@@ -850,7 +850,7 @@
                       {
                         "speaker": 0,
                         "text": "Ez tiştên xweş dinivîsim!",
-                        "en": "I’m writing funny things!"
+                        "en": "I’m writing fun things!"
                       },
                       {
                         "speaker": 1,
@@ -2443,8 +2443,8 @@
             {
               "key": "u05s3l1",
               "position": 1,
-              "titleKu": "Demjimêr çend e?",
-              "titleEn": "What time is it?",
+              "titleKu": "Sê demjimêr",
+              "titleEn": "Three clocks",
               "exercises": [
                 {
                   "position": 1,
@@ -3833,13 +3833,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Dapîr jî dibêje: Her gav!",
+                    "say": "Dapîr jî dibêje: Ez her gav çayê vedixwim!",
                     "voice": "hamo",
-                    "prompt": "Dapîr jî dibêje: ___ gav!",
+                    "prompt": "Dapîr jî dibêje: Ez ___ gav çayê vedixwim!",
                     "options": [
-                      "Her",
-                      "Kes",
-                      "Çend"
+                      "her",
+                      "kes",
+                      "çend"
                     ],
                     "correctIndex": 0
                   }
@@ -4429,9 +4429,9 @@
                     "voice": "hamo",
                     "prompt": "Hemû li Nazê dinêrin, û Nazê tenê dikene.",
                     "accepted": [
-                      "Everyone looks at Nazê, and Nazê just smiles.",
                       "Everyone looks at Nazê, and Nazê just laughs.",
-                      "Everyone is looking at Nazê, and Nazê just smiles.",
+                      "Everyone looks at Nazê, and Nazê just smiles.",
+                      "Everyone is looking at Nazê, and Nazê just laughs.",
                       "Everybody looks at Nazê, and Nazê only laughs."
                     ]
                   }
@@ -4500,7 +4500,7 @@
                       {
                         "speaker": 0,
                         "text": "Û Nazê tenê dikene. Çima?",
-                        "en": "And Nazê just smiles. Why?"
+                        "en": "And Nazê just laughs. Why?"
                       }
                     ],
                     "prompt": "Otobûs kengî diçe?",
@@ -4744,7 +4744,7 @@
                         "en": "I don’t know… but there’s always time for tea!"
                       }
                     ],
-                    "prompt": "Telefona Hamo kengî wî şiyar dike?",
+                    "prompt": "Li ser telefona Hamo demjimêr heşt e. Sibehê an êvarê?",
                     "options": [
                       "Êvarê, di demjimêr heştan de.",
                       "Sibehê, di demjimêr heştan de.",

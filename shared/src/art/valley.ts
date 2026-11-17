@@ -446,7 +446,8 @@ export type ValleyLoopKind = 'kilim' | 'steam' | 'water' | 'flag' | 'colours' | 
  * the box the apps lay the moving sprite into.
  */
 export interface ValleyLandmark {
-  draw: (dark: boolean, random: () => number) => string;
+  /** `page` when it is drawn on a page of its own colour (a book's opener, a stamp) rather than on the path's land, where what belongs to the land behind it is left out */
+  draw: (dark: boolean, random: () => number, page?: boolean) => string;
   loop: { kind: ValleyLoopKind; x: number; y: number; w: number; h: number };
 }
 

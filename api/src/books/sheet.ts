@@ -107,8 +107,9 @@ export class Press {
   /** how many pages have been started */
   pages = 0;
 
-  constructor(title: string) {
-    this.doc = new PDFDocument({ size: [PAGE.w, PAGE.h], autoFirstPage: false, margin: 0, info: { Title: title, Author: 'Hevalo', Subject: 'Learning Kurmancî' } });
+  /** `author` is who the file's details name as its author: the book's own author where the book has one, and Hevalo where not. */
+  constructor(title: string, author = 'Hevalo') {
+    this.doc = new PDFDocument({ size: [PAGE.w, PAGE.h], autoFirstPage: false, margin: 0, info: { Title: title, Author: author, Subject: 'Learning Kurmancî' } });
     this.raw = this.doc as unknown as Raw;
     for (const [name, file] of Object.entries(FONTS)) this.doc.registerFont(name, file);
     // the drawings' dotted lines are dashes of no length with round caps, which the PDF writer refuses: a hair of length draws the same dot
@@ -144,8 +145,35 @@ export class Press {
    * not (so a comma stays with the bold word before it), and a line that
    * would end the paragraph on a single short word takes a companion down
    * with it where it can.
+   *
+   * A no-break space (U+00A0) holds what it joins on one line: an option's
+   * letter and the option, an answer's number and the answer. It is set as
+   * an ordinary space once the lines are broken, so the file carries plain
+   * spaces and no face needs a glyph for it. An en or em space (U+2002,
+   * U+2003) is the other way round: a line may break there like at any
+   * space, but within a line it keeps its own width, which is how a list run
+   * into one paragraph (a question's options, a chapter's answers) holds its
+   * items apart; any other run of spaces is set as one.
+   *
+   * `balance` evens the lines out instead of filling each to the measure,
+   * for a speech bubble, whose last line should not be one word under a
+   * long one: the paragraph keeps its number of lines and is broken at the
+   * narrowest width that still holds it in them.
    */
-  wrap(text: string | readonly Span[], width: number, type: Type, maxLines = Infinity): Line[] {
+  wrap(text: string | readonly Span[], width: number, type: Type, maxLines = Infinity, balance = false): Line[] {
+    if (balance && Number.isFinite(width)) {
+      const count = this.wrap(text, width, type).length;
+      if (count > 1 && count <= maxLines) {
+        // the narrowest width that keeps the count, to a quarter of a point: each line then runs about as long as the others
+        let [lo, hi] = [width * 0.5, width];
+        while (hi - lo > 0.25) {
+          const mid = (lo + hi) / 2;
+          if (this.wrap(text, mid, type).length <= count) hi = mid;
+          else lo = mid;
+        }
+        return this.wrap(text, hi, type, maxLines);
+      }
+    }
     const spans: readonly Span[] = typeof text === 'string' ? [{ text }] : text;
     // a word is one or more pieces with no space between them, each in its own face
     interface Piece {
@@ -154,32 +182,46 @@ export class Press {
       color: string;
       w: number;
     }
-    const words: Array<{ pieces: Piece[]; w: number }> = [];
+    // a word, and the space set before it when it is not the first of its line: one space of the face before it, unless the text gives a wider one
+    interface Word {
+      pieces: Piece[];
+      w: number;
+      gap?: number;
+    }
+    const space = (face: FontKey): number => this.measure(' ', face, type.size) + (type.tracking ?? 0);
+    const words: Word[] = [];
     let open = false;
+    let wide: number | undefined;
     for (const span of spans) {
       const face = span.font ?? type.font;
       const color = span.color ?? type.color;
-      for (const part of span.text.split(/(\s+)/)) {
+      // JavaScript's \s takes in the no-break space, so the break is on any space but that one
+      for (const part of span.text.split(/([^\S\u00a0]+)/)) {
         if (part === '') continue;
-        if (/^\s+$/.test(part)) {
+        if (/^[^\S\u00a0]+$/.test(part)) {
           open = false;
+          if (/[\u2002\u2003]/.test(part)) wide = [...part].reduce((w, ch) => w + (ch === '\u2003' ? type.size : ch === '\u2002' ? type.size / 2 : space(face)), 0);
           continue;
         }
-        const piece = { text: part, font: face, color, w: this.measure(part, face, type.size, type.tracking) };
+        const set = part.replace(/\u00a0/g, ' ');
+        const piece = { text: set, font: face, color, w: this.measure(set, face, type.size, type.tracking) };
         if (open && words.length > 0) {
           const last = words[words.length - 1]!;
           last.pieces.push(piece);
           last.w += piece.w;
-        } else words.push({ pieces: [piece], w: piece.w });
+        } else {
+          words.push(wide === undefined ? { pieces: [piece], w: piece.w } : { pieces: [piece], w: piece.w, gap: wide });
+          wide = undefined;
+        }
         open = true;
       }
     }
-    const space = (face: FontKey): number => this.measure(' ', face, type.size) + (type.tracking ?? 0);
-    const rows: Array<Array<{ pieces: Piece[]; w: number }>> = [];
-    let row: Array<{ pieces: Piece[]; w: number }> = [];
+    const gapOf = (line: readonly Word[], i: number): number => (i === 0 ? 0 : (line[i]!.gap ?? space(line[i - 1]!.pieces.at(-1)!.font)));
+    const rows: Word[][] = [];
+    let row: Word[] = [];
     let used = 0;
     for (const word of words) {
-      const gap = row.length > 0 ? space(row[row.length - 1]!.pieces.at(-1)!.font) : 0;
+      const gap = row.length > 0 ? (word.gap ?? space(row[row.length - 1]!.pieces.at(-1)!.font)) : 0;
       if (row.length > 0 && used + gap + word.w > width + 0.01) {
         rows.push(row);
         row = [];
@@ -197,19 +239,34 @@ export class Press {
     }
     const kept = rows.slice(0, maxLines);
     if (rows.length > kept.length && kept.length > 0) {
+      // a paragraph cut short ends its last line on an ellipsis, measured with the line, so nothing set after the line runs into it
       const tail = kept[kept.length - 1]!;
-      const end = tail[tail.length - 1]!.pieces.at(-1)!;
-      end.text = `${end.text.replace(/[.,;:!?]+$/, '')}…`;
+      const trail = (): void => {
+        const word = tail[tail.length - 1]!;
+        const end = word.pieces.at(-1)!;
+        const text = `${end.text.replace(/[.,;:!?]+$/, '')}…`;
+        const w = this.measure(text, end.font, type.size, type.tracking);
+        word.w += w - end.w;
+        end.text = text;
+        end.w = w;
+      };
+      const across = (): number => tail.reduce((x, word, i) => x + word.w + gapOf(tail, i), 0);
+      trail();
+      while (tail.length > 1 && across() > width + 0.01) {
+        tail.pop();
+        trail();
+      }
     }
     return kept.map((r) => {
       const runs: Line['runs'] = [];
       let x = 0;
       r.forEach((word, i) => {
-        if (i > 0) x += space(r[i - 1]!.pieces.at(-1)!.font);
+        x += gapOf(r, i);
         word.pieces.forEach((piece, k) => {
           const before = runs[runs.length - 1];
-          // words in one face run on as one string, so the writer sets them in one go
-          if (before && before.font === piece.font && before.color === piece.color) before.text += (k === 0 ? ' ' : '') + piece.text;
+          // words in one face run on as one string, so the writer sets them in one go; a word after a wide space starts a run of its own, where the space ends
+          const joins = k > 0 || (i > 0 && word.gap === undefined);
+          if (before && before.font === piece.font && before.color === piece.color && joins) before.text += (k === 0 ? ' ' : '') + piece.text;
           else runs.push({ text: piece.text, font: piece.font, color: piece.color, x });
           x += piece.w;
         });
@@ -245,9 +302,9 @@ export class Press {
     return w;
   }
 
-  /** A paragraph, measured: its lines and the height they take. */
-  para(text: string | readonly Span[], width: number, type: Type, maxLines = Infinity): { lines: Line[]; height: number } {
-    const lines = this.wrap(text, width, type, maxLines);
+  /** A paragraph, measured: its lines and the height they take; `balance` evens its lines out, as `wrap` does. */
+  para(text: string | readonly Span[], width: number, type: Type, maxLines = Infinity, balance = false): { lines: Line[]; height: number } {
+    const lines = this.wrap(text, width, type, maxLines, balance);
     return { lines, height: lines.length * type.lead };
   }
 

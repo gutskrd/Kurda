@@ -14,7 +14,7 @@
         {
           "position": 1,
           "titleKu": "Em diçin bazarê",
-          "titleEn": "Off to market",
+          "titleEn": "We’re off to market",
           "grammarMd": "**Ez diçim bazarê.** I am going to the market. The present is **di-** + the verb’s present stem + an ending: **-im** (I), **-î** (you), **-e** (he, she, it), **-in** (we, you, they).\n\n- *çûn* to go: *diçim, diçî, diçe, diçin* · *dîtin* to see: *dibînim* · *gotin* to say: *dibêjim* · *kirin* to do: *dikim*\n- *hatin* to come has no di-: *ez têm, tu têyî, ew tê, em tên*.",
           "lessons": [
             {
@@ -2260,7 +2260,7 @@
                       {
                         "speaker": 0,
                         "text": "Ji bo şîvê tu çi dixwazî?",
-                        "en": "What would you like for supper?"
+                        "en": "What would you like for dinner?"
                       },
                       {
                         "speaker": 1,
@@ -2301,7 +2301,7 @@
                     "prompt": "What is strange about Hevalo at lunch?",
                     "options": [
                       "He looks at the mountain, not the apple.",
-                      "He wants fish for supper.",
+                      "He wants fish for dinner.",
                       "He eats all the honey."
                     ],
                     "correctIndex": 0
@@ -2313,7 +2313,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran’s mother wants potatoes for supper.",
+                    "prompt": "Baran’s mother wants potatoes for dinner.",
                     "accepted": [
                       "Diya Baran ji bo şîvê kartolan dixwaze.",
                       "Diya Baran ji bo şîvê kartol dixwaze.",
@@ -2340,8 +2340,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Destên xwe bişo, xwarin li ser maseyê ye.",
-                    "reference": "Destên xwe bişo, xwarin li ser maseyê ye."
+                    "prompt": "Em nan û penîr dixwin, û Hevalo li çiyê dinêre.",
+                    "reference": "Em nan û penîr dixwin, û Hevalo li çiyê dinêre."
                   }
                 },
                 {
@@ -3220,8 +3220,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez sed û bîst didim, bîst ji bo çayê.",
-                    "reference": "Ez sed û bîst didim, bîst ji bo çayê."
+                    "prompt": "Ez sed û deh didim, û bîst jî ji bo çayê.",
+                    "reference": "Ez sed û deh didim, û bîst jî ji bo çayê."
                   }
                 },
                 {
@@ -4547,7 +4547,7 @@
                     ],
                     "prompt": "Who phones Hamo after the trial?",
                     "options": [
-                      "His sister Lorîn",
+                      "Lorîn",
                       "Mîrza",
                       "Ferhad"
                     ],

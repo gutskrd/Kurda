@@ -63,7 +63,13 @@ export function pathLandmarkSvg(opts: PathLandmarkOptions): string {
   // drawn standing in the meadow's shade, then given the shade of the land it stands on, so a market's shadow is not grass
   const meadow = dusk(VALLEY.meadowShade, dark);
   const shade = opts.shade ?? (opts.ground ? pathGroundShade(opts.ground, dark) : meadow);
-  const body = art.draw(dark, seeded(`valley-landmark|${landmark}`)).split(`fill="${meadow}"`).join(`fill="${shade}"`);
+  const body = art
+    .draw(dark, seeded(`valley-landmark|${landmark}`), opts.shade !== undefined)
+    .split(`fill="${meadow}"`)
+    .join(`fill="${shade}"`)
+    // a pole's shadow is a line of the meadow's shade, and on a page of its own colour it is that page's shade too, never a green stick
+    .split(`stroke="${meadow}"`)
+    .join(`stroke="${shade}"`);
   const label = opts.title
     ? ` role="img" aria-labelledby="${prefix}t"><title id="${prefix}t">${escapeXml(opts.title)}</title>`
     : ' aria-hidden="true" focusable="false">';

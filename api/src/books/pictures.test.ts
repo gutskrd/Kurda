@@ -26,14 +26,21 @@ import {
   PANEL,
   chapterEmblem,
   chapterHue,
+  composedScenes,
   hueDistance,
+  lessonScene,
   pictureForName,
   pictureForWord,
+  pictureNamed,
+  propsOf,
   sceneFor,
+  sceneFromSpec,
   sceneLayout,
   sentencesOf,
   tellBeat,
   type BookPicture,
+  type BookScene,
+  type PanelBox,
 } from './pictures.js';
 import { chapterWords, roadBookCast, roadBookChapters } from './road-book.js';
 import { INK } from './sheet.js';
@@ -49,7 +56,7 @@ function drawable(p: BookPicture): boolean {
   if (p.kind === 'paint') return BOOK_PAINTS.includes(p.colour);
   if (p.kind === 'landmark') return PATH_LANDMARKS.includes(p.landmark);
   if (p.kind === 'cast') return Object.hasOwn(BOOK_POSES, p.who) && (BOOK_POSES[p.who] as readonly string[]).includes(p.pose);
-  if (p.kind === 'figure') return /^\d+(st|nd)?$/.test(p.text);
+  if (p.kind === 'figure') return /^\d+\.?$/.test(p.text);
   return p.kind === 'sapling';
 }
 
@@ -74,7 +81,8 @@ describe('a word’s picture', () => {
   it('is a number’s figure, a colour’s paint, or one of the things drawn for the book', () => {
     expect(pictureForWord(word('sê', 'three', 'num'))).toEqual({ kind: 'figure', text: '3' });
     expect(pictureForWord(word('hezar', 'a thousand', 'num'))).toEqual({ kind: 'figure', text: '1000' });
-    expect(pictureForWord(word('yekem', 'first', 'num'))).toEqual({ kind: 'figure', text: '1st' });
+    // an ordinal is written as the book's own Kurdish and European ones are: the figure and a full stop
+    expect(pictureForWord(word('yekem', 'first', 'num'))).toEqual({ kind: 'figure', text: '1.' });
     expect(pictureForWord(word('sor', 'red', 'adj'))).toEqual({ kind: 'paint', colour: 'red' });
     expect(pictureForWord(word('spî', 'white', 'adj'))).toEqual({ kind: 'paint', colour: 'white' });
     expect(pictureForWord(word('simbêl', 'moustache'))).toEqual({ kind: 'spot', spot: 'moustache' });
@@ -216,8 +224,8 @@ describe('a beat told in a line or two', () => {
   });
 
   it('tells how it opens and how it ends, with an ellipsis where it leaves something out', () => {
-    // the ending is too short to stand alone, so it takes what leads up to it along
-    expect(tellBeat(beat, 160)).toBe('Hamo counts the apples in the basket, one by one, with great care and a pencil. … “Kî sêv xwar? Tu?” he asks the hens. Hevalo looks at the sky.');
+    // the ending is too short to stand alone, so it takes what leads up to it along; a whole sentence goes on to the next whole one, with no full stop and ellipsis together
+    expect(tellBeat(beat, 160)).toBe('Hamo counts the apples in the basket, one by one, with great care and a pencil. “Kî sêv xwar? Tu?” he asks the hens. Hevalo looks at the sky.');
     // less room: the opening is cut where a clause ends, and the telling trails off there, with no second ellipsis
     expect(tellBeat(beat, 130)).toBe('Hamo counts the apples in the basket, one by one… “Kî sêv xwar? Tu?” he asks the hens. Hevalo looks at the sky.');
     expect(tellBeat(beat, 90)).toBe('Hamo counts the apples in the basket, one by one… Hevalo looks at the sky.');
@@ -255,9 +263,11 @@ describe('a beat told in a line or two', () => {
             if (short.length > max) problems.push(`${where}: ${short.length} long`);
             if (short.trim() === '') problems.push(`${where}: empty`);
             if (count(short, '“') !== count(short, '”') || count(short, '(') !== count(short, ')')) problems.push(`${where}: left open: ${short}`);
-            if (/… …|……/.test(short)) problems.push(`${where}: two ellipses together`);
-            if (!whole.startsWith(short.split('…')[0]!.trimEnd())) problems.push(`${where}: does not open as the beat does`);
-            for (const piece of short.split(/\s*…\s*/).filter(Boolean)) if (!whole.includes(piece)) problems.push(`${where}: not the beat’s own words: ${piece}`);
+            if (/… …|……|[.!?] …/.test(short)) problems.push(`${where}: two marks of a break together`);
+            // the beat's own ellipsis, closing a quotation, is part of what it says and not a place the telling skips
+            const pieces = short.split(/\s*…(?![”’])\s*/).filter(Boolean).flatMap((piece) => sentencesOf(piece));
+            if (pieces.length > 0 && !whole.startsWith(pieces[0]!)) problems.push(`${where}: does not open as the beat does`);
+            for (const piece of pieces) if (!whole.includes(piece)) problems.push(`${where}: not the beat’s own words: ${piece}`);
           }
           // where the beat goes on to say what Hevalo did, the telling at the book's measure says so too
           if (/Hevalo|the deer/.test(sentencesOf(told).slice(1).join(' '))) {
@@ -338,7 +348,7 @@ describe('a lesson’s scene', () => {
   });
 
   it('draws no second apple beside a deer who has one in his mouth, or whose core lies beside him', () => {
-    expect(sceneFor('Hevalo eats the bread, the cheese and the yoghurt.', [apple])).toEqual({
+    expect(sceneFor('Hevalo eats the bread, the cheese and the yoghurt.', [apple])).toMatchObject({
       setting: 'day',
       orb: null,
       cast: [{ who: 'hevalo', pose: 'caught' }],
@@ -368,60 +378,6 @@ describe('a lesson’s scene', () => {
     expect(sceneFor('The first snow, then rain, then a storm cloud.').props).toEqual([{ kind: 'word', id: 'cloud' }]);
   });
 
-  it('never lets anything cover the moon or the sun, in any scene of the road, on either side of the page', async () => {
-    const { plan, docs, stories } = await loadRoadBookSources();
-    const lessons = roadBookChapters(plan, docs, stories, ALL).flatMap((c) => c.parts.flatMap((p) => p.lessons));
-    const problems: string[] = [];
-    const lit = { night: 0, nights: 0, dusk: 0, dusks: 0 };
-    for (const lesson of lessons) {
-      const scene = sceneFor(lesson.beat, lesson.words);
-      for (const p of scene.props) if (p.kind === 'word' && ['sun', 'moon', 'star'].includes(p.id)) problems.push(`${lesson.key}: a ${p.id} drawn as a picture`);
-      if (scene.setting === 'night' && scene.orb !== 'moon' && scene.orb !== 'full moon') problems.push(`${lesson.key}: a night with ${scene.orb}`);
-      if (scene.setting !== 'night' && scene.orb !== null && scene.orb !== 'sun') problems.push(`${lesson.key}: a ${scene.setting} with a moon`);
-      for (const side of ['left', 'right'] as const) {
-        const layout = sceneLayout(scene, side);
-        const where = `${lesson.key} on the ${side}`;
-        if (scene.setting === 'night') {
-          lit.nights += 1;
-          lit.night += layout.orb ? 1 : 0;
-        }
-        if (scene.setting === 'dusk') {
-          lit.dusks += 1;
-          lit.dusk += layout.orb ? 1 : 0;
-        }
-        const orb = layout.orb;
-        if (!orb) continue;
-        // inside the panel, above the mountains where it is the moon, and clear of the people, the things and the lesson's number
-        if (orb.x - orb.r < 0 || orb.x + orb.r > PANEL.w || orb.y - orb.r < 0) problems.push(`${where}: off the panel`);
-        if (scene.setting === 'night' && orb.y + orb.r > bookRidgeAt(orb.x / BACKDROP_SCALE) * BACKDROP_SCALE) problems.push(`${where}: the moon below the mountains`);
-        const boxes = [...layout.cast.map((c) => [c.who, c.box] as const), ...layout.props.map((p) => [JSON.stringify(p.picture), p.box] as const)];
-        boxes.push(['the number', { x: layout.badge.x - layout.badge.r, y: layout.badge.y - layout.badge.r, w: 2 * layout.badge.r, h: 2 * layout.badge.r }]);
-        for (const [what, b] of boxes) {
-          const dx = Math.max(b.x - orb.x, 0, orb.x - (b.x + b.w));
-          const dy = Math.max(b.y - orb.y, 0, orb.y - (b.y + b.h));
-          if (Math.hypot(dx, dy) < orb.r + ORB_ROOM - 0.01) problems.push(`${where}: ${what} over the ${scene.setting === 'night' ? 'moon' : 'sun'}`);
-        }
-        // and the sky the backdrop paints for it keeps its stars and clouds off the moon and off everything laid over it
-        const k = BACKDROP_SCALE;
-        const sky = bookSkyMarks({
-          setting: scene.setting,
-          orb: { x: orb.x / k, y: orb.y / k, r: orb.r / k },
-          clear: layout.clear.map((c) => ({ x: c.x / k, y: c.y / k, w: c.w / k, h: c.h / k })),
-          seed: lesson.key,
-        });
-        for (const m of sky.marks) {
-          const dx = Math.max(m.x - orb.x / k, 0, orb.x / k - (m.x + m.w));
-          const dy = Math.max(m.y - orb.y / k, 0, orb.y / k - (m.y + m.h));
-          if (Math.hypot(dx, dy) < orb.r / k + 2) problems.push(`${where}: a ${m.kind} on the ${scene.setting === 'night' ? 'moon' : 'sun'}`);
-        }
-      }
-    }
-    expect(problems).toEqual([]);
-    // the moon finds room in nearly every night, and the setting sun in every dusk
-    expect(lit.night / lit.nights).toBeGreaterThan(0.85);
-    expect(lit.dusk).toBe(lit.dusks);
-  });
-
   it('reads Kurdish letters as letters: the hill Miştenûr is not a tenûr', () => {
     const tenur: BookPicture = { kind: 'word', id: 'tenur' };
     expect(sceneFor('From the roof you can see Miştenûr.').props).not.toContainEqual(tenur);
@@ -430,25 +386,179 @@ describe('a lesson’s scene', () => {
     expect(sceneFor('Hamo is a teacher of teamwork.').props).toEqual([]);
   });
 
-  it('composes a scene for every lesson of the road from drawings that exist', async () => {
-    const { plan, docs, stories } = await loadRoadBookSources();
-    const scenes = roadBookChapters(plan, docs, stories, ALL).flatMap((c) => c.parts.flatMap((p) => p.lessons.map((l) => ({ key: l.key, scene: sceneFor(l.beat, l.words) }))));
+  it('sets a scene by the weather it is in now, not the weather of a memory, and by the time of day before a rule about the night', () => {
+    expect(sceneFor('The sun is back, the snow melts and the stream sings.').setting).toBe('day');
+    expect(sceneFor('Hamo remembers his first winter here, the snow up to the door.').setting).toBe('day');
+    expect(sceneFor('After the harvest the village meets, and November is coming, and the first frost.').setting).toBe('day');
+    expect(sceneFor('Hamo says “Şev baş!”, and the next morning he is at the gate with tea.').setting).toBe('day');
+    expect(sceneFor('On the last evening Dapîr hums by the fire.').setting).toBe('dusk');
+    expect(sceneFor('No honey at night, says the doctor, and Hamo sighs.').setting).toBe('day');
+    expect(sceneFor('A knock at midnight, in deep snow.').setting).toBe('snow');
+  });
+
+  it('reads how each friend takes it in a calm beat as calm, and the deer who is gone as caught', () => {
+    const pose = (beat: string, who: CharacterId): string | undefined => sceneFor(beat).cast.find((c) => c.who === who)?.pose;
+    expect(pose('Hamo climbs up and sits beside him without a word, then talks quietly about trust.', 'hamo')).toBe('telling');
+    expect(pose('Hamo cannot get out of bed: his back is very bad.', 'hamo')).toBe('shocked');
+    expect(pose('Bring it here, Hamo tells Hevalo, who is chewing something papery.', 'hevalo')).toBe('innocent');
+    expect(pose('By morning Hevalo is gone, and so is the sack of apples.', 'hevalo')).toBe('caught');
+  });
+
+  it('shows only what is there: no colour as a thing, no land as a thing, and nothing a beat only likens something to', () => {
+    const shown = (beat: string, words: Parameters<typeof sceneFor>[1] = []): string[] => sceneFor(beat, words).props.map((p) => JSON.stringify(p));
+    expect(shown('Hamo waits.', [word('reş', 'black', 'adj')])).toEqual([]);
+    expect(shown('A wolf as big as a horse, says Hamo.')).toEqual([JSON.stringify({ kind: 'word', id: 'wolf' })]);
+    expect(shown('His heart beats like a drum.')).toEqual([]);
+    expect(shown('The river runs under the mountains.')).toEqual([]);
+    // market day is no basket, and the door next to Hamo's is no house of its own
+    expect(propsOf('Market day at last.')).toEqual([]);
+    expect(propsOf('Hamo knocks at the next door.')).toEqual([]);
+    // the road's own drawings for its own things: the doe with no antlers, Dapîr's white goat, the walnut tree, the teahouse and the gate
+    expect(propsOf('The doe comes for the salt.')).toEqual([{ kind: 'spot', spot: 'doe' }]);
+    expect(propsOf('Dapîr’s white goat eats the clue.')).toEqual([{ kind: 'spot', spot: 'whiteGoat' }]);
+    expect(propsOf('Under the walnut tree.')).toEqual([{ kind: 'spot', spot: 'walnutTree' }]);
+    expect(propsOf('At the tea house contest.')).toEqual([{ kind: 'landmark', landmark: 'teahouse' }]);
+    expect(propsOf('The blue gate creaks.')).toEqual([{ kind: 'landmark', landmark: 'gate' }]);
+  });
+});
+
+/** Every lesson of the road with its scene and how it is laid out on the side of the page it falls on. */
+async function roadScenes(): Promise<Array<{ key: string; chapter: number; position: number; scene: BookScene; layout: ReturnType<typeof sceneLayout> }>> {
+  const { plan, docs, stories } = await loadRoadBookSources();
+  return roadBookChapters(plan, docs, stories, ALL).flatMap((c) =>
+    c.parts.flatMap((p) =>
+      p.lessons.map((l) => {
+        const scene = lessonScene(l);
+        return { key: l.key, chapter: c.number, position: l.position, scene, layout: sceneLayout(scene, l.position % 2 === 1 ? 'left' : 'right') };
+      }),
+    ),
+  );
+}
+
+const overlap = (a: PanelBox, b: PanelBox): number => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+
+describe('the scenes composed by hand', () => {
+  it('composes one for every lesson of the road, from drawings and poses there are', async () => {
+    const scenes = await roadScenes();
     expect(scenes).toHaveLength(192);
+    expect(composedScenes().size).toBe(192);
     for (const { key, scene } of scenes) {
+      expect(composedScenes().has(key), key).toBe(true);
       expect(BOOK_SETTINGS, key).toContain(scene.setting);
-      expect(scene.cast.length, key).toBeGreaterThanOrEqual(1);
-      expect(scene.cast.length, key).toBeLessThanOrEqual(2);
-      expect(new Set(scene.cast.map((c) => c.who)).size, key).toBe(scene.cast.length);
-      for (const c of scene.cast) expect(drawable({ kind: 'cast', ...c }), `${key} ${c.who} ${c.pose}`).toBe(true);
-      // Hamo, when he is in it, stands first: on the left, looking into the scene
-      if (scene.cast.some((c) => c.who === 'hamo')) expect(scene.cast[0]!.who, key).toBe('hamo');
-      expect(scene.props.length, key).toBeLessThanOrEqual(scene.cast.length > 1 ? 1 : 3);
-      for (const p of scene.props) expect(drawable(p) && p.kind !== 'cast' && p.kind !== 'figure', `${key} ${JSON.stringify(p)}`).toBe(true);
+      expect(scene.cast.length, key).toBeLessThanOrEqual(3);
+      for (const c of scene.cast) expect(drawable({ kind: 'cast', who: c.who, pose: c.pose }), `${key} ${c.who} ${c.pose}`).toBe(true);
+      for (const t of scene.things) expect(drawable(t.picture), `${key} ${JSON.stringify(t.picture)}`).toBe(true);
     }
-    // the road has every kind of sky, dusk the fewest, the deer is in a good third of it, and he is caught at it again and again
-    for (const setting of BOOK_SETTINGS) expect(scenes.filter((s) => s.scene.setting === setting).length, setting).toBeGreaterThan(setting === 'dusk' ? 3 : 5);
+    // most scenes have someone in them, and the deer is in a good part of the road, caught at it again and again
+    expect(scenes.filter((s) => s.scene.cast.length > 0).length).toBeGreaterThan(185);
     const deer = scenes.flatMap((s) => s.scene.cast.filter((c) => c.who === 'hevalo'));
     expect(deer.length).toBeGreaterThan(60);
     expect(deer.filter((c) => c.pose === 'caught' || c.pose === 'innocent').length).toBeGreaterThan(20);
+  });
+
+  it('refuses a scene that names a drawing, a pose or a holder that is not there', () => {
+    const base = { shot: 'wide' as const, cast: [{ who: 'hamo' as const, pose: 'proud' }] };
+    expect(() => sceneFromSpec('k', { ...base, things: [{ show: 'banana', at: 'ground' }] })).toThrow(/no drawing called banana/);
+    expect(() => sceneFromSpec('k', { ...base, cast: [{ who: 'hamo', pose: 'dancing' }] })).toThrow(/no pose called dancing/);
+    expect(() => sceneFromSpec('k', { ...base, things: [{ show: 'apple', at: 'hand', of: 'xezo' }] })).toThrow(/held by someone not there/);
+    expect(() => sceneFromSpec('k', { ...base, things: [{ show: 'apple', at: 'on', on: 0 }] })).toThrow(/put on nothing before it/);
+    expect(() => sceneFromSpec('k', { ...base, things: [{ show: 'calendar', at: 'wall' }] })).toThrow(/on a wall out of doors/);
+    expect(pictureNamed('landmark:school')).toEqual({ kind: 'landmark', landmark: 'school' });
+    expect(pictureNamed('school')).toEqual({ kind: 'word', id: 'school' });
+    expect(pictureNamed('doe')).toEqual({ kind: 'spot', spot: 'doe' });
+    expect(pictureNamed('toString')).toBeNull();
+  });
+
+  it('never stands a thing that is held in the hand alone on the ground', () => {
+    // what is carried or put on a table: never left standing on the grass or the floor by itself
+    const held = new Set(['word:tea', 'word:glass', 'word:phone', 'word:spoon', 'word:medicine', 'word:bread', 'word:honey', 'word:clock', 'word:cup', 'word:money', 'word:letter', 'word:book', 'word:tomato', 'word:grapes', 'word:cheese', 'word:egg', 'spot:lamp', 'spot:jug', 'spot:notebook', 'spot:photo', 'spot:flute']);
+    const key = (p: BookPicture): string => (p.kind === 'word' ? `word:${p.id}` : p.kind === 'spot' ? `spot:${p.spot}` : p.kind);
+    for (const [k, scene] of composedScenes()) for (const t of scene.things) if (t.at === 'ground') expect(held.has(key(t.picture)), `${k} ${key(t.picture)}`).toBe(false);
+  });
+
+  it('draws everyone and everything to one measure: what is held is a hand’s size, and what is set back stands where the land begins', async () => {
+    for (const { key, scene, layout } of await roadScenes()) {
+      scene.things.forEach((t, i) => {
+        const box = layout.props[i]!.box;
+        if (t.at === 'hand' || t.at === 'mouth') {
+          const holder = layout.cast.find((c) => c.who === t.of)!;
+          expect(box.w, `${key} ${JSON.stringify(t.picture)} in hand`).toBeLessThanOrEqual(holder.box.w * 0.6 + 0.01);
+        }
+        // its foot (a drawing's own foot, a little above its square's) on the floor, inside the picture
+        if (t.at === 'back' && !scene.room) expect(box.y + box.h * (t.picture.kind === 'landmark' ? 114 / 120 : 104 / 120), `${key} ${JSON.stringify(t.picture)} set back`).toBeLessThan(PANEL.h - 4);
+      });
+      // nobody is taller than the panel lets them stand, and a whole figure stands with its feet in the picture
+      // (one standing lower than the rest is half hidden behind something, and their feet are out of sight on purpose)
+      layout.cast.forEach((c, i) => {
+        if (c.crop === 'full' && !scene.cast[i]!.down) expect(c.box.y + c.box.h, `${key} ${c.who}'s feet`).toBeLessThanOrEqual(PANEL.h + 0.5);
+      });
+    }
+  });
+
+  it('never covers a face with the lesson’s number, nor the sun or the moon with anything', async () => {
+    const problems: string[] = [];
+    const lit = { nights: 0, night: 0, dusks: 0, dusk: 0 };
+    for (const { key, scene, layout } of await roadScenes()) {
+      const b = layout.badge;
+      const badge = { x: b.x - b.r, y: b.y - b.r, w: 2 * b.r, h: 2 * b.r };
+      for (const c of layout.cast) if (overlap(badge, c.face) > c.face.w * c.face.h * 0.08) problems.push(`${key}: the number on ${c.who}'s face`);
+      if (scene.setting === 'night' && !scene.room) {
+        lit.nights += 1;
+        lit.night += layout.orb ? 1 : 0;
+      }
+      if (scene.setting === 'dusk' && !scene.room) {
+        lit.dusks += 1;
+        lit.dusk += layout.orb ? 1 : 0;
+      }
+      const orb = layout.orb;
+      if (!orb || scene.room) continue;
+      if (orb.x - orb.r < 0 || orb.x + orb.r > PANEL.w || orb.y - orb.r < 0) problems.push(`${key}: the ${scene.orb} off the panel`);
+      if (scene.setting === 'night' && orb.y + orb.r > bookRidgeAt(orb.x / BACKDROP_SCALE) * BACKDROP_SCALE) problems.push(`${key}: the moon below the mountains`);
+      // what the layout keeps the sky clear of: everyone, every thing as far as its drawing reaches, and the number
+      for (const box of layout.clear) {
+        const dx = Math.max(box.x - orb.x, 0, orb.x - (box.x + box.w));
+        const dy = Math.max(box.y - orb.y, 0, orb.y - (box.y + box.h));
+        if (Math.hypot(dx, dy) < orb.r + ORB_ROOM - 0.01 && box.y < PANEL.h) problems.push(`${key}: something over the ${scene.orb}`);
+      }
+      // and the sky the backdrop paints keeps its stars and clouds off it
+      const sky = bookSkyMarks({ setting: scene.setting, orb: layout.backdrop.orb, clear: layout.backdrop.clear, seed: key });
+      for (const m of sky.marks) {
+        const o = layout.backdrop.orb!;
+        const dx = Math.max(m.x - o.x, 0, o.x - (m.x + m.w));
+        const dy = Math.max(m.y - o.y, 0, o.y - (m.y + m.h));
+        if (Math.hypot(dx, dy) < o.r + 2) problems.push(`${key}: a ${m.kind} on the ${scene.orb}`);
+      }
+    }
+    expect(problems).toEqual([]);
+    // every night out of doors has its moon, and every dusk its setting sun
+    expect(lit.night).toBe(lit.nights);
+    expect(lit.dusk).toBe(lit.dusks);
+  });
+
+  it('never draws two lessons in a row alike, and sees each part from more than one distance', async () => {
+    const scenes = await roadScenes();
+    const look = (s: BookScene): string =>
+      JSON.stringify([s.shot, Boolean(s.room), s.cast.map((c) => [c.who, Math.round((c.x ?? 0.5) * 5)]), s.things.filter((t) => t.at === 'back').map((t) => t.picture)]);
+    for (let i = 1; i < scenes.length; i++) expect(look(scenes[i]!.scene), `${scenes[i - 1]!.key} and ${scenes[i]!.key}`).not.toBe(look(scenes[i - 1]!.scene));
+    for (let i = 0; i < scenes.length; i += 4) {
+      const part = scenes.slice(i, i + 4);
+      expect(new Set(part.map((s) => s.scene.shot)).size, part[0]!.key).toBeGreaterThanOrEqual(2);
+    }
+    // the road is seen whole most of the time, close up now and then, and indoors in its winter chapters more than its summer ones
+    const shots = (shot: string): number => scenes.filter((s) => s.scene.shot === shot).length;
+    expect(shots('wide')).toBeGreaterThan(80);
+    expect(shots('close')).toBeGreaterThan(15);
+    expect(shots('close')).toBeLessThan(45);
+  });
+
+  it('puts a room’s things on its walls and its window sill, and the sun or the moon in its window', async () => {
+    for (const { key, scene, layout } of await roadScenes()) {
+      if (!scene.room) continue;
+      expect(layout.backdrop.room, key).not.toBeNull();
+      if (scene.room.window === null) expect(layout.backdrop.room!.window, key).toBeNull();
+      const o = layout.backdrop.orb;
+      const w = layout.backdrop.room!.window;
+      if (o && w) expect(o.x > w.x && o.x < w.x + w.w && o.y > w.y && o.y < w.y + w.h, `${key}: the ${scene.orb} in the window`).toBe(true);
+    }
   });
 });

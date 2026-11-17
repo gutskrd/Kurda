@@ -1208,7 +1208,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "At Newroz there’s a holiday.",
+                    "prompt": "There’s a holiday at Newroz.",
                     "accepted": [
                       "Li Newrozê betlane heye.",
                       "Li Newrozê betlane ye."
@@ -2129,9 +2129,9 @@
                     "voice": "hamo",
                     "prompt": "Piştî şîvê, Hêvî kevçiyan dişo, û ew jî dixwaze efsaneyê bizane.",
                     "options": [
-                      "After supper Hêvî washes the spoons, and she wants to hear the legend too.",
-                      "After supper Hêvî sells the spoons, and she tells the legend.",
-                      "Before supper Hêvî washes the apples, and she goes to sleep."
+                      "After dinner Hêvî washes the spoons, and she wants to hear the legend too.",
+                      "After dinner Hêvî sells the spoons, and she tells the legend.",
+                      "Before dinner Hêvî washes the apples, and she goes to sleep."
                     ],
                     "correctIndex": 0
                   }
@@ -3312,8 +3312,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xem neke. Baran bereket e.",
-                        "en": "Don’t worry. Rain is a blessing."
+                        "text": "Xem neke. Ev baran bereket e.",
+                        "en": "Don’t worry. This rain is a blessing."
                       },
                       {
                         "speaker": 1,
@@ -3345,9 +3345,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Baran bereket e.",
+                    "say": "Ev baran bereket e.",
                     "voice": "hamo",
-                    "prompt": "Baran ___ e.",
+                    "prompt": "Ev baran ___ e.",
                     "options": [
                       "bereket",
                       "amade",
@@ -4501,7 +4501,7 @@
                       {
                         "speaker": 0,
                         "text": "Ez şiyar im, lê nikarim rabim. Ji wan re bibêje, bi xêr biçin!",
-                        "en": "I’m awake, but I can’t get up. Tell them to go well!"
+                        "en": "I’m awake, but I can’t get up. Tell them to have a safe journey!"
                       },
                       {
                         "speaker": 1,
@@ -4880,7 +4880,7 @@
                       {
                         "speaker": 0,
                         "text": "Erê, dayê. Pişta min baş e… hinek baş e.",
-                        "en": "Yes, Mum. My back is fine… a little bit fine."
+                        "en": "Yes, Mum. My back is fine… well, sort of fine."
                       }
                     ],
                     "prompt": "Hamo ji diya xwe re çi dibêje?",

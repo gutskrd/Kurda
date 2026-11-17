@@ -180,7 +180,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += fill('M66 112V97A8 8 0 0 0 58 89V112Z', c(VALLEY.gateLight));
       out += fill(ellipsePath(56.2, 102, 0.9, 0.9) + ellipsePath(59.8, 102, 0.9, 0.9), c(VALLEY.gold));
       // The kilim hangs on its post by the gate, at rest where the moving sprite will lie.
-      out += stroke('M15 112l7 3', ground, 2.4);
+      // the post's shadow: a thin sliver along the ground to the lower right, as every shadow in the valley falls
+      out += fill('M14.2 111.4L21.4 114.2L22 113.2L15.8 110.8Z', ground);
       out += stroke('M15 112V60M14 61.4H36', c(VALLEY.trunk), 1.8);
       out += kilim(16, 61, dark);
       return out;
@@ -194,7 +195,7 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
    * the porch's edge, steam going up from its chimney.
    */
   teahouse: {
-    loop: { kind: 'steam', x: 41, y: 54, w: 16, h: 24 },
+    loop: { kind: 'steam', x: 41, y: 66, w: 16, h: 24 },
     draw(dark, random) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
@@ -245,18 +246,21 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += fill(glasses.map(([x, y]) => ellipsePath(x, y, 2, 0.7)).join(''), c(VALLEY.cream));
       out += fill(glasses.map(([x, y]) => `M${f(x - 1)} ${f(y - 3)}h2l-.4 1.3l.4 1.5h-2l.4 -1.5Z`).join(''), c(TEA));
       out += fill(glasses.map(([x, y]) => box(x - 1, y - 3.7, 2, 0.8)).join(''), c(VALLEY.waterLight));
-      // The samovar: a brass foot, the red body with its shade on the right, a brass band and tap, and the teapot warming on its crown.
+      // The samovar: a brass foot, the red body with its shade on the right, a brass band and tap, and the teapot warming on its crown;
+      // half the height it was drawn at, so it stands on the table no taller than four of the glasses beside it.
       const cx = 48.5;
-      out += fill(`M${cx - 4.5} 101.6h9l-1.4 -2.6h-6.2Z`, c(VALLEY.gold));
-      out += fill(`M${cx - 5} 99C${cx - 7.4} 94 ${cx - 7.4} 88 ${cx - 4.6} 84.4H${cx + 4.6}C${cx + 7.4} 88 ${cx + 7.4} 94 ${cx + 5} 99Z`, c(VALLEY.red));
-      out += fill(
+      let samovar = '';
+      samovar += fill(`M${cx - 4.5} 101.6h9l-1.4 -2.6h-6.2Z`, c(VALLEY.gold));
+      samovar += fill(`M${cx - 5} 99C${cx - 7.4} 94 ${cx - 7.4} 88 ${cx - 4.6} 84.4H${cx + 4.6}C${cx + 7.4} 88 ${cx + 7.4} 94 ${cx + 5} 99Z`, c(VALLEY.red));
+      samovar += fill(
         `M${cx + 1.6} 84.4H${cx + 4.6}C${cx + 7.4} 88 ${cx + 7.4} 94 ${cx + 5} 99H${cx + 2.2}C${cx + 3.8} 94 ${cx + 3.8} 88 ${cx + 1.6} 84.4Z`,
         c(VALLEY.redDark),
       );
-      out += fill(box(cx - 6.5, 91, 13, 1.5) + box(cx - 5, 82.8, 10, 1.8) + `M${cx - 6.6} 94h-3.2v1.5h1.3v1.5h1.9Z`, c(VALLEY.gold));
+      samovar += fill(box(cx - 6.5, 91, 13, 1.5) + box(cx - 5, 82.8, 10, 1.8) + `M${cx - 6.6} 94h-3.2v1.5h1.3v1.5h1.9Z`, c(VALLEY.gold));
       const teapot = `M${cx - 3.6} 82.8c0 -2.8 1.6 -3.8 3.6 -3.8s3.6 1 3.6 3.8ZM${cx - 3.4} 81.4l-2.4 -1.6l.5 -.6l2.4 1Z`;
-      out += fill(teapot + box(cx - 0.7, 77.8, 1.4, 1.4), c(VALLEY.cream));
-      out += steam(41, 54, dark, random);
+      samovar += fill(teapot + box(cx - 0.7, 77.8, 1.4, 1.4), c(VALLEY.cream));
+      out += `<g transform="matrix(0.5 0 0 0.5 ${f(cx * 0.5)} ${f(101.6 * 0.5)})">${samovar}</g>`;
+      out += steam(41, 66, dark, random);
       return out;
     },
   },
@@ -404,7 +408,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += castShadow(8, 112, 14, 6, 5, ground) + block(8, 112, 14, 7, 6, wood) + heap(9.5, 103.6, 13, VALLEY.apple, VALLEY.redDark);
       out += castShadow(24, 113, 12, 6, 5, ground) + block(24, 113, 12, 7, 6, wood) + heap(25, 104.6, 12, VALLEY.fruit, VALLEY.goldDark);
       // The kilim for sale hangs on its own frame, at rest where the moving sprite will lie.
-      out += stroke('M94 108l6 3M114 106l4 2', ground, 2.4);
+      // each post's shadow a thin sliver on the ground to the lower right
+      out += fill('M93.2 107.4L99.4 110.2L100 109.2L94.8 106.8Z' + 'M113.2 105.4L117.4 107.4L118 106.4L114.8 104.8Z', ground);
       out += stroke('M94 108V62M114 106V62M93 63.4H115', c(VALLEY.trunk), 1.8);
       out += kilim(95, 63, dark);
       return out;
@@ -415,11 +420,14 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
    * The bus stop on the road out of the village: a little shelter with a
    * blue roof and a wooden bench, its concrete apron, the round sign hanging
    * from its post's arm, a white milestone with its red cap, and the
-   * stubble of the cut wheat behind with a few bales still in it.
+   * stubble of the cut wheat behind with a few bales still in it. On a page
+   * of its own colour (the book's chapter opener and its stamp) the field,
+   * its bales and the milestone belong to land that is not there: the
+   * shelter stands alone, with its bench and its sign.
    */
   busstop: {
     loop: { kind: 'sign', x: 16, y: 50, w: 18, h: 26 },
-    draw(dark) {
+    draw(dark, _random, page = false) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
       const stone = tones(STONE_TOP, VALLEY.stone, VALLEY.stoneSide, dark);
@@ -427,18 +435,20 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       const wood = tones(WOOD.top, WOOD.face, WOOD.side, dark);
       const straw = tones(HAY.top, HAY.face, HAY.side, dark);
       let out = '';
-      // The stubble field lies behind, as the preview's terraces do: a step of shade along its front, its face, the rows of cut stalks.
-      const field = (dy: number): string => softPoly([[4, 77 + dy], [72, 77 + dy], [114, 56 + dy], [46, 56 + dy]], 5);
-      out += fill(field(3), c(VALLEY.wheatShade)) + fill(field(0), c(VALLEY.wheat));
-      let rows = '';
-      for (const y of [60.2, 64.4, 68.6, 72.8]) {
-        const x0 = 4 + (77 - y) * 2 + 5;
-        const x1 = 72 + (77 - y) * 2 - 5;
-        rows += smoothPath([[x0, y], [(x0 + x1) / 2, y + 0.7], [x1, y]]);
+      if (!page) {
+        // The stubble field lies behind, as the preview's terraces do: a step of shade along its front, its face, the rows of cut stalks.
+        const field = (dy: number): string => softPoly([[4, 77 + dy], [72, 77 + dy], [114, 56 + dy], [46, 56 + dy]], 5);
+        out += fill(field(3), c(VALLEY.wheatShade)) + fill(field(0), c(VALLEY.wheat));
+        let rows = '';
+        for (const y of [60.2, 64.4, 68.6, 72.8]) {
+          const x0 = 4 + (77 - y) * 2 + 5;
+          const x1 = 72 + (77 - y) * 2 - 5;
+          rows += smoothPath([[x0, y], [(x0 + x1) / 2, y + 0.7], [x1, y]]);
+        }
+        out += stroke(rows, c(VALLEY.furrowWheat), 1.2);
+        // the bales lie where the baler dropped them, no two quite the same
+        out += block(60, 63, 10, 5.4, 5, straw) + block(89, 61.4, 8, 4.6, 4.4, straw) + block(29, 73.4, 9.4, 5, 5.4, straw);
       }
-      out += stroke(rows, c(VALLEY.furrowWheat), 1.2);
-      // the bales lie where the baler dropped them, no two quite the same
-      out += block(60, 63, 10, 5.4, 5, straw) + block(89, 61.4, 8, 4.6, 4.4, straw) + block(29, 73.4, 9.4, 5, 5.4, straw);
       // The shelter's shadow falls on its concrete apron, so it is the concrete's own darker edge colour.
       out += fill(poly([[34, 108], [94, 108], [108, 101], [48, 101]]), c(VALLEY.path));
       out += fill(box(34, 108, 60, 2), c(VALLEY.pathEdge));
@@ -450,13 +460,15 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += block(87, 104, 3, 26, 12, stone);
       // The roof is the gate's blue, the village's colour, carried out to the road.
       out += block(36, 80, 60, 4, 18, blue);
-      // The milestone is white with its red cap, as the road's stones are.
-      out += castShadow(100, 114, 6, 4, 4, ground);
-      out += block(100, 114, 6, 7, 4, stone);
-      const cap = poly([[100, 107], [106, 107], [106, 104.6], [103, 103.2], [100, 104.6]]) + poly([[106, 107], [110, 105], [110, 102.6], [106, 104.6]]);
-      out += fill(cap, c(VALLEY.red));
+      if (!page) {
+        // The milestone is white with its red cap, as the road's stones are.
+        out += castShadow(100, 114, 6, 4, 4, ground);
+        out += block(100, 114, 6, 7, 4, stone);
+        const cap = poly([[100, 107], [106, 107], [106, 104.6], [103, 103.2], [100, 104.6]]) + poly([[106, 107], [110, 105], [110, 102.6], [106, 104.6]]);
+        out += fill(cap, c(VALLEY.red));
+      }
       // The sign hangs from its post's arm, so the moving sprite can swing it; here it hangs still.
-      out += stroke('M14 112l7 3', ground, 2.4);
+      out += fill('M13.2 111.4L20.4 114.2L21 113.2L14.8 110.8Z', ground);
       out += stroke('M14 112V50.5H25', c(VALLEY.basaltLight), 2);
       out += stroke('M25 51v4', c(VALLEY.basaltLight), 1.4);
       out += fill(ellipsePath(25, 64, 8, 8), c(VALLEY.gateDark));

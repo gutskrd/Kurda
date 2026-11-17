@@ -11,10 +11,10 @@
  * The chapter wears its hue throughout, and the apple in the corner of its
  * pages loses a bite every few pages until only the core is left.
  */
-import { BOOK_APPLE_BITES, BOOK_BACKDROP, WORD_PICTURES, bookBackdropSvg, bookSpotSvg, parseMarkdown, type BookSetting, type HueSteps, type Span as MarkSpan } from '@kurda/shared';
+import { BOOK_APPLE_BITES, BOOK_BACKDROP, WORD_PICTURES, bookBackdropSvg, bookSpotSvg, parseMarkdown, type BookPose, type BookSetting, type CharacterId, type HueSteps, type Span as MarkSpan } from '@kurda/shared';
 import { keepList, paginate } from './flow.js';
 import { T, appleArt, castArt, display, displayItalic, drawPicture, drawStamp, footOf, heavy, hueOf, label, runSheets, squareArt, STAMP, type Block, type Filler, type Places, type Sheet } from './page.js';
-import { BACKDROP_SCALE, PANEL, chapterEmblem, chapterHue, pictureForWord, sceneFor, sceneLayout, tellBeat, type BookPicture } from './pictures.js';
+import { PANEL, chapterEmblem, chapterHue, lessonScene, pictureForWord, sceneFor, sceneLayout, tellBeat, type BookPicture } from './pictures.js';
 import { chapterWords, type BookChapter, type BookDialogue, type BookLesson, type BookPair, type BookPart, type BookWord } from './road-book.js';
 import { INK, MARGIN, PAGE, Press, TEXT, blend, type Line, type Span, type Type } from './sheet.js';
 
@@ -22,6 +22,16 @@ import { INK, MARGIN, PAGE, Press, TEXT, blend, type Line, type Span, type Type 
 const tones = (hue: HueSteps): { band: string; card: string; hill: string } => ({ band: hue.wash, card: hue.tint, hill: blend(hue.wash, hue.base, 0.3) });
 
 // ───────────────────────────────────────────────────────────── the opening page
+
+/**
+ * Who stands at a chapter's landmark on its opening page where it is not
+ * the road's own host for that land: Hamo, where the chapter is his (the
+ * market he takes the apples to, his own town, his own aches).
+ */
+const OPENER_HOST: Readonly<Record<number, CharacterId>> = { 4: 'hamo', 6: 'hamo', 8: 'hamo' };
+
+/** How Hevalo stands at each chapter's landmark, by chapter: the face of what the chapter does to him, from his own book poses. */
+const OPENER_DEER: readonly BookPose<'hevalo'>[] = ['curious', 'pleased', 'munching', 'caught', 'innocent', 'curious', 'pleased', 'innocent', 'curious', 'pleased', 'curious', 'innocent'];
 
 function openerSheet(press: Press, c: BookChapter, places: Places): Sheet {
   const hue = hueOf(c);
@@ -52,17 +62,21 @@ function openerSheet(press: Press, c: BookChapter, places: Places): Sheet {
       const size = Math.min(196, band - 28);
       const shade = blend(tone.hill, hue.deep, 0.16);
       drawPicture(press, chapterEmblem(c.number), PAGE.w / 2 - size / 2 + 30, band - size - 4, size, hue, shade);
-      const host = castArt(press, c.land.host, c.land.host === 'hamo' ? 'proud' : 'smiling', 'full');
-      const hh = Math.min(124, band - 50);
+      const who = OPENER_HOST[c.number] ?? c.land.host;
+      const host = castArt(press, who, who === 'hamo' ? 'proud' : 'smiling', 'full');
+      // the two of them stand a step in front of the landmark, and are drawn to its scale: a person a little taller than its door
+      const hh = Math.min(124, band - 50, size * 0.44);
       const hw = (hh * host.w) / host.h;
-      const deer = castArt(press, 'hevalo', c.number % 2 === 1 ? 'caught' : 'innocent', 'full');
+      const deer = castArt(press, 'hevalo', OPENER_DEER[(c.number - 1) % OPENER_DEER.length]!, 'full');
       const dh = hh * 0.74;
       const dw = (dh * deer.w) / deer.h;
+      const hx = 74 + (124 - hh) * 0.3;
+      const dx = PAGE.w - 70 - dw * 0.35;
       // each of them stands on their own shadow, falling to the lower right as every shadow in the book does
-      doc.save().ellipse(64 + hw * 0.56, band - 4, hw * 0.42, 3.4).fill(shade).restore();
-      doc.save().ellipse(PAGE.w - 74 + dw * 0.56, band - 2.4, dw * 0.44, 2.8).fill(shade).restore();
-      press.place(host, 64, band - hh - 3, hw);
-      press.place(deer, PAGE.w - 74, band - dh - 1, dw);
+      doc.save().ellipse(hx + hw * 0.56, band - 4, hw * 0.42, 3.4).fill(shade).restore();
+      doc.save().ellipse(dx + dw * 0.56, band - 2.4, dw * 0.44, 2.8).fill(shade).restore();
+      press.place(host, hx, band - hh - 3, hw);
+      press.place(deer, dx, band - dh - 1, dw);
       press.line(String(c.number), TEXT.x, 22, heavy(48, hue.deep));
       const level = label(hue.deep, 7);
       const lw = press.measure(c.cefr, level.font, level.size, level.tracking) + 16;
@@ -136,9 +150,14 @@ function partHead(press: Press, c: BookChapter, p: BookPart): Block {
   };
 }
 
-/** How a grammar note's marks are set: what it puts in bold is Kurdish to remember, what it puts in italics is Kurdish said. */
+/**
+ * How a grammar note's marks are set: what it puts in bold is Kurdish to
+ * remember, what it puts in italics is Kurdish said. The dot a note puts
+ * between two forms stays at the end of the line with the form before it,
+ * so no line of a note opens on a separator.
+ */
 function noteSpans(spans: readonly MarkSpan[]): Span[] {
-  return spans.map((s) => ({ text: s.text, ...(s.bold ? { font: 'semi' as const } : s.italic ? { font: 'italic' as const } : {}) }));
+  return spans.map((s) => ({ text: s.text.replace(/ ·(?= )/g, '\u00a0·'), ...(s.bold ? { font: 'semi' as const } : s.italic ? { font: 'italic' as const } : {}) }));
 }
 
 /**
@@ -182,9 +201,11 @@ function grammarNote(press: Press, c: BookChapter, p: BookPart): Block[] {
       },
     };
   });
-  // the opening paragraph may stand alone under its label; what follows it is a list, and never ends on one line
-  if (blocks.length > 2) blocks[blocks.length - 2]!.keep = true;
-  else if (blocks.length === 2) blocks[0]!.keep = true;
+  // a short note is one card and is never split; a longer one may leave its opening paragraph under its label, but never ends on one line
+  if (blocks.length <= 4) for (const b of blocks) b.keep = true;
+  else blocks[blocks.length - 2]!.hold = true;
+  // and the note goes over with the part's first lesson, so a part never opens at the foot of a page with its lessons overleaf
+  blocks[blocks.length - 1]!.keep = true;
   return blocks;
 }
 
@@ -203,7 +224,8 @@ function sceneColours(hue: HueSteps, setting: BookSetting): { sky: string; groun
     case 'dusk':
       return { sky: blend(DUSK_GLOW, hue.wash, 0.38), ground: blend(hue.deep, DUSK_LAND, 0.3), light: '#fff4d6', far: blend(hue.base, hue.deep, 0.4) };
     case 'night':
-      return { sky: hue.deep, ground: blend(hue.deep, '#000000', 0.35), light: hue.wash };
+      // a night sky is navy whatever the chapter's hue, which only tinges it, so a green chapter's night is not a green sky; the moon is cream
+      return { sky: blend(NIGHT_SKY, hue.deep, 0.2), ground: blend(NIGHT_LAND, hue.deep, 0.16), light: MOON };
     case 'snow':
       return { sky: hue.wash, ground: '#ffffff', light: '#ffffff', far: blend(hue.wash, hue.base, 0.32) };
   }
@@ -212,24 +234,35 @@ function sceneColours(hue: HueSteps, setting: BookSetting): { sky: string; groun
 /** The warm of a sky at sunset, which a dusk sky takes most of whatever the chapter's hue, and the dark the land goes as the sun sets. */
 const DUSK_GLOW = '#f6b26b';
 const DUSK_LAND = '#2b1f2e';
+/** The navy of a night sky and the darker land under it, and the cream of the moon and the stars. */
+const NIGHT_SKY = '#1f2550';
+const NIGHT_LAND = '#121631';
+const MOON = '#fbf0d0';
 
-/** A lesson's scene, drawn: the sky and the land in the chapter's colours, who is in it, and the things the beat names, each where `sceneLayout` puts it. */
+/**
+ * A lesson's scene, drawn: the one composed for it by hand (or, without
+ * one, the one its printed text makes), its sky, its land or its room in the
+ * chapter's colours, then everyone and everything in it from the farthest to
+ * the nearest, each where and as big as `sceneLayout` puts it: the friends
+ * whole, head to waist or head and shoulders as the shot shows them, turned
+ * to look into the scene, and a landmark casting the shade of the ground it
+ * stands on.
+ */
 function drawScene(press: Press, c: BookChapter, lesson: BookLesson, x: number, y: number, side: 'left' | 'right'): void {
   const hue = hueOf(c);
-  const scene = sceneFor(lesson.beat, lesson.words);
+  const scene = lessonScene(lesson);
   const layout = sceneLayout(scene, side);
   const colours = sceneColours(hue, scene.setting);
-  // the sun or the moon, and what the sky keeps clear of, on the backdrop's own canvas
-  const k = BACKDROP_SCALE;
-  const orb = layout.orb ? { x: layout.orb.x / k, y: layout.orb.y / k, r: layout.orb.r / k, full: layout.orb.full } : null;
-  const clear = layout.clear.map((b) => ({ x: b.x / k, y: b.y / k, w: b.w / k, h: b.h / k }));
   // each scene's sky is its own: its stars, its clouds and its poplars are placed from the lesson's own key
-  const key = `backdrop|${chapterHue(c.number)}|${lesson.key}|${scene.setting}|${JSON.stringify(orb)}|${JSON.stringify(clear)}`;
-  const backdrop = press.art(key, BOOK_BACKDROP.w, BOOK_BACKDROP.h, () => bookBackdropSvg({ setting: scene.setting, ...colours, orb, clear, seed: lesson.key }));
+  const key = `backdrop|${chapterHue(c.number)}|${lesson.key}|${JSON.stringify(layout.backdrop)}`;
+  const backdrop = press.art(key, BOOK_BACKDROP.w, BOOK_BACKDROP.h, () => bookBackdropSvg({ ...colours, ...layout.backdrop, seed: lesson.key }));
+  const shade = blend(colours.ground, '#000000', 0.12);
   press.within(x, y, PANEL.w, PANEL.h, PANEL.r, () => {
     press.place(backdrop, x, y, PANEL.w + 1);
-    for (const p of layout.props) drawPicture(press, p.picture, x + p.box.x, y + p.box.y, p.box.w, hue);
-    for (const who of layout.cast) press.place(castArt(press, who.who, who.pose), x + who.box.x, y + who.box.y, who.box.w);
+    for (const part of layout.parts) {
+      if (part.kind === 'cast') press.place(castArt(press, part.who, part.pose, part.crop), x + part.box.x, y + part.box.y, part.box.w, { flip: part.flip });
+      else drawPicture(press, part.picture, x + part.box.x, y + part.box.y, part.box.w, hue, shade);
+    }
   });
 }
 
@@ -249,14 +282,12 @@ function lessonStrip(press: Press, c: BookChapter, lesson: BookLesson, follows: 
   // the English name beside the Kurdish when the line has room, and under it when not
   const beside = kuW + 7 + enW + 8 + tagW <= tw;
   const head = beside ? 14.5 : 24.5;
-  let max = 240;
-  let beat = press.para(tellBeat(lesson.beat, max), tw, T.caption);
-  while (beat.lines.length > BEAT_LINES && max > 90) {
-    max -= 12;
-    beat = press.para(tellBeat(lesson.beat, max), tw, T.caption);
-  }
+  // the beat as the book tells it, whole; only a beat written for the app alone, too long for the lines here, is told shorter by machine
+  let beat = press.para(lesson.beat, tw, T.caption);
+  for (let max = 240; beat.lines.length > BEAT_LINES && max > 90; max -= 12) beat = press.para(tellBeat(lesson.beat, max), tw, T.caption);
   const say: Type = { font: 'semi', size: 8.4, color: hue.deep, lead: 10.6 };
-  const bubble = lesson.say ? press.para(lesson.say, tw - 18, say, 3) : null;
+  // the line to say in even lines, so a bubble never ends on one word under a long line
+  const bubble = lesson.say ? press.para(lesson.say, tw - 18, say, 3, true) : null;
   const bubbleH = bubble ? bubble.height + 6.4 : 0;
   const textH = head + beat.height + (bubble ? 3.6 + bubbleH : 0);
   const height = Math.max(PANEL.h, textH);
@@ -270,7 +301,7 @@ function lessonStrip(press: Press, c: BookChapter, lesson: BookLesson, follows: 
       const py = y + (height - PANEL.h) / 2;
       drawScene(press, c, lesson, px, py, side);
       // the lesson's number on the corner of its scene, where the scene's layout keeps it clear
-      const badge = sceneLayout(sceneFor(lesson.beat, lesson.words), side).badge;
+      const badge = sceneLayout(lessonScene(lesson), side).badge;
       press.disc(px + badge.x, py + badge.y, badge.r, INK.card);
       press.line(String(lesson.position), px + badge.x - 7, py + badge.y - 4.7, { font: 'bold', size: 7.2, color: hue.deep, lead: 9.4 }, 'center', 14);
       const top = y + Math.max(0, (height - textH) / 2);
@@ -303,30 +334,43 @@ function genderMark(press: Press, gender: BookWord['gender'], x: number, y: numb
 }
 
 /**
- * A lesson's new words. Most are cards, three across: each with its picture
- * where it has one, its gender where it has one, and its meaning. A word
- * whose meaning takes explaining (a phrase learnt whole, an ending) is set
- * across the page under them instead, so no card has to stand four lines
- * tall beside two short ones.
+ * A lesson's new words. Most are cards, three across, or two across when
+ * there are four, so no card is left on a row of its own: each with its
+ * picture where it has one, its gender where it has one, and its meaning,
+ * and every word of a row on one line, centred on the pictures where the
+ * row has any. A word whose meaning takes explaining (a phrase learnt
+ * whole, an ending) is set across the page under them instead, with its
+ * meaning where the lesson's English stands (`en`, from `englishColumn`),
+ * or under it when the word itself runs that far, so no card has to stand
+ * four lines tall beside two short ones. The rows are a list: the last of
+ * them never heads a page alone.
  */
-function wordRows(press: Press, c: BookChapter, lesson: BookLesson): Block[] {
+function wordRows(press: Press, c: BookChapter, lesson: BookLesson, en: number): Block[] {
   const hue = hueOf(c);
-  const cols = 3;
   const gutter = 8;
-  const cw = (TEXT.w - gutter * (cols - 1)) / cols;
-  const made = lesson.words.map((w) => {
+  const widthOf = (cols: number): number => (TEXT.w - gutter * (cols - 1)) / cols;
+  const measured = (w: BookWord, cw: number): { w: BookWord; picture: BookPicture | null; name: { lines: Line[]; height: number }; gloss: { lines: Line[]; height: number } } => {
     const picture = pictureForWord(w);
     const tw = cw - (picture ? 40 : 6);
-    const name = press.para(w.ku, tw - (w.gender ? 20 : 0), T.word);
-    const gloss = press.para(w.en, tw, T.gloss);
-    return { w, picture, name, gloss, long: name.lines.length > 1 || gloss.lines.length > 2, height: Math.max(picture ? 34 : 0, name.height + gloss.height + 3) };
+    return { w, picture, name: press.para(w.ku, tw - (w.gender ? 20 : 0), T.word), gloss: press.para(w.en, tw, T.gloss) };
+  };
+  // which words are cards is settled at three across, so a word does not change places with the count
+  const made = lesson.words.map((w) => {
+    const cell = measured(w, widthOf(3));
+    return { ...cell, long: cell.name.lines.length > 1 || cell.gloss.lines.length > 2 };
   });
   // the pictured words first, so their row is a row of pictures
-  const cards = [...made.filter((x) => x.picture && !x.long), ...made.filter((x) => !x.picture && !x.long)];
+  const short = [...made.filter((x) => x.picture && !x.long), ...made.filter((x) => !x.picture && !x.long)];
+  const cols = short.length === 4 ? 2 : 3;
+  const cw = widthOf(cols);
+  const cards = cols === 3 ? short : short.map((x) => measured(x.w, cw));
   const rows: Block[] = [];
   for (let i = 0; i < cards.length; i += cols) {
     const row = cards.slice(i, i + cols);
-    const height = Math.max(...row.map((x) => x.height));
+    const pictured = row.some((x) => x.picture);
+    const text = Math.max(...row.map((x) => x.name.height + x.gloss.height));
+    const height = Math.max(pictured ? 34 : 0, text + 3);
+    const lift = pictured ? Math.max(0, (34 - text) / 2 - 1) : 1;
     rows.push({
       height,
       gap: i === 0 ? 7 : 4,
@@ -339,7 +383,7 @@ function wordRows(press: Press, c: BookChapter, lesson: BookLesson): Block[] {
             drawPicture(press, cell.picture, x + 2, y + 2, 30, hue);
             tx = x + 40;
           } else press.box(x, y + 2, 1.6, height - 4.5, 0.8, hue.wash);
-          const top = y + (cell.picture ? Math.max(0, (34 - cell.name.height - cell.gloss.height) / 2 - 1) : 1);
+          const top = y + lift;
           press.set(cell.name.lines, tx, top, T.word);
           genderMark(press, cell.w.gender, tx + (cell.name.lines[0]?.width ?? 0) + 4, top + 1.8, hue);
           press.set(cell.gloss.lines, tx, top + cell.name.height + 0.5, T.gloss);
@@ -347,13 +391,15 @@ function wordRows(press: Press, c: BookChapter, lesson: BookLesson): Block[] {
       },
     });
   }
-  const kw = 112;
   made
     .filter((x) => x.long)
     .forEach((cell, i) => {
-      const name = press.para(cell.w.ku, kw - (cell.w.gender ? 22 : 4), T.word);
-      const gloss = press.para(cell.w.en, TEXT.w - kw - 8, T.gloss);
-      const height = Math.max(name.height, gloss.height + 2) + 1;
+      const mark = cell.w.gender ? 22 : 0;
+      const name = press.para(cell.w.ku, TEXT.w - 5 - mark, T.word);
+      const reach = 5 + Math.max(...name.lines.map((l) => l.width)) + mark;
+      const beside = name.lines.length === 1 && reach + 10 <= en;
+      const gloss = press.para(cell.w.en, beside ? TEXT.w - en : TEXT.w - 5, T.gloss);
+      const height = beside ? Math.max(name.height, gloss.height + 2) + 1 : name.height + gloss.height + 2;
       rows.push({
         height,
         gap: i === 0 ? (cards.length > 0 ? 5 : 7) : 2.5,
@@ -361,57 +407,83 @@ function wordRows(press: Press, c: BookChapter, lesson: BookLesson): Block[] {
           press.box(TEXT.x, y + 2, 1.6, height - 4, 0.8, hue.wash);
           press.set(name.lines, TEXT.x + 5, y, T.word);
           genderMark(press, cell.w.gender, TEXT.x + 5 + (name.lines[0]?.width ?? 0) + 4, y + 1.8, hue);
-          press.set(gloss.lines, TEXT.x + kw + 4, y + 2, T.gloss);
+          if (beside) press.set(gloss.lines, TEXT.x + en, y + 2, T.gloss);
+          else press.set(gloss.lines, TEXT.x + 5, y + name.height + 0.5, T.gloss);
         },
       });
     });
+  keepList(rows);
+  // a last row of a single word (a card on its own, or a word set across the page) never opens a page by itself, however much room that costs the page before
+  const single = made.some((x) => x.long) || cards.length % cols === 1;
+  if (single && rows.length > 1) rows[rows.length - 2]!.keep = true;
   return rows;
 }
 
+/** How far in a lesson's Kurdish lines start (`READ`), and its conversation's lines after the speaker's name (`SAID`); and the space before the English. */
+const READ = 9;
+const SAID = 30;
+const PAIR_GUTTER = 10;
+
+/** One line of Kurdish beside its English: the Kurdish from `left` up to the gutter before `en`, the English from `en` to the right edge. */
+function pairRow(press: Press, pair: { ku: string; en: string | null }, left: number, en: number): { ku: Line[]; en: Line[]; height: number } {
+  const ku = press.wrap(pair.ku, en - PAIR_GUTTER - left, T.kurdish);
+  const english = pair.en ? press.wrap(pair.en, TEXT.w - en, T.english) : [];
+  return { ku, en: english, height: Math.max(ku.length * T.kurdish.lead, english.length * T.english.lead + 1.6) };
+}
+
 /**
- * Kurdish beside its English, as the book always sets the two: Kurdish on
- * the left, its meaning on the right. How the width is shared between them
- * is whichever of a few splits takes the least room for these lines, so
- * short lines sit on one row and long ones do not wrap more than they must.
+ * Where a lesson's English stands, from the left of the measure: Kurdish on
+ * the left and its meaning on the right, as the book always sets the two,
+ * with one column for the English of all of a lesson's lines (those to read
+ * aloud and its conversation, and its long words), so its meanings stand
+ * one under another. The column is whichever of a few places takes the
+ * least room for these lines, so short lines sit on one row and long ones
+ * do not wrap more than they must.
  */
-function pairColumns(press: Press, pairs: ReadonlyArray<{ ku: string; en: string | null }>, width: number): { kw: number; rows: Array<{ ku: Line[]; en: Line[]; height: number }> } {
-  const gutter = 10;
-  let best: { kw: number; rows: Array<{ ku: Line[]; en: Line[]; height: number }>; total: number } | null = null;
-  for (const share of [0.57, 0.5, 0.62, 0.66]) {
-    const kw = (width - gutter) * share;
-    const ew = width - gutter - kw;
-    const rows = pairs.map((p) => {
-      const ku = press.wrap(p.ku, kw, T.kurdish);
-      const en = p.en ? press.wrap(p.en, ew, T.english) : [];
-      return { ku, en, height: Math.max(ku.length * T.kurdish.lead, en.length * T.english.lead + 1.6) };
-    });
-    const total = rows.reduce((a, r) => a + r.height, 0);
-    if (!best || total < best.total - 0.01) best = { kw: kw + gutter, rows, total };
+function englishColumn(press: Press, lesson: BookLesson): number {
+  const lines: Array<[{ ku: string; en: string | null }, number]> = [
+    ...lesson.sentences.map((p): [BookPair, number] => [p, READ]),
+    ...(lesson.dialogue?.lines ?? []).map((l): [{ ku: string; en: string | null }, number] => [{ ku: l.text, en: l.en }, SAID]),
+  ];
+  let best = { en: 208, total: Infinity };
+  for (const en of [208, 196, 220, 184, 232]) {
+    const total = lines.reduce((sum, [pair, left]) => sum + pairRow(press, pair, left, en).height, 0);
+    if (total < best.total - 0.01) best = { en, total };
   }
-  return best!;
+  return best.en;
 }
 
 /** Lines to read aloud, each beside what it means. */
-function pairRows(press: Press, c: BookChapter, pairs: readonly BookPair[]): Block[] {
+function pairRows(press: Press, c: BookChapter, pairs: readonly BookPair[], en: number): Block[] {
   const hue = hueOf(c);
-  const set = pairColumns(press, pairs, TEXT.w - 9);
-  const rows: Block[] = set.rows.map((row, i) => ({
-    height: row.height,
-    gap: i === 0 ? 7 : 2.5,
-    draw: (y) => {
-      press.box(TEXT.x, y + 1.5, 2.2, row.height - 2.5, 1.1, hue.base);
-      press.set(row.ku, TEXT.x + 9, y, T.kurdish);
-      press.set(row.en, TEXT.x + 9 + set.kw, y + 1.6, T.english);
-    },
-  }));
+  const rows: Block[] = pairs.map((pair, i) => {
+    const row = pairRow(press, pair, READ, en);
+    return {
+      height: row.height,
+      gap: i === 0 ? 7 : 2.5,
+      draw: (y) => {
+        press.box(TEXT.x, y + 1.5, 2.2, row.height - 2.5, 1.1, hue.base);
+        press.set(row.ku, TEXT.x + READ, y, T.kurdish);
+        press.set(row.en, TEXT.x + en, y + 1.6, T.english);
+      },
+    };
+  });
   return keepList(rows);
 }
 
-/** A conversation: who says what, beside what it means, and the question the lesson asks about it. */
-function dialogueRows(press: Press, c: BookChapter, dialogue: BookDialogue): Block[] {
+/**
+ * A question's options as spans to run on after it: each option's letter
+ * held to its first word by a no-break space, and an em space between one
+ * option and the next, so they stand apart and a letter never ends a line
+ * without its option.
+ */
+function optionSpans(options: readonly string[], hue: HueSteps): Span[] {
+  return options.flatMap((o, k): Span[] => [...(k > 0 ? [{ text: '\u2003' }] : []), { text: 'abcdef'[k]!, font: 'bold', color: hue.deep }, { text: `\u00a0${o}` }]);
+}
+
+/** A conversation: who says what (named where the speaker changes), beside what it means, and the question the lesson asks about it. */
+function dialogueRows(press: Press, c: BookChapter, dialogue: BookDialogue, en: number): Block[] {
   const hue = hueOf(c);
-  const tagW = 30;
-  const set = pairColumns(press, dialogue.lines.map((l) => ({ ku: l.text, en: l.en })), TEXT.w - tagW);
   const blocks: Block[] = [
     {
       height: 13,
@@ -425,14 +497,16 @@ function dialogueRows(press: Press, c: BookChapter, dialogue: BookDialogue): Blo
     },
   ];
   const lines: Block[] = dialogue.lines.map((l, i) => {
-    const row = set.rows[i]!;
+    const row = pairRow(press, { ku: l.text, en: l.en }, SAID, en);
+    // a speaker who goes on is not named again, and a new speaker stands a little apart
+    const turn = i === 0 || dialogue.lines[i - 1]!.who !== l.who;
     return {
       height: row.height,
-      gap: i === 0 ? 4 : 2.2,
+      gap: i === 0 ? 4 : turn ? 3.2 : 2.2,
       draw: (y) => {
-        press.line(l.who.toUpperCase(), TEXT.x, y + 2.8, label(l.learner ? INK.violet : hue.deep, 5.6));
-        press.set(row.ku, TEXT.x + tagW, y, T.kurdish);
-        press.set(row.en, TEXT.x + tagW + set.kw, y + 1.6, T.english);
+        if (turn) press.line(l.who.toUpperCase(), TEXT.x, y + 2.8, label(l.learner ? INK.violet : hue.deep, 5.6));
+        press.set(row.ku, TEXT.x + SAID, y, T.kurdish);
+        press.set(row.en, TEXT.x + en, y + 1.6, T.english);
       },
     };
   });
@@ -440,17 +514,17 @@ function dialogueRows(press: Press, c: BookChapter, dialogue: BookDialogue): Blo
   if (dialogue.question) {
     const q = dialogue.question;
     const type: Type = { ...T.caption, color: INK.ink };
-    const spans: Span[] = [{ text: `${q.prompt}  `, font: 'semi' }, ...q.options.flatMap((o, k): Span[] => [{ text: `${'abcdef'[k]}`, font: 'bold', color: hue.deep }, { text: ` ${o}${k < q.options.length - 1 ? '   ' : ''}` }])];
-    const para = press.para(spans, TEXT.w - tagW, type);
+    const spans: Span[] = [{ text: q.prompt, font: 'semi' }, { text: '\u2003' }, ...optionSpans(q.options, hue)];
+    const para = press.para(spans, TEXT.w - SAID, type);
     // the question stays with the last line of what it asks about
-    if (lines.length > 0) lines[lines.length - 1]!.keep = true;
+    if (lines.length > 0) lines[lines.length - 1]!.hold = true;
     lines.push({
       height: para.height + 1,
       gap: 5,
       draw: (y) => {
         press.disc(TEXT.x + 7, y + 5.4, 5.6, hue.wash);
         press.line('?', TEXT.x + 1.4, y + 0.8, { font: 'bold', size: 7.4, color: hue.deep, lead: 9.4 }, 'center', 11.2);
-        press.set(para.lines, TEXT.x + tagW, y, type);
+        press.set(para.lines, TEXT.x + SAID, y, type);
       },
     });
   }
@@ -459,10 +533,73 @@ function dialogueRows(press: Press, c: BookChapter, dialogue: BookDialogue): Blo
 
 // ───────────────────────────────────────────────────────────── the story
 
-/** The things a story names that there is a drawing of, for the band over it. */
-function storyProps(c: BookChapter): BookPicture[] {
+/**
+ * What the band over each chapter's story shows beside Hamo, by chapter:
+ * the things the story turns on, chosen by hand, since a story names far
+ * more than three things and the first three it names are seldom the ones
+ * it is about. A chapter missing here gets what its English names first.
+ */
+const TALE_PICTURES: Readonly<Record<number, readonly BookPicture[]>> = {
+  1: [{ kind: 'word', id: 'tea' }, { kind: 'word', id: 'bread' }, { kind: 'word', id: 'apple' }],
+  2: [{ kind: 'spot', spot: 'photo' }, { kind: 'spot', spot: 'moustache' }, { kind: 'word', id: 'tea' }],
+  3: [{ kind: 'word', id: 'map' }, { kind: 'spot', spot: 'whiteGoat' }, { kind: 'spot', spot: 'walnutTree' }],
+  4: [{ kind: 'word', id: 'basket' }, { kind: 'word', id: 'tea' }, { kind: 'word', id: 'sugar' }],
+  5: [{ kind: 'word', id: 'bus' }, { kind: 'word', id: 'clock' }, { kind: 'spot', spot: 'calendar' }],
+  6: [{ kind: 'word', id: 'book' }, { kind: 'spot', spot: 'photo' }, { kind: 'spot', spot: 'town' }],
+  7: [{ kind: 'spot', spot: 'flute' }, { kind: 'word', id: 'fire' }, { kind: 'word', id: 'drum' }],
+  8: [{ kind: 'word', id: 'honey' }, { kind: 'spot', spot: 'moustache' }, { kind: 'word', id: 'moon' }],
+  9: [{ kind: 'word', id: 'donkey' }, { kind: 'word', id: 'heart' }, { kind: 'word', id: 'spring' }],
+  10: [{ kind: 'spot', spot: 'doe' }, { kind: 'spot', spot: 'lake' }, { kind: 'spot', spot: 'flute' }],
+  11: [{ kind: 'word', id: 'apple' }, { kind: 'sapling' }, { kind: 'spot', spot: 'stove' }],
+  12: [{ kind: 'sapling' }, { kind: 'spot', spot: 'appleTree' }, { kind: 'word', id: 'basket' }],
+};
+
+/** The things a story turns on, for the band over it. */
+function storyProps(c: BookChapter): readonly BookPicture[] {
+  const chosen = TALE_PICTURES[c.number];
+  if (chosen) return chosen;
   const english = c.tale?.english.join(' ') ?? '';
   return sceneFor(english).props.filter((p) => p.kind !== 'figure').slice(0, 3);
+}
+
+/** Kurdish quoted in the book's own marks: the stories that quote in «guillemets» are set in “quotation marks”, as the lessons and the other stories are. */
+const quoted = (text: string): string => text.replace(/«\s*/g, '“').replace(/\s*»/g, '”');
+
+/**
+ * A question's options under it: on one line, an em space apart, when they
+ * all fit on it; else two to a line in two columns, or one under another,
+ * each by its letter, so a long option is never mistaken for the start of
+ * the next.
+ */
+function optionList(press: Press, options: readonly string[], width: number, type: Type, hue: HueSteps): { height: number; draw: (x: number, y: number) => void } {
+  const inline = press.para(optionSpans(options, hue), width, type);
+  if (inline.lines.length <= 1) return { height: inline.height, draw: (x, y) => press.set(inline.lines, x, y, type) };
+  const letter: Type = { ...type, font: 'bold', color: hue.deep };
+  // two to a line, in two columns, where every option fits half the line; otherwise one to a line
+  const half = (width - 8) / 2;
+  if (options.every((o) => press.measure(o, type.font, type.size) <= half - 9)) {
+    return {
+      height: Math.ceil(options.length / 2) * type.lead,
+      draw: (x, y) =>
+        options.forEach((o, k) => {
+          const [ox, oy] = [x + (k % 2) * (half + 8), y + Math.floor(k / 2) * type.lead];
+          press.line('abcdef'[k]!, ox, oy, letter);
+          press.line(o, ox + 9, oy, type);
+        }),
+    };
+  }
+  const each = options.map((o) => press.para(o, width - 9, type));
+  return {
+    height: each.reduce((h, p) => h + p.height, 0),
+    draw: (x, y) => {
+      let at = y;
+      each.forEach((p, k) => {
+        press.line('abcdef'[k]!, x, at, letter);
+        press.set(p.lines, x + 9, at, type);
+        at += p.height;
+      });
+    },
+  };
 }
 
 function taleBlocks(press: Press, c: BookChapter): Block[] {
@@ -492,8 +629,8 @@ function taleBlocks(press: Press, c: BookChapter): Block[] {
   const kw = TEXT.w * 0.585;
   const ew = TEXT.w - kw - 14;
   const rows: Block[] = tale.paragraphs.map((text, i) => {
-    const ku = press.para(text, kw, T.tale);
-    const en = tale.english[i] ? press.para(tale.english[i]!, ew, T.taleEnglish) : null;
+    const ku = press.para(quoted(text), kw, T.tale);
+    const en = tale.english[i] ? press.para(quoted(tale.english[i]!), ew, T.taleEnglish) : null;
     const height = Math.max(ku.height, (en?.height ?? 0) + 2.4);
     return {
       height,
@@ -507,7 +644,12 @@ function taleBlocks(press: Press, c: BookChapter): Block[] {
   // each row is a whole paragraph beside its English, so any of them may open or close a page
   blocks.push(...rows);
   if (tale.glossary.length > 0) {
-    const spans: Span[] = tale.glossary.flatMap((g, i): Span[] => [{ text: g.term, font: 'semi' }, { text: ` ${g.en}${i < tale.glossary.length - 1 ? '   ·   ' : ''}`, font: 'italic', color: INK.soft }]);
+    // each word held to the first word of its meaning, and the words an em space apart round the dot between them
+    const spans: Span[] = tale.glossary.flatMap((g, i): Span[] => [
+      ...(i > 0 ? [{ text: '\u00a0·\u2003', font: 'italic' as const, color: INK.soft }] : []),
+      { text: quoted(g.term), font: 'semi' },
+      { text: `\u00a0${g.en}`, font: 'italic', color: INK.soft },
+    ]);
     const para = press.para(spans, TEXT.w - 44, T.note);
     blocks.push({
       height: para.height,
@@ -534,8 +676,8 @@ function taleBlocks(press: Press, c: BookChapter): Block[] {
     const option: Type = { font: 'body', size: 8.1, color: INK.ink, lead: 10.3 };
     const cells = tale.questions.map((q, i) => {
       // the question in Kurdish, and what it asks in English running on after it
-      const ku = press.para([{ text: q.prompt }, ...(q.promptEn ? [{ text: `  ${q.promptEn}`, font: 'italic' as const, color: INK.soft }] : [])], cw - 15, prompt);
-      const options = press.para(q.options.flatMap((o, k): Span[] => [{ text: 'abcdef'[k]!, font: 'bold', color: hue.deep }, { text: ` ${o}${k < q.options.length - 1 ? '   ' : ''}` }]), cw - 15, option);
+      const ku = press.para([{ text: quoted(q.prompt) }, ...(q.promptEn ? [{ text: `\u2002${quoted(q.promptEn)}`, font: 'italic' as const, color: INK.soft }] : [])], cw - 15, prompt);
+      const options = optionList(press, q.options.map(quoted), cw - 15, option, hue);
       return { i, ku, options, height: ku.height + options.height + 1.5 };
     });
     const made: Block[] = [];
@@ -549,7 +691,7 @@ function taleBlocks(press: Press, c: BookChapter): Block[] {
             const x = TEXT.x + k * (cw + 14);
             press.line(String(cell.i + 1), x, y - 0.4, display(9.2, hue.deep));
             press.set(cell.ku.lines, x + 15, y, prompt);
-            press.set(cell.options.lines, x + 15, y + cell.ku.height + 0.8, option);
+            cell.options.draw(x + 15, y + cell.ku.height + 0.8);
           });
         },
       });
@@ -596,11 +738,14 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
     height: 40,
     gap: 24,
     keep: true,
+    // practice always opens a page, so "the pages before this one" are pages and not half of this one
+    fresh: true,
     section: 'With a pencil',
     anchor: `${c.number}:practice`,
     draw: (y) => {
       press.box(TEXT.x, y, TEXT.w, 40, 12, tones(hue).band);
-      drawPicture(press, { kind: 'word', id: 'pen' }, TEXT.x + TEXT.w - 48, y + 2, 36, hue);
+      // the notebook with its pencil: what the reader works with here, and not a pen
+      drawPicture(press, { kind: 'spot', spot: 'notebook' }, TEXT.x + TEXT.w - 48, y + 2, 36, hue);
       press.line('With a pencil', TEXT.x + 14, y + 4.5, display(16));
       const at = places.get('answers');
       press.line(at === undefined ? 'The answers are at the back.' : `Cover the pages before this one. The answers are on page ${at}.`, TEXT.x + 14, y + 24.5, { ...T.english, color: hue.deep });
@@ -637,7 +782,9 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
         });
       },
     }));
-    blocks.push(...keepList(rows));
+    // a word and its meaning are joined by a line across the page, so the task is never split by a page turn
+    rows.forEach((row, i) => (row.keep = i < rows.length - 1));
+    blocks.push(...rows);
   }
 
   if (pr.gaps.length > 0) {
@@ -678,7 +825,8 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
           else {
             press.line(before, tx, y, T.kurdish);
             press.dots(tx + bw + 1, y + 10.6, gap, INK.soft);
-            press.line(after, tx + bw + gap + 3, y, T.kurdish);
+            // punctuation after the gap closes up to the dots, as it would to the word written there
+            press.line(after, tx + bw + gap + (/^[,.;:!?…”)]/.test(after) ? 0.5 : 3), y, T.kurdish);
           }
           if (cue) press.set(cue.lines, tx, y + (wrapped ? wrapped.height : 12.6) - 0.6, T.gloss);
         },
@@ -771,43 +919,60 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
 // ───────────────────────────────────────────────────────────── how a chapter ends
 
 /**
- * How a chapter ends: its stamp, cancelled, and its own line about Hevalo
- * and his apples. `small` is the same with a smaller stamp, for a chapter
- * whose last page has just that much room left.
+ * How a chapter ends: its stamp, cancelled, its own line about Hevalo and
+ * his apples, and the core of the apple in the corner, set clear of the
+ * words. `small` is the same with a smaller stamp, for a chapter whose last
+ * page has just that much room left; `drop` is how far down its page the
+ * block starts, when it stands on a page of its own.
  */
-function endBlock(press: Press, c: BookChapter, places: Places, small = false): Block {
+function endBlock(press: Press, c: BookChapter, places: Places, small = false, drop = 0): Block {
   const hue = hueOf(c);
   const w = small ? 62 : 88;
   const h = (w * STAMP.h) / STAMP.w;
+  const x = TEXT.x + 14;
+  const tx = x + w + 30;
   const tw = TEXT.w - w - 44;
   const gag = c.gag;
   const say: Type = { font: 'semi', size: small ? 8.6 : 9.2, color: hue.deep, lead: small ? 11 : 12 };
   const line = gag ? press.para(gag.ku, tw - 44, say, 3) : null;
   const meaning = gag ? press.para(gag.en, tw - 26, T.english, 3) : null;
-  const height = h + (small ? 22 : 30);
+  const at = places.get('passport');
+  const note = press.para(`Cancel its stamp in your passport${at === undefined ? '' : ` on page ${at}`}, then turn the page.`, tw, T.caption);
+  // where the words go, from the top of the block: the note, then Hamo's bubble and what it means under it
+  const ny = small ? 37 : 46;
+  const by = ny + note.height + (small ? 6 : 9);
+  const bw = line ? Math.min(tw - 26, Math.max(...line.lines.map((l) => l.width)) + 18) : 0;
+  const my = by + (line?.height ?? 0) + 11;
+  const words = line && meaning ? my + meaning.height : ny + note.height;
+  // the core in the bottom corner, unless a line of the words reaches into it there; then in the top corner, beside the chapter's name, where that leaves it room; else under the words
+  const core = small ? 28 : 36;
+  const cx = TEXT.x + TEXT.w - core - 4;
+  const reach = (lines: readonly Line[], left: number, top: number, lead: number): number => lines.reduce((low, l, i) => (left + l.width > cx - 6 ? top + (i + 1) * lead : low), 0);
+  const crowd = Math.max(reach(note.lines, tx, ny, T.caption.lead), meaning ? reach(meaning.lines, tx + 25, my, T.english.lead) : 0, line && tx + 25 + bw > cx - 6 ? by + line.height + 8 : 0);
+  const base = h + (small ? 22 : 30);
+  const corner = base - core - 6;
+  const name = display(small ? 15 : 18);
+  const head = Math.max(press.measure(c.titleKu, name.font, name.size), press.measure(`CHAPTER ${c.number} IS YOURS`, label(hue.deep).font, label(hue.deep).size, label(hue.deep).tracking));
+  const top = tx + head <= cx - 8 && reach(note.lines, tx, ny, T.caption.lead) === 0;
+  const cy = crowd <= corner ? corner : top ? 2 : Math.max(corner, words + 6);
+  const height = drop + Math.max(base, cy + core + 4);
   return {
     height,
     gap: small ? 20 : 26,
-    draw: (y) => {
-      const x = TEXT.x + 14;
-      drawStamp(press, x, y + (small ? 12 : 15), w, c, { glow: 0.5, cancelled: true });
-      const tx = x + w + 30;
+    draw: (top) => {
+      const y = top + drop;
+      // on paper a stamp's light is a faint halo: a strong glow prints as a coloured blur
+      drawStamp(press, x, y + (small ? 12 : 15), w, c, { glow: 0.2, cancelled: true });
       press.line(`CHAPTER ${c.number} IS YOURS`, tx, y + (small ? 8 : 12), label(hue.deep));
       press.line(c.titleKu, tx, y + (small ? 17.5 : 22.5), display(small ? 15 : 18));
-      const at = places.get('passport');
-      const note = press.para(`Cancel its stamp in your passport${at === undefined ? '' : ` on page ${at}`}, then turn the page.`, tw, T.caption);
-      const ny = y + (small ? 37 : 46);
-      press.set(note.lines, tx, ny, T.caption);
+      press.set(note.lines, tx, y + ny, T.caption);
       if (line && meaning) {
-        const by = ny + note.height + (small ? 6 : 9);
-        const bw = Math.min(tw - 26, Math.max(...line.lines.map((l) => l.width)) + 18);
-        press.place(castArt(press, 'hamo', 'laughing'), tx - 2, by - 3, 22);
-        press.bubble(tx + 25, by, bw, line.height + 8, hue.wash, { side: 'left', at: 9 });
-        press.set(line.lines, tx + 34, by + 4, say);
-        press.set(meaning.lines, tx + 25, by + line.height + 11, T.english);
+        press.place(castArt(press, 'hamo', 'laughing'), tx - 2, y + by - 3, 22);
+        press.bubble(tx + 25, y + by, bw, line.height + 8, hue.wash, { side: 'left', at: 9 });
+        press.set(line.lines, tx + 34, y + by + 4, say);
+        press.set(meaning.lines, tx + 25, y + my, T.english);
       }
-      const core = small ? 28 : 36;
-      press.place(appleArt(press, BOOK_APPLE_BITES), TEXT.x + TEXT.w - core - 4, y + height - core - 6, core);
+      press.place(appleArt(press, BOOK_APPLE_BITES), cx, y + cy, core);
     },
   };
 }
@@ -820,93 +985,166 @@ const ASIDES: ReadonlyArray<readonly [who: 'tracks' | 'hevalo' | 'hamo', pose: s
   ['tracks', '', 'This way. There may be apples.'],
   ['hevalo', 'innocent', 'It was like that when he found it.'],
   ['hamo', 'asleep', 'Five minutes, says Hamo.'],
-  ['tracks', '', 'Hevalo has gone on ahead.'],
   ['hevalo', 'caught', 'Nobody saw that. Turn the page.'],
   ['hevalo', 'asleep', 'Shh. He is dreaming of an orchard.'],
-  ['tracks', '', 'Mind the hoofprints.'],
-  ['hevalo', 'curious', 'Is the next page made of apples? He would like to know.'],
   ['hamo', 'proud', 'A moustache like this takes time. So does Kurdish.'],
-  ['tracks', '', 'Somebody was here. Somebody with hooves.'],
+  ['tracks', '', 'Hevalo has gone on ahead.'],
+  ['hevalo', 'curious', 'Is the next page made of apples? He would like to know.'],
+  ['hamo', 'telling', 'Hamo has a story about this page. It is a long one.'],
   ['hevalo', 'munching', 'He is not hungry, he says.'],
+  ['tracks', '', 'Somebody was here. Somebody with hooves.'],
   ['hevalo', 'pleased', 'On you go. Hamo is putting the kettle on.'],
+  ['hamo', 'laughing', 'Hamo has read this page twice. He laughed both times.'],
+  ['hevalo', 'sad', 'No apples on this page either. He looked.'],
 ];
 
+/** How many pages of a chapter may end on an aside, and how much room an aside needs: a short page is left plain rather than padded. */
+const ASIDES_PER_CHAPTER = 2;
+const ASIDE_ROOM = 90;
+
 /**
- * What fills the space a page of the chapter has left over. On its last
- * page, the chapter in pictures: every word of it that has a drawing, to
- * cover and name — but not the ones "Name the pictures" asks for, when that
- * task is on the same page (`asked` says which page it is on), or they would
- * be its answers. On a page that only ends a little early, one of the asides
- * above, a different one each time.
+ * Which aside a book tells next, so they run on from chapter to chapter
+ * without repeating. Kept by the press, so each book is told its asides in
+ * the same order every time it is made.
  */
-function chapterFiller(press: Press, c: BookChapter, asked: () => number): Filler {
-  const hue = hueOf(c);
+const asidesTold = new WeakMap<Press, { next: number }>();
+
+/**
+ * The pages of a chapter's run that end on an aside, from how much each
+ * page has left over (`slack`, by its place in the run) and the number of
+ * its first page in the book: the roomiest of them, at most two, never two
+ * on the pages of one spread (an even page and the odd one after it), and
+ * never the last, which ends on the chapter's pictures.
+ */
+export function asidePages(slack: readonly number[], first: number): Set<number> {
+  const facing = (a: number, b: number): boolean => Math.abs(a - b) === 1 && (first + Math.min(a, b)) % 2 === 0;
+  const roomy = slack
+    .map((room, index) => ({ room, index }))
+    .filter((p) => p.index < slack.length - 1 && p.room >= ASIDE_ROOM)
+    .sort((a, b) => b.room - a.room || a.index - b.index);
+  const chosen: number[] = [];
+  for (const p of roomy) if (chosen.length < ASIDES_PER_CHAPTER && !chosen.some((c) => facing(c, p.index))) chosen.push(p.index);
+  return new Set(chosen);
+}
+
+/** The chapter's pictures at the end of its last page: a row of seven or more, or none. */
+const STRIP = { per: 7, cell: 50, gap: 22, least: 7 } as const;
+
+/** How many rows of `count` pictures fit in `room` points, if they make at least one full row. */
+const stripRows = (count: number, room: number): number => (count < STRIP.least ? 0 : Math.max(0, Math.min(Math.ceil(count / STRIP.per), Math.floor((room - 10) / STRIP.cell))));
+
+/** How tall the chapter's pictures stand in `rows` rows: the heading over them and the rows. */
+const stripHeight = (rows: number): number => rows * STRIP.cell + 10;
+
+/**
+ * Every word of a chapter that has a drawing, to cover and name at its
+ * end: but never the ones "Name the pictures" asks for, which would be that
+ * task's answers.
+ */
+export function chapterPictures(c: BookChapter): Array<{ picture: BookPicture; ku: string }> {
+  const asked = new Set(c.practice.pictures.map((p) => p.picture));
   const seen = new Set<string>();
   const pictured: Array<{ picture: BookPicture; ku: string }> = [];
   for (const w of chapterWords(c)) {
     const picture = pictureForWord(w);
     if (!picture || picture.kind === 'cast' || picture.kind === 'figure') continue;
+    if (picture.kind === 'word' && asked.has(picture.id)) continue;
     const key = JSON.stringify(picture);
     if (seen.has(key)) continue;
     seen.add(key);
     pictured.push({ picture, ku: w.ku });
   }
-  // each chapter starts somewhere else in the asides, and takes them in turn from there
-  let turn = c.number * 5;
-  return (y, height, last, index) => {
+  return pictured;
+}
+
+/**
+ * What fills the space a page of the chapter has left over. On its last
+ * page, a little way under the stamp, the chapter in pictures (when they
+ * make a row of seven at least). On a page that ends early, one of the
+ * asides above, a different one each time: at most two to a chapter, never
+ * two on one spread, and only where there is room for one to breathe.
+ */
+function chapterFiller(press: Press, c: BookChapter, slack: readonly number[]): Filler {
+  const hue = hueOf(c);
+  const pictured = chapterPictures(c);
+  let chosen: Set<number> | null = null;
+  return (y, height, last, index, page) => {
     if (!last) {
-      if (height < 62) return;
-      const [who, pose, line] = ASIDES[turn++ % ASIDES.length]!;
+      // which pages have an aside is settled once the chapter's first page has its number
+      chosen ??= asidePages(slack, page - index);
+      if (!chosen.has(index)) return;
+      const book = asidesTold.get(press) ?? { next: c.number * 5 };
+      asidesTold.set(press, book);
+      const [who, pose, line] = ASIDES[book.next++ % ASIDES.length]!;
       const mid = y + height / 2 + 4;
+      // a page left half empty gets a larger one, so it reads as the close of what ends there
+      const large = height >= 200;
       if (who === 'tracks') {
-        const prints = squareArt(press, 'spot|hoofprints', () => bookSpotSvg({ spot: 'hoofprints' }));
-        for (let i = 0; i < 4; i++) press.place(prints, PAGE.w / 2 - 82 + i * 41, mid - 22 + (i % 2) * 3, 30, { turn: 62 });
-        press.line(line, TEXT.x, mid + 15, T.english, 'center', TEXT.w);
+        // the tracks once, as they were left: leading up the page toward the next
+        const size = large ? 84 : 64;
+        press.place(squareArt(press, 'spot|hoofprints', () => bookSpotSvg({ spot: 'hoofprints' })), PAGE.w / 2 - size / 2, mid - size + 6, size);
+        press.line(line, TEXT.x, mid + 12, T.english, 'center', TEXT.w);
         return;
       }
       // a little round portrait, as the people of the road have theirs
-      const r = 21;
+      const r = large ? 30 : 21;
       const cy = mid - 8;
       press.disc(PAGE.w / 2, cy, r, tones(hue).band);
       press.within(PAGE.w / 2 - r, cy - r, r * 2, r * 2, r, () => press.place(castArt(press, who, pose), PAGE.w / 2 - r + 2, cy - r + 4.5, r * 2 - 4));
+      // what he says he found lies at the foot of the portrait, outside it, where it can be seen whole
+      if (pose === 'innocent') press.place(appleArt(press, BOOK_APPLE_BITES), PAGE.w / 2 + r * 0.55, cy + r * 0.3, r * 0.72);
       press.line(line, TEXT.x, cy + r + 5, T.english, 'center', TEXT.w);
       return;
     }
-    const per = 7;
-    const cell = { w: TEXT.w / per, h: 50 };
-    const task = new Set(asked() === index ? c.practice.pictures.map((p) => p.picture) : []);
-    const fresh = pictured.filter((p) => !(p.picture.kind === 'word' && task.has(p.picture.id)));
-    const rows = Math.min(Math.ceil(fresh.length / per), Math.floor((height - 36) / cell.h));
-    if (rows < 1 || fresh.length < 3) return;
-    const shown = fresh.slice(0, rows * per);
-    // set at the foot of the page, so the stamp above keeps its air
-    const top = y + height - rows * cell.h - 16;
-    const w = press.line(`CHAPTER ${c.number} IN PICTURES`, TEXT.x, top - 4, label(hue.deep));
-    const hint = press.line('cover the words, then name them', TEXT.x + w + 8, top - 5.6, T.english);
-    press.rule(TEXT.x + w + hint + 16, top + 1, TEXT.w - w - hint - 16, hue.wash, 0.9);
+    const rows = stripRows(pictured.length, height - STRIP.gap);
+    if (rows < 1) return;
+    const shown = pictured.slice(0, rows * STRIP.per);
+    const cell = TEXT.w / STRIP.per;
+    // set a fixed space under the stamp, so the two read as one ending and not as two things at either end of the page
+    const top = y + STRIP.gap;
+    const w = press.line(`CHAPTER ${c.number} IN PICTURES`, TEXT.x, top, label(hue.deep));
+    const hint = press.line('cover the words, then name them', TEXT.x + w + 8, top - 1.6, T.english);
+    press.rule(TEXT.x + w + hint + 16, top + 5, TEXT.w - w - hint - 16, hue.wash, 0.9);
     const name: Type = { font: 'semi', size: 7.6, color: INK.ink, lead: 9.6 };
     shown.forEach((p, i) => {
-      const x = TEXT.x + (i % per) * cell.w;
-      const cy = top + 12 + Math.floor(i / per) * cell.h;
-      press.box(x + (cell.w - 32) / 2, cy, 32, 32, 9, tones(hue).card);
-      drawPicture(press, p.picture, x + (cell.w - 28) / 2, cy + 2, 28, hue);
+      const row = Math.floor(i / STRIP.per);
+      // a last row that is not full stands in the middle under the full ones
+      const inRow = Math.min(STRIP.per, shown.length - row * STRIP.per);
+      const x = TEXT.x + ((STRIP.per - inRow) / 2 + (i % STRIP.per)) * cell;
+      const cy = top + 16 + row * STRIP.cell;
+      press.box(x + (cell - 32) / 2, cy, 32, 32, 9, tones(hue).card);
+      drawPicture(press, p.picture, x + (cell - 28) / 2, cy + 2, 28, hue);
       let size = name.size;
-      while (size > 5.4 && press.measure(p.ku, name.font, size) > cell.w - 2) size -= 0.3;
-      press.line(p.ku, x, cy + 33.5, { ...name, size }, 'center', cell.w);
+      while (size > 5.4 && press.measure(p.ku, name.font, size) > cell - 2) size -= 0.3;
+      press.line(p.ku, x, cy + 33.5, { ...name, size }, 'center', cell);
     });
   };
 }
 
 // ───────────────────────────────────────────────────────────── the chapter
 
+/**
+ * A lesson's blocks: its scene with its name, its rows of new words, and its
+ * lines (to read aloud, and its conversation). The scene never ends a page
+ * without its first row of words, and the last row of words holds to the
+ * first lines, so the lines never open a page cut off from their lesson.
+ */
+export function lessonBlocks(press: Press, c: BookChapter, lesson: BookLesson): { strip: Block; words: Block[]; lines: Block[] } {
+  const en = englishColumn(press, lesson);
+  const words = wordRows(press, c, lesson, en);
+  const lines = [...pairRows(press, c, lesson.sentences, en), ...(lesson.dialogue ? dialogueRows(press, c, lesson.dialogue, en) : [])];
+  if (words.length > 0 && lines.length > 0) words[words.length - 1]!.hold = true;
+  return { strip: lessonStrip(press, c, lesson, words.length + lines.length > 0), words, lines };
+}
+
 /** Everything of a chapter after its opening page, as one run of blocks. */
-function chapterBlocks(press: Press, c: BookChapter, places: Places): Block[] {
+export function chapterBlocks(press: Press, c: BookChapter, places: Places): Block[] {
   const blocks: Block[] = [];
   for (const p of c.parts) {
     blocks.push(partHead(press, c, p), ...grammarNote(press, c, p));
     for (const lesson of p.lessons) {
-      const rest = [...wordRows(press, c, lesson), ...pairRows(press, c, lesson.sentences), ...(lesson.dialogue ? dialogueRows(press, c, lesson.dialogue) : [])];
-      blocks.push(lessonStrip(press, c, lesson, rest.length > 0), ...rest);
+      const { strip, words, lines } = lessonBlocks(press, c, lesson);
+      blocks.push(strip, ...words, ...lines);
     }
   }
   blocks.push(...taleBlocks(press, c), ...practiceBlocks(press, c, places));
@@ -917,7 +1155,12 @@ function chapterBlocks(press: Press, c: BookChapter, places: Places): Block[] {
   const pages = paginate([...blocks, full], TEXT.room);
   const before = pages.at(-2);
   const alone = pages.at(-1)?.from === blocks.length && before !== undefined;
-  return [...blocks, alone && before.used + small.gap + small.height <= TEXT.room ? small : full];
+  if (!alone) return [...blocks, full];
+  if (before.used + small.gap + small.height <= TEXT.room) return [...blocks, small];
+  // on a page of its own the stamp and the chapter's pictures under it stand together, a little above the middle of the page
+  const rows = stripRows(chapterPictures(c).length, TEXT.room - full.height - STRIP.gap);
+  const stands = full.height + (rows > 0 ? STRIP.gap + stripHeight(rows) : 0);
+  return [...blocks, endBlock(press, c, places, false, Math.max(0, (TEXT.room - stands) * 0.42))];
 }
 
 /**
@@ -927,13 +1170,10 @@ function chapterBlocks(press: Press, c: BookChapter, places: Places): Block[] {
  */
 export function chapterSheets(press: Press, c: BookChapter, places: Places): { sheets: Sheet[]; anchors: Array<[string, number]> } {
   const anchors: Array<[string, number]> = [[`${c.number}:opener`, 0]];
-  // the page of the run that "Name the pictures" is on, for the chapter's pictures at its end to keep clear of
-  let pictures = -1;
-  const noted = (anchor: string, index: number): void => {
-    anchors.push([anchor, index + 1]);
-    if (anchor === `${c.number}:pictures`) pictures = index;
-  };
-  const run = runSheets(press, chapterBlocks(press, c, places), (_, section) => ({ chapter: c, section, bites: 0 }), noted, chapterFiller(press, c, () => pictures));
+  const noted = (anchor: string, index: number): void => void anchors.push([anchor, index + 1]);
+  const blocks = chapterBlocks(press, c, places);
+  const slack = paginate(blocks, TEXT.room).map((p) => TEXT.room - p.used);
+  const run = runSheets(press, blocks, (_, section) => ({ chapter: c, section, bites: 0 }), noted, chapterFiller(press, c, slack));
   const total = run.length + 1;
   run.forEach((sheet, i) => {
     if (sheet.furniture) sheet.furniture.bites = Math.min(BOOK_APPLE_BITES, Math.floor(((i + 1) * (BOOK_APPLE_BITES + 1)) / total));

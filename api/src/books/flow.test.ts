@@ -1,14 +1,17 @@
 /**
  * How the Hevalo book breaks into pages (flow.ts), as arithmetic on heights:
  * blocks set one under another until a page is full; a heading never left at
- * the foot of a page; a list never leaving one line behind; the space above a
- * block dropped at the top of a page; and a nearly full page spread to its
- * foot.
+ * the foot of a page; a list never leaving one line behind, unless that
+ * would leave a page badly short; a section that always opens a page; the
+ * space above a block dropped at the top of a page; and a nearly full page
+ * spread to its foot.
  */
 import { describe, expect, it } from 'vitest';
-import { SETTLE_SHARE, keepList, paginate, settle, type FlowItem } from './flow.js';
+import { HOLD_SHARE, SETTLE_SHARE, keepList, paginate, settle, type FlowItem } from './flow.js';
 
 const block = (height: number, gap = 0, keep = false): FlowItem => ({ height, gap, keep });
+const held = (height: number, gap = 0): FlowItem => ({ height, gap, hold: true });
+const fresh = (height: number, gap = 0): FlowItem => ({ height, gap, fresh: true });
 const spans = (items: readonly FlowItem[], room: number, firstRoom?: number): Array<[number, number]> => paginate(items, room, firstRoom).map((p) => [p.from, p.to]);
 
 describe('how the book breaks into pages', () => {
@@ -83,30 +86,80 @@ describe('how the book breaks into pages', () => {
 
   it('never leaves one line of a list behind: its first two stay together, and its last two', () => {
     const rows = (n: number): FlowItem[] => keepList(Array.from({ length: n }, () => block(20)));
-    expect(rows(5).map((r) => r.keep)).toEqual([true, false, false, true, false]);
+    expect(rows(5).map((r) => r.hold ?? false)).toEqual([true, false, false, true, false]);
     // room for one row under what is already there: the list starts on the next page instead
-    expect(spans([block(70), ...rows(5)], 100)).toEqual([
+    expect(spans([block(78), ...rows(5)], 100)).toEqual([
       [0, 1],
       [1, 6],
     ]);
     // room for all but the last row: the one before it goes over with it
-    expect(spans([block(10), ...rows(5)], 100)).toEqual([
+    expect(spans([block(18), ...rows(5)], 100)).toEqual([
       [0, 4],
       [4, 6],
     ]);
     // unmarked, the same rows would have left one behind, and then one over
     const loose = (n: number): FlowItem[] => Array.from({ length: n }, () => block(20));
-    expect(spans([block(70), ...loose(5)], 100)).toEqual([[0, 2], [2, 6]]);
-    expect(spans([block(10), ...loose(5)], 100)).toEqual([[0, 5], [5, 6]]);
+    expect(spans([block(78), ...loose(5)], 100)).toEqual([[0, 2], [2, 6]]);
+    expect(spans([block(18), ...loose(5)], 100)).toEqual([[0, 5], [5, 6]]);
+  });
+
+  it('lets a hold give way rather than leave a page more than its share empty', () => {
+    // the held row would go over with the row after it, and leave its page 70 points full of 100: too short, so the hold gives way
+    expect(1 - 70 / 100).toBeGreaterThan(HOLD_SHARE);
+    expect(spans([block(50), held(20), block(20), block(20)], 100)).toEqual([
+      [0, 3],
+      [3, 4],
+    ]);
+    expect(spans([block(50), block(20), held(20), block(20)], 100)).toEqual([
+      [0, 3],
+      [3, 4],
+    ]);
+    // the same with room enough to spare: the held row goes over
+    expect(spans([block(78), held(10), block(20)], 100)).toEqual([
+      [0, 1],
+      [1, 3],
+    ]);
+    // a heading before a held row goes with it, and counts against the page it leaves
+    expect(spans([block(70), block(8, 0, true), held(10), block(20)], 100)).toEqual([
+      [0, 3],
+      [3, 4],
+    ]);
+    expect(spans([block(78), block(4, 0, true), held(10), block(20)], 100)).toEqual([
+      [0, 1],
+      [1, 4],
+    ]);
+    // and a kept block is kept whatever it costs
+    expect(spans([block(30), block(20, 0, true), block(60)], 100)).toEqual([
+      [0, 1],
+      [1, 3],
+    ]);
+  });
+
+  it('opens a page with a fresh block, wherever the page before it ends', () => {
+    expect(spans([block(20), block(20), fresh(20), block(20)], 100)).toEqual([
+      [0, 2],
+      [2, 4],
+    ]);
+    // a fresh block at the head of a run, or of a page, is where a page starts anyway
+    expect(spans([fresh(20), block(20)], 100)).toEqual([[0, 2]]);
+    expect(spans([block(90), fresh(20), block(20)], 100)).toEqual([
+      [0, 1],
+      [1, 3],
+    ]);
+    // the page it ends is left as it is, its space at the foot
+    const items = [block(20), block(20, 10), fresh(20), block(20)];
+    const [first] = paginate(items, 100);
+    expect(first!.used).toBe(50);
+    expect(settle(items, first!, 100, false)).toEqual([0, 30]);
   });
 
   it('keeps a list of three or fewer whole', () => {
-    expect(keepList([block(20), block(20), block(20)]).map((r) => r.keep)).toEqual([true, true, false]);
-    expect(keepList([block(20), block(20)]).map((r) => r.keep)).toEqual([true, false]);
-    expect(keepList([block(20)]).map((r) => r.keep)).toEqual([false]);
+    expect(keepList([block(20), block(20), block(20)]).map((r) => r.hold ?? false)).toEqual([true, true, false]);
+    expect(keepList([block(20), block(20)]).map((r) => r.hold ?? false)).toEqual([true, false]);
+    expect(keepList([block(20)]).map((r) => r.hold ?? false)).toEqual([false]);
     expect(keepList([])).toEqual([]);
-    const three = keepList([block(30), block(30), block(30)]);
-    expect(spans([block(40), ...three], 100)).toEqual([
+    const three = keepList([block(10), block(10), block(10)]);
+    expect(spans([block(80), ...three], 100)).toEqual([
       [0, 1],
       [1, 4],
     ]);
@@ -124,7 +177,11 @@ describe('how the book breaks into pages', () => {
     };
     for (let trial = 0; trial < 300; trial++) {
       const room = 200 + Math.floor(next() * 400);
-      const items = Array.from({ length: 1 + Math.floor(next() * 40) }, () => block(4 + Math.floor(next() * room * 0.45), Math.floor(next() * 24), next() < 0.3));
+      const items = Array.from({ length: 1 + Math.floor(next() * 40) }, (): FlowItem => {
+        const made = block(4 + Math.floor(next() * room * 0.45), Math.floor(next() * 24), next() < 0.3);
+        const roll = next();
+        return roll < 0.15 ? { ...made, hold: true } : roll < 0.2 ? { ...made, fresh: true } : made;
+      });
       const firstRoom = next() < 0.5 ? room : Math.floor(room * next());
       const pages = paginate(items, room, firstRoom);
       // every block once, in order
@@ -138,8 +195,10 @@ describe('how the book breaks into pages', () => {
         expect(p.used).toBeCloseTo(used, 6);
         // more than one block on a page always fits it
         if (p.to - p.from > 1) expect(p.used).toBeLessThanOrEqual((k === 0 ? firstRoom : room) + 1e-6);
-        // a page ends on a kept block only when it holds nothing but kept blocks
-        if (k < pages.length - 1 && items[p.to - 1]!.keep) expect(items.slice(p.from, p.to).every((it) => it.keep)).toBe(true);
+        // a page ends on a kept block only when it holds nothing but kept blocks, or a fresh block opens the next
+        if (k < pages.length - 1 && items[p.to - 1]!.keep && !items[p.to]!.fresh) expect(items.slice(p.from, p.to).every((it) => it.keep)).toBe(true);
+        // and a fresh block is always the first on its page
+        for (let i = p.from + 1; i < p.to; i++) expect(items[i]!.fresh ?? false).toBe(false);
       });
     }
   });

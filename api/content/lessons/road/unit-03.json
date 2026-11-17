@@ -2124,7 +2124,7 @@
                     "prompt": "Were, taştê li ser maseyê ye!",
                     "options": [
                       "Come on, breakfast is on the table!",
-                      "Come on, supper is on the table!",
+                      "Come on, dinner is on the table!",
                       "Come on, the map is on the table!"
                     ],
                     "correctIndex": 0
@@ -3255,7 +3255,7 @@
                     "prompt": "Half of this photo is in my hand.",
                     "accepted": [
                       "Nîvê vî wêneyî di destê min de ye.",
-                      "Nîvê wêneyê di destê min de ye."
+                      "Nîvê wêneyî di destê min de ye."
                     ]
                   }
                 },
@@ -3314,7 +3314,7 @@
             {
               "key": "u03s3l4",
               "position": 4,
-              "titleKu": "Nîvê wêneyê",
+              "titleKu": "Nîvê wêneyekî",
               "titleEn": "Half a photo",
               "exercises": [
                 {
@@ -3572,8 +3572,8 @@
                     "voice": "hamo",
                     "prompt": "Baran, destên xwe bişo! Şîv germ e.",
                     "accepted": [
-                      "Baran, wash your hands! Supper is hot.",
                       "Baran, wash your hands! Dinner is hot.",
+                      "Baran, wash your hands! Supper is hot.",
                       "Baran, wash your hands! The supper is hot."
                     ]
                   }

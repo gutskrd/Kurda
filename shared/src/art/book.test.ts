@@ -190,7 +190,11 @@ describe('the drawings of Hevalo’s book', () => {
     ];
     expect(again).toEqual(FLAT.map(([, svg]) => svg));
     expect(new Set(again).size).toBe(again.length);
-    expect(BOOK_SPOTS).toEqual(['moustache', 'flute', 'photo', 'lake', 'stove', 'calendar', 'notebook', 'ladder', 'sack', 'lamp', 'hoofprints', 'town']);
+    expect(BOOK_SPOTS).toEqual([
+      'moustache', 'flute', 'photo', 'lake', 'stove', 'calendar', 'notebook', 'ladder', 'sack', 'lamp', 'hoofprints', 'town',
+      'lowTable', 'tray', 'cloth', 'rock', 'stoneWall', 'bedding', 'appleTree', 'walnutTree', 'flatHouse', 'houseLadder', 'ruin',
+      'doe', 'whiteGoat', 'ram', 'flyingBird', 'eagle', 'tin', 'doctorBag', 'boots', 'jug', 'churn', 'saj', 'snowDeer', 'frames',
+    ]);
     expect(BOOK_PAINTS).toEqual(['red', 'blue', 'green', 'yellow', 'black', 'white']);
   });
 

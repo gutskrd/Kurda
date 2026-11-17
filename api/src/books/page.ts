@@ -217,8 +217,8 @@ export function furnish(press: Press, f: Furniture, page: number): void {
   press.rule(TEXT.x, y + 14.5, TEXT.w, hue.wash, 0.9);
 }
 
-/** What is drawn in the space a page has left over, given its top and its height; returns nothing when the space is too small for it. */
-export type Filler = (y: number, height: number, last: boolean, index: number) => void;
+/** What is drawn in the space a page has left over, given its top and its height, whether it is the run's last page, its place in the run and its number in the book; it draws nothing when the space is too small for it. */
+export type Filler = (y: number, height: number, last: boolean, index: number, page: number) => void;
 
 /**
  * A run of blocks broken into pages by rule, each page a sheet with the
@@ -251,9 +251,9 @@ export function runSheets(
     const f = furniture(index, here);
     return {
       furniture: f,
-      draw: (): void => {
+      draw: (n: number): void => {
         for (let k = page.from; k < page.to; k++) blocks[k]!.draw(TEXT.top + at[k - page.from]!);
-        if (filler && (last || slack > TEXT.room * SETTLE_SHARE)) filler(TEXT.top + page.used, slack, last, index);
+        if (filler && (last || slack > TEXT.room * SETTLE_SHARE)) filler(TEXT.top + page.used, slack, last, index, n);
       },
     };
   });

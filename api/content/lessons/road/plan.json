@@ -8,7 +8,7 @@
   "characters": {
     "hamo": "Hamo is the warm heart of Sêvan, a village of apple orchards under the mountains, and the voice of the whole road. He was born and grew up in Kobanî, where his father Ibrahîm, who plays the shepherd’s flute, and his mother Edûl still live, with his younger brother Evdila and his sisters Lorîn and Cîhan; as children he and Lorîn spent their summers in Sêvan with their aunt, and as a young man he came back to the village and stayed. He lives behind the blue gate with Hevalo, Bozo the donkey, Şêro the dog and the old apple orchard, and the village children call him Xalo Hamo. He speaks standard Kurmanji with the warmth and a few of the words of Kobanî. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the end of his full black moustache when he is pleased with you, and is prouder of that moustache than of anything he owns. A miss gets one raised eyebrow and a thoughtful look, never a cross word. He wears the traditional suit with a green piştên, keeps the orchard, drinks tea from dawn to dusk with far too much sugar, is never quite on time, and has a proverb or a tale for every moment. Every line of the road is his: he talks with you, and tells you about everyone else.",
     "xezo": "Xezal is the young teacher at the village school. She comes from Amed and teaches the children of Sêvan their letters, and she lives in the village like any other neighbour. She is seen now and then, at the school with the children or at the market, and is mostly talked about rather than talked to: the road hears of her through what Hamo and the children say. Bright, quick and kind, she knows the city and the village alike. In the last chapters a school in Hewlêr, far away, offers her a post; she decides to go, says goodbye to the whole village, and leaves on the dawn bus from the blue gate.",
-    "hevalo": "Hevalo is a young male deer and the learner’s guide: he brings you to Hamo’s blue gate in the first lesson and walks the whole road beside you. His name means “O friend!”. Curious about everything and quick on his feet, he hops when he is pleased, tilts his head when something puzzles him and pricks up his ears at anything new. He is always after apples and always the first suspect when apples go missing, cheeky in a sweet way and kind when you get something wrong. He does not talk: Hamo puts his thoughts into words, usually with a laugh. On the summer pastures he only has eyes for Zerê, a shy wild doe, and brings her every apple he can carry."
+    "hevalo": "Hevalo is a young male deer and the learner’s guide: he brings you to Hamo’s blue gate in the first lesson and walks the whole road beside you. His name means “O friend!” Curious about everything and quick on his feet, he hops when he is pleased, tilts his head when something puzzles him and pricks up his ears at anything new. He is always after apples and always the first suspect when apples go missing, cheeky in a sweet way and kind when you get something wrong. He does not talk: Hamo puts his thoughts into words, usually with a laugh. On the summer pastures he only has eyes for Zerê, a shy wild doe, and brings her every apple he can carry."
   },
   "core": ["û", "ji", "li", "bi", "jî", "an", "ku", "re", "ve", "wey", "lo", "îcar"],
   "names": [
@@ -20,21 +20,21 @@
     {"name": "Baran", "kind": "person", "en": "Nazê’s son, nine", "forms": ["Baran"]},
     {"name": "Hêvî", "kind": "person", "en": "Nazê’s daughter, six", "forms": ["Hêvî", "Hêviyê"]},
     {"name": "Şemsê", "kind": "person", "en": "Dapîr Şemsê, the village grandmother", "forms": ["Şemsê"]},
-    {"name": "Ibrahîm", "kind": "person", "en": "Hamo’s father, in Kobanî", "forms": ["Ibrahîm"]},
-    {"name": "Edûl", "kind": "person", "en": "Hamo’s mother, in Kobanî", "forms": ["Edûl", "Edûlê"]},
-    {"name": "Evdila", "kind": "person", "en": "Hamo’s younger brother", "forms": ["Evdila"]},
-    {"name": "Lorîn", "kind": "person", "en": "Hamo’s younger sister, in Kobanî", "forms": ["Lorîn", "Lorînê"]},
-    {"name": "Cîhan", "kind": "person", "en": "Hamo’s youngest sister", "forms": ["Cîhan", "Cîhanê"]},
+    {"name": "Ibrahîm", "kind": "family", "en": "Hamo’s father, in Kobanî", "forms": ["Ibrahîm"]},
+    {"name": "Edûl", "kind": "family", "en": "Hamo’s mother, in Kobanî", "forms": ["Edûl", "Edûlê"]},
+    {"name": "Evdila", "kind": "family", "en": "Hamo’s younger brother", "forms": ["Evdila"]},
+    {"name": "Lorîn", "kind": "family", "en": "Hamo’s younger sister, in Kobanî", "forms": ["Lorîn", "Lorînê"]},
+    {"name": "Cîhan", "kind": "family", "en": "Hamo’s youngest sister", "forms": ["Cîhan", "Cîhanê"]},
     {"name": "Ferhad", "kind": "person", "en": "the neighbour with the tractor", "forms": ["Ferhad"]},
     {"name": "Mîrza", "kind": "person", "en": "the fruit seller at the market", "forms": ["Mîrza"]},
-    {"name": "Azad", "kind": "person", "en": "Doctor Azad, the old doctor from the town", "forms": ["Azad"]},
+    {"name": "Azad", "kind": "person", "en": "the old doctor from the town", "forms": ["Azad"]},
     {"name": "Bişar", "kind": "person", "en": "the shepherd on the summer pastures", "forms": ["Bişar"]},
     {"name": "Bozo", "kind": "animal", "en": "Hamo’s grey donkey", "forms": ["Bozo"]},
     {"name": "Şêro", "kind": "animal", "en": "Hamo’s dog", "forms": ["Şêro"]},
     {"name": "Zerê", "kind": "animal", "en": "the shy wild doe on the summer pastures", "forms": ["Zerê"]},
-    {"name": "Kawa", "kind": "person", "en": "Kawa the blacksmith of the Newroz tale", "forms": ["Kawa", "Kawayê"]},
-    {"name": "Şengê", "kind": "person", "en": "a kid in the folk tale", "forms": ["Şengê"]},
-    {"name": "Pengê", "kind": "person", "en": "a kid in the folk tale", "forms": ["Pengê"]},
+    {"name": "Kawa", "kind": "person", "en": "the blacksmith of the Newroz tale", "forms": ["Kawa", "Kawayê"]},
+    {"name": "Şengê", "kind": "person", "en": "one of the two little goats in the folk tale", "forms": ["Şengê"]},
+    {"name": "Pengê", "kind": "person", "en": "one of the two little goats in the folk tale", "forms": ["Pengê"]},
     {"name": "Newroz", "kind": "festival", "en": "Newroz, the new year on 21 March", "forms": ["Newroz", "Newrozê", "Newroza"]},
     {"name": "Kurmancî", "kind": "language", "en": "Kurmanji, Northern Kurdish (Rêya Kurmancî, the road’s name)", "forms": ["Kurmancî"]},
     {"name": "Sêvan", "kind": "place", "en": "the village where Hamo lives", "forms": ["Sêvan", "Sêvanê"]},
@@ -65,7 +65,7 @@
       "cefr": "A1",
       "titleKu": "Silav",
       "titleEn": "Hello",
-      "story": "Hevalo, a young deer with a twitching nose and a weakness for apples, brings you up a lane of apple trees to a blue gate in Sêvan, a village of orchards under the mountains. Behind it lives Hamo: born in Kobanî, owner of the proudest black moustache in the valley and of more tea glasses than chairs. On your first day you say hello and thank you, take an apple (Hevalo takes three), drink your first tea, learn whose house this is and what everything is called, and when you don’t know a word you ask “Bi kurdî çi ye?”. By night you can say what you want, discover that the apple basket is mysteriously empty, and wish everyone good night.",
+      "story": "Hevalo, a young deer with a twitching nose and a weakness for apples, brings you up a lane of apple trees to a blue gate in Sêvan, a village of orchards under the mountains. Behind it lives Hamo: born in Kobanî, owner of the proudest black moustache in the valley and of more tea glasses than chairs. On your first day you say hello and thank you, take an apple (Hevalo takes three), drink your first tea, learn whose house this is and what everything is called, and when you don’t know a word you ask “Bi kurdî çi ye?” By night you can say what you want, discover that the apple basket is mysteriously empty, and wish everyone good night.",
       "recorder": "hamo",
       "skills": [
         {
@@ -137,7 +137,7 @@
           "titleKu": "Çay û nan",
           "titleEn": "Tea and bread",
           "grammar": "ev … e / ye: this is … (Ev çay e.), and the question Ev çi ye?; Ez avê vedixwim, I drink the water, learnt whole",
-          "grammarMd": "**Ev çay e.** This is tea. “Is” is an ending too: **e** after a consonant, **ye** after a vowel.\n\n- *Ev nan e.* This is bread. · *Çay xweş e.* The tea is nice. · *Ev Hevalo ye.* This is Hevalo.\n- To ask, put **çi** (what) where the answer would be: *Ev çi ye?* What is this? — *Ev sêv e.*\n- *Av* → **Ez avê vedixwim.** I drink the water. *Çay* takes **-ê** too (*Ez çayê vedixwim*), but *nan* and *şîr* stay as they are: *Ez nan dixwim.* · *Ez şîr vedixwim.*",
+          "grammarMd": "**Ev çay e.** This is tea. “Is” is an ending too: **e** after a consonant, **ye** after a vowel.\n\n- *Ev nan e.* This is bread. · *Çay xweş e.* The tea is nice. · *Ev Hevalo ye.* This is Hevalo.\n- To ask, put **çi** (what) where the answer would be: *Ev çi ye?* What is this? — *Ev sêv e.*\n- *Av* → **Ez avê vedixwim.** I drink the water. *Çay* takes **-ê** too (*Ez çayê vedixwim*), but *nan* and *şîr* stay as they are (they are masculine): *Ez nan dixwim.* · *Ez şîr vedixwim.*",
           "lessons": [
             {
               "key": "u01s2l1",
@@ -180,7 +180,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "Bi xêr hatî!", "en": "Welcome! (to one person; Bi xêr hatin! to more than one)", "pos": "phrase", "forms": ["bi", "xêr", "hatî", "hatin"]},
-                {"ku": "Ser çavan!", "en": "Thank you! (the answer to a welcome; word for word “on my eyes”)", "pos": "phrase", "forms": ["ser", "çavan"]},
+                {"ku": "Ser çavan!", "en": "Thank you! (the answer to a welcome; word for word “on the eyes”)", "pos": "phrase", "forms": ["ser", "çavan"]},
                 {"ku": "germ", "en": "hot, warm", "pos": "adj", "forms": ["germ"]},
                 {"ku": "fermo", "en": "here you are; please, go ahead", "pos": "interj", "forms": ["fermo"]}
               ]
@@ -265,7 +265,7 @@
           "titleKu": "Şev baş!",
           "titleEn": "Good night!",
           "grammar": "whole phrases first: Ez … dixwazim (I want …), … heye? / … tune (is there …? / there isn’t), and Were!, Bixwe!, Vexwe!",
-          "grammarMd": "Some Kurdish is best learnt whole, before its grammar. Kurdish puts the verb last, so what you want comes first:\n\n- **Ez nan dixwazim.** I want bread. · *Tu çi dixwazî?* What would you like? · *Hevalo sêvekê dixwaze.* Hevalo wants an apple.\n- **Nan heye?** Is there bread? — *Erê, heye.* · *Na, tune.* No, there isn’t. · **Were!** Come! · **Bixwe!** Eat! · **Vexwe!** Drink!",
+          "grammarMd": "Some Kurdish is best learnt whole, before its grammar. Kurdish puts the verb last, so what you want comes first:\n\n- **Ez nan dixwazim.** I want bread. · *Tu çi dixwazî?* What would you like? · *Hevalo sêvekê dixwaze.* Hevalo wants an apple.\n- **Nan heye?** Is there bread? — *Erê, heye.* Yes, there is. · *Na, tune.* No, there isn’t. · **Were!** Come! · **Bixwe!** Eat! · **Vexwe!** Drink!",
           "lessons": [
             {
               "key": "u01s4l1",
@@ -273,7 +273,7 @@
               "titleKu": "Ez nan dixwazim",
               "titleEn": "I want bread",
               "focus": "meet",
-              "beat": "Supper. Hamo asks what you want, and now you can say it: “Ez nan dixwazim.” Hevalo wants one thing only and Hamo does not need to ask. “Sêv heye?” He looks in the basket: “Erê, heye. Bixwe!” For you it is “Bixwe, vexwe!”, which is Hamo’s whole idea of looking after a guest.",
+              "beat": "Dinner. Hamo asks what you want, and now you can say it: “Ez nan dixwazim.” Hevalo wants one thing only and Hamo does not need to ask. “Sêv heye?” He looks in the basket: “Erê, heye. Bixwe!” For you it is “Bixwe, vexwe!”, which is Hamo’s whole idea of looking after a guest.",
               "voice": "hamo",
               "new": [
                 {"ku": "Ez … dixwazim.", "en": "I want … (tu … dixwazî: you want; … dixwaze: he, she wants)", "pos": "phrase", "forms": ["ez", "dixwazim", "dixwazî", "dixwaze"]},
@@ -306,7 +306,7 @@
               "beat": "Night falls on Sêvan. Hamo shows you to the guest room, “Şev baş!”, and in the morning he is at the gate with tea: “Roj baş!” You set off with Hevalo to see the village, “Bi xatirê te!”, and Hamo waves: “Bi xêr biçî!” Ten steps down the lane, Hevalo turns back for an apple.",
               "voice": "hamo",
               "new": [
-                {"ku": "Roj baş!", "en": "Good day!", "pos": "phrase", "forms": ["roj", "baş"]},
+                {"ku": "Roj baş!", "en": "Good morning! (word for word “good day”)", "pos": "phrase", "forms": ["roj", "baş"]},
                 {"ku": "Şev baş!", "en": "Good night!", "pos": "phrase", "forms": ["şev", "baş"]},
                 {"ku": "Bi xatirê te!", "en": "Goodbye! (said by the one who leaves, to one person)", "pos": "phrase", "forms": ["bi", "xatirê", "te"]},
                 {"ku": "Bi xêr biçî!", "en": "Go well! (the answer to “Bi xatirê te!”)", "pos": "phrase", "forms": ["bi", "xêr", "biçî"]}
@@ -331,7 +331,7 @@
       "cefr": "A1",
       "titleKu": "Malbat",
       "titleEn": "Family",
-      "story": "The neighbours come to tea at Hamo’s: Nazê from next door with her son Baran, nine and full of questions, and her daughter Hêvî, six and shy until she isn’t, and then Dapîr Şemsê, the village grandmother, who leans on her stick and on everybody. On the guest-room wall hang photos of Hamo’s family far away in Kobanî: his father Ibrahîm with his shepherd’s flute, his mother Edûl, his brother Evdila and his sisters Lorîn and Cîhan. Hêvî counts the hens with Dapîr and gets a different number every time; breakfast is spread on a cloth on the floor and Hamo puts five sugars in his tea; everyone says which animals they have, and Bozo the donkey puts his big grey head over the wall to make sure nobody forgets him. Hevalo has no apples, and makes sure everybody notices.",
+      "story": "The neighbours come to tea at Hamo’s: Nazê from next door with her son Baran, nine and full of questions, and her daughter Hêvî, six and shy until she isn’t, and then Dapîr Şemsê, the village grandmother, who leans on her stick and on everybody. On the guest-room wall hang photos of Hamo’s family, far away in Kobanî. Hêvî counts the hens with Dapîr and gets a different number every time; breakfast is spread on a cloth on the floor and Hamo puts five sugars in his tea; everyone says which animals they have, and Bozo the donkey puts his big grey head over the wall to make sure nobody forgets him. Hevalo has no apples, and makes sure everybody notices.",
       "recorder": "hamo",
       "skills": [
         {
@@ -339,7 +339,7 @@
           "titleKu": "Malbat û cîran",
           "titleEn": "Family and neighbours",
           "grammar": "the ezafe: -ê after a masculine noun, -a after a feminine one (bavê min, diya min); em, hûn, ew … in / ne",
-          "grammarMd": "**Bavê min, diya min.** My father, my mother. A noun is joined to the word after it by a link: **-ê** for a masculine noun, **-a** for a feminine one: *bavê min*, *birayê min*; *diya min*, *xwişka min*, *navê wê* her name.\n\n- With **em** (we), **hûn** (you, more than one) and **ew** (they), “are” is **in**, or **ne** after a vowel: *Em malbat in.* · *Hûn cîran in.*\n- *Ew li Kobaniyê ne.* They are in Kobanî.",
+          "grammarMd": "**Bavê min, diya min.** My father, my mother. A noun is joined to the word after it by a link: **-ê** for a masculine noun, **-a** for a feminine one: *bavê min*, *birayê min*, *navê wê* (her name); *diya min*, *xwişka min* (*dê* becomes *diya*; after a vowel a *y* slips in: *birayê*).\n\n- With **em** (we), **hûn** (you, more than one) and **ew** (they), “are” is **in**, or **ne** after a vowel: *Em malbat in.* · *Hûn cîran in.*\n- *Ew li Kobaniyê ne.* They are in Kobanî.",
           "lessons": [
             {
               "key": "u02s1l1",
@@ -354,7 +354,7 @@
                 {"ku": "dê", "en": "mother", "pos": "noun", "gender": "f", "forms": ["dê", "diya", "diyê", "dayê", "dayik", "dayika", "dayikê"]},
                 {"ku": "wêne", "en": "picture, photo", "pos": "noun", "gender": "m", "forms": ["wêne", "wêneyên", "wêneyan", "wêneyek", "wêneyê", "wêneyekî", "wêneyî"]},
                 {"ku": "wî", "en": "his; him", "pos": "pron", "forms": ["wî"]},
-                {"ku": "wê", "en": "her (his/her: of a woman); her", "pos": "pron", "forms": ["wê"]}
+                {"ku": "wê", "en": "her (of a woman: navê wê, her name)", "pos": "pron", "forms": ["wê"]}
               ]
             },
             {
@@ -532,9 +532,9 @@
         {
           "position": 4,
           "titleKu": "Heye û tune",
-          "titleEn": "Having",
+          "titleEn": "There is, there isn’t",
           "grammar": "having: the thing, then its owner, then heye / hene / tune (Kerekî min heye.); -ek for “a”",
-          "grammarMd": "**Kerekî min heye.** I have a donkey (word for word: a donkey of mine is). The thing comes first, then its owner, then **heye**; **-ek** means “a”, and grows to **-ekî** (masculine) or **-eke** (feminine) before *min*.\n\n- **hene** for more than one: *Du birayên min hene.* I have two brothers.\n- **tune** for none: *Pisîka min tune.* I don’t have a cat.",
+          "grammarMd": "**Kerekî min heye.** I have a donkey (word for word: a donkey of mine is). The thing comes first, then its owner, then **heye**; **-ek** means “a”, and grows to **-ekî** (masculine) or **-eke** (feminine) before *min*.\n\n- **hene** for more than one: *Du xwişkên min hene.* I have two sisters.\n- **tune** for none: *Pisîkeke min tune.* I don’t have a cat.",
           "lessons": [
             {
               "key": "u02s4l1",
@@ -574,7 +574,7 @@
               "titleKu": "Kerem bike!",
               "titleEn": "Help yourself!",
               "focus": "talk",
-              "beat": "Supper with everyone at Hamo’s. “Kerem bike!” he says, passing round the bread, and when Hêvî counts all the way to ten without a mistake he calls out “Aferîn!”. Dapîr wants to know where you are from, so Hamo asks you for her, and tells you his own answer: from Kobanî, and from Sêvan. Meanwhile Hevalo eats the bread you were holding.",
+              "beat": "Dinner with everyone at Hamo’s. “Kerem bike!” he says, passing round the bread, and when Hêvî counts all the way to ten without a mistake he calls out “Aferîn!”. Dapîr wants to know where you are from, so Hamo asks you for her, and tells you his own answer: from Kobanî, and from Sêvan. Meanwhile Hevalo eats the bread you were holding.",
               "voice": "hamo",
               "new": [
                 {"ku": "Kerem bike!", "en": "Please! Go ahead! (offering)", "pos": "phrase", "forms": ["kerem", "bike", "bikin"]},
@@ -589,7 +589,7 @@
               "titleKu": "Çi heye, çi tune?",
               "titleEn": "What’s there, what isn’t?",
               "focus": "review",
-              "beat": "A game at supper: everyone says one thing they have and one they don’t. Hamo has a donkey, a dog and an orchard; he has no cat. Hevalo has no apples, so everyone gives him one, and now he has six, and Hamo has none.",
+              "beat": "A game at dinner: everyone says one thing they have and one they don’t. Hamo has a donkey, a dog and an orchard; he has no cat. Hevalo has no apples, so everyone gives him one, and now he has six, and Hamo has none.",
               "voice": "hamo",
               "new": []
             }
@@ -794,10 +794,10 @@
             {
               "key": "u03s3l4",
               "position": 4,
-              "titleKu": "Nîvê wêneyê",
+              "titleKu": "Nîvê wêneyekî",
               "titleEn": "Half a photo",
               "focus": "review",
-              "beat": "Everyone gathers round the tin: marbles in every colour and half a photo. Hamo tells the story: summers with his aunt, he and Lorîn under this walnut tree, burying treasure for the next summer, and then forgetting it for thirty years. Hevalo sniffs every marble, in case one of them is an apple.",
+              "beat": "Everyone gathers round the tin: marbles in every colour and half a photo. Hamo tells the story: summers with his aunt, he and Lorîn under this walnut tree, burying treasure for the next summer, and then forgetting it for forty years. Hevalo sniffs every marble, in case one of them is an apple.",
               "voice": "hamo",
               "new": []
             }
@@ -876,13 +876,13 @@
       "cefr": "A1",
       "titleKu": "Bazar",
       "titleEn": "The market",
-      "story": "Market day in the town below the village. Hamo, Hevalo and you go down the road with Bozo, who carries the empty baskets and stops at every flower. Now the verbs come alive in the present tense: going, coming, seeing, saying, knowing, wanting, eating. At the market Hamo knows every seller, and Mîrza the fruit seller best of all: they haggle like the old friends they are, and Mîrza always wins. Hamo buys what is on his list and several things that are not, takes far too much sugar in Mîrza’s tea, and gets his numbers in a muddle once the prices pass a hundred. Then Mîrza’s apple crate is found empty, every witness says “Ez nizanim”, and a certain deer has a very round belly. On the way home Hamo’s phone rings: it is his sister Lorîn in Kobanî. Come for the weekend, all of you.",
+      "story": "Market day in the town below the village. Hamo, Hevalo and you go down the road with Bozo, who carries the empty baskets and stops at every flower. Now the verbs come alive in the present tense: going, coming, seeing, saying, knowing, wanting, eating. At the market Hamo knows every seller, and Mîrza the fruit seller best of all: they haggle like the old friends they are, and Mîrza always wins. Hamo buys what is on his list and several things that are not, takes far too much sugar in Mîrza’s tea, and gets his numbers in a muddle once the prices pass a hundred. Then Mîrza’s apple basket is found empty, every witness says “Ez nizanim”, and a certain deer has a very round belly. On the way home Hamo’s phone rings: it is his sister Lorîn in Kobanî. Come for the weekend, all of you.",
       "recorder": "hamo",
       "skills": [
         {
           "position": 1,
           "titleKu": "Em diçin bazarê",
-          "titleEn": "Off to market",
+          "titleEn": "We’re off to market",
           "grammar": "the present tense: di- + the present stem + -im, -î, -e, -in; çûn (diç-), dîtin (dibîn-), gotin (dibêj-), kirin (dik-), and hatin (tê-)",
           "grammarMd": "**Ez diçim bazarê.** I am going to the market. The present is **di-** + the verb’s present stem + an ending: **-im** (I), **-î** (you), **-e** (he, she, it), **-in** (we, you, they).\n\n- *çûn* to go: *diçim, diçî, diçe, diçin* · *dîtin* to see: *dibînim* · *gotin* to say: *dibêjim* · *kirin* to do: *dikim*\n- *hatin* to come has no di-: *ez têm, tu têyî, ew tê, em tên*.",
           "lessons": [
@@ -994,7 +994,7 @@
               "titleKu": "Çaya Mîrza",
               "titleEn": "Tea at Mîrza’s",
               "focus": "talk",
-              "beat": "Mîrza makes tea for his old friend. “Hinek şekir?” Hamo takes one spoonful, then a second, then a third, and Mîrza cries “Zêde!”: too much! Hamo says the sugar is for his voice, which he needs for haggling. Then he asks you how you take yours, and pours it himself, with sugar.",
+              "beat": "Mîrza makes tea for his old friend. “Hinek şekir?” Hamo takes one spoonful, then a second, then a third, then a fourth, and Mîrza cries “Zêde!”: too much! Hamo says the sugar is for his voice, which he needs for haggling. Then he asks you how you take yours, and pours it himself, with sugar.",
               "voice": "hamo",
               "new": [
                 {"ku": "kevçî", "en": "spoon", "pos": "noun", "gender": "m", "forms": ["kevçî", "kevçiyên", "kevçiyan", "kevçiyek", "kevçiyê", "kevçiyekî", "kevçiyî"]},
@@ -1009,7 +1009,7 @@
               "titleKu": "Çi dixwî?",
               "titleEn": "What are you eating?",
               "focus": "review",
-              "beat": "Lunch on a bench: bread, cheese, a little honey and tea. Everyone is eating, except Hevalo, who is suddenly not hungry at all and gazing at the mountain. Hamo asks what everyone wants for supper; Hevalo still doesn’t want anything, which has never happened before.",
+              "beat": "Lunch on a bench: bread, cheese, a little honey and tea. Everyone is eating, except Hevalo, who is suddenly not hungry at all and gazing at the mountain. Hamo asks what everyone wants for dinner; Hevalo still doesn’t want anything, which has never happened before.",
               "voice": "hamo",
               "new": []
             }
@@ -1077,7 +1077,7 @@
               "titleKu": "Pere tune!",
               "titleEn": "No money left!",
               "focus": "review",
-              "beat": "Hamo adds it all up once more: the potatoes, the fish, the honey, the basket of apples, Mîrza’s tea. He has twenty left, exactly the price of a glass of tea, and he spends it on tea. Then Mîrza looks at his apple crate and goes pale.",
+              "beat": "Hamo adds it all up once more: the potatoes, the fish, the honey, the basket of apples, Mîrza’s tea. He has twenty left, exactly the price of a glass of tea, and he spends it on tea. Then Mîrza looks at his apple basket and goes pale.",
               "voice": "hamo",
               "new": []
             }
@@ -1096,7 +1096,7 @@
               "titleKu": "Kes nizane!",
               "titleEn": "Nobody knows!",
               "focus": "meet",
-              "beat": "Mîrza’s apple crate is empty. Who ate the apples? Nobody knows. Bozo looks away. Hevalo shakes his head very, very fast, and Hamo puts it into words for him: “Ez nizanim! Ez hîç nizanim!” “Çima?” asks Mîrza. Nobody knows that either.",
+              "beat": "Mîrza’s apple basket is empty. Who ate the apples? Nobody knows. Bozo looks away. Hevalo shakes his head very, very fast, and Hamo puts it into words for him: “Ez nizanim! Ez hîç nizanim!” “Çima?” asks Mîrza. Nobody knows that either.",
               "voice": "hamo",
               "new": [
                 {"ku": "na-", "en": "not (the negative present: naçim, nakim)", "pos": "particle", "forms": ["naçim", "naçî", "naçe", "naçin", "nayêm", "nayî", "nayê", "nayên", "nakim", "nakî", "nake", "nakin", "nabînim", "nabînî", "nabîne", "nabînin", "nabêjim", "nabêjî", "nabêje", "nabêjin", "nanêrim", "nanêrî", "nanêre", "nanêrin", "naxivim", "naxivî", "naxive", "naxivin", "nakirim", "nakirî", "nakire", "nakirin", "nafiroşim", "nafiroşî", "nafiroşe", "nafiroşin", "nadim", "nadî", "nade", "nadin", "nagerim", "nagerî", "nagere", "nagerin", "naxebitim", "naxebitî", "naxebite", "naxebitin", "naxwazim", "naxwazî", "naxwaze", "naxwazin", "naxwim", "naxwî", "naxwe", "naxwin", "venaxwim", "venaxwî", "venaxwe", "venaxwin"]},
@@ -1113,7 +1113,7 @@
               "titleKu": "Zikê te tije ye!",
               "titleEn": "Your belly is full!",
               "focus": "build",
-              "beat": "Hamo turns detective and goes round looking for the apple thief, with you as his assistant. Is Hevalo hungry? He shakes his head. Then why is his belly so full? Is it true that he was by the crate? Hevalo says that is wrong, but there is apple peel on his nose.",
+              "beat": "Hamo turns detective and goes round looking for the apple thief, with you as his assistant. Is Hevalo hungry? He shakes his head. Then why is his belly so full? Is it true that he was by the basket? Hevalo says that is wrong, but there is apple peel on his nose.",
               "voice": "hamo",
               "new": [
                 {"ku": "zik", "en": "belly, stomach", "pos": "noun", "gender": "m", "forms": ["zik", "zikên", "zikan", "zikek", "zikê", "zikekî", "zikî"]},
@@ -1279,9 +1279,9 @@
               "beat": "Hamo announces that since nobody knows his birthday he will have one today, and again tomorrow, to be safe. “Bîra min nayê,” he admits, when you ask what year he was born. “Xem neke!” he tells you: a man is as old as his moustache, and his moustache is young.",
               "voice": "hamo",
               "new": [
-                {"ku": "Pîroz be!", "en": "Congratulations! Happy …! (… pîroz be)", "pos": "phrase", "forms": ["pîroz", "be"]},
+                {"ku": "Pîroz be!", "en": "Congratulations! (Rojbûna te pîroz be! Happy birthday!)", "pos": "phrase", "forms": ["pîroz", "be"]},
                 {"ku": "Xem neke!", "en": "Don’t worry!", "pos": "phrase", "forms": ["xem", "neke"]},
-                {"ku": "bîr", "en": "memory (bîra min: I remember)", "pos": "noun", "gender": "f", "forms": ["bîr", "bîrên", "bîran", "bîrek", "bîra", "bîrê", "bîreke"]},
+                {"ku": "bîr", "en": "memory (bîra min tê: I remember; bîra min nayê: I don’t remember)", "pos": "noun", "gender": "f", "forms": ["bîr", "bîrên", "bîran", "bîrek", "bîra", "bîrê", "bîreke"]},
                 {"ku": "dîsa", "en": "again", "pos": "adv", "forms": ["dîsa"]}
               ]
             },
@@ -1307,8 +1307,8 @@
             {
               "key": "u05s3l1",
               "position": 1,
-              "titleKu": "Demjimêr çend e?",
-              "titleEn": "What time is it?",
+              "titleKu": "Sê demjimêr",
+              "titleEn": "Three clocks",
               "focus": "meet",
               "beat": "Hamo owns three clocks, and each of them says a different time: one says eleven, one says twelve, one a quarter past something. He trusts the one that says it is time for tea. In the morning it is always time for tea, he explains, and in the evening too.",
               "voice": "hamo",
@@ -1412,7 +1412,7 @@
               "titleKu": "Soza min",
               "titleEn": "My promise",
               "focus": "talk",
-              "beat": "Everyone plans the trip: the bus leaves the square at eight sharp on Saturday, with no time for tea. Hamo gives his solemn word: “Soza min soz e!” If the bus will not stop for him, he says, he will run after it. Everybody looks at Nazê; Nazê just smiles.",
+              "beat": "Everyone plans the trip: the bus leaves the square at eight sharp on Saturday, with no time for tea. Hamo gives his solemn word: “Soza min soz e!” If the bus will not stop for him, he says, he will run after it. Everybody looks at Nazê; Nazê just laughs.",
               "voice": "hamo",
               "new": [
                 {"ku": "soz", "en": "promise", "pos": "noun", "gender": "f", "forms": ["soz", "sozên", "sozan", "sozek", "soza", "sozê", "sozeke"]},
@@ -1440,7 +1440,7 @@
       "cefr": "A2",
       "titleKu": "Bajar",
       "titleEn": "The city",
-      "story": "With the bus gone, Ferhad drives everyone down to the main road on his tractor, and a minibus takes you the rest of the way to Kobanî. The town is Hamo’s world: the streets of his childhood, the crowded market, the bakery where he bought bread at seven, and Miştenûr hill above the roofs. He is so happy that he gets lost twice, in his own town. At his parents’ house his mother Edûl will not let anyone stand up from the table (“Bixwe! Vexwe! Rûne!”), Lorîn’s children call him Xalo and climb all over him, and his father Ibrahîm takes the old shepherd’s flute down from the wall. Lorîn opens her old tin: the other half of the photo, and the promise of their childhood, that one day their father would play for them again by a Newroz fire. This Newroz, Ibrahîm says, he will come to Sêvan and keep it. Orders fill the house, and so do divê and dikarim.",
+      "story": "With the bus gone, Ferhad drives everyone down to the main road on his tractor, and a minibus takes you the rest of the way to Kobanî. The town is Hamo’s world: the streets of his childhood, the crowded market, the bakery where he bought bread as a boy of seven, and Miştenûr hill above the roofs. He is so happy to be home that he gets lost twice in his own town. At his parents’ house his mother Edûl will not let anyone stand up from the table (“Bixwe! Vexwe! Rûne!”), Lorîn’s children call him Xalo and climb all over him, and his father Ibrahîm takes the old shepherd’s flute down from the wall. Lorîn brings out an old book: the other half of the photo, and the promise of their childhood, that one day their father would play for them again by a Newroz fire. This Newroz, Ibrahîm says, he will come to Sêvan and keep it. Orders fill the house, and so do divê and dikarim.",
       "recorder": "hamo",
       "skills": [
         {
@@ -1448,7 +1448,7 @@
           "titleKu": "Li bajêr",
           "titleEn": "In town",
           "grammar": "finding the way: li rastê, li çepê, rasterast; bajar becomes bajêr after a word of place (li bajêr)",
-          "grammarMd": "**Li rastê, li çepê, rasterast.** On the right, on the left, straight on. *Kolan li rastê ye.* The street is on the right.\n\n- After a word of place, *bajar* changes its vowel: **li bajêr** in town, **ji bajêr** from town.\n- *Mal dûr e?* Is the house far? — *Na, nêzîk e.* No, it’s near.",
+          "grammarMd": "**Li rastê, li çepê, rasterast.** On the right, on the left, straight on. *Kolan li rastê ye.* The street is on the right.\n\n- After *li*, *ji* or *bi*, *bajar* becomes **bajêr**: **li bajêr** in town, **ji bajêr** from town. With a word after it, it stays *bajar*: *li bajarê min* in my town.\n- *Mal dûr e?* Is the house far? — *Na, nêzîk e.* No, it’s near.",
           "lessons": [
             {
               "key": "u06s1l1",
@@ -1464,7 +1464,7 @@
                 {"ku": "bilêt", "en": "ticket", "pos": "noun", "gender": "f", "forms": ["bilêt", "bilêtên", "bilêtan", "bilêtek", "bilêta", "bilêtê", "bilêteke", "bilêtekê"]},
                 {"ku": "hêdî", "en": "slow; slowly", "pos": "adj", "forms": ["hêdî"]},
                 {"ku": "dûr", "en": "far", "pos": "adj", "forms": ["dûr"]},
-                {"ku": "nêzîk", "en": "near, close", "pos": "adj", "forms": ["nêzîk"]}
+                {"ku": "nêzîk", "en": "near, close", "pos": "adj", "forms": ["nêzîk", "nêzîkî"]}
               ]
             },
             {
@@ -1505,7 +1505,7 @@
               "titleKu": "Mala bavê min",
               "titleEn": "My father’s house",
               "focus": "review",
-              "beat": "The family house at the corner, the old fig tree still in the yard. Hamo shows you everything from the gate: the window he climbed out of, the step he fell down, the street where he got lost today. Lorîn opens the door, and brother and sister look at each other: she knows why he has come.",
+              "beat": "The family house at the corner, the old fig tree still in the yard. Hamo shows you everything from the gate: the window he climbed out of, the step he fell down, the street where he got lost today. Edûl opens the door, Lorîn comes down the stairs, and brother and sister look at each other: she knows why he has come.",
               "voice": "hamo",
               "new": []
             }
@@ -1516,7 +1516,7 @@
           "titleKu": "Werin, rûnin!",
           "titleEn": "Come in, sit down!",
           "grammar": "the imperative: bi- + present stem + -e for one, -in for more (bide, bidin); were, here, rûne without bi-; “don’t” with ne- (neke, neçe)",
-          "grammarMd": "**Werin, rûnin!** Come in, sit down! An order to one person ends in **-e**, to more than one in **-in**, and most take **bi-** in front: *bide / bidin* give, *bibêje / bibêjin* say, and *bixwe* eat, *vexwe* drink.\n\n- Some have no bi-: *were* come, *here* go, *rûne* sit, *derkeve* go out.\n- “Don’t!” is **ne-** in place of bi-: *neke!* don’t, *neçe!* don’t go, *netirse!* don’t be afraid.",
+          "grammarMd": "**Werin, rûnin!** Come in, sit down! An order to one person ends in **-e**, to more than one in **-in**, and most take **bi-** in front: *bide / bidin* give, *bibêje / bibêjin* say, and *bixwe* eat.\n\n- Some have no bi-: *were* come, *here* go, *rûne* sit, *derkeve* go out, *vexwe* drink.\n- “Don’t!” is **ne-** in place of bi-: *neke!* don’t, *neçe!* don’t go, *netirse!* don’t be afraid.",
           "lessons": [
             {
               "key": "u06s2l1",
@@ -1573,7 +1573,7 @@
               "titleKu": "Wêneyê kevn",
               "titleEn": "The old photo",
               "focus": "review",
-              "beat": "After dinner Lorîn brings out the tin she has kept for thirty years: the other half of the photo, their father on Miştenûr at Newroz, and on the back, in two children’s handwriting, a promise: one day he will play for us again by a Newroz fire. Ibrahîm gets up and takes his old shepherd’s flute down from the wall.",
+              "beat": "After dinner Lorîn brings out an old book, and in it, kept safe for forty years, is the other half of the photo: their father on Miştenûr at Newroz. On the back, in two children’s handwriting, is a promise: one day he will play for us again by a Newroz fire. Ibrahîm gets up and takes his old shepherd’s flute down from the wall.",
               "voice": "hamo",
               "new": []
             }
@@ -1789,7 +1789,7 @@
               "titleKu": "Berf dihele",
               "titleEn": "The snow is melting",
               "focus": "review",
-              "beat": "The sun returns, the snow melts and the stream by the walnut tree sings again. Hamo announces “Newroz tê!”, and the phone rings: his mother in Kobanî wants to know if the road is open. His father is ready, and she is coming too.",
+              "beat": "The sun returns, the snow melts and the stream by the walnut tree sings again. Hamo announces “Newroz tê!”, and the phone rings: his mother in Kobanî wants to know if the road is open. His father is ready, and his mother is coming too.",
               "voice": "hamo",
               "new": []
             }
@@ -1826,7 +1826,7 @@
               "titleKu": "Sêzdeh roj",
               "titleEn": "Thirteen days",
               "focus": "build",
-              "beat": "The children count the days to Newroz on Dapîr’s calendar: fourteen, thirteen… Hamo is writing a speech for the fire, a great speech, which he will learn by heart afterwards. He dreams about it at night, a dream in which everyone claps. In the morning he cannot find it: has he forgotten where he put it? Bring it here, he tells Hevalo, who is chewing something papery.",
+              "beat": "The children count the days to Newroz on Dapîr’s calendar: fourteen, thirteen… Hamo is writing a speech for the fire, a great speech, which he will learn by heart afterwards. He dreams about it at night, a dream in which everyone claps. In the morning he cannot find it: has he forgotten where he put it? Bring it here, Hamo tells Hevalo, who is chewing something papery.",
               "voice": "hamo",
               "new": [
                 {"ku": "piştre", "en": "afterwards, later", "pos": "adv", "forms": ["piştre"]},
@@ -1896,7 +1896,7 @@
               "titleKu": "Kincên Newrozê",
               "titleEn": "Newroz clothes",
               "focus": "build",
-              "beat": "Nazê has sewn new clothes for everyone: a dress for Hêvî, new shoes for Baran, and for Hamo the traditional suit with a green sash, which he puts on straight away, over his pyjamas. The leader of the govend dances at the front, he explains, and that will be him, if his knees agree.",
+              "beat": "Nazê has sewn new clothes for everyone: a dress for Hêvî, new shoes for Baran, and for Hamo the traditional suit with a green sash, which he puts on straight away, over his pyjamas. The leader of the govend dances at the front, Hamo explains, and that will be him, if his knees agree.",
               "voice": "hamo",
               "new": [
                 {"ku": "li xwe kirin", "en": "to put on (clothes)", "pos": "phrase", "forms": ["li", "xwe", "kirin"]},
@@ -2090,7 +2090,7 @@
           "titleKu": "Ez te dibînim",
           "titleEn": "I see you",
           "grammar": "pronouns as objects in the present, before the verb (doktor min dibîne, ez te dibînim); jê for ji + him, her, it",
-          "grammarMd": "**Doktor min dibîne.** The doctor sees me. A pronoun as the object goes before the verb, in its short form, *min, te, wî, wê, me, we, wan*: *Ez te dibînim.* I see you. · *Tu wî nas dikî?* Do you know him?\n\n- **jê** is *ji* + him, her or it: *Ez jê hez dikim.* I like it. · *Jê bipirse!* Ask him!",
+          "grammarMd": "**Doktor min dibîne.** The doctor sees me. A pronoun as the object goes before the verb, in its other form, the one you know from *navê min*: *min, te, wî, wê, me, we, wan*: *Ez te dibînim.* I see you. · *Tu wî nas dikî?* Do you know him?\n\n- **jê** is *ji* + him, her or it: *Ez jê hez dikim.* I like it. · *Jê bipirse!* Ask him!",
           "lessons": [
             {
               "key": "u08s2l1",
@@ -2230,7 +2230,7 @@
           "titleKu": "Ez ditirsim",
           "titleEn": "I’m afraid",
           "grammar": "feelings in the present (ez ditirsim, ez dihizirim, ez tê digihîjim); xwe for oneself (ew li xwe dinêre); guhdariya min bike",
-          "grammarMd": "**Ez ditirsim.** I’m afraid. Many feelings are verbs in Kurdish: *ditirsim* I’m afraid, *dihizirim* I think, *tê digihîjim* I understand.\n\n- **xwe** is oneself, whoever that is: *Ez li xwe dinêrim.* I look at myself. · *Ew li xwe dinêre.* He looks at himself.\n- **Guhdariya min bike!** Listen to me! (word for word: do my listening)",
+          "grammarMd": "**Ez ditirsim.** I’m afraid. Fear, thought and understanding are verbs in Kurdish, not adjectives: *ditirsim* I’m afraid, *dihizirim* I think, *tê digihîjim* I understand.\n\n- **xwe** is oneself, whoever that is: *Ez li xwe dinêrim.* I look at myself. · *Ew li xwe dinêre.* He looks at himself.\n- **Guhdariya min bike!** Listen to me! (word for word: do my listening)",
           "lessons": [
             {
               "key": "u08s4l1",
@@ -2287,7 +2287,7 @@
               "key": "u08s4l4",
               "position": 4,
               "titleKu": "Sibe ez ê bibêjim",
-              "titleEn": "Tomorrow I’ll tell",
+              "titleEn": "I’ll tell you tomorrow",
               "focus": "review",
               "beat": "Baran comes down from the roof and sits by the stove. He does not tell yet; he says “Sibe ez ê bibêjim.” Then Hevalo sits next to him and offers him his last apple, and that, everyone agrees, is a very big moment.",
               "voice": "hamo",
@@ -2354,7 +2354,7 @@
               "titleKu": "Ez razam",
               "titleEn": "I fell asleep",
               "focus": "talk",
-              "beat": "Hamo asks the questions everyone is afraid to ask. Baran admits it: he was a little afraid; he sat down under a walnut tree to think, and fell asleep. When he got up, it was dark. Hamo asks you what you would have done; he himself, he says, would have eaten some walnuts first.",
+              "beat": "You ask the questions everyone is afraid to ask, and Hamo answers for Baran: he was a little afraid; he sat down under a walnut tree to think, and fell asleep. When he got up, it was dark. And Hamo himself, under a tree? He would eat some walnuts first.",
               "voice": "hamo",
               "new": [
                 {"ku": "raza", "en": "slept (past of razan)", "pos": "verb", "forms": ["raza", "razam", "razayî", "razan", "neraza"]},
@@ -2380,7 +2380,7 @@
           "titleKu": "Berê",
           "titleEn": "In the old days",
           "grammar": "time in the past: duh, pêr, par, berê, hefteya borî; dema ku … (when …) with the past",
-          "grammarMd": "**Dema ku ez zarok bûm, …** When I was a child, … *Dema ku* (when) starts a time in the past, and what happened then follows: *Dema ku ez vegeriyam, ew li malê bû.* When I came back, he was at home.\n\n- *duh* yesterday · *pêr* the day before · *par* last year · *berê* before, in the old days · *hefteya borî* last week",
+          "grammarMd": "**Dema ku ez zarok bûm, …** When I was a child, … *Dema ku* (when) starts a time in the past, and what happened then follows: *Dema ku ez vegeriyam, ew li malê bû.* When I came back, he was at home.\n\n- *duh* yesterday · *pêr* the day before yesterday · *par* last year · *berê* before, in the old days · *hefteya borî* last week",
           "lessons": [
             {
               "key": "u09s2l1",
@@ -2549,7 +2549,7 @@
               "beat": "Hamo tells how organised the family will be this time, and how, the last time they moved to the pastures, he was late by one whole day: by mistake, of course, completely by mistake. A small mistake. This time everyone leaves at dawn, he says, and he will be wide awake. He tests the ropes for the packs. Bozo watches, shy, from behind the wall: Bozo has been acting strangely all week.",
               "voice": "hamo",
               "new": [
-                {"ku": "hişyar", "en": "alert, careful", "pos": "adj", "forms": ["hişyar"]},
+                {"ku": "hişyar", "en": "awake, alert; watchful", "pos": "adj", "forms": ["hişyar"]},
                 {"ku": "çewtî", "en": "mistake", "pos": "noun", "gender": "f", "forms": ["çewtî", "çewtiyên", "çewtiyan", "çewtiyek", "çewtiya", "çewtiyê", "çewtiyeke"]},
                 {"ku": "bi şaşî", "en": "by mistake", "pos": "phrase", "forms": ["bi", "şaşî"]},
                 {"ku": "bi tevahî", "en": "completely", "pos": "phrase", "forms": ["bi", "tevahî"]},
@@ -2592,7 +2592,7 @@
       "cefr": "B1",
       "titleKu": "Zozan",
       "titleEn": "The summer pastures",
-      "story": "The shepherd on the path is Bişar, Hamo’s old friend, and he leads everyone up to the zozan, the high summer pastures, where his black tents stand by a cold spring. Life up there is milk and bread and work: milking at dawn, churning butter in a goatskin, baking bread on the saj, songs at night under more stars than Baran can count. The mysterious visitor is Zerê, a shy wild doe who comes every night for the salt Bişar puts out, and from the moment Hevalo sees her he has eyes for nobody else: he brings her apples, he forgets his own, and one morning he is gone with the whole sack. Following the two deer, the camp finds a hidden lake and an old stone house: Dapîr’s summer home when she was a girl, where, she remembers, a young flute player from Kobanî used to play for the shepherds by the lake. It was Hamo’s father. The past now has objects (min nan xwar, te çi dît?, me ew dîtin), and old summers run in the past continuous. At the end of the summer Hevalo says a long goodbye to Zerê, and everyone goes back down to the village with a notebook full of stories.",
+      "story": "The shepherd on the path is Bişar, Hamo’s old friend, and he leads everyone up to the zozan, the high summer pastures, where his black tents stand by a cold spring. Life up there is milk and bread and work: milking at dawn, churning butter in a goatskin, baking bread on the saj, songs at night under more stars than Baran can count. The mysterious visitor is Zerê, a shy wild doe who comes every night for the salt Bişar puts out, and from the moment Hevalo sees her he has eyes for nobody else: he brings her apples, he forgets his own, and one morning he is gone with the whole sack. Following the two deer, the camp finds a hidden lake and an old stone house: Dapîr’s summer home when she was a girl, where, she remembers, a young flute player from Kobanî used to play for the shepherds by the lake. It was Hamo’s father. You learn the past of verbs that take an object (min nan xwar, te çi dît?) and the past continuous for the old summers. At the end of the summer Hevalo says a long goodbye to Zerê, and everyone goes back down to the village with a notebook full of stories.",
       "recorder": "hamo",
       "skills": [
         {
@@ -2608,7 +2608,7 @@
               "titleKu": "Me çay vexwar",
               "titleEn": "We drank tea",
               "focus": "meet",
-              "beat": "The shepherd on the path is Bişar, Hamo’s old friend. They drink tea on the rocks while his flock goes past, and Hamo tells him everything that happened on the way up, twice. Bişar picks up Dapîr’s bag, puts it down in front of his tent and asks what you saw, what you ate, what Bozo did. Hamo gets as far as “Me çay vexwar…”.",
+              "beat": "The shepherd on the path is Bişar, Hamo’s old friend. They drink tea on the rocks while his flock goes past, and Hamo tells him everything that happened on the way up, twice. Bişar picks up Dapîr’s bag, puts it down in front of his tent and asks what you saw, what you ate, what Bozo did. Hamo gets as far as “Me çay vexwar…”",
               "voice": "hamo",
               "new": [
                 {"ku": "xwar", "en": "ate (past of xwarin)", "pos": "verb", "forms": ["xwar", "xwarin", "nexwar"]},
@@ -2767,7 +2767,7 @@
               "key": "u10s3l2",
               "position": 2,
               "titleKu": "Dema Dapîr keçik bû",
-              "titleEn": "When Grandma was a girl",
+              "titleEn": "When Dapîr was a girl",
               "focus": "build",
               "beat": "Dapîr tells: when she was a girl, the women used to milk while the girls sang, and at night the whole household slept on felt rugs by the fire, even when lightning lit the sky. Her mother used to sing her a lullaby; she came up here nineteen summers in a row. And one summer a young flute player from Kobanî came up and played for the shepherds by the lake every evening. His name was Ibrahîm. Hamo, for once in his life, has nothing to say.",
               "voice": "hamo",
@@ -2840,7 +2840,7 @@
               "titleKu": "Min ji te re got!",
               "titleEn": "I told you!",
               "focus": "build",
-              "beat": "Who saw the lake first? Who burned the bread? Who said the doe was “just a goat”? Hamo says he does not remember saying that; Baran shouts that he did; Hamo is astonished. “We had a summer like no other,” he says to change the subject, worth every step of the climb, and everyone is happy to agree.",
+              "beat": "Who saw the lake first? Who burned the bread? Who said the doe was “just a goat”? Hamo says he does not remember saying that; Baran shouts that he did; Hamo is astonished. “We had a summer like no other,” he says, to change the subject: worth every step of the climb. Everyone is happy to agree.",
               "voice": "hamo",
               "new": [
                 {"ku": "şaşmayî", "en": "astonished", "pos": "adj", "forms": ["şaşmayî"]},
@@ -2894,7 +2894,7 @@
           "titleKu": "Karê te çi ye?",
           "titleEn": "What’s your job?",
           "grammar": "jobs and the endings that make them: -kar (cotkar), -ker (karker), -dar (dikandar), -pêj (nanpêj); bûn for becoming (ez ê bibim mamoste)",
-          "grammarMd": "**Karê te çi ye?** What’s your job? — **Ez cotkar im.** I’m a farmer. Many jobs are a word with an ending: *kar* work → **karker** worker, *dikan* shop → **dikandar** shopkeeper, *nan* bread → **nanpêj** baker.\n\n- To become is *bûn*: *Ez dixwazim bibim mamoste.* I want to become a teacher. · *Ew ê bibe nivîskar.* He will become a writer.",
+          "grammarMd": "**Karê te çi ye?** What’s your job? — **Ez cotkar im.** I’m a farmer. Many job names are a word plus an ending: *kar* work → **karker** worker, *dikan* shop → **dikandar** shopkeeper, *nan* bread → **nanpêj** baker.\n\n- To become is *bûn*: *Ez dixwazim bibim mamoste.* I want to become a teacher. · *Ew ê bibe nivîskar.* He will become a writer.",
           "lessons": [
             {
               "key": "u11s1l1",
@@ -3036,7 +3036,7 @@
           "titleKu": "Ji ber ku…",
           "titleEn": "Because…",
           "grammar": "linking ideas: ji ber ku and çimkî (because), loma and ji ber vê yekê (so), lê and lêbelê (but), hem … hem (both … and), bêyî ku (without)",
-          "grammarMd": "**Ez dibezim, ji ber ku ez dereng im.** I’m running because I’m late. **ji ber ku** and **çimkî** say why; **loma** and **ji ber vê yekê** say what follows: *Baran ditirse, loma ew dihizire.*\n\n- **lê** and **lêbelê** but, however · **hem … hem** both … and: *hem sêv hem tirî*\n- **bêyî ku** + the bi- form: *bêyî ku tiştekî bibêje* without saying anything",
+          "grammarMd": "**Ez dibezim, ji ber ku ez dereng im.** I’m running because I’m late. **ji ber ku** and **çimkî** say why; **loma** and **ji ber vê yekê** say what follows: *Baran ditirse, loma ew bêdeng e.* Baran is afraid, so he is quiet.\n\n- **lê** and **lêbelê** but, however · **hem … hem** both … and: *hem sêv hem tirî*\n- **bêyî ku** + the bi- form: *bêyî ku tiştekî bibêje* without saying anything",
           "lessons": [
             {
               "key": "u11s3l1",
@@ -3180,7 +3180,7 @@
       "cefr": "B1",
       "titleKu": "Çîrok û stran",
       "titleEn": "Stories and songs",
-      "story": "The last winter by the stove. Each night Hamo tells one of his father’s tales (Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear) while Dapîr answers every tale with a proverb and the children act them out; Hevalo makes a terrible wolf, far too friendly. One snowy night travellers knock: an old dengbêj and his grandson, who sing for their supper, and their kilam about a flute player from Kobanî is missing its last verse, until Ibrahîm sings it down the telephone line. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it Ferhad’s son’s wedding, which is also the village’s farewell to its teacher: Xezal thanks everyone for every tale and every glass of tea, and at dawn the bus takes her from the blue gate to Hewlêr. Then the village turns to you, at the blue gate where your road began: “Rêya te vekirî be!”",
+      "story": "The last winter by the stove. Each night Hamo tells one of his father’s tales (Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear) while Dapîr answers every tale with a proverb and the children act them out; Hevalo makes a terrible wolf, far too friendly. One snowy night travellers knock: an old dengbêj and his grandson, who sing for their supper, and their kilam about a flute player from Kobanî is missing its last verse, until Hamo’s father sings it down the telephone line. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it Ferhad’s son’s wedding, which is also the village’s farewell to its teacher: Xezal thanks everyone for every tale and every glass of tea, and at dawn the bus takes her from the blue gate to Hewlêr. Then the village turns to you, at the blue gate where your road began: “Rêya te vekirî be!”",
       "recorder": "hamo",
       "skills": [
         {
@@ -3256,7 +3256,7 @@
           "titleKu": "Mêvan hatin",
           "titleEn": "Guests have come",
           "grammar": "reported speech: got ku … (he said that …), pirsî ka … (he asked whether …), dibêjin ku … (they say that …); gelo? (I wonder)",
-          "grammarMd": "**Wî got ku ew birçî ye.** He said he was hungry. Kurdish reports speech with **ku** and keeps the speaker’s own tense: *Wî got ku ew ê bê.* He said he would come.\n\n- A question is reported with **ka**: *Wê pirsî ka tu kengî têyî.* She asked when you were coming.\n- **gelo** I wonder: *Gelo ew kî ne?* I wonder who they are?",
+          "grammarMd": "**Wî got ku ew birçî ye.** He said he was hungry. Kurdish reports speech with **ku** and keeps the speaker’s own tense: *Wî got ku ew ê bê.* He said he would come.\n\n- A question is reported with **ka**: *Wê pirsî ka tu kengî têyî.* She asked when you were coming.\n- **gelo** I wonder: *Gelo ew kî ne?* I wonder who they are.",
           "lessons": [
             {
               "key": "u12s2l1",
@@ -3324,7 +3324,7 @@
           "titleKu": "Gotinên pêşiyan",
           "titleEn": "Proverbs",
           "grammar": "proverbs and how they are built: the plain present for what is always true (… dibe, … derdixe), and … çiqas … be (however … may be)",
-          "grammarMd": "**Av dilop dilop dibe gol.** Drop by drop, water becomes a lake. Proverbs speak in the plain present, because they are true every day: *dibe* becomes, *derdixe* brings out.\n\n- **çiqas … be** however … it may be: *Çiya çiqas bilind be, wê rê pê keve.* However high the mountain, a road will cross it.\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.",
+          "grammarMd": "**Av dilop dilop dibe gol.** Drop by drop, water becomes a lake. Proverbs speak in the plain present, because they are true every day: *dibe* becomes, *derdixe* brings out.\n\n- **çiqas … be** however … it may be (often with **jî**: *çiqas bilind be jî*): *Çiya çiqas bilind be, wê rê pê keve.* However high the mountain, a road will cross it.\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.",
           "lessons": [
             {
               "key": "u12s3l1",
@@ -3431,7 +3431,7 @@
             {
               "key": "u12s4l3",
               "position": 3,
-              "titleKu": "Li ber deriyê şîn",
+              "titleKu": "Li ber dergehê şîn",
               "titleEn": "At the blue gate",
               "focus": "talk",
               "beat": "Dawn at the blue gate, where your road began, and the bus is waiting. Hamo, Hevalo and you say goodbye to Xezal. “Rêya te vekirî be, Xezo!” says Hamo; “Xwedê ji te razî be!” “Oxir be, bi silametî!” Then, outraged and proud, he tells you her parting order: he is to take care of his moustache. Hevalo gets the last apple.",
@@ -3440,7 +3440,7 @@
                 {"ku": "Rêya te vekirî be!", "en": "Safe journey! (may your road be open)", "pos": "phrase", "forms": ["rêya", "te", "vekirî", "be"]},
                 {"ku": "Oxir be!", "en": "Farewell! Good luck! (to someone setting off)", "pos": "phrase", "forms": ["oxir", "be"]},
                 {"ku": "bi silametî", "en": "safely", "pos": "phrase", "forms": ["bi", "silametî"]},
-                {"ku": "dergeh", "en": "gate", "pos": "noun", "gender": "m", "forms": ["dergeh", "dergehên", "dergehan", "dergehek", "dergehê", "dergehekî", "dergehî"]}
+                {"ku": "dergeh", "en": "gate (a yard’s big door: Hamo’s blue gate is a dergeh)", "pos": "noun", "gender": "m", "forms": ["dergeh", "dergehên", "dergehan", "dergehek", "dergehê", "dergehekî", "dergehî"]}
               ]
             },
             {
@@ -3476,7 +3476,7 @@
     {"ku": "ask", "reason": "ask is the word for deer (pezkûvî is a wild sheep or goat); its gender is not marked in the dictionaries and the course takes it as feminine — confirm, and whether the owner prefers xezal or mamiz anywhere"},
     {"ku": "zozan", "reason": "zozan: dictionaries disagree on its gender; the course takes it as feminine and mostly uses it in the plural (li zozanan) — confirm"},
     {"ku": "piştên", "reason": "piştên (sash) is the only attested spelling; its gender (the course treats it as masculine) is not in the dictionaries — confirm"},
-    {"ku": "Zimanê şîrîn mar ji qulê derdixe", "reason": "the proverbs take forms the collections attest: “Zimanê şîrîn mar ji qulê derdixe” (Wîkîferheng has “Gotina xweş mar ji qulê derdixe”), “Av dilop dilop dibe gol”, and “Çiya çiqas bilind be, wê rê pê keve” (the dictionary has “… wê rojekê rê pê bikeve”) — confirm"},
+    {"ku": "Zimanê şîrîn mar ji qulê derdixe", "reason": "the proverbs take forms the collections attest: “Zimanê şîrîn mar ji qulê derdixe” (Wîkîferheng has “Gotina xweş mar ji qulê derdixe”), “Av dilop dilop dibe gol”, and “Çiya çiqas bilind be, wê rê pê keve” (the dictionary has “… wê rojekê rê pê bikeve”) — confirm, and whether the concessive wants jî (“çiqas bilind be jî”), which the chapter 12 grammar note now mentions beside it"},
     {"ku": "demjimêr", "reason": "demjimêr (hour, clock) replaces the Arabic loan saet, as Kurdish schools and broadcasters write it; saet is still what many people say — confirm"},
     {"ku": "mêwe", "reason": "mêwe (fruit, feminine) replaces fêkî, from Arabic; fêkî is the commoner word in speech in the north — confirm"},
     {"ku": "wane", "reason": "wane (lesson, class; feminine: waneya) replaces ders, from Arabic, as the schools in Rojava say it — confirm"},
@@ -3486,6 +3486,15 @@
     {"ku": "berhev kirin", "reason": "to pick apples is taught as berhev kirin (gather); çinîn (to pick fruit) may be the more natural word for the harvest — confirm"},
     {"ku": "nêrdewan", "reason": "nêrdewan (ladder, feminine), also spelt nerdewan — confirm spelling and gender"},
     {"ku": "lorî", "reason": "lorî (lullaby, feminine: loriya) — confirm spelling and gender"},
-    {"ku": "Rêya te vekirî be, Xezo!", "reason": "the pet name Xezo comes back only in the farewell scenes of chapter 12, as the owner asked — confirm the line"}
+    {"ku": "Rêya te vekirî be, Xezo!", "reason": "the pet name Xezo comes back only in the farewell scenes of chapter 12, as the owner asked — confirm the line"},
+    {"ku": "Dapîrê got … / Dapîrê dew çêkir", "reason": "Dapîr as the agent of a past transitive verb takes the oblique, Dapîrê, as unit 10’s own exercise teaches (“Dapîrê hevîr çêkir.”); chapters 11 and 12 now write it so — confirm, and whether “Dapîr rabû û got ku …” (one subject across û) may stay"},
+    {"ku": "çepik lêxistin", "reason": "in the past the verb agrees with its object, and çepik (claps) is taken as plural everywhere: “guhdaran / Dapîrê / her kesî / wî çepik lêxistin”, “Kê … çepik lêxistin?”, as the present “çepikan lêdixe” — confirm"},
+    {"ku": "Li ber dergehê şîn", "reason": "chapter 12 teaches dergeh, the proper word for a yard’s big gate, and its lesson is now titled with it, as its conversation and lines already were; chapters 3, 4 and 7 keep “deriyê şîn” for the same blue gate — confirm"},
+    {"ku": "tunebû", "reason": "the past of tune is written as one word, tunebû / tunebûn, as the chapter 9 grammar note and “Hebû tunebû” write it; lines met before it is taught say “nebû” instead — confirm the spelling"},
+    {"ku": "wêne", "reason": "wêne is masculine, so on its own after a word of place or as an object it is wêneyî (“li ser wêneyî”, “li wêneyî dinêre”, “Wêneyî bide min”), and with a possessor wêneyê (“wêneyê me”) — confirm, and whether the owner says wêneyî or plain wêne"},
+    {"ku": "Roj baş!", "reason": "glossed “Good morning! (word for word “good day”)”, as the conversations translate it; “Sibê baş!” is not taught — confirm, and whether the owner wants “Sibê baş!” as well"},
+    {"ku": "Nîvek li vir e. Nîvek li ku ye?", "reason": "the question for the other half of the photo keeps “nîvek … nîvek”; “Nîvê din li ku ye?” would be clearer, but din (other) is not taught anywhere in the road — confirm, or teach din"},
+    {"ku": "mal û hal", "reason": "taught as “household, home and belongings” and used for the whole household asleep by the fire (“hemû mal û hal radiza”); if it only means home and belongings, those lines want “hemû malbat” — confirm"},
+    {"ku": "Hingê gur li dora min dimeşe.", "reason": "Hamo’s wolf story is in the past but this line is in the present, because the past of meşîn and gerîn comes later in chapter 9 — confirm that the storyteller’s present reads naturally here"}
   ]
 }

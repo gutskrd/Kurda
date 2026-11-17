@@ -40,7 +40,8 @@ import {
   type MouthShape,
 } from '../characters/index.js';
 import { CANVAS, escapeXml, hashOf, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
-import { VALLEY, blobPath, earthHouse, ellipsePath, foliage, roundTree } from './valley.js';
+import { VALLEY, bark, blobPath, earthHouse, ellipsePath, foliage, grownTree, orchardTree, roundTree, type TreeShape } from './valley.js';
+import { wordPictureKinBody } from './word-pictures.js';
 
 // ───────────────────────────────────────────────────────────── colours
 
@@ -63,6 +64,12 @@ const IRON: Tone = [VALLEY.basalt, VALLEY.basaltSide, VALLEY.basaltLight];
 const BURLAP: Tone = ['#cdb07a', '#a88a54', '#e3cc9c'];
 /** The flesh of a bitten apple, and the shade in the hollow of a bite. */
 const FLESH: Tone = ['#f8e6b4', '#e3cb90', '#fff5d8'];
+/** Field stone and the dry-stone walls of the lanes. */
+const STONE: Tone = ['#cbc3b2', '#a3998a', '#e2dccf'];
+/** Fired clay: a jug, a pot. */
+const CLAY: Tone = ['#d58f55', '#a6632f', '#ecb37f'];
+/** Brown leather, worn. */
+const LEATHER: Tone = ['#7a4a2c', '#57321d', '#9c6845'];
 /** An old photo's browns. */
 const SEPIA: Tone = ['#d9c39a', '#a98d5f', '#f1e3c4'];
 /** Hamo's moustache: his own black, never pure. */
@@ -385,6 +392,9 @@ export function bookAppleSvg(opts: BookArtOptions & { bites: number }): string {
 
 type Draw = (b: Brush, random: () => number) => void;
 
+/** A house of the valley's own as a spot shows it: the shade it casts as soft as every other thing's, so it lies on any ground a scene has. */
+const soft = (markup: string): string => markup.split(`fill="${GROUND}"`).join(`fill="${GROUND}" fill-opacity="0.45"`);
+
 const SPOTS = {
   // Hamo's pride, on its own: full across the lip, and the two ends turned up, as he wears it when he is pleased
   moustache: (b) => {
@@ -394,31 +404,34 @@ const SPOTS = {
     b.line('M67 53C76 50 88 52 97 57M53 53C44 50 32 52 23 57', MOUSTACHE[2], 2.4);
   },
 
-  // the shepherd's flute Ibrahîm plays: a plain wooden pipe, bound at both ends, six holes down it
+  // the shepherd's flute: a plain wooden pipe, bound at both ends, six holes down it, lying where it was put down
   flute: (b) => {
-    b.ground(38, 60, 102);
-    b.group('rotate(-36 60 62)', () => {
-      b.form(box(10, 55, 100, 14, 7), WOOD, 12, 56, 0.96);
-      b.fill(box(10, 55, 9, 14, 6) + box(101, 55, 9, 14, 6), WOOD[1]);
-      b.fill(box(24, 55, 3.5, 14) + box(92, 55, 3.5, 14), STRAW[0]);
-      b.line('M22 58.5H98', WOOD[2], 1.8);
-      b.fill([36, 46, 56, 66, 76, 86].map((x) => O(x, 62.5, 2.5)).join(''), '#5a3a22');
+    b.ground(46, 60, 102);
+    b.group('rotate(-7 60 92)', () => {
+      b.form(box(12, 86, 96, 12, 6), WOOD, 14, 87, 0.96);
+      b.fill(box(12, 86, 9, 12, 5) + box(99, 86, 9, 12, 5), WOOD[1]);
+      b.fill(box(26, 86, 3.5, 12) + box(91, 86, 3.5, 12), STRAW[0]);
+      b.line('M24 89H96', WOOD[2], 1.6);
+      b.fill([38, 47, 56, 65, 74, 83].map((x) => O(x, 92, 2.2)).join(''), '#5a3a22');
     });
   },
 
-  // half of an old photo, torn down its right side: the walnut tree by the spring, gone brown with thirty years
+  // half of an old photo, torn down its right side and propped where it was found: two children by the walnut tree, gone brown with forty years
   photo: (b) => {
-    b.ground(34, 58, 104);
-    b.group('rotate(-7 58 60)', () => {
-      const edge = [88, 26, 91, 35, 85, 43, 92, 52, 86, 61, 93, 70, 87, 79, 92, 88, 87, 96];
-      b.fill(poly(23.5, 27.5, ...edge.map((v) => v + 1.5), 23.5, 97.5), PAPER[1]);
-      b.fill(poly(22, 26, ...edge, 22, 96), PAPER[2]);
-      b.fill(poly(28, 32, 82, 32, 85, 39, 79, 45, 86, 53, 80, 61, 87, 70, 81, 78, 85, 86, 28, 86), SEPIA[2]);
-      b.fill('M28 74C40 66 54 70 64 66C72 63 78 66 82 70L85 86H28Z', SEPIA[0]);
-      b.fill(box(47, 54, 4.5, 20), SEPIA[1]);
-      b.fill(O(49, 48, 13), SEPIA[1]);
-      b.fill(O(46, 45, 9), SEPIA[0]);
-      b.fill(O(70, 43, 4.5), PAPER[2]);
+    b.ground(36, 60, 104);
+    b.group('rotate(-5 56 100)', () => {
+      const edge = [88, 30, 91, 39, 85, 47, 92, 56, 86, 65, 93, 74, 87, 83, 92, 92, 87, 101];
+      b.fill(poly(23.5, 31.5, ...edge.map((v) => v + 1.5), 23.5, 102.5), PAPER[1]);
+      b.fill(poly(22, 30, ...edge, 22, 101), PAPER[2]);
+      b.fill(poly(28, 36, 82, 36, 85, 43, 79, 49, 86, 57, 80, 65, 87, 74, 81, 82, 85, 91, 28, 91), SEPIA[2]);
+      b.fill('M28 79C40 72 54 75 64 71C72 68 78 71 82 75L85 91H28Z', SEPIA[0]);
+      // the walnut tree behind them
+      b.fill(box(35, 55, 3.5, 20), SEPIA[1]);
+      b.fill(O(37, 50, 10), SEPIA[1]);
+      // the boy, and his sister beside him, half of her torn away with the other half of the photo
+      const child = (x: number, y: number, k: number): string => O(x, y, 3.6 * k) + box(x - 3.8 * k, y + 3.6 * k, 7.6 * k, 12 * k, 3 * k) + box(x - 2.6 * k, y + 15 * k, 2.2 * k, 6 * k) + box(x + 0.4 * k, y + 15 * k, 2.2 * k, 6 * k);
+      b.fill(child(52, 58, 1.05) + child(71, 61, 0.92), '#7d6442');
+      b.fill(O(51, 57, 2.4) + O(70.2, 60.2, 2.1), SEPIA[0]);
     });
   },
 
@@ -528,39 +541,320 @@ const SPOTS = {
     b.line('M53 48C51 58 50 66 51 76', GLASS[2], 2);
   },
 
-  // the tracks Hevalo leaves: a small cloven hoof pressed into the earth three times, each step a little further on and turned its own way
+  // the tracks Hevalo leaves: a walking line of small cloven prints, each two slim halves with a gap between them, left and right by turns
   hoofprints: (b) => {
-    // one half of a print: pointed at the front, round at the heel, its inner edge nearly straight
-    const half = 'M-1 -12.4C-6.4 -10.6 -8.4 -1.6 -7 6.4C-6.2 10.4 -3.2 11.8 -1 10.4C-0.4 4.6 -0.2 -3.6 -1 -12.4Z';
-    const heel = 'M-2 8.6C-4.2 9.6 -5.8 8.4 -6.4 6.2C-4.8 7 -3.4 7.2 -2 6.8Z';
-    const print = (x: number, y: number, turn: number, k: number, spread: number): void =>
+    // one half of a print: a slim teardrop, pointed at the toe and round at the heel
+    const half = 'M0 -9C-2.8 -7.6 -4.2 -1.8 -3.6 3.4C-3.2 7 -1.6 8.4 0 8C0.6 3 0.8 -3 0 -9Z';
+    const print = (x: number, y: number, turn: number, k: number): void =>
       b.group(`translate(${x} ${y}) rotate(${turn}) scale(${k})`, () => {
-        b.fill(half, VALLEY.wallSide, ` transform="rotate(${-spread})"`);
-        b.fill(half, VALLEY.wallSide, ` transform="scale(-1 1) rotate(${-spread})"`);
-        b.fill(heel, VALLEY.earthShade, ` transform="rotate(${-spread})"`);
-        b.fill(heel, VALLEY.earthShade, ` transform="scale(-1 1) rotate(${-spread})"`);
+        b.fill(half, VALLEY.wallSide, ' transform="translate(-1.4 0)"');
+        b.fill(half, VALLEY.wallSide, ' transform="translate(1.4 0) scale(-1 1)"');
+        b.fill(E(-1.6, 6.2, 1.5, 1.1) + E(1.6, 6.2, 1.5, 1.1), VALLEY.earthShade);
       });
-    print(32, 92, 16, 1.7, 4);
-    print(58, 62, 6, 1.55, 7);
-    print(84, 30, 22, 1.4, 3);
+    // the line bends a little as a walk does, each step its own size and angle, a step's length apart and left and right of the line by turns, so the prints never touch and read as a deer walking, not a row of beans
+    print(27, 99, 40, 1.12);
+    print(38, 78, 47, 1.08);
+    print(60, 68, 37, 1.06);
+    print(71, 47, 45, 1.02);
+    print(93, 37, 39, 1);
   },
 
-  // Kobanî under Miştenûr: the flat roofs of Hamo's town, the fig tree in his father's yard, and the hill above them all
+  // Kobanî under Miştenûr: the flat roofs of Hamo's town, the fig tree in his father's yard, and the hill above them all, its foot lost among the houses
   town: (b, random) => {
-    b.fill(E(60, 104, 54, 9), GROUND, ' fill-opacity="0.45"');
-    // Miştenûr: a long hill with a flat top, its right flank in shade, a path worn up its face
-    b.fill('M4 86C12 70 22 52 34 41C40 36.4 50 35 60 34.6C72 34.2 82 35.4 88 40C98 48 108 66 116 86Z', '#c9c6a2');
-    b.fill('M88 40C98 48 108 66 116 86H96C94 70 90 54 82 37.4C84.6 38 86.6 38.8 88 40Z', '#b5b08a');
-    b.fill('M40 38.2C46 36.2 54 35.4 62 35.2C68 35 74 35.6 78 36.6C70 37.4 56 37.6 40 38.2Z', '#dedbb8');
-    b.line('M30 70C38 66 46 64 52 60C46 56 50 50 58 46C62 44 64 41 66 37', '#dedbb8', 1.4);
-    const lane = VALLEY.earthShade;
-    b.add(earthHouse(16, 80, 22, 16, 9, { dark: false, ground: lane }));
-    b.add(earthHouse(70, 76, 24, 18, 10, { dark: false, ground: lane }));
-    b.add(earthHouse(40, 88, 26, 20, 11, { dark: false, ground: lane, door: VALLEY.gate }));
-    b.add(earthHouse(8, 102, 28, 20, 12, { dark: false, ground: lane, door: VALLEY.gateDark, roofLine: VALLEY.fruit }));
-    b.add(earthHouse(70, 103, 30, 22, 12, { dark: false, ground: lane, door: VALLEY.gate }));
+    b.ground(54, 60, 104);
+    // Miştenûr: a long hill rising unevenly to a flat top, its right flank in shade, a path worn up its face; it ends behind the roofs, not on a line
+    b.fill('M2 92C8 80 14 66 24 54C30 46 36 40 46 37.4C52 36 58 35.6 64 35.8C72 36 80 37.6 86 41.4C94 46.6 102 58 108 70C112 78 115 86 118 92C96 96 24 96 2 92Z', '#c9c6a2');
+    b.fill('M86 41.4C94 46.6 102 58 108 70C112 78 115 86 118 92C110 93 102 93.6 96 94C95 76 90 58 81 39C83 39.6 84.6 40.4 86 41.4Z', '#b5b08a');
+    b.fill('M42 39C48 37 56 36.2 64 36.2C70 36.2 75 36.8 79 37.8C71 38.4 57 38.6 42 39Z', '#dedbb8');
+    b.line('M30 72C38 68 46 66 52 62C46 58 50 52 58 48C62 46 64 43 66 39', '#dedbb8', 1.4);
+    // the houses, each its own: two storeys, a parapet, a stair up the side, a ladder to the roof; the shade each casts is as soft as the rest
+    const house = (x: number, y: number, w: number, h: number, d: number, more: { door?: string; roofLine?: string } = {}): void =>
+      b.add(soft(earthHouse(x, y, w, h, d, { dark: false, ground: GROUND, ...more })));
+    house(70, 78, 24, 24, 10, { roofLine: VALLEY.fruit });
+    b.fill(box(74, 64, 5, 6, 1), VALLEY.window);
+    house(36, 92, 26, 18, 11);
+    b.line('M38 92L48 74M40.4 92L50.4 74M39.4 88H42.8M41.4 84H44.8M43.4 80H46.8M45.4 76H48.8', WOOD[1], 1.2);
+    house(6, 103, 28, 20, 12, { door: VALLEY.gateDark });
+    b.fill(poly(34, 103, 46, 97, 46, 93, 34, 99), VALLEY.parapet);
+    house(72, 104, 30, 22, 12, { door: VALLEY.gate });
+    b.fill(box(70, 80, 34, 2.6, 1), VALLEY.parapet);
     // the fig is small enough here that a round tree, its trunk well up inside its crown, says it with fewer curves
-    b.add(roundTree(60, 104, 0.62, foliage(false), lane, random));
+    b.add(soft(roundTree(58, 104, 0.62, foliage(false), GROUND, random)));
+  },
+
+
+  // ── what a scene sets things on, and what stands in front of it
+
+  // a low round table of the guest room, its top seen a little from above: what is put on it stands on its middle
+  lowTable: (b) => {
+    b.ground(50, 60, 104);
+    b.fill(box(31, 74, 6, 26, 2.5) + box(83, 74, 6, 26, 2.5), WOOD[1]);
+    b.form(box(20, 76, 8, 27, 3), WOOD, 21, 77, 0.9);
+    b.form(box(92, 76, 8, 27, 3), WOOD, 93, 77, 0.9);
+    b.fill(E(60, 75, 51, 11), WOOD[1]);
+    b.fill(E(60, 70.5, 51, 11), WOOD[0]);
+    b.fill(oval(42, 66.5, 20, 3.6, -4), WOOD[2]);
+  },
+
+  // the round copper tray tea comes on, set down on the floor or the grass
+  tray: (b) => {
+    b.ground(54, 60, 104);
+    b.fill(E(60, 100.5, 52, 8.6), COPPER[1]);
+    b.fill(E(60, 98, 52, 8.6), COPPER[0]);
+    b.fill(E(61, 98.6, 44, 6.2), mix(COPPER[0], COPPER[1], 0.45));
+    b.line('M24 95.4C36 91.6 52 90.6 66 91', COPPER[2], 1.8);
+  },
+
+  // the meal cloth spread on the floor for breakfast or a guest's dinner: a woven red ground inside a pale border of lozenges
+  cloth: (b) => {
+    const edge = (k: number, dy: number): string => {
+      const [l, r, t, u] = [12 + k * 1.4, 108 - k * 1.4, 84 + k + dy, 104 - k + dy];
+      return (
+        `M${f(l + 2)} ${f(u)}C${f(l - 2)} ${f(u)} ${f(l - 2)} ${f(u - 3)} ${f(l + 1)} ${f(u - 6)}L${f(l + 14)} ${f(t + 2)}C${f(l + 16)} ${f(t)} ${f(l + 18)} ${f(t)} ${f(l + 20)} ${f(t)}` +
+        `H${f(r - 20)}C${f(r - 18)} ${f(t)} ${f(r - 16)} ${f(t)} ${f(r - 14)} ${f(t + 2)}L${f(r - 1)} ${f(u - 6)}C${f(r + 2)} ${f(u - 3)} ${f(r + 2)} ${f(u)} ${f(r - 2)} ${f(u)}Z`
+      );
+    };
+    b.fill(edge(0, 1.4), VALLEY.redDark);
+    b.fill(edge(0, 0), VALLEY.red);
+    b.fill(edge(2.6, 0), VALLEY.cream);
+    b.fill(edge(5, 0), VALLEY.red);
+    b.fill([0, 1, 2, 3, 4, 5, 6].map((i) => poly(27 + i * 11, 101.4, 29.2 + i * 11, 100, 31.4 + i * 11, 101.4, 29.2 + i * 11, 102.8)).join(''), VALLEY.indigo);
+    b.line('M36 90.4H84', mix(VALLEY.red, VALLEY.cream, 0.35), 1.2);
+  },
+
+  // a flat-topped rock by the path, the kind a shepherd sets his tea glass on
+  rock: (b) => {
+    b.ground(50, 62, 104);
+    b.form(smooth([[14, 103], [16, 88], [24, 74], [38, 67.4], [60, 66], [82, 67.4], [96, 74], [104, 88], [106, 103], [60, 105]]), STONE, 20, 70, 0.9);
+    b.fill(E(58, 69.6, 38, 4.4), STONE[2]);
+    b.line('M30 84C36 88 40 94 38 101M80 80C84 86 90 88 94 94', STONE[1], 1.4);
+    b.fill(blobPath(84, 99, 9, 3.6, 7, 0.3, seeded('book-rock-moss')), GRASS[1]);
+  },
+
+  // a dry-stone wall of the lanes, waist-high, its stones laid by hand and capped with flat ones: a scene's near edge, or a seat
+  stoneWall: (b, random) => {
+    b.fill(box(0, 62, 120, 44), STONE[1]);
+    let stones = '';
+    let lit = '';
+    for (const [y, h] of [[67, 12], [80, 12], [93, 12]] as const) {
+      for (let x = -8 + random() * 10; x < 120; ) {
+        const w = 18 + random() * 12;
+        stones += box(x + 0.8, y + 0.6, w - 1.6, h - 1.4, 3.4);
+        lit += `M${f(x + 2.4)} ${f(y + 2.6)}h${f(w * 0.45)}`;
+        x += w;
+      }
+    }
+    b.fill(stones, STONE[0]);
+    b.line(lit, STONE[2], 1.8);
+    b.fill(box(-2, 58, 124, 7, 3), STONE[2]);
+    b.fill(box(-2, 62.4, 124, 2.6), STONE[1]);
+    b.fill(blobPath(14, 105, 10, 3.4, 7, 0.4, random) + blobPath(98, 105, 12, 3.4, 7, 0.4, random), GRASS[1]);
+  },
+
+  // a bed made up on the floor, as village houses make one: a thick mattress and a quilt patterned in the red and indigo of a kilim
+  bedding: (b) => {
+    b.ground(56, 60, 105);
+    b.form(box(4, 84, 112, 20, 7), PAPER, 6, 85, 0.94);
+    b.fill('M8 92C8 76 20 66 40 64C58 62 80 62 98 66C110 68 116 78 116 92Z', VALLEY.redDark);
+    b.fill('M8 90C8 75 20 65.4 40 63.4C58 61.4 80 61.4 98 65.4C109 67.6 114 76 114 90Z', VALLEY.red);
+    b.line('M14 86C18 74 30 70 44 69C62 68 82 68 98 72C105 74 108 79 110 86', VALLEY.cream, 2.6);
+    b.fill([24, 42, 60, 78, 96].map((x) => poly(x, 72.6, x + 4, 76.6, x, 80.6, x - 4, 76.6)).join(''), VALLEY.indigo);
+  },
+
+  // ── places a scene is set in, and what grows there
+
+  // one of Hamo's apple trees, its fruit nearly ripe
+  appleTree: (b, random) => {
+    b.ground(40, 66, 104);
+    b.add(grownTree({ ...orchardTree(58, 104, 2.85, 0.9, random), shadow: false }, foliage(false, VALLEY.apple), bark(false), GROUND, random));
+  },
+
+  // the old walnut tree: a thick pale trunk and a broad dark crown, the green nuts among the leaves
+  walnutTree: (b, random) => {
+    const shape: TreeShape = {
+      foot: [60, 104],
+      base: 12,
+      fork: [59, 68],
+      limbs: [
+        { from: [59, 68], bend: [46, 56], to: [32, 46], width: 5 },
+        { from: [59, 68], bend: [59, 50], to: [60, 32], width: 5.6 },
+        { from: [59, 68], bend: [74, 56], to: [88, 44], width: 4.6 },
+      ],
+      lobes: [
+        { x: 31, y: 46, rx: 24, ry: 17 },
+        { x: 60, y: 31, rx: 27, ry: 21 },
+        { x: 89, y: 44, rx: 24, ry: 17 },
+        { x: 60, y: 54, rx: 32, ry: 11 },
+      ],
+      rough: 0.12,
+      dot: 2.2,
+      shadow: false,
+    };
+    b.ground(46, 66, 104);
+    b.add(grownTree(shape, { face: '#5d8c44', light: '#82ad5e', shade: '#456b35', dots: '#a8c15c' }, { face: '#a39383', shade: '#7c6f63' }, GROUND, random));
+  },
+
+  // a village house of mud brick under its flat roof, its blue door and a small window, as Sêvan's houses are
+  flatHouse: (b) => {
+    b.add(soft(earthHouse(12, 104, 68, 46, 28, { dark: false, ground: GROUND, door: VALLEY.gate, roofLine: VALLEY.fruit })));
+    b.fill(box(56, 66, 8, 7, 1.5), VALLEY.window);
+  },
+
+  // the same house with the ladder up to its roof, where everyone sleeps in summer
+  houseLadder: (b) => {
+    b.add(soft(earthHouse(8, 104, 66, 46, 28, { dark: false, ground: GROUND, door: VALLEY.gate })));
+    b.line('M76 104L69 52M85 104L78 52', WOOD[0], 3);
+    b.line('M75.2 98H83.8M74 89H82.6M72.8 80H81.4M71.6 71H80.2M70.4 62H79', WOOD[1], 2.2);
+    b.line('M75.6 103L68.8 54', WOOD[2], 1);
+  },
+
+  // the old stone house by the lake: its roof long gone, its walls broken down to different heights, a doorway and a window open to the sky
+  ruin: (b, random) => {
+    b.ground(54, 62, 104);
+    b.fill(poly(80, 104, 80, 60, 92, 54, 98, 60, 104, 57, 106, 96), STONE[1]);
+    b.fill(poly(14, 104, 14, 62, 22, 57, 28, 63, 36, 52, 46, 57, 52, 49, 62, 51, 70, 59, 80, 55, 80, 104), STONE[0]);
+    b.line('M14 74H80M14 87H80M22 62V74M40 74V87M58 74V87M30 87V104M66 87V104M48 62V74M70 62V74', STONE[1], 1.2);
+    b.fill('M24 104V84A7 7 0 0 1 38 84V104Z' + box(54, 64, 10, 10, 1), '#5a4c40');
+    b.fill(blobPath(86, 104, 7, 3.4, 6, 0.3, random) + blobPath(96, 103, 5, 2.6, 6, 0.3, random) + blobPath(8, 103, 6, 3, 6, 0.3, random), STONE[1]);
+    b.fill(blobPath(46, 105, 10, 3, 7, 0.4, random) + blobPath(104, 104, 6, 2.4, 6, 0.4, random), GRASS[1]);
+  },
+
+  // ── animals the word pictures do not have
+
+  // Zerê, the golden doe of the summer pastures: no antlers
+  doe: (b) => b.add(wordPictureKinBody('doe')),
+  // Dapîr's white goat, her long beard and her collar
+  whiteGoat: (b) => b.add(wordPictureKinBody('whiteGoat')),
+  // a ram, the curled horns of the flock
+  ram: (b) => b.add(wordPictureKinBody('ram')),
+
+  // a small bird in flight, its wings up: what crosses a scene's sky
+  flyingBird: (b) => {
+    const t: Tone = ['#a8703f', '#7c4f2a', '#cf9a64'];
+    b.fill(smooth([[64, 58], [76, 38], [92, 26], [90, 38], [78, 56]]), t[1]);
+    b.fill(poly(84, 60, 100, 52, 98, 62, 100, 70), t[1]);
+    b.fill(smooth([[26, 60], [36, 54], [52, 52], [70, 55], [88, 60], [72, 67], [52, 68], [36, 66]]), t[0]);
+    b.fill(smooth([[36, 64], [52, 66], [70, 64], [60, 68], [46, 68]]), '#efdcc0');
+    b.form(smooth([[46, 58], [40, 38], [28, 22], [32, 38], [40, 58]]), t, 34, 30, 0.9);
+    b.fill(poly(27, 58.6, 19, 60.6, 27, 62.4), VALLEY.goldDark);
+    b.fill(O(32, 58, 1.8), INK);
+  },
+
+  // an eagle soaring, its wings spread wide and fingered at the tips: dark, with gold on its nape
+  eagle: (b) => {
+    const t: Tone = ['#5a4030', '#3d2b20', '#7a5a42'];
+    const wing = (side: 1 | -1): string => {
+      const x = (v: number): number => 60 + side * v;
+      return `M${x(6)} 54C${x(18)} 44 ${x(34)} 38 ${x(50)} 40L${x(54)} 36L${x(55)} 42L${x(58)} 39L${x(58)} 45L${x(56)} 49C${x(42)} 52 ${x(26)} 58 ${x(8)} 64Z`;
+    };
+    b.fill(wing(1), t[1]);
+    b.fill(wing(-1), t[0]);
+    b.fill(poly(70, 56, 84, 54, 84, 66, 70, 64), t[1]);
+    b.form(smooth([[36, 56], [44, 51], [60, 51], [74, 56], [62, 63], [44, 62]]), t, 42, 52, 0.9);
+    b.fill(smooth([[30, 54], [36, 49.6], [44, 50], [44, 57], [36, 58]]), '#c9a05c');
+    b.fill('M30 53.4C26 53.6 24 55.4 25.6 57.6C27 56.6 28.6 56.4 30.4 56.6Z', VALLEY.gold);
+    b.fill(O(34, 53, 1.3), INK);
+  },
+
+  // ── small things
+
+  // the rusty tin from under the walnut tree, its lid open on a handful of marbles
+  tin: (b) => {
+    const rust: Tone = ['#b8673a', '#8a4526', '#d98e5c'];
+    b.ground(42, 62, 104);
+    b.fill(poly(30, 66, 38, 46, 96, 46, 88, 66), rust[1]);
+    b.fill(poly(34, 64, 40.4, 49, 92.4, 49, 86, 64), mix(rust[1], rust[0], 0.4));
+    b.fill(poly(86, 70, 98, 64, 98, 96, 86, 102), rust[1]);
+    b.fill(box(24, 70, 62, 32, 3), rust[0]);
+    b.fill(poly(24, 70, 36, 64, 98, 64, 86, 70), '#4a2a1c');
+    b.fill(O(46, 67.4, 3.6) + O(64, 66.6, 3.4), '#3f7fbf');
+    b.fill(O(55, 68, 3.4) + O(104, 101, 3.2), '#5aa452');
+    b.fill(O(74, 67.6, 3.2) + O(95, 104, 2.8), '#e9a93b');
+    b.fill(blobPath(36, 88, 5, 3.4, 6, 0.4, seeded('book-tin')) + blobPath(70, 80, 6, 3, 6, 0.4, seeded('book-tin-2')), rust[1]);
+    b.line('M27 74H82', rust[2], 1.4);
+  },
+
+  // Doctor Azad's bag: brown leather, a brass clasp along its mouth, a handle worn smooth
+  doctorBag: (b) => {
+    b.ground(46, 60, 104);
+    b.line('M44 52C44 36 76 36 76 52', LEATHER[1], 5);
+    b.form('M20 102C17 84 20 66 30 56C40 50 80 50 90 56C100 66 103 84 100 102Z', LEATHER, 24, 58, 0.93);
+    b.fill(box(26, 52, 68, 7, 3.4), VALLEY.goldDark);
+    b.fill(box(26, 52, 68, 3.4, 1.7), VALLEY.gold);
+    b.fill(box(55, 57, 10, 9, 2), VALLEY.gold);
+    b.line('M24 90H96', LEATHER[2], 1.2, ' stroke-dasharray="2 2.6"');
+  },
+
+  // Baran's boots, muddy to the ankles
+  boots: (b) => {
+    const boot = (x: number, t: Tone, mud: string): void => {
+      b.fill(`M${x} 46H${x + 22}V86C${x + 30} 88 ${x + 38} 92 ${x + 38} 98V103H${x - 2}V60C${x - 2} 52 ${x} 48 ${x} 46Z`, t[0]);
+      b.fill(`M${x + 22} 46V86C${x + 30} 88 ${x + 38} 92 ${x + 38} 98V103H${x + 30}V96C${x + 30} 92 ${x + 24} 90 ${x + 16} 89V46Z`, t[1]);
+      b.fill(`M${x - 2} 84C${x + 6} 80 ${x + 14} 86 ${x + 22} 82C${x + 30} 86 ${x + 36} 88 ${x + 38} 96V103H${x - 2}Z`, mud);
+    };
+    b.ground(46, 60, 104);
+    boot(52, ['#4f5a3c', '#3a4329', '#6b7752'], '#8a6a45');
+    boot(26, ['#5d6a46', '#45502f', '#76835a'], '#9c7a4f');
+    b.fill(O(20, 98, 2.4) + O(96, 96, 2) + O(100, 101, 1.6), '#8a6a45');
+  },
+
+  // a clay jug for milk or spring water, its handle on its shoulder
+  jug: (b) => {
+    b.ground(34, 60, 104);
+    b.line('M76 48C92 48 92 72 76 76', CLAY[1], 5);
+    b.form('M48 30H72V40C84 48 88 62 86 78C84 94 74 102 60 102C46 102 36 94 34 78C32 62 36 48 48 40Z', CLAY, 42, 44, 0.92);
+    b.fill(E(60, 30, 13, 3.4), CLAY[1]);
+    b.line('M38 70C50 74 70 74 82 70', VALLEY.cream, 2.2);
+    b.fill([46, 54, 62, 70].map((x) => O(x + 2, 78, 1.5)).join(''), VALLEY.redDark);
+  },
+
+  // the goatskin churn hanging from its three poles, where butter and ayran are rocked out of the milk
+  churn: (b) => {
+    b.ground(50, 60, 104);
+    b.line('M60 14L22 104M60 14L98 104', WOOD[1], 3.4);
+    b.line('M60 14L66 104', WOOD[0], 3.4);
+    b.line('M48 52L60 16L72 50', BARK[1], 1.2);
+    b.form(smooth([[30, 62], [42, 50], [60, 48], [80, 50], [92, 62], [86, 78], [62, 82], [38, 78]]), ['#b08a5c', '#86643c', '#cba67a'], 38, 52, 0.9);
+    b.fill(oval(30, 56, 4, 7, -30) + oval(92, 56, 4, 7, 30), '#86643c');
+    b.line('M44 70C54 74 70 74 80 70', '#cba67a', 1.4);
+  },
+
+  // the saj: a dome of iron over a low fire on three stones, a bread as thin as paper spread on it
+  saj: (b) => {
+    b.ground(48, 60, 104);
+    b.fill(E(28, 97, 9, 7) + E(92, 97, 9, 7) + E(60, 100, 8, 5), STONE[0]);
+    b.fill('M48 100C50 90 56 88 60 82C64 88 70 90 72 100Z', VALLEY.fire);
+    b.fill('M54 100C56 94 58 92 60 88C62 92 64 94 66 100Z', VALLEY.fireCore);
+    b.fill('M14 88C22 70 40 62 60 62C80 62 98 70 106 88C92 86 76 85 60 85C44 85 28 86 14 88Z', IRON[1]);
+    b.fill('M18 84C28 70 42 65 60 65C78 65 92 70 102 84C88 82 74 81 60 81C46 81 32 82 18 84Z', PAPER[1]);
+    b.fill(blobPath(52, 70, 5, 2, 6, 0.3, seeded('book-saj')) + blobPath(74, 74, 4, 1.6, 6, 0.3, seeded('book-saj-2')), STRAW[1]);
+  },
+
+  // the snow deer Hevalo builds by the wall, an apple for its nose
+  snowDeer: (b) => {
+    const snow: Tone = [VALLEY.snow, VALLEY.snowShade, '#ffffff'];
+    b.ground(40, 60, 104);
+    b.line('M48 34L42 20M44 26L38 24M64 34L70 20M68 26L74 24', BARK[0], 2.4);
+    b.form(smooth([[30, 102], [28, 84], [36, 70], [60, 66], [84, 70], [92, 84], [90, 102], [60, 104]]), snow, 36, 72, 0.92);
+    b.form(smooth([[42, 52], [46, 38], [60, 34], [74, 38], [78, 52], [70, 62], [50, 62]]), snow, 46, 40, 0.92);
+    b.fill(O(52, 46, 2) + O(68, 46, 2) + O(60, 82, 2) + O(60, 92, 2), INK);
+    b.fill(O(60, 55, 5), RED[0]);
+    b.fill(O(58.4, 53.4, 1.6), RED[2]);
+  },
+
+  // three photos in their frames on a wall: the family far away in Kobanî, a moustache in the middle
+  frames: (b) => {
+    const frame = (x: number, y: number, w: number, h: number): void => {
+      b.fill(box(x + 1, y + 1.4, w, h, 2), mix(WOOD[1], '#000000', 0.15));
+      b.fill(box(x, y, w, h, 2), WOOD[0]);
+      b.fill(box(x + 3, y + 3, w - 6, h - 6, 1), SEPIA[2]);
+      b.fill(O(x + w / 2, y + h * 0.42, w * 0.14) + box(x + w * 0.28, y + h * 0.58, w * 0.44, h * 0.42 - 3, 3), SEPIA[1]);
+    };
+    frame(10, 36, 30, 38);
+    frame(46, 24, 30, 40);
+    frame(82, 40, 28, 34);
+    b.fill(oval(61, 43.6, 4.6, 1.3, 0), MOUSTACHE[0]);
+    b.line('M25 36L25 30M61 24L61 18M96 40L96 34', BARK[1], 1);
   },
 } as const satisfies Readonly<Record<string, Draw>>;
 
@@ -692,9 +986,91 @@ function nearOrb(box: BookSkyBox, orb: BookOrb, margin: number): boolean {
   return Math.hypot(dx, dy) < orb.r + margin;
 }
 
-/** How high the far mountains stand at x on the backdrop's canvas: the sky ends there, and a setting sun goes down behind them. */
-export function bookRidgeAt(x: number): number {
-  return farTop(x);
+/**
+ * How high the land stands at x on the backdrop's canvas: the far mountains
+ * by default (the sky ends there, and a setting sun goes down behind them),
+ * the back edge of the floor a scene's people and things stand on, so what
+ * is set back stands on it rather than on the hill behind, or, indoors,
+ * where a room's walls meet its floor.
+ */
+export function bookRidgeAt(x: number, line: 'far' | 'floor' | 'room' = 'far'): number {
+  return line === 'room' ? BOOK_ROOM_FLOOR : line === 'floor' ? heightOf(NEAR, x) : farTop(x);
+}
+
+/** Where the walls of a room meet its floor, on the backdrop's canvas: a scene set indoors stands its furniture there. */
+const BOOK_ROOM_FLOOR = 70;
+
+/**
+ * A room a scene is set in: the box of its one window on the backdrop's
+ * canvas (the day, the dusk, the night or the snow outside shows through it;
+ * none for a room without one), and whether a kilim lies on its floor.
+ */
+export interface BookRoom {
+  window: BookSkyBox | null;
+  rug?: boolean;
+}
+
+/** A patch of shade on a scene's floor under someone standing there, on the backdrop's canvas: its middle and how wide it reaches each way. */
+export interface BookFloorShade {
+  x: number;
+  y: number;
+  rx: number;
+}
+
+/** The colours a room is painted in by the light it is seen in: its plaster, the floor of beaten earth, and the poplar beams of its ceiling. */
+function roomColours(setting: BookSetting, sky: string): { wall: string; shade: string; floor: string; floorShade: string; beam: string } {
+  const plaster = setting === 'night' ? mix('#b78b5c', sky, 0.12) : setting === 'dusk' ? mix('#e6c99c', sky, 0.16) : mix('#f0e2c4', sky, setting === 'snow' ? 0.3 : 0.24);
+  const floor = setting === 'night' ? mix('#7c5838', plaster, 0.2) : mix('#c39a6a', plaster, 0.22);
+  return { wall: plaster, shade: mix(plaster, '#6b4a30', 0.16), floor, floorShade: mix(floor, '#4a3324', 0.25), beam: mix('#7a5236', plaster, 0.12) };
+}
+
+/**
+ * A room's walls laid over the land outside, so the land shows only through
+ * its window: plaster with the window cut out of it, the window's depth and
+ * its blue frame and sill, the ends of the ceiling's beams along the top,
+ * the floor of beaten earth, and a kilim on it.
+ */
+function paintRoom(brush: Brush, room: BookRoom, setting: BookSetting, sky: string): void {
+  const { w, h } = BOOK_BACKDROP;
+  const floorY = BOOK_ROOM_FLOOR;
+  const c = roomColours(setting, sky);
+  const win = room.window;
+  const hole = win ? `M${f(win.x)} ${f(win.y)}V${f(win.y + win.h)}H${f(win.x + win.w)}V${f(win.y)}Z` : '';
+  brush.fill(`M0 0H${w}V${floorY}H0Z${hole}`, c.wall, ' fill-rule="evenodd"');
+  if (win) {
+    const { x, y, w: ww, h: wh } = win;
+    // the depth of the wall round the window: its far side and its foot in shade, its near side in the light
+    brush.fill(poly(x + ww, y, x + ww - 3, y + 3, x + ww - 3, y + wh - 2, x + ww, y + wh) + poly(x, y + wh, x + 3, y + wh - 2, x + ww - 3, y + wh - 2, x + ww, y + wh), c.shade);
+    brush.fill(poly(x, y, x + ww, y, x + ww - 3, y + 2.4, x + 3, y + 2.4), mix(c.shade, c.wall, 0.4));
+    // the blue frame and its bars, and the sill a thing can be set on
+    const frame = VALLEY.gate;
+    brush.line(`M${f(x + 3)} ${f(y + 2.4)}H${f(x + ww - 3)}V${f(y + wh - 2)}H${f(x + 3)}Z`, frame, 1.6);
+    brush.line(`M${f(x + ww / 2)} ${f(y + 2.4)}V${f(y + wh - 2)}M${f(x + 3)} ${f(y + wh * 0.46)}H${f(x + ww - 3)}`, frame, 1.2);
+    brush.fill(box(x - 3, y + wh, ww + 6, 3.4, 1.2), mix(c.wall, '#ffffff', 0.3));
+    brush.fill(box(x - 2, y + wh + 3.4, ww + 4, 1.4), c.shade);
+  }
+  // the beams of the ceiling, end on, along the top of the wall
+  brush.fill(`M0 0H${w}V4.2H0Z`, c.beam);
+  let ends = '';
+  for (let x = 9; x < w; x += 21) ends += O(x, 5.2, 2.6);
+  brush.fill(ends, mix(c.beam, c.wall, 0.35));
+  // the wall darkens a little where it meets the floor
+  brush.fill(`M0 ${floorY - 3.4}H${w}V${floorY}H0Z`, c.shade);
+  brush.fill(`M0 ${floorY}H${w}V${h}H0Z`, c.floor);
+  brush.fill(`M0 ${floorY}H${w}V${floorY + 1.6}H0Z`, c.floorShade);
+  if (room.rug) {
+    // a kilim on the floor, seen from where we stand: its border and a row of lozenges
+    const rug = (k: number): string => poly(44 + k * 1.6, 76 + k, 136 - k * 1.6, 76 + k, 152 - k * 2, 99 - k, 28 + k * 2, 99 - k);
+    brush.fill(rug(0), VALLEY.red);
+    brush.fill(rug(2), VALLEY.cream);
+    brush.fill(rug(3.6), VALLEY.red);
+    let lozenges = '';
+    for (let i = 0; i < 7; i++) {
+      const x = 52 + i * 12.6;
+      lozenges += poly(x, 84, x + 4, 87.6, x, 91.2, x - 4, 87.6);
+    }
+    brush.fill(lozenges, VALLEY.indigo);
+  }
 }
 
 /** How high a line of the land stands at x, along its points. */
@@ -792,7 +1168,20 @@ function twinklePath(m: BookSkyBox): string {
  * head and nothing in the sky is ever drawn over the moon.
  */
 export function bookBackdropSvg(
-  opts: BookArtOptions & { setting: BookSetting; sky: string; ground: string; light: string; far?: string; orb?: BookOrb | null; clear?: readonly BookSkyBox[]; seed?: string },
+  opts: BookArtOptions & {
+    setting: BookSetting;
+    sky: string;
+    ground: string;
+    light: string;
+    far?: string;
+    orb?: BookOrb | null;
+    clear?: readonly BookSkyBox[];
+    seed?: string;
+    /** a room the scene is set in, the land outside showing through its window */
+    room?: BookRoom | null;
+    /** the shade on the floor under each of the people standing on it */
+    shadows?: readonly BookFloorShade[];
+  },
 ): string {
   if (!BOOK_SETTINGS.includes(opts.setting)) throw new RangeError(`art: no book setting ${String(opts.setting)}`);
   for (const c of [opts.sky, opts.ground, opts.light, opts.far ?? '#000000']) if (!/^#[0-9a-f]{6}$/.test(c)) throw new RangeError(`art: a backdrop's colours are six-digit colours, not ${String(c)}`);
@@ -850,7 +1239,25 @@ export function bookBackdropSvg(
   if (flakes) brush.fill(flakes, light);
   // the floor of the scene, last, so whatever stands in it stands on it
   brush.fill(`${smoothLine(NEAR)}V${h}H0Z`, ground);
-  const key = [setting, sky, ground, light, opts.far ?? '', opts.seed ?? '', orb ? `${f(orb.x)}-${f(orb.y)}-${f(orb.r)}${orb.full ? 'f' : ''}` : 'no', ...(opts.clear ?? []).map((c) => `${f(c.x)}-${f(c.y)}-${f(c.w)}-${f(c.h)}`)].join('|');
+  if (opts.room) paintRoom(brush, opts.room, setting, sky);
+  const shadows = opts.shadows ?? [];
+  for (const s of shadows) if (![s.x, s.y, s.rx].every(Number.isFinite) || s.rx <= 0) throw new RangeError('art: a shade on the floor needs a place and a size');
+  if (shadows.length > 0) {
+    const floor = opts.room ? roomColours(setting, sky).floorShade : mix(ground, '#2b1f2e', setting === 'snow' ? 0.14 : 0.2);
+    brush.fill(shadows.map((s) => E(s.x, s.y, s.rx, s.rx * 0.2)).join(''), floor, ' fill-opacity="0.55"');
+  }
+  const key = [
+    setting,
+    sky,
+    ground,
+    light,
+    opts.far ?? '',
+    opts.seed ?? '',
+    orb ? `${f(orb.x)}-${f(orb.y)}-${f(orb.r)}${orb.full ? 'f' : ''}` : 'no',
+    ...(opts.clear ?? []).map((c) => `${f(c.x)}-${f(c.y)}-${f(c.w)}-${f(c.h)}`),
+    opts.room ? `room-${opts.room.window ? `${f(opts.room.window.x)}-${f(opts.room.window.y)}-${f(opts.room.window.w)}-${f(opts.room.window.h)}` : 'shut'}-${opts.room.rug ? 'rug' : ''}` : '',
+    ...shadows.map((s) => `${f(s.x)}-${f(s.y)}-${f(s.rx)}`),
+  ].join('|');
   return picture(String(brush), prefixFor(opts.idPrefix, 'book-backdrop', setting, hashOf(key)), opts.size, opts.title, `0 0 ${w} ${h}`, h / w);
 }
 

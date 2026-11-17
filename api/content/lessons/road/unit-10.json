@@ -2378,8 +2378,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Zirne tune bû, lê me stran gotin, û em ketin govendê.",
-                    "reference": "Zirne tune bû, lê me stran gotin, û em ketin govendê."
+                    "prompt": "Zirne tunebû, lê me stran gotin, û em ketin govendê.",
+                    "reference": "Zirne tunebû, lê me stran gotin, û em ketin govendê."
                   }
                 },
                 {
@@ -2670,8 +2670,8 @@
                     "voice": "hamo",
                     "prompt": "It was a custom: she used to make dried curd on the roof all the time.",
                     "accepted": [
-                      "Nerîtek bû: wê berdewam li ser banê keşk çêdikir.",
-                      "Nerîtek bû: wê li ser banê berdewam keşk çêdikir."
+                      "Nerîtek bû: wê berdewam li ser banî keşk çêdikir.",
+                      "Nerîtek bû: wê li ser banî berdewam keşk çêdikir."
                     ]
                   }
                 },
@@ -2765,7 +2765,7 @@
               "key": "u10s3l2",
               "position": 2,
               "titleKu": "Dema Dapîr keçik bû",
-              "titleEn": "When Grandma was a girl",
+              "titleEn": "When Dapîr was a girl",
               "exercises": [
                 {
                   "position": 1,
@@ -3271,8 +3271,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew çû golê, cem Zerê. Bêdeng be, binêre.",
-                        "en": "He went to the lake, to Zerê. Be quiet, look."
+                        "text": "Her êvar ew diçû golê, cem Zerê, û îro jî. Bêdeng be, binêre.",
+                        "en": "Every evening he used to go to the lake, to Zerê, and today too. Be quiet, look."
                       },
                       {
                         "speaker": 1,

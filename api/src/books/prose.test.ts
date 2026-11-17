@@ -19,9 +19,10 @@ describe('the book’s own words', () => {
     expect(letter).not.toMatch(/thirty years/);
   });
 
-  it('introduces Hamo as the one who made Hevalo, from the author’s own note, and names none of his family', () => {
+  it('introduces Hamo as the one who created the Hevalo app, from the author’s own note, and names none of his family', () => {
     expect(FRIENDS.hamo).toMatch(/^Hamo was born in Kobanî/);
-    for (const fact of ['Kurdish roots', 'the Netherlands', 'he made Hevalo']) expect(FRIENDS.hamo).toContain(fact);
+    // what he made is the app, not the deer who walks the road with him
+    for (const fact of ['Kurdish roots', 'the Netherlands', 'he created the Hevalo app']) expect(FRIENDS.hamo).toContain(fact);
     for (const family of ['Ibrahîm', 'Edûl', 'Evdila', 'Lorîn', 'Cîhan', 'father', 'mother', 'brother', 'sister', 'aunt']) {
       expect(FRIENDS.hamo, family).not.toContain(family);
     }
@@ -32,6 +33,8 @@ describe('the book’s own words', () => {
     // the letter has already said who the young deer is, so his page does not say it again
     expect(letter).toContain('your guide');
     expect(FRIENDS.hevalo).not.toMatch(/guide|young (male )?deer/);
+    // his name’s meaning ends its sentence by itself, and the “O” is never left alone at a line’s end
+    expect(FRIENDS.hevalo).toContain('His name means “O\u00a0friend!” Curious');
     expect(FRIENDS.xezo).toMatch(/^Xezal is the young teacher at the village school\./);
   });
 

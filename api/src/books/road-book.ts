@@ -7,8 +7,9 @@
  * plain outline (`roadBookChapters`) that pdf.ts lays out. A chapter is its
  * four parts; a part is its grammar note and its four lessons; and a lesson
  * is what the app teaches in it: the little scene it happens in (the plan's
- * beat), its new words, the line Hamo has the learner say after him, a few
- * of its sentences to read aloud with their meaning, and its conversation.
+ * beat, told in the book's own hand-written words where it has them), its
+ * new words, the line Hamo has the learner say after him, a few of its
+ * sentences to read aloud with their meaning, and its conversation.
  * Then the story Hamo tells at the chapter's end, with its English and its
  * questions, and practice for a pencil, whose answers wait at the back.
  *
@@ -41,6 +42,12 @@ export interface BookPlanUnit {
       titleEn: string;
       focus?: string;
       beat?: string;
+      /**
+       * The beat as the book tells it beside the lesson's drawing, written by
+       * hand to fit the lines there: from content/lessons/road/book-beats.json
+       * (see `withBookBeats`), or the plan's own where it gives one.
+       */
+      bookBeat?: string;
       new: Array<{ ku: string; en: string; pos?: string; gender?: string }>;
     }>;
   }>;
@@ -117,7 +124,11 @@ export interface BookLesson {
   titleEn: string;
   /** what the lesson is for, in the plan's word: meet, build, talk or review */
   focus: string;
-  /** the little scene the lesson happens in, in English, as the plan tells it */
+  /**
+   * The little scene the lesson happens in, in English, as the book prints
+   * it beside the drawing and draws it: the book's hand-written telling,
+   * whole, where there is one, and the plan's beat where there is not.
+   */
   beat: string;
   words: BookWord[];
   /** the line Hamo says for the learner to say after him */
@@ -261,6 +272,9 @@ const wordsIn = (text: string): number => text.trim().split(/\s+/).length;
 /** How many lines a lesson gives to read aloud: a lesson with a conversation is read as that. */
 const READ_ALOUD = 2;
 
+/** A line as it is compared with a word card: in lower case, without the stop, mark or dots it ends on. */
+const bareLine = (text: string): string => text.toLowerCase().trim().replace(/[\s.!?…]+$/u, '');
+
 /**
  * One lesson, from the plan and its exercises. What each kind of exercise
  * gives it: "pick the picture" ties a word to its picture; the line to
@@ -279,9 +293,11 @@ function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index
   }
   const dialogue = dialogueOf(exercises);
   const speaking = exercises.find((e) => e.type === 'speaking');
-  // a line of one word is on the page already, as a word; a line of the conversation is in the conversation
+  // a line of one word is on the page already, as a word; a line of the conversation is in the conversation;
+  // and a line that is one of the lesson's own new sayings is on its word card just above, so other lines are read instead
   const spoken = new Set(dialogue?.lines.map((l) => l.text) ?? []);
-  const all = pairsOf(exercises).filter((s) => !spoken.has(s.ku));
+  const carded = new Set(plan.new.map((w) => bareLine(w.ku)));
+  const all = pairsOf(exercises).filter((s) => !spoken.has(s.ku) && !carded.has(bareLine(s.ku)));
   const whole = all.filter((s) => wordsIn(s.ku) > 1);
   return {
     key: plan.key,
@@ -289,12 +305,37 @@ function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index
     titleKu: plan.titleKu,
     titleEn: plan.titleEn,
     focus: plan.focus ?? '',
-    beat: plan.beat ?? '',
+    // the plan's beat is written for the app and runs longer than the lines beside the drawing; the book's own telling fits them whole
+    beat: str(plan.bookBeat) ?? plan.beat ?? '',
     words: plan.new.map((w) => ({ ku: w.ku, en: w.en, gender: genderOf(w.gender), pos: w.pos ?? null, picture: pictures.get(w.ku) ?? null })),
     say: speaking ? (str(speaking.payload.reference) ?? str(speaking.payload.prompt)) : null,
     sentences: dialogue ? [] : spread(whole.length >= READ_ALOUD ? whole : all, READ_ALOUD),
     dialogue,
   };
+}
+
+/** A word and its meaning spelt so nearly alike that one gives the other away: a loanword beside its English (doktor and doctor, plan and plan, trên and train). */
+export function givesAway(pair: BookPair): boolean {
+  const plain = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '');
+  const ku = plain(pair.ku);
+  // the English's first meaning is the one a learner would match it by
+  return pair.en.split(/[,;(]/).map(plain).some((en) => {
+    if (en === ku) return true;
+    // short words are too few letters to judge by: ez and I, av and a, are not alike
+    if (Math.min(en.length, ku.length) < 4) return false;
+    return editDistance(ku, en) <= 2;
+  });
+}
+
+/** How many letters must be put in, taken out or changed to turn one word into the other. */
+function editDistance(a: string, b: string): number {
+  let row = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const next = [i];
+    for (let j = 1; j <= b.length; j++) next.push(Math.min(row[j]! + 1, next[j - 1]! + 1, row[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1)));
+    row = next;
+  }
+  return row[b.length]!;
 }
 
 /** How much of each kind of task a chapter's practice holds. */
@@ -348,7 +389,8 @@ function practiceOf(exercises: readonly BookExercise[], printed: ReadonlySet<str
       if (ku && picture && first(`picture|${picture}`)) pictures.push({ picture, ku });
     } else if (e.type === 'listening') {
       const line = str(strings(p.accepted)[0]);
-      if (line && !printed.has(line) && first(`alone|${line}`)) alone.push(line);
+      // a line read alone is new to the page: not one printed whole, nor one inside a longer printed line (“Spas! …” says it already)
+      if (line && ![...printed].some((p) => p.includes(line)) && first(`alone|${line}`)) alone.push(line);
     }
   }
   // a reply with the lesson's own hint says what is going on, and a sentence is a fairer thing to translate than one word
@@ -356,10 +398,12 @@ function practiceOf(exercises: readonly BookExercise[], printed: ReadonlySet<str
   const sentences = toKurdish.filter((t) => wordsIn(t.ku) > 1);
   const few = gaps.length < GAPS_AT_LEAST;
   const into = PRACTICE.toKurdish + (few ? GAPS_AT_LEAST : 0);
-  // what is joined with a line is a word and its meaning: a whole proverb is for reading, not for one end of a line
-  const short = match.filter((m) => wordsIn(m.ku) <= 3 && m.ku.length <= 18 && m.en.length <= 26);
+  // what is joined with a line is a word and its meaning: a whole proverb is for reading, not for one end of a line;
+  // and a word spelt nearly as its English (doktor, doctor) joins itself, so it teaches nothing there
+  const fair = match.filter((m) => !givesAway(m));
+  const short = fair.filter((m) => wordsIn(m.ku) <= 3 && m.ku.length <= 18 && m.en.length <= 26);
   return {
-    match: spread(short.length >= PRACTICE.match ? short : match, PRACTICE.match),
+    match: spread(short.length >= PRACTICE.match ? short : fair, PRACTICE.match),
     gaps: few ? [] : spread(gaps, PRACTICE.gaps),
     replies: spread(hinted.length >= PRACTICE.replies ? hinted : replies, PRACTICE.replies),
     toKurdish: spread(sentences.length >= into ? sentences : toKurdish, into),
@@ -379,6 +423,35 @@ function gagOf(pairs: readonly BookPair[]): BookPair | null {
   const his = pairs.filter((s) => s.ku.includes('Hevalo'));
   const apples = his.filter((s) => /sêv/i.test(s.ku));
   return shortest(apples.filter((s) => s.ku.includes('!'))) ?? shortest(apples) ?? shortest(his.filter((s) => /birçî|dixwe|xwar/i.test(s.ku)));
+}
+
+/** The book's own telling of each lesson's beat, by lesson key, as content/lessons/road/book-beats.json has them. */
+export type BookBeats = Readonly<Record<string, unknown>>;
+
+/**
+ * The plan with the book's own telling of each beat set beside the beat.
+ * The plan's beats are the app's, and most run longer than the three lines
+ * a scene has beside its drawing, where cutting them by machine loses who
+ * is speaking and what the drawing shows; so the book has a telling of its
+ * own for each, written by hand to fit, kept in a file of its own so the
+ * plan stays the course writers' document. The plan given is not changed;
+ * a lesson with no telling in `beats` keeps what the plan has.
+ */
+export function withBookBeats(plan: BookPlan, beats: BookBeats): BookPlan {
+  const own = (key: string): string | null => (Object.hasOwn(beats, key) ? str(beats[key]) : null);
+  return {
+    ...plan,
+    units: plan.units.map((unit) => ({
+      ...unit,
+      skills: unit.skills.map((skill) => ({
+        ...skill,
+        lessons: skill.lessons.map((lesson) => {
+          const told = own(lesson.key);
+          return told ? { ...lesson, bookBeat: told } : lesson;
+        }),
+      })),
+    })),
+  };
 }
 
 /**
@@ -450,7 +523,10 @@ export function roadBookWordList(chapters: ReadonlyArray<Pick<BookChapter, 'part
   const out: Array<BookWord & { chapter: number }> = [];
   for (const c of chapters) {
     for (const w of chapterWords(c)) {
-      const key = w.ku.toLowerCase();
+      // a word is listed once, the first time it is met, however it is written: Were! and were / werin, both "come", are one
+      // entry; but wî "his" and wî / wê / wan "that" are two, and so are na "no" and na- "not"
+      const first = (text: string, letters: RegExp): string => text.split(/[/,;(]/)[0]!.toLowerCase().replace(letters, '').trim();
+      const key = `${first(w.ku, /[^a-zçêîşû -]/g)}|${first(w.en, /[^a-z ]/g).split(' ').find((x) => x !== '' && x !== 'to') ?? ''}`;
       if (seen.has(key)) continue;
       seen.add(key);
       out.push({ ...w, chapter: c.number });
@@ -465,6 +541,8 @@ const ORDER = 'abcçdeêfghiîjklmnopqrsştuûvwxyz';
 export function kurdishCompare(a: string, b: string): number {
   const rank = (ch: string): number => {
     const i = ORDER.indexOf(ch);
+    // a space comes before every letter, so a phrase is listed by its first word: bi lez before bira, e / ye before ez
+    if (ch === ' ') return -1;
     return i >= 0 ? i : ORDER.length + ch.charCodeAt(0);
   };
   const x = a.toLowerCase().replace(/[^a-zçêîşû ]/g, '');
@@ -547,8 +625,9 @@ export function roadBookCast(plan: BookPlan, chapters: readonly BookChapter[]): 
     ])
     .join('\n');
   return (plan.names ?? [])
-    // an entry that only says what someone is called by another is not a person of its own
-    .filter((who) => (who.kind === 'person' || who.kind === 'animal') && !/^what /.test(who.en))
+    // an entry that only says what someone is called by another is not a person of its own; Hamo's own
+    // family (`family` in the plan) stays in the cast, for the people pages to tell apart and leave out
+    .filter((who) => (who.kind === 'person' || who.kind === 'family' || who.kind === 'animal') && !/^what /.test(who.en))
     .filter((who) => [who.name, ...(who.forms ?? [])].some((form) => new RegExp(`(^|[^\\p{L}])${form}($|[^\\p{L}])`, 'u').test(text)))
     .map(({ name, kind, en }) => ({ name, kind, en }));
 }

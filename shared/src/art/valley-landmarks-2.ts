@@ -183,35 +183,29 @@ function restRipple(box: Box, dark: boolean): string {
 }
 
 /**
- * Smoke going up from the bottom middle of the box: one plume, thin where it
- * leaves the fire and billowing into rounded lobes as it rises and drifts,
- * its shade a step down along its lower right.
+ * Smoke going up from the bottom middle of the box, as it rises on a still
+ * day: three puffs, each a little bigger than the one below it, a little
+ * further over to the right, and a little thinner, so the air shows through
+ * the last of them; each puff its shade a step down along its lower right.
  */
 function restSmoke(box: Box, face: string, shade: string): string {
   const s = box.w / 16;
-  const k = box.h / s / 30;
-  const plume: Pt[] = [
-    [8, 29.6],
-    [9.6, 26.4],
-    [10.4, 23],
-    [12.6, 19.6],
-    [13.2, 15],
-    [14.8, 10.6],
-    [14.2, 5.4],
-    [11.6, 2],
-    [8.4, 3],
-    [7.2, 6.6],
-    [4.4, 9.2],
-    [3.2, 13.6],
-    [5, 17],
-    [4, 20.6],
-    [5.8, 24],
-    [7, 27.2],
+  const k = box.h / 30;
+  const puffs: ReadonlyArray<readonly [x: number, y: number, r: number, alpha: number]> = [
+    [8, 25.4, 2.6, 0.95],
+    [9.4, 16.8, 3.6, 0.75],
+    [10.8, 7, 4.6, 0.5],
   ];
-  const at = (dx: number, dy: number): Pt[] => plume.map(([px, py]) => [box.x + (px + dx) * s, box.y + (py * k + dy) * s] as Pt);
-  // the face is drawn a little up and to the left of the shade, its foot pulled up so the shade shows under it
-  const lit = at(-0.3, -0.3).map(([x, y], i) => (i === 0 ? [x, y - 0.6 * s] : [x, y]) as Pt);
-  return fill(smoothPath(at(0.7, 0.6), true), shade) + fill(smoothPath(lit, true), face);
+  let out = '';
+  for (const [px, py, r, alpha] of puffs) {
+    const [cx, cy] = [box.x + px * s, box.y + py * k];
+    const lobes = (dx: number, dy: number): string =>
+      ellipsePath(cx - r * 0.6 * s + dx, cy + r * 0.2 * s + dy, r * 0.6 * s, r * 0.52 * s) +
+      ellipsePath(cx + dx, cy - r * 0.22 * s + dy, r * 0.72 * s, r * 0.64 * s) +
+      ellipsePath(cx + r * 0.58 * s + dx, cy + r * 0.16 * s + dy, r * 0.58 * s, r * 0.5 * s);
+    out += `<path d="${lobes(0.5 * s, 0.5 * s)}" fill="${shade}" fill-opacity="${alpha}"/><path d="${lobes(0, 0)}" fill="${face}" fill-opacity="${alpha}"/>`;
+  }
+  return out;
 }
 
 /** The flag of Kurdistan flying from the pole at the box's left edge: the very cloth the apps make stir in the wind over it. */
@@ -592,11 +586,11 @@ function school(dark: boolean, random: () => number): string {
   const rise = 8;
   const top = y - h;
   const ridgeY = top - d / 4 - rise;
-  // the poplar behind the roof, and the yard of beaten earth the school stands in
-  out += poplar(78, 84, 0.84, autumnPoplar(dark), c(VALLEY.meadowShade));
+  // the poplar behind the roof, its foot in the yard behind the building, and the yard of beaten earth the school stands in
+  out += poplar(80, 101, 0.98, autumnPoplar(dark), c(VALLEY.meadowShade));
   out += fill(blobPath(60, 106.4, 55, 8.4, 12, 0.08, random), c(VALLEY.dirt));
   // the school's shadow, its gable end in shade, its front, the blue plinth, the windows and the door
-  out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d + 11, y - d / 2 + 6], [x + w + 11, y + 6]]), c(VALLEY.dirtEdge));
+  out += `<path d="${ellipsePath(x + w + d * 0.6, y + 1.4, d, 2.6)}" fill="${c(VALLEY.dirtEdge)}" fill-opacity="0.6"/>`;
   out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w + d / 2, ridgeY], [x + w, top]]), c(HUE.whitewashSide));
   out += fill(`M${x} ${top}h${w}v${h}h${-w}Z`, c(HUE.whitewash));
   out += fill(`M${x} ${y - 3}h${w}v3h${-w}Z`, c(VALLEY.gate));
@@ -670,7 +664,8 @@ function hearth(dark: boolean, random: () => number): string {
   const h = 27;
   const d = 16;
   const top = y - h;
-  out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d + 11, y - d / 2 + 6], [x + w + 11, y + 6]]), snowShade);
+  // the house's shadow lies soft on the snow, inside the drift, as a shadow on snow does
+  out += `<path d="${ellipsePath(x + w + d * 0.62, y + 1.4, d * 0.95, 2.4)}" fill="${snowShade}" fill-opacity="0.7"/>`;
   out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w, top]]), c(VALLEY.wallSide));
   out += fill(`M${x} ${top}h${w}v${h}h${-w}Z`, c(VALLEY.wall));
   out += fill(`M${x + 9} ${y}v-14a5.5 5.5 0 0 1 11 0v14Z`, c(VALLEY.gate));
@@ -742,7 +737,7 @@ function hearth(dark: boolean, random: () => number): string {
   const drift: Pt[] = [[x - 3, y + 1.2], [x + 10, y - 1.8], [x + 30, y - 1], [x + w + 2, y - 2], [x + w + 4, y + 1], [x + w - 6, y + 3], [x + 20, y + 3.6]];
   out += fill(smoothPath(drift, true), snow);
   let steps = '';
-  for (let k = 0; k < 4; k++) steps += ellipsePath(x + 14.5 - k * 2.2 + (k % 2) * 2.4, y + 3.4 + k * 3.4, 1.3, 0.8);
+  for (let k = 0; k < 4; k++) steps += ellipsePath(x + 14.5 - k * 2.2 + (k % 2) * 2.4, y + 3.2 + k * 2.6, 1.3, 0.8);
   out += fill(steps, snowShade);
   out += restSmoke(HEARTH_SMOKE, c(HUE.smokeOnSnow), c(HUE.smokeOnSnowShade));
   return out;
