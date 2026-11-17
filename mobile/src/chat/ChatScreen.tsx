@@ -10,7 +10,7 @@ import type { ApiError } from '../api/types';
 import { describeError, isMaintenance } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, lineOf } from '../theme/Skeleton';
@@ -67,7 +67,10 @@ const ONLINE_DOT = 10;
  * and holding one of their messages reports it. A message is in the thread
  * the moment it is sent, drawn as still on its way until the server has it
  * (chat/sending.ts); one the server refuses is taken out again, says why
- * above the composer — and what was typed goes back in the field.
+ * above the composer — and what was typed goes back in the field. A thread
+ * that could not be read says so, with the way to ask again: it is not
+ * drawn as a conversation nobody has written in, offering a first hello to
+ * a friend of years.
  */
 export function ChatScreen({
   userId,
@@ -94,6 +97,9 @@ export function ChatScreen({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
+  // the conversation could not be read: said, with the way to ask again, rather than passing for one nobody has written in
+  const [loadError, setLoadError] = useState<ApiError | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [peerTyping, setPeerTyping] = useState(false);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [picking, setPicking] = useState(false);
@@ -138,15 +144,23 @@ export function ChatScreen({
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
     void client.get<{ messages: ChatMessage[] }>(`/chat/${userId}/messages`).then((res) => {
-      if (active && res.ok) setMessages(res.data.messages);
-      if (active) setLoading(false);
-      markRead();
+      if (!active) return;
+      if (res.ok) {
+        setMessages(res.data.messages);
+        setLoadError(null);
+        markRead();
+      } else {
+        setLoadError(res.error);
+      }
+      setLoading(false);
     });
     return () => {
       active = false;
     };
-  }, [client, userId, markRead]);
+    // a retry reads the conversation again
+  }, [client, userId, markRead, attempt]);
 
   useEffect(() => {
     let active = true;
@@ -334,6 +348,10 @@ export function ChatScreen({
 
         {loading ? (
           <ThreadSkeleton mirrored={mirrored} />
+        ) : loadError && messages.length === 0 ? (
+          <ScrollView contentContainerStyle={styles.welcome}>
+            <ErrorRetry message={describeError(loadError, t)} onRetry={() => setAttempt((n) => n + 1)} style={styles.failed} />
+          </ScrollView>
         ) : thread.length === 0 ? (
           // nothing said yet: who it is with, and a first hello to send
           <ScrollView contentContainerStyle={styles.welcome} keyboardShouldPersistTaps="handled">
@@ -487,6 +505,8 @@ const styles = StyleSheet.create({
   // the runs keep their own distance (chat/MessageRow.tsx); the tails reach a little into the margin
   list: { paddingHorizontal: spacing.md - 4, paddingVertical: spacing.md },
   welcome: { flexGrow: 1 },
+  // the error in the middle of what the thread would fill
+  failed: { flexGrow: 1, justifyContent: 'center' },
   // your own words at the end of the line and theirs at its start, whichever side that is
   rowEnd: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   rowStart: { alignSelf: 'flex-start', alignItems: 'flex-start' },

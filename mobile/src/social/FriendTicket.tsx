@@ -39,6 +39,8 @@ export interface RequestPerson {
   userId: string;
   username: string;
   displayName?: string | null;
+  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose) */
+  avatarUrl?: string | null;
 }
 
 export function FriendRequestTicket({
@@ -67,7 +69,8 @@ export function FriendRequestTicket({
   const dir = useDirection();
   const reduce = useReducedMotion();
   const accepted = answer === 'accepted';
-  const wants = t('rail.wantsToBeFriendsWith', { name: person.displayName ?? person.username });
+  // the line under their handle: the name they chose, where it says something the handle does not; their handle is not said twice
+  const wants = person.displayName ? t('rail.wantsToBeFriendsWith', { name: person.displayName }) : t('rail.wantsToBeFriends');
 
   // folded down and away, like a ticket put back in a pocket — and open again if the answer did not get through
   const fold = useRef(new Animated.Value(0)).current;
@@ -106,7 +109,7 @@ export function FriendRequestTicket({
       // held, the row fills as a list row does: who they are opens their profile
       style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
     >
-      <InitialsAvatar name={person.username} id={person.userId} size={compact ? 36 : 44} />
+      <InitialsAvatar name={person.username} id={person.userId} size={compact ? 36 : 44} photoUrl={person.avatarUrl ?? undefined} />
       <View style={styles.names}>
         <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
           {person.username}

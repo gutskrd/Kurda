@@ -30,6 +30,8 @@ export interface RailGroup {
   id: string;
   name: string;
   memberCount: number;
+  /** the group's own picture, when its owner gave it one */
+  photoUrl?: string | null;
   unread: number;
 }
 
@@ -37,6 +39,7 @@ export interface RailPerson {
   userId: string;
   username: string;
   displayName?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface SocialRailData {

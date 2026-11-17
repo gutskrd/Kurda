@@ -33,6 +33,8 @@ interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
+  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose) */
+  avatarUrl?: string | null;
 }
 
 /** How long a suggestion says "Requested", its ticket handed over, before it moves to the requests you sent. */
@@ -226,7 +228,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             : t('friends.openProfile', { username: u.username })
         }
       >
-        <InitialsAvatar name={u.username} id={u.userId} size={36} />
+        <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
         <View style={styles.rowMain}>
           <Text style={[styles.username, { color: colors.textPrimary }]}>{u.username}</Text>
           {sub ? <Text style={[styles.display, { color: colors.textSecondary }]}>{sub}</Text> : null}

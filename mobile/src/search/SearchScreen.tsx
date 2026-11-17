@@ -42,6 +42,8 @@ interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
+  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose): the face they have everywhere else */
+  avatarUrl?: string | null;
   /** on search results: already friends with whoever searched */
   friend?: boolean;
 }
@@ -426,7 +428,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
               suggestions.slice(0, 5).map((u) =>
                 row(
                   's-' + u.userId,
-                  <InitialsAvatar name={u.username} id={u.userId} size={40} />,
+                  <InitialsAvatar name={u.username} id={u.userId} size={40} photoUrl={u.avatarUrl ?? undefined} />,
                   u.username,
                   u.mutualCount > 0 ? mutualText(t, u.mutualCount) : (u.displayName ?? null),
                   () => navigation.navigate('UserProfile', { userId: u.userId }),
@@ -452,7 +454,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           peopleShown.map((u) =>
             row(
               'p-' + u.userId,
-              <InitialsAvatar name={u.username} id={u.userId} size={40} />,
+              <InitialsAvatar name={u.username} id={u.userId} size={40} photoUrl={u.avatarUrl ?? undefined} />,
               u.username,
               // a friend says so, the way a list of people you follow does
               u.friend ? [u.displayName, t('search.friend')].filter(Boolean).join(' · ') : (u.displayName ?? null),

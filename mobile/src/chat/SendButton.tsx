@@ -21,9 +21,10 @@ const DISC = 34;
  * disc beside it. Inside the pill the button reads as the field's own, the
  * row is one control shorter, and the words get the width the gap took.
  *
- * In a browser the field being typed in is ringed, as a keyboard needs: the
- * ring is the pill's, since the browser's own would be a rectangle drawn
- * round the words inside it. A phone shows a caret and no ring.
+ * In a browser the field being typed in is ringed in violet, as a keyboard
+ * needs and as what has the focus is everywhere: the ring is the pill's,
+ * since the browser's own would be a rectangle drawn round the words inside
+ * it. A phone shows a caret and no ring.
  */
 export function MessageField({
   value,
@@ -42,7 +43,7 @@ export function MessageField({
   const [focused, setFocused] = useState(false);
   const ringed = focused && Platform.OS === 'web';
   return (
-    <View style={[styles.field, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, ringed ? [styles.fieldRinged, { outlineColor: colors.textPrimary }] : null]}>
+    <View style={[styles.field, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, ringed ? [styles.fieldRinged, { outlineColor: colors.primary }] : null]}>
       <TextInput
         style={[styles.fieldInput, dir.free, { color: colors.textPrimary }]}
         onFocus={() => setFocused(true)}
@@ -68,7 +69,7 @@ export function MessageField({
  * something to send, a faint arrow before — the shape every message field
  * has, so nobody has to look for it. (A comment's used to be a bare chevron,
  * the glyph that elsewhere means "go on to the next page".) Ready, the circle
- * is the gold your own words are sent in.
+ * is the colour your own words are sent in.
  *
  * Empty, it is disabled and says so to a screen reader, rather than taking
  * the tap and doing nothing with it. The arrow points the way the text runs.

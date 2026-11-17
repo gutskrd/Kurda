@@ -65,3 +65,18 @@ describe('the new-message panel under a finger, as the menu is', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 });
+
+describe('the new-message panel with nobody about', () => {
+  it('says so under the friends online, where they would be, and not under the ones who are away', async () => {
+    testAuth.client = fakeClient({
+      'GET /me/social': ok({ friends: [{ userId: 'u2', username: 'rojda', online: false, lastSeenAt: null }], challenges: [], requests: [], groups: [] }),
+    });
+    renderWithProviders(<SocialSlide open onClose={() => undefined} />);
+    const note = await screen.findByText('Nobody right now.');
+    const online = screen.getByText('Friends online');
+    const away = screen.getByText('Offline');
+    // in the order the panel reads: the heading, its note, and then the friends who are away
+    expect(online.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(note.compareDocumentPosition(away) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});

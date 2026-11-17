@@ -2691,6 +2691,7 @@ export type TranslationKey =
   | 'rail.messageWho'
   | 'rail.wantsToPlay'
   | 'rail.wantsToBeFriendsWith'
+  | 'rail.wantsToBeFriends'
   | 'time.justNow'
   | 'time.aWhileAgo'
   | 'time.minutes'
@@ -5354,6 +5355,7 @@ const en: Catalog = {
   'groups.namePlaceholder': 'e.g. Kurmancî learners',
   'groups.description': 'Description',
   'groups.descriptionOptional': 'Description (optional)',
+  'rail.wantsToBeFriends': 'Wants to be friends',
   'groups.privateHint': 'Groups are private: only the people added to one can see it.',
   'groups.create': 'Create group',
   // how many of something one person may have, and what makes room (limits/limitCopy.ts)
@@ -9172,6 +9174,7 @@ const ku: Catalog = {
   'limits.savedWords': 'Ferhengoka te tije ye: heta {max} peyvan tê de cih digirin. Peyvekê jê bibe da ku yeke nû zêde bikî.',
   'limits.playInvites': '{max} vexwendinên te yên lîstikê li benda bersivê ne. Berî ku bêtir vexwînî, li benda hin bersivan bimîne.',
   'limits.drafts': '{max} reşnivîsên te yên neqediyayî hene. Yekê biweşîne an jê bibe da ku yeke din biparêzî.',
+  'rail.wantsToBeFriends': 'Dixwaze bibe hevalê te',
   'groups.creating': 'Tê çêkirin…',
   'groups.noGroupsYet': 'Hê kom tune',
   'groups.noGroupsBody': 'Komekê çêke û hevalên xwe lê zêde bike da ku hûn bi hev re biaxivin.',
@@ -12989,6 +12992,7 @@ const de: Catalog = {
   'groups.info': 'Gruppeninfo',
   'groups.edit': 'Gruppe bearbeiten',
   'groups.save': 'Speichern',
+  'rail.wantsToBeFriends': 'Möchte befreundet sein',
   'groups.photo.add': 'Bild hinzufügen',
   'groups.photo.change': 'Bild ändern',
   'groups.photo.remove': 'Bild entfernen',
@@ -16806,6 +16810,7 @@ const es: Catalog = {
   'groups.deleteWarning': 'Esto elimina {group} y todos sus mensajes para todos. No se puede deshacer.',
   'groups.report': 'Denunciar grupo',
   'groups.ownerLeaveHint': 'Para salir, primero haz propietario a otro miembro.',
+  'rail.wantsToBeFriends': 'Te ha pedido amistad',
   'groups.adminHint': 'El propietario y los administradores pueden cambiar el nombre, la descripción y la imagen del grupo, y expulsar miembros.',
   'groups.chatOptions': 'Opciones del chat',
   'groups.welcome.start': 'Aquí empieza {group}',
@@ -20623,6 +20628,7 @@ const tr: Catalog = {
   'groups.clear.askMeBody': 'Şimdiye kadarki mesajlar yalnızca senin için kaybolur; diğerleri onları görmeye devam eder.',
   'groups.clear.askEveryone': 'Bu sohbet {count} üyenin tümü için temizlensin mi?',
   'groups.clear.askEveryoneBody': 'Şimdiye kadarki mesajlar herkes için silinir ve sohbet, onu senin temizlediğini gösterir. Bu geri alınamaz.',
+  'rail.wantsToBeFriends': 'Arkadaş olmak istiyor',
   'groups.clear.doneMe': 'Sohbet senin için temizlendi',
   'groups.clear.doneEveryone': 'Sohbet herkes için temizlendi',
   'groups.addFriends.title': 'Arkadaş ekle',
@@ -24440,6 +24446,7 @@ const ar: Catalog = {
   'groups.ban.action': 'حظر…',
   'groups.ban.title': 'حظر {name}',
   'groups.ban.howLong': 'المدة',
+  'rail.wantsToBeFriends': 'يريد أن يكون صديقك',
   'groups.ban.day': 'يوم واحد',
   'groups.ban.week': 'أسبوع واحد',
   'groups.ban.forGood': 'نهائيًا',
@@ -28257,6 +28264,7 @@ const fr: Catalog = {
   'groups.requests.emptyBody': 'Quand une personne bannie de ce groupe demande à revenir, sa demande attend ici.',
   'groups.requests.declinedOnce': 'Refusé une fois auparavant',
   'groups.requests.declinedMany': 'Refusé {count} fois auparavant',
+  'rail.wantsToBeFriends': 'Veut devenir ton ami',
   'groups.requests.approve': 'Accepter',
   'groups.requests.approveFrom': 'Accepter la demande de {name}',
   'groups.requests.decline': 'Refuser',
@@ -32074,6 +32082,7 @@ const nl: Catalog = {
   'groups.bans.title': 'Verbannen',
   'groups.bans.until': 'Tot {date}',
   'groups.bans.by': 'Verbannen door {name}',
+  'rail.wantsToBeFriends': 'Wil vrienden worden',
   'groups.bans.byGone': 'Verbannen door een beheerder',
   'groups.bans.requestsClosed': 'Verzoeken gestopt',
   'groups.bans.unban': 'Ban opheffen',
@@ -35892,6 +35901,7 @@ const ckb: Catalog = {
   'groups.standing.bannedUntil': 'تا {date} لەم گرووپە قەدەغە کراویت',
   'groups.standing.bannedForGood': 'بۆ هەمیشە لەم گرووپە قەدەغە کراویت',
   'groups.standing.reason': 'هۆکار: {reason}',
+  'rail.wantsToBeFriends': 'دەیەوێت ببێتە هاوڕێت',
   'groups.standing.canBeAdded': 'بەڕێوەبەرێکی گرووپەکە دەتوانێت دووبارە زیادت بکات.',
   'groups.standing.ask': 'داوای گەڕانەوە بکە',
   'groups.standing.pending': 'داواکاری {when} نێردرا — بەڕێوەبەران بڕیار دەدەن',

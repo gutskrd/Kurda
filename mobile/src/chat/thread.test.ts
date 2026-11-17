@@ -72,6 +72,8 @@ describe('what a day is called', () => {
 
   it('writes the time on the clock, and nothing for a time that will not parse', () => {
     expect(timeLabel(new Date(2026, 9, 20, 14, 5).toISOString(), 'en-GB')).toBe('14:05');
+    // the same hour the list of conversations writes, with no zero before it
+    expect(timeLabel(new Date(2026, 9, 20, 19, 46).toISOString(), 'en-US')).toMatch(/^7:46\sPM$/);
     expect(timeLabel('not a date', 'en-GB')).toBe('');
   });
 });

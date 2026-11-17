@@ -51,6 +51,8 @@ interface RequestRow {
   userId: string;
   username: string;
   displayName?: string | null;
+  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose) */
+  avatarUrl?: string | null;
 }
 
 /**
@@ -228,7 +230,7 @@ export function MessagesScreen(): React.JSX.Element {
           <View style={styles.faces}>
             {requests.slice(0, 2).map((r, i) => (
               <View key={r.userId} style={[styles.face, i > 0 && styles.faceBehind, { borderColor: colors.surface }]}>
-                <InitialsAvatar name={r.username} id={r.userId} size={32} />
+                <InitialsAvatar name={r.username} id={r.userId} size={32} photoUrl={r.avatarUrl ?? undefined} />
               </View>
             ))}
             {/* friend requests are tickets, as invites to play are: the glyph on the faces' corner */}
