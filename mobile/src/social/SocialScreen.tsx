@@ -14,6 +14,7 @@ import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 import { describeError, isMaintenance } from '../api/errors';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
@@ -61,6 +62,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
 
   const { t } = useI18n();
+  // in Soranî and Arabic the rows start on the right, as the friend request tickets above them already do
+  const dir = useDirection();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
@@ -219,7 +222,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     return (
       <PressableScale
         key={u.userId}
-        style={[styles.row, { backgroundColor: colors.controlTrack }]}
+        style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
         onPress={() => openProfile(u.userId)}
         accessibilityRole="button"
         accessibilityLabel={
@@ -230,8 +233,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
       >
         <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
         <View style={styles.rowMain}>
-          <Text style={[styles.username, { color: colors.textPrimary }]}>{u.username}</Text>
-          {sub ? <Text style={[styles.display, { color: colors.textSecondary }]}>{sub}</Text> : null}
+          <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
+          {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}
         </View>
         {right}
       </PressableScale>
@@ -241,7 +244,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   /** Takes a key, not a word: the two headings here were plain English, and
       a label built at the call site is invisible to the i18n gate. */
   const section = (key: TranslationKey) => (
-    <Text style={[styles.section, { color: colors.textSecondary }]}>{t(key)}</Text>
+    <Text style={[styles.section, dir.text, { color: colors.textSecondary }]}>{t(key)}</Text>
   );
 
   const showingSearch = results !== null;
@@ -260,7 +263,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             <Pressable
               onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
               hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
-              style={({ pressed }) => [styles.messagesLink, pressed && heldDim]}
+              style={({ pressed }) => [styles.messagesLink, { flexDirection: dir.row }, pressed && heldDim]}
               accessibilityRole="button"
               accessibilityLabel={t('nav.messages')}
             >
