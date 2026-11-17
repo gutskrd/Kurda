@@ -59,11 +59,3 @@ export function learningStats(streak: Streak): {
 export function streakLabelKey(current: number): 'streak.day' | 'streak.days' {
   return current === 1 ? 'streak.day' : 'streak.days';
 }
-
-/**
- * The flame reads as "lit" only while the run is alive. A zeroed streak
- * shows a cold flame to nudge the learner back.
- */
-export function isFlameLit(current: number): boolean {
-  return current > 0;
-}
