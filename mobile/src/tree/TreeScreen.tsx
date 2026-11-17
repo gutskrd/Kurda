@@ -281,7 +281,8 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               ) : null}
               {note ? (
                 <View style={[styles.health, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite">
-                  <Text style={[styles.healthName, { color: colors.textPrimary }]}>{note}</Text>
+                  {/* the note across the pill, from the reading side: in Soranî it sat on the left */}
+                  <Text style={[styles.healthName, styles.noteText, dir.text, { color: colors.textPrimary }]}>{note}</Text>
                 </View>
               ) : null}
 
@@ -765,10 +766,13 @@ function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; 
               aria-checked={on}
               accessibilityLabel={said(k.species)}
               onPress={() => {
-                haptic('select');
+                // a tick for another seed, nothing for the one already picked
+                if (!on) haptic('select');
                 setPicked(k.species);
               }}
-              style={[styles.seed, { backgroundColor: colors.surface, borderColor: on ? treeColour(k.species) : 'transparent' }]}
+              // the seed picked is ringed in the violet of every choice: in its own tree's colour the oak's ring was a right
+              // answer's green and the pomegranate's a wrong one's red
+              style={[styles.seed, { backgroundColor: colors.surface, borderColor: on ? colors.primary : 'transparent' }]}
               testID={`tree-seed-${k.species}`}
             >
               {/* the seed's picture closes in on the seed itself */}
@@ -969,6 +973,7 @@ const styles = StyleSheet.create({
   spark: { position: 'absolute', backgroundColor: '#fff6c0' },
   health: { alignItems: 'baseline', flexWrap: 'wrap', gap: spacing.sm, borderRadius: radii.md, paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md },
   healthName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  noteText: { alignSelf: 'stretch' },
   healthSince: { flexShrink: 1, fontSize: typography.sizes.sm },
   growth: { alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   goal: { width: GOAL, height: GOAL, alignItems: 'center', justifyContent: 'center' },

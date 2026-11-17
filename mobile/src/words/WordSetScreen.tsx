@@ -141,7 +141,8 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
           />
           <View style={styles.intro}>
             <Text style={[styles.summary, dir.text, { color: colors.textPrimary }]}>{summary}</Text>
-            <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('words.lead')}</Text>
+            {/* what a tap does here: the list's own lead ("Start with the letters…") is for the page the sets are on */}
+            <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('words.setLead')}</Text>
             <Progress explored={explored} total={order.length} />
           </View>
           {set === 'months' ? <SeasonLegend dialect={dialect} /> : null}

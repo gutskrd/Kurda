@@ -21,10 +21,15 @@ const CARD_HEIGHT = CHEST * CHEST_RATIO + 2 * (spacing.sm + 6) + 16;
 
 /**
  * Today's quests on Learn, slim: a chest, "Daily quests" with how many are
- * done (or that a chest is ready, today's or an earlier day's, with a gold dot
- * on the chest as well — and the chest shaking now and then, ChestWobble),
- * and a short bar for each of the three. A tap opens them in full
- * (QuestsScreen), where a chest waiting is opened.
+ * done (or that a chest is ready, today's or an earlier day's, with a dot on
+ * the chest as well — and the chest shaking now and then, ChestWobble), and a
+ * short bar for each of the three. A tap opens them in full (QuestsScreen),
+ * where a chest waiting is opened.
+ *
+ * A chest waiting is something to look at, so its dot and its words are in
+ * the violet the tab bar's dots are in; the gold stays with what the quests
+ * have earned, their bars. Both were gold, which on a card of gold bars said
+ * nothing more than the bars did.
  *
  * Read each time Learn comes into view. Held in grey while it loads; when it
  * did not load it says so, and a tap asks again; with no quests today it is
@@ -99,7 +104,7 @@ export function QuestsCard(): React.JSX.Element | null {
         <ChestWobble active={ready !== null} testID="quests-card-shaking">
           <ChestArt tier={chest.chest} size={CHEST} open={chest.claimed} shine={ready !== null} />
         </ChestWobble>
-        {ready ? <View style={[styles.dot, dir.rtl ? styles.dotRtl : null, { backgroundColor: colors.gold, borderColor: colors.surface }]} testID="quests-card-dot" /> : null}
+        {ready ? <View style={[styles.dot, dir.rtl ? styles.dotRtl : null, { backgroundColor: colors.primary, borderColor: colors.surface }]} testID="quests-card-dot" /> : null}
       </View>
       <View style={styles.main}>
         {/*
@@ -108,7 +113,7 @@ export function QuestsCard(): React.JSX.Element | null {
         */}
         <View style={[styles.head, { flexDirection: dir.row }]}>
           <Text style={[styles.title, dir.text, { color: colors.textPrimary }]}>{t('quests.title')}</Text>
-          <Text style={[styles.detail, dir.text, { color: ready ? colors.goldText : colors.textSecondary }]}>{ready ? t('quests.ready') : summary}</Text>
+          <Text style={[styles.detail, dir.text, { color: ready ? colors.primary : colors.textSecondary }]}>{ready ? t('quests.ready') : summary}</Text>
         </View>
         <View style={[styles.bars, { flexDirection: dir.row }]}>
           {day.quests.map((q) => (
@@ -134,7 +139,7 @@ const styles = StyleSheet.create({
   bars: { gap: spacing.xs + 2 },
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radii.pill },
-  // the gold dot on the chest's top corner: a chest waiting, said in words beside it too
+  // the dot on the chest's top corner: a chest waiting, said in words beside it too
   dot: { position: 'absolute', top: -3, right: -3, width: 12, height: 12, borderRadius: radii.pill, borderWidth: 2 },
   dotRtl: { right: undefined, left: -3 },
 });

@@ -689,7 +689,7 @@ function SessionPlayerBody({
             </Pressable>
           ) : null}
         </View>
-        {reask ? <Text style={[styles.reask, { color: colors.textSecondary }]}>{t('lesson.secondTry')}</Text> : null}
+        {reask ? <Text style={[styles.reask, dir.text, { color: colors.textSecondary }]}>{t('lesson.secondTry')}</Text> : null}
 
       <BottomSheet visible={leaving} onClose={() => setLeaving(false)} title={t('lesson.leave.title')} testID="lesson-leave">
         <Text style={[styles.leaveBody, dir.text, { color: colors.textSecondary }]}>

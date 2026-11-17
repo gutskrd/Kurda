@@ -3316,6 +3316,7 @@ export type TranslationKey =
   | 'words.toolHint'
   | 'words.fromAlphabet'
   | 'words.lead'
+  | 'words.setLead'
   | 'words.set.colours'
   | 'words.set.numbers'
   | 'words.set.days'
@@ -7142,6 +7143,7 @@ const en: Catalog = {
   'words.toolHint': 'Letters, colours, numbers, days, months',
   'words.fromAlphabet': 'Learn colours, numbers, days and months',
   'words.lead': 'Start with the letters, then the first words. Tap a letter or a word to hear it.',
+  'words.setLead': 'Tap a word to hear it.',
   'words.set.colours': 'Colours',
   'words.set.numbers': 'Numbers',
   'words.set.days': 'Days of the week',
@@ -10964,6 +10966,7 @@ const ku: Catalog = {
   'words.toolHint': 'Tîp, reng, hejmar, roj, meh',
   'words.fromAlphabet': 'Reng, hejmar, roj û mehan hîn bibe',
   'words.lead': 'Bi tîpan dest pê bike, paşê bi peyvên pêşîn. Li tîpekê an peyvekê bitikîne da ku bibihîzî.',
+  'words.setLead': 'Li peyvekê bitikîne da ku bibihîzî.',
   'words.set.colours': 'Reng',
   'words.set.numbers': 'Hejmar',
   'words.set.days': 'Rojên hefteyê',
@@ -14786,6 +14789,7 @@ const de: Catalog = {
   'words.toolHint': 'Buchstaben, Farben, Zahlen, Tage, Monate',
   'words.fromAlphabet': 'Farben, Zahlen, Tage und Monate lernen',
   'words.lead': 'Fang mit den Buchstaben an, dann kommen die ersten Wörter. Tippe auf einen Buchstaben oder ein Wort, um es zu hören.',
+  'words.setLead': 'Tippe auf ein Wort, um es zu hören.',
   'words.set.colours': 'Farben',
   'words.set.numbers': 'Zahlen',
   'words.set.days': 'Wochentage',
@@ -18608,6 +18612,7 @@ const es: Catalog = {
   'words.toolHint': 'Letras, colores, números, días, meses',
   'words.fromAlphabet': 'Aprende colores, números, días y meses',
   'words.lead': 'Empieza por las letras y sigue con las primeras palabras. Toca una letra o una palabra para oírla.',
+  'words.setLead': 'Toca una palabra para oírla.',
   'words.set.colours': 'Colores',
   'words.set.numbers': 'Números',
   'words.set.days': 'Días de la semana',
@@ -22430,6 +22435,7 @@ const tr: Catalog = {
   'words.toolHint': 'Harfler, renkler, sayılar, günler, aylar',
   'words.fromAlphabet': 'Renkleri, sayıları, günleri ve ayları öğren',
   'words.lead': 'Harflerle başla, ardından ilk kelimelere geç. Duymak için bir harfe ya da kelimeye dokun.',
+  'words.setLead': 'Duymak için bir kelimeye dokun.',
   'words.set.colours': 'Renkler',
   'words.set.numbers': 'Sayılar',
   'words.set.days': 'Haftanın günleri',
@@ -26252,6 +26258,7 @@ const ar: Catalog = {
   'words.toolHint': 'الحروف والألوان والأرقام والأيام والأشهر',
   'words.fromAlphabet': 'تعلّم الألوان والأرقام والأيام والأشهر',
   'words.lead': 'ابدأ بالحروف ثم بأولى الكلمات. اضغط على حرف أو كلمة لتسمعها.',
+  'words.setLead': 'اضغط على كلمة لتسمعها.',
   'words.set.colours': 'الألوان',
   'words.set.numbers': 'الأرقام',
   'words.set.days': 'أيام الأسبوع',
@@ -30074,6 +30081,7 @@ const fr: Catalog = {
   'words.toolHint': 'Lettres, couleurs, nombres, jours, mois',
   'words.fromAlphabet': 'Apprendre couleurs, nombres, jours et mois',
   'words.lead': 'Commence par les lettres, puis les premiers mots. Touche une lettre ou un mot pour l’entendre.',
+  'words.setLead': 'Touche un mot pour l’entendre.',
   'words.set.colours': 'Couleurs',
   'words.set.numbers': 'Nombres',
   'words.set.days': 'Jours de la semaine',
@@ -33896,6 +33904,7 @@ const nl: Catalog = {
   'words.toolHint': 'Letters, kleuren, getallen, dagen, maanden',
   'words.fromAlphabet': 'Leer kleuren, getallen, dagen en maanden',
   'words.lead': 'Begin met de letters, daarna de eerste woorden. Tik op een letter of woord om het te horen.',
+  'words.setLead': 'Tik op een woord om het te horen.',
   'words.set.colours': 'Kleuren',
   'words.set.numbers': 'Getallen',
   'words.set.days': 'Dagen van de week',
@@ -37719,6 +37728,7 @@ const ckb: Catalog = {
   'words.toolHint': 'پیت، ڕەنگ، ژمارە، ڕۆژ، مانگ',
   'words.fromAlphabet': 'ڕەنگ و ژمارە و ڕۆژ و مانگەکان فێربە',
   'words.lead': 'بە پیتەکان دەست پێ بکە، پاشان یەکەم وشەکان. کرتە لە پیتێک یان وشەیەک بکە بۆ ئەوەی گوێت لێی بێت.',
+  'words.setLead': 'کرتە لە وشەیەک بکە بۆ ئەوەی گوێت لێی بێت.',
   'words.set.colours': 'ڕەنگەکان',
   'words.set.numbers': 'ژمارەکان',
   'words.set.days': 'ڕۆژەکانی هەفتە',

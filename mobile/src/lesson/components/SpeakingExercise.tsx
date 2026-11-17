@@ -129,7 +129,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   return (
     <View style={styles.container}>
       <ExerciseHeadline>{headline ? t(headline.key, headline.params) : t('lesson.speak.prompt')}</ExerciseHeadline>
-      {exercise.prompt ? <Text style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
+      {exercise.prompt ? <Text style={[saidStyle(exercise.prompt), dir.free, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {model.supported && voice ? (
         // head to waist on its stage, saying the sentence; a tap on it says it again too

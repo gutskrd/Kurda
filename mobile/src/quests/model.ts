@@ -25,7 +25,7 @@ export const CHEST_NAME: Record<ChestTier, TranslationKey> = {
   epic: 'quests.chest.epic',
 };
 
-/** The unit colour a chest's screen is painted in (coursemap/path.ts `TONES`): green, blue, violet, by how much it holds. */
+/** The unit colour a chest's screen is painted in (coursemap/path.ts `TONES`): meadow green, saffron, rose, by how much it holds. */
 export const CHEST_TONE: Record<ChestTier, UnitTone> = { common: 'meadow', rare: 'saffron', epic: 'rose' };
 
 /**
