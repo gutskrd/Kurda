@@ -21,10 +21,8 @@ import { EmptyState } from '../theme/EmptyState';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * Tags (KUR-287): shows the user's effective main tag +
- * claimable/auto tags, lets them claim self-claim tags (sensitive ones require
- * explicit consent, #109), show/hide claimed tags, and revoke them. Purchase
- * tags (e.g. Kurdish) link out to the Shop.
+ * The user's tags: the effective main tag plus claimable and automatic tags. Self-claim tags can be claimed
+ * (sensitive ones need explicit consent), shown or hidden, and revoked; purchase tags link to the Shop.
  */
 export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -37,7 +35,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const [catalog, setCatalog] = useState<TagRow[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
-  // inline claim form state
+  // Inline claim form state.
   const [claiming, setClaiming] = useState<TagRow | null>(null);
   const [value, setValue] = useState('');
   const [consent, setConsent] = useState(false);
@@ -143,14 +141,14 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               </>
             ) : null}
 
-            {/* my claimed tags */}
+            {/* My claimed tags. */}
             <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.yours')}</Text>
             {claimed.length === 0 ? (
               <EmptyState title={t('tags.none')} />
             ) : (
               claimed.map((tag) => (
                 <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
-                  {/* the tag and what it says turn the switch as well as the switch does: the words are the bigger target */}
+                  {/* The tag's name and text also toggle the switch: they are the bigger target. */}
                   <ToggleRow
                     label={t('tags.showOnProfile', { tag: tag.label })}
                     hint={tag.sensitive ? t('tags.sensitive') : undefined}
@@ -171,11 +169,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                       </>
                     )}
                   </ToggleRow>
-                  {/*
-                    Taking a tag off for good stands clear of the switch that
-                    only hides it: a fingertip's square of its own, a gap away,
-                    where it was a small cross whose reach ran onto the switch.
-                  */}
+                  {/* Removing a tag is a separate, spaced-out target so its reach does not overlap the switch that only hides it. */}
                   <Pressable
                     onPress={() => revoke(tag)}
                     accessibilityRole="button"
@@ -207,7 +201,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
           )}
         </AsyncBoundary>
 
-        {/* inline claim sheet */}
+        {/* Inline claim sheet. */}
         {claiming ? (
           <View style={[styles.sheet, { backgroundColor: colors.glassFill }]}>
             <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('tags.addTitle', { tag: claiming.label })}</Text>
@@ -220,7 +214,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               maxLength={60}
             />
             {claiming.sensitive ? (
-              // the sentence is what is agreed to, so it turns the switch too, and names it to a screen reader
+              // The sentence is what is agreed to, so it turns the switch too, and names it to a screen reader.
               <ToggleRow label={t('tags.sensitiveConsent')} value={consent} onValueChange={setConsent} style={styles.consentRow}>
                 {(toggle) => (
                   <>
@@ -236,7 +230,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               <ClayButton label={t('common.cancel')} tone="neutral" onPress={() => setClaiming(null)} style={styles.flex} />
               <ClayButton
                 label={t('tags.add')}
-                // adding: the button turns and takes no second press, and a screen reader is told what it is doing
+                // Adding: the button turns and takes no second press, and a screen reader is told what it is doing.
                 accessibilityLabel={busy ? t('tags.adding') : undefined}
                 busy={busy}
                 tone="primary"

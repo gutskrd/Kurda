@@ -18,17 +18,10 @@ interface ActiveEvent {
 }
 
 /**
- * A tap-through banner for the highest-priority live event (KUR-091), shown on
- * the Learn tab only while an event is active. Hidden entirely otherwise.
- *
- * Its look is the event theme's colour and glyph, or, when an admin has given
- * the theme a banner picture (art/overrides.ts), that picture behind the
- * event's name, cropped to fill and dimmed under the words so they read on
- * whatever it shows. A picture that will not load leaves the colour.
- *
- * The words and the glyphs are in the pack's own ink, which is chosen to read
- * on the pack's colour; with no pack the banner is a primary button's fill
- * and takes a primary button's label colour.
+ * A tap-through banner for the highest-priority live event, on the Learn tab only while one is active. It uses
+ * the event theme's colour and glyph, or the theme's banner picture when an admin set one (art/overrides.ts),
+ * cropped and dimmed under the text; a picture that fails to load falls back to the colour. Text uses the pack's
+ * ink, or a primary button's label colour when there is no pack.
  */
 export function EventBanner() {
   const navigation = useNavigation<RootNavigation>();
@@ -37,7 +30,7 @@ export function EventBanner() {
   const { t } = useI18n();
   const { colors } = useTheme();
   const [event, setEvent] = useState<ActiveEvent | null>(null);
-  // by the event's own theme, which may have no pack of its own; not for someone who turned event looks off
+  // Uses the event's own theme, which may have no pack, and not for someone who turned event looks off.
   const uploaded = useArtOverride('event', optedOut ? null : event?.theme);
   const [failed, setFailed] = useState<string | null>(null);
   const picture = uploaded !== null && uploaded !== failed ? uploaded : null;
@@ -65,7 +58,7 @@ export function EventBanner() {
       accessibilityLabel={t('events.bannerLabel', { name: event.name })}
     >
       {picture ? (
-        // decoration behind the words: the button already says what the event is
+        // Decoration behind the words: the button already says what the event is.
         <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <Image source={{ uri: picture }} style={styles.fill} resizeMode="cover" onError={() => setFailed(picture)} accessibilityIgnoresInvertColors />
           <View style={styles.dim} />
@@ -82,13 +75,12 @@ export function EventBanner() {
   );
 }
 
-// on a picture, whatever its colours and whatever the theme: white over a dimming
-// dark enough that even an all-white picture leaves both lines above 4.5:1
+// On a picture, white text over a dimming dark enough to keep both lines above 4.5:1 even on an all-white picture.
 const ON_PICTURE = '#FFFFFF';
 const UNDER_WORDS = 'rgba(0,0,0,0.6)';
 /** The glyph before the words: the theme's own, or a star for an event with no theme. */
 const GLYPH = 24;
-/** A banner with a picture is taller than the colour one, so the picture shows as more than a strip. */
+/** A banner with a picture is taller, so the picture shows as more than a strip. */
 const PICTURED_HEIGHT = 112;
 
 const styles = StyleSheet.create({
