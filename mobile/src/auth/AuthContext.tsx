@@ -17,6 +17,7 @@ import type { SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
 import { onMaintenanceOver, showMaintenance } from '../maintenance/maintenance';
 import { notifyGuestRefused } from './guestRefused';
+import { unregisterThisDevice } from '../push/thisDevice';
 
 export interface SessionUser {
   id: string;
@@ -506,6 +507,8 @@ export function AuthProvider({
       return res.ok ? null : describeError(res.error, t);
     },
     logout: async () => {
+      // the phone off the account's notifications first, while the session can still say whose phone it is
+      await unregisterThisDevice(client);
       // end the session on the server too, not only on this phone
       await client.endSession();
       await storage.clear();
@@ -513,8 +516,12 @@ export function AuthProvider({
       setStatus('signedOut');
     },
     deleteAccount: async () => {
+      // before the deletion, which ends every session the account has: after it, nothing could say whose phone this is
+      await unregisterThisDevice(client);
       const res = await client.delete<{ deletionScheduled: boolean; graceDays: number }>('/me');
       if (!res.ok) return { ok: false, message: describeError(res.error, t) };
+      // and the session ends on the server as signing out ends it, whatever the deletion did with it
+      await client.endSession();
       await storage.clear();
       setUser(null);
       setStatus('signedOut');

@@ -67,6 +67,18 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
     expect(u.rows[0].password_hash).toContain('$argon2id$');
   });
 
+  it('keeps the time zone it is sent, and gives UTC for one the database does not know', async () => {
+    const zoneOf = async (res: { json: () => { user: { id: string } } }) =>
+      (await pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [res.json().user.id])).rows[0]!.timezone;
+    const kept = await register({ email: email('tzkept'), username: uname('tzkept'), password: 'a-strong-password1', timezone: 'Europe/Berlin' }, '10.1.0.7');
+    expect(kept.statusCode).toBe(201);
+    expect(await zoneOf(kept)).toBe('Europe/Berlin');
+    // the app's date code would take it; the database would not
+    const odd = await register({ email: email('tzodd'), username: uname('tzodd'), password: 'a-strong-password1', timezone: 'BET' }, '10.1.0.8');
+    expect(odd.statusCode).toBe(201);
+    expect(await zoneOf(odd)).toBe('UTC');
+  });
+
   it('duplicate email returns a safe generic error (no enumeration)', async () => {
     const first = await register({ email: email('dup'), username: uname('dupa'), password: 'a-strong-password1' }, '10.1.0.2');
     // an address is kept for the account that confirmed it; one never confirmed does not hold it (pending-signups)

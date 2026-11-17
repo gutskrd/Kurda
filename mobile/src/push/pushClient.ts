@@ -17,7 +17,10 @@ export function heartbeatDevice(client: ApiClient, token: string): Promise<unkno
   return client.post('/me/devices/heartbeat', { token });
 }
 
-/** Unregister on logout so we stop pushing to this device. */
+/**
+ * Unregister on logout so we stop pushing to this device. The last request the
+ * session makes here, so it never renews the session (ApiClient `once`).
+ */
 export function removeDevice(client: ApiClient, token: string): Promise<unknown> {
-  return client.post('/me/devices/remove', { token });
+  return client.post('/me/devices/remove', { token }, { once: true });
 }
