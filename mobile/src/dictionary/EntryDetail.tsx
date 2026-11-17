@@ -21,24 +21,19 @@ import { useHardwareBack } from '../navigation/hardwareBack';
 import { useI18n } from '../i18n/I18nContext';
 import { describeError, isMaintenance } from '../api/errors';
 
-/** A pronunciation's speaker and timeline, which the entry sends beside its URL rather than as one voice. */
+/** A pronunciation's speaker and timeline, sent beside its URL. */
 function voiceOf(recording: DictionaryAudio): RecordingVoice | null {
   if (!recording.speaker) return null;
   return knownVoice(recording.lipsync ? { speaker: recording.speaker, lipsync: recording.lipsync } : { speaker: recording.speaker });
 }
 
-/** Senses beyond this start collapsed so long entries stay scannable (KUR-045). */
+/** Senses beyond this start collapsed so long entries stay scannable. */
 const COLLAPSE_AFTER = 8;
 
 /**
- * One word, opened from the results of a search.
- *
- * It takes the place of the list that led to it rather than being pushed over
- * it (search/SearchScreen says why), so the navigator knows nothing of it:
- * left to itself, Android's back — the button, or the swipe in from the edge —
- * went past the word *and* the results, out of the dictionary or the Search
- * tab altogether. Back is routed to the same way out the chevron takes, so it
- * returns to the results being read.
+ * One word, opened from search results. It replaces the results rather than being pushed over them
+ * (search/SearchScreen says why), so the navigator does not know about it: Android's back is routed to the
+ * chevron's exit, which returns to the results.
  */
 export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () => void }) {
   const { client } = useAuth();
@@ -48,7 +43,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   useHardwareBack(onBack);
   const [entry, setEntry] = useState<Entry | null>(null);
   const [saved, setSaved] = useState(false);
-  // with a character to say any of them, each pronunciation gets its own row; else the one button, as before
+  // With a character to say them, each pronunciation gets its own row; otherwise a single play button.
   const voiced = !!entry?.audio.some((a) => voiceOf(a) !== null);
   const audio = useAudio(voiced ? undefined : entry?.audio[0]?.url);
 
@@ -70,7 +65,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
     setSaved(next); // optimistic
     void (next ? client.put(`/dictionary/entries/${entryId}/save`) : client.delete(`/dictionary/entries/${entryId}/save`)).then((res) => {
       if (res.ok) return;
-      // it did not take: the star goes back, and a full vocabulary says why (limits/limitCopy.ts)
+      // It did not take: the star goes back, and a full vocabulary says why (limits/limitCopy.ts).
       setSaved(!next);
       if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
     });
@@ -87,7 +82,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
           <ScrollView contentContainerStyle={[styles.body, { paddingBottom: tabBarInset }]}>
             <View style={styles.headwordRow}>
               <Text style={[styles.headword, { color: colors.textPrimary }]}>{entry.headword}</Text>
-              {/* the two round buttons have the row to themselves: each reaches 8 past its edges, and between them they share the gap */}
+              {/* The two round buttons have the row to themselves: each reaches 8 past its edges, sharing the gap between them. */}
               <ReachGroup gap={spacing.md}>
                 {entry.audio.length > 0 && !voiced && audio.supported ? (
                   <PressableScale
@@ -108,7 +103,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                   reach="open"
                   style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
                 >
-                  {/* a saved word is on, and on is violet, as a bookmarked story is */}
+                  {/* A saved word is on, and on is violet, as a bookmarked story is. */}
                   <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={22} color={saved ? colors.primary : colors.textSecondary} />
                 </PressableScale>
               </ReachGroup>
@@ -146,11 +141,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   );
 }
 
-/**
- * One pronunciation: who says it and in which variety, beside its own play
- * button. The character says the word as it plays. Laid out as the headword's
- * row above it is, in every interface language.
- */
+/** One pronunciation: speaker and variety beside its play button; the character says the word as it plays. */
 function Pronunciation({ recording, word }: { recording: DictionaryAudio; word: string }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -187,10 +178,7 @@ function Pronunciation({ recording, word }: { recording: DictionaryAudio; word: 
   );
 }
 
-/**
- * The entry while it loads: the word with its two round buttons, the variety,
- * and its senses — the part of speech in its column and the meaning beside it.
- */
+/** The loading placeholder: the word with its two round buttons, the variety, and senses with part of speech and meaning. */
 function EntrySkeleton(): React.JSX.Element {
   const { t } = useI18n();
   return (
@@ -215,9 +203,9 @@ function EntrySkeleton(): React.JSX.Element {
   );
 }
 
-/** display(34) sets 1.12 */
+/** display(34) sets 1.12. */
 const HEADWORD_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
-/** the part of speech's column in a sense (SenseSection.tsx) */
+/** The part of speech's column in a sense (SenseSection.tsx). */
 const POS_COLUMN = 64;
 
 const styles = StyleSheet.create({

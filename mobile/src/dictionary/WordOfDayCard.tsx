@@ -18,14 +18,14 @@ interface WordOfDay {
   definitionKu: string | null;
 }
 
-/** Home-screen word-of-the-day card (KUR-046); tapping opens the entry. */
+/** The word-of-the-day card; tapping opens the entry. */
 export function WordOfDayCard() {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const [word, setWord] = useState<WordOfDay | null>(null);
   const [open, setOpen] = useState(false);
-  // until the first answer, the card's place is held in grey; with no word (or no answer) it is given up
+  // Until the first answer the card's place is held in grey; with no word or no answer it is given up.
   const [settled, setSettled] = useState(false);
 
   useEffect(() => {
@@ -44,11 +44,7 @@ export function WordOfDayCard() {
 
   return (
     <>
-      {/*
-        A card like the others on the page, with the word itself as the
-        thing that stands out. It used to be the one solid black (or white)
-        block on the Learn screen, louder than the lesson above it.
-      */}
+      {/* A card like the others on the page, with the word itself standing out. */}
       <PressableScale
         onPress={() => setOpen(true)}
         style={[styles.card, { backgroundColor: colors.surface }]}
@@ -63,7 +59,7 @@ export function WordOfDayCard() {
         </Text>
       </PressableScale>
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
-        {/* the entry is a screen of its own, not beside the Learn page's controls: their groups do not cap it */}
+        {/* The entry is its own screen, away from the Learn page's controls, so their reach groups do not cap it. */}
         <ReachReset>
           <EntryDetail entryId={word.entryId} onBack={() => setOpen(false)} />
         </ReachReset>
@@ -84,7 +80,7 @@ function WordOfDaySkeleton(): React.JSX.Element {
   );
 }
 
-/** display(28) sets 1.12 */
+/** display(28) sets 1.12. */
 const HEADWORD_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 
 const styles = StyleSheet.create({
