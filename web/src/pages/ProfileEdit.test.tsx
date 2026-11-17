@@ -118,7 +118,7 @@ describe('Edit Profile page', () => {
     expect(await screen.findByRole('button', { name: /^remove$/i })).toBeInTheDocument();
   });
 
-  it('sends an owned tag from the inventory to Tags & badges, on the same page', async () => {
+  it('sends an owned tag from the inventory to Tags, on the same page', async () => {
     const base = editFetch([]);
     vi.stubGlobal(
       'fetch',
@@ -135,9 +135,9 @@ describe('Edit Profile page', () => {
     const tile = screen.getByText('Kurdish Tag').closest('figure')!;
     const link = within(tile).getByRole('link', { name: 'Manage tags' });
     expect(link).toHaveAttribute('href', '#tags');
-    // the place it goes to is on this page: the Tags & badges card
+    // the place it goes to is on this page: the Tags card
     const target = document.getElementById('tags');
     expect(target).not.toBeNull();
-    expect(within(target!).getByRole('heading', { name: 'Tags & badges' })).toBeInTheDocument();
+    expect(within(target!).getByRole('heading', { name: 'Tags' })).toBeInTheDocument();
   });
 });
