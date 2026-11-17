@@ -1,16 +1,8 @@
 /**
- * The lesson path's world in the painted valley style (valley.ts): each unit's land, the road through it and its
- * stops; chapter landmarks are in path-landmark.ts. Each land opens under its banner with hills, then terraced fields,
- * orchards, poplars, an optional stream, and an earth road through every stop: warm dirt where walked, paler ahead.
- *
- * - `pathLandSvg`: one unit's ground at its display size, with scatter kept off the stops, road, landmark and places
- *   people stand (`landClear`), and the shepherds' cairn in open-country lands (`cairnBox`).
- * - `pathStonesSvg`: the walked stretches of road, laid over the road ahead stop to stop (found by `trailStones`).
- * - `pathStopSvg`: a stop as a base and a face, so a press can push the face into the base. A skill's glyph is set by
- *   the app; the guide's book, story scroll, jump gate and chapter saddlebag are drawn here.
- * - `pathSignpostSvg`: the signpost at the end of the path while the next unit is being made.
- *
- * Deterministic: ids come from a hash of the request (svg.ts) and scatter from a generator seeded with it.
+ * The lesson path's world in the painted valley style (valley.ts): each unit's land (`pathLandSvg`, scatter kept clear
+ * of `landClear`), the walked stretches of road (`pathStonesSvg`), the stops as a base and a face a press pushes down
+ * (`pathStopSvg`; the app sets a skill's glyph), and the signpost while the next unit is being made
+ * (`pathSignpostSvg`). Chapter landmarks are in path-landmark.ts. Ids and scatter are seeded from the request.
  */
 import type { UnitTone } from '../lesson-path.js';
 import { PATH_GEOMETRY } from '../lesson-path.js';

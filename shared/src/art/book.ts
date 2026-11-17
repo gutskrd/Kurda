@@ -1,11 +1,8 @@
 /**
- * Drawings used only by Hevalo's book. The book's running joke is the road's: a deer who is never hungry and an apple
- * that shrinks every time you look, so `bookAppleSvg` draws it bite by bite down to the core (one per page corner, a
- * bite further each page). Also here: the small scene props the word pictures lack (`bookSpotSvg`), a paint dab per
- * colour word (`bookPaintSvg`), scene backdrops (`bookBackdropSvg`), the chapter stamp's postmark (`bookPostmarkSvg`),
- * and the three friends posed (`bookCastSvg`), where a pose only recombines the rig's own layers and adds a prop.
- * Painted like the word pictures (word-pictures.ts), with no gradient, blur, mask or clip, so a PDF draws them exactly
- * as a browser does.
+ * Drawings used only by Hevalo's book: the apple that loses a bite on every page (`bookAppleSvg`), scene props
+ * (`bookSpotSvg`), colour-word paint dabs (`bookPaintSvg`), scene backdrops (`bookBackdropSvg`), the chapter stamp's
+ * postmark (`bookPostmarkSvg`) and the three friends posed (`bookCastSvg`; a pose only recombines the rig's layers).
+ * Painted like the word pictures with no gradient, blur, mask or clip, so a PDF draws them exactly as a browser does.
  */
 import {
   characterArt,

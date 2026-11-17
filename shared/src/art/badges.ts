@@ -1,12 +1,8 @@
 /**
- * Badges: one calm, glossy piece in its family's shape and its own colour, a paler plate set into it, and one symbol
- * pressed into the plate. Sixty of them on a page must read as one set yet be told apart at a glance, and no part
- * relies on colour alone: the shape is the family (shapes.ts), the symbol is the badge (badge-glyphs.ts), and a tiered
- * badge's tag shows the milestone number in the tier's metal.
- *
- * Small sizes are redrawn rather than shrunk: below `SMALL_BADGE` the piece fills the square, four pips replace the tag
- * and the shadow goes; below `TINY_BADGE` the gloss goes too. States: `earned` is the whole badge, `locked` the same
- * piece in greys with the first milestone on its tag, and `secret` a violet gem with a "?", the same for every secret.
+ * Badges: a glossy piece in its family's shape (shapes.ts) and its own colour, a paler plate, and one symbol
+ * (badge-glyphs.ts); a tiered badge's tag shows its milestone in the tier's metal, so nothing relies on colour alone.
+ * Below `SMALL_BADGE` the piece fills the square and pips replace the tag; below `TINY_BADGE` the gloss goes too.
+ * `locked` is the same piece in greys, and `secret` a violet gem with a "?", the same for every secret.
  */
 import { BADGE_GLYPHS, GLYPH_VIEWBOX } from './badge-glyphs.js';
 import type { BadgeFamily, BadgeKey, BadgeTier, RankTier } from './keys.js';

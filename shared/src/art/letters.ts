@@ -1,11 +1,8 @@
 /**
- * The pictures for letters by bird (shared/src/letters.ts): your window, the pigeons that come and go, and a letter in
- * its envelope. The window is seen from inside a room, drawn for depth: wall, reveal, a white frame set back, a deep
- * sill with a flower pot, and two casements swung open toward you; outside, the country recedes in paler layers (sky,
- * clouds, mountains, hills, meadow). Each layer is its own same-sized picture (`part`) so apps can stack and animate
- * them (parallax, drifting clouds, stirring casements, sill light); `whole` is all of it, still. A pigeon (pigeon.ts) is
- * drawn separately (`letterBirdSvg`) so it can stand on the sill in front of the room or fly out into the country;
- * `LETTER_SILL` places it and `LETTER_FLIGHT` is its flight path.
+ * The pictures for letters by bird (shared/src/letters.ts): your window seen from inside a room, the pigeons, and a
+ * letter in its envelope. Each window layer is its own same-sized picture (`part`) so apps can stack and animate them;
+ * `whole` is all of it, still. The pigeon is drawn separately (`letterBirdSvg`) so it can stand on the sill in front of
+ * the room or fly out behind it; `LETTER_SILL` places it and `LETTER_FLIGHT` is its flight path.
  */
 import { LETTER_BIRDS } from '../letters.js';
 import { form, ring, rr, type Tones } from './cutout.js';

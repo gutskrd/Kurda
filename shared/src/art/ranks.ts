@@ -1,11 +1,8 @@
 /**
- * Game-rank emblems: six tiers, each a crest (crest.ts) whose cut stone sits in the tier's metal with a setting that
- * grows as the player climbs, from a lone carnelian shield (Deşt) to Stêrk's full crest. Each stone carries the glyph of
- * the place the tier is named for. The division is a plaque of three stones under the crest, lit one, two or three
- * for III, II and I, counted rather than coloured; the title carries the numeral. A season emblem (the peak tier of a
- * season) swaps the plaque for the season's glyph and the year's last two figures. Below `SMALL_EMBLEM` pixels the
- * crest fills its square and drops the division (the app prints it alongside); below `TINY_EMBLEM` the stone's table
- * and glyph go too and only the outline-defining setting stays.
+ * Game-rank emblems: six tiers, each a crest (crest.ts) whose setting grows as the player climbs, its stone carrying the
+ * glyph of the place the tier is named for. The division is a plaque of one to three lit stones (III to I), counted
+ * rather than coloured; a season emblem shows the season's glyph and year instead. Below `SMALL_EMBLEM` the division is
+ * left for the app to print alongside; below `TINY_EMBLEM` only the outline-defining setting stays.
  */
 import { SEASON_ICONS } from './icons.js';
 import { paintIcon } from './iconpaint.js';

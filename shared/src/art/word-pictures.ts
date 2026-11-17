@@ -1,13 +1,8 @@
 /**
- * One small painted picture per everyday word a lesson's "pick the picture" exercise can ask for. Each must read at a
- * glance at 72–96 px, for a child first without talking down to an adult. `WORD_PICTURES` is the catalogue the server's
- * exercise schema and the road checker read: an ascii id, the Kurmancî word (Hawar alphabet) and its English meaning.
- *
- * Painted in the valley style (valley.ts). Each thing stands alone in the middle of the 120-unit canvas on a soft patch
- * of shade over a transparent ground; things in the sky and parts of the body float without one, since a shadow would
- * make them objects on a table. Where a thing has a Kurdish form it is drawn in it (tea in a tulip glass, tenûr bread,
- * the double teapot, the black tent). On a dark card colours move toward the dusk violet and the darkest ones are
- * lifted so they still stand out; fire stays warm.
+ * One small painted picture per word the "pick the picture" exercise can ask for, legible at 72–96 px. `WORD_PICTURES`
+ * is the catalogue the server's exercise schema and the road checker read. Painted in the valley style (valley.ts),
+ * each thing centred on a soft shade patch over a transparent ground; sky things and body parts float without one, so
+ * they never read as objects on a table. On a dark card colours move toward the dusk violet and the darkest are lifted.
  */
 import { CANVAS, escapeXml, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { VALLEY, blobPath, dusk, ellipsePath, warm } from './valley.js';

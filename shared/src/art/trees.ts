@@ -1,13 +1,8 @@
 /**
- * The learner's tree: every kind (`tree.ts`) at each of its seven stages, from a seed in the earth to a great tree, and
- * as it fares without water (thirsty, wilting, withered). Flat shapes with one step of light and one of shade. The seed,
- * sprout and swing are traced from the owner's references. From the sapling on each kind shows its own silhouette,
- * colours and fruit; grown crowns are leafy masses at three depths, and the great broad-crowned tree carries a carved
- * swirl, a red mushroom and a swing.
- *
- * Each stage stands taller and wider than the last (`tree-motion.ts` grows one out of the other), and the great tree
- * stays clear of the picture's edges however it moves. A tree is drawn in layers an app can move apart: ground, plant,
- * swing and front. Variation comes from a generator seeded with the tree's kind, so a tree is the same string everywhere.
+ * The learner's tree: every kind (`tree.ts`) at each of seven stages from seed to great tree, and as it fares without
+ * water. The seed, sprout and swing are traced from the owner's references. Each stage stands taller and wider than the
+ * last (`tree-motion.ts` grows one out of the other) and the great tree stays clear of the picture's edges however it
+ * moves. Drawn in layers an app can move apart (ground, plant, swing, front), with variation seeded by the kind.
  */
 import type { TreeHealth, TreeSeason, TreeSpecies, TreeStage } from '../tree.js';
 import { leaf } from './paint.js';

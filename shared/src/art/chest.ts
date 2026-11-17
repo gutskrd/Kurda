@@ -1,14 +1,8 @@
 /**
- * The quest reward chest, drawn alike by both apps: a chunky trunk seen from three quarters and a little above, with a
- * barrel lid, strap bindings, a belt round the seam, a shield-shaped lock plate under a knob, a ring handle and a soft
- * ground shadow. Three tiers: common (amber wood, dark iron), rare (the same wood bound in gold) and epic (pomegranate
- * lacquer, gold, a garnet knob and gold studs).
- *
- * It is drawn as layers with stable ids, back to front, because the renderers animate them (lid swing, inner light,
- * turning rays, lock glint, sparkles). Each layer is self-contained markup on the one 120 × 120 canvas; the phone stacks
- * them as separate pictures, the web as groups in one inline SVG, and `chestSvg` is the whole picture for a still.
- * Flat cut-out style: one highlight and one shade step per form, edges in each piece's own darkest tone; the only
- * gradients are the soft lights and the ground shadow.
+ * The quest reward chest in three tiers (common, rare, epic), drawn alike by both apps as a three-quarter trunk with a
+ * barrel lid. It is built as layers with stable ids, back to front, because the renderers animate them (lid, inner
+ * light, rays, lock glint, sparkles); each layer is self-contained markup on the one 120 × 120 canvas, and `chestSvg`
+ * is the whole picture for a still. Flat cut-out style: the only gradients are the soft lights and the ground shadow.
  */
 import type { ChestTier } from '../quests.js';
 import { rad } from './geometry.js';
