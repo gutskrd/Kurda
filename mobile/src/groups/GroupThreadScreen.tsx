@@ -9,7 +9,7 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
@@ -96,7 +96,8 @@ function bannedFrom(error: ApiError): Banned | null {
  * as its owner or an admin, for everyone — and reports the group.
  *
  * An empty chat welcomes (Welcome.tsx); a chat an admin cleared says so at
- * the top of its history. A group made a moment ago opens with the sheet for
+ * the top of its history. A history that could not be read says that, with
+ * the way to ask again, and is never drawn as a group nobody has written in. A group made a moment ago opens with the sheet for
  * adding friends up (`addFriends`), since nobody else is in it until its
  * owner brings them.
  *
@@ -169,6 +170,8 @@ export function GroupThreadScreen({
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [exhausted, setExhausted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // the history could not be read at all: said, with the way to ask again, rather than passing for a group nobody has written in
+  const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [name, setName] = useState(nameParam);
   // null until the club says: its menu waits rather than flash a report button at its owner
@@ -251,9 +254,10 @@ export function GroupThreadScreen({
       setLoading(false);
       if (!res.ok) {
         if (isOutside(res.error)) goOutside(res.error);
-        else setError(describeError(res.error, t));
+        else setLoadError(res.error);
         return;
       }
+      setLoadError(null);
       readOnce.current = true;
       setCleared(res.data.cleared ?? null);
       setMessages(res.data.messages as Message[]);
@@ -560,6 +564,16 @@ export function GroupThreadScreen({
             ) : (
               <Loading />
             )}
+          </ScrollView>
+        ) : loadError && messages.length === 0 ? (
+          <ScrollView contentContainerStyle={styles.centred}>
+            <ErrorRetry
+              message={describeError(loadError, t)}
+              onRetry={() => {
+                setLoading(true);
+                setReloadKey((k) => k + 1);
+              }}
+            />
           </ScrollView>
         ) : thread.length === 0 ? (
           <ScrollView contentContainerStyle={styles.welcome}>

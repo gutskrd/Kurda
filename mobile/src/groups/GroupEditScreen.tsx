@@ -5,9 +5,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { GROUP_DESCRIPTION_MAX, GROUP_NAME_MAX, GROUP_NAME_MIN, canEditGroup } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import type { ApiError } from '../api/types';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { showActions } from '../theme/actionSheet';
 import { useTheme } from '../theme/ThemeProvider';
@@ -27,7 +28,8 @@ import { heldDim } from '../theme/MotionParts';
  *
  * The picture changes the moment one is chosen — it is its own act, as it is
  * on a profile — and the words change on Save, which stays grey until there is
- * something new to save and the name is long enough. Each field says how much
+ * something new to save and the name is long enough, and is violet, as what
+ * can be pressed is, once there is. Each field says how much
  * room is left. What the server refuses (a word not allowed here, a role taken
  * away meanwhile) is said in words under the fields, and nothing is lost.
  */
@@ -44,13 +46,17 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // the group could not be read at all: said, with the way to ask again
+  const [loadError, setLoadError] = useState<ApiError | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setLoadError(null);
     void groupDetail(client, groupId).then((res) => {
       if (!active) return;
       if (!res.ok) {
-        setError(describeError(res.error, t));
+        setLoadError(res.error);
         return;
       }
       setDetail(res.data);
@@ -61,7 +67,8 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
     return () => {
       active = false;
     };
-  }, [client, groupId, t]);
+    // a retry reads the group again
+  }, [client, groupId, attempt]);
 
   const editable = canEditGroup(detail?.myRole ?? null);
   const trimmed = name.trim();
@@ -137,14 +144,14 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
               {saving ? (
                 <ActivityIndicator color={colors.textPrimary} />
               ) : (
-                <Text style={[styles.saveText, { color: canSave ? colors.textPrimary : colors.textSecondary }]}>{t('groups.save')}</Text>
+                <Text style={[styles.saveText, { color: canSave ? colors.primary : colors.textSecondary }]}>{t('groups.save')}</Text>
               )}
             </Pressable>
           }
         />
         {detail === null ? (
-          error ? (
-            <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
+          loadError ? (
+            <ErrorRetry message={describeError(loadError, t)} onRetry={() => setAttempt((n) => n + 1)} />
           ) : (
             <Loading style={styles.loading} />
           )

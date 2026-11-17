@@ -324,3 +324,24 @@ describe('editing a group', () => {
     await waitFor(() => expect(onExit).toHaveBeenCalled());
   });
 });
+
+describe('a group’s pages that could not be read', () => {
+  const down = fail({ kind: 'server', status: 500, message: 'down' });
+
+  it('says so on the group’s own page, with the way to ask again', async () => {
+    testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
+    let reads = 0;
+    testAuth.client = fakeClient({ 'GET /groups/g1': () => (reads++ === 0 ? down : detail('member')) });
+    renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('heading', { name: 'Hevalên Kurmancî' })).toBeTruthy();
+  });
+
+  it('says so on the edit page, with the way to ask again, and keeps nothing to save meanwhile', async () => {
+    let reads = 0;
+    testAuth.client = fakeClient({ 'GET /groups/g1': () => (reads++ === 0 ? down : detail('owner')) });
+    renderWithProviders(<GroupEditScreen groupId="g1" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByLabelText('Name')).toBeTruthy();
+  });
+});
