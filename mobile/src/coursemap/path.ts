@@ -1,13 +1,14 @@
 /**
  * The phone's side of the lesson path: the colours a unit takes, the words a
- * stop says to a screen reader, which course the path shows first, and where
- * to scroll to find the current skill. The path itself — which skill is
- * current, the milestones, where each stop sits — is @kurda/shared's
- * `lessonPath`, which the website draws from too.
+ * stop says to a screen reader, what a stop's ring shows, which course the
+ * path shows first, and where to scroll to find the current skill. The path
+ * itself — which skill is current, the rounds of each, the sections, where
+ * each stop sits — is @kurda/shared's `lessonPath`, which the website draws
+ * from too.
  *
  * Pure, so it is tested without a screen.
  */
-import { lessonPath, type PathStop, type PathStopLook, type UnitTone } from '@kurda/shared';
+import { TOPIC_STARS, lessonPath, levelHintKey, levelNameKey, levelOfCefr, type PathStop, type PathStopLook, type SkillStop, type UnitTone } from '@kurda/shared';
 import type { ColorScheme } from '../theme/appearance';
 import { LIGHT } from '../theme/palette';
 import type { TranslationKey } from '../i18n/translations';
@@ -72,6 +73,21 @@ export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string
   dark: { paper: () => '#3d2a1f', stone: '#d6d2dc' },
 };
 
+/**
+ * A topic's ring where it is not yet filled: the track, the valley's cream by
+ * day and the page's own violet-grey by evening, and the darker edge drawn
+ * under every piece, filled or not, so the ring reads on any ground the road
+ * crosses — pale wheat, green fields or snow. The pieces filled are the app's
+ * violet, and a ring whole the app's gold (the palette's `primary` and `gold`).
+ */
+export const RING: Record<ColorScheme, { track: string; edge: string }> = {
+  light: { track: '#fffaf0', edge: 'rgba(36, 24, 70, 0.32)' },
+  dark: { track: '#2b283c', edge: 'rgba(6, 4, 16, 0.6)' },
+};
+
+/** A star on a finished topic's coin: the valley's cream, edged in a deep gold so it stands off the gold it is on. */
+export const STAR = { fill: '#fffaf0', edge: '#a8691a' } as const;
+
 /** The sun's gold under an earned trophy. */
 export const GOLD_LIP: Record<ColorScheme, string> = { dark: '#b88d1f', light: '#b07f00' };
 /**
@@ -118,14 +134,14 @@ function stateWord(stop: Extract<PathStop<SkillNode>, { kind: 'skill' }>): Trans
 
 /**
  * The whole of a stop, in words, for its button: "Family, you are here, 2 of
- * 4 lessons done". The state word is a key of its own, for the caller to look
- * up and pass in as `state`. A unit's guide is named for its unit, as its
- * banner's button was before it stood on the path.
+ * 4 lessons done", and once a skill has a star, the round it is in instead —
+ * "Greetings, done, round 2 of 3, 3 of 4 lessons" — or that all three are
+ * done. The state word is a key of its own, for the caller to look up and
+ * pass in as `state`.
  */
 export function stopLabel(stop: PathStop<SkillNode>, unit: { number: number; title: string }): { words: Words; state?: TranslationKey } {
   const unitNumber = unit.number;
   if (stop.kind === 'review') return { words: { key: 'coursemap.path.reviewLabel', params: { count: stop.due } } };
-  if (stop.kind === 'guide') return { words: { key: 'coursemap.path.guideFor', params: { unit: unit.title } } };
   if (stop.kind === 'trophy') {
     return {
       words: { key: 'coursemap.path.trophyLabel', params: { n: unitNumber } },
@@ -134,26 +150,61 @@ export function stopLabel(stop: PathStop<SkillNode>, unit: { number: number; tit
   }
   if (stop.kind === 'story') return { words: { key: stop.open ? 'coursemap.path.storyLabel' : 'coursemap.path.storyLabelShut', params: { title: stop.title } } };
   const state = stateWord(stop);
-  return stop.lessonsTotal > 0
-    ? { words: { key: 'coursemap.path.label', params: { title: stop.skill.title, done: stop.lessonsDone, total: stop.lessonsTotal } }, state }
-    : { words: { key: 'coursemap.path.labelShort', params: { title: stop.skill.title } }, state };
+  const title = stop.skill.title;
+  if (stop.lessonsTotal === 0) return { words: { key: 'coursemap.path.labelShort', params: { title } }, state };
+  if (stop.rounds >= TOPIC_STARS) return { words: { key: 'coursemap.path.labelRounds', params: { title, last: TOPIC_STARS } }, state };
+  if (stop.rounds > 0) {
+    return { words: { key: 'coursemap.path.labelRound', params: { title, round: stop.rounds + 1, last: TOPIC_STARS, done: stop.pieces, total: stop.lessonsTotal } }, state };
+  }
+  return { words: { key: 'coursemap.path.label', params: { title, done: stop.lessonsDone, total: stop.lessonsTotal } }, state };
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`): a skill by how it stands, the
- * guide as its open book (grey until its unit is begun), review as an open
- * stop, a unit's end as its chest — open once earned — the story after it as
- * a scroll, rolled and tied until the chapter is done, and the first skill of
- * a unit that can be jumped to as the gate the jump goes through.
+ * What a skill's ring shows: `of` pieces, one for each lesson, `filled` of
+ * them; `whole` once all three rounds are played, when the ring stays full
+ * and gold. Null for a stop that wears no ring.
+ */
+export function ringOf(stop: PathStop<SkillNode>): { of: number; filled: number; whole: boolean } | null {
+  if (stop.kind !== 'skill' || stop.lessonsTotal === 0) return null;
+  return ringAt(stop, { rounds: stop.rounds, pieces: stop.pieces });
+}
+
+/** A skill's ring at a moment of its rounds: what it showed before a lesson, or shows now. */
+export function ringAt(stop: Pick<SkillStop<SkillNode>, 'lessonsTotal'>, at: { rounds: number; pieces: number }): { of: number; filled: number; whole: boolean } {
+  const whole = at.rounds >= TOPIC_STARS;
+  return { of: stop.lessonsTotal, filled: whole ? stop.lessonsTotal : Math.min(at.pieces, stop.lessonsTotal), whole };
+}
+
+/**
+ * How a stop is drawn (shared `pathStopSvg`): a skill by how it stands — a
+ * finished one a gold coin however strong its reviews say it is, since its
+ * stars now say how far it has been taken, and faded only when a refresh
+ * would help — review as an open stop, a chapter's story as its prize, a
+ * scroll rolled and tied on stone until the chapter is done and open on gold
+ * from then on (a unit without a story ends at its chest, open once earned),
+ * and the first skill of a unit that can be jumped to as the gate the jump
+ * goes through.
  */
 export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook {
   if (jump) return 'jump';
   if (stop.kind === 'review') return 'review';
-  if (stop.kind === 'guide') return stop.open ? 'guide' : 'guideLocked';
   if (stop.kind === 'trophy') return stop.earned ? 'chestOpen' : 'chest';
   if (stop.kind === 'story') return stop.open ? 'story' : 'storyLocked';
-  if (stop.state === 'done') return stop.finish === 'strong' ? 'strong' : stop.finish === 'refresh' ? 'refresh' : 'done';
+  if (stop.state === 'done') return stop.finish === 'refresh' ? 'refresh' : 'done';
   return stop.state;
+}
+
+/**
+ * What a section's level is called, and what it is like, for its card
+ * ("Beginner", "Everyday sentences and short stories"): the app's own plain
+ * names for its levels, the ones the stories use (shared `levelNameKey`), so
+ * a learner meets one ladder everywhere and never a bare CEFR letter. Null
+ * for a section without a level, or with one past the ladder, which the card
+ * then calls by its number alone.
+ */
+export function levelWords(level: string | null): { name: TranslationKey; hint: TranslationKey } | null {
+  const at = level ? levelOfCefr(level) : null;
+  return at ? { name: levelNameKey(at), hint: levelHintKey(at) } : null;
 }
 
 /**

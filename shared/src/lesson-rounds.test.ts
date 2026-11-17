@@ -41,6 +41,72 @@ describe('a topic’s rounds', () => {
   });
 });
 
+describe('the ring round a topic’s stop', () => {
+  const { cx, cy, rx, ry, width, pad, box } = PATH_RING;
+
+  it('is cut into one piece for each lesson, starting at the top and going round clockwise', () => {
+    expect(ringPieces(0)).toEqual([]);
+    const four = ringPieces(4);
+    expect(four).toHaveLength(4);
+    const [[x0, y0], [x1, y1]] = pointsOf(four[0]!) as [[number, number], [number, number]];
+    // the first piece starts just past the top and ends just short of the right-hand side, going clockwise
+    expect(x0).toBeGreaterThan(cx);
+    expect(y0).toBeLessThan(cy - ry + 2);
+    expect(x1).toBeGreaterThan(cx + rx - 2);
+    expect(y1).toBeLessThan(cy);
+    expect(four[0]).toMatch(/A45 44 0 0 1 /);
+    // every piece is the same arc turned, so the gaps between them are alike
+    const ends = four.map((d) => pointsOf(d));
+    expect(Math.round(ends[2]![0]![0])).toBe(Math.round(2 * cx - ends[0]![0]![0]));
+  });
+
+  it('leaves a gap between each two pieces, never more than a third of a piece', () => {
+    for (const of of [1, 2, 3, 4, 6, 8]) {
+      const pieces = ringPieces(of);
+      expect(pieces).toHaveLength(of);
+      for (let k = 0; k < of; k++) {
+        const end = pointsOf(pieces[k]!)[1]!;
+        const next = pointsOf(pieces[(k + 1) % of]!)[0]!;
+        // a gap, but a short one: the ring still reads as a ring
+        const apart = Math.hypot(end[0] - next[0], end[1] - next[1]);
+        expect(apart, `${of} pieces, after ${k}`).toBeGreaterThan(width);
+        expect(apart, `${of} pieces, after ${k}`).toBeLessThan(2 * Math.PI * rx * (1 / of / 3) + 1);
+      }
+    }
+    // one lesson is one long piece, its gap at the top
+    expect(ringPieces(1)[0]).toMatch(/A45 44 0 1 1 /);
+  });
+
+  it('stays inside the box an app lays over the stop', () => {
+    expect(-pad + box).toBeGreaterThanOrEqual(cx + rx + width / 2);
+    expect(-pad).toBeLessThanOrEqual(cy - ry - width / 2);
+    expect(-pad + box).toBeGreaterThanOrEqual(cy + ry + width / 2);
+  });
+});
+
+describe('a topic’s stars', () => {
+  it('stands one, two or three stars on the coin, and none before the first round', () => {
+    expect(roundStars(0)).toEqual([]);
+    expect(roundStars(1)).toHaveLength(1);
+    expect(roundStars(2)).toHaveLength(2);
+    expect(roundStars(3)).toHaveLength(3);
+    expect(roundStars(7)).toEqual(roundStars(3));
+    // each within the coin's face (72 by 62, round its middle at 36, 30), and side by side without touching
+    for (const rounds of [1, 2, 3]) {
+      const stars = roundStars(rounds);
+      for (const s of stars) expect(((s.x - 36) / 34) ** 2 + ((s.y - 30) / 29) ** 2, `${rounds}`).toBeLessThan(1);
+      for (let i = 1; i < stars.length; i++) expect(stars[i]!.x - stars[i - 1]!.x).toBeGreaterThan(stars[i]!.r + stars[i - 1]!.r - 6);
+    }
+  });
+
+  it('draws a star as ten corners, point up', () => {
+    const d = starPath(36, 30, 10);
+    expect(d.match(/[ML]/g)).toHaveLength(10);
+    expect(d.startsWith('M36 20')).toBe(true);
+    expect(d.endsWith('Z')).toBe(true);
+  });
+});
+
 describe('the lesson a round plays next', () => {
   it('is the first not finished yet, in the topic’s order', () => {
     expect(nextInRound([0, 0, 0, 0])).toBe(0);

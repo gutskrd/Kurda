@@ -31,11 +31,13 @@ import { formatNumber } from '../i18n/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useDirection } from '../reports/direction';
 import { useEnter } from '../theme/animate';
+import { sectionLabel } from '../theme/fonts';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import type { TranslationKey } from '../i18n/translations';
 import type { ToneColors } from './path';
 import type { UpcomingUnit } from './types';
 import type { SkillNode } from './types';
@@ -46,8 +48,8 @@ import type { SkillNode } from './types';
  * each unit's land edge to edge under its stops, the stepping stones between
  * them, the unit's landmark with its one small moving part, the person of the
  * course who waits by the unit, the learner's own picture standing on the
- * stop to do now, and the rail of units that the unit banner's map button
- * opens.
+ * stop to do now, and the rail of units, in their sections, that a unit
+ * heading's map button opens.
  *
  * Cheap on purpose: a unit far from the screen (`near` false) is only its
  * ground's colour, so a course of twelve units draws two or three lands at a
@@ -358,56 +360,76 @@ export interface RailUnit {
   here: boolean;
 }
 
+/** A section as the rail lists it: its number (null in a course of one section, which is not named), its level's plain name to look up, and its units. */
+export interface RailSection {
+  number: number | null;
+  level: TranslationKey | null;
+  units: RailUnit[];
+}
+
 /**
- * Every unit of the course on one rail, top to bottom, from the unit banner's
- * map button: a milestone each — filled once the unit is done, ringed where
- * the learner is — with its number and its name, and a tap goes there.
+ * Every unit of the course on one rail, top to bottom, from a unit heading's
+ * map button, under the name of its section where the course has more than
+ * one: a milestone each — filled once the unit is done, ringed where the
+ * learner is — with its number and its name, and a tap goes there (opening
+ * its section, or to a shut section's card).
  */
-export function UnitRailSheet({ units, open, onClose, onPick }: { units: RailUnit[]; open: boolean; onClose: () => void; onPick: (unitId: string) => void }): React.JSX.Element {
+export function UnitRailSheet({ sections, open, onClose, onPick }: { sections: RailSection[]; open: boolean; onClose: () => void; onPick: (unitId: string) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
   return (
     <BottomSheet visible={open} onClose={onClose} title={t('learn.map.title')} icon="flag" detents={['medium', 'large']} testID="lp-rail">
       <SheetScrollView contentContainerStyle={styles.rail}>
-        {units.map((u, i) => {
-          const finished = u.total > 0 && u.done === u.total;
-          const number = t('coursemap.path.unit', { n: formatNumber(u.number, locale) });
-          return (
-            <Pressable
-              key={u.unitId}
-              onPress={() => onPick(u.unitId)}
-              accessibilityRole="button"
-              accessibilityLabel={`${number}, ${u.title}`}
-              accessibilityState={{ selected: u.here }}
-              // held, the row fills as a list row does (it has its own inset, so the fill is its own shape)
-              style={({ pressed }) => [styles.railRow, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack, borderRadius: radii.sm }]}
-            >
-              <View style={styles.railMark}>
-                {i > 0 ? <View style={[styles.railLine, styles.railLineUp, { backgroundColor: colors.separator }]} /> : null}
-                {i < units.length - 1 ? <View style={[styles.railLine, styles.railLineDown, { backgroundColor: colors.separator }]} /> : null}
-                <View
-                  style={[
-                    styles.railDot,
-                    u.here ? styles.railDotHere : null,
-                    { backgroundColor: finished || u.here ? u.tone.fill : colors.surface, borderColor: u.tone.lip },
-                  ]}
-                >
-                  {finished ? <Icon name="check" size={14} color={u.tone.ink} /> : null}
-                </View>
-              </View>
-              <View style={styles.railWords}>
-                <Text style={[styles.railNumber, dir.text, { color: u.here ? u.tone.text : colors.textSecondary }]}>{number}</Text>
-                <Text style={[styles.railTitle, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
-                  {u.title}
-                </Text>
-              </View>
-              <Text style={[styles.railCount, { color: colors.textSecondary }]}>
-                {t('coursemap.path.unitDone', { done: formatNumber(u.done, locale), total: formatNumber(u.total, locale) })}
+        {sections.map((section, s) => (
+          <View key={section.number ?? s} style={styles.railSection}>
+            {section.number !== null ? (
+              <Text style={[styles.railSectionName, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+                {section.level
+                  ? `${t('coursemap.path.section', { n: formatNumber(section.number, locale) })} · ${t(section.level)}`
+                  : t('coursemap.path.section', { n: formatNumber(section.number, locale) })}
               </Text>
-            </Pressable>
-          );
-        })}
+            ) : null}
+            {section.units.map((u, i) => {
+              const finished = u.total > 0 && u.done === u.total;
+              const number = t('coursemap.path.unit', { n: formatNumber(u.number, locale) });
+              return (
+                <Pressable
+                  key={u.unitId}
+                  onPress={() => onPick(u.unitId)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${number}, ${u.title}`}
+                  accessibilityState={{ selected: u.here }}
+                  // held, the row fills as a list row does (it has its own inset, so the fill is its own shape)
+                  style={({ pressed }) => [styles.railRow, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack, borderRadius: radii.sm }]}
+                >
+                  <View style={styles.railMark}>
+                    {i > 0 ? <View style={[styles.railLine, styles.railLineUp, { backgroundColor: colors.separator }]} /> : null}
+                    {i < section.units.length - 1 ? <View style={[styles.railLine, styles.railLineDown, { backgroundColor: colors.separator }]} /> : null}
+                    <View
+                      style={[
+                        styles.railDot,
+                        u.here ? styles.railDotHere : null,
+                        { backgroundColor: finished || u.here ? u.tone.fill : colors.surface, borderColor: u.tone.lip },
+                      ]}
+                    >
+                      {finished ? <Icon name="check" size={14} color={u.tone.ink} /> : null}
+                    </View>
+                  </View>
+                  <View style={styles.railWords}>
+                    <Text style={[styles.railNumber, dir.text, { color: u.here ? u.tone.text : colors.textSecondary }]}>{number}</Text>
+                    <Text style={[styles.railTitle, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
+                      {u.title}
+                    </Text>
+                  </View>
+                  <Text style={[styles.railCount, { color: colors.textSecondary }]}>
+                    {t('coursemap.path.unitDone', { done: formatNumber(u.done, locale), total: formatNumber(u.total, locale) })}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
       </SheetScrollView>
     </BottomSheet>
   );
@@ -442,7 +464,9 @@ const styles = StyleSheet.create({
   token: { position: 'absolute', alignItems: 'center' },
   tokenRing: { borderRadius: radii.pill, borderWidth: TOKEN.ring, padding: 1, overflow: 'hidden' },
   stem: { width: 4, height: TOKEN.stem, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
-  rail: { paddingBottom: spacing.lg },
+  rail: { paddingBottom: spacing.lg, gap: spacing.md },
+  railSection: { gap: 0 },
+  railSectionName: { ...sectionLabel, paddingHorizontal: spacing.xs, marginBottom: spacing.xs },
   railRow: { alignItems: 'center', gap: spacing.sm + 4, minHeight: MIN_TOUCH_TARGET + 12, paddingHorizontal: spacing.xs },
   railMark: { width: 28, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   railLine: { position: 'absolute', width: 3, left: 12.5 },

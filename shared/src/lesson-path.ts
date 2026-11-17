@@ -702,23 +702,24 @@ export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path
 }
 
 /**
- * Coming back to the path after a lesson, in ms: the page settles first
- * (`settleMs`), then, from there, the ring fills (`ringMs`), the finished stop
- * pops and turns gold (`finishAtMs`, a `popMs` pop), a star earned drops in
- * under it (`starAtMs`, over `starMs`) and a ring made whole starts its next
- * round as the star lands, the opened stop's lock gives way to its number
- * (`openAtMs`, the glyphs crossing in `glyphMs`) and it pops, and the bubble
- * arrives at the new current stop as the page scrolls to it and Hevalo cheers
- * (`bubbleAtMs`, over `bubbleMs`). Under Reduce Motion none of it plays: the
- * path is drawn as it now is.
+ * Coming back to the path after a lesson, in ms from when the path is drawn,
+ * the same on the phone and the website: the page settles first
+ * (`settleMs`), then the ring's pieces fill (over `ringMs`) up to the moment a
+ * finished stop pops and turns gold (`finishAtMs`, a `popMs` pop), a star
+ * earned drops in on its coin (`starAtMs`, over `starMs`) and a ring made
+ * whole starts its next round as the star lands, the opened stop's lock gives
+ * way to its number (`openAtMs`, the glyphs crossing in `glyphMs`) and it
+ * pops, and the bubble arrives at the new current stop as the page scrolls to
+ * it and Hevalo cheers (`bubbleAtMs`, over `bubbleMs`). Under Reduce Motion
+ * none of it plays: the path is drawn as it now is.
  */
 export const PATH_RETURN = {
   settleMs: 300,
-  ringMs: 600,
-  finishAtMs: 650,
+  ringMs: 400,
+  finishAtMs: 700,
   popMs: 320,
-  starAtMs: 760,
-  starMs: 320,
+  starAtMs: 800,
+  starMs: 280,
   openAtMs: 900,
   glyphMs: 120,
   bubbleAtMs: 1100,

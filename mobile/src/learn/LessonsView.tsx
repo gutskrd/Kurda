@@ -24,7 +24,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
-import { UnitRailSheet } from '../coursemap/PathWorld';
+import { UnitRailSheet, type RailSection } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
@@ -66,12 +66,14 @@ import { PressableScale } from '../theme/MotionParts';
  * (LearnBar), where it stays in sight while the path scrolls.
  *
  * The path is one course at a time, with a switch between courses when there
- * are several. It is told which of its units are near the screen, which can
- * be seen and which is in the middle of it, so it draws and moves only those;
- * and a unit banner's map button opens the rail of every unit, a tap on one
- * scrolling there. When it first appears it scrolls to the current skill, and a
- * button brings that back once it has been scrolled away. A course whose map
- * could not be loaded stays in the switch, saying so, with a way to try again.
+ * are several, and one section of the course at a time (the rest folded into
+ * cards round it). It is told which of its units are near the screen, which
+ * can be seen and which is in the middle of it, so it draws and moves only
+ * those; and a unit heading's map button opens the rail of every unit in its
+ * section, a tap on one opening its section and scrolling there. When it first
+ * appears it scrolls to the current skill, and a button brings that back once
+ * it has been scrolled away. A course whose map could not be loaded stays in
+ * the switch, saying so, with a way to try again.
  *
  * Learn's moments show here, one at a time: a freeze that kept the streak is
  * said once (`useKeptStreak`, from the `streak` the bar read), and once
@@ -283,14 +285,25 @@ export function LessonsView({
   const seenUnits = useMemo(() => (seenKey === null ? null : new Set(seenKey.split(','))), [seenKey]);
   const [rail, setRail] = useState(false);
   const openRail = useCallback(() => setRail(true), []);
+  // every unit of the course in its section, as the path tells it, for the rail
+  const [railSections, setRailSections] = useState<RailSection[]>([]);
+  // a unit picked on the rail: the path opens its section, then says where it is
+  const [reveal, setReveal] = useState<{ unitId: string; at: number } | null>(null);
   const toUnit = (unitId: string): void => {
     setRail(false);
-    const unit = units.find((u) => u.unitId === unitId);
-    if (unit && pathTopOnPage !== null) {
-      touched.current = true;
-      scroller.current?.scrollTo({ y: Math.max(0, pathTopOnPage + unit.top - spacing.sm), animated: !reduceMotion });
-    }
+    setReveal({ unitId, at: Date.now() });
   };
+  const pathTopRef = useRef(pathTopOnPage);
+  pathTopRef.current = pathTopOnPage;
+  const onReveal = useCallback(
+    (y: number) => {
+      const top = pathTopRef.current;
+      if (top === null) return;
+      touched.current = true;
+      scroller.current?.scrollTo({ y: Math.max(0, top + y - spacing.sm), animated: !reduceMotion });
+    },
+    [reduceMotion],
+  );
 
   const lastUnit = units[units.length - 1];
   const pinned =
@@ -404,10 +417,13 @@ export function LessonsView({
                   due={due ?? 0}
                   onFocus={onFocus}
                   onUnits={setUnits}
+                  onCourse={setRailSections}
                   near={nearUnits}
                   seen={seenUnits}
                   inView={inView}
                   onOpenRail={openRail}
+                  reveal={reveal}
+                  onReveal={onReveal}
                 />
               </View>
             ) : entry?.map ? (
@@ -459,12 +475,7 @@ export function LessonsView({
         </View>
       ) : null}
 
-      <UnitRailSheet
-        open={rail}
-        units={units.map((u) => ({ unitId: u.unitId, number: u.number, title: u.title, tone: u.tone, done: u.done, total: u.total, here: u.here }))}
-        onClose={() => setRail(false)}
-        onPick={toUnit}
-      />
+      <UnitRailSheet open={rail} sections={railSections} onClose={() => setRail(false)} onPick={toUnit} />
 
       <KeptStreakSheet
         streak={kept.shown}

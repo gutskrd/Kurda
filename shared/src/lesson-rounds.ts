@@ -1,7 +1,7 @@
 /**
  * A topic's rounds: how many times over its lessons have been played, as the
- * ring round its stop on the lesson path shows it and the stars under it
- * count it.
+ * ring round its stop on the lesson path shows it and the stars on its gold
+ * coin count it.
  *
  * A topic's ring is cut into one piece for each of its lessons. The first
  * time through, a piece fills as each lesson is finished; once every lesson
@@ -15,8 +15,9 @@
  * finished (no more than `TOPIC_STARS`), and the pieces filled are the lessons
  * finished more times than that. The server works this out for every topic of
  * a course map from the lessons each learner finished (api/src/coursemap), and
- * both apps draw from the numbers it sends, so a ring is the same ring on the
- * phone and on the website. Pure, so the rule is tested once.
+ * both apps draw from the numbers it sends — and from the ring's shape and the
+ * stars' places here (`ringPieces`, `roundStars`) — so a ring is the same ring
+ * on the phone and on the website. Pure, so the rule is tested once.
  */
 
 /** The most rounds a topic counts, and the most stars it can wear. */

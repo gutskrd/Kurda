@@ -443,8 +443,9 @@ describe('coming back to the path', () => {
     expect(pathChanges(pathSnapshot(lessonPath(before)), lessonPath(grown))).toBeNull();
   });
 
-  it('drops a star in after the stop turns gold, and lands it before the bubble moves on', () => {
-    const { finishAtMs, starAtMs, starMs, bubbleAtMs } = PATH_RETURN;
+  it('fills the ring before the stop turns gold, drops a star in after, and lands it before the bubble moves on', () => {
+    const { settleMs, ringMs, finishAtMs, starAtMs, starMs, bubbleAtMs } = PATH_RETURN;
+    expect(settleMs + ringMs).toBeLessThanOrEqual(finishAtMs);
     expect(starAtMs).toBeGreaterThan(finishAtMs);
     expect(starAtMs + starMs).toBeLessThanOrEqual(bubbleAtMs);
   });

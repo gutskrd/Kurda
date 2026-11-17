@@ -24,7 +24,9 @@
  *   gold once done, the unit's own colour for the one to do now, cream when
  *   open, field stone while shut. A skill's glyph is the app's own (a check, a
  *   number, a padlock); the guide's book, a story's scroll, the jump's gate
- *   and the chapter's saddlebag of gifts are drawn here.
+ *   and the chapter's saddlebag of gifts are drawn here. A chapter's story is
+ *   its prize: its scroll lies rolled and tied on stone until the chapter is
+ *   done, and open on gold from then on.
  * - `pathSignpostSvg`: the signpost at the end of the path while the next
  *   unit is still being made, one plank pointing on up the road.
  *
@@ -562,8 +564,10 @@ function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boo
     case 'review':
       return { ...cream, side: stone.side, ring: mix(t.fill, cream.face, 0.4) };
     case 'guide':
-    case 'story':
       return { ...cream, ring: mix(t.fill, cream.face, 0.55) };
+    // a chapter's story, open once every topic of the chapter is done, is the chapter's prize: won, so gold
+    case 'story':
+      return gold;
     default:
       return stone;
   }

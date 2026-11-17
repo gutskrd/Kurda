@@ -318,11 +318,13 @@ describe('a course map', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Kurmanji for Beginners' })).toBeInTheDocument();
     expect(screen.getByText('1 of 3 lessons done')).toBeInTheDocument();
 
-    // the unit's banner: its number, its name, what it covers
-    const unit = screen.getByRole('region', { name: 'Basics' });
-    expect(within(unit).getByText('Chapter 1')).toBeInTheDocument();
-    expect(within(unit).getByText('Greetings · Numbers')).toBeInTheDocument();
-    expect(within(unit).getByText('0 of 2 done')).toBeInTheDocument();
+    // the unit, named for its number and its name: a course without levels is one section, not named
+    const unit = screen.getByRole('region', { name: 'Chapter 1, Basics' });
+    // the heading pinned over the path says the same, in the unit's colour
+    const pin = screen.getByTestId('lp-pin');
+    expect(within(pin).getByText('Chapter 1')).toBeInTheDocument();
+    expect(within(pin).getByText('Basics')).toBeInTheDocument();
+    expect(screen.queryByText(/Section/)).not.toBeInTheDocument();
 
     // every stop is a button with its whole state in its name
     expect(within(unit).getByRole('button', { name: 'Greetings, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
@@ -456,8 +458,11 @@ describe('a course map', () => {
     await waitFor(() => expect(greet).toHaveClass('is-done', 'is-finishing'), { timeout: 3000 });
     await waitFor(() => expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveClass('is-current', 'is-opening'), { timeout: 3000 });
     expect(await screen.findByRole('link', { name: 'Start: Numbers' }, { timeout: 3000 })).toHaveClass('is-arriving');
-    // and the path as it is now is what next time is compared with
-    expect(JSON.parse(sessionStorage.getItem('hevalo:path:c1')!)).toEqual({ 's:greet': { state: 'done', done: 2 }, 's:num': { state: 'current', done: 0 } });
+    // and the path as it is now is what next time is compared with, rounds and rings with it
+    expect(JSON.parse(sessionStorage.getItem('hevalo:path:c1')!)).toEqual({
+      's:greet': { state: 'done', done: 2, rounds: 1, pieces: 0 },
+      's:num': { state: 'current', done: 0, rounds: 0, pieces: 0 },
+    });
   });
 
   it('stands the learner on the stop to do now, and lists every unit on a rail that goes to it', async () => {
@@ -471,8 +476,8 @@ describe('a course map', () => {
     const here = within(rail).getByRole('button', { name: 'Chapter 1, Basics' });
     expect(here).toHaveAttribute('aria-current', 'step');
     await userEvent.click(here);
-    expect(screen.getByRole('button', { name: /^Guide to Basics/ })).toHaveFocus();
-    // where there is no room for the rail, a banner's flag opens it in a sheet
+    expect(screen.getByRole('button', { name: /^Greetings/ })).toHaveFocus();
+    // where there is no room for the rail, the heading's flag opens it in a sheet
     await userEvent.click(screen.getByRole('button', { name: 'Course map' }));
     const sheet = await screen.findByRole('dialog', { name: 'Course map' });
     expect(within(sheet).getByRole('button', { name: 'Chapter 1, Basics' })).toBeInTheDocument();
@@ -487,14 +492,155 @@ describe('a course map', () => {
     expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveFocus();
     await userEvent.keyboard('{End}');
     expect(screen.getByRole('button', { name: /trophy/ })).toHaveFocus();
-    // the unit opens with its guide, the first stop on the path
+    // the unit's grammar is its heading's guide, not a stop: the first stop on the path is its first skill
     await userEvent.keyboard('{Home}');
-    expect(screen.getByRole('button', { name: 'Guide to Basics' })).toHaveFocus();
-    await userEvent.keyboard('{ArrowDown}');
     expect(greetings).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveFocus();
   });
 
-  it('puts review on the path when words are due, and a unit’s guide at the head of its path', async () => {
+  /** A course in three sections, as the road is: the first finished, the learner in the second, the third still shut. */
+  const sections = (): Map => {
+    const played = (id: string, times: number[]) =>
+      skill({ skillId: id, title: `Topic ${id}`, state: 'gold', strength: 90, lessons: times.map((n, i) => ({ ...lesson(`${id}${i + 1}`, true, `Lesson ${id}${i + 1}`), times: n })) });
+    return {
+      course: { id: 'c1', title: 'The Kurmanji Road' },
+      units: [
+        { unitId: 'r1', title: 'Hello', level: 'A1', skills: [played('a', [1, 1]), played('b', [2, 1])], story: { slug: 'road-01-tale', title: 'Mêvan' } },
+        {
+          unitId: 'r2',
+          title: 'Family',
+          level: 'A2',
+          skills: [played('c', [3, 3]), skill({ skillId: 'd', title: 'Topic d', lessons: [{ ...lesson('d1', true, 'Lesson d1'), times: 1 }, lesson('d2', false, 'Lesson d2')] })],
+          story: { slug: 'road-02-tale', title: 'Malbat' },
+        },
+        { unitId: 'r3', title: 'House', level: 'A2', skills: [skill({ skillId: 'e', title: 'Topic e', state: 'locked', lessons: [lesson('e1')] })] },
+        { unitId: 'r4', title: 'Market', level: 'B1', skills: [skill({ skillId: 'f', title: 'Topic f', state: 'locked', lessons: [lesson('f1')] })] },
+      ],
+    };
+  };
+
+  it('shows the course a section at a time: the learner’s open, the one before folded into a card, the one after shut', async () => {
+    serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+
+    // the open section: its units named under the section's number
+    expect(await screen.findByRole('region', { name: 'Section 2, Chapter 2, Family' })).toBeInTheDocument();
+    expect(within(screen.getByTestId('lp-pin')).getByText('Section 2 · Chapter 2')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Chapter 3, House' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Topic d, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
+
+    // the finished one before it, by the app's plain name for its level, never its CEFR letter
+    const done = screen.getByTestId('lp-section-1');
+    expect(within(done).getByText('Starter')).toBeInTheDocument();
+    expect(within(done).getByText('Section complete')).toBeInTheDocument();
+    expect(within(done).queryByText(/A1/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Topic a/ })).not.toBeInTheDocument();
+
+    // the shut one after it: what it is, how many chapters, what opens it; and it does not open
+    const shut = screen.getByTestId('lp-section-3');
+    expect(within(shut).getByText('Intermediate')).toBeInTheDocument();
+    expect(within(shut).getByText('One chapter')).toBeInTheDocument();
+    expect(within(shut).getByText('Opens when Section 2 is done')).toBeInTheDocument();
+    expect(shut.tagName).not.toBe('BUTTON');
+    expect(within(shut).queryByRole('button')).not.toBeInTheDocument();
+
+    // pressed, the finished one opens again, and the learner's own folds into a card that says they are there
+    expect(done).toHaveAccessibleName('Section 1, Starter, First words and short sentences, Section complete, One chapter');
+    await userEvent.click(done);
+    expect(screen.getByRole('button', { name: 'Topic a, Done — strong, round 2 of 3, 0 of 2 lessons' })).toBeInTheDocument();
+    const here = screen.getByTestId('lp-section-2');
+    expect(within(here).getByText('You are here · 0 of 2 chapters done')).toBeInTheDocument();
+    await userEvent.click(here);
+    expect(screen.getByRole('button', { name: /^Topic d, You are here/ })).toBeInTheDocument();
+  });
+
+  it('rings each topic with a piece for each lesson, stands a star on its coin for each round, and says the round in its card', async () => {
+    serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+
+    // Topic c has all three rounds: its ring whole and gold, three stars on its coin
+    const c = await screen.findByRole('button', { name: 'Topic c, Done — strong, all 3 rounds done' });
+    expect(within(c).getByTestId('lp-ring')).toHaveClass('is-whole');
+    expect(within(c).getAllByTestId('lp-stars-3')).toHaveLength(1);
+    expect(c.querySelectorAll('.lp-ring-piece')).toHaveLength(2);
+    // Topic d, the one to do now: a piece filled of two, and no stars yet
+    const d = screen.getByRole('button', { name: /^Topic d/ });
+    expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1);
+    expect(within(d).queryByTestId(/lp-stars/)).not.toBeInTheDocument();
+
+    await userEvent.click(c);
+    const card = screen.getByRole('group', { name: 'Topic c' });
+    expect(within(card).getByTestId('lp-card-stars-3')).toBeInTheDocument();
+    expect(within(card).getByText('All 3 rounds done')).toBeInTheDocument();
+    expect(within(card).getByText('Three stars: every lesson here played three times.')).toBeInTheDocument();
+  });
+
+  it('plays a gold topic again from the lesson finished fewest times, and says the round it is in', async () => {
+    serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+    await userEvent.click(await screen.findByTestId('lp-section-1'));
+    await userEvent.click(screen.getByRole('button', { name: 'Topic b, Done — strong, round 2 of 3, 1 of 2 lessons' }));
+    const card = screen.getByRole('group', { name: 'Topic b' });
+    expect(within(card).getByText('Round 2 of 3 · 1 of 2 lessons')).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'Practise again' })).toHaveAttribute('href', '/app/learn/lesson/b2?course=c1');
+  });
+
+  it('makes a chapter’s story its prize: the chapter complete, the story to read and the chapter to practise', async () => {
+    serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+    await userEvent.click(await screen.findByTestId('lp-section-1'));
+    await userEvent.click(screen.getByRole('button', { name: 'Hamo’s story: Mêvan' }));
+    const card = screen.getByRole('group', { name: 'Hamo’s story' });
+    expect(within(card).getByTestId('lp-chapter-complete')).toHaveTextContent('Chapter complete');
+    expect(within(card).getByRole('link', { name: 'Read the story' })).toHaveAttribute('href', '/app/learn/stories/road-01-tale');
+    expect(within(card).getByRole('link', { name: 'Practise' })).toHaveAttribute('href', '/app/learn/review');
+    // no trophy beside it: the story is the chapter's last stop
+    expect(screen.queryByRole('button', { name: /trophy/ })).not.toBeInTheDocument();
+  });
+
+  it('fills the ring, turns the stop gold and drops its star in on coming back from the lesson that finished its round', async () => {
+    // as the path was drawn before the lesson: Topic d current, one lesson of two done
+    sessionStorage.setItem(
+      'hevalo:path:c1',
+      JSON.stringify({ 's:a': { state: 'done', done: 2, rounds: 1, pieces: 0 }, 's:b': { state: 'done', done: 2, rounds: 1, pieces: 1 }, 's:c': { state: 'done', done: 2, rounds: 3, pieces: 2 }, 's:d': { state: 'current', done: 1, rounds: 0, pieces: 1 }, 's:e': { state: 'locked', done: 0, rounds: 0, pieces: 0 }, 's:f': { state: 'locked', done: 0, rounds: 0, pieces: 0 } }),
+    );
+    const after = sections();
+    after.units[1]!.skills[1] = { ...after.units[1]!.skills[1]!, state: 'completed', lessons: [{ ...lesson('d1', true, 'Lesson d1'), times: 1 }, { ...lesson('d2', true, 'Lesson d2'), times: 1 }] };
+    after.units[2]!.skills[0] = { ...after.units[2]!.skills[0]!, state: 'unlocked' };
+    serve({ 'GET /courses/c1/map': after, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+
+    const d = await screen.findByRole('button', { name: /^Topic d/ });
+    // first as it was: one piece filled, no star
+    expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1);
+    // then the ring whole and gold as the stop turns gold, and its star dropping in
+    await waitFor(() => expect(within(d).getByTestId('lp-ring')).toHaveClass('is-whole'), { timeout: 3000 });
+    await waitFor(() => expect(d.querySelector('.lp-star.is-earned')).not.toBeNull(), { timeout: 3000 });
+    // and the next round begins as the star lands: the ring empty again, the star kept
+    await waitFor(() => expect(within(d).getByTestId('lp-ring')).not.toHaveClass('is-whole'), { timeout: 3000 });
+    expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(0);
+    expect(within(d).getByTestId('lp-stars-1')).toBeInTheDocument();
+  });
+
+  it('comes back to the section a lesson was played in, a finished one too, with its ring moving on', async () => {
+    // as the path was drawn before: the learner in the second section, the first finished
+    sessionStorage.setItem(
+      'hevalo:path:c1',
+      JSON.stringify({ 's:a': { state: 'done', done: 2, rounds: 1, pieces: 0 }, 's:b': { state: 'done', done: 2, rounds: 1, pieces: 1 }, 's:c': { state: 'done', done: 2, rounds: 3, pieces: 2 }, 's:d': { state: 'current', done: 1, rounds: 0, pieces: 1 }, 's:e': { state: 'locked', done: 0, rounds: 0, pieces: 0 }, 's:f': { state: 'locked', done: 0, rounds: 0, pieces: 0 } }),
+    );
+    // a lesson of Topic a played a second time
+    const replayed = sections();
+    replayed.units[0]!.skills[0] = { ...replayed.units[0]!.skills[0]!, lessons: [{ ...lesson('a1', true, 'Lesson a1'), times: 2 }, { ...lesson('a2', true, 'Lesson a2'), times: 1 }] };
+    serve({ 'GET /courses/c1/map': replayed, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+    const a = await screen.findByRole('button', { name: 'Topic a, Done — strong, round 2 of 3, 1 of 2 lessons' });
+    await waitFor(() => expect(a.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1), { timeout: 3000 });
+    // the learner's own section waits folded, to go back to
+    expect(screen.getByTestId('lp-section-2')).toHaveAccessibleName(/^Section 2, Beginner, .*You are here/);
+  });
+
+  it('puts review on the path when words are due, and a unit’s guide in the heading over its path', async () => {
     serve({
       'GET /courses/c1/map': basics,
       'GET /practice/due': { due: 6, available: 12 },
