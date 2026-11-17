@@ -1,5 +1,5 @@
 import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
-import type { PlayGame } from '@kurda/shared';
+import { playGameHue, type PlayGame } from '@kurda/shared';
 import { BookIcon, ChainIcon, HelpIcon, ImpostorIcon, TicketIcon, TilesIcon, WaveformIcon } from '../components/icons';
 
 /**
@@ -14,10 +14,10 @@ import { BookIcon, ChainIcon, HelpIcon, ImpostorIcon, TicketIcon, TilesIcon, Wav
  * asked into a lobby and a friend request lie on their side. Being one
  * component, they cannot drift apart.
  *
- * The colour says what it is for: each game its own (Peyvok Battle the green
- * of a right letter, Rhyme Match the sun's gold, a story game the ink of the
- * page), a friendship the colour of a heart given, and a ticket that can no
- * longer be used a quiet grey. The shape is drawn on a layer of its own under
+ * The colour says what it is for: each game its own, the hue of its stamp on
+ * the games page (a story game, which has none, the page's violet), a
+ * friendship the colour of a heart given, and a ticket that can no longer be
+ * used a quiet grey. The shape is drawn on a layer of its own under
  * the content (`ticket-paper`), so a menu opened from inside a ticket is not
  * cut off by its notches. How it looks is in styles/ticket.css, and how it
  * moves (arriving, tearing, folding away, a stamp landing) in motion.css.
@@ -31,7 +31,18 @@ export type TicketLayout = 'row' | 'column';
 
 /** The classes that make an element a ticket, for a root that is not a plain div (a link, a list item). */
 export function ticketClass(tone: TicketTone, layout: TicketLayout = 'row', extra?: string | false | null): string {
-  return `ticket ticket--${layout} ticket--${tone}${extra ? ` ${extra}` : ''}`;
+  return `ticket ticket--${layout} ${ticketToneClass(tone)}${extra ? ` ${extra}` : ''}`;
+}
+
+/**
+ * The classes that give an element a ticket's colour, for what is coloured
+ * like one without being one (a notification's badge, the fan of tickets just
+ * sent): its tone's, and for a game with a stamp, that stamp's hue, whose
+ * steps tokens.css sets for the theme and `.ticket-hued` (ticket.css) reads.
+ */
+export function ticketToneClass(tone: TicketTone): string {
+  const hue = tone === 'friend' || tone === 'muted' ? null : playGameHue(tone);
+  return hue ? `ticket--${tone} ticket-hued hue-${hue}` : `ticket--${tone}`;
 }
 
 type HalfProps = HTMLAttributes<HTMLElement> & {

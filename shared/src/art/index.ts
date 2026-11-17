@@ -116,6 +116,8 @@ export {
   gameEmblemHue,
   gameEmblemTone,
   isGameEmblem,
+  PLAY_GAME_EMBLEM,
+  playGameHue,
   type GameArtOptions,
   type GameEmblem,
   type GameEmblemLayer,

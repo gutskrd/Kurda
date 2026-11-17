@@ -39,8 +39,20 @@ import {
   impostorWaySvg,
   impostorWayTone,
 } from './impostor.js';
-import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemHue, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
+import {
+  GAME_EMBLEMS,
+  GAME_EMBLEM_SAMPLES,
+  PLAY_GAME_EMBLEM,
+  gameEmblemHue,
+  gameEmblemLayers,
+  gameEmblemLoopMs,
+  gameEmblemSvg,
+  gameEmblemTone,
+  isGameEmblem,
+  playGameHue,
+} from './games.js';
 import { isHueName } from '../hues.js';
+import { PLAY_GAMES } from '../play.js';
 import { LETTERS, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
@@ -1165,6 +1177,18 @@ describe('the games’ emblems', () => {
     for (const hue of hues) expect(isHueName(hue)).toBe(true);
     expect(new Set(hues).size).toBe(GAME_EMBLEMS.length);
     expect(() => gameEmblemHue('toString' as never)).toThrow(RangeError);
+  });
+
+  it('gives every game played with friends its stamp’s hue, and a story game none', () => {
+    for (const game of PLAY_GAMES) {
+      const emblem = PLAY_GAME_EMBLEM[game];
+      expect(playGameHue(game)).toBe(emblem ? gameEmblemHue(emblem) : null);
+    }
+    expect(playGameHue('stories')).toBeNull();
+    expect(playGameHue('wordle-battle')).toBe('green');
+    expect(playGameHue('rhyme-match')).toBe('pink');
+    // every other game has a stamp of its own to take its colour from
+    expect(PLAY_GAMES.filter((game) => !PLAY_GAME_EMBLEM[game])).toEqual(['stories']);
   });
 
   it('has a colour for every game’s card, and refuses a game it has never heard of', () => {

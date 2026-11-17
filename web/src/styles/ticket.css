@@ -10,11 +10,12 @@
  * round each notch: a ring the size of the bite, of which the mask keeps the
  * quarter inside the half.
  *
- * The colour is what the ticket is for, from the palette and the same as on
- * the phone (mobile/src/play/joinCode.ts): Peyvok Battle in the green of a
- * right letter, Rhyme Match in the sun's gold, a story game in the ink of the
- * page, a friendship in the colour of a heart given, and a ticket that is
- * spent in a quiet grey. How tickets move is in motion.css.
+ * The colour is what the ticket is for, the same as on the phone
+ * (mobile/src/play/joinCode.ts): a game in the hue of its stamp on the games
+ * page, a story game in the page's violet, a friendship in the colour of a
+ * heart given, and a ticket that is spent in a quiet grey. A game was in the
+ * green of a right letter or the sun's gold, the colours that say a right
+ * answer and something earned. How tickets move is in motion.css.
  */
 .ticket {
   --t-accent: var(--primary);
@@ -35,13 +36,10 @@
 [dir='rtl'] .ticket {
   --t-out: 1;
 }
-.ticket--wordle-battle {
-  --t-accent: var(--success);
-  --t-ink: var(--success);
-}
-.ticket--rhyme-match {
-  --t-accent: var(--gold);
-  --t-ink: var(--gold-ink);
+/* a game with a stamp: its hue, the `hue-` class beside this one setting the steps for the theme (ui/Ticket.tsx) */
+.ticket-hued {
+  --t-accent: var(--hue-base);
+  --t-ink: var(--hue-deep);
 }
 .ticket--friend {
   --t-accent: var(--like);

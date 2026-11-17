@@ -19,6 +19,7 @@ import { GAME_EMBLEM_SAMPLES, sample, type Cover, type GamePose } from './game-a
 import { COVERS } from './game-covers.js';
 import { Drawing, checkSize, prefixFor } from './svg.js';
 import type { HueName } from '../hues.js';
+import type { PlayGame } from '../play.js';
 
 export { GAME_EMBLEM_SAMPLES, type GamePose };
 
@@ -88,6 +89,25 @@ export function gameEmblemTone(game: GameEmblem): string {
 export function gameEmblemHue(game: GameEmblem): HueName {
   coverOf(game);
   return HUE_OF[game];
+}
+
+/**
+ * The stamp each game played with friends is on the games page, so whatever
+ * stands for it elsewhere (an invite's ticket, a join link's page) wears its
+ * picture and its colour. A story game has no stamp of its own.
+ */
+export const PLAY_GAME_EMBLEM: Readonly<Partial<Record<PlayGame, GameEmblem>>> = {
+  'wordle-battle': 'peyvok',
+  'rhyme-match': 'rhyme',
+  'last-letter': 'last-letter',
+  impostor: 'impostor',
+  'who-am-i': 'who-am-i',
+};
+
+/** A game's own hue, its stamp's; null for a story game, which has none and takes the page's violet. */
+export function playGameHue(game: PlayGame): HueName | null {
+  const emblem = PLAY_GAME_EMBLEM[game];
+  return emblem ? HUE_OF[emblem] : null;
 }
 
 /** A game's cover, still: every part where it is drawn. */
