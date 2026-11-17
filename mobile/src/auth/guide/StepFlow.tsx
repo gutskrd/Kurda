@@ -6,6 +6,7 @@ import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { haptic } from '../../feedback/haptics';
 import { useI18n } from '../../i18n/I18nContext';
+import { useHardwareBack } from '../../navigation/hardwareBack';
 import { useDirection } from '../../reports/direction';
 import { springTo, useShake } from '../../theme/animate';
 import { display } from '../../theme/fonts';
@@ -166,6 +167,8 @@ export function StepFlow({
     if (index > 0) goTo(index - 1, 'back');
     else onExit?.();
   };
+  // Android's back goes back a question as the chevron does; from the first it leaves as any screen does
+  useHardwareBack(index > 0 ? back : null);
 
   const tools: StepTools = {
     submit: () => void submit(),

@@ -7,11 +7,13 @@ vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
 vi.mock('@react-navigation/native', () => import('./testing/navigation'));
+vi.mock('../../navigation/hardwareBack', () => import('../../navigation/testing/hardwareBack'));
 import { useState } from 'react';
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { onHaptic, resetHaptics } from '../../feedback/haptics';
 import { PACING, type HapticEvent } from '../../feedback/hapticPacing';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { pressBack, resetHardwareBack } from '../../navigation/testing/hardwareBack';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { GuideField } from './GuideField';
@@ -39,6 +41,7 @@ beforeEach(() => {
 afterEach(() => {
   stop();
   cleanup();
+  resetHardwareBack();
 });
 
 /** A two-question flow: a name that must not be empty, then a word the server has the last say on. */
@@ -135,6 +138,23 @@ describe('StepFlow', () => {
     expect(bar().getAttribute('aria-valuenow')).toBe('1');
     await press(en['common.back']);
     expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('goes back a question on Android’s back too, and leaves Android’s back to the screen on the first', async () => {
+    const onExit = vi.fn();
+    renderWithProviders(<Flow onFinish={() => undefined} onExit={onExit} commit={async () => ({ ok: true })} />);
+    expect(pressBack()).toBe(false);
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'Rojda' } });
+    await press(en['common.continue']);
+    await screen.findByText('A word?');
+    await act(async () => {
+      expect(pressBack()).toBe(true);
+    });
+    expect(await screen.findByText('What is your name?')).toBeTruthy();
+    await turned();
+    expect((screen.getByTestId('name') as HTMLInputElement).value).toBe('Rojda');
+    expect(pressBack()).toBe(false);
+    expect(onExit).not.toHaveBeenCalled();
   });
 
   it('has no way back from the first question when the flow has no way out', async () => {
