@@ -1,21 +1,9 @@
 /**
- * The pictures of Impostor: one for every category a word can come
- * from, one for "any category", one for each way the game can be played, and
- * the game's own emblem (the masked card among the open ones).
- *
- * They are cut-outs (cutout.ts), the family the cards of Letters and words
- * are drawn in: one object a child would know for each category — an apple
- * for the fruit, a tea glass for the drinks, a kilim's medallion for the
- * culture, the Newroz fire for the celebrations, a def for the music, the
- * flag for Kurdistan, Şahmaran for the legends — in flat colour, lit from
- * the upper left, its thickness showing below it. A picture holds no text and no numerals: the numbers are counted
- * in beads, as the abacus counts them.
- *
- * A category is named by its slug (api/src/games/word-categories.ts lists the
- * starter ones). A category an editor adds later, whose slug is not drawn
- * here, gets the label tag every category can wear, so a tile is never empty.
- * Each picture has a colour of its own (`impostorCategoryTone`) that the two
- * apps tint its tile with.
+ * Impostor's pictures: one per word category, one for "any category", one per way to play, and the game's emblem.
+ * They use the cut-out style (cutout.ts) of the Letters and words cards: one familiar object per category, with no text
+ * or numerals (numbers are counted in beads). Categories are named by slug (api/src/games/word-categories.ts lists the
+ * starter ones); a slug with no picture here gets the generic label tag, so a tile is never empty. Each picture has its
+ * own tile tint (`impostorCategoryTone`).
  */
 import { GAME_NAMES } from '../games/names.js';
 import { dab, form, ring, rr, type Tones } from './cutout.js';
@@ -25,9 +13,9 @@ export type ImpostorWay = 'classic' | 'blind' | 'odd';
 export type ImpostorEmblem = 'cards' | 'mask';
 
 export interface ImpostorArtOptions {
-  /** how big it is drawn, in pixels (it is square) */
+  /** Size in pixels; the drawing is square. */
   size?: number;
-  /** its text label; the apps say the name beside it and hide the picture from screen readers */
+  /** The accessible label; the apps print the name beside it and hide the picture from screen readers. */
   title?: string;
   idPrefix?: string;
 }
@@ -46,7 +34,7 @@ const TEAL = '#2fa7a0';
 const BROWN = '#a8683a';
 const STEEL = '#9aa5b4';
 const NIGHT = '#3b2f63';
-/** The deep tone lines and pupils are drawn in: never black. */
+/** The deep tone for lines and pupils, never black. */
 const INK = '#3a2b4d';
 const CREAM: Tones = { light: '#fffaf1', base: '#f6ead6', shade: '#cdb898' };
 const WHITE: Tones = { light: '#ffffff', base: '#eef2f7', shade: '#bcc6d4' };
@@ -67,7 +55,7 @@ const dot = (dr: Drawing, cx: number, cy: number, r: number, hex: string): void 
 };
 /** A round bead: a dab as wide as it is tall. */
 const bead = (dr: Drawing, cx: number, cy: number, r: number, hex: string, drop = 2.4): void => dab(dr, cx, cy, r, r, hex, drop);
-/** What `draw` adds, turned by `angle` degrees about a point. */
+/** Runs `draw` inside a group turned `angle` degrees about a point. */
 function turned(dr: Drawing, angle: number, cx: number, cy: number, draw: () => void): void {
   dr.add(`<g transform="rotate(${n(angle)} ${n(cx)} ${n(cy)})">`);
   draw();
@@ -93,7 +81,7 @@ const star = (cx: number, cy: number, r: number): string => {
   }
   return `M${pts.join('L')}Z`;
 };
-/** A person as a playing piece: a round head on rounded shoulders. No face: a picture of a category is nobody. */
+/** A person as a playing piece: a round head on rounded shoulders, with no face. */
 function piece(dr: Drawing, cx: number, top: number, head: number, width: number, height: number, hex: string): void {
   form(dr, rr(cx - width / 2, top + head * 2 - 2, width, height, width / 2), tones(hex), 4, 2.2);
   form(dr, ring(cx, top + head, head), SKIN, 3, 2);
@@ -155,7 +143,7 @@ const family: Draw = (dr) => {
   piece(dr, 60, 52, 9.5, 24, 34, GOLD);
 };
 
-/** An eye: the part of the body that is looking back. */
+/** An eye, for the body. */
 const body: Draw = (dr) => {
   form(dr, 'M12 60C28 36 46 28 60 28C74 28 92 36 108 60C92 84 74 92 60 92C46 92 28 84 12 60Z', WHITE, 4, 2.4);
   form(dr, ring(60, 60, 21), tones('#7a5236'), 0, 3);
@@ -276,7 +264,7 @@ const play: Draw = (dr) => {
   dr.add('<ellipse cx="42" cy="38" rx="9" ry="6" fill="#ffffff" fill-opacity="0.45" transform="rotate(-32 42 38)"/>');
 };
 
-/** A def, the frame drum: its wooden hoop, the skin stretched over it, the rings that shiver inside and a kilim diamond painted at its heart. */
+/** A def, the frame drum: wooden hoop, stretched skin, the jingling rings inside and a kilim diamond at its heart. */
 const music: Draw = (dr) => {
   form(dr, ring(60, 56, 47), WOOD, 9, 2.8);
   form(dr, ring(60, 56, 37), CREAM, 0, 2.2);
@@ -289,7 +277,7 @@ const music: Draw = (dr) => {
   fill(dr, 'M60 52L64 56L60 60L56 56Z', tint(RED, -0.04));
 };
 
-/** The Newroz fire: a stack of logs, its flames leaping, sparks flying off. */
+/** The Newroz fire: a stack of logs, leaping flames and sparks. */
 const celebrations: Draw = (dr) => {
   turned(dr, -15, 60, 98, () => form(dr, rr(20, 92, 80, 13, 6.5), WOOD, 3, 1.8));
   turned(dr, 15, 60, 98, () => form(dr, rr(20, 92, 80, 13, 6.5), tones(tint(BROWN, 0.12)), 3, 1.8));
@@ -388,7 +376,7 @@ const money: Draw = (dr) => {
   coin(46, 46, 32);
 };
 
-/** A sparkle, and a smaller one: what a thing is like. */
+/** A sparkle and a smaller one: what a thing is like. */
 const qualities: Draw = (dr) => {
   form(dr, sparkle(54, 62, 42), tones(GOLD), 4, 2.6);
   form(dr, sparkle(94, 26, 15), tones(SKY), 2, 1.6);
@@ -466,7 +454,7 @@ const world: Draw = (dr) => {
   );
 };
 
-/** The flag of Kurdistan on its pole: red, white and green, the golden sun of twenty-one rays at its heart. */
+/** The flag of Kurdistan on its pole: red, white and green with the golden sun of twenty-one rays. */
 const kurdistan: Draw = (dr) => {
   line(dr, 'M22 14V110', tint(BROWN, -0.18), 6);
   dot(dr, 22, 12, 5.5, GOLD);
@@ -485,7 +473,7 @@ const kurdistan: Draw = (dr) => {
   dot(dr, cx, cy, 6.4, GOLD);
 };
 
-/** Şahmaran, the queen of the snakes: a green snake coiled on itself, a crown on its head. */
+/** Şahmaran, queen of the snakes: a coiled green snake with a crown. */
 const legends: Draw = (dr) => {
   const body = 'M18 96C34 106 72 106 88 94C102 84 94 68 76 68C58 68 46 70 40 60C33 49 43 38 60 38C69 38 74 34 76 28';
   const skin = tones('#3c9a5f');
@@ -499,7 +487,7 @@ const legends: Draw = (dr) => {
   form(dr, 'M73 15L75 3L80 9L85 0L90 9L95 3L97 15Z', tones(GOLD), 2, 1.6);
 };
 
-/** Three cards fanned out, a sparkle on the one in front: whatever comes. */
+/** Three fanned cards with a sparkle on the front one: whatever comes. */
 const any: Draw = (dr) => {
   turned(dr, -20, 60, 104, () => form(dr, rr(38, 24, 44, 62, 8), tones(RED), 4, 2.4));
   turned(dr, 20, 60, 104, () => form(dr, rr(38, 24, 44, 62, 8), tones(BLUE), 4, 2.4));
@@ -507,7 +495,7 @@ const any: Draw = (dr) => {
   fill(dr, sparkle(60, 51, 17), GOLD);
 };
 
-/** A label on its string: a category that has no picture of its own yet. */
+/** A tag on a string, for a category with no picture of its own yet. */
 const label: Draw = (dr) => {
   form(dr, `M18 34H70Q74 34 77 37L104 60L77 83Q74 86 70 86H18Q12 86 12 80V40Q12 34 18 34Z${ring(30, 60, 6)}`, tones(TEAL), 5, 2.6, true);
   line(dr, 'M30 60C22 48 12 40 8 28', '#b79f7c', 3);
@@ -569,27 +557,25 @@ const categoryOf = (slug: string | null | undefined): { draw: Draw; tone: string
 };
 
 /**
- * Where a category stands among its fellows on a screen that lists them: the
- * order they are drawn in above, which starts with the things a table of
- * beginners names most easily (animals, food, fruit) and ends with the
- * abstract ones. A category that is not drawn here comes after them all.
+ * A category's place in a list: the order drawn above, which starts with what beginners name most easily (animals,
+ * food, fruit) and ends with the abstract ones. Categories not drawn here come last.
  */
 export function impostorCategoryRank(slug: string): number {
   const at = IMPOSTOR_CATEGORY_PICTURES.indexOf(slug);
   return at < 0 ? IMPOSTOR_CATEGORY_PICTURES.length : at;
 }
 
-/** Categories in the order a screen lists them (`impostorCategoryRank`), those not drawn here last, as they came. */
+/** Categories in list order (`impostorCategoryRank`), undrawn ones last in their given order. */
 export function impostorCategoriesInOrder<T extends { slug: string }>(categories: readonly T[]): T[] {
   return categories.map((c, i) => ({ c, i })).sort((a, b) => impostorCategoryRank(a.c.slug) - impostorCategoryRank(b.c.slug) || a.i - b.i).map((x) => x.c);
 }
 
-/** The colour a category's tile is tinted with: its picture's own. */
+/** A category's tile tint: its picture's own colour. */
 export function impostorCategoryTone(slug: string | null | undefined): string {
   return categoryOf(slug).tone;
 }
 
-/** The picture of a category, by its slug; of "any category" for none; the label for a slug that is not drawn. */
+/** A category's picture by slug; "any category" for none, and the label for a slug that is not drawn. */
 export function impostorCategorySvg(opts: ImpostorArtOptions & { category: string | null }): string {
   const size = checkSize(opts.size, 56);
   const picture = categoryOf(opts.category);
@@ -601,7 +587,7 @@ export function impostorCategorySvg(opts: ImpostorArtOptions & { category: strin
 
 // ────────────────────────────────────────────────────────── the ways to play
 
-/** The mask the impostor wears: two eyes cut out of it. */
+/** The impostor's mask, with two eye holes. */
 const MASK = 'M-22 -7C-14 -14 -6 -10 0 -6C6 -10 14 -14 22 -7C24 4 16 12 8 8C4 6 2 2 0 2C-2 2 -4 6 -8 8C-16 12 -24 4 -22 -7Z';
 const MASK_EYES = 'M-13 -4.5A4.6 3.4 0 1 0 -3.8 -4.5A4.6 3.4 0 1 0 -13 -4.5ZM3.8 -4.5A4.6 3.4 0 1 0 13 -4.5A4.6 3.4 0 1 0 3.8 -4.5Z';
 
@@ -609,7 +595,7 @@ function mask(dr: Drawing, cx: number, cy: number, scale: number, hex: string): 
   dr.add(`<g transform="translate(${n(cx)} ${n(cy)}) scale(${n(scale)})"><path d="${MASK}${MASK_EYES}" fill="${hex}" fill-rule="evenodd"/></g>`);
 }
 
-/** A playing card standing up: its face in `face`, turned by `angle` about the foot of the fan. */
+/** A standing playing card with its face in `face`, turned `angle` about the foot of the fan. */
 function card(dr: Drawing, x: number, y: number, w: number, h: number, face: Tones, angle = 0, mark?: () => void): void {
   turned(dr, angle, 60, 118, () => {
     form(dr, rr(x, y, w, h, 7), face, 4, 2.4);
@@ -617,14 +603,14 @@ function card(dr: Drawing, x: number, y: number, w: number, h: number, face: Ton
   });
 }
 
-/** Classic: everyone holds the same word, and one card among them is the impostor's. */
+/** Classic: everyone holds the same word, and one card is the impostor's. */
 const classic: Draw = (dr) => {
   card(dr, 43, 38, 34, 50, CREAM, -27, () => bead(dr, 60, 62, 9, GOLD, 2));
   card(dr, 43, 38, 34, 50, CREAM, 27, () => bead(dr, 60, 62, 9, GOLD, 2));
   card(dr, 40, 22, 40, 58, tones(NIGHT), 0, () => mask(dr, 60, 51, 0.76, GOLD));
 };
 
-/** In the dark: the impostor is told nothing at all. A night with a moon in it. */
+/** In the dark: the impostor is told nothing. A night with a moon. */
 const blind: Draw = (dr) => {
   form(dr, ring(60, 60, 46), tones(NIGHT), 5, 2.8);
   form(dr, 'M70 26C52 30 42 46 46 64C50 80 66 90 84 86C76 96 62 100 48 96C30 90 20 72 26 52C30 36 48 24 70 26Z', tones(GOLD), 0, 2.4);
@@ -633,7 +619,7 @@ const blind: Draw = (dr) => {
   dot(dr, 64, 40, 2, '#fff1b8');
 };
 
-/** Odd word out: three alike and one that is not. */
+/** Odd word out: three alike and one different. */
 const odd: Draw = (dr) => {
   bead(dr, 34, 36, 19, TEAL, 4);
   bead(dr, 86, 36, 19, TEAL, 4);
@@ -647,7 +633,7 @@ const WAYS: Readonly<Record<ImpostorWay, { draw: Draw; tone: string; title: stri
   odd: { draw: odd, tone: TEAL, title: 'Odd word out' },
 };
 
-/** The colour a way's card is tinted with. */
+/** A way's card tint. */
 export function impostorWayTone(way: ImpostorWay): string {
   return WAYS[way].tone;
 }
@@ -663,7 +649,7 @@ export function impostorWaySvg(opts: ImpostorArtOptions & { way: ImpostorWay }):
 
 // ──────────────────────────────────────────────────────────── the emblem
 
-/** The game itself: a hand of five cards, four open with the same mark, the one in the middle masked. */
+/** The game itself: five cards, four open with the same mark and the middle one masked. */
 const cards: Draw = (dr) => {
   for (const a of [-34, -17, 17, 34]) {
     card(dr, 44, 38, 32, 46, CREAM, a, () => bead(dr, 60, 58, 7.5, GOLD, 2));
@@ -671,7 +657,7 @@ const cards: Draw = (dr) => {
   card(dr, 41, 20, 38, 56, tones(NIGHT), 0, () => mask(dr, 60, 47, 0.74, GOLD));
 };
 
-/** The mask alone, in gold: what the back of every card wears. */
+/** The mask alone in gold, as on every card's back. */
 const maskOnly: Draw = (dr) => {
   form(dr, ring(60, 60, 44), tones(NIGHT), 4, 2.6);
   line(dr, ring(60, 60, 36), tint(GOLD, -0.1), 2);
@@ -680,7 +666,7 @@ const maskOnly: Draw = (dr) => {
 
 const EMBLEMS: Readonly<Record<ImpostorEmblem, { draw: Draw; title: string }>> = {
   cards: { draw: cards, title: GAME_NAMES.impostor },
-  // every card's back wears it, so its label says nothing of whose card it is
+  // Every card's back wears it, so its label gives nothing away.
   mask: { draw: maskOnly, title: 'A card, face down' },
 };
 
@@ -693,6 +679,6 @@ export function impostorEmblemSvg(opts: ImpostorArtOptions & { emblem: ImpostorE
   return dr.svg(size, opts.title ?? EMBLEMS[opts.emblem].title);
 }
 
-/** Every way and emblem that is drawn, for a page that shows them all. */
+/** Every way and emblem drawn, for a page that shows them all. */
 export const IMPOSTOR_WAYS_DRAWN: readonly ImpostorWay[] = ['classic', 'blind', 'odd'];
 export const IMPOSTOR_EMBLEMS_DRAWN: readonly ImpostorEmblem[] = ['cards', 'mask'];
