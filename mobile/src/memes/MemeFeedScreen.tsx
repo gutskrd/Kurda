@@ -30,6 +30,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Loading } from '../theme/Loading';
+import { useDirection } from '../reports/direction';
 
 const PAGE = 20;
 
@@ -43,6 +44,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const dir = useDirection();
 
   const [category, setCategory] = useState<Category>('meme');
   const [sort, setSort] = useState<'newest' | 'popular'>('newest');
@@ -150,8 +152,18 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
           accessibilityRole="button"
           accessibilityLabel={item.caption ? t('memes.openPostCaption', { caption: item.caption }) : t('memes.openPost')}
         >
-          <View style={styles.cardHead}>
-            <InitialsAvatar name={item.authorId.slice(0, 2)} id={item.authorId} size={28} />
+          {/* who posted it — their face and their name, as on the wall — and when; an older server that sends no author shows only when */}
+          <View style={[styles.cardHead, { flexDirection: dir.row }]}>
+            {item.author ? (
+              <View style={[styles.who, { flexDirection: dir.row }]}>
+                <InitialsAvatar name={item.author.username} id={item.author.id} size={28} photoUrl={item.author.avatarUrl} />
+                <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {item.author.username}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.who} />
+            )}
             <Text style={[styles.age, { color: colors.textSecondary }]}>{noticeTime(item.createdAt, t, locale)}</Text>
           </View>
           {item.imageUrl ? (
@@ -161,10 +173,10 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
               <Text style={{ color: colors.textSecondary }}>{t('memes.imageUnavailable')}</Text>
             </View>
           )}
-          {item.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{item.caption}</Text> : null}
+          {item.caption ? <Text style={[styles.caption, dir.free, { color: colors.textPrimary }]}>{item.caption}</Text> : null}
           {/* a heart is the one reaction there is, counted on the post itself; here, how many have said something */}
           {item.commentCount > 0 ? (
-            <View style={styles.cardFoot}>
+            <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
               <Icon name="chat" size={16} color={colors.textSecondary} />
               <Text style={[styles.stat, { color: colors.textSecondary }]}>{item.commentCount}</Text>
             </View>
@@ -172,7 +184,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </PressableScale>
       </Rise>
     ),
-    [navigation, colors, entering, t, locale],
+    [navigation, colors, entering, t, locale, dir],
   );
 
   return (
@@ -203,7 +215,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             contentContainerStyle={styles.list}
             onScroll={onScroll}
             scrollEventThrottle={64}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
@@ -216,7 +228,8 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
           />
         </AsyncBoundary>
 
-        <View style={[styles.fab, { bottom: spacing.xl }]}>
+        {/* at the end of the line, which is the left in Soranî and Arabic */}
+        <View style={[styles.fab, dir.row === 'row-reverse' ? styles.fabLeft : styles.fabRight, { bottom: spacing.xl }]}>
           <ClayButton label={t('memes.post')} icon="plus" tone="primary" onPress={compose} />
         </View>
       </View>
@@ -257,12 +270,16 @@ const styles = StyleSheet.create({
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
-  cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  who: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  name: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   age: { fontSize: typography.sizes.sm },
   image: { width: '100%', aspectRatio: 1, borderRadius: radii.md },
   imageFallback: { alignItems: 'center', justifyContent: 'center' },
   caption: { fontSize: typography.sizes.md },
   cardFoot: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stat: { fontSize: typography.sizes.sm },
-  fab: { position: 'absolute', right: spacing.lg },
+  fab: { position: 'absolute' },
+  fabRight: { right: spacing.lg },
+  fabLeft: { left: spacing.lg },
 });

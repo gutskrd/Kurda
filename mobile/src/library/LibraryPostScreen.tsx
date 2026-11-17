@@ -29,6 +29,12 @@ import { onPostSaved } from '../composer/postSaved';
 import { CommentComposer, CommentList, CommentsSkeleton } from '../comments/CommentList';
 import { useCommentThread } from '../comments/useCommentThread';
 import { heldDim } from '../theme/MotionParts';
+import { useNavigation } from '@react-navigation/native';
+import type { RootNavigation } from '../navigation/rootStack';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { useDirection } from '../reports/direction';
+import { noticeTime } from '../notifications/inbox';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 
 /**
  * Read a library post (KUR-284): title + body, an inline audio player when it has
@@ -38,6 +44,10 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const navigation = useNavigation<RootNavigation>();
+  const dir = useDirection();
+  // the side a line starts on: the right in Soranî and Arabic
+  const edge = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
   // what is being reported, and whose it is (the Hevalo team's own posts offer no block)
   const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null; name?: string } | null>(null);
 
@@ -131,10 +141,28 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
           ) : (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               {/* a gotin has no title; its pictures come first on its own page, words under them */}
-              {post.title ? <Text style={[styles.title, { color: colors.textPrimary }]}>{post.title}</Text> : null}
+              {post.title ? <Text style={[styles.title, dir.free, { color: colors.textPrimary }]}>{post.title}</Text> : null}
+              {/* who wrote it and when, as the wall says it: a tap opens their profile */}
+              {post.author ? (
+                <Pressable
+                  onPress={() => post.author && navigation.navigate('UserProfile', { userId: post.author.id })}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('friends.openProfile', { username: post.author.username })}
+                  testID="library-post-author"
+                  style={({ pressed }) => [styles.byline, { flexDirection: dir.row, alignSelf: edge }, pressed && heldDim]}
+                >
+                  <InitialsAvatar name={post.author.username} id={post.author.id} size={BYLINE_FACE} photoUrl={post.author.avatarUrl} />
+                  <Text style={[styles.author, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {post.author.username}
+                  </Text>
+                  <Text style={[styles.when, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {noticeTime(post.publishedAt ?? post.createdAt, t, locale)}
+                  </Text>
+                </Pressable>
+              ) : null}
               <PostPictures images={postImages(post)} />
               {post.audioUrl ? <AudioPlayer url={post.audioUrl} /> : null}
-              {post.body ? <Text style={[styles.postBody, { color: colors.textPrimary }]}>{post.body}</Text> : null}
+              {post.body ? <Text style={[styles.postBody, dir.free, { color: colors.textPrimary }]}>{post.body}</Text> : null}
               {post.sourceCredit ? <SourceCredit text={post.sourceCredit} /> : null}
               {post.authorId !== user?.id ? (
                 <Pressable
@@ -147,7 +175,8 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                   hitSlop={13}
                   accessibilityRole="button"
                   accessibilityLabel={t('moderation.reportPost')}
-                  style={({ pressed }) => pressed && heldDim}
+                  // the flag beside its words, on one line, at the reading edge
+                  style={({ pressed }) => [styles.reportRow, { flexDirection: dir.row, alignSelf: edge }, pressed && heldDim]}
                 >
                   <Icon name="flag" size={14} color={colors.textSecondary} />
                   <Text style={[styles.report, { color: colors.textSecondary }]}>{t('moderation.reportPost')}</Text>
@@ -227,8 +256,15 @@ function PostSkeleton(): React.JSX.Element {
 const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 const BODY_LINE = 24;
 
+/** The face in the byline: as big as the wall's. */
+const BYLINE_FACE = 28;
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  byline: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
+  author: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  when: { fontSize: typography.sizes.sm },
+  reportRow: { alignItems: 'center', gap: spacing.xs },
   screen: { flex: 1, paddingHorizontal: layout.gutter },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   title: { ...display(typography.sizes.xl) },

@@ -121,6 +121,18 @@ function shownAlert(): { title: string; message: string; buttons: Button[] } {
 const type = (text: string) => fireEvent.change(screen.getByPlaceholderText('Add a comment…'), { target: { value: text } });
 const send = () => fireEvent.click(screen.getByRole('button', { name: 'Post comment' }));
 
+describe('the post’s author', () => {
+  it('says who wrote the post and when, under its title, and opens their profile', async () => {
+    open({ 'GET /library/posts/p1': ok({ ...POST, authorId: azad.id, author: azad }) }, []);
+    const by = await screen.findByTestId('library-post-author');
+    expect(by.getAttribute('aria-label')).toBe('azad — open profile');
+    expect(by.textContent).toContain('azad');
+    expect(by.textContent).toContain('1h ago');
+    fireEvent.click(by);
+    expect(navigation.navigate).toHaveBeenCalledWith('UserProfile', { userId: 'u-azad' });
+  });
+});
+
 describe('a comment’s author', () => {
   it('shows who wrote it, with their picture and how long ago in words, and opens their profile', async () => {
     open({}, [comment('c1')]);
