@@ -1,21 +1,11 @@
 /**
- * Conversations in lessons: two or three of the characters talking, line by
- * line, and then a question about what was said. Each part is one character
- * (Hamo, Xezo or the deer, Hevalo), called by its own name, and only that
- * character is ever shown saying its lines — or the learner's own part, when
- * a character talks with them: those lines are the learner's to read (and
- * say), shown as theirs, and nobody records them.
+ * Conversations in lessons: two or three characters talking, then a question about what was said. Each part is one
+ * character, or the learner's own part, whose lines are theirs to read and say and are never recorded.
  *
- * Each part is recorded by whoever plays it, wherever they are, so a line's
- * recording is filed under its conversation and its part as well as its words:
- * "Silav!" said by both people in one conversation is two recordings, not one,
- * and a new take in one conversation never replaces a line in another. A plain
- * text's recording (`lessonAudioKey`) is shared by every exercise that says
- * it; a line's is the conversation's own.
- *
- * One copy of the shape, the keys and the limits for the API that stores and
- * delivers conversations, the admin panel that writes and records them, and
- * the two players that show them.
+ * Each part is recorded by whoever plays it, so a line's recording is keyed by its conversation and part as well as its
+ * words: "Silav!" from both people is two recordings, and a new take never replaces another conversation's line. A plain
+ * text's recording (`lessonAudioKey`) is shared by every exercise; a line's belongs to its conversation. Shared by the API,
+ * the admin and both players.
  */
 import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey } from './lesson-audio.js';
 import { CHARACTER_NAMES } from './characters/types.js';
@@ -24,7 +14,7 @@ import { isRecord } from './sanitize.js';
 
 export const CONVERSATION_LIMITS = {
   speakersMin: 2,
-  /** each part is a character of its own */
+  /** each part is a different character */
   speakersMax: SPEAKERS.length,
   nameMax: 40,
   titleMax: 120,
@@ -40,22 +30,17 @@ export const CONVERSATION_LIMITS = {
 } as const;
 
 /**
- * A conversation's id, what its recordings are filed under. Written once when
- * the conversation is made and kept by every later version of its lesson (a
- * new version copies the payload), so publishing a fix to a line's spelling
- * does not lose the other lines' recordings.
+ * A conversation's id, which its recordings are filed under. Set once and copied into every later version of its lesson,
+ * so fixing one line's spelling does not lose the other lines' recordings.
  */
 export const CONVERSATION_ID = /^[a-z0-9]{6,32}$/;
 
-/**
- * One part: the character who says its lines, and its name, which is the
- * character's own; or the learner's part, which no character plays.
- */
+/** One part: the character who says its lines, named by its own name; or the learner's part, which no character plays. */
 export interface ConversationSpeaker {
   name: string;
   /** null only for the learner's own part */
   character: SpeakerId | null;
-  /** the learner's own part: its lines are theirs, shown as theirs, never recorded */
+  /** the learner's own part: shown as theirs, never recorded */
   learner?: true;
 }
 
@@ -69,21 +54,13 @@ export function learnerPart(): ConversationSpeaker {
   return { name: 'Tu', character: null, learner: true };
 }
 
-/**
- * The characters who stand on a conversation's stage, in their parts' order:
- * every part but the learner's, who is the one they face. Null when a part
- * has no character to draw, or no part has one.
- */
+/** The characters on a conversation's stage in part order: every part but the learner's, whom they face. Null when a part has no character, or none does. */
 export function stageCast(speakers: readonly { character?: unknown; learner?: unknown }[]): SpeakerId[] | null {
   const cast = speakers.filter((s) => s.learner !== true).map((s) => s.character);
   return cast.length > 0 && cast.every(isSpeakerId) ? cast : null;
 }
 
-/**
- * Each line as the stage sees it: its speaker by place on the stage, and a
- * learner's line by nobody there (one past the last place), so whoever is on
- * the stage looks out at the learner while they speak.
- */
+/** Each line as the stage sees it: its speaker by stage place, and a learner's line by one past the last place, so the cast looks out at the learner. */
 export function stageLines<L extends { speaker: number }>(speakers: readonly { learner?: unknown }[], lines: readonly L[]): L[] {
   const place = new Map<number, number>();
   speakers.forEach((s, part) => {
@@ -97,11 +74,11 @@ export interface ConversationLine {
   speaker: number;
   /** what they say, in Kurdish */
   text: string;
-  /** what it means, for a learner who wants the help */
+  /** what it means, for a learner who wants help */
   en?: string;
 }
 
-/** A conversation as it is written and stored. The question is asked and graded as a multiple-choice item's is. */
+/** A conversation as written and stored; its question is asked and graded like a multiple-choice item. */
 export interface ConversationPayload {
   id: string;
   title?: string;
@@ -112,17 +89,12 @@ export interface ConversationPayload {
   correctIndex: number;
 }
 
-/**
- * Between the parts of a line's key: the word joiner, which `lessonAudioKey`
- * always removes, so no plain text's key can contain it and the two kinds of
- * key can never collide.
- */
+/** Joins the parts of a line's key: the word joiner, which `lessonAudioKey` always removes, so line keys never collide with plain ones. */
 const JOIN = '⁠';
 
 /**
- * The key the recording of one line is filed under: the conversation, the part
- * (who says it, by place, so renaming a part keeps its recordings) and the
- * words, keyed as any recording's are. Empty when there is nothing to file.
+ * The key a line's recording is filed under: the conversation, the part by place (so renaming a part keeps its
+ * recordings) and the words keyed as any recording's. Empty when there is nothing to file.
  */
 export function conversationLineKey(conversationId: string, part: number, text: string): string {
   const said = lessonAudioKey(text);
@@ -149,10 +121,8 @@ export interface ConversationClip {
 }
 
 /**
- * Every line of a stored conversation that can be recorded, in order, with its
- * key. A line said twice by the same part is listed once, at its first place.
- * Anything malformed yields nothing rather than throwing: this runs over
- * stored content.
+ * Every recordable line of a stored conversation in order, with its key; a line the same part says twice is listed once.
+ * Malformed payloads yield nothing rather than throwing, since this runs over stored content.
  */
 export function conversationClips(payload: unknown): ConversationClip[] {
   if (!isRecord(payload) || typeof payload.id !== 'string' || !Array.isArray(payload.lines)) return [];
@@ -162,7 +132,7 @@ export function conversationClips(payload: unknown): ConversationClip[] {
   payload.lines.forEach((line, index) => {
     if (!isRecord(line) || typeof line.text !== 'string' || typeof line.speaker !== 'number') return;
     const who = speakers[line.speaker];
-    // the learner says their own lines: nothing to record
+    // The learner says their own lines, so there is nothing to record.
     if (!isRecord(who) || who.learner === true) return;
     const character = isSpeakerId(who.character) ? who.character : null;
     const name = character ? CHARACTER_NAMES[character] : typeof who.name === 'string' ? who.name : null;
@@ -184,11 +154,9 @@ export function conversationClips(payload: unknown): ConversationClip[] {
 }
 
 /**
- * Who a learner sees say a line, and how their mouth moves: always the
- * character playing the line's part, whichever voice the recording was saved
- * under, with the recording's own timeline when it has one. Null for a part
- * with no character, which stored content made before every part had one may
- * still have.
+ * Who a learner sees say a line and how their mouth moves: always the character playing its part, whatever voice the
+ * recording was saved under, with the recording's own timeline when it has one. Null for a part without a character,
+ * which older stored content may have.
  */
 export function conversationLineVoice(
   speakers: readonly { character?: SpeakerId | null }[],

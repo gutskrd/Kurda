@@ -1,64 +1,38 @@
 /**
- * How much of each thing one person may have at once — groups, friends, saved
- * words, open games — the same numbers for the API, which holds people to
- * them, and for the website and the phone, which say so before anyone runs
- * into one.
- *
- * Each number is far above anything a person using Hevalo as it is meant to
- * be used comes near, and low enough that a script cannot fill the database
- * or a stranger's screen. The server checks it inside the same transaction as
- * the write, under a lock on the person, so two requests at once cannot both
- * squeeze under it; what is already over a number when it is lowered stays,
- * and only new ones are refused. Staff tools are not held to any of them.
+ * How much of each thing one person may have at once, the same numbers for the API, which enforces them, and both apps,
+ * which say so first. Each is far above normal use and low enough that a script cannot fill the database or a stranger's
+ * screen. The server checks inside the write's transaction under a lock on the person, so two requests cannot both slip
+ * under; lowering a number keeps what is already over it and refuses only new ones. Staff tools are exempt.
  */
 import { MAX_GROUP_MEMBERS } from './group-roles.js';
 import { REPORTS_PER_DAY } from './reports.js';
 
-/**
- * Groups one person owns at once, archived ones aside. A group is somebody's
- * to look after; ten is several communities' worth, and a spammer cannot open
- * a hundred rooms to post the same thing in.
- */
+/** Groups one person owns at once, archived ones aside: several communities' worth, too few for a spammer's hundred rooms. */
 export const MAX_GROUPS_OWNED = 10;
 /** Groups one person is in at once, owned ones included: more rooms than anyone can follow. */
 export const MAX_GROUP_MEMBERSHIPS = 50;
-/** Accepted friends (this was the friend list's cap before there was this file). */
+/** Accepted friends. */
 export const MAX_FRIENDS = 500;
-/**
- * Friend requests one person has sent and nobody has answered yet. They
- * expire after thirty days; a hundred at once is a lot of introductions and
- * stops a script asking every account it can find.
- */
+/** Unanswered friend requests one person has sent. They expire after thirty days; a hundred stops a script asking every account. */
 export const MAX_FRIEND_REQUESTS_SENT = 100;
 /** Friend requests waiting for one person at once, so nobody's list can be flooded. */
 export const MAX_FRIEND_REQUESTS_RECEIVED = 500;
 /**
- * Accounts one person has blocked. Blocking is how a person keeps themselves
- * safe, so this is set far above what harassment by people produces; it bounds
- * a script, and reporting is always there beside it.
+ * Accounts one person has blocked. Blocking keeps a person safe, so this is far above what human harassment produces; it
+ * only bounds a script, and reporting is always there too.
  */
 export const MAX_BLOCKS = 5000;
-/** Words saved from the dictionary: years of learning, and one list a phone can still show. */
+/** Words saved from the dictionary: years of learning, and still a list a phone can show. */
 export const MAX_SAVED_WORDS = 5000;
-/**
- * Game invites one person has sent that are still waiting for an answer. An
- * invite lasts fifteen minutes and one request asks up to seven friends.
- */
+/** Game invites one person sent still awaiting an answer; an invite lasts fifteen minutes and asks up to seven friends. */
 export const MAX_PENDING_PLAY_INVITES = 30;
-/**
- * Games one person hosts at once, for each kind of game: a fourth closes the
- * host's oldest lobby nobody has started, and is refused only when all three
- * are being played.
- */
+/** Games one person hosts at once per kind: a fourth closes their oldest unstarted lobby and is refused only when all three are in play. */
 export const MAX_HOSTED_GAMES = 3;
-/** Unfinished drafts kept on the server (the apps keep new drafts on the device). */
+/** Unfinished drafts kept on the server; the apps keep new drafts on the device. */
 export const MAX_OPEN_DRAFTS = 20;
-/**
- * Signed-in sessions one account holds. A new sign-in is never refused for
- * it: the session used longest ago ends instead, as signing out of it would.
- */
+/** Signed-in sessions one account holds. A new sign-in is never refused: the session used longest ago ends instead. */
 export const MAX_SESSIONS = 50;
-/** Phones one account gets notifications on; a new one takes the place of the one seen longest ago. */
+/** Phones one account gets notifications on; a new one replaces the one seen longest ago. */
 export const MAX_PUSH_DEVICES = 20;
 
 /** Everything a refusal can be about, and how many of it one person may have. */
@@ -81,14 +55,10 @@ export type LimitKind = keyof typeof LIMITS;
 
 export const LIMIT_KINDS = Object.keys(LIMITS) as LimitKind[];
 
-/** The code of a refusal for a limit that had no code of its own before: 409, with `LimitDetails`. */
+/** The code for limits that had no code of their own: 409, with `LimitDetails`. */
 export const LIMIT_REACHED = 'LIMIT_REACHED';
 
-/**
- * What a limit refusal carries in `details`: which limit, its number, and
- * `theirs` when it is the other person's — the friend whose list is full, the
- * member who already owns as many groups as anyone may.
- */
+/** A limit refusal's `details`: which limit, its number, and `theirs` when it is the other person's (the friend whose list is full). */
 export interface LimitDetails {
   limit: LimitKind;
   max: number;
@@ -96,9 +66,8 @@ export interface LimitDetails {
 }
 
 /**
- * The limits that had a code before `LIMIT_REACHED` existed keep it, so an app
- * that knows only the old code still reads them; each now carries
- * `LimitDetails` too, and stands for its own kind when it arrives without.
+ * Limits that had their own code before `LIMIT_REACHED` keep it, so older apps still read them; each now also carries
+ * `LimitDetails`, and means its own kind when it arrives without.
  */
 const CODE_KIND: Readonly<Record<string, LimitKind>> = {
   GROUP_FULL: 'group_members',
@@ -117,11 +86,7 @@ export function limitDetails(limit: LimitKind, opts: { theirs?: boolean } = {}):
   return { limit, max: LIMITS[limit], ...(opts.theirs ? { theirs: true } : {}) };
 }
 
-/**
- * Which limit an error from the API is about, or null when it is not about
- * one. The number is the server's when it sent one, so an app older than a
- * change to a limit still says the number in force.
- */
+/** Which limit an API error is about, or null; the number is the server's when sent, so older apps still say the one in force. */
 export function limitOf(error: { code?: string; details?: unknown } | null | undefined): LimitDetails | null {
   const code = error?.code;
   if (!code || (code !== LIMIT_REACHED && CODE_KIND[code] === undefined)) return null;
@@ -132,7 +97,7 @@ export function limitOf(error: { code?: string; details?: unknown } | null | und
   return { limit, max, ...(d.theirs === true ? { theirs: true } : {}) };
 }
 
-/** What a list of one's own groups says about the group limits: `GET /me/groups` as both apps load it. */
+/** What a list of one's own groups (`GET /me/groups`) says about the group limits. */
 export interface GroupLimitState {
   owned: number;
   memberships: number;
@@ -142,10 +107,7 @@ export interface GroupLimitState {
   join: LimitDetails | null;
 }
 
-/**
- * Where a person stands against the group limits, counted the way the server
- * counts them: archived groups are not owned or belonged to any more.
- */
+/** Where a person stands against the group limits, counted as the server counts: archived groups no longer count. */
 export function groupLimits(groups: ReadonlyArray<{ myRole: string; archivedAt?: string | null }>): GroupLimitState {
   const live = groups.filter((g) => !g.archivedAt);
   const owned = live.filter((g) => g.myRole === 'owner').length;

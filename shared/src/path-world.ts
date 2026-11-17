@@ -1,22 +1,11 @@
 /**
- * The land the lesson path runs through: which landscape each unit crosses,
- * which landmark stands beside its route, who of the course's people waits
- * by it, where each of those stands, and where the stepping stones between
- * two stops lie.
+ * The land the lesson path runs through: each unit's landscape, its landmark, which of the course's people waits by it,
+ * where those stand, and where the stepping stones between stops lie. The Kurmanji Road follows a village through one
+ * year, so each unit takes the land at its place on that road (`pathLand`) and the seasons turn as the learner goes on;
+ * a course longer than twelve units starts the year again.
  *
- * The Kurmanji Road walks one year in the life of a village: arriving at
- * Sêvan's blue gate, Hamo's tea, the spring under the walnut tree, market
- * day, the bus that left without them, Amed's black walls, the Newroz fire,
- * the hives whose honey went missing, the river Bozo ran off along, the black
- * tents of the summer pastures, the school, and the last winter by the stove.
- * Each unit of a course takes the land of the unit at its place on that road
- * (`pathLand`), so the seasons turn as the learner goes on — and a course
- * longer than twelve units starts the year again.
- *
- * Pure numbers in the path's own logical terms (`x` from the middle toward
- * the end of the line, as `lessonPath` places stops), so both apps put the
- * same things in the same places and a right-to-left page mirrors them as it
- * mirrors the stops. The drawings are art/path-land.ts.
+ * Pure numbers in the path's logical terms (`x` from the middle toward the end of a line, as `lessonPath` places stops),
+ * so both apps agree and right-to-left pages mirror them like the stops. The drawings are in art/path-land.ts.
  */
 import { PATH_GEOMETRY, PATH_MASCOT, PATH_RETURN, mascotSpot } from './lesson-path.js';
 
@@ -41,7 +30,7 @@ export type PathLandmark = (typeof PATH_LANDMARKS)[number];
 export const PATH_GROUNDS = ['orchard', 'meadow', 'lanes', 'town', 'stubble', 'plaza', 'bloom', 'honey', 'valley', 'alpine', 'autumn', 'snow'] as const;
 export type PathGround = (typeof PATH_GROUNDS)[number];
 
-/** Who of the course's people stands by a unit: the rigs the lessons use, unchanged. */
+/** Who of the course's people stands by a unit, using the lessons' own rigs. */
 export type PathHost = 'hamo' | 'xezo';
 
 export interface PathLand {
@@ -50,11 +39,7 @@ export interface PathLand {
   host: PathHost;
 }
 
-/**
- * The twelve lands of the road, in its order. Hamo keeps the village and its
- * stories; Xezal goes where the road goes to town, to the market, to the
- * pastures and to her new school.
- */
+/** The twelve lands of the road in order. Hamo keeps the village and its stories; Xezal goes to town, the market, the pastures and school. */
 export const PATH_LANDS: readonly PathLand[] = [
   { landmark: 'gate', ground: 'orchard', host: 'hamo' },
   { landmark: 'teahouse', ground: 'meadow', host: 'hamo' },
@@ -85,13 +70,12 @@ export interface PathBox {
 }
 
 /**
- * What stands where beside the stops: the landmark's largest size and how
- * close to the edge it may stand; the people's height, drawn whole (as tall
- * as Hevalo is on the path), and how much room their words take above them.
+ * Sizes beside the stops: the landmark's largest size and how near the edge it may stand, the people's height (drawn whole,
+ * as tall as Hevalo on the path) and the room their words take above them.
  */
 export const PATH_SCENERY = { landmark: 150, landmarkMin: 96, edge: 6, host: 132, hostWidth: 88, bubble: 44, overStop: 130 } as const;
 
-/** The stop's own footprint, for keeping things off it: its round, its lip and a little air. */
+/** The stop's own footprint, kept clear: its round, its lip and a little air. */
 const STOP_CLEAR = PATH_GEOMETRY.node / 2 + 10;
 
 /** A placed stop as the world needs it. */
@@ -102,23 +86,21 @@ export interface WorldStop {
 }
 
 /**
- * The landmark: at the top of the unit, on the start side of its first stop
- * (which always stands in the middle), as large as the room beside the path
- * allows, its foot level with the first stop's foot. Hevalo never stands
- * there: beside a stop in the middle he stands on the end side, and the next
- * stop leans toward the start, a step further down.
+ * The landmark: at the top of the unit, on the start side of the first stop (which always stands in the middle), as large
+ * as the room allows, its foot level with that stop's. Hevalo never stands there: beside a middle stop he stands on the
+ * end side.
  */
 export function landmarkBox(width: number): PathBox {
   const { landmark, landmarkMin, edge } = PATH_SCENERY;
   const half = width / 2;
   const size = Math.max(landmarkMin, Math.min(landmark, half - STOP_CLEAR - edge));
-  // as far out as the edge allows, but never so far that it is cut by it, nor further than a wide page needs
+  // As far out as the edge allows without being cut, and no further than a wide page needs.
   const middle = Math.min(half - edge - size / 2, STOP_CLEAR + size / 2 + 72);
   const foot = PATH_GEOMETRY.pad + PATH_GEOMETRY.node / 2 + 4;
   return { x: -Math.max(middle, STOP_CLEAR + size / 2), y: foot - size, w: size, h: size };
 }
 
-/** Where Hevalo stands beside a placed stop, as a box: `mascotSpot`'s place, drawn whole (PathMascot). */
+/** Where Hevalo stands beside a placed stop, as a box: `mascotSpot`'s place, drawn whole. */
 export function mascotBox(stop: { x: number; y: number }): PathBox {
   const spot = mascotSpot(stop);
   const tall = PATH_SCENERY.host;
@@ -130,16 +112,14 @@ function overlaps(a: PathBox, b: PathBox): boolean {
 }
 
 /**
- * Who waits by the unit, and beside which stop: the unit's last stop (its
- * chest), on the side away from its lean, as Hevalo would stand by it — or
- * nowhere, when Hevalo stands close enough to crowd them (`mascotAt`, the stop
- * he is beside, in this unit) or the landmark is in the way.
+ * Who waits by the unit and beside which stop: its last stop (the chest), on the side away from its lean. Nobody when
+ * Hevalo stands close enough to crowd them (`mascotAt`, the stop he is beside in this unit) or the landmark is in the way.
  */
 export function hostBox(stops: readonly WorldStop[], width: number, mascotAt: WorldStop | null): { box: PathBox; by: string } | null {
   const last = stops[stops.length - 1];
   if (!last || stops.length < 3) return null;
   const box = mascotBox(last);
-  // the words over them need room above, inside the unit
+  // Their words need room above them, inside the unit.
   box.y -= PATH_SCENERY.bubble;
   box.h += PATH_SCENERY.bubble;
   if (Math.abs(box.x) + box.w / 2 > width / 2) return null;
@@ -148,34 +128,25 @@ export function hostBox(stops: readonly WorldStop[], width: number, mascotAt: Wo
   return { box, by: last.key };
 }
 
-/**
- * The lands where a shepherds' cairn stands beside the road, on its knoll of
- * dry grass: where the road crosses open country — the stubble on the way to
- * the bus, the river valley, and the summer pastures in the mountains.
- */
+/** The lands where a shepherds' cairn stands beside the road, where it crosses open country. */
 export const PATH_CAIRN_GROUNDS: readonly PathGround[] = ['stubble', 'valley', 'alpine'];
 
-/** The cairn's box at its largest and its smallest (its height; it is a little narrower than tall), its width to height, and the air kept round it. */
+/** The cairn's box at its largest and smallest (its height; it is a little narrower than tall), its aspect, and the air kept round it. */
 export const PATH_CAIRN = { size: 120, min: 76, aspect: 0.92, air: 8 } as const;
 
 /**
- * Where the cairn stands in a unit: in the open beside the path, as large as
- * the room there allows — off every stop and the whole of the trail, off
- * anything else the land asks it to `avoid` (its stream), the landmark, the host,
- * every place Hevalo may stand by a stop and the room over each stop where the
- * learner and the flag stand. Nearest the unit's middle of the places that
- * fit; on a page too narrow for even the smallest, it may stand where the flag
- * over a stop would pass in front of it, and failing that nowhere. It
- * depends on the stops' places alone, never on how far the learner has
- * come, so it never moves as they go on. In the path's logical terms, so a right-to-left page mirrors it as it mirrors the
- * stops.
+ * Where the cairn stands in a unit: in the open beside the path, as large as the room allows, clear of every stop, the
+ * whole trail, anything in `avoid`, the landmark, the host, every place Hevalo may stand and the room over each stop for
+ * the learner and the flag. The fitting place nearest the unit's middle wins; on a page too narrow it may stand where a
+ * stop's flag passes in front, and failing that nowhere. It depends only on the stops' places, so it never moves as the
+ * learner progresses.
  */
 export function cairnBox(stops: readonly WorldStop[], width: number, avoid: readonly PathBox[] = []): PathBox | null {
   if (stops.length < 3) return null;
   const half = width / 2;
   const solid: PathBox[] = [...avoid];
   for (const s of stops) solid.push({ x: s.x, y: s.y - STOP_CLEAR, w: 2 * STOP_CLEAR, h: 2 * STOP_CLEAR + 6 });
-  // the whole trail, walked or not, so the cairn stands in the same place however far the learner has come
+  // The whole trail, walked or not, so the cairn stays put however far the learner has come.
   const trail = trailStones(stops.map((s, i) => ({ stop: { key: s.key }, x: s.x, y: s.y, trail: i === 0 ? null : 'ahead' })));
   for (const s of trail) solid.push({ x: s.x, y: s.y - s.r - 4, w: 2 * s.r + 8, h: 2 * s.r + 8 });
   solid.push(landmarkBox(width));
@@ -194,7 +165,7 @@ export function cairnBox(stops: readonly WorldStop[], width: number, avoid: read
         for (const side of [-1, 1]) {
           for (let reach = w / 2 + 8; reach + w / 2 <= half - PATH_SCENERY.edge; reach += 6) {
             const box = { x: side * reach, y, w, h };
-            // a little air all round, so nothing (Hevalo's antlers least of all) brushes its knoll
+            // A little air all round, so nothing, Hevalo's antlers least of all, brushes its knoll.
             const air = { x: box.x, y: y - PATH_CAIRN.air, w: w + 2 * PATH_CAIRN.air, h: h + 2 * PATH_CAIRN.air };
             if ([...solid, ...keep].some((b) => overlaps(air, b))) continue;
             const off = Math.abs(y + h / 2 - middle);
@@ -213,19 +184,19 @@ export function cairnBox(stops: readonly WorldStop[], width: number, avoid: read
 export interface TrailStone {
   x: number;
   y: number;
-  /** its half-width; the half-height is a little under two thirds of it, as a flat stone seen from above */
+  /** its half-width; the half-height is a little under two thirds of it, like a flat stone seen from above */
   r: number;
-  /** turned a few degrees, so a row of them reads as laid by hand */
+  /** turned a few degrees, so a row reads as laid by hand */
   turn: number;
   walked: boolean;
   /** the stop this stretch leads to */
   to: string;
 }
 
-/** How far apart the stones lie along the line, and how much room is kept clear round each stop. */
+/** How far apart stones lie along the line, and how much room is kept clear round each stop. */
 export const PATH_TRAIL = { gap: 23, clear: PATH_GEOMETRY.node / 2 + 14, stone: 10 } as const;
 
-/** The S between two stops' centres, as `lessonPath`'s apps have always drawn it. */
+/** The S-curve between two stops' centres, as the apps draw it. */
 function bezier(a: { x: number; y: number }, b: { x: number; y: number }, t: number): [number, number] {
   const bend = PATH_GEOMETRY.step / 2;
   const p = [a.x, a.y, a.x, a.y + bend, b.x, b.y - bend, b.x, b.y];
@@ -235,18 +206,16 @@ function bezier(a: { x: number; y: number }, b: { x: number; y: number }, t: num
 }
 
 /**
- * The trail as stepping stones: along each stretch between two stops, a stone
- * every `PATH_TRAIL.gap` points, none on a stop. Walked where both ends have
- * been reached (the stop's own `trail`), ahead otherwise. Deterministic: each
- * stone's size and turn come from its place, so the trail is the same each
- * time it is drawn.
+ * The trail as stepping stones: a stone every `PATH_TRAIL.gap` points along each stretch, none on a stop; walked where both
+ * ends were reached (the stop's `trail`), else ahead. Each stone's size and turn come from its place, so the trail is
+ * deterministic.
  */
 export function trailStones(stops: readonly { stop: { key: string }; x: number; y: number; trail: 'walked' | 'ahead' | null }[]): TrailStone[] {
   const out: TrailStone[] = [];
   stops.forEach((p, i) => {
     const before = stops[i - 1];
     if (!before || !p.trail) return;
-    // measure the curve, then lay stones at even steps along it
+    // Measure the curve, then lay stones at even steps along it.
     const samples: [number, number][] = [];
     for (let k = 0; k <= 48; k++) samples.push(bezier(before, p, k / 48));
     const along: number[] = [0];
@@ -282,11 +251,9 @@ export function trailStones(stops: readonly { stop: { key: string }; x: number; 
 }
 
 /**
- * What the drawing of the land keeps clear: every stop, every stone, the
- * landmark, the cairn where there is one, the host, and the places beside
- * the stops where Hevalo may stand — so a tree never grows through the path
- * or behind someone standing by it.
- * Small things (grass, flowers, pebbles) may still lie in Hevalo's places.
+ * What the land's drawing keeps clear: every stop, stone, the landmark, the cairn, the host and Hevalo's places beside the
+ * stops, so a tree never grows through the path or behind someone; small things such as grass may still lie in Hevalo's
+ * places.
  */
 export function landClear(stops: readonly WorldStop[], width: number, stones: readonly TrailStone[], cairn: PathBox | null = null): { solid: PathBox[]; tall: PathBox[] } {
   const solid: PathBox[] = [];
@@ -295,7 +262,7 @@ export function landClear(stops: readonly WorldStop[], width: number, stones: re
   solid.push(landmarkBox(width));
   if (cairn) solid.push(cairn);
   const tall: PathBox[] = stops.map((s) => mascotBox(s));
-  // over any stop the learner may stand on, with the flag over them
+  // Over any stop the learner may stand on, with the flag over them.
   for (const s of stops) tall.push({ x: s.x, y: s.y - PATH_SCENERY.overStop, w: 128, h: PATH_SCENERY.overStop });
   const host = hostBox(stops, width, null);
   if (host) tall.push(host.box);
@@ -303,12 +270,9 @@ export function landClear(stops: readonly WorldStop[], width: number, stones: re
 }
 
 /**
- * The motion on the path, in ms and points, shared so the phone and the
- * website move alike: the current stop's slow bob; the stops rising one after
- * another the first time their unit comes into view; the learner's hop from
- * the stop they finished to the next one, as the bubble moves on
- * (`PATH_RETURN.bubbleAtMs`); and a chest's wobble before it bursts open, as
- * the skill that earns it pops.
+ * Motion on the path in ms and points, shared so both apps move alike: the current stop's bob, stops rising in turn when
+ * their unit first comes into view, the learner's hop to the next stop as the bubble moves (`PATH_RETURN.bubbleAtMs`), and
+ * a chest's wobble before it bursts open.
  */
 export const PATH_MOTION = {
   bobMs: 2400,
@@ -329,11 +293,7 @@ export const PATH_MOTION = {
   sayForMs: 3200,
 } as const;
 
-/**
- * Where the learner's hop goes, at `share` (0–1) of its way from `from` to `to`
- * (both the points their feet stand on): straight across, and up and down on a
- * parabola that peaks `PATH_MOTION.hop` above the higher end.
- */
+/** Where the learner's hop is at `share` (0–1) from `from` to `to`: straight across, on a parabola peaking `PATH_MOTION.hop` above the higher end. */
 export function hopAt(from: { x: number; y: number }, to: { x: number; y: number }, share: number): { x: number; y: number } {
   const t = Math.max(0, Math.min(1, share));
   const lift = PATH_MOTION.hop + Math.max(0, (from.y - to.y) / 2);

@@ -1,45 +1,25 @@
 /**
- * Usernames: what one may be made of, how what somebody typed becomes one,
- * and how a name is read back out of a sentence or a search box.
+ * Usernames: what one may contain, how typed text becomes one, and how a name is read back out of text. This module is
+ * the one rule: the server checks every name with it (api/src/users/username.ts) and both apps check as a name is typed,
+ * so all three refuse the same names with the same reasons. The database holds the part a CHECK can express (migration
+ * 1751000540000_lowercase-usernames).
  *
- * There is one rule, and it is this module. The server checks every name it is
- * given with it (api/src/users/username.ts), and the browser and the phone check
- * with it as a name is typed, so the three refuse the same names for the same
- * reasons and say so in the same words. The database keeps the part of it that
- * can be written as a CHECK (migration 1751000540000_lowercase-usernames).
+ * A username is 3 to 30 of: a–z and the Kurdish ç ê î ş û; digits; `_` and `.`, never first or last and never two side by
+ * side (they read as one mistyped mark and make one name easy to pass off as another). It has at least one letter and is
+ * not a reserved name (RESERVED_NAMES).
  *
- * A username is 3 to 30 of these, and nothing else:
- *
- * - the lowercase letters a–z, and the Kurdish ç ê î ş û;
- * - the digits 0–9;
- * - the underscore `_` and the dot `.`, never first or last, and never two of
- *   them side by side (`..`, `__`, `._` and `_.` all read as one mark mistyped,
- *   and make one name easy to pass off as another);
- *
- * with at least one letter in it, and not one of the names kept back because
- * they would pass for Hevalo, its staff or the system (RESERVED_NAMES).
- *
- * What was typed is normalised before it is judged, and only in these ways:
- *
- * - Unicode NFC, so an e followed by a combining circumflex is the one ê;
- * - the spaces around it are let go of (the ones inside it are not);
- * - capitals become lowercase letters, Ê Î Û Ç Ş as much as A–Z, so somebody
- *   who signed up as `hamo` and types `Hamo` is still `hamo`. The capital İ a
- *   Turkish keyboard types is lowercased to a plain i: JavaScript would make
- *   it i followed by a combining dot above, which is no letter of this set.
- *
- * Anything else outside the set is refused, never quietly dropped or swapped:
- * the refusal names the characters, so a form can say which one cannot be in
- * a username rather than only that something cannot.
+ * Typed text is normalised only by NFC, trimming the ends, and lowercasing (Ê Î Û Ç Ş as much as A–Z, and a Turkish
+ * keyboard's İ to a plain i rather than JavaScript's i plus a combining dot). Anything else outside the set is refused,
+ * never dropped or swapped, and the refusal names the characters so a form can say which one.
  */
 
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 30;
 
-/** The Kurdish letters a username may have beside a–z, in the order a key row offers them. */
+/** The Kurdish letters a username may have beside a–z, in key-row order. */
 export const USERNAME_KURDISH_LETTERS = ['ç', 'ê', 'î', 'ş', 'û'] as const;
 
-/** Why a name cannot be a username. The order the rules are checked in is `checkUsername`'s. */
+/** Why a name cannot be a username; `checkUsername` fixes the order the rules are checked in. */
 export type UsernameReason =
   | 'invalid-chars'
   | 'too-long'
@@ -50,7 +30,7 @@ export type UsernameReason =
   | 'no-letter'
   | 'reserved';
 
-/** A name turned down: the rule it broke, and for a character not allowed, which ones (each once, in the order typed). */
+/** A refused name: the rule it broke and, for disallowed characters, which ones (each once, in typed order). */
 export type UsernameRefusal =
   | { ok: false; reason: 'invalid-chars'; chars: string[] }
   | { ok: false; reason: Exclude<UsernameReason, 'invalid-chars'> };
@@ -64,23 +44,20 @@ const PUNCTUATION = /[._]/;
 const SIDE_BY_SIDE = /[._]{2}/;
 const CAPITAL_DOTTED_I = /İ/g;
 
-/** Lowercase, the way a username is: Ê to ê as much as A to a, and İ to a plain i. */
+/** Lowercase as a username is: Ê to ê as much as A to a, and İ to a plain i. */
 function lower(text: string): string {
   return text.normalize('NFC').replace(CAPITAL_DOTTED_I, 'i').toLowerCase().normalize('NFC');
 }
 
-/** What was typed, as the username it stands for: NFC, trimmed, lowercase. Nothing else is changed. */
+/** Typed text as the username it stands for: NFC, trimmed, lowercase, nothing else changed. */
 export function normalizeUsername(raw: unknown): string {
   return lower(String(raw ?? '').normalize('NFC').trim());
 }
 
 /**
- * A username field's text as it is being typed: lowercase as it goes, with
- * the caret kept where it was. Nothing is trimmed or taken out, so a space or a
- * character that is not allowed stays in the field for the form to say why.
- * `caret` is where the caret was in `text`; the answer says where it belongs
- * in the new text (the two lengths differ only when NFC joins a letter and its
- * mark).
+ * A username field's text while typing: lowercased with the caret kept in place. Nothing is trimmed or removed, so a space
+ * or a disallowed character stays for the form to explain. Returns where `caret` belongs in the new text, which differs
+ * in length only when NFC joins a letter and its mark.
  */
 export function lowercaseAsTyped(text: string, caret: number = text.length): { text: string; caret: number } {
   const at = Math.max(0, Math.min(caret, text.length));
@@ -89,15 +66,13 @@ export function lowercaseAsTyped(text: string, caret: number = text.length): { t
 
 /** Whitespace, or a character nobody can see (a zero-width space, a control character). */
 const UNSEEN = /^[\s\p{Z}\p{C}]$/u;
-/** A mark left over that NFC found no letter to join to, such as a circumflex after an x. */
+/** A mark NFC found no letter to join, such as a circumflex after an x. */
 const LONE_MARK = /^\p{M}$/u;
 
 /**
- * The characters of a refusal as a form shows them: the ones that can be seen,
- * each once and at most `limit` of them, and whether there were spaces or
- * invisible ones too. A form says "“!” can’t be in a username" for the first and
- * "a username can’t have spaces" for the second. A lone accent is shown on a
- * dotted circle, the way type sets a mark with no letter under it.
+ * A refusal's characters as a form shows them: the visible ones, each once and at most `limit`, and whether there were
+ * spaces or invisible ones too ("“!” can’t be in a username", "a username can’t have spaces"). A lone accent is shown on a
+ * dotted circle, as type sets a mark without a letter.
  */
 export function refusedChars(chars: readonly string[], limit = 3): { visible: string[]; unseen: boolean } {
   const visible = chars.filter((ch) => !UNSEEN.test(ch)).map((ch) => (LONE_MARK.test(ch) ? `◌${ch}` : ch));
@@ -105,12 +80,9 @@ export function refusedChars(chars: readonly string[], limit = 3): { visible: st
 }
 
 /**
- * Whether `raw` can be a username, and if so which: the normalised name, or the
- * first rule it breaks. The order is fixed, so one name always gets the same
- * reason, and it puts first what more typing cannot mend: a character that is
- * not allowed, a name too long, a dot or underscore at the start or two side by
- * side. Then what typing on may still mend (too short, a mark at the end, no
- * letter yet), and last the reserved names.
+ * Whether `raw` can be a username: the normalised name, or the first rule it breaks. The order is fixed so a name always
+ * gets the same reason, putting first what more typing cannot mend (a disallowed character, too long, a leading or doubled
+ * mark), then what it may (too short, a trailing mark, no letter yet), and the reserved names last.
  */
 export function checkUsername(raw: unknown): UsernameCheck {
   const value = normalizeUsername(raw);
@@ -128,12 +100,9 @@ export function checkUsername(raw: unknown): UsernameCheck {
 }
 
 /**
- * What a form says about a name while it is still being typed: the refusal, or
- * null when the only thing wrong is something the next keys may put right.
- * "ha" is not too short yet, and "hamo." is on its way to "hamo.k"; both are
- * said when the person is done (on Continue, on leaving the field), not under
- * every key. A character that is not allowed, a name too long, or a mark at
- * the start or doubled, is said at once.
+ * What a form says while a name is still being typed: the refusal, or null when only the next keys may fix it ("ha" is not
+ * too short yet, "hamo." may become "hamo.k"). Those are said when the person is done; a disallowed character, a name too
+ * long, or a leading or doubled mark is said at once.
  */
 export function usernameProblemWhileTyping(raw: unknown): UsernameRefusal | null {
   const check = checkUsername(raw);
@@ -144,14 +113,14 @@ export function usernameProblemWhileTyping(raw: unknown): UsernameRefusal | null
     case 'no-letter':
       return null;
     case 'edge-punctuation':
-      // checked at the start first: reaching here with a clean start means only the end is open
+      // The start was checked first, so reaching here with a clean start means only the end is open.
       return PUNCTUATION.test(normalizeUsername(raw).charAt(0)) ? check : null;
     default:
       return check;
   }
 }
 
-/** Whether two ways of writing a name are the same username ("@Hamo" and "hamo" are). */
+/** Whether two spellings are the same username, as "@Hamo" and "hamo" are. */
 export function sameUsername(a: unknown, b: unknown): boolean {
   const x = normalizeUsername(handleName(String(a ?? '')));
   return x !== '' && x === normalizeUsername(handleName(String(b ?? '')));
@@ -159,15 +128,12 @@ export function sameUsername(a: unknown, b: unknown): boolean {
 
 // ───────────────────────────────────────────────────────────── names in text
 
-/** The marks a sentence may end on, or a list go on after, right behind a handle. */
+/** The marks a sentence may end on, or a list continue after, right behind a handle. */
 const SENTENCE_END = /[.,;:!?…]+$/u;
 
 /**
- * The name a handle typed or pasted somewhere stands for: without the "@"
- * written before a username, and without the full stop, comma or other mark
- * that ends the sentence after it ("thanks @hamo." is about hamo). A dot inside
- * the name stays: "@hamo.k" is hamo.k. Capitals are left for
- * `normalizeUsername`, and anything else for the rules to judge.
+ * The name a typed or pasted handle stands for: without a leading "@" or the punctuation ending the sentence after it
+ * ("thanks @hamo." is hamo). A dot inside the name stays ("@hamo.k" is hamo.k); capitals are left to `normalizeUsername`.
  */
 export function handleName(text: string): string {
   return String(text ?? '')
@@ -179,18 +145,14 @@ export function handleName(text: string): string {
 
 // ───────────────────────────────────────────────────────────── names made for people
 
-/** Letters other alphabets put marks on or join, as the plain letters a username can hold. */
+/** Letters other alphabets mark or join, as the plain letters a username can hold. */
 const PLAIN_LETTER: Record<string, string> = { ı: 'i', ß: 'ss', æ: 'ae', œ: 'oe', ø: 'o', đ: 'd', ł: 'l', þ: 'th', ð: 'd' };
 
 /**
- * A username made from somebody's name or the start of their email address, for
- * an account a sign-in through another service creates: "Hamo Ali" is
- * hamo_ali, "Şêrîn Özdemir" is şêrîn_ozdemir, "hamo.ali" stays hamo.ali.
- * Lowercase first, the way every username is; a letter of another alphabet
- * with a mark on it gives its plain letter (ö is o); anything else between
- * the letters becomes one underscore; and it is cut to length. Null when what
- * is left cannot be a username (a name in another script, or a reserved one),
- * for the caller to fall back on a name of its own.
+ * A username made from someone's name or email prefix, for an account created by a sign-in through another service:
+ * "Hamo Ali" is hamo_ali, "Şêrîn Özdemir" şêrîn_ozdemir, "hamo.ali" stays hamo.ali. Lowercased, other alphabets' marked
+ * letters made plain, anything else between letters one underscore, cut to length. Null when the result cannot be a
+ * username (another script, a reserved name), for the caller to fall back on.
  */
 export function suggestUsername(from: string): string | null {
   let out = '';
@@ -208,11 +170,8 @@ export function suggestUsername(from: string): string | null {
 }
 
 /**
- * `base` with a number after it, for when the name itself is taken: hamo_2,
- * hamo_3. The base is cut so the whole stays within USERNAME_MAX, and loses a
- * dot or underscore it would then end on, so the result never has two marks
- * side by side. The database's own numbering (migration
- * 1751000540000_lowercase-usernames) writes them the same way.
+ * `base` with a number after it for when the name is taken: hamo_2, hamo_3. The base is cut to fit USERNAME_MAX and loses
+ * a trailing mark, so two marks never meet. Migration 1751000540000_lowercase-usernames numbers names the same way.
  */
 export function numberedUsername(base: string, n: number): string {
   const suffix = `_${n}`;
@@ -221,28 +180,23 @@ export function numberedUsername(base: string, n: number): string {
 
 // ───────────────────────────────────────────────────────────── reserved names
 
-/**
- * The names nobody may have, because they would pass for Hevalo, its staff or
- * its roles, or for the system itself. One list, here, so it is audited in one
- * place, and the apps can say so as the name is typed.
- */
+/** Names nobody may have because they would pass for Hevalo, its staff or roles, or the system; one list, audited in one place. */
 const RESERVED_NAMES: readonly string[] = [
-  // product / brand
+  // Product and brand.
   'hevalo', 'hevaloapp', 'heval',
-  // kept from the old name: a @mykurda now would be a stranger in a
-  // name people still recognise
+  // The old name, so nobody can pose under a name people still recognise.
   'mykurda', 'kurda', 'mykurdaapp', 'kurdaapp', 'kurdi', 'kurdish',
-  // roles / staff
+  // Roles and staff.
   'admin', 'administrator', 'superadmin', 'sysadmin', 'moderator', 'mod', 'staff',
   'support', 'help', 'helpdesk', 'contact', 'team', 'official', 'founder', 'owner',
   'ceo', 'security', 'billing', 'payments', 'payment', 'noreply', 'no-reply',
-  // system / generic
+  // System and generic.
   'system', 'root', 'api', 'bot', 'null', 'undefined', 'anonymous', 'anon', 'guest',
   'everyone', 'nobody', 'me', 'you', 'user', 'users', 'account', 'info', 'webmaster',
   'postmaster', 'abuse', 'legal', 'privacy', 'verify', 'verified',
 ];
 
-/** Digits and signs that are read as the letter they look like, for the fold. */
+/** Digits and signs read as the letters they look like, for the reserved check. */
 const CONFUSABLES: Record<string, string> = {
   '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '8': 'b', '9': 'g',
   '@': 'a', '$': 's', '|': 'i', '!': 'i',
@@ -251,11 +205,8 @@ const DIACRITIC: Record<string, string> = { ê: 'e', î: 'i', û: 'u', ç: 'c', 
 const SEPARATORS = new Set(['_', '-', '.', ' ']);
 
 /**
- * A name as it reads, for the reserved check only (never for storage):
- * lowercase, the Kurdish letters as their base letters, digits and signs as the
- * letters they look like, and no separators at all. So ad.min, a_d_m_i_n, Adm1n
- * and my_kurda read as admin and mykurda: a name that differs from a reserved
- * one only by dots or underscores reads as that name, and is refused with it.
+ * A name as it reads, for the reserved check only (never stored): lowercase, Kurdish letters as their base letters, digits
+ * and signs as lookalike letters, separators removed, so ad.min, a_d_m_i_n and Adm1n all read as admin.
  */
 export function foldForReserved(name: string): string {
   let out = '';
@@ -268,7 +219,7 @@ export function foldForReserved(name: string): string {
 
 const RESERVED_FOLDED: ReadonlySet<string> = new Set(RESERVED_NAMES.map(foldForReserved));
 
-/** Whether a name, written any way at all, reads as a reserved one. */
+/** Whether a name, however written, reads as a reserved one. */
 export function isReservedUsername(name: string): boolean {
   return RESERVED_FOLDED.has(foldForReserved(name));
 }

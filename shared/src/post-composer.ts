@@ -1,28 +1,14 @@
 /**
- * Writing a post: one box for words and up to four pictures, X-style.
- *
- * A written post (a gotin, a çîrok or a helbest) can carry pictures now, so
- * "words or a picture first?" is no longer a question anybody has to answer.
- * The API decides what a post may be, and the browser and the phone both build
- * the request and show the counter — so the limits, the rule for what kind of
- * post it is, the way characters are counted and the shape of a draft kept on
- * the device live here, where the three cannot drift apart.
- *
- * Drafts stay on the device (the browser's storage, the phone's). The server's
- * own "draft" status is still there for apps installed before this, and
+ * Writing a post: one box for words and up to four pictures. The API decides what a post may be and both apps build the
+ * request and show the counter, so the limits, the rule for a post's kind, the character count and the device draft's
+ * shape live here. Drafts stay on the device; the server's "draft" status remains for older app installs, and
  * `GET /me/library/drafts` finds what they saved.
  */
 import { stripControlChars } from './sanitize.js';
 
 /** A çîrok's or a helbest's name. */
 export const POST_TITLE_MAX = 200;
-/**
- * The text of a post, with or without pictures.
- *
- * One limit: a caption used to be its own, shorter thing on a separate kind of
- * post, but pictures live on the written post now and the words are the same
- * words either way.
- */
+/** The text of a post, with or without pictures. */
 export const POST_BODY_MAX = 50_000;
 /** What a picture shows, for someone who cannot see it. */
 export const POST_ALT_MAX = 1_000;
@@ -39,51 +25,41 @@ export function isWrittenPostType(value: unknown): value is WrittenPostType {
   return typeof value === 'string' && (WRITTEN_POST_TYPES as readonly string[]).includes(value);
 }
 
-/** Only a gotin may go without a name; the database says so too. */
+/** Only a gotin may go without a name; the database enforces it too. */
 export function titleRequiredFor(type: WrittenPostType): boolean {
   return type !== 'gotin';
 }
 
-/**
- * Text as the server keeps it: control characters stripped (newlines and tabs
- * stay, a poem needs its lines), the ends trimmed.
- */
+/** Text as the server keeps it: control characters stripped (newlines and tabs stay, since a poem needs its lines) and trimmed. */
 export function cleanPostText(text: string | null | undefined): string {
   return text ? stripControlChars(text).trim() : '';
 }
 
 /**
- * How long a piece of text is, counted exactly the way the server counts it.
- *
- * The counter under the box must agree with the server to the character, or
- * someone is told they have room left and then refused: so it is the cleaned
- * text's `.length` (UTF-16 units, which is what the server measures) — spaces
- * and blank lines at either end do not count, an emoji counts as two.
+ * A text's length exactly as the server counts it, so the counter never promises room the server refuses: the cleaned
+ * text's `.length` in UTF-16 units, so spaces at either end do not count and an emoji counts as two.
  */
 export function postTextLength(text: string | null | undefined): number {
   return cleanPostText(text).length;
 }
 
 /**
- * What kind of written post this is.
- *
- * A kind somebody chose wins. Without one the title decides: no title makes a
- * gotin, a title makes a çîrok (a helbest is only ever chosen). Clearing the
- * title of an unchosen post goes back to a gotin.
+ * What kind of written post this is. A chosen kind wins; otherwise no title makes a gotin and a title a çîrok (a helbest
+ * is only ever chosen), so clearing an unchosen post's title returns it to a gotin.
  */
 export function derivePostType(input: { title?: string | null; type?: WrittenPostType | null }): WrittenPostType {
   if (input.type && isWrittenPostType(input.type)) return input.type;
   return cleanPostText(input.title) ? 'story' : 'gotin';
 }
 
-/** What a post is made of — a draft, a request, or a post being edited. */
+/** What a post is made of: a draft, a request, or a post being edited. */
 export interface PostContent {
   /** the kind somebody chose; empty means "decide from the title" */
   type?: WrittenPostType | null;
   title?: string | null;
   body?: string | null;
   pictures?: ReadonlyArray<{ altText?: string | null }>;
-  /** marked as a meme, for the Memes filter — only a post with pictures can be */
+  /** marked as a meme for the Memes filter; only a post with pictures can be */
   meme?: boolean;
   sourceCredit?: string | null;
 }
@@ -91,10 +67,7 @@ export interface PostContent {
 /** A field that has a length limit. */
 export type PostTextField = 'title' | 'body' | 'altText' | 'sourceCredit';
 
-/**
- * Why a post cannot be posted yet. `code` is the error code the API answers
- * with (HTTP 422), so a client can use one message table for both.
- */
+/** Why a post cannot be posted yet; `code` is the API's 422 error code, so one message table serves both. */
 export type PostProblem =
   /** no words and no pictures */
   | { code: 'EMPTY_POST' }
@@ -112,10 +85,7 @@ const LIMITS: Readonly<Record<PostTextField, number>> = {
   sourceCredit: POST_SOURCE_MAX,
 };
 
-/**
- * Everything that stops this post from being posted, most fundamental first.
- * Empty when it can be posted.
- */
+/** Everything that stops this post from being posted, most fundamental first; empty when it can be. */
 export function postProblems(post: PostContent): PostProblem[] {
   const problems: PostProblem[] = [];
   const pictures = post.pictures ?? [];
@@ -131,7 +101,7 @@ export function postProblems(post: PostContent): PostProblem[] {
   };
   tooLong('title', post.title);
   tooLong('body', post.body);
-  // one problem for the alt texts, however many of them are too long
+  // One problem for the alt texts, however many are too long.
   if (pictures.some((p) => postTextLength(p.altText) > POST_ALT_MAX)) {
     problems.push({ code: 'TOO_LONG', field: 'altText', max: POST_ALT_MAX });
   }
@@ -140,11 +110,8 @@ export function postProblems(post: PostContent): PostProblem[] {
 }
 
 /**
- * Whether the Post button is on, and if not, the first thing to fix.
- *
- * The API runs the same check, so a post this allows is not refused for its
- * shape — only for what the server alone knows (whose pictures they are,
- * posting too fast).
+ * Whether the Post button is on, and if not the first thing to fix. The API runs the same check, so an allowed post is
+ * refused only for what the server alone knows (whose pictures they are, posting too fast).
  */
 export function canPost(
   post: PostContent,
@@ -162,11 +129,8 @@ export interface PostMediaInput {
 }
 
 /**
- * `POST /library/posts`.
- *
- * `type` may be left out (see `derivePostType`); `body` may be empty when
- * there are pictures. Each `mediaKey` must be the author's own upload, not yet
- * on any post.
+ * `POST /library/posts`. `type` may be left out (see `derivePostType`) and `body` may be empty when there are pictures.
+ * Each `mediaKey` must be the author's own upload, not yet on any post.
  */
 export interface CreatePostRequest {
   type?: WrittenPostType;
@@ -176,15 +140,14 @@ export interface CreatePostRequest {
   meme?: boolean;
   sourceCredit?: string | null;
   language?: string;
-  /** false saves a server draft — kept for apps installed before device drafts */
+  /** false saves a server draft, kept for apps from before device drafts */
   publish?: boolean;
 }
 
 /**
- * `PATCH /library/posts/:id`. Every field is optional; `media` replaces the
- * whole list in the order given — a key already on the post stays, a new one
- * must be an unused upload of the author's, and a key left out is let go.
- * `title: null` clears a gotin's title.
+ * `PATCH /library/posts/:id`, every field optional. `media` replaces the list in the given order: keys already on the
+ * post stay, new ones must be unused uploads of the author's, and missing ones are let go. `title: null` clears a gotin's
+ * title.
  */
 export interface UpdatePostRequest {
   type?: WrittenPostType;
@@ -196,7 +159,7 @@ export interface UpdatePostRequest {
   language?: string;
 }
 
-/** A picture on a post, as the API sends it back (in order). */
+/** A picture on a post as the API sends it back, in order. */
 export interface PostMediaView {
   mediaKey: string;
   /** null only when the server has no storage configured */
@@ -206,10 +169,7 @@ export interface PostMediaView {
   height: number | null;
 }
 
-/**
- * A picture on a wall card (`GET /feed` → `items[].images`, the first four).
- * Old picture posts have no alt text and no recorded size.
- */
+/** A picture on a wall card (`GET /feed` → `items[].images`, the first four); old picture posts have no alt text or size. */
 export interface FeedImage {
   url: string;
   alt: string | null;
@@ -218,11 +178,8 @@ export interface FeedImage {
 }
 
 /**
- * Where to upload a picture for a post.
- *
- * "I made this" (on unless switched off) puts the small Hevalo signature with
- * the poster's handle on the picture; a picture somebody did not make goes up
- * without it, since a signature on it would claim it as theirs.
+ * Where to upload a picture for a post. "I made this" (on by default) adds the small Hevalo signature with the poster's
+ * handle; a picture someone else made goes up without it, since the signature would claim it.
  */
 export function pictureUploadPath(ownWork: boolean): string {
   return ownWork ? '/images/upload' : '/images/upload?ownWork=false';
@@ -232,7 +189,7 @@ export function pictureUploadPath(ownWork: boolean): string {
 
 /** A picture in a draft: picked, maybe already uploaded. */
 export interface PostPictureDraft {
-  /** set once uploaded; an upload not used by a post is cleared away after a day */
+  /** set once uploaded; an upload no post uses is cleared after a day */
   mediaKey: string | null;
   /** the phone's file path or the browser's object URL, to show it again */
   localUri: string | null;
@@ -266,7 +223,7 @@ export function emptyPostDraft(now: number = Date.now()): PostDraft {
   return { version: POST_DRAFT_VERSION, type: null, title: '', body: '', pictures: [], meme: false, sourceCredit: '', savedAt: now };
 }
 
-/** Nothing worth keeping: closing the composer need not ask. */
+/** Nothing worth keeping, so closing the composer need not ask. */
 export function isEmptyDraft(draft: PostDraft): boolean {
   return (
     !postTextLength(draft.title) &&
@@ -280,12 +237,9 @@ const str = (value: unknown): string => (typeof value === 'string' ? value : '')
 const strOrNull = (value: unknown): string | null => (typeof value === 'string' && value ? value : null);
 
 /**
- * Read a draft back from the device.
- *
- * Storage can hold anything — an older version, a half-written value, a value
- * another tab wrote — so this accepts the JSON text or the parsed value, keeps
- * what it recognises, and answers null rather than throwing when it is not a
- * draft at all. Pictures past the limit are dropped.
+ * Reads a draft back from the device. Storage can hold anything (an older version, a half-written value, another tab's),
+ * so this takes JSON text or the parsed value, keeps what it recognises, drops pictures past the limit, and answers null
+ * rather than throwing for anything that is not a draft.
  */
 export function parsePostDraft(raw: unknown): PostDraft | null {
   let value: unknown = raw;
@@ -324,10 +278,8 @@ export function parsePostDraft(raw: unknown): PostDraft | null {
 }
 
 /**
- * The request for a finished draft, or null while a picture is still uploading.
- *
- * Empty fields are left out rather than sent empty, so the request means the
- * same thing to the server as the draft does to the counter.
+ * The request for a finished draft, or null while a picture is still uploading. Empty fields are left out, so the request
+ * means to the server what the draft means to the counter.
  */
 export function toCreatePostRequest(draft: PostDraft): CreatePostRequest | null {
   if (draft.pictures.some((p) => !p.mediaKey)) return null;

@@ -1,37 +1,27 @@
 /**
- * What a lesson needs to be heard: which Kurdish texts in an exercise want a
- * native recording, and the key a recording of one is filed under.
- *
- * One list for the three places that need it: the admin's audio studio shows
- * what is still to record, the API attaches recordings to the exercises it
- * delivers, and both have to agree on which text is which. The same sentence
- * recorded once serves every exercise that uses it, so "Spas." in one lesson
- * and "spas" in another are one recording, not two.
+ * Which Kurdish texts in an exercise want a native recording, and the key a recording is filed under. The audio studio
+ * and the API's delivery must agree on which text is which. One recording serves every exercise with the same sentence,
+ * so "Spas." and "spas" share it.
  */
 import { normalizeKurdish } from './kurdish-text.js';
 import { isRecord } from './sanitize.js';
 
-/** The longest recording worth keeping: one sentence, said at a learner's pace. */
+/** The longest recording worth keeping: one sentence at a learner's pace. */
 export const LESSON_AUDIO_MAX_SECONDS = 15;
 
 /** The longest text that can be recorded; the same bound as an exercise's `say`. */
 export const LESSON_AUDIO_TEXT_MAX = 300;
 
 /**
- * Characters that change nothing about what is said: bidi marks that ride in
- * on a copy and paste (LRM, RLM, the Arabic letter mark that Soranî text
- * carries most often, embeddings and isolates), zero-width spaces, the soft
- * hyphen, and the Arabic tatweel, which only stretches a letter. The
- * zero-width non-joiner stays — in older Soranî spelling it decides whether ه
- * is the consonant or the vowel.
+ * Characters that change nothing said: bidi marks from copy and paste (LRM, RLM, the Arabic letter mark, embeddings,
+ * isolates), zero-width spaces, the soft hyphen and tatweel. The zero-width non-joiner stays, since in older Soranî
+ * spelling it decides whether ه is the consonant or the vowel.
  */
 const INVISIBLE = /[\u00AD\u061C\u0640\u200B\u200E\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/g;
 
 /**
- * Letters that are one letter in Kurdish typed two ways: the Arabic kaf and yeh
- * beside the Kurdish ones, and a Turkish keyboard's ı and İ, which Hawar does
- * not have. The same table, and the same reasons, as the dictionary's alphabet
- * (web/scripts/ferheng-alphabet.ts), including its choice of ه → ھ.
+ * Letters Kurdish types two ways: the Arabic kaf and yeh beside the Kurdish ones, and a Turkish keyboard's ı and İ. The
+ * same table as the dictionary's alphabet (web/scripts/ferheng-alphabet.ts), including ه → ھ.
  */
 const VARIANTS: Record<string, string> = {
   'ك': 'ک',
@@ -44,11 +34,7 @@ const VARIANTS: Record<string, string> = {
 };
 const VARIANT_CHARS = new RegExp(`[${Object.keys(VARIANTS).join('')}]`, 'g');
 
-/**
- * One character with the letter variants above folded, for matching text typed
- * on different keyboards (a glossary term against a story, say) without
- * changing its length: the caller keeps indices into the original.
- */
+/** One character with the variants folded, for matching across keyboards without changing length, so callers keep their indices. */
 export function foldVariantChar(ch: string): string {
   return VARIANTS[ch] ?? ch;
 }
@@ -65,14 +51,9 @@ const EDGE_QUOTES = /^["“”«»„]+|["“”«»„]+$/g;
 const TRAILING_PUNCTUATION = /[\s.!?…؟۔,،;؛:]+$/;
 
 /**
- * The key a recording of `text` is filed under.
- *
- * NFC with whitespace collapsed (`normalizeKurdish`), lower case, the letter
- * variants above folded, invisible characters dropped, surrounding quotes and
- * trailing sentence punctuation removed. Diacritics are kept: sêv and sev are
- * different words and are said differently.
- *
- * Empty when there is nothing left to say ("?", "  ").
+ * The key a recording of `text` is filed under: `normalizeKurdish`, lower case, variants folded, invisible characters
+ * dropped, surrounding quotes and trailing punctuation removed. Diacritics stay: sêv and sev are said differently. Empty
+ * when nothing is left to say ("?", "  ").
  */
 export function lessonAudioKey(text: string): string {
   let key = normalizeKurdish(
@@ -81,7 +62,7 @@ export function lessonAudioKey(text: string): string {
       .replace(INVISIBLE, '')
       .replace(VARIANT_CHARS, (ch) => VARIANTS[ch] ?? ch),
   ).toLowerCase();
-  // quotes and punctuation can wrap each other ("Spas!".), so strip until nothing changes
+  // Quotes and punctuation can wrap each other ("Spas!".), so strip until nothing changes.
   for (let before = ''; before !== key; ) {
     before = key;
     key = key.replace(EDGE_QUOTES, '').replace(TRAILING_PUNCTUATION, '').trim();
@@ -90,10 +71,8 @@ export function lessonAudioKey(text: string): string {
 }
 
 /**
- * A string that leaves something to say once keyed, and that one recording
- * can hold. A writing item may accept a 500-character answer; a text past
- * LESSON_AUDIO_TEXT_MAX could never be saved (the API refuses it as too long),
- * so it is not asked for at all rather than listed as missing for ever.
+ * Whether a string leaves something to say once keyed and fits one recording. A text past LESSON_AUDIO_TEXT_MAX could
+ * never be saved, so it is not asked for at all rather than listed as missing for ever.
  */
 function sayable(v: unknown): v is string {
   return typeof v === 'string' && normalizeKurdish(v).length <= LESSON_AUDIO_TEXT_MAX && lessonAudioKey(v) !== '';
@@ -104,25 +83,21 @@ function firstOf(v: unknown): unknown {
 }
 
 /**
- * The Kurdish texts an exercise wants recorded, as they are written in its
- * payload (so a client can look one up by the text it shows), one per key.
+ * The Kurdish texts an exercise wants recorded, as written in its payload so a client can look one up by the text it
+ * shows, one per key:
  *
- *   any type                     `say`, when the author set one — always first
- *   translate                    the first accepted answer, only when there is no `say`
- *   writing                      the first accepted answer, but for a missing word's
- *                                item with `say`, whose answer is only the gap's word
+ *   any type                     `say`, when set, always first
+ *   translate                    the first accepted answer, only without `say`
+ *   writing                      the first accepted answer, except a missing-word item with `say`, whose answer is only
+ *                                the gap's word
  *   listening                    the first accepted transcription: the clip itself
- *   speaking                     the reference, the model to imitate
+ *   speaking                     the reference to imitate
  *   match_pairs                  every left-hand card
- *   multiple_choice              only `say`: its Kurdish may be in the prompt or
- *                                among the options, and only the author knows which
+ *   multiple_choice              only `say`, since only the author knows whether its Kurdish is in the prompt or options
  *
- * A translation is authored English → Kurdish, and its first accepted answer
- * is the Kurdish to hear. One going the other way names its Kurdish with
- * `say`, and then its answers are English: asking for a recording of one
- * would put an English sentence in the studio for a Kurdish speaker to read
- * out, so a translation with `say` wants `say` alone. Anything malformed
- * yields nothing rather than throwing: this runs over stored content.
+ * A translation into Kurdish is heard by its first answer; one from Kurdish names its Kurdish with `say` and has English
+ * answers, so it wants `say` alone. Malformed payloads yield nothing rather than throwing, since this runs over stored
+ * content.
  */
 export function lessonAudioTargets(type: string, payload: unknown): string[] {
   const p = isRecord(payload) ? payload : {};
@@ -142,7 +117,7 @@ export function lessonAudioTargets(type: string, payload: unknown): string[] {
       if (!sayable(p.say)) add(firstOf(p.accepted));
       break;
     case 'writing':
-      // a missing-word item's answer is the word for its gap: the whole line, its `say`, is what is heard
+      // A missing-word item's answer is only the gap's word; the whole line, its `say`, is what is heard.
       if (!(p.ask === 'missing' && sayable(p.say))) add(firstOf(p.accepted));
       break;
     case 'listening':
@@ -158,16 +133,13 @@ export function lessonAudioTargets(type: string, payload: unknown): string[] {
   return out;
 }
 
-/** a letter, a mark or a digit — or the ZWNJ, which sits inside a Soranî word */
+/** a letter, a mark, a digit, or the ZWNJ that sits inside a Soranî word */
 const WORD = String.raw`[\p{L}\p{M}\p{N}\u200c]`;
 
 /**
- * Whether `text` stands as whole words in what `prompt` shows, once both are
- * keyed the way recordings are (`lessonAudioKey`). The API plays a multiple-
- * choice or translate item's model before the answer only when its Kurdish is
- * on screen like this (lessonaudio/delivery.ts); the road's check asks the
- * same of every item whose Kurdish is in `say`, so none is left with nothing
- * to read or hear.
+ * Whether `text` appears as whole words in what `prompt` shows, both keyed like recordings. The API plays a multiple-choice
+ * or translate item's model before the answer only when its Kurdish is on screen like this (lessonaudio/delivery.ts), and
+ * the road's check asks the same of every item with `say`.
  */
 export function shownInPrompt(prompt: unknown, text: string): boolean {
   if (typeof prompt !== 'string') return false;
@@ -178,12 +150,9 @@ export function shownInPrompt(prompt: unknown, text: string): boolean {
 }
 
 /**
- * The one text a learner should hear as the model for an exercise: `say` when
- * set, else the first accepted answer (translate, writing, listening) or the
- * reference (speaking). Match-pairs has none — each card has its own — and so
- * has a multiple-choice item without `say`. Always the first of
- * `lessonAudioTargets`, where an item has a model: a translation with `say`
- * is never modelled by its English answer, which nobody records.
+ * The one text a learner hears as an exercise's model: `say` when set, else the first accepted answer (translate,
+ * writing, listening) or the reference (speaking). Match-pairs and multiple choice without `say` have none. It is always
+ * the first of `lessonAudioTargets` when there is one.
  */
 export function primaryAudioTarget(type: string, payload: unknown): string | null {
   const p = isRecord(payload) ? payload : {};
