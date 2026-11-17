@@ -3,7 +3,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import Svg, { Circle } from 'react-native-svg';
-import { STORY_DIALECTS, categoryName, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
+import { STORY_DIALECTS, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -27,7 +27,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { activeGames, getLibrary, listStories, searchStories, setBookmark } from './api';
 import { StoryCover } from './covers';
-import { DIALECT_NAME, MODE_KEY, categoryLabel, levelName } from './labels';
+import { DIALECT_NAME, MODE_KEY, categoryLabel, categoryTitle, levelName } from './labels';
 import { LibraryFilterChips, LibraryFilterSheet, NO_FILTER, activeParts, filterButtonLabel, isFiltering, isPlainFilter, libraryQuery, type LibraryFilter } from './LibraryFilter';
 import { shownDialect, useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
@@ -340,7 +340,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
       ...(personal ? [{ key: 'continue', title: t('stories.library.continue'), stories: library.continue }] : []),
       { key: 'featured', title: t('stories.library.featured'), stories: library.featured },
       // the legends, on a shelf of their own under their category's own name, so no newer story pushes one off the page
-      { key: 'legends', title: categoryLabel(LEGEND_CATEGORY, library.categories, locale) ?? '', stories: library.legends ?? [], filed: false },
+      { key: 'legends', title: categoryLabel(LEGEND_CATEGORY, library.categories, locale, t) ?? '', stories: library.legends ?? [], filed: false },
       { key: 'recent', title: t('stories.library.recent'), stories: library.recent },
     ];
     let shown = 0;
@@ -381,7 +381,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
               {library.categories
                 .filter((c) => c.count > 0)
                 .map((c) => (
-                  <ShelfChip key={c.slug} label={categoryName(c, locale)} count={c.count} onPress={() => setFilter({ ...NO_FILTER, category: c.slug })} />
+                  <ShelfChip key={c.slug} label={categoryTitle(c, locale, t)} count={c.count} onPress={() => setFilter({ ...NO_FILTER, category: c.slug })} />
                 ))}
             </View>
           </View>
@@ -630,7 +630,7 @@ export function StoryCard({
   const { t, locale } = useI18n();
   const dir = useDirection();
   const minutes = t('stories.aboutMinutes', { count: story.readingMinutes });
-  const category = filed ? categoryLabel(story.category, categories, locale) : null;
+  const category = filed ? categoryLabel(story.category, categories, locale, t) : null;
   const narrated = story.audioCoverage === 'full' ? t('stories.library.narrated') : story.audioCoverage === 'partial' ? t('stories.library.partlyNarrated') : null;
   const share = story.me?.finishedAt ? 1 : (story.me?.share ?? 0);
   const level = levelName(story.level, t);

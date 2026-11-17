@@ -1,5 +1,6 @@
 import {
   categoryName,
+  categoryNameKey,
   lengthMinutes,
   levelHintKey,
   levelNameKey,
@@ -77,9 +78,23 @@ export function narrationLabel(coverage: StoryAudioCoverage, t: Translate): stri
   return null;
 }
 
-/** A category's name in the reader's language, from the library's list; the slug itself for one the list does not know. */
-export function categoryLabel(slug: string | null | undefined, categories: readonly StoryCategory[] | undefined, locale: string): string | null {
+/**
+ * A category's name in the reader's language. One the library was seeded
+ * with is named from the catalogue (`categoryNameKey`), in all nine
+ * languages, because the library's list names it in English, Kurmancî and
+ * Soranî only; one an editor added since is named from the list, English
+ * where it has no name in the reader's language.
+ */
+export function categoryTitle(category: StoryCategory, locale: string, t: Translate): string {
+  const key = categoryNameKey(category.slug);
+  return key ? t(key) : categoryName(category, locale);
+}
+
+/** The same for a category known only by its slug: the slug itself for one neither the catalogue nor the list knows. */
+export function categoryLabel(slug: string | null | undefined, categories: readonly StoryCategory[] | undefined, locale: string, t: Translate): string | null {
   if (!slug) return null;
+  const key = categoryNameKey(slug);
+  if (key) return t(key);
   const found = categories?.find((c) => c.slug === slug);
   return found ? categoryName(found, locale) : slug;
 }

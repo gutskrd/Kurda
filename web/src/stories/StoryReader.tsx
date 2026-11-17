@@ -5,7 +5,6 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   PAID_STORY_REPEATS_PER_DAY,
   STORY_ASSESSMENT,
-  categoryName,
   glossFor,
   storySpelling,
   storyTextDirection,
@@ -30,7 +29,7 @@ import { dialectName } from '../learn/map';
 import { STORIES_LIBRARY, createGame, gamePath, readerPath, setBookmark, storyError } from './api';
 import { useStoryCategories } from './catalogue';
 import { StoryCover } from './Cover';
-import { levelHint, levelName, minutesLeft, narratedKey } from './labels';
+import { categoryLabel, levelHint, levelName, minutesLeft, narratedKey } from './labels';
 import { rememberTextSize, rememberVariety, rememberedExtraTime, rememberedTextSize } from './prefs';
 import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
 import { SetupSheet } from './SetupSheet';
@@ -173,10 +172,10 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
     return null;
   }, [story.translations, story.paragraphs.length, locale]);
 
-  const category = useMemo(() => {
-    const c = categories?.find((x) => x.slug === story.category);
-    return c ? categoryName(c, locale) : null;
-  }, [categories, story.category, locale]);
+  const category = useMemo(
+    () => (story.category ? categoryLabel(story.category, categories, locale, t) : null),
+    [categories, story.category, locale, t],
+  );
 
   const scrollToParagraph = (index: number): void => {
     const el = text.current?.querySelector<HTMLElement>(`[data-paragraph="${index}"]`) ?? text.current;

@@ -223,6 +223,29 @@ describe('StoriesView', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('StoryReader', { slug: 'kmr-kawaye-hesinkar' });
   });
 
+  it('names the categories it knows in every language from its own words, and one added since from the list', async () => {
+    localStorage.setItem('kurda_locale_v1', 'de');
+    const kawa = story({ id: 's9', slug: 'kmr-kawaye-hesinkar', title: 'Kawayê Hesinkar', level: 3, length: 'saga', category: 'legend', cover: 'kawa', me: me() });
+    // the list names its categories in English, Kurmancî and Soranî only; the two at the end are an editor’s since
+    const categories = [
+      ...CATEGORIES,
+      { slug: 'legend', name: { en: 'Legends and history', ku: 'Efsane û dîrok' }, position: 2, count: 1 },
+      { slug: 'poems', name: { en: 'Poems', de: 'Gedichte' }, position: 8, count: 1 },
+      { slug: 'songs', name: { en: 'Songs' }, position: 9, count: 1 },
+    ];
+    testAuth.client = client({}, library({ legends: [kawa], categories }));
+    renderWithProviders(<StoriesView />);
+    // the legends' shelf is named in German, and so is every chip of a category the app knows
+    expect(await screen.findByRole('heading', { name: 'Sagen und Geschichte' })).toBeTruthy();
+    const shelf = screen.getByRole('heading', { name: 'Kategorien' }).parentElement!;
+    for (const name of [/^Tierfabeln,/, /^Dorfleben,/, /^Alltag,/, /^Sagen und Geschichte,/]) expect(within(shelf).getByRole('button', { name })).toBeTruthy();
+    // one the app does not know keeps the list's own name: German where it has one, else English
+    expect(within(shelf).getByRole('button', { name: /^Gedichte,/ })).toBeTruthy();
+    expect(within(shelf).getByRole('button', { name: /^Songs,/ })).toBeTruthy();
+    // and a card says its category the same way
+    expect(screen.getAllByText('Dorfleben').length).toBeGreaterThan(0);
+  });
+
   it('shows a guest the shelves without the personal rows, and asks the server for no games', async () => {
     testAuth.user = { ...testAuth.user, guest: true };
     const c = client();

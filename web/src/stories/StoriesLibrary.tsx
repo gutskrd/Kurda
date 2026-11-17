@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  categoryName,
   isStoryDialect,
   storyQueryString,
   storySpelling,
@@ -30,7 +29,7 @@ import { LearnHeader } from '../learn/LearnHeader';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import { STORIES_LIBRARY, gamePath, storyError } from './api';
 import { useStoryList } from './catalogue';
-import { categoryNames } from './labels';
+import { categoryLabel, categoryNames, categoryTitle } from './labels';
 import { LibraryFilterBar, NO_FILTERS, isPlain, queryOf, readFilters, writeFilters, type LibraryFilters } from './LibraryFilter';
 import { rememberVariety, rememberedExtraTime, shownVariety } from './prefs';
 import { MODE_KEY, SetupSheet } from './SetupSheet';
@@ -273,7 +272,7 @@ function Library(): React.JSX.Element {
   const { library, error, reload, patch } = useLibrary(status !== 'restoring', signedIn, dialect);
   const active = q.trim() !== '' || !isPlain(filters);
   const results = useStoryResults(active ? queryOf(q, filters, dialect) : null);
-  const names = useMemo(() => categoryNames(library?.categories, locale), [library?.categories, locale]);
+  const names = useMemo(() => categoryNames(library?.categories, locale, t), [library?.categories, locale, t]);
   const [games, setGames] = useState<StoryGameSummary[]>([]);
 
   useEffect(() => {
@@ -362,7 +361,14 @@ function Library(): React.JSX.Element {
           <Shelf id="continue" title={t('stories.library.continue')} stories={library.continue} names={names} onBookmarked={bookmarked} />
           <Shelf id="featured" title={t('stories.library.featured')} stories={library.featured} names={names} onBookmarked={bookmarked} />
           {/* the legends, on a shelf of their own under their category's own name: no newer story pushes one off the page */}
-          <Shelf id="legends" title={names.get(LEGEND_CATEGORY) ?? LEGEND_CATEGORY} stories={library.legends ?? []} names={names} filed={false} onBookmarked={bookmarked} />
+          <Shelf
+            id="legends"
+            title={categoryLabel(LEGEND_CATEGORY, library.categories, locale, t) ?? LEGEND_CATEGORY}
+            stories={library.legends ?? []}
+            names={names}
+            filed={false}
+            onBookmarked={bookmarked}
+          />
           <Shelf id="recent" title={t('stories.library.recent')} stories={library.recent} names={names} onBookmarked={bookmarked} />
           <Categories categories={library.categories} onPick={(slug) => choose({ ...NO_FILTERS, category: slug })} />
           <Shelf id="bookmarks" title={t('stories.library.bookmarks')} stories={library.bookmarks} names={names} onBookmarked={bookmarked} />
@@ -531,7 +537,7 @@ function Categories({ categories, onPick }: { categories: Array<StoryCategory & 
       <div className="story-chip-row">
         {filled.map((c) => (
           <button key={c.slug} type="button" className="story-chip story-chip-category" onClick={() => onPick(c.slug)}>
-            {categoryName(c, locale)}
+            {categoryTitle(c, locale, t)}
             <span className="story-chip-count" aria-hidden="true">
               {c.count.toLocaleString(locale)}
             </span>

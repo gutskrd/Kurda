@@ -5,7 +5,6 @@ import {
   DEFAULT_STORY_SORT,
   STORY_LENGTHS,
   STORY_LEVELS,
-  categoryName,
   lengthMinutes,
   storyQueryString,
   type StoryDialect,
@@ -25,7 +24,7 @@ import { FilterChip, FilterChips, FilterHeading, FilterOption, FilterOptions, Fi
 import type { IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
-import { LENGTH_KEY, categoryLabel, levelHint, levelName } from './labels';
+import { LENGTH_KEY, categoryLabel, categoryTitle, levelHint, levelName } from './labels';
 import { heldDim } from '../theme/MotionParts';
 
 /**
@@ -120,7 +119,7 @@ export function activeParts(f: LibraryFilter, t: (key: TranslationKey, vars?: Re
   if (f.level) add('level', levelName(f.level, t), { level: null });
   if (f.length) add('length', t(LENGTH_KEY[f.length]), { length: null });
   if (f.narrated) add('narrated', t('stories.filter.readAloud'), { narrated: false }, 'headphones');
-  if (f.category) add('category', categoryLabel(f.category, library?.categories, locale) ?? f.category, { category: null }, 'tag');
+  if (f.category) add('category', categoryLabel(f.category, library?.categories, locale, t) ?? f.category, { category: null }, 'tag');
   return parts;
 }
 
@@ -290,7 +289,7 @@ export function LibraryFilterSheet({
           <FilterPills label={t('stories.filter.category')}>
             <FilterPill label={t('stories.filter.anyCategory')} on={draft.category === null} onPress={() => set({ category: null })} />
             {categories.map((c) => (
-              <FilterPill key={c.slug} label={categoryName(c, locale)} count={c.count} on={draft.category === c.slug} onPress={() => set({ category: c.slug })} />
+              <FilterPill key={c.slug} label={categoryTitle(c, locale, t)} count={c.count} on={draft.category === c.slug} onPress={() => set({ category: c.slug })} />
             ))}
           </FilterPills>
         </>

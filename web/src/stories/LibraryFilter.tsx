@@ -23,7 +23,6 @@ import {
   DEFAULT_STORY_SORT,
   STORY_LENGTHS,
   STORY_LEVELS,
-  categoryName,
   cefrOf,
   isStoryLength,
   isStoryLevel,
@@ -44,7 +43,7 @@ import { HeadphonesIcon, SortIcon, TagIcon } from '../components/icons';
 import { SearchField } from '../components/SearchField';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { levelHint, levelName } from './labels';
+import { categoryLabel, categoryTitle, levelHint, levelName } from './labels';
 import { LENGTH_KEY, minutesLabel } from './SetupSheet';
 
 /** What narrows or orders the library, apart from the words typed in the search. */
@@ -221,10 +220,7 @@ export function LibraryFilterBar({
     return STORY_LEVELS.filter((l) => l === draft.level || have.some((h) => h.level === l && h.count > 0));
   }, [library?.levels, draft.level]);
   const categories = (library?.categories ?? []).filter((c) => c.count > 0 || c.slug === draft.category);
-  const categoryOf = (slug: string): string => {
-    const found = library?.categories.find((c) => c.slug === slug);
-    return found ? categoryName(found, locale) : slug;
-  };
+  const categoryOf = (slug: string): string => categoryLabel(slug, library?.categories, locale, t) ?? slug;
   const minutesFor = (length: StoryLength): string => minutesLabel(dialect, length, t);
 
   // what is on, in the order the panel has it: one chip each, and the funnel's name
@@ -303,7 +299,7 @@ export function LibraryFilterBar({
                   <FilterPill
                     key={c.slug}
                     on={draft.category === c.slug}
-                    label={categoryName(c, locale)}
+                    label={categoryTitle(c, locale, t)}
                     count={number(c.count)}
                     countLabel={t('stories.library.categoryCount', { count: number(c.count) })}
                     onChoose={() => set({ category: c.slug })}

@@ -73,7 +73,7 @@ const reader = (slug = 'qelema-sin') =>
   );
 
 const me = (over: Partial<StoryMe> = {}): StoryMe => ({ bookmarked: false, paragraph: 0, share: 0, finishedAt: null, bestCorrect: null, total: null, attemptsToday: 0, ...over });
-const CATEGORIES = { categories: [{ slug: 'everyday', name: { en: 'Everyday', de: 'Alltag' }, position: 6 }] };
+const CATEGORIES = { categories: [{ slug: 'everyday', name: { en: 'Everyday life' }, position: 6 }] };
 const S1 = 'Îro Rojîn diçe dibistanê.';
 const S2 = 'Ew deh salî ye.';
 
@@ -93,7 +93,7 @@ describe('the story page', () => {
     // the level by its plain name, what it means on hover, and no CEFR letter
     expect(screen.getByText('Starter')).toHaveAttribute('title', 'First words and short sentences');
     expect(screen.queryByText('A1')).toBeNull();
-    expect(await screen.findByText('Everyday')).toBeInTheDocument();
+    expect(await screen.findByText('Everyday life')).toBeInTheDocument();
     expect(screen.getByText('~2 min')).toBeInTheDocument();
     expect(screen.getByText('90 words')).toBeInTheDocument();
     expect(screen.getByText('Written for learners')).toBeInTheDocument();

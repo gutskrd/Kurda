@@ -573,7 +573,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const share = me?.finishedAt ? 1 : (me?.share ?? 0);
   const left = minutesLeft(story.readingMinutes, share);
   const narrated = narrationLabel(story.audioCoverage, t);
-  const category = categoryLabel(story.category, categories, locale);
+  const category = categoryLabel(story.category, categories, locale, t);
   const reading = narration.current;
   const meta = metaFor(story, locale);
   // the same story in the other variety, when it has been told in both
