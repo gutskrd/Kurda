@@ -8,14 +8,6 @@ import { useTheme } from '../theme/ThemeProvider';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import type { PlaybackClock } from './voice';
 
-/**
- * Where he looks unless told otherwise: straight at whoever is reading, his
- * pupils in the middle of his eyes. Left to rest they sit turned in toward
- * each other, as on the icon, and at the size the first screens draw him that
- * read as a cross-eyed stare.
- */
-export const GAZE_AT_READER: CharacterPoint = { x: 0, y: 0 };
-
 /** When, once he has started up through the tear, he is through enough to be glad about it: a share of the spring. */
 const GLAD_AT = 0.55;
 
@@ -37,9 +29,8 @@ export interface PeekSpeech {
  * the air. As the picture appears he comes up through the tear on a spring,
  * the shadow his head throws on the page and his shade in the dark under his
  * chin coming with him, all on one value; under Reduce Motion he is simply there. Alive as ever: he
- * blinks, glances about, looks at the reader unless told to look elsewhere
- * (`gaze`), follows a finger, cheers as he comes through, and cheers or
- * tilts his head at a `reaction`.
+ * blinks, glances about, looks where he is told (`gaze`), follows a finger,
+ * cheers as he comes through, and cheers or tilts his head at a `reaction`.
  *
  * Given `speech` and the `text` of a line, he says it: his mouth moves with
  * the words by the clock the speech keeps (auth/guide/speech.ts).
@@ -52,7 +43,7 @@ export interface PeekSpeech {
 export function HevaloPeek({
   size,
   reaction = null,
-  gaze = GAZE_AT_READER,
+  gaze = null,
   resting = false,
   flip = false,
   pop = true,

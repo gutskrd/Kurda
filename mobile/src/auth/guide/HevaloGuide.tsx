@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { CharacterPoint } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
-import { GAZE_AT_READER, HevaloPeek } from '../../characters/HevaloPeek';
+import { HevaloPeek } from '../../characters/HevaloPeek';
 import type { CharacterReaction } from '../../characters/SpeakingCharacter';
 import { useDirection } from '../../reports/direction';
 import { timing } from '../../theme/animate';
@@ -33,8 +33,7 @@ const TAIL = 12;
  * the words in it (characters/HevaloPeek), coming through as the screen
  * opens: cut off at the waist and floating beside his words, he read as half
  * a deer. He says the words: his mouth moves with the line (guide/speech.ts), he breathes,
- * blinks, and looks where he is told (`gaze`, at the field; at the reader
- * when nobody says), tilts his head
+ * blinks, and looks where he is told (`gaze`, at the field), tilts his head
  * at a refused answer and cheers at a right one (`reaction`), and greets a
  * tap. The bubble's words fade in whenever they change.
  *
@@ -46,15 +45,14 @@ const TAIL = 12;
 export function HevaloGuide({
   says,
   reaction = null,
-  gaze = GAZE_AT_READER,
+  gaze = null,
   resting = false,
   onPress,
   style,
 }: {
   says: string;
   reaction?: CharacterReaction | null;
-  /** where he looks; by default at the reader */
-  gaze?: CharacterPoint;
+  gaze?: CharacterPoint | null;
   resting?: boolean;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;

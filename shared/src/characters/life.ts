@@ -635,9 +635,18 @@ export function between([min, max]: readonly [number, number], random: () => num
   return min + random() * (max - min);
 }
 
-/** Somewhere to glance: anywhere across, and a little up or down rather than far. */
+/**
+ * How far to one side a glance goes at the least, as a share of the eyes' reach. A glance sets both pupils in
+ * the middle of their eyes before it moves them, and one that lands near the middle leaves them there, white all
+ * round: a startled stare rather than a look at something.
+ */
+export const GLANCE_ASIDE = 0.45;
+
+/** Somewhere to glance: off to one side or the other, and a little up or down rather than far. */
 export function glanceTarget(random: () => number = Math.random): CharacterPoint {
-  return { x: Math.round((random() * 2 - 1) * 100) / 100, y: Math.round((random() * 1.1 - 0.5) * 100) / 100 };
+  const across = random() * 2 - 1;
+  const x = Math.sign(across || 1) * (GLANCE_ASIDE + (1 - GLANCE_ASIDE) * Math.abs(across));
+  return { x: Math.round(x * 100) / 100, y: Math.round((random() * 1.1 - 0.5) * 100) / 100 };
 }
 
 /** Whether a character has the parts the deer's habits move. */
