@@ -13,21 +13,12 @@ import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import type { JumpTestStart } from './JumpTestScreen';
 
-/** How tall Hevalo's window stands over the result. */
+/** Height of Hevalo's window above the result. */
 const WINDOW = 180;
 
 /**
- * How a test to jump ahead came out, as the server decided it.
- *
- * Passed: the unit is open, the skipped lessons stay open, and one button goes
- * back to the path — which opens up to the unit and moves on to it as it does
- * after a lesson. Felt once, the system's success, and Hevalo pops up in his
- * window and cheers.
- *
- * Not yet: how many were right and how many open the unit, said plainly and
- * never as a failure; "Keep learning" back to the path, and "Try again" while
- * today's tries at this unit last. Hevalo, in his window, tilts his head,
- * curious. No buzz: nothing went wrong.
+ * The result of a jump-ahead test, as the server graded it. A pass opens the unit and Hevalo cheers; a miss says
+ * the score plainly, never as a failure, with "Try again" while today's tries last, and no error buzz.
  */
 export function JumpResults({
   test,
@@ -36,7 +27,7 @@ export function JumpResults({
   onAgain,
 }: {
   test: JumpTestStart['jump'];
-  /** null when the server sent none (it always does for a test) */
+  /** Null when the server sent none, which it always does for a test. */
   outcome: JumpOutcome | null;
   onPath: () => void;
   onAgain: () => void;
@@ -55,11 +46,10 @@ export function JumpResults({
     ? t('coursemap.jump.passedBody', { correct, total })
     : t('coursemap.jump.notYetBody', { correct, total, n, needed: formatNumber(Math.max(0, (outcome?.total ?? 0) - (outcome?.mistakesAllowed ?? 0)), locale) });
 
-  // said once, as the result arrives
+  // Only once, when the result opens.
   useEffect(() => {
     if (passed) haptic('celebrate');
     AccessibilityInfo.announceForAccessibility?.(title);
-    // once, as the result opens
   }, []);
 
   return (

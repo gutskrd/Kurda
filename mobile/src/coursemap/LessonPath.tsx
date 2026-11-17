@@ -51,106 +51,68 @@ type Unit = PathUnit<SkillNode>;
 type Section = PathSection<SkillNode>;
 
 /**
- * The path last drawn for each course, while the app runs: Learn reads the
- * course again each time it comes back into view, so coming back from a
- * lesson finds the path as it was before it, and can show what the lesson
- * changed (shared `pathChanges`) rather than only the new state.
+ * The path last drawn for each course, kept while the app runs, so a return from a lesson can animate what changed
+ * (shared `pathChanges`) instead of only showing the new state.
  */
 const LAST_DRAWN = new Map<string, PathSnapshot>();
 
-/** The units whose stops have risen into place already, by course, while the app runs: each rises once. */
+/** Units whose stops have already risen into place, by course; each rises once per app run. */
 const RISEN = new Set<string>();
 
 const NO_STOPS: ReadonlySet<string> = new Set();
 
-/** What coming back changed, and where the learner was before it: the bubble and Hevalo move on from there. */
+/** What a return from a lesson changed, and where the learner was before it. */
 interface Return {
   changes: PathChanges;
-  /** the skill that was current before the lesson */
+  /** The current skill before the lesson. */
   was: string | null;
 }
 
 /**
- * One course as a lesson path, a section at a time. The course's units are
- * grouped into sections by their level in the course plan (shared
- * `lessonPath`'s `sections`: A1, A2, B1 on the road), and one section is open:
- * the one the learner is in. A section before it is one compact card, which
- * opens it again when tapped; a later one is a card that says what it is —
- * its number, its level, how many chapters — shut, with the offer to test out
- * to it where the course allows (JumpSheet). A course without levels is one
- * section, and shows no cards.
+ * One course as a lesson path, one section open at a time. Units are grouped into sections by level (shared
+ * `lessonPath`). Earlier sections collapse to a card that reopens them; later ones are shut cards that may offer a
+ * jump test (JumpSheet). A course without levels is one section with no cards.
  *
- * In the open section each unit's stops follow one gently winding line: its
- * four topics, review beside the current one when words are due, and as its
- * last stop the story that closes the chapter (its prize; a unit without one
- * ends at its chest). The first unit opens under a heading in its colour —
- * "Section 1 · Chapter 1" over its name, with its guide (the grammar notes) in
- * the book button on the far side and the map of every unit beside it — the
- * same face the pinned header wears once it has gone up out of sight
- * (PinnedUnit); each unit after it begins at a quiet divider with its name.
+ * In the open section each unit's stops follow one winding line over its own land (PathWorld). The first unit sits
+ * under a heading with its guide and the unit map; later units start at a divider. The pinned header (PinnedUnit)
+ * repeats the heading once it scrolls away.
  *
- * `onFocus` hears where, from the top of the path, the stop to open on sits
- * (the current skill, or the furthest point reached), once it has been laid
- * out, so the screen can scroll to it; null while that stop is in a section
- * that is shut. `onUnits` hears where each unit of the open section lies, for
- * the pinned header, and `onCourse` every unit in its section, for the map of
- * them all. `reveal` asks for a unit to be brought into view (from that map):
- * its section opens, and `onReveal` hears where the unit — or, in a section
- * still shut, the section's card — sits.
+ * Callbacks report layout back to the screen: `onFocus` the stop to scroll to (null while its section is shut),
+ * `onUnits` the open section's units for the pinned header, and `onCourse` every unit for the unit map. `reveal`
+ * opens a unit's section and reports its position through `onReveal`. `near`, `seen` and `inView` say which units
+ * to draw in full, which rise into place, and which animates; without them, the units round the current stop are
+ * drawn and nothing waits.
  *
- * A later unit whose first skill is still closed can be jumped to (shared
- * `PathUnit.jump`): its first stop offers it, "Jump here?", and opens a sheet
- * (JumpSheet) that starts the test (JumpTestScreen).
- *
- * Each unit's stops stand on a land of their own (shared `pathLand`): its
- * ground edge to edge, its stepping stones, its landmark beside the route, and
- * one of the course's people by its last stop (PathWorld). The learner's own
- * picture stands on the stop to do now, and Hevalo beside it (PathMascot).
- * The screen says which units are near the screen (`near`: drawn in full),
- * which can be seen (`seen`: their stops rise into place the first time), and
- * which is in view (`inView`: the one that moves); without them the units
- * round the stop to do now are drawn and nothing waits.
- *
- * Coming back from a lesson, the path moves before it settles (shared
- * `PATH_RETURN`): a topic's ring fills its piece, a finished topic pops as it
- * turns gold and its star drops in, a round made whole on a gold topic earns
- * its next star, an opened one trades its padlock for its number, a chapter's
- * prize wobbles and bursts open, and then the bubble, the page, the learner
- * (with a hop) and Hevalo move on to the skill to do now — where he cheers,
- * and into the next section when the lesson finished one. Until then the
- * focus stays where the learner was, so the page is still there when the
- * path starts to move. Under Reduce Motion none of it plays: the path is
- * drawn as it now is.
+ * Returning from a lesson, the path animates the changes before moving on (shared `PATH_RETURN`): rings fill,
+ * topics turn gold and earn stars, padlocks open and prizes burst, then the bubble, page, learner and Hevalo move
+ * to the new current skill. Until then the focus stays where the learner was. Under Reduce Motion the path is drawn
+ * as it now is.
  */
 export interface PathFocus {
   key: string;
-  /** the stop's centre, from the top of the path */
+  /** The stop's centre, from the top of the path. */
   y: number;
-  /** a skill to do now (rather than the end of everything open) */
+  /** A skill to do now, rather than the end of everything open. */
   current: boolean;
 }
 
-/**
- * Where a unit of the open section sits on the path, from the path's top:
- * what the screen needs to keep the unit being scrolled through named at the
- * top of the page.
- */
+/** Where a unit of the open section sits, from the path's top, so the screen can name it in the pinned header. */
 export interface UnitPlace {
   unitId: string;
-  /** the unit's top, and where its heading (or divider) ends and the unit itself ends */
+  /** The unit's top, the end of its heading (or divider), and its end. */
   top: number;
   bannerBottom: number;
   bottom: number;
   number: number;
   title: string;
   tone: ToneColors;
-  /** the section it is in, from 1; null in a course of one section, which is not named */
+  /** Its section, from 1; null in a single-section course, where sections are not named. */
   section: number | null;
-  /** skills finished, of `total`, and whether the learner is in it now */
+  /** Skills finished, of `total`, and whether the learner is in this unit now. */
   done: number;
   total: number;
   here: boolean;
-  /** open the unit's guide; absent when it has none */
+  /** Opens the unit's guide; absent when it has none. */
   openGuide?: () => void;
 }
 
@@ -170,21 +132,21 @@ export const LessonPath = memo(function LessonPath({
   map: CourseMap;
   due: number;
   onFocus: (focus: PathFocus | null) => void;
-  /** where each unit of the open section lies, once laid out, for a pinned header */
+  /** Where each unit of the open section lies, once laid out, for the pinned header. */
   onUnits?: (units: UnitPlace[]) => void;
-  /** every unit of the course in its section, for the map of them all */
+  /** Every unit of the course by section, for the unit map. */
   onCourse?: (sections: RailSection[]) => void;
-  /** the units near the screen, drawn in full; without it, those round the stop to do now */
+  /** Units near the screen, drawn in full; without it, those round the current stop. */
   near?: ReadonlySet<string>;
-  /** the units that can be seen, whose stops rise into place the first time; null before the screen has measured them */
+  /** Units on screen, whose stops rise into place the first time; null before the screen has measured them. */
   seen?: ReadonlySet<string> | null;
-  /** the unit in the middle of the screen: the one that moves */
+  /** The unit in the middle of the screen, the only one that animates. */
   inView?: string | null;
-  /** open the map of every unit, from a unit heading's map button */
+  /** Opens the unit map from a heading's map button. */
   onOpenRail?: () => void;
-  /** a unit to bring into view (`at` tells one ask from the next) */
+  /** A unit to bring into view; `at` tells one request from the next. */
   reveal?: { unitId: string; at: number } | null;
-  /** where, from the top of the path, the unit asked for (or its section's card) sits */
+  /** Where the requested unit (or its shut section's card) sits, from the top of the path. */
   onReveal?: (y: number) => void;
 }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -197,11 +159,8 @@ export const LessonPath = memo(function LessonPath({
   const courseId = map.course.id;
 
   /*
-   * What changed since this course's path was last drawn: worked out as the
-   * new path is drawn, so its first frame is already the one the changes
-   * start from, and kept until the next return — the path drawn again for
-   * another reason (the review count arriving) changes nothing and must not
-   * cut it short. The new path is remembered once drawn.
+   * Worked out while the new path is drawn, so its first frame is the one the changes start from. Kept until the
+   * next return: a redraw for another reason (the review count arriving) must not cut it short.
    */
   const fresh = useMemo<Return | null>(() => {
     const before = LAST_DRAWN.get(courseId) ?? null;
@@ -212,14 +171,9 @@ export const LessonPath = memo(function LessonPath({
   }, [path, courseId, reduce]);
   const [kept, setKept] = useState<Return | null>(fresh);
   /*
-   * The section open: the one picked from its card, else, coming back from a
-   * lesson, the one it was played in (a lesson played again in a section
-   * finished long ago is seen filling its ring there), and once the path has
-   * moved on, or with nothing to show, the one the focus is in — the
-   * learner's, or during a return the one they were in until the path moves
-   * on, so a lesson that finishes a section is seen finishing it. A pick
-   * lasts until the learner moves into another section, or comes back from a
-   * lesson played in another.
+   * The open section: the one picked from its card; else, on a return, the one the lesson was played in; else the
+   * one holding the focus. A pick lasts until the learner moves into another section or returns from a lesson
+   * played elsewhere.
    */
   const [picked, setPicked] = useState<number | null>(null);
   const [pickedFor, setPickedFor] = useState(path.section);
@@ -232,12 +186,12 @@ export const LessonPath = memo(function LessonPath({
     const playedIn = playedSection(path, fresh);
     if (picked !== null && playedIn !== null && playedIn !== picked) setPicked(null);
   }
-  // the system asked for less motion while it played: what is left of it is simply drawn
+  // Under Reduce Motion, even if switched on mid-return, the path is simply drawn as it is.
   const back = reduce ? null : kept;
   useEffect(() => {
     LAST_DRAWN.set(courseId, pathSnapshot(path));
   }, [path, courseId]);
-  // the bubble, the page and Hevalo move on to the new current skill once the rest has moved
+  // The bubble, page and Hevalo move to the new current skill once the rest has moved.
   const [moved, setMoved] = useState<Return | null>(null);
   useEffect(() => {
     if (!back) return;
@@ -253,19 +207,18 @@ export const LessonPath = memo(function LessonPath({
   const shown = path.sections[open] ?? null;
   const named = path.sections.length > 1;
 
-  // the screen's width less its gutters until the path has been measured, so it draws at once
-  // (a phone's width where the window has none to give yet)
+  // The screen width less gutters until the path is measured, so it draws at once.
   const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
   const [sheet, setSheet] = useState<{ stop: Stop; unit: Unit } | null>(null);
   const [guide, setGuide] = useState<{ title: string; skills: SkillNode[] } | null>(null);
   const [jumpTo, setJumpTo] = useState<Unit | null>(null);
-  // where each unit, and the path under its heading, sit — to find the focus stop on the page
+  // Where each unit, and the path under its heading, sit, to find the focus stop.
   const unitTop = useRef<Record<string, number>>({});
   const unitHeight = useRef<Record<string, number>>({});
   const pathTop = useRef<Record<string, number>>({});
-  // where each section's card, and the open section, sit
+  // Where each section's card, and the open section, sit.
   const sectionTop = useRef<Record<string, number>>({});
-  // the app mirrors its own screens for Soranî and Arabic (reports/direction): so does the path
+  // The path mirrors with the app for right-to-left languages (reports/direction).
   const sign = dir.row === 'row-reverse' ? -1 : 1;
   const openUnits = useMemo(() => shown?.units ?? [], [shown]);
 
@@ -280,7 +233,7 @@ export const LessonPath = memo(function LessonPath({
       if (s !== undefined && u !== undefined && p !== undefined) onFocus({ key: focusKey, y: s + u + p + placed.y, current: path.current !== null });
       return;
     }
-    // the stop to open on is in a section that is shut
+    // The focus stop is in a shut section.
     onFocus(null);
   }, [path, focusKey, onFocus, openUnits, shown]);
 
@@ -288,7 +241,7 @@ export const LessonPath = memo(function LessonPath({
     report();
   }, [report]);
 
-  // a unit asked for from the map: its section opens, and once it is laid out the screen hears where it is
+  // A unit requested from the map: open its section, then report where it is once laid out.
   const asked = useRef<{ unitId: string; at: number } | null>(null);
   const answer = useCallback(() => {
     const want = asked.current;
@@ -316,10 +269,10 @@ export const LessonPath = memo(function LessonPath({
     const at = path.sections.findIndex((s) => s.units.some((u) => u.unitId === reveal.unitId));
     if (at >= 0 && path.sections[at]!.state !== 'locked' && at !== open) setPicked(at);
     answer();
-    // a new ask, not a new path, is what opens a section
+    // Only a new request opens a section, not a new path.
   }, [reveal]);
 
-  // every unit of the open section laid out: where each starts, where its heading ends and where it ends
+  // Where each unit of the open section starts, where its heading ends, and where it ends.
   const placeUnits = useCallback(() => {
     answer();
     if (!onUnits || !shown) return;
@@ -348,7 +301,7 @@ export const LessonPath = memo(function LessonPath({
     onUnits(places);
   }, [onUnits, openUnits, shown, path.current, scheme, named, t, answer]);
 
-  // the map of every unit, in its section
+  // Every unit by section, for the unit map.
   useEffect(() => {
     onCourse?.(
       path.sections.map((section) => ({
@@ -376,19 +329,19 @@ export const LessonPath = memo(function LessonPath({
     navigation.navigate('Practice');
   };
 
-  // what each stop shows of the return: one object per stop for the whole return, so each plays it once
+  // One stable object per stop for the whole return, so each stop plays its change once.
   const stopChanges = useMemo(() => (back ? changesByStop(back, path.units) : {}), [back, path.units]);
-  // the line into the skill to do now has been walked only since the lesson: it fills in as the path moves on to it
+  // The line into the new current skill was walked in this lesson, so it fills in as the path moves on.
   const freshTrail = useMemo(() => (back && back.was !== null && back.changes.current ? new Set([back.changes.current]) : NO_STOPS), [back]);
-  // Hevalo by the current skill — by the one before it until the path has moved on — when the screen leaves him room
+  // Hevalo stands by the previous skill until the path moves on, and only when there is room for him.
   const mascotAt = path.current && width >= MASCOT_MIN_WIDTH ? (waiting ? back.was : path.current) : null;
   const cheer = moved !== null && moved === back && (back.changes.finished.length > 0 || back.changes.opened.length > 0);
-  // the learner stands where Hevalo does; once the path has moved on they hop there from the stop they finished
+  // The learner stands where Hevalo does, and hops over from the finished stop once the path moves on.
   const tokenAt = path.current ? (waiting ? back.was : path.current) : null;
   const hopFrom = moved !== null && moved === back && back.was !== null && back.changes.current !== null ? back.was : null;
   const unitOfCurrent = path.units.find((u) => u.stops.some((p) => p.stop.key === path.current))?.unitId ?? null;
 
-  // the units drawn in full: those the screen says are near, or, before it says, those round the stop to do now
+  // Units drawn in full: those the screen reports as near, or before it does, those round the current stop.
   const focusIndex = Math.max(
     0,
     openUnits.findIndex((u) => u.stops.some((p) => p.stop.key === focusKey)),
@@ -399,7 +352,7 @@ export const LessonPath = memo(function LessonPath({
   );
   const moving = (unitId: string): boolean => live && (inView === undefined || inView === unitId);
 
-  // the stop to do now bobs, and the learner on it, while its unit is in view
+  // The current stop and the learner on it bob while its unit is in view.
   const bob = useRef(new Animated.Value(0)).current;
   const bobbing = live && !waiting && unitOfCurrent !== null && (inView === undefined || inView === unitOfCurrent);
   useEffect(() => {
@@ -421,7 +374,7 @@ export const LessonPath = memo(function LessonPath({
     };
   }, [bobbing, bob]);
 
-  // the first time a unit can be seen, its stops rise into place one after another; until then they wait under the ground
+  // The first time a unit is seen, its stops rise into place one after another.
   const rises = useRef<Record<string, Animated.Value>>({}).current;
   const riseOf = (unit: Unit): Animated.Value | null => {
     if (reduce || seen === undefined) return null;
@@ -544,7 +497,7 @@ export const LessonPath = memo(function LessonPath({
                           })}
                           {tokenHere ? (
                             <LearnerToken
-                              // a new place is a new arrival: the hop plays from where they were
+                              // A new place remounts it, so the hop plays from the old one.
                               key={tokenHere.stop.key}
                               at={{ x: cx(tokenHere.x), y: tokenHere.y }}
                               from={hopFrom ? (fromHere ? { x: cx(fromHere.x), y: fromHere.y } : { x: cx(tokenHere.x), y: tokenHere.y - 2 * PATH_GEOMETRY.step }) : null}
@@ -558,7 +511,7 @@ export const LessonPath = memo(function LessonPath({
                               const spot = mascotSpot(placed);
                               const x = cx(spot.x);
                               return (
-                                // a new place is a new arrival: he arrives there, and cheers when there is something to cheer
+                                // A new place remounts him, so he arrives there.
                                 <PathMascot
                                   key={placed.stop.key}
                                   x={x}
@@ -633,12 +586,12 @@ function changesByStop({ changes, was }: Return, units: readonly Unit[]): Record
   for (const ring of changes.ring) at(ring.key).ring = ring;
   for (const key of changes.finished) {
     at(key).finishing = true;
-    // it turns gold from how it looked: the stop to do now, or an open one beside it
+    // It turns gold from its previous look: the current stop, or an open one beside it.
     at(key).wasLook = key === was ? 'current' : 'available';
   }
   for (const key of changes.opened) at(key).opening = true;
   if (changes.current && was !== null) at(changes.current).arriving = true;
-  // a unit whose last topics were just finished: the lesson won its prize, its story (or its chest)
+  // A unit whose last topics were just finished wins its prize: its story, or its chest.
   for (const unit of units) {
     const end = unit.stops[unit.stops.length - 1]?.stop;
     const won = end?.kind === 'story' ? end.open : end?.kind === 'trophy' ? end.earned : false;
@@ -647,11 +600,7 @@ function changesByStop({ changes, was }: Return, units: readonly Unit[]): Record
   return out;
 }
 
-/**
- * A stop with its words: the full label for a screen reader, and "Start" over
- * the current skill — or, on the first stop of a unit that can be jumped to,
- * the offer to jump.
- */
+/** A stop with its screen-reader label, and "Start" over the current skill or "Jump here?" on a unit that can be jumped to. */
 function PathStopView({
   placed,
   unit,
@@ -708,13 +657,7 @@ function PathStopView({
   );
 }
 
-/**
- * Between one unit and the next, a quiet line across the page with the next
- * unit's number and name between two hairlines in the grey of the line ahead,
- * so a long path reads in chapters and each says where it begins. The name
- * wraps rather than being cut. The first unit of a section has its heading
- * instead.
- */
+/** The divider before each unit after a section's first: its number and name between two hairlines. The name wraps. */
 function UnitDivider({ number, title }: { number: number; title: string }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
@@ -725,7 +668,7 @@ function UnitDivider({ number, title }: { number: number; title: string }): Reac
       <View style={[styles.hairline, { backgroundColor: REST[scheme].line }]} />
       <View style={styles.dividerWords}>
         <Text style={[styles.dividerEyebrow, { color: colors.textSecondary }]}>{chapter}</Text>
-        {/* the course's own words: on a right-to-left page they line up with it and still read their own way */}
+        {/* Course text keeps its own direction on a right-to-left page. */}
         <Text style={[styles.dividerTitle, dir.free, { color: colors.textPrimary }]}>{title}</Text>
       </View>
       <View style={[styles.hairline, { backgroundColor: REST[scheme].line }]} />
@@ -733,19 +676,14 @@ function UnitDivider({ number, title }: { number: number; title: string }): Reac
   );
 }
 
-/** "Chapter 2, Family & Food", or "Section 1, Chapter 2, Family & Food": a unit's place and name, said as one heading. */
+/** A unit's place and name as one heading: "Section 1, Chapter 2, Family & Food". */
 function unitHeading(number: string, title: string, section?: string | null): string {
   return section ? `${section}, ${number}, ${title}` : `${number}, ${title}`;
 }
 
 /**
- * A unit's heading, in its colour on a darker lip of the same colour:
- * "Section 1 · Chapter 2" over its name (the section left out in a course of
- * one), the guide to its grammar on the far side as a book — where the unit
- * has notes — and the map of every unit beside it. The first unit of the open
- * section opens under it, and the same face is pinned to the top of the page
- * as the units are scrolled through (PinnedUnit), so the one always takes the
- * other's place. Number and name are one heading, read as one.
+ * A unit's heading in its colour: "Section 1 · Chapter 2" over its name (no section in a single-section course),
+ * with the guide's book button where the unit has notes and the unit map beside it. PinnedUnit wears the same face.
  */
 function UnitFace({
   number,
@@ -773,7 +711,7 @@ function UnitFace({
     <View style={[styles.pinLip, { backgroundColor: tone.lip }]} testID={testID}>
       <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: tone.fill }]}>
         <View style={styles.pinWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(chapter, title, sectionWords)}>
-          {/* both wrap rather than being cut: "Abschnitt 1 · Kapitel 2" is long beside two buttons on a narrow phone */}
+          {/* Both wrap: "Abschnitt 1 · Kapitel 2" is long beside two buttons on a narrow phone. */}
           <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{eyebrow}</Text>
           <Text style={[styles.pinTitle, dir.free, { color: tone.ink }]}>{title}</Text>
         </View>
@@ -805,13 +743,8 @@ function UnitFace({
 }
 
 /**
- * A section of the course that is not open, as one card: its number
- * ("Section 2"), its level by the app's own plain name for it ("Beginner")
- * with a line saying what that is like, and where it stands — done, how far
- * the learner is through it, or, shut, how many chapters wait in it and what
- * opens it. A section done or begun opens when tapped; a shut one stays shut,
- * and offers the test to jump to it where the course allows ("Jump here?",
- * JumpSheet).
+ * A section that is not open, as a card: its number, level name and description, and progress, or for a shut
+ * section how many chapters it holds. Done or begun sections open on tap; shut ones may offer a jump test.
  */
 function SectionCard({ section, here, onOpen, onJump }: { section: Section; here: boolean; onOpen: () => void; onJump?: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -900,23 +833,16 @@ function SectionCard({ section, here, onOpen, onJump }: { section: Section; here
 }
 
 /**
- * The unit being scrolled through, pinned to the top of the page once its own
- * heading has gone up out of sight: "Section 1 · Chapter 2" over its name, in
- * the unit's colour, with its guide and the map of every unit one tap away —
- * the same face the heading has, so the one takes the other's place.
- *
- * It arrives as the heading goes up under it — a short fade, settling down a
- * few points — and, scrolled on into the next unit, it turns into that one:
- * the new colour and name cross-fade in over the old (`duration.base`,
- * opacity alone, on the native driver). Under Reduce Motion it simply
- * appears, and simply changes.
+ * The unit being scrolled through, pinned to the top once its own heading has scrolled away, with the heading's
+ * face. It fades in as the heading leaves and cross-fades to the next unit (`duration.base`, opacity only, native
+ * driver). Under Reduce Motion it appears and changes without animating.
  */
 export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => void }): React.JSX.Element {
   const reduce = useReducedMotion();
   const arrive = useEnter(!reduce, 0, duration.base);
   const dropIn = { opacity: arrive, transform: [{ translateY: arrive.interpolate({ inputRange: [0, 1], outputRange: [-PIN_DROP, 0] }) }] };
   const fade = useRef(new Animated.Value(1)).current;
-  // the unit it is turning from, drawn under the new one while that fades in
+  // The previous unit, drawn under the new one while it fades in.
   const [from, setFrom] = useState<UnitPlace | null>(null);
   const last = useRef(unit);
   useEffect(() => {
@@ -935,7 +861,7 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
       if (finished) setFrom(null);
     });
     return () => run.stop();
-    // a new unit, not a new object for the same one, is what turns it
+    // Only a new unit turns it, not a new object for the same one.
   }, [unit.unitId, reduce]);
   const face = (u: UnitPlace, rail?: () => void) => (
     <UnitFace number={u.number} title={u.title} tone={u.tone} section={u.section} openGuide={u.openGuide} onRail={rail} />
@@ -955,11 +881,7 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
 /** How far the pinned unit settles down as it arrives. */
 const PIN_DROP = 6;
 
-/**
- * The path while the course loads: a unit's heading and its first stops, on
- * the same zigzag and at the same spacing as the real ones (the geometry is
- * shared), so the course drops into the shape that held its place.
- */
+/** The path while the course loads, on the same zigzag and spacing as the real one, so the course drops into place. */
 export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
@@ -1000,13 +922,13 @@ const styles = StyleSheet.create({
   unit: { gap: 0 },
   divider: { alignItems: 'center', gap: spacing.sm + 4, paddingHorizontal: spacing.xs, paddingVertical: spacing.md },
   hairline: { flex: 1, height: StyleSheet.hairlineWidth },
-  // the words between the hairlines wrap in their own share of the line rather than pushing them off it
+  // The words wrap within their share of the line rather than pushing the hairlines off it.
   dividerWords: { flexShrink: 1, maxWidth: '72%', alignItems: 'center', gap: 2 },
   dividerEyebrow: { ...sectionLabel, textAlign: 'center' },
   dividerTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
-  // edge to edge: the land runs under the page's gutters to the screen's sides
+  // The land runs under the page's gutters to the screen's edges.
   path: { position: 'relative', marginHorizontal: -layout.gutter },
-  // and a little under the heading above it
+  // And a little under the heading above.
   pathUnderHead: { marginTop: -spacing.md },
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
   pinLip: { borderRadius: radii.lg, paddingBottom: 4, zIndex: 2 },

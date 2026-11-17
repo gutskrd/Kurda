@@ -20,22 +20,12 @@ type Stop = PathStop<SkillNode>;
 type Unit = PathUnit<SkillNode>;
 
 /**
- * What a stop on the path opens: a sheet from the foot of the screen with what
- * the stop is, how far along it is, and one thing to do — "Start",
- * "Continue", "Practise again", or for one still closed a kind line saying
- * what opens it.
+ * The sheet a path stop opens: what the stop is, its progress, and one action ("Start", "Continue", "Practise
+ * again"), or for a locked stop what opens it. A skill lists its lessons, each replayable once open, its stars and
+ * current round, and the XP its next lesson pays (shared `lessonXpRange`).
  *
- * A skill's lessons are listed too, each one a way in once it is open, so a
- * finished lesson can be played again on its own; and once it has a star, its
- * stars and the round it is in, with what another round earns. Above the
- * button, what the lesson it opens pays (shared `lessonXpRange`, the server's
- * own numbers): a first time through, or a replay's smaller share.
- *
- * A chapter's story is its prize: shut, it says what opens it; open, it says
- * the chapter is complete, opens the story in the reader, and offers the
- * chapter's own review in practice (`onPractise`) — what the chest at a
- * chapter's end offered before the story took its place, and still offers in
- * a unit that has no story.
+ * A chapter's story says what opens it while shut; once open, it opens the reader and offers the chapter's review
+ * (`onPractise`), as a unit's chest does where there is no story.
  */
 export function StopSheet({
   open,
@@ -52,13 +42,13 @@ export function StopSheet({
   onClose: () => void;
   onLesson: (lessonId: string) => void;
   onReview: () => void;
-  /** the chapter's own review in practice */
+  /** Opens the chapter's review in practice. */
   onPractise: (unitId: string) => void;
   onTips: (skill: SkillNode) => void;
   onStory: (slug: string) => void;
 }): React.JSX.Element {
   return (
-    // no title in the header: the stop's own name heads the card, under what it belongs to
+    // No header title: the stop's own name heads the card.
     <BottomSheet visible={open !== null} onClose={onClose} contentStyle={styles.scroller}>
       {open && tone ? (
         <SheetScrollView contentContainerStyle={styles.body}>
@@ -111,7 +101,7 @@ function Card({
     );
   }
 
-  // the chapter is complete: said in gold, as what was won
+  // "Chapter complete", in gold as something won.
   const complete = (
     <View style={[styles.won, { flexDirection: dir.row, alignSelf: dir.rtl ? 'flex-end' : 'flex-start', backgroundColor: colors.gold }]} testID="lp-chapter-complete">
       <Icon name="check" size={14} color={colors.textOnGold} />
@@ -153,7 +143,7 @@ function Card({
   const { skill } = stop;
   const lessons = skill.lessons ?? [];
   const states = lessonStates(skill);
-  // the round being played: its lessons finished, and once every round is played, all of them
+  // Progress through the current round, or through all lessons before the first star.
   const share = stop.lessonsTotal > 0 ? (stop.rounds > 0 ? stop.pieces / stop.lessonsTotal : stop.lessonsDone / stop.lessonsTotal) : 0;
   const launch = stop.launch;
   const action =
@@ -165,7 +155,7 @@ function Card({
             label: stop.state === 'done' ? t('coursemap.path.again') : stop.lessonsDone > 0 ? t('learn.continue.button') : t('coursemap.path.start'),
             go: () => onLesson(launch),
           };
-  // a finished skill opens its first lesson again, which pays a replay's share
+  // A finished skill reopens its first lesson, which pays the replay share.
   const xp = action && stop.finish !== 'refresh' ? lessonXpRange(stop.state === 'done') : null;
 
   return (
@@ -221,7 +211,7 @@ function Card({
         <View style={styles.progress}>
           {stop.rounds > 0 ? <Stars rounds={stop.rounds} /> : null}
           {stop.rounds < TOPIC_STARS ? (
-            // a place on the road, not something won: the app's violet, as the ring's pieces are
+            // Progress, not a reward, so the app's violet like the ring's pieces.
             <View style={[styles.bar, { backgroundColor: colors.controlTrack }]}>
               <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }, dir.rtl && styles.barEnd]} />
             </View>
@@ -263,11 +253,7 @@ function Card({
   );
 }
 
-/**
- * A topic's stars in its sheet, three in a row: one in the app's gold for
- * each round played, the rest the ring's empty track. Said by the line under
- * them, so a screen reader passes them by.
- */
+/** A topic's three stars: gold for each round played, the rest the ring's track. Hidden from screen readers, as the line below says it. */
 function Stars({ rounds }: { rounds: number }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const dir = useDirection();
@@ -291,13 +277,13 @@ function Stars({ rounds }: { rounds: number }): React.JSX.Element {
 const STAR_SIZE = 26;
 
 const styles = StyleSheet.create({
-  // the gutter is the scroll view's own, so the card scrolls edge to edge
+  // The scroll view keeps no gutter so the card scrolls edge to edge.
   scroller: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm + 4 },
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   title: { ...display(typography.sizes.lg) },
   line: { fontSize: typography.sizes.sm, lineHeight: 21 },
-  // the tale's own name, in Kurdish, under "Hamo's story"
+  // The tale's Kurdish title, under "Hamo's story".
   tale: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontStyle: 'italic' },
   small: { fontSize: typography.sizes.xs },
   lessons: { gap: 2 },
