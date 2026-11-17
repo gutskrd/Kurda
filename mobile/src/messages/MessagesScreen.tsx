@@ -52,38 +52,25 @@ interface RequestRow {
   userId: string;
   username: string;
   displayName?: string | null;
-  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose) */
+  /** Their picture, as the server resolves it (an uploaded photo, else the avatar they chose). */
   avatarUrl?: string | null;
 }
 
 /**
- * Messages: every conversation, with one person or with a group, and the
- * friend requests waiting on you.
+ * Messages: every conversation, with one person or a group, and friend requests.
  *
- * The requests are a single row at the top — "Friend requests (2)" — rather
- * than rows among the chats, because a request is the one thing in here
- * waiting on the reader, and in a list sorted by time it would sink under a
- * morning of chatter. The chats follow, newest first, an unread one in bold
- * with its count.
+ * Requests are one row at the top ("Friend requests (2)") rather than rows among chats, since they are the one
+ * thing waiting on the reader and would sink in a time-sorted list. Chats follow, newest first, unread in bold
+ * with a count. The field filters what is loaded, and chips narrow to unread or groups. A moderator wellbeing
+ * check is pinned above everything until read.
  *
- * The field filters what is already loaded (no request per letter), and the
- * chips narrow to what is unread or to groups. A message from the moderators
- * that checks on somebody's wellbeing is pinned above everything until it is
- * read: it is the kind of message that must never be missed.
- *
- * A group starts here, in one tap: "New group" is a row at the head of the
- * list (and the button of the empty states, which stand in for the row when
- * there is nothing under it). It asks for a name; the group's chat then opens
- * with the sheet for adding friends, since a group is private and its owner
- * bringing friends in is the only way anyone else comes into it. There are
- * no groups to find and none to join.
- *
- * Notifications are not here any more. They are the bell at the top of
- * every tab: what arrived *about* you is not a conversation *with* anybody.
+ * "New group" is a row at the head of the list (or the empty state's button). It asks for a name, then opens the
+ * group's chat with the add-friends sheet, since groups are private and only their owner adds people.
+ * Notifications are the bell at the top of every tab, not here.
  */
 export function MessagesScreen(): React.JSX.Element {
   const { client } = useAuth();
-  // a guest has no conversations and may start none: the tab says what an account opens (auth/AccountGate)
+  // A guest has no conversations and can start none, so the tab shows what an account opens (auth/AccountGate).
   const { isGuest, require } = useAccountGate();
   const navigation = useNavigation<TabNavigation>();
   const { colors } = useTheme();
@@ -99,13 +86,13 @@ export function MessagesScreen(): React.JSX.Element {
   const [groups, setGroups] = useState<GroupConversation[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [caringItems, setCaringItems] = useState<InboxItem[]>([]);
-  // letters by bird: your bird and your pen pals, for the row at the head of the list
+  // Letters by bird: your bird and your pen pals, for the row at the head of the list.
   const [letters, setLetters] = useState<LettersHome | null>(null);
   const [caring, setCaring] = useState<CaringMessage | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  // the conversations could not be read at all: say so and offer to try again, rather than "No messages yet"
+  // The conversations could not be loaded at all: say so and offer a retry, rather than "No messages yet".
   const [failed, setFailed] = useState(false);
-  // starting a group: the sheet, and the limit that would refuse one, counted from the reader's own groups as the server counts them
+  // Starting a group: the sheet, and the limit that could refuse it, counted from the reader's own groups as the server does.
   const [composing, setComposing] = useState(false);
   const [createLimit, setCreateLimit] = useState<LimitDetails | null>(null);
 
@@ -113,7 +100,7 @@ export function MessagesScreen(): React.JSX.Element {
   useScrollToTop(listRef);
 
   const load = useCallback(async () => {
-    // every one of these is refused to a guest, and the tab shows them none of it
+    // Every one of these refuses guests, so the tab shows a guest none of it.
     if (isGuest) return;
     const [c, g, gu, r, n, l] = await Promise.all([
       client.get<{ conversations: DirectConversation[] }>('/chat/conversations'),
@@ -121,10 +108,10 @@ export function MessagesScreen(): React.JSX.Element {
       client.get<{ unread: { groupId: string; unread: number }[] }>('/me/groups/unread'),
       client.get<{ requests: RequestRow[] }>('/friends/requests'),
       client.get<{ notifications: InboxItem[] }>('/me/notifications'),
-      // with the letters still to land, so listing them here never counts one as landed at the window (letters/homePath.ts)
+      // With the letters still to land, so listing them here never marks one as landed at the window (letters/homePath.ts).
       client.get<LettersHome>(LETTERS_HOME_PATH),
     ]);
-    // a server from before letters answers with nothing to show: the row is simply not drawn
+    // A server from before letters answers with nothing to show: the row is simply not drawn.
     if (l.ok && Array.isArray(l.data?.penPals)) setLetters(l.data);
     const unreadByGroup = new Map((gu.ok ? gu.data.unread : []).map((u) => [u.groupId, u.unread]));
     const nextGroups: GroupConversation[] = g.ok
@@ -140,7 +127,7 @@ export function MessagesScreen(): React.JSX.Element {
     if (n.ok) {
       setCaringItems(n.data.notifications.filter((i) => !i.readAt && resolveDeepLink(i.data)?.screen === 'CaringMessage'));
     }
-    // the badge on the tab, from what was just read rather than asked for again
+    // The tab badge, from what was just loaded rather than fetched again.
     report({
       ...(c.ok ? { chats: c.data.conversations.reduce((sum, x) => sum + Math.max(0, x.unread), 0) } : {}),
       ...(gu.ok ? { groups: gu.data.unread.reduce((sum, x) => sum + Math.max(0, x.unread), 0) } : {}),
@@ -180,7 +167,7 @@ export function MessagesScreen(): React.JSX.Element {
     () => messageRows({ chats: chats ?? [], groups, filter, query, preview }),
     [chats, groups, filter, query, preview],
   );
-  // the first screenful of conversations rises in once, as the list arrives
+  // The first screenful of conversations rises in once, as the list arrives.
   const entering = useListEntrance(chats !== null && rows.length > 0);
   const unreadCount = useMemo(
     () => (chats ?? []).filter((c) => c.unread > 0).length + groups.filter((g) => g.unread > 0).length,
@@ -196,7 +183,7 @@ export function MessagesScreen(): React.JSX.Element {
   const newGroup = () => setComposing(true);
   const nothingAtAll = chats !== null && chats.length === 0 && groups.length === 0;
   const typed = query.trim().length > 0;
-  // the row that starts a group: at the head of a list that has something in it (an empty one offers it as its button)
+  // The new-group row heads a non-empty list; an empty one offers it as its button.
   const offersNewGroup = chats !== null && !nothingAtAll && !typed && (filter === 'all' || (filter === 'groups' && groups.length > 0));
 
   const header = (
@@ -235,7 +222,7 @@ export function MessagesScreen(): React.JSX.Element {
                 <InitialsAvatar name={r.username} id={r.userId} size={32} photoUrl={r.avatarUrl ?? undefined} />
               </View>
             ))}
-            {/* friend requests are tickets, as invites to play are: the glyph on the faces' corner */}
+            {/* Friend requests are tickets, as invites to play are: the glyph on the faces' corner. */}
             <View style={[styles.ticketBadge, dir.row === 'row-reverse' ? styles.ticketBadgeLeft : styles.ticketBadgeRight]}>
               <TicketBadge tone="friend" size={18} ring={colors.surface} />
             </View>
@@ -297,10 +284,8 @@ export function MessagesScreen(): React.JSX.Element {
     );
 
   /*
-   * A guest's Messages: the tab, its title and its pencil as everyone has
-   * them, and under the title what an account opens here — not an empty list
-   * saying to find friends, which a guest cannot do either. The pencil and
-   * the button both make the offer.
+   * A guest's Messages: the same tab, title and pencil, with what an account opens instead of an empty list; the
+   * pencil and the button both offer an account.
    */
   if (isGuest) {
     return (
@@ -309,7 +294,7 @@ export function MessagesScreen(): React.JSX.Element {
           title={t('nav.messages')}
           action={<HeaderButton icon="compose" label={t('messages.new')} onPress={() => require('message')} />}
         />
-        {/* nothing here takes typing, but a keyboard still up from elsewhere must not swallow the first tap on the button */}
+        {/* Nothing here takes typing, but a keyboard still up from elsewhere must not swallow the first tap on the button. */}
         <ScrollView contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.guest} testID="messages-guest">
             <View style={[styles.guestMark, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -334,7 +319,7 @@ export function MessagesScreen(): React.JSX.Element {
 
   return (
     <GradientBackground>
-      {/* the tab's name and its pencil stay at the top, in reach however far the list goes */}
+      {/* The tab's name and its pencil stay at the top, in reach however far the list goes. */}
       <TabHeader title={t('nav.messages')} action={<HeaderButton icon="compose" label={t('messages.new')} onPress={openSlide} />} />
 
       <FlatList
@@ -379,7 +364,7 @@ export function MessagesScreen(): React.JSX.Element {
         onClose={() => setComposing(false)}
         onCreated={(id, name) => {
           setComposing(false);
-          // on to its chat, where the sheet for adding friends opens by itself
+          // On to its chat, where the sheet for adding friends opens by itself.
           navigation.navigate('GroupThread', { groupId: id, name, addFriends: true });
         }}
       />
@@ -387,11 +372,7 @@ export function MessagesScreen(): React.JSX.Element {
   );
 }
 
-/**
- * One conversation: who, the last line, when, and whether anything in it is
- * unread — which is said three ways, because colour alone is not a signal:
- * the name turns bold, the count appears, and a screen reader hears it.
- */
+/** One conversation: who, the last line, when, and unread state shown three ways (bold name, count, announced), not by colour alone. */
 function ConversationRow({
   row,
   locale,
@@ -408,7 +389,7 @@ function ConversationRow({
   const dir = useDirection();
   const unread = row.unread > 0;
   const line = row.kind === 'direct' ? preview(row.chat) : membersLine(t, row.group.memberCount);
-  // a gift or a game has no words of its own: its mark goes before the line that stands in for them
+  // A gift or a game has no words of its own: its mark goes before the line that stands in for them.
   const mark = row.kind === 'direct' ? previewIcon(row.chat.lastKind) : null;
   const when = row.kind === 'direct' ? listTime(row.at, locale) : '';
   const label = unread ? t('messages.unreadLabel', { name: row.name, count: row.unread }) : row.name;
@@ -423,7 +404,7 @@ function ConversationRow({
       {row.kind === 'direct' ? (
         <InitialsAvatar name={row.name} id={row.chat.userId} size={52} photoUrl={row.chat.avatarUrl ?? undefined} />
       ) : (
-        // a group in its rounded square, so it is never mistaken for a person with that name
+        // A group in its rounded square, so it is never mistaken for a person with that name.
         <GroupAvatar name={row.name} id={row.group.id} size={52} photoUrl={row.group.photoUrl} />
       )}
       <View style={styles.rowMain}>
@@ -455,11 +436,7 @@ function ConversationRow({
   );
 }
 
-/**
- * The list while it loads: conversation rows in grey, at the row's own size
- * — the 52pt picture, the name and the time on one line, the last message
- * under it — as many as the screen holds.
- */
+/** The loading placeholder: grey conversation rows at the real size (52 pt picture, name and time, last message), as many as fit. */
 function ConversationsSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
@@ -485,10 +462,8 @@ function ConversationsSkeleton(): React.JSX.Element {
 }
 
 /**
- * The way into letters by bird (letters/LettersScreen), at the head of the
- * conversations, as the website has it: your bird, and in a few words what is
- * new — a bird at your window, a letter waiting to be answered, your bird out
- * — or, with nothing yet, what letters are.
+ * The way into letters by bird (letters/LettersScreen) at the head of the conversations, as on the web: your bird
+ * and a few words on what is new (a bird at your window, a letter to answer, your bird out), or what letters are.
  */
 function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -496,7 +471,7 @@ function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void 
   const dir = useDirection();
   const unread = home.penPals.reduce((n, p) => n + p.unread, 0);
   const waiting = home.penPals.find((p) => p.yourTurn);
-  // a bird at your window waits for you first, then a pen pal's letter, then your own bird out
+  // A bird at your window waits for you first, then a pen pal's letter, then your own bird out.
   const visitor = home.visitor ?? null;
   const line = visitor
     ? t('letters.visitor.title', { name: visitor.person.name })
@@ -505,7 +480,7 @@ function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void 
       : home.out
         ? t('letters.out.title')
         : t('letters.row.invite');
-  // drawn as an unread conversation is while a bird or a letter waits on you
+  // Drawn as an unread conversation is while a bird or a letter waits on you.
   const lit = unread > 0 || visitor !== null;
   return (
     <PressableScale
@@ -538,7 +513,7 @@ function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void 
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  // the page's gutter, inside the list's own narrower one
+  // The page's gutter, inside the list's own narrower one.
   head: { paddingHorizontal: layout.gutter - spacing.sm, gap: spacing.md - 4, paddingBottom: spacing.sm },
   list: { paddingHorizontal: spacing.sm, paddingTop: spacing.xs },
   listHead: { gap: spacing.sm, paddingHorizontal: spacing.sm, marginBottom: spacing.xs },
@@ -570,10 +545,10 @@ const styles = StyleSheet.create({
   when: { fontSize: typography.sizes.xs },
   count: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   countText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  // "New group": a row shaped like the requests row above it, its mark where the faces are
+  // "New group": a row shaped like the requests row above it, its mark where the faces are.
   newGroupMark: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
-  // a guest's tab: the offer, centred under the title with room above it
+  // A guest's tab: the offer, centred under the title with room above it.
   guest: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xl },
   guestMark: { width: 64, height: 64, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
   guestTitle: { ...display(typography.sizes.lg), textAlign: 'center' },

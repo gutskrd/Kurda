@@ -30,15 +30,9 @@ interface RequestRow {
 }
 
 /**
- * The friend requests waiting on you, each with Accept and Decline.
- *
- * Opened from the row at the top of Messages. A request is answered here and
- * shows it at once — the answer is not in doubt, and a row that stays as it
- * was while the request flies reads as a button that did nothing. Each one
- * is a friendship ticket (social/FriendTicket): Accept tears its stub off and
- * stamps it "Friends" for a moment before it leaves the list, Decline folds
- * it away. Tapping the person opens their profile first, for anyone who
- * wants to know who is asking before they answer.
+ * Friend requests waiting on you, each with Accept and Decline, opened from the row at the top of Messages.
+ * Answers show at once, as tickets (social/FriendTicket): Accept tears the stub and stamps "Friends" before the
+ * row leaves; Decline folds it away. Tapping the person opens their profile first.
  */
 export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -46,7 +40,7 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
   const { t } = useI18n();
   const { refresh } = useUnread();
   const [requests, setRequests] = useState<RequestRow[] | null>(null);
-  // a list that could not be loaded says so, rather than passing for an empty one
+  // A list that could not be loaded says so, rather than passing for an empty one.
   const [error, setError] = useState<ApiError | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -62,10 +56,10 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
       return () => {
         live = false;
       };
-      // a retry asks again
+      // A retry asks again.
     }, [client, attempt]),
   );
-  // pulled down, the requests are read again; a failure keeps the list that is there
+  // Pulled down, the requests are read again; a failure keeps the list that is there.
   const pull = usePullRefresh(() =>
     client.get<{ requests: RequestRow[] }>('/friends/requests').then((r) => {
       if (r.ok) {
@@ -77,7 +71,7 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
 
   const reduce = useReducedMotion();
   const { announce, region } = useAnnouncer();
-  /** answered on this phone: stamped "Friends" or folding away, until it leaves the list */
+  /** Answered on this phone: stamped "Friends" or folding away, until it leaves the list. */
   const [answers, setAnswers] = useState<Record<string, RequestAnswer>>({});
   const leaving = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   useEffect(() => () => leaving.current.forEach(clearTimeout), []);
@@ -94,7 +88,7 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
       if (accept) announce(t('friends.nowFriends', { name: row.displayName ?? row.username }));
       const at = (requests ?? []).findIndex((r) => r.userId === row.userId);
       setAnswers((a) => ({ ...a, [row.userId]: accept ? 'accepted' : 'declined' }));
-      // stamped for a moment, or folded away, and then out of the list
+      // Stamped for a moment, or folded away, and then out of the list.
       let gone = false;
       const drop = (): void => {
         gone = true;
@@ -110,9 +104,9 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
           refresh();
           return;
         }
-        // the answer did not get through: the request comes back where it was, to be answered again
+        // The answer did not get through, so the request returns to be answered again.
         haptic('error');
-        // a friend list that is full (theirs or yours) will not empty on a retry, so it is said (limits/limitCopy.ts)
+        // A full friend list (theirs or yours) will not clear on retry, so say so (limits/limitCopy.ts).
         const limit = limitErrorText(res.error, t);
         if (limit) Alert.alert(limit);
         clearTimeout(leaving.current.get(row.userId));
