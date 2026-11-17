@@ -45,6 +45,7 @@ import { leftResults, reportGameFinished, useRatingBoxInset } from '../feedback/
 import { applyTypingChange, typeKey } from './input';
 import { RaceText } from './RaceText';
 import { finishRace, startRace, type RaceGame, type RaceResult } from './raceApi';
+import { dialectNameKey } from '../i18n/dialectName';
 
 const LENGTHS: readonly RaceLength[] = [1, 2, 3];
 
@@ -55,10 +56,6 @@ const LENGTH_KEY: Record<RaceLength, TranslationKey> = {
 };
 
 const DIALECTS: readonly TypingDialect[] = ['kurmanci', 'sorani'];
-const DIALECT_KEY: Record<TypingDialect, TranslationKey> = {
-  kurmanci: 'games.race.kurmanci',
-  sorani: 'games.race.sorani',
-};
 
 /** How often the on-screen clock ticks. The score is timed server-side. */
 const TICK_MS = 100;
@@ -309,7 +306,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                     options={DIALECTS}
                     value={dialect}
                     onChange={(d) => setPrefs({ raceDialect: d })}
-                    labelOf={(d) => t(DIALECT_KEY[d])}
+                    labelOf={(d) => t(dialectNameKey(d))}
                   />
                 </View>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.length')}</Text>

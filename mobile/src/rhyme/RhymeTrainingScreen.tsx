@@ -20,8 +20,9 @@ import { TABLE } from '../impostor/table';
 import { useDirection } from '../reports/direction';
 import { useCourseDialect } from '../learn/courseDialect';
 import { MissedRhymes, wordDirection, type RhymeHint } from '../wordle/WordAnswer';
-import { DIALECT_NAME, isRhymeOffered, offeredRhymeDialects, openingRhymeDialect, useRhymeOffered } from './availability';
+import { isRhymeOffered, offeredRhymeDialects, openingRhymeDialect, useRhymeOffered } from './availability';
 import type { Dialect } from './matchApi';
+import { dialectNameKey } from '../i18n/dialectName';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane' | 'inflected';
@@ -209,7 +210,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
                   setPicked(d);
                   setNote(null);
                 }}
-                labelOf={(d) => DIALECT_NAME[d]}
+                labelOf={(d) => t(dialectNameKey(d))}
                 groupLabel={t('games.dialect')}
                 wrap
               />

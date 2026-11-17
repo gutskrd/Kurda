@@ -17,13 +17,6 @@ import type { Dialect } from './matchApi';
 
 export const RHYME_DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
 
-/**
- * A variety is called by its own name in every language, the way a language
- * is. Not a catalogue entry: translating "Kurmancî" into Kurmancî nine times
- * is how you end up with nine spellings of one word.
- */
-export const DIALECT_NAME: Record<Dialect, string> = { kurmanci: 'Kurmancî', sorani: 'Soranî' };
-
 /** What the server said, variety by variety; null until it has said anything useful. */
 export type RhymeOffered = Partial<Record<Dialect, boolean>> | null;
 

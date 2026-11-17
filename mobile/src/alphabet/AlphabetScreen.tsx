@@ -37,6 +37,7 @@ import { scriptRow, scriptText } from './parts';
 import { Practice } from './Practice';
 import { useSeen } from './seen';
 import { useClipPlayer } from './useClipPlayer';
+import { dialectNameKey } from '../i18n/dialectName';
 
 const SCRIPTS: readonly AlphabetScript[] = ['kmr', 'ckb'];
 
@@ -186,7 +187,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
             options={SCRIPTS}
             value={script}
             onChange={setChosen}
-            labelOf={(s) => t(s === 'kmr' ? 'games.race.kurmanci' : 'games.race.sorani')}
+            labelOf={(s) => t(dialectNameKey(s))}
             groupLabel={t('alphabet.script.label')}
           />
           <View style={styles.intro}>

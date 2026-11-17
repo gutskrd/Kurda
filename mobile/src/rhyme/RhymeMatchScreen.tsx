@@ -45,7 +45,8 @@ import { GameArt } from '../games/GameArt';
 import { useDirection } from '../reports/direction';
 import { useCourseDialect } from '../learn/courseDialect';
 import { MissedRhymes, wordDirection } from '../wordle/WordAnswer';
-import { DIALECT_NAME, isRhymeOffered, offeredRhymeDialects, openingRhymeDialect, useRhymeOffered } from './availability';
+import { isRhymeOffered, offeredRhymeDialects, openingRhymeDialect, useRhymeOffered } from './availability';
+import { dialectNameKey } from '../i18n/dialectName';
 
 const REJECT_KEY: Record<RhymeReject, TranslationKey> = {
   'not-a-word': 'games.rhyme.reject.notAWord',
@@ -151,7 +152,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
                     setPicked(d);
                     setError(null);
                   }}
-                  labelOf={(d) => DIALECT_NAME[d]}
+                  labelOf={(d) => t(dialectNameKey(d))}
                   groupLabel={t('games.dialect')}
                   wrap
                 />

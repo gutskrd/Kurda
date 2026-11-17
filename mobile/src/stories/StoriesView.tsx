@@ -27,7 +27,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { activeGames, getLibrary, listStories, searchStories, setBookmark } from './api';
 import { StoryCover } from './covers';
-import { DIALECT_NAME, MODE_KEY, categoryLabel, categoryTitle, levelName } from './labels';
+import { MODE_KEY, categoryLabel, categoryTitle, levelName } from './labels';
 import { LibraryFilterChips, LibraryFilterSheet, NO_FILTER, activeParts, filterButtonLabel, isFiltering, isPlainFilter, libraryQuery, type LibraryFilter } from './LibraryFilter';
 import { shownDialect, useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
@@ -38,6 +38,7 @@ import { pressedDim } from '../theme/motion';
 import { LoreEntry } from '../lore/LoreEntry';
 import { textIn } from '../lore/labels';
 import { metaFor } from './legend';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /** A story's row in every list it is in, with `me` changed: a bookmark flips everywhere at once. */
 function withMe(list: StoryListItem[], id: string, patch: (me: StoryListItem['me']) => StoryListItem['me']): StoryListItem[] {
@@ -429,7 +430,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
             options={STORY_DIALECTS}
             value={dialect}
             onChange={chooseDialect}
-            labelOf={(d) => DIALECT_NAME[d]}
+            labelOf={(d) => t(dialectNameKey(d))}
             groupLabel={t('stories.variety')}
           />
         ) : (

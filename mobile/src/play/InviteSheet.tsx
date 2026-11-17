@@ -33,7 +33,6 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useCourseDialect } from '../learn/courseDialect';
 import { listStories } from '../stories/api';
-import { DIALECT_NAME } from '../stories/labels';
 import { StoryPresetFields, useCanHostOpen } from '../stories/SetupSheet';
 import { changeSetup, initialSetup, inviteSettings, type SetupState } from '../stories/setup';
 import { shownDialect, useStoryPrefs } from '../stories/prefs';
@@ -56,6 +55,7 @@ import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { TableChoices } from '../games/partyChoices';
 import { pressedDim } from '../theme/motion';
+import { dialectNameKey } from '../i18n/dialectName';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -525,7 +525,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
                   options={rhymeDialects}
                   value={rhymeDialect}
                   onChange={setDialect}
-                  labelOf={(d) => DIALECT_NAME[d]}
+                  labelOf={(d) => t(dialectNameKey(d))}
                 />
               </View>
             ) : null
@@ -537,7 +537,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
                 options={STORY_DIALECTS}
                 value={dialect}
                 onChange={setDialect}
-                labelOf={(d) => DIALECT_NAME[d]}
+                labelOf={(d) => t(dialectNameKey(d))}
               />
             </View>
           )}

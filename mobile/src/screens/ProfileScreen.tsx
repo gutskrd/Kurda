@@ -47,6 +47,7 @@ import { formatNumber } from '../i18n/format';
 import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /** How big the face is: the largest thing on the screen, in the middle, over the numbers. */
 const AVATAR = 96;
@@ -360,7 +361,7 @@ function AccountProfile() {
       {
         key: 'course',
         art: <CourseFlag />,
-        value: t(course === 'ckb' ? 'games.race.sorani' : 'games.race.kurmanci'),
+        value: t(dialectNameKey(course)),
         label: t('profile.stat.course'),
         onPress: () => navigation.navigate('Tabs', { screen: 'Learn' }),
       },

@@ -28,7 +28,6 @@ import type { TranslationKey } from '../i18n/translations';
 import { useCourseDialect } from '../learn/courseDialect';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { PartyTimer } from '../party/Composer';
-import { PARTY_DIALECT_NAME } from '../party/PartyStart';
 import { GameRoom, multiSeatName } from '../play/GameRoom';
 import { InviteSheet } from '../play/InviteSheet';
 import { useGameView } from '../play/useGameView';
@@ -58,6 +57,7 @@ import {
   listed,
   type TableSeat,
 } from './WhoAmIStage';
+import { dialectNameKey } from '../i18n/dialectName';
 
 type TableView = MultiView<WhoAmITableBoard | null>;
 type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<WhoAmITableBoard | null, WhoAmITableOutcome>>>;
@@ -247,7 +247,7 @@ function TableRoom({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpe
         const s = v.settings as { difficulty?: GameDifficulty; minutes?: number };
         return (
           <Text style={[styles.note, { color: colors.textSecondary }]}>
-            {PARTY_DIALECT_NAME[v.dialect]}
+            {t(dialectNameKey(v.dialect))}
             {s.difficulty ? ` · ${t(DIFFICULTY_KEY[s.difficulty])}` : ''}
             {s.minutes ? ` · ${t('games.whoAmI.minutesCount', { count: s.minutes })}` : ''}
           </Text>
