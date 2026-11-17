@@ -24,61 +24,23 @@ import { floating } from '../theme/floating';
 const GLYPH = 24;
 /** Your picture on the Profile tab, a little smaller than the glyphs so its ring fits the same box. */
 const AVATAR = 22;
-/** The room between the bar's edge and the tabs, which is the air round the capsule behind the tab you are on. */
+/** The bar's padding around the tabs, which is the air round the capsule behind the chosen tab. */
 const PAD = 6;
 
 /**
- * The tab bar: four places in one rounded bar that floats over the bottom of
- * the page, each an icon with its word under it.
+ * The tab bar: four places in one solid rounded bar floating over the bottom of the page, each an icon with its word
+ * under it. Each tab screen leaves room for it under its last row (`useTabBarInset`).
  *
- * It floats, clear of the screen's edges, so the page is seen to carry on
- * under and round it and the bar reads as something to hold rather than as
- * the end of the screen. It is solid: nothing shows through between the
- * icons. Each tab screen leaves room for it under its last row
- * (`useTabBarInset`).
+ * The chosen tab is shown three ways, none by colour alone: a solid glyph, a heavier word and a soft capsule behind it,
+ * which slides to the chosen tab (no slide under Reduce Motion). Your own picture is the Profile tab.
  *
- * Every tab says what it is. The bar drew the icons alone for a while, with
- * the name shown only while a tab was held, and a row of glyphs asks to be
- * learnt before it can be used: an open book and a paper plane mean Learn
- * and Messages only to somebody who already knows. A word under each is read
- * at once, in the reader's own language.
+ * Only two things badge: Messages, with unread messages and friend requests (1–9, then "9+"), and Profile, with a dot
+ * for a gift waiting to be unwrapped. Both are said in words to a screen reader. Tapping the tab you are on scrolls its
+ * screen to the top (`useScrollToTop`). Mirrored in right-to-left languages.
  *
- * The tab you are on is told three ways, none of them colour alone: its
- * glyph is drawn solid where the others are in outline, its word is a step
- * heavier, and a soft capsule sits behind it; all three are in the app's
- * violet, the colour of whatever is chosen. The
- * capsule slides along the bar to the tab chosen, so the change of tab is
- * seen moving, not only found. That is all that moves: the bar is the most
- * used control there is, and what is used all day arrives and stops. A tab
- * gives a little under the finger, as every button in the app does, and
- * moving to another gives the light tick of a selection. Somebody who has
- * asked for less motion gets neither the give nor the slide: the capsule is
- * simply behind the tab they are on.
- *
- * Your own picture is the Profile tab, ringed while you are on it.
- *
- * Two things badge, and nothing else does: Messages, with how many unread
- * messages and friend requests are waiting (1–9, then "9+"), and Profile, with
- * a dot when a gift is waiting to be unwrapped. A badge that counts anything
- * else is a badge people learn to ignore. Both are said in words to a screen
- * reader — "Messages, 3 unread" — since a number in a coloured circle is not
- * something VoiceOver can see.
- *
- * Tapping the tab you are already on scrolls its screen back to the top: the
- * bar sends the press either way, and each tab's list listens for it
- * (`useScrollToTop`).
- *
- * In Soranî and Arabic the bar is mirrored, Home on the right, the same as
- * every row on those screens.
- *
- * It is last in the tree, with a z-index and, for Android, where elevation
- * decides what draws on top, an elevation above anything a screen raises.
- * The strip either side of it and under it lets touches through to the page.
- *
- * While the keyboard is up the bar is put away. On Android the window
- * shrinks to make room for the keys, and a bar that floats over the bottom
- * of the window would ride up with it and sit over the list being filtered,
- * just above the keys, where a thumb aiming for a letter finds a tab.
+ * It is last in the tree with a z-index and, for Android, an elevation above anything a screen raises. While the
+ * keyboard is up it is hidden: on Android the window shrinks for the keys, and the bar would ride up over the list
+ * being typed into.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -87,28 +49,25 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const { messages, counts, refresh } = useUnread();
-  // the signed-in session, for the picture on the profile tab
+  // The signed-in session, for the picture on the Profile tab.
   const { user } = useAuth();
 
   const mirrored = dir.row === 'row-reverse';
   const typing = useKeyboardShown();
 
-  // moving between tabs is a good moment to make sure the badges are current
+  // Moving between tabs is a good moment to refresh the badges.
   useEffect(() => {
     refresh({ soon: true });
   }, [state.index, refresh]);
 
   /*
-   * The capsule behind the tab you are on: one shape, a tab wide, moved
-   * along the bar on a transform. The row's width is measured once it is
-   * laid out; until then there is nothing to place it by and it is not
-   * drawn. It arrives where it belongs with no slide the first time, and
-   * slides there on the interface's own spring after that (no bounce, there
-   * within 300 ms) — straight there under Reduce Motion.
+   * The capsule behind the chosen tab: one tab-wide shape moved along the bar on a transform. It is drawn once the row
+   * has been measured, arrives without a slide the first time, and then slides on the interface spring (straight there
+   * under Reduce Motion).
    */
   const [rowWidth, setRowWidth] = useState(0);
   const slot = rowWidth > 0 ? rowWidth / state.routes.length : 0;
-  // counted from the left whichever way the tabs run
+  // Counted from the left whichever way the tabs run.
   const place = mirrored ? state.routes.length - 1 - state.index : state.index;
   const capsuleX = useRef(new Animated.Value(0)).current;
   const capsulePlaced = useRef(false);
@@ -139,7 +98,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             <Animated.View
               pointerEvents="none"
               testID="tab-pill"
-              // a faint wash of the violet the chosen tab is written in, so the place you are on is one thing: its capsule, glyph and word
+              // A faint wash of the violet the chosen tab is written in, so capsule, glyph and word read as one.
               style={[styles.capsule, { width: slot, backgroundColor: `${colors.primary}1F`, transform: [{ translateX: capsuleX }] }]}
             />
           ) : null}
@@ -151,7 +110,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             const ink = focused ? colors.primary : colors.textSecondary;
             const badge = name === 'Messages' ? unreadBadge(messages) : null;
             const dot = name === 'Profile' && counts.gifts > 0;
-            // a screen reader gets the name, and what is waiting
+            // A screen reader gets the name and what is waiting.
             const spoken = badge
               ? t('nav.tabUnread', { tab: full, count: messages })
               : dot
@@ -164,7 +123,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                 navigation.navigate(route.name, route.params);
               }
             };
-            // counted from the left whichever way the tabs run, as the capsule is
+            // Counted from the left whichever way the tabs run, as the capsule is.
             const at = mirrored ? state.routes.length - 1 - i : i;
             return (
               <TabButton
@@ -181,11 +140,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
               >
                 {name === 'Profile' && user ? (
                   /*
-                    Your own face on your own tab: every other tab is a glyph for
-                    a place, and this one is a person. The photo comes off the
-                    session that is already loaded, so it costs no request;
-                    without one it is your coloured initials.
-                  */
+                   * Your own face on your own tab, from the session already loaded so it costs no request; your
+                   * initials without a photo.
+                   */
                   <View style={[styles.ring, { borderColor: focused ? colors.primary : 'transparent' }]}>
                     <InitialsAvatar
                       name={user.username}
@@ -224,14 +181,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
 }
 
 /**
- * One tab: its whole share of the bar is the target; its glyph and word give
- * under the finger as any button does (`usePressScale`), and do nothing more.
- *
- * The bar's own padding, the air round the capsule, answers too: every tab
- * reaches across it to the bar's top and bottom edge, and the two end tabs to
- * the bar's rounded ends, so no part of the bar a thumb lands on is dead.
- * Between tabs nothing is added, since they already touch. All of it is
- * inside the bar, which is clear of everything else on the screen.
+ * One tab: its whole share of the bar is the target, and its glyph and word give under the finger (`usePressScale`).
+ * Every tab also reaches across the bar's padding to its top and bottom edges, and the end tabs to its rounded ends, so
+ * no part of the bar is dead.
  */
 function TabButton({
   name,
@@ -246,10 +198,13 @@ function TabButton({
   children,
 }: {
   name: TabName;
-  /** whether this tab is at the bar's left or right end as drawn, which in Soranî and Arabic is the other way round from the order of the tabs */
+  /**
+   * Whether this tab is at the bar's left or right end as drawn, which is reversed from the tab order in right-to-left
+   * languages.
+   */
   leftmost: boolean;
   rightmost: boolean;
-  /** the tab's name, under its glyph */
+  /** The tab's name, under its glyph. */
   word: string;
   spoken: string;
   focused: boolean;
@@ -258,11 +213,11 @@ function TabButton({
   onLongPress: () => void;
   children: React.ReactNode;
 }): React.JSX.Element {
-  // still under Reduce Motion, where the tab's own change of shape is the answer
+  // Still under Reduce Motion, where the tab's own change of shape is the feedback.
   const press = usePressScale();
   return (
     <Pressable
-      // the tab bar is outside anything that scrolls, so it answers the moment it is touched
+      // The tab bar is outside anything that scrolls, so it answers the moment it is touched.
       pressDelay={0}
       hitSlop={{ top: PAD, bottom: PAD, left: leftmost ? PAD : 0, right: rightmost ? PAD : 0 }}
       onPress={onPress}
@@ -281,7 +236,7 @@ function TabButton({
         <Text
           style={[styles.word, { color: ink, fontWeight: focused ? typography.weights.semibold : typography.weights.medium }]}
           numberOfLines={1}
-          // a word in a share of the bar that cannot grow with it
+          // A word in a share of the bar that cannot grow with it.
           maxFontSizeMultiplier={fontScaleCap.fixedBox}
         >
           {word}
@@ -292,18 +247,18 @@ function TabButton({
 }
 
 const styles = StyleSheet.create({
-  // over every screen: last in the tree, and raised for Android, where
-  // elevation rather than order decides what draws on top
+  // Over every screen: last in the tree, and raised for Android, where elevation rather than order decides what draws
+  // on top.
   dock: { position: 'absolute', left: TAB_BAR_SIDE, right: TAB_BAR_SIDE, zIndex: 10, elevation: 12 },
   bar: { height: TAB_BAR_HEIGHT, borderRadius: radii.pill, padding: PAD },
   row: { flex: 1, alignItems: 'stretch' },
-  // behind the tabs, free to travel along the bar, and as tall as the row
+  // Behind the tabs, free to travel along the bar, as tall as the row.
   capsule: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: radii.pill },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
   face: { alignItems: 'center', gap: 3 },
   glyph: { width: GLYPH + 4, height: GLYPH + 2, alignItems: 'center', justifyContent: 'center' },
   word: { fontSize: typography.ios.tabLabel, lineHeight: 13, textAlign: 'center' },
-  // the ring sits round the picture with a hairline of air between them
+  // The ring sits round the picture with a hairline of air between them.
   ring: {
     width: AVATAR + 5,
     height: AVATAR + 5,
@@ -312,7 +267,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // the initials inside a small avatar: the smallest size text is drawn at, and two letters still fit
+  // The initials inside a small avatar: the smallest text size, which still fits two letters.
   avatarText: { fontSize: 11 },
   badge: {
     position: 'absolute',
@@ -326,7 +281,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // over the glyph's leading shoulder in a mirrored bar, as the platform puts it
+  // Over the glyph's leading shoulder in a mirrored bar, as the platform puts it.
   badgeMirrored: { left: undefined, right: 16 },
   badgeText: { fontSize: typography.ios.tabLabel, fontWeight: typography.weights.bold, lineHeight: 13 },
   dot: { position: 'absolute', top: -2, right: -2, width: 10, height: 10, borderRadius: radii.pill, borderWidth: 2 },

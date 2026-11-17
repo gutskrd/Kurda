@@ -7,17 +7,8 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { LAUNCH, WASH } from './splash';
 
 /**
- * A soft light drifting across the launch page.
- *
- * The page is a near-flat gradient, and for the moment the app takes to find
- * out who is holding it that gradient was the only thing on the screen. A
- * band of faint white, leaning a little, crosses it slowly from one side to
- * the other and back — the way light moves over a wall — so the page is
- * alive before anything on it is. It is a gradient view moved by one
- * transform on the native driver, and nothing else: no blur, no frost.
- *
- * It is a loop, which is the one thing a launch page may loop, and so it is
- * not there at all for somebody who has asked for less motion.
+ * A faint band of light drifting slowly across the launch page and back, so the page looks alive while the app starts:
+ * one gradient view moved by a native-driver transform. It loops, so it is absent under Reduce Motion.
  */
 export function LightWash(): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -25,7 +16,7 @@ export function LightWash(): React.JSX.Element | null {
   const { width, height } = useWindowDimensions();
   const drift = useRef(new Animated.Value(0)).current;
 
-  // it stops while the app is in the background: a launch that is waiting on the network can be left there
+  // Paused while the app is in the background, where a launch waiting on the network may be left.
   const alive = useMotionAlive();
   useEffect(() => {
     if (!alive) return;
@@ -41,7 +32,7 @@ export function LightWash(): React.JSX.Element | null {
 
   if (reduce) return null;
 
-  // the band leans, so it is drawn taller than the screen to still cover it top to bottom, and starts and ends off the screen's sides
+  // The band leans, so it is drawn taller than the screen to cover it, and starts and ends off the screen's sides.
   const band = width * 0.9;
   const tall = height * 1.6;
   const travel = drift.interpolate({ inputRange: [0, 1], outputRange: [-width * 1.2, width * 2.2] });

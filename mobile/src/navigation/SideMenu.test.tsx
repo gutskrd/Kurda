@@ -14,7 +14,7 @@ import { SideMenu, type MenuGroup } from './SideMenu';
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(cleanup);
 
-// a phone's screen: jsdom's window has no size, and the panel is a share of its width
+// A phone's screen: jsdom's window has no size, and the panel is a share of its width.
 Object.defineProperty(window, 'visualViewport', { value: { height: 800, width: 400, scale: 1 }, configurable: true });
 window.dispatchEvent(new Event('resize'));
 
@@ -31,7 +31,7 @@ function swipe(from: Element, dx: number, msPerStep?: number): void {
     time += msPerStep ?? 1;
   }
   fireEvent.mouseMove(from, at(200 + dx));
-  // let go slowly: held still a moment first, so it lifts with no speed
+  // Let go slowly: held still a moment first, so it lifts with no speed.
   if (msPerStep === undefined) time += 200;
   fireEvent.mouseUp(from, at(200 + dx));
   clock.mockRestore();
@@ -41,7 +41,7 @@ describe('the side menu under a finger', () => {
   it('closes when pushed most of the way back to the edge it came from', () => {
     const onClose = vi.fn();
     renderWithProviders(<SideMenu open onClose={onClose} groups={groups} side="end" />);
-    // from the end edge: the right, in English
+    // From the end edge: the right, in English.
     swipe(screen.getByText('Friends'), 260);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
