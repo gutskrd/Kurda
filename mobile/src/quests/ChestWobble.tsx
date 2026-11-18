@@ -3,14 +3,10 @@ import { Animated, Easing, StyleSheet } from 'react-native';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
- * A chest that can be opened, asking to be: every few seconds it rocks on
- * its base — a quick shake, like something knocking from inside — and rests.
- * Only while `active` (a chest with Zêr in it, not opened yet), and only
- * while the screen is in front and the phone has not asked for less motion
- * (`useMotionAlive`): a shut chest and an opened one sit still, and so does a
- * waiting one on a screen nobody is looking at. One rotation on the native
- * driver, about the chest's foot. `testID` is on it only while it moves, so
- * a test can count the chests that are shaking.
+ * An openable chest rocks on its base every few seconds, like something knocking inside. Only while `active` (Zêr
+ * inside, not yet opened) and while the screen is focused with motion allowed (`useMotionAlive`). One
+ * native-driver rotation about the chest's foot. `testID` is set only while it moves, so tests can count shaking
+ * chests.
  */
 export function ChestWobble({ active, children, testID }: { active: boolean; children: ReactNode; testID?: string }): React.JSX.Element {
   const live = useMotionAlive();
@@ -43,6 +39,6 @@ const REST_MS = 2400;
 const TILT_DEG = 8;
 
 const styles = StyleSheet.create({
-  // it rocks about its foot, which stays on the ground
+  // It rocks about its foot, which stays on the ground.
   base: { transformOrigin: '50% 85%' },
 });
