@@ -201,8 +201,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         },
         {
           key: 'password',
-          terms: [t('security.password.title'), t('settings.group.security')],
-          row: <SettingsRow icon="lock" title={t('security.password.title')} onPress={() => navigation.navigate('ChangePassword')} />,
+          terms: [t('auth.password'), t('security.password.title'), t('settings.group.security')],
+          row: <SettingsRow icon="lock" title={t('auth.password')} onPress={() => navigation.navigate('ChangePassword')} />,
         },
         {
           key: 'devices',
@@ -227,7 +227,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           row: (
             <SettingsRow
               icon="bell"
-              title={t('settings.notifications')}
+              title={t('notifications.title')}
               // Notifications blocked by the phone is the one thing in this section to act on.
               value={attention.pushOff ? t('settings.off') : undefined}
               attention={attention.pushOff}

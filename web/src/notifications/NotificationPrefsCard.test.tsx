@@ -53,7 +53,7 @@ describe('NotificationPrefsCard', () => {
     expect(await screen.findByRole('checkbox', { name: 'Streak reminders' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Friend activity' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Game invites & results' })).not.toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Events & quests' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Events and quests' })).toBeChecked();
     // League and badge news has its own switch.
     expect(screen.getByRole('checkbox', { name: 'Leagues and badges' })).toBeChecked();
     // The opt-in category is off until chosen.

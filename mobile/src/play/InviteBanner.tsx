@@ -283,7 +283,7 @@ function InviteCard({
     // Joining: the stub comes off, then the lobby opens.
     onAnswer(invite.id);
     haptic('tap');
-    announce(t('play.card.joined'));
+    announce(t('play.ticket.joined'));
     setTorn(true);
     const route = lobbyRoute(res.data.game, res.data.lobbyId);
     after(reduce ? 0 : TEAR_MS + 40, () => {

@@ -69,7 +69,7 @@ describe('Settings', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'visibility' });
     fireEvent.click(screen.getByRole('button', { name: 'Sounds and vibration' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'sounds' });
-    fireEvent.click(screen.getByRole('button', { name: 'Notification settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Notifications' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Notifications');
     fireEvent.click(screen.getByRole('button', { name: 'Blocked people' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('BlockedUsers');
@@ -241,7 +241,7 @@ describe('Settings pages', () => {
   it('chooses the theme from a list, with the seasonal themes beside it', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsPageScreen page="theme" onExit={() => undefined} />);
-    const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    const group = screen.getByRole('radiogroup', { name: 'Appearance' });
     expect(within(group).getAllByRole('radio')).toHaveLength(3);
     fireEvent.click(within(group).getByRole('radio', { name: 'Light' }));
     expect(within(group).getByRole('radio', { name: 'Light' }).getAttribute('aria-checked')).toBe('true');
@@ -251,7 +251,7 @@ describe('Settings pages', () => {
   it('ticks the chosen answer in violet, the colour everything chosen wears', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsPageScreen page="theme" onExit={() => undefined} />);
-    const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    const group = screen.getByRole('radiogroup', { name: 'Appearance' });
     fireEvent.click(within(group).getByRole('radio', { name: 'Light' }));
     const tick = within(group).getByRole('radio', { name: 'Light' }).querySelector('svg');
     expect(tick).toBeTruthy();
