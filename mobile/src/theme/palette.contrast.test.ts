@@ -2,12 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DARK, LIGHT } from './palette';
 import { AA_LARGE, AA_NORMAL, contrastRatio, hexToRgb, type Rgb } from '../a11y/contrast';
 
-/**
- * A translucent fill as it actually appears: laid over what is behind it.
- *
- * The bar and the glass are rgba, and a contrast ratio is between two opaque
- * colours, so the pane is measured where it sits — over the page.
- */
+/** A translucent fill as it appears over what is behind it, since contrast is between opaque colours. */
 function over(fill: string, behind: string): Rgb {
   const base = hexToRgb(behind);
   const m = /^rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)$/.exec(fill);
@@ -18,20 +13,13 @@ function over(fill: string, behind: string): Rgb {
 }
 
 /**
- * WCAG AA contrast audit for the app palette (KUR-266). The palette must stay
- * readable in both modes: body text hits AA (4.5:1) on the app
- * background and on primary buttons; secondary/muted text and the brand colour
- * (used mostly for large headings) hit at least AA large-text (3:1). Text sits
- * on translucent glass cards over the gradient, but the raw background is the
- * lowest-contrast surface, so it's the conservative check.
+ * The palette's WCAG AA contrast: body text 4.5:1 on the background and on primary buttons; the brand colour, used
+ * mostly for large headings, at least 3:1. The raw background is the lowest-contrast surface, so it is the
+ * conservative check.
  */
 for (const p of [LIGHT, DARK]) {
   describe(`palette contrast — ${p.scheme}`, () => {
-    /*
-     * A switch must be seen, on or off, wherever it is (WCAG 1.4.11): its
-     * track against the page, a card and a raised surface, and its knob
-     * against its track. Violet, not green: green is for a right answer.
-     */
+    // A switch must be visible on or off anywhere (WCAG 1.4.11): its track on the page, a card and a raised surface, and its knob on its track.
     it('a switch’s track and knob clear 3:1, on and off, on every surface', () => {
       for (const surface of [p.background, p.surface, p.surfaceRaised]) {
         expect(contrastRatio(p.switchOn, surface), `on, ${surface}`).toBeGreaterThanOrEqual(AA_LARGE);
@@ -42,14 +30,14 @@ for (const p of [LIGHT, DARK]) {
       expect(p.switchOn).not.toBe(p.success);
     });
 
-    // a spinner over a photo being uploaded is a graphic, so 3:1, over the page and over even a white photo
+    // A spinner over an uploading photo is a graphic, so 3:1, over the page and even a white photo.
     it('what sits on the scrim clears 3:1, whatever is under the scrim', () => {
       for (const behind of [p.background, '#FFFFFF', '#000000']) {
         expect(contrastRatio(p.textOnScrim, over(p.scrim, behind)), behind).toBeGreaterThanOrEqual(AA_LARGE);
       }
     });
 
-    // a conversation is body text, so both voices are held to 4.5:1 on their own bubble
+    // Chat is body text, so both voices are held to 4.5:1 on their bubble.
     it('the words in a chat bubble meet AA (4.5:1), yours and theirs', () => {
       expect(contrastRatio(p.bubbleMineInk, p.bubbleMine)).toBeGreaterThanOrEqual(AA_NORMAL);
       expect(contrastRatio(p.bubbleTheirsInk, p.bubbleTheirs)).toBeGreaterThanOrEqual(AA_NORMAL);
@@ -63,11 +51,7 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.textOnPrimary, p.primary)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
-    /*
-     * Secondary text is body text too — a message preview, a caption, a time
-     * — so it is held to the full 4.5:1 rather than the large-text 3:1 it
-     * used to be allowed.
-     */
+    // Secondary text is body text too (previews, captions, times), so it is held to the full 4.5:1.
     it('secondary text on the background meets AA (4.5:1)', () => {
       expect(contrastRatio(p.textSecondary, p.background)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
@@ -85,10 +69,7 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.textSecondary, card)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
-    /*
-     * The tab bar: an inactive label is the secondary colour at 11pt, which
-     * is small text, on the bar's own fill over the page.
-     */
+    // An inactive tab label is secondary colour at 11 points, small text, on the bar's fill over the page.
     it('the tab labels meet AA on the bar, active and inactive', () => {
       const bar = over(p.barFill, p.background);
       expect(contrastRatio(p.primary, bar)).toBeGreaterThanOrEqual(AA_NORMAL);
@@ -100,11 +81,7 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.goldText, p.surface)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
-    /*
-     * A gold pill, a podium place, a letter in the wrong square: what is
-     * written on the gold is small text, so the full 4.5:1. White never was:
-     * on the day's gold it is 2.1:1.
-     */
+    // Text on gold (a pill, a podium place, a wrong-square letter) is small text, so 4.5:1; white is only 2.1:1 there.
     it('what is written on a gold fill meets AA (4.5:1)', () => {
       expect(contrastRatio(p.textOnGold, p.gold)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
@@ -117,11 +94,7 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.danger, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
     });
 
-    /*
-     * The unread dot and the count on a tab are drawn in the app's violet, as
-     * everything that asks to be acted on is, and the number on them in the
-     * colour a primary button's label is.
-     */
+    // The unread dot and tab count are in the app's violet, with the number in the primary button label's colour.
     it('the unread badge stands out from the page (3:1) and its count is legible (4.5:1)', () => {
       expect(contrastRatio(p.primary, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
       expect(contrastRatio(p.primary, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_LARGE);

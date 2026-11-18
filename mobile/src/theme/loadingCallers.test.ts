@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-/*
- * The spinner of a page, a list or a row that is waiting is Loading. Written
- * out by hand it was the brand's ink on most screens and the caption's grey
- * on the rest, and said nothing to a screen reader. A spinner in a surface's
- * own ink (a button's label colour, the scrim's) is that surface's to draw.
- */
+// A waiting page, list or row uses Loading; a spinner in a surface's own ink (a button label, the scrim) is that surface's to draw.
 
-/** Node's file system, which this workspace's types do not describe: the test reads the sources it runs beside. */
+/** Node's file system, which this workspace's types do not include: the test reads the sources beside it. */
 interface Files {
   readFileSync(path: string, encoding: 'utf8'): string;
   readdirSync(path: string, options: { withFileTypes: true }): { name: string; isDirectory(): boolean }[];

@@ -1,13 +1,8 @@
 /**
- * The colours of a chunky tile — a lesson's answer card, option, word tile and
- * its Check button — by state, worked out from the palette so they follow the
- * light and the dark theme. Pure, with no React Native in it, so the contrast
- * of every state can be tested.
- *
- * A tile is a face standing on a darker lip: it looks like something that can
- * be pressed, and sinks onto the lip when it is. Every face is opaque, because
- * the lip runs on under it; a translucent fill from the palette is laid over
- * the surface it sits on first.
+ * A chunky tile's colours by state (lesson answer cards, options, word tiles, Check), derived from the palette for
+ * both themes. Pure, so every state's contrast is testable. A tile is a face on a darker lip it sinks onto when
+ * pressed; every face is opaque because the lip runs under it, so translucent palette fills are blended over their
+ * surface first.
  */
 import { AA_NORMAL, hexToRgb } from '../a11y/contrast';
 import { ensureContrast } from '../a11y/ensureContrast';
@@ -18,7 +13,7 @@ import type { Palette } from './palette';
  * picked    chosen, waiting (a card for its partner, an option for Check)
  * right     answered right
  * wrong     answered wrong
- * spent     used up: a pair already made — no lip, faded, not tappable
+ * spent     used up (a pair already made): no lip, faded, not tappable
  * disabled  not answerable now: the lesson has moved on to the verdict
  */
 export type TileState = 'idle' | 'picked' | 'right' | 'wrong' | 'spent' | 'disabled';
@@ -26,18 +21,18 @@ export type TileState = 'idle' | 'picked' | 'right' | 'wrong' | 'spent' | 'disab
 export interface TileTone {
   face: string;
   edge: string;
-  /** null for a tile with no lip: one that cannot be pressed any more */
+  /** Null for a tile with no lip, one that can no longer be pressed. */
   lip: string | null;
   ink: string;
 }
 
-/** How far a tile's face stands above its lip, in points: what it sinks by under a finger. */
+/** How far a tile's face stands above its lip in points, which is what it sinks by. */
 export const LIP = 4;
 
 /** The tile's edge, all round its face. */
 export const TILE_EDGE = 2;
 
-/** What a lesson's buttons can mean: the brand's Check, and the two verdicts' Continue. */
+/** What a lesson button can mean: the brand's Check, and the two verdicts' Continue. */
 export type TileButtonTone = 'primary' | 'success' | 'danger';
 
 interface Rgba {
@@ -58,7 +53,7 @@ function hex({ r, g, b }: { r: number; g: number; b: number }): string {
   return `#${c(r)}${c(g)}${c(b)}`;
 }
 
-/** `top` laid over `bottom` with `amount` of `top` showing (and its own alpha on top of that), as one opaque colour. */
+/** `top` over `bottom` with `amount` of `top` showing (times its own alpha), as one opaque colour. */
 export function blend(top: string, bottom: string, amount = 1): string {
   const t = parse(top);
   const b = parse(bottom);
@@ -66,12 +61,12 @@ export function blend(top: string, bottom: string, amount = 1): string {
   return hex({ r: t.r * a + b.r * (1 - a), g: t.g * a + b.g * (1 - a), b: t.b * a + b.b * (1 - a) });
 }
 
-/** `ink`, darkened or lightened just enough to read on `face` (4.5:1). */
+/** `ink`, darkened or lightened just enough to read on `face` at 4.5:1. */
 function readableOn(ink: string, face: string): string {
   return ensureContrast(ink, face, AA_NORMAL);
 }
 
-/** A lip a step darker than the edge it sits under (a join code's tiles stand on one too). */
+/** A lip a step darker than the edge above it (join code tiles use it too). */
 export function lipOf(edge: string, colors: Palette): string {
   return blend('#000000', edge, colors.scheme === 'dark' ? 0.3 : 0.15);
 }
@@ -79,7 +74,7 @@ export function lipOf(edge: string, colors: Palette): string {
 /** A tile's colours in `state`. */
 export function tileTone(colors: Palette, state: TileState): TileTone {
   const ground = colors.surface;
-  // the quiet edge of a tile that is not saying anything: a step off the surface, as a card's hairline is
+  // The quiet edge of an idle tile: a step off the surface, like a card's hairline.
   const quiet = blend(colors.textPrimary, ground, colors.scheme === 'dark' ? 0.16 : 0.13);
   switch (state) {
     case 'picked': {
@@ -102,7 +97,7 @@ export function tileTone(colors: Palette, state: TileState): TileTone {
   }
 }
 
-/** A lesson button's colours: filled in its tone, on a lip; a quiet grey and flat while there is nothing to press. */
+/** A lesson button's colours: filled in its tone on a lip; flat quiet grey while there is nothing to press. */
 export function tileButtonTone(colors: Palette, tone: TileButtonTone, enabled: boolean): TileTone {
   if (!enabled) {
     const face = blend(colors.textPrimary, colors.surface, colors.scheme === 'dark' ? 0.12 : 0.08);

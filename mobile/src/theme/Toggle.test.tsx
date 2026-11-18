@@ -12,10 +12,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { ToggleRow } from './Toggle';
 
-/*
- * A switch with its words (theme/Toggle.tsx `ToggleRow`): the whole row is
- * the switch, for a finger and for a screen reader alike.
- */
+// The whole row is the switch, for a finger and for a screen reader alike.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(cleanup);
@@ -49,7 +46,7 @@ describe('a switch row', () => {
 
   it('is one switch to a screen reader, with the one inside it hidden', () => {
     renderWithProviders(<Row />);
-    // the system switch inside is drawn, but only the row is offered as a switch
+    // The system switch inside is drawn, but only the row is offered as a switch.
     expect(screen.getAllByRole('switch')).toHaveLength(1);
     expect(screen.getAllByRole('switch', { hidden: true }).length).toBeGreaterThan(1);
     expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('false');

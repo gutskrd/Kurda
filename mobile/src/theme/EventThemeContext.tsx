@@ -5,11 +5,11 @@ import { resolveEventTheme, type ActiveEventLite, type EventThemePack } from './
 import { getThemeOptOut, setThemeOptOut } from './themePref.js';
 
 interface EventThemeValue {
-  /** The pack to apply, or null (opted out / nothing live). */
+  /** The pack to apply, or null (opted out, or nothing live). */
   pack: EventThemePack | null;
   optedOut: boolean;
   setOptedOut: (value: boolean) => void;
-  /** Re-resolve now (e.g. on a screen transition near the event boundary). */
+  /** Resolves again now (e.g. on a screen transition near the event boundary). */
   refresh: () => void;
 }
 
@@ -20,14 +20,13 @@ const EventThemeContext = createContext<EventThemeValue>({
   refresh: () => {},
 });
 
-/** How often to re-poll live events so the theme reverts near a boundary. */
+/** How often live events are re-polled, so the theme reverts near a boundary. */
 const POLL_MS = 60_000;
 
 /**
- * Tracks the active event theme app-wide (KUR-092). Live events are re-polled on
- * mount, when the app returns to the foreground, and on a slow interval, so the
- * theme applies while an event runs and reverts cleanly once it ends — there is
- * no persisted theme state to leave stale. Opt-out short-circuits to null.
+ * Tracks the active event theme app-wide. Live events are re-polled on mount, on return to the foreground and on a
+ * slow interval, so the theme applies while an event runs and reverts when it ends, with no stored state to go
+ * stale. Opting out gives null.
  */
 export function EventThemeProvider({ children }: { children: ReactNode }) {
   const { client, status } = useAuth();

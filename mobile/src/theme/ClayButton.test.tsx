@@ -13,12 +13,7 @@ import { forgetReach, reachOf } from '../testing/reach';
 import { ClayButton } from './glass';
 import { ReachGroup } from './Pressable';
 
-/*
- * The app's button (theme/glass.tsx): what it does when its label is longer
- * than its room, and which side its icon is on. Both were found on screens:
- * a label ran out past the button's edge in German, and in Soranî an icon
- * stood after the word it belongs before.
- */
+// The app's button (theme/glass.tsx): a label longer than its room wraps, and the icon sits on the reading side.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -27,7 +22,7 @@ afterEach(() => {
   localStorage.removeItem('kurda_locale_v1');
 });
 
-/** The pill a button draws: the row its icon, label and badge stand in. */
+/** The pill a button draws: the row holding its icon, label and badge. */
 function pill(button: HTMLElement): HTMLElement {
   return button.firstElementChild as HTMLElement;
 }
@@ -36,7 +31,7 @@ describe('the app’s button', () => {
   it('lets a label longer than its room go on to a second line inside it, centred', () => {
     renderWithProviders(<ClayButton label="Learn colours, numbers, days and months" onPress={() => undefined} />);
     const label = screen.getByText('Learn colours, numbers, days and months');
-    // a label that may not shrink is as wide as its words, and runs out of a button narrower than them
+    // A label that cannot shrink would run out of a button narrower than its words.
     expect(getComputedStyle(label).flexShrink).toBe('1');
     expect(getComputedStyle(label).textAlign).toBe('center');
   });
@@ -46,7 +41,7 @@ describe('the app’s button', () => {
     await act(async () => undefined);
     const row = pill(screen.getByRole('button', { name: 'Share' }));
     expect(getComputedStyle(row).flexDirection).toBe('row');
-    // the icon first, then the word, then the count that closes it
+    // The icon first, then the word, then the closing count.
     expect(row.children).toHaveLength(3);
     expect(row.children[1]!.textContent).toBe('Share');
     expect(row.children[2]!.textContent).toBe('3');
@@ -57,7 +52,7 @@ describe('the app’s button', () => {
     renderWithProviders(<ClayButton label="هاوبەشکردن" icon="share" badge="3" onPress={() => undefined} testID="go" />);
     await act(async () => undefined);
     const row = pill(screen.getByTestId('go'));
-    // the same order in the markup, laid out from the other side
+    // The same markup order, laid out from the other side.
     expect(getComputedStyle(row).flexDirection).toBe('row-reverse');
     expect(row.children[1]!.textContent).toBe('هاوبەشکردن');
   });

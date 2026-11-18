@@ -10,11 +10,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { GlassRow } from './glass';
 
-/*
- * The list row a card of settings is made of (theme/glass.tsx): which side
- * it starts on, and which way its chevron points. It was laid out left to
- * right in every language, so a Soranî reader's row began at its far end.
- */
+// The settings row (theme/glass.tsx): which side it starts on, and which way its chevron points.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -50,7 +46,7 @@ describe('a list row', () => {
     const title = screen.getByText('ڕاپۆرتەکانت');
     expect(getComputedStyle(title).textAlign).toBe('right');
     expect(getComputedStyle(screen.getByText('ئەوەی پێت ڕاگەیاندووین')).textAlign).toBe('right');
-    // the chevron is the last thing in the row, which is now its left end, and points left
+    // The chevron is last in the row, at its left end, and points left.
     expect((row.lastElementChild as HTMLElement).style.transform).toMatch(/scaleX\(-1\)/);
   });
 

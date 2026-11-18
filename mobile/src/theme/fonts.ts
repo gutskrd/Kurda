@@ -1,12 +1,7 @@
 import { Platform, type TextStyle } from 'react-native';
 import { typography } from './tokens';
 
-/**
- * The heading face, resolved for the platform we are actually on.
- *
- * Separate from `tokens.ts` because that module is kept free of React Native so
- * it can be unit-tested; the names live there, the choice happens here.
- */
+/** The heading face for the current platform. The names live in `tokens.ts`, which stays free of React Native for unit tests; the choice happens here. */
 export const displayFont: string =
   Platform.select({
     ios: typography.displayByPlatform.iosFont,
@@ -15,13 +10,8 @@ export const displayFont: string =
   }) ?? typography.displayByPlatform.webFont;
 
 /**
- * A heading, in the website's terms: the serif, at 600, with its leading pulled
- * in and its tracking tightened.
- *
- * The browser writes `line-height: 1.12` and `letter-spacing: -0.01em`, both
- * relative to the size. React Native wants points, so they are multiplied out
- * here rather than guessed at per screen — which is how the phone's headings
- * drifted apart from each other in the first place.
+ * A heading as the website sets it: the serif at 600 with tightened leading and tracking. The website's relative
+ * `line-height: 1.12` and `letter-spacing: -0.01em` are converted to points here, so headings stay consistent.
  */
 export function display(size: number): TextStyle {
   return {
@@ -34,19 +24,8 @@ export function display(size: number): TextStyle {
 }
 
 /**
- * The little grey word above a group of rows.
- *
- * There were seven versions of this in the app — 11, 12 and 14 point, three
- * different letter-spacings, some bold and some not — for one job. Four of
- * the seven were mine, added while building screens that each looked right on
- * their own.
- *
- * This one is Settings' value, because that is the screen most like a list of
- * settings elsewhere on the phone, and 12 uppercase sits closest to what iOS
- * puts above a grouped section.
- *
- * Layout stays at the call site: this says what the words look like, not
- * where they sit.
+ * The small grey label above a group of rows, the one style for that job: Settings' 12-point uppercase, closest to
+ * what iOS puts above a grouped section. Layout stays at the call site.
  */
 export const sectionLabel: TextStyle = {
   fontSize: typography.sizes.xs,
@@ -54,13 +33,7 @@ export const sectionLabel: TextStyle = {
   letterSpacing: 1,
   textTransform: 'uppercase',
 };
-/**
- * A number with a word under it — level, XP, streak, badges.
- *
- * The two profile screens show the same row of them and drew it two ways:
- * one bold with an uppercase caption, the other semibold with a tracked
- * lowercase one. Nobody sees both at once, which is exactly why it drifted.
- */
+/** A number with a word under it (level, XP, streak, badges), shared so the profile screens draw it the same way. */
 export const statValue: TextStyle = {
   fontSize: typography.sizes.lg,
   fontWeight: typography.weights.semibold,

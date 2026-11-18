@@ -3,11 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 
 const KEY = 'kurda_event_theme_optout_v1';
 
-/**
- * Local persistence for the "opt out of event theming" preference (KUR-092).
- * Mirrors the token-storage split: keystore on device, localStorage on web.
- * Best-effort — any failure reads as "not opted out" so theming still works.
- */
+/** Stores the event-theme opt-out: keystore on device, localStorage on web. Best-effort, so a failure reads as not opted out. */
 export async function getThemeOptOut(): Promise<boolean> {
   try {
     if (Platform.OS === 'web') return globalThis.localStorage?.getItem(KEY) === '1';
@@ -23,6 +19,6 @@ export async function setThemeOptOut(optedOut: boolean): Promise<void> {
     if (Platform.OS === 'web') globalThis.localStorage?.setItem(KEY, value);
     else await SecureStore.setItemAsync(KEY, value);
   } catch {
-    // preference is a nicety; ignore persistence failures
+    // A preference is a nicety; storage failures are ignored.
   }
 }

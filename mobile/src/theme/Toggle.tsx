@@ -9,11 +9,8 @@ import { useTheme } from './ThemeProvider';
 import { spacing, typography } from './tokens';
 
 /**
- * The system switch, felt as it flips: the lightest tick there is, for a value
- * that changed under the person's own finger (iOS's switch gives it itself). Everything else is the
- * platform's own control, in the app's ink (see `switchOn` in palette.ts):
- * a dark track and a white knob when it is on in light mode, a pale track and
- * a dark knob in dark mode, a grey track with a white knob when it is off.
+ * The system switch with a light haptic as it flips (iOS's switch provides its own). Otherwise the platform control
+ * in the app's colours (see `switchOn` in palette.ts).
  */
 export function Toggle({ onValueChange, ...rest }: SwitchProps): React.JSX.Element {
   const { colors } = useTheme();
@@ -22,13 +19,13 @@ export function Toggle({ onValueChange, ...rest }: SwitchProps): React.JSX.Eleme
     <Switch
       thumbColor={rest.value ? onThumb : colors.switchOffThumb}
       trackColor={{ true: colors.switchOn, false: colors.switchOff }}
-      // iOS paints the track of a switch that is off from this, not from trackColor
+      // iOS paints an off switch's track from this, not from trackColor.
       ios_backgroundColor={colors.switchOff}
-      // react-native-web takes the knob of a switch that is on from its own prop (teal when left out)
+      // react-native-web takes an on switch's knob colour from its own prop (teal when omitted).
       {...({ activeThumbColor: onThumb } as object)}
       {...rest}
       onValueChange={(next) => {
-        // iOS's own switch already ticks as it flips; a second one of ours was the same moment felt twice
+        // iOS's switch already ticks as it flips; a second haptic would double the moment.
         if (Platform.OS !== 'ios') haptic('select');
         onValueChange?.(next);
       }}
@@ -37,47 +34,34 @@ export function Toggle({ onValueChange, ...rest }: SwitchProps): React.JSX.Eleme
 }
 
 /**
- * The knob of a switch that is on.
- *
- * On iOS the knob sits inside its track, so in dark mode it is dark on the
- * pale track. Android and a browser draw it bigger than the track, standing
- * out past its edges onto the page, where a dark knob would vanish into a
- * dark page; there it is white, and stands out against the page instead.
+ * An on switch's knob colour. On iOS the knob sits inside the track, so in dark mode it is dark on the pale track.
+ * Android and the web draw it larger than the track, over the page, where a dark knob would vanish on a dark page, so
+ * there it is white.
  */
 function onKnob(knob: string, scheme: 'light' | 'dark'): string {
   return Platform.OS === 'ios' || scheme === 'light' ? knob : '#FFFFFF';
 }
 
-export interface ToggleRowProps {
-  /** what it turns on: the switch's name for a screen reader, and the row's words unless `children` draws its own */
+interface ToggleRowProps {
+  /** What it turns on: the switch's screen-reader name, and the row's text unless `children` draws its own. */
   label: string;
-  /** what turning it on means, under the label, and read out after it */
+  /** What turning it on means, shown under the label and read after it. */
   hint?: string;
   value: boolean;
   onValueChange: (on: boolean) => void;
   disabled?: boolean;
-  /**
-   * The row's own content in place of the label and hint, with the switch
-   * after it; or a function that is handed the switch and places it itself,
-   * for a row that already has a slot for what ends it.
-   */
+  /** The row's own content in place of label and hint, with the switch after it; or a function given the switch to place itself. */
   children?: ReactNode | ((toggle: ReactNode) => ReactNode);
-  /** the row's style; a function of `pressed` also takes over how the row looks while held */
+  /** The row's style; a function of `pressed` also controls how the row looks while held. */
   style?: StyleProp<ViewStyle> | ((state: { pressed: boolean }) => StyleProp<ViewStyle>);
   testID?: string;
 }
 
 /**
- * A switch with its words, where the whole row turns it: the words are the
- * bigger target and the one the eye goes to, and a switch alone is 31pt
- * tall, under what a fingertip needs. The row is at least `MIN_REACH` tall.
- *
- * The row is the one control. It speaks as a switch, with its state, so a
- * screen reader meets one control rather than a label and a switch, and the
- * switch inside is hidden from it. The switch takes no touches of its own
- * either, so a tap on it is the row's tap and flips the value once: in the
- * browser build a click on the switch would otherwise reach the row too and
- * flip it twice. The tick is felt here on every platform, because a value
+ * A switch with its words where the whole row toggles it, since the words are the bigger target and a bare switch
+ * (31 points) is below a fingertip; the row is at least `MIN_REACH` tall. The row is the one control: it speaks as a
+ * switch with its state, and the inner switch is hidden from screen readers and takes no touches, so a tap flips the
+ * value once (on the web a click would otherwise reach both). The haptic plays here on every platform, since a value
  * set from outside the system switch does not tick by itself.
  */
 export function ToggleRow({ label, hint, value, onValueChange, disabled = false, children, style, testID }: ToggleRowProps): React.JSX.Element {
@@ -113,11 +97,11 @@ export function ToggleRow({ label, hint, value, onValueChange, disabled = false,
       accessibilityLabel={label}
       accessibilityHint={hint}
       accessibilityState={{ checked: value, disabled }}
-      // the same state again under the name the browser build reads
+      // The same state under the name the web build reads.
       aria-checked={value}
       testID={testID}
       style={({ pressed }) => [
-        // a row that places the switch itself brings its own layout, and only needs to be tall enough
+        // A row that places the switch itself brings its own layout and only needs the height.
         placesToggle ? styles.tall : [styles.row, { flexDirection: dir.row }],
         typeof style === 'function' ? style({ pressed }) : [style, pressed && styles.held],
         disabled && styles.disabled,

@@ -12,12 +12,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { forgetReach, reachOf } from '../testing/reach';
 import { FilterChip, FilterChips, FilterPill, FilterPills, FilterSheet, FilterToggle } from './FilterSheet';
 
-/*
- * The pieces of the sort-and-filter sheet (theme/FilterSheet.tsx), and how
- * far each answers a finger. The chip under a screen's header is two
- * controls that touch, the words and the ✕, so their reaches are set as a
- * pair; chips and pills in a row share the gaps round them half each.
- */
+// How far each sheet piece answers: the header chip's words and ✕ touch, so their reaches are paired; chips and pills share their gaps half each.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {

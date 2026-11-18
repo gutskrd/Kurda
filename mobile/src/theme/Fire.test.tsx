@@ -12,12 +12,9 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { Fire } from './Fire';
 
 /*
- * The streak's fire on the phone: every stage burning off one clock, its
- * painted flame stepping through its sheet on that clock, the light version
- * beside a number, a cold hearth with no streak, growing into its new stage
- * off one more value on the day it grew, and standing still (one frame)
- * under Reduce Motion or when asked, with no clock running at all — hidden
- * from VoiceOver every time, the words beside it say the streak.
+ * Every stage burns off one clock, the painted flame steps through its sheet on it, the light version sits beside a
+ * number, a cold hearth shows with no streak, growth runs on one more value, and Reduce Motion or `still` shows one
+ * frame with no clock. Always hidden from VoiceOver.
  */
 
 afterEach(() => {
@@ -27,7 +24,7 @@ afterEach(() => {
 
 const lvl = (stage: FireStage, growth = 0): FireLevel => ({ stage, growth });
 
-/** Every clock started, and whether it has been stopped. */
+/** Every clock started, and whether it was stopped. */
 function clocks(): { started: number; stopped: number } {
   const seen = { started: 0, stopped: 0 };
   const real = Animated.loop;
@@ -48,13 +45,13 @@ function clocks(): { started: number; stopped: number } {
   return seen;
 }
 
-/** Every growth run started (its timing), with a way to see it through to its end. */
+/** Every growth run started (its timing), with a way to finish it. */
 function growths(): { config: Animated.TimingAnimationConfig; finish: () => void }[] {
   const runs: { config: Animated.TimingAnimationConfig; finish: () => void }[] = [];
   const real = Animated.timing;
   vi.spyOn(Animated, 'timing').mockImplementation((value, config) => {
     const timing = real(value, config);
-    // the fire's clock runs for a whole cycle with no delay; a growth waits first
+    // The fire's clock runs a whole cycle with no delay; a growth waits first.
     if (config.delay === undefined) return timing;
     return {
       ...timing,
@@ -66,15 +63,15 @@ function growths(): { config: Animated.TimingAnimationConfig; finish: () => void
   return runs;
 }
 
-/** Let the Reduce Motion answer arrive. */
+/** Lets the Reduce Motion answer arrive. */
 const settle = () => act(() => new Promise((r) => setTimeout(r, 0)));
 
-/** The tongues drawn, by the gradient each is filled with. */
+/** The tongues drawn, by their fill gradient. */
 const tongues = (el: Element): string[] =>
   [...el.querySelectorAll('path')].map((p) => /a(back|left|right|outer|flame|core|heart)\)$/.exec(p.getAttribute('fill') ?? '')?.[1]).filter((t): t is string => !!t);
-/** The painted flames shown, by the stage whose sheet each plays, oldest first. */
+/** The painted flames shown, by the stage each plays, oldest first. */
 const flames = (el: Element): string[] => [...el.querySelectorAll('[data-testid^="fire-flame-"]')].map((f) => f.getAttribute('data-testid')!.slice('fire-flame-'.length));
-/** Whether a painted flame is stepping through its sheet: moved by the clock, rather than held at its first frame. */
+/** Whether a painted flame steps through its sheet off the clock, rather than holding its first frame. */
 const stepping = (el: Element, stage: string): boolean => (el.querySelector<HTMLElement>(`[data-testid="fire-flame-${stage}"]`)?.style.transform ?? '') !== '';
 
 describe('the fire', () => {
@@ -92,7 +89,7 @@ describe('the fire', () => {
       expect(flames(fire), stage).toEqual([stage]);
       expect(fire.querySelector(`[data-testid="fire-flame-${stage}"]`)!.outerHTML, stage).toContain(`${stage}.webp`);
       expect(stepping(fire, stage), stage).toBe(true);
-      // the window onto the sheet is the flame's own box, the sheet behind it its frames laid out
+      // The window is the flame's own box, with the sheet's frames laid out behind it.
       const window = fire.querySelector<HTMLElement>(`[data-testid="fire-flame-${stage}"]`)!.parentElement!;
       expect(parseFloat(window.style.height), stage).toBeCloseTo((drawing.painted!.box.h * 168) / FIRE_VIEW.h, 3);
       expect([window.style.overflowX, window.style.overflowY], stage).toEqual(['hidden', 'hidden']);
@@ -101,7 +98,7 @@ describe('the fire', () => {
       expect(sheetWide, stage).toBeCloseTo(((sheet.sheet.w * box.w) / sheet.frame.w) * (168 / FIRE_VIEW.h), 3);
       expect(fire.querySelector('path[fill$="rays)"]') !== null, stage).toBe(stage === 'newroz');
       expect(fire.querySelector('path[fill$="stone)"]') !== null, stage).toBe(stage === 'blaze' || stage === 'newroz');
-      // its glow round it, and the same light pooled on the ground
+      // Its glow round it, and the same light pooled on the ground.
       expect(fire.querySelectorAll('ellipse'), stage).toHaveLength(2);
       expect(seen, stage).toEqual({ started: 1, stopped: 0 });
       unmount();
@@ -120,7 +117,7 @@ describe('the fire', () => {
     expect(fire.querySelectorAll('path[fill$="char)"]').length).toBeGreaterThan(0);
     expect(fire.querySelectorAll('circle[fill$="cinder)"]')).toHaveLength(1);
     expect(fire.querySelectorAll('linearGradient[id$="d0"], linearGradient[id$="d1"]')).toHaveLength(2);
-    // no glow, nothing lit on the ground
+    // No glow, and nothing lit on the ground.
     expect(fire.querySelectorAll('ellipse')).toHaveLength(0);
     expect(seen.started).toBe(1);
   });
@@ -153,13 +150,13 @@ describe('the fire', () => {
       expect(parseFloat(fire.style.height), stage).toBeCloseTo(frame.h, 6);
       cleanup();
     }
-    // each part laid out from the frame's corner, not the whole box's: the logs low in a spark's frame, not far below it
+    // Each part is laid out from the frame's corner, not the whole box's: the logs low in a spark's frame.
     renderWithProviders(<Fire size={FIRE_VIEW.h} level={lvl('spark')} framed />);
     await settle();
     const tops = [...screen.getByTestId('fire-lit').children].map((layer) => parseFloat((layer as HTMLElement).style.top)).filter((top) => !Number.isNaN(top));
     expect(Math.max(...tops)).toBeLessThan(fireFrame('spark').h);
     cleanup();
-    // beside a number it is the light version's own box, framed or not
+    // Beside a number it is the light version's own box, framed or not.
     renderWithProviders(<Fire size={FIRE_SMALL} level={lvl('spark')} framed />);
     await settle();
     expect(screen.getByTestId('fire-lit-small').style.width).toBe(`${(FIRE_SMALL * FIRE_SMALL_VIEW.w) / FIRE_SMALL_VIEW.h}px`);
@@ -167,7 +164,7 @@ describe('the fire', () => {
 
   it('stands still under Reduce Motion: the fire at its stage, its flame one frame, but no clock runs and nothing rises', async () => {
     patchReactNativeWeb({ reduceMotion: true });
-    // the setting is asked once; a fire after the answer starts from it
+    // The setting is read once; a fire mounted after the answer starts from it.
     renderWithProviders(<Fire size={40} level={lvl('campfire')} />);
     await settle();
     cleanup();
@@ -202,7 +199,7 @@ describe('the fire', () => {
     renderWithProviders(<Fire size={190} level={lvl('kindling')} from={lvl('spark', 0.9)} />);
     await settle();
     const fire = screen.getByTestId('fire-lit');
-    // the old flame under the new one, both playing off the one clock
+    // The old flame under the new one, both off the one clock.
     expect(flames(fire)).toEqual(['spark', 'kindling']);
     expect([stepping(fire, 'spark'), stepping(fire, 'kindling')]).toEqual([true, true]);
     expect(seen.started).toBe(1);

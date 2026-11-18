@@ -30,7 +30,7 @@ describe('a sheet under a finger', () => {
   });
 
   it('gives with the rubber band above the tallest', () => {
-    // 100 points past the top of a 720-point sheet shows as 51.1
+    // 100 points past the top of a 720-point sheet shows as 51.1.
     expect(dragOffset(0, -100, sheet)).toBeCloseTo(-51.1, 1);
     expect(dragOffset(0, -100, sheet)).toBeGreaterThan(-100);
   });
@@ -49,12 +49,12 @@ describe('a sheet let go', () => {
   });
 
   it('follows a flick up to large from near medium', () => {
-    // 280 − 249.5 = 30.5: nearer the top
+    // 280 − 249.5 = 30.5, nearer the top.
     expect(settleSheet(280, -500, sheet)).toBe(0);
   });
 
   it('closes when let go past half of what shows at medium, or flicked down from it', () => {
-    // 400 points show at medium; half of them is 200 below the medium offset
+    // 400 points show at medium; half of them is 200 below the medium offset.
     expect(settleSheet(519, 0, sheet)).toBe(320);
     expect(settleSheet(521, 0, sheet)).toBe('close');
     expect(settleSheet(340, 500, sheet)).toBe('close');
@@ -74,15 +74,15 @@ describe('a sheet let go', () => {
 describe('how long a sheet takes to leave', () => {
   it('takes the time anything leaving takes when nothing was moving it', () => {
     expect(leaveMs(500, 0, 200, 120)).toBe(200);
-    // a flick back up that still closed it (dragged past halfway) is no speed towards leaving
+    // A flick back up that still closed it (dragged past halfway) adds no speed toward leaving.
     expect(leaveMs(500, -300, 200, 120)).toBe(200);
   });
 
   it('is sooner when the finger was already taking it faster, and never slower than that', () => {
-    // 300 points at 3000 a second is a tenth of a second: not shorter than the least, though
+    // 300 points at 3000 a second is a tenth of a second, but never shorter than the minimum.
     expect(leaveMs(300, 3000, 200, 120)).toBe(120);
     expect(leaveMs(450, 3000, 200, 120)).toBe(150);
-    // a gentle let-go would take longer than everything else does: it does not
+    // A gentle release would take longer than the standard exit, so it does not.
     expect(leaveMs(450, 600, 200, 120)).toBe(200);
   });
 

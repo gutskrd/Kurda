@@ -1,12 +1,6 @@
 /**
- * Design tokens — the single source of visual truth (KUR-011) for everything
- * that is not a colour: spacing, corners, type and the page's geometry.
- * Components never hardcode those; they import from here.
- *
- * Colours live in `palette.ts`, one set per scheme, and reach a component
- * through ThemeProvider. A green palette from before the app turned
- * monochrome used to sit here as well, read by nothing but its own test, and
- * was one autocomplete away from being painted on a screen.
+ * Design tokens for everything that is not a colour: spacing, corners, type and page geometry. Components import
+ * these rather than hardcoding values. Colours live in `palette.ts`, one set per scheme, read through ThemeProvider.
  */
 
 export const spacing = {
@@ -20,7 +14,7 @@ export const spacing = {
 
 /** The website's radius scale, to the pixel — its --r-* tokens. */
 export const radii = {
-  // square: a picture run edge to edge of the phone, whose corners are the screen's
+  // Square: a picture running edge to edge, whose corners are the screen's.
   none: 0,
   xs: 6,
   sm: 8,
@@ -31,47 +25,24 @@ export const radii = {
 } as const;
 
 export const typography = {
-  /**
-   * System fonts render Kurdish Latin diacritics (ê î û ç ş) correctly on
-   * both platforms. Any future custom font MUST be verified against the
-   * full Kurdish character set before shipping (no tofu/fallback mixing).
-   */
+  /** System fonts render the Kurdish Latin diacritics (ê î û ç ş) on both platforms; any custom font must be checked against the full set first. */
   fontFamily: 'System',
   /**
-   * The display face, for headings — the same one the website sets as
-   * `--font-display` and applies to every h1–h4.
-   *
-   * Kept as data, by platform, because this module is deliberately free of
-   * React Native so it can be unit-tested; `fonts.ts` resolves it. The order
-   * mirrors the browser stack: a Mac or an iPhone lands on Iowan Old Style,
-   * so an iPhone reading hevalo.app and an iPhone running the app see the
-   * same letters.
-   *
-   * Body copy stays on the system face. That is what iOS does with a brand
-   * serif, and what the website does — the serif is for titles, not for
-   * paragraphs.
+   * The display face for headings, matching the website's `--font-display`. Kept as per-platform data because this
+   * module is free of React Native for unit tests; `fonts.ts` resolves it. The order mirrors the website's stack, so an
+   * iPhone shows the same letters in the app and on hevalo.app. Body text stays on the system face.
    */
   displayByPlatform: {
     iosFont: 'Iowan Old Style',
     androidFont: 'serif',
     webFont: "'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif",
   },
-  /** Headings are 600 on the web, not 700 — a serif at 700 gets heavy fast. */
+  /** Headings are 600, as on the website; a serif at 700 gets heavy fast. */
   displayWeight: '600',
-  /** The website sets line-height 1.12 and letter-spacing -0.01em on headings. */
+  /** The website's heading line height (1.12) and letter spacing (-0.01em). */
   displayLineHeight: 1.12,
   displayTracking: -0.01,
-  /**
-   * One scale, used everywhere: 34 and 28 for large titles (in the display
-   * serif, where it is already used), 22 for a section's title, 17 for body
-   * text and rows, 15 for what is secondary, 13 for captions. Nothing smaller
-   * than 11, which only the tab labels use.
-   *
-   * It was the website's 12/14/16/20/26/34, a point under the platform's own
-   * sizes at every step, so a row read as nearly native rather than native
-   * and a caption was harder to read than it needed to be for the youngest
-   * readers.
-   */
+  /** One scale everywhere: 34 and 28 for large titles, 22 for section titles, 17 body and rows, 15 secondary, 13 captions, and 11 only for tab labels. */
   sizes: {
     xs: 13,
     sm: 15,
@@ -80,84 +51,41 @@ export const typography = {
     xl: 28,
     xxl: 34,
   },
-  /**
-   * The sizes iOS sets its own controls at.
-   *
-   * Not the website's scale above, which is what body copy and headings
-   * use. These three come from the Human Interface Guidelines and are what
-   * makes a row, a button or a tab label read as native rather than as
-   * approximately native — a settings row at 16 is a settings row that is
-   * one point wrong, on every line, forever.
-   *
-   * Nine styles had copied the numbers loose, each from whichever other one
-   * its author happened to look at.
-   */
+  /** The sizes iOS sets its own controls at (Human Interface Guidelines), so rows, buttons and tab labels read as native. */
   ios: {
-    /** a tab bar label */
+    /** A tab bar label. */
     tabLabel: 11,
-    /** the label on a button */
+    /** A button's label. */
     button: 15,
-    /** the title and the value on a list row */
+    /** A list row's title and value. */
     row: 17,
   },
   weights: {
     regular: '400',
     medium: '500',
-    /** What the website's buttons and headings are; 700 is too heavy for both. */
+    /** The website's button and heading weight; 700 is too heavy for both. */
     semibold: '600',
     bold: '700',
   },
 } as const;
 
 /**
- * How far the reader's own text size may grow a piece of text, as a
- * `maxFontSizeMultiplier`, where the text sits in something that cannot grow
- * with it.
- *
- * Text follows the size set in the system's settings, and body text follows
- * it all the way: a paragraph, a row, a button's label wrap and their boxes
- * grow, so they are never capped. What is capped is the little that is drawn
- * in a box sized in points, where a larger letter does not make the box
- * larger, it only pushes the letter out of it. There was no rule for these:
- * each screen that noticed wrote a number of its own, and the ones that did
- * not noticed nothing until the largest sizes clipped them.
+ * How far the reader's text size may grow text inside something that cannot grow with it, as a
+ * `maxFontSizeMultiplier`. Body text, rows and button labels are never capped, since they wrap and their boxes grow;
+ * only text in a box sized in points is, where a larger letter would be pushed out of it.
  */
 export const fontScaleCap = {
-  /** a letter or a count in a box whose size is fixed: a tile, a key, a badge, one segment of a control */
+  /** A letter or count in a fixed-size box: a tile, a key, a badge, one segment of a control. */
   fixedBox: 1.2,
-  /** a title kept to one line at a size that is already large */
+  /** A title kept to one line at an already large size. */
   heading: 1.3,
 } as const;
 
-/**
- * The page's own geometry.
- *
- * `gutter` is the space between a screen's edge and its content on a phone:
- * 16, so the tabs line up with each other. It lives here rather than in `spacing`, which is a scale of
- * steps — this is one decision, not a step on it.
- */
+/** The page's geometry. `gutter` is the phone's edge-to-content space (16), a single decision rather than a step on `spacing`. */
 export const layout = {
   gutter: 16,
-  /** between rows in a list that has no dividers */
+  /** Between rows in a list without dividers. */
   rowGap: 12,
-  /**
-   * How wide a list or a page of reading gets on a tablet or a wide window.
-   * Past this a row is a band across the screen and the eye loses its place
-   * on the way back to the start of the next line. The shop, the season and
-   * the stories already stopped here; this names the number they share.
-   */
+  /** The widest a list or reading page gets on a tablet or wide window, past which the eye loses its place between lines. */
   column: 680,
 } as const;
-
-/**
- * The full Kurdish Latin special-character set. NOT for display — used
- * by tests (and future font checks) to verify diacritic rendering.
- */
-export const KURDISH_CHARSET = 'ÊêÎîÛûÇçŞş';
-
-/**
- * RTL readiness (future Sorani/Arabic-script support, KUR-093):
- * layouts must use logical start/end properties, never left/right.
- * Flipping this on is the switch point; nothing should break before it.
- */
-export const rtlReady = false;

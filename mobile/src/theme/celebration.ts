@@ -1,7 +1,6 @@
 /**
- * The app's one celebration — its timing and its flecks — lives in
- * @kurda/shared (celebration.ts), so the phone and the website play the same
- * moment the same way. theme/CelebrationParts.tsx draws it here.
+ * The app's one celebration (timing and flecks) lives in @kurda/shared (celebration.ts), so phone and website play it
+ * the same; theme/CelebrationParts.tsx draws it.
  */
 export {
   BURST,
