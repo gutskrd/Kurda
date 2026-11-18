@@ -1,6 +1,6 @@
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback } from 'react';
 import type { ApiClient } from '../api/client';
-import { useIntents, useSayNotSaved } from '../api/optimistic';
+import { createHiddenSet, useIntents, useSayNotSaved } from '../api/optimistic';
 import type { ApiResult } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 
@@ -37,42 +37,11 @@ export function unblockUser(client: ApiClient, userId: string): Promise<ApiResul
   return client.delete(`/friends/${userId}/block`);
 }
 
-/*
- * People blocked from this phone whose lists have not been read again since: they leave every list showing people at
- * once, before the server has the block, and come back if it refuses.
- */
-let hidden: ReadonlySet<string> = new Set();
-const listeners = new Set<() => void>();
-
-function setHidden(next: ReadonlySet<string>): void {
-  hidden = next;
-  for (const listener of listeners) listener();
-}
-
-/** Take them out of the lists now; the block itself is sent by the caller. */
-export function hideBlocked(userId: string): void {
-  setHidden(new Set(hidden).add(userId));
-}
-
-/** The block was refused: they are back where they were. */
-export function unhideBlocked(userId: string): void {
-  const next = new Set(hidden);
-  next.delete(userId);
-  setHidden(next);
-}
-
-/** The people a list should leave out while their block is on its way or done. */
-export function useHiddenByBlock(): ReadonlySet<string> {
-  return useSyncExternalStore(
-    (listener) => {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
-    () => hidden,
-  );
-}
+// People blocked from this phone: they leave every list of people at once, before the server has the block.
+const blocked = createHiddenSet();
+export const hideBlocked = blocked.hide;
+export const unhideBlocked = blocked.unhide;
+export const useHiddenByBlock = blocked.useHidden;
 
 /**
  * Block someone, once the question has been answered: they leave the lists at once and the server is told after. A

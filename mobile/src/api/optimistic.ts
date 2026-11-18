@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert } from 'react-native';
 import { useI18n } from '../i18n/I18nContext';
 import { describeError, isMaintenance, type Translate } from './errors';
@@ -134,4 +134,41 @@ export function useIntents<K, S, T = unknown>(
     }),
   );
   return intents;
+}
+
+/**
+ * Things taken away at once from lists on other screens (a blocked person, a group left, a deleted post): those lists
+ * leave them out as they draw while the removal is on its way or done, and show them again, in their place, if it is
+ * refused.
+ */
+export interface HiddenSet {
+  hide: (id: string) => void;
+  unhide: (id: string) => void;
+  /** The ids a list should leave out. */
+  useHidden: () => ReadonlySet<string>;
+}
+
+export function createHiddenSet(): HiddenSet {
+  let hidden: ReadonlySet<string> = new Set();
+  const listeners = new Set<() => void>();
+  const set = (next: ReadonlySet<string>): void => {
+    hidden = next;
+    for (const listener of listeners) listener();
+  };
+  const subscribe = (listener: () => void) => {
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  };
+  return {
+    hide: (id) => set(new Set(hidden).add(id)),
+    unhide: (id) => {
+      if (!hidden.has(id)) return;
+      const next = new Set(hidden);
+      next.delete(id);
+      set(next);
+    },
+    useHidden: () => useSyncExternalStore(subscribe, () => hidden),
+  };
 }
