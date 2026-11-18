@@ -38,28 +38,18 @@ import type { Notification } from '../push/service.js';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * SQL: the user behind `alias` takes part in leagues right now — their own
- * choice if they made one, otherwise in for adults and out for minors (and for
- * an account whose age is not on record yet). Read from age at the moment it
- * is asked, so a minor who never chose joins in on their own once they are 18.
+ * SQL: the user behind `alias` takes part in leagues now: their own choice if made, otherwise in for known adults
+ * and out for others. Derived from age at each ask, so a minor who never chose joins at 18.
  */
 export function inLeaguesSql(alias: string): string {
-  // never a guest (auth/guest.ts): a league table is a list of other people,
-  // which a guest may not be on, whatever the setting says
+  // Never a guest: a league table lists people, and a guest may not be on it whatever the setting.
   return `(COALESCE(${alias}.leagues_enabled, NOT ${notKnownAdultSql(alias)}) AND NOT ${alias}.guest)`;
 }
 
 /**
- * Take a user out of this week's league table.
- *
- * Leaving is immediate rather than at the week's end: somebody who has said
- * they do not want to be ranked should not stay on twenty other people's
- * screens until Sunday. Earlier weeks are history and stay as they were.
- *
- * Their place is kept, marked as left (`left_at`), rather than deleted: coming
- * back the same week returns them to the same group (`ensureMembership`). A
- * fresh placement would let two taps swap a strong group for an empty one
- * late in the week, and a top finish there pays a promotion.
+ * Takes a user out of this week's league table at once, so someone who asked not to be ranked leaves other people's
+ * screens now. Earlier weeks stay. Their place is kept, marked `left_at`, so returning the same week puts them back
+ * in the same group; a fresh draw would let two taps swap a strong group for an empty one and a promotion.
  */
 export async function leaveThisWeek(executor: Executor, userId: string, now: Date = new Date()): Promise<void> {
   await executor.query(
@@ -69,9 +59,8 @@ export async function leaveThisWeek(executor: Executor, userId: string, now: Dat
 }
 
 /**
- * Back into this week's group, for someone who left it and has opted in again:
- * the same place, not a new draw (see `leaveThisWeek`). Somebody who had no
- * group this week gets one with their next learning XP.
+ * Back into this week's group for someone who left and opted in again: the same place, not a new draw. Someone with
+ * no group this week gets one with their next learning XP.
  */
 export async function returnThisWeek(executor: Executor, userId: string, now: Date = new Date()): Promise<void> {
   await executor.query(
@@ -80,27 +69,23 @@ export async function returnThisWeek(executor: Executor, userId: string, now: Da
   );
 }
 
-/**
- * SQL: a ledger row of `alias` inside the week starting at the date in
- * placeholder `week` — Monday 00:00 UTC to the next, whatever the session's
- * own time zone is.
- */
+/** SQL: a ledger row of `alias` in the week starting at placeholder `week`, Monday 00:00 UTC to the next. */
 function inWeekSql(alias: string, week: string): string {
   return `${alias}.created_at >= (${week}::date::timestamp AT TIME ZONE 'UTC')
           AND ${alias}.created_at < ((${week}::date + 7)::timestamp AT TIME ZONE 'UTC')`;
 }
 
-/** Grants Gems for a rule/refId; injected so leagues stay decoupled (KUR-068). */
+/** Grants Gems for a rule and reference id. */
 export interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<{ granted: number }>;
 }
 
-/** Publishes a friend-feed milestone; injected so leagues stay decoupled (KUR-087). */
+/** Records a friend milestone. */
 export interface ActivityPublisher {
   publish(actorId: string, type: 'league_promotion', payload: Record<string, unknown>): Promise<unknown>;
 }
 
-/** The notification list and push, as the leagues use them: calm, and never more than one push a week. */
+/** The notification list and push as the leagues use them: never more than one push a week. */
 export interface LeagueNotices {
   record(userId: string, notification: Notification): Promise<void>;
   push(userId: string, notification: Notification): Promise<void>;
@@ -161,34 +146,17 @@ interface MembershipRow {
 }
 
 /**
- * Learning Leagues (KUR-062, rebuilt by contract 4 §L).
+ * Learning Leagues. A learner joins the week's league the first time they earn learning XP in it (a lesson, practice
+ * or story), never by opening a page. They are placed in a group of their tier near their last four weeks of XP and
+ * within six hours of their clock, filling open groups first; a group locks at twenty, and joins of one tier and week
+ * take turns under a lock so a group never overfills.
  *
- * A learner joins the week's league the first time they earn *learning* XP in
- * it — a lesson, a practice session, a story — and never by opening a page.
- * They are placed in a group of their tier, near their own last four weeks of
- * XP and within six hours of their clock, filling open groups before starting
- * new ones; a group locks at twenty. Joins of one tier in one week take turns
- * under a lock, so two at once can no longer push a group past its size.
- *
- * The table is ranked by the XP that counts for the league (xp/rules.ts), in
- * one query per table rather than one per member. On Wednesday, groups still
- * under eight are merged into the nearest open group (`mergeSmallGroups`). On
- * Monday the week is settled (`settleDue`) from the job queue, once: the top
- * quarter with the goal met move up, those at the bottom who missed it move
- * down, and every week's result is recorded in `league_weeks`. The first
- * settle of a quarter then moves everyone two tiers down, so the top stays
- * reachable.
- *
- * Somebody whose first XP of a new week arrives before the settle has run is
- * not placed by last week's tier: their own last group is settled first, and
- * the season reset applied, before they join (`ensureMembership`). That was
- * the Monday race — joining at the old tier and then having the settle's
- * promotion overwritten.
- *
- * Only those taking part (`inLeaguesSql`) are placed, shown or moved: someone
- * who opts out (and every teen who has not chosen) is in personal mode — the
- * same weekly goal against their own last weeks — and keeps their tier for
- * when they come back.
+ * Tables rank league-counted XP (xp/rules.ts) in one query per table. On Wednesday groups under eight merge into the
+ * nearest open group; on Monday the week is settled once from the job queue: the top quarter who met the goal move
+ * up, those at the bottom who missed it move down, and every result goes in `league_weeks`. A quarter's first settle
+ * moves everyone two tiers down. A learner whose first XP of a week arrives before the settle has their own last
+ * group settled first (`ensureMembership`), so they join at the tier they earned. Only those taking part
+ * (`inLeaguesSql`) are placed, shown or moved; the rest are in personal mode and keep their tier.
  */
 export class LeagueService {
   private readonly goalXp: number;
@@ -214,19 +182,13 @@ export class LeagueService {
   }
 
   /**
-   * An award landed. Learning XP joins this week's league; any XP that takes a
-   * member past the weekly goal tells them, once, that they are safe.
-   *
-   * Called from the XP service's hook, which can fire inside the award's own
-   * transaction: the award may not be visible to this connection yet, or it may
-   * — so this week's XP is read without it and its counted amount added.
+   * An award landed: learning XP joins this week's league, and XP taking a member past the weekly goal tells them once
+   * that they are safe. Called from the XP hook, possibly inside the award's transaction, so the week's XP is read
+   * without the award and its counted amount added.
    */
   async onXp(award: AwardedXp, now: Date = new Date()): Promise<void> {
     const weekKey = weekStart(now);
-    // Every award asks the same three things, so they are one read: whether
-    // they take part (`takesPart`), their place in this week's league if they
-    // have one (`ensureMembership`'s first look), and the week's XP before this
-    // award (`noteSafe`).
+    // One read for what every award asks: taking part, this week's place if any, and the week's XP before this award.
     const facts = await this.pool.query<{ taking_part: boolean; xp: number } & Partial<MembershipRow> & { safe_noted: boolean | null }>(
       `SELECT ${inLeaguesSql('u')} AS taking_part,
               m.cohort_id, m.tier, m.left_at IS NOT NULL AS left, m.safe_notified_at IS NOT NULL AS safe_noted,
@@ -270,10 +232,8 @@ export class LeagueService {
   }
 
   /**
-   * Put the user in a group for the current week if they are not in one — or,
-   * for one who left this week and is back, return them to the one they left
-   * (see `leaveThisWeek`). Their earlier weeks are settled first and the
-   * season reset applied, so the tier they join at is the one they earned.
+   * Puts the user in a group for the current week, or returns someone who left this week to the same group. Earlier
+   * weeks are settled and the season reset applied first, so they join at the tier they earned.
    */
   async ensureMembership(
     userId: string,
@@ -301,9 +261,8 @@ export class LeagueService {
       return { cohortId: existing.cohort_id, tier: toLeagueTier(existing.tier) ?? FIRST_LEAGUE_TIER };
     }
 
-    // outside the join's transaction: settling takes the group's lock and then
-    // its members' rows, and holding this user's row meanwhile could cross
-    // another member doing the same
+    // Outside the join's transaction: settling locks the group and then its members, so holding this user's row could
+    // cross another member doing the same.
     await this.settleOwnPastWeeks(userId, weekKey);
 
     const facts = await this.pool.query<{ timezone: string | null; band_xp: number }>(
@@ -320,8 +279,7 @@ export class LeagueService {
 
     return this.tx(async (client) => {
       const tier = await this.currentTier(client, userId, weekKey);
-      // joins to one tier's groups take turns: the count read below is the
-      // count the insert lands on
+      // Joins to one tier's groups take turns, so the count read below is the count the insert lands on.
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`league-join:${weekKey}:${tier}`]);
       const recheck = await client.query<{ cohort_id: string; tier: string }>(
         `SELECT cohort_id, tier FROM league_members WHERE week_key = $1 AND user_id = $2`,
@@ -348,11 +306,9 @@ export class LeagueService {
   }
 
   /**
-   * The best open group for a joiner: same tier and week, room left, within six
-   * hours of their clock and one XP band of theirs — the closest band first,
-   * then the closest clock, then the fullest, so open groups fill before new
-   * ones start. After Wednesday's merge any open group of the tier will do: a
-   * late joiner is better in a group than alone in a new one.
+   * The best open group for a joiner: same tier and week, room left, within six hours of their clock and one XP band,
+   * preferring the closest band, then clock, then the fullest group. After Wednesday's merge any open group of the
+   * tier will do.
    */
   private async openGroupFor(
     client: Executor,
@@ -386,9 +342,8 @@ export class LeagueService {
   }
 
   /**
-   * The learner's tier for `weekKey`, their row locked for the join. A first
-   * league starts in Dilop, in the current season; a learner last seen in an
-   * earlier season moves down two tiers for each one that has begun since.
+   * The learner's tier for `weekKey`, their row locked for the join. A first league starts in Dilop; a learner last
+   * seen in an earlier season drops two tiers for each season begun since.
    */
   private async currentTier(client: Executor, userId: string, weekKey: string): Promise<LeagueTier> {
     const season = weekSeason(weekKey);
@@ -412,7 +367,7 @@ export class LeagueService {
     return dropped;
   }
 
-  /** Settle any group of an earlier week the user is in that has not been settled yet. */
+  /** Settles any unsettled earlier-week group the user is in. */
   private async settleOwnPastWeeks(userId: string, weekKey: string): Promise<void> {
     const due = await this.pool.query<{ cohort_id: string }>(
       `SELECT m.cohort_id FROM league_members m JOIN league_cohorts c ON c.id = m.cohort_id
@@ -425,9 +380,8 @@ export class LeagueService {
 
   /** A group's members still in it, with this week's counted XP: one query for the whole table. */
   private async groupMembers(executor: Executor, cohortId: string, weekKey: string, viewer: string | null): Promise<MemberRow[]> {
-    // somebody who left mid-week (leaveThisWeek), whose default changed under
-    // them (an adult account found to be a minor's) or whose account is gone
-    // is not in the table: nobody is shown who is not taking part
+    // Anyone who left mid-week, whose default changed (an adult account found to be a minor's) or whose account is gone
+    // is not shown.
     const rows = await executor.query<MemberRow>(
       `SELECT m.user_id, m.tier, u.username, ${shownToSql('u', '$3::uuid')} AS shown,
               COALESCE((SELECT SUM(${countedXpSql('l')}) FROM xp_ledger l
@@ -447,10 +401,8 @@ export class LeagueService {
   }
 
   /**
-   * What `standings` asks about the learner, in one read: whether they take
-   * part (`takesPart`), this week's counted XP, the tier and season they keep,
-   * their place in this week's league if they are in it, and any group of an
-   * earlier week of theirs still to settle (`settleOwnPastWeeks`).
+   * What `standings` asks about the learner, in one read: taking part, this week's counted XP, their tier and season,
+   * this week's place if any, and any earlier-week group still to settle.
    */
   private async ownFacts(
     userId: string,
@@ -498,17 +450,12 @@ export class LeagueService {
   }
 
   /**
-   * `GET /me/league`: the learner's week, in whichever mode they are in.
-   * Reading it never joins anyone. It does settle the learner's own last group
-   * if the Monday settle has not reached it yet, so the result card and the
-   * tier shown are the ones they earned.
+   * `GET /me/league`: the learner's week in whichever mode they are in. Reading never joins, but it settles the
+   * learner's own last group if the Monday settle has not, so the result and tier shown are the ones earned.
    */
   async standings(userId: string, now: Date = new Date()): Promise<LeagueView> {
     const weekKey = weekStart(now);
-    // The learner's own facts in one read, with any earlier group of theirs not
-    // settled yet. When there is one (the first look after a week ends, before
-    // the Monday settle reached it) it is settled first and they are read again,
-    // as they always were read after the settle.
+    // If an earlier group of theirs is unsettled (the first look after a week ends), settle it and read again.
     let me = await this.ownFacts(userId, weekKey);
     if (me.due.length > 0) {
       for (const cohortId of me.due) await this.settleCohort(cohortId);
@@ -562,7 +509,7 @@ export class LeagueService {
       joined: true,
       tier: myTier,
       ...base,
-      // met the goal in a league: demotion is no longer possible this week
+      // Met the goal in a league, so demotion is no longer possible this week.
       safe: goalMet,
       rank: mine?.rank ?? standings.length,
       groupSize: standings.length,
@@ -605,7 +552,7 @@ export class LeagueService {
     };
   }
 
-  /** The four weeks before this one and this one, oldest first: "you vs last week". */
+  /** The four previous weeks and this one, oldest first, for "you vs last week". */
   private async recentWeeks(userId: string, weekKey: string): Promise<LeagueWeekXp[]> {
     const weeks = [weekKey];
     for (let i = 0; i < 4; i++) weeks.unshift(previousWeek(weeks[0]!));
@@ -629,11 +576,9 @@ export class LeagueService {
   // ---- the weekly settle -------------------------------------------------------
 
   /**
-   * Settle one group (idempotent: the group's row is locked and claimed, and a
-   * settled group is left alone). Each member's next tier is written and their
-   * week recorded; then, after the commit, promotion Gems are paid — once per
-   * tier per season, which the grant's key enforces — and the badges hear of it.
-   * Returns the standings it settled (empty when it had been settled already).
+   * Settles one group idempotently: the group's row is locked and claimed, and a settled group is left alone. Each
+   * member's next tier and week are written; after the commit, promotion Gems are paid (once per tier per season, by
+   * the grant's key) and the badges are told. Returns the standings settled, empty if already done.
    */
   async settleCohort(cohortId: string): Promise<LeagueStanding[]> {
     const settled = await this.tx(async (client) => {
@@ -646,9 +591,7 @@ export class LeagueService {
       const members = await this.groupMembers(client, cohortId, c.week_key, null);
       const standings = this.standingsOf(members);
       const season = weekSeason(c.week_key);
-      // Three statements for the whole group rather than three per member.
-      // Members' rows in one order everywhere (the insert takes them in the
-      // order given), so two settles never wait on each other in a circle.
+      // Three statements for the whole group, with members in one order everywhere so two settles never deadlock.
       const ordered = [...standings].sort((a, b) => (a.userId < b.userId ? -1 : 1));
       if (ordered.length > 0) {
         const kept = await client.query<{ user_id: string; season_key: string }>(
@@ -659,8 +602,8 @@ export class LeagueService {
           [ordered.map((s) => s.userId), ordered.map((s) => s.tier), season],
         );
         const seasonOf = new Map(kept.rows.map((r) => [r.user_id, r.season_key]));
-        // a reset that already reached this learner (a later season's join)
-        // applies to this result too, so a late settle cannot undo it
+        // A season reset that already reached this learner (through a later join) applies here too, so a late settle cannot
+        // undo it.
         const after = ordered.map((s) => seasonDrop(s.tierAfter, seasonsBetween(season, seasonOf.get(s.userId)!)));
         await client.query(
           `UPDATE user_league ul SET tier = m.tier, updated_at = now(),
@@ -725,12 +668,9 @@ export class LeagueService {
   }
 
   /**
-   * The weekly settle (the `league-settle` job: Monday 00:00 UTC, and at
-   * startup to catch up). Settles every group of a closed week, records the
-   * week of everyone in personal mode, applies the season reset when a new
-   * quarter has begun, and tells the promoted. Every step is idempotent, and
-   * the run is recorded per week, so starting it twice — two processes, a
-   * retry, the admin's "re-run" — changes nothing the first did not.
+   * The weekly settle (the `league-settle` job, Monday 00:00 UTC and at startup to catch up): settles every group of a
+   * closed week, records personal-mode weeks, applies the season reset when a quarter begins, and tells the promoted.
+   * Every step is idempotent and the run is recorded per week, so running it twice changes nothing.
    */
   async settleDue(now: Date = new Date(), opts: { force?: boolean } = {}): Promise<LeagueRunStatus> {
     const weekKey = weekStart(now);
@@ -749,8 +689,7 @@ export class LeagueService {
       );
       for (const cohort of due.rows) await this.settleCohort(cohort.id);
 
-      // personal mode, and anyone who earned XP last week outside a group: their
-      // week is recorded too (the weekly-goal badge, the result card, the export)
+      // Personal mode, and anyone who earned XP last week outside a group: their week is recorded too.
       const personalWeeks = [previousWeek(weekKey)];
       for (let i = 0; i < 3; i++) personalWeeks.push(previousWeek(personalWeeks[personalWeeks.length - 1]!));
       let personal = 0;
@@ -795,14 +734,11 @@ export class LeagueService {
   }
 
   /**
-   * Everyone moves down two tiers when a season begins (never below Dilop), so
-   * the top stays reachable. Applied once per learner per season: their row
-   * says which season's reset it already reflects, and a join that got there
-   * first has applied it already (`currentTier`).
+   * Everyone moves down two tiers when a season begins (never below Dilop), so the top stays reachable. Applied once
+   * per learner per season: their row records the season it reflects, and a join may have applied it first.
    */
   async applySeasonReset(season: string): Promise<number> {
-    // seasons are 'YYYY-Qn': year*4+n orders them, and the difference is how
-    // many resets a row has missed (somebody away a whole year missed four)
+    // Seasons are 'YYYY-Qn', so year*4+n orders them and the difference counts missed resets.
     const ordinal = (k: string) => `(split_part(${k}, '-Q', 1)::int * 4 + split_part(${k}, '-Q', 2)::int)`;
     const moved = await this.pool.query(
       `UPDATE user_league
@@ -817,10 +753,8 @@ export class LeagueService {
   }
 
   /**
-   * Tell the promoted and the trophy winners of a week, once each: the row is
-   * claimed before the notification goes. A week where somebody stayed or
-   * moved down sends nothing — their result card says it calmly when they next
-   * look, and nobody is pushed a message about going down.
+   * Tells a week's promoted and trophy winners once each, claiming the row before notifying. Staying or moving down
+   * sends nothing; the result card says it when they next look.
    */
   private async notifyResults(weekKey: string): Promise<number> {
     const claimed = await this.pool.query<{ user_id: string; tier_after: string; outcome: string; trophy: boolean }>(
@@ -850,13 +784,9 @@ export class LeagueService {
   // ---- Wednesday's merge -------------------------------------------------------
 
   /**
-   * Merge groups still under eight on Wednesday 00:00 UTC into the nearest open
-   * group (the `league-merge` job), so nobody spends a week in a league of two.
-   * The nearest is a group of the same tier first, by clock, then a group of a
-   * neighbouring tier — whose members keep racing in their own tier, scored on
-   * their own (`resolveGroup`). A merge never takes a group past twenty. Joins
-   * to the week wait while it runs (it holds every tier's join lock, in tier
-   * order, so it cannot cross a join).
+   * Merges groups still under eight at Wednesday 00:00 UTC into the nearest open group (the `league-merge` job): same
+   * tier first by clock, then a neighbouring tier whose members keep racing in their own tier (`resolveGroup`), never
+   * past twenty. It holds every tier's join lock in tier order, so joins wait and cannot cross it.
    */
   async mergeSmallGroups(now: Date = new Date(), opts: { force?: boolean } = {}): Promise<LeagueRunStatus | null> {
     const weekKey = weekStart(now);
@@ -939,7 +869,7 @@ export class LeagueService {
 
   // ---- runs, for the job and the admin -----------------------------------------
 
-  /** Start a run unless this week's already finished (or `force`); null when there is nothing to do. */
+  /** Starts a run unless this week's has finished (or `force`); false when there is nothing to do. */
   private async claimRun(kind: 'settle' | 'merge', weekKey: string, force: boolean): Promise<boolean> {
     const r = await this.pool.query(
       `INSERT INTO league_runs (kind, week_key) VALUES ($1, $2)

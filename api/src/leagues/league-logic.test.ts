@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { demote, previousWeek, promote, TIERS, utcOffsetMinutes, weekStart } from './league-logic.js';
 
-// The ten-tier ladder and the old "top ten promote, bottom five demote" rule
-// this file pinned were replaced on purpose (contract 4 §L); their successors
-// are tested in shared/src/leagues.test.ts.
+// The league tier and promotion rules are tested in shared/src/leagues.test.ts.
 
 describe('promote / demote', () => {
   it('moves one tier and clamps at the ends', () => {

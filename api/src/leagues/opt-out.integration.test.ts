@@ -48,9 +48,7 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
   const call = (who: Account, method: 'GET' | 'PATCH', url: string, payload?: Record<string, unknown>) =>
     app.inject({ method, url, payload, headers: { authorization: `Bearer ${who.token}` }, remoteAddress: '10.141.0.1' });
 
-  // deliberately changed: leaving used to delete the week's row, so this
-  // asked whether there was one; the row is now kept, marked as left, and
-  // being in the week's table means a row that is not
+  // Leaving keeps the week's row, marked as left, so being in the week means a row that is not left.
   const inWeek = async (userId: string, weekKey = weekStart(new Date())): Promise<boolean> =>
     ((
       await pool.query(`SELECT 1 FROM league_members WHERE user_id = $1 AND week_key = $2 AND left_at IS NULL`, [
@@ -110,9 +108,7 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
     expect(others.standings.some((s) => s.userId === leaver.id)).toBe(false);
   });
 
-  // deliberately changed (contract 4 §L2): reading the page used to join the
-  // week, so this expected a place straight after opting back in; now the
-  // next learning XP joins, and reading never does
+  // Reading the page never joins; the next learning XP does.
   it('one tap back in', async () => {
     const returner = await signUp('returner');
     await call(returner, 'PATCH', '/me', { leaguesEnabled: false });
@@ -130,8 +126,7 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
     const first = await cohortOf(hopper.id);
     expect(first).toBeDefined();
 
-    // a fresh, empty cohort of the same tier is open, the first place a new
-    // arrival would go
+    // A fresh, empty group of the same tier is open, the first place a new arrival would go.
     const tier = (await pool.query<{ tier: string }>(`SELECT tier FROM league_cohorts WHERE id = $1`, [first])).rows[0]!.tier;
     const empty = (
       await pool.query<{ id: string }>(
@@ -163,8 +158,7 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
     expect(await inWeek(minor.id)).toBe(true);
   });
 
-  // the ten tiers became six, and the old "top ten promote" rule the top-quarter
-  // one (contract 4 §L3), so the tiers and the expectation changed with them
+  // Tiers and expectations follow the current six-tier, top-quarter rules.
   it('nobody who has left is promoted or demoted when the week closes', async () => {
     // a closed week, far enough back to be nobody else's
     const week = weekStart(new Date(Date.now() - 35 * 86_400_000));
