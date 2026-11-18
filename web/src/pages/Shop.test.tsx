@@ -246,7 +246,8 @@ describe('Shop', () => {
     expect(screen.queryByText('Night on the high pastures')).toBeNull();
 
     await userEvent.type(screen.getByRole('searchbox'), 'sonne');
-    expect(tileNames()).toEqual(['Roj']);
+    // The search reaches the list through the address, a render behind the last key.
+    await waitFor(() => expect(tileNames()).toEqual(['Roj']));
   });
 
   it('sorts by price, either way', async () => {

@@ -192,7 +192,7 @@ describe('RhymeMatchScreen', () => {
       await waitFor(() => expect(client.calls.find((c) => c.path === '/rhyme/matches')?.body).toMatchObject({ dialect: 'kurmanci' }));
     });
 
-    it('asks friends in the same step, makes the match friendly, and invites them once it exists', async () => {
+    it('asks friends in the same step, with no rated choice, and invites them once the match exists', async () => {
       const client = fakeClient({
         'GET /rhyme/availability': availability(false),
         'GET /friends?limit=500': ok({ total: 1, friends: [{ userId: 'u-azad', username: 'azad', displayName: 'Azad', online: false, avatarUrl: null }] }),
@@ -208,7 +208,7 @@ describe('RhymeMatchScreen', () => {
       fireEvent.click(await screen.findByRole('checkbox', { name: 'Azad' }));
       fireEvent.click(screen.getByRole('button', { name: 'Create match' }));
       await waitFor(() => expect(client.calls.some((c) => c.path === '/play/invites' && c.method === 'POST')).toBe(true));
-      expect(client.calls.find((c) => c.path === '/rhyme/matches')?.body).toEqual({ dialect: 'kurmanci', rated: false });
+      expect(client.calls.find((c) => c.path === '/rhyme/matches')?.body).toEqual({ dialect: 'kurmanci' });
       expect(client.calls.find((c) => c.path === '/play/invites' && c.method === 'POST')?.body).toEqual({ game: 'rhyme-match', lobbyId: 'm1', userIds: ['u-azad'] });
     });
 
