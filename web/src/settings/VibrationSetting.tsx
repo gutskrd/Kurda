@@ -3,13 +3,9 @@ import { useT } from '../i18n/I18nProvider';
 import { canVibrate, haptic, setVibration, vibrationOn } from '../lib/haptics';
 
 /**
- * Settings → Vibration: whether this device buzzes for a right answer, a
- * wrong one and a moment worth marking (lib/haptics.ts).
- *
- * Shown only where it can mean something — a touch screen whose browser can
- * vibrate (not a laptop, and not Safari on an iPhone, which cannot). On this
- * device only, like the gift chime beside it: it is about where you are, not
- * who you are. Turning it on is felt, so the switch shows what it does.
+ * Settings → Vibration: whether this device buzzes for right and wrong answers and celebrations (lib/haptics.ts).
+ * Shown only on a touch screen whose browser can vibrate, which excludes iPhones. Stored per device; turning it on
+ * buzzes once.
  */
 export function VibrationSetting(): React.JSX.Element | null {
   const t = useT();

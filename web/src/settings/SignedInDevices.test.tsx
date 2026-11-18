@@ -57,7 +57,7 @@ function renderDevices(): void {
   );
 }
 
-/** ConfirmButton: the first press arms it, the second does it. */
+/** Presses a ConfirmButton twice: the first press arms it, the second confirms. */
 async function confirm(user: ReturnType<typeof userEvent.setup>, name: string | RegExp): Promise<void> {
   await user.click(screen.getByRole('button', { name }));
   await user.click(screen.getByRole('button', { name: /press again to confirm/i }));
@@ -71,7 +71,7 @@ describe('signed-in devices in Settings', () => {
     await screen.findByText('Safari on iPhone');
     const rows = screen.getAllByRole('listitem');
     expect(rows).toHaveLength(3);
-    // this device leads, however the server ordered them
+    // This device comes first, however the server ordered them.
     expect(rows[0]).toHaveTextContent('Chrome on Windows');
     expect(within(rows[0]!).getByText(en['settings.devices.thisDevice'])).toBeInTheDocument();
     expect(rows[0]).toHaveTextContent(`${en['settings.devices.thisDevice']} · ${en['settings.devices.activeNow']}`);
@@ -82,7 +82,7 @@ describe('signed-in devices in Settings', () => {
     expect(rows[2]).toHaveTextContent(en['settings.devices.unknown']);
     expect(rows[2]).toHaveTextContent('Last active 3 days ago');
 
-    // every row but this one can be signed out on its own
+    // Every row but this one can be signed out on its own.
     expect(within(rows[1]!).getByRole('button', { name: 'Sign out Safari on iPhone' })).toBeInTheDocument();
     expect(within(rows[2]!).getByRole('button', { name: 'Sign out Unknown device' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: en['settings.devices.signOutOthers'] })).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('signed-in devices in Settings', () => {
     const loading = screen.getByRole('status');
     expect(loading).toHaveAttribute('aria-busy', 'true');
     expect(loading).toHaveTextContent(en['settings.devices.loading']);
-    // drawn a moment late, so a quick answer never flashes grey
+    // Drawn after a moment, so a quick answer never flashes grey.
     expect(loading).toHaveClass('skeleton-region');
     answer(jsonResponse(200, { sessions: [HERE] }));
     expect(await screen.findByText('Chrome on Windows')).toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('signed-in devices in Settings', () => {
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: 'Sign out Safari on iPhone' }));
-    // one press only arms it
+    // One press only arms it.
     expect(calls(fetchMock, 'DELETE', `/me/sessions/${PHONE.id}`)).toBe(0);
     await user.click(screen.getByRole('button', { name: /press again to confirm/i }));
 
@@ -154,7 +154,7 @@ describe('signed-in devices in Settings', () => {
 
   it('signs this browser out when the session ended was its own', async () => {
     persistTokens({ accessToken: 'a', refreshToken: 'r' }, true);
-    // the list was fetched elsewhere: the row is not marked as this one, but the server knows
+    // The list was fetched elsewhere, so no row is marked as this one, but the server knows.
     stubApi([[HERE, { ...PHONE }]], (url, init) =>
       init?.method === 'DELETE' && url.includes('/me/sessions/') ? jsonResponse(200, { revoked: true, current: true }) : undefined,
     );
@@ -200,7 +200,7 @@ describe('signed-in devices in Settings', () => {
     await screen.findByText('Safari on iPhone');
     await confirm(userEvent.setup(), /^sign out everywhere$/i);
     expect(await screen.findByText('Signed-out home')).toBeInTheDocument();
-    // no parameter: every session, this one included
+    // No parameter: every session, this one included.
     expect(calls(fetchMock, 'DELETE', '/me/sessions')).toBe(1);
     expect(localStorage.getItem('hevalo_tokens')).toBeNull();
   });

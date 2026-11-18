@@ -12,43 +12,34 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 /** GET /me/username's answer (api/src/users/username-change.ts `UsernameStatus`). */
 interface UsernameStatus {
   username: string;
-  /** false for an account that signs in through another service and has no password to give */
+  /** False for an account that signs in through another service and has no password. */
   needsPassword: boolean;
   canChange: boolean;
-  /** when the wait since the last change ends; null when there is none */
+  /** When the wait since the last change ends, or null. */
   availableAt: string | null;
   cooldownDays: number;
   holdDays: number;
-  /** earlier names nobody else can take yet */
+  /** Earlier names nobody else can take yet. */
   held: Array<{ username: string; heldUntil: string }>;
 }
 
 type Availability = { available: true; username: string } | { available: false; reason: string; chars?: string[] };
 
-/** How a name being typed stands with the server: not asked about, being asked, free, or why not. */
+/** The server's verdict on the typed name: not asked, asking, free, or the problem. */
 type Check = { kind: 'idle' } | { kind: 'checking' } | { kind: 'free' } | { kind: 'problem'; text: string };
 
 const NAME_ID = 'username-new';
 const PASSWORD_ID = 'username-password';
 
-/** Long enough that a name is asked about when the typing stops, not at every letter. */
+/** The pause in typing before a name is checked. */
 const CHECK_AFTER_MS = 450;
 
 
 /**
- * Change the username: the new name, and the password to show it is you.
- *
- * The card says the limits before anything is typed: how often a name may be
- * changed, and that the old one is kept for its owner for a while, so nobody
- * can pass themselves off as them the day after. While the wait runs there is
- * no form, only the day it ends. A name is asked about as it is typed, and a
- * refusal is said under the field it is about.
- *
- * The rules of a username (shared/src/username.ts) are checked here first, by
- * the field as it is typed (auth/UsernameField.tsx) and again when the change
- * is asked for: the server allows thirty questions a minute and five changes
- * in fifteen, and a name it would refuse by its rule should not spend one.
- * The server still decides, and knows which names are taken.
+ * Changes the username, confirmed with the password. The card states the limits first: how often a name may change,
+ * and that the old one stays reserved for a while. During the wait there is only the date it ends. Names are checked
+ * as typed, against the shared rules first (shared/src/username.ts) so a doomed name does not spend the server's rate
+ * limit; the server still decides and knows which names are taken.
  */
 export function ChangeUsername({ onChanged }: { onChanged?: (username: string) => void }): React.JSX.Element {
   const { client, refreshUser } = useAuth();
@@ -65,7 +56,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
-  /** the latest question asked: an answer to an earlier one is about a name no longer in the field */
+  /** The latest check's number, so an answer to an earlier one is ignored. */
   const asked = useRef(0);
 
   const load = useCallback(async (): Promise<void> => {
@@ -81,12 +72,12 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
 
   const day = (iso: string): string => new Date(iso).toLocaleDateString(locale, { dateStyle: 'long' });
 
-  // the name the server would write: lowercase and trimmed, or null while the rule refuses it
+  // The name the server would store: lowercase and trimmed, or a refusal from the rules.
   const checked = checkUsername(name);
   const typed = checked.ok ? checked.value : name.trim();
   const current = status?.username ?? '';
 
-  // ask about the name once the typing has stopped, and only about one the server would look at
+  // Check the name once typing stops, and only one the rules accept.
   useEffect(() => {
     const ticket = ++asked.current;
     if (!open || typed === '') {
@@ -97,7 +88,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
       setCheck({ kind: 'problem', text: t('settings.username.same') });
       return;
     }
-    // a name the rule refuses is the field's to explain (it waits on what more typing may mend); the server is not asked
+    // A name the rules refuse is the field's to explain, and the server is not asked.
     if (!checked.ok) {
       setCheck({ kind: 'idle' });
       return;
@@ -106,7 +97,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
     const timer = window.setTimeout(() => {
       void client.get<Availability>(`/me/username/available?username=${encodeURIComponent(typed)}`).then((res) => {
         if (ticket !== asked.current) return;
-        // a question that could not be answered is no verdict: the change itself is still checked
+        // A failed check is no verdict; the change itself is still checked.
         if (!res.ok) setCheck({ kind: 'idle' });
         else if (res.data.available) setCheck({ kind: 'free' });
         else if (res.data.reason === 'taken') setCheck({ kind: 'problem', text: t('error.code.usernameTaken') });
@@ -115,7 +106,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
       });
     }, CHECK_AFTER_MS);
     return () => window.clearTimeout(timer);
-    // `t` changes with the language only, and the wording is redrawn with the next letter
+    // `t` changes only with the language, and the wording redraws with the next letter.
   }, [client, current, open, typed, checked.ok]);
 
   function close(): void {
@@ -151,7 +142,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
       close();
       setDone(now);
       onChanged?.(now);
-      // the name shown around the app is the session's copy of the account
+      // The name shown around the app is the session's copy of the account.
       void refreshUser();
       return;
     }
@@ -167,7 +158,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
         document.getElementById(PASSWORD_ID)?.focus();
         break;
       case 'USERNAME_CHANGE_COOLDOWN':
-        // changed somewhere else since this page was opened: show the wait as it now stands
+        // Changed elsewhere since this page opened, so show the wait as it now stands.
         close();
         void load();
         break;
@@ -181,7 +172,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
   }
 
   const problem = nameProblem ?? (check.kind === 'problem' ? check.text : null);
-  // nothing from the server is shown over what the field itself says about the name as typed
+  // The field's own message about the typed name takes precedence over the server's.
   const typingProblem = usernameProblemWhileTyping(name) !== null;
 
   return (
@@ -193,7 +184,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
 
       <dl className="username-now">
         <dt>{t('settings.username.current')}</dt>
-        {/* a handle reads left to right in every language, @ first */}
+        {/* A handle reads left to right in every language, @ first. */}
         <dd dir="ltr">@{status.username}</dd>
       </dl>
 
@@ -238,7 +229,7 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
             value={name}
             onChange={(next) => {
               setName(next);
-              // the moment it is touched, the old complaint no longer applies
+              // Editing the field clears its old problem.
               setNameProblem(null);
             }}
             problem={typingProblem ? null : problem}

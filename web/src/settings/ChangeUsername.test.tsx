@@ -58,7 +58,7 @@ describe('changing the username in Settings', () => {
     const user = await openForm();
     await user.type(screen.getByLabelText(en['settings.username.new']), 'lovelace');
     expect(await screen.findByText(en['settings.username.available'])).toBeInTheDocument();
-    // one question for the whole word, not one a letter
+    // One request for the whole word, not one per letter.
     expect(calls(fetchMock, '/me/username/available')).toHaveLength(1);
   });
 
@@ -95,7 +95,7 @@ describe('changing the username in Settings', () => {
     const field = screen.getByLabelText(en['settings.username.new']);
     await user.type(field, 'ŞÊRÎN.K');
     expect(field).toHaveValue('şêrîn.k');
-    // one's own name in capitals is one's own name
+    // One's own name in capitals is still one's own name.
     await user.clear(field);
     await user.type(field, 'ADA');
     expect(field).toHaveValue('ada');
@@ -126,7 +126,7 @@ describe('changing the username in Settings', () => {
     expect(JSON.parse(String(init!.body))).toEqual({ username: 'lovelace', currentPassword: 'a-strong-password1' });
     expect(onChanged).toHaveBeenCalledWith('lovelace');
     expect(screen.getByText('@lovelace')).toBeInTheDocument();
-    // the wait has begun: its day is said, and there is nothing left to press
+    // The wait has begun: its end date shows and there is nothing to press.
     expect(screen.getByText(/You can change your username again on .*2027/)).toBeInTheDocument();
     expect(screen.getByText(/@ada is kept for you until .*2027/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: en['settings.username.change'] })).not.toBeInTheDocument();
