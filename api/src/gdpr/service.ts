@@ -24,11 +24,8 @@ import { UNCONFIRMED_SIGNUP, UNCONFIRMED_SIGNUP_DAYS, forgetOldSends } from '../
 export const DELETION_GRACE_DAYS = 14;
 
 /**
- * A returning owner keeps their account: a deletion still in its grace period
- * is called off. Every way of signing in calls this before it hands out a
- * session (a password, Google, Apple), because the app and the deletion notice
- * both promise that signing in again cancels it, whichever way the person
- * signs in. True when there was a deletion to cancel.
+ * Cancels a deletion still in its grace period, since the app and the notice promise that signing in again keeps the
+ * account. Every sign-in path calls this before issuing a session. True when there was a deletion to cancel.
  */
 export async function cancelPendingDeletion(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<boolean> {
   const result = await executor.query(
@@ -67,15 +64,9 @@ export class GdprService {
   }
 
   /**
-   * Starts the 14-day grace period; signing in again cancels it.
-   *
-   * Every session the account has ends here, on this device and every other.
-   * Signing in again is what calls the deletion off, so a phone or browser
-   * that simply stayed signed in would otherwise carry on as if nothing were
-   * coming, with no sign of the erasure until the account was gone. Now the
-   * next thing any of them sees is the sign-in screen, and coming back through
-   * it keeps the account. Ending the sessions also takes the account's phones
-   * off its notifications (migration `push-ends-with-its-session`).
+   * Starts the 14-day grace period, which signing in again cancels. Every session of the account ends here, on every
+   * device, so nothing carries on signed in unaware; the next screen anywhere is the sign-in. Ending the sessions also
+   * takes the account's phones off its notifications (migration `push-ends-with-its-session`).
    */
   async requestDeletion(userId: string): Promise<void> {
     const result = await this.pool.query<{ email: string | null; username: string; locale: string }>(
@@ -367,9 +358,8 @@ export class GdprService {
    * Taken under the person's lock, so two taps make one export rather than two full builds.
    */
   async requestExport(userId: string): Promise<string> {
-    // an export is kept only in a bucket nobody can read without its signed
-    // link (media/storage.ts `putPrivate`); with none, the app says it could
-    // not be asked for, rather than that one is on its way
+    // Exports are kept only in a bucket readable through a signed link (media/storage.ts `putPrivate`); without one the
+    // request is refused rather than promised.
     if (!this.deps.storage?.hasPrivateBucket) {
       throw new AppError('EXPORT_NOT_AVAILABLE', 503, 'data export is not available right now');
     }
@@ -521,14 +511,9 @@ export class GdprService {
   }
 
   /**
-   * Worker-side fulfillment: build, upload, mark completed, and delete the
-   * person's earlier export files.
-   *
-   * Without a private bucket that takes writes, the export is not made at all
-   * (PrivateStorageUnavailable), never written to the public bucket instead.
-   * The request is withdrawn as the job fails, so GET /me/export does not go
-   * on saying one is on its way, and the person may ask again once there is
-   * somewhere to keep it.
+   * Worker-side fulfilment: build, upload, mark completed, and delete the person's earlier export files. Without a
+   * writable private bucket no export is made (PrivateStorageUnavailable), never one in the public bucket; the request
+   * is withdrawn as the job fails, so GET /me/export stops promising one and the person can ask again later.
    */
   async fulfillExport(exportId: string): Promise<void> {
     if (!this.deps.storage) throw new Error('storage not configured');
@@ -557,11 +542,8 @@ export class GdprService {
   }
 
   /**
-   * Once a newer export is ready, the files of the person's earlier ones are
-   * deleted: only the newest is ever offered (`exportStatus`), and an old copy
-   * of somebody's account kept for nobody is one more to lose. One that cannot
-   * be deleted now keeps its key, and is tried again when the next export is
-   * ready or the account is closed (`eraseAccountData`).
+   * Deletes the files of the person's earlier exports once a newer one is ready, since only the newest is offered. One
+   * that cannot be deleted keeps its key and is retried with the next export or when the account closes.
    */
   private async deleteEarlierExports(userId: string, exportId: string, kept: string): Promise<void> {
     const earlier = await this.pool.query<{ id: string; storage_key: string }>(

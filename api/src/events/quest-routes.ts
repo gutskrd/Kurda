@@ -49,7 +49,7 @@ export function registerQuestRoutes(app: FastifyInstance, quests: QuestService):
       if (!result.ok) {
         return reply
           .code(CLAIM_STATUS[result.code] ?? 400)
-          // the flat { code, message } every route answers with, so the apps can say which refusal it was
+          // The flat { code, message } every route answers with, so the apps can tell which refusal it was.
           .send({ code: result.code, message: CLAIM_MESSAGE[result.code] ?? 'cannot claim' });
       }
       return result;

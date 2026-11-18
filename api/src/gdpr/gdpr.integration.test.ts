@@ -82,12 +82,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(cancelled.rows[0].deletion_requested_at).toBeNull();
   });
 
-  /*
-   * Signing in again is what calls a deletion off, so no device may simply
-   * carry on as before: every session ends when the deletion is asked for,
-   * the one that asked and every other, and the next thing each sees is the
-   * sign-in screen.
-   */
+  /* Signing in again cancels a deletion, so asking for one ends every session on every device. */
   it('DELETE /me ends every session the account has, on every device', async () => {
     const user = await makeUser('graceall');
     const elsewhere = await app.inject({
@@ -105,7 +100,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(del.statusCode).toBe(200);
     expect(del.json().deletionScheduled).toBe(true);
 
-    // neither the device that asked nor the other one goes on working, and the other cannot renew its session
+    // Neither device keeps working, and the other cannot renew its session.
     expect((await me(user.token)).statusCode).toBe(401);
     expect((await me(other.accessToken)).statusCode).toBe(401);
     const renewed = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: other.refreshToken }, remoteAddress: '10.13.1.6' });
@@ -365,8 +360,8 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
 
   it.skipIf(!S3_READY)('export request → fulfillment → signed download', async () => {
     const user = await makeUser('export');
-    // loadConfig() from process.env so the CI job's S3_* vars are seen, with a
-    // private bucket beside the public one: an export is kept nowhere else
+    // loadConfig() from process.env so the CI S3_* settings apply, with a private bucket beside the public one, since
+    // exports are kept nowhere else.
     const fullConfig = loadConfig({ ...process.env, S3_EVIDENCE_BUCKET: `${process.env.S3_BUCKET ?? 'kurda-test'}-private` });
     // test files run in arbitrary order — ensure the bucket exists
     const s3 = new S3Client({
@@ -418,11 +413,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(res.json().code).toBe('EXPORT_NOT_AVAILABLE');
   });
 
-  /*
-   * An export holds a person's account, sessions and linked identities, and
-   * is kept only where nobody can read it without its short-lived signed
-   * link: never in the public bucket the CDN serves, whatever is configured.
-   */
+  /* An export holds a person's account, sessions and identities, so it is kept only in the private bucket behind a short-lived signed link. */
   it('makes no export without a private bucket: asking is refused, and a request already made is withdrawn', async () => {
     const user = await makeUser('noprivate');
     const storage = new FakeStorage();
@@ -430,7 +421,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     const service = new GdprService(pool, { storage: storage.asStorage });
     await expect(service.requestExport(user.id)).rejects.toMatchObject({ code: 'EXPORT_NOT_AVAILABLE', statusCode: 503 });
 
-    // asked for while there was one, and come to after it was lost
+    // Asked for while there was a private bucket, and processed after it was lost.
     storage.hasPrivateBucket = true;
     const exportId = await service.requestExport(user.id);
     storage.hasPrivateBucket = false;
