@@ -23,7 +23,7 @@ import { JoinCodeCard } from '../play/JoinByCode';
 import { RematchPanel } from '../play/RematchPanel';
 import { Verdict } from '../play/Verdict';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
-import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
+import { backspace, buildBoard, DEL, DIFFICULTIES, DIFFICULTY_KEY, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
 import { WordMeaningLine } from './WordAnswer';
@@ -44,15 +44,6 @@ import {
 import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { useDirection } from '../reports/direction';
-
-const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
-
-const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
-  easy: 'games.difficulty.easy',
-  medium: 'games.difficulty.medium',
-  hard: 'games.difficulty.hard',
-};
-
 
 /**
  * Peyvok Battle: race a friend to the same word. Built on the poll-safe REST endpoints, so a realtime gateway can
@@ -508,8 +499,8 @@ function guessMessage(error: ApiError, t: (key: TranslationKey) => string): stri
   return describeError(error, t);
 }
 
-/** The screen's frame: back, title, and a scroller that clears the notch. */
-function Shell({
+/** A match screen's frame: back, title, and a scroller that clears the notch. Rhyme Match uses it too. */
+export function Shell({
   title,
   onExit,
   children,

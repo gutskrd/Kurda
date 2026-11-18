@@ -2,10 +2,10 @@ import type { RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import { joined } from '../play/joining';
-import type { Feedback, ScoredGuess } from './board';
+import type { Difficulty, Feedback, ScoredGuess } from './board';
 import type { WordMeanings } from './WordAnswer';
 
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type { Difficulty };
 
 export interface OpponentView {
   /** `seat:N` — never another player's account id. */

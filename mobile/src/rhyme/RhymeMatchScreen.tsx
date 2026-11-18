@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
-import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, GlassCard, Segmented } from '../theme/glass';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useHardwareBack } from '../navigation/hardwareBack';
 import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
@@ -45,6 +44,7 @@ import { GameArt } from '../games/GameArt';
 import { useDirection } from '../reports/direction';
 import { useCourseDialect } from '../learn/courseDialect';
 import { MissedRhymes, wordDirection } from '../wordle/WordAnswer';
+import { Shell } from '../wordle/WordleBattleScreen';
 import { DIALECT_NAME, RHYME_DIALECTS, isRhymeOffered, openingRhymeDialect, useRhymeOffered } from './availability';
 
 const REJECT_KEY: Record<RhymeReject, TranslationKey> = {
@@ -543,32 +543,7 @@ function MatchRoom({
   );
 }
 
-/** The screen's frame: back, title, and a scroller that clears the notch. */
-function Shell({
-  title,
-  onExit,
-  children,
-}: {
-  title: string;
-  onExit: () => void;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <GradientBackground>
-      <ScreenHeader title={title} onBack={onExit} />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {children}
-      </ScrollView>
-    </GradientBackground>
-  );
-}
-
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   // Lay out a card's contents on an inner View: a GlassCard's own style only dresses its outside.
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },

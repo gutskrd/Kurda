@@ -25,9 +25,12 @@ import {
   backspace,
   buildBoard,
   DEL,
+  DIFFICULTIES,
+  DIFFICULTY_KEY,
   ENTER,
   MAX_ATTEMPTS,
   typeLetter,
+  type Difficulty,
   type Feedback,
 } from './board';
 import { shareOut } from '../share/ShareWin';
@@ -36,7 +39,6 @@ import { WordleBoard, cellSizeFor, turnMs } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
 import { WordAnswer, type WordCard } from './WordAnswer';
 import { useI18n } from '../i18n/I18nContext';
-import type { TranslationKey } from '../i18n/translations';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
@@ -44,7 +46,6 @@ import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
 import { useDirection } from '../reports/direction';
 
-type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
 
 interface GuessRow {
@@ -81,14 +82,6 @@ interface WordleStats {
   winPercentage: number;
   averageGuesses: number;
 }
-
-const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
-
-const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
-  easy: 'games.difficulty.easy',
-  medium: 'games.difficulty.medium',
-  hard: 'games.difficulty.hard',
-};
 
 /**
  * Kurdish Peyvok. Server-authoritative: the screen never holds the answer; it posts guesses and renders the

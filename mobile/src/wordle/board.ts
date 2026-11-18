@@ -5,9 +5,22 @@
  */
 
 import type { LetterFeedback } from '@kurda/shared';
+import type { TranslationKey } from '../i18n/translations';
 
 /** How the server scored a letter: the same three marks the shared result grid uses (shared `win-share.ts`). */
 export type Feedback = LetterFeedback;
+
+/** A Peyvok word's difficulty, as the solo game and the battle offer it. */
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
+
+/** Each difficulty's catalogue label. */
+export const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
+  easy: 'games.difficulty.easy',
+  medium: 'games.difficulty.medium',
+  hard: 'games.difficulty.hard',
+};
 
 export const MAX_ATTEMPTS = 6;
 
