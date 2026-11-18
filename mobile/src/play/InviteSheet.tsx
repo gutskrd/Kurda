@@ -37,7 +37,8 @@ import { changeSetup, initialSetup, inviteSettings, type SetupState } from '../s
 import { shownDialect, useStoryPrefs } from '../stories/prefs';
 import { Note, SectionLabel, Sheet } from '../stories/ui';
 import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummary } from './api';
-import { DIFFICULTY_KEY, GAME_ICON, GAME_NAME_KEY, type Difficulty } from './labels';
+import { GAME_ICON, GAME_NAME_KEY } from './labels';
+import { DIFFICULTY_KEY, type Difficulty } from '../wordle/board';
 import { lobbyRoute } from './routes';
 import { PickedTickets, SentFan, flightMs, type SendPhase, type TicketHolder } from './SentTickets';
 import { SendErrorNotice } from '../reports/SendError';
