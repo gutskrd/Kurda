@@ -3,15 +3,11 @@ import type pino from 'pino';
 
 export interface JobContext {
   log: pino.Logger;
-  /** BullMQ attempt number (1-based). Handlers MUST be idempotent — a job
-   *  can run twice if a worker dies after the work but before the ack. */
+  /** The 1-based attempt number. Handlers must be idempotent: a job can run twice if a worker dies before the ack. */
   attempt: number;
   /**
-   * The same for every attempt of this job and for no other job: its id with
-   * the moment it was made, as an id alone starts again if the queue's Redis is
-   * ever emptied. What a handler gives a provider that can tell a retry from a
-   * new request (the send-email job gives it to Resend). Absent when a handler
-   * is called outside the queue.
+   * The same for every attempt of this job and no other: its id plus its creation time, since ids restart if Redis is
+   * emptied. Handlers pass it to providers that can tell a retry from a new request. Absent outside the queue.
    */
   key?: string;
 }
@@ -21,9 +17,8 @@ export interface JobDefinition<T> {
   schema: ZodType<T>;
   handler: (payload: T, ctx: JobContext) => Promise<void>;
   /**
-   * How often this job is tried and how long it waits before the first new
-   * try (doubling after that), where the queue's own patience is too short
-   * for it. Whoever enqueues it may still say otherwise for one job.
+   * How often this job is tried and the first retry delay (doubling after), where the queue's default is too short.
+   * An enqueue may still override it.
    */
   retry?: { attempts: number; backoffDelayMs: number };
 }
