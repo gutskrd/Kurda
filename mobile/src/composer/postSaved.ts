@@ -1,11 +1,8 @@
 import type { ComposerPost } from './api';
 
 /**
- * "This post was just saved" — from the composer to a screen showing it.
- *
- * The post's own page loads once, when it opens; reloading every time it
- * came back into focus counted a view each time (the API counts one per
- * read). It reloads when it hears that its post was edited instead.
+ * "This post was just saved", from the composer to a screen showing it. The post's page loads once (every read counts a
+ * view on the server) and reloads when it hears its post was edited.
  */
 type Listener = (post: ComposerPost) => void;
 
