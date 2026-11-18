@@ -53,6 +53,7 @@ export interface Me {
   id: string;
   username: string;
   profilePhotoUrl: string | null;
+  avatarUrl?: string | null;
 }
 
 /**
@@ -61,7 +62,7 @@ export interface Me {
  */
 export function authorOf(c: Pick<ThreadComment, 'author' | 'authorId'>, me: Me | null): CommentAuthor {
   if (c.author) return c.author;
-  if (me && c.authorId === me.id) return { id: me.id, username: me.username, avatarUrl: me.profilePhotoUrl };
+  if (me && c.authorId === me.id) return { id: me.id, username: me.username, avatarUrl: me.avatarUrl ?? me.profilePhotoUrl };
   return { id: c.authorId, username: '', avatarUrl: null };
 }
 

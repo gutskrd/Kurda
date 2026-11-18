@@ -31,7 +31,7 @@ import { useCommentThread } from '../comments/useCommentThread';
 import { heldDim } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import type { RootNavigation } from '../navigation/rootStack';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { noticeTime } from '../notifications/inbox';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -147,7 +147,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                   testID="library-post-author"
                   style={({ pressed }) => [styles.byline, { flexDirection: dir.row, alignSelf: edge }, pressed && heldDim]}
                 >
-                  <InitialsAvatar name={post.author.username} id={post.author.id} size={BYLINE_FACE} photoUrl={post.author.avatarUrl} />
+                  <Avatar name={post.author.username} size={BYLINE_FACE} photoUrl={post.author.avatarUrl} />
                   <Text style={[styles.author, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
                     {post.author.username}
                   </Text>

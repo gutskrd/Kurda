@@ -3,7 +3,7 @@ import { Alert, AppState, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import type { PlayGame } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
 import { Icon } from '../theme/Icon';
@@ -102,7 +102,7 @@ export function LobbyPeople({
                 ]);
               return (
                 <View key={p.seat} style={styles.player}>
-                  <InitialsAvatar name={p.name ?? String(p.seat)} id={`seat-${p.seat}`} size={32} photoUrl={p.avatarUrl} />
+                  <Avatar name={p.name ?? String(p.seat)} size={32} photoUrl={p.avatarUrl} />
                   <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
                     {name}
                   </Text>

@@ -4,7 +4,7 @@ import { PressableScale } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
-import { InitialsAvatar } from './InitialsAvatar';
+import { Avatar } from './Avatar';
 import { spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
@@ -84,12 +84,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
             accessibilityLabel={f.displayName || f.username}
             style={styles.friend}
           >
-            <InitialsAvatar
-              name={f.displayName || f.username}
-              id={f.userId}
-              size={52}
-              photoUrl={f.avatarUrl ?? null}
-            />
+            <Avatar name={f.displayName || f.username} size={52} photoUrl={f.avatarUrl} />
             <Text style={[styles.name, { color: colors.textSecondary }]} numberOfLines={1}>
               {f.displayName || f.username}
             </Text>

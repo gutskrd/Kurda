@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { CalmFrame, CalmLine, Greetings } from '../groups/Welcome';
 import { useI18n } from '../i18n/I18nContext';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { spacing } from '../theme/tokens';
 
 /**
@@ -9,12 +9,10 @@ import { spacing } from '../theme/tokens';
  * away, as a group's start offers (groups/Welcome.tsx).
  */
 export function DmWelcome({
-  userId,
   name,
   photoUrl,
   onGreet,
 }: {
-  userId: string;
   name: string;
   photoUrl?: string | null;
   /** Sends a greeting as the reader's first message. */
@@ -23,7 +21,7 @@ export function DmWelcome({
   const { t } = useI18n();
   return (
     <View style={styles.centred}>
-      <CalmFrame name={name} picture={(size) => <InitialsAvatar name={name} id={userId} size={size} photoUrl={photoUrl} />}>
+      <CalmFrame name={name} picture={(size) => <Avatar name={name} size={size} photoUrl={photoUrl} />}>
         <CalmLine>{t('chat.welcome.start', { name })}</CalmLine>
         <Greetings hint={t('chat.welcome.greetHint')} onGreet={onGreet} />
       </CalmFrame>

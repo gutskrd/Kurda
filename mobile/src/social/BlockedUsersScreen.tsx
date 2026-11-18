@@ -8,7 +8,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { useDirection } from '../reports/direction';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
@@ -130,12 +130,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                     key={u.userId}
                     style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
                   >
-                    <InitialsAvatar
-                      name={u.displayName || u.username}
-                      id={u.userId}
-                      size={40}
-                      photoUrl={u.avatarUrl}
-                    />
+                    <Avatar name={u.displayName || u.username} size={40} photoUrl={u.avatarUrl} />
                     <View style={styles.main}>
                       <Text style={[styles.name, dir.free, { color: colors.textPrimary }]}>{u.displayName || u.username}</Text>
                       <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>

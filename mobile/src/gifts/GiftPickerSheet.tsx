@@ -30,7 +30,7 @@ import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { SearchField } from '../theme/SearchField';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
 import { useDirection } from '../reports/direction';
@@ -148,7 +148,7 @@ function WhoStep({
             checked={chosen.includes(f.userId)}
             disabled={!chosen.includes(f.userId) && chosen.length >= MAX_GIFT_RECIPIENTS}
             onPress={() => toggle(f.userId)}
-            avatar={<InitialsAvatar name={f.name} id={f.userId} size={32} photoUrl={f.avatarUrl ?? undefined} />}
+            avatar={<Avatar name={f.name} size={32} photoUrl={f.avatarUrl ?? undefined} />}
           />
         ))}
       </SheetScrollView>

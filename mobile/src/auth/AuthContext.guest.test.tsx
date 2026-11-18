@@ -154,6 +154,8 @@ describe('trying Hevalo as a guest', () => {
         if (url.endsWith('/auth/refresh')) return json(200, { accessToken: 'guest-acc-2', refreshToken: 'guest-ref-2' });
         if (expired && token === 'guest-acc') return json(401, { code: 'UNAUTHORIZED', message: 'token expired' });
         if (url.endsWith('/auth/oauth')) return json(201, { user: CLAIMED.user, tokens: { accessToken: 'acc', refreshToken: 'ref' } });
+        // The account as it is now: the claimed one, once the sign-in has gone through.
+        if (url.endsWith('/me') && token === 'acc') return json(200, { user: CLAIMED.user });
         return json(200, { user: GUEST.user });
       }),
     );

@@ -24,7 +24,7 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError, type Translate } from '../api/errors';
 import type { ApiError } from '../api/types';
 import type { RootNavigation } from '../navigation/rootStack';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { ClayButton, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -388,7 +388,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
         style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.controlTrack : 'transparent', opacity: pressed ? pressedDim : 1 }]}
       >
         <View>
-          <InitialsAvatar name={name} id={f.userId} size={36} photoUrl={f.avatarUrl} />
+          <Avatar name={name} size={36} photoUrl={f.avatarUrl} />
           {f.online ? <View style={[styles.online, { backgroundColor: colors.success, borderColor: colors.background }]} /> : null}
         </View>
         <View style={styles.friendText}>

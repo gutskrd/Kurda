@@ -12,7 +12,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { TicketBadge } from '../play/Ticket';
 import { useI18n } from '../i18n/I18nContext';
@@ -94,7 +94,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
       accessibilityRole="button"
       accessibilityLabel={t('rail.messageWho', { name: f.displayName ?? f.username })}
     >
-      <InitialsAvatar name={f.username} id={f.userId} size={34} photoUrl={f.avatarUrl ?? undefined} />
+      <Avatar name={f.username} size={34} photoUrl={f.avatarUrl ?? undefined} />
       <View style={styles.rowMain}>
         <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
           {f.username}
@@ -182,7 +182,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                     accessibilityRole="button"
                     accessibilityLabel={t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
                   >
-                    <InitialsAvatar name={c.username} id={c.userId} size={34} photoUrl={c.avatarUrl ?? undefined} />
+                    <Avatar name={c.username} size={34} photoUrl={c.avatarUrl ?? undefined} />
                     <View style={styles.rowMain}>
                       <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>{c.username}</Text>
                       <Text style={[styles.detail, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -201,7 +201,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                   >
                     {/* A friend request is a ticket, as an invite to play is: its glyph on the face's corner. */}
                     <View>
-                      <InitialsAvatar name={r.username} id={r.userId} size={34} photoUrl={r.avatarUrl ?? undefined} />
+                      <Avatar name={r.username} size={34} photoUrl={r.avatarUrl ?? undefined} />
                       <View style={[styles.ticketBadge, fromRight ? styles.ticketBadgeRight : styles.ticketBadgeLeft]}>
                         <TicketBadge tone="friend" size={16} ring={colors.background} />
                       </View>

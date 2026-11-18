@@ -10,7 +10,7 @@ import { HeartBurst, heldDim } from '../theme/MotionParts';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -199,7 +199,7 @@ export const FeedCard = memo(function FeedCard({
             reachSize={{ width: AUTHOR, height: AUTHOR }}
             style={({ pressed }) => pressed && heldDim}
           >
-            <InitialsAvatar name={who} id={item.author.id} size={AUTHOR} photoUrl={item.author.avatarUrl} />
+            <Avatar name={who} size={AUTHOR} photoUrl={item.author.avatarUrl} />
           </Pressable>
           <View style={[styles.byline, { flexDirection: dir.row }]}>
             {/* A control of its own, since a pressable run of text cannot reach past its letters. */}

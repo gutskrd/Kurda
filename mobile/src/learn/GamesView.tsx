@@ -18,7 +18,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { getMyRanks } from '../ranks/api';
 import { daysLeftText, seasonTitle } from '../ranks/format';
 import { acceptInvite, listInvites } from '../play/api';
@@ -245,7 +245,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
               : t('play.banner.invited', { name: invite.from.name, game });
             return (
               <View key={invite.id} style={[styles.invite, { backgroundColor: colors.surface, flexDirection: dir.row }]}>
-                <InitialsAvatar name={invite.from.name} id={invite.from.name} size={36} photoUrl={invite.from.avatarUrl} />
+                <Avatar name={invite.from.name} size={36} photoUrl={invite.from.avatarUrl} />
                 <Text style={[styles.inviteText, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
                   {headline}
                 </Text>

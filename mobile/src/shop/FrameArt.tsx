@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { PictureFramed, framedAvatarSize } from '../ranks/art';
 import { radii } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
@@ -31,7 +31,7 @@ export function FrameArt({
       importantForAccessibility="no-hide-descendants"
     >
       <PictureFramed url={path} size={ring}>
-        <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} photoUrl={user?.profilePhotoUrl} size={framedAvatarSize(ring)} />
+        <Avatar name={user?.displayName ?? user?.username ?? ''} photoUrl={ownAvatarUrl(user)} size={framedAvatarSize(ring)} />
       </PictureFramed>
     </View>
   );

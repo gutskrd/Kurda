@@ -139,8 +139,8 @@ describe('the Shop, by kind', () => {
   it('shows a frame the way it will be worn: round your own picture, in its row and in its sheet', async () => {
     open([...CATALOGUE, item({ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', price: 1400, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' })], { zer: 2000, gems: 0 });
     const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr$/ });
-    await waitFor(() => expect(row.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/frames/made-01-lale.png'));
-    // Your own picture inside it (here with no photo, your initials on their disc).
+    await waitFor(() => expect([...row.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toContain('https://hevalo.app/cosmetics/frames/made-01-lale.png'));
+    // Your own picture inside it (here with no photo, the default avatar).
     expect(row.querySelector('[role="img"][aria-label*="rojda"]')).not.toBeNull();
     // And again, larger, in the sheet the row opens: the frame and your picture are each on screen twice.
     fireEvent.click(row);

@@ -23,7 +23,7 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
 import { BackButton } from '../navigation/BackButton';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { EmptyState } from '../theme/EmptyState';
 import { mutualText, undoAction } from './format';
 import { SearchField } from '../theme/SearchField';
@@ -249,7 +249,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
               : t('friends.openProfile', { username: u.username })
           }
         >
-          <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
+          <Avatar name={u.username} size={36} photoUrl={u.avatarUrl ?? undefined} />
           <View style={styles.rowMain}>
             <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
             {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}

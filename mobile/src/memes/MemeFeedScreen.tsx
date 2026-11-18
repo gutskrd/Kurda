@@ -19,7 +19,7 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { listPosts } from './api';
 import { type Category, type ImagePost } from './types';
 import { Icon } from '../theme/Icon';
@@ -145,7 +145,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <View style={[styles.cardHead, { flexDirection: dir.row }]}>
             {item.author ? (
               <View style={[styles.who, { flexDirection: dir.row }]}>
-                <InitialsAvatar name={item.author.username} id={item.author.id} size={28} photoUrl={item.author.avatarUrl} />
+                <Avatar name={item.author.username} size={28} photoUrl={item.author.avatarUrl} />
                 <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
                   {item.author.username}
                 </Text>

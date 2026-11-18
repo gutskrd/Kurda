@@ -20,7 +20,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useI18n } from '../i18n/I18nContext';
 import { formatCompact, formatNumber } from '../i18n/format';
 import { LeagueEmblem } from '../ranks/art';
@@ -504,9 +504,9 @@ const TableRow = memo(function TableRow({ item, delay }: { item: TableItem; dela
     <>
       <Text style={[styles.rank, { color: colors.textSecondary }]}>{row.rank}</Text>
       {row.username ? (
-        <InitialsAvatar name={row.username} id={row.userId ?? `row-${row.rank}`} size={32} />
+        <Avatar name={row.username} size={32} />
       ) : (
-        // Somebody the viewer may not be shown by name: a quiet face, not initials made up from "A learner".
+        // Somebody the viewer may not be shown by name: a quiet face rather than anyone's picture.
         <View style={[styles.anon, { backgroundColor: colors.controlTrack }]}>
           <Icon name="person" size={16} color={colors.textSecondary} />
         </View>
