@@ -379,6 +379,17 @@ describe.skipIf(!DATABASE_URL)('shop art and catalogue editing (integration)', (
       expect((await call(admin, 'PATCH', `/shop/items/${edited}`, { assetKey: null })).json().code).toBe('ART_REQUIRED');
     });
 
+    it('takes a new item’s picture only as uploaded art or a file the site ships, through either route', async () => {
+      const item = { sku: sku('badart'), name: 'Bad art', currency: 'zer', price: 5 };
+      for (const assetKey of ['../../index.html', 'icons/../../index.html', '//elsewhere.test/x.png', 'profile-photo/x.webp', 'https://cdn.test/x.png']) {
+        expect((await call(admin, 'POST', '/admin/shop/items', { ...item, category: 'icon', assetKey })).json().code, assetKey).toBe('BAD_ART_KEY');
+        expect((await call(admin, 'POST', '/shop/items', { ...item, category: 'background', assetKey })).json().code, assetKey).toBe('BAD_ART_KEY');
+      }
+      expect((await pool.query(`SELECT 1 FROM shop_items WHERE sku = $1`, [item.sku])).rowCount).toBe(0);
+      const shipped = await call(admin, 'POST', '/admin/shop/items', { ...item, sku: sku('shipart'), category: 'icon', assetKey: 'icons/x.png' });
+      expect(shipped.statusCode).toBe(201);
+    });
+
     it('holds art named by a change waiting in Approvals, and lets it go when the change is rejected', async () => {
       const { sku: edited } = await addArtItem('Waiting', 'icon');
       const art = await upload('icon', await picture(512, 512, true));
