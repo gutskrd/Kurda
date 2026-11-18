@@ -6,19 +6,9 @@ import type { TokenStorage } from '../lib/tokenStorage';
 import { avatarSrc } from '../lib/cosmetics';
 
 /**
- * Pictures an admin has put in place of the art that ships (@kurda/shared
- * art-slots.ts): a badge, a rank or league emblem, a season frame, a default
- * profile picture. The art the site draws itself stays the default; wherever
- * a slot has an uploaded picture, that picture is drawn instead.
- *
- * One list for the whole page, asked for once when the app starts and again
- * when the tab comes back into view after a while. The last list that arrived
- * is kept in this browser, so a returning visitor sees the replaced pictures
- * from the first frame rather than the built-in ones flicking over to them.
- *
- * Nothing here ever throws into the page: a list that will not come (the API
- * asleep, the network gone, an answer that makes no sense) leaves the last
- * good one where it is, and with none at all every slot simply draws its own art.
+ * Pictures an admin uploaded in place of built-in art slots (@kurda/shared art-slots.ts). One list for the page,
+ * fetched at start-up and again when a tab returns after a while, and cached in this browser so a returning visitor
+ * sees the replacements from the first frame. Nothing here throws: a failed fetch keeps the last good list.
  */
 
 export const ART_OVERRIDES_KEY = 'hevalo.art-overrides.v1';
@@ -34,18 +24,15 @@ interface Held {
 const NONE: Held = Object.freeze({ version: null, overrides: Object.freeze({}) });
 
 let held: Held | null = null;
-/** when the server was last asked, whatever it answered (ms since the epoch) */
+/** When the server was last asked, whatever it answered (ms since the epoch). */
 let askedAt = 0;
 let inFlight: Promise<void> | null = null;
 let stopWatching: (() => void) | null = null;
 const listeners = new Set<() => void>();
 
 /*
- * The list is public and the same for everybody, so it is asked for without
- * the session: a client of its own with nothing in its token store. Sharing the
- * signed-in client would attach a token this request does not need, and a
- * second client reading the real store could start a token refresh of its own
- * alongside the one the session is already making.
+ * The list is public, so it uses its own client with an empty token store: a client reading the real store could
+ * start a token refresh alongside the session's own.
  */
 const NO_SESSION: TokenStorage = { get: () => null, set: () => undefined, clear: () => undefined };
 let client: ApiClient | null = null;
@@ -53,7 +40,7 @@ function api(): ApiClient {
   return (client ??= new ApiClient(API_URL, NO_SESSION, () => undefined));
 }
 
-/** A picture's address is a web address the page may load: https, or http only while the API itself is (a local server). */
+/** Whether the page may load a picture from this address: https, or http only while the API itself is (a local server). */
 function isPictureUrl(url: string): boolean {
   try {
     const { protocol } = new URL(url);
@@ -64,9 +51,8 @@ function isPictureUrl(url: string): boolean {
 }
 
 /**
- * A list as the server (or this browser's copy) holds it, or null when it is
- * not one. Entries that are not a slot's name, or whose picture is not a web
- * address, are left out one at a time, so one bad entry never costs the rest.
+ * Parses a list from the server or the browser's copy, or null when it is not one. Bad entries are dropped one at a
+ * time, so one never costs the rest.
  */
 export function parseArtOverrides(raw: unknown): Held | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -79,7 +65,7 @@ export function parseArtOverrides(raw: unknown): Held | null {
   return { version, overrides: Object.freeze(kept) };
 }
 
-/* Storage can be missing or refuse (a private window, blocked site data): then the list lives for this visit only. */
+/* Storage can be missing or refuse (a private window, blocked site data); the list then lives for this visit only. */
 function readCache(): Held {
   try {
     const raw = localStorage.getItem(ART_OVERRIDES_KEY);
@@ -93,7 +79,7 @@ function writeCache(next: Held): void {
   try {
     localStorage.setItem(ART_OVERRIDES_KEY, JSON.stringify({ version: next.version, overrides: next.overrides }));
   } catch {
-    // not kept for next time; this visit still has it
+    // Not kept for next time; this visit still has it.
   }
 }
 
@@ -107,17 +93,17 @@ async function ask(): Promise<void> {
     const res = await api().get<ArtOverridesResponse>('/art/overrides');
     if (!res.ok) return;
     const next = parseArtOverrides(res.data);
-    // the version changes whenever the list does: the same one is nothing new to draw
+    // The version changes whenever the list does, so the same one is nothing new.
     if (!next || next.version === current().version) return;
     held = next;
     writeCache(next);
     for (const l of listeners) l();
   } catch {
-    // keep the last good list
+    // Keep the last good list.
   }
 }
 
-/** Ask for the list now (once at a time). Resolves when the answer, or the lack of one, is in; never rejects. */
+/** Fetches the list now, one request at a time. Never rejects. */
 export function refreshArtOverrides(): Promise<void> {
   if (!inFlight) {
     const asking: Promise<void> = ask().finally(() => {
@@ -129,9 +115,8 @@ export function refreshArtOverrides(): Promise<void> {
 }
 
 /**
- * Load the list once and keep it fresh: called from the app's entry. A tab
- * that comes back into view (or a window that gets focus) asks again once the
- * list is more than a quarter of an hour old. Calling it twice changes nothing.
+ * Loads the list and refetches it when the tab returns to view or the window gets focus, once the list is older
+ * than `ART_OVERRIDES_STALE_MS`. Called from the app's entry; calling it twice changes nothing.
  */
 export function startArtOverrides(): void {
   if (stopWatching) return;
@@ -159,40 +144,27 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
-/** Every replaced picture by slot, as things stand: for a plain function, or a list drawing many. */
+/** Every replaced picture by slot, as things stand. */
 export function currentArtOverrides(): ArtOverrides {
   return current().overrides;
 }
 
-/** The version of the list in hand, or null before any has arrived. */
-export function artOverridesVersion(): string | null {
-  return current().version;
-}
-
-/** The uploaded picture for a slot right now, or null to draw the art that ships. */
-export function artOverride(family: ArtSlotFamily, key: string, level?: string | null): string | null {
-  return overrideFor(current().overrides, family, key, level);
-}
-
-/** Every replaced picture by slot, drawn again whenever the list changes. */
+/** Every replaced picture by slot, re-rendering whenever the list changes. */
 export function useArtOverrides(): ArtOverrides {
   return useSyncExternalStore(subscribe, currentArtOverrides, currentArtOverrides);
 }
 
-/** The uploaded picture for a slot (the level's own first), or null to draw the art that ships. */
+/** The uploaded picture for a slot (the level's own first), or null to draw the built-in art. */
 export function useArtOverride(family: ArtSlotFamily, key: string, level?: string | null): string | null {
   return overrideFor(useArtOverrides(), family, key, level);
 }
 
-/**
- * A person's avatar as the server resolved it, with a default profile
- * picture's replacement in its place (lib/cosmetics.ts `avatarSrc`).
- */
+/** A person's avatar, with any replacement for a default profile picture applied (lib/cosmetics.ts `avatarSrc`). */
 export function useAvatarSrc(url: string | null | undefined): string | null {
   return avatarSrc(url, useArtOverrides());
 }
 
-/** For tests: forget the list and stop watching the tab, as a reload would (this browser's copy stays). */
+/** For tests: forgets the list and stops watching the tab, as a reload would; the browser's copy stays. */
 export function resetArtOverridesForTests(): void {
   stopWatching?.();
   stopWatching = null;

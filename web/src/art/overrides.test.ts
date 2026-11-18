@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
+import { overrideFor, type ArtSlotFamily } from '@kurda/shared';
 import {
   ART_OVERRIDES_KEY,
   ART_OVERRIDES_STALE_MS,
-  artOverride,
-  artOverridesVersion,
   currentArtOverrides,
   parseArtOverrides,
   refreshArtOverrides,
@@ -36,6 +35,17 @@ function cached(version: string, overrides: Record<string, string>): void {
   localStorage.setItem(ART_OVERRIDES_KEY, JSON.stringify({ version, overrides }));
 }
 
+/** The version in this browser's copy, or null when there is none. */
+function cachedVersion(): string | null {
+  const raw = localStorage.getItem(ART_OVERRIDES_KEY);
+  return raw ? (JSON.parse(raw) as { version: string }).version : null;
+}
+
+/** The uploaded picture for a slot as things stand. */
+function artOverride(family: ArtSlotFamily, key: string, level?: string): string | null {
+  return overrideFor(currentArtOverrides(), family, key, level);
+}
+
 beforeEach(() => {
   resetArtOverridesForTests();
 });
@@ -49,12 +59,11 @@ afterEach(() => {
 describe('the list of replaced pictures', () => {
   it('has nothing in it before any list has arrived, so every slot draws its own art', () => {
     expect(currentArtOverrides()).toEqual({});
-    expect(artOverridesVersion()).toBeNull();
     expect(artOverride('badge', 'agir', 'zer')).toBeNull();
   });
 
   it('asks the API once, without the session, and keeps a copy in this browser', async () => {
-    // a signed-in browser: the list is public, so the token stays where it is
+    // A signed-in browser: the list is public, so no token is sent.
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'secret-access', refreshToken: 'secret-refresh' }));
     const calls = serve(() => jsonResponse(200, { version: 'v1', overrides: { 'badge:agir': AGIR, 'rank:gir': GIR } }));
     await refreshArtOverrides();
@@ -64,7 +73,6 @@ describe('the list of replaced pictures', () => {
     expect(calls[0]!.init?.method).toBe('GET');
     expect(JSON.stringify(calls[0]!.init?.headers ?? {})).not.toMatch(/authorization|secret-access/i);
 
-    expect(artOverridesVersion()).toBe('v1');
     expect(artOverride('rank', 'gir')).toBe(GIR);
     expect(JSON.parse(localStorage.getItem(ART_OVERRIDES_KEY)!)).toEqual({ version: 'v1', overrides: { 'badge:agir': AGIR, 'rank:gir': GIR } });
   });
@@ -87,7 +95,7 @@ describe('the list of replaced pictures', () => {
     answer(jsonResponse(200, { version: 'v2', overrides: { 'rank:gir': 'https://cdn.test/art/rank-gir-2.png' } }));
     await loading;
     expect(artOverride('rank', 'gir')).toBe('https://cdn.test/art/rank-gir-2.png');
-    expect(artOverridesVersion()).toBe('v2');
+    expect(cachedVersion()).toBe('v2');
   });
 
   it.each([
@@ -101,8 +109,7 @@ describe('the list of replaced pictures', () => {
     serve(answer);
     await expect(refreshArtOverrides()).resolves.toBeUndefined();
     expect(artOverride('rank', 'gir')).toBe(GIR);
-    expect(artOverridesVersion()).toBe('v1');
-    expect(JSON.parse(localStorage.getItem(ART_OVERRIDES_KEY)!).version).toBe('v1');
+    expect(cachedVersion()).toBe('v1');
   });
 
   it('changes nothing for the version it already has, and everything for a new one', async () => {
@@ -124,7 +131,7 @@ describe('the list of replaced pictures', () => {
 
     version = 'v2';
     await act(() => refreshArtOverrides());
-    // a list is replaced whole: a slot it no longer names draws its own art again
+    // A list is replaced whole, so a slot it no longer names draws its own art again.
     expect(result.current).toBeNull();
     expect(artOverride('league', 'kani')).toBe('https://cdn.test/art/kani.png');
     expect(JSON.parse(localStorage.getItem(ART_OVERRIDES_KEY)!).version).toBe('v2');
@@ -159,7 +166,6 @@ describe('the list of replaced pictures', () => {
   it('starts with nothing when this browser’s copy is garbage', () => {
     localStorage.setItem(ART_OVERRIDES_KEY, '{not json');
     expect(currentArtOverrides()).toEqual({});
-    expect(artOverridesVersion()).toBeNull();
   });
 
   it('works for the visit when storage refuses to be read or written', async () => {
@@ -183,21 +189,21 @@ describe('the list of replaced pictures', () => {
     startArtOverrides();
     startArtOverrides();
     expect(calls).toHaveLength(1);
-    await vi.waitFor(() => expect(artOverridesVersion()).toBe('v1'));
+    await vi.waitFor(() => expect(cachedVersion()).toBe('v1'));
 
-    // back after five minutes: the list is fresh enough
+    // Back after five minutes: the list is fresh enough.
     now += 5 * 60_000;
     window.dispatchEvent(new Event('focus'));
     document.dispatchEvent(new Event('visibilitychange'));
     expect(calls).toHaveLength(1);
 
-    // a quarter of an hour on, but still out of sight
+    // Stale now, but the tab is still hidden.
     now += ART_OVERRIDES_STALE_MS;
     const state = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
     document.dispatchEvent(new Event('visibilitychange'));
     expect(calls).toHaveLength(1);
 
-    // in view again: asked once, however many ways the page hears of it
+    // Visible again: asked once, however many events arrive.
     state.mockReturnValue('visible');
     document.dispatchEvent(new Event('visibilitychange'));
     window.dispatchEvent(new Event('focus'));
