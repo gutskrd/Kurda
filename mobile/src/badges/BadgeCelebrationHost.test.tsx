@@ -15,7 +15,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the user's own channel: here the test is the channel
+// The user's own channel: here the test is the channel.
 const userEvents = vi.hoisted(() => ({ handler: null as ((e: unknown) => void) | null }));
 vi.mock('../realtime/useUserEvents', () => ({
   useUserEvents: (h: (e: unknown) => void) => {
@@ -55,7 +55,7 @@ describe('BadgeCelebrationHost', () => {
     expect(screen.getByText('30 days')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && JSON.stringify(c.body) === JSON.stringify({ keys: ['agir'] }))).toBe(true));
-    // the secret comes next, said as a secret found
+    // The secret comes next, said as a secret found.
     expect(await screen.findByText('Secret found', {}, { timeout: 3000 })).toBeTruthy();
     expect(screen.getByText('Tîrê rast')).toBeTruthy();
   });
@@ -86,7 +86,7 @@ describe('BadgeCelebrationHost', () => {
     );
     expect(await screen.findByText('agir,tire-rast')).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }, { timeout: 3000 }));
-    // celebrated, and still news until the app is next opened
+    // Celebrated, and still news until the app is next opened.
     expect(screen.getByText('agir,tire-rast')).toBeTruthy();
   });
 
@@ -105,12 +105,12 @@ describe('BadgeCelebrationHost', () => {
       testAuth.client = fakeClient({ 'GET /me/badges/unseen': ok({ unseen: [unseen[0]] }), 'POST /me/badges/seen': ok({ seen: true }) });
       renderWithProviders(<BadgeCelebrationHost>{null}</BadgeCelebrationHost>);
       expect(await screen.findByText('Agir', {}, { timeout: 3000 })).toBeTruthy();
-      // past the moment it would have been felt: opening the app is not something to buzz for
+      // Past the moment it would have been felt: opening the app is not something to buzz for.
       await new Promise((r) => setTimeout(r, 600));
       expect(felt).toEqual([]);
       fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-      // earned now, while the app is open
+      // Earned now, while the app is open.
       userEvents.handler?.({ type: 'badge_unlocked', key: 'tire-rast', family: 'secret', tier: 1, tierKey: 'zer', secret: true });
       expect(await screen.findByText('Secret found', {}, { timeout: 3000 })).toBeTruthy();
       await waitFor(() => expect(felt).toEqual(['celebrate']));
@@ -120,10 +120,7 @@ describe('BadgeCelebrationHost', () => {
   });
 });
 
-/*
- * Under the two ways on, a quiet Share: the badge by its name and the site's
- * address, and nothing of who earned it.
- */
+/* Under the two ways on, a quiet Share: the badge's name and the site's address, nothing about who earned it. */
 describe('sharing a badge', () => {
   afterEach(() => {
     cleanup();
@@ -140,7 +137,7 @@ describe('sharing a badge', () => {
     const see = screen.getByRole('button', { name: 'See your badges' });
     const button = screen.getByRole('button', { name: 'Share' });
     expect(screen.getAllByRole('button', { name: 'Share' })).toHaveLength(1);
-    // after both ways on, in the order they are read and reached
+    // After both ways on, in the order they are read and reached.
     expect(onward.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(see.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
@@ -148,10 +145,10 @@ describe('sharing a badge', () => {
     expect(share).toHaveBeenCalledTimes(1);
     const { message } = share.mock.calls[0]?.[0] as { message: string };
     expect(message).toBe('I earned the “Agir” badge on Hevalo. 🏅\nhttps://hevalo.app/win/badge');
-    // the account is "rojda": neither the name nor a page about them is in it
+    // The account is "rojda": neither the name nor a page about them is in it.
     for (const theirs of [testAuth.user.username, testAuth.user.email, '/users/', '/profile', '@']) expect(message).not.toContain(theirs);
 
-    // sharing is not a way on: the badge is still there, not yet marked seen, and nobody was taken anywhere
+    // Sharing is not a way on: the badge stays up, not yet marked seen, and nobody is navigated anywhere.
     expect(screen.getByText('Agir')).toBeTruthy();
     expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/badges/seen')).toBe(false);
     expect(navigation.navigate).not.toHaveBeenCalled();

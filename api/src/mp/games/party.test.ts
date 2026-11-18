@@ -1,7 +1,6 @@
 /**
- * The party games' server modules without a database: what a host may choose,
- * what a move may be, what each deal draws from the approved pool, and that a
- * deal never travels in anything a client sent.
+ * The party games' server modules without a database: host choices, move schemas, what each deal draws from the
+ * approved pool, and that a deal never comes from client input.
  */
 import { describe, expect, it } from 'vitest';
 import { IMPOSTOR_CATEGORY_MIN, IMPOSTOR_CATEGORY_PICTURES, IMPOSTOR_UNSURE_VOTE, impostorRules, type ImpostorSettings, type WordCardContent } from '@kurda/shared';

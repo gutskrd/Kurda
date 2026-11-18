@@ -1,9 +1,7 @@
 /**
- * The pages before and after the chapters (pdf.ts): a word's meaning made
- * short only at its joints and never left empty, so the word list and the
- * alphabet print every meaning whole or at a clause; the people of the road
- * without Hamo's own family; and the file's details naming the book's
- * author.
+ * The front and back matter (pdf.ts): a meaning shortened only at its joints and never left empty, so the word list and
+ * alphabet print meanings whole or at a clause; the people of the road without Hamo's family; and the file's metadata
+ * naming the author.
  */
 import { describe, expect, it } from 'vitest';
 import { glossFor, isFamily, renderRoadBook } from './pdf.js';

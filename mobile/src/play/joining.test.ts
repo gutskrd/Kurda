@@ -12,7 +12,7 @@ describe('a lobby opened while its invite is still being accepted', () => {
     accepted();
     await joined('g1');
     expect(asked).toBe(true);
-    // nothing is under way any more: the next read is not held up
+    // Nothing is pending any more, so the next read is not held up.
     await expect(joined('g1')).resolves.toBeUndefined();
   });
 

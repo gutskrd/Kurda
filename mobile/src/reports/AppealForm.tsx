@@ -11,13 +11,9 @@ import { fileAppeal } from './api';
 import { useDirection } from './direction';
 
 /**
- * "Ask for a review" — one request per decision, for six months.
- *
- * The same few lines wherever a decision can be questioned: a sanction on
- * Account standing, a "doesn't break our rules" answer in My reports, and the
- * suspension screen, which has no session and passes a client that sends the
- * appeal token instead. Words are required (the server needs something to
- * look at again), but there is no minimum.
+ * "Ask for a review": one request per decision, within six months. The same form wherever a decision can be questioned:
+ * a sanction on Account standing, a "doesn't break our rules" answer in My reports, and the suspension screen, which
+ * has no session and passes a client that sends the appeal token. Words are required, with no minimum.
  */
 export function AppealForm({
   client,
@@ -25,7 +21,7 @@ export function AppealForm({
   onFiled,
 }: {
   client: ApiClient;
-  /** the sanction, or the report's case, being questioned */
+  /** The sanction, or the report's case, being questioned. */
   subject: Pick<FileAppealRequest, 'sanctionId' | 'caseId'>;
   onFiled: (appeal: AppealView) => void;
 }): React.JSX.Element {

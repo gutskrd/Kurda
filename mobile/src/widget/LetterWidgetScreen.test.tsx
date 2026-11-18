@@ -12,7 +12,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('./reload', () => ({ reloadLetterWidget: vi.fn(), resetReloadClock: vi.fn() }));
-// this phone has no widget token in the test, so the preview draws the paper itself rather than asking for the picture
+// This device has no widget token in the test, so the preview draws the paper itself rather than fetching the picture.
 vi.mock('./storage', () => ({
   readWidgetConfig: vi.fn(async () => null),
   writeWidgetConfig: vi.fn(async () => undefined),
@@ -92,7 +92,7 @@ describe('the letter widget’s page', () => {
     expect(screen.queryByText(LETTER.excerpt)).toBeNull();
     expect(puts().map((c) => c.body)).toEqual([{ showWords: false }]);
     expect(screen.getByRole('switch', { name: 'Show the words' }).getAttribute('aria-checked')).toBe('false');
-    // and why it matters, said beside the switch
+    // And why it matters, said beside the switch.
     expect(screen.getByText(TRANSLATIONS.en['letterWidget.wordsPrivate'])).toBeTruthy();
   });
 
@@ -115,7 +115,7 @@ describe('the letter widget’s page', () => {
     expect(screen.getByText('Tap Edit, then Add Widget. On older iPhones, tap + instead.')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Android' })).toBeNull();
     expect(screen.queryByText('Tap Widgets.')).toBeNull();
-    // with no letter yet, the preview is the empty sill
+    // With no letter yet, the preview is the empty sill.
     expect(screen.getByText('No letter yet')).toBeTruthy();
   });
 

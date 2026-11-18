@@ -8,22 +8,16 @@ export interface ReceivedGift {
   name: string;
   category: string;
   assetUrl: string | null;
-  /** null when they have since left — the item is still yours */
+  /** Null when they have since left; the item is still yours. */
   from: { id: string; username: string } | null;
   seenAt: string | null;
   createdAt: string;
 }
 
 /**
- * Buy an item for somebody else.
- *
- * `expectedPrice` is the price the screen was showing when it was tapped. The
- * server compares it to the real one and refuses on a mismatch rather than
- * quietly charging the difference, so a price that changed while the sheet was
- * open is an error instead of a surprise.
- *
- * `idempotencyKey` is what stops a double tap, or a retry after a dropped
- * connection, from sending — and charging for — two gifts.
+ * Buy an item for somebody else. `expectedPrice` is the price shown when tapped; the server refuses on a mismatch
+ * rather than quietly charging the difference. `idempotencyKey` stops a double tap or a retry after a dropped
+ * connection from sending (and charging for) two gifts.
  */
 export function giftItem(
   client: ApiClient,

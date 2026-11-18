@@ -30,38 +30,32 @@ const BOB = 6;
 /** While the server is asked, the chest strains: pressed a little flat, shivering this fast. */
 const STRAIN_MS = 110;
 /**
- * The stage's height against the chest's width, shut and open alike, with
- * the chest in its middle: the one layout both states share, so the chest
- * hops from where it stood and nothing jumps as the screen changes under it.
+ * The stage's height relative to the chest's width, with the chest centred, shared by the shut and open states so
+ * nothing jumps between them.
  */
 const STAGE_RATIO = 1.25;
 /** A large button's height: what the bar under the chest is made for. */
 const BUTTON_HEIGHT = 50;
-/** When the opening chest lands out of its hop (shared CHEST_HOP): the moment it is felt, the ring widens and the gold is thrown. */
+/** When the opening chest lands from its hop (shared CHEST_HOP): the haptic, the ring and the thrown gold start here. */
 const LAND_MS = CHEST_HOP_MS * CHEST_HOP_LAND;
-/** Where the sparkles round the waiting chest sit, from its middle, as shares of its size; and when each twinkles. */
+/** Where the sparkles around the waiting chest sit, from its centre as shares of its size, and when each twinkles. */
 const SPARKLES = [
   { x: -0.62, y: -0.42, size: 22, delay: 0 },
   { x: 0.6, y: -0.18, size: 16, delay: 500 },
   { x: 0.5, y: 0.5, size: 20, delay: 1000 },
   { x: -0.7, y: 0.3, size: 12, delay: 1400 },
 ];
-/** How far the rays out of the open chest reach, against the drawing's own: across most of the screen. */
+/** How far the open chest's rays reach relative to the drawing's own: across most of the screen. */
 const RAYS_REACH = 2.4;
 
 /**
- * A quest's chest, on a screen of its own in the colour of what it holds:
- * its name, the chest bobbing gently with a few sparkles round it and a glint
- * now and then on its lock, and "Tap to open". A tap asks the server to open
- * it, and the chest strains while it waits; then it hops: it crouches,
- * springs up and the lid bursts open at the top, it lands, light bursts out
- * of it in rays that turn slowly, gold is thrown, and what it held rises out
- * of it as a tile with its count, with the learner's Zêr counting up to its
- * new total in the corner — felt and heard once, as it lands.
+ * A quest's chest on its own screen, in the colour of what it holds: its name, the chest bobbing with a few
+ * sparkles and a glint on its lock, and "Tap to open". A tap asks the server to open it while the chest strains;
+ * then it hops open, rays turn, gold is thrown, and the contents rise as a tile with a count while the Zêr
+ * balance counts up, with one haptic and sound on landing.
  *
- * Anything in the way is said plainly, with a way on: offline, the chest
- * stays shut and waits on Learn; already opened, nothing is lost. Nothing to
- * buy, nothing to watch, no "more": one chest, what was in it, and Continue.
+ * Problems are said plainly with a way on: offline, the chest stays shut and waits on Learn; already opened,
+ * nothing is lost. Nothing to buy or watch: one chest, its contents, and Continue.
  */
 export function ChestScreen({
   questId,
@@ -70,7 +64,7 @@ export function ChestScreen({
 }: {
   questId: string;
   tier: ChestTier;
-  /** on Continue: whether the chest is open now (just opened, or found open already) or still shut */
+  /** On Continue: whether the chest is open now (just opened, or already open) or still shut. */
   onDone: (open: boolean) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -102,13 +96,13 @@ export function ChestScreen({
 
   return (
     <View style={[styles.screen, { backgroundColor: tone.fill, paddingTop: top }]} testID="quest-chest">
-      {/* the tier's colour, deepening a little towards the foot */}
+      {/* The tier's colour, deepening a little towards the foot. */}
       <LinearGradient colors={[tone.fill, mix(tone.fill, tone.lip, 0.35)]} start={{ x: 0, y: 0.3 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       {opened ? (
         <Opened opening={opened} tier={tier} size={size} ink={tone.ink} />
       ) : (
         <>
-          {/* the balance's corner, kept empty, so the chest stands in the same place shut and open */}
+          {/* The balance's corner, kept empty, so the chest stands in the same place shut and open. */}
           <View style={styles.corner} />
           <View style={styles.middle}>
             <Text style={[styles.name, { color: tone.ink }]} accessibilityRole="header">
@@ -139,7 +133,7 @@ export function ChestScreen({
           </View>
         </>
       )}
-      {/* the bar keeps the height it has with a button in it, so the chest above stands in the same place with and without one */}
+      {/* The bar keeps its button height either way, so the chest above stays put. */}
       <View style={[styles.bar, { paddingBottom: bottom, minHeight: BUTTON_HEIGHT + spacing.sm + bottom }]}>
         {problem === 'offline' || problem === 'failed' ? <ClayButton label={t('common.retry')} tone="primary" size="large" busy={busy} onPress={open} /> : null}
         {opened || problem ? (
@@ -157,28 +151,24 @@ export function ChestScreen({
 }
 
 /**
- * The chest just opened: it hops (the shared CHEST_HOP, one second) — a
- * crouch, a spring up with the lid bursting open at the top, a landing — and
- * as it lands the celebration (theme/celebration.ts) goes off: it is felt and
- * heard, a ring and a burst of gold leave it and a few stars flash, the light
- * inside blooms and a fan of rays rises out of it and keeps turning, then
- * what it held rises out of the chest as a tile with its count ("× 40") and
- * "+N Zêr" lands under it, while the balance in the corner counts up to what
- * the server says it now is. Badges wait for it. Under Reduce Motion the
- * chest simply stands open and the gold fades in, its rays still.
+ * The chest just opened: a one-second hop (shared CHEST_HOP), and on landing the celebration
+ * (theme/celebration.ts): haptic and sound, a ring and a burst of gold, a few stars, the inner light, and turning
+ * rays. Then the contents rise as a tile with a count ("× 40") and "+N Zêr" lands under it while the corner
+ * balance counts up to the server's new total. Badges wait for it. Under Reduce Motion the chest stands open and
+ * the gold fades in, rays still.
  */
 function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: ChestTier; size: number; ink: string }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  // the balance sits in the far corner from where the reading starts
+  // The balance sits in the far corner from where the reading starts.
   const dir = useDirection();
-  // the celebration is timed from the landing, not from the first frame: it is felt as the chest hits the ground
+  // The celebration is timed from the landing, not the first frame.
   const reduce = useReducedMotion();
   const timing = celebrationPlan(reduce);
   const moment = useCelebration({ sound: 'reward', delayMs: timing.travel ? LAND_MS - timing.hapticAtMs : 0 });
   useCelebrationHold(moment.playing);
   const { plan } = moment;
-  // the hop, straight through the shared frames; a skip puts the chest down where it ends
+  // The hop, straight through the shared frames; a skip puts the chest down where it ends.
   const hop = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!plan.travel) return;
@@ -196,12 +186,12 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(reward);
-    // said once, as it opens
+    // Said once, as it opens.
   }, []);
 
-  // the lid, the light and the stars follow the hop; under Reduce Motion it is simply open, and only the gold fades in
+  // The lid, light and stars follow the hop; under Reduce Motion it is just open and only the gold fades in.
   const motion = plan.travel ? { hop } : { light: moment.art.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }) };
-  // the tile rises out of the chest's mouth to its place over the lid, where the tier's name was
+  // The tile rises from the chest's mouth to its place over the lid, where the tier's name was.
   const rise = plan.travel ? moment.details.interpolate({ inputRange: [0, 1], outputRange: [size * 0.32, 0] }) : 0;
   const chestHeight = size * CHEST_RATIO;
   const stageHeight = size * STAGE_RATIO;
@@ -215,7 +205,7 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
         </View>
       </View>
       <View style={styles.middle}>
-        {/* the tier's name keeps its room but gives way to what the chest held, which rises into it */}
+        {/* The tier's name keeps its room but gives way to what the chest held, which rises into it. */}
         <Text style={[styles.name, styles.gone]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {t(CHEST_NAME[tier])}
         </Text>
@@ -231,7 +221,7 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
           {plan.travel ? <GlowRing progress={moment.ring} colour="#FFFFFF" size={size * 0.9} /> : null}
           <ChestArt tier={tier} size={size} open={!plan.travel} motion={motion} rays={plan.travel ? 'turning' : 'still'} reach={RAYS_REACH} testID="chest-art" />
           {plan.travel ? (
-            // the gold comes out of the open top, in front of the chest
+            // The gold comes out of the open top, in front of the chest.
             <View style={[StyleSheet.absoluteFill, { transform: [{ translateY: -size * 0.12 }] }]} pointerEvents="none">
               <ConfettiBurst progress={moment.burst} count={BURST.badge} seed={opening.amount * 7 + 3} colours={[colors.gold, '#FFE16A', '#FFBD1F', '#FFFFFF']} reach={size * 0.75} />
             </View>
@@ -259,11 +249,9 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
 }
 
 /**
- * The waiting chest, rising and settling gently for as long as it waits.
- * While the server is asked it strains instead — pressed a little flat on
- * its foot and shivering, as if what is inside wanted out — which is the
- * crouch the hop then springs from. Still under Reduce Motion, and when
- * nobody is looking.
+ * The waiting chest bobs gently. While the server is asked it strains instead (squashed on its foot and
+ * shivering), which is the crouch the hop springs from. Still under Reduce Motion and when the screen is not
+ * focused.
  */
 function Bobbing({ straining, children }: { straining: boolean; children: React.ReactNode }): React.JSX.Element {
   const alive = useMotionAlive();
@@ -294,14 +282,14 @@ function Bobbing({ straining, children }: { straining: boolean; children: React.
     return () => run.stop();
   }, [alive, straining, bob, press, shiver]);
   const translateY = bob.interpolate({ inputRange: [0, 1], outputRange: [BOB / 2, -BOB / 2] });
-  // the strain presses the chest flat about its foot (the shadow is drawn below it), tilting it a little each way
+  // The strain squashes the chest about its foot (the shadow is drawn below it), tilting it a little each way.
   const scaleX = press.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] });
   const scaleY = press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.94] });
   const rotate = shiver.interpolate({ inputRange: [-1, 1], outputRange: ['-3deg', '3deg'] });
   return <Animated.View style={{ transformOrigin: '50% 88%', transform: [{ translateY }, { scaleX }, { scaleY }, { rotate }] }}>{children}</Animated.View>;
 }
 
-/** A few white sparkles round the waiting chest, each twinkling in its turn; simply there under Reduce Motion. */
+/** A few white sparkles around the waiting chest, each twinkling in turn; static under Reduce Motion. */
 function Sparkles({ size }: { size: number }): React.JSX.Element {
   return (
     <View style={[StyleSheet.absoluteFill, styles.centre]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -345,9 +333,9 @@ const styles = StyleSheet.create({
   sparkle: { position: 'absolute' },
   name: { ...display(typography.sizes.xxl), textAlign: 'center' },
   stage: { alignItems: 'center', justifyContent: 'center' },
-  // the tile sits over the open lid, its foot a little above the chest's top (where is set by the sizes)
+  // The tile sits over the open lid, its foot a little above the chest's top.
   tile: { position: 'absolute', alignItems: 'center', gap: spacing.xs, borderRadius: radii.lg, paddingHorizontal: spacing.md + 4, paddingVertical: spacing.sm + 4, minWidth: 96 },
-  // what is said under the chest — "Tap to open", a problem, or what it held — in one slot tall enough for the biggest of them
+  // What is said under the chest ("Tap to open", a problem, or the contents), in one slot tall enough for the largest.
   words: { minHeight: 56, alignItems: 'center', justifyContent: 'center' },
   gone: { opacity: 0 },
   count: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'], writingDirection: 'ltr' },

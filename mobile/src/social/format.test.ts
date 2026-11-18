@@ -22,7 +22,7 @@ describe('friendActionLabel', () => {
     expect(friendActionLabel('self')).toBeNull();
   });
 
-  // a key with nothing behind it renders as the key, which the type cannot catch
+  // A key with nothing behind it renders as the key, which the type cannot catch.
   it('names a key every language actually has', () => {
     for (const status of ['none', 'pending_out', 'pending_in', 'friends', 'blocked'] as const) {
       const key = friendActionLabel(status)!;
@@ -39,11 +39,7 @@ describe('isActionable', () => {
     expect(isActionable('friends')).toBe(true);
   });
 
-  /*
-   * The two that are genuinely not actions. `blocked` is undone from the block
-   * list, not from a profile you can no longer usefully see, and `self` has no
-   * relationship to change.
-   */
+  /* The two that are not actions: `blocked` is undone from the block list, and `self` has no relationship to change. */
   it('is false where there is nothing to do', () => {
     expect(isActionable('blocked')).toBe(false);
     expect(isActionable('self')).toBe(false);
@@ -64,9 +60,8 @@ describe('isUndo', () => {
   });
 
   /*
-   * The invariant that matters: anything that undoes something must also be
-   * something you can press. If these two ever disagree the button either
-   * confirms an action it cannot perform, or performs one without asking.
+   * The invariant: anything that undoes something must also be pressable, or the button confirms an action it cannot
+   * perform, or performs one without asking.
    */
   it('never marks a state the button cannot act on', () => {
     for (const status of ['none', 'pending_out', 'pending_in', 'friends', 'blocked', 'self'] as const) {
@@ -97,10 +92,8 @@ describe('undoAction', () => {
   });
 
   /*
-   * The prompt has to say who. A translation that dropped `{name}` turns
-   * "Remove Dilan as a friend" into a bare "Remove" — the same word as the
-   * button beneath it, on the one dialog whose whole job is to be specific
-   * about which friendship is about to end.
+   * The prompt has to say who: a translation that dropped `{name}` would turn "Remove Dilan as a friend" into a bare
+   * "Remove", the same word as the button.
    */
   it('asks about a named person in every language', () => {
     for (const status of ['pending_out', 'friends'] as const) {
@@ -128,10 +121,7 @@ describe('VISIBILITY_LABEL', () => {
 
 describe('profile visibility', () => {
   it('offers every value the server stores', () => {
-    // the column defaults to 'members', and the phone used to offer three
-    // options without it — so a fresh account saw nothing selected, could not
-    // read its own privacy setting, and moved off the default by touching any
-    // of them
+    // All four, so a fresh account at the default 'members' sees its own setting selected.
     expect([...VISIBILITIES]).toEqual(['everyone', 'members', 'friends', 'nobody']);
   });
 

@@ -1,7 +1,6 @@
 /**
- * The solo round every learning game played alone shares, as practice
- * sessions are made: the server makes the round, keeps the answers, checks
- * every try and pays once.
+ * The solo round shared by every learning game played alone, made like practice sessions: the server makes the round,
+ * keeps the answers, checks every try and pays once.
  *
  *   POST /games/solo/sessions            make a round: its items, without their answers
  *   GET  /games/solo/sessions/:id        come back to it: the items and how far it got
@@ -10,36 +9,23 @@
  *   POST /games/solo/sessions/:id/hints    spend a hint, for a game whose rounds have them (Detective)
  *   POST /games/solo/sessions/:id/begin    { index }: what an item shows while it is studied gives way to what it is answered with (The Memory Thief)
  *
- * A game plugs in an engine (`SoloEngine`): how a round is made from its
- * approved pool, what an item looks like to the player, how a try is graded,
- * the nudge after a wrong first try and the correction once an item is done.
- * Everything else — sessions, tries, expiry, resuming, paying — is here, the
- * same for every game.
+ * A game plugs in an engine (`SoloEngine`): how a round is made from its approved pool, how an item looks to the player,
+ * how a try is graded, the nudge after a wrong first try and the correction once done. Sessions, tries, expiry,
+ * resuming and paying are here, the same for every game.
  *
- * A round can be come back to for SOLO_SESSION_HOURS; after that it takes no
- * more answers and pays nothing. A try is a row of its own keyed by its
- * number, so a try sent twice (a retry after a dropped connection) is answered
- * the same twice and counted once; the finish claims the round with one
- * UPDATE, so it pays once however often it is asked for.
+ * A round can be resumed for SOLO_SESSION_HOURS; after that it takes no answers and pays nothing. Each try is its own
+ * row keyed by number, so a resent try is answered the same and counted once; the finish claims the round with one
+ * UPDATE, so it pays once.
  *
- * A learner has at most one open round of a game in a variety. A new one
- * replaces the round left open, which is given up: it takes no more answers
- * (it is expired at once), it pays nothing, and what it covered is recorded
- * in `game_seen` as a finished round's is — so the corrections a round showed
- * cannot be read, the round dropped, and the same items played again first
- * as if never met. (Detective also carries the hints spent on a case
- * into the next round of that case until a round has paid for them:
- * detective.ts.)
+ * A learner has at most one open round per game and variety. A new one gives up the open one: expired at once, paid
+ * nothing, and its coverage recorded in `game_seen` like a finished round's, so its corrections cannot be read and the
+ * same items replayed as unseen. (Detective also carries spent hints into the next round of a case: detective.ts.)
  *
- * A game's item view never carries anything worked out from its answer: no
- * key hashed from the sentence, no stable id of the identity behind a tile.
- * What an item is known by is its place in the round.
+ * An item's view never carries anything derived from its answer (no hash of the sentence, no stable id of a tile's
+ * identity); an item is known by its place in the round.
  *
- * Most engines are the registry's games, and play by their entries: the
- * varieties they are played in and what a round alone pays. An engine that is
- * not one of them — the proverbs' round of the Stories (lore/proverb-round.ts)
- * — brings those two rules itself (`rules`), and is made and answered here
- * the same way.
+ * Most engines are registry games and take their varieties and solo pay from their entries. An engine outside the
+ * registry (the Stories' proverbs round, lore/proverb-round.ts) brings those two rules itself (`rules`).
  */
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
@@ -109,26 +95,19 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
   /** the key of the explanation the apps word */
   why(item: Item): string | null;
   /**
-   * What the whole round shares beside its items, as the player is sent it,
-   * from what the round decided and how far it has got (Detective's
-   * case board). Sent with the round when it is made and when it is read.
+   * What the whole round shares besides its items, as sent to the player, from the round's decisions and progress
+   * (Detective's case board). Sent when the round is made and read.
    */
   board?(items: Item[], meta: Record<string, unknown>, states: SoloItemState[]): unknown;
   /**
-   * For a game whose items are studied before they are answered (The Memory
-   * Thief): the player is ready to answer this item, and what it shows while
-   * it is studied gives way, for good, to what it is answered with. The
-   * round's new `meta`, or null when the item had already begun. An answer
-   * begins its item too, so a try is never judged on an item whose study is
-   * still on show.
+   * For games whose items are studied before answering (The Memory Thief): the player is ready to answer this item, and
+   * its study view gives way for good to its answer view. Returns the round's new `meta`, or null if the item had
+   * already begun. An answer begins its item too, so a try is never judged while the study is still shown.
    */
   begin?(round: { items: Item[]; meta: Record<string, unknown> }, index: number): Record<string, unknown> | null;
   /** what a request for a hint may ask for, for a game whose rounds have hints to spend */
   hintAsk?: z.ZodType<unknown>;
-  /**
-   * Spend one hint on the round as a whole: what the round decides from now
-   * on (its new `meta`), or an AppError when there is none to give.
-   */
+  /** Spend one hint on the round as a whole: the round's new `meta`, or an AppError when none is left. */
   spendHint?(round: { items: Item[]; meta: Record<string, unknown>; states: SoloItemState[] }, ask: unknown): Record<string, unknown>;
   /** after the round is paid, inside the same transaction (Build a Sentence moves its ladder) */
   finished?(client: pg.PoolClient, round: { userId: string; dialect: GameDialect; meta: Record<string, unknown>; items: readonly Item[]; results: SoloResults }): Promise<void>;
@@ -203,9 +182,8 @@ export class SoloService {
   }
 
   /**
-   * Where an engine's rounds are played and what one pays: its registry
-   * entry's — only the lessons' exercises pay when played alone
-   * (`paysAlone`) — or the engine's own.
+   * Where an engine's rounds are played and what one pays: its registry entry's (only the lessons' exercises pay alone,
+   * `paysAlone`) or the engine's own.
    */
   private rules(engine: AnyEngine): SoloRules {
     if (engine.rules) return engine.rules;
@@ -214,11 +192,9 @@ export class SoloService {
   }
 
   /**
-   * Give up every round of this game and variety the learner left open: each
-   * is expired now and marked given up, and the items it covered go into
-   * `game_seen` as a finished round's do (`recordSeen`: tried, and when last
-   * answered right). One statement, so it costs a round no more than one
-   * trip; the UPDATE's row locks make two at once give a round up once.
+   * Give up every round of this game and variety the learner left open: each is expired and marked given up, and its
+   * items go into `game_seen` like a finished round's (`recordSeen`). One statement; the UPDATE's row locks make
+   * concurrent calls give a round up once.
    */
   private async replaceOpen(db: Pick<pg.Pool, 'query'>, userId: string, game: SoloGameId, dialect: GameDialect): Promise<void> {
     await db.query(
@@ -259,14 +235,12 @@ export class SoloService {
   }
 
   /**
-   * A new round of a game, in a variety, at a difficulty, in place of any
-   * round of it left open (`replaceOpen`). 409 NOT_ENOUGH_CONTENT when there
-   * is too little approved content.
+   * A new round of a game, in a variety, at a difficulty, replacing any open round (`replaceOpen`). 409
+   * NOT_ENOUGH_CONTENT when there is too little approved content.
    *
-   * The round left open is given up before the new one is built, so what it
-   * covered already counts as seen; the build runs outside any transaction
-   * (it reads the pools on connections of its own), and the insert gives up
-   * again whatever round a request racing this one opened meanwhile.
+   * The open round is given up before the new one is built, so its coverage already counts as seen; the build runs
+   * outside any transaction (reading pools on its own connections), and the insert gives up any round a racing request
+   * opened meanwhile.
    */
   async create(userId: string, game: SoloGameId, dialect: GameDialect, difficulty: GameDifficulty): Promise<SoloSessionView<unknown>> {
     const engine = this.engine(game);
@@ -356,9 +330,8 @@ export class SoloService {
   }
 
   /**
-   * One try at one item. `attempt`, when sent, is which try this is: a try
-   * already recorded under it is answered again as it was, so a retry after a
-   * lost response is never a second try.
+   * One try at one item. `attempt`, when sent, numbers the try: a try already recorded under it is answered again as
+   * before, so a retry after a lost response is never a second try.
    */
   async answer(id: string, userId: string, index: number, raw: unknown, attempt?: number): Promise<SoloAnswerResult<unknown, unknown>> {
     return this.tx(async (client) => {
@@ -418,10 +391,8 @@ export class SoloService {
   }
 
   /**
-   * The player is ready to answer an item that is studied first: its study
-   * gives way to what it is answered with, for good (The Memory Thief's
-   * passage, then its gaps). Answered with the item as it now is; asking
-   * again answers the same.
+   * The player is ready to answer a studied item: its study view gives way for good to its answer view (The Memory
+   * Thief's passage, then its gaps). Answered with the item as it now is; asking again answers the same.
    */
   async begin(id: string, userId: string, index: number): Promise<{ item: unknown }> {
     return this.tx(async (client) => {
@@ -439,8 +410,7 @@ export class SoloService {
   }
 
   /**
-   * Spend a hint on an open round, under the round's lock so two at once are
-   * two hints, never one counted twice. Answered with the round's board as it
+   * Spend a hint on an open round under the round's lock, so two at once are two hints. Answered with the board as it
    * now stands.
    */
   async hint(id: string, userId: string, raw: unknown): Promise<{ board: unknown }> {
@@ -460,9 +430,8 @@ export class SoloService {
   }
 
   /**
-   * Close the round and pay it, once. A round asked to finish again answers
-   * with the results it was paid with. Items never tried count as missed: a
-   * round is scored out of all of it.
+   * Close and pay the round, once. Finishing again returns the results it was paid with. Untried items count as missed:
+   * a round is scored out of all of it.
    */
   async finish(id: string, userId: string): Promise<SoloResults> {
     const now = new Date();
@@ -498,8 +467,8 @@ export class SoloService {
   }
 
   /**
-   * Housekeeping: rounds long finished or long expired, and what learners saw
-   * long ago. Idempotent deletes, so several instances may run it at once.
+   * Housekeeping: delete rounds long finished or expired and old `game_seen` rows. Idempotent, so several instances may
+   * run it at once.
    */
   async housekeeping(): Promise<{ sessions: number; seen: number }> {
     const sessions = await this.pool.query(

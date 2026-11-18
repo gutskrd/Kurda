@@ -8,29 +8,16 @@ import { useDirection } from '../reports/direction';
 import type { ProfileBackground, ProfileIcon } from './types';
 
 /**
- * The equipped cosmetics, drawn the way the browser draws them.
- *
- * Presentation only: whether somebody owns a thing, and whether a premium item
- * is theirs to wear today, is settled server-side long before any of this sees
- * a value. Kept in one file per app for the reason the browser keeps its own —
- * the popup and the full profile must not drift — and written against the same
- * shapes so the two apps cannot either.
+ * The equipped cosmetics, drawn as the browser draws them. Presentation only: ownership and whether a premium item may
+ * be worn today are settled server-side. One file per app, written against the same shapes as the browser's, so the
+ * popup and the full profile cannot drift.
  */
 
 /**
- * An equipped background.
- *
- * `image` and `gif` both go through `Image`; a GIF animates on its own on iOS,
- * and on Android through the decoder Expo ships. `video` does not render at
- * all: playing one needs `expo-video`, a native module, and the phone would
- * have to be rebuilt to carry it. A still frame is not available either — the
- * server sends a URL and a type and no poster — so rather than draw a black
- * rectangle where a background should be, this draws nothing and the screen's
- * own gradient shows through.
- *
- * The URL goes through `assetUrl`: the backgrounds the shop ships with arrive
- * as paths on the website (`/cosmetics/backgrounds/…`), which a phone cannot
- * load as they are, and the ones added in the admin as whole CDN addresses.
+ * An equipped background. `image` and `gif` go through `Image` (a GIF animates on its own on iOS, and on Android
+ * through Expo's decoder). `video` is not drawn: it would need `expo-video`, a native module, and the server sends no
+ * poster frame, so the screen's own gradient shows through instead of a black rectangle. The URL goes through
+ * `assetUrl`, since shipped backgrounds arrive as site paths and admin-added ones as whole CDN addresses.
  */
 export function CosmeticBackground({
   background,
@@ -45,17 +32,13 @@ export function CosmeticBackground({
 }
 
 /**
- * The equipped premium icon, straddling the edge of the avatar.
- *
- * A layer over the avatar and never baked into it: the avatar is a photo
- * somebody uploaded, and the icon is a thing they are wearing on top of it.
- * `size` is the avatar's, and the icon is a third of it in the bottom-trailing
- * corner, which is where the browser's CSS puts it.
+ * The equipped premium icon straddling the avatar's edge: a layer over the avatar, never baked into the photo. `size`
+ * is the avatar's; the icon is a third of it in the bottom-trailing corner, as the browser's CSS places it.
  */
 export function IconOverlay({ icon, size }: { icon: ProfileIcon; size: number }): React.JSX.Element | null {
   const { t } = useI18n();
   const d = Math.round(size / 3);
-  // a site path for the icons that ship, a CDN address for uploaded ones (as the background above)
+  // A site path for shipped icons, a CDN address for uploaded ones (as the background above).
   const uri = assetUrl(icon.url);
   if (!uri) return null;
   return (
@@ -81,16 +64,9 @@ export function PremiumPill(): React.JSX.Element {
 }
 
 /**
- * Who gave them what they are wearing.
- *
- * Half the point of a gift is that it is seen to be from somebody. Without
- * this a gifted background is indistinguishable from a bought one the moment
- * it is equipped, which is a present with the card thrown away.
- *
- * Whole sentences rather than a noun plus " gifted by ": which word order that
- * takes, and whether the noun changes shape, is not the same in nine
- * languages. Nothing renders when nothing was gifted — a line saying so would
- * be noise on the great majority of profiles.
+ * Who gave them what they are wearing, so a gifted item is seen to be from somebody. Whole sentences rather than a noun
+ * plus " gifted by ", since word order and noun forms differ across the nine languages. Nothing renders when nothing
+ * was gifted.
  */
 export function GiftedNote({
   background,
@@ -108,9 +84,8 @@ export function GiftedNote({
   if (notes.length === 0) return null;
 
   /*
-   * A quiet line, its mark in the line's own grey: a gift is not something
-   * earned, which is what gold is kept for. Right to left, the mark leads on
-   * the right.
+   * A quiet line, its mark in the line's own grey: a gift is not earned, which is what gold is kept for. Right to left,
+   * the mark leads on the right.
    */
   return (
     <View style={styles.gifts}>
@@ -125,27 +100,16 @@ export function GiftedNote({
 }
 
 /**
- * Where a flag picture comes from.
- *
- * The roster itself is `@kurda/shared`, the same one the browser reads, so the
- * two apps cannot end up with different country lists. Flags come from
- * flagcdn as small cached PNGs, because emoji flags do not render on every
- * platform — except Kurdistan's, which no service that only knows about states
- * will serve, so Hevalo serves its own.
+ * Where a flag picture comes from. The country list is `@kurda/shared`'s, as the browser's. Flags are small cached PNGs
+ * from a flag CDN, since emoji flags do not render on every platform; Kurdistan's is served by Hevalo, since services
+ * that only know states do not have it.
  */
 export function flagUrl(code: string): string {
   if (code.toUpperCase() === 'KU') return assetUrl('/flags/kurdistan.png') ?? '';
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
 
-/**
- * A poem or a story somebody put on their profile on purpose.
- *
- * Here rather than on a screen because two screens show it: your own profile and
- * somebody else's. It lived on `ProfileScreen` while only that one did, and the
- * moment a second screen needed it was the moment it would otherwise have been
- * copied — which is the drift this file exists to prevent.
- */
+/** A poem or story somebody pinned to their profile, shared by your own profile and somebody else's. */
 export function FavoriteRow({ label, title }: { label: string; title: string }): React.JSX.Element {
   const { colors } = useTheme();
   return (

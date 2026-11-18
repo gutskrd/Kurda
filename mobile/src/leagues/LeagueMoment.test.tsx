@@ -82,7 +82,7 @@ describe('the league week’s ceremony', () => {
     expect(await screen.findByRole('heading', { name: 'You finished #3 last week and moved up to Çem.' })).toBeTruthy();
     expect(screen.getByText('Moved up')).toBeTruthy();
     expect(screen.getByText('410 XP · +10 Gems')).toBeTruthy();
-    // the league they are in now stands in the middle, named; the ones beside it are decoration
+    // The current league stands in the middle, named; the ones beside it are decorative.
     expect(screen.getByRole('img', { name: 'Çem League (River)' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('heading', { name: 'You’re in the Çem League' })).toBeTruthy();
@@ -92,7 +92,7 @@ describe('the league week’s ceremony', () => {
     await waitFor(() => expect(store.data.hevalo_league_celebrated).toBe('2026-10-26'));
     expect(screen.queryByText('You’re in the Çem League')).toBeNull();
 
-    // the same week opened again: already seen on this phone
+    // The same week opened again: already seen on this phone.
     cleanup();
     renderWithProviders(<LeagueMoment league={view(closed())} store={store} />);
     await new Promise((r) => setTimeout(r, 50));
@@ -151,7 +151,7 @@ describe('the league week’s ceremony', () => {
       patchReactNativeWeb({ reduceMotion: false });
       renderWithProviders(<LeagueMoment league={view(closed())} store={memoryStore()} />);
       expect(await screen.findByTestId('league-strip')).toBeTruthy();
-      // a promotion keeps the burst
+      // A promotion keeps the burst.
       expect(await screen.findByTestId('league-burst')).toBeTruthy();
       await waitFor(() => expect(felt).toEqual(['tap']), { timeout: 2000 });
       cleanup();
@@ -168,11 +168,7 @@ describe('the league week’s ceremony', () => {
   });
 });
 
-/*
- * The quiet Share under the first beat's Continue, for a week that is good
- * news to tell: the league moved up to, or a place in the first three. Never
- * for a week that moved the learner down or simply stayed.
- */
+/* The quiet Share under the first Continue, for a promotion or a top-three place; never for a demotion or a week that stayed. */
 describe('sharing a league week', () => {
   const sheet = () => vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
   const said = (share: ReturnType<typeof sheet>): string => (share.mock.calls[0]?.[0] as { message: string } | undefined)?.message ?? '';
@@ -191,13 +187,13 @@ describe('sharing a league week', () => {
     fireEvent.click(button);
     expect(share).toHaveBeenCalledTimes(1);
     expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I moved up to the Çem League on Hevalo. 🏆\nhttps://hevalo.app/win/league/cem' });
-    // not the size of the group, not the XP, not the account ("rojda")
+    // Not the size of the group, not the XP, not the account ("rojda").
     for (const theirs of ['18', '410', 'rojda', '/users/', '@']) expect(said(share)).not.toContain(theirs);
-    // sharing is not the way on: the first beat is still there, and the week not yet put away
+    // Sharing is not the way on: the first beat is still there, and the week not yet put away.
     expect(screen.getByRole('heading', { name: 'You finished #3 last week and moved up to Çem.' })).toBeTruthy();
     expect(store.data.hevalo_league_celebrated).toBeUndefined();
 
-    // it is offered with the news, once: the second beat has only its way on
+    // It is offered with the news, once: the second beat has only its way on.
     fireEvent.click(onward);
     await screen.findByRole('heading', { name: 'You’re in the Çem League' });
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
@@ -230,7 +226,7 @@ describe('sharing a league week', () => {
     ];
     for (const [week, line] of weeks) {
       renderWithProviders(<LeagueMoment league={view(closed(week))} store={memoryStore()} />);
-      // the ceremony is still staged, with its way on, and nothing to share
+      // The ceremony is still staged, with its way on, and nothing to share.
       expect(await screen.findByRole('heading', { name: line })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'Share' }), line).toBeNull();

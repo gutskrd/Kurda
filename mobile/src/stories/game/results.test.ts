@@ -18,7 +18,7 @@ describe('story results layout', () => {
     expect(standingsLayout('duo', [s(1, 4, 1), s(2, 3, 2)])).toBe('duo');
     expect(standingsLayout('group', [s(1, 4, 1), s(2, 3, 2), s(3, 2, 3)])).toBe('seats');
     expect(standingsLayout('group', [s(1, 4, 1), s(2, 3, 2), s(3, 2, 3), s(4, 1, 4)])).toBe('podium');
-    // a group game two people finished is shown as a pair
+    // A group game two people finished shows as a pair.
     expect(standingsLayout('group', [s(1, 4, 1), s(2, 3, 2)])).toBe('duo');
   });
 

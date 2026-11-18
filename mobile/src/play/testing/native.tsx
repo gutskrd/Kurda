@@ -1,14 +1,7 @@
 /**
- * react-native for component tests that check what a screen reader is told.
- *
- * The app marks a radio's choice, a selected option or a disabled button with
- * `accessibilityState`, which a phone hands to VoiceOver and TalkBack.
- * react-native-web no longer reads that prop, so through the plain harness a
- * checked radio and an unchecked one look the same in the DOM. This is
- * react-native-web with View, Pressable and Text turning `accessibilityState`
- * into the aria attributes it stands for, so a test can ask for
- * `aria-checked` the way it would on the web (and `accessibilityLanguage`,
- * the voice VoiceOver reads an element in, into `lang`). Wired with
+ * react-native for component tests that check what screen readers are told. react-native-web ignores
+ * `accessibilityState`, so this wraps View, Pressable and Text to turn it into aria attributes (and
+ * `accessibilityLanguage` into `lang`), letting a test ask for `aria-checked` as on the web. Wire it with
  * `vi.mock('react-native', () => import('…/play/testing/native'))`.
  */
 import { createElement, forwardRef, type ComponentType } from 'react';
@@ -35,7 +28,7 @@ function withState(Component: ComponentType<Props>): ComponentType<Props> {
     if (state?.disabled !== undefined) aria['aria-disabled'] = state.disabled;
     if (state?.busy !== undefined) aria['aria-busy'] = state.busy;
     if (state?.expanded !== undefined) aria['aria-expanded'] = state.expanded;
-    // the language VoiceOver reads an element in, as the web's `lang`
+    // The language VoiceOver reads an element in, as the web's `lang`.
     if (accessibilityLanguage) aria.lang = accessibilityLanguage;
     return createElement(Component, { ...rest, ...aria, ref });
   }) as unknown as ComponentType<Props>;

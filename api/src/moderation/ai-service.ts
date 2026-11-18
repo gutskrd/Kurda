@@ -48,11 +48,9 @@ class TextCache {
 }
 
 /**
- * AI-assisted moderation orchestrator (KUR-293). Sits *after* the #086 wordlist:
- * classifies text (provider-agnostic, fail-open/closed configurable), maps the
- * scores to an action via the policy engine, and records every above-`allow`
- * decision in `moderation_flags` — the automated tier feeding the #102 human
- * queue. Every automated action is reversible (false-positive appeals).
+ * AI-assisted moderation, run after the wordlist filter: classify text (provider-agnostic, fail open or closed by
+ * config), map scores to an action via the policy engine, and record every above-`allow` decision in `moderation_flags`
+ * for the human queue. Every automated action is reversible.
  */
 export class AiModerationService {
   private readonly pool: pg.Pool;
@@ -71,10 +69,9 @@ export class AiModerationService {
   }
 
   /**
-   * Moderate one piece of text. Persists a flag when the action is above
-   * `allow`; `blocked` tells the caller whether to reject the write (auto_block,
-   * and auto_hide on write-through surfaces like chat where "hide" == don't
-   * deliver).
+   * Moderate one piece of text, persisting a flag when the action is above `allow`. `blocked` tells the caller to
+   * reject the write (auto_block, and auto_hide on write-through surfaces like chat, where hiding means not
+   * delivering).
    */
   async moderate(input: ModerateInput): Promise<ModerationOutcome> {
     const key = `${input.surface}:${hash(input.text)}`;
@@ -111,7 +108,7 @@ export class AiModerationService {
     };
   }
 
-  /** Pending flags oldest-first — the automated feed for the #102 queue. */
+  /** Pending flags oldest-first — the automated feed for the queue. */
   async pending(limit = 50): Promise<PendingFlag[]> {
     const res = await this.pool.query<{
       id: string; surface: string; content_type: string; content_ref: string | null;

@@ -7,26 +7,15 @@ import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
 import { PressableScale } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
-import { radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography, wash } from '../../theme/tokens';
 import { MONTH_KEYS } from '../birthMonth';
 
-/** The violet wash an option that is on wears, as the tab bar and the segmented control mark where you are. */
-const CHOSEN_WASH = '1F';
-
 /**
- * The twelve months as chips, for the month somebody was born in: one tap,
- * with none chosen to start with, so nothing on the screen suggests an
- * answer. The chosen one is a wash of the brand's violet with the month in
- * violet, as every option that is on is marked, and says so to a screen
- * reader, which hears the twelve as one group of choices. Month names come
- * from the catalogue, not from the phone's locale data, which may have no
- * Kurdish.
+ * The twelve months as chips for a birth month: one tap, none chosen at first so nothing suggests an answer, announced
+ * as one group of choices. Names come from the catalogue, since the phone's locale data may have no Kurdish.
  *
- * Three to a row where every month's longest word fits its chip, two where
- * one does not. A name of two words takes a second line inside its chip:
- * cut to one, Soranî's January and December both read "کانوونی …", and
- * October and November both "تشرینی …", and German's September lost its end
- * on a narrow phone.
+ * Three to a row where every month's longest word fits its chip, two where one does not. A two-word name takes a second
+ * line, since cut to one several months would read alike (Soranî's January and December both "کانوونی …").
  */
 export function MonthChips({
   value,
@@ -67,7 +56,7 @@ export function MonthChips({
             style={[
               styles.chip,
               columns === 3 ? styles.third : styles.half,
-              { backgroundColor: chosen ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack },
+              { backgroundColor: chosen ? wash(colors.primary) : colors.controlTrack },
               disabled && styles.dim,
             ]}
           >
@@ -87,10 +76,9 @@ const GAP = spacing.sm;
 const PAD = spacing.sm;
 
 /**
- * Three chips to a row, or two: three where the longest single word of any
- * month fits inside a third of the grid (a word cannot be broken across two
- * lines; two words can). `width` is the grid's own, 0 before it is laid out,
- * when three is assumed; `fontScale` the reader's text size.
+ * Three chips to a row, or two: three where every month's longest single word fits a third of the grid (words cannot be
+ * broken; two words can wrap). `width` is the grid's own, 0 before layout, when three is assumed; `fontScale` the
+ * reader's text size.
  */
 export function monthColumns(width: number, fontScale: number, labels: readonly string[]): 2 | 3 {
   if (width <= 0) return 3;
@@ -110,7 +98,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // three to a row, or two, with the gaps between them
+  // Three to a row, or two, with the gaps between them.
   third: { flexBasis: '31%' },
   half: { flexBasis: '46%' },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, textAlign: 'center' },

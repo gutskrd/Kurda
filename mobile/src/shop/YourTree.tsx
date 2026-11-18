@@ -20,17 +20,10 @@ import { TreePicture } from '../tree/TreeScene';
 import { ART, YoursRow, YoursRowSkeleton } from './YoursRow';
 
 /**
- * Your tree, in the Shop, as the website has it (web/src/shop/YourTree.tsx).
- *
- * A row at the top of the Shop shows the tree that stands; a tap opens the
- * nursery the tree screen opens (tree/TreeScreen `Nursery`), with the same
- * words and the same two questions, asked in the sheet itself: every kind,
- * which are yours to plant, which are free, what the others cost against the
- * Zêr there are; buying one plants nothing, and planting one is asked about
- * first, because the tree that stands is gone when another is planted, while
- * the water held stays.
- *
- * A guest is never asked about, and a server with no trees yet shows nothing.
+ * Your tree in the Shop, as on the website (web/src/shop/YourTree.tsx): a row showing the tree that stands, opening the
+ * tree screen's nursery (tree/TreeScreen `Nursery`) in the sheet itself: every kind, which are yours, which are free
+ * and what the others cost. Buying plants nothing; planting is confirmed first, since the standing tree is replaced
+ * (the water held stays). A guest is never asked about, and a server with no trees shows nothing.
  */
 
 /** What `GET /me/tree` holds, and the way to read it again or put a newer answer in its place. */
@@ -46,9 +39,8 @@ export interface ShopTreeState {
 const isMyTree = (value: unknown): value is MyTree => typeof value === 'object' && value !== null && Array.isArray((value as Partial<MyTree>).kinds);
 
 /**
- * The tree as the Shop needs it, read when the Shop reads its catalogue (on
- * focus, and when pulled down). A second read that fails keeps what the first
- * one showed.
+ * The tree as the Shop needs it, read with the Shop's catalogue (on focus and on pull). A later failed read keeps what
+ * the first one showed.
  */
 export function useShopTree(): ShopTreeState {
   const { client, isGuest } = useAuth();
@@ -110,11 +102,9 @@ export function YourTree({ tree, zer, onZer }: { tree: ShopTreeState; zer: numbe
 }
 
 /**
- * The nursery, in the Shop: every kind there is, and once one is picked, the
- * question that picking it asks, as the sheet's second step, so nothing opens
- * over anything. Planted, the sheet closes on the Shop, whose row now shows
- * the seed; bought, it goes back to the kinds, where the one bought is now
- * yours to plant.
+ * The nursery in the Shop: every kind, and once one is picked its question as the sheet's second step, so nothing opens
+ * over anything. Planted, the sheet closes on the Shop; bought, it goes back to the kinds, where the new one is yours
+ * to plant.
  */
 function Nursery({ tree, data, zer, onZer, onClose }: { tree: ShopTreeState; data: MyTree; zer: number; onZer: (zer: number) => void; onClose: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -142,11 +132,12 @@ function Nursery({ tree, data, zer, onZer, onClose }: { tree: ShopTreeState; dat
       haptic('correct');
       learn(res.data);
       setAsking(null);
-      // planted: back to the Shop, whose row shows the seed now; bought: back to the kinds, where it is now theirs to plant
+      // Planted: back to the Shop, whose row shows the seed; bought: back to the kinds, where it is now theirs to
+      // plant.
       if (what === 'plant') onClose();
       return;
     }
-    // spent meanwhile, or bought already somewhere else: the tree is read again, and what it says now is shown
+    // Spent elsewhere meanwhile, or bought already: the tree is read again, and what it says now is shown.
     if (res.error.code === 'INSUFFICIENT_FUNDS' || res.error.code === 'TREE_OWNED') {
       const again = await getTree(client);
       setBusy(false);
@@ -245,10 +236,8 @@ function Nursery({ tree, data, zer, onZer, onClose }: { tree: ShopTreeState; dat
 }
 
 /**
- * One kind as a row, as the nursery has it: the tree it will be, full-grown in
- * summer, its name and what it means, and what it costs or whose it is. One
- * that cannot be afforded says how much is missing beside its price, as the
- * catalogue does, and still opens its question, which says it again.
+ * One kind as a row, as in the nursery: the tree full-grown in summer, its name and meaning, and its price or owner.
+ * One that cannot be afforded says how much is missing, and still opens its question.
  */
 function KindRow({
   kind,
@@ -261,9 +250,9 @@ function KindRow({
   kind: TreeKindOffer;
   zer: number;
   busy: boolean;
-  /** in place of a price: "Free", "Yours", "Growing now" */
+  /** In place of a price: "Free", "Yours", "Growing now" */
   note?: string;
-  /** the button's words; none for the kind that stands */
+  /** The button's words; none for the kind that stands. */
   action: string | null;
   onAct: () => void;
 }): React.JSX.Element {

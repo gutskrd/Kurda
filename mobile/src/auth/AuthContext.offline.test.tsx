@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
-// a connection the test turns off and on, as a phone on a train has it
+// A connection the test turns off and on, as a phone on a train has it.
 const net = vi.hoisted(() => {
   const listeners = new Set<(state: { isConnected: boolean | null }) => void>();
   let connected = false;
@@ -37,10 +37,8 @@ import { I18nProvider } from '../i18n/I18nContext';
 import { AuthProvider, useAuth } from './AuthContext';
 
 /*
- * Opening the app from a notification with no network, or while the server
- * is still waking: the stored session is neither thrown away nor taken for a
- * signed-out one. The app waits, asks again once it can be answered, and the
- * letter the notification was about is then reachable.
+ * Opening the app from a notification with no network, or while the server wakes: the stored session is kept, asked
+ * again once it can be answered, and the letter the notification was about is then reachable.
  */
 
 afterEach(() => {
@@ -121,7 +119,7 @@ describe('restoring a session with no network', () => {
     expect(result.current.status).toBe('restoring');
     expect(await storage.get()).toEqual({ accessToken: 'acc', refreshToken: 'ref' });
 
-    // back online: the refresh goes through, and the account is read with the new token
+    // Back online: the refresh goes through, and the account is read with the new token.
     online = true;
     fetchFn.mockImplementation(async (url: string) =>
       String(url).endsWith('/auth/refresh') ? json(200, { accessToken: 'acc2', refreshToken: 'ref2' }) : json(200, { user }),

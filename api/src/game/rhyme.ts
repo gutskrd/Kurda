@@ -1,14 +1,8 @@
 /**
- * Kurdish rhyme-scoring engine (KUR-298) — the pure core behind the Rhyming
- * Words game mode (KUR-299). Given a prompt word and a player's submission it
- * decides: (1) is it a real Kurdish word, (2) does it actually rhyme and how
- * well, and (3) — with the server-timed elapsed — how many points to award.
- *
- * It reuses the #053 scoring model: instead of a boolean `correct`, a rhyme
- * gets a quality tier (perfect / near / none) which scales the same
- * base + speed-decay curve, so scoring feels identical to quiz mode. Pure and
- * deterministic (lexicon + profanity check injected), so it runs server-side
- * and is fully unit-testable.
+ * Kurdish rhyme scoring, the pure core of the rhyme games. Given a prompt and a submission it decides whether the
+ * submission is a real Kurdish word, whether and how well it rhymes, and, with the server-timed elapsed time, the
+ * points. A rhyme's quality tier (perfect, near, none) scales the shared base-plus-speed curve (scoring.ts). Lexicon
+ * and profanity checks are injected.
  */
 import { wordKey, type LetterDialect } from '@kurda/shared';
 import { POINTS_BASE, SPEED_BONUS } from './scoring.js';
@@ -23,36 +17,27 @@ export function letterDialectOf(dialect: Dialect): LetterDialect {
 }
 
 /**
- * Normalize a word for comparison: lowercase, NFC (keeps ê/î/û as single
- * letters), and strip everything that is not a letter — whitespace,
- * punctuation, digits, and Arabic combining marks all go. The result is the
- * pure letter sequence the rhyme logic operates on.
+ * Normalize a word for comparison: lowercase, NFC (ê, î, û stay single letters), and only letters kept (whitespace,
+ * punctuation, digits and Arabic combining marks removed).
  */
 export function normalizeWord(word: string): string {
   return word.toLowerCase().normalize('NFC').replace(/[^\p{L}]/gu, '');
 }
 
 /**
- * A word as a round compares it: one word in the dialect's own letters
- * (shared `wordKey`: ê is not e, and the Arabic keyboard's ي is Soranî's ی),
- * or '' when it is not one word of that dialect at all.
+ * A word as a round compares it: one word in the dialect's own letters (shared `wordKey`: ê is not e, and the Arabic
+ * keyboard's ي is Soranî's ی), or '' when it is not one word of that dialect.
  *
- * Every comparison a round makes goes through this one key — is it the
- * prompt, was it said already, which dictionary entry is it — so a word typed
- * without its marks can never pass for the word with them. That was how the
- * prompt şev, typed as "sev", used to score as a perfect rhyme of itself.
+ * Every comparison in a round (is it the prompt, was it said, which dictionary entry) uses this key, so a word typed
+ * without its marks never passes for the word with them.
  */
 export function rhymeWordKey(word: string, dialect: Dialect): string {
   return wordKey(letterDialectOf(dialect), word) ?? '';
 }
 
 /**
- * How many letters two words end with in common, counted from the last letter
- * backwards.
- *
- * `kurdistan` against `baran`: n=n, a=a, t≠r — two. The walk stops at the first
- * letter that differs and never looks past it, so the *last* letter deciding
- * everything is not a special case but the first step of the same loop.
+ * How many letters two words share at the end, counted backwards from the last letter until the first difference
+ * (`kurdistan` vs `baran`: n, a, then t≠r, so two).
  */
 export function sharedEnding(a: string, b: string): number {
   let n = 0;
@@ -88,26 +73,18 @@ export function rimeOf(word: string): { rime: string; coda: string; vowel: strin
 }
 
 /**
- * A word written backwards, which is how its rhymes are found.
- *
- * Rhyming is a question about the end of a word, and no index can answer one of
- * those. Reversed it becomes a question about the start: every word ending in
- * `-an` begins `na-` here, so "what rhymes with kurdistan" is a prefix lookup.
- * `dict_entries.rhyme_key` is the stored form of this (1751000117000), and
- * Postgres' `reverse()` has to agree with this function exactly.
+ * A word written backwards, so "what rhymes with kurdistan" (every word ending in `-an`) becomes a prefix lookup an
+ * index can answer. `dict_entries.rhyme_key` stores this form (1751000117000), and Postgres' `reverse()` must agree
+ * with it exactly.
  */
 export function rhymeKey(word: string): string {
   return [...normalizeWord(word)].reverse().join('');
 }
 
 /**
- * The rhyme-key prefix shared by every word that ends with this one's last
- * `letters` letters, or null when the word is too short to have that many.
- *
- * Null is the answer to a real question rather than an error: a one-letter word
- * cannot share two final letters with anything but itself, so it has no perfect
- * rhymes at all. Returning a short prefix instead would match every word ending
- * in that letter and call them all perfect.
+ * The rhyme-key prefix shared by every word ending in this word's last `letters` letters, or null when the word is
+ * shorter. Null is meaningful: a one-letter word has no perfect rhymes, and a shorter prefix would match every word
+ * ending in that letter.
  */
 export function rhymePrefix(word: string, letters: number): string | null {
   const key = [...rhymeKey(word)];
@@ -119,23 +96,16 @@ export function rhymePrefix(word: string, letters: number): string | null {
  * Classify how well two words rhyme.
  *
  * **Kurmancî, by the rime**, as Kurdish verse rhymes:
- *  - `perfect`: the same last vowel and the same letters after it — dar,
- *    bajar, êvar; baran, şivan, ziman; and derî, kanî, azadî, which end on the
- *    same î and nothing after it.
- *  - `near`: the same consonants at the end after a different last vowel —
- *    dar and dêr, dil and gul.
- *  - `none`: anything else. A shared last letter is no longer enough on its
- *    own: dest and mast share "st" but not the vowel before it, so they are a
- *    near rhyme, and derî and bira share nothing.
+ * - `perfect`: the same last vowel and letters after it (dar, bajar, êvar; baran, şivan, ziman; derî, kanî, azadî).
+ * - `near`: the same final consonants after a different last vowel (dar and dêr, dil and gul).
+ * - `none`: anything else; a shared last letter alone is not enough (dest and mast are near; derî and bira share
+ *   nothing).
  *
- * **Soranî, by its last letters**: two or more is perfect and one is near.
- * Soranî writes some vowels and leaves others out, so the letters at the end
- * are the honest thing to compare there.
+ * **Soranî, by its last letters**: two or more is perfect, one is near, since Soranî writes some vowels and omits
+ * others.
  *
- * Both are spelling, not phonetics: one answer a player can predict, decided
- * for hundreds of thousands of words without anybody ruling on them one at a
- * time. Where it is wrong about a particular pair, a curator's
- * `rhyme_overrides` verdict beats it — in both directions.
+ * Both rules are spelling, not phonetics: predictable for players and decidable for hundreds of thousands of words. A
+ * curator's `rhyme_overrides` verdict beats them in either direction.
  */
 export function classifyRhyme(prompt: string, submission: string, dialect: Dialect = 'kurmanci'): RhymeQuality {
   const np = normalizeWord(prompt);
@@ -158,16 +128,12 @@ export function classifyRhyme(prompt: string, submission: string, dialect: Diale
 }
 
 /**
- * How the dictionary finds a word's rhymes by its `rhyme_key` (the reversed
- * headword): every partner's key starts with `prefix`, which an index answers;
- * `any` and `perfect` are anchored patterns over the key that tell a partner
- * from a word that merely shares the prefix, and a perfect partner from a near
- * one. Null for a word nothing can rhyme with (a Kurmancî word with no vowel).
+ * How the dictionary finds a word's rhymes by `rhyme_key` (the reversed headword): every partner's key starts with
+ * `prefix` (index-answerable), and `any` / `perfect` are anchored patterns that tell partners from words merely sharing
+ * the prefix, and perfect from near. Null for a word nothing can rhyme with (a Kurmancî word with no vowel).
  *
- * Kurmancî: a partner ends in the prompt's coda with a vowel just before it
- * (any vowel for a near rhyme, the prompt's own for a perfect one); a prompt
- * ending in a vowel has only perfect partners, the words ending in that vowel.
- * Soranî: the last letter, and the last two.
+ * Kurmancî: a partner ends in the prompt's coda with a vowel just before it (any vowel for near, the prompt's own for
+ * perfect); a prompt ending in a vowel has only perfect partners. Soranî: the last letter, and the last two.
  */
 export function rhymePattern(word: string, dialect: Dialect): { prefix: string; any: string; perfect: string } | null {
   if (dialect === 'sorani') {
@@ -185,7 +151,7 @@ export function rhymePattern(word: string, dialect: Dialect): { prefix: string; 
   return { prefix: coda, any: `^${coda}${VOWEL_CLASS}`, perfect: `^${rime}` };
 }
 
-/** Quality → points multiplier applied to the #053 base+speed curve. */
+/** Quality → points multiplier applied to the base + speed curve. */
 export const RHYME_QUALITY_MULTIPLIER: Record<RhymeQuality, number> = {
   perfect: 1,
   near: 0.5,
@@ -201,9 +167,8 @@ export interface RhymePointsInput {
 }
 
 /**
- * Points for a rhyme: 0 for a non-rhyme, else the #053 base + speed bonus
- * (decaying linearly from instant to the deadline) scaled by the quality
- * multiplier. A stronger rhyme and a faster answer each raise the score.
+ * Points for a rhyme: 0 for a non-rhyme, else the shared base plus speed bonus (falling linearly to the deadline)
+ * scaled by the quality multiplier.
  */
 export function rhymePoints({ quality, elapsedMs, windowMs }: RhymePointsInput): number {
   const mult = RHYME_QUALITY_MULTIPLIER[quality];
@@ -213,15 +178,11 @@ export function rhymePoints({ quality, elapsedMs, windowMs }: RhymePointsInput):
 }
 
 /**
- * The endings a word takes in a sentence rather than in the dictionary, each
- * with what its stem ends in again once it is taken off (Kurmancî î becomes iy
- * before an ending: derî, deriyê). Longest first, so "malên" is read as mal +
- * ên and not as malê + n.
+ * Endings a word takes in a sentence, each with what its stem ends in once removed (Kurmancî î becomes iy before an
+ * ending: derî, deriyê). Longest first, so "malên" reads as mal + ên, not malê + n.
  *
- * Kurmancî: the oblique and the plural (-an, -ên), the ezafe (-a, -ê, -ên, and
- * -ya, -yê after a vowel), and the indefinite (-ek, -eke, -ekê, -ekî).
- * Soranî: the definite (ەکە, ەکان and their -کە, -کان after a vowel), the
- * plural ان, and the indefinite ێک, یەک.
+ * Kurmancî: oblique and plural (-an, -ên), ezafe (-a, -ê, -ên; -ya, -yê after a vowel), indefinite (-ek, -eke, -ekê,
+ * -ekî). Soranî: definite (ەکە, ەکان; -کە, -کان after a vowel), plural ان, indefinite ێک, یەک.
  */
 const INFLECTIONS: Record<Dialect, ReadonlyArray<readonly [ending: string, stemEnd: string]>> = {
   kurmanci: [
@@ -240,9 +201,8 @@ const INFLECTIONS: Record<Dialect, ReadonlyArray<readonly [ending: string, stemE
 const MIN_STEM_LETTERS = 2;
 
 /**
- * The words a submission could be an inflected form of: each stem, with the
- * ending taken off. The engine asks the lexicon which of them are words; this
- * only proposes.
+ * The stems a submission could be an inflected form of, each with its ending removed. The engine asks the lexicon which
+ * are words; this only proposes.
  */
 export function inflectionStems(word: string, dialect: Dialect): Array<{ stem: string; ending: string }> {
   const letters = normalizeWord(word);
@@ -256,9 +216,8 @@ export function inflectionStems(word: string, dialect: Dialect): Array<{ stem: s
 }
 
 /**
- * How many letters at the end of `submission` the rhyme with `prompt` rests
- * on: the rime for a perfect Kurmancî rhyme, the coda for a near one, and in
- * Soranî the letters the two share.
+ * How many final letters of `submission` its rhyme with `prompt` rests on: the rime for a perfect Kurmancî rhyme, the
+ * coda for a near one, and in Soranî the letters the two share.
  */
 function rhymingTail(prompt: string, submission: string, quality: RhymeQuality, dialect: Dialect): number {
   if (dialect === 'sorani') return sharedEnding(normalizeWord(prompt), normalizeWord(submission));
@@ -267,8 +226,7 @@ function rhymingTail(prompt: string, submission: string, quality: RhymeQuality, 
   return [...(quality === 'perfect' ? r.rime : r.coda)].length;
 }
 
-/** Injected Kurdish word list — real implementation seeded from the content
- *  corpus (#026) / saved-words store (#047); tests supply a small one. */
+/** Injected Kurdish word list; tests supply a small one. */
 export interface KurdishLexicon {
   has(normalizedWord: string, dialect: Dialect): boolean;
 }
@@ -295,9 +253,8 @@ export class InMemoryLexicon implements KurdishLexicon {
 }
 
 /**
- * Why a word was not taken. `inflected` is a word with an ending on it (malan,
- * mala) whose rhyme is only the ending: any noun can be given one, so a round
- * of them is a round of padding, not of finding rhymes.
+ * Why a word was refused. `inflected` is a word whose rhyme is only its ending (malan, mala): any noun can take one, so
+ * such answers are padding.
  */
 export type RhymeReject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane' | 'inflected';
 
@@ -325,26 +282,23 @@ export interface RhymeScorerDeps {
   /** the words that exist: the submission, and for the inflection check any stem of it */
   lexicon: KurdishLexicon;
   /**
-   * An admin's explicit verdict for this (prompt, submission) pair, if there is
-   * one. Returning a quality overrides the computed rhyme — including 'none',
-   * which rules a pair out that the endings would otherwise accept.
+   * An admin's explicit verdict for this (prompt, submission) pair, if any. A returned quality overrides the computed
+   * rhyme, including 'none', which rules out a pair the endings would accept.
    */
   overrideQuality?: (promptNormalized: string, submissionNormalized: string) => RhymeQuality | undefined;
-  /** profanity gate (#086); receives the normalized word. Optional. */
+  /** profanity gate; receives the normalized word. Optional. */
   isProfane?: (normalizedWord: string) => boolean;
   /**
-   * A word somebody chose by hand — a curated game word, or a word the course
-   * teaches — is a word in its own right whatever it ends in (baran is not
-   * bar + -an), so the inflection check leaves it alone.
+   * A hand-chosen word (curated game word or course word) is a word in its own right whatever it ends in (baran is not
+   * bar + -an), so the inflection check skips it.
    */
   isChosen?: (normalizedWord: string) => boolean;
 }
 
 /**
- * Evaluate one submission end to end, server-authoritatively. Checks run in a
- * fixed order so the rejection reason is deterministic: empty → profane →
- * the prompt itself → already used → not a real word → doesn't rhyme → an
- * ending doing all the rhyming. Only a real, unused, rhyming word scores.
+ * Evaluate one submission, server-authoritatively. Checks run in a fixed order so the reason is deterministic: empty,
+ * profane, the prompt itself, already used, not a word, no rhyme, rhyme carried only by an ending. Only a real, unused,
+ * rhyming word scores.
  */
 export function evaluateSubmission(
   input: RhymeSubmissionInput,

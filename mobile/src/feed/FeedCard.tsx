@@ -27,48 +27,20 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { ReportSheet } from '../reports/ReportSheet';
 import { pressedDim } from '../theme/motion';
 
-/** The avatar beside a post's author: big enough to recognise somebody by, small enough to sit on one line. */
+/** The author's avatar: big enough to recognise, small enough for one line. */
 const AUTHOR = 32;
 /**
- * Two taps closer together than this are one double tap. It is also how long
- * a single tap waits before it opens the post, so it is kept as short as a
- * double tap can comfortably be made in; the press itself is answered at
- * once (the words fill, the picture fades), so the wait is never a silence.
+ * Two taps closer than this are a double tap. It is also how long a single tap waits before opening the post, so
+ * it is as short as a comfortable double tap; the press shows feedback at once, so the wait is never silent.
  */
 export const DOUBLE_TAP_MS = 220;
 
 /**
- * One post on the wall, whichever half it came from: a written post and a
- * picture are the same shape, because on a wall they sit next to each other
- * and anything else reads as two apps stitched together.
- *
- * Posts follow one another as one chain, a hairline across the page between
- * two and no box round any. Each is, top to bottom, the same in every post:
- * one line of who posted it, what kind of post and how long ago, with a "⋯"
- * for its menu at the end; its words — a bold title and a few lines of the
- * rest; its pictures, inside the page's margins with rounded corners; and a
- * row of soft pills, each a glyph and its count — like, comments, repost —
- * with share and save as round buttons at the far end.
- *
- * The words always come before the pictures, so what a post is about is read
- * first and every post on the wall starts the same way.
- *
- * A heart is the one reaction there is. A double tap on the words or the
- * pictures likes the post, with a heart that blooms in the middle of it and
- * the tick of a like; a single tap opens it. A like counts at once, before
- * the server has answered, and quietly goes back if the server says no. A
- * like, a repost and a save each wait only on themselves: one on its way to
- * the server does not hold the other two back.
- *
- * The "⋯" is your own post's Edit and Delete, and anyone else's Report.
- * `standalone` is the post on its own page: nothing to open, and its
- * comments are already under it.
- *
- * A guest reads the same card: a like, a repost or a save asks first for the
- * account those are kept on (auth/AccountGate), before anything moves.
- *
- * Memoised: a wall of twenty re-renders when one post is liked, and nineteen
- * of them have nothing new to draw.
+ * One post on the wall, written or a picture, in one shape: a header line (author, kind, age, "⋯"), the text, the
+ * pictures, and a row of pills (like, comments, repost, share, save). A double tap likes with a blooming heart; a
+ * single tap opens the post. Like, repost and save are optimistic, each waiting only on itself, and roll back on
+ * refusal; guests are offered an account first (auth/AccountGate). `standalone` is the post on its own page.
+ * Memoised, since liking one post re-renders the wall.
  */
 export const FeedCard = memo(function FeedCard({
   item,
@@ -77,30 +49,30 @@ export const FeedCard = memo(function FeedCard({
   onDeleted,
 }: {
   item: FeedItem;
-  /** told the fresh totals, so a like does not reload the wall */
+  /** Told the fresh totals, so a like does not reload the wall. */
   onChanged?: (next: FeedItem) => void;
-  /** the post on its own page */
+  /** The post on its own page. */
   standalone?: boolean;
-  /** told when its author deletes it from its menu, so a page showing it can close */
+  /** Told when its author deletes it from its menu, so a page showing it can close. */
   onDeleted?: () => void;
 }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
-  // a guest reads the wall; liking, reposting and saving are the account's (auth/AccountGate)
+  // A guest reads the wall; liking, reposting and saving are the account's (auth/AccountGate).
   const { require } = useAccountGate();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  // each like made here, so the heart answers the press before the server does
+  // Each like made here, so the heart answers the press before the server does.
   const [likes, setLikes] = useState(0);
-  // each like made by a double tap, for the heart in the middle of the post
+  // Each like made by a double tap, for the heart in the middle of the post.
   const [blooms, setBlooms] = useState(0);
-  // the engagement shown: the server's, or the change just made while it answers
+  // The engagement shown: the server's, or the change just made while it answers.
   const [shown, setShown] = useState(item.engagement);
   const [reporting, setReporting] = useState(false);
-  // which of the three is on its way to the server: each locks itself and nothing else
+  // Which of the three is on its way to the server: each locks itself and nothing else.
   const pending = useRef(new Set<EngagementKind>());
-  // what is shown now, for a change made while another kind's answer is still out
+  // What is shown now, for a change made while another kind's answer is pending.
   const now = useRef(shown);
   now.current = shown;
   useEffect(() => setShown(item.engagement), [item.engagement]);
@@ -110,14 +82,12 @@ export const FeedCard = memo(function FeedCard({
     if (item.targetType === 'library') navigation.navigate('LibraryPost', { postId: item.id });
     else navigation.navigate('MemeDetail', { postId: item.id });
   }, [navigation, item.targetType, item.id, standalone]);
-  // your own post's Edit and Delete, on a long press, the "⋯" (and as an action for a screen reader)
+  // Your own post's Edit and Delete, on a long press, the "⋯" (and as an action for a screen reader).
   const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onActivate: open, onDeleted });
   const openAuthor = useCallback(() => navigation.navigate('UserProfile', { userId: item.author.id }), [navigation, item.author.id]);
   /**
-   * Like, repost or save at once, and tell the server after: the glyph fills
-   * and the count moves under the finger. The server's answer brings the true
-   * totals (somebody else may have liked it meanwhile); a refusal puts back
-   * what was there.
+   * Like, repost or save optimistically, then tell the server; its answer brings the true totals, and a refusal
+   * restores what was there.
    */
   const toggle = useCallback(
     async (kind: EngagementKind) => {
@@ -126,7 +96,7 @@ export const FeedCard = memo(function FeedCard({
       const before = { on: now.current[flag], count: now.current[count] };
       const on = !before.on;
       pending.current.add(kind);
-      // only this kind's flag and count: another kind's change, made meanwhile, is left as it stands
+      // Only this kind's flag and count: another kind's change, made meanwhile, is left as it stands.
       setShown((s) => ({ ...s, [flag]: on, [count]: Math.max(0, s[count] + (on ? 1 : -1)) }));
       const res = await toggleEngagement(client, item, kind);
       pending.current.delete(kind);
@@ -134,7 +104,7 @@ export const FeedCard = memo(function FeedCard({
         setShown((s) => ({ ...s, [flag]: before.on, [count]: before.count }));
         return;
       }
-      // the server's totals, except for a kind whose own answer is still on its way
+      // The server's totals, except for a kind whose own answer is still on its way.
       const answered = res.data.engagement;
       const waiting = pending.current;
       setShown((s) => ({
@@ -149,10 +119,8 @@ export const FeedCard = memo(function FeedCard({
   );
 
   /**
-   * Whether a tap on one of the three may go ahead: an account, and nothing
-   * of the same kind already on its way. Asked before anything is felt or
-   * seen, so a tap that will do nothing does nothing at all — the heart used
-   * to pop and stay empty when a like was tapped while another was out.
+   * Whether a tap on one of the three may proceed: an account, and nothing of the same kind pending. Checked
+   * before any feedback, so a tap that will do nothing shows nothing.
    */
   const may = useCallback(
     (kind: EngagementKind): boolean => require(kind === 'bookmark' ? 'save' : 'react') && !pending.current.has(kind),
@@ -167,9 +135,9 @@ export const FeedCard = memo(function FeedCard({
   );
 
   const like = useCallback(() => {
-    // a guest's heart does not pop and then ask, and neither does one already on its way: the guard comes first
+    // The guard comes first: neither a guest's heart nor a pending one pops before refusing.
     if (!may('like')) return;
-    // a like is felt and pops; taking one back is quiet
+    // A like is felt and pops; taking one back is quiet.
     if (!now.current.liked) {
       haptic('tap');
       setLikes((n) => n + 1);
@@ -178,10 +146,8 @@ export const FeedCard = memo(function FeedCard({
   }, [may, toggle]);
 
   /*
-   * One tap opens the post; two quick taps like it. The first tap waits a
-   * moment to see whether a second follows — the price of the gesture, and
-   * the reason it is short. A double tap on a post already liked keeps it
-   * liked: the gesture only ever adds a heart, never takes one away.
+   * One tap opens the post; two quick taps like it, so the first tap waits briefly for a second. A double tap on
+   * a liked post keeps it liked: the gesture only adds a heart.
    */
   const lastTap = useRef(0);
   const single = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -192,7 +158,7 @@ export const FeedCard = memo(function FeedCard({
       lastTap.current = 0;
       if (single.current) clearTimeout(single.current);
       single.current = null;
-      // a guest's double tap asks for the account before any heart blooms
+      // A guest's double tap asks for the account before any heart blooms.
       if (!require('react')) return;
       setBlooms((n) => n + 1);
       if (!shown.liked) like();
@@ -205,21 +171,18 @@ export const FeedCard = memo(function FeedCard({
     }, DOUBLE_TAP_MS);
   }, [like, open, shown.liked, require]);
 
-  /**
-   * Hand the post to whatever the phone shares with: the system sheet, where
-   * every app already puts this, reaching the messaging app somebody uses.
-   */
+  /** Hand the post to the system share sheet. */
   const share = useCallback(async () => {
     const url = postUrl(item);
     const message = item.title ? `${item.title}\n${url}` : url;
     try {
       await Share.share({ message, url });
     } catch {
-      // the sheet was dismissed, or the platform refused it; nothing was shared
+      // The sheet was dismissed or the platform refused it; nothing was shared.
     }
   }, [item]);
 
-  // an unfamiliar kind prints itself rather than an empty word
+  // An unfamiliar kind prints itself rather than an empty word.
   const badgeKey = CARD_LABEL_KEY[item.kind];
   const badge = badgeKey ? t(badgeKey) : item.kind;
   const who = item.author.displayName || item.author.username;
@@ -227,15 +190,14 @@ export const FeedCard = memo(function FeedCard({
   const pictures = feedImages(item);
   const when = noticeTime(item.at, t, locale);
   const count = (n: number): number | undefined => (n > 0 ? n : undefined);
-  // a picture's words are its caption, under it; a written post's words are the post
+  // A picture's words are its caption, under it; a written post's words are the post.
   const words = item.title || item.excerpt;
 
   return (
     <View style={[styles.post, !standalone && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}>
       {/*
-        One line: who, what kind of post and how long ago; the "⋯" at the end.
-        The picture, the name and the "⋯" each reach a fingertip up and down
-        and share the gaps between them, half each.
+        One line: author, kind and age, with the "⋯" at the end. The picture, name and "⋯" each reach a fingertip
+        up and down and split the gaps between them.
       */}
       <View style={[styles.head, { flexDirection: dir.row }]}>
         <ReachGroup gap={spacing.sm}>
@@ -249,7 +211,7 @@ export const FeedCard = memo(function FeedCard({
             <InitialsAvatar name={who} id={item.author.id} size={AUTHOR} photoUrl={item.author.avatarUrl} />
           </Pressable>
           <View style={[styles.byline, { flexDirection: dir.row }]}>
-            {/* a control of its own rather than a pressable run of text, which cannot reach past its letters */}
+            {/* A control of its own, since a pressable run of text cannot reach past its letters. */}
             <Pressable
               onPress={openAuthor}
               accessibilityRole="link"
@@ -286,7 +248,7 @@ export const FeedCard = memo(function FeedCard({
             accessibilityRole={standalone ? undefined : 'button'}
             accessibilityLabel={item.title ? `${badge}: ${item.title}` : `${badge} — ${who}`}
             accessibilityHint={t('feed.doubleTapHint')}
-            // answered at once, as a row held down is: the tap itself waits a moment to see whether a second follows
+            // Feedback is immediate, as for a held row; the tap itself waits briefly to see whether a second follows.
             style={({ pressed }) => [styles.words, pressed && !standalone && { backgroundColor: colors.controlTrack }]}
           >
             {item.title ? (
@@ -303,7 +265,7 @@ export const FeedCard = memo(function FeedCard({
         ) : null}
 
         {pictures.length > 0 ? (
-          // under the words, inside the margins, each named by what it shows, the double tap reaching them too
+          // Under the text, within the margins, each labelled by what it shows; the double tap reaches them too.
           <View style={styles.pictures}>
             <PostPictures images={pictures} onPress={tap} onLongPress={menu.open} wall />
           </View>
@@ -311,7 +273,7 @@ export const FeedCard = memo(function FeedCard({
       </Bloom>
 
       <View style={[styles.actions, { flexDirection: dir.row }]}>
-        {/* the pills share the row's gap between them, and the 12 above them with what they are under */}
+        {/* The pills share the row's gap between them, and the 12 above them with what they are under. */}
         <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
           <Action
             icon={e.liked ? 'heart-fill' : 'heart'}
@@ -332,7 +294,7 @@ export const FeedCard = memo(function FeedCard({
             onPress={() => act('repost')}
           />
           <View style={styles.spacer} />
-          {/* sharing has a glyph of its own: the paper plane is Messages and Send, and a post is not sent to anybody here */}
+          {/* Sharing has its own glyph: the paper plane means Messages and Send, and a post is not sent to anyone here. */}
           <Action icon="share" label={t('share.post')} onPress={() => void share()} />
           <Action
             icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
@@ -358,9 +320,8 @@ export const FeedCard = memo(function FeedCard({
 });
 
 /**
- * The heart that blooms in the middle of a post liked by a double tap: it
- * grows past its size, settles, and fades, in about two thirds of a second.
- * Under Reduce Motion it only fades in and out.
+ * The heart that blooms on a double-tap like: it grows past its size, settles and fades in about two thirds of a
+ * second. Under Reduce Motion it only fades.
  */
 function Bloom({ fired, children }: { fired: number; children: React.ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
@@ -389,10 +350,8 @@ function Bloom({ fired, children }: { fired: number; children: React.ReactNode }
 }
 
 /**
- * A post while the wall loads: its one-line head, a title on most, a couple
- * of lines and the row of pills, at the post's own spacing — so the real one
- * lands in the grey one's place. A written post with no title comes first
- * because that is what most of a wall is.
+ * A post's loading placeholder at the post's own spacing: the head line, a title, a couple of lines and the
+ * pills. An untitled written post comes first, since that is most of a wall.
  */
 export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolean; lines?: number }): React.JSX.Element {
   const { colors } = useTheme();
@@ -406,7 +365,7 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
       </View>
       <View style={styles.words}>
         {titled ? <SkeletonText size={TITLE_SIZE} lineHeight={TITLE_LINE} width="62%" /> : null}
-        {/* one paragraph, its lines with nothing between them */}
+        {/* One paragraph, its lines with nothing between them. */}
         <View>
           {Array.from({ length: lines }, (_, i) => (
             <SkeletonText key={i} size={typography.sizes.md} width={i === lines - 1 ? '64%' : '94%'} />
@@ -429,7 +388,7 @@ export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React
   const { height, width } = useWindowDimensions();
   const { t } = useI18n();
   const count = Math.max(2, Math.ceil(height / 200));
-  // a few lines of a post run to two on a phone and fit on one across a tablet
+  // A few lines of a post run to two on a phone and fit on one across a tablet.
   const lines = width >= WIDE ? 1 : 2;
   return (
     <View style={style} accessibilityLabel={t('common.loading')}>
@@ -440,36 +399,30 @@ export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React
   );
 }
 
-/** past this a short paragraph fits on one line */
+/** Past this a short paragraph fits on one line. */
 const WIDE = 600;
-/** a title is bold and a size up from what is under it, in the face the rest of the post is in */
+/** A title is bold and a size up from what is under it, in the face the rest of the post is in. */
 const TITLE_SIZE = 19;
 const TITLE_LINE = 25;
 /**
- * A pill's height, and a round one's width: drawn at 36 and reached at a
- * fingertip's 48 up and down; across, the row's 8-point gap is shared out
- * between neighbours, so 44.
+ * A pill's height and a round pill's width: drawn at 36 and reaching 48 up and down; across, the row's 8 gap is
+ * shared between neighbours, so 44.
  */
 const PILL = 36;
 /**
- * Between the words or pictures and the pills: 6 under the words, inside what
- * opens the post, and the pills' row's own 6, which their reach takes. Were
- * the row's share inside the words' box, the pills drawn after it would take
- * the foot of the words' presses.
+ * The gap between the text or pictures and the pills: 6 under the text, inside what opens the post, and the pill
+ * row's own 6, which their reach takes. Inside the text's box, the later-drawn pills would steal the bottom of
+ * its presses.
  */
 const ACTIONS_ABOVE = spacing.sm + 4;
-/** the author's name: one line of the small size */
+/** The author's name: one line of the small size. */
 const NAME_LINE = 18;
 
 /**
- * One soft pill in the row under a post: a 20pt glyph and its count when
- * there is one, or a round button the same height when there is not. Filled,
- * not framed, and filled no differently when on — the glyph says that (a red
- * heart, a green repost, a filled bookmark).
- *
- * The label says what pressing it does, never what it counts: a number is
- * what a screen reader announces as the name unless told otherwise, and "4"
- * tells you nothing about what would happen.
+ * One soft pill under a post: a 20 pt glyph and its count, or a round button of the same height without one.
+ * Filled, not framed, and no different when on; the glyph shows that (a red heart, a green repost, a filled
+ * bookmark). The label says what pressing does, never the count, since a screen reader would otherwise announce
+ * the number as its name.
  */
 function Action({
   icon,
@@ -484,9 +437,9 @@ function Action({
   label: string;
   count?: number;
   on?: boolean;
-  /** the colour while on, when it is not the ink (a red heart, a green repost) */
+  /** The colour while on, when it is not the ink (a red heart, a green repost). */
   tint?: string;
-  /** goes up each time the icon should pop with a burst (a like) */
+  /** Goes up each time the icon should pop with a burst (a like). */
   burst?: number;
   onPress: () => void;
 }): React.JSX.Element {
@@ -517,10 +470,8 @@ function Action({
 const COUNT_LINE = 20;
 
 /**
- * A pill's count, ticking: when the number changes the old one slides out
- * and the new one rises into its place — upwards for one more, downwards for
- * one fewer — on the native driver and the standard spring, so a like is
- * seen to count. Under Reduce Motion the number simply changes.
+ * A pill's count ticking: on change the old number slides out and the new one rises in (up for more, down for
+ * fewer) on the native driver's standard spring. Under Reduce Motion it just changes.
  */
 function TickCount({ value, color }: { value: number; color: string }): React.JSX.Element {
   const { locale } = useI18n();
@@ -535,13 +486,13 @@ function TickCount({ value, color }: { value: number; color: string }): React.JS
     }
     setTick({ now: value, was: tick.now, up: value > tick.now });
     p.setValue(0);
-    // the count answers a tap on a control used all day: there inside 300 ms, with no bounce
+    // The count answers a tap on a control used all day: there inside 300 ms, with no bounce.
     const run = springTo(p, 1, 'chrome');
     run.start(({ finished }) => {
       if (finished) setTick((s) => ({ ...s, was: null }));
     });
     return () => run.stop();
-    // once per change of the number; what it was is read from the tick shown until now
+    // Once per change of the number; the previous value is read from the tick shown until now.
   }, [value]);
   const sign = tick.up ? 1 : -1;
   const leaving = p.interpolate({ inputRange: [0, 1], outputRange: [0, -sign * COUNT_LINE] });
@@ -563,26 +514,22 @@ function TickCount({ value, color }: { value: number; color: string }): React.JS
   );
 }
 
-/** A count in a pill: whole up to 9,999, then short ("12.3K"), so five pills fit across a phone, as on the website. */
+/** A count in a pill: whole up to 9,999, then short ("12.3K"), so five pills fit across a phone, as on the web. */
 export function pillCount(n: number, locale: Locale): string {
   return n < 10_000 ? formatNumber(n, locale) : formatCompact(n, locale);
 }
 
 const styles = StyleSheet.create({
-  // no box: a hairline across the page under each post, the same room above and below it
+  // No box: a hairline across the page under each post, the same room above and below it.
   post: { paddingTop: spacing.sm + 4, paddingBottom: spacing.sm + 4 },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
-  /*
-   * Who, and what kind of post and when, on one line where they fit; where
-   * they do not (a narrow phone, a long name, Soranî's longer "6h ago") the
-   * kind and the time go under the name rather than squeeze it to "wa…".
-   */
+  /* Author, kind and time on one line where they fit; otherwise kind and time wrap under the name rather than truncating it. */
   byline: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
   whoLink: { flexShrink: 1 },
   who: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   meta: { flexShrink: 1, fontSize: typography.sizes.sm },
   more: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginVertical: -6, marginEnd: -spacing.sm - 2 },
-  // the 12 between a post's words or pictures and its pills is half theirs and half the pills' row, so the pills reach into a gap of their own (ACTIONS_ABOVE)
+  // The 12 between a post's content and its pills is split between them, so the pills reach into a gap of their own (ACTIONS_ABOVE).
   words: { paddingHorizontal: layout.gutter, gap: 6, paddingBottom: spacing.xs + 2 },
   title: { fontSize: TITLE_SIZE, lineHeight: TITLE_LINE, fontWeight: typography.weights.bold },
   excerpt: { fontSize: typography.sizes.md, lineHeight: 23 },
@@ -594,7 +541,7 @@ const styles = StyleSheet.create({
   pillWide: { paddingHorizontal: spacing.sm + 4 },
   pressed: { opacity: pressedDim },
   count: { fontSize: typography.sizes.sm, lineHeight: COUNT_LINE, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
-  // the count's window: one line tall, so a number sliding out is gone at its edge
+  // The count's window: one line tall, so a number sliding out is gone at its edge.
   tick: { height: COUNT_LINE, overflow: 'hidden', justifyContent: 'center' },
   tickOld: { position: 'absolute', left: 0, right: 0 },
 });

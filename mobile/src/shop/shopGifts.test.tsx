@@ -32,7 +32,7 @@ describe('GiftSheet (the Shop)', () => {
     testAuth.client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': ok({ balance: 4100 }) });
     const onSent = vi.fn();
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={onSent} />);
-    // each row is named for its friend, not only for the item
+    // Each row is named for its friend, not only for the item.
     fireEvent.click(await screen.findByRole('button', { name: 'A gift for Şîlan' }));
     await waitFor(() => expect(onSent).toHaveBeenCalledWith(4100, { userId: 'u2', username: 'shilan', name: 'Şîlan' }));
   });
@@ -71,8 +71,8 @@ describe('GiftSheet (the Shop)', () => {
     ];
     testAuth.client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': () => answers.shift()! });
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={() => undefined} />);
-    // each refusal re-enables the row in a later render; let it settle before
-    // pressing again, or the press can land while the row is still busy
+    // Each refusal re-enables the row in a later render; let it settle before pressing again, or the press can land
+    // while the row is still busy.
     const settle = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
     fireEvent.click(await screen.findByText('Şîlan'));
     expect(await screen.findByText('Şîlan already has it.')).toBeTruthy();
@@ -128,16 +128,16 @@ describe('useUnseenGifts', () => {
     const { result } = renderHook(() => useUnseenGifts());
     await waitFor(() => expect(result.current).toBe(1));
 
-    // a minute passes: nothing is asked (the old poll asked every 60 s)
+    // A minute passes and nothing is asked: there is no poll.
     const asked = client.calls.length;
     await act(async () => {
       vi.advanceTimersByTime(120_000);
     });
     expect(client.calls.length).toBe(asked);
-    // the social summary reads the friend list, the groups and the notifications as well, for one number
+    // The social summary reads friends, groups and notifications too, for one number.
     expect(client.calls.some((c) => c.path === '/me/social')).toBe(false);
 
-    // a gift arrives (GiftArrivals calls this): counted again
+    // A gift arrives (GiftArrivals calls this): counted again.
     unseen = 2;
     act(() => refreshGiftBadge());
     await waitFor(() => expect(result.current).toBe(2));
@@ -156,7 +156,7 @@ describe('useUnseenGifts', () => {
     const counts = () => client.calls.filter((c) => c.path === '/me/gifts/unseen').length;
     await waitFor(() => expect(counts()).toBe(1));
 
-    // iOS: inactive and active again, with the app running all along and its connection open
+    // iOS: inactive and active again, with the app running and its connection open all along.
     send('inactive');
     send('active');
     expect(counts()).toBe(1);

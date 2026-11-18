@@ -8,16 +8,13 @@ import { knownHash } from './known-devices.js';
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 export const REFRESH_TOKEN_TTL_DAYS = 30;
 /**
- * How long a session lasts after it was last used when its sign-in asked not
- * to be remembered ("Remember me" left off): the browser forgets it when the
- * window closes, so the server need not keep it for a month after.
+ * Session lifetime after last use when "Remember me" was off: the browser forgets it when the window closes, so the
+ * server need not keep it for a month.
  */
 export const UNREMEMBERED_TTL_DAYS = 1;
 /**
- * The longest a session lasts, however often it is refreshed: each refresh
- * token lives REFRESH_TOKEN_TTL_DAYS, but never past this many days after the
- * sign-in that began its family. A stolen refresh token cannot be kept alive
- * for ever by refreshing it, and everyone signs in again now and then.
+ * The longest a session lasts however often it is refreshed: each refresh token lives REFRESH_TOKEN_TTL_DAYS, but never
+ * past this many days after the sign-in that began its family, so a stolen refresh token cannot be kept alive forever.
  */
 export const SESSION_MAX_DAYS = 90;
 /** Tolerated clock skew when validating access tokens. */
@@ -25,9 +22,9 @@ export const CLOCK_SKEW_SECONDS = 60;
 
 export interface AccessTokenClaims {
   sub: string;
-  /** users.token_version — bumping it force-logs-out issued tokens (KUR-016). */
+  /** users.token_version — bumping it force-logs-out issued tokens. */
   ver: number;
-  /** refresh_tokens.family_id this access token belongs to (KUR-022). */
+  /** refresh_tokens.family_id this access token belongs to. */
   fam?: string;
 }
 
@@ -56,11 +53,8 @@ export async function verifyAccessToken(
     const { payload } = await jwtVerify(token, secretKey(config), {
       issuer: 'kurda-api',
       clockTolerance: CLOCK_SKEW_SECONDS,
-      // Name the algorithm rather than letting the token's own header choose it.
-      // jose will not verify an HMAC token against anything but an HMAC key, so
-      // this is not closing an open door — but "the attacker picks the algorithm"
-      // is how algorithm confusion starts, and the cost of saying which one is
-      // one line.
+      // Name the algorithm rather than trusting the token header. jose already refuses HMAC tokens against non-HMAC
+      // keys, but letting the attacker pick the algorithm is how algorithm confusion starts.
       algorithms: ['HS256'],
     });
     if (!payload.sub || typeof payload.ver !== 'number') return null;
@@ -103,19 +97,13 @@ export interface SessionOptions {
 }
 
 /**
- * Keep an account to its newest MAX_SESSIONS live sessions: every live one
- * past them, by when it was last used, is ended the way signing it out ends
- * it. A new sign-in is never refused for the limit — that would lock somebody
- * out of their own account from a new phone because of old ones they cannot
- * reach — so the session used longest ago gives way instead.
+ * Keep an account to its newest MAX_SESSIONS live sessions, ending older ones (by last use) as sign-out does. A new
+ * sign-in is never refused for the limit, which would lock someone out from a new phone; the least recently used
+ * session gives way.
  *
- * One statement, run after the new session is in, so it works the same on
- * the pool or inside a caller's transaction. However many sign-ins run at
- * once, each keeps the newest sessions it can see and ends only ones older
- * than those, and the last of them sees every session — so what is left is
- * never more than the limit, and never without the newest. The rows it ends
- * are locked in id order first: two of these locking the same rows in
- * whatever order each scan met them waited on each other.
+ * One statement, run after the new session is inserted, so it works on the pool or in a transaction. Concurrent
+ * sign-ins each end only sessions older than the newest they see, so the result never exceeds the limit and always
+ * keeps the newest. Rows are locked in id order first to avoid deadlocks between concurrent runs.
  */
 export async function endOldestSessions(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<number> {
   const ended = await executor.query(
@@ -140,7 +128,7 @@ export function sessionDeviceHash(config: AppConfig, userId: string, deviceId: s
 /**
  * Creates a refresh token (returned raw once, stored hashed) and an
  * access token. familyId starts a new rotation chain unless continuing
- * an existing one (KUR-015 rotation).
+ * an existing one.
  */
 export async function issueTokenPair(
   config: AppConfig,

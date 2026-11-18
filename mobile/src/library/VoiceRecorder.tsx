@@ -12,12 +12,10 @@ import { useI18n } from '../i18n/I18nContext';
 import { useMicRecorder, type MicTake } from '../recording/useMicRecorder';
 
 /**
- * Record a voice note (KUR-282): request mic permission → record (auto-stops at
- * `maxSeconds`, or when the app leaves the front) → preview via the shared
- * AudioPlayer → keep or re-record. Reports the local file uri through
- * `onChange` (null when cleared); the parent uploads it via /media/voice. The
- * microphone itself is useMicRecorder, which a speaking exercise records with
- * too.
+ * Record a voice note: ask for the microphone, record (stopping at `maxSeconds` or when the app leaves the
+ * foreground), preview with the shared AudioPlayer, then keep or re-record. Reports the local file URI through
+ * `onChange` (null when cleared); the parent uploads it via /media/voice. The microphone itself is
+ * useMicRecorder, shared with speaking exercises.
  */
 export function VoiceRecorder({
   value,
@@ -55,7 +53,7 @@ export function VoiceRecorder({
         </View>
         <Pressable
           onPress={() => onChange(null)}
-          // one 18-point line of words beside the player, caught at 48 and a little past its ends
+          // One 18-point line of words beside the player, caught at 48 and a little past its ends.
           reach="open"
           reachSize={WORD}
           accessibilityRole="button"
@@ -105,10 +103,8 @@ const WORD = { height: 18 };
 /** The pills are drawn 36 points tall. */
 const PILL_HEIGHT = 36;
 /**
- * The pills answer over 48 of height, but toward the top only half the gap
- * the comment box leaves above them, where its "Replying to" row may sit
- * with a close button of its own; below them is the field, which reaches
- * nothing back.
+ * The pills answer over 48 of height, but upward only half the gap above them, where the comment box's "Replying
+ * to" row and its close button may sit; the field below reaches nothing back.
  */
 const PILL_REACH = reachSlop(null, PILL_HEIGHT, { limit: { top: spacing.sm / 2 } });
 

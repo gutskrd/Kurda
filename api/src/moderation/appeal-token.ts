@@ -3,19 +3,13 @@ import { APPEAL_TOKEN_TTL_SECONDS } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 
 /**
- * The token a suspended account gets instead of a session.
+ * The token a suspended account gets instead of a session. A suspended or banned person must still be able to read why
+ * and appeal (notices and appeal access stay available during a suspension), but signing them in would open the whole
+ * app. So login answers 403 ACCOUNT_SUSPENDED with this token, which reaches only `GET /me/standing` and `POST
+ * /me/appeals`.
  *
- * A suspended or banned person still has to be able to read why, and to ask for
- * a review (Santa Clara: notices and appeal access stay available during a
- * suspension). Signing them in would hand them the whole app, so login answers
- * 403 ACCOUNT_SUSPENDED with this instead: it can read `GET /me/standing` and
- * file `POST /me/appeals`, and nothing else.
- *
- * It is signed with the same secret as access tokens but a different issuer, so
- * the access-token check (which insists on issuer `kurda-api`) refuses it on
- * every other route, and this check refuses an access token. It carries the
- * account's `token_version`, so anything that ends sessions (a password reset, a
- * new ban) ends it too.
+ * Signed with the access-token secret but a different issuer, so each check refuses the other's token. It carries the
+ * account's `token_version`, so anything that ends sessions (password reset, new ban) ends it too.
  */
 const ISSUER = 'kurda-appeal';
 

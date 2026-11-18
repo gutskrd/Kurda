@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
 /**
- * Any item in the shop can carry a picture an admin gave it — a power-up, a
- * streak freeze, a tag — not only backgrounds and icons. Where the API sends
- * one it is drawn, wherever the item is (the shop, the inventory, the gift
- * picker, a gift in a chat); where it sends none, the kind's glyph is.
+ * Any shop item can carry an admin-given picture, not only backgrounds and icons. Where the API sends one it is drawn
+ * wherever the item appears; where it sends none, the kind's glyph is.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('../play/testing/native'));

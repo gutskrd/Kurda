@@ -63,7 +63,7 @@ describe('Lobby', () => {
     expect(screen.getByText('Rojda (You)')).toBeTruthy();
     expect(screen.getByText('Azad')).toBeTruthy();
     expect(screen.getByText('Player 3')).toBeTruthy();
-    // the host may take out anyone else, by seat
+    // The host may remove anyone else, by seat.
     expect(screen.getByRole('button', { name: 'Remove Azad' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Remove Rojda (You)' })).toBeNull();
   });
@@ -87,7 +87,7 @@ describe('Lobby', () => {
     const message = (share.mock.calls[0]?.[0] as { message: string }).message;
     const [sentence, link] = message.split('\n');
     expect(sentence).toBe('Play “Nanê Germ” with me on Hevalo! Open Games → Join with a code and type ABC 234');
-    // the link is the invitation's own page, which anyone can open: never an address inside the app, which asks for a sign-in first
+    // The link is the invitation's public page, never an in-app address that would demand a sign-in first.
     expect(link).toMatch(/^Or tap to join: https:\/\/hevalo\.app\/join\/stories\/ABC234(\?from=[0-9a-f-]{36})?$/);
     expect(message).not.toMatch(/\/app\/games/);
   });

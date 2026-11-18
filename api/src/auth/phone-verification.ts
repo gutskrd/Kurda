@@ -1,13 +1,9 @@
 /**
- * Phone (SMS) OTP verification — pure state logic (KUR-297). The send/verify
- * lifecycle with attempt limits, code expiry, and resend cooldown/caps, as a
- * set of pure functions with the clock injected (`now`). The SMS provider
- * (send), the code hashing, and persistence live in the service layer; this
- * module never sends, hashes, or stores — callers pass in the code *hash* and
- * the current time, so every branch is deterministically unit-testable.
+ * Phone (SMS) OTP verification as pure state logic: attempt limits, code expiry and resend cooldown/caps, with the
+ * clock injected (`now`). Sending, hashing and persistence live in the service; callers pass the code hash and time, so
+ * every branch is deterministic.
  *
- * Optional feature: a verified phone raises trust (#295) and lowers risk
- * (#296); it is never required for normal use.
+ * Optional: a verified phone raises trust and lowers risk, but is never required.
  */
 import { timingSafeEqual } from 'node:crypto';
 
@@ -65,8 +61,8 @@ export type ResendResult =
   | { ok: false; reason: 'cooldown' | 'max-sends'; retryAfterMs?: number };
 
 /**
- * Send a fresh code. Respects the resend cooldown and the per-session send cap.
- * A new code resets the expiry and the attempt counter (the old code is void).
+ * Send a fresh code, respecting the resend cooldown and per-session cap. A new code resets the expiry and attempt
+ * counter and voids the old one.
  */
 export function resend(
   state: VerificationState,
@@ -105,10 +101,8 @@ export type VerifyResult =
     };
 
 /**
- * Verify a submitted code (already hashed by the caller the same way the stored
- * hash was produced). Checks run in a fixed order: a code that has exhausted
- * its attempts is locked (resend required); then expiry; then the match. A
- * mismatch consumes an attempt.
+ * Verify a submitted code (hashed by the caller like the stored hash). Order: exhausted attempts are locked (resend
+ * required), then expiry, then the match. A mismatch consumes an attempt.
  */
 export function verifyCode(
   state: VerificationState,

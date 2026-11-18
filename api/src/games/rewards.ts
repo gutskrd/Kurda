@@ -1,31 +1,22 @@
 /**
- * What a finished solo round of a learning game pays, and what it counts for.
+ * What a finished solo round pays and counts for.
  *
- * Only a round of the lessons' own exercises pays XP (`paysAlone`, the
- * games registry). A game played alone pays none: there is nobody to play
- * against, and XP is for lessons and for games online with other people. Its
- * round is still scored and still counts as a day learned when it was played
- * well enough, exactly as below; it is only the XP that is not paid.
+ * Only rounds of the lessons' own exercises pay XP (`paysAlone`, the games registry). A game played alone pays none (XP
+ * is for lessons and games with other people), but its round is still scored and still counts as a day learned when
+ * played well enough.
  *
- * Rewards follow performance, never opening or finishing a game:
- * - every item answered right pays by its level (`answerXp`): 1 XP at levels
- *   1–2, 2 at level 3, 3 at levels 4–5, and one more for a first try;
- * - an item the learner answered right in the last GAME_REPEAT_XP_DAYS days
- *   pays nothing — read from `game_seen` here, at the finish, under a lock per
- *   learner and game, so two rounds finishing together cannot both pay for it;
- * - the round is learning — XP, the streak, the daily goal — only when at
- *   least half of it was answered right on the first try
- *   (`roundCountsAsLearning`): a second try comes after a hint that rules an
- *   option out, so a round tapped through at random pays nothing at all, as
- *   an empty practice session does;
- * - the XP goes to the game's own source, which is one of the API's game
- *   sources (GAME_XP_SOURCES), so the league's daily cap on game XP applies;
- *   its ref is `${sessionId}:${userId}`, unique to the learner, so XpService
- *   pays it once whatever happens;
- * - no Zêr and no Gewher, ever.
+ * Rewards follow performance, never opening or finishing:
+ * - every item answered right pays by level (`answerXp`): 1 XP at levels 1–2, 2 at level 3, 3 at levels 4–5, plus one
+ *   for a first try;
+ * - an item answered right in the last GAME_REPEAT_XP_DAYS days pays nothing, read from `game_seen` at the finish under
+ *   a per-learner, per-game lock so concurrent finishes cannot both pay;
+ * - the round counts as learning (XP, streak, daily goal) only when at least half was right on the first try
+ *   (`roundCountsAsLearning`), since a second try follows a hint that rules out an option;
+ * - the XP goes to the game's own source, one of GAME_XP_SOURCES, so the league's daily game-XP cap applies; its ref
+ *   `${sessionId}:${userId}` makes XpService pay it once;
+ * - never Zêr or Gewher.
  *
- * Runs inside the caller's transaction (the one that closes the round), so a
- * round finished at 23:59 is learning on the day it was played.
+ * Runs inside the caller's round-closing transaction, so a round finished at 23:59 counts for that day.
  */
 import type pg from 'pg';
 import { GAME_REPEAT_XP_DAYS, answerXp, roundCountsAsLearning, roundLearningNeeds, type SoloResults } from '@kurda/shared';
@@ -62,11 +53,9 @@ export interface RoundToPay {
 }
 
 /**
- * What a round covered, into `game_seen`: every item tried, and when it was
- * last answered right. A finished round records it here. A round given up
- * for a new one is recorded the same way, in the one statement that gives it
- * up (games/solo.ts `replaceOpen`), so the corrections it showed send its
- * items behind the ones never met, as a finished round's do.
+ * What a round covered, into `game_seen`: every item tried and when it was last answered right. A finished round
+ * records here; a round given up for a new one is recorded the same way in the statement that gives it up
+ * (games/solo.ts `replaceOpen`), so the corrections it showed push its items behind unseen ones.
  */
 export async function recordSeen(client: Pick<pg.PoolClient, 'query'>, userId: string, game: string, items: readonly Pick<ItemOutcome, 'key' | 'answered' | 'correct'>[], now: Date): Promise<void> {
   const covered = items.filter((i) => i.answered);
@@ -84,10 +73,7 @@ export async function recordSeen(client: Pick<pg.PoolClient, 'query'>, userId: s
   );
 }
 
-/**
- * Pay a finished round and record what it was seen to cover. Returns the
- * results as the learner is shown them.
- */
+/** Pay a finished round and record what it covered. Returns the results as the learner sees them. */
 export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: RoundToPay): Promise<SoloResults> {
   const { sessionId, userId, game, items, now, source } = round;
   // one finish of this learner's rounds of this game at a time: the repeat check below is then one answer

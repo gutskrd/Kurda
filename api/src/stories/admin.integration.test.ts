@@ -1,8 +1,6 @@
 /**
- * Writing stories in the admin panel, against real Postgres: who may, drafts
- * that may be unfinished, the lock that stops two editors overwriting each
- * other, review and publishing with the whole check, the audit of each
- * status change, and a played story that cannot be deleted.
+ * Story writing in the admin panel against real Postgres: permissions, unfinished drafts, the edit lock, review and
+ * publishing with the whole check, the audit of each status change, and a played story that cannot be deleted.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

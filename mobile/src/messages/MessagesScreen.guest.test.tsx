@@ -30,9 +30,8 @@ afterEach(() => {
 
 describe('Messages for a guest', () => {
   /*
-   * A guest has no conversations and may start none, and every list the tab
-   * reads is refused to one. So the tab asks for nothing and says what an
-   * account opens here, with the way to one.
+   * A guest has no conversations and can start none, and every list the tab reads refuses guests, so the tab asks
+   * for nothing and shows what an account opens.
    */
   it('asks the server for nothing and offers an account instead of an empty list', () => {
     const client = fakeClient();
@@ -42,7 +41,7 @@ describe('Messages for a guest', () => {
     expect(screen.getByRole('heading', { name: 'Your messages will live here' })).toBeTruthy();
     expect(screen.getByText('Create an account to write to friends and join groups.')).toBeTruthy();
     expect(client.calls).toHaveLength(0);
-    // the tab keeps its name and its pencil, as every tab has them
+    // The tab keeps its name and its pencil, as every tab has them.
     expect(screen.getByRole('button', { name: 'New message' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Create my account' }));

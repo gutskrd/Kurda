@@ -1,16 +1,9 @@
 /**
- * What Would You Say?, which is no longer part of Hevalo, against real
- * Postgres and Redis.
- *
- * Two promises are kept here, the same two as for the games with friends
- * that were retired before it (mp/retired-games.integration.test.ts). Nothing
- * starts it: no round of it can be made or looked for, it is not among what
- * can be played, and no scene can be written or imported for it. And what was
- * stored while it was played is never in the way: a round, a scene and the XP
- * it paid stay in the database, a round or a scene is answered as something
- * that is not there, and the XP still counts as game XP under the league's
- * daily cap. The migration that gives the open rounds up is run here as it is
- * written.
+ * What Would You Say? (retired) against real Postgres and Redis, with the same guarantees as the retired friends games
+ * (mp/retired-games.integration.test.ts). Nothing starts it: no round can be made or found, it is not listed as
+ * playable, and no scene can be written or imported. What was stored stays out of the way: rounds, scenes and the XP it
+ * paid stay in the database, rounds and scenes answer as missing, and the XP still counts as game XP under the league's
+ * daily cap. The migration that gives up open rounds runs here as written.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

@@ -9,13 +9,10 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import type { Sense } from './types';
 
-/**
- * One sense, collapsible. Long entries (20+ senses, KUR-045) start collapsed
- * so the page stays scannable; tap the header to expand examples.
- */
+/** One collapsible sense. Long entries (20+ senses) start collapsed; tapping the header shows the examples. */
 export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCollapsed: boolean }) {
   const { colors } = useTheme();
-  // shut, the chevron points the way the page reads; the row and its indent start on the reading side too
+  // Collapsed, the chevron points in the reading direction; the row and its indent start on the reading side too.
   const dir = useDirection();
   const flip = dir.flip;
   const indent = dir.row === 'row-reverse' ? { marginRight: INDENT } : { marginLeft: INDENT };
@@ -28,20 +25,16 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
         onPress={() => setOpen((o) => !o)}
         style={({ pressed }) => [styles.header, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
         disabled={!hasExamples}
-        // a sense with examples opens and closes; one without is only words
+        // A sense with examples opens and closes; one without is only words.
         accessibilityRole={hasExamples ? 'button' : undefined}
         accessibilityState={hasExamples ? { expanded: open } : undefined}
       >
         <Text style={[styles.pos, { color: colors.primary }]}>{sense.pos}</Text>
-        {/*
-          English on top when there is one, and the Kurdish under it. A word that
-          is only defined in Kurdish — which is most of Wîkîferheng — puts that
-          definition here rather than leaving "1." followed by nothing.
-        */}
+        {/* English first when there is one, then the Kurdish; a word defined only in Kurdish (most of Wîkîferheng) shows that here. */}
         <Text style={[styles.def, dir.text, { color: colors.textPrimary }]}>
           {sense.position}. {sense.definitionEn ?? sense.definitionKu}
         </Text>
-        {/* the set's own chevrons, as every other row that opens has, in place of two triangles typed as text */}
+        {/* The set's own chevrons, as every expandable row uses. */}
         {hasExamples ? <Icon name={open ? 'chevron-down' : 'chevron-right'} size={16} color={colors.textSecondary} style={open ? undefined : (flip ?? undefined)} /> : null}
       </Pressable>
       {sense.definitionEn && sense.definitionKu ? (
@@ -61,13 +54,13 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
   );
 }
 
-/** The definitions' and examples' indent: past the part of speech, which is this wide. */
+/** The indent of definitions and examples: past the part of speech, which is this wide. */
 const POS_WIDTH = 64;
 const INDENT = POS_WIDTH + spacing.sm;
 
 const styles = StyleSheet.create({
   sense: { paddingVertical: spacing.sm, gap: 4 },
-  // opens the examples: a fingertip tall
+  // Opens the examples: a fingertip tall.
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   pos: {
     fontSize: typography.sizes.xs,

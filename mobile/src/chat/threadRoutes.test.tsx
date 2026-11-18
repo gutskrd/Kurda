@@ -6,11 +6,11 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// the catch-up when the screen comes back into focus (realtime/catchUp) is not under test here
+// The catch-up when the screen comes back into focus (realtime/catchUp) is not under test here.
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn() }), useFocusEffect: () => undefined }));
 vi.mock('./useChatSocket', () => ({ useChatSocket: () => undefined }));
 import { cleanup, fireEvent, screen } from '@testing-library/react';
-// the router itself, as the app's native stack runs it (pure: no React Native in it)
+// The router itself, as the app's native stack runs it (pure: no React Native in it).
 import { CommonActions, StackRouter, type ParamListBase, type StackNavigationState } from '@react-navigation/routers';
 import type { GiftCard } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -46,14 +46,14 @@ describe('the thread routes', () => {
   it('give another person’s chat a screen of its own, and bring an open one forward', () => {
     const { go } = threadRouter();
     const rojda = go('Chat', { userId: 'u-rojda', username: 'Rojda' }).routes[1];
-    // the gift banner's Open, pressed in Rojda's chat for a gift from Azad
+    // The gift banner's Open, pressed in Rojda's chat for a gift from Azad.
     const withAzad = go('Chat', { userId: 'u-azad', username: 'Azad', openGift: 'g7' });
     expect(withAzad.routes.map((r) => r.name)).toEqual(['Tabs', 'Chat', 'Chat']);
     expect(withAzad.routes[1]).toMatchObject({ key: rojda?.key, params: { userId: 'u-rojda' } });
     expect(withAzad.routes[2]?.key).not.toBe(rojda?.key);
     expect(withAzad.routes[2]?.params).toMatchObject({ userId: 'u-azad', openGift: 'g7' });
 
-    // Rojda's again, with a gift of hers: the same screen comes forward, not a second copy
+    // Rojda's again, with a gift of hers: the same screen comes forward, not a second copy.
     const back = go('Chat', { userId: 'u-rojda', username: 'Rojda', openGift: 'g8' });
     expect(back.routes.filter((r) => (r.params as { userId?: string } | undefined)?.userId === 'u-rojda')).toHaveLength(1);
     expect(back.routes[back.index]).toMatchObject({ key: rojda?.key, params: { openGift: 'g8' } });

@@ -1,9 +1,7 @@
 /**
- * Stories from files, against real Postgres: the import command's rules (all
- * or nothing, by slug, never over a story people are looking at), and the
- * starter stories the API seeds by itself — once each, published, kept as
- * their files say until an editor changes them, without ever stopping the
- * API from starting.
+ * Stories from files against real Postgres: the import command's rules (all or nothing, by slug, never over a story
+ * people are looking at), and the starter stories the API seeds itself, once each, published, kept to their files until
+ * an editor changes them, and never blocking start-up.
  */
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -43,10 +41,8 @@ describe('the starter story files', () => {
   });
 
   /*
-   * Linked, two stories are offered as one: the reader's switch between the
-   * varieties goes from one to the other. So a pair must be the same tale —
-   * here held to what the legends have in common in their file: one cover,
-   * one title in English, one level and one shelf.
+   * Linked stories are offered as one (the reader's variety switch goes between them), so a pair must be the same tale:
+   * here one cover, one English title, one level and one shelf, as the legends share.
    */
   it('names as one story only two tellings of the same tale, a Kurmancî one and a Soranî one', async () => {
     const drafts = new Map<string, ReturnType<typeof parseStoryFile>['drafts'][number]>();
@@ -152,9 +148,8 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
     });
 
     /*
-     * An approval is of the text that was read. A file that replaces the text
-     * of an approved draft takes the approval with it, as an edit in the panel
-     * does, so the new text cannot be published without a review.
+     * An approval is of the text that was read, so a file replacing an approved draft's text removes the approval, as
+     * an edit in the panel does.
      */
     it('takes the approval off a draft whose content it replaces, and leaves it on one it leaves alone', async () => {
       await importStories(pool, { stories: [testStory(slug('approved')), testStory(slug('approvedsame'))] });

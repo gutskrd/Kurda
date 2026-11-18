@@ -3,9 +3,8 @@ import { voiceTimeline, visemeAt } from '@kurda/shared';
 import { SpokenLine, speechMs } from './speech';
 
 /*
- * Words with no recording: a clock that runs for as long as the line would
- * take to say, which a speaking character reads as it reads a player, and
- * the lip-sync made from the words moves the mouth by it.
+ * Words with no recording: a clock that runs as long as the line would take to say, read by a speaking character as a
+ * player is, with lip-sync from the words.
  */
 describe('a spoken line', () => {
   it('takes longer to say the more letters it has, within reason', () => {

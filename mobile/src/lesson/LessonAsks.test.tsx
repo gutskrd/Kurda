@@ -29,11 +29,7 @@ import { resetHardwareBack } from '../navigation/testing/hardwareBack';
 import { SessionPlayer } from './LessonPlayerScreen';
 import type { Exercise, SessionView } from './types';
 
-/*
- * The lesson's questions in their new style: each says what it asks
- * (`ask`), which names its headline, and its bubble holds the line alone.
- * Played through the session player, as a learner meets them.
- */
+// Items with an `ask`, played through the session player as a learner meets them.
 
 beforeEach(() => {
   patchReactNativeWeb({ reduceMotion: true });
@@ -93,7 +89,7 @@ describe('the headline of a question that says what it asks', () => {
     expect(await screen.findByRole('heading', { name: headline })).toBeTruthy();
   });
 
-  // an item written before there were asks is asked as its type always was
+  // An item from before asks existed is asked as its type always was.
   it.each<[string, Exercise, string]>([
     ['multiple choice', { id: 'o1', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'] }, 'Choose the right answer'],
     ['translation', { id: 'o2', type: 'translate', prompt: 'apple' }, 'Translate this'],
@@ -116,14 +112,14 @@ describe('the bubble', () => {
     expect(within(scene).queryByText('What does this mean?')).toBeNull();
     expect(within(scene).getByRole('button', { name: 'Hear a native speaker' })).toBeTruthy();
 
-    // slow is three quarters of the speed, and full speed again after it
+    // Slow is 0.75×, then full speed again after it.
     fireEvent.click(within(scene).getByRole('button', { name: 'Play at slow speed' }));
     expect(FakeAudio.of(CLIP)?.playbackRate).toBe(0.75);
     fireEvent.click(within(scene).getByRole('button', { name: 'Hear a native speaker' }));
     expect(FakeAudio.of(CLIP)?.playbackRate).toBe(1);
   });
 
-  // the phone used to play nothing before a translation was answered; the website did
+  // The website plays the Kurdish line before a translation is answered, and so must the phone.
   it('plays a Kurdish line to translate into English, and offers nothing to play on an English one', async () => {
     const shown = play([{ id: 'te', type: 'translate', ask: 'to-english', prompt: 'Ez baş im.', modelAudioUrl: CLIP, modelAudioVoice: { speaker: 'hamo' } }]);
     expect(await screen.findByRole('button', { name: 'Hear a native speaker' })).toBeTruthy();
@@ -144,7 +140,7 @@ describe('the bubble', () => {
     const meanings = await screen.findByTestId('prompt-meanings');
     expect(meanings.textContent?.startsWith('hello')).toBe(true);
     expect(meanings.textContent).toContain('hi');
-    // one word is new here, and only it is dotted as new
+    // One word is new here, and only it has the new-word dots.
     expect(screen.getAllByTestId('fresh-word-dots')).toHaveLength(1);
   });
 
@@ -191,7 +187,7 @@ describe('the gap in a line', () => {
     play([missing], { routes: { 'POST /sessions/s1/answers': ok({ verdict: 'wrong', accepted: false, correction: 'baş', duplicate: false }) } });
     const gap = await screen.findByTestId('ask-gap');
     expect(gap.getAttribute('aria-label')).toBe('Missing word');
-    // the words either side of it stay in the bubble with it
+    // The words either side of the gap stay in the bubble with it.
     expect(screen.getByTestId('ask-line').textContent).toContain('Ez');
     expect(screen.getByTestId('ask-line').textContent).toContain('im.');
 
@@ -225,7 +221,7 @@ describe('the pictures to choose among', () => {
       expect(card.querySelector('svg[data-xml="drawn"]')).toBeTruthy();
       expect(card.textContent).toMatch(/^\d$/);
     }
-    // the word is the question, said large in the bubble
+    // The word is the question, large in the bubble.
     expect(screen.getByTestId('ask-line').textContent).toBe('sêv');
   });
 

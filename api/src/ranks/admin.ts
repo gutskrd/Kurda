@@ -65,10 +65,8 @@ function ratedGameOf(r: GameRow): AdminRatedGame {
 }
 
 /**
- * The admin side of Game Ranks (contract-4 §R3, §U Admin): how the players
- * spread over the tiers (to tune the ONE tier table), the top of each game,
- * the pairs whose rated games together look unusual, voiding one game's
- * rating effect, and resetting one player's rating.
+ * Admin tools for Game Ranks: the tier spread, each game's top, suspicious pairs, voiding a game's rating effect and
+ * resetting a player's rating.
  */
 export class RankAdmin {
   constructor(
@@ -136,10 +134,9 @@ export class RankAdmin {
   }
 
   /**
-   * Pairs worth a look, most suspicious first. The score adds up the signals —
-   * a shared device (3), a shared network (1), many rated games together in
-   * one day (2), lopsided results over six or more games (2) — and pairs with
-   * none are left out. Signals only: nothing here acts on anyone.
+   * Pairs worth a look, most suspicious first. Score: shared device 3, shared network 1, many rated games together in a
+   * day 2, lopsided results over six or more games 2; pairs scoring 0 are left out. Signals only: nothing here acts on
+   * anyone.
    */
   async suspiciousPairs(limit = 100): Promise<SuspiciousPair[]> {
     const rows = await this.pool.query<{
@@ -188,11 +185,7 @@ export class RankAdmin {
     }));
   }
 
-  /**
-   * A player's latest rated games, newest first, with what each did to them —
-   * how an admin finds the game to void from the player's page. Null when
-   * there is no such account.
-   */
+  /** A player's latest rated games, newest first, with what each did to them. Null when there is no such account. */
   async playerGames(userId: string, limit = 30): Promise<AdminPlayerGame[] | null> {
     const exists = await this.pool.query(`SELECT 1 FROM users WHERE id = $1`, [userId]);
     if (!exists.rowCount) return null;
@@ -222,10 +215,7 @@ export class RankAdmin {
     }));
   }
 
-  /**
-   * The rated games a pair played together in one game, newest first: what a
-   * suspicious pair's row opens, so the games to void are a click away.
-   */
+  /** The rated games a pair played together in one game, newest first. */
   async pairGames(game: RankedGame, a: string, b: string, limit = 100): Promise<AdminPairGame[]> {
     const rows = await this.pool.query<GameRow & { a_place: number | null; b_place: number | null }>(
       `SELECT g.game, g.game_ref, g.applied_at, g.weight, g.voided_at, g.void_reason, pa.place AS a_place, pb.place AS b_place,
@@ -241,8 +231,8 @@ export class RankAdmin {
   }
 
   /**
-   * Reset one player's rating in one game to the start (μ 25, σ 25/3,
-   * placement again), as an 'admin-reset' event — which a later replay keeps.
+   * Reset one player's rating in one game to the start (μ 25, σ 25/3, placement again) as an 'admin-reset' event, which
+   * a later replay keeps.
    */
   async reset(userId: string, game: RankedGame): Promise<void> {
     const at = this.now();
@@ -258,15 +248,10 @@ export class RankAdmin {
   }
 
   /**
-   * Void one game's rating effect (R3): the game no longer counts, and every
-   * rating it touched is worked out again from history — the players' standing
-   * before it, then each later game they played, in order, with the same
-   * places, weights and new-account limits as at the time. A game a replayed
-   * player played moves its other players too, so they are replayed from there
-   * as well; players no replay reaches keep their numbers exactly. Seasons
-   * crossed on the way are rolled again (their recorded results follow; the
-   * rewards already handed out stay). Every rated write of this game waits
-   * while it runs.
+   * Void one game's rating effect (R3) and replay every rating it touched from history, with the places, weights and
+   * new-account limits each later game had. A replayed player's later games pull their other players into the replay
+   * too; players it never reaches keep their numbers exactly. Seasons crossed on the way are rolled again (recorded
+   * results follow; rewards already given stay). Rated writes of this game wait while it runs.
    */
   async voidGame(game: RankedGame, gameRef: string, adminId: string, reason: string): Promise<{ replayedGames: number; players: number }> {
     const at = this.now();
@@ -317,7 +302,7 @@ export class RankAdmin {
           await this.rewriteResult(client, ev.user_id, game, state);
           states.set(ev.user_id, next);
         } else {
-          // a reset, or the move from the old Elo: absolute, whatever came before
+          // A reset, or the move from the old Elo: absolute, whatever came before.
           states.set(ev.user_id, fromStored(ev.state_after));
         }
       }
@@ -328,9 +313,8 @@ export class RankAdmin {
   }
 
   /**
-   * Work one later game out again if a replayed player was in it. Its other
-   * players start from where they stood then (the history's `state_before`;
-   * an erased account from the numbers its seat kept). Returns whether it did.
+   * Replay one later game if a replayed player was in it. Its other players start from the history's `state_before` (an
+   * erased account from the numbers its seat kept). Returns whether it replayed.
    */
   private async replayGame(client: pg.PoolClient, game: RankedGame, ref: string, states: Map<string, PlayerState>): Promise<boolean> {
     const header = (

@@ -7,7 +7,7 @@ function statusForAction(action: ImageAction): 'cleared' | 'gated' | 'blocked' {
   switch (action) {
     case 'allow':
     case 'flag':
-      return 'cleared'; // flag = published-but-flagged (#102)
+      return 'cleared'; // flag = published-but-flagged
     case 'gate':
       return 'gated'; // withheld pending review (blur/hold)
     case 'auto_block':
@@ -36,13 +36,10 @@ export interface PendingImageScan {
 }
 
 /**
- * Automatic image scanning at the media finalize step (KUR-294). Image
- * consumers (profile pictures #181, memes #290, …) call {@link scan} once an
- * upload is confirmed and **before serving it**; the verdict sets
- * `media_uploads.scan_status` so unscanned/blocked images are never publicly
- * served, and records every above-`allow` verdict in `image_scans` for audit +
- * moderator reversal. A CSAM match is hard-blocked with the record preserved
- * (evidence + mandated reporting) — never soft-deleted.
+ * Automatic image scanning at the media finalize step. Image consumers (profile pictures, memes, …) call {@link scan}
+ * once an upload is confirmed and before serving it. The verdict sets `media_uploads.scan_status`, so unscanned or
+ * blocked images are never served publicly, and every above-`allow` verdict is recorded in `image_scans` for audit and
+ * reversal. A CSAM match is hard-blocked with the record preserved, never soft-deleted.
  */
 export class ImageModerationService {
   private readonly pool: pg.Pool;
@@ -86,7 +83,7 @@ export class ImageModerationService {
     return res.rows[0]?.scan_status === 'cleared';
   }
 
-  /** Pending image flags oldest-first — the automated feed for the #102 queue. */
+  /** Pending image flags oldest-first — the automated feed for the queue. */
   async pending(limit = 50): Promise<PendingImageScan[]> {
     const res = await this.pool.query<{
       id: string; media_key: string; surface: string; action: string; reasons: string[];
@@ -106,9 +103,8 @@ export class ImageModerationService {
   }
 
   /**
-   * Resolve a flag. `reversed` = false positive → the image is cleared for
-   * serving. A CSAM (preserve-evidence) flag can be actioned but is **never**
-   * reversed to cleared here — it stays blocked with evidence retained.
+   * Resolve a flag. `reversed` (false positive) clears the image for serving. A CSAM (preserve-evidence) flag can be
+   * actioned but is never reversed here; it stays blocked with evidence kept.
    */
   async resolve(scanId: string, moderatorId: string, outcome: 'actioned' | 'reversed'): Promise<boolean> {
     const client = await this.pool.connect();

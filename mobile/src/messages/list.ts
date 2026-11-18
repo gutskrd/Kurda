@@ -1,12 +1,7 @@
 /**
- * What the Messages tab lists, and in what order. The part with no React in it.
- *
- * Two kinds of conversation share one list: a chat with one person, from
- * `/chat/conversations`, and a group's room, from `/me/groups` with its unread
- * count from `/me/groups/unread`. Friend requests are not rows of the list —
- * they are the one thing in here waiting on *you*, so they get a row of their
- * own above it rather than a place in an order where a morning of chatter
- * could bury them.
+ * What the Messages tab lists, and in what order. One-to-one chats come from `/chat/conversations` and group
+ * rooms from `/me/groups`, with unread counts from `/me/groups/unread`. Friend requests get their own row above
+ * the list.
  */
 import { foldDiacritics, type ChatMessageKind } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
@@ -15,7 +10,7 @@ export interface DirectConversation {
   userId: string;
   username: string;
   lastMessage: string;
-  /** a gift or a game card says so here, and the line is written from it */
+  /** A gift or a game card says so here, and the line is written from it. */
   lastKind?: ChatMessageKind;
   lastAt?: string | null;
   lastFromMe: boolean;
@@ -28,7 +23,7 @@ export interface GroupConversation {
   name: string;
   memberCount: number;
   unread: number;
-  /** the group's own picture, or none for its initials */
+  /** The group's own picture, or none for its initials. */
   photoUrl?: string | null;
 }
 
@@ -48,13 +43,7 @@ export const FILTER_LABEL: Record<MessageFilter, TranslationKey> = {
   groups: 'messages.filter.groups',
 };
 
-/**
- * Newest first, by an ISO timestamp, with anything undated last.
- *
- * `lastAt` on a conversation is an ISO string from Postgres, so it compares
- * correctly as a string — but a row missing one must not sort to the top,
- * which is what comparing `undefined` would do.
- */
+/** Newest first by ISO timestamp (Postgres ISO strings compare correctly as strings), with undated rows last rather than first. */
 export function newestFirst<T>(rows: readonly T[], at: (row: T) => string | null | undefined): T[] {
   return [...rows].sort((a, b) => {
     const x = at(a) ?? '';
@@ -67,24 +56,18 @@ export function newestFirst<T>(rows: readonly T[], at: (row: T) => string | null
 }
 
 /**
- * The list, for a chip and whatever is typed in the field.
+ * The list for a chip and the typed filter. Groups have no time yet (`/me/groups` sends none): unread groups go
+ * first, since unread means recent, then chats by time, then quiet groups by name. Once the server sends a
+ * group's last message time this becomes one sort by time.
  *
- * A group has no time on it yet (`/me/groups` sends none), so groups cannot be
- * slotted between chats by when they last spoke. What is known is whether
- * something in them is unread — which means it arrived after you last looked,
- * so it is recent — and those go first, before the chats by time; the quiet
- * groups follow, by name. When the server sends a group's last message time,
- * this becomes one sort by time and nothing else changes.
- *
- * The field filters what is already loaded, on the name and the last line,
- * folded so "rojhat" finds "Rojhat" and "se" finds "sê".
+ * The filter matches loaded names and last lines, folded so "rojhat" finds "Rojhat" and "se" finds "sê".
  */
 export function messageRows(input: {
   chats: readonly DirectConversation[];
   groups: readonly GroupConversation[];
   filter: MessageFilter;
   query?: string;
-  /** the last line of a chat as the reader sees it (a gift says so in their language) */
+  /** The last line of a chat as the reader sees it (a gift says so in their language). */
   preview?: (chat: DirectConversation) => string;
 }): MessageRow[] {
   const direct: MessageRow[] = newestFirst(input.chats, (c) => c.lastAt).map((chat) => ({
@@ -125,14 +108,8 @@ function fold(text: string): string {
 }
 
 /**
- * The number on the Messages tab.
- *
- * Messages, not conversations: three messages from one person is three things
- * you have not read, and counting conversations would say "1" to somebody
- * with a morning of backlog. A friend request counts as one whether or not
- * you have seen it — there is no read state for a request, and one waiting
- * on you is the point of the badge — because the row that answers it is at
- * the top of this tab.
+ * The number on the Messages tab: unread messages, not conversations, so a backlog from one person is not "1".
+ * Each friend request counts as one, since requests have no read state and the row answering them is on this tab.
  */
 export function messagesUnread(input: { chats: readonly number[]; groups: readonly number[]; requests: number }): number {
   const sum = (list: readonly number[]) => list.reduce((a, b) => a + Math.max(0, b), 0);
@@ -140,10 +117,9 @@ export function messagesUnread(input: { chats: readonly number[]; groups: readon
 }
 
 /**
- * When a message arrived, as a list shows it: the time today, the weekday this
- * week, a short date before that. Formatted by the reader's locale, so a
- * Soranî reader gets their own digits and month names — and the hour the way
- * the locale writes it ("3:49 PM", not "03:49 PM"; "15:49" in German).
+ * When a message arrived, as a list shows it: the time today, the weekday this week, a short date before that.
+ * Formatted for the reader's locale, so Soranî gets its own digits and month names and hours follow the locale
+ * ("3:49 PM"; "15:49" in German).
  */
 export function listTime(iso: string | null | undefined, locale: string, now: number = Date.now()): string {
   if (!iso) return '';
@@ -157,7 +133,7 @@ export function listTime(iso: string | null | undefined, locale: string, now: nu
     if (days < 6) return at.toLocaleDateString(locale, { weekday: 'short' });
     return at.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
   } catch {
-    // a locale the runtime does not know falls back to the device's own
+    // A locale the runtime does not know falls back to the device's own.
     return sameDay ? at.toLocaleTimeString() : at.toLocaleDateString();
   }
 }

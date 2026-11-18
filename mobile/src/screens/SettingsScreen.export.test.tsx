@@ -1,8 +1,5 @@
 // @vitest-environment jsdom
-/**
- * The copy of one's data (Settings, "Your data"): asked for, said to be on its way while it is prepared, and once it
- * is ready, downloaded from the row with a fresh link, or prepared again.
- */
+/** The data export row: requested, shown as preparing, then downloadable with a fresh link or prepared again. */
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Alert, Linking } from 'react-native';

@@ -29,40 +29,21 @@ interface Props {
   choice: number | null;
   onSelect: (index: number) => void;
   disabled: boolean;
-  /** the verdict, once the answer is graded; null while choosing */
+  /** The verdict once graded; null while choosing. */
   feedback?: Feedback | null;
-  /**
-   * a question of its own, with its headline and its asker; false for one
-   * that is part of something bigger (a conversation's question), set plainly
-   */
+  /** A question of its own, with headline and asker; false for one within something bigger (a conversation's question). */
   standalone?: boolean;
 }
 
 /**
- * Choose one. The question is said in a speech bubble by whoever says its
- * recording (Hevalo, when nobody does), and the options are cream cards, each
- * with its number in a round chip at its start: the one chosen is ringed in
- * the pomegranate's red. Once it is graded the options answer back, and not
- * by colour alone: the one chosen pops and a check draws into its chip when it
- * was right, or shakes with a cross there when it was not — and then the
- * right one is marked with a check as well, so the answer is on the screen
- * where it was asked. The rest step back.
+ * Choose one. The question is in a speech bubble said by whoever voices its recording (Hevalo by default), and the
+ * options are cream cards with a numbered chip; the chosen one is ringed in red. Once graded, the choice pops with a
+ * check if right, or shakes with a cross and the right one is checked too, so the answer is never colour alone.
  *
- * When the question's Kurdish has a native recording that gives nothing away
- * (the server sends it only then), the bubble carries a round play mark at
- * its start and says it when tapped, as its character does.
- *
- * An item that says what it asks (`ask`) has the headline for it and the line
- * alone in the bubble (`AskScene`), with "Slow" under it. Its answers are
- * pictures for 'picture' (`PictureChoices`); for 'missing', short Kurdish
- * words, the one chosen standing in the line's gap (`WordChoices`); and option
- * cards otherwise, their words in the display face where they are Kurdish
- * ('reply', 'choose-kurdish'). A conversation's question has no ask of its
- * own and no bubble: it stands plainly under the conversation, in the display
- * face the lesson's questions are in and a step under the headline, reading
- * its own way in every language as the options do. It was set in the plain
- * face at 28 bold, bigger than the headline over it and louder than the
- * conversation it asks about.
+ * When the Kurdish has a recording that gives nothing away, the bubble carries a play mark. An item with `ask` gets
+ * its headline and the line alone in the bubble (`AskScene`), answered by pictures (`PictureChoices`), gap words
+ * (`WordChoices`) or option cards. A conversation's question has no bubble: it stands plainly under the
+ * conversation in the display face, a step under the headline.
  */
 export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, feedback = null, standalone = true }: Props) {
   const { colors } = useTheme();
@@ -71,7 +52,7 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, f
   const options = exercise.options ?? [];
   const model = useAudio(exercise.modelAudioUrl);
   const voice = knownVoice(exercise.modelAudioVoice);
-  // the right option is the one chosen when it was accepted, else the one the correction names
+  // The right option is the chosen one when accepted, else the one the correction names.
   const isRight = (i: number): boolean => (feedback ? (feedback.accepted ? i === choice : feedback.correction === options[i]) : false);
   const say = model.supported ? () => model.play(1) : undefined;
   const choose = (i: number): void => {
@@ -155,18 +136,18 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, f
   );
 }
 
-/** The play mark in the bubble, drawn smaller than a fingertip and reaching one. */
+/** The bubble's play mark, drawn smaller than a fingertip but reaching one. */
 const SPEAKER = 32;
 
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
   prompt: { ...display(typography.sizes.lg) },
-  // the play mark at the top of the bubble's start, however many lines follow it
+  // The play mark at the top of the bubble's start, however many lines follow.
   said: { alignItems: 'flex-start', gap: spacing.sm + 2 },
   grow: { flexShrink: 1 },
   pressed: { opacity: pressedDim },
   options: { gap: spacing.sm + 2 },
-  // the lesson's cards, the words from the start beside the chip
+  // The lesson's cards, the words starting beside the chip.
   option: {
     justifyContent: 'flex-start',
     gap: spacing.sm + 4,
@@ -177,6 +158,6 @@ const styles = StyleSheet.create({
     borderWidth: CARD.edge,
   },
   optionText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  // Kurdish answers, in the face the lesson's Kurdish is in everywhere else
+  // Kurdish answers in the lesson's Kurdish face.
   kurdishText: { ...display(typography.sizes.md + 2) },
 });

@@ -21,14 +21,14 @@ import { Loading } from '../theme/Loading';
 /** GET /me/username's answer (the server's `UsernameStatus`). */
 interface UsernameStatus {
   username: string;
-  /** false for an account that signs in through another service and has no password to give */
+  /** False for an account that signs in through another service and has no password to give. */
   needsPassword: boolean;
   canChange: boolean;
-  /** when the wait since the last change ends; null when there is none */
+  /** When the wait since the last change ends; null when there is none. */
   availableAt: string | null;
   cooldownDays: number;
   holdDays: number;
-  /** earlier names nobody else can take yet */
+  /** Earlier names nobody else can take yet. */
   held: Array<{ username: string; heldUntil: string }>;
 }
 
@@ -41,22 +41,15 @@ type Verdict = { name: string; free: true } | { name: string; free: false; text:
 const CHECK_AFTER_MS = 450;
 
 /**
- * Change username (KUR-004). Shows the current name, the wait and the names
- * still kept for their owner, validates the new one as it is typed, asks the
- * server whether it is free once the typing stops, and submits to
- * POST /me/username with the password: the server is the authority for
- * availability, reserved names, the wait between changes and who is asking.
- * Its refusals are said in the reader's own language, each under the field it
- * is about: a name taken or not allowed, a password that is not right, the
- * wait with the day it ends, and anything else as a plain "couldn't update"
- * rather than the server's English.
+ * Change username via POST /me/username with the password. Shows the current name, the wait and names still
+ * reserved for their owner, validates as the user types and checks availability once typing stops. The server
+ * decides availability, reserved names and the cooldown; its refusals are shown in the reader's language under
+ * the field they concern, with anything unexpected as a plain "couldn't update".
  *
- * The new name is written in lowercase as it is typed, with the Kurdish
- * letters as keys under the field (./typing.tsx). What is said under it while
- * typing is only what more typing cannot mend, a character that is not allowed
- * named as such; "too short" and a dot at the end wait until the field is left
- * or Save is pressed. The field has no length limit of its own, so a name too
- * long is said rather than cut short at the next key.
+ * The name is lowercased as typed, with the Kurdish letters as keys under the field (./typing.tsx). While typing,
+ * only problems more typing cannot fix are shown; "too short" and a trailing dot wait until the field is left or
+ * Save is pressed. The field has no length limit of its own, so an overlong name is reported rather than
+ * truncated.
  */
 export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, refreshUser } = useAuth();
@@ -66,10 +59,10 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
   const bottom = useScreenBottomInset(spacing.lg);
 
   const [status, setStatus] = useState<UsernameStatus | null>(null);
-  // the account's name did not load: without it nothing can be compared, so the screen says so and asks again
+  // The account's name did not load and nothing can be compared without it, so say so and offer a retry.
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [input, setInput] = useState('');
-  // the field was left (or Save pressed) since it was last typed in: every rule the name breaks is said, not only what typing cannot mend
+  // The field was left, or Save pressed, since the last edit: report every rule the name breaks.
   const [settled, setSettled] = useState(false);
   const [password, setPassword] = useState('');
   const [verdict, setVerdict] = useState<Verdict>(null);
@@ -81,10 +74,10 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
     setServerError(null);
   });
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  // a limit on the account (a new name is shown to others) — said with a way to Account standing
+  // A limit on the account (a new name is shown to others) — said with a way to Account standing.
   const [limit, setLimit] = useState<ApiError | null>(null);
   const [done, setDone] = useState(false);
-  /** the latest question asked: an answer to an earlier one is about a name no longer in the field */
+  /** The latest availability question; an answer to an earlier one is about a name no longer in the field. */
   const asked = useRef(0);
 
   const load = useCallback(() => {
@@ -100,17 +93,17 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
   const current = status?.username ?? null;
   const check = checkUsername(input);
   const touched = input.trim().length > 0;
-  // a change of capitals alone is a change too, and the server takes it
+  // A change of capitals alone is a change too, and the server takes it.
   const changed = check.ok && current != null && check.value !== current;
   const candidate = check.ok && changed ? check.value : null;
 
-  // ask whether the name is free once the typing has stopped, and only about one the server would look at
+  // Check availability once typing stops, and only for a name the server would consider.
   useEffect(() => {
     const ticket = ++asked.current;
     if (candidate === null) return;
     const timer = setTimeout(() => {
       void client.get<Availability>(`/me/username/available?username=${encodeURIComponent(candidate)}`).then((res) => {
-        // a question that could not be answered is no verdict: the change itself is still checked
+        // A question that could not be answered is no verdict: the change itself is still checked.
         if (ticket !== asked.current || !res.ok) return;
         if (res.data.available) setVerdict({ name: candidate, free: true });
         else if (res.data.reason === 'taken') setVerdict({ name: candidate, free: false, text: t('error.code.usernameTaken') });
@@ -125,7 +118,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
   const canSubmit = candidate !== null && !saving && !done && said?.free !== false && (status?.needsPassword !== true || password.length > 0);
 
   const submit = useCallback(async () => {
-    // a name the rule refuses is said in full under the field, rather than Save doing nothing
+    // A name the rule refuses is said in full under the field, rather than Save doing nothing.
     if (!check.ok) setSettled(true);
     if (candidate === null || !canSubmit || !status) return;
     setSaving(true);
@@ -138,10 +131,10 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
     });
     setSaving(false);
     if (res.ok) {
-      // nothing typed here stays in memory once it has done its job
+      // Nothing typed here stays in memory once it has done its job.
       setPassword('');
       setDone(true);
-      // the name shown around the app is the session's copy of the account
+      // The name shown around the app is the session's copy of the account.
       void refreshUser();
       setTimeout(onExit, 700);
       return;
@@ -157,7 +150,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
     setServerError(refusalText(res.error, t, locale));
   }, [check.ok, candidate, canSubmit, status, client, password, refreshUser, onExit, t, locale]);
 
-  // inline hint under the field: a client rule, a server error, or an all-clear
+  // Inline hint under the field: a client rule, a server error, or an all-clear.
   const ruled = settled ? check : usernameIssueWhileTyping(input);
   const hint: { text: string; tone: 'error' | 'ok' } | null = serverError
     ? { text: serverError, tone: 'error' }
@@ -218,7 +211,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
                         spellCheck={false}
                         autoComplete="username"
                         textContentType="username"
-                        // no example in the field: one was written in English, and the line under the field already says what a name may be made of
+                        // No placeholder example: the line under the field already says what a name may contain.
                         accessibilityLabel={t('username.new')}
                         editable={!saving && !done}
                       />
@@ -269,7 +262,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
             {status.canChange ? (
               <ClayButton
                 label={done ? t('username.saved') : t('username.save')}
-                // saving: the button turns and takes no second press, and a screen reader is told what it is doing
+                // Saving: the button turns and takes no second press, and a screen reader is told what it is doing.
                 accessibilityLabel={saving ? t('username.saving') : undefined}
                 busy={saving}
                 tone="primary"
@@ -286,9 +279,8 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
 }
 
 /**
- * Why the server would not take the new name, in the reader's words. The
- * cooldown is a 429 that carries the day it ends, so it is said with that
- * day rather than read as "too many attempts" with a countdown of weeks.
+ * Why the server refused the name, in the reader's words. The cooldown is a 429 carrying its end date, so it is
+ * shown with that date rather than as a rate limit.
  */
 function refusalText(error: ApiError, t: Translate, locale: string): string {
   if (error.code === 'USERNAME_CHANGE_COOLDOWN') {
@@ -302,7 +294,7 @@ function refusalText(error: ApiError, t: Translate, locale: string): string {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  // one column on a tablet, on the same gutter as every other screen on a phone
+  // One column on a tablet, on the same gutter as every other screen on a phone.
   screen: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter },
 
   card: { gap: spacing.xs },

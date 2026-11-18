@@ -1,24 +1,19 @@
 import { AWAY_AFTER_MISSED_TURNS, AWAY_TURN_GRACE_MS, LOBBY_IDLE_MINUTES, type GameRules } from '@kurda/shared';
 
 /**
- * The phase engine's decisions, pure: given a game's state, its seats and the
- * time, what is due now and when the next thing will be. Generalised from the
- * story games' phase rules (story-games/logic.ts): deadlines are judged on the
- * database's clock read after the game's lock, nobody is waited for who has
- * gone, and a player who is not there does not hold everyone else up.
+ * The phase engine's pure decisions: given a game's state, seats and the time, what is due now and when the next thing
+ * is. Deadlines are judged on the database clock read after the game's lock, and absent players never hold the others
+ * up.
  *
- * - A turn whose time ran out is a timeout for every seat it waited on; a
- *   clock that ran out while nobody was waited on is a timeout for no seat.
+ * - A turn that ran out is a timeout for every seat it waited on; a clock that ran out while nobody was waited on is a
+ *   timeout for no seat.
  * - Hevalo's seat moves when its thinking time is up.
- * - A player who let two turns in a row run out, or who has not been heard
- *   from (presence), is away: their turn is passed over a moment after it
- *   comes (AWAY_TURN_GRACE_MS) instead of running its whole time. They are back
- *   the moment they ask anything.
+ * - A player who let two turns in a row run out, or is silent (presence), is away: their turn is passed after
+ *   AWAY_TURN_GRACE_MS instead of its full time. Any request brings them back.
  * - With every person gone the game ends where it stands.
  *
- * The service (service.ts) applies one step at a time to the row it has
- * locked, and arms a timer — and writes `due_at` for any replica's sweep — for
- * `nextDue`.
+ * The service (service.ts) applies one step at a time to the locked row and arms a timer, and writes `due_at` for any
+ * replica's sweep, for `nextDue`.
  */
 
 /** A seat as the engine judges it. Times are epoch milliseconds. */
@@ -109,12 +104,9 @@ export function lobbyClosesAt(updatedAt: number): number {
 }
 
 /**
- * Who holds the host controls after the start: the host while in the game and
- * not away, otherwise the earliest-joined person still in it and present,
- * until the host is back. Host controls only make a game move sooner (or open
- * the next round), so handing them on costs nothing. In the lobby they never
- * pass: who may join is decided by who the host is, and a lobby whose host has
- * left is called off.
+ * Who holds the host controls after the start: the host while in the game and not away, else the earliest-joined
+ * present person until the host is back. Host controls only make a game move sooner, so handing them on is harmless. In
+ * the lobby they never pass: the host decides who may join, and a lobby whose host left is called off.
  */
 export function controllerOf(hostId: string | null, seats: readonly EngineSeat[]): string | null {
   const host = hostId ? seats.find((s) => s.userId === hostId) : undefined;

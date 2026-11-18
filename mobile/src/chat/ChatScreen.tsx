@@ -45,32 +45,15 @@ const MAX_LEN = 2000;
 /** The face beside the name in the header: big enough to know them by, small enough for a bar. */
 const HEADER_FACE = 28;
 
-/** The dot on the face in the header while they are online, and the ring that sets it off the face. */
+/** The online dot on the header face, and the ring that separates it from the face. */
 const ONLINE_DOT = 10;
 
 /**
- * 1:1 conversation thread (KUR-083).
- *
- * The thread is drawn the way a conversation is read (chat/MessageRow.tsx,
- * chat/thread.ts): messages from one side in a row are one turn, with the
- * friend's face once at its foot and a tail on its last bubble; a day is
- * named over its first message, and the time is said once a moment rather
- * than under every line. While they are writing, a bubble of dots stands
- * where their message will land. Scrolled up, a round button leads back
- * down and counts what has come in. An empty conversation opens on who it is
- * with and a first hello to send.
- *
- * A message is what its kind says (chat/MessageContent): words, a gift to
- * unwrap, a game card. The gift button beside the composer gives this friend
- * something; their gifts arrive here wrapped, and `openGift` (the gift banner
- * and its notification) unwraps one as soon as the thread is open. Pressing
- * and holding one of their messages reports it. A message is in the thread
- * the moment it is sent, drawn as still on its way until the server has it
- * (chat/sending.ts); one the server refuses is taken out again, says why
- * above the composer — and what was typed goes back in the field. A thread
- * that could not be read says so, with the way to ask again: it is not
- * drawn as a conversation nobody has written in, offering a first hello to
- * a friend of years.
+ * A one-to-one conversation, drawn as it is read (chat/MessageRow.tsx, chat/thread.ts), with a typing bubble, a
+ * back-to-newest button counting new messages, and a suggested first hello when empty. Messages render by kind
+ * (chat/MessageContent); the composer's gift button sends a gift, and `openGift` unwraps one on open. Holding
+ * their message reports it. Sends show at once as pending (chat/sending.ts); a refused one is removed, its text
+ * restored and the reason shown. A failed load shows a retry rather than an empty thread.
  */
 export function ChatScreen({
   userId,
@@ -79,7 +62,7 @@ export function ChatScreen({
   onExit,
 }: {
   userId: string;
-  /** '' when the way in only knew the id: the thread names them from the messages */
+  /** '' when the way in only knew the id: the thread names them from the messages. */
   username: string;
   openGift?: string;
   onExit: () => void;
@@ -89,7 +72,7 @@ export function ChatScreen({
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const reduce = useReducedMotion();
-  // in Soranî and Arabic the thread is mirrored: your own words on the left, the composer's Send on the left too
+  // In Soranî and Arabic the thread is mirrored: your words on the left, and the composer's Send too.
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   const bottom = useScreenBottomInset(spacing.md);
@@ -97,7 +80,7 @@ export function ChatScreen({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
-  // the conversation could not be read: said, with the way to ask again, rather than passing for one nobody has written in
+  // The conversation failed to load: say so with a retry rather than looking like one nobody has written in.
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [peerTyping, setPeerTyping] = useState(false);
@@ -106,33 +89,33 @@ export function ChatScreen({
   const [flying, setFlying] = useState<{ tier: GiftTier; key: number } | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
   const [reporting, setReporting] = useState<string | null>(null);
-  // the header's report: about the person, not one message
+  // The header's report: about the person, not one message.
   const [reportingPerson, setReportingPerson] = useState(false);
-  // their picture and whether they are here now: the list of conversations knows both, the thread's own messages neither
+  // Their picture and presence: the conversation list knows both, the thread's own messages neither.
   const [other, setOther] = useState<{ avatarUrl: string | null; online: boolean } | null>(null);
   const list = useRef<FlatList<ShownMessage>>(null);
   const { away, onScroll } = useAwayFromLatest();
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
-  // the gift the way in asked for, once unwrapped — by id, so a second banner
-  // for this same chat (brought forward with a new gift) unwraps that one too
+  // The gift the entry point asked for, once unwrapped, by id, so a second banner for this chat (with a new gift)
+  // unwraps that one too.
   const autoOpened = useRef<string | null>(null);
   useOpenChat({ kind: 'dm', userId });
 
-  // their name from the conversation when the way in did not bring it
+  // Their name from the conversation when the way in did not bring it.
   const name = username || messages.find((m) => m.senderId === userId)?.username || '';
-  // the gift picker's one friend, the same array until the friend changes
+  // The gift picker's one friend, the same array until the friend changes.
   const giftFriends = useMemo(() => [{ userId, name }], [userId, name]);
-  // the messages sent from here that the server has not answered for yet
+  // The messages sent from here that the server has not answered for yet.
   const { outgoing, begin, settle } = useOutgoing();
-  // the thread as it is read, oldest first, with what is still on its way after what the server has
+  // The thread as it is read, oldest first, with what is still on its way after what the server has.
   const thread = useMemo<ShownMessage[]>(
     () => [...messages, ...outgoing.map((m): ShownMessage => ({ ...m, senderId: me, kind: 'text', gift: null, game: null, pending: true }))],
     [messages, outgoing, me],
   );
-  // newest first, for the inverted list below — once per change to the thread, not per keystroke
+  // Newest first, for the inverted list below — once per change to the thread, not per keystroke.
   const newestFirst = useMemo<ShownMessage[]>(() => [...thread].reverse(), [thread]);
-  // where each message sits: its day, its place in its run, whether it says the time
+  // Where each message sits: its day, its place in its run, whether it says the time.
   const places = useMemo(
     () => placeMessages(thread, new Date(), { locale, today: t('chat.day.today'), yesterday: t('chat.day.yesterday'), earlier: t('chat.day.earlier') }),
     [thread, locale, t],
@@ -159,7 +142,7 @@ export function ChatScreen({
     return () => {
       active = false;
     };
-    // a retry reads the conversation again
+    // A retry reads the conversation again.
   }, [client, userId, markRead, attempt]);
 
   useEffect(() => {
@@ -174,7 +157,7 @@ export function ChatScreen({
     };
   }, [client, userId]);
 
-  // what arrived while the connection was away, and the card of a game started from here
+  // What arrived while the connection was away, and the card of a game started from here.
   useCatchUp(
     useCallback(() => {
       void client.get<{ messages: ChatMessage[] }>(`/chat/${userId}/messages`).then((res) => {
@@ -203,7 +186,7 @@ export function ChatScreen({
     ),
   );
 
-  // their gift to you was opened elsewhere, or yours to them was: draw the card again
+  // Their gift to you, or yours to them, was opened elsewhere: redraw the card.
   useGiftEvents((ev) => {
     const batchId = ev.batchId;
     if (!messages.some((m) => m.gift?.batchId === batchId)) return;
@@ -218,17 +201,17 @@ export function ChatScreen({
         setUnwrapping({ giftId, card: message.gift, fromName: message.username || name });
         return;
       }
-      // older than the page the thread loaded: the server has its card
+      // Older than the page the thread loaded: the server has its card.
       void openGiftApi(client, giftId).then((res) => {
         if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: name });
-        // a gift that cannot be opened now says so, rather than the tap doing nothing
+        // A gift that cannot be opened now says so, rather than the tap doing nothing.
         else if (!isMaintenance(res.error)) Alert.alert(t('error.generic'), describeError(res.error, t));
       });
     },
     [client, messages, name, t],
   );
 
-  // arrived from the gift banner or its notification: unwrap it once the thread is here
+  // Arrived from the gift banner or its notification: unwrap it once the thread is here.
   useEffect(() => {
     if (!openGift || loading || autoOpened.current === openGift) return;
     autoOpened.current = openGift;
@@ -248,7 +231,7 @@ export function ChatScreen({
   /** Send words into the thread: null when they went, else the refusal, for whoever asked to say. */
   const post = useCallback(
     async (body: string): Promise<ApiError | null> => {
-      // in the thread at once, as one on its way; the server's copy takes its place, or it is taken out
+      // In the thread at once, as one on its way; the server's copy takes its place, or it is taken out.
       const sending = begin(body);
       const res = await client.post<ChatMessage>(`/chat/${userId}/messages`, { body });
       settle(sending);
@@ -259,7 +242,7 @@ export function ChatScreen({
     [client, userId, begin, settle],
   );
 
-  // the person, not one message: their profile, a report, or a block
+  // The person, not one message: their profile, a report, or a block.
   const personMenu = useCallback(() => {
     showActions({
       title: name,
@@ -276,7 +259,7 @@ export function ChatScreen({
               {
                 text: t('moderation.block'),
                 style: 'destructive',
-                // blocked: the conversation is over for you
+                // Blocked: the conversation is over for you.
                 onPress: () =>
                   void blockUser(client, userId).then((res) => {
                     if (res.ok) onExit();
@@ -294,14 +277,14 @@ export function ChatScreen({
     if (!body) return;
     setDraft('');
     setSendError(null);
-    // felt as it goes; and if it did not go, felt again as an error — it is in the way
+    // Felt as it goes; and if it did not go, felt again as an error — it is in the way.
     haptic('tap');
-    // sending is what takes you back down to the newest message, wherever you were reading
+    // Sending scrolls back down to the newest message, wherever you were reading.
     toLatest();
     const refused = await post(body);
     if (!refused) return;
     haptic('error');
-    // a refused message is put back, before anything typed since, so nothing typed is lost
+    // A refused message is put back, before anything typed since, so nothing typed is lost.
     setSendError(refused);
     setDraft((now) => restoredDraft(body, now));
   }, [draft, post, toLatest]);
@@ -319,23 +302,19 @@ export function ChatScreen({
     [post],
   );
 
-  // their picture: the conversation list's, or the one their own messages carry
+  // Their picture: the conversation list's, or the one their own messages carry.
   const face = other?.avatarUrl ?? messages.find((m) => m.senderId === userId)?.avatarUrl ?? null;
 
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/*
-          Report and block where anybody would look for them: at the top of
-          the conversation, about the person, as well as on a held message
-          about that message.
-        */}
+        {/* Report and block at the top of the conversation, about the person, as well as on a held message about that message. */}
         <ScreenHeader
           title={name}
           titleAvatar={
             <View>
               <InitialsAvatar name={name} id={userId} size={HEADER_FACE} photoUrl={face} />
-              {/* here now: a green dot on the face, ringed in the page's colour so it reads on any picture */}
+              {/* Online now: a green dot on the face, ringed in the page colour so it reads on any picture. */}
               {other?.online ? <View style={[styles.online, { backgroundColor: colors.success, borderColor: colors.background }]} testID="header-online" /> : null}
             </View>
           }
@@ -355,18 +334,13 @@ export function ChatScreen({
             <ErrorRetry message={describeError(loadError, t)} onRetry={() => setAttempt((n) => n + 1)} style={styles.failed} />
           </ScrollView>
         ) : thread.length === 0 ? (
-          // nothing said yet: who it is with, and a first hello to send
+          // Nothing said yet: who it is with, and a first hello to send.
           <ScrollView contentContainerStyle={styles.welcome} keyboardShouldPersistTaps="handled">
             <DmWelcome userId={userId} name={name} photoUrl={face} onGreet={(greeting) => void greet(greeting)} />
           </ScrollView>
         ) : (
           <View style={styles.flex}>
-            {/*
-              Newest at the bottom, and the thread opens there: inverted, as a
-              club's thread is. Drawn top-down it opened on the oldest message
-              of the page, and a reply arriving — or the one just sent — landed
-              below the fold.
-            */}
+            {/* Newest at the bottom and opening there: an inverted list, as a club's thread is, so new replies land in view. */}
             <FlatList
               ref={list}
               data={newestFirst}
@@ -375,7 +349,7 @@ export function ChatScreen({
               contentContainerStyle={styles.list}
               onScroll={onScroll}
               scrollEventThrottle={64}
-              // under the newest message, where theirs is about to land (the head of an inverted list is its foot)
+              // Under the newest message, where theirs is about to land (an inverted list's header is its foot).
               ListHeaderComponent={<TypingBubble names={peerTyping ? [name] : []} face={{ id: userId, name, photoUrl: face }} />}
               renderItem={({ item }) => {
                 const mine = item.senderId === me;
@@ -387,7 +361,7 @@ export function ChatScreen({
                     senderName={item.username || name}
                     receipt={mine && item.readAt ? t('chat.receipt.read') : null}
                     onOpenGift={startUnwrap}
-                    // the controls inside a message (a gift, an invite link) report it too
+                    // The controls inside a message (a gift, an invite link) report it too.
                     onReport={mine ? undefined : () => setReporting(item.id)}
                   />
                 );
@@ -453,7 +427,7 @@ export function ChatScreen({
         target={{ type: 'dm_message', messageId: reporting ?? '' }}
         blockable={{ userId, name: name || null }}
         onClose={() => setReporting(null)}
-        // blocked from the report: the conversation is over for you
+        // Blocked from the report: the conversation is over for you.
         onBlocked={() => {
           setReporting(null);
           onExit();
@@ -464,9 +438,8 @@ export function ChatScreen({
 }
 
 /**
- * The thread while it loads: bubbles in grey, theirs at the start and yours
- * at the end, sitting on the composer the way the newest messages do — the
- * thread opens at its foot, so that is where the grey is.
+ * The loading placeholder: grey bubbles, theirs at the start and yours at the end, sitting on the composer since
+ * the thread opens at its foot.
  */
 function ThreadSkeleton({ mirrored }: { mirrored: boolean }): React.JSX.Element {
   const { t } = useI18n();
@@ -490,13 +463,13 @@ function ThreadSkeleton({ mirrored }: { mirrored: boolean }): React.JSX.Element 
   );
 }
 
-/** A message in the thread: the server's, or one sent from here that it has not answered for yet. */
+/** A message in the thread: the server's, or one sent from here still awaiting its answer. */
 type ShownMessage = RowMessage;
 
 /** A message the thread has not placed yet (it arrived between two draws): a bubble on its own. */
 const LONE = { day: null, first: true, last: true, timed: false } as const;
 
-/** a one-line bubble: 9 above and below a 17pt line */
+/** A one-line bubble: 9 above and below a 17pt line. */
 const BUBBLE_LINE = 18 + lineOf(typography.sizes.md);
 
 const styles = StyleSheet.create({
@@ -504,16 +477,16 @@ const styles = StyleSheet.create({
   skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden', gap: spacing.sm },
   skeletonRow: { maxWidth: '86%' },
   screen: { flex: 1 },
-  // the runs keep their own distance (chat/MessageRow.tsx); the tails reach a little into the margin
+  // The runs keep their own distance (chat/MessageRow.tsx); the tails reach a little into the margin.
   list: { paddingHorizontal: spacing.md - 4, paddingVertical: spacing.md },
   welcome: { flexGrow: 1 },
-  // the error in the middle of what the thread would fill
+  // The error in the middle of what the thread would fill.
   failed: { flexGrow: 1, justifyContent: 'center' },
-  // your own words at the end of the line and theirs at its start, whichever side that is
+  // Your own words at the end of the line and theirs at its start, whichever side that is.
   rowEnd: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   rowStart: { alignSelf: 'flex-start', alignItems: 'flex-start' },
   online: { position: 'absolute', right: -2, bottom: -2, width: ONLINE_DOT, height: ONLINE_DOT, borderRadius: radii.pill, borderWidth: 2 },
-  // the buttons stay by the last line as a long message grows the field upwards
+  // The buttons stay by the last line as a long message grows the field upwards.
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -522,6 +495,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  // a plain glyph beside the field, as the tools by a message field are; the touch is still 44pt
+  // A plain glyph beside the field, as the tools by a message field are; the touch is still 44pt.
   giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 });

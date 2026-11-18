@@ -5,12 +5,7 @@ import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
 import { typography } from '../theme/tokens';
 
-/**
- * The pages on hevalo.app the app points to rather than repeating: the rules
- * for using Hevalo, what happens to your data, how it teaches, the answers to
- * what people ask, and who makes it. One copy of each, kept on the website,
- * so the app and the site can never say two different things.
- */
+/** The pages on hevalo.app the app links to instead of repeating them, so the app and the site never disagree. */
 export const LEGAL_URLS = {
   terms: 'https://hevalo.app/terms',
   privacy: 'https://hevalo.app/privacy',
@@ -20,30 +15,25 @@ export const LEGAL_URLS = {
   about: 'https://hevalo.app/about',
 } as const;
 
-/** Where a person writes to when something is wrong: answered by a person. */
+/** The support address; a person answers it. */
 export const SUPPORT_EMAIL = 'support@hevalo.app';
 
-/** Open one of the pages above, or the mail app for support; a failure to open is not worth an error. */
+/** Open one of the pages above, or the mail app for support; failing to open is not worth an error. */
 export function openLegal(to: keyof typeof LEGAL_URLS | 'support'): void {
   const url = to === 'support' ? `mailto:${SUPPORT_EMAIL}` : LEGAL_URLS[to];
   void Linking.openURL(url).catch(() => undefined);
 }
 
 /**
- * Write to support: the mail app, opened with the address filled in.
- *
- * A phone with no mail app to open (none installed, or none signed in) made
- * the row do nothing at all, which reads as a broken button on the one row a
- * person reaches for when something already is broken. So then the address is
- * copied, and the person is told so and where to paste it. If even the copy
- * fails, they are told the address to write to.
+ * Write to support in the mail app. Without a mail app the address is copied and the person is told so; if
+ * copying fails too, they are told the address.
  */
 export async function contactSupport(t: (key: TranslationKey, vars?: Record<string, string | number>) => string): Promise<void> {
   try {
     await Linking.openURL(`mailto:${SUPPORT_EMAIL}`);
     return;
   } catch {
-    // no mail app answered; the address is the next best thing
+    // No mail app answered, so copy the address instead.
   }
   let copied = false;
   try {
@@ -55,17 +45,13 @@ export async function contactSupport(t: (key: TranslationKey, vars?: Record<stri
   Alert.alert(t('settings.support.noMail.title'), t(body, { email: SUPPORT_EMAIL }));
 }
 
-// placeholders that cannot appear in a translation, to find where each link goes
+// Placeholders that cannot appear in a translation, to find where each link goes.
 const MARK = '\u0000';
 
 /**
- * "By continuing you agree to Hevalo's Terms of Use and Privacy Policy", with
- * the two names as links, under every way of creating an account: the email
- * form and the Apple and Google buttons alike.
- *
- * The sentence is translated whole, with {terms} and {privacy} where the
- * links go, because the order of the two (and the words round them) is not
- * the same in every language.
+ * "By continuing you agree to Hevalo's Terms of Use and Privacy Policy", with both names as links, under every
+ * way of creating an account. The sentence is translated whole with {terms} and {privacy} placeholders, because
+ * word order differs between languages.
  */
 export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JSX.Element {
   const { t } = useI18n();
@@ -75,9 +61,9 @@ export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JS
   return (
     <Text style={[styles.line, { color: colors.textSecondary }, style]}>
       {parts.map((part, i) =>
-        // the odd pieces are the placeholders' names
+        // The odd-indexed pieces are the placeholder names.
         i % 2 === 1 && (part === 'terms' || part === 'privacy') ? (
-          // a link is violet, as everything pressable is; the underline says so without the colour too
+          // Links are violet like everything pressable; the underline marks them without relying on colour.
           <Text
             key={i}
             accessibilityRole="link"
@@ -95,7 +81,7 @@ export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JS
 }
 
 const styles = StyleSheet.create({
-  // a link inside a sentence takes no reach of its own, so its line is made taller instead: a finger a little high or low still lands on it
+  // An inline link has no hit slop of its own, so its line is made taller instead.
   line: { fontSize: typography.sizes.xs, lineHeight: 24, textAlign: 'center' },
   link: { fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },
 });

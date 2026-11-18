@@ -1,12 +1,9 @@
 /**
- * The Memory Thief's word decks (api/content/games/memory-thief) against the
- * stories as their files hold them, cut as the game cuts them: every entry
- * finds its paragraph and every word stands in it as written, each word is
- * one a round may take (three letters or more, not a name) with what it means
- * in every language but its own Kurdish, no passage the decks fill is one the
- * calm check keeps out, and the stories alone now hold enough passages at
- * each difficulty the plan opens. Kurmancî beginner rounds also draw on the
- * lessons' conversations, which only the availability count can see.
+ * The Memory Thief's word decks (api/content/games/memory-thief) against the stories as shipped, cut as the game cuts
+ * them: every entry finds its paragraph and every word stands in it as written, each word is takeable (three or more
+ * letters, not a name) with meanings in every language but its own Kurdish, no filled passage fails the calm check, and
+ * the stories alone hold enough passages at each planned difficulty. Kurmancî beginner rounds also use lesson
+ * conversations, which only the availability count sees.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

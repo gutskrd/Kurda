@@ -21,8 +21,8 @@ import { useDirection } from '../reports/direction';
 import { Ticket, TicketStamp, useChangedSinceMount } from './Ticket';
 import { Loading } from '../theme/Loading';
 
-/** A card's state in words: "Open · 2 of 4 joined", "Under way", … */
-export function cardStateText(card: LobbyCard, t: Translate): string {
+/** A card's state in words: "Open · 2 of 4 joined", "Under way", and so on. */
+function cardStateText(card: LobbyCard, t: Translate): string {
   switch (card.status) {
     case 'open':
       return t('play.card.open', { players: card.players, max: card.maxPlayers });
@@ -40,10 +40,8 @@ export function cardStateText(card: LobbyCard, t: Translate): string {
 }
 
 /**
- * The stamp a card's ticket wears: "You're in" once the viewer is in a game that
- * is still on, the word for it once a game is over, and nothing while it is
- * simply open. A game that is over is spent — its stub greyed and punched —
- * and so is one this viewer may not see, which looks the same as gone.
+ * The stamp a card's ticket wears: "You're in" while the viewer is in a game still on, how it ended once over, and
+ * nothing while simply open. A game that is over is spent (greyed and punched), as is one this viewer may not see.
  */
 export function cardStamp(card: LobbyCard | null): { key: 'play.card.joined' | 'play.card.finished' | 'play.card.cancelled'; tone: 'success' | 'muted' } | null {
   if (!card) return null;
@@ -53,18 +51,14 @@ export function cardStamp(card: LobbyCard | null): { key: 'play.card.joined' | '
   return null;
 }
 
-/** Whether a card's ticket is spent: the game is over, called off, or not this viewer's to see. */
+/** Whether a card's ticket is spent: the game is over, cancelled, or not this viewer's to see. */
 export function cardSpent(card: LobbyCard | null): boolean {
   return card !== null && (card.status === 'finished' || card.status === 'cancelled' || card.status === 'unavailable');
 }
 
 /**
- * What a card offers. Join while it can be joined; Open for a player who is
- * in it. Only a game that is still gathering (one that can be joined, or the
- * viewer's own lobby waiting to start) gets the strong button: a chat with a
- * few past games in it would otherwise be a column of loud buttons, and the
- * one game that can be played would not stand out. A game under way or over
- * keeps a quiet Open.
+ * What a card offers: Join while joinable, Open for a player in it. Only a game still gathering gets the prominent
+ * button, so the one playable game stands out among past ones; a game under way or over keeps a quiet Open.
  */
 export function cardAction(card: LobbyCard | null): { kind: 'join' | 'enter'; prominent: boolean } | null {
   if (!card) return null;
@@ -74,12 +68,8 @@ export function cardAction(card: LobbyCard | null): { kind: 'join' | 'enter'; pr
   return null;
 }
 
-/**
- * A message's text with an old invite link taken out, and the game it
- * pointed at (before game cards were messages of their own, an invite was a
- * link pasted into the text; those still turn into cards).
- */
-export function linkedGame(body: string | null | undefined): { game: PlayGame; lobbyId: string; rest: string } | null {
+/** An old message's invite link and the game it points at, with the rest of the text; such links still become cards. */
+function linkedGame(body: string | null | undefined): { game: PlayGame; lobbyId: string; rest: string } | null {
   if (!body) return null;
   const invite = parseInvite(body);
   if (!invite) return null;
@@ -87,11 +77,8 @@ export function linkedGame(body: string | null | undefined): { game: PlayGame; l
 }
 
 /**
- * The game a chat message shows as a card, if any: a game message (kind
- * 'game'), or a text with an old invite link in it — with what is left of the
- * text once the link is out. A message is as old as the chat it is in, so the
- * game it names is checked against the games there are: one that is not among
- * them has no card (see `retiredGameOf`).
+ * The game a chat message shows as a card, if any: a game message, or a text with an old invite link (with the
+ * remaining text). Old messages may name retired games, which get no card (see `retiredGameOf`).
  */
 export function gameCardOf(message: {
   kind?: string | null;
@@ -103,46 +90,31 @@ export function gameCardOf(message: {
   return linkedGame(message.body);
 }
 
-// an invite link to a game Hevalo no longer has, as such links were written: "/app/games/<game>?id=<id>", any origin or none
+// An old invite link to a retired game: "/app/games/<game>?id=<id>", with any origin or none.
 const RETIRED_LINK = String.raw`\S*/app/games/(?:${RETIRED_GAME_IDS.join('|')})\?id=[A-Za-z0-9-]+\S*`;
 
 /**
- * Whether a chat message is an invitation to a game Hevalo no longer has: a
- * game message that names one, or a text with such a game's old invite link
- * in it. The thread shows these as a quiet line saying the game is no longer
- * played, with nothing to press; `rest` is what else was written beside the
- * link, which is still the sender's own words.
+ * Whether a message invites to a retired game: a game message naming one, or a text with its old invite link. The
+ * thread shows these as a quiet line with nothing to press; `rest` is the sender's other words beside the link.
  */
 export function retiredGameOf(message: { kind?: string | null; game?: { game: string; lobbyId: string } | null; body?: string | null }): { rest: string } | null {
   if (message.kind === 'game') return message.game && isRetiredGame(message.game.game) ? { rest: '' } : null;
   if ((message.kind && message.kind !== 'text') || !message.body) return null;
-  // a link to a game that is still played wins: its card is the thing to show
+  // A link to a game still played wins, since its card is what to show.
   if (parseInvite(message.body) || !new RegExp(RETIRED_LINK).test(message.body)) return null;
   return { rest: message.body.replace(new RegExp(RETIRED_LINK, 'g'), '').trim() };
 }
 
 /**
- * A game in a chat (contract §B1): what the game is, whether it can still be
- * joined — open with how many are in it, full, under way, finished, called
- * off — and a Join while it can be. The state is fetched when the card is
- * shown and again whenever `play_changed` says the lobby changed (on your own
- * channel, or in the group's room for a card shared into a group), so it
- * changes in place without anybody editing the message.
+ * A game in a chat (contract §B1): what it is, whether it can still be joined, and a Join while it can. The state is
+ * fetched when shown and again on `play_changed` (your channel, or the group's room), so it updates in place. A
+ * card the viewer may not see reads "This game isn't available", like a game that is gone.
  *
- * A card the viewer may not see reads "This game isn't available", the same
- * as a game that is gone: it never says whose it was or why.
+ * It is a ticket (Ticket.tsx). Its stamp lands with a small thump when it appears while the chat is open; a stamp
+ * already there when the chat opens is simply shown.
  *
- * It is a ticket (Ticket.tsx): the game's colour and glyph on the stub, the
- * game, who posted it and where it stands on the paper. Where it stands is a
- * stamp once there is one to give — "You're in" lands with a small thump the
- * moment the viewer is in, and a game that is over is greyed, punched and
- * stamped with how it ended. A stamp already there when the chat opens is
- * simply there.
- *
- * `onReport` (someone else's message): the card takes the touch, so the
- * row's press-and-hold never fires there; a long press on the card reports
- * the message instead, and Report is among its screen-reader actions — on
- * the card when it is read as one element, else on its Join.
+ * With `onReport` (someone else's message) the card takes the touch, so a long press on it reports the message, and
+ * Report is among its screen-reader actions (on the card when read as one element, else on its Join).
  */
 export function ChatGameCard({
   game,
@@ -152,9 +124,9 @@ export function ChatGameCard({
 }: {
   game: PlayGame;
   lobbyId: string;
-  /** report the message the card came in; undefined for your own */
+  /** Reports the message the card came in; undefined for your own. */
   onReport?: () => void;
-  /** who posted it, for someone else's card */
+  /** Who posted it, for someone else's card. */
   from?: string;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -194,13 +166,13 @@ export function ChatGameCard({
 
   const stamp = cardStamp(card);
   const spent = cardSpent(card);
-  // a stamp that arrives while the chat is open lands; one there as the card's state first arrived does not
+  // A stamp that arrives while the chat is open lands; one present from the first state does not.
   const landed = useChangedSinceMount(stamp?.key ?? null, card !== null);
-  // the state in words, unless the stamp already says it
+  // The state in words, unless the stamp already says it.
   const stateLine = card && !(stamp && stamp.tone === 'muted') ? state : null;
 
   const mirror = dir.row === 'row-reverse';
-  // the card's own words and its Join: drawn the same whether or not it can be reported
+  // The card's words and Join, the same whether or not it can be reported.
   const content = (
     <>
       <View style={styles.text}>
@@ -217,7 +189,7 @@ export function ChatGameCard({
             {details}
           </Text>
         ) : null}
-        {/* Rated or Friendly, before anyone joins */}
+        {/* Rated or Friendly, before anyone joins. */}
         {card?.summary.rated !== undefined ? <RatedPill rated={card.summary.rated} small style={[styles.rated, mirror && styles.endSelf]} /> : null}
       </View>
       {card ? (
@@ -262,7 +234,7 @@ export function ChatGameCard({
     </Ticket>
   );
   const label = [from ? t('play.card.from', { name: from }) : null, t('play.card.label', { game: name, state })].filter(Boolean).join('. ');
-  // someone else's card reports its message on a long press; your own is a plain surface, not a control
+  // Someone else's card reports its message on a long press; your own is a plain surface, not a control.
   return onReport ? (
     <PressableScale
       onLongPress={onReport}

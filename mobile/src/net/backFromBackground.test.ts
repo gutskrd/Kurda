@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { AppStateStatus } from 'react-native';
 import { onBackFromBackground } from './backFromBackground';
 
-/** An app state that a test moves by hand, starting where the app starts. */
+/** An app state the test moves by hand, starting where the app starts. */
 function appState(start: string = 'active') {
   const listeners = new Set<(state: AppStateStatus) => void>();
   const state = {
@@ -38,13 +38,13 @@ describe('onBackFromBackground', () => {
     const app = appState();
     const back = vi.fn();
     onBackFromBackground(app, back);
-    // iOS on the way out and in again
+    // iOS on the way out and back in.
     app.go('inactive');
     app.go('background');
     app.go('inactive');
     app.go('active');
     expect(back).toHaveBeenCalledTimes(1);
-    // Android, which goes straight to the background and back
+    // Android goes straight to the background and back.
     app.go('background');
     app.go('active');
     expect(back).toHaveBeenCalledTimes(2);

@@ -11,37 +11,24 @@ import { pressedDim } from './motion';
 import { floating } from './floating';
 
 /**
- * A search field: a magnifier, the words, and a clear button once there are
- * words to clear.
- *
- * Messages filters its own list with one and Search asks the server with
- * another, and they looked different — one with a clear button and one
- * without, at two heights. Same field now, 44 tall, with the clear button a
- * fingertip wide — and the same one in the shop, the gift picker, the
- * profile's items and the stories' library, which each had a copy of it built
- * by hand.
- *
- * Clearing leaves the cursor in the field with the keyboard up, ready for the
- * next search, as a phone's own search fields do.
+ * A search field: a magnifier, the text, and a clear button once there is text. The one field for every search
+ * (Messages, Search, the shop, the gift picker, profile items, the stories library), 44 tall with a fingertip-wide
+ * clear button. Clearing keeps the cursor and keyboard, ready for the next search, as system search fields do.
  */
 export const SearchField = forwardRef<TextInput, {
   value: string;
   onChangeText: (text: string) => void;
-  /** What the field is for, said to a screen reader and shown until something is typed. */
+  /** What the field is for, read to screen readers and shown until something is typed. */
   label: string;
   placeholder?: string;
   onSubmit?: () => void;
   returnKeyType?: ReturnKeyTypeOptions;
   autoFocus?: boolean;
-  /** the most that can be typed, where what is searched has a limit */
+  /** The most that can be typed, where the search has a limit. */
   maxLength?: number;
-  /**
-   * The search page's own field: a rounded shape in the bar's fill, floating
-   * a little off the page like the way back beside it, where every other
-   * search field is a quiet tinted box in the page.
-   */
+  /** The search page's own field: rounded in the bar's fill and floating slightly off the page like the back button beside it. */
   floating?: boolean;
-  /** where the field sits (a margin), not how it looks */
+  /** Where the field sits (a margin), not how it looks. */
   style?: StyleProp<ViewStyle>;
 }>(function SearchField({ value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus, maxLength, floating: lifted = false, style }, ref) {
   const { colors } = useTheme();
@@ -50,8 +37,8 @@ export const SearchField = forwardRef<TextInput, {
   const { t } = useI18n();
   const dir = useDirection();
   const clearable = value.length > 0;
-  // the magnifier's side always has its inset; the other side has the clear
-  // button's own 44pt, or an inset of its own when there is nothing to clear
+  // The magnifier side always has its inset; the other side has the clear button's 44 points, or its own inset when
+  // there is nothing to clear.
   const lead = spacing.md - 4;
   const inset = dir.row === 'row-reverse'
     ? { paddingRight: lead, paddingLeft: clearable ? 0 : lead }

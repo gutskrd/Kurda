@@ -14,7 +14,7 @@ for (const p of [LIGHT, DARK]) {
       }
     });
 
-    // the face is opaque, because the lip runs on under it
+    // The face is opaque because the lip runs under it.
     it('draws every face solid, and a lip under each tile that can still be pressed', () => {
       for (const state of STATES) {
         const tone = tileTone(p, state);

@@ -1,51 +1,30 @@
 /**
- * The Memory Thief: a round of approved passages to study, each of which then
- * loses a few of its words to the thief, to be given back.
+ * The Memory Thief: a round of approved passages to study, each then losing a few words to be given back.
  *
- * The passages are published stories' paragraphs, a few lines at a time of
- * published lessons' conversations, and published `passage` rows, in the
- * learner's variety only. The words that vanish are approved ones with a
- * meaning the passage's own source attests: a story's own glossary terms, a
- * row's own hidden words, and for a conversation the words its own lesson
- * teaches. Each is matched exactly as the passage writes it, marks and
- * capitals kept — never a folded look-alike, nor a meaning another lesson
- * gives a word spelled alike (tê is not te, xwe is not xwê, Baran is not
- * baran) — so the meaning shown in the reveal is the passage's own. The one
- * capital forgiven is a sentence's first letter: a glossary term written in
- * lower case is still the word where the passage only ever writes it with a
- * capital at the start of a sentence (mîr, Mîr), because that capital is the
- * sentence's and not the word's. A capital anywhere else marks a name.
- * Short words (two letters or fewer) and names are never taken; a word taken
- * from two places is one gap twice, and a word that vanished from one passage
- * of a round is not taken from another while a different word can be, so a
- * legend's mîr is a gap once a round, not five times.
+ * Passages are published story paragraphs, a few lines at a time of published lesson conversations, and published
+ * `passage` rows, in the learner's variety only. Vanishing words have a meaning the passage's own source attests: a
+ * story's glossary terms, a row's hidden words, or for a conversation the words its lesson teaches. Each is matched
+ * exactly as written, marks and capitals kept (tê is not te, xwe is not xwê, Baran is not baran), so the reveal's
+ * meaning is the passage's own. The one forgiven capital is a sentence's first letter (mîr, Mîr); a capital elsewhere
+ * marks a name. Short words (two letters or fewer) and names are never taken; a word in two places is one gap twice,
+ * and a word taken from one passage is not taken from another in the round while an alternative exists.
  *
- * A story paragraph that ends in a colon introduces what follows it ("Gur
- * got:"), so it is read together with the next paragraph of the story when
- * the two still fit a passage's length. And the round stays calm: a passage
- * with a word of killing, blood, boiling or death in it (`isCalmPassage`) is
- * never one of its passages, though it stays in the story.
+ * A story paragraph ending in a colon ("Gur got:") is read with the next one when both fit a passage. Rounds stay calm:
+ * a passage with a word of killing, blood, boiling or death (`isCalmPassage`) is never used, though it stays in the
+ * story.
  *
- * A round is five passages at the difficulty's levels (stories by their own
- * level, conversations by how long their lines are), never-met passages
- * first and no more than two from one story or conversation, the easier ones
- * first. Beginner rounds take two or three words, intermediate three or four,
- * advanced four to six (`MEMORY_HIDDEN`), and study longer the easier they are.
+ * A round is five passages at the difficulty's levels (stories by their level, conversations by line length), unseen
+ * first, at most two per story or conversation, easier first. Beginner rounds take two or three words, intermediate
+ * three or four, advanced four to six (`MEMORY_HIDDEN`), and study longer the easier they are.
  *
- * Words are given back from tiles with a few decoys — other approved words
- * the passage does not hold — or, at the advanced difficulty, typed with the
- * key bar and taken as a lesson takes a typed answer (`typedVerdict`). A
- * passage is right when every gap is; a wrong first try is told which gaps
- * are still wrong, never the words; once a passage is done every word comes
- * back with what it means.
+ * Words are given back from tiles with a few decoys (other approved words not in the passage) or, at advanced, typed
+ * and judged like a lesson's typed answer (`typedVerdict`). A passage is right when every gap is; a wrong first try is
+ * told which gaps are wrong, never the words; once done every word returns with its meaning.
  *
- * A passage is sent whole while it is studied and with its gaps once the
- * player asks for them (`begin`, or a first answer), never both at once —
- * comparing the two would give the vanished words away — and a round come
- * back to after that is not shown the passage again. Nothing in the view is
- * worked out from the passage (no key hashed from its text). The pool is
- * worked out once per variety and kept, and decoys are drawn one at a time
- * from one seeded generator per passage (games/draw.ts).
+ * A passage is sent whole while studied and with gaps once the player asks (`begin`, or a first answer), never both,
+ * since comparing them would reveal the words; a round resumed after that never shows the passage again. Nothing in the
+ * view is derived from the passage text. The pool is built once per variety and cached, and decoys are drawn one at a
+ * time from one seeded generator per passage (games/draw.ts).
  */
 import type pg from 'pg';
 import { z } from 'zod';
@@ -153,10 +132,8 @@ export function pieces(line: string): Array<{ text: string; word: string | null 
 const SENTENCE_END = /[.!?…؟]\s*$/u;
 
 /**
- * Every word of a passage once, by its strict key: as first written, where
- * it stands (its places among the passage's words), and whether it is ever
- * written with a capital where no sentence starts — a name, which is never
- * taken.
+ * Every word of a passage once, by strict key: its first written form, its positions among the passage's words, and
+ * whether it is ever capitalised away from a sentence start (a name, never taken).
  */
 function wordsOf(lines: readonly string[], dialect: GameDialect): Map<string, { form: string; forms: Set<string>; at: number[]; name: boolean }> {
   const out = new Map<string, { form: string; forms: Set<string>; at: number[]; name: boolean }>();
@@ -184,9 +161,8 @@ function wordsOf(lines: readonly string[], dialect: GameDialect): Map<string, { 
 }
 
 /**
- * Whether a lower-case term is the word a passage writes with a capital only
- * where a sentence starts: every form it has is the term with its first
- * letter raised, and none stands where no sentence starts (that is a name).
+ * Whether a lower-case term is a word the passage capitalises only at sentence starts: every form is the term with its
+ * first letter raised, and none stands away from a sentence start (that would be a name).
  */
 function sentenceCapitalOnly(term: string, word: { forms: ReadonlySet<string>; name: boolean }): boolean {
   if (word.name || term !== term.toLowerCase()) return false;
@@ -194,13 +170,10 @@ function sentenceCapitalOnly(term: string, word: { forms: ReadonlySet<string>; n
 }
 
 /**
- * The words a passage could lose, preferred first: its own glossary terms (a
- * story's, or a row's own hidden words), then the words its own lesson
- * teaches (`taught`, by each word exactly as written). Each is a single word
- * the passage has exactly as the glossary or the lesson writes it — marks and
- * capitals kept, so a word spelled alike is never taken for it, save a
- * glossary term the passage only capitalises to start a sentence — at least
- * three letters long, not a name, with a meaning (pure, for the tests).
+ * The words a passage could lose, preferred first: its own glossary terms (a story's, or a row's hidden words), then
+ * words its lesson teaches (`taught`, exactly as written). Each is a single word the passage holds exactly as written
+ * (marks and capitals kept, except a glossary term capitalised only to start a sentence), three or more letters, not a
+ * name, with a meaning (pure, for tests).
  */
 export function candidatesIn(
   lines: readonly string[],
@@ -229,14 +202,10 @@ export function candidatesIn(
 }
 
 /**
- * Which words vanish: `count` of the candidates (fewer when there are not
- * that many), glossary terms before taught words, a word met once before one
- * met twice, and none right beside another where that can be helped — two
- * gaps side by side are a guess, not a memory. A word already taken from
- * another passage of the round (`taken`, by its strict key) comes last of
- * all, used only when nothing else can make up the count. Returned in the
- * order they stand in the passage, which is their gaps' order (pure, for the
- * tests).
+ * Which words vanish: `count` candidates (fewer if not enough), glossary terms before taught words, rarer words first,
+ * and none adjacent to another where avoidable, since two gaps side by side are a guess, not a memory. A word already
+ * taken elsewhere in the round (`taken`, by strict key) comes last. Returned in passage order, which is the gap order
+ * (pure, for tests).
  */
 export function chooseHidden(
   lines: readonly string[],
@@ -265,9 +234,8 @@ export function chooseHidden(
 }
 
 /**
- * The passage as the restore phase lays it out: each line opened by a line
- * marker, every place a vanished word stood a gap (the same gap wherever the
- * word stands), the rest as it is written (pure, for the tests).
+ * The passage as the restore phase lays it out: each line opened by a marker, every place a vanished word stood a gap
+ * (the same gap wherever the word stands), the rest as written (pure, for tests).
  */
 export function passageParts(lines: readonly string[], hidden: readonly string[], dialect: GameDialect): MemoryPart[] {
   const gapOf = new Map(hidden.map((term, i) => [foldForDialect(term, dialect), i]));
@@ -313,14 +281,10 @@ const fits = (lines: readonly string[]): boolean => {
 };
 
 /**
- * Words that keep a passage out of a round, by variety: killing, blood,
- * boiling and death, and the graves of the dead. The legends tell of all
- * of them, and a story may; a memory game played for fun should not open on
- * them, so a passage holding one is left out. Each is a whole word as written
- * (mîr, a prince, is not mir, died; li gor, according to, is not gora, a
- * grave), and a few that also mean a light or a fire going out are kept on
- * the list because a passage too many left out costs nothing, and one too few
- * puts a death in a child's round.
+ * Words that keep a passage out of a round, per variety: killing, blood, boiling, death, and graves. Legends and
+ * stories tell of them, but a memory game played for fun should not open on them. Each is a whole word as written (mîr,
+ * a prince, is not mir, died; li gor, according to, is not gora, a grave). A few that also mean a light or fire going
+ * out stay listed, since excluding one passage too many costs nothing and one too few puts a death in a child's round.
  */
 export const UNCALM_WORDS: Readonly<Record<GameDialect, readonly string[]>> = {
   kmr: [
@@ -441,11 +405,9 @@ export interface StoryWindow {
 }
 
 /**
- * A story's paragraphs as passages: each on its own, except that one ending
- * in a colon is read together with the paragraph after it when the two still
- * fit a passage's length — the words introducing a speech belong with the
- * speech (pure, for the tests and for the word deck, which must cut the
- * stories exactly as the game does).
+ * A story's paragraphs as passages: each alone, except one ending in a colon is joined with the next when both fit a
+ * passage, since an introduction belongs with its speech (pure, for tests and for the word deck, which must cut stories
+ * exactly as the game does).
  */
 export function storyWindows(passages: readonly StoryPassage[]): StoryWindow[] {
   const out: StoryWindow[] = [];
@@ -475,11 +437,9 @@ export function storyWindows(passages: readonly StoryPassage[]): StoryWindow[] {
 const DECOYS_LOOKED_AT = 800;
 
 /**
- * Decoy tiles for a passage: other approved words, none the passage holds,
- * none the same as a vanished word even by the lenient key, close in length
- * to the vanished words, each once (pure, for the tests). Drawn one at a time
- * in a random order, so a passage looks at a few hundred words at most, not
- * every word the variety has.
+ * Decoy tiles for a passage: other approved words, none in the passage, none equal to a vanished word even by the
+ * lenient key, close in length to the vanished words, each once (pure, for tests). Drawn one at a time, so a passage
+ * looks at a few hundred words at most.
  */
 export function chooseDecoys(
   hidden: readonly string[],
@@ -527,10 +487,9 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
   constructor(private readonly sources: TrustedSources) {}
 
   /**
-   * Every approved passage of a variety, with the words it could lose: the
-   * published rows first (a row's hidden words are a reviewer's choice), then
-   * published stories' paragraphs, then lesson conversations a few lines at
-   * a time. A story paragraph with the same text as a row is one passage.
+   * Every approved passage of a variety with the words it could lose: published rows first (their hidden words are a
+   * reviewer's choice), then published story paragraphs, then lesson conversations a few lines at a time. A story
+   * paragraph with the same text as a row is one passage.
    */
   async pool(dialect: GameDialect): Promise<PoolPassage[]> {
     return (await this.read(dialect)).passages;

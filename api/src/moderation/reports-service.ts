@@ -27,26 +27,19 @@ import { reportCaseSummary, reportPriority, reportWeight } from './rules.js';
 import { inTransaction, type Executor } from './tx.js';
 
 /**
- * Taking a report: one path for every surface.
- *
- * `POST /reports` and the older per-surface routes (`/users/:id/report`,
- * `/library/posts/:id/report`, `/images/:id/report`, `/chat/reports`) all land
- * here, so a report is a report wherever it was filed: checked, snapshotted,
- * prioritised and attached to its case in one transaction.
- *
- * What happens to one:
- *   1. the reporter is under the daily limit (20), and not reporting themselves;
- *   2. the target is resolved and frozen into an evidence snapshot (evidence.ts),
- *      which also decides whether this reporter may report it at all;
- *   3. its priority comes from the category, moved for minors on either side
- *      and for brand-new accounts (rules.ts);
- *   4. an open report by the same person about the same thing is returned as is
- *      — the same incident twice is one report; once it is closed, a new one is
- *      a new incident;
- *   5. it joins the target's open case, or opens one, and the case's counts,
- *      priority and category are recomputed from all its reports;
- *   6. the snapshot's media is marked so no cleanup deletes it;
- *   7. after commit, a P0 case alerts the moderators (alerts.ts), once.
+ * Taking a report: one path for every surface. `POST /reports` and the older per-surface routes (`/users/:id/report`,
+ * `/library/posts/:id/report`, `/images/:id/report`, `/chat/reports`) all land here, so every report is checked,
+ * snapshotted, prioritised and attached to its case in one transaction:
+ *   1. the reporter is under the daily limit (20) and not reporting themselves;
+ *   2. the target is resolved and frozen into an evidence snapshot (evidence.ts), which also decides whether this
+ * reporter may report it;
+ *   3. priority comes from the category, adjusted for minors on either side and brand-new accounts (rules.ts);
+ *   4. an open report by the same person about the same thing is returned as is (one incident, one report); once
+ * closed, a new one is a new incident;
+ *   5. it joins the target's open case or opens one, and the case's counts, priority and category are recomputed from
+ * all its reports;
+ *   6. the snapshot's media is protected from cleanup;
+ *   7. after commit, a P0 case alerts the moderators once (alerts.ts).
  */
 
 export interface FileReportInput {
@@ -77,10 +70,8 @@ interface ReportRow {
 }
 
 /**
- * The label "My reports" shows for what was reported: a username or a title —
- * never more than the reporter could already see. A game player gets none: a
- * game shows people who are not your friends as "Player N", and a report must
- * not be the way to find out who they are (the client says "a player in …").
+ * The label "My reports" shows for a target: a username or title, never more than the reporter could already see. A
+ * game player gets none, since games show non-friends as "Player N" and a report must not reveal who they are.
  */
 function targetLabelOf(evidence: EvidenceSnapshot | Record<string, unknown>): string | null {
   const e = evidence as Partial<EvidenceSnapshot>;
@@ -117,9 +108,8 @@ const OPEN_LIST = OPEN_CASE_STATUSES.map((s) => `'${s}'`).join(',');
 export const OPEN_CASE_PREDICATE = `status IN (${OPEN_LIST})`;
 
 /**
- * Under REPORTS_PER_DAY in the last 24 hours, or 429 REPORT_LIMIT with the
- * limit's details and an hour's wait (the oldest of them leaves the window
- * some time in the next day; an hour is the honest round number).
+ * Under REPORTS_PER_DAY in the last 24 hours, or 429 REPORT_LIMIT with the limit's details and an hour's wait (the
+ * oldest report leaves the window sometime in the next day; an hour is the honest round number).
  */
 async function assertReportRoom(executor: Executor, reporterId: string): Promise<void> {
   const recent = await executor.query<{ n: number }>(
@@ -231,10 +221,9 @@ export class ReportsService {
   }
 
   /**
-   * Join the target's open case, or open one; then recompute the case from all
-   * of its reports. The lookup locks the open case so two reports at once cannot
-   * both open one — and if they race to create it, the partial unique index
-   * makes one of them wait and then find the other's.
+   * Join the target's open case or open one, then recompute the case from all its reports. The lookup locks the open
+   * case so two simultaneous reports cannot both open one; if they race to create it, the partial unique index makes
+   * one wait and find the other's.
    */
   async attachToCase(
     client: Executor,
@@ -265,9 +254,8 @@ export class ReportsService {
   }
 
   /**
-   * A report case's counts, priority, category, minor flag and summary, from its
-   * reports. The summary is built in code from values that may all be missing,
-   * so it is never NULL.
+   * A report case's counts, priority, category, minor flag and summary, from its reports. The summary is built in code
+   * from possibly missing values, so it is never NULL.
    */
   async recomputeCase(client: Executor, caseId: string): Promise<ReportPriority> {
     const agg = await client.query<{

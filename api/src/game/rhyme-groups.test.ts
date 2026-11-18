@@ -8,10 +8,7 @@ describe('applyRulings', () => {
     expect(applyRulings('gul', counts(10, 5), [])).toEqual({ perfect: 10, near: 5, ruledOut: 0 });
   });
 
-  /**
-   * Ruling a word out has to take it off the count it was on, or the coverage
-   * page keeps promising a rhyme the game will refuse.
-   */
+  /** Ruling a word out must take it off its count, or the coverage page promises a rhyme the game refuses. */
   it('moves a ruled-out word off its count and reports it', () => {
     // kul is a perfect rhyme for gul by its ending; ruled to none
     expect(applyRulings('gul', counts(10, 5), [['kul', 'none']])).toEqual({
@@ -48,9 +45,8 @@ describe('applyRulings', () => {
   });
 
   /**
-   * The grouped counts and the rulings are computed from different things, so a
-   * curator ruling out more words than a group holds must not produce a
-   * negative count on the page.
+   * Rulings and grouped counts come from different sources, so ruling out more words than a group holds must not
+   * produce a negative count.
    */
   it('never reports a negative count', () => {
     expect(

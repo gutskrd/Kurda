@@ -1,7 +1,6 @@
 /**
- * The sanctions service against real Postgres, where it matters that two
- * transactions meet: changes to one person's sanctions run one after the
- * other, so the enforced columns always match the sanctions in force.
+ * The sanctions service against real Postgres where concurrent transactions meet: changes to one person run in
+ * sequence, so the enforced columns always match the sanctions in force.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

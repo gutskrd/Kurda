@@ -2,10 +2,8 @@ import type { CourseMap, SkillNode, SkillState } from './types';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * The state as a word, for the label a screen reader reads after the title.
- * Lowercase, because it is spoken after a comma — "Silav, girtî" — and a
- * TranslationKey rather than a string, so it cannot reach a screen unless
- * something calls t() on it.
+ * A skill's state, read after its title ("Silav, girtî"), hence lowercase. A key rather than a string so it is
+ * always translated.
  */
 export const STATE_LABEL: Record<SkillState, TranslationKey> = {
   locked: 'coursemap.state.locked',
@@ -15,23 +13,17 @@ export const STATE_LABEL: Record<SkillState, TranslationKey> = {
   decayed: 'coursemap.state.decayed',
 };
 
-/**
- * A flattened map row for a list: a unit header or a skill node (Search
- * lists a course's skills this way).
- */
-export type MapRow = { kind: 'header'; key: string; title: string } | { kind: 'node'; key: string; node: SkillNode };
+/** A unit header or skill row of a flattened map, as Search lists a course. */
+type MapRow = { kind: 'header'; key: string; title: string } | { kind: 'node'; key: string; node: SkillNode };
 
-/**
- * A course as the Learn tab has it: its map, or null when the map could not
- * be loaded — the course stays listed then, saying so, with a way to try again.
- */
+/** A course as the Learn tab holds it; `map` is null when it failed to load, and the course offers a retry. */
 export interface CourseEntry {
-  /** `dialect` as `/courses` lists it ('kurmanji', 'sorani') */
+  /** As `/courses` lists it: 'kurmanji' or 'sorani'. */
   course: { id: string; title: string; dialect?: string };
   map: CourseMap | null;
 }
 
-/** Flatten units→skills into one list (unit headers interleaved). */
+/** Flattens units and skills into one list, with unit headers between. */
 export function flattenMap(map: CourseMap): MapRow[] {
   const rows: MapRow[] = [];
   for (const unit of map.units) {

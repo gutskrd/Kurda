@@ -24,41 +24,29 @@ import { KIND_LABEL, SORT_LABEL, itemsText, kindWithCount } from './format';
 import { pressedDim } from '../theme/motion';
 
 /**
- * The pieces the shop, the inventory and the gift picker find their way with.
+ * The pieces the shop, the inventory and the gift picker share to find things: the search field (the app's
+ * `theme/SearchField`), a row of kinds with counts, an order, a few switches, and one way of drawing an item. What is
+ * searched, sorted and counted is @kurda/shared's (shop-items.ts), as in the browser.
  *
- * Three screens sell, hold and give the same things, and each used to lay
- * them out its own way: the shop as a list under the server's own words
- * (BACKGROUND, ICON, TAG) with no pictures, the inventory as two unlabelled
- * shelves of squares, the gift picker as one long grid. They now share one
- * set of controls — the search field, a row of kinds with how many there are of
- * each, an order, a few switches — and one way of drawing an item, so a
- * background looks like a background and is found under Backgrounds wherever
- * it is. What is searched, sorted and counted is @kurda/shared's
- * (shop-items.ts), the same as the browser's. The search field itself is the
- * app's one (`theme/SearchField`), not a copy kept here.
- *
- * Chips rather than the segmented control: a kind is a word and a count, and
- * four of those do not fit across a phone in German or Dutch without being cut
- * short. A row of chips scrolls instead, starting from the reading side.
+ * Chips rather than the segmented control: four kinds with counts do not fit across a phone in German or Dutch, so the
+ * row scrolls, starting from the reading side.
  */
 
 /** The most that can be typed into a search of items: longer than any item's name, short enough that a slip of the thumb is not searched for. */
 export const SEARCH_MAX = 80;
 
 /**
- * The room a row of chips leaves above and below itself, inside the scroller:
- * a chip is drawn a fingertip tall and answers a finger this much past its
- * top and bottom edges, which the scroller would otherwise cut off.
+ * The room a row of chips leaves above and below itself inside the scroller: a chip answers a finger this far past its
+ * edges, which the scroller would otherwise cut off.
  */
 const CHIP_ROOM = reachRoom((MIN_REACH - MIN_TOUCH_TARGET) / 2);
 
 /** A row of chips that scrolls sideways and starts on the reading side (right, in Soranî and Arabic). */
-function ChipRow({ children, inset = 0, style }: { children: ReactNode; inset?: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+function ChipRow({ children, inset = 0 }: { children: ReactNode; inset?: number }): React.JSX.Element {
   const dir = useDirection();
   const scroller = useRef<ScrollView>(null);
-  // the app mirrors these screens itself (reports/direction.ts): a row laid
-  // out from the right is scrolled to its right end, where it starts — and
-  // kept there as its counts change, unless somebody has scrolled it away
+  // The app mirrors these screens itself (reports/direction.ts): a row laid out from the right is scrolled to its right
+  // end, where it starts, and kept there as counts change unless somebody scrolled it away.
   const mirrored = dir.row === 'row-reverse';
   const geometry = useRef({ content: 0, view: 0, x: 0 });
   return (
@@ -67,8 +55,8 @@ function ChipRow({ children, inset = 0, style }: { children: ReactNode; inset?: 
       horizontal
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      style={[CHIP_ROOM.scroller, style]}
-      // the row runs to the screen's edges and scrolls under them; `inset` lines its first chip up with the text above
+      style={CHIP_ROOM.scroller}
+      // The row runs to the screen's edges and scrolls under them; `inset` lines its first chip up with the text above.
       contentContainerStyle={[styles.chipRow, CHIP_ROOM.content, { flexDirection: dir.row, paddingHorizontal: inset }]}
       onLayout={(e) => {
         geometry.current.view = e.nativeEvent.layout.width;
@@ -92,18 +80,15 @@ function ChipRow({ children, inset = 0, style }: { children: ReactNode; inset?: 
 export interface KindOption<K extends string> {
   key: K;
   label: string;
-  /** how many there are; drawn beside the label */
+  /** How many there are; drawn beside the label. */
   count?: number;
-  /** what a screen reader says, when the label and the count say it badly together */
+  /** What a screen reader says, when the label and the count say it badly together. */
   a11y?: string;
 }
 
 /**
- * One kind at a time: "All 42 · Backgrounds 27 · Icons 14 · Tags 1".
- *
- * A filter is a choice of one (`radio`); where the kinds are separate panels
- * of different things — the inventory, where a background is put on one way
- * and a frame another — they are tabs (`tab`).
+ * One kind at a time: "All 42 · Backgrounds 27 · Icons 14 · Tags 1". A filter is a choice of one (`radio`); where the
+ * kinds are separate panels of different things (the inventory) they are tabs (`tab`).
  */
 export function KindChips<K extends string>({
   options,
@@ -112,22 +97,20 @@ export function KindChips<K extends string>({
   label,
   role = 'radio',
   inset,
-  style,
 }: {
   options: readonly KindOption<K>[];
   value: K;
   onChange: (key: K) => void;
-  /** what the choice is, for a screen reader */
+  /** What the choice is, for a screen reader. */
   label: string;
   role?: 'radio' | 'tab';
-  /** the side padding of a row that runs edge to edge */
+  /** The side padding of a row that runs edge to edge. */
   inset?: number;
-  style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   return (
-    <View accessibilityRole={role === 'tab' ? 'tablist' : 'radiogroup'} accessibilityLabel={label} style={style}>
+    <View accessibilityRole={role === 'tab' ? 'tablist' : 'radiogroup'} accessibilityLabel={label}>
       <ChipRow inset={inset}>
         {options.map((o) => {
           const on = o.key === value;
@@ -137,7 +120,7 @@ export function KindChips<K extends string>({
               onPress={() => onChange(o.key)}
               accessibilityRole={role}
               accessibilityState={role === 'tab' ? { selected: on } : { checked: on }}
-              // react-native-web reads only the aria-* form
+              // React-native-web reads only the aria-* form.
               aria-checked={role === 'radio' ? on : undefined}
               aria-selected={role === 'tab' ? on : undefined}
               accessibilityLabel={o.a11y ?? o.label}
@@ -204,10 +187,8 @@ export function ToggleChip({
 }
 
 /**
- * The order the list is in, as a chip that says it ("Featured") and opens a
- * short menu of the four. A menu rather than four more chips: the order is
- * chosen once and then left, and the row it would need is better spent on
- * the list.
+ * The list's order as a chip that says it ("Featured") and opens a short menu of the four: chosen once and left, so not
+ * worth a row of chips.
  */
 export function SortChip({ value, onChange }: { value: ItemSort; onChange: (sort: ItemSort) => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -230,10 +211,10 @@ export function SortChip({ value, onChange }: { value: ItemSort; onChange: (sort
         <Icon name="chevron-down" size={12} color={colors.textSecondary} />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        {/* the menu is drawn over the screen, not beside the chips, so their row's caps stay behind */}
+        {/* The menu is drawn over the screen, not beside the chips, so their row's caps stay behind. */}
         <ReachReset>
           <View style={styles.menuWrap}>
-            {/* a sibling of the menu, not its parent: a pressable wrapping the options would read as one button */}
+            {/* A sibling of the menu, not its parent: a pressable wrapping the options would read as one button. */}
             <Pressable
               style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
               onPress={() => setOpen(false)}
@@ -330,7 +311,7 @@ export function KindHeading({ kind, count, style }: { kind: ItemCategory; count:
 }
 
 /** The glyph an item without a picture of its own is drawn with. */
-export const KIND_GLYPH: Record<ItemCategory, IconName> = {
+const KIND_GLYPH: Record<ItemCategory, IconName> = {
   background: 'image',
   icon: 'star',
   frame: 'crown',
@@ -339,14 +320,10 @@ export const KIND_GLYPH: Record<ItemCategory, IconName> = {
 };
 
 /**
- * An item's picture, shaped by its kind: a background as the 16:9 picture it
- * is, cropped to fill; an icon whole on a soft square (they are cut-outs, and
- * a circle would clip them); anything without art — the Kurdish tag — as its
- * kind's glyph on the same square, so a row never has a hole in it.
- *
- * Any kind can have a picture: a power-up, a streak freeze or a tag an admin
- * gave one is drawn from it, whole on the square as an icon is. A picture
- * that will not load is drawn as the glyph, as one never given is.
+ * An item's picture, shaped by its kind: a background as its 16:9 picture, cropped; an icon whole on a soft square
+ * (they are cut-outs a circle would clip); anything without art as its kind's glyph on the square, so a row never has a
+ * hole. Any kind can have an admin-given picture, drawn whole on the square; one that fails to load falls back to the
+ * glyph.
  */
 export function ItemArt({
   category,
@@ -355,9 +332,9 @@ export function ItemArt({
   style,
 }: {
   category: string;
-  /** the site path the API sends (`/cosmetics/…`); null when the item has no art */
+  /** The site path the API sends (`/cosmetics/…`); null when the item has no art. */
   path: string | null | undefined;
-  /** in points; left out, the art fills the width it is given (16:9 or square) */
+  /** In points; left out, the art fills the width it is given (16:9 or square). */
   width?: number;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {

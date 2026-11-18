@@ -11,7 +11,7 @@ import { RiddleAnswerScreen } from './RiddleAnswerScreen';
 import { rememberAnswer, rememberList, resetLoreStore } from './store';
 import { ANSWER, HINT, HINT_2, QUESTION, QUESTION_EN, RIDDLES, SPOILERS, card } from './test/fixtures';
 
-// jsdom has no matchMedia, and react-native-web reads the colour scheme and Reduce Motion through it
+// Jsdom has no matchMedia, and react-native-web reads the colour scheme and Reduce Motion through it.
 vi.hoisted(() => {
   window.matchMedia ??= ((media: string) => ({
     matches: false,
@@ -33,9 +33,8 @@ vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 
 /**
- * A server that sends a hint, the answer and the explanation only from the
- * calls meant to: the hint route, a right guess and a reveal. The list and
- * the riddle's page are what the API sends for them, and nothing more.
+ * A server that sends a hint, the answer and the explanation only from the calls meant to (the hint route, a right
+ * guess, a reveal); the list and the riddle's page carry only what the API sends.
  */
 function server(extra: Parameters<typeof fakeClient>[0] = {}) {
   return fakeClient({
@@ -68,7 +67,7 @@ describe('nothing spoils a riddle before it is asked for', () => {
     testAuth.client = client;
     renderWithProviders(<RiddlesScreen dialect="kmr" onExit={() => undefined} />);
     await screen.findByTestId('riddle-daily');
-    // the translations too, which a reader may turn on
+    // The translations too, which a reader may turn on.
     fireEvent.click(screen.getByRole('switch', { name: 'Show translations' }));
     await screen.findAllByText(QUESTION_EN);
     for (const spoiler of SPOILERS) {
@@ -85,7 +84,7 @@ describe('nothing spoils a riddle before it is asked for', () => {
       expect(pageText()).not.toContain(spoiler);
       expect(pageMarkup()).not.toContain(spoiler);
     }
-    // read only: no hint, guess or reveal was asked for on anyone’s behalf
+    // Read only: no hint, guess or reveal was asked for on anyone's behalf.
     expect(posts(client)).toEqual([]);
     expect(client.calls.map((c) => c.path)).toEqual(['/riddles?dialect=kmr', '/riddles/kmr-mum']);
   });
@@ -151,7 +150,7 @@ describe('a riddle’s page', () => {
     expect(await screen.findByText(HINT.text)).toBeTruthy();
     expect(screen.getByText(HINT.translations.en!)).toBeTruthy();
     expect(screen.queryByText(HINT_2.text)).toBeNull();
-    // a hint halves what the solve pays, and says so
+    // A hint halves what the solve pays, and says so.
     expect(screen.getByText('Solve it for 2 XP.')).toBeTruthy();
     expect(posts(client)).toEqual([{ method: 'POST', path: '/riddles/kmr-mum/hint', body: { index: 0 } }]);
     fireEvent.click(screen.getByRole('button', { name: 'Take a hint (2 of 2)' }));
@@ -253,7 +252,7 @@ describe('a riddle’s answer', () => {
     expect(screen.getByText('Once lit, it burns down and grows shorter.')).toBeTruthy();
     expect(screen.getByText('A riddle as it is told in Behdînan.')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Mamikên gundê me' })).toBeTruthy();
-    // the next one not solved or seen: the hard one, begun
+    // The next one not solved or seen: the hard one, begun.
     fireEvent.click(screen.getByTestId('riddle-next'));
     expect(navigation.replace).toHaveBeenCalledWith('Riddle', { slug: 'kmr-ezman' });
   });

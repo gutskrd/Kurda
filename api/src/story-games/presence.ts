@@ -12,20 +12,15 @@ export interface PresenceOptions {
 }
 
 /**
- * Who is still at the game: every request a member makes refreshes them here,
- * in memory, and — at most every 15 s — in `story_game_players.last_seen_at`,
- * so another instance (or this one after a restart) can tell too.
+ * Who is still at the game. Every member request refreshes them in memory and, at most every 15 s, in
+ * `story_game_players.last_seen_at` so other instances (or this one after a restart) can tell.
  *
- * Presence is why a closed tab cannot stall a game. Someone not heard from for
- * PRESENCE_TIMEOUT_SECONDS is away: not waited for while reading, answering or
- * continuing, not counted towards starting, and — when it is the host — not
- * holding the host controls. Clients poll at least every 20 s, so a present
- * player is never mistaken for an away one. Coming back is just another
- * request: they are present again, seat and score as they were.
+ * Presence is why a closed tab cannot stall a game: someone silent for PRESENCE_TIMEOUT_SECONDS is away (not waited
+ * for, not counted toward starting, and not holding host controls). Clients poll at least every 20 s, so a present
+ * player never looks away. Any request brings them back with seat and score intact.
  *
- * Right after a process starts this instance has heard from nobody, and the
- * database copy may be up to 15 s old; for the first PRESENCE_TIMEOUT_SECONDS
- * everyone counts as present, rather than everyone as away.
+ * Right after start-up this instance has heard from nobody and the database copy may be 15 s old, so for the first
+ * PRESENCE_TIMEOUT_SECONDS everyone counts as present.
  */
 export class Presence {
   private readonly seen = new Map<string, Map<string, number>>();
@@ -43,8 +38,8 @@ export class Presence {
   }
 
   /**
-   * Record a request from a member. Returns whether the database copy is due
-   * a write (the caller writes it), and whether they had been away until now.
+   * Record a request from a member. Returns whether the database copy is due a write (the caller writes it) and whether
+   * they had been away.
    */
   touch(gameId: string, userId: string, dbSeenAt: Date | null = null): { write: boolean; wasAway: boolean } {
     const now = this.now();

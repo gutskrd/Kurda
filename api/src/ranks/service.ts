@@ -106,16 +106,12 @@ export interface StartedFrom {
 }
 
 /**
- * Game Ranks (contract-4 §R): Rated or Friendly per game, decided at the
- * start; the rating applied when a rated game finishes, in the game's own
- * transaction; leaving and its cooldown; and every read the apps make — your
- * ranks, a result's reason line, the lobby's expected gains, the boards.
+ * Game Ranks (contract-4 §R): Rated or Friendly per game, decided at the start; ratings applied in the finishing game's
+ * own transaction; leaves and cooldowns; and the app reads (ranks, result reasons, expected gains, boards).
  *
- * The games call in at four moments (each inside their own transaction, with
- * the game row locked): `defaultRated` and `rememberChoice` when a lobby is
- * made or its badge changed, `decideAtStart` when it starts, `recordLeave`
- * when a player leaves a started game, and `finish` when it ends. The maths
- * is engine.ts; the seasons, admin tools and replay are next to this file.
+ * Games call in, inside their own transaction with the game row locked: `defaultRated` and `rememberChoice` when a
+ * lobby is made or its badge changes, `decideAtStart` at the start, `recordLeave` when a player leaves a started game,
+ * and `finish` at the end. The maths is in engine.ts; seasons, admin tools and replay sit beside this file.
  */
 export class RankService {
   readonly events: RankEvents;
@@ -137,9 +133,8 @@ export class RankService {
   // the badge: Rated or Friendly
 
   /**
-   * The badge a new lobby gets when the host did not say: their last choice in
-   * this game; with none yet, Friendly for a game started from a chat or among
-   * friends, Rated for one opened to everyone.
+   * The badge a new lobby gets when the host did not choose: their last choice in this game, else Friendly from a chat
+   * or among friends and Rated when open to everyone.
    */
   async defaultRated(db: Executor, hostId: string, game: RankedGame, from: StartedFrom): Promise<boolean> {
     const pref = await db.query<{ rated: boolean }>(`SELECT rated FROM rank_preferences WHERE user_id = $1 AND game = $2`, [
@@ -163,12 +158,10 @@ export class RankService {
   // the start
 
   /**
-   * Decide at the start whether a game the host set to Rated counts (R2):
-   * two or more players, every one with a confirmed email and a birth month,
-   * none restricted or on a leave cooldown, and the same players not past
-   * their rated games together for today. A game that counts is recorded,
-   * with its players and weight, for its finish. Returns what to store in the
-   * game's `rated_state`. Call inside the transaction that starts the game.
+   * Decide at the start whether a game set to Rated counts (R2): two or more players, each with a confirmed email and a
+   * birth month, none restricted or on a leave cooldown, and the same players under today's cap on rated games
+   * together. A counting game is recorded with its players and weight. Returns the game's `rated_state`; call inside
+   * the transaction that starts the game.
    */
   async decideAtStart(
     client: pg.PoolClient,
@@ -272,9 +265,8 @@ export class RankService {
   }
 
   /**
-   * For each pair of `userIds`, how many rated games of this game they played
-   * together in the last 24 h (key `lo:hi`; pairs with none are 0). Voided
-   * games, and the game being decided, do not count.
+   * How many rated games of this game each pair of `userIds` played together in the last 24 h (key `lo:hi`, 0 when
+   * none). Voided games and the game being decided do not count.
    */
   private async pairCounts(
     db: Executor,
@@ -305,12 +297,10 @@ export class RankService {
   // leaving
 
   /**
-   * A player left a started game. In a game that counts it is last place (at
-   * the finish) and a step on the leave ladder (R3): the second leave within
-   * 24 h of the one before brings a 10-minute rated cooldown, then 30 minutes,
-   * then 2 hours; 24 h without one starts the ladder again. Anything else — a
-   * friendly game, a player already finished — is not a leave. Call inside
-   * the game's transaction.
+   * A player left a started game. In a counting game that means last place at the finish and a step on the leave ladder
+   * (R3): a second leave within 24 h of the previous one brings a 10-minute rated cooldown, then 30 minutes, then 2
+   * hours; 24 h without one resets the ladder. Anything else (a friendly game, a player already finished) is not a
+   * leave. Call inside the game's transaction.
    */
   async recordLeave(client: Executor, game: RankedGame, gameRef: string, userId: string): Promise<void> {
     const at = this.now();
@@ -338,10 +328,8 @@ export class RankService {
   // the finish
 
   /**
-   * A finished game that did not count (called off, too few left: its rules'
-   * `counted`): closed as void without rating anyone, so it reads as settled
-   * rather than waiting for ever. In the transaction that finished it; does
-   * nothing for a game already settled or voided.
+   * Close a finished game that did not count (called off, too few left) as void without rating anyone, so it reads as
+   * settled. Call in the finishing transaction; no-op for a game already settled or voided.
    */
   async closeUncounted(client: Executor, game: RankedGame, gameRef: string): Promise<void> {
     await client.query(
@@ -351,12 +339,10 @@ export class RankService {
   }
 
   /**
-   * Apply a finished game's ratings, in the transaction that finished it.
-   * `places` is the game's own result (1 = first, equal places tie) for
-   * everyone still in it; a player who left is last whatever it says, and one
-   * the host removed (absent from `places`) is not rated. Does nothing for a
-   * game that did not count, or twice. The rest of the API hears of it after
-   * the commit (`events`).
+   * Apply a finished game's ratings in the finishing transaction. `places` is the game's own result (1 = first, equal
+   * places tie) for everyone still in it; a leaver is last regardless, and a player the host removed (absent from
+   * `places`) is not rated. No-op for a game that did not count or was already applied. Listeners hear of it after the
+   * commit (`events`).
    */
   async finish(
     client: pg.PoolClient,
@@ -478,11 +464,9 @@ export class RankService {
   }
 
   /**
-   * The signals behind the admin's "suspicious pairs" (R3): games together,
-   * who won, the busiest 24 h, and a shared device or network — by the same
-   * rules as the moderators' linked accounts (net/evidence.ts), looked up again
-   * each time the pair plays, so the flags follow what is true now. Stored,
-   * never acted on by themselves.
+   * The signals behind the admin's suspicious pairs (R3): games together, who won, the busiest 24 h, and a shared
+   * device or network by the moderators' linked-account rules (net/evidence.ts). Looked up afresh each time the pair
+   * plays and stored; never acted on by themselves.
    */
   private async recordPairs(client: Executor, game: RankedGame, outcomes: readonly RateOutcome[], at: Date): Promise<void> {
     const sorted = [...outcomes].sort((a, b) => (a.userId < b.userId ? -1 : 1));
@@ -598,8 +582,8 @@ export class RankService {
   }
 
   /**
-   * A standing as of now, without writing: a fresh one before the first game,
-   * and one still in an earlier season as the season job will roll it.
+   * A standing as of now, without writing: fresh before the first game, and rolled forward as the season job would for
+   * one still in an earlier season.
    */
   private async currentState(db: Executor, userId: string, game: RankedGame, at: Date): Promise<PlayerState> {
     return (await this.currentStates(db, [userId], game, at)).get(userId)!;
@@ -624,18 +608,16 @@ export class RankService {
   }
 
   /**
-   * Stêrk (R4): Lûtke I, 30 rated games, one in the last 14 days, and a place
-   * in the top 1% (at least the top 20) of the game's active rated players —
-   * judged only once the game has FEW_PLAYERS of them.
+   * Stêrk (R4): Lûtke I, 30 rated games, one in the last 14 days, and a top-1% place (at least top 20) among the game's
+   * active rated players, judged only once the game has FEW_PLAYERS of them.
    */
   private async isSterk(db: Executor, game: RankedGame, state: PlayerState, at: Date): Promise<boolean> {
     return (await this.sterkAmong(db, game, [state], at))[0]!;
   }
 
   /**
-   * `isSterk` for each of these standings in one game, in their order: the
-   * game's active rated players are counted once, with how many are above
-   * each of them, in one query (none when nobody passes the other rules).
+   * `isSterk` for each standing in one game, in order, with one query for the active-player counts (skipped when nobody
+   * passes the other rules).
    */
   private async sterkAmong(db: Executor, game: RankedGame, states: readonly PlayerState[], at: Date): Promise<boolean[]> {
     const points = states.map((s) => pointsOf(s.mu, s.sigma));
@@ -673,9 +655,8 @@ export class RankService {
   // reading: a result
 
   /**
-   * `GET /ranks/results/:game/:ref`: what a finished game did to the
-   * viewer's rank and why, in one line. Null when the viewer was not in it
-   * (the route answers 404, as for a game that does not exist).
+   * `GET /ranks/results/:game/:ref`: what a finished game did to the viewer's rank and why. Null when the viewer was
+   * not in it (the route answers 404).
    */
   async result(viewerId: string, game: RankedGame, gameRef: string): Promise<RankResult | null> {
     if (!(await isInGame(this.pool, game, gameRef, viewerId))) return null;
@@ -688,8 +669,7 @@ export class RankService {
         state_before: StoredState;
         state_after: StoredState;
       }>(
-        // the event keeps the weight this player's change was applied with;
-        // the game keeps its repeat-opponent damping, so the two can be told apart
+        // The event keeps this player's applied weight; the game keeps its repeat-opponent damping, so the two can be told apart.
         `SELECT e.reason, e.weight, g.weight AS damping, e.voided_at, e.state_before, e.state_after
            FROM rating_events e
            LEFT JOIN rated_games g ON g.game = e.game AND g.game_ref = e.game_ref
@@ -723,11 +703,8 @@ export class RankService {
   // reading: the lobby's expected gains
 
   /**
-   * `GET /ranks/expected/:game/:lobbyId`: the chess.com line in the lobby —
-   * per opponent, by seat, roughly what a win and a loss would do to your
-   * points, from the ratings as they are now; and whether the game would
-   * count if it started now, and if not why ("This game is friendly: …").
-   * Members only (null otherwise).
+   * `GET /ranks/expected/:game/:lobbyId`: per opponent by seat, roughly what a win and a loss would do to your points
+   * now, and whether the game would count if it started now (and if not, why). Members only; null otherwise.
    */
   async expected(viewerId: string, game: RankedGame, lobbyId: string): Promise<ExpectedGains | null> {
     const at = this.now();
@@ -791,11 +768,9 @@ export class RankService {
 
   /**
    * `GET /ranks/boards/:game?scope=`:
-   * - `friends`: you and your friends, minors included (friends see each
-   *   other), not anyone who hid their profile from everyone;
-   * - `top`: the top 50 active players — known adults only, named only when
-   *   their profile is public (everyone else is "Player") — hidden while the
-   *   game has fewer than FEW_PLAYERS active rated players.
+   * - `friends`: you and your friends, minors included, except anyone who hid their profile from everyone.
+   * - `top`: the top 50 active players, known adults only, named only with a public profile (else "Player"); hidden
+   *   while the game has fewer than FEW_PLAYERS active rated players.
    * Your own place comes back to you alone, in `me`.
    */
   async board(viewerId: string, game: RankedGame, scope: RankBoardScope): Promise<RankBoard> {
@@ -910,10 +885,9 @@ export class RankService {
   // reading: someone's profile
 
   /**
-   * The ranks someone's profile shows (the profile's own visibility rules
-   * decide whether it is shown at all): per game played, or carried over from
-   * the old Elo, the tier now — or "Resting" after 28 days without a rated
-   * game, to anyone but its owner — and the best this season and ever.
+   * The ranks a profile shows (the profile's visibility rules decide whether at all): per game played or carried over
+   * from the old Elo, the current tier ("Resting" to others after 28 days without a rated game), and the best this
+   * season and ever.
    */
   async profileRanks(userId: string, viewerIsOwner: boolean): Promise<ProfileRank[]> {
     const at = this.now();

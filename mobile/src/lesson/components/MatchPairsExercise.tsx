@@ -19,34 +19,28 @@ interface Props {
   state: MatchState;
   onChange: (state: MatchState) => void;
   disabled: boolean;
-  /** how the pairs were graded, once they have been: they pop, or shake once */
+  /** How the pairs were graded, once they have been: they pop, or shake once. */
   verdict?: 'right' | 'wrong' | null;
 }
 
-/** How long a pair just tried shows what it was before it settles: spent when right, back to waiting when not. */
+/** How long a just-tried pair shows its result before settling: spent when right, waiting again when wrong. */
 export const PAIR_FLASH_MS = { right: 650, wrong: 550 } as const;
 
-/** A pair just tried, still showing whether it was one. */
+/** A just-tried pair, still showing its result. */
 interface Flash extends MatchPair {
   id: number;
-  /** a right pair, made; else one tried and not made */
+  /** A correct pair, made; otherwise one tried and not made. */
   made: boolean;
 }
 
 /**
- * Tap a Kurdish card and its meaning — or the meaning first: two columns of
- * the lesson's cream cards, the Kurdish in the display face. A Kurdish card
- * with a recording says it as it is tapped, hearing the word while deciding
- * what it means, as the website's cards do.
+ * Match Kurdish cards with their meanings, tapping either side first. A Kurdish card with a recording plays it when
+ * tapped, as on the website.
  *
- * When the server says which card pairs with which (`pairOf`), each pair is
- * answered as it is made: a right one flashes green with a light crossing it
- * and a spark, is felt and heard as right, then settles spent; a wrong one
- * flashes red and shakes once, is felt as a gentle miss, and both cards wait
- * again. A screen reader hears each. The last pair made sends the answer by
- * itself (the lesson's own doing; there is no Check). From an older server,
- * pairs are made freely and graded together at Check, as they always were:
- * tapping a made pair undoes it.
+ * When the server says which cards pair (`pairOf`), each pair is graded as it is made: right flashes green with a
+ * spark and haptic, then settles spent; wrong flashes red, shakes once and both cards wait again. Screen readers
+ * hear each. The last pair submits by itself. From an older server, pairs are made freely and graded together at
+ * Check, and tapping a made pair undoes it.
  */
 export function MatchPairsExercise({ exercise, state, onChange, disabled, verdict = null }: Props) {
   const { t } = useI18n();
@@ -78,7 +72,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled, verdic
   };
 
   const tap = (side: 'left' | 'right', text: string): void => {
-    // the Kurdish card says itself, unless its pair is already made
+    // The Kurdish card plays itself, unless its pair is already made.
     if (side === 'left' && !isLeftMatched(state, text)) say(exercise.audio?.[text]);
     if (!key) {
       if (side === 'left' && !isLeftMatched(state, text)) haptic('select');
@@ -102,7 +96,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled, verdic
     }
   };
 
-  // the latest try a card was in, while it still shows
+  // The latest try a card was in, while it still shows.
   const shown = (side: 'left' | 'right', text: string): Flash | undefined => {
     for (let i = flashes.length - 1; i >= 0; i--) if ((side === 'left' ? flashes[i]!.left : flashes[i]!.right) === text) return flashes[i];
     return undefined;
@@ -145,10 +139,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled, verdic
   );
 }
 
-/**
- * One player for the cards: a tap loads that card's recording and plays it as
- * soon as it has loaded, and the same card tapped again plays it again.
- */
+/** One player for all cards: a tap loads that card's recording and plays it once loaded; tapping again replays it. */
 function useCardSound(): (url: string | undefined) => void {
   const [wanted, setWanted] = useState<{ url: string; n: number } | null>(null);
   const { source, play } = useAudio(wanted?.url);
@@ -167,9 +158,9 @@ const styles = StyleSheet.create({
   container: { gap: spacing.xl },
   columns: { gap: spacing.md },
   column: { flex: 1, gap: spacing.sm + 2 },
-  // the lesson's cards: 16 round, on a hairline edge
+  // The lesson's cards: 16 round, on a hairline edge.
   card: { minHeight: 60, borderRadius: CARD.radius, borderWidth: CARD.edge },
-  // the Kurdish in the display face the headings are in, its meaning in the reader's own
+  // The Kurdish in the headings' display face, its meaning in the reader's own.
   kurdish: { ...display(typography.sizes.md + 2) },
   meaning: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
 });

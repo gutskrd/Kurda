@@ -1,9 +1,8 @@
 /**
- * Pêşbaziya Peyvan and Pêşbaziya Serwayan lobbies under the rules every online game
- * shares (contract §B2): members only, the join rule, players as seats with
- * names only for friends, leaving and removing, idle lobbies, a battle that
- * cannot hang, the latecomer's answer, prompts in the match's own dialect,
- * and a `play_changed` after every change. Against real Postgres.
+ * Pêşbaziya Peyvan and Pêşbaziya Serwayan lobbies under the shared online-game rules (contract §B2) against real
+ * Postgres: members only, the join rule, seats with names only for friends, leaving and removing, idle lobbies, a
+ * battle that cannot hang, the latecomer's answer, prompts in the match's dialect, and a `play_changed` after every
+ * change.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { LOBBY_IDLE_MINUTES, dictionaryKey, letterKey } from '@kurda/shared';

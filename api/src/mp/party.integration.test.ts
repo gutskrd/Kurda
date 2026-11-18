@@ -1,17 +1,12 @@
 /**
- * Xapînok through the routes, against real Postgres and Redis: a
- * game dealt only from approved cards, what each seat's view may and may not
- * hold (the word never in the impostor's, the impostor in nobody else's),
- * every clue and guess through the chat pipeline's gate and then the game's
- * own checks, places and placement XP, reports by seat with what was typed,
- * where the game is offered, and the admin's vocabulary picker and starter
- * word cards. And what keeps the games fair and safe: a game called off pays
- * nobody, nobody's text reaches the gate for a move that is not theirs, a
- * minor is never seated with someone who is not their friend, a block made
- * during a game parts the pair, and a report must name the lobby's own game.
+ * Xapînok through the routes against real Postgres and Redis: deals only from approved cards, what each seat's view may
+ * hold (the word never in the impostor's, the impostor in nobody else's), clues and guesses through the chat gate then
+ * the game's checks, places and placement XP, reports by seat, where the game is offered, and the admin's vocabulary
+ * picker and starter cards. Also the fairness and safety rules: a called-off game pays nobody, nobody's text reaches
+ * the gate for someone else's move, a minor is only seated with friends, a block during a game parts the pair, and a
+ * report must name the lobby's own game.
  *
- * The games that are no longer part of Hevalo have a suite of their own
- * (retired-games.integration.test.ts).
+ * Retired games have their own suite (retired-games.integration.test.ts).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

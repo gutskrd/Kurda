@@ -1,11 +1,9 @@
 import type { ProverbList, ProverbView, RiddleAnswer, RiddleCard, RiddleHint, RiddleList } from '@kurda/shared';
 
 /**
- * Riddles and proverbs for the lore screens' tests (kept in a `test` folder,
- * whose English is test data rather than copy), in the shapes the server
- * sends (shared lore.ts). The answer, the hint and the explanation are their
- * own values here, kept apart from the cards, so a test can hand them out
- * only from the calls that send them and then look for them anywhere else.
+ * Riddles and proverbs for the lore screens' tests, in the server's shapes (shared lore.ts); kept in a `test` folder,
+ * whose English is test data rather than copy. The answer, hint and explanation are separate values so a test can hand
+ * them out only from the calls that send them and look for them anywhere else.
  */
 
 export const QUESTION = 'Ez dirêj im dema ciwan im, kurt im dema pîr im. Ez çi me?';

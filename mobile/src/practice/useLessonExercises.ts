@@ -4,11 +4,9 @@ import { useAuth } from '../auth/AuthContext';
 import { exercisesOf, type PhoneExercise } from './exercises';
 
 /**
- * The exercises to offer a learner now, in their Kurdish; none until the
- * answer has arrived, or when it cannot be had. `dialect` is null while the
- * screen asking does not know the learner's Kurdish yet: nothing is asked
- * then, so what is listed never changes from one variety's answer to the
- * other's.
+ * The exercises to offer the learner now in their Kurdish; none until the answer arrives or if it fails.
+ * `dialect` is null while the learner's Kurdish is unknown, and nothing is fetched then, so the list never
+ * switches between varieties.
  */
 export function useLessonExercises(dialect: GameDialect | null): PhoneExercise[] {
   const { client } = useAuth();

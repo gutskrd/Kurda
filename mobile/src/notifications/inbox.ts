@@ -1,8 +1,8 @@
-/** Pure notification-inbox helpers (KUR-097) — no React Native. */
+/** Pure notification-inbox helpers, with no React Native. */
 import { isPlayGame, letterNoticeOf, type IncomingInvite, type PlayGame } from '@kurda/shared';
 import type { Translate } from '../api/errors';
 import type { IconName } from '../theme/icon-paths';
-import { socialDeepLink, type SocialDeepLink } from '../reports/deepLinks';
+import { socialDeepLink, str, type SocialDeepLink } from '../reports/deepLinks';
 
 export interface InboxItem {
   id: string;
@@ -20,38 +20,27 @@ export type DeepLink =
   | { screen: 'Notifications' }
   | { screen: 'Profile'; params: { userId: string } }
   | { screen: 'Chat'; params: { userId: string; username: string } }
-  /** an invite to play: accepted on the way, into the game's lobby */
+  /** An invite to play: accepted on the way, into the game's lobby. */
   | { screen: 'PlayInvite'; params: { inviteId: string; game: PlayGame; lobbyId: string } }
-  /** a badge earned (one, or the day's bundle): the badges page */
+  /** A badge earned (one, or the day's bundle): the badges page. */
   | { screen: 'Badges' }
-  /** safe this week, moved up a league, a Pêla week: the league */
+  /** Safe this week, moved up a league, a Pêla week: the league. */
   | { screen: 'League' }
-  /** someone asked to come back to a group you run: the requests themselves, waiting on an answer */
+  /** Someone asked to come back to a group you run: the requests themselves, waiting on an answer. */
   | { screen: 'GroupRequests'; params: { groupId: string } }
   /**
-   * a bird came to your window, or your own came home with an answer: the
-   * window, naming the correspondence (`bird`), so its bird lands there before
-   * the letter is read; the window opens that correspondence itself when there
-   * is nothing of it to land. Without a correspondence, just the window.
+   * A bird came to your window, or yours came home with an answer: the window, naming the correspondence (`bird`) so
+   * its bird lands there before the letter is read; the window opens the correspondence itself when there is nothing to
+   * land. Without a correspondence, just the window.
    */
   | { screen: 'Letters'; params?: { bird: string } }
-  // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
+  // Gifts, report outcomes and decisions on your account (reports/deepLinks.ts).
   | SocialDeepLink;
 
-function str(v: unknown): string | null {
-  return typeof v === 'string' && v.length > 0 ? v : null;
-}
-
 /**
- * What a group tells someone about their place in it (api groups): removed,
- * banned, someone asking to come back (to its owner and admins), and the
- * answer to asking. Each carries the group's id.
- *
- * A group is private, so a notice opens it only for someone it is still shown
- * to: a member, or someone banned, who sees where they stand and can ask to
- * come back. Removed, or let back without being put back in, the reader is
- * out of it, and its screen would only say there is no such group — so those
- * two open nothing, and the line itself says an admin can add them again.
+ * What a group tells someone about their place in it: removed, banned, someone asking to come back (to its owner and
+ * admins), and the answer to asking. A group is private, so a notice opens it only for a member or someone banned; the
+ * removed, or the let back but not re-added, would only see "no such group", so those two open nothing.
  */
 const GROUP_NOTICES = ['group_removed', 'group_banned', 'group_request', 'group_request_approved', 'group_request_declined'] as const;
 
@@ -60,24 +49,24 @@ export function isGroupNotice(data: Record<string, unknown>): boolean {
 }
 
 /**
- * Resolve a notification's `data` to a navigation target, or null when there's
- * no valid target — the caller then just marks it read (the friendly fallback
- * for an expired/removed deep-link, rather than navigating into a dead screen).
+ * A notification's `data` as a navigation target, or null when there is no valid one; the caller then just marks it
+ * read rather than opening a dead screen.
  */
 export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null {
-  // gifts, report outcomes and decisions on your account first (reports/deepLinks.ts)
+  // Gifts, report outcomes and decisions on your account first (reports/deepLinks.ts).
   const social = socialDeepLink(data);
   if (social) return social;
   /*
-   * What the server writes today is a `kind` with the ids it needs, rather
-   * than a screen name: the app decides where each kind of thing lives.
+   * The server writes a `kind` with the ids it needs rather than a screen name, so the app decides where each thing
+   * lives.
    */
   if (data.kind === 'play_invite') {
     const inviteId = str(data.inviteId);
     const lobbyId = str(data.lobbyId);
     return inviteId && lobbyId && isPlayGame(data.game) ? { screen: 'PlayInvite', params: { inviteId, game: data.game, lobbyId } } : null;
   }
-  // a group, about one's place in it: the requests waiting on an answer, or the group itself while it is still shown to them
+  // A group, about one's place in it: the requests waiting on an answer, or the group itself while it is still shown to
+  // them.
   if (isGroupNotice(data)) {
     const groupId = str(data.groupId);
     if (!groupId) return null;
@@ -86,11 +75,11 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
     if (data.kind === 'group_removed' || letBackOnly) return null;
     return { screen: 'GroupThread', params: { groupId, name: str(data.groupName) ?? '' } };
   }
-  // a letter: to the window, with its bird named, rather than straight into the correspondence, where reading it
-  // first used to take its landing away; an id that is not one is never followed
+  // A letter goes to the window with its bird named, rather than straight into the correspondence, so the bird still
+  // lands; an invalid id is never followed.
   const letter = letterNoticeOf(data);
   if (letter) return letter.threadId ? { screen: 'Letters', params: { bird: letter.threadId } } : { screen: 'Letters' };
-  // progress (contract 4): badges and the weekly league
+  // Progress: badges and the weekly league.
   if (data.kind === 'badge') return { screen: 'Badges' };
   if (data.kind === 'league_safe' || data.kind === 'league_promotion' || data.kind === 'league_trophy') return { screen: 'League' };
   switch (data.screen) {
@@ -122,9 +111,8 @@ export type NoticeGroup = 'today' | 'week' | 'earlier';
 const DAY_MS = 86_400_000;
 
 /**
- * Which stretch a notification falls in: today by the reader's own calendar
- * (not the last 24 hours, which would put last night's under "Today"), this
- * week for the six days before that, and earlier for the rest.
+ * Which stretch a notification falls in: today by the reader's calendar (not the last 24 hours, which would put last
+ * night under "Today"), this week for the six days before, and earlier for the rest.
  */
 export function noticeGroup(iso: string, now: number = Date.now()): NoticeGroup {
   const at = Date.parse(iso);
@@ -134,10 +122,8 @@ export function noticeGroup(iso: string, now: number = Date.now()): NoticeGroup 
 }
 
 /**
- * The list in its stretches, newest first within each, skipping a stretch
- * with nothing in it. The server already sends them newest first; sorting
- * again keeps one that arrives out of order from landing under the wrong
- * heading.
+ * The list in its stretches, newest first within each, skipping empty ones. Sorting again keeps one that arrives out of
+ * order from landing under the wrong heading.
  */
 export function groupNotices<T extends Pick<InboxItem, 'createdAt'>>(items: readonly T[], now: number = Date.now()): Array<{ key: NoticeGroup; items: T[] }> {
   const order: NoticeGroup[] = ['today', 'week', 'earlier'];
@@ -147,11 +133,7 @@ export function groupNotices<T extends Pick<InboxItem, 'createdAt'>>(items: read
     .filter((g) => g.items.length > 0);
 }
 
-/**
- * When, quietly and in the reader's words: "just now", "5m ago", "3h ago",
- * "2d ago", and past a week the date itself, which by then says more than a
- * count of days.
- */
+/** When, quietly and in the reader's words: "just now", "5m ago", "3h ago", "2d ago", and the date past a week. */
 export function noticeTime(iso: string, t: Translate, locale: string, now: number = Date.now()): string {
   const at = Date.parse(iso);
   if (Number.isNaN(at)) return '';
@@ -165,17 +147,14 @@ export function noticeTime(iso: string, t: Translate, locale: string, now: numbe
   try {
     return new Date(at).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
   } catch {
-    // a locale the runtime does not know falls back to the device's own
+    // A locale the runtime does not know falls back to the device's own.
     return new Date(at).toLocaleDateString();
   }
 }
 
 /**
- * When a notification came, short enough to sit after its words on the same
- * line, as the website says it: "just now", "6m" and "20h" today, a count of
- * days this week, and the date itself for anything earlier, where a count of
- * days stops meaning much. The stretch is the one the list filed it under, so
- * the time and the heading over it never disagree.
+ * When a notification came, short enough to sit after its words, as the website says it: "just now", "6m", "20h" today,
+ * days this week, and the date earlier. The stretch is the list's heading, so time and heading never disagree.
  */
 export function noticeWhen(iso: string, group: NoticeGroup, t: Translate, locale: string, now: number = Date.now()): string {
   const at = Date.parse(iso);
@@ -184,7 +163,7 @@ export function noticeWhen(iso: string, group: NoticeGroup, t: Translate, locale
     try {
       return new Date(at).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
     } catch {
-      // a locale the runtime does not know falls back to the device's own
+      // A locale the runtime does not know falls back to the device's own.
       return new Date(at).toLocaleDateString();
     }
   }
@@ -197,22 +176,15 @@ export function noticeWhen(iso: string, group: NoticeGroup, t: Translate, locale
 }
 
 /**
- * What kind of thing a notification is, as the small picture beside it says:
- * the glyph, and whether it is a reward (drawn in the sun's gold, the one
- * warm colour the app has) or anything else (drawn in the text colour).
- *
- * From what the server writes — `data.kind` first, then the screen a link
- * names, then the category the reader can switch off in settings — so a kind
- * the app has not met yet still gets the picture of its category rather than
- * a blank.
- *
- * An invite to play is a ticket, as it is everywhere else in the app
- * (play/Ticket.tsx): the ticket glyph, in its game's colour.
+ * What kind of thing a notification is, as its small picture says: the glyph, and whether it is a reward (in the sun's
+ * gold) or not (in the text colour). Read from `data.kind`, then the linked screen, then the category, so an unknown
+ * kind still gets its category's picture. An invite is a ticket in its game's colour, as everywhere else
+ * (play/Ticket.tsx).
  */
 export interface NoticeKind {
   icon: IconName;
   reward: boolean;
-  /** an invite's game, whose colour its ticket is drawn in */
+  /** An invite's game, whose colour its ticket is drawn in. */
   game?: PlayGame;
 }
 
@@ -280,7 +252,7 @@ export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): NoticeKi
 /** Somebody a notification is about: whose picture it wears, and whose name is set in bold. */
 export interface NoticeActor {
   name: string;
-  /** what the monogram's colour is keyed on */
+  /** What the monogram's colour is keyed on. */
   id: string;
   photoUrl: string | null;
 }
@@ -294,14 +266,9 @@ export interface NoticeFriend {
 }
 
 /**
- * Who a notification is from, where the app can know it.
- *
- * An invite names its host while it can still be answered — the same list the
- * invite banner holds (`GET /play/invites`) — and a message names its sender.
- * A gift or a letter names its sender only by id, and that is almost always a
- * friend, so it is looked up among them, as the website does. Everything else
- * is from Hevalo, or from somebody the stored data does not name, and wears
- * Hevalo's own mark instead of a guessed face.
+ * Who a notification is from, where the app can know it. An invite names its host while it can still be answered (from
+ * `GET /play/invites`), and a message its sender; a gift or a letter names its sender only by id, almost always a
+ * friend, so it is looked up among them. Everything else wears Hevalo's mark rather than a guessed face.
  */
 export function noticeActor(item: Pick<InboxItem, 'data'>, invites: readonly IncomingInvite[] = [], friends: readonly NoticeFriend[] = []): NoticeActor | null {
   const { data } = item;
@@ -320,10 +287,8 @@ export function noticeActor(item: Pick<InboxItem, 'data'>, invites: readonly Inc
 }
 
 /**
- * A line with one name in it, cut so the name can be set in bold: the text
- * before it, the name, and the text after. The whole line as `before` when
- * the name is not in it — a translation that declines the name, or a line
- * that never had it.
+ * A line with one name in it, split so the name can be bold: the text before, the name, the text after. The whole line
+ * is `before` when the name is not in it (a translation that declines the name).
  */
 export function splitName(text: string, name: string | null | undefined): { before: string; name: string; after: string } {
   const at = name ? text.indexOf(name) : -1;

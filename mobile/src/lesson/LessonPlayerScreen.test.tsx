@@ -4,16 +4,16 @@ vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
-// the lesson's end may offer reminders (push/ReminderOffer.tsx)
+// The lesson's end may offer reminders (push/ReminderOffer.tsx).
 vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
-// the phone's recorder, as Metro picks it on iOS and Android
+// The phone's recorder, as Metro picks it on iOS and Android.
 vi.mock('./useRecorder', () => import('./useRecorder.native'));
-// Android's back, pressed by the test (navigation/testing/hardwareBack)
+// Android's back, pressed by the test (navigation/testing/hardwareBack).
 vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
 vi.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn(), addListener: () => () => undefined, isFocused: () => true }),
@@ -63,7 +63,7 @@ const results: SessionResults = {
 const serverDown: ApiResult<never> = { ok: false, error: { kind: 'server', message: 'unavailable', status: 503 } };
 const standing = { 'GET /me': ok({ user: { skipSpeaking: false } }), 'GET /me/daily-goal': ok({ completed: false }) };
 
-/** A route that answers from a list, one reply per call, the last one for ever after. */
+/** A route answering from a list, one reply per call, repeating the last. */
 function inTurn<T>(...replies: Array<ApiResult<T>>): () => ApiResult<T> {
   let i = 0;
   return () => replies[Math.min(i++, replies.length - 1)]!;
@@ -86,7 +86,7 @@ describe('a lesson that cannot reach the server', () => {
     expect(screen.queryByText('You’re offline — tap to retry')).toBeNull();
 
     fireEvent.click(stalled);
-    // the verdict, and its way on — not the same stalled bar again
+    // The verdict and its way on, not the stalled bar again.
     expect(await screen.findByRole('button', { name: 'Continue' })).toBeTruthy();
     expect(screen.queryByText('That didn’t go through — tap to try again')).toBeNull();
   });
@@ -102,16 +102,16 @@ describe('a lesson that cannot reach the server', () => {
     await answerFirst();
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
 
-    // a way on and a way out, rather than "Tallying results…" for ever
+    // A way on and a way out, rather than "Tallying results…" forever.
     expect(await screen.findByText('Your answers are saved, but the results didn’t come through.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    // every first answer right and nothing put off
+    // Every first answer right and nothing put off.
     expect(await screen.findByText('Perfect lesson!')).toBeTruthy();
     expect(onExit).not.toHaveBeenCalled();
   });
 
-  // a full-screen modal with no header: while the lesson is on its way, the ✕ is the way out
+  // A headerless full-screen modal: while loading, the ✕ is the only way out.
   it('can be closed while it is still loading', async () => {
     testAuth.client = fakeClient({ ...standing, 'GET /lessons/l1/session': () => new Promise<ApiResult<never>>(() => undefined) });
     const onExit = vi.fn();
@@ -153,7 +153,7 @@ describe('the lesson’s name', () => {
     ],
   };
 
-  // read from the course's map beside the session, and written over the question, which keeps its place as the heading
+  // Read from the course map beside the session and shown over the question, which stays the heading.
   it('is written over each question, from the course the lesson was opened from', async () => {
     testAuth.client = fakeClient({ ...standing, 'GET /lessons/l1/session': ok(view), 'GET /courses/c1/map': ok(map) });
     renderWithProviders(<LessonPlayerScreen lessonId="l1" courseId="c1" onExit={() => undefined} />);
@@ -176,7 +176,6 @@ describe('the lesson’s name', () => {
 });
 
 describe('a run of right answers', () => {
-  // the chime climbs with each one, and from the third the banner says how many
   it('is heard climbing and, from the third, named in the banner', async () => {
     resetSounds();
     const heard: string[] = [];
@@ -189,7 +188,7 @@ describe('a run of right answers', () => {
       testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }) });
       renderWithProviders(<SessionPlayer view={three} paths={paths} onExit={() => undefined} />);
       for (let n = 1; n <= 3; n++) {
-        // seconds apart for a person; here, faster than the sounds' pacing allows
+        // A person answers seconds apart; here it is faster than the sounds' pacing allows.
         resetSounds();
         fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
         fireEvent.click(screen.getByRole('button', { name: 'Check' }));
@@ -216,10 +215,7 @@ describe('the way out of a lesson', () => {
     await waitFor(() => expect(onExit).toHaveBeenCalled());
   });
 
-  /*
-   * Once something is answered, the ✕ asks first — saying how far the lesson
-   * has come and that the answers are kept — and staying is the first choice.
-   */
+  // The ✕ asks once something is answered, saying how far the lesson has come and that answers are kept; staying is the first choice.
   it('asks once something is answered, and keeping going keeps the lesson', async () => {
     testAuth.client = fakeClient(standing);
     const onExit = vi.fn();
@@ -240,10 +236,6 @@ describe('the way out of a lesson', () => {
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 
-  /*
-   * Android's back (the button, or the swipe in from the edge) is the ✕ as
-   * well: it goes at once before anything is answered, and asks after.
-   */
   it('takes Android’s back through the same question once something is answered', async () => {
     testAuth.client = fakeClient(standing);
     const onExit = vi.fn();
@@ -312,7 +304,7 @@ describe('a conversation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     expect(await screen.findByRole('button', { name: 'Continue' })).toBeTruthy();
     expect(client.calls.find((c) => c.path === '/sessions/s1/answers')?.body).toEqual({ exerciseId: 'cv', answer: { choice: 0 } });
-    // the right one is marked where it was asked, and named in the banner
+    // The right one is marked where it was asked, and named in the banner.
     expect(screen.getByRole('radio', { name: 'Çay, Correct' })).toBeTruthy();
     expect(screen.getByText('Not quite')).toBeTruthy();
   });
@@ -336,7 +328,7 @@ describe('one speaking exercise after another', () => {
     await screen.findByRole('button', { name: 'Stop recording' });
     act(() => mic.recorder!.run(2000));
 
-    // put off for the rest of the lesson, then brought back
+    // Put off for the rest of the lesson, then brought back.
     fireEvent.click(screen.getByRole('button', { name: 'Can’t do this now — skip' }));
     expect(await screen.findByText('No more speaking in this lesson')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
@@ -361,16 +353,16 @@ describe('one speaking exercise after another', () => {
     renderWithProviders(<SessionPlayer view={twoToSay} paths={paths} onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Start recording' }));
     expect(await screen.findByText(/The microphone is off for Hevalo/)).toBeTruthy();
-    // no button is left busy waiting for an answer that will not come: speaking is put off from the footer
+    // No button is left waiting for an answer that will not come; speaking is put off from the footer.
     for (const button of screen.getAllByRole('button')) expect(button.getAttribute('aria-busy'), button.textContent ?? '').not.toBe('true');
     expect(screen.queryByRole('button', { name: 'Start recording' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Can’t do this now — skip' }));
 
-    // the next question is asked and answered as ever, and the lesson is added up
+    // The next question is answered as usual, and the lesson is totalled.
     await answerFirst();
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('button', { name: 'Done' })).toBeTruthy();
-    // the speaking exercises were passed over, never sent as answers
+    // The speaking exercises were skipped, never sent as answers.
     expect(client.calls.filter((c) => c.path === '/sessions/s1/answers')).toHaveLength(1);
     expect(mic.calls).toEqual(['ask']);
   });
@@ -384,7 +376,6 @@ describe('a typed miss', () => {
     exercises: [{ id: 'tr', type: 'translate', prompt: 'apple', position: 1 }],
   };
 
-  // the answer beside the right one, the letters that differ marked, what kind of slip it was, and the tips one tap away
   it('is set beside the right answer, says only the marks differ, and offers the tips', async () => {
     testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'wrong', accepted: false, correction: 'sêv', duplicate: false }) });
     renderWithProviders(<SessionPlayer view={typed} paths={paths} onExit={() => undefined} />);
@@ -393,11 +384,11 @@ describe('a typed miss', () => {
     expect(await screen.findByText('You wrote')).toBeTruthy();
     expect(screen.getByText('Right answer')).toBeTruthy();
     expect(screen.getByText('Only the marks differ: e → ê')).toBeTruthy();
-    // the differing letter is marked in each, never by colour alone
+    // The differing letter is marked in each, never by colour alone.
     const marked = within(screen.getByTestId('lesson-verdict')).getByText('ê');
     const look = getComputedStyle(marked);
     expect(look.textDecorationLine || look.textDecoration).toMatch(/underline/);
-    // Hevalo, who said it in his bubble, thinks it over with the learner there: the sheet brings in nobody else
+    // Hevalo, who said it in his bubble, reacts there, so the sheet brings in nobody else.
     expect(screen.getByTestId('prompt-scene')).toBeTruthy();
     expect(screen.queryByTestId('lesson-stand-in')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Why? Read the tips' }));
@@ -411,7 +402,6 @@ describe('the verdict', () => {
     exercises: [1, 2, 3, 4, 5].map((n) => ({ id: `mc${n}`, type: 'multiple_choice' as const, prompt: `Water ${n}?`, options: ['av', 'nan'], position: n })),
   };
 
-  // praised in Kurdish, by Hevalo beside the question; a run named over the bar, and held a moment at five
   it('praises a right answer in Kurdish, names the run over the bar, and holds a run of five a moment before going on', async () => {
     const client = fakeClient({
       ...standing,
@@ -426,23 +416,22 @@ describe('the verdict', () => {
       await screen.findByRole('button', { name: 'Continue' });
       if (n === 1) {
         expect(screen.getByText('Well done')).toBeTruthy();
-        // he asked the question, so he reacts beside it: the sheet brings in nobody else
+        // He asked the question, so he reacts beside it and the sheet brings in nobody else.
         expect(screen.getByTestId('prompt-scene')).toBeTruthy();
         expect(screen.queryByTestId('lesson-stand-in')).toBeNull();
       }
       if (n < 5) fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     }
-    // the count is over the bar, and only there
+    // The count is over the bar, and only there.
     expect(screen.getByTestId('lesson-in-a-row').textContent).toBe('5 in a row');
     expect(screen.getAllByText(/in a row/)).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    // the milestone holds the screen between this exercise and the next, and a tap moves on
+    // The milestone holds the screen between exercises, and a tap moves on.
     fireEvent.click(await screen.findByRole('button', { name: '5 in a row!' }));
     expect(screen.queryByRole('button', { name: '5 in a row!' })).toBeNull();
     await waitFor(() => expect(client.calls.some((c) => c.path === '/sessions/s1/complete')).toBe(true));
   });
 
-  // where nobody else is on screen to react, Hevalo comes into the sheet: on the first answer and at a miss, not every time
   it('brings Hevalo into the sheet on the first answer and at a miss where nobody else is on screen', async () => {
     const written: SessionView = {
       ...view,
@@ -461,7 +450,7 @@ describe('the verdict', () => {
       fireEvent.change(await screen.findByLabelText('Your written answer'), { target: { value: 'çay' } });
       fireEvent.click(screen.getByRole('button', { name: 'Check' }));
       await screen.findByRole('button', { name: 'Continue' });
-      // his head in at the window
+      // His head in at the window.
       there.push(screen.queryByTestId('lesson-stand-in')?.querySelector('[data-testid="hevalo-window"]') != null);
       if (n < 3) fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     }
@@ -485,7 +474,7 @@ describe('pairs answered as they are made', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'sêv' }));
     expect(screen.queryByRole('button', { name: 'Check' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'apple' }));
-    // a wrong one first: nothing is sent for it
+    // A wrong pair first: nothing is sent for it.
     fireEvent.click(screen.getByRole('button', { name: 'nan' }));
     fireEvent.click(screen.getByRole('button', { name: 'apple' }));
     expect(client.calls.filter((c) => c.path === '/sessions/s1/answers')).toHaveLength(0);
@@ -598,7 +587,6 @@ describe('listening', () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
-  // the clip is the question: it plays by itself, and "Can't listen now" puts listening off for the rest of the lesson
   it('plays itself, and can be put off for the rest of the lesson and brought back', async () => {
     FakeAudio.made = [];
     vi.stubGlobal('Audio', FakeAudio);
@@ -627,7 +615,7 @@ describe('the results', () => {
       { id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'], position: 2 },
     ],
   };
-  /** a skill of one lesson, as the course map lists it */
+  /** A skill of one lesson, as the course map lists it. */
   const skillOf = (skillId: string, title: string, state: string, lesson: { lessonId: string; title: string; completed: boolean }) => ({
     skillId,
     level: 1,
@@ -660,7 +648,7 @@ describe('the results', () => {
     streak: { current: 4, longest: 4, freezes: 0, lastActiveOn: '2026-10-28', daysLearned: 12, freezeProgress: 2, sessionsPerFreeze: 5 },
   };
 
-  /** answer every turn there is, a miss's second try included */
+  /** Answers every turn, including a miss's second try. */
   async function finish(turns: number): Promise<void> {
     for (let n = 0; n < turns; n++) {
       fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
@@ -669,7 +657,7 @@ describe('the results', () => {
     }
   }
 
-  // the mistakes can be practised at once; the course's next lesson leads while today's goal is still to meet
+  // The mistakes can be practised at once, and the next lesson leads while today's goal is unmet.
   it('offers the next lesson and practising the mistakes, and passes the kept streak on the way', async () => {
     testAuth.client = fakeClient({
       'GET /me': inTurn(
@@ -695,14 +683,14 @@ describe('the results', () => {
     await finish(3);
     expect(await screen.findByText('Lesson complete!')).toBeTruthy();
     expect(screen.getByLabelText('Right first time: 50%, Good practice, 1 of 2')).toBeTruthy();
-    // this sitting, timed from the first exercise shown: three answers in seconds is quick
+    // This sitting, timed from the first exercise shown: three answers in seconds is quick.
     expect(screen.getByLabelText(/^Quick: 0 min \d+ s$/)).toBeTruthy();
     expect(await screen.findByText('19 of 20 XP today')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Next lesson' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Practise these now' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back to the path' })).toBeTruthy();
 
-    // today kept the streak: its moment comes first, then the way on that was chosen
+    // Today kept the streak, so its moment comes first, then the chosen way on.
     fireEvent.click(screen.getByRole('button', { name: 'Practise these now' }));
     expect(await screen.findByRole('heading', { name: '4 day streak' })).toBeTruthy();
     expect(screen.getByLabelText('2 of 5 sessions to your next freeze')).toBeTruthy();
@@ -745,7 +733,6 @@ describe('a lesson opened again', () => {
     ],
   };
 
-  // the phone remembers the second tries it asked, so closing the app does not ask one twice
   it('does not ask a second try again that was asked before the app was closed', async () => {
     localStorage.setItem('hevalo:reasked:resume1', JSON.stringify(['mc']));
     testAuth.client = fakeClient({
@@ -759,7 +746,7 @@ describe('a lesson opened again', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'nan' }));
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
-    // finished: "Water?" is not asked a second time
+    // Finished, with "Water?" not asked a second time.
     expect(await screen.findByRole('button', { name: 'Done' })).toBeTruthy();
     expect(screen.queryByText('Water?')).toBeNull();
     await waitFor(() => expect(localStorage.getItem('hevalo:reasked:resume1')).toBeNull());
@@ -771,7 +758,6 @@ describe('an invite to play', () => {
     return <>{useInvitesQuieted() ? 'invite waits' : 'invite shows'}</>;
   }
 
-  // the lesson is the one thing on the screen; an invite waits, and shows the moment the lesson is left
   it('waits while a lesson is open, and shows once it is closed', async () => {
     testAuth.client = fakeClient(standing);
     const { rerender } = renderWithProviders(

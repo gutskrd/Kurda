@@ -1,7 +1,6 @@
 /**
- * Admin 2FA codes, against real Postgres: each code is good once, and wrong
- * codes lock the second factor rather than letting six digits be guessed by
- * whoever has the password.
+ * Admin 2FA codes against real Postgres: each code works once, and wrong codes lock the second factor so six digits
+ * cannot be guessed.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

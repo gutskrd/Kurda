@@ -38,7 +38,7 @@ const story = (over: Partial<StoryListItem>): StoryListItem => ({
   ...over,
 });
 
-// a short and a long story, and nothing medium: Medium is not offered
+// A short and a long story but no medium one, so Medium is not offered.
 const STORIES = [story({}), story({ id: 's2', slug: 'bajar', title: 'Bajar', length: 'long', level: 2 })];
 
 const created = { id: 'g1', mode: 'duo', status: 'lobby' } as unknown as StoryGameView;
@@ -70,7 +70,7 @@ describe('SetupSheet', () => {
     expect(radios('Length').map((r) => r.getAttribute('aria-label'))).toEqual(['Short', 'Long']);
     expect(checked('Story')).toBe('Surprise me');
     expect(radios('Questions').map((r) => r.getAttribute('aria-label'))).toEqual(['3', '5']);
-    // together, a minute a question until the host picks
+    // Together: a minute a question until the host picks.
     expect(checked('Time per question')).toBe('60 s');
     expect(checked('Text during questions')).toBe('Text visible');
   });
@@ -106,7 +106,7 @@ describe('SetupSheet', () => {
     expect(screen.getByText('Only your friends can join.')).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'Just me' }));
     expect(screen.queryByRole('radiogroup', { name: 'Who can join' })).toBeNull();
-    // alone, nobody to wait for: no timer, unless one is picked
+    // Alone, with nobody to wait for: no timer unless one is picked.
     expect(checked('Time per question')).toBe('No timer');
   });
 
@@ -133,7 +133,7 @@ describe('SetupSheet', () => {
       timerSeconds: 30,
       textDuring: 'hidden',
       access: 'friends',
-      // with a friend: the host's Rated/Friendly choice, Friendly when nothing was ever chosen
+      // With a friend: the host's Rated/Friendly choice, Friendly when never chosen.
       rated: false,
     });
   });
@@ -148,7 +148,7 @@ describe('SetupSheet', () => {
     renderWithProviders(
       <SetupSheet dialect="kurmanci" stories={STORIES} initialMode="duo" onClose={() => undefined} onCreated={() => undefined} />,
     );
-    // starts where the host left it last time (the server remembers)
+    // Starts where the host left it last time, as the server remembers.
     await waitFor(() => expect(screen.getByRole('radio', { name: /^Rated\./ }).getAttribute('aria-checked')).toBe('true'));
     fireEvent.click(screen.getByRole('radio', { name: /^Friendly\./ }));
     fireEvent.click(screen.getByRole('button', { name: 'Create game' }));

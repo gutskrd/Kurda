@@ -16,10 +16,8 @@ import { GREETINGS } from './greetings';
 import { pressedDim } from '../theme/motion';
 
 /**
- * A calm card in the middle of a group chat with nothing in it: the group's
- * picture large, its name, and a line about where the chat stands. Shared by
- * the welcome below and by the card that says where someone who is out of
- * the group stands (Standing.tsx), so the two read as the same place.
+ * A calm card in the middle of an empty group chat: the group's picture large, its name, and a line about the chat.
+ * Shared with the standing card (Standing.tsx), so the two read as the same place.
  */
 export function CalmCard({
   group,
@@ -36,17 +34,16 @@ export function CalmCard({
 }
 
 /**
- * The card itself, around any picture: a group's, or the face of the one
- * friend a new conversation is with (chat/DmWelcome.tsx). `picture` is
- * handed the size the card has room for.
+ * The card itself, around any picture: a group's, or the friend's face in a new conversation (chat/DmWelcome.tsx).
+ * `picture` is handed the size the card has room for.
  */
 export function CalmFrame({ name, picture, children }: { name: string; picture: (size: number) => ReactNode; children: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
-  // a short phone (an SE) keeps the whole card on screen: a smaller picture, less air
+  // A short phone keeps the whole card on screen: a smaller picture, less air.
   const compact = useWindowDimensions().height < 700;
   return (
     <View style={[styles.card, compact && styles.compact, { backgroundColor: colors.surface }]}>
-      {/* the name under it says whose picture it is */}
+      {/* The name under it says whose picture it is. */}
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         {picture(compact ? AVATAR_COMPACT : AVATAR)}
       </View>
@@ -65,16 +62,10 @@ export function CalmLine({ children }: { children: string }): React.JSX.Element 
 }
 
 /**
- * The welcome in an empty group chat.
- *
- * A brand-new chat says it is the start of the group; one the reader cleared
- * for themselves says when, and that new messages will show; one an admin
- * cleared for everyone has its line at the top (ClearedLine) and this under
- * it. Then three greetings in the learner's own Kurdish, one tap to send —
- * not when the reader cannot post (`canGreet`), nor in a chat they only
- * cleared for themselves, where the others may be mid-conversation. The
- * owner or an admin of a group nobody else is in yet is offered
- * to add friends (`onAddFriends`).
+ * The welcome in an empty group chat: that it is the group's start, or when the reader cleared it for themselves. Then
+ * three greetings to send with one tap, except when the reader cannot post (`canGreet`) or only cleared the chat for
+ * themselves, where the others may be mid-conversation. The owner or an admin alone in the group is offered to add
+ * friends (`onAddFriends`).
  */
 export function WelcomeCard({
   group,
@@ -107,10 +98,8 @@ export function WelcomeCard({
 }
 
 /**
- * Three ways to say hello, in the learner's own Kurdish, each sent with one
- * tap: the first word in a new chat is already practice. The same under a
- * group's welcome and under a first conversation with one friend
- * (chat/DmWelcome.tsx); `hint` tells a screen reader where the tap sends it.
+ * Three ways to say hello in the learner's own Kurdish, each sent with one tap. Shared with a first conversation with
+ * one friend (chat/DmWelcome.tsx); `hint` tells a screen reader where the tap sends it.
  */
 export function Greetings({ hint, onGreet }: { hint: string; onGreet: (greeting: string) => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -139,9 +128,8 @@ export function Greetings({ hint, onGreet }: { hint: string; onGreet: (greeting:
 }
 
 /**
- * "Azad cleared the chat · 2h ago", centred at the top of the history, where
- * an admin cleared it for everyone: so nobody wonders where the messages went.
- * "You" for the admin who did it, and "An admin" once that account is gone.
+ * "Azad cleared the chat · 2h ago" at the top of the history, so nobody wonders where the messages went. "You" for the
+ * admin who did it, and "An admin" once that account is gone.
  */
 export function ClearedLine({ by, at, me }: { by: string | null; at: string; me: string }): React.JSX.Element {
   const { colors } = useTheme();

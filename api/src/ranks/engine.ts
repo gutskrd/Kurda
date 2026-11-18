@@ -17,20 +17,16 @@ import {
 } from '@kurda/shared';
 
 /**
- * The rating maths of Game Ranks (contract-4 §R1–R4), pure and deterministic:
- * the same inputs give the same ratings, which is what lets an admin void a
- * game and replay everything after it from history (ranks/replay.ts). All
- * persistence is in the RankService.
+ * The rating maths of Game Ranks (contract-4 §R1–R4), pure and deterministic so an admin's void can replay history
+ * exactly (ranks/admin.ts). Persistence lives in the RankService.
  *
- * OpenSkill's Plackett-Luce model (the `openskill` package, Weng & Lin 2011)
- * ranks every finishing place at once, so a 1v1 and an eight-player game are
- * the same call; equal places are ties. On top of it, the Hevalo rules:
- * - σ grows a little for every idle week before a game (capped), so someone
- *   back after a break moves faster — while nothing they see decays;
- * - a game counts with a weight (repeat-opponent damping, decided when it
- *   started), and a new account moves each opponent by at most half;
- * - a shield holds a player who just reached a tier at its floor for three
- *   games; placement, wins and the season's peak are counted here too.
+ * OpenSkill's Plackett-Luce model (Weng & Lin 2011) rates every finishing place at once, so 1v1 and eight-player games
+ * are the same call; equal places tie. Hevalo's rules on top:
+ * - σ grows a little per idle week before a game (capped), so a returning player moves faster; shown points never
+ *   decay.
+ * - A game counts with a weight (repeat-opponent damping, decided at the start), and a new account moves each opponent
+ *   by at most half.
+ * - A shield holds a player who just reached a tier at its floor for three games.
  */
 
 /** Everything a player's standing in one game is made of, as stored per (user, game). */
@@ -71,9 +67,8 @@ export function freshState(seasonId: string): PlayerState {
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
- * σ after time away: +0.1 per whole idle week, never past the starting σ. It
- * only feeds the maths of the next game (and the lobby's expected gains): the
- * points a resting player shows do not move while they are away.
+ * σ after time away: +0.1 per whole idle week, never past the starting σ. It only feeds the next game's maths (and the
+ * lobby's expected gains); shown points do not move while a player is away.
  */
 export function idleSigma(sigma: number, lastRatedAt: Date | null, at: Date): number {
   if (!lastRatedAt) return sigma;
@@ -82,11 +77,7 @@ export function idleSigma(sigma: number, lastRatedAt: Date | null, at: Date): nu
   return Math.min(START_SIGMA, sigma + IDLE_SIGMA_PER_WEEK * weeks);
 }
 
-/**
- * A new season (R5): σ is raised to at least 4 and μ kept — points dip a
- * little and a good player is back in a few games; the season's counters
- * start again. Placement is not repeated.
- */
+/** A new season (R5): σ raised to at least 4, μ kept, season counters reset. Placement is not repeated. */
 export function seasonReset(state: PlayerState, seasonId: string): PlayerState {
   const sigma = Math.max(state.sigma, SEASON_SIGMA_FLOOR);
   return {
@@ -136,10 +127,7 @@ export interface RateOutcome {
   shieldHeld: boolean;
   /** the weight this player's change was applied with (damping × new-account limit) */
   weight: number;
-  /**
-   * how many tiers above them the strongest opponent they finished ahead of was
-   * (0 when none, while placing, or when that opponent left the game)
-   */
+  /** How many tiers above them the strongest opponent they finished ahead of was (0 when none, while placing, or if that opponent left). */
   beatTierGap: number;
 }
 
@@ -147,9 +135,8 @@ export interface RateOutcome {
 const EVEN_POINTS = 50;
 
 /**
- * The two parts of the weight a change was applied with: the game's
- * repeat-opponent damping, and what is left of it after the new-account limit
- * (the engine multiplies them). Older rows without a weight were full.
+ * The two parts of a change's weight: the game's repeat-opponent damping, and the new-account limit (the engine
+ * multiplies them). Older rows without a weight were full.
  */
 export function weightParts(weight: number | null, damping: number | null): { weight: number; damping: number; newAccountLimit: number } {
   const w = weight ?? 1;
@@ -160,9 +147,8 @@ export function weightParts(weight: number | null, damping: number | null): { we
 }
 
 /**
- * The places the rating uses: leavers share the place after everyone who
- * stayed, and the places are then counted again (1 + how many finished ahead),
- * so whoever is ahead of everyone left in the game is first.
+ * The places the rating uses: leavers share the place after everyone who stayed, then places are recounted as 1 + how
+ * many finished ahead.
  */
 export function effectivePlaces(entries: readonly Pick<GameEntry, 'place' | 'left'>[]): number[] {
   const stayed = entries.filter((e) => !e.left).map((e) => e.place);
@@ -177,8 +163,7 @@ function shownTier(state: PlayerState, points: number): PointsTier | null {
 }
 
 /**
- * Rate one finished game. The order of the outcomes matches `entries`.
- * Needs at least two entries; fewer is not a game and returns nothing.
+ * Rate one finished game; outcomes are in `entries` order. Fewer than two entries is not a game and returns nothing.
  */
 export function rateGame(input: RateInput): RateOutcome[] {
   const { entries, at } = input;
@@ -292,10 +277,7 @@ export function rateGame(input: RateInput): RateOutcome[] {
   });
 }
 
-/**
- * The one plain reason a result is shown with. Strength is judged by the
- * points everyone could see before the game: "a higher-ranked player".
- */
+/** The one plain reason a result is shown with. Strength is judged by the points everyone could see before the game. */
 function reasonFor(r: {
   left: boolean;
   placing: boolean;
@@ -328,10 +310,7 @@ export interface Contender {
   newAccount: boolean;
 }
 
-/**
- * What a win and a loss against one opponent would do to `me`'s points, from
- * the ratings as they are now (chess.com's "Win ≈ +24 · Lose ≈ −8").
- */
+/** What a win and a loss against one opponent would do to `me`'s points, from the current ratings. */
 export function expectedVs(me: Contender, opponent: Contender, weight: number, at: Date): { win: number; lose: number } {
   // a game that would not count changes nothing (and an idle σ is no "loss")
   if (weight <= 0) return { win: 0, lose: 0 };

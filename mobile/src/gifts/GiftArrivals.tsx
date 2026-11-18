@@ -24,19 +24,11 @@ function isGiftEvent(event: UserEvent): event is GiftUserEvent {
 }
 
 /**
- * Gifts as they happen, wherever you are in the app.
- *
- * Takes `gift_received` and `gift_opened` off your own channel and passes them
- * to the open chat (gifts/events.ts), recounts the badge, and — when a gift
- * arrives somewhere other than the chat on screen — shows a banner: "Rojda sent
- * you a gift", Open or Later. Open goes to that chat and unwraps it there. It
- * is a status, not an alert: it does not take focus, and it stays until it is
- * answered rather than vanishing before it can be read.
- *
- * It arrives the way a menu does, growing a little and fading in (a fade
- * alone under Reduce Motion), where it used to be simply there between one
- * frame and the next. Each gift's banner is its own, so a second gift
- * arriving over the first is seen to arrive.
+ * Gifts as they happen, anywhere in the app. Takes `gift_received` and `gift_opened` off your own channel, hands them
+ * to the open chat (gifts/events.ts), recounts the badge and, when a gift arrives anywhere but the chat on screen,
+ * shows a banner ("Rojda sent you a gift", Open or Later); Open goes to that chat and unwraps it there. It is a status,
+ * not an alert: it takes no focus and stays until answered. It arrives growing a little and fading in (a fade alone
+ * under Reduce Motion), each gift's banner its own, so a second gift is seen to arrive.
  */
 export function GiftArrivals(): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
@@ -61,7 +53,7 @@ export function GiftArrivals(): React.JSX.Element | null {
   return <GiftBanner key={banner.giftId} event={banner} onOpen={open} onLater={() => setBanner(null)} />;
 }
 
-export function GiftBanner({
+function GiftBanner({
   event,
   onOpen,
   onLater,
@@ -75,7 +67,7 @@ export function GiftBanner({
   const dir = useDirection();
   const top = useScreenTopInset();
   const text = t('gift.banner.body', { name: event.from.name });
-  // a live region speaks on Android only; VoiceOver is told in words, once
+  // A live region speaks on Android only; VoiceOver is told in words, once.
   useEffect(() => {
     if (Platform.OS !== 'android') AccessibilityInfo.announceForAccessibility?.(text);
   }, [text, event.giftId]);

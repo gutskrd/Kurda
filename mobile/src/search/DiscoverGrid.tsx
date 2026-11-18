@@ -20,16 +20,10 @@ const ASK = 18;
 const GAP = 2;
 
 /**
- * The pictures people have posted lately, three to a row, under the search
- * field before anything is typed: something to look at, and somewhere to go,
- * for somebody who opened Search without a name or a word in mind.
- *
- * A tile is the post's first picture, square; a post with more than one says
- * so in its corner. A tap opens the post. The grid runs to the screen's
- * edges, as pictures do on the wall.
- *
- * `onCount` says how many there turned out to be, so the screen can show its
- * own empty state when there are none and this shows nothing.
+ * Recent picture posts, three to a row under the search field before anything is typed. A tile is the post's
+ * first picture, square, with a corner mark when there are more; a tap opens the post. The grid runs to the
+ * screen's edges. `onCount` reports how many there are, so the screen can show its own empty state when there are
+ * none.
  */
 export function DiscoverGrid({ width, onCount }: { width: number; onCount?: (n: number) => void }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -41,13 +35,13 @@ export function DiscoverGrid({ width, onCount }: { width: number; onCount?: (n: 
   const counted = useRef(onCount);
   counted.current = onCount;
 
-  // asked once, when Search first opens; a pull on the wall is where fresh pictures come from
+  // Asked once, when Search first opens; a pull on the wall is where fresh pictures come from.
   useEffect(() => {
     let active = true;
     void getFeed(client, { section: 'dimen', limit: ASK, offset: 0 }).then((res) => {
       if (!active) return;
       const pictured = res.ok ? (res.data.items ?? []).filter((i) => feedImages(i).length > 0) : [];
-      // three to a row: a short last row reads as a grid that broke off
+      // Three to a row: a short last row reads as a grid that broke off.
       const whole = pictured.length > 3 ? pictured.slice(0, pictured.length - (pictured.length % 3)) : pictured;
       setItems(whole);
       counted.current?.(whole.length);
@@ -120,7 +114,7 @@ const styles = StyleSheet.create({
   title: { ...sectionLabel, paddingHorizontal: spacing.md },
   grid: { flexWrap: 'wrap', gap: GAP },
   fill: { width: '100%', height: '100%' },
-  // in the top corner, with a soft shadow so it reads on a pale picture as on a dark one
+  // In the top corner, with a soft shadow so it reads on a pale picture as on a dark one.
   more: {
     position: 'absolute',
     top: 6,

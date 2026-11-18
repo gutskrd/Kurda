@@ -3,19 +3,15 @@ import type { GameDifficulty, LetterDialect, MultiGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 
 /**
- * Where a multiplayer learning game is offered now (`GET /mp/:game/availability`),
- * on the phone, for a game that answers more than "with friends or not":
- * Who Am I? names the difficulties its identities fill. Per dialect; a
- * game is only offered where it says so, with no "coming soon" anywhere.
- *
- * Read once while the app runs and shared by every screen that asks, as The
- * Last Letter's is (lastletter/availability.ts).
+ * Where a multiplayer learning game is offered now (`GET /mp/:game/availability`), per dialect, for a game that says
+ * more than yes or no: Who Am I? names the difficulties its identities fill. Read once while the app runs and shared by
+ * every screen, as The Last Letter's is (lastletter/availability.ts).
  */
 export interface MpDialectOffer {
   dialect: LetterDialect;
   group: boolean;
   solo: boolean;
-  /** Who Am I?: the difficulties it can be played at */
+  /** Who Am I?: the difficulties it can be played at. */
   difficulties?: GameDifficulty[];
 }
 
@@ -36,7 +32,7 @@ export function useMpAvailability(game: MultiGame, enabled = true): MpDialectOff
     if (!read) {
       read = client.get<{ dialects: MpDialectOffer[] }>(`/mp/${game}/availability`).then((r) => {
         if (r.ok && Array.isArray(r.data?.dialects)) return r.data.dialects;
-        // a failed read is not an answer: asked again next time
+        // A failed read is not an answer: asked again next time.
         cached.delete(game);
         return [];
       });

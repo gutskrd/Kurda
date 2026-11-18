@@ -10,8 +10,8 @@ interface Entry {
 }
 
 /**
- * A dictionary standing in for `dict_entries`, answering the two queries the
- * module makes: by folded key (`= ANY`) and by folded prefix (`LIKE ANY`).
+ * A stand-in for `dict_entries` answering the module's two queries: by folded key (`= ANY`) and by folded prefix (`LIKE
+ * ANY`).
  */
 function dictionary(entries: Entry[]) {
   const folded = (w: string) =>

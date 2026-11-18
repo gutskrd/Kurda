@@ -4,6 +4,7 @@ import { Pressable } from '../theme/Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
+import { GlassCard } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -11,14 +12,9 @@ import { TABLE, TABLE_CLOTH } from './table';
 import { pressedDim } from '../theme/motion';
 
 /**
- * The parts Impostor's screens on the phone are built from, shared by
- * its start (ImpostorStart.tsx), the game on one phone (CouchGame.tsx) and
- * the invite sheet's category choice: the table's cloth, the one gold thing
- * to press, a numbered step's title, and the choices drawn as pictures.
- *
- * A choice among pictures is a radio group with radios in it, as the
- * segmented control is: each says its name and what it is set to, and the
- * chosen one is told by a tick as well as by its colour.
+ * The parts Impostor's screens are built from, also used by Who Am I? and the invite sheet: the table's cloth, a glass
+ * card, the one gold button, a numbered step's title, and choices drawn as pictures. A choice among pictures is a radio
+ * group, as the segmented control is, and the chosen one is marked by a tick as well as by colour.
  */
 
 // ───────────────────────────────────────────────────────────── the table
@@ -32,10 +28,29 @@ export function Cloth({ style, children }: { style?: StyleProp<ViewStyle>; child
   );
 }
 
+/** A glass card whose contents are laid out by `style`: the glass card's own style places the frame, not what is inside. */
+export function Card({ style, children }: { style: StyleProp<ViewStyle>; children: ReactNode }): React.JSX.Element {
+  return (
+    <GlassCard>
+      <View style={style}>{children}</View>
+    </GlassCard>
+  );
+}
+
+/** Names joined as a list the way the reader's language joins them, or with commas where the engine has no list format. */
+export function listed(names: readonly string[], locale: string): string {
+  try {
+    const formats = Intl as unknown as { ListFormat?: new (locale: string, options: { type: 'conjunction' }) => { format(items: readonly string[]): string } };
+    if (formats.ListFormat) return new formats.ListFormat(locale, { type: 'conjunction' }).format(names);
+  } catch {
+    // An older engine has no list format; the commas below are enough.
+  }
+  return names.join(', ');
+}
+
 /**
- * The one thing to press: gold, standing off the screen on its own edge, and
- * going down onto it under the thumb. Nothing else on a screen is this colour
- * and this weight.
+ * The one thing to press: gold, standing off the screen on its own edge and pressing down under the thumb. Nothing else
+ * on a screen has this colour and weight.
  */
 export function GoldButton({
   label,
@@ -50,7 +65,7 @@ export function GoldButton({
   icon?: IconName;
   onPress: () => void;
   testID?: string;
-  /** working on it: the press is taken away, and a screen reader is told */
+  /** Working on it: the press is disabled, and a screen reader is told. */
   busy?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -81,9 +96,8 @@ export function GoldButton({
 }
 
 /**
- * A step of a setup: its number on a disc of the page's ink, and what it asks.
- * The setup is laid out on the app's own cards, off the table, where gold is
- * kept for what is earned; the disc was gold.
+ * A step of a setup: its number on a disc of the page's ink, and what it asks. The setup is on the app's own cards, off
+ * the table, where gold is kept for what is earned.
  */
 export function StepTitle({ n, children }: { n: number; children: string }): React.JSX.Element {
   const { colors } = useTheme();
@@ -104,11 +118,11 @@ export function StepTitle({ n, children }: { n: number; children: string }): Rea
 export interface PictureOption<T extends string> {
   value: T;
   label: string;
-  /** a second, quieter line: what a way to play does, what a category's name means */
+  /** A second, quieter line: what a way to play does, what a category's name means. */
   hint?: string;
-  /** the picture, already drawn */
+  /** The picture, already drawn. */
   art: ReactNode;
-  /** the picture's own colour, which tints the choice */
+  /** The picture's own colour, which tints the choice. */
   tone: string;
 }
 
@@ -168,11 +182,9 @@ export function PictureCards<T extends string>({
 }
 
 /**
- * Many choices known at a glance (the categories): small squares, three to a
- * row, the picture over its name. A long list shows its `first` choices and a
- * button for the rest, and never folds away the one that is chosen. `strip`
- * lays them on one row that scrolls sideways, where a sheet has no room for a
- * grid.
+ * Many choices known at a glance (the categories): small squares, three to a row. A long list shows its `first` choices
+ * and a button for the rest, and never folds away the chosen one. `strip` lays them on one sideways-scrolling row,
+ * where a sheet has no room for a grid.
  */
 export function PictureTiles<T extends string>({
   label,

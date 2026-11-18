@@ -2,22 +2,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactElement } from 'react';
 
 /*
- * The Android letter widget: what it draws for each thing it can show, and
- * how it decides what to show — the token the app left, the feed asked for
- * only when it is due, the picture fetched only when it would change, and
- * the last letter kept for when the phone is offline.
+ * The Android letter widget: what it draws for each state, and how it decides: the app's token, the feed fetched
+ * only when due, the picture only when it would change, and the last letter kept for offline use.
  */
 
 const disk = vi.hoisted(() => ({
   files: new Map<string, string>(),
   keystore: new Map<string, string>(),
-  /** what the server answers a picture download with */
+  /** What the server answers a picture download with. */
   picture: { status: 200, body: 'PNG' },
   downloads: [] as Array<{ url: string; headers: Record<string, string> }>,
 }));
 
 vi.mock('react-native', () => import('react-native-web'));
-// the widget library's pieces, by the names its tree builder reads them by: what is drawn is checked here, not how the library draws it
+// The widget library's components by the names its tree builder reads; this checks what is drawn, not how the library draws it.
 vi.mock('react-native-android-widget', () => {
   const piece = (name: string) => Object.assign(() => null, { __name__: name });
   return {
@@ -45,7 +43,7 @@ vi.mock('expo-file-system/legacy', () => ({
   writeAsStringAsync: async (uri: string, text: string) => void disk.files.set(uri, text),
   makeDirectoryAsync: async () => undefined,
   deleteAsync: async (uri: string) => {
-    // a folder (ending in /) goes with everything in it; a file only itself
+    // A folder (ending in /) goes with everything in it; a file only itself.
     for (const key of [...disk.files.keys()]) if (key === uri || (uri.endsWith('/') && key.startsWith(uri))) disk.files.delete(key);
   },
   moveAsync: async ({ from, to }: { from: string; to: string }) => {
@@ -80,7 +78,7 @@ interface Node {
   children: Node[];
 }
 
-/** The widget tree as the library reads it: our own components called through to the widget library's pieces. */
+/** The widget tree as the library reads it: our components called through to the library's. */
 function expand(element: ReactElement): Node {
   let el = element as ReactElement<Record<string, unknown>> & { type: { (p: unknown): ReactElement; __name__?: string } };
   while (typeof el.type === 'function' && !el.type.__name__) el = el.type(el.props) as typeof el;
@@ -111,7 +109,7 @@ describe('the Android letter widget, drawn', () => {
     expect(tree.props.clickAction).toBe('OPEN_URI');
     expect(tree.props.clickActionData).toEqual({ uri: 'hevalo://app/letters/t1' });
     expect(all(tree, 'ImageWidget')[0]!.props.image).toBe('data:image/png;base64,AAA');
-    // gold ink on the night sheet is the light gold the shared colours give it
+    // Gold ink on the night sheet is the light gold the shared colours give it.
     const name = all(tree, 'TextWidget')[0]!;
     expect((name.props.style as { color: string }).color).toBe('#f3d37c');
     expect(String(tree.props.accessibilityLabel)).toContain('Rojda');
@@ -207,7 +205,7 @@ describe('what the Android widget shows', () => {
     await loadLetterWidget(place, { fresh: false, now: at('2026-11-15T12:00:00'), fetchFn: net.fn });
     await loadLetterWidget(place, { fresh: false, now: at('2026-11-15T12:20:00'), fetchFn: net.fn });
     expect(net.calls).toHaveLength(1);
-    // nor the picture: it is of the same letter, at the same size
+    // Nor the picture: it is of the same letter, at the same size.
     expect(disk.downloads).toHaveLength(1);
     await loadLetterWidget(place, { fresh: false, now: at('2026-11-15T12:31:00'), fetchFn: net.fn });
     expect(net.calls).toHaveLength(2);
@@ -258,7 +256,7 @@ describe('what the Android widget shows', () => {
     signIn('hvw_old');
     const net = server([{ status: 401 }, feed()]);
     const fetchFn = vi.fn(async (url: string, init: RequestInit) => {
-      // the app makes its new token while the old one is being refused
+      // The app makes its new token while the old one is being refused.
       if (net.calls.length === 0) disk.keystore.set(WIDGET_KEYS.token, 'hvw_new');
       return net.fn(url, init);
     });
@@ -276,7 +274,7 @@ describe('what the Android widget shows', () => {
       throw new TypeError('Network request failed');
     });
     expect((await loadLetterWidget(place, { fresh: false, fetchFn: offline })).shows).toEqual({ kind: 'waiting' });
-    // what is kept on disk says whose it was without holding the token itself
+    // What is stored on disk identifies the owner without holding the token itself.
     expect(fingerprint('a')).toMatch(/^[0-9a-f]{8}$/);
     expect([...disk.files.values()].join(' ')).not.toContain('hvw_');
   });

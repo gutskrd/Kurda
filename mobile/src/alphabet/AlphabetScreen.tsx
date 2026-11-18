@@ -65,9 +65,9 @@ interface TileData {
   id: string;
   glyph: string;
   small?: string;
-  /** under the letter: the sound it is like, or its partner in the other script */
+  /** Under the letter: the sound it is like, or its partner in the other script. */
   hint: string | null;
-  /** a violet dot, "look at this": a false friend, or a letter Arabic does not have */
+  /** A violet dot, "look at this": a false friend, or a letter Arabic does not have. */
   dot: boolean;
 }
 
@@ -79,24 +79,11 @@ function soraniTile(l: SoraniLetter, arabicReader: boolean): TileData {
 }
 
 /**
- * The alphabet: both of them — Kurmancî in Latin letters and Soranî in Arabic
- * script — every letter with its sound, what it is like in the reader's own
- * language, a word to remember it by, and a round of questions to check
- * yourself with. The phone's own telling of the website's page, with the same
- * letters, the same groups and the same practice (alphabet/ in @kurda/shared).
- *
- * It opens on the reader's own dialect: Soranî for someone reading the app in
- * Soranî, Kurmancî for everyone else. Tapping a letter opens it from the foot
- * of the screen and plays it at once, sound and shape together; a recording an
- * editor gave a character is said by Hevalo, Hamo or Xezo beside its button.
- *
- * Nothing here waits on the server. The letters, their clips and where the
- * clips are all ship with the app, so the grid is there at once and every
- * letter plays its generated clip, as on the website. Which sounds an editor
- * has recorded, and who says them, is asked for in the background
- * (GET /alphabet/audio): when the answer comes the recordings take the clips'
- * place and their characters appear; when it does not, the page goes on with
- * the clips and asks once more, quietly, a little later.
+ * Both Kurdish alphabets, Kurmancî Latin and Soranî Arabic: each letter with its sound, a comparison in the
+ * reader's language, a memory word and a self-check round, as on the web (alphabet/ in @kurda/shared). It opens
+ * on the reader's dialect, and a tapped letter opens in a sheet and plays. Letters and clips ship with the app;
+ * recordings and their speakers load in the background (GET /alphabet/audio), retried once, and replace the clips
+ * when they arrive.
  */
 export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScript; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -109,11 +96,11 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
   const { width } = useWindowDimensions();
   const grid = tileGrid(Math.min(width, layout.column) - layout.gutter * 2);
 
-  // a link may ask for either alphabet; anything else it says is ignored
+  // A link may ask for either alphabet; anything else it says is ignored.
   const [chosen, setChosen] = useState<AlphabetScript | null>(asked === 'kmr' || asked === 'ckb' ? asked : null);
   const script: AlphabetScript = chosen ?? (locale === 'ckb' ? 'ckb' : 'kmr');
 
-  // the generated clips from the first frame; the recordings in their place once the server names them
+  // Generated clips from the first frame, replaced by recordings once the server names them.
   const [audio, setAudio] = useState<AlphabetAudio>(GENERATED);
   useEffect(() => {
     let live = true;
@@ -146,7 +133,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
   );
   const order = useMemo(() => groups.flatMap((g) => g.tiles.map((tile) => tile.id)), [groups]);
 
-  // hearing it the moment it is tapped is the point of tapping: sound and shape, together
+  // Hearing it the moment it is tapped is the point of tapping: sound and shape, together.
   const open = (id: string): void => {
     setOpenId(id);
     markSeen(id);
@@ -230,7 +217,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
             <Text style={[styles.cardTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
               {t('alphabet.next.title')}
             </Text>
-            {/* one under another, from the reading side: side by side, the longest ran out of the card in English and in German */}
+            {/* Stacked from the reading side: side by side, the longest overflowed the card in English and German. */}
             <View style={[styles.links, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
               <ClayButton label={t('alphabet.next.dictionary')} icon="text" onPress={() => navigation.navigate('Dictionary')} />
               <ClayButton label={t('alphabet.next.wordle')} icon="grid" onPress={() => navigation.navigate('Wordle')} />
@@ -245,14 +232,9 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
 }
 
 /**
- * One letter in the grid: the letter (and its small form), what it is like or
- * its partner underneath, a tick once it has been opened, and a dot on a false
- * friend. Read out the way the website labels it: "C, like j".
- *
- * The dot, the hint and the tick are in the app's violet, its colour for
- * "look at this" and for what is on. They were gold, which is for what is
- * earned, and green, which is for a right answer: opening a letter is
- * neither.
+ * One letter in the grid: the letter and its small form, a hint or its partner underneath, a tick once opened,
+ * and a dot on a false friend. Read out as on the web: "C, like j". The dot, hint and tick use the app's violet
+ * for "look at this" and "on", not gold (earned) or green (a right answer).
  */
 function Tile({
   tile,
@@ -270,7 +252,7 @@ function Tile({
   const { colors } = useTheme();
   const { t } = useI18n();
   const arabic = script === 'ckb';
-  // the tick sits where the script's line starts, the dot where it ends
+  // The tick sits where the script's line starts, the dot where it ends.
   const startSide = arabic ? styles.right : styles.left;
   const endSide = arabic ? styles.left : styles.right;
   return (
@@ -295,7 +277,7 @@ function Tile({
   );
 }
 
-/** How many of this alphabet's letters have been opened here: the small, honest kind of progress, in the violet every bar of it is in. */
+/** How many of this alphabet's letters have been opened here, in the violet of every progress bar. */
 function Progress({ explored, total }: { explored: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -331,7 +313,7 @@ function HatRule(): React.JSX.Element {
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }]}>
       <View
-        // the Latin letters keep their own order, at the reading side of the card
+        // The Latin letters keep their own order, at the reading side of the card.
         style={[styles.ruleDemo, { flexDirection: scriptRow('kmr'), justifyContent: dir.rtl ? 'flex-end' : 'flex-start' }]}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
@@ -377,12 +359,12 @@ const GLYPH = 28;
 const RULE_GLYPH = 30;
 const RULE_LINE = Math.round(RULE_GLYPH * 1.2);
 const TRACK = 120;
-/** display(22) at the summary's own leading */
+/** display(22) at the summary's own leading. */
 const SUMMARY_LINE = Math.round(typography.sizes.lg * 1.3);
-/** How long to wait before asking once more for the recordings, when the first answer did not come. */
+/** How long to wait before retrying the recordings when the first request got no answer. */
 const ASK_AGAIN_MS = 20_000;
 
-/** The generated clips alone, from the website: what every letter plays until the recordings are known. */
+/** Only the generated clips from the website: what every letter plays until the recordings are known. */
 const GENERATED = alphabetAudio(null);
 
 const styles = StyleSheet.create({

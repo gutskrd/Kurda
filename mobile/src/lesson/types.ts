@@ -1,9 +1,9 @@
-/** Lesson-player contract — mirrors the server payloads (KUR-028/#28). */
+/** Lesson-player contract, mirroring the server payloads. */
 import type { DeliveredExercise, GradeResult, QuestStep, RecentDay, RecordedAnswer, Verdict } from '@kurda/shared';
 
 export type { ExerciseType, MatchPair, SelfRating, Verdict } from '@kurda/shared';
 
-/** An exercise as delivered to the client: answer keys stripped server-side. */
+/** An exercise as delivered to the client, with answer keys stripped server-side. */
 export type Exercise = DeliveredExercise;
 
 export interface SessionView {
@@ -13,9 +13,9 @@ export interface SessionView {
   completed: boolean;
   exercises: Exercise[];
   answered: Record<string, RecordedAnswer>;
-  /** markdown grammar note for this lesson's skill, if any (KUR-038) */
+  /** Markdown grammar note for this lesson's skill, if any. */
   grammarMd?: string | null;
-  /** the course's variety of Kurdish; absent on a practice session */
+  /** The course's variety of Kurdish; absent on a practice session. */
   dialect?: string | null;
 }
 
@@ -24,7 +24,7 @@ export interface AnswerResult extends GradeResult {
   duplicate: boolean;
 }
 
-/** A second try at a missed item, as `/retry` grades it: never recorded. */
+/** A second try at a missed item, as `/retry` grades it; never recorded. */
 export type RetryResult = Omit<GradeResult, 'duplicate'>;
 
 export interface Streak {
@@ -32,14 +32,14 @@ export interface Streak {
   longest: number;
   freezes: number;
   lastActiveOn: string | null;
-  /** days learned in all, which never go down (api/src/streaks/service.ts `StreakSummary`) */
+  /** Total days learned, which never goes down (api/src/streaks/service.ts `StreakSummary`). */
   daysLearned?: number;
-  /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
+  /** Finished sessions towards the next freeze, out of `sessionsPerFreeze`. */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
-  /** the learner's own today (YYYY-MM-DD, their timezone), to lay out the week; absent on an older server */
+  /** The learner's today (YYYY-MM-DD, their timezone), to lay out the week; absent on an older server. */
   today?: string;
-  /** days in the last 14 (theirs) on which they learned, or a freeze kept the streak; absent on an older server */
+  /** Days in the learner's last 14 with learning or a freeze; absent on an older server. */
   recent?: RecentDay[];
 }
 
@@ -47,23 +47,23 @@ export interface SessionResults {
   correct: number;
   total: number;
   accuracy: number;
-  /** what was missed, with the question and its right answer (a lesson's results and a review's alike) */
+  /** What was missed, with the question and its right answer (lesson results and reviews alike). */
   mistakes?: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
   streak: Streak;
-  /** a test to jump ahead on the path: how it came out */
+  /** A jump-ahead test's outcome. */
   jump?: JumpOutcome;
-  /** today's quests this session moved, before and after (absent when none moved, or on an older server) */
+  /** Today's quests this session moved, before and after; absent when none moved or on an older server. */
   quests?: QuestStep[];
-  /** the water this session earned the learner's tree, and what they hold now (absent when it earned none, or on an older server) */
+  /** Water this session earned the learner's tree, and their total; absent when none or on an older server. */
   tree?: { gained: number; water: number };
 }
 
-/** How a test to jump ahead came out, as the server decided it (api/src/jump/settle.ts). */
+/** A jump-ahead test's outcome, as the server decided it (api/src/jump/settle.ts). */
 export interface JumpOutcome {
   unitId: string;
   passed: boolean;
-  /** right the first time, of every item asked */
+  /** Right the first time, of every item asked. */
   correct: number;
   total: number;
   mistakesAllowed: number;

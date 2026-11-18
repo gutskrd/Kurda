@@ -1,17 +1,12 @@
 /**
- * The native "rate this app" prompt (expo-store-review), behind a guard.
+ * The native review prompt (expo-store-review), guarded. It is a native module, so it exists only in builds made
+ * after it was added; importing it elsewhere throws, so it is required lazily inside a try and a phone without it
+ * never asks.
  *
- * It is a native module, so it exists only in an app built after it was added
- * (a new EAS build; the phone takes no over-the-air updates). In a build
- * without it, importing the package throws — so it is required lazily, inside
- * a try, and a phone without it simply never asks.
- *
- * And it is only ever the system's own prompt: `requestReview()` on its own
- * would open the store page instead when the system prompt is unavailable
- * (TestFlight, an old Android), which from inside the app is a custom review
- * prompt — so it is called only after `isAvailableAsync()` says the real one
- * is there. Never from a button: Apple and Google both forbid that, and the
- * persistent "Rate Hevalo" row in Settings opens the store page instead.
+ * Only the system prompt is ever used: `requestReview()` alone opens the store page when the system prompt is
+ * unavailable, which from inside the app is a custom review prompt, so it is called only after
+ * `isAvailableAsync()` confirms the real one. Never from a button, which both stores forbid; Settings' "Rate
+ * Hevalo" opens the store page instead.
  */
 interface StoreReviewModule {
   isAvailableAsync(): Promise<boolean>;
@@ -32,11 +27,7 @@ function storeReview(): StoreReviewModule | null {
   return cached;
 }
 
-/**
- * Ask the system to show its review prompt. True when it was asked — whether
- * the system then shows anything is its own business (it keeps its own quota
- * and never says).
- */
+/** Ask the system to show its review prompt. True when asked; whether anything shows is up to the system's own quota. */
 export async function requestStoreReview(module: StoreReviewModule | null = storeReview()): Promise<boolean> {
   if (!module) return false;
   try {

@@ -22,15 +22,11 @@ import type { MilestoneRecorder } from '../achievements/service.js';
 import { scoreRace } from './race.js';
 
 /**
- * Typing race (solo time trial).
+ * Typing race (solo time trial). The server hands out a text and records when; speed comes from that timestamp and the
+ * submitted text, never a client-reported duration.
  *
- * The server hands out a text and remembers when it did. Speed is computed from
- * that timestamp and the text the racer submits — never from a duration the
- * client reports, which would make the leaderboard a fiction.
- *
- * A race is in a variety (the text is picked by its language) and in an accent
- * mode (@kurda/shared `typing`), both stored with it: the mode decides what
- * counts, so a racer's best is per mode.
+ * A race has a variety (texts are picked by language) and an accent mode (@kurda/shared `typing`), both stored; the
+ * mode decides what counts, so bests are per mode.
  */
 
 export interface RaceText {
@@ -69,13 +65,8 @@ export class RaceService {
   ) {}
 
   /**
-   * Start a race on a random active text in the variety asked for, optionally
-   * of one length.
-   *
-   * Returns null when there is no such text rather than inventing one — or
-   * handing a Kurmancî racer a Soranî text, which is what happened while the
-   * text's language was ignored. An admin has to add one, and the UI says so
-   * instead of showing an empty race.
+   * Start a race on a random active text in the requested variety, optionally of one length. Returns null when there is
+   * none rather than inventing one or handing over a text in the other variety; the UI then says an admin must add one.
    */
   async start(userId: string, options: StartOptions = {}): Promise<RaceGame | null> {
     const dialect = options.dialect ?? 'kurmanci';
@@ -118,8 +109,8 @@ export class RaceService {
   }
 
   /**
-   * Finish a race: score what was typed against the text, in the race's accent
-   * mode, from the server's own clock. It pays no XP.
+   * Finish a race: score what was typed against the text in the race's accent mode, timed by the server's clock. Pays
+   * no XP.
    */
   async finish(userId: string, gameId: string, typed: string): Promise<FinishResult> {
     const row = await this.pool.query<{
@@ -184,14 +175,9 @@ export class RaceService {
   }
 
   /**
-   * A racer's best runs in each accent mode, best first — the "how am I doing"
-   * lists — and each mode's personal best. Ranked only within a mode: a
-   * forgiving run (e counts for ê) at the speed of a strict one scores higher
-   * and is not the same race, so one list across modes put it above the strict
-   * run, as the personal best never would. A run worth nothing (nothing typed
-   * right, or a speed nobody types at) is in its list but is nobody's personal
-   * best — and as the lists are by score, a mode's personal best is the top of
-   * its list whenever that is worth anything.
+   * A racer's best runs per accent mode, best first, and each mode's personal best. Ranked only within a mode, since a
+   * forgiving run (e counts for ê) is a different race from a strict one. A worthless run (nothing typed right, or an
+   * impossible speed) is listed but is never a personal best; otherwise a mode's personal best is the top of its list.
    */
   async best(
     userId: string,
@@ -293,17 +279,11 @@ export class RaceTextService {
 }
 
 /**
- * A text as it is saved: in the form a keyboard types it (`normalizeTyping` —
- * NFC, straight quotes, single spaces), so the stored text is the one the racer
- * is compared with. The admin used to save whatever was pasted, trimmed, and a
- * text pasted decomposed could not be typed by anyone.
+ * A text as saved: in the form a keyboard types (`normalizeTyping`: NFC, straight quotes, single spaces), so the stored
+ * text is what the racer is compared with.
  *
- * And under the language its script says it is in. The language decides who
- * is handed the text, and the admin screen offers Kurmancî first, so a Soranî
- * text saved without changing that would go to Kurmancî racers — every letter
- * of it untypeable for them. That is refused rather than relabelled behind the
- * admin's back; `details.language` is the code the text's script says, for the
- * screen to offer.
+ * It must be labelled with the language its script says, since the language decides who is handed it. A mismatch is
+ * refused rather than silently relabelled; `details.language` names the script's language for the screen to offer.
  */
 function normalizeText(input: Omit<RaceText, 'id'>): Omit<RaceText, 'id'> {
   const dialect = typingDialectOf(input.language);

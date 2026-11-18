@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PREFERENCE,
-  isDarkMode,
-  nextPreference,
   normalizePreference,
   PREFERENCE_LABEL,
   resolveScheme,
@@ -21,26 +19,8 @@ describe('resolveScheme', () => {
   });
 
   it('falls back to dark when the OS scheme is unknown', () => {
-    // the website is dark and has no light theme, so dark is what the app is
-    // when nothing has told it otherwise
+    // The website is dark-only, so the app is dark when nothing says otherwise.
     expect(resolveScheme('system', null)).toBe('dark');
-  });
-});
-
-describe('isDarkMode', () => {
-  it('reflects the resolved scheme', () => {
-    expect(isDarkMode('dark', 'light')).toBe(true);
-    expect(isDarkMode('system', 'dark')).toBe(true);
-    // unknown OS scheme resolves to the default, which is dark
-    expect(isDarkMode('system', null)).toBe(true);
-  });
-});
-
-describe('nextPreference', () => {
-  it('cycles System → Light → Dark → System', () => {
-    expect(nextPreference('system')).toBe('light');
-    expect(nextPreference('light')).toBe('dark');
-    expect(nextPreference('dark')).toBe('system');
   });
 });
 
@@ -50,8 +30,7 @@ describe('normalizePreference', () => {
   });
 
   it('falls back to the default for anything invalid', () => {
-    // nothing stored, or nonsense stored, means nobody has chosen — and the
-    // app before anyone chooses is the dark one the website is
+    // Nothing or nonsense stored means nobody has chosen, which means the default dark theme.
     for (const bad of ['purple', undefined, null, 42]) {
       expect(normalizePreference(bad)).toBe(DEFAULT_PREFERENCE);
     }
@@ -60,12 +39,7 @@ describe('normalizePreference', () => {
 });
 
 describe('PREFERENCE_LABEL', () => {
-  /**
-   * Truthy was the old assertion, and a key is truthy — so it passed while the
-   * map held the English words System, Light and Dark, and would pass again if
-   * it held keys nothing had translated. Resolving in all nine is the claim
-   * worth making.
-   */
+  // Truthiness would pass for untranslated keys too, so every preference must resolve in all nine languages.
   it('gives every preference real copy in all nine languages', () => {
     for (const p of THEME_PREFERENCES) {
       const key = PREFERENCE_LABEL[p];

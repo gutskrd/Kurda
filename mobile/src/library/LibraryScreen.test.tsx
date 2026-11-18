@@ -17,8 +17,8 @@ import { LibraryScreen } from './LibraryScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(cleanup);
-// The list hands its cell updates to an idle-time queue; let that queue empty while the page still exists, so an
-// update the last test queued never runs after the test environment is gone (it then fails on a missing window).
+// The list queues cell updates for idle time; drain the queue while the page still exists, so an update queued by
+// the last test never runs after the environment is torn down (it would fail on a missing window).
 afterAll(() => new Promise<void>((resolve) => setTimeout(resolve, 500)));
 
 const story = (n: number, over: Record<string, unknown> = {}) => ({
@@ -41,34 +41,30 @@ const story = (n: number, over: Record<string, unknown> = {}) => ({
 });
 const FIRST = '/library/posts?type=story&sort=newest&limit=20&offset=0';
 
-/*
- * The list asked for its first page again each time it was come back to, and
- * put it in place of everything loaded: somebody reading the fortieth story
- * came back from it to twenty and the top of the list.
- */
+/* Returning to the list keeps every loaded page and the reader's place, rather than replacing it with the first page. */
 describe('the library, come back to from a post', () => {
   it('keeps what was loaded, in its place, and takes what the new read says of it', async () => {
     const page = Array.from({ length: 20 }, (_, i) => story(i + 1));
-    // read again: twenty stories written since, and the first of the old ones with a new count
+    // Read again: twenty stories written since, and the first of the old ones with a new count.
     const again = [...Array.from({ length: 19 }, (_, i) => story(101 + i)), story(1, { commentCount: 7 })];
     let reads = 0;
     const client = fakeClient({ [`GET ${FIRST}`]: () => ok({ posts: reads++ === 0 ? page : again }) });
     testAuth.client = client;
     renderWithProviders(<LibraryScreen onExit={() => undefined} />);
     expect(await screen.findByText('Çîrok 1')).toBeTruthy();
-    // some way down the list, as somebody who opened a post from it is
+    // Some way down the list, as somebody who opened a post from it is.
     const list = screen.getByTestId('library-list');
     Object.defineProperty(list, 'scrollTop', { value: 240, configurable: true });
     fireEvent.scroll(list);
 
     act(() => refocus());
     await waitFor(() => expect(reads).toBe(2));
-    // the posts that were there are there, with what the read says of them; the new ones wait for the top of the list
+    // The posts that were there stay, updated from the read; new ones wait at the top of the list.
     expect(await screen.findByText('7')).toBeTruthy();
     expect(screen.getByText('Çîrok 1')).toBeTruthy();
     expect(screen.getByText('Çîrok 2')).toBeTruthy();
     expect(screen.queryByText('Çîrok 101')).toBeNull();
-    // back at the top, they are on it
+    // Back at the top, they are on it.
     Object.defineProperty(list, 'scrollTop', { value: 0, configurable: true });
     fireEvent.scroll(list);
     expect(await screen.findByText('Çîrok 101')).toBeTruthy();

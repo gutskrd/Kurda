@@ -17,12 +17,9 @@ interface Log {
 }
 
 /**
- * The multiplayer learning games for a process that serves none of their
- * routes: the job worker, which takes a closing account out of the games it is
- * still in. As the story games' standalone service (story-games/standalone.ts):
- * leaving can end a game for everybody else, so this pays and rates exactly as
- * the API does, wakes the API instances' waiting polls over Redis with a
- * publish-only notifier, and arms no timers of its own.
+ * The multiplayer games for a process that serves none of their routes: the job worker, which removes a closing account
+ * from its games. Like story-games/standalone.ts, it pays and rates as the API does (a leave can end a game), wakes the
+ * API's polls over Redis with a publish-only notifier, and arms no timers.
  */
 export function standaloneMultiplayer(pool: pg.Pool, opts: { redis?: Redis | null; log?: Log } = {}): MultiplayerService {
   const log: Log = opts.log ?? { warn: () => undefined };

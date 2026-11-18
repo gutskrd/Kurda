@@ -18,18 +18,11 @@ import { heldDim } from '../theme/MotionParts';
 const LINK_INSET = 26;
 
 /**
- * A failed send, said in place — above a chat composer, under a form.
- *
- * Calm on purpose: a limit is not an error the person made just now, so it is
- * not red and does not shout. When the limit is a Hevalo decision with its
- * reasons written down, a link to Account standing sits beside it; when it is
- * not (a group's own mute, the automatic pause), there is nothing there to
- * read, so there is no link.
- *
- * Announced once when it appears (a live region), and dismissable.
- *
- * Inside a sheet or a dialog, pass `onNavigate` to close it first: Account
- * standing opens under a Modal, so without it the link seems to do nothing.
+ * A failed send, said in place (above a chat composer, under a form). Calm on purpose: a limit is not a mistake made
+ * just now. When the limit is a Hevalo decision with written reasons, a link to Account standing sits beside it; a
+ * group's own mute or the automatic pause has nothing to read, so no link. Announced once (a live region), and
+ * dismissable. Inside a sheet or dialog, pass `onNavigate` to close it first, since Account standing opens under a
+ * Modal.
  */
 export function SendErrorNotice({
   error,
@@ -39,9 +32,9 @@ export function SendErrorNotice({
 }: {
   error: ApiError | null;
   onDismiss?: () => void;
-  /** called just before Account standing opens — the sheet this sits in closes itself */
+  /** Called just before Account standing opens, so the sheet this sits in closes itself. */
   onNavigate?: () => void;
-  /** where it sits: by default inset above a composer; a card's column passes its own */
+  /** Where it sits: by default inset above a composer; a card's column passes its own. */
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element | null {
   const { t, locale } = useI18n();
@@ -79,7 +72,7 @@ export function SendErrorNotice({
             navigation.navigate('AccountStanding');
           }}
           accessibilityRole="link"
-          // under the words, past the icon, on the side they start from
+          // Under the words, past the icon, on the side they start from.
           style={({ pressed }) => [styles.link, dir.rtl ? { alignSelf: 'flex-end', paddingRight: LINK_INSET } : { paddingLeft: LINK_INSET }, pressed && heldDim]}
         >
           <Text style={[styles.linkText, { color: colors.primary }]}>{t('restriction.seeStanding')}</Text>
@@ -90,20 +83,16 @@ export function SendErrorNotice({
 }
 
 /**
- * The same answer as an alert, for screens that already answer a failed send
- * with one (a post, a comment, a picture, a voice note, a profile change). The
- * title stays the screen's own ("Couldn't post"); the message becomes the
- * limit, with a second button to Account standing when it has the reasons.
- *
- * An upload (a picture, a voice note) has already been put into words by
- * `describeUploadFailure`; pass `{ message, limited }` from its result instead.
+ * The same answer as an alert, for screens that already answer a failed send with one (a post, a comment, a picture, a
+ * voice note, a profile change): the screen's own title, the limit as the message, and an Account standing button when
+ * it has the reasons. For an upload already put into words by `describeUploadFailure`, pass `{ message, limited }`.
  */
 export function useSendErrorAlert(): (title: string, error: ApiError | { message: string; limited?: boolean }) => void {
   const { t, locale } = useI18n();
   const navigation = useNavigation<RootNavigation>();
   return useCallback(
     (title: string, error: ApiError | { message: string; limited?: boolean }) => {
-      // Hevalo offline for a while: the screen over the app says so, not an alert on top of it
+      // Hevalo being offline is shown by the screen over the app, not an alert on top of it.
       if ('kind' in error && isMaintenance(error)) return;
       const { message, standing } = alertTextOf(error, t, locale);
       if (standing) {
@@ -134,9 +123,8 @@ function alertTextOf(
 const DISMISS_SIZE = 16 + 2 * 2;
 
 /**
- * It answers over 48 every way but up. Up, it stops half a gap past the
- * notice's own top padding: the screens set the notice a gap (8) under the
- * control above it, and the other half of that gap is the control's.
+ * It answers over 48pt every way but up, where it stops half a gap past the notice's top padding: the other half of the
+ * 8pt gap above belongs to the control there.
  */
 const DISMISS_REACH = reachSlop(DISMISS_SIZE, DISMISS_SIZE, { limit: { top: spacing.sm + spacing.sm / 2 } });
 

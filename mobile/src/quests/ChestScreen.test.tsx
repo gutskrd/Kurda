@@ -14,12 +14,11 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { ChestScreen } from './ChestScreen';
 
 /*
- * The chest's own screen: shut and waiting, its lid swings open on a tap and
- * the rays out of it turn, and what it held rises as a tile with its count;
- * under Reduce Motion it simply stands open, its rays still.
+ * The chest screen: shut and waiting, the lid swings open on a tap, the rays turn and the contents rise as a tile
+ * with a count; under Reduce Motion it just stands open with still rays.
  */
 
-// full motion here, so the lid is seen going and the rays turning
+// Full motion here, so the lid is seen going and the rays turning.
 patchReactNativeWeb();
 afterEach(cleanup);
 
@@ -38,7 +37,7 @@ describe('the chest screen', () => {
     expect(await screen.findByRole('heading', { name: '+40 Zêr' })).toBeTruthy();
     expect(screen.getByText('× 40')).toBeTruthy();
     expect(screen.getByLabelText('You have 1,292 Zêr')).toBeTruthy();
-    // the shut lid is still there on its way out, the open one has landed, and the rays are going round
+    // The shut lid is still there on its way out, the open one has landed, and the rays are going round.
     expect(screen.getByTestId('chest-art-lid')).toBeTruthy();
     expect(screen.getByTestId('chest-art-lid-open')).toBeTruthy();
     expect(screen.getByTestId('chest-art-rays-turning')).toBeTruthy();

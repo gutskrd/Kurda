@@ -22,7 +22,6 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
-import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useDirection } from '../reports/direction';
 import { ClayButton, GradientBackground } from '../theme/glass';
@@ -31,54 +30,32 @@ import { PressableScale } from '../theme/MotionParts';
 import { TileButton } from '../theme/Tile';
 import { useTheme } from '../theme/ThemeProvider';
 import { displayFont } from '../theme/fonts';
-import { layout, radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { GameArt } from './GameArt';
+import { DIFFICULTY_KEY } from './partyChoices';
 import { dialectNameKey } from '../i18n/dialectName';
 
 /**
- * What every learning game played alone has around its own staging, on the
- * phone: the intro (the game's own picture of it, the difficulty), the round
- * (where you are in it, the verdict and its explanation after each answer),
- * and results that say exactly what happened: right, right first time, and
- * whether the day counts.
+ * What every learning game played alone has around its own board (`renderRound`): the intro, the round's progress with
+ * a verdict and explanation after each answer, and results that say exactly what happened, as the website's
+ * games/SoloGameShell.tsx does. The round is the server's (api/src/games/solo.ts), offered again while left open.
  *
- * What a round pays is the shared registry's to say (`paysAlone`). A game
- * played alone earns no XP: XP is for lessons, stories and games played
- * online with other people. So a game's round promises none before it
- * starts and shows none when it ends, and its results say so in one quiet
- * line; a round played well enough still counts as a day learned. The
- * lessons' two exercises pay as lessons do, and for those the shell says
- * what a round can earn, what this one did, and when it paid nothing, why.
- *
- * The round is the server's (api/src/games/solo.ts): made there, checked
- * there, paid there once. A round left open is offered again until it
- * expires. The game draws its own board (`renderRound`), with its Check
- * button, its nudge after a wrong try and its correction once an item is
- * done; this draws the rest. The website's games/SoloGameShell.tsx is the
- * same shell, so the two say the same things in the same order.
- *
- * Two of the rounds it carries are not games but exercises of the lessons'
- * practice (Build a Sentence and Hear It, Find It: the shared
- * registry's `place: 'lessons'`). For those the results offer another round
- * and Done, which goes back to wherever the exercise was opened from (the
- * practice hub, or the Lessons half of Learn); nothing on the way calls an
- * exercise a game.
- *
- * A game opens on the night the Games half puts its featured game on, with
- * its emblem acting the game out and one gold button to begin, and its
- * result is given on the same night: the start and the end of a round are
- * one place. An exercise has no emblem and keeps the lessons' plain page.
+ * A game played alone earns no XP (`paysAlone`) and says so in one quiet line; a round played well still counts as a
+ * day learned. The lessons' two practice exercises (`place: 'lessons'`) pay as lessons do, keep the lessons' plain
+ * page, and end with another round or Done. A game's start and result are on the Games night scene with its emblem.
  */
 
 export interface SoloRound<Item, H, C, B = unknown> {
-  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Detective's hints) */
+  /**
+   * The round's id: what a game's clips are played from (`hearItClipPath`), and what extra asks go to (Detective's
+   * hints).
+   */
   sessionId: string;
-  /** what the whole round shares, as the round was sent (Detective's case board); null for a game without */
+  /** What the whole round shares, as sent (Detective's case board); null for a game without one. */
   board: B | null;
   /**
-   * The verdict, the explanation and the way on, for a game that places them
-   * itself (`feedbackInRound`): beside its question rather than under a tall
-   * board. Null for every other game, whose round has them underneath.
+   * The verdict, explanation and way on, for a game that places them beside its question (`feedbackInRound`). Null for
+   * the others, which have them underneath.
    */
   feedback: ReactNode;
   item: Item;
@@ -89,9 +66,8 @@ export interface SoloRound<Item, H, C, B = unknown> {
   busy: boolean;
   submit: (answer: unknown) => Promise<void>;
   /**
-   * For an item studied before it is answered (The Memory Thief): ask for
-   * what it is answered with. The item comes back changed for good, through
-   * `item`; false when the server could not be reached (the error is shown).
+   * For an item studied before it is answered (The Memory Thief): ask for what it is answered with. The changed item
+   * comes back through `item`; false when the server could not be reached (the error is shown).
    */
   begin: () => Promise<boolean>;
 }
@@ -109,22 +85,17 @@ interface Props<Item, H, C, B> {
   explain: (why: string) => string | null;
   onFinished?: (results: SoloResults) => void;
   resultsExtra?: ReactNode;
-  /** the game puts the verdict and the way on in its own round (`SoloRound.feedback`), next to what was answered */
+  /** The game puts the verdict and the way on in its own round (`SoloRound.feedback`), next to what was answered. */
   feedbackInRound?: boolean;
   onExit: () => void;
-  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts, for a round that pays */
+  /** Items in one round when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts, for a round that pays. */
   roundItems?: number;
 }
 
-const DIFFICULTY_KEY: Record<GameDifficulty, TranslationKey> = {
-  beginner: 'games.solo.difficulty.beginner',
-  intermediate: 'games.solo.difficulty.intermediate',
-  advanced: 'games.solo.difficulty.advanced',
-};
-
 type Phase = 'intro' | 'round' | 'results';
 
-function nextOpen(states: readonly SoloItemState[]): number {
+/** The first item not yet done, or the item count when all are. */
+export function nextOpen(states: readonly SoloItemState[]): number {
   const at = states.findIndex((s) => !s.done);
   return at < 0 ? states.length : at;
 }
@@ -133,7 +104,7 @@ function nextOpen(states: readonly SoloItemState[]): number {
 export function Stones({ states, here, tone, night = false }: { states: readonly SoloItemState[]; here: number | null; tone: string; night?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  // on the night the stones are told apart by gold and by the cloth's own veil, whatever the theme
+  // On the night the stones are told apart by gold and the cloth's veil, whatever the theme.
   const track = night ? TABLE.veil : colors.controlTrack;
   return (
     <View style={[styles.stones, night && styles.stonesNight, { flexDirection: dir.row }]} aria-hidden>
@@ -178,11 +149,11 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  // an exercise of the lessons' practice rather than a game: its results speak of practice
+  // An exercise of the lessons' practice rather than a game: its results speak of practice.
   const exercise = learnGame(game).place === 'lessons';
-  // whether a round of this earns XP at all: a game played alone does not, and nothing here may say it does
+  // Whether a round earns XP at all: a game played alone does not, and nothing here may say it does.
   const pays = paysAlone(game);
-  // a game's own picture, for its start and its result; an exercise of the lessons has none
+  // A game's own picture, for its start and its result; an exercise has none.
   const emblem = !exercise && isGameEmblem(game) ? game : null;
   const dir = useDirection();
   const [phase, setPhase] = useState<Phase>('intro');
@@ -327,7 +298,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
             {t(pays ? 'games.solo.results.noXp' : 'games.solo.results.notCounted', { needed: results.needed, correct: results.firstTry })}
           </Text>
         )}
-        {/* where a round that pays shows what it earned: said once, quietly, so nobody waits for XP that is not coming */}
+        {/* Said once, quietly, so nobody waits for XP that is not coming. */}
         {pays ? null : <Text style={muted}>{t('games.noXpAlone')}</Text>}
         {resultsExtra}
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
@@ -337,7 +308,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           ) : (
             <GoldButton label={t('games.solo.playAgain')} onPress={() => void start()} busy={busy} disabled={!chosen} />
           )}
-          {/* the quieter way out: green is for an answer that was right, and this is no answer */}
+          {/* The quieter way out: green is for a right answer, and this is no answer. */}
           <ClayButton label={t(exercise ? 'common.done' : 'games.solo.backToGames')} onPress={onExit} tone="neutral" size="large" />
         </View>
       </ScrollView>
@@ -401,13 +372,13 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           <Cloth style={styles.hero}>
             {emblem ? <GameArt game={emblem} size={132} moving /> : null}
             <Text style={styles.heroKicker}>{t('games.solo.variety', { variety: t(dialectNameKey(dialect)) })}</Text>
-            {/* the screen's header already says the game's name as the heading; here it is the picture's caption */}
+            {/* The header already has the game's name as the heading; here it is the picture's caption. */}
             <Text style={styles.heroName}>{title}</Text>
             <Text style={styles.heroLine}>{blurb}</Text>
           </Cloth>
         )}
         {intro}
-        {/* a round left part-way is what most likely brought the learner back: it is offered first, in the app's own colour */}
+        {/* A round left part-way is most likely what brought the learner back, so it is offered first. */}
         {open ? <TileButton label={t('games.solo.continue')} onPress={() => void resume()} busy={busy} /> : null}
         <Text style={[styles.legend, ...text]}>{t('games.solo.difficulty')}</Text>
         <View style={[styles.chips, { flexDirection: dir.row }]} accessibilityRole="radiogroup">
@@ -422,8 +393,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on, disabled: !can }}
                 accessibilityLabel={t(DIFFICULTY_KEY[d])}
-                // the one chosen as the segmented control and the tab bar mark the place you are in: a wash of the violet, in its ink
-                style={[styles.chip, { backgroundColor: on ? `${colors.primary}1F` : colors.controlTrack, opacity: can ? 1 : 0.5 }]}
+                // The chosen one is marked as the segmented control and the tab bar mark theirs: a wash of the violet.
+                style={[styles.chip, { backgroundColor: on ? wash(colors.primary) : colors.controlTrack, opacity: can ? 1 : 0.5 }]}
               >
                 <Text style={[styles.chipText, { color: on ? colors.primary : colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular }]}>
                   {t(DIFFICULTY_KEY[d])}
@@ -438,7 +409,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         ) : (
           <GoldButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} disabled={!chosen} />
         )}
-        {/* none of the three can be chosen: "try another one" would send the learner to a choice that is not there */}
+        {/* None of the three can be chosen: "try another one" would point to a choice that is not there. */}
         {difficulties !== null && offered.length === 0 ? <Text style={muted}>{t('games.solo.noneYet')}</Text> : null}
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
       </ScrollView>

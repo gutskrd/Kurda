@@ -53,7 +53,7 @@ describe('the try-it box', () => {
 
   it('lights each letter once it is anywhere in the box, in either case and either encoding', () => {
     expect([...lettersTyped('kurmanci', 'Çê')].sort()).toEqual(['ç', 'ê']);
-    // e + combining circumflex is ê
+    // E + combining circumflex is ê.
     expect(lettersTyped('kurmanci', 'ê').has('ê')).toBe(true);
     expect(lettersTyped('kurmanci', 'çêîşû').size).toBe(5);
   });

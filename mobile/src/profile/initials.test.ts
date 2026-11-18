@@ -7,8 +7,8 @@ import { AVATAR_COLORS, AVATAR_TEXT_COLOR, avatarColor, deriveInitials, initials
 describe('deriveInitials', () => {
   it('takes first + last initials for multi-word names', () => {
     expect(deriveInitials('Ada Lovelace')).toBe('AL');
-    expect(deriveInitials('Şêrko Bêkes')).toBe('ŞB'); // Kurdish diacritics preserved + uppercased
-    expect(deriveInitials('mary jane watson')).toBe('MW'); // first + last, not middle
+    expect(deriveInitials('Şêrko Bêkes')).toBe('ŞB'); // Kurdish diacritics kept and uppercased.
+    expect(deriveInitials('mary jane watson')).toBe('MW'); // First and last, not middle.
   });
 
   it('takes the first two characters for a single word', () => {
@@ -22,7 +22,7 @@ describe('deriveInitials', () => {
 
   it('drops leading punctuation / @ handles', () => {
     expect(deriveInitials('@zilan')).toBe('ZI');
-    expect(deriveInitials('zilan_bot')).toBe('ZI'); // underscore is not a word break here
+    expect(deriveInitials('zilan_bot')).toBe('ZI'); // Underscore is not a word break here.
   });
 
   it('collapses extra whitespace', () => {
@@ -57,9 +57,8 @@ describe('avatarColor', () => {
   });
 
   /*
-   * The slot an id lands in is its hash over the count, so the count and the
-   * order are the mapping. These ids are pinned to the slot they have always
-   * had; what fills the slot is now a colour of the course.
+   * The slot an id lands in is its hash over the count, so the count and order are the mapping; these ids stay pinned
+   * to their slots.
    */
   it('keeps every id in the slot it had', () => {
     expect(AVATAR_COLORS).toHaveLength(8);
@@ -73,7 +72,8 @@ describe('the avatar colours', () => {
   it('are the course’s own, as the lesson path paints them by day', () => {
     const course = Object.values(TONES.light).flatMap((t) => [t.fill, t.lip]);
     for (const bg of AVATAR_COLORS) expect(course, bg).toContain(bg);
-    // every tone of the path is somebody's colour: its fill, or for saffron, whose fill is a gold white cannot be read on, its deeper edge
+    // Every tone of the path is somebody's colour: its fill, or for saffron (a gold white cannot be read on) its deeper
+    // edge.
     for (const [name, t] of Object.entries(TONES.light)) {
       const mine = name === 'saffron' ? t.lip : t.fill;
       expect(AVATAR_COLORS, mine).toContain(mine);

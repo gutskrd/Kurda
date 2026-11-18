@@ -1,13 +1,9 @@
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * Settings → About Hevalo: whose work Hevalo uses, and under which licence.
- *
- * The phone ships Phosphor's icon paths (MIT; their notice is in
- * src/theme/icon-paths.ts). The Vazirmatn typeface (OFL) and the Noto Emoji
- * images (Apache 2.0) are the browser's, so their lines say where they are
- * used. The shop's art and the stickers are Hevalo's own, drawn by
- * scripts/generate-cosmetic-art.mjs — the last line says so.
+ * Settings → About Hevalo: third-party work Hevalo uses, and its licences. Phosphor's icon paths (MIT) ship in
+ * src/theme/icon-paths.ts with their notice. Vazirmatn (OFL) and Noto Emoji (Apache 2.0) are the website's, and
+ * their lines say where they are used. The shop art and stickers are Hevalo's own (scripts/generate-cosmetic-art.mjs).
  */
 export const CREDIT_LINES: readonly TranslationKey[] = [
   'settings.credits.fonts',

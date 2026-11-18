@@ -22,24 +22,17 @@ interface Props {
   text: string;
   onChangeText: (text: string) => void;
   disabled: boolean;
-  /** the course's variety of Kurdish, for the key bar */
+  /** The course's variety of Kurdish, for the key bar. */
   dialect?: string | null;
-  /** how the answer was graded, once it has been */
+  /** How the answer was graded, once it has been. */
   verdict?: 'right' | 'wrong' | null;
 }
 
 /**
- * Translate the sentence Hevalo says in his speech bubble — its words dotted
- * where they can be tapped for what they mean. The answer is built from word
- * tiles when the item comes with them (unless this device would rather type),
- * or typed with the Kurdish key bar. Hevalo is pleased with a right answer and
- * thinks a wrong one over with you.
- *
- * An item that says which way it goes (`ask`) has the headline for it and
- * the line alone in the bubble (`AskScene`). Into English, the line is
- * Kurdish, and its native recording — when there is one to hear before
- * answering — plays from the bubble, at speed or slowly, said by its
- * character. Into Kurdish, the line is English, with nothing to play.
+ * Translate the sentence Hevalo says in his bubble, whose words can be tapped for their meaning. The answer is built
+ * from word tiles when the item has them (unless this device prefers typing), or typed with the Kurdish key bar.
+ * An item with `ask` gets its headline and the line alone in the bubble (`AskScene`): into English, the Kurdish
+ * line's recording plays from the bubble, at speed or slowly; into Kurdish, the line is English with nothing to play.
  */
 export function TranslateExercise({ exercise, text, onChangeText, disabled, dialect, verdict = null }: Props) {
   const { colors } = useTheme();
@@ -49,15 +42,15 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled, dial
   const [mode, setMode] = useAnswerMode();
   const tiles = !!bank && mode === 'tiles';
   const [placed, setPlaced] = useState<number[]>([]);
-  // only an item that says what it asks plays its recording before the answer; one without keeps the screen it had
+  // Only an `ask` item plays its recording before the answer; others keep their old screen.
   const model = useAudio(exercise.ask ? exercise.modelAudioUrl : undefined);
   const headline = askHeadline(exercise, { dialect });
   const reaction = verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null;
 
-  // back on the tiles, the answer is what they say again
+  // Back on the tiles, the answer is what they say again.
   useEffect(() => {
     if (tiles && bank) onChangeText(tileAnswer(bank, placed));
-    // only as the way of answering changes; laying a tile says it itself
+    // Only when the answer mode changes; laying a tile updates it by itself.
   }, [tiles]);
 
   const lay = (next: number[]): void => {
@@ -104,7 +97,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled, dial
 
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
-  // the field's card, edge and face are the answer box's own (KurdishAnswerInput)
+  // The field's card, edge and face match the answer box (KurdishAnswerInput).
   input: { minHeight: MIN_TOUCH_TARGET, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   dim: { opacity: 0.6 },
 });

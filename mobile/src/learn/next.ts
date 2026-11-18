@@ -1,45 +1,28 @@
-/**
- * The one next step on the Lessons view, and how far along the course is.
- * Pure, so the choice is tested apart from the screen.
- *
- * The view used to open on a goal ring, a goal picker, a practice button, a
- * daily-reward strip and a word of the day before the first lesson — five
- * things to choose between, and the thing most people came for was below all
- * of them. Now the top of the view is a single card with a single button, and
- * this decides what that button does.
- */
+/** The one next step on the Lessons view and the course's progress. Pure, so the choice is tested apart from the screen. */
 import { lessonPath } from '@kurda/shared';
 import type { CourseEntry } from '../coursemap/node';
 import { firstCourse } from '../coursemap/path';
 import type { SkillNode } from '../coursemap/types';
 
 export type NextStep =
-  /** nothing finished yet anywhere: the very first lesson (`courseId` its course, for the lesson's own next one) */
+  /** Nothing finished anywhere yet: the very first lesson (`courseId` is its course, for the lesson's own next one). */
   | { kind: 'start'; courseId: string; courseTitle: string; unitTitle: string; skill: SkillNode; lessonId: string; done: number; total: number }
-  /** the first open skill that is not finished: the path's current stop */
+  /** The first open skill that is not finished: the path's current stop. */
   | { kind: 'continue'; courseId: string; courseTitle: string; unitTitle: string; skill: SkillNode; lessonId: string; done: number; total: number }
-  /** everything open is finished: review is the next step, until more opens */
+  /** Everything open is finished: review is the next step, until more opens. */
   | { kind: 'review'; courseTitle: string; done: number; total: number };
 
 /**
- * Where to go next: the current stop of the course the path opens on, so the
- * card and the path's "Continue" bubble always name the same lesson.
+ * Where to go next: the current stop of the course the path opens on, so the card and the path's "Continue"
+ * bubble always name the same lesson.
  *
- * Both come from the shared path rules (`lessonPath`, `firstCourse`): the
- * course already begun that still has something to do, and in it the first
- * open skill not yet finished, in the order the course was written to be
- * taken. A skill gone rusty is finished — the path marks it for a refresh and
- * offers review beside it — so it does not take the card from the lesson the
- * learner is in the middle of. When nothing anywhere is finished, the card
- * says "Start your first lesson" rather than "Continue", which would be a
- * small lie to somebody on their first day. One lesson finished is enough to
- * have begun: a skill is four lessons long, and "Start your first lesson"
- * over the second, third and fourth of them was the same lie the other way,
- * with the path's own bubble saying "Continue" under it.
+ * Both come from the shared path rules (`lessonPath`, `firstCourse`): the begun course that still has work, and
+ * in it the first open, unfinished skill in course order. A rusty skill counts as finished (the path marks it for
+ * review), so it does not take the card from the lesson in progress. With nothing finished anywhere, the card
+ * says "Start your first lesson" rather than "Continue"; one finished lesson is enough to count as begun.
  *
- * `done` and `total` count the skills of the course the step is in, so the bar
- * under it shows how far that course has come (and never resets to zero
- * because a second course was added).
+ * `done` and `total` count the skills of the step's course, so the bar shows that course's progress and never
+ * resets when another course is added.
  */
 export function nextStep(courses: readonly CourseEntry[]): NextStep | null {
   const loaded = courses.filter((c): c is CourseEntry & { map: NonNullable<CourseEntry['map']> } => c.map !== null);
@@ -47,7 +30,7 @@ export function nextStep(courses: readonly CourseEntry[]): NextStep | null {
   const id = firstCourse(courses);
   const entry = loaded.find((c) => c.course.id === id) ?? loaded[0]!;
   const path = lessonPath(entry.map);
-  // a skill finished, or a lesson of one still open
+  // A skill finished, or a lesson of one still open.
   const anyFinished = loaded.some((c) => {
     const p = lessonPath(c.map);
     return p.done > 0 || p.units.some((u) => u.stops.some(({ stop }) => stop.kind === 'skill' && stop.lessonsDone > 0));

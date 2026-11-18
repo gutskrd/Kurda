@@ -12,12 +12,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { ActionSheetHost } from './ActionSheetHost';
 import { orderActions, showActions } from './actionSheet';
 
-/*
- * The app's own action sheet (theme/ActionSheetHost.tsx), which a "⋯" opens
- * where the phone has no action sheet of its own. The system's dialog it
- * replaces showed three buttons at most on Android: a friend's profile menu
- * lost Block and Cancel, and could not be put away without choosing.
- */
+// The system dialog this replaces on Android showed at most three buttons, so a friend's menu lost Block and Cancel.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -26,7 +21,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** A friend's profile menu: five things, the last two not to be taken back. */
+/** A friend's profile menu: five actions, the last two irreversible. */
 function friendMenu() {
   const done: string[] = [];
   const act = (label: string, destructive = false) => ({ label, destructive, onPress: () => done.push(label) });
@@ -54,7 +49,7 @@ describe('the app’s action sheet', () => {
     const menu = friendMenu();
     act(() => showActions({ actions: menu.actions, cancel: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Block' }));
-    // not while the sheet is still on its way out
+    // Not while the sheet is still leaving.
     expect(menu.done).toEqual([]);
     act(() => vi.advanceTimersByTime(400));
     expect(menu.done).toEqual(['Block']);

@@ -1,24 +1,16 @@
 /**
- * The Hevalo book: the Kurmanji Road on paper, chapter by chapter, for a
- * learner to download as a PDF and keep beside the app.
+ * The Hevalo book: the Kurmanji Road on paper, chapter by chapter, as a downloadable PDF.
  *
- * What a chapter holds comes from the same files the course is seeded from
- * (content/lessons/road and content/stories/road.json), gathered here into a
- * plain outline (`roadBookChapters`) that pdf.ts lays out. A chapter is its
- * four parts; a part is its grammar note and its four lessons; and a lesson
- * is what the app teaches in it: the little scene it happens in (the plan's
- * beat, told in the book's own hand-written words where it has them), its
- * new words, the line Hamo has the learner say after him, a few of its
- * sentences to read aloud with their meaning, and its conversation.
- * Then the story Hamo tells at the chapter's end, with its English and its
- * questions, and practice for a pencil, whose answers wait at the back.
+ * Chapter content comes from the course's seed files (content/lessons/road and content/stories/road.json), gathered
+ * into a plain outline (`roadBookChapters`) that pdf.ts lays out. A chapter has four parts; a part has its grammar note
+ * and four lessons; a lesson has its scene (the plan's beat, in the book's own hand-written words where available), new
+ * words, Hamo's line to repeat, a few sentences to read aloud with their meaning, and its conversation. Then Hamo's
+ * story with English and questions, and pencil practice with answers at the back.
  *
- * Every kind of exercise gives the book something (see `lessonOf` and
- * `practiceOf`), and nothing Kurdish is written here: every word and line is
- * taken as the files have it.
+ * Every exercise kind contributes (`lessonOf`, `practiceOf`), and no Kurdish is written here: every word and line is
+ * taken from the files.
  *
- * Pure: the routes decide which chapters a learner may have (only the ones
- * online), and the files are read by the caller.
+ * Pure: the routes decide which chapters a learner may have (online ones only), and the caller reads the files.
  */
 import { LATIN_LETTERS, PATH_LANDS, type PathLand } from '@kurda/shared';
 
@@ -43,9 +35,8 @@ export interface BookPlanUnit {
       focus?: string;
       beat?: string;
       /**
-       * The beat as the book tells it beside the lesson's drawing, written by
-       * hand to fit the lines there: from content/lessons/road/book-beats.json
-       * (see `withBookBeats`), or the plan's own where it gives one.
+       * The beat as the book tells it beside the lesson's drawing, written to fit there: from
+       * content/lessons/road/book-beats.json (see `withBookBeats`), or the plan's own.
        */
       bookBeat?: string;
       new: Array<{ ku: string; en: string; pos?: string; gender?: string }>;
@@ -125,9 +116,8 @@ export interface BookLesson {
   /** what the lesson is for, in the plan's word: meet, build, talk or review */
   focus: string;
   /**
-   * The little scene the lesson happens in, in English, as the book prints
-   * it beside the drawing and draws it: the book's hand-written telling,
-   * whole, where there is one, and the plan's beat where there is not.
+   * The lesson's scene in English as the book prints and draws it: the book's own telling where there is one, else the
+   * plan's beat.
    */
   beat: string;
   words: BookWord[];
@@ -212,10 +202,8 @@ function tally(text: string): number {
 }
 
 /**
- * A question's options as the book prints them. In the files the right one
- * always comes first (the app deals them afresh each time it asks); a book
- * is dealt once, so the right one is moved to a place worked out from `by`,
- * and the answers at the back are not all "a".
+ * A question's options as printed. The files put the right one first (the app shuffles each time); a book is dealt
+ * once, so the right one moves to a place derived from `by` and the answers are not all "a".
  */
 export function dealt(options: readonly string[], right: number, by: string): { options: string[]; answer: number } {
   const others = options.filter((_, i) => i !== right);
@@ -245,9 +233,8 @@ function dialogueOf(exercises: readonly BookExercise[]): BookDialogue | null {
 }
 
 /**
- * A lesson's Kurdish lines with what they mean: the items that ask for the
- * English of something Hamo says — a choice of what his line means, whose
- * right option is its English, or a translation into English.
+ * A lesson's Kurdish lines with their meanings: items asking for the English of something Hamo says (a choice whose
+ * right option is its English, or a translation into English).
  */
 function pairsOf(exercises: readonly BookExercise[]): BookPair[] {
   const out: BookPair[] = [];
@@ -276,12 +263,9 @@ const READ_ALOUD = 2;
 const bareLine = (text: string): string => text.toLowerCase().trim().replace(/[\s.!?…]+$/u, '');
 
 /**
- * One lesson, from the plan and its exercises. What each kind of exercise
- * gives it: "pick the picture" ties a word to its picture; the line to
- * repeat is the line to say after Hamo; "what does it mean" and translating
- * into English are the lines to read aloud; the conversation is printed
- * whole, with the question the lesson asks about it. (The other kinds are
- * the chapter's practice: `practiceOf`.)
+ * One lesson from the plan and its exercises. "Pick the picture" ties a word to its picture; the repeat line is Hamo's
+ * line; "what does it mean" and translations into English are the read-aloud lines; the conversation is printed whole
+ * with its question. Other kinds go to the chapter's practice (`practiceOf`).
  */
 function lessonOf(plan: BookPlanUnit['skills'][number]['lessons'][number], index: number, exercises: readonly BookExercise[]): BookLesson {
   const pictures = new Map<string, string>();
@@ -342,19 +326,15 @@ function editDistance(a: string, b: string): number {
 const PRACTICE = { match: 8, gaps: 6, replies: 4, toKurdish: 4, pictures: 6, alone: 3 } as const;
 
 /**
- * The fewest lines a gap task is worth setting: with a line or two, the box
- * of words beside it gives the answers away. A chapter with fewer is given
- * this many more lines to put into Kurdish instead.
+ * The fewest lines a gap task is worth: with one or two, the word box gives the answers away. A chapter with fewer gets
+ * that many extra lines to put into Kurdish instead.
  */
 const GAPS_AT_LEAST = 3;
 
 /**
- * A chapter's practice, from all its lessons' exercises: the matching pairs
- * to join, the missing words to fill in (from a choice or from writing), the
- * replies to give, the English to put into Kurdish (translating, writing, or
- * choosing the right Kurdish), the pictures to name, and the lines the
- * lessons only say aloud, to read alone. Only what is right is taken: a
- * choice's wrong options are wrong on purpose, and stay in the app.
+ * A chapter's practice from all its lessons' exercises: matching pairs, missing words (from choices or writing),
+ * replies, English to put into Kurdish (translating, writing or choosing), pictures to name, and say-aloud lines to
+ * read alone. Only right answers are taken; wrong options stay in the app.
  */
 function practiceOf(exercises: readonly BookExercise[], printed: ReadonlySet<string>): BookPractice {
   const match: BookPair[] = [];
@@ -413,10 +393,8 @@ function practiceOf(exercises: readonly BookExercise[], printed: ReadonlySet<str
 }
 
 /**
- * The chapter's own line about Hevalo and his apples: the shortest of its
- * lines that names both, one said with feeling (an exclamation) before a
- * plain one; or failing that the shortest that has him eating. Every chapter
- * of the road has one; the book prints it where the chapter ends.
+ * The chapter's own line about Hevalo and his apples: the shortest line naming both, an exclamation before a plain one,
+ * else the shortest that has him eating. Every road chapter has one; it is printed where the chapter ends.
  */
 function gagOf(pairs: readonly BookPair[]): BookPair | null {
   const shortest = (list: readonly BookPair[]): BookPair | null => list.reduce<BookPair | null>((best, s) => (best === null || s.ku.length < best.ku.length ? s : best), null);
@@ -429,13 +407,10 @@ function gagOf(pairs: readonly BookPair[]): BookPair | null {
 export type BookBeats = Readonly<Record<string, unknown>>;
 
 /**
- * The plan with the book's own telling of each beat set beside the beat.
- * The plan's beats are the app's, and most run longer than the three lines
- * a scene has beside its drawing, where cutting them by machine loses who
- * is speaking and what the drawing shows; so the book has a telling of its
- * own for each, written by hand to fit, kept in a file of its own so the
- * plan stays the course writers' document. The plan given is not changed;
- * a lesson with no telling in `beats` keeps what the plan has.
+ * The plan with the book's own telling set beside each beat. Most plan beats run longer than the three lines a scene
+ * has beside its drawing, and cutting them mechanically loses who speaks and what is drawn, so the book keeps
+ * hand-written tellings in a file of its own (leaving the plan to the course writers). The plan passed in is not
+ * changed; a lesson without a telling in `beats` keeps the plan's.
  */
 export function withBookBeats(plan: BookPlan, beats: BookBeats): BookPlan {
   const own = (key: string): string | null => (Object.hasOwn(beats, key) ? str(beats[key]) : null);
@@ -455,8 +430,8 @@ export function withBookBeats(plan: BookPlan, beats: BookBeats): BookPlan {
 }
 
 /**
- * The chapters asked for, in order, gathered from the plan, the unit files and
- * the stories. A chapter whose unit file is missing is left out.
+ * The chapters asked for, in order, from the plan, unit files and stories. A chapter whose unit file is missing is left
+ * out.
  */
 export function roadBookChapters(plan: BookPlan, docs: ReadonlyMap<number, BookUnitDoc>, stories: readonly BookStory[], chapters: readonly number[]): BookChapter[] {
   const out: BookChapter[] = [];
@@ -515,8 +490,8 @@ export function chapterWords(chapter: Pick<BookChapter, 'parts'>): BookWord[] {
 }
 
 /**
- * Every word the chapters teach, A to Z in Kurdish alphabetical order, each
- * with the chapter it is first met in: the book's word list.
+ * Every word the chapters teach in Kurdish alphabetical order, each with the chapter it first appears in: the book's
+ * word list.
  */
 export function roadBookWordList(chapters: ReadonlyArray<Pick<BookChapter, 'parts' | 'number'>>): Array<BookWord & { chapter: number }> {
   const seen = new Set<string>();
@@ -569,12 +544,9 @@ export interface BookLetter {
 const plainWord = (w: BookWord): boolean => /^[a-zçêîşû]+$/i.test(w.ku) && w.pos !== 'cop' && w.pos !== 'particle';
 
 /**
- * The alphabet, each letter with a word of these chapters to remember it by:
- * the first word taught that begins with the letter, one with a picture
- * before one without (`pictured` says which words have one); and for a
- * letter no word begins with, one that has it inside, and where there is a
- * choice one that no other letter is shown in. Only words the chapters
- * teach, so a book of one chapter shows nothing from further down the road.
+ * The alphabet, each letter with a word from these chapters: the first taught word starting with it (pictured words
+ * before unpictured, per `pictured`); for a letter no word starts with, one containing it, preferring one no other
+ * letter shows. Only taught words, so a one-chapter book shows nothing from later chapters.
  */
 export function roadBookAlphabet(chapters: ReadonlyArray<Pick<BookChapter, 'parts'>>, pictured: (word: BookWord) => boolean): BookLetter[] {
   const words = chapters.flatMap((c) => chapterWords(c)).filter(plainWord);
@@ -612,9 +584,8 @@ export interface BookName {
 }
 
 /**
- * The people and animals of these chapters, in the plan's order: everyone
- * the plan names who is spoken of in the chapters' scenes, lines or stories.
- * Places, and the people of a chapter not asked for, are left out.
+ * The people and animals of these chapters, in the plan's order: everyone the plan names who appears in the chapters'
+ * scenes, lines or stories. Places, and people of chapters not asked for, are left out.
  */
 export function roadBookCast(plan: BookPlan, chapters: readonly BookChapter[]): BookName[] {
   const text = chapters

@@ -11,18 +11,18 @@ describe('a notification row pulled aside', () => {
     expect(swipeClaims(4, 1)).toBeNull();
     expect(swipeClaims(-8, 2)).toBe(true);
     expect(swipeClaims(9, 0)).toBe(true);
-    // up or down first is a scroll, and stays one
+    // Up or down first is a scroll, and stays one.
     expect(swipeClaims(3, 12)).toBe(false);
     expect(swipeClaims(9, 11)).toBe(false);
-    // diagonal but more across than down still pulls the row
+    // Diagonal but more across than down still pulls the row.
     expect(swipeClaims(14, 11)).toBe(true);
   });
 
   it('follows the finger, gives a little past its stops, and never leaves its own width', () => {
     expect(swipeOffset(0, -100, 360)).toBe(-100);
-    // the wrong way it hardly moves
+    // The wrong way it hardly moves.
     expect(swipeOffset(0, 50, 360)).toBe(10);
-    // past open it still goes, a little slower
+    // Past open it still goes, a little slower.
     expect(swipeOffset(-SWIPE.open, -50, 360)).toBe(-SWIPE.open - 40);
     expect(swipeOffset(0, -900, 360)).toBe(-360);
   });
@@ -39,7 +39,7 @@ describe('a notification row pulled aside', () => {
     expect(swipeRest(-30, 360, -900)).toBe('open');
     expect(swipeRest(-150, 360, 900)).toBe('closed');
     expect(swipeRest(-150, 360, -5000)).toBe('open');
-    // a flick the wrong way at rest opens nothing
+    // A flick the wrong way at rest opens nothing.
     expect(swipeRest(0, 360, -900)).toBe('closed');
   });
 });

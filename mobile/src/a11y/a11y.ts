@@ -1,49 +1,7 @@
 /**
- * Accessibility prop helpers (KUR-266). Small pure builders so every
- * interactive element gets a consistent label / role / hint, decorative
- * imagery is hidden from VoiceOver, touch-target sizing can be asserted in
- * tests, and a control's reach (the area that answers a finger, past what is
- * drawn) is worked out in one place. React Native components spread the
- * returned props.
- *
- * The role union is defined locally (rather than imported from react-native)
- * so this module stays free of native imports and runs under plain vitest.
+ * Accessibility helpers: hiding decorative art from screen readers, the minimum touch target, and a control's
+ * reach (the area that answers a finger, past what is drawn). No native imports, so it runs under plain vitest.
  */
-
-/** The accessibility roles Kurda uses; a subset of RN's AccessibilityRole. */
-export type A11yRole =
-  | 'button'
-  | 'link'
-  | 'header'
-  | 'image'
-  | 'text'
-  | 'adjustable'
-  | 'summary'
-  | 'switch'
-  | 'none';
-
-export interface A11yProps {
-  accessible: true;
-  accessibilityRole: A11yRole;
-  accessibilityLabel: string;
-  accessibilityHint?: string;
-}
-
-/**
- * Build the accessibility props for an interactive element. The hint is only
- * included when provided so we never announce an empty string.
- */
-export function a11yProps(role: A11yRole, label: string, hint?: string): A11yProps {
-  const props: A11yProps = {
-    accessible: true,
-    accessibilityRole: role,
-    accessibilityLabel: label,
-  };
-  if (hint && hint.trim().length > 0) {
-    props.accessibilityHint = hint;
-  }
-  return props;
-}
 
 export interface DecorativeProps {
   accessible: false;
@@ -63,11 +21,6 @@ export function decorative(): DecorativeProps {
 /** Apple HIG / WCAG minimum interactive target, in points. */
 export const MIN_TOUCH_TARGET = 44;
 
-/** True when a control already meets the minimum tappable size. */
-export function meetsTouchTarget(width: number, height: number): boolean {
-  return width >= MIN_TOUCH_TARGET && height >= MIN_TOUCH_TARGET;
-}
-
 export interface HitSlop {
   top: number;
   bottom: number;
@@ -76,36 +29,30 @@ export interface HitSlop {
 }
 
 /*
- * Reach: the area that answers a finger, which can be larger than what is
- * drawn. A fingertip lands a few points off what the eye aimed at, so a
- * control is drawn at least `MIN_TOUCH_TARGET` and answers over at least
- * `MIN_REACH`. Two neighbours' reaches never add up to more than the gap
- * between them: on iOS, Android and the web the later sibling wins where two
- * overlap, so an overlap takes taps from the control the finger was nearer.
+ * Reach: the area that answers a finger, which can be larger than what is drawn. A control is drawn at least
+ * `MIN_TOUCH_TARGET` and answers over at least `MIN_REACH`. Neighbours' reaches never add up to more than the gap
+ * between them, because on iOS, Android and the web the later sibling wins where two overlap.
  */
 
-/** The smallest area that answers a finger, in points: four more than what is drawn, so a near miss still lands. */
+/** The smallest area that answers a finger, in points: four more than the drawn minimum, so a near miss lands. */
 export const MIN_REACH = 48;
 
-/** How far past each edge a control with nothing near it answers: a back or close button, an empty state's action. */
+/** How far past each edge a control with nothing near it answers, such as a back or close button. */
 export const REACH_OPEN = 8;
 
 export interface ReachOptions {
-  /** reach at least this far past every edge, whatever the size (`REACH_OPEN` for a control that stands alone) */
+  /** Reach at least this far past every edge, whatever the size (`REACH_OPEN` for a control that stands alone). */
   edge?: number;
-  /** the most each side may reach: half the gap to a neighbour, from a `ReachGroup`; a side left out is not capped */
+  /** The most each side may reach: half the gap to a neighbour, from a `ReachGroup`; an omitted side is uncapped. */
   limit?: Partial<HitSlop> | null;
-  /** grow along one axis only */
+  /** Grow along one axis only. */
   axis?: 'x' | 'y' | 'both';
 }
 
 /**
- * The hitSlop that lets a control of the given drawn size answer over at
- * least `MIN_REACH`: each side grows by half of what is missing, and a side
- * that is already 48 or more grows by nothing. A size that is not known
- * (null) grows by nothing, because guessing would steal taps from whatever
- * sits beside it. `edge` is a floor past every edge, and `limit` caps each
- * side after everything else.
+ * The hitSlop that lets a control of the given drawn size answer over at least `MIN_REACH`: each side grows by
+ * half the shortfall. An unknown size (null) grows by nothing, since guessing would steal taps from neighbours.
+ * `edge` is a floor past every edge, and `limit` caps each side last.
  */
 export function reachSlop(width: number | null, height: number | null, o: ReachOptions = {}): HitSlop {
   const grow = (size: number | null): number => Math.max(o.edge ?? 0, size === null ? 0 : (MIN_REACH - size) / 2, 0);
@@ -116,16 +63,12 @@ export function reachSlop(width: number | null, height: number | null, o: ReachO
 }
 
 /**
- * Room a horizontal scroller leaves above and below its row, so its
- * children's reach is not cut off at its edge: a scroller clips whatever
- * reaches past it, so the row is padded by the room and the scroller pulled
- * back by the same amount, and nothing moves on screen. Spread `content` into
- * `contentContainerStyle` and `scroller` into `style`.
+ * Padding for a horizontal scroller so its children's reach is not clipped: the row is padded and the scroller
+ * pulled back by the same amount, so nothing moves on screen. Spread `content` into `contentContainerStyle` and
+ * `scroller` into `style`.
  *
- * Each of `top` and `bottom` is at most the gap to the neighbour on that side
- * minus that neighbour's own reach into the gap. In its padding band the
- * scroller itself is what a finger lands on, so a tap there scrolls nothing
- * and presses nothing, rather than pressing the neighbour.
+ * `top` and `bottom` are each at most the gap to that neighbour minus the neighbour's own reach. A tap in the
+ * padding band lands on the scroller and presses nothing, rather than pressing the neighbour.
  */
 export function reachRoom(
   top: number,

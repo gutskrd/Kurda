@@ -1,29 +1,21 @@
 /**
- * The Kurmanji Road's chapters, and each one going online by itself.
+ * The Kurmanji Road's chapters, each going online by itself.
  *
- * A chapter is one unit of the road's course: four parts of four lessons,
- * seeded as drafts (road-seed.ts). It goes online as a whole, the moment the
- * last recording it needs is made: every lesson in it is published together,
- * so a learner never meets half a chapter, or a chapter with silent lines.
- * What it needs is every recording its lessons play — each exercise's model
- * (`lessonAudioTargets`) and each conversation's lines (`conversationClips`),
- * keyed as the studio files them.
+ * A chapter is one unit of the road's course (four parts of four lessons, seeded as drafts by road-seed.ts). It goes
+ * online whole the moment the last recording it needs is made, so learners never meet half a chapter or silent lines.
+ * It needs every recording its lessons play: each exercise's model (`lessonAudioTargets`) and each conversation's lines
+ * (`conversationClips`), keyed as the studio files them.
  *
- * Only a chapter that is not online yet goes online this way, and only its
- * lessons still at their first version (draft or in review) are published:
- * a lesson an editor is reworking after it went out (a later version) stays
- * theirs, through the usual review. A chapter with nothing to record never
- * goes online by itself, since there is nothing to wait for.
+ * Only a chapter not yet online goes online this way, and only lessons still at their first version (draft or in
+ * review) are published; a lesson an editor is reworking (a later version) goes through the usual review. A chapter
+ * with nothing to record never goes online by itself.
  *
- * A chapter's story — the one Hamo tells at its end, a story whose slug
- * names the chapter (`road-01-…`, shared `roadStoryChapter`) — belongs to it
- * the same way: its sentences are recordings the chapter waits for, and it
- * is published, and approved, together with the lessons. A story added to a
- * chapter already online goes online on its own once its sentences are in.
+ * The chapter's story (slug naming the chapter, `road-01-…`, shared `roadStoryChapter`) belongs to it the same way: its
+ * sentences are recordings the chapter waits for, and it is published and approved with the lessons. A story added to
+ * an online chapter goes online once its sentences are in.
  *
- * `publishRecordedChapters` checks every chapter and publishes the ready ones;
- * `RoadChapterWatch` runs it after each take is saved, one run at a time, so
- * a burst of takes costs one check after another, never two at once.
+ * `publishRecordedChapters` checks every chapter and publishes the ready ones; `RoadChapterWatch` runs it after each
+ * saved take, one run at a time.
  */
 import type pg from 'pg';
 import type { FastifyBaseLogger } from 'fastify';
@@ -81,9 +73,8 @@ export function chapterKeys(exercises: ReadonlyArray<{ type: string; payload: un
 }
 
 /**
- * Every place in the course with its newest lesson that is not archived, by
- * chapter; or only chapter `unit`'s, its lessons locked first when `lock`, so
- * what is read is what the caller's transaction will publish.
+ * Every course place with its newest non-archived lesson, by chapter; or only chapter `unit`'s, its lessons locked
+ * first when `lock`, so what is read is what the caller's transaction will publish.
  */
 async function places(db: Pick<pg.Pool, 'query'>, course: string, unit: number | null = null, lock = false): Promise<Map<number, PlaceRow[]>> {
   const where = `c.slug = $1 AND ($2::int IS NULL OR u.position = $2) AND l.status <> 'archived'`;
@@ -118,10 +109,9 @@ interface StoryRow {
 }
 
 /**
- * The chapters' stories that are not archived, by chapter; or only chapter
- * `unit`'s, locked first when `lock`. A story whose length falls between the
- * bands cannot be published (the table refuses it), so it is left out rather
- * than hold its chapter back; the content tests keep the road's in a band.
+ * The chapters' non-archived stories by chapter; or only chapter `unit`'s, locked first when `lock`. A story whose
+ * length falls between bands cannot be published (the table refuses it), so it is left out rather than hold its chapter
+ * back; content tests keep the road's stories in a band.
  */
 async function chapterStories(db: Pick<pg.Pool, 'query'>, unit: number | null = null, lock = false): Promise<Map<number, StoryRow>> {
   const pattern = unit === null ? 'road-__-%' : `road-${String(unit).padStart(2, '0')}-%`;
@@ -188,9 +178,8 @@ async function survey(
 }
 
 /**
- * The course's chapters in order, with how far each has been recorded and
- * whether it is online. The chapters' stories are the road's (`withStories`):
- * a course of a test's own has none unless it says so.
+ * The course's chapters in order, with recording progress and whether each is online. Stories are the road's
+ * (`withStories`); a test's own course has none unless it says so.
  */
 export async function roadChapters(pool: pg.Pool, course: string = ROAD_COURSE, withStories = course === ROAD_COURSE): Promise<RoadChapter[]> {
   const { byUnit, stories, made } = await survey(pool, course, withStories);
@@ -213,9 +202,8 @@ export async function roadChapters(pool: pg.Pool, course: string = ROAD_COURSE, 
 }
 
 /**
- * Whether a chapter can go online now — not online, every waiting place at its
- * first version, and every line recorded — or, once online, whether a story
- * added to it since can follow, its own sentences all recorded.
+ * Whether a chapter can go online now (not online, every waiting place at its first version, every line recorded), or,
+ * once online, whether a story added since can follow with all its sentences recorded.
  */
 function ready(c: Summary): boolean {
   if (c.lines === 0 || c.recorded !== c.lines) return false;
@@ -224,9 +212,8 @@ function ready(c: Summary): boolean {
 }
 
 /**
- * Publish every chapter whose recordings are all made; the chapters published,
- * by position. Each goes online in its own transaction, which locks its
- * lessons and the takes they play and checks again before it publishes.
+ * Publish every chapter whose recordings are all made; returns the chapters published, by position. Each goes online in
+ * its own transaction, which locks its lessons and their takes and checks again before publishing.
  */
 export async function publishRecordedChapters(pool: pg.Pool, log: Log, course: string = ROAD_COURSE, withStories = course === ROAD_COURSE): Promise<number[]> {
   const { byUnit, stories, made } = await survey(pool, course, withStories);
@@ -271,9 +258,8 @@ export async function publishRecordedChapters(pool: pg.Pool, log: Log, course: s
 }
 
 /**
- * Runs `publishRecordedChapters` when asked, one run at a time: a request
- * while a run is going makes one more run after it, however many come.
- * Never throws; a failed run is logged and the next request tries again.
+ * Runs `publishRecordedChapters` on request, one run at a time: requests during a run cause exactly one more run. Never
+ * throws; a failed run is logged and the next request retries.
  */
 export class RoadChapterWatch {
   private running: Promise<void> | null = null;

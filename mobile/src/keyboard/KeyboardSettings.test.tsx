@@ -16,11 +16,7 @@ import { KeyboardGuide } from './KeyboardGuide';
 import { KeyboardSettingsSheet } from './KeyboardSettings';
 import { keyboardPrefs } from './prefs';
 
-/*
- * The race's own settings sheet (keyboard/KeyboardSettings.tsx): each switch
- * is its whole row, so a tap on its words turns it as a tap on the switch
- * does, and a screen reader meets one switch rather than words and a switch.
- */
+/* The race settings sheet: each switch is its whole row, so tapping its text toggles it and a screen reader meets one switch. */
 
 patchReactNativeWeb({ reduceMotion: true });
 

@@ -2,12 +2,9 @@ import type { AppFeedbackRequest, AppFeedbackState, AppPlatform } from '@kurda/s
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
-/**
- * The rating box's and the store prompt's calls (contract §F; shapes in
- * `@kurda/shared` feedback.ts).
- */
+/** The rating box and store prompt calls (shapes in `@kurda/shared` feedback.ts). */
 
-/** Is the box due for this account, and may this phone ask for a store review now. */
+/** Whether the box is due for this account, and whether this phone may ask for a store review now. */
 export const getFeedbackState = (
   client: ApiClient,
   platform: AppPlatform,

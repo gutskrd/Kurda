@@ -23,24 +23,16 @@ import { inTransaction, type Executor } from './tx.js';
 /**
  * Sanctions: applying, lifting, enforcing and explaining them.
  *
- * The `sanctions` table is the record; `users.banned_at`, `banned_until` and
- * `muted_until` are what every request actually checks (the auth hook, the
- * chat routes), so every change here re-derives them from the sanctions in
- * force, in the same transaction — a ban can never be recorded without being
- * enforced, or lifted while the account stays locked.
+ * The `sanctions` table is the record; `users.banned_at`, `banned_until` and `muted_until` are what requests check
+ * (auth hook, chat routes), so every change re-derives them from the sanctions in force in the same transaction. A ban
+ * is never recorded without enforcement, nor lifted while the account stays locked.
  *
- * Each sanction also leaves an `admin_actions` row (which case, which rule, what
- * the person was told, the enforced state before and after) and, unless it is
- * waiting for a second admin, a notice in the person's inbox: the statement of
- * reasons (see notices.ts).
+ * Each sanction also writes an `admin_actions` row (case, rule, what the person was told, enforced state before and
+ * after) and, unless awaiting a second admin, an inbox notice with the statement of reasons (notices.ts).
  *
- * Every change to one person's sanctions starts by locking their `users` row
- * (`lockPerson`), so two changes at once — a suspension and an unmute, or the
- * spam engine's mute arriving with an admin's ban — run one after the other.
- * Without it, the second transaction's re-derivation read the sanctions as
- * they were before the first committed, waited on the row, and then wrote its
- * stale answer over the first's: a suspension recorded but not enforced.
- * Lock order is always the person first, then any sanction row.
+ * Every change to one person's sanctions first locks their `users` row (`lockPerson`), so concurrent changes run in
+ * sequence; otherwise the second re-derivation would read stale sanctions and overwrite the first (a suspension
+ * recorded but not enforced). Lock order is always the person, then any sanction row.
  */
 
 /** The longest a timed sanction can run; anything longer is a permanent ban, with its own rules. */
@@ -241,10 +233,9 @@ async function enforcedState(db: Executor, userId: string): Promise<EnforcedStat
 }
 
 /**
- * What stops this person doing `scope` right now, and until when (null = no
- * end). Null when nothing does. One query: the enforced column for chat, and
- * the sanctions in force for every scope (which also covers a mute written
- * before the column was kept in step).
+ * What stops this person doing `scope` now, and until when (null end = indefinite); null when nothing does. One query:
+ * the enforced column for chat, plus the sanctions in force for every scope (covering mutes written before the column
+ * was kept in step).
  */
 export async function activeRestriction(
   db: Executor,
@@ -284,18 +275,13 @@ export interface SanctionsOptions {
 }
 
 /**
- * How many admins can moderate, for the two-person rules (a second admin
- * confirms a permanent ban; someone else reviews an appeal): the role and a
- * confirmed second factor, on an account that is not deleted and not closed
- * for good by a confirmed permanent ban.
+ * How many admins can moderate, for the two-person rules (a second admin confirms a permanent ban; someone else reviews
+ * an appeal): the role and a confirmed second factor, on an account not deleted and not closed by a confirmed permanent
+ * ban.
  *
- * A suspended moderator still counts, and so does one whose permanent ban
- * nobody has confirmed. Leaving them out let one moderator defeat the rule on
- * their own: suspend the only other moderator for an hour, and the count drops
- * to one — then permanently ban anyone with just the username typed (recorded
- * as single-approved, so it never comes up for review), and lift the
- * suspension. A ban decided while the other moderator is away now waits for
- * them, under its emergency suspension, like any other.
+ * Suspended moderators and those with unconfirmed permanent bans still count. Otherwise one moderator could suspend the
+ * only other one, drop the count to one, permanently ban anyone with just the username typed (single-approved, never
+ * reviewed), and lift the suspension.
  */
 export async function countModerators(db: Executor): Promise<number> {
   const r = await db.query<{ n: number }>(
@@ -325,9 +311,8 @@ export class SanctionsService {
   }
 
   /**
-   * Record a sanction and enforce it, in the caller's transaction. A ban in
-   * force ends every session (token version + refresh tokens), and a permanent
-   * one also puts the address in the ban registry.
+   * Record a sanction and enforce it in the caller's transaction. A ban in force ends every session (token version and
+   * refresh tokens); a permanent one also adds the address to the ban registry.
    */
   async apply(db: Executor, input: ApplySanctionInput): Promise<AppliedSanction> {
     const statement = input.statement.trim();
@@ -423,9 +408,8 @@ export class SanctionsService {
   }
 
   /**
-   * Lift a sanction early. Re-derives what is enforced, takes the address off the
-   * ban registry when no permanent ban is left, and tells the person when it
-   * was actually limiting them.
+   * Lift a sanction early: re-derive enforcement, remove the address from the ban registry when no permanent ban
+   * remains, and tell the person if it was actually limiting them.
    */
   async revoke(
     db: Executor,
@@ -509,9 +493,8 @@ export class SanctionsService {
   }
 
   /**
-   * Lift the automatic chat mute (the 1 h → 24 h → permanent ladder for repeated
-   * flagged messages). The permanent step had no way back at all; this resets
-   * the count too, so one more slip does not put them straight back on it.
+   * Lift the automatic chat mute (the 1 h → 24 h → permanent ladder for repeated flagged messages) and reset the count,
+   * so one more slip does not put them straight back.
    */
   async liftChatOffenses(adminId: string, userId: string, reason: string): Promise<boolean> {
     notSelf(adminId, userId);
@@ -529,9 +512,8 @@ export class SanctionsService {
   }
 
   /**
-   * Re-derive the enforced columns from the sanctions in force: the ban from
-   * suspensions and permanent bans (no end when any permanent one is in force),
-   * the chat mute from chat mutes ('infinity' for one with no end).
+   * Re-derive the enforced columns from the sanctions in force: the ban from suspensions and permanent bans (no end
+   * with any permanent one), the chat mute from chat mutes ('infinity' for one with no end).
    */
   async syncEnforcedColumns(db: Executor, userId: string): Promise<void> {
     await db.query(
@@ -557,8 +539,8 @@ export class SanctionsService {
   }
 
   /**
-   * Take the lock every change to this person's sanctions starts with (see the
-   * top of this file). False when there is no such person.
+   * Take the lock every change to this person's sanctions starts with (see the module header). False when there is no
+   * such person.
    */
   async lockPerson(db: Executor, userId: string): Promise<boolean> {
     const r = await db.query(`SELECT 1 FROM users WHERE id = $1 FOR UPDATE`, [userId]);
@@ -592,13 +574,11 @@ export class SanctionsService {
   }
 
   /**
-   * Take the address off the registry once no permanent ban is left. By the
-   * bans' ids as well as by the address: a closed account's email has been
-   * anonymised by then, and its hash no longer matches the entry.
+   * Remove the address from the registry once no permanent ban remains, matching by ban ids as well as address, since a
+   * closed account's email is anonymised by then.
    *
-   * Not when another account still permanently banned has the same address
-   * as the registry sees it (a `+tag` or Gmail-dots variant: one entry stands
-   * for both) — the entry then stays, pointing at that account's ban.
+   * Not when another permanently banned account has the same normalised address (a `+tag` or dots variant shares one
+   * entry); the entry then stays, pointing at that ban.
    */
   private async unregisterBannedEmail(db: Executor, userId: string): Promise<void> {
     const stillBanned = await db.query(
@@ -639,12 +619,9 @@ export class SanctionsService {
   }
 
   /**
-   * Put every permanent ban in force on the registry that is not on it yet.
-   * The migration that carried the old column bans into sanctions could not
-   * do it (the hash needs the server's key, which a migration does not have),
-   * so those people could sign up again with a `+tag` of their address. Runs
-   * with the retention sweep — after start and then daily — and does nothing
-   * once every ban is on it. Returns how many entries it added.
+   * Add every permanent ban in force that the registry lacks. The migration that moved old column bans into sanctions
+   * could not (the hash needs the server key), which let those people sign up again with a `+tag`. Runs with the
+   * retention sweep (after start, then daily) and is a no-op once complete. Returns how many entries it added.
    */
   async backfillBanRegistry(): Promise<number> {
     const due = await this.pool.query<{ sanction_id: string; email: string }>(
@@ -807,9 +784,8 @@ export interface CurrentBan {
   /** null = permanent */
   until: Date | null;
   /**
-   * When the account was first locked out by the bans in force (the earliest
-   * of them was recorded then, and every session ended with it). Refresh
-   * tokens revoked at or after this were revoked by the ban.
+   * When the bans in force first locked the account out (when the earliest was recorded and every session ended).
+   * Refresh tokens revoked at or after this were revoked by the ban.
    */
   since: Date;
   policy: ReportCategory | null;
@@ -818,11 +794,9 @@ export interface CurrentBan {
 }
 
 /**
- * The ban that keeps this account out, for the sign-in refusal: the permanent
- * one if there is one, else the suspension that ends last. Null when the account
- * is not banned. The enforced columns decide whether it is banned; the sanction
- * supplies the reason. A ban written straight to the columns (an older path, or
- * a hand edit) still counts, with a generic statement and nothing to appeal.
+ * The ban keeping this account out, for the sign-in refusal: the permanent one if any, else the suspension ending last;
+ * null when not banned. The enforced columns decide whether it is banned and the sanction supplies the reason. A ban
+ * written straight to the columns still counts, with a generic statement and nothing to appeal.
  */
 export async function currentBan(db: Executor, userId: string): Promise<CurrentBan | null> {
   const u = await db.query<{ banned_at: Date | null; banned_until: Date | null }>(

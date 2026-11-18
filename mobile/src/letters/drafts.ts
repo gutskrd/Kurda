@@ -3,29 +3,19 @@ import { checkLetterDecor, DEFAULT_PAPER, type LetterPaper, type PaperNote, type
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * Letters that are never lost while they are being written, on the phone (the
- * website's web/src/letters/drafts.ts, kept the same way).
+ * Letter drafts on the phone, kept the same way as web/src/letters/drafts.ts. The screen a letter is written on can
+ * change under it (a bird flies on, a pen pal leaves, the app closes), so the paper is saved as it is written, one
+ * draft per place: your new bird (`new`), an answer to a visitor (`visitor:<letter id>`), or a correspondence
+ * (`thread:<id>`). A draft is dropped once its letter is sent.
  *
- * A letter takes a while to write, in a language still being learned, and
- * the screen it is written on can change under it: a bird that was waiting on
- * the sill flies on by itself, a pen pal says goodbye, two birds cross, the
- * app is closed or the phone runs out of battery. So whatever is on the paper
- * is kept as it is written, one draft for each place a letter is written
- * from: your own new bird (`new`), an answer to the bird at your window
- * (`visitor:<letter id>`), and a correspondence (`thread:<id>`). The paper
- * opens on it again, and it is let go once that letter has been sent.
- *
- * Drafts are kept on this phone only, for the account that wrote them: a
- * draft of anybody else is dropped before one is read, nothing older than a
- * month is kept, and signing out lets them all go (widget/LetterWidgetSync.tsx
- * hears every sign-out). The phone's storage answers later than a screen is
- * drawn, so the drafts are read into memory once (`useLetterDrafts`) and the
- * paper opens on them from there; a store that refuses only means the draft
- * lasts as long as the app is open.
+ * Drafts stay on this phone for the account that wrote them: other accounts' drafts are dropped on read, nothing
+ * older than a month is kept, and sign-out clears them (widget/LetterWidgetSync.tsx). Storage answers later than
+ * the first render, so drafts are read into memory once (`useLetterDrafts`); if the store refuses, drafts last
+ * only while the app is open.
  */
 
 /** What is on the paper of a letter not yet sent. */
-export interface LetterDraft {
+interface LetterDraft {
   body: string;
   paper: LetterPaper;
   strokes: PaperStroke[];
@@ -42,11 +32,11 @@ interface Drawer {
 }
 
 export const DRAFTS_KEY = 'hevalo_letter_drafts_v1';
-/** A draft untouched this long is let go: a letter half written a month ago is not the one being written now. */
+/** Drafts untouched this long are dropped. */
 const KEEP_MS = 30 * 86_400_000;
-/** More places to write from than anybody has open at once: five pen pals, a visitor and a bird of your own. */
+/** More places to write from than anyone has open at once. */
 const KEEP_MAX = 12;
-/** Typing is kept in memory at once and written to the phone a moment after it stops, not on every letter typed. */
+/** Typing is kept in memory at once and written to storage this long after it stops. */
 const WRITE_AFTER_MS = 400;
 
 /** The draft for your own new bird. */
@@ -71,7 +61,7 @@ function fresh(drafts: Record<string, Kept>): Record<string, Kept> {
   return Object.fromEntries(kept);
 }
 
-/** Reads `who`'s drafts from the phone into memory, once; anybody else's found there are not handed over. */
+/** Reads `who`'s drafts into memory, once; other accounts' drafts found there are dropped. */
 export function loadLetterDrafts(who: string): Promise<void> {
   if (drawer?.who === who) return Promise.resolve();
   if (reading?.who === who) return reading.done;
@@ -82,7 +72,7 @@ export function loadLetterDrafts(who: string): Promise<void> {
       const parsed = raw ? (JSON.parse(raw) as Drawer) : null;
       if (parsed && parsed.who === who && parsed.drafts && typeof parsed.drafts === 'object') found = parsed;
     } catch {
-      // an unreadable drawer is an empty one
+      // An unreadable store counts as empty.
     }
     drawer = { who, drafts: fresh(found?.drafts ?? {}) };
     reading = null;
@@ -91,7 +81,7 @@ export function loadLetterDrafts(who: string): Promise<void> {
   return done;
 }
 
-/** Whether `who`'s drafts have been read, so a paper opened now opens on its draft; reads them if not. */
+/** Whether `who`'s drafts have been read, so a paper opened now starts from its draft; reads them if not. */
 export function useLetterDrafts(who: string | null): boolean {
   const [ready, setReady] = useState(() => who === null || drawer?.who === who);
   useEffect(() => {
@@ -112,7 +102,7 @@ export function useLetterDrafts(who: string | null): boolean {
 }
 
 function drawerFor(who: string): Drawer {
-  // drafts not read yet (the storage was slow): what is written now is kept from here on, over anything older there
+  // Drafts not read yet (slow storage): keep what is written from here on, over anything older.
   if (drawer?.who !== who) drawer = { who, drafts: {} };
   return drawer;
 }
@@ -129,9 +119,8 @@ function writeSoon(): void {
 }
 
 /**
- * The draft kept for `place`, checked as the composer will use it: a paper it
- * does not know falls back to the default one, and a drawing or a note that
- * is not one any more is left out rather than breaking the paper.
+ * The draft for `place`, validated as the composer will use it: an unknown paper falls back to the default, and
+ * invalid drawings or notes are dropped rather than breaking the paper.
  */
 export function draftOf(who: string | null, place: string): LetterDraft | null {
   if (!who || drawer?.who !== who) return null;
@@ -144,12 +133,12 @@ export function draftOf(who: string | null, place: string): LetterDraft | null {
   return { body: d.body, paper, strokes: strokeCheck.ok ? strokeCheck.value.strokes : [], notes };
 }
 
-/** Whether a draft holds anything worth keeping: words, a line drawn or a note (a paper chosen alone is not a letter). */
-export function draftHasWork(d: LetterDraft): boolean {
+/** Whether a draft holds words, a drawing or a note; a chosen paper alone does not count. */
+function draftHasWork(d: LetterDraft): boolean {
   return d.body.trim().length > 0 || d.strokes.length > 0 || d.notes.some((n) => n.text.trim().length > 0);
 }
 
-/** Keeps what is on the paper for `place`, or lets it go (`null`, or nothing written). */
+/** Saves the paper for `place`, or drops it (`null`, or nothing written). */
 export function keepDraft(who: string | null, place: string, draft: LetterDraft | null): void {
   if (!who) return;
   const d = drawerFor(who);
@@ -160,17 +149,15 @@ export function keepDraft(who: string | null, place: string, draft: LetterDraft 
 }
 
 /**
- * Moves the draft for `from` to `to`: an answer whose bird has flown becomes
- * a letter for your own bird, or for a correspondence with that person. A
- * first letter to somebody new carries no drawing (`strokes: false`), so a
- * drawing does not go with it. Says whether there was a draft to move.
+ * Moves the draft from `from` to `to`, e.g. when a visitor's bird has flown and the answer becomes a new letter.
+ * With `strokes: false` (a first letter to someone new) the drawing stays behind. Returns whether there was a draft.
  */
 export function moveDraft(who: string | null, from: string, to: string, opts: { strokes: boolean }): boolean {
   const moved = draftOf(who, from);
   if (!who || !moved || !draftHasWork(moved)) return false;
   const d = drawerFor(who);
   delete d.drafts[from];
-  // what is already being written there stays as it is, on its own paper, and the moved words go under it
+  // A draft already at the destination keeps its paper, and the moved words go under it.
   const there = draftOf(who, to);
   if (there && draftHasWork(there)) d.drafts[to] = { ...there, body: [there.body.trim(), moved.body.trim()].filter(Boolean).join('\n\n'), at: Date.now() };
   else d.drafts[to] = { ...moved, strokes: opts.strokes ? moved.strokes : [], at: Date.now() };
@@ -178,18 +165,14 @@ export function moveDraft(who: string | null, from: string, to: string, opts: { 
   return true;
 }
 
-/**
- * The answers kept for birds no longer at the window: begun, and left when
- * the app was closed, while the bird's day ran out. `here` is the letter of
- * the bird at the window now, whose answer is not stray.
- */
+/** Answers kept for birds no longer at the window; `here` is the current visitor's letter, whose answer is not stray. */
 export function strayAnswers(who: string | null, here: string | null): string[] {
   if (!who || drawer?.who !== who) return [];
   const mine = here ? visitorDraft(here) : null;
   return Object.keys(drawer.drafts).filter((place) => place.startsWith('visitor:') && place !== mine);
 }
 
-/** Every draft let go: at sign-out, so nobody who signs in on this phone next finds what was being written. */
+/** Drops every draft at sign-out, so the next account on this phone finds nothing. */
 export function forgetLetterDrafts(): Promise<void> {
   if (writeTimer !== null) clearTimeout(writeTimer);
   writeTimer = null;
@@ -198,7 +181,7 @@ export function forgetLetterDrafts(): Promise<void> {
   return store.remove(DRAFTS_KEY);
 }
 
-/** For tests: the store drafts are kept in, and a phone with nothing read yet; returns a function that puts the store back. */
+/** For tests: swaps the drafts store and clears what was read; returns a function that restores the store. */
 export function setDraftStoreForTests(next: DeviceStore): () => void {
   const before = store;
   store = next;

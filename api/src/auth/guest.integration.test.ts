@@ -1,9 +1,7 @@
 /**
- * Guest accounts against real Postgres: a phone gets a guest and, for a day,
- * the same guest back; a guest learns exactly as a signed-in learner does and
- * is refused everything social; nobody else can find the guest; claiming
- * upgrades the same row with the progress on it; leaving and the idle purge
- * close the row at once.
+ * Guest accounts against real Postgres: a phone gets a guest and the same one back for a day; guests learn like members
+ * but are refused everything social; nobody else can find them; claiming upgrades the same row with its progress;
+ * leaving and the idle purge close the row at once.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

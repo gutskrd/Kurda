@@ -16,10 +16,8 @@ import type { SkillNode } from './types';
 import { Loading } from '../theme/Loading';
 
 /**
- * A unit's guide — the grammar notes of its skills — or one skill's Tips,
- * presented over the path. Each note is fetched the first time the guide asks
- * for it and kept, so opening a unit's guide twice fetches it once, and a path
- * of twenty skills does not fetch twenty notes nobody opened.
+ * A unit's guide (its skills' grammar notes) or one skill's tips, over the path. Each note is fetched the first
+ * time it is shown and kept.
  */
 export function UnitGuide({ guide, onClose }: { guide: { title: string; skills: SkillNode[] } | null; onClose: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -43,12 +41,12 @@ export function UnitGuide({ guide, onClose }: { guide: { title: string; skills: 
     return () => {
       live = false;
     };
-    // a note once fetched is kept (`notes` is read, not watched): only a new guide asks again
+    // `notes` is read, not watched, so only a new guide fetches again.
   }, [guide, client, t]);
 
   return (
     <Modal visible={guide !== null} animationType={slide} onRequestClose={onClose}>
-      {/* a screen of its own over the path: nothing on the path below caps the reach of what is on it */}
+      {/* A screen of its own, so the path below caps nothing on it. */}
       <ReachReset>
         <GradientBackground>
           <View style={styles.screen}>
@@ -85,7 +83,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { padding: spacing.lg, gap: spacing.xl },
   section: { gap: spacing.sm },
-  // the skill's name over its note, quieter than the note's own heading
+  // The skill's name, quieter than the note's own heading.
   skill: { ...sectionLabel },
   error: { fontSize: typography.sizes.sm },
 });

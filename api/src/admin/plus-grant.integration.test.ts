@@ -1,8 +1,7 @@
 /**
- * Giving Hevalo+ from a person's page (POST /admin/users/:id/plus), against
- * real Postgres and through the console's own gate: a superadmin's alone, with
- * a reason, written to the person's history, once per request key — and what
- * the member then has (the service's own rules are in user-admin.integration).
+ * Giving Hevalo+ from a person's page (POST /admin/users/:id/plus) against real Postgres and through the console's
+ * gate: superadmin only, with a reason, in the person's history, once per request key, and what the member then has
+ * (the service rules are in user-admin.integration).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

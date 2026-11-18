@@ -18,9 +18,9 @@ function BrokenCard(): React.JSX.Element {
 
 describe('the error boundary round the screens', () => {
   beforeEach(() => {
-    // a store build: the crash screen leaves out the developer’s detail line
+    // A store build: the crash screen leaves out the developer’s detail line.
     vi.stubGlobal('__DEV__', false);
-    // React logs the caught error on its own; it is expected here
+    // React logs the caught error on its own; it is expected here.
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
@@ -37,7 +37,7 @@ describe('the error boundary round the screens', () => {
       </AppErrorBoundary>,
     );
     expect(await screen.findByTestId('crash-retry')).toBeTruthy();
-    // the calm fawn the offline state wears, not a red alarm: it is never the reader's doing
+    // The calm fawn the offline state wears, not a red alarm: it is never the reader's doing.
     expect(screen.getByTestId('crash-art')).toBeTruthy();
     expect(document.querySelector('svg')).toBeNull();
     expect(reportRenderError).toHaveBeenCalledTimes(1);

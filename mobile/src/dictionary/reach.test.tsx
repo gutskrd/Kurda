@@ -22,10 +22,8 @@ import { SourceLine } from './SourceLine';
 import type { Entry, SavedWord } from './types';
 
 /*
- * How far the dictionary's controls answer a finger past what they draw: the
- * two round buttons beside a headword, which have the row to themselves; a
- * saved word's ✕, which must never take a tap meant for the word; and the
- * source line's links, which cannot reach past their own line.
+ * How far the dictionary's controls reach past what they draw: the headword's two round buttons, a saved word's ✕
+ * (which must never take a tap meant for the word), and the source line's links.
  */
 
 beforeEach(() => {
@@ -47,15 +45,11 @@ const ENTRY: Entry = {
   xrefs: [],
 };
 
-/**
- * The line height a line of text is drawn with. react-native-web sets it
- * through a class whose rule it adds to the page's styles, and the test page
- * does not work a line height out from a class, so the rule is read instead.
- */
+/** The line height a text line is drawn with, read from the stylesheet rule react-native-web adds for its class. */
 function lineHeightOf(el: Element): string | undefined {
   const cls = [...el.classList].find((c) => c.startsWith('r-lineHeight-'));
   if (!cls) return undefined;
-  // the rules can sit inside grouping rules (a media block), so every level is looked through
+  // The rules can sit inside grouping rules (a media block), so every level is looked through.
   const find = (rules: CSSRuleList): string | undefined => {
     for (const rule of rules) {
       if (rule.cssText.startsWith(`.${cls}`)) return /line-height:\s*([^;]+);/.exec(rule.cssText)?.[1]?.trim();
@@ -98,7 +92,7 @@ describe('a saved word’s ✕', () => {
     testAuth.client = fakeClient({ 'GET /me/saved-words': ok({ words: [saved('e1', 'mal', 'house'), saved('e2', 'av', 'water')] }) });
     renderWithProviders(<DictionaryScreen onBack={() => undefined} />);
     await screen.findByText('av');
-    // the row's 8 of padding and half the 4 between rows, above and below; nothing on the word's side
+    // The row's 8 of padding and half the 4 between rows, above and below; nothing on the word's side.
     expect(reachOf('Remove av')).toEqual({ top: 10, bottom: 10, left: 0, right: 10 });
     expect(reachOf('Remove mal')).toEqual({ top: 10, bottom: 10, left: 0, right: 10 });
   });

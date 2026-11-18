@@ -16,10 +16,9 @@ import { radii, spacing, typography } from '../theme/tokens';
 const ART = 52;
 
 /**
- * Hevalo's book on Learn: one slim card that opens the road on paper — the
- * PDF of every chapter that is online (api/src/books), Hamo's stories, words
- * and grammar with it — for the phone to keep, share or print. It is there
- * only once a chapter is online, and never on a server that has no book.
+ * Hevalo's book on Learn: one slim card opening the PDF of every online chapter (api/src/books), with Hamo's
+ * stories, words and grammar, to keep, share or print. Shown only once a chapter is online, never when the server
+ * has no book.
  */
 export function BookCard(): React.JSX.Element | null {
   const { client } = useAuth();
@@ -32,7 +31,7 @@ export function BookCard(): React.JSX.Element | null {
   const load = useCallback(() => {
     let live = true;
     void client.get<{ chapters: number[] }>('/books/road').then((res) => {
-      // an answer without a chapter list (an older server) shows no card rather than breaking Learn
+      // An answer without a chapter list (an older server) shows no card rather than breaking Learn.
       if (live && res.ok) setChapters(Array.isArray(res.data?.chapters) ? res.data.chapters.length : 0);
     });
     return () => {
@@ -59,7 +58,7 @@ export function BookCard(): React.JSX.Element | null {
         <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
           {t('book.card.title')}
         </Text>
-        {/* what the book holds, said whole: three lines cut it at "the words and t…" on a narrow phone and in German */}
+        {/* What the book holds, shown whole: three lines truncated on narrow phones and in German. */}
         <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]}>{sub}</Text>
       </View>
       <Icon name="book" size={18} color={colors.textSecondary} />

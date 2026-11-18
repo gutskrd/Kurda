@@ -1,14 +1,7 @@
 /**
- * Words with no recording behind them, said anyway.
- *
- * A speaking character follows a player's clock (characters/voice.ts) and
- * shapes its mouth from the recording's timeline, or from the words once the
- * recording's length is known. Hevalo's lines on the sign-up steps and the
- * intro slides have no recording — they change with the language and with
- * what was typed — so this gives him a clock to say them by: one that starts
- * when the line does, runs for as long as the line would take to say, and
- * then stops. The character reads it on every frame as it would a player,
- * so the same lip-sync moves his mouth, with no sound.
+ * A playback clock for lines with no recording (Hevalo's sign-up and intro lines change with the language and what was
+ * typed): it starts with the line, runs as long as the line would take to say, then stops. The character reads it each
+ * frame like a player's clock (characters/voice.ts), so the same lip-sync moves his mouth, silently.
  */
 import { useEffect, useRef, useState } from 'react';
 import type { PlaybackClock } from '../../characters/voice';
@@ -49,14 +42,13 @@ export class SpokenLine implements PlaybackClock {
 export interface Speech {
   player: PlaybackClock | null;
   playing: boolean;
-  /** names the line, so the character works out a new timeline for each one, even one with the same words */
+  /** Names the line, so the character works out a new timeline for each one, even with the same words. */
   source: string | null;
 }
 
 /**
- * Says `text` from the moment it is given, and again each time it changes;
- * said to the end, or until `speak` goes false (the screen lost focus, or
- * motion is turned down), the mouth rests. Null text says nothing.
+ * Says `text` from the moment it is given and again each time it changes; once said, or when `speak` goes false (the
+ * screen lost focus, or motion is reduced), the mouth rests. Null text says nothing.
  */
 export function useSpokenLine(text: string | null, speak = true): Speech {
   const [said, setSaid] = useState<{ line: SpokenLine; source: string; playing: boolean } | null>(null);
@@ -71,7 +63,7 @@ export function useSpokenLine(text: string | null, speak = true): Speech {
     count.current += 1;
     const source = `said:${count.current}`;
     setSaid({ line, source, playing: true });
-    // a little after the last sound, so the mouth comes to rest before the frames stop
+    // A little after the last sound, so the mouth comes to rest before the frames stop.
     const done = setTimeout(() => setSaid((now) => (now?.source === source ? { ...now, playing: false } : now)), line.durationMs + 80);
     return () => clearTimeout(done);
   }, [text, speak]);

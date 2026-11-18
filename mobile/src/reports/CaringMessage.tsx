@@ -18,19 +18,11 @@ export interface CaringMessage {
 }
 
 /**
- * The moderators' message to someone who may be at risk, in full, with the
- * helpline one tap away.
- *
- * In a list a notification is cut to a line or two, and this one's helpline
- * is in its second paragraph — so a tap on it opens it here (`socialDeepLink`
- * → `CaringMessage`) instead of leading nowhere. Not an alert: nothing is
- * wrong with the reader, and it says nothing they did. The words are the
- * moderators' own (their note first, then the check-in), so they keep their
- * own direction on a Soranî screen; the button is ours, in the reader's
- * language.
- *
- * Shared by the Inbox and the notification list; renders nothing when
- * `message` is null.
+ * The moderators' message to someone who may be at risk, in full, with the helpline one tap away. A list cuts a
+ * notification to a line or two and this one's helpline is in its second paragraph, so a tap opens it here
+ * (`socialDeepLink` → `CaringMessage`). Not an alert: nothing is wrong with the reader. The words are the moderators'
+ * own and keep their direction on a Soranî screen; the button is in the reader's language. Shared by the Inbox and the
+ * notification list; renders nothing when `message` is null.
  */
 export function CaringMessageDialog({
   message,

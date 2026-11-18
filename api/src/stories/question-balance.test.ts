@@ -1,11 +1,7 @@
 /**
- * The story game's questions as a player meets them, for the road, the
- * Kurmancî and the Soranî stories (api/content/stories): no question is a
- * coin toss between two answers, a true-or-false item always has its third
- * answer (the story does not say), each road story asks about its words more
- * than once, and the right option does not give itself away by being the one
- * long option. The legends are held to the same rules by their own test once
- * their questions are rebalanced.
+ * Story game questions in the road, Kurmancî and Soranî stories (api/content/stories): no two-answer coin tosses, every
+ * true-or-false item has its third answer, each road story asks about its words more than once, and the right option is
+ * not the one long option. The legends have their own test.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -48,9 +44,8 @@ const longestGivesItAway = (q: FileQuestion): boolean => {
 const LONGEST_SHARE = 0.4;
 
 /**
- * Stories whose options are still to be rebalanced, with how many of their
- * questions give the answer away by its length today: the count may fall,
- * never rise, until each is brought under the share and taken off this list.
+ * Stories still to rebalance, with how many questions currently give the answer away by length: counts may fall, never
+ * rise, until each is under the share and removed.
  */
 const STILL_TO_BALANCE: Readonly<Record<string, number>> = {
   'road-06-nameya-bave-me': 7,

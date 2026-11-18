@@ -10,7 +10,7 @@ import type { HapticEvent } from '../feedback/hapticPacing';
 import { JOIN_CODE_LENGTH } from '@kurda/shared';
 import { FLIP_MS, FLIP_STAGGER_MS, JoinCodeCard, JoinCodeSheet, SUCCESS_MS, SUCCESS_REDUCED_MS } from './JoinByCode';
 
-// jsdom has no matchMedia, and react-native-web reads the colour scheme through it
+// jsdom has no matchMedia, which react-native-web uses to read the colour scheme.
 vi.hoisted(() => {
   window.matchMedia ??= ((media: string) => ({
     matches: false,
@@ -50,16 +50,13 @@ afterEach(() => {
 });
 
 /*
- * Once a code is accepted the sheet runs on the clock: the boxes turn one
- * after another, and the lobby opens after the burst. A test of that moves the
- * clock itself rather than waiting it out, so a busy machine can neither run
- * past "the first box has turned and the last has not" before it is looked at
- * nor stretch the wait for the lobby past the test's own time.
+ * Once a code is accepted the sheet runs on timers, so tests drive the clock instead of waiting: a slow machine can
+ * then neither skip past the mid-flip state nor stretch the wait past the test's timeout.
  */
 function onTheClock(): void {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 }
-/** The server's answer to the code, which arrives as a promise, not on the clock. */
+/** Lets the server's answer, a promise rather than a timer, arrive. */
 const answered = () => act(async () => undefined);
 const after = (ms: number) =>
   act(() => {
@@ -84,14 +81,14 @@ describe('JoinCodeSheet', () => {
     fireEvent.focus(field);
     type(field, 'kq7');
     expect(field.value).toBe('KQ7');
-    // the box the next character goes to is lit; the boxes themselves are only a picture
+    // The next box is lit; the boxes themselves are only a picture.
     expect(screen.getByTestId('code-box-3-picked')).toBeTruthy();
     expect(screen.getByTestId('code-box-0-idle').closest('[aria-hidden="true"]')).toBeTruthy();
     expect(joins()).toHaveLength(0);
 
     type(field, 'KQ7m4x');
     expect(joins()[0]?.body).toEqual({ code: 'KQ7M4X' });
-    // in: the boxes turn green, the phone says so, and the lobby opens
+    // Accepted: the boxes turn green, a haptic plays, and the lobby opens.
     await answered();
     after(SUCCESS_MS);
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: LOBBY });
@@ -156,7 +153,7 @@ describe('JoinCodeSheet', () => {
     expect(felt).toEqual(['error']);
     expect(navigation.navigate).not.toHaveBeenCalled();
 
-    // any key is typing again — a seventh character that changes nothing too: the red and the words go
+    // Any key counts as retyping, even a seventh character that changes nothing: the red and the message clear.
     type(field, 'ZZZ9999');
     expect(screen.queryByTestId('join-message')).toBeNull();
     expect(screen.queryByTestId('code-box-0-wrong')).toBeNull();
@@ -184,7 +181,7 @@ describe('JoinCodeSheet', () => {
     const { field } = sheet({ 'POST /play/join': ok({ game: 'wordle-battle', lobbyId: LOBBY }) });
     type(field, 'KQ7M4X');
     await answered();
-    // halfway through its flip the first box shows green, and the last has not started
+    // Halfway through its flip the first box shows green, and the last has not started.
     after(FLIP_MS / 2);
     expect(screen.getByTestId('code-box-0-right')).toBeTruthy();
     expect(screen.queryByTestId('code-box-5-right')).toBeNull();

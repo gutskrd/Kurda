@@ -91,7 +91,7 @@ describe('progress', () => {
   it('reads "7 / 30 days", and nothing once every tier is earned', () => {
     expect(progressText(t, view())).toBe('12 / 30 days');
     expect(progressText(t, view({ next: null, tier: 4 }))).toBeNull();
-    // never more than the target, however far past it the count has gone
+    // Never more than the target, however far past it the count has gone.
     expect(progressText(t, view({ progress: 45, next: 30 }))).toBe('30 / 30 days');
   });
 
@@ -103,7 +103,7 @@ describe('progress', () => {
     expect(unitWord(t, 'seasons', 3)).toBe('seasons');
   });
 
-  // a Soranî reader's counts are in the digits the rest of the screen is in, and the singular is still chosen by the number
+  // A Soranî reader's counts use the screen's digits, and the singular is still chosen by the number.
   it('writes the counts in the reader’s own digits where it is given them', () => {
     const tCkb = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.ckb[key] ?? key, vars);
     const ckb = (v: number): string => new Intl.NumberFormat('ckb').format(v);

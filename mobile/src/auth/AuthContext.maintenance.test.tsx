@@ -49,9 +49,8 @@ function wrapperWith(storage: TokenStorage) {
 
 describe('AuthProvider while Hevalo is offline', () => {
   /*
-   * Opening the app while Hevalo is offline: the session is restored with
-   * `GET /me`, which is answered 503 MAINTENANCE. That is not a failed session,
-   * and it used to land on the sign-in screen as though it were.
+   * Opening the app while Hevalo is offline: restoring the session with `GET /me` is answered 503 MAINTENANCE, which is
+   * not a failed session.
    */
   it('keeps a session it could not restore, and restores it once Hevalo is back', async () => {
     let open = false;

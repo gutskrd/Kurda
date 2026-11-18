@@ -27,14 +27,9 @@ const SET_BODY: Record<WordSetId, TranslationKey> = {
 };
 
 /**
- * Letters and words: the alphabet first, then the colours, the numbers, the
- * days of the week and the months, each a set taught the way the alphabet is.
- * One big card each, with a picture of what is in it and how much of it has
- * been opened on this phone; the letters' card opens the alphabet
- * (AlphabetScreen), a set's card opens the set (WordSetScreen).
- *
- * The letters stood on their own tile in Learn's tools beside this one; they
- * are the first of the same steps, so they sit at the top of the same list.
+ * Letters and words: the alphabet first, then colours, numbers, weekdays and months, each a set taught like the
+ * alphabet. One large card each, with a picture of its contents and how much has been opened on this device; the
+ * letters' card opens the alphabet (AlphabetScreen), a set's card opens the set (WordSetScreen).
  */
 export function WordsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -43,7 +38,7 @@ export function WordsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   const navigation = useNavigation<RootNavigation>();
   const bottom = useScreenBottomInset(spacing.xl);
   const counts = useSeenCounts();
-  // the alphabet opens in the reader's own script, so its card counts that one
+  // The alphabet opens in the reader's own script, so its card counts that one.
   const script: AlphabetScript = locale === 'ckb' ? 'ckb' : 'kmr';
   const letters = useLettersSeen(script);
 
@@ -123,10 +118,8 @@ function Card({ id, script, title, body, seen, total, onPress }: CardProps): Rea
 }
 
 /**
- * A picture of what a card holds, in place of an icon: toy blocks with the
- * first letters (in the script the alphabet opens in), a paint palette, an
- * abacus, the sun (roj, the day) and a wall calendar, drawn in the shared art
- * so the browser shows the same five.
+ * A picture of what a card holds: toy blocks with the first letters, a paint palette, an abacus, the sun (roj,
+ * the day) and a wall calendar, from the shared art so the web shows the same five.
  */
 function Teaser({ id, script }: { id: WordsCardId; script: AlphabetScript }): React.JSX.Element {
   const { colors } = useTheme();

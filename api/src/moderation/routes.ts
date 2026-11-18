@@ -7,7 +7,7 @@ import { requireCapability } from '../admin/routes.js';
 const moderators = [requireAuth, requireCapability('moderation.act')];
 import type { ModerationService } from './service.js';
 
-/** Message reporting + admin moderation queue (KUR-086). */
+/** Message reporting + admin moderation queue. */
 export function registerModerationRoutes(app: FastifyInstance, moderation: ModerationService): void {
   /** Report a message; captures ~10 surrounding messages as context. */
   app.post(

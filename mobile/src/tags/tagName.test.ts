@@ -1,7 +1,4 @@
-/**
- * Tag names in the reader's language (tagName.ts): the server's English label
- * is only the fallback for a tag the app does not know yet.
- */
+/** Tag names in the reader's language (tagName.ts); the server's English label is only the fallback for an unknown tag. */
 import { describe, expect, it } from 'vitest';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { tagBadgeText, tagName } from './tagName';

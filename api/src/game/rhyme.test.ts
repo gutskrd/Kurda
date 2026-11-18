@@ -70,9 +70,8 @@ describe('rhymeKey and rhymePrefix', () => {
   });
 
   /**
-   * The equivalence Soranî's rule rests on: two words rhyme perfectly iff their
-   * rhyme keys share a two-character prefix, and at all iff they share one.
-   * Asserted directly rather than trusted.
+   * The equivalence Soranî's rule rests on: two words rhyme perfectly iff their rhyme keys share a two-character
+   * prefix, and at all iff they share one.
    */
   it('agrees with classifyRhyme for Soranî', () => {
     const pairs: Array<[string, string]> = [
@@ -91,9 +90,8 @@ describe('rhymeKey and rhymePrefix', () => {
   });
 
   /**
-   * A one-letter word has no perfect rhymes — nothing can share two final
-   * letters with it. A one-character prefix would have matched every word
-   * ending in that letter and called them all perfect.
+   * A one-letter word has no perfect rhymes: nothing shares two final letters with it, and a one-character prefix would
+   * wrongly match every word ending in it.
    */
   it('has no two-letter prefix for a one-letter word', () => {
     expect(rhymePrefix('a', 2)).toBeNull();
@@ -180,9 +178,8 @@ describe('classifyRhyme (Soranî, by the last letters)', () => {
 
 describe('rhymePattern', () => {
   /**
-   * The database finds a word's rhymes by its reversed headword: the prefix an
-   * index answers, then the anchored patterns. They must say exactly what
-   * classifyRhyme says, or a prompt is offered with partners the round refuses.
+   * The database finds rhymes by reversed headword (an indexed prefix, then anchored patterns). That must agree exactly
+   * with classifyRhyme, or a prompt is offered with partners the round refuses.
    */
   it('agrees with classifyRhyme over a set of Kurmancî words', () => {
     const words = ['dar', 'bajar', 'êvar', 'dêr', 'baran', 'şivan', 'derî', 'kanî', 'bira', 'mal', 'dil', 'gul', 'dest', 'mast', 'av', 'çav', 'kew'];
@@ -244,7 +241,7 @@ describe('rhymePoints', () => {
     expect(rhymePoints({ quality: 'none', elapsedMs: 0, windowMs: 10000 })).toBe(0);
   });
 
-  it('gives a perfect rhyme the full #053 curve', () => {
+  it('gives a perfect rhyme the full base and speed curve', () => {
     // answered instantly → base + full speed bonus
     expect(rhymePoints({ quality: 'perfect', elapsedMs: 0, windowMs: 10000 })).toBe(
       POINTS_BASE + SPEED_BONUS,
@@ -313,7 +310,7 @@ describe('evaluateSubmission', () => {
     expect(r).toMatchObject({ accepted: false, reason: 'not-a-word' });
   });
 
-  it('rejects a profane submission before scoring (#086 hook)', () => {
+  it('rejects a profane submission before scoring', () => {
     const r = evaluateSubmission(
       { ...base, submission: 'kul' },
       { lexicon, isProfane: (w) => w === 'kul' },
@@ -333,9 +330,8 @@ describe('evaluateSubmission', () => {
   });
 
   /**
-   * The exploit this closes: the prompt şev typed as "sev" was looked up by the
-   * folded key, found (şev and sêv both fold to it), and scored as a perfect
-   * rhyme of the prompt itself. Every check now uses the word as written.
+   * The prompt şev typed as "sev" must not match through the folded key (şev and sêv both fold to it) and score as a
+   * rhyme of itself: every check uses the word as written.
    */
   it('does not take the prompt typed without its marks, nor count one word three ways', () => {
     const words = new InMemoryLexicon([{ word: 'şev', dialect: 'kurmanci' }, { word: 'sêv', dialect: 'kurmanci' }, { word: 'dev', dialect: 'kurmanci' }]);

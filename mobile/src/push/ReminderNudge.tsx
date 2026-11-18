@@ -19,22 +19,13 @@ import { pressedDim } from '../theme/motion';
 const HEVALO = 40;
 
 /**
- * A slim banner at the top of Learn once reminders have been turned down for
- * good: Hevalo, one line saying what they are for, a button that opens the
- * app's page in the phone's settings, where that answer is changed, and a ✕.
+ * A slim banner at the top of Learn once reminders were declined for good: Hevalo, one line on what they are for,
+ * a button opening the app's page in the phone's settings, and a ✕. It shows only when the phone will not ask
+ * again, since it cannot raise the system prompt and must not stand in front of one; the two places that lead to
+ * the prompt (after a lesson, Notification settings) each have one button only.
  *
- * It is there only when the phone will not ask again, and it cannot bring up
- * the phone's question itself: it has no way to ask. A banner with a button
- * and a ✕ in front of that question would be the app offering a choice the
- * phone is about to offer, and a way round it; the two places that do lead to
- * the question (the screen after a lesson, the row in Notification settings)
- * each have one button and no other way on. Here no question follows, so the
- * ✕ is only a banner being put away.
- *
- * Whether it shows at all is permission.ts's (`shouldNudgeReminders`): not to
- * minors, and out of the same budget as the screen after a lesson, counted
- * when it is seen. While `hold` is on, another of Learn's moments has this
- * visit, and the banner waits for another.
+ * Whether it shows is `shouldNudgeReminders` (permission.ts): never to minors, and from the same budget as the
+ * post-lesson screen, counted when seen. While `hold` is on, another of Learn's moments has this visit.
  */
 export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; store?: DeviceStore }): React.JSX.Element | null {
   const { client, user } = useAuth();
@@ -43,7 +34,7 @@ export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; st
   const dir = useDirection();
   const [phase, setPhase] = useState<'deciding' | 'offer' | 'gone'>('deciding');
   const noted = useRef(false);
-  // what the rule reads of the account, one by one, so it is worked out again only when one of them changes
+  // The account fields the rule reads, separately, so it is recomputed only when one changes.
   const minor = user?.minor;
   const guest = user?.guest;
   const birthDateRequired = user?.birthDateRequired;
@@ -52,7 +43,7 @@ export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; st
     let active = true;
     void (async () => {
       const now = await readPermission();
-      // the cheap answer first: most of the time reminders are on, the phone can still ask, or there is no push here
+      // The cheap answer first: usually reminders are on, the phone can still ask, or there is no push here.
       if (settingsAction(now) !== 'openSettings') {
         if (active) setPhase('gone');
         return;
@@ -66,7 +57,7 @@ export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; st
     };
   }, [client, minor, guest, birthDateRequired, store]);
 
-  // counted when it is actually seen, not when it was decided on
+  // Counted when actually seen, not when decided.
   const visible = !hold && phase === 'offer';
   useEffect(() => {
     if (!visible || noted.current) return;
@@ -98,7 +89,7 @@ export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; st
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <SpeakingCharacter speaker="hevalo" player={null} playing={false} size={HEVALO} flip={dir.rtl} />
       </View>
-      {/* the line over its button, so neither is squeezed by a long word or a large text size */}
+      {/* The line over its button, so neither is squeezed by a long word or a large text size. */}
       <View style={[styles.words, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
         <Text style={[styles.line, dir.text, { color: colors.textPrimary }]}>{t('learn.reminders.line')}</Text>
         <ClayButton label={t('notifications.device.openSettings')} tone="primary" onPress={toSettings} />
@@ -110,10 +101,10 @@ export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; st
 
 const styles = StyleSheet.create({
   banner: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingStart: spacing.sm, paddingEnd: spacing.xs },
-  // mirrored by hand, the start and end the padding knows are still left and right: Hevalo's side keeps the wider edge
+  // Mirrored by hand: padding start and end are still physical left and right, and Hevalo's side keeps the wider edge.
   bannerMirrored: { paddingStart: spacing.xs, paddingEnd: spacing.sm },
   words: { flex: 1, gap: spacing.xs },
   line: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  // a 16pt ✕ in a 44pt target
+  // A 16pt ✕ in a 44pt target.
   close: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
 });

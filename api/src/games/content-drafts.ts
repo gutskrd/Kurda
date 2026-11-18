@@ -1,18 +1,11 @@
 /**
- * Game content made from Kurdish that is already in the course, so that none
- * is typed again: what a set of readers holds, turned into rows a game can be
- * played with. Each maker here only reads and returns; who stores the rows,
- * and as what, is the caller's business.
+ * Game content made from Kurdish already in the course, so none is retyped. Each maker only reads and returns rows; the
+ * caller decides how to store them:
+ * - the admin importers (content-admin.ts) store them as drafts;
+ * - the starter library (starter-library.ts) stores each game's first set, published.
  *
- *   - the admin panel's importers (content-admin.ts) run these over published
- *     content and store what comes back as drafts for an editor;
- *   - the starter library (starter-library.ts) runs them over the course as it
- *     stands and stores the first set of each game's rows, published.
- *
- * Every row is checked with `checkGameContent` before it is returned, so what
- * a maker gives can be stored as it is, and carries the place it came from
- * (`origin`): the same line, paragraph or word makes the same row every time,
- * and is one row of its kind per variety however often a maker runs.
+ * Every row is checked with `checkGameContent` before it is returned and carries its source (`origin`), so the same
+ * line, paragraph or word always makes the same single row per kind and variety.
  */
 import {
   PASSAGE_HIDDEN,
@@ -32,10 +25,8 @@ import { STARTER_CATEGORIES, starterCategoryOf } from './word-categories.js';
 import { starterIdentityOf } from './starter-identities.js';
 
 /**
- * Whether a word's English meaning says it is a form of a word rather than
- * the word: "the kitchen" for aşxaneyê, "the bakery" for نانەواخانەکە. The
- * course glosses an inflected form that way where a lesson teaches it whole,
- * and a card made of it would show the form as if it were the word.
+ * Whether an English meaning marks an inflected form rather than the word ("the kitchen" for aşxaneyê, "the bakery" for
+ * نانەواخانەکە); a card made of it would present the form as the word.
  */
 export function inflectedGloss(en: string | undefined): boolean {
   return typeof en === 'string' && /^\s*(the|a|an)\s/i.test(en);
@@ -48,10 +39,7 @@ export interface ContentDraft {
   origin: string;
 }
 
-/**
- * Lessons' sentences as `sentence` rows, with the English and the orders they
- * accept, on the level their shape gives them.
- */
+/** Lesson sentences as `sentence` rows with their English and accepted orders, at the level their shape gives. */
 export async function sentenceDrafts(sources: TrustedSources, dialect: GameDialect, limit = 500): Promise<ContentDraft[]> {
   const drafts: ContentDraft[] = [];
   for (const s of (await sources.lessonSentences(dialect)).slice(0, limit)) {
@@ -68,9 +56,8 @@ export async function sentenceDrafts(sources: TrustedSources, dialect: GameDiale
 }
 
 /**
- * Stories' paragraphs as `passage` rows: the paragraph, and as the words that
- * vanish the glossary terms it holds (two to six), each with the meanings the
- * story's glossary gives it.
+ * Story paragraphs as `passage` rows: the paragraph, with the glossary terms it holds (two to six) as the vanishing
+ * words, each with its glossary meanings.
  */
 export async function passageDrafts(sources: TrustedSources, dialect: GameDialect, limit = 500): Promise<ContentDraft[]> {
   const drafts: ContentDraft[] = [];
@@ -87,10 +74,8 @@ export async function passageDrafts(sources: TrustedSources, dialect: GameDialec
 }
 
 /**
- * Conversations as `passage` rows, a few lines at a time, as The Memory Thief
- * cuts them: each piece with the words its own lesson teaches as the words
- * that vanish (two to six, each exactly as the piece writes it, with the
- * meaning that lesson gives it). A piece with fewer words to take is no
+ * Conversations as `passage` rows, a few lines at a time as The Memory Thief cuts them: each piece's vanishing words
+ * are those its own lesson teaches (two to six, as written, with that lesson's meaning). A piece with fewer is no
  * passage.
  */
 export async function conversationPassageDrafts(sources: TrustedSources, dialect: GameDialect, limit = 500): Promise<ContentDraft[]> {
@@ -117,11 +102,9 @@ export async function conversationPassageDrafts(sources: TrustedSources, dialect
 }
 
 /**
- * Impostor's starter cards: each word whose English meaning puts it
- * in a starter category (word-categories.ts) becomes a word card — its word
- * and meaning copied, the category's name as the impostor's hint — and each
- * category used becomes a category row. Filed at level 1. A word that is its
- * category's own name (heywan, in animals) is left out: the hint would be the
+ * Impostor's starter cards: each word whose English meaning places it in a starter category (word-categories.ts)
+ * becomes a word card (word and meaning copied, category name as hint), and each category used becomes a category row,
+ * at level 1. A word that is its category's own name (heywan in animals) is left out, since the hint would be the
  * answer.
  */
 export async function wordCardDrafts(sources: TrustedSources, dialect: GameDialect, limit = 500): Promise<{ categories: ContentDraft[]; cards: ContentDraft[] }> {
@@ -156,11 +139,9 @@ export async function wordCardDrafts(sources: TrustedSources, dialect: GameDiale
 }
 
 /**
- * A facts table from what is true of a thing and what is only sometimes
- * true: every other fact it is asked about is a no. `asked` is the facts its
- * questions make sense for (a cat is never asked whether it sells things):
- * any other is left unset, so its question is never dealt beside the card.
- * Without it, every fact the game knows is answered.
+ * A facts table from what is true and what is sometimes true of a thing; every other asked fact is a no. `asked` lists
+ * the facts its questions make sense for (a cat is never asked whether it sells things); others stay unset so those
+ * questions are never dealt with the card. Without it every known fact is answered.
  */
 export function factsTable(
   yes: readonly WhoAmIFact[],
@@ -172,14 +153,10 @@ export function factsTable(
 }
 
 /**
- * The level a starter identity is filed at, for an identity made from the
- * course's words rather than the curated deck (who-am-i-deck.ts, which files
- * each card at the unit that teaches its word). A level only says which
- * difficulty hides the identity (the tiles around it come from every level),
- * and what makes a round harder is how many tiles there are, so the things
- * are spread evenly: every difficulty hides animals, food, objects, jobs and
- * places alike. The spread follows the thing's name, so it is the same on
- * every start.
+ * The level a starter identity made from course words is filed at (the curated deck, who-am-i-deck.ts, files by
+ * teaching unit instead). Level only decides which difficulty hides the identity, and difficulty comes from tile count,
+ * so things are spread evenly across difficulties (animals, food, objects, jobs and places alike), keyed on the thing's
+ * name so it is stable.
  */
 export function identityLevel(thing: string): number {
   let sum = 0;
@@ -188,17 +165,12 @@ export function identityLevel(thing: string): number {
 }
 
 /**
- * Who Am I?'s starter identities: each word whose English meaning is one of
- * the things the starter table knows (starter-identities.ts) becomes an
- * identity — its word and meaning copied, and the table's answers to the
- * questions that make sense for its kind as its facts. The table holds no
- * Kurdish: which word says "cat" is the course's to say.
+ * Who Am I?'s starter identities: each word whose English meaning is a thing the starter table knows
+ * (starter-identities.ts) becomes an identity, with word and meaning copied and the table's answers for its kind as
+ * facts. The table holds no Kurdish.
  *
- * A word is taken once, by the course's own key for it, and a thing once: a
- * word the course glosses twice ("chest" for the body and for a box) is still
- * one word, and a second word for "cat" would be a second card with the same
- * answers to every question. A meaning that gives a form of a word ("the
- * kitchen") makes no card at all.
+ * Each word is taken once (by the course's key) and each thing once: a word glossed twice is still one word, and a
+ * second word for "cat" would duplicate every answer. A meaning naming an inflected form ("the kitchen") makes no card.
  */
 export async function identityDrafts(sources: TrustedSources, dialect: GameDialect, limit = 300): Promise<ContentDraft[]> {
   const drafts: ContentDraft[] = [];

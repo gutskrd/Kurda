@@ -89,7 +89,7 @@ describe('RematchPanel', () => {
     testAuth.client = fakeClient({
       'GET /play/wordle-battle/g1/rematch': () => ok(state),
       'POST /play/wordle-battle/g1/rematch': () => {
-        // the server stops offering the host to open a round once it is open
+        // The server stops offering the host to open a round once it is open.
         state = round({ nextLobbyId: 'g2' });
         return ok(state);
       },

@@ -42,22 +42,12 @@ const GUEST_NOTE_KEY = 'hevalo.lore.guest-note.v1';
 const STATE_ICON: Record<RiddleCard['state'], IconName | null> = { new: null, trying: 'lightbulb', solved: 'check', revealed: 'eye' };
 
 /**
- * Metelok: the riddles (Learn → Stories, and their own address
- * `app/learn/riddles`).
+ * The riddles (Learn → Stories, and `app/learn/riddles`): how many of the variety the reader has solved, the variety
+ * switch, the riddle of the day set large, then every riddle by difficulty with chips to filter. Each row is the
+ * question in its own Kurdish, with its translation when translations are on, and a mark for where the reader stands.
  *
- * It opens on how many of the variety's riddles the reader has solved, the
- * switch between Kurmancî and Soranî, and the riddle of the day, set large;
- * then every riddle by difficulty — easy, medium, hard — with chips to keep
- * to one. Each row is the riddle's question in its own Kurdish and its own
- * direction, with its translation under it when the reader asks for the
- * translations, and a mark for where they stand with it.
- *
- * A list never holds an answer, a hint or an explanation: the server sends
- * none here and this screen asks for none. A riddle's page is where a hint
- * is taken, one at a time; its answer has a screen of its own.
- *
- * A guest plays like anyone, and their riddles are kept with their guest
- * account; a quiet note says once that an account keeps them everywhere.
+ * A list never holds an answer, hint or explanation, and this screen asks for none. A guest plays like anyone, with
+ * their riddles kept on the guest account; a quiet note says once that an account keeps them everywhere.
  */
 export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialect; onExit: () => void }): React.JSX.Element {
   const { client, isGuest } = useAuth();
@@ -84,7 +74,7 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
     } else setError(res.error);
   }, [client, dialect]);
 
-  // again on coming back from a riddle: one just solved moves the count and its mark
+  // Read again on coming back from a riddle: one just solved moves the count and its mark.
   useFocusEffect(
     useCallback(() => {
       void load();
@@ -218,7 +208,10 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
   );
 }
 
-/** How far through the variety's riddles the reader is: a thin violet line, as all progress along a road is, drawn once where it stands. */
+/**
+ * How far through the variety's riddles the reader is: a thin violet line, as progress along a road is, drawn once
+ * where it stands.
+ */
 function SolvedBar({ solved, total }: { solved: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
@@ -231,10 +224,8 @@ function SolvedBar({ solved, total }: { solved: number; total: number }): React.
 }
 
 /**
- * The riddle of the day, set apart: the question large in the display face,
- * in its own Kurdish, its translation under it when the translations are on,
- * how hard it is and where the reader stands with it. The whole block opens
- * the riddle.
+ * The riddle of the day, set apart: the question large, its translation when translations are on, its difficulty and
+ * the reader's standing. The whole block opens the riddle.
  */
 function DailyRiddle({ riddle, translated, onOpen }: { riddle: RiddleCard; translated: boolean; onOpen: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -253,7 +244,7 @@ function DailyRiddle({ riddle, translated, onOpen }: { riddle: RiddleCard; trans
       style={[styles.daily, { backgroundColor: colors.surface }]}
       testID="riddle-daily"
     >
-      {/* a label, in the page's quiet ink as the website has it: gold is for what is earned */}
+      {/* A label in the page's quiet ink, as the website has it: gold is for what is earned. */}
       <View style={[styles.dailyKicker, { flexDirection: dir.row }]}>
         <Icon name="calendar" size={14} color={colors.textSecondary} />
         <Text style={[sectionLabel, { color: colors.textSecondary }]}>{t('lore.riddles.daily')}</Text>

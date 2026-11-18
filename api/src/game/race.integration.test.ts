@@ -48,13 +48,8 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     });
 
   /**
-   * Make a race look like somebody typed it.
-   *
-   * Injecting a start and a finish back to back is a run of a few milliseconds,
-   * which the scorer now rejects as faster than anyone types — correctly, since
-   * that is exactly the shape of a paste. Moving `started_at` back is the only
-   * honest way to fake elapsed time here, because elapsed time is the one thing
-   * the client cannot tell the server.
+   * Make a race look typed: move `started_at` back. Back-to-back start and finish is a few milliseconds, which the
+   * scorer rightly rejects as a paste, and elapsed time is the one thing the client cannot tell the server.
    */
   async function typedFor(gameId: string, seconds: number): Promise<void> {
     await pool.query(`UPDATE race_games SET started_at = now() - ($2 || ' seconds')::interval WHERE id = $1`, [
@@ -137,9 +132,8 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   });
 
   /**
-   * The typing box refuses a paste, but nothing here went through a typing box.
-   * This is the request a cheat actually sends: the whole text, at once, the
-   * instant the race is handed out.
+   * The request a cheat sends: the whole text at once, the instant the race is handed out (the typing box refuses
+   * pastes, but the endpoint does not depend on it).
    */
   it('will not rank or pay a run that arrives faster than anyone types', async () => {
     const race = await call('POST', '/race', playerToken, { difficulty: 3 });
@@ -279,9 +273,8 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   });
 
   /*
-   * Migrations run while the previous release is still serving, and it starts
-   * a race without saying a mode or a variety. It must still be able to, and
-   * the race is then scored as that release scored it: exactly as typed.
+   * Migrations run while the previous release still serves, and it starts races without a mode or variety. That must
+   * still work, scored strictly as typed.
    */
   it('takes a race started the way the previous release starts one, and scores it strictly', async () => {
     const text = await pool.query<{ id: string }>(`SELECT id FROM race_texts WHERE title = $1`, [`it_${suffix} welat`]);
@@ -330,11 +323,7 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     expect(all.personalBests.forgiving).not.toBeNull();
   });
 
-  /*
-   * The best-runs list without a mode used to rank every mode together, so a
-   * forgiving run (e counts for ê) outranked a strict one at the same speed —
-   * the comparison the personal best was already kept apart from.
-   */
+  /* Best runs are ranked only against runs in the same accent mode, as the personal best is. */
   it('ranks best runs only against runs in the same accent mode', async () => {
     const strict = await race({ length: 3, accentMode: 'strict' });
     await typedFor(strict.id, 60);
@@ -433,9 +422,8 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   });
 
   /*
-   * The language decides who is handed a text, and the admin screen offers
-   * Kurmancî first: a Soranî text saved without changing that went to
-   * Kurmancî racers, every letter of it untypeable for them.
+   * The language decides who is handed a text, so a Soranî text labelled Kurmancî would reach racers who cannot type a
+   * letter of it.
    */
   it('refuses a text whose script says it is in the other variety, and says which', async () => {
     const sorani = await call('POST', '/admin/race/texts', adminToken, {
@@ -477,11 +465,9 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   });
 
   /*
-   * Migration 157 made the language the rule, so the texts saved before it
-   * are labelled by their script there — by the count the save now checks
-   * with (@kurda/shared `scriptDialect`). Its statement is run here against
-   * a table of this transaction's own, under the same name, so no real text
-   * is touched.
+   * Migration 157 labels texts saved before it by their script, with the count the save now uses (@kurda/shared
+   * `scriptDialect`). Its statement runs here against a same-named table local to this transaction, so no real text is
+   * touched.
    */
   it('labels the texts saved before by their script, as the save reads it (migration 157)', async () => {
     const file = '../../migrations/1751000157000_race-accent-modes.js';
@@ -528,8 +514,8 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   });
 
   /*
-   * Texts saved before saving normalised them are still in the table as they
-   * were pasted. One stored decomposed could not be typed at all.
+   * Texts saved before normalisation are still stored as pasted; a decomposed one must be handed out and scored as a
+   * keyboard types it.
    */
   it('hands out and scores an old text stored decomposed as the text a keyboard types', async () => {
     await pool.query(`UPDATE race_texts SET active = false WHERE difficulty = 2`);

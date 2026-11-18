@@ -5,18 +5,12 @@ import { discardRecording, useMicRecorder, type MicTake } from '../recording/use
 import { MAX_TAKE_MS, type RecorderState, type Take } from './recording';
 
 /**
- * Mic recording for speaking exercises (KUR-036) on a phone, through the same
- * microphone a voice note uses (useMicRecorder). Metro picks this file on iOS
- * and Android; the browser records with MediaRecorder (useRecorder.ts), and
- * the exercise sees the same `RecorderState` from both.
- *
- * A take is a file in the app's cache, only ever played back here beside the
- * model, so it is deleted as soon as it leaves the screen: replaced by the
- * next take, turned away as too short, or left behind when the exercise
- * closes.
+ * Speaking-exercise recording on a phone, through the voice-note microphone (useMicRecorder). Metro picks this file
+ * on iOS and Android; the browser uses useRecorder.ts, with the same `RecorderState`. A take is a cache file played
+ * only here, so it is deleted as soon as it leaves the screen.
  */
 
-/** How big a take's file is, which tells a silent capture from a real one; nought when it cannot be read. */
+/** A take's file size, which tells a silent capture from a real one; zero when it cannot be read. */
 async function sizeOf(uri: string): Promise<number> {
   try {
     const info = await FileSystem.getInfoAsync(uri);
@@ -35,7 +29,7 @@ export function useRecorder(): RecorderState {
   const [failed, setFailed] = useState<RecorderState['failed']>(null);
   const [keeping, setKeeping] = useState(false);
   const live = useRef(true);
-  // the file of the take on screen, so it goes when the take does
+  // The file of the take on screen, deleted when the take goes.
   const shown = useRef<string | null>(null);
 
   const show = useCallback((take: Take | null) => {
@@ -78,7 +72,7 @@ export function useRecorder(): RecorderState {
 
   const start = useCallback(async () => {
     setFailed(null);
-    // a new take replaces the last one, whatever becomes of it
+    // A new take replaces the last one, whatever becomes of it.
     show(null);
     if ((await begin()) === 'failed') setFailed('start');
   }, [begin, show]);

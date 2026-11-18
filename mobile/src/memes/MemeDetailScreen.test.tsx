@@ -81,7 +81,7 @@ describe('a picture’s comments', () => {
   it('say who and when in words, and open their replies from the picture’s own thread', async () => {
     open({ 'GET /images/comments/c1/replies?limit=50': ok({ comments: [comment('r1', { parentCommentId: 'c1', depth: 1, body: 'a reply' })] }) });
     expect(await screen.findByRole('button', { name: 'rojda — open profile' })).toBeTruthy();
-    // the picture's own time, beside what kind of post it is at its top, then the comment's
+    // The picture's own time, beside what kind of post it is at its top, then the comment's.
     expect(screen.getByText(/ · 2h ago$/)).toBeTruthy();
     expect(screen.getAllByText('2h ago')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'View 1 reply' }));
@@ -96,7 +96,7 @@ describe('a picture’s comments', () => {
     await act(async () => buttons.find((b) => b.style === 'destructive')?.onPress?.());
     expect(client.calls.find((c) => c.method === 'DELETE')?.path).toBe('/images/comments/c1');
     await waitFor(() => expect(alert).toHaveBeenCalledTimes(2));
-    // it had a reply, so it was a placeholder for a moment; it is itself again
+    // It had a reply, so it was briefly a placeholder; now it is back.
     expect(screen.getByText('comment c1')).toBeTruthy();
   });
 });
@@ -107,7 +107,7 @@ describe('your own picture', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Post options' }));
     expect(screen.queryByRole('button', { name: 'Edit post' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Delete post' }));
-    // the question, in the sheet (your own comment under it has a Delete of its own)
+    // The question, in the sheet (your own comment under it has a Delete of its own).
     const sheet = within(screen.getByRole('heading', { name: 'Delete this post?' }).parentElement!);
     expect(sheet.getByText('This can’t be undone.')).toBeTruthy();
     fireEvent.click(sheet.getByRole('button', { name: 'Delete' }));

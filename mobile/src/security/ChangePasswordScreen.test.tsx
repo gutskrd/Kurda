@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// the reset form it opens is drawn on the sign-in shell, whose guide asks the navigator whether the screen is in front
+// The reset form it opens is drawn on the sign-in shell, whose guide asks the navigator whether the screen is focused.
 vi.mock('@react-navigation/native', () => import('../auth/guide/testing/navigation'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { ApiClient } from '../api/client';
@@ -21,10 +21,7 @@ afterEach(() => cleanup());
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
-/**
- * The real client over a stored session, answering POST /me/password with
- * `answer` — so what reaches the keystore is what the app would store.
- */
+/** The real client over a stored session, answering POST /me/password with `answer`, so the keystore gets what the app would store. */
 async function serve(answer: (body: { currentPassword: string; newPassword: string }) => Response | Promise<Response>) {
   const storage = new MemoryTokenStorage();
   await storage.set({ accessToken: 'acc-old', refreshToken: 'ref-1' });
@@ -47,7 +44,7 @@ async function fill(current: string, next: string, confirm = next) {
   fireEvent.change(screen.getByTestId('current-password'), { target: { value: current } });
   fireEvent.change(screen.getByTestId('new-password'), { target: { value: next } });
   fireEvent.change(screen.getByTestId('confirm-password'), { target: { value: confirm } });
-  // react-native-web wires a press in an effect after the draw: let it run first
+  // react-native-web wires a press in an effect after the draw: let it run first.
   await act(async () => undefined);
   fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
 }
@@ -65,7 +62,7 @@ describe('changing the password', () => {
     expect(current.getAttribute('enterkeyhint')).toBe('next');
     expect(next.getAttribute('enterkeyhint')).toBe('next');
     expect(confirm.getAttribute('enterkeyhint')).toBe('done');
-    // each one can be shown, to check what was typed
+    // Each field can be revealed, to check what was typed.
     expect(screen.getAllByRole('button', { name: 'Show password' })).toHaveLength(3);
   });
 
@@ -86,10 +83,7 @@ describe('changing the password', () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
-  /*
-   * The server ends every other session and the old access token with them;
-   * the fresh one it hands back takes its place, and the refresh token stays.
-   */
+  /* The server ends every other session and the old access token; its fresh token replaces it and the refresh token stays. */
   it('keeps this phone signed in with the new access token, and says the others were signed out', async () => {
     const { storage, fetchFn } = await serve(() => json(200, { changed: true, accessToken: 'acc-new', accessExpiresInSeconds: 900 }));
     const { onExit } = open();
@@ -99,7 +93,7 @@ describe('changing the password', () => {
     expect(JSON.parse(String(fetchFn.mock.calls[0]![1].body))).toEqual({ currentPassword: 'old-pass-1', newPassword: 'berbang2026' });
     expect(fetchFn.mock.calls[0]![0]).toBe('http://api.test/me/password');
     expect(await storage.get()).toEqual({ accessToken: 'acc-new', refreshToken: 'ref-1' });
-    // nothing typed is left on screen
+    // Nothing typed is left on screen.
     expect(screen.queryByTestId('current-password')).toBeNull();
     await act(async () => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
@@ -123,15 +117,11 @@ describe('changing the password', () => {
     expect(await storage.get()).toEqual({ accessToken: 'acc-old', refreshToken: 'ref-1' });
   });
 
-  /*
-   * The line under a field is about what was in it. Once that is being put
-   * right the line goes — it used to stay, red, until the button was pressed
-   * again — and the other fields keep theirs.
-   */
+  /* A field's error clears as soon as the field is edited; the other fields keep theirs. */
   it('takes a field’s line away as soon as that field is edited, and leaves the others', async () => {
     await serve(() => json(200, {}));
     open();
-    // nothing typed for the current password, and two new ones that differ
+    // Nothing typed for the current password, and two new ones that differ.
     await fill('', 'berbang2026', 'berbang2027');
     expect(within(fieldOf('current-password')).getByText('Required')).toBeTruthy();
     expect(within(fieldOf('confirm-password')).getByText('Those passwords don’t match.')).toBeTruthy();
@@ -148,7 +138,7 @@ describe('changing the password', () => {
     expect(await within(fieldOf('new-password')).findByText('Password must be at least 8 characters')).toBeTruthy();
 
     answer = json(400, { code: 'PASSWORD_BREACHED', message: 'this password has appeared in a data breach', details: { reason: 'breached' } });
-    // the button was busy a moment ago: let it hear presses again before pressing
+    // The button was just busy: let it accept presses again before pressing.
     await act(async () => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
     expect(

@@ -24,7 +24,7 @@ import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
 import { PlayerReportButton } from '../../reports/PlayerReportButton';
 import { RankResultPanel } from '../../ranks/RankResultPanel';
 
-/** The mark of a game that counted as a day of learning: a campfire, the fire a kept week burns at, not anybody's count. */
+/** The mark of a game that counted as a day of learning: a campfire, a kept week's fire, not anybody's count. */
 const COUNTED_FIRE = fireLevel(FIRE_STAGE_DAYS.campfire);
 
 /** A standing's name as this viewer may see it. */
@@ -34,14 +34,10 @@ function nameOf(s: StoryGameStanding, t: (k: 'stories.player' | 'games.you', v?:
 }
 
 /**
- * The end of a game (contract §A1 "Results", design notes §6): how everyone
- * did, laid out for the number of players (no places for two; a podium only
- * from four), what this game earned you and whether it counted as a day of
- * learning — with a line on why when a repeat on the same day paid less or
- * nothing, from the reader's own record of the story — every question again
- * with the missed ones first, and what next: back to the story the game was
- * on (`results.storySlug`), another story from the library, or the same
- * questions again (alone) or with the same people.
+ * The end of a game (contract §A1 "Results", design notes §6): standings laid out by player count, what the game
+ * earned and whether it counted as a day of learning (with why a same-day repeat paid less), every question again
+ * with misses first, and what next: back to the story (`results.storySlug`), another story, or the same questions
+ * again alone or with the same people.
  */
 export function Results({
   view,
@@ -53,7 +49,7 @@ export function Results({
   view: StoryGameView;
   story: StoryDetail | null;
   onOpenGame: (id: string) => void;
-  /** back to the reader, on the story this game was played on */
+  /** Back to the reader, on this game's story. */
   onRead: (slug: string) => void;
   onBack: () => void;
 }): React.JSX.Element | null {
@@ -66,7 +62,7 @@ export function Results({
   const [againError, setAgainError] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
   useFocusOn(headRef, view.results ? view.id : null);
-  // today's finished games on this story, this one among them: a second pays a quarter, from the third none
+  // Today's finished games on this story, including this one: a second pays a quarter, from the third none.
   const [attemptsToday, setAttemptsToday] = useState<number | null>(null);
   const slug = view.results?.storySlug ?? null;
   const paid = !!view.results?.me;
@@ -88,7 +84,7 @@ export function Results({
   const dialect = view.settings.dialect;
   const dir = storyTextStyle(dialect);
   const props = storyTextProps(dialect);
-  // the same remembered choice as under the questions and the answers
+  // The same remembered choice as under the questions and answers.
   const english = showEnglish(prefs.englishUnder, view.settings.level);
   const other = results.standings.find((s) => !s.isMe);
 
@@ -118,7 +114,7 @@ export function Results({
         {t('stories.results.title')}
       </Text>
 
-      {/* duo and group: what this game did to your rank, with its one plain reason */}
+      {/* Duo and group: this game's effect on your rank, with its one plain reason. */}
       {view.mode !== 'solo' && view.rated?.rated ? <RankResultPanel game="stories" gameRef={view.id} /> : null}
 
       {me ? (
@@ -143,7 +139,7 @@ export function Results({
           ) : (
             <Text style={[styles.notCounted, { color: colors.textSecondary }]}>{t('stories.results.notCounted')}</Text>
           )}
-          {/* a game that counted and paid nothing is the day's third on this story; one that paid after another today, a repeat */}
+          {/* A game that counted but paid nothing is the day's third on this story; one that paid after another today is a repeat. */}
           {me.learningCounted && me.xp === 0 ? (
             <Text style={[styles.notCounted, { color: colors.textSecondary }]}>{t('stories.results.noXp')}</Text>
           ) : me.xp > 0 && (attemptsToday ?? 0) >= 2 ? (
@@ -155,7 +151,7 @@ export function Results({
       {layout === 'duo' ? (
         <Card style={styles.card}>
           <Text style={[styles.duo, { color: colors.textPrimary }]}>
-            {/* you first, then the other: two people need no places */}
+            {/* You first, then the other: two people need no places. */}
             {[...results.standings]
               .sort((a, b) => Number(b.isMe) - Number(a.isMe))
               .map((s) => `${nameOf(s, t)} ${s.correct}/${total}`)
@@ -197,7 +193,7 @@ export function Results({
         </Card>
       ) : null}
 
-      {/* everyone else who sat in it, by seat and without scores, each with the flag to report them */}
+      {/* Everyone else who played, by seat and without scores, each with a report flag. */}
       {view.mode !== 'solo' && view.players.some((p) => !p.isMe) ? (
         <Card style={styles.card}>
           <SectionLabel>{t('stories.results.players')}</SectionLabel>
@@ -238,7 +234,7 @@ export function Results({
           <SectionLabel>{t('stories.results.review')}</SectionLabel>
           {reviewOrder(results.review).map((item) => {
             const right = item.myChoice === item.correctIndex;
-            // the question and its explanation in the reader's language where the story has them, else the English
+            // The question and explanation in the reader's language where the story has them, else English.
             const tr = questionIn(item, locale);
             const trSet = tr ? translatedText(tr.lang) : null;
             const quote = story ? evidenceText(story.paragraphs, item.evidenceParagraph, item.evidenceSentence) : null;

@@ -3,10 +3,8 @@ import type { AlphabetScript } from '@kurda/shared';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * Which letters this reader has opened, per alphabet — on this phone only and
- * never sent anywhere, as the website keeps them in its browser. Seeing the
- * ticks add up is the small, honest kind of progress that keeps someone
- * going; a store that fails just means no ticks.
+ * Which letters this reader has opened, per alphabet, on this device only and never sent, as the web keeps them
+ * in the browser. A failing store just means no ticks.
  */
 export const SEEN_KEY = 'hevalo_alphabet_seen_v1';
 
@@ -14,7 +12,7 @@ export type Seen = Record<AlphabetScript, string[]>;
 
 const NONE: Seen = { kmr: [], ckb: [] };
 
-/** What was stored, read field by field: anything else counts as nothing opened yet. */
+/** What was stored, read field by field; anything else counts as nothing opened. */
 export function parseSeen(raw: string | null | undefined): Seen {
   if (!raw) return NONE;
   try {
@@ -26,7 +24,7 @@ export function parseSeen(raw: string | null | undefined): Seen {
   }
 }
 
-/** The letters opened in `script`, and a way to add one — or, under another `key`, the words of a word set. */
+/** The letters opened in `script` and a way to add one, or under another `key` a word set's words. */
 export function useSeen(
   script: AlphabetScript,
   store: DeviceStore = deviceStore,
@@ -39,7 +37,7 @@ export function useSeen(
     let live = true;
     void store.get(key).then((raw) => {
       if (!live) return;
-      // a letter opened before the stored ones arrived is kept with them, not lost under them
+      // A letter opened before the stored ones arrived is kept with them, not lost under them.
       const early = latest.current;
       const saved = parseSeen(raw);
       const merge = (s: AlphabetScript) => [...new Set([...saved[s], ...early[s]])];

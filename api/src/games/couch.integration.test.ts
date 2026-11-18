@@ -1,9 +1,7 @@
 /**
- * Xapînok for one phone, through the routes, against real Postgres
- * and Redis: where it is offered, an evening's cards dealt only from approved
- * word cards, one category's when one is asked for, and what the routes will
- * not take: a caller who is not signed in, a body that carries anything about
- * the people in the room, more decks than a room could play in a minute.
+ * Xapînok on one phone through the routes, against real Postgres and Redis: where it is offered, an evening's cards
+ * dealt only from approved word cards (one category's when asked), and what the routes refuse: unsigned callers, bodies
+ * carrying anything about the people in the room, and more decks than a room could play in a minute.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

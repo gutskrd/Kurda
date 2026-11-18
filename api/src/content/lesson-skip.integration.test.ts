@@ -1,13 +1,10 @@
 /**
- * Putting an exercise off ("Can't listen now", "Can't speak now") against real
- * Postgres: a listening or speaking item left unanswered is out of the score,
- * so it costs no accuracy and no XP — and earns no perfect-lesson Gems or
- * a perfect lesson for the Bêkêmasî badge either. Anything else left unanswered still counts as missed.
- * The same for a review's listening items.
+ * Putting an exercise off ("Can't listen now", "Can't speak now") against real Postgres: an unanswered listening or
+ * speaking item is out of the score, costing no accuracy or XP, and earning no perfect-lesson Gems or Bêkêmasî perfect
+ * lesson either. Anything else unanswered still counts as missed. Reviews treat their listening items the same.
  *
- * The perfect-lesson gem rule is switched off for everyone now; this suite
- * switches it on for itself, because the Gems are one of the two ways it tells
- * a lesson answered in full from one with something put off.
+ * The perfect-lesson gem rule is off for everyone; this suite enables it because the Gems are one way it tells a fully
+ * answered lesson from one with something put off.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

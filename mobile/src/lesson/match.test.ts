@@ -26,13 +26,13 @@ describe('match interaction', () => {
   it('unmatches by tapping a matched left or right', () => {
     let s = tapRight(tapLeft(emptyMatch, 'av'), 'water');
     expect(s.matches).toHaveLength(1);
-    s = tapLeft(s, 'av'); // tap matched left → remove
+    s = tapLeft(s, 'av'); // Tapping a matched left card removes the pair.
     expect(s.matches).toHaveLength(0);
   });
 
   it('switches selection between lefts before pairing', () => {
     let s = tapLeft(emptyMatch, 'a');
-    s = tapLeft(s, 'b'); // change mind
+    s = tapLeft(s, 'b'); // A change of mind.
     expect(s.selectedLeft).toBe('b');
     s = tapRight(s, 'B');
     expect(s.matches).toEqual([{ left: 'b', right: 'B' }]);

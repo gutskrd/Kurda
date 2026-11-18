@@ -28,7 +28,7 @@ const SLOW = { timeout: 4000 };
 const ID = '00000000-0000-4000-8000-0000000000ff';
 const en = (text: string) => ({ en: text });
 
-// a stand-in case, never shown to a learner
+// A stand-in case, never shown to a learner.
 const board = (over: Partial<DetectiveBoardView> = {}): DetectiveBoardView => ({
   title: en('The empty jar'),
   intro: en('A jar of honey is empty in the morning.'),
@@ -88,7 +88,7 @@ const stepDone = {
     walk: null,
   },
   why: 'step',
-  // a case solved alone is scored, and earns no XP: the server sends 0 for every answer and for the round
+  // A case solved alone earns no XP: the server sends 0 for every answer and for the round.
   xp: 0,
   repeat: false,
 };
@@ -138,14 +138,14 @@ describe('DetectiveScreen', () => {
     testAuth.client = client;
     renderWithProviders(<DetectiveScreen onExit={() => undefined} />);
     await ready();
-    // before the case: hints are few, and nothing says one costs XP, or that the case pays any
+    // Before the case: hints are few, and nothing says one costs XP or that the case pays any.
     expect(screen.getByText(/Hints help, but a case has only a few\.$/)).toBeTruthy();
     expect(screen.queryByText(/XP/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     expect(await screen.findByText('The empty jar', {}, { timeout: 15000 })).toBeTruthy();
     expect(screen.getAllByText('Meaning not found yet')).toHaveLength(2);
     expect(screen.getByText('Baran îro ne li malê ye.')).toBeTruthy();
-    // how many are left is the whole price of a hint
+    // How many are left is the whole price of a hint.
     expect(screen.getByText('Hints left: 3')).toBeTruthy();
     expect(screen.getByText('A case has only a few hints, so use them where they help most.')).toBeTruthy();
     expect(screen.queryByText(/XP/)).toBeNull();
@@ -169,13 +169,13 @@ describe('DetectiveScreen', () => {
     const baran = screen.getByLabelText('Your mark for Baran');
     fireEvent.click(within(hamo).getByRole('radio', { name: 'Suspicious' }));
     expect(within(hamo).getByRole('radio', { name: 'Suspicious' }).getAttribute('aria-checked')).toBe('true');
-    // one suspect’s mark is not the other’s
+    // One suspect’s mark is not the other’s.
     expect(within(baran).getByRole('radio', { name: 'Suspicious' }).getAttribute('aria-checked')).toBe('false');
     fireEvent.click(within(baran).getByRole('radio', { name: 'Not sure' }));
     fireEvent.click(within(hamo).getByRole('radio', { name: 'Suspicious' }));
     expect(within(hamo).getByRole('radio', { name: 'Suspicious' }).getAttribute('aria-checked')).toBe('false');
     expect(within(baran).getByRole('radio', { name: 'Not sure' }).getAttribute('aria-checked')).toBe('true');
-    // the notebook is the player’s own: nothing is sent when a mark is set
+    // The notebook is the player’s own: nothing is sent when a mark is set.
     expect(client.calls.filter((c) => c.method !== 'GET' && !c.path.endsWith('/sessions'))).toHaveLength(0);
   }, 20000);
 
@@ -203,7 +203,7 @@ describe('DetectiveScreen', () => {
     expect(await screen.findByText('2 of 2 right', {}, SLOW)).toBeTruthy();
     expect(screen.getByText('Today counts for your streak.')).toBeTruthy();
     expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
-    // no XP earned, none taken for hints, and no figure at all
+    // No XP earned, none taken for hints, and no figure at all.
     expect(screen.queryByText(/\d+ XP/)).toBeNull();
     expect(screen.queryByText(/cost/)).toBeNull();
   }, 20000);
@@ -218,7 +218,7 @@ describe('the games list', () => {
     });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-detective', {}, SLOW);
-    // the game is on the shelf, or, on a day it is the one put forward, the featured game's Play: named either way
+    // The game is on the shelf or, on the day it is featured, the featured game's Play: named either way.
     expect(card.getAttribute('aria-label')).toMatch(/^Detektîf, (Play|Solo\. Solve a case from Kurdish evidence, then name who did it\.)$/);
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('Detective');

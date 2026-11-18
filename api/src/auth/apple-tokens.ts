@@ -4,25 +4,18 @@ import type { AppConfig } from '../config/env.js';
 import { seal, unseal } from '../security/at-rest.js';
 
 /**
- * What Sign in with Apple gives the app beyond the sign-in itself, and taking
- * it back when the account goes.
+ * Sign in with Apple token handling: keeping a refresh token at sign-in and revoking it when the account goes.
  *
- * App Store guideline 5.1.1(v): an app that offers Sign in with Apple must,
- * when someone deletes their account, revoke what Apple issued it for them,
- * through Apple's REST API. Revoking needs a token: the identity token the
- * app signs in with will not do, so the app also sends the one-time
- * authorization code Apple gives it alongside, and the server exchanges that
- * here for a refresh token, keeps it encrypted (security/at-rest.ts) on the
- * Apple identity, and hands it back to Apple to revoke when the deletion
- * becomes final (gdpr/service.ts).
+ * App Store guideline 5.1.1(v) requires revoking Apple's grant through its REST API when someone deletes their account.
+ * That needs a refresh token (the identity token will not do), so the app also sends the one-time authorization code,
+ * which is exchanged here for a refresh token, kept encrypted (security/at-rest.ts) on the Apple identity, and revoked
+ * when the deletion becomes final (gdpr/service.ts).
  *
- * Both calls authenticate with a client secret: a short JWT signed with the
- * deployment's Sign in with Apple key. Without that key configured (APPLE_TEAM_ID,
- * APPLE_KEY_ID, APPLE_PRIVATE_KEY) `appleTokens` is null and nothing here runs.
+ * Both calls authenticate with a short client-secret JWT signed with the deployment's Sign in with Apple key. Without
+ * that key (APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY) `appleTokens` is null and nothing here runs.
  *
- * Neither call is ever allowed to stand in anyone's way: a sign-in does not
- * wait for the exchange, and a deletion goes ahead when Apple refuses or does
- * not answer. A failure is logged as a warning, and that is all it does.
+ * Neither call may block anyone: sign-in does not wait for the exchange, and deletion proceeds if Apple refuses or does
+ * not answer. Failures are logged as warnings only.
  */
 
 export const APPLE_TOKEN_URL = 'https://appleid.apple.com/auth/token';
@@ -71,10 +64,9 @@ function base64url(json: unknown): string {
 }
 
 /**
- * The client secret Apple's token and revoke endpoints ask for: a JWT signed
- * ES256 with the Sign in with Apple key, naming the team as its issuer, the
- * client as its subject and Apple as its audience, the key by its id. ES256
- * wants the raw r‖s signature (IEEE P1363), not the DER node signs by default.
+ * The client secret Apple's token and revoke endpoints require: an ES256 JWT with the team as issuer, the client as
+ * subject, Apple as audience and the key id in the header. ES256 needs the raw r‖s signature (IEEE P1363), not node's
+ * default DER.
  */
 export function appleClientSecret(key: AppleSigningKey, now: number = Date.now()): string {
   const iat = Math.floor(now / 1000);
@@ -110,10 +102,8 @@ export class AppleTokens {
   }
 
   /**
-   * On an Apple sign-in: exchanges the authorization code the app sent for a
-   * refresh token and keeps it, sealed, on that Apple identity. A later
-   * sign-in replaces it with its own (each is as good for revoking). Never
-   * throws; the sign-in does not wait for it.
+   * On an Apple sign-in, exchange the app's authorization code for a refresh token and keep it, sealed, on that Apple
+   * identity (a later sign-in replaces it). Never throws; sign-in does not wait for it.
    */
   async keep(providerUserId: string, authorizationCode: string): Promise<void> {
     try {
@@ -136,12 +126,9 @@ export class AppleTokens {
   }
 
   /**
-   * As an account is deleted for good: asks Apple to revoke the refresh token
-   * kept for each of its Apple identities, which ends Sign in with Apple for
-   * this app as well. To be called while the identities still exist, before
-   * the account is anonymized. An identity with no token kept (signed in
-   * before tokens were kept, or the exchange failed) has nothing to revoke.
-   * Never throws: the deletion goes ahead whatever Apple answers.
+   * On final account deletion, ask Apple to revoke the refresh token kept for each Apple identity. Call while the
+   * identities still exist, before anonymizing. An identity without a kept token has nothing to revoke. Never throws:
+   * the deletion proceeds whatever Apple answers.
    */
   async revokeFor(userId: string): Promise<void> {
     let kept: Array<{ refresh_token_sealed: string }>;
@@ -191,10 +178,7 @@ export class AppleTokens {
   }
 }
 
-/**
- * The deployment's Apple tokens, or null without a Sign in with Apple key:
- * then nothing is exchanged, kept or revoked, and no request goes to Apple.
- */
+/** The deployment's Apple tokens, or null without a Sign in with Apple key, in which case no request goes to Apple. */
 export function appleTokens(config: AppConfig, pool: pg.Pool, deps: AppleTokenDeps = {}): AppleTokens | null {
   const key = appleSigningKey(config);
   return key ? new AppleTokens(key, pool, config.JWT_SECRET, deps) : null;

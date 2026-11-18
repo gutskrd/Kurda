@@ -25,18 +25,12 @@ import { pressedDim } from '../theme/motion';
 const RING = 24;
 
 /**
- * Where today stands, in the top corner of Learn: the streak, the day's goal
- * as a ring filling up, and the Zêr in your pocket. Three glances' worth,
- * always in the same place, the way a learning app's corner is read — and
- * each one opens onto more: the streak's whole story, the goal (where it can
- * be changed), the shop.
+ * Today's status in Learn's top corner: the streak, the daily goal as a filling ring, and the Zêr balance, each
+ * opening more (the streak sheet, the goal picker, the shop). The numbers are plain: nothing counts down or warns
+ * of loss, and a zero streak shows a cold fire saying a lesson today starts one. Some readers are children.
  *
- * The numbers are plain. Nothing counts down and nothing warns about what
- * could be lost: a streak at zero shows a cold fire and says a lesson today
- * starts one. Some of the people reading it are children.
- *
- * The streak it reads is handed on (`onStreak`), for Learn's own moments; a
- * new `reloadKey` reads all three again (Learn pulled to refresh).
+ * The streak it reads is passed on (`onStreak`) for Learn's own moments; a new `reloadKey` reloads all three
+ * (pull to refresh).
  */
 export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onStreak?: (streak: Streak) => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -50,7 +44,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
   const [settled, setSettled] = useState(false);
   const [open, setOpen] = useState<'streak' | 'goal' | null>(null);
 
-  // fresh each time Learn comes back into view: a lesson just finished moved all three
+  // Fresh each time Learn comes back into view: a lesson just finished moved all three.
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -91,7 +85,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
       ? t('learn.today.goalMet')
       : t('learn.today.goal', { xp: formatNumber(goal.earnedXp, locale), goal: formatNumber(goal.effectiveGoal, locale) })
     : '';
-  // a button that opens a sheet: the sheet arriving is the answer, not a buzz
+  // A button that opens a sheet: the sheet arriving is the answer, not a buzz.
   const show = (which: 'streak' | 'goal') => setOpen(which);
 
   if (!settled) {
@@ -128,7 +122,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
         >
           <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
             <GoalRing xp={goal.earnedXp} goal={goal.effectiveGoal} size={RING} tint={[colors.gold, colors.goldText]} showNumbers={false} />
-            {/* the XP bolt in the middle: an empty ring alone, before the day's first lesson, read as a picture that had not loaded */}
+            {/* The XP bolt in the middle: an empty ring alone, before the day's first lesson, looked like a picture that failed to load. */}
             <View style={styles.ringMark} pointerEvents="none">
               <Icon name="bolt" size={11} color={goal.earnedXp > 0 ? colors.goldText : colors.textSecondary} />
             </View>
@@ -151,7 +145,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
       <StreakSheet
         streak={open === 'streak' ? streak : null}
         onClose={() => setOpen(null)}
-        // a streak restored in the sheet is the streak everywhere: the fire in the bar, and Learn's own moments
+        // A streak restored in the sheet is the streak everywhere: the bar's fire and Learn's own moments.
         onRestored={(next) => {
           setStreak(next);
           onStreak?.(next);
@@ -175,7 +169,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
 
 const styles = StyleSheet.create({
   bar: { alignItems: 'center', gap: spacing.xs },
-  // each stat is a 44pt target however small its number
+  // Each stat is a 44pt target however small its number.
   stat: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
   number: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   ringMark: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },

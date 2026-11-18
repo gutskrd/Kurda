@@ -23,10 +23,7 @@ import { radii, spacing, typography } from './tokens';
 
 export { LIP, type TileState } from './tileTones';
 
-/**
- * The colours a place with a look of its own paints its tiles in (a lesson's
- * painted valley), by state; the palette's own (`tileTone`) where none is given.
- */
+/** The tile colours, by state, of a place with its own look (a lesson's valley); the palette's own (`tileTone`) otherwise. */
 export interface TileLook {
   tile: (state: TileState) => TileTone;
   button: (tone: TileButtonTone, enabled: boolean) => TileTone;
@@ -34,22 +31,20 @@ export interface TileLook {
 
 const TileLookContext = createContext<TileLook | null>(null);
 
-/** Every tile and lesson button inside is drawn in `look`. */
+/** Draws every tile and lesson button inside in `look`. */
 export function TileLookScope({ look, children }: { look: TileLook; children: ReactNode }): React.JSX.Element {
   return <TileLookContext.Provider value={look}>{children}</TileLookContext.Provider>;
 }
 
-/** How long the light takes to cross a tile that has just been answered right. */
+/** How long the light takes to cross a tile just answered right. */
 const SWEEP_MS = 480;
 
-/** The light that crosses a tile: one white for every face it passes over (a join code's glint is the same light). */
+/** The light crossing a tile, one white for every face (a join code's glint uses it too). */
 export const SHINE = 'rgba(255,255,255,0.75)';
 
 /**
- * A face sinking onto its lip under a finger, and coming back up on a spring
- * as it is let go: on the native driver, and stopped wherever it is by the
- * next touch. Under Reduce Motion it does not travel — it is simply down while
- * held and up when let go.
+ * A face sinking onto its lip under a finger and springing back up on release, on the native driver and interruptible
+ * by the next touch. Under Reduce Motion it jumps between down while held and up when released.
  */
 function useSink(enabled: boolean): { translateY: Animated.AnimatedInterpolation<number>; onPressIn: () => void; onPressOut: () => void } {
   const reduce = useReducedMotion();
@@ -62,16 +57,16 @@ function useSink(enabled: boolean): { translateY: Animated.AnimatedInterpolation
     },
     [reduce, sink],
   );
-  // a tile that cannot be pressed any more (answered, used up) stands back up on its lip
+  // A tile that can no longer be pressed (answered, used up) stands back up on its lip.
   useEffect(() => {
     if (!enabled) to(0);
   }, [enabled, to]);
-  // clamped, so the spring's bounce never takes the face through its lip or off it
+  // Clamped, so the spring's bounce never takes the face through or off its lip.
   const translateY = sink.interpolate({ inputRange: [0, 1], outputRange: [0, LIP], extrapolate: 'clamp' });
   return { translateY, onPressIn: () => (enabled ? to(1) : undefined), onPressOut: () => to(0) };
 }
 
-/** The face on its lip: what a tile and a lesson button both are. */
+/** The face on its lip, which both a tile and a lesson button are. */
 function Chunk({
   tone,
   translateY,
@@ -85,7 +80,7 @@ function Chunk({
   onFaceLayout?: (e: LayoutChangeEvent) => void;
   children: ReactNode;
 }): React.JSX.Element {
-  // the lip follows the face's corners, where a caller rounds them its own way
+  // The lip follows the face's corners, where a caller rounds them differently.
   const corner = StyleSheet.flatten(faceStyle)?.borderRadius;
   return (
     <>
@@ -100,20 +95,20 @@ function Chunk({
   );
 }
 
-export interface TileProps {
+interface TileProps {
   state?: TileState;
-  /** the words on it; or `children`, given the ink to draw them in */
+  /** The label; or `children`, given the ink to draw them in. */
   label?: string;
   children?: ReactNode | ((ink: string) => ReactNode);
   onPress?: () => void;
-  /** not pressable for now, though it keeps its colours: an answer already graded */
+  /** Not pressable for now but keeping its colours: an answer already graded. */
   disabled?: boolean;
-  /** a light crosses it and a spark shines at its corner as it turns right: a pair just made */
+  /** A light crosses it and a spark shines at its corner as it turns right: a pair just made. */
   sweep?: boolean;
   accessibilityRole?: AccessibilityRole;
   accessibilityLabel?: string;
   accessibilityHint?: string;
-  /** the language its label is read in, when that is not the app's: a story's own words on an answer */
+  /** The language its label is read in, when not the app's: a story's own words on an answer. */
   accessibilityLanguage?: string;
   selected?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -123,27 +118,19 @@ export interface TileProps {
   ref?: Ref<View>;
   onLayout?: (e: LayoutChangeEvent) => void;
   /**
-   * How far past its face it answers a finger (theme/Pressable.tsx). A tile
-   * is a fingertip tall with its lip, so by default it reaches nothing more;
-   * one drawn smaller says so with `reachSize`, and one with nothing near it
-   * may be `open`.
+   * How far past its face it answers a finger (theme/Pressable.tsx): nothing extra by default, since it is a fingertip
+   * tall with its lip; `reachSize` for smaller ones, `open` when nothing is near.
    */
   reach?: Reach;
   reachSize?: ReachSize;
 }
 
 /**
- * A chunky tile that looks pressable and is: a rounded face with a 2-point
- * edge, standing on a darker 4-point lip it sinks onto when pressed. The
- * lesson's cards, options and word tiles are all one of these, and so are a
- * story quiz's answers, so an answer feels the same under a finger wherever
- * it is given.
- *
- * Its state is told by its colours — the brand's ink when picked, green when
- * right, red when wrong — and by more than colour: a spent tile has lost its
- * lip and greyed, a disabled one is faded, and each says its state to a screen
- * reader. At least a fingertip tall. What a press feels like (a tick, a knock)
- * is the caller's to say, since only it knows what the press meant.
+ * A chunky tile that looks pressable and is: a rounded face with a 2-point edge on a darker 4-point lip it sinks onto
+ * when pressed. Lesson cards, options and word tiles, and story quiz answers, all use it, so answers feel the same
+ * everywhere. Its state shows in colour (brand ink when picked, green right, red wrong) and beyond colour (a spent
+ * tile loses its lip and greys, a disabled one fades), and is announced to screen readers. At least a fingertip
+ * tall. The caller chooses the haptic, since only it knows what the press meant.
  */
 export function Tile({
   state = 'idle',
@@ -173,7 +160,7 @@ export function Tile({
   const pressable = !disabled && state !== 'spent' && state !== 'disabled' && !!onPress;
   const sink = useSink(pressable);
 
-  // the light across a pair just made: once, as the tile turns right
+  // The light across a pair just made: once, as the tile turns right.
   const light = useRef(new Animated.Value(0)).current;
   const [width, setWidth] = useState(0);
   const before = useRef(state);
@@ -182,13 +169,13 @@ export function Tile({
     before.current = state;
     if (!sweep || reduce || state !== 'right' || was === 'right') return;
     light.setValue(0);
-    // not stopped when the tile settles: the light finishes crossing whatever it turns into next
+    // Not stopped when the tile settles: the light finishes crossing whatever it becomes.
     timing(light, 1, SWEEP_MS, { easing: Easing.inOut(Easing.quad) }).start();
   }, [state, sweep, reduce, light]);
   useEffect(() => () => light.stopAnimation(), [light]);
 
   const band = Math.max(24, width * 0.3);
-  // a light over a dark face shows more than the same light over a pale one
+  // Light shows more over a dark face than a pale one.
   const shine = colors.scheme === 'dark' ? 0.3 : 0.7;
   const content = typeof children === 'function' ? children(tone.ink) : children;
   return (
@@ -203,7 +190,7 @@ export function Tile({
       accessibilityHint={accessibilityHint}
       accessibilityLanguage={accessibilityLanguage}
       aria-disabled={!pressable}
-      // one of a set of options is checked; a card or a word tile is selected
+      // One of a set of options is checked; a card or word tile is selected.
       aria-checked={accessibilityRole === 'radio' ? (selected ?? state === 'picked') : undefined}
       aria-selected={accessibilityRole === 'radio' ? undefined : (selected ?? state === 'picked')}
       onLayout={onLayout}
@@ -245,10 +232,9 @@ export function Tile({
 }
 
 /**
- * A lesson's Check and Continue: a tile filled in its tone, as wide as the
- * screen, where the thumb already is. While there is nothing to check it is
- * flat and grey, and it says so to a screen reader; while an answer is on its
- * way it spins in place of its word and cannot be pressed twice.
+ * A lesson's Check and Continue: a full-width tile filled in its tone, where the thumb already is. With nothing to
+ * check it is flat and grey and says so to screen readers; while an answer is in flight it spins instead of its
+ * label and cannot be pressed twice.
  */
 export function TileButton({
   label,
@@ -268,7 +254,7 @@ export function TileButton({
   disabled?: boolean;
   accessibilityLabel?: string;
   testID?: string;
-  /** as a tile's: the button is 54 tall with its lip, past any reach it needs, unless a caller draws it smaller */
+  /** As a tile's: at 54 tall with its lip it needs no extra reach, unless a caller draws it smaller. */
   reach?: Reach;
   reachSize?: ReachSize;
 }): React.JSX.Element {
@@ -300,7 +286,7 @@ export function TileButton({
 }
 
 const styles = StyleSheet.create({
-  // room under the face for its lip, kept whether the lip shows or not, so nothing moves when a tile is spent
+  // Room under the face for its lip, kept whether or not the lip shows, so nothing moves when a tile is spent.
   tile: { paddingBottom: LIP },
   lip: { position: 'absolute', top: LIP, left: 0, right: 0, bottom: 0, borderRadius: radii.lg },
   face: {
@@ -317,7 +303,7 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, textAlign: 'center' },
   band: { position: 'absolute', top: -8, bottom: -8, left: 0, backgroundColor: SHINE },
   spark: { position: 'absolute', right: spacing.sm, bottom: spacing.xs },
-  // 50, what iOS gives the full-width button a screen is about
+  // 50, which iOS gives a screen's full-width main button.
   buttonFace: { minHeight: 50, alignSelf: 'stretch' },
   buttonLabel: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
 });

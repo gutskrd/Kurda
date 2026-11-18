@@ -1,10 +1,8 @@
 /**
- * Detektîf against real Postgres and Redis: the line picker lists
- * published lines only; a case is put together from them without typing
- * Kurdish, and offered only once it is published; its board keeps every
- * meaning back until it is found or a hint buys it, and each hint costs a
- * point at the finish; the starter case is seeded once, published, made of
- * the course's own lines.
+ * Detektîf against real Postgres and Redis: the line picker lists only published lines; a case is built from them
+ * without typing Kurdish and offered only once published; its board withholds meanings until found or bought with a
+ * hint, and each hint costs a point at the finish; the starter case is seeded once, published, from the course's own
+ * lines.
  */
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

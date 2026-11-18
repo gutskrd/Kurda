@@ -12,31 +12,25 @@ import { useValley } from '../ValleyScope';
 import { CARD } from '../valley';
 import { aroundGap, glossTokens, type GlossToken } from '../asks';
 
-/** The popover's edge, and the rule between two meanings in it: the lesson's hairline. */
+/** The popover's edge and the rule between meanings: the lesson's hairline. */
 const EDGE = CARD.edge;
 
-/** The dotted line under a word that can be asked about, and the space between it and the word. */
+/** The dotted underline's thickness, and its distance from the word. */
 const DOTS = 3;
 const DOTS_GAP = 1;
 
-/** The dots under a word the item brings in for the first time: a little heavier, closer set, in the gold of the badge that says so. */
+/** The dots under a new word: slightly heavier and closer set, in the gold of the "New word" badge. */
 const FRESH_DOTS = { width: 2.5, dash: '3 3' } as const;
 const DOTS_AS_EVER = { width: 2, dash: '2 4' } as const;
 
-/** The popover's arrow: a square turned to a point, half of it showing. */
+/** The popover's arrow: a rotated square, half showing. */
 const ARROW = 12;
 
 /**
- * How far a word answers past what it draws: a line of text and its dots
- * under it. The words of a line touch, and a line that wraps lies right on
- * the one above it, so a word reaches neither sideways nor up: the words of
- * the line below come later, and a reach up from them would take the foot of
- * every word over them, dots and all. It reaches down instead, by half of
- * what a fingertip's 48 is missing. Under a line with another below it, that
- * reach lies under the lower line's own words, which answer there
- * themselves, so it only answers where nothing else does: below the last
- * line, and beside a shorter line under it. Nothing, where the line's height
- * is not known.
+ * How far a word answers past its text and dots. Words in a line touch and wrapped lines sit flush, so a word
+ * reaches neither sideways nor up, only down by half of what 48 points lacks. Below another line that reach lies
+ * under words that answer there themselves, so it only matters below the last line or beside a shorter one. None
+ * when the line height is unknown.
  */
 function wordReach(lineHeight: number | undefined): HitSlop | undefined {
   return lineHeight === undefined ? undefined : reachSlop(null, lineHeight + DOTS_GAP + DOTS, { limit: { top: 0 } });
@@ -44,7 +38,7 @@ function wordReach(lineHeight: number | undefined): HitSlop | undefined {
 
 interface Opened {
   index: number;
-  /** the word's place on the screen */
+  /** The word's position on screen. */
   x: number;
   y: number;
   w: number;
@@ -52,21 +46,10 @@ interface Opened {
 }
 
 /**
- * A prompt whose words can be asked about. When the course knows what a word
- * means (`promptTokens`), the word is underlined with dots, and a tap opens a
- * small popover under it listing its meanings, with an arrow pointing at the
- * word; a tap anywhere else closes it. For a screen reader each such word is a
- * button whose hint reads the meanings. A prompt with no meanings is just its
- * text, as it always was.
- *
- * Soranî reads from the right: its words, and the lines they wrap onto, start
- * there.
- *
- * The words an item brings in for the first time (`newWords`) lead with the
- * meaning the item gives them, and their dots are a little heavier and in
- * gold, the colour of the badge over the question that says there is a new
- * word in it. A line with a gap in it (a 'missing' item) has `gap` drawn in
- * the gap's place, between the words either side.
+ * A prompt whose words can be looked up. A word with known meanings (`promptTokens`) has a dotted underline, and a
+ * tap opens a popover under it listing them; tapping elsewhere closes it. For screen readers each such word is a
+ * button whose hint reads the meanings. Soranî lines start from the right. New words (`newWords`) lead with the
+ * item's meaning and have heavier gold dots. A 'missing' item draws `gap` in the gap's place.
  */
 export function PromptWords({
   prompt,
@@ -78,7 +61,7 @@ export function PromptWords({
   prompt: string;
   tokens?: PromptToken[];
   newWords?: NewWord[];
-  /** what stands in the line's gap (`GAP`): the slot the chosen or typed word goes in */
+  /** What stands in the line's gap (`GAP`): the slot for the chosen or typed word. */
   gap?: ReactNode;
   style?: StyleProp<TextStyle>;
 }): React.JSX.Element {
@@ -88,14 +71,14 @@ export function PromptWords({
   const words = useRef<Array<View | null>>([]);
   const [open, setOpen] = useState<Opened | null>(null);
   const [width, setWidth] = useState(0);
-  // a prompt in Arabic script (Soranî) reads from the right
+  // An Arabic-script prompt (Soranî) reads from the right.
   const rtl = scriptDialect(prompt) === 'sorani';
   const direction: TextStyle = rtl ? styles.rtl : styles.ltr;
   const valley = useValley();
   const face = valley.card;
   const edge = valley.line;
   const glossed = useMemo(() => glossTokens(prompt, tokens, newWords), [prompt, tokens, newWords]);
-  // the line's words in order, and the gap among them where it has one and something is to stand in it
+  // The line's words in order, with the gap among them where there is one and something to fill it.
   const pieces = useMemo<Array<GlossToken | null>>(() => {
     const around = gap !== undefined ? aroundGap(glossed) : null;
     return around ? [...around.before, null, ...around.after] : glossed;
@@ -116,7 +99,7 @@ export function PromptWords({
   const close = (): void => setOpen(null);
 
   const meanings = open ? (pieces[open.index]?.meanings ?? []) : [];
-  // under the word and centred on it, kept inside the screen's margins; placed once its own width is known
+  // Centred under the word and kept within the screen's margins; placed once its own width is known.
   const left = open && width > 0 ? Math.max(layout.gutter, Math.min(screen.width - layout.gutter - width, open.x + open.w / 2 - width / 2)) : 0;
   const arrowAt = open ? open.x + open.w / 2 - left - ARROW / 2 : 0;
 
@@ -140,7 +123,7 @@ export function PromptWords({
               style={({ pressed }) => pressed && heldDim}
             >
               <Text style={[style, direction]}>{token.text}</Text>
-              {/* laid over the word's width rather than given one, so the word alone decides how wide it is */}
+              {/* Laid over the word rather than sized, so the word alone decides the width. */}
               <View style={styles.dots}>
                 <Svg width="100%" height={DOTS} style={StyleSheet.absoluteFill}>
                   <Line
@@ -165,7 +148,7 @@ export function PromptWords({
         )}
       </View>
       <Modal visible={open !== null} transparent animationType="none" onRequestClose={close}>
-        {/* the popover is drawn over the whole screen, not beside the lesson's controls, so no group round the prompt caps it */}
+        {/* The popover covers the whole screen, so no reach group round the prompt caps it. */}
         <ReachReset>
           <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel={t('common.close')} />
           {open ? (

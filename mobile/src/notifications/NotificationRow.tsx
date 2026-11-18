@@ -29,53 +29,44 @@ import { pressedDim } from '../theme/motion';
 export interface NoticeRowProps {
   title: string;
   body: string;
-  /** when it came, short: "6m", "20h", a date */
+  /** When it came, short: "6m", "20h", a date. */
   time: string;
   unread: boolean;
   actor: NoticeActor | null;
   kind: NoticeKind;
-  /** what it is about, drawn at the row's end, where it can be drawn */
+  /** What it is about, drawn at the row's end, where it can be drawn. */
   picture: NoticePicture | null;
-  /** what a screen reader hears for the whole row */
+  /** What a screen reader hears for the whole row. */
   label: string;
   onPress: () => void;
-  /** the one thing that can be done from the row itself, where the app already does it (join a game, open a gift) */
+  /** The one thing doable from the row itself, where the app already does it (join a game, open a gift). */
   action?: { label: string; onPress: () => void } | null;
-  /** pulled open on what is under it; one row at a time, which the list keeps */
+  /** Pulled open on what is under it; one row at a time, which the list keeps. */
   open: boolean;
-  /** taken away, and on its way out of the list */
+  /** Taken away, and on its way out of the list. */
   leaving: boolean;
-  /** when it rises into the list as the list arrives, or null to simply be there */
+  /** When it rises into the list as the list arrives, or null to simply be there. */
   enter: number | null;
   onOpen: (open: boolean) => void;
   onRemove: () => void;
-  /** its way out is over: the list can let it go */
+  /** Its way out is over: the list can let it go. */
   onGone: () => void;
   onTouch: () => void;
   onSwiping: (swiping: boolean) => void;
   onSettings: () => void;
 }
 
-/** How long the warm wash under a new one takes to fade once it has been read: the website's 420 ms. */
+/** How long the wash under a new one takes to fade once read: the website's 420 ms. */
 const WASH_FADE_MS = 420;
 
 /**
- * A notification: who it is from at its start — their face, or Hevalo's own
- * mark for news from Hevalo, with what kind of thing it is on the corner —
- * what happened in the reader's words with the time after them, and at its end
- * a picture of what it is about where there is one: the badge, the league, the
- * game, the letter, the gift, the streak's fire.
+ * A notification: who it is from at its start (their face, or Hevalo's mark, with a badge for the kind), what happened
+ * with the time after it, and at its end a picture of what it is about where there is one.
  *
- * New is said three ways and never by colour alone: a small violet dot at
- * its start, a faint wash of the same violet across the row (the one tinted
- * thing in the list), and "Unread" in what a screen reader hears. Once read,
- * the wash and the dot fade rather than vanish.
- *
- * Pulled toward its start by a finger it slides open on the notification
- * settings and the way to take it away; pulled most of the way across it goes
- * at once. Held down it opens the same way, and a screen reader is offered
- * taking it away as one of the row's actions, beside the inline one (Join,
- * Open), which it would otherwise never reach inside the row.
+ * New is shown three ways, never by colour alone: a violet dot, a faint violet wash across the row, and "Unread" for a
+ * screen reader; both fade once read. Pulled toward its start it slides open on the settings and Delete, and pulled
+ * most of the way across it goes at once. A long press opens it too, and a screen reader is offered Delete as an action
+ * beside the inline one (Join, Open), which it could not otherwise reach.
  */
 export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
   const { title, body, time, unread, actor, kind, picture, label, onPress, action, open, leaving, enter, onOpen, onRemove, onSettings } = props;
@@ -96,14 +87,12 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
   });
   const line = splitName(title, actor?.name);
   /*
-   * A line in the reader's own right-to-left words is read that way even when
-   * it starts with a name in Latin letters ("Azad …"), which would otherwise
-   * turn the whole line round; the server's English, on a Soranî screen,
-   * still reads left to right.
+   * A line in the reader's right-to-left words reads that way even when it starts with a Latin-letter name, which would
+   * otherwise flip it; the server's English on a Soranî screen still reads left to right.
    */
   const titleDir = dir.rtl && RTL_SCRIPT.test(title) ? dir.text : dir.free;
 
-  // the wash and the dot are one value, so they fade out together as the row is read
+  // The wash and the dot are one value, so they fade out together as the row is read.
   const fresh = useRef(new Animated.Value(unread ? 1 : 0)).current;
   useEffect(() => {
     const to = unread ? 1 : 0;
@@ -116,7 +105,7 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
     return () => run.stop();
   }, [unread, reduce, fresh]);
 
-  // the app's violet at a tenth, as the website mixes it; the face's ring is the same colour made solid, so the badge sits on the row
+  // The app's violet at a tenth, as the website mixes it; the face's ring is the same colour made solid.
   const wash = `${colors.primary}1A`;
   const ring = unread ? blend(colors.primary, colors.background, 0.1) : colors.background;
   const deleteWhat = t('notifications.deleteWhat', { what: title });
@@ -137,7 +126,7 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
             />
             <Pressable
               onPress={() => {
-                // the end of a pull is not a tap
+                // The end of a pull is not a tap.
                 if (!swipe.pulled()) onPress();
               }}
               onLongPress={() => {
@@ -161,10 +150,8 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
                   {line.before}
                   {line.name ? <Text style={styles.name}>{line.name}</Text> : null}
                   {line.after}
-                  {/*
-                   * after the words, on their line, quieter than them: kept in one piece so "6 Min." never breaks, and
-                   * set apart from the words beside it, so a time in Arabic letters never joins a name in Latin ones
-                   */}
+                  {/* After the words, quieter: kept in one piece so "6 Min." never breaks, and isolated so a time in
+                     Arabic letters never joins a Latin name. */}
                   <Text style={[styles.time, { color: colors.textSecondary }]}>{` \u2068${time.replace(/ /g, '\u00a0')}\u2069`}</Text>
                 </Text>
                 {body ? (
@@ -174,10 +161,8 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
                 ) : null}
                 {action ? (
                   <View style={[styles.actionRow, { flexDirection: dir.row }]}>
-                    {/*
-                      Reaches a fingertip up and down from its 32 and stays inside the row around it, so a near miss
-                      does what the button says rather than opening the notification behind it.
-                    */}
+                    {/* Reaches a fingertip up and down from its 32pt within the row, so a near miss does what the
+                       button says rather than opening the notification. */}
                     <PressableScale
                       onPress={action.onPress}
                       accessibilityRole="button"
@@ -207,14 +192,9 @@ const RTL_SCRIPT = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
 const UNDER_BUTTON = SWIPE.open / 2;
 
 /**
- * What a finger finds under a row as it pulls it aside: the notification
- * settings, in grey, and taking it away, in red, at the row's end.
- *
- * Red runs under the whole row, so a row pulled past what it opens to shows
- * only more red, and the settings ride along at the row's edge, fading as it
- * nears the point where letting go takes it away: all red then says what will
- * happen. Only drawn while the row is pulled, open or leaving, and only
- * offered to a screen reader while it is open.
+ * What is under a row as it is pulled aside: the settings in grey and Delete in red at the row's end. Red runs under
+ * the whole row, so pulling past open shows only more red, and the settings fade as the row nears the point where
+ * letting go deletes it. Drawn only while pulled, open or leaving, and offered to a screen reader only while open.
  */
 function Under({
   offset,
@@ -260,7 +240,7 @@ function Under({
           onPress={onSettings}
           accessibilityRole="button"
           accessibilityLabel={t('settings.notifications')}
-          // solid, not the track's own see-through grey: the red runs under it
+          // Solid, not the track's see-through grey: the red runs under it.
           style={({ pressed }) => [styles.underFill, { backgroundColor: blend(colors.controlTrack, colors.background) }, pressed && styles.pressed]}
         >
           <Icon name="gear" size={20} color={colors.textPrimary} />
@@ -274,10 +254,8 @@ function Under({
 }
 
 /**
- * Who it is from: their face, or Hevalo's own mark for news from Hevalo, as
- * somebody's face would be — with what they did in a small badge on the
- * corner. An invite's badge is its ticket, in its game's colour, filled the
- * way the ticket's stub is.
+ * Who it is from: their face, or Hevalo's mark for news from Hevalo, with what they did in a small corner badge. An
+ * invite's badge is its ticket, in its game's colour.
  */
 function Face({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; kind: NoticeKind; ring: string; mirrored: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -291,7 +269,7 @@ function Face({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; kind
           <Image source={MASCOT} style={styles.deer} resizeMode="contain" />
         </View>
       )}
-      {/* ringed in whatever the row is drawn on, so it reads as sitting on the face rather than cut into it */}
+      {/* Ringed in whatever the row is drawn on, so it sits on the face rather than cutting into it. */}
       <View style={[styles.badge, mirrored ? styles.badgeLeft : styles.badgeRight, { backgroundColor: stub ? stub.face : colors.primary, borderColor: ring }]}>
         <Icon name={kind.icon} size={11} color={stub ? stub.ink : colors.textOnPrimary} />
       </View>
@@ -300,10 +278,8 @@ function Face({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; kind
 }
 
 /**
- * What it is about, drawn small at the row's end: the same drawings the
- * website shows (shared art, drawn at twice the size and fitted, so the
- * detail holds), the gift's own wrapping, and the streak's fire standing
- * still. Decoration: the row's words already say what it is.
+ * What it is about, drawn small at the row's end: the website's shared art (drawn at twice the size and fitted, so
+ * detail holds), the gift's wrapping, or the streak's still fire. Decoration: the row's words already say it.
  */
 function NoticeArt({ picture }: { picture: NoticePicture }): React.JSX.Element {
   const { colors } = useTheme();
@@ -343,17 +319,17 @@ function NoticeArt({ picture }: { picture: NoticePicture }): React.JSX.Element {
 }
 
 /**
- * The list while it loads: the same heading and the same rows, in grey, as
- * many as the screen holds — so nothing moves when the real ones arrive.
+ * The list while it loads: the same heading and rows in grey, as many as the screen holds, so nothing moves when the
+ * real ones arrive.
  */
 export function NotificationListSkeleton(): React.JSX.Element {
   const { height } = useWindowDimensions();
   const { t } = useI18n();
   const dir = useDirection();
-  // enough rows to reach the foot of the screen, whatever its height
+  // Enough rows to reach the foot of the screen, whatever its height.
   const count = Math.max(4, Math.ceil(height / NOTICE_ROW_HEIGHT));
   const widths = ['78%', '64%', '86%', '58%', '72%'] as const;
-  // the bars start where the words will, which in Soranî is on the right
+  // The bars start where the words will, which in right-to-left languages is on the right.
   const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
   return (
     <View style={styles.column} accessibilityLabel={t('common.loading')}>
@@ -371,7 +347,7 @@ export function NotificationListSkeleton(): React.JSX.Element {
               <Skeleton width="46%" height={12} />
             </View>
           </View>
-          {/* most notifications have a picture at their end; a few do not */}
+          {/* Most notifications have a picture at their end; a few do not. */}
           {i % 3 === 2 ? null : <Skeleton width={NOTICE.picture} height={NOTICE.picture} radius={radii.md} />}
         </View>
       ))}
@@ -390,7 +366,7 @@ export function NotificationHeading({ title, first, action }: { title: string; f
       </Text>
       {action ? (
         <Pressable onPress={action.onPress} accessibilityRole="button" accessibilityLabel={action.label} style={({ pressed }) => [styles.markAll, pressed && styles.pressed]}>
-          {/* violet, as what can be pressed is: it is the one thing on the list's head that does something */}
+          {/* Violet, as what can be pressed is: it is the one thing on the list's head that does something. */}
           <Text style={[styles.markAllText, { color: colors.primary }]} numberOfLines={1}>
             {action.label}
           </Text>
@@ -401,7 +377,7 @@ export function NotificationHeading({ title, first, action }: { title: string; f
 }
 
 const styles = StyleSheet.create({
-  // the same column the list draws, so the rows land where the grey ones stood
+  // The same column the list draws, so the rows land where the grey ones stood.
   column: { width: '100%', maxWidth: layout.column, alignSelf: 'center' },
   box: { overflow: 'hidden' },
   slide: { width: '100%' },
@@ -413,7 +389,7 @@ const styles = StyleSheet.create({
     paddingVertical: NOTICE.padV,
   },
   dot: { position: 'absolute', top: '50%', width: NOTICE.dot, height: NOTICE.dot, marginTop: -NOTICE.dot / 2, borderRadius: radii.pill },
-  // in the gutter, halfway between the screen's edge and the face
+  // In the gutter, halfway between the screen's edge and the face.
   dotLeft: { left: (NOTICE.padH - NOTICE.dot) / 2 },
   dotRight: { right: (NOTICE.padH - NOTICE.dot) / 2 },
   face: { width: NOTICE.avatar, height: NOTICE.avatar },
@@ -449,7 +425,7 @@ const styles = StyleSheet.create({
   besideLeft: { left: UNDER_BUTTON },
   underFill: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   underText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  // each bar centred on the line it stands in for
+  // Each bar centred on the line it stands in for.
   titleBar: { height: NOTICE.titleLine, justifyContent: 'center' },
   bodyBar: { height: NOTICE.bodyLine, justifyContent: 'center' },
   heading: { minHeight: NOTICE.heading, alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: NOTICE.padH, gap: spacing.md },

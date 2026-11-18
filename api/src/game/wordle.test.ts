@@ -6,12 +6,12 @@ import {
   keyboardFromGuesses,
   MAX_ATTEMPTS,
   mergeKeyboard,
-  normalizeWord,
   scoreGuess,
   toLetters,
   validateGuess,
   type LetterFeedback,
 } from './wordle.js';
+import { normalizeWord } from './rhyme.js';
 
 // A small Kurdish dictionary for tests (5- and 6-letter words).
 const dict = new InMemoryDictionary([

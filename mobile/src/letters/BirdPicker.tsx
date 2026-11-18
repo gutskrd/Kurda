@@ -10,7 +10,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { BirdBadge } from './LetterParts';
 
-/** Each bird by its name (its kind or its colour), for whoever cannot see the picture: by its number in the shared LETTER_BIRDS. */
+/** Each bird's accessible name, by its index in shared LETTER_BIRDS. */
 export const BIRD_NAMES: readonly TranslationKey[] = [
   'letters.bird.grey',
   'letters.bird.sky',
@@ -23,14 +23,9 @@ export const BIRD_NAMES: readonly TranslationKey[] = [
 ];
 
 /**
- * Choosing your bird, under your window, where the bird on the sill takes
- * the colour of whichever is picked (LettersScreen shows it there), as the
- * website has it (web/src/letters/BirdPicker.tsx).
- *
- * The first bird is chosen for free and is yours from then on; another after
- * it costs Zêr (shared LETTER_BIRD_PRICE), and the picker says so, and how
- * much there is, before anything is paid. The birds are a group of radio
- * buttons, each said by its colour.
+ * Choosing your bird under your window, where the sill's bird takes the picked colour, as on the website
+ * (web/src/letters/BirdPicker.tsx). The first bird is free; changing later costs Zêr (shared LETTER_BIRD_PRICE),
+ * and the price and balance show before anything is paid. The birds are a radio group, each named by its colour.
  */
 export function BirdPicker({
   first,
@@ -43,7 +38,7 @@ export function BirdPicker({
   onConfirm,
   onCancel,
 }: {
-  /** choosing for the first time, for free; otherwise changing, for Zêr */
+  /** Choosing for the first time, for free; otherwise changing, for Zêr. */
   first: boolean;
   current: number;
   picked: number;
@@ -113,11 +108,11 @@ const styles = StyleSheet.create({
   picker: { alignItems: 'center', gap: spacing.sm, alignSelf: 'stretch' },
   status: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center', maxWidth: 360 },
   strong: { fontWeight: typography.weights.bold },
-  // two even rows of four
+  // Two even rows of four.
   birds: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm, maxWidth: 4 * (48 + 10) + 3 * spacing.sm + 2, marginVertical: spacing.xs },
-  // each bird a round button, at least a finger wide; the one picked ringed in violet, as whatever is chosen is
+  // Each bird a round button at least a finger wide; the picked one ringed in violet.
   bird: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', padding: 3, borderWidth: 2, borderRadius: radii.pill },
-  // the bird that is yours now, marked with a small dot when choosing another
+  // A small dot marks your current bird while choosing another.
   mine: { position: 'absolute', right: 2, bottom: 2, width: 12, height: 12, borderWidth: 2, borderRadius: radii.pill },
   action: { alignSelf: 'stretch' },
 });

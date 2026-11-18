@@ -11,7 +11,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { usePartyOffer, type PartyGame } from './offer';
 import { Loading } from '../theme/Loading';
 
-/** A party game's levels, by the solo games' names for them. */
+/** A party game's levels, named as the solo games name them. */
 export const PARTY_LEVEL_KEY = {
   beginner: 'games.solo.difficulty.beginner',
   intermediate: 'games.solo.difficulty.intermediate',
@@ -19,10 +19,8 @@ export const PARTY_LEVEL_KEY = {
 } as const satisfies Record<string, TranslationKey>;
 
 /**
- * The start of a party game on the phone: how to play in three steps, a game
- * with friends (the invite sheet), and a code from someone else — offered
- * only in the varieties with enough approved cards, and saying so plainly
- * where there are none.
+ * The start of a party game: how to play, a game with friends (the invite sheet), and joining by code. Offered
+ * only in varieties with enough approved cards, and says so plainly where there are none.
  */
 export function PartyStart({
   game,
@@ -88,7 +86,7 @@ export function PartyStart({
           <ClayButton label={t('games.party.withFriends')} icon="people" tone="primary" onPress={() => setInviting(true)} style={styles.stretch} />
         </View>
       </GlassCard>
-      {/* a game somebody else made: its code opens it, whichever game it turns out to be */}
+      {/* A code opens somebody else's game, whichever game it is. */}
       <JoinCodeCard />
       {inviting ? <InviteSheet target={{ kind: 'new', game }} onClose={() => setInviting(false)} /> : null}
     </>
@@ -96,7 +94,7 @@ export function PartyStart({
 }
 
 const styles = StyleSheet.create({
-  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
+  // Lay out a card's contents on an inner View: a GlassCard's own style only dresses its outside.
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   loading: { marginTop: spacing.xl },

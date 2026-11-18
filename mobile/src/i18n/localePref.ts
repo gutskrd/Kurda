@@ -8,10 +8,7 @@ function isLocale(v: unknown): v is Locale {
   return typeof v === 'string' && (LOCALES as readonly string[]).includes(v);
 }
 
-/**
- * Best-effort device locale mapped to a supported one, else English. Uses Intl
- * (no extra native dep); only the primary subtag matters ("de-DE" → "de").
- */
+/** The device locale mapped to a supported one, else English, via Intl; only the primary subtag matters ("de-DE" → "de"). */
 export function deviceLocale(): Locale {
   try {
     const resolved = new Intl.DateTimeFormat().resolvedOptions().locale;
@@ -36,6 +33,6 @@ export async function setSavedLocale(locale: Locale): Promise<void> {
     if (Platform.OS === 'web') globalThis.localStorage?.setItem(KEY, locale);
     else await SecureStore.setItemAsync(KEY, locale);
   } catch {
-    // preference persistence is a nicety; ignore failures
+    // Preference persistence is a nicety; ignore failures.
   }
 }

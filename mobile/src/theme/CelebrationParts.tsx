@@ -9,33 +9,30 @@ import { burstPlan, celebrationPlan, type CelebrationPlan, type Fleck } from './
 import { radii } from './tokens';
 
 /**
- * The parts of a celebration (celebration.ts says how it goes): the art's
- * arrival, the ring, the burst, the words — driven by four values on the
- * native driver, so the whole moment plays even while the JS thread is busy
- * loading what comes next, and a skip is four `setValue(1)`s.
+ * A celebration's parts (celebration.ts says how it goes): the art's arrival, the ring, the burst and the words, on
+ * four native-driver values, so the moment plays while the JS thread loads what is next, and skipping is four
+ * `setValue(1)`s.
  */
-export interface Celebrating {
+interface Celebrating {
   plan: CelebrationPlan;
-  /** 0 → 1: the art (a spring under full motion, so it may pass 1 a little) */
+  /** 0 → 1: the art (a spring under full motion, so it may pass 1 briefly). */
   art: Animated.Value;
-  /** 0 → 1: the ring widening once */
+  /** 0 → 1: the ring widening once. */
   ring: Animated.Value;
-  /** 0 → 1: the whole burst; each fleck takes its own slice */
+  /** 0 → 1: the whole burst; each fleck takes its own slice. */
   burst: Animated.Value;
-  /** 0 → 1: the words */
+  /** 0 → 1: the words. */
   details: Animated.Value;
-  /** still playing; false once it has ended or been skipped */
+  /** Still playing; false once ended or skipped. */
   playing: boolean;
-  /** jump to the end */
+  /** Jumps to the end. */
   skip: () => void;
 }
 
 /**
- * Play a celebration once, as the component mounts — or `delayMs` after, for
- * a moment that opens on something else first. It is felt and heard as the
- * art lands — `haptic('celebrate')` and a chime (sounds.ts): `complete` for a
- * finished lesson, `reward` for anything else earned. The pacing in each
- * keeps it to one however many moments arrive together.
+ * Plays a celebration once on mount, or `delayMs` after for a moment that opens on something else. As the art lands
+ * it plays `haptic('celebrate')` and a chime (sounds.ts): `complete` for a finished lesson, `reward` otherwise; their
+ * pacing keeps it to one however many moments arrive together.
  */
 export function useCelebration({ feel = true, sound = 'reward', delayMs = 0 }: { feel?: boolean; sound?: 'complete' | 'reward'; delayMs?: number } = {}): Celebrating {
   const reduce = useReducedMotion();
@@ -78,13 +75,13 @@ export function useCelebration({ feel = true, sound = 'reward', delayMs = 0 }: {
       run.stop();
       if (tick.current) clearTimeout(tick.current);
     };
-    // the Reduce Motion answer can arrive a moment late; then it simply plays again, as a fade
+    // The Reduce Motion answer can arrive late; then it replays, as a fade.
   }, [plan, art, ring, burst, details, feelIt, delayMs]);
 
   const skip = useCallback(() => {
     running.current?.stop();
     if (tick.current) clearTimeout(tick.current);
-    // skipped before it landed: the moment still happened, and is still felt
+    // Skipped before it landed: the moment still happened, so it is still felt.
     feelIt();
     art.setValue(1);
     ring.setValue(1);
@@ -141,10 +138,7 @@ export function GlowRing({ progress, colour, size, testID }: { progress: Animate
   );
 }
 
-/**
- * The flecks, thrown out from the middle of the art and falling away. One
- * value drives them all; each fleck reads its own slice of it.
- */
+/** The flecks, thrown out from the art's centre and falling away; one value drives them all, each reading its own slice. */
 export function ConfettiBurst({
   progress,
   count,
@@ -179,7 +173,7 @@ export function ConfettiBurst({
 
 function BurstFleck({ fleck, progress, colour }: { fleck: Fleck; progress: Animated.Value; colour: string }): React.JSX.Element {
   const { start, end } = fleck;
-  // thrown out fast over the first third of its time, then falling for the rest
+  // Thrown out fast over the first third of its time, then falling for the rest.
   const out = start + (end - start) * 0.32;
   const translateX = progress.interpolate({ inputRange: [start, out, end], outputRange: [0, fleck.dx, fleck.dx * 1.12], extrapolate: 'clamp' });
   const translateY = progress.interpolate({ inputRange: [start, out, end], outputRange: [0, fleck.dy, fleck.dy + fleck.fall], extrapolate: 'clamp' });

@@ -1,21 +1,11 @@
 /**
- * This install's device id, for the `X-Device-Id` header.
+ * This install's device id, for the `X-Device-Id` header. The server keeps a separate failed-sign-in budget for a
+ * device that has signed in before, so wrong passwords from elsewhere cannot lock the owner out, and emails the owner
+ * about sign-ins from unseen devices; both need a stable id.
  *
- * The server keeps a separate budget of failed sign-ins for a device that has
- * signed in to an account before, so somebody typing the owner's address with
- * wrong passwords from elsewhere cannot lock the owner out of their own phone;
- * and it emails the owner when an account is signed in to from a device it
- * has not seen. Both need the phone to say which device it is, the same way
- * every time.
- *
- * The id is a random UUID made once and kept beside the tokens, so it says
- * nothing about the phone or the person. It is not cleared on sign-out: the
- * point is that the next sign-in from here is recognised. A new install of the
- * app on a phone an earlier one was on forgets it with the session, and is a
- * new device (install.ts). It is never logged.
- *
- * No React Native in here, so the tests can run it under Node; the stores are
- * in `storage.ts`.
+ * The id is a random UUID made once and kept beside the tokens, so it says nothing about the phone or the person. It
+ * survives sign-out so the next sign-in is recognised; a reinstall forgets it with the session (install.ts). It is
+ * never logged. No React Native here, so tests run it under Node; the stores are in `storage.ts`.
  */
 
 /** The longest id the server accepts (api/src/auth/routes.ts). */
@@ -28,14 +18,13 @@ export interface DeviceIdStore {
 
 interface RandomSource {
   crypto?: { randomUUID?: () => string; getRandomValues?: (array: Uint8Array) => Uint8Array };
-  /** Expo's own native generator, which every Expo app installs at start-up */
+  /** Expo's own native generator, which every Expo app installs at start-up. */
   expo?: { uuidv4?: () => string };
 }
 
 /**
- * A stored value the server would take: 1–200 characters. Printable ASCII
- * only, too, since it travels as a header and a corrupt value would otherwise
- * make every request fail before it left the phone.
+ * A stored value the server would take: 1–200 characters of printable ASCII, since it travels as a header and a corrupt
+ * value would make every request fail.
  */
 export function isDeviceId(value: unknown): value is string {
   return typeof value === 'string' && value.length <= DEVICE_ID_MAX && /^[!-~]+$/.test(value);
@@ -51,12 +40,8 @@ export function uuidFromBytes(bytes: Uint8Array): string {
 }
 
 /**
- * A new id, from the best source the runtime has.
- *
- * Hermes has no global `crypto`, so on a phone the native generator is the
- * one that answers; a browser and Node have `crypto.randomUUID`, and an older
- * browser at least `getRandomValues`. Math.random is the last resort only, so
- * that a runtime with none of these still gets an id rather than none.
+ * A new id from the best source the runtime has: Hermes has no global `crypto`, so on a phone the native generator
+ * answers; browsers and Node have `crypto.randomUUID` or `getRandomValues`. Math.random is only the last resort.
  */
 export function newDeviceId(source: RandomSource = globalThis as RandomSource): string {
   const attempts: Array<() => string | undefined> = [
@@ -72,7 +57,7 @@ export function newDeviceId(source: RandomSource = globalThis as RandomSource): 
       const id = attempt();
       if (isDeviceId(id)) return id;
     } catch {
-      // that source is missing or broken here; the next one answers
+      // That source is missing or broken here; the next one answers.
     }
   }
   return uuidFromBytes(Uint8Array.from({ length: 16 }, () => Math.floor(Math.random() * 256)));
@@ -81,15 +66,10 @@ export function newDeviceId(source: RandomSource = globalThis as RandomSource): 
 let pending: Promise<string> | null = null;
 
 /**
- * The id, read once and then held in memory for every request after.
- *
- * A first launch makes one and stores it. If the store cannot be read (a
- * locked keychain, an entry the keystore can no longer decrypt) a fresh id is
- * made and the store is still asked to keep it — an unreadable entry can often
- * still be overwritten, and without that write every launch was a new device,
- * with a "new sign-in" email to the owner each time. Only where the write
- * fails too does the id live just for as long as the app is open, rather than
- * sending none, and the store is tried again next launch.
+ * The id, read once and then held in memory. A first launch makes and stores one. If the store cannot be read (a locked
+ * keychain, an entry that no longer decrypts) a fresh id is made and still written, since an unreadable entry can often
+ * be overwritten; without that every launch would be a new device. Only if the write fails too does the id live just
+ * for this session.
  */
 export function loadDeviceId(store: DeviceIdStore, make: () => string = newDeviceId): Promise<string> {
   pending ??= (async () => {
@@ -97,14 +77,14 @@ export function loadDeviceId(store: DeviceIdStore, make: () => string = newDevic
     try {
       stored = await store.get();
     } catch {
-      // fall through: a fresh id, offered to the store below
+      // Fall through: a fresh id, offered to the store below.
     }
     if (isDeviceId(stored)) return stored;
     const id = make();
     try {
       await store.set(id);
     } catch {
-      // kept in memory for this session only
+      // Kept in memory for this session only.
     }
     return id;
   })();

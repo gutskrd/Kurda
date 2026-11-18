@@ -15,9 +15,8 @@ const guessBody = z.object({
 });
 
 /**
- * Peyvok daily & practice routes (KUR-304). All authenticated. The guess
- * endpoint is rate-limited (#010, keyed per-user by default) as an anti-abuse
- * guard on the server-authoritative scoring.
+ * Peyvok daily and practice routes, all authenticated. The guess endpoint is rate-limited (per user by default) to
+ * protect server-side scoring.
  */
 export function registerWordleRoutes(
   app: FastifyInstance,
@@ -85,11 +84,9 @@ export function registerWordleRoutes(
   );
 
   /**
-   * Save a finished game's word to the player's words, the entry its results
-   * card names; it counts once toward the stats' words learned. 404 for a
-   * game that is not theirs, 409 while it is still being played, and 404
-   * NO_ENTRY for a word the dictionary has no entry for (there is nothing to
-   * save it as).
+   * Save a finished game's word to the player's words (the entry its results card names); counts once toward words
+   * learned. 404 for someone else's game, 409 while still playing, and 404 NO_ENTRY when the dictionary has no entry to
+   * save.
    */
   app.post(
     '/wordle/games/:id/save',

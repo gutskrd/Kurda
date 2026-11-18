@@ -1,13 +1,9 @@
 import { vi } from 'vitest';
 
 /**
- * A recording and a screen's animation frames, both moved by the test: for
- * the speaking characters' tests.
- *
- * `FakeAudio` stands in for the page's `Audio` element (lesson/useAudio.ts):
- * it plays when asked, says so with the element's own events, and is where
- * the test puts it. `fakeFrames` replaces requestAnimationFrame with a queue
- * the test steps through one frame at a time.
+ * A recording and animation frames driven by the test, for the speaking characters' tests. `FakeAudio` stands in
+ * for the page's `Audio` element (lesson/useAudio.ts), playing when asked and firing the element's events;
+ * `fakeFrames` replaces requestAnimationFrame with a queue the test steps one frame at a time.
  */
 export class FakeAudio {
   static made: FakeAudio[] = [];
@@ -23,7 +19,7 @@ export class FakeAudio {
     FakeAudio.made.push(this);
   }
 
-  /** the one made for this URL most lately */
+  /** The one made for this URL most lately. */
   static of(src: string): FakeAudio | undefined {
     return [...FakeAudio.made].reverse().find((a) => a.src === src);
   }
@@ -52,7 +48,7 @@ export class FakeAudio {
     this.emit('pause');
   }
 
-  /** the recording has loaded and turned out this long */
+  /** The recording has loaded and turned out this long. */
   load(seconds: number): void {
     this.duration = seconds;
   }
@@ -71,9 +67,9 @@ export class FakeAudio {
 }
 
 export interface Frames {
-  /** callbacks waiting for the next frame */
+  /** Callbacks waiting for the next frame. */
   readonly pending: number;
-  /** run the frame everything is waiting for */
+  /** Run the frame everything is waiting for. */
   step: () => void;
 }
 

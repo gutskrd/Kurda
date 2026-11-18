@@ -1,8 +1,7 @@
 /**
- * Seasons against real Postgres (contract-4 §R5): closing a season rolls every
- * rating into the next one (σ ≥ 4, μ kept), records each player's emblem,
- * marks the Stêrk players, and hands out the rewards — once, however many
- * times the job runs — to active accounts in good standing only.
+ * Seasons against real Postgres (contract-4 §R5): closing rolls every rating into the next season (σ ≥ 4, μ kept),
+ * records emblems, marks Stêrk players, and hands out rewards once however often the job runs, to active accounts in
+ * good standing only.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

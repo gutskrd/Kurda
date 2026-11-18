@@ -5,9 +5,8 @@ import { TRANSLATIONS, LOCALES } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
 /*
- * The phone's words for the username rule. The rule itself is the server's
- * own (shared/src/username.test.ts tests it); these check that every refusal
- * has a sentence, in every language, and that the sentence is the right one.
+ * The phone's sentences for the username rule (the rule itself is tested in shared/src/username.test.ts): every
+ * refusal has the right sentence in every language.
  */
 
 const issue = (raw: string): UsernameReason | 'ok' => {
@@ -26,10 +25,7 @@ describe('checkUsername (phone)', () => {
     expect(checkUsername('s' + String.fromCharCode(0x327) + 'ev')).toEqual({ ok: true, value: 'şev' });
   });
 
-  /*
-   * A leading "@" and a trailing full stop used to be dropped without a word.
-   * Nothing typed is dropped now: what cannot be in a username is named.
-   */
+  /* Nothing typed is silently dropped: a leading "@" or a trailing full stop is named. */
   it('names a character it will not take, rather than dropping it', () => {
     expect(said('@dilan')).toBe('“@” can’t be in a username.');
     expect(said('dilan!?')).toBe('“! ?” can’t be in a username.');
@@ -53,10 +49,8 @@ describe('checkUsername (phone)', () => {
   });
 
   /**
-   * The reason is a key, and a key with nothing behind it renders as the key —
-   * which typechecks, because TranslationKey is a union of strings. So the
-   * assertion is that every language actually has the sentence, with the same
-   * holes in it.
+   * A missing translation renders as its key and still typechecks, so assert every language has the sentence with
+   * the same placeholders.
    */
   it('names a rule every language has a sentence for', () => {
     const inputs = ['ab', 'a'.repeat(USERNAME_MAX + 1), 'bad!', 'bad name', '_ab', 'a__b', '12345', '12_34', 'admin'];
@@ -95,7 +89,7 @@ describe('usernameMessage', () => {
     expect(usernameMessage('invalid-chars', ['#'])).toEqual({ message: 'username.rule.charNotAllowed', vars: { ...USERNAME_RULE_VARS, chars: '#' } });
     expect(usernameMessage('invalid-chars', [' '])).toMatchObject({ message: 'username.rule.spaces' });
     expect(usernameMessage('reserved')).toMatchObject({ message: 'error.code.usernameUnavailable' });
-    // a reason the phone does not know yet gets the rule as a whole
+    // A reason the phone does not know yet gets the rule as a whole.
     expect(usernameMessage('something-newer')).toMatchObject({ message: 'username.rule.invalidChars' });
     expect(usernameMessage('invalid-chars')).toMatchObject({ message: 'username.rule.invalidChars' });
   });

@@ -2,12 +2,9 @@ import type { AppPlatform } from '@kurda/shared';
 import appJson from '../../app.json';
 
 /**
- * What the feedback inbox and the store prompt need to know about this app.
- *
- * Read from app.json, which is what the build was made from: the phone has no
- * over-the-air updates (expo-updates is not installed), so the version there is
- * the version running — and "once per app version" for the store prompt means
- * once per store release.
+ * What the feedback inbox and store prompt need to know about the app, read from app.json. The phone has no
+ * over-the-air updates (expo-updates is not installed), so that version is the one running, and "once per app
+ * version" means once per store release.
  */
 interface AppJson {
   expo: { version?: string; ios?: { appStoreUrl?: string }; android?: { playStoreUrl?: string } };
@@ -18,16 +15,11 @@ const config = (appJson as AppJson).expo;
 export const APP_VERSION: string = config.version ?? '0.0.0';
 
 /**
- * The build number of the binary that is running (CFBundleVersion on iOS, the
- * version code on Android), or null where there is none to read.
- *
- * It is not in app.json: the store builds number themselves remotely, so only
- * the binary knows it. It is read from the Application native module, which
- * every build already carries because the notifications package depends on
- * it, straight from where Expo installs its native modules rather than through
- * the package's JavaScript, which this app does not list. Where the module is
- * missing (a test, the web preview) the answer is null, and whoever shows the
- * version shows it without the build.
+ * The running binary's build number (CFBundleVersion on iOS, the version code on Android), or null. It is not in
+ * app.json because store builds are numbered remotely. It is read from the Application native module, which every
+ * build carries as a dependency of the notifications package, directly from the native module registry rather
+ * than the package's JavaScript, which this app does not list. Where the module is missing (tests, the web
+ * preview) it is null.
  */
 export function nativeBuildNumber(
   modules: Record<string, unknown> | undefined = (globalThis as { expo?: { modules?: Record<string, unknown> } }).expo?.modules,
@@ -45,12 +37,9 @@ export function appPlatform(os: string): AppPlatform {
 }
 
 /**
- * Where "Rate Hevalo" in Settings goes: the store page, opened at the place to
- * write a review (`action=write-review` on the App Store, the reviews on
- * Google Play). Null until the owner puts the store addresses in app.json
- * (`expo.ios.appStoreUrl`, `expo.android.playStoreUrl`, empty until the app is
- * listed) — and then the row is simply not there, rather than a row that goes
- * nowhere.
+ * Where "Rate Hevalo" goes: the store page at its review section (`action=write-review` on the App Store, the
+ * reviews on Google Play). Null until the store addresses are set in app.json (`expo.ios.appStoreUrl`,
+ * `expo.android.playStoreUrl`), and the row is hidden until then.
  */
 export function rateUrl(
   os: string,

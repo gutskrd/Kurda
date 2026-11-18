@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AA_LARGE,
-  AA_NORMAL,
-  checkContrast,
   contrastRatio,
   hexToRgb,
   relativeLuminance,
-  requiredRatio,
 } from './contrast.js';
 
 describe('hexToRgb', () => {
@@ -44,39 +40,5 @@ describe('contrastRatio', () => {
 
   it('is order-independent', () => {
     expect(contrastRatio('#000', '#fff')).toBeCloseTo(contrastRatio('#fff', '#000'), 5);
-  });
-});
-
-describe('requiredRatio', () => {
-  it('uses the AA thresholds by default', () => {
-    expect(requiredRatio()).toBe(AA_NORMAL);
-    expect(requiredRatio({ largeText: true })).toBe(AA_LARGE);
-  });
-
-  it('uses stricter AAA thresholds when asked', () => {
-    expect(requiredRatio({ level: 'AAA' })).toBe(7);
-    expect(requiredRatio({ level: 'AAA', largeText: true })).toBe(4.5);
-  });
-});
-
-describe('checkContrast', () => {
-  it('passes AA for black on white', () => {
-    const r = checkContrast('#000', '#fff');
-    expect(r.passes).toBe(true);
-    expect(r.required).toBe(AA_NORMAL);
-  });
-
-  it('fails AA for a low-contrast grey on white', () => {
-    expect(checkContrast('#bbbbbb', '#ffffff').passes).toBe(false);
-  });
-
-  it('a mid-grey (~4.48:1) fails AA normal but passes AA large', () => {
-    expect(checkContrast('#777777', '#ffffff').passes).toBe(false);
-    expect(checkContrast('#777777', '#ffffff', { largeText: true }).passes).toBe(true);
-  });
-
-  it('reports the measured ratio rounded to 2dp', () => {
-    const r = checkContrast('#000', '#fff');
-    expect(r.ratio).toBeCloseTo(21, 1);
   });
 });

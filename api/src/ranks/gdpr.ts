@@ -1,10 +1,8 @@
 import type { Executor } from './store.js';
 
 /**
- * Game Ranks in a data export (Art. 15): everything stored about the player —
- * their ratings, every change with its reason, their leaves and cooldowns,
- * their Rated/Friendly choices, season results and rewards. Nothing about the
- * other players in their games: game ids only.
+ * Game Ranks in a data export (Art. 15): the player's ratings, every change with its reason, leaves and cooldowns,
+ * Rated/Friendly choices, season results and rewards. Other players appear only as game ids.
  */
 export async function exportRanks(db: Executor, userId: string): Promise<Record<string, unknown>> {
   const q = async (sql: string) => (await db.query(sql, [userId])).rows;
@@ -33,12 +31,9 @@ export async function exportRanks(db: Executor, userId: string): Promise<Record<
 }
 
 /**
- * Erasing a child's account takes their Game Ranks with it, as it takes their
- * games and their social data. The seats they held in other people's rated
- * games stay, with no name (`user_id` NULL) — the numbers the other players'
- * replays need, and nothing that points at them. An adult's anonymised
- * account keeps its numbers, tied to no name, like the rest of its learning
- * history; no board lists a closed account.
+ * Erasing a child's account removes their Game Ranks. Their seats in other people's rated games stay with `user_id`
+ * NULL, since the other players' replays need the numbers. An adult's anonymised account keeps its numbers unnamed; no
+ * board lists a closed account.
  */
 export async function eraseRanks(db: Executor, userId: string): Promise<void> {
   await db.query(`UPDATE rated_game_players SET user_id = NULL WHERE user_id = $1`, [userId]);

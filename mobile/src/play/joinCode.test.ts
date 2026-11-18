@@ -4,7 +4,7 @@ import { contrastRatio } from '../a11y/contrast';
 import { DARK, LIGHT } from '../theme/palette';
 import { codePath, codeTone, joinCodeError, shareMessage, spelledCode, typedCode } from './joinCode';
 
-// the keys, with what was put into them, so a test reads what a person would be told
+// Keys with their parameters, so a test reads what a person would be told.
 const t = (key: string, vars?: Record<string, string | number>) => (vars ? `${key} ${JSON.stringify(vars)}` : key);
 
 describe('typedCode', () => {
@@ -88,13 +88,13 @@ describe('codeTone', () => {
   it('draws each game’s code in its own colour, with letters that read on it in both themes', () => {
     for (const palette of [LIGHT, DARK]) {
       const faces = PLAY_GAMES.map((game) => codeTone(palette, game).face);
-      // every game a colour of its own
+      // Every game has its own colour.
       expect(new Set(faces).size).toBe(PLAY_GAMES.length);
       for (const game of PLAY_GAMES) {
         const tone = codeTone(palette, game);
         expect(contrastRatio(tone.ink, tone.face), `${palette.scheme} ${game}`).toBeGreaterThanOrEqual(4.5);
         expect(tone.lip).not.toBe(tone.face);
-        // never the green of a right answer, nor the gold of something earned
+        // Never the green of a right answer, nor the gold of something earned.
         expect([palette.success, palette.gold], `${palette.scheme} ${game}`).not.toContain(tone.face);
       }
     }
@@ -106,7 +106,7 @@ describe('codeTone', () => {
     for (const game of PLAY_GAMES) {
       const hue = playGameHue(game);
       if (!hue) continue;
-      // by night the stamp's own lifted hue; by day a step deeper than its base, so white letters clear 5:1
+      // By night the stamp's lifted hue; by day a step deeper than its base, so white text clears 5:1.
       expect(codeTone(DARK, game).face).toBe(hueSteps('dark', hue).base);
       expect(contrastRatio(codeTone(LIGHT, game).face, '#ffffff'), game).toBeGreaterThanOrEqual(5);
       for (const palette of [LIGHT, DARK]) expect(codeTone(palette, game).ink.toLowerCase(), `${palette.scheme} ${game}`).toBe(palette.textOnPrimary.toLowerCase());

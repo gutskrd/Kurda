@@ -3,12 +3,9 @@ import type { AuthStackParamList } from './authStack';
 import type { RootStackParamList } from './rootStack';
 
 /**
- * A place is open once: opening it again from a screen above it goes back to
- * it instead of stacking a second copy (a second set of tabs over a finished
- * lesson, a second search over a profile it found). Places are the tabs and
- * the pages about no one thing; a page about a person, a post, a lesson or a
- * game is pushed again for another one. Done in the router, so a press, a
- * notification and a link all behave the same.
+ * A place is open once: opening it again from a screen above goes back to it instead of stacking a second copy. Places
+ * are the tabs and the pages about no one thing; a page about a person, post, lesson or game is pushed again for
+ * another. Done in the router, so a press, a notification and a link behave the same.
  */
 export const ROOT_PLACES: ReadonlySet<keyof RootStackParamList> = new Set<keyof RootStackParamList>([
   'Tabs',
@@ -45,7 +42,7 @@ export const ROOT_PLACES: ReadonlySet<keyof RootStackParamList> = new Set<keyof 
   'EditProfile',
 ]);
 
-/** Before signing in, every form is wanted once: "Create account" and "Sign in" under each other's forms go back to the other. */
+/** Before signing in every form is wanted once, so "Create account" and "Sign in" go back to each other. */
 export const AUTH_PLACES: ReadonlySet<keyof AuthStackParamList> = new Set<keyof AuthStackParamList>(['Welcome', 'Login', 'Register', 'ForgotPassword']);
 
 type Navigate = NavigationAction & { type: 'NAVIGATE'; payload: { name: string; pop?: boolean } };

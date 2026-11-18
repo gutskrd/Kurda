@@ -12,16 +12,9 @@ import { SEND_FLY_MS } from './motion';
 const ARC = 44;
 
 /**
- * A sent gift, wrapped, flying into the chat.
- *
- * The present appears in the middle of the screen, settles, and is tossed
- * toward the conversation where its bubble now is — so the sender sees it go,
- * rather than a sheet closing on nothing. It goes on an arc, as a thing thrown
- * does: across first, towards the side your own messages are on, and then
- * down faster and faster, leaning the way it goes. It used to fall in a
- * straight line. With Reduce Motion it fades in and out where it is. It never
- * takes a tap (the screen under it stays usable) and says what happened once,
- * for screen readers.
+ * A sent gift, wrapped, flying into the chat: it appears mid-screen, settles, and is tossed on an arc towards the side
+ * your own messages are on, so the sender sees it go. Under Reduce Motion it fades in and out where it is. It never
+ * takes a tap, and announces what happened once.
  */
 export function GiftSendAnimation({
   tier,
@@ -29,7 +22,7 @@ export function GiftSendAnimation({
   onDone,
 }: {
   tier: GiftTier;
-  /** said aloud: "Gift sent to Rojda" */
+  /** Said aloud: "Gift sent to Rojda". */
   announce: string;
   onDone: () => void;
 }): React.JSX.Element {
@@ -37,9 +30,9 @@ export function GiftSendAnimation({
   const reduce = useReducedMotion();
   const appear = useRef(new Animated.Value(0)).current;
   const fly = useRef(new Animated.Value(0)).current;
-  // sideways, on a curve of its own: it has moved across before the fall has got going, so the path is an arc and not a drop
+  // Sideways on a curve of its own, ahead of the fall, so the path is an arc and not a drop.
   const across = useRef(new Animated.Value(0)).current;
-  // towards the side your own messages sit on, which is where it lands in the chat
+  // Towards the side your own messages sit on, where it lands in the chat.
   const side = useDirection().row === 'row-reverse' ? -1 : 1;
   const done = useRef(onDone);
   done.current = onDone;
@@ -73,7 +66,7 @@ export function GiftSendAnimation({
         { translateX: across.interpolate({ inputRange: [0, 1], outputRange: [0, ARC * side] }) },
         { translateY: fly.interpolate({ inputRange: [0, 1], outputRange: [0, 260] }) },
         { scale: Animated.multiply(appear, fly.interpolate({ inputRange: [0, 1], outputRange: [1, 0.35] })) },
-        // leaning into the way it is going
+        // Leaning into the way it is going.
         { rotate: fly.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${12 * side}deg`] }) },
       ];
 

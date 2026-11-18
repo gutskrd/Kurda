@@ -10,16 +10,10 @@ import { useTheme } from './ThemeProvider';
 import { radii, spacing, typography } from './tokens';
 
 /**
- * The app's own action sheet: what a "⋯" or a long press opens on Android
- * and the web (on an iPhone the system's sheet does it; theme/actionSheet.ts
- * says why). Mounted once at the root, over every screen, and shown when
- * `showActions` is called.
- *
- * Every action is listed, however many there are, with the ones that cannot
- * be taken back last and in red; it is put away by its ✕, a tap on the
- * scrim, or the back button, and then nothing is done. An action chosen runs
- * once the sheet has gone, so what it opens (a report, a confirmation) is
- * not drawn under the sheet on its way out.
+ * The app's own action sheet, opened by a "⋯" or long press on Android and the web (theme/actionSheet.ts says why
+ * iOS uses the system's). Mounted once at the root and shown by `showActions`. Every action is listed, destructive
+ * ones last in red; the ✕, the scrim or the back button dismiss it with nothing done. A chosen action runs once the
+ * sheet has gone, so what it opens is not drawn under the leaving sheet.
  */
 export function ActionSheetHost(): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -69,12 +63,12 @@ export function ActionSheetHost(): React.JSX.Element | null {
   );
 }
 
-/** How long after the sheet is told to go an action runs: its fade, so a sheet the action opens is not laid over it. */
+/** The delay before a chosen action runs: the sheet's fade, so a sheet the action opens is not laid over it. */
 const AFTER_CLOSE_MS = 220;
 
 const styles = StyleSheet.create({
   list: { borderRadius: radii.lg, paddingVertical: spacing.xs, overflow: 'hidden' },
-  // a row the height of a list row, its words the size of a list row's
+  // A list row's height and text size.
   row: { minHeight: Math.max(MIN_TOUCH_TARGET, 52), justifyContent: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   label: { fontSize: typography.ios.row, fontWeight: typography.weights.regular },
 });

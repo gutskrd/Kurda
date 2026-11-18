@@ -38,7 +38,7 @@ describe('uploadPicture', () => {
     const send = vi.fn(answer(201, { imageMediaId: 'k' }));
     await uploadPicture(client(), { uri: 'file:///x.heic', contentType: 'image/heic', ownWork: false }, t, () => undefined, { send });
     expect(send.mock.calls[0]![0]).toBe('http://api.test/images/upload?ownWork=false');
-    // a type the API's parser does not route is sent as bytes for the server to sniff
+    // A type the API's parser does not route is sent as bytes for the server to sniff.
     expect(send.mock.calls[0]![2]['content-type']).toBe('application/octet-stream');
   });
 
@@ -61,7 +61,7 @@ describe('uploadPicture', () => {
     expect(await run(415, { code: 'HEIC_UNSUPPORTED' })).toEqual({ ok: false, error: 'composer.picture.notImage' });
     expect(await run(413, { code: 'UPLOAD_TOO_LARGE' })).toEqual({ ok: false, error: 'composer.picture.tooLarge' });
     expect(await run(403, { code: 'MUTED' })).toEqual({ ok: false, error: 'composer.error.paused' });
-    // a limit on the account says what it stops and until when, in the app's language (reports/sendErrors.ts)
+    // A limit on the account says what it stops and until when, in the app's language (reports/sendErrors.ts).
     expect(await run(403, { code: 'MUTED', details: { scope: 'media', until: null } })).toEqual({ ok: false, error: 'restriction.media' });
     const until = await uploadPicture(
       client(),

@@ -1,10 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-/*
- * Android's back, as the phone hands it over: listeners added with
- * `addEventListener`, the latest asked first, and one that answers true
- * keeps back from going any further.
- */
+/* Android's back as the phone hands it over: the latest listener is asked first, and one that answers true stops it. */
 const android = vi.hoisted(() => {
   const listeners: Array<() => boolean> = [];
   return {
@@ -77,7 +73,7 @@ describe('useGameBack', () => {
     const onBack = vi.fn();
     const view = renderHook(({ ask }: { ask: (() => void) | null }) => useGameBack(ask), { initialProps: { ask: onBack as (() => void) | null } });
     expect(navigation.setOptions).toHaveBeenLastCalledWith({ gestureEnabled: false });
-    // Android's back asks the game as well
+    // Android's back asks the game as well.
     expect(android.press()).toBe(true);
     expect(onBack).toHaveBeenCalledTimes(1);
     view.rerender({ ask: null });

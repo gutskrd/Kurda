@@ -1,27 +1,18 @@
 /**
- * What Who Am I?'s starter identities are and what is true of each: a short
- * table of everyday things — animals, food, things in a house, jobs, places —
- * with the questions each answers yes to (`WHO_AM_I_FACTS`), and the few it
- * answers "sometimes" to, where honest people would say either (a dog in the
- * house or in the yard). Every other question its kind is asked is a no, and
- * a question its kind is never asked ("Does it sell things?" of a cat) is left
- * unset, so it is never dealt beside the card.
+ * Who Am I?'s starter identities and their facts: a short table of everyday things (animals, food, household things,
+ * jobs, places) with the questions each answers yes to (`WHO_AM_I_FACTS`) and the few it answers "sometimes" to, where
+ * honest people could say either. Every other question its kind is asked is no; questions its kind is never asked are
+ * left unset and never dealt with the card.
  *
- * The curated deck (who-am-i-deck.ts) is what the game is played with; this
- * table makes a card only for a course word the deck does not have yet, and
- * says only what it can say safely.
+ * The curated deck (who-am-i-deck.ts) is what the game plays with; this table only makes cards for course words the
+ * deck lacks.
  *
- * The table holds no Kurdish. A thing is named by its English meaning, lower
- * case and without an article, exactly as the course's vocabulary gives a
- * word's meaning; the starter library (content-drafts.ts `identityDrafts`)
- * finds the course's own word for it and copies that. A thing the course does
- * not teach makes no identity.
+ * The table holds no Kurdish: things are named by English meaning, lower case without article, as the course's
+ * vocabulary gives them, and the starter library (content-drafts.ts `identityDrafts`) copies the course's word. Things
+ * the course does not teach make no identity.
  *
- * Only answers nobody would argue with are given. Where a question has no
- * plain answer for a thing — whether a frog lives in water, whether a car runs
- * on electricity, whether people eat rabbit, whether a hen is found at home —
- * the thing is left out of the table rather than guessed at: a player who
- * reasons well must never lose to the table.
+ * Only indisputable answers are given; a thing with any debatable answer is left out, so a player who reasons well
+ * never loses to the table.
  */
 import type { WhoAmICategory, WhoAmIFact } from '@kurda/shared';
 import { meaningKeys } from './word-categories.js';
@@ -39,11 +30,9 @@ export interface StarterIdentity {
 }
 
 /**
- * Each row: the thing's English names, the first its own, then what is true
- * of it beyond its kind, and what more there is to say: what is only
- * sometimes true, a fact asked of it that its kind is not asked (a tractor
- * works outdoors), and meanings that are another thing altogether (a word
- * glossed "nanny" is not a nurse, whatever else its gloss says).
+ * Each row: the thing's English names (its own first), what is true of it beyond its kind, and extras: what is only
+ * sometimes true, facts asked of it that its kind is not asked (a tractor works outdoors), and meanings that are
+ * another thing altogether (a word glossed "nanny" is not a nurse).
  */
 type Row = readonly [names: string, yes: readonly WhoAmIFact[], more?: { sometimes?: readonly WhoAmIFact[]; asks?: readonly WhoAmIFact[]; unless?: readonly string[] }];
 
@@ -260,10 +249,8 @@ export const STARTER_IDENTITIES: ReadonlyMap<string, StarterIdentity> = new Map(
 ]);
 
 /**
- * The starter identity a word is, by its English meaning, or null. Only the
- * meaning the lesson gives first counts: a word taught as "craftsman, builder"
- * is a craftsman, and what is true of a builder is not known to be true of
- * it. A meaning given as a verb ("to fly") is never a thing.
+ * The starter identity a word is, by English meaning, or null. Only the lesson's first meaning counts ("craftsman,
+ * builder" is a craftsman), and a verb meaning ("to fly") is never a thing.
  */
 export function starterIdentityOf(en: string | undefined): StarterIdentity | null {
   if (!en || /^\s*to\s+/i.test(en)) return null;

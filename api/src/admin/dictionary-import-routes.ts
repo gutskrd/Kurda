@@ -1,13 +1,9 @@
 /**
- * Starting and watching a dictionary import from the admin panel.
+ * Starting and watching a dictionary import from the admin panel, so the long import runs where the database
+ * credentials already are.
  *
- * The alternative was a shell on the host, for ninety minutes, against a
- * database that accepts no connections from outside its network. This is the
- * same work with the credentials where they already are.
- *
- * Gated to admin and superadmin rather than content_editor: this writes several
- * hundred thousand rows and there is no undo button for it. Curating words is
- * editing content; importing a language is not.
+ * Admin and superadmin only, not content_editor: it writes several hundred thousand rows with no undo. Curating words
+ * is editing content; importing a language is not.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -27,9 +23,7 @@ const startBody = z.object({
 });
 
 /**
- * What the panel needs beyond the row itself: how far along, and roughly how
- * much longer. Computed here rather than stored, because it is a reading of the
- * progress rather than a fact about it.
+ * What the panel needs beyond the row: progress percent and a rough ETA, derived from the progress rather than stored.
  */
 function withProgress(run: ImportRun): ImportRun & { percent: number; etaMinutes: number | null } {
   const percent = run.filesTotal > 0 ? Math.round((run.filesDone / run.filesTotal) * 100) : 0;
@@ -53,10 +47,8 @@ export function registerDictionaryImportRoutes(app: FastifyInstance, source: Fer
   });
 
   /**
-   * Start an import, or continue one a restart interrupted.
-   *
-   * Returns as soon as the run is recorded — the work outlives the request by an
-   * hour and a half, and `GET` above is how to watch it.
+   * Start an import, or continue one a restart interrupted. Returns once the run is recorded; the work takes about
+   * ninety minutes and `GET` above reports on it.
    */
   app.post('/admin/dictionary/import', { schema: { body: startBody }, preHandler: canImport }, async (req, reply) => {
     const { lang } = req.body as z.infer<typeof startBody>;
@@ -74,11 +66,8 @@ export function registerDictionaryImportRoutes(app: FastifyInstance, source: Fer
   });
 
   /**
-   * Give up on a run that is not progressing.
-   *
-   * Nothing already written is undone — an import has no undo, and half a
-   * dictionary is still a dictionary. This only stops the panel waiting on a run
-   * whose process is gone, so the button works again.
+   * Give up on a stalled run. Nothing written is undone (an import has no undo); this only stops the panel waiting on a
+   * run whose process is gone.
    */
   app.delete('/admin/dictionary/import', { preHandler: canImport }, async () => {
     const run = await runner.cancel();

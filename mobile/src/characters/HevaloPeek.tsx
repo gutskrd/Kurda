@@ -8,13 +8,13 @@ import { useTheme } from '../theme/ThemeProvider';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import type { PlaybackClock } from './voice';
 
-/** When, once he has started up through the tear, he is through enough to be glad about it: a share of the spring. */
+/** The share of the rise at which he is through enough to cheer. */
 const GLAD_AT = 0.55;
 
-/** How far past the picture's top and sides a hop or a twitch of an ear may carry him before anything cuts him off, as a share of its height. */
+/** How far past the picture's top and sides a hop or ear twitch may carry him before he is clipped, as a share of its height. */
 const ROOM = 0.3;
 
-/** What he is saying through the page, read as a speaking character reads a player: the clock, whether it runs, and a name for the line. */
+/** What he is saying, read like a player: the clock, whether it runs, and a name for the line. */
 export interface PeekSpeech {
   player: PlaybackClock | null;
   playing: boolean;
@@ -22,23 +22,11 @@ export interface PeekSpeech {
 }
 
 /**
- * Hevalo poking his head through the screen (shared `peekArt`): the page is
- * torn open, its ragged white edge and a few flaps of it curling back, cracks
- * running out into the page and scraps of it flung out, and his head and the
- * top of his neck come out of the dark behind it, nothing of him cut off in
- * the air. As the picture appears he comes up through the tear on a spring,
- * the shadow his head throws on the page and his shade in the dark under his
- * chin coming with him, all on one value; under Reduce Motion he is simply there. Alive as ever: he
- * blinks, glances about, looks where he is told (`gaze`), follows a finger,
- * cheers as he comes through, and cheers or tilts his head at a `reaction`.
- *
- * Given `speech` and the `text` of a line, he says it: his mouth moves with
- * the words by the clock the speech keeps (auth/guide/speech.ts).
- *
- * The tear is scenery a screen reader passes by; he is as he is everywhere
- * (named, answering a tap), and a caller that shows him beside words that
- * say what he does hides him with them. Turned round (`flip`), he faces the
- * other way and the picture is mirrored with him.
+ * Hevalo's head poking through a torn page (shared `peekArt`). He rises through the tear on a spring when shown,
+ * with his shadows following on one value, or appears in place under Reduce Motion. He blinks, glances, looks
+ * where told (`gaze`), follows a finger, cheers as he comes through, and reacts to `reaction`. `speech` and
+ * `text` make him say a line (auth/guide/speech.ts); `flip` mirrors the whole picture. The tear is decorative for
+ * screen readers; he is named and answers taps as everywhere.
  */
 export function HevaloPeek({
   size,
@@ -52,15 +40,15 @@ export function HevaloPeek({
   onPress,
   style,
 }: {
-  /** how tall the picture is drawn, in points; its width follows */
+  /** The picture's drawn height in points; its width follows. */
   size: number;
   reaction?: CharacterReaction | null;
   gaze?: CharacterPoint | null;
   resting?: boolean;
   flip?: boolean;
-  /** he comes up through the tear as it appears; false, he is there already */
+  /** He rises through the tear as it appears; false, he is already there. */
   pop?: boolean;
-  /** the line he is saying, and its clock; null, he is quiet */
+  /** The line he is saying, and its clock; null when he is quiet. */
   speech?: PeekSpeech | null;
   text?: string | null;
   onPress?: () => void;
@@ -72,7 +60,7 @@ export function HevaloPeek({
   const width = (size * PEEK_VIEW.w) / PEEK_VIEW.h;
   const drop = PEEK_PLACE.drop * size;
   const rise = useRef(new Animated.Value(pop && !reduce ? drop : 0)).current;
-  // through the page, he is glad of it: a cheer as the spring settles, unless the screen has a reaction of its own for him
+  // Through the page, he cheers as the spring settles, unless the screen has a reaction of its own for him.
   const [glad, setGlad] = useState<CharacterReaction | null>(null);
   useEffect(() => {
     if (!pop || reduce) return;
@@ -81,7 +69,7 @@ export function HevaloPeek({
   }, [pop, reduce]);
 
   useEffect(() => {
-    // asked for less motion — an answer that may arrive a moment after he appears — he is simply there
+    // Under Reduce Motion (an answer that may arrive just after he appears) he is simply there.
     if (!pop || reduce) {
       rise.stopAnimation();
       rise.setValue(0);
@@ -90,26 +78,26 @@ export function HevaloPeek({
     const up = springTo(rise, 0, 'bouncy', PEEK_POP.delayMs);
     up.start();
     return () => up.stop();
-    // once, as he appears; a new size moves nothing
+    // Once, as he appears; a new size moves nothing.
   }, [pop, reduce, rise]);
 
-  // his shadows come with him: on the page behind his head, and into the dark under his chin
+  // His shadows come with him: on the page behind his head, and in the dark under his chin.
   const shade = useMemo(() => rise.interpolate({ inputRange: [0, drop], outputRange: [1, 0], extrapolate: 'clamp' }), [rise, drop]);
 
   const room = size * ROOM;
   const { figure } = PEEK_PLACE;
   const mirrored = flip ? styles.flip : null;
   return (
-    // the tear is scenery a screen reader passes by; he is named and answers a tap as he always does, wherever he is shown
+    // The tear is decorative for screen readers; he is named and answers a tap as everywhere.
     <View style={[{ width, height: size }, style]} pointerEvents="box-none" testID="hevalo-peek">
       <View style={[StyleSheet.absoluteFill, mirrored]} pointerEvents="none" aria-hidden>
         <SvgXml xml={art.back} width={width} height={size} />
       </View>
-      {/* the shadow his head throws on the page, coming as he does */}
+      {/* The shadow his head throws on the page, arriving with him. */}
       <Animated.View style={[StyleSheet.absoluteFill, mirrored, { opacity: shade }]} pointerEvents="none" aria-hidden testID="hevalo-peek-cast">
         <SvgXml xml={art.cast} width={width} height={size} />
       </Animated.View>
-      {/* he is cut off at the tear's foot and nowhere else: an ear or an antler may reach past the picture's top and sides */}
+      {/* He is clipped at the tear's foot only: an ear or antler may reach past the picture's top and sides. */}
       <View
         style={[styles.cut, { top: -room, left: -room, right: -room, height: PEEK_PLACE.cut * size + room }]}
         pointerEvents="box-none"

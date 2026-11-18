@@ -85,7 +85,7 @@ describe('writing a post', () => {
     expect(disabled(postButton())).toBe(true);
     fireEvent.change(box, { target: { value: '  Silav li we!  ' } });
     expect(disabled(postButton())).toBe(false);
-    // kept on the phone as it is written
+    // Kept on the phone as it is written.
     await waitFor(() => expect(store.data.get(KEY)).toContain('Silav li we!'));
 
     fireEvent.click(postButton());
@@ -104,7 +104,7 @@ describe('writing a post', () => {
     const onExit = vi.fn();
     renderWithProviders(<ComposeScreen onExit={onExit} store={store} />);
     fireEvent.change(await screen.findByLabelText('Your post'), { target: { value: 'Zû' } });
-    // Post at once, while the save for that last letter is still waiting
+    // Post at once, while the save for that last letter is still waiting.
     fireEvent.click(postButton());
     await waitFor(() => expect(onExit).toHaveBeenCalled());
     await pastSaveDelay();
@@ -178,10 +178,10 @@ describe('pictures', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add pictures' }));
     await waitFor(() => expect(p.upload).toHaveBeenCalledTimes(2));
     expect(p.pick).toHaveBeenCalledWith(4);
-    // the signature goes on unless "I made this" is switched off
+    // The signature goes on unless "I made this" is switched off.
     expect(p.pending.map((x) => x.ownWork)).toEqual([true, true]);
 
-    // nothing goes up while a picture is on its way
+    // Nothing goes up while a picture is on its way.
     p.pending[0]!.progress(0.5);
     expect(await screen.findByLabelText('Picture 1 of 2 — uploading, 50%')).toBeTruthy();
     expect(disabled(postButton())).toBe(true);
@@ -195,7 +195,7 @@ describe('pictures', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     fireEvent.click(screen.getByRole('switch', { name: 'Meme' }));
 
-    // a post may be only its pictures
+    // A post may be only its pictures.
     fireEvent.click(postButton());
     await waitFor(() =>
       expect(client.calls.find((c) => c.method === 'POST')?.body).toEqual({
@@ -253,9 +253,9 @@ describe('pictures', () => {
     );
     await waitFor(() => expect(p.pick).toHaveBeenCalledOnce());
     await waitFor(() => expect(p.upload).toHaveBeenCalledOnce());
-    // finished inside act(), so Post is enabled — and told so — before it is pressed (see "a post going up")
+    // Finished inside act(), so Post is enabled (and told so) before it is pressed.
     await act(async () => p.done(0));
-    // the whole card is the switch, so it says its state itself
+    // The whole card is the switch, so it says its state itself.
     expect(screen.getByRole('switch', { name: 'Meme' }).getAttribute('aria-checked')).toBe('true');
     expect(disabled(postButton())).toBe(false);
     fireEvent.click(postButton());
@@ -288,7 +288,7 @@ describe('drafts', () => {
       [KEY]: JSON.stringify({ version: 1, type: 'poem', title: 'Şev', body: 'Stêrk', pictures: [], meme: false, sourceCredit: '', savedAt: Date.now() }),
     });
     const onExit = vi.fn();
-    // opened inside act(), so the draft has been read back and Cancel knows there is one before it is pressed
+    // Opened inside act(), so the draft has been read back and Cancel knows there is one before it is pressed.
     await act(async () => {
       renderWithProviders(<ComposeScreen onExit={onExit} store={store} />);
     });
@@ -304,7 +304,7 @@ describe('drafts', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete draft' }));
     await waitFor(() => expect(onExit).toHaveBeenCalled());
-    // the save that was waiting when Delete was tapped does not bring it back
+    // The save that was waiting when Delete was tapped does not bring it back.
     await pastSaveDelay();
     expect(store.data.has(KEY)).toBe(false);
   });
@@ -357,7 +357,7 @@ describe('drafts', () => {
     expect((screen.getByLabelText('Your post') as HTMLTextAreaElement).value).toBe('Rojek ji rojan');
     fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
     await waitFor(() => expect(onExit).toHaveBeenCalled());
-    // nothing was changed, so nothing is patched: it only goes up
+    // Nothing was changed, so nothing is patched: it only goes up.
     expect(client.calls.filter((c) => c.method !== 'GET').map((c) => `${c.method} ${c.path}`)).toEqual(['POST /library/posts/d1/publish']);
   });
 });
@@ -375,7 +375,7 @@ describe('editing', () => {
     expect(await screen.findByText('Edit post')).toBeTruthy();
     const save = screen.getByRole('button', { name: 'Save' });
     expect(disabled(save)).toBe(true);
-    // a picture already on the post keeps its signature as it went up
+    // A picture already on the post keeps its signature as it went up.
     fireEvent.click(screen.getByRole('button', { name: 'Describe picture 1 of 1' }));
     expect(screen.queryByRole('switch', { name: 'I made this' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
@@ -387,7 +387,7 @@ describe('editing', () => {
     await waitFor(() => expect(onExit).toHaveBeenCalled());
     stop();
     expect(client.calls.find((c) => c.method === 'PATCH')?.body).toEqual({ body: 'Niha' });
-    // the post's own page hears of it, and reloads then rather than on every return
+    // The post's own page hears of it, and reloads then rather than on every return.
     expect(saved).toHaveBeenCalledWith(expect.objectContaining({ id: 'post-1' }));
   });
 
@@ -409,11 +409,8 @@ describe('a post going up', () => {
     const stop = onHaptic((e) => felt.push(e));
     try {
       /*
-       * The refusal is answered inside act(), so the screen has finished with
-       * it — drawn, and Post enabled again — before it is pressed a second
-       * time. Waiting only for the words to appear was not enough: Post is
-       * told it is pressable again in an effect after that draw, and a press
-       * that landed in between, on a busy machine, was dropped.
+       * The refusal is answered inside act(), so the screen has redrawn and re-enabled Post before the second press;
+       * Post is re-enabled in an effect after that draw, and on a busy machine a press in between was dropped.
        */
       let answer: (result: ApiResult<ComposerPost>) => void = () => undefined;
       let refused = false;

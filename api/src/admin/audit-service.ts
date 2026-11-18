@@ -23,10 +23,8 @@ export interface AuditFilters {
   action?: string;
   targetId?: string;
   /**
-   * Only the entries after this one, newest first: the last row of the page
-   * before, for paging. An id rather than a time, because rows share a time
-   * (pg answers to the millisecond, the table holds microseconds) and a time
-   * cursor skipped the rest of a millisecond's rows.
+   * Only entries after this one, newest first (the previous page's last row). An id rather than a time, because rows
+   * share a millisecond (pg returns milliseconds, the table holds microseconds) and a time cursor skipped them.
    */
   beforeId?: string;
   limit?: number;
@@ -48,11 +46,8 @@ export interface AuditRow {
 }
 
 /**
- * Immutable admin audit trail (KUR-104). `record` takes any executor, so a
- * service can pass its own transaction client to make the audit write part of
- * the same transaction as the mutation — if the audit insert fails, the whole
- * action rolls back (the issue's edge case). The DB trigger makes rows
- * append-only, so the log can't be edited or deleted afterward.
+ * Immutable admin audit trail. `record` takes any executor so a service can write the audit in the mutation's own
+ * transaction: if the audit insert fails, the action rolls back. A DB trigger makes rows append-only.
  */
 export class AuditService {
   constructor(private readonly pool: pg.Pool) {}

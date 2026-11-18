@@ -26,7 +26,7 @@ describe('a game’s emblem on the phone', () => {
   it('stays still with Reduce Motion on, whatever the screen asks', async () => {
     patchReactNativeWeb({ reduceMotion: true });
     const { container } = render(<GameArt game="detective" size={120} moving />);
-    // the setting is read after the first frame: once it has been, there is one picture and no layers
+    // The setting is read after the first frame; once it is, there is one picture and no layers.
     await waitFor(() => expect(container.querySelectorAll('svg')).toHaveLength(1));
   });
 });

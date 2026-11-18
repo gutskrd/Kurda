@@ -1,7 +1,6 @@
 /**
- * rhyme_games partitioning (KUR-115) — confirms the table is range-partitioned by
- * started_at and that inserts still route + read back correctly (the solo rhyme
- * training + multiplayer services keep working transparently). Real Postgres.
+ * rhyme_games is range-partitioned by started_at, and inserts still route and read back correctly for the training and
+ * match services. Real Postgres.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

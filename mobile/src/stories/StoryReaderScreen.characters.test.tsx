@@ -10,8 +10,7 @@ import { resetPrefsCache } from './prefs';
 import { NANE_GERM } from './testing/views';
 import { StoryReaderScreen } from './StoryReaderScreen';
 
-// jsdom has no matchMedia, and react-native-web reads the colour scheme and
-// Reduce Motion through it
+// jsdom has no matchMedia, which react-native-web uses for the colour scheme and Reduce Motion.
 vi.hoisted(() => {
   window.matchMedia ??= ((media: string) => ({
     matches: false,
@@ -23,7 +22,7 @@ vi.hoisted(() => {
   })) as unknown as typeof window.matchMedia;
 });
 
-/** the narrator's one player: where it is, and the end of a sentence, are the test's to say */
+/** The narrator's one player, whose position and sentence ends the test controls. */
 const player = vi.hoisted(() => ({
   currentTime: 0,
   duration: 1,
@@ -118,7 +117,7 @@ function read(s: StoryDetail): void {
   renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
 }
 
-/** The text is behind the overview: Read opens it. */
+/** Opens the text from the overview. */
 async function openText(): Promise<void> {
   fireEvent.click(await screen.findByRole('button', { name: 'Read' }));
 }
@@ -138,7 +137,7 @@ describe('the story reader’s speaking characters', () => {
     const drawn = () => [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
     expect(drawn()).toContain(characterLayers('hevalo', 'bust').mouths.a);
 
-    // the first line ends: the second, said by somebody else
+    // The first line ends; the second is said by someone else.
     act(() => player.status?.({ didJustFinish: true }));
     expect(await screen.findByRole('img', { name: 'Said by Xezo' })).toBeTruthy();
     expect(screen.queryByRole('img', { name: 'Said by Hevalo' })).toBeNull();

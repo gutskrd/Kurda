@@ -1,16 +1,10 @@
 /**
- * The legends' shelf against real Postgres, with the real legends: each of
- * the five is on the front page of the library in Kurmancî and in Soranî,
- * Kawa first, however many newer stories there are — a newer story once
- * pushed Kawa off the newest row, the only place a legend was shown. On a
- * variety's page a legend stands once, on its shelf; the whole library, as
- * an app from before the varieties' switch asks for it, keeps its old shape.
+ * The legends' shelf against real Postgres with the real legends: all five are on the library's front page in Kurmancî
+ * and Soranî, Kawa first, however many newer stories exist. On a variety's page each legend appears once, on its shelf;
+ * the whole library, as older apps request it, keeps its old shape.
  *
- * The legends are seeded from api/content/stories/legends.json as the API
- * seeds them, and taken away again after. On a database that already holds
- * them, they are used as they are and left there; on one where they were
- * seeded once and have since gone, the test is skipped, since seeding them
- * there is not the test's to decide.
+ * The legends are seeded from legends.json as the API seeds them and removed afterwards. If already present they are
+ * used as they are; if seeded once and since removed, the test skips.
  */
 import { afterAll, beforeAll, describe, expect, it, type TestContext } from 'vitest';
 import type { FastifyInstance } from 'fastify';

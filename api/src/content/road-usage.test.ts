@@ -1,14 +1,10 @@
 /**
- * Guards the road's Kurdish usage where the course once disagreed with
- * itself: each rule here was settled once for the whole road (the oblique of
- * a masculine noun, the agent of a past transitive verb, one spelling of a
- * word), and a line written later in the old way would quietly undo it. The
- * checks read every string of the plan and the unit files, so the place a
- * line breaks a rule is named in the failure.
+ * Guards the road's Kurdish usage where the course once disagreed with itself: each rule was settled once for the whole
+ * road (masculine oblique, past-transitive agent, one spelling per word), and a later line in the old style would undo
+ * it. The checks read every string in the plan and unit files, naming where a line breaks a rule.
  *
- * It also holds the road's plan to the owner's wish for Hamo's family: they
- * are marked as family, so the book can leave them off its people pages, and
- * the chapter summaries the book prints on its openers do not name them.
+ * Also holds the plan to the owner's wish for Hamo's family: they are marked as family so the book can leave them off
+ * its people pages, and the chapter summaries the book prints do not name them.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

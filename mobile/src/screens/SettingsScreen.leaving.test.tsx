@@ -19,7 +19,7 @@ vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 const logout = vi.fn(async () => undefined);
 const deleteAccount = vi.fn(async (): Promise<AccountDeletion> => ({ ok: true, graceDays: 14 }));
 
-/** Every alert the screen raises, answered with its destructive button as a person going ahead would. */
+/** Answers every alert with its destructive button. */
 function goAheadWithEverything() {
   return vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
     buttons?.find((b) => b.style === 'destructive')?.onPress?.();
@@ -47,11 +47,7 @@ describe('signing out everywhere', () => {
     expect(logout).toHaveBeenCalledTimes(1);
   });
 
-  /*
-   * When the server did not take it nothing was signed out anywhere, so the
-   * phone stays signed in and says so: signing it out regardless would leave
-   * the person believing the other devices were out too.
-   */
+  // Signing out locally anyway would suggest the other devices were signed out too.
   it('stays signed in and says so when the server did not take it', async () => {
     testAuth.client = fakeClient({ 'DELETE /me/sessions': { ok: false, error: { kind: 'network', message: 'Network request failed' } } });
     const alert = goAheadWithEverything();
@@ -65,11 +61,7 @@ describe('signing out everywhere', () => {
 });
 
 describe('deleting the account', () => {
-  /*
-   * The server keeps the account for a grace period and a sign-in keeps it,
-   * so once it is done the phone says so, with the number of days the server
-   * gave and the way back, instead of dropping to the welcome screen in silence.
-   */
+  // The server keeps the account for a grace period that a sign-in cancels, so the phone says how long and how.
   it('says how long the account is kept, and how to keep it, once it is deleted', async () => {
     testAuth.client = fakeClient();
     const alert = goAheadWithEverything();

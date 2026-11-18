@@ -56,13 +56,9 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
 
   afterAll(async () => {
     if (added.length) {
-      // Decisions are keyed by the normalized word and outlive the entry when it
-      // is removed with raw SQL like this. A test that fails mid-way would
-      // otherwise leave one behind and silently break a later suite — which is
-      // exactly what happened: a stray 'gul'/'kul' ruling made the rhyme
-      // training suite reject a word it expects to accept.
-      // the fixed words this suite uses are named explicitly: a re-run finds them
-      // already present, so they never enter `added` and would escape cleanup
+      // Decisions are keyed by the normalized word and outlive entries removed with raw SQL, so a test failing mid-way
+      // would leave one behind and break a later suite. The suite's fixed words are named explicitly because a re-run
+      // finds them already present, so they never enter `added`.
       const forms = [...new Set([...added, 'gul', 'kul', 'roj'].map(normalizeWord))];
       await pool.query(
         `DELETE FROM rhyme_overrides WHERE prompt_normalized = ANY($1) OR rhyme_normalized = ANY($1)`,
@@ -166,10 +162,8 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(report.rhymes.some((r: { word: string }) => r.word === 'kul')).toBe(false);
     expect(report.ruledOut.find((r: { word: string }) => r.word === 'kul')).toMatchObject({ derived: 'perfect' });
     /*
-     * There is no `candidates` list any more. It was every pool word that did
-     * not rhyme — a set a curator could pick one out of while the pool was a
-     * few hundred words, and 447,000 rows once a dictionary is imported. Ruling
-     * a word in is a search now, not a list; the admin page never read it.
+     * There is no `candidates` list: every non-rhyming pool word would be hundreds of thousands of rows after an
+     * import. Ruling a word in is a search.
      */
     expect(report.candidates).toBeUndefined();
 
@@ -188,13 +182,7 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  /**
-   * The counts are over the dictionary, not the pool, because the dictionary is
-   * what a player may answer with. Counting the pool made a prompt with
-   * thousands of valid answers read as having none, and sent a curator looking
-   * for work that did not exist — which is the whole reason an import used to
-   * need hand-curation behind it.
-   */
+  /** Counts are over the dictionary, not the pool, because the dictionary is what a player may answer with. */
   it('counts rhymes the game accepts, including words outside the pool', async () => {
     const prompt = `zy${suffix}an`;
     await authed('POST', '/admin/dictionary', editorToken, { words: [prompt] });
@@ -217,9 +205,8 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
   });
 
   /**
-   * Soranî rhymes by its last two letters, and a one-letter word cannot share
-   * two with anything but itself. (Kurmancî rhymes by the rime instead, so a
-   * word that is one vowel rhymes with every word ending in it.)
+   * Soranî rhymes by its last two letters, so a one-letter word shares two with nothing but itself. (Kurmancî rhymes by
+   * the rime, so a single-vowel word rhymes with every word ending in it.)
    */
   it('gives a one-letter Soranî prompt no perfect rhymes', async () => {
     const report = (await authed('GET', `/admin/dictionary/rhymes?word=${encodeURIComponent('و')}&dialect=sorani`, editorToken)).json();
@@ -346,13 +333,10 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
   });
 
   /**
-   * The cliff these exist for: a round falls back to the whole pool while
-   * NOTHING is marked, so marking the first word silently takes every other
-   * word out of the game. Two marked words is not a narrower game, it is a
-   * two-word game — which is what happened in production to a 159-word pool.
+   * A round falls back to the whole pool while NOTHING is marked, so marking the first word drops every other word from
+   * the game; two marked words make a two-word game.
    *
-   * These share one dictionary with every other suite, so the write test puts
-   * the flags back exactly as it found them.
+   * These share one dictionary with every other suite, so the write test restores the flags exactly.
    */
   describe('putting the base words back', () => {
     const snapshot = async (): Promise<Array<{ id: string; is_rhyme_prompt: boolean }>> =>
@@ -390,12 +374,8 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     });
 
     /**
-     * The guarantee the flag exists to give: a round can always be played.
-     *
-     * Asserted as an invariant over the result rather than against a word
-     * invented to have no rhyme — every word this suite seeds carries the same
-     * `suffix`, so they all rhyme with each other and no such word can be
-     * built here.
+     * The flag's guarantee: a round can always be played. Asserted as an invariant over the result, because every word
+     * this suite seeds shares `suffix` and so they all rhyme with each other.
      */
     it('leaves no base word that a round could not be played on', async () => {
       const a = `bilind${suffix}`;
@@ -430,10 +410,7 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
       }
     });
 
-    /**
-     * The whole point, end to end: from a pool serving two prompts back to one
-     * serving all of them.
-     */
+    /** End to end: from a pool serving two prompts back to one serving all of them. */
     it('takes a two-word game back to the whole playable pool', async () => {
       const a = `çirûsk${suffix}`;
       const b = `birûsk${suffix}`;
@@ -480,14 +457,9 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
 
   describe('the pool and the dictionary behind it', () => {
     /**
-     * A word that arrived the way an import arrives: straight into the table,
-     * with no `in_games`.
-     *
-     * The normalized form is computed rather than reusing the headword, because
-     * the games' normalizer drops everything that is not a letter — and the
-     * unique suffix these tests build names with contains digits. Storing the
-     * raw word means the search, which normalizes what you type, can never match
-     * it.
+     * A word arriving as an import does: straight into the table, without `in_games`. The normalized form is computed,
+     * since the games' normalizer drops non-letters and these names contain digits; storing the raw word would make it
+     * unsearchable.
      */
     async function imported(word: string): Promise<void> {
       added.push(word);
@@ -506,25 +478,14 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
       const inPool = await authed('GET', `/admin/dictionary?q=zp${suffix}`, editorToken);
       expect(inPool.json().words.map((w: { headword: string }) => w.headword)).toEqual([mine]);
 
-      /*
-       * The regression. `z.coerce.boolean()` is `Boolean(value)`, so the string
-       * "false" coerced to **true** and this view returned the pool — the one
-       * input a flag like this is guaranteed to be given.
-       */
+      /* `z.coerce.boolean()` is `Boolean(value)`, so "false" would read as true and this view would return the pool. */
       const outOfPool = await authed('GET', `/admin/dictionary?q=zp${suffix}&inGames=false`, editorToken);
       expect(outOfPool.json().words.map((w: { headword: string }) => w.headword)).toEqual([theirs]);
     });
 
     /**
-     * The band filter and the page are SQL now (1751000114000). They used to be
-     * a `.filter()` and a `.slice()` over every matching row, which the
-     * dictionary-only view — the one that holds a whole imported lexicon, and
-     * the one an admin has to use to promote anything out of it — would have
-     * made unusable.
-     *
-     * What is asserted is the part that is easy to get wrong when a filter moves
-     * into SQL beside a LIMIT: the total has to be how many words matched the
-     * filter, not how many are on the page.
+     * The band filter and the page are SQL (1751000114000). Asserted: the total counts every word matching the filter,
+     * not just the page.
      */
     it('filters by letter length and pages, in agreement with the games', async () => {
       for (const w of ['pênûs', 'hirmî', 'zêrîn', 'sêvî', 'kevn']) await imported(w);
@@ -545,9 +506,8 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     });
 
     /**
-     * A rename is the only thing that changes a headword after it is written, so
-     * it is the only thing that can leave the stored length describing a word
-     * that is no longer there.
+     * A rename is the only thing that changes a headword after it is written, so it is the only way the stored length
+     * could go stale.
      */
     it('keeps the stored length right when a word is renamed', async () => {
       const short = `zn${suffix}`;
@@ -586,11 +546,7 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
       expect(demoted.json().words[0].inGames).toBe(false);
     });
 
-    /**
-     * A prompt outside the pool is a round the game will never open, so dropping
-     * a word out has to take its prompt flag with it rather than leave a promise
-     * the coverage view would go on counting.
-     */
+    /** A prompt outside the pool is a round the game never opens, so dropping a word out must clear its prompt flag. */
     it('clears the rhyme-prompt flag when a word leaves the pool', async () => {
       const word = `zs${suffix}`;
       const id = await seed(word, true);

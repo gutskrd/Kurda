@@ -17,7 +17,7 @@ import { SectionLabel } from '../stories/ui';
 import { cancelInvite, inviteFriends, listInvites } from './api';
 import { Ticket, TicketStamp } from './Ticket';
 
-/** What the host is told about each friend asked (never more than the soft wording). */
+/** What the host is told about each invited friend, never more than the soft wording. */
 export function inviteStateKey(invite: Pick<OutgoingInviteState, 'status' | 'declineReason'>): TranslationKey | null {
   switch (invite.status) {
     case 'pending':
@@ -42,18 +42,11 @@ const STATE_ICON: Record<OutgoingInviteState['status'], IconName> = {
 };
 
 /**
- * The lobby's "Invited" list, for the host (contract §B1): each friend asked
- * and where they are — waiting (with Cancel), joined, can't play right now /
- * would rather play something else, or expired (with Invite again). It keeps
- * itself up to date from `play_invite_update` and `play_changed`, and asks
- * again after the connection comes back.
- *
- * Each friend asked holds one of the host's tickets (Ticket.tsx), their face
- * on its stub. A ticket still waiting is drawn in outline, with a light
- * crossing it now and then (only while the lobby is in front); one taken up
- * is stamped "Joined", the stamp dropping in as it happens; one turned down
- * or run out is greyed, with the reason under the name. One taken back is
- * nobody's business, and is not shown.
+ * The lobby's "Invited" list for the host (contract §B1): each invited friend and their state, waiting (with
+ * Cancel), joined, declined, or expired (with Invite again). Kept current from `play_invite_update` and
+ * `play_changed`, and re-read after reconnecting. Each is a ticket (Ticket.tsx): waiting in outline with a passing
+ * shine while the lobby is in front, stamped "Joined" when taken up, greyed with a reason when declined or expired.
+ * Cancelled invites are not shown.
  */
 export function LobbyInvites({ game, lobbyId, refreshKey = 0 }: { game: PlayGame; lobbyId: string; refreshKey?: number }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -62,11 +55,8 @@ export function LobbyInvites({ game, lobbyId, refreshKey = 0 }: { game: PlayGame
   const dir = useDirection();
   const [invitees, setInvitees] = useState<OutgoingInviteState[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
-  /*
-   * The invites as this lobby first saw them: one that was taken up before
-   * the host got here wears its stamp already; one taken up while they wait
-   * gets it dropped on.
-   */
+  // Invites as first seen: one taken up before the host arrived already wears its stamp; one taken up while waiting
+  // gets it dropped on.
   const firstSeen = useRef<Map<string, OutgoingInviteState['status']> | null>(null);
 
   const load = useCallback(() => {
@@ -91,7 +81,7 @@ export function LobbyInvites({ game, lobbyId, refreshKey = 0 }: { game: PlayGame
     ),
   );
 
-  // one taken back is nobody's business
+  // A cancelled invite is nobody's business.
   const shown = invitees.filter((i) => i.status !== 'cancelled');
   if (shown.length === 0) return null;
 
@@ -110,7 +100,7 @@ export function LobbyInvites({ game, lobbyId, refreshKey = 0 }: { game: PlayGame
         const key = inviteStateKey(i);
         const pending = i.status === 'pending';
         const joined = i.status === 'accepted';
-        // a "not now" is not asked again from here: the server waits a while before it would pass it on
+        // A "not now" is not re-asked from here: the server waits a while before passing it on.
         const action = pending ? t('play.invited.cancel') : i.status === 'expired' ? t('play.invited.again') : null;
         const landed = joined && firstSeen.current?.get(i.inviteId) !== 'accepted';
         return (

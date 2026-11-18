@@ -4,10 +4,8 @@ import type { Translate } from '../../api/errors';
 import type { StoryTextProps } from '../storyText';
 
 /**
- * The question's own words in the reader's language (shared `questionIn`,
- * stories/legend.ts), and how the switch that shows them is worded: "Show
- * English" where what it shows is the English, "Translation" where it is the
- * reader's own language.
+ * The toggle label for a question's translation (shared `questionIn`, stories/legend.ts): "Show English" when it
+ * shows English, "Translation" when it shows the reader's own language.
  */
 export function translationToggle(lang: AppLocale, shown: boolean, t: Translate): string {
   if (lang === 'en') return shown ? t('stories.question.hideEnglish') : t('stories.question.showEnglish');

@@ -15,24 +15,14 @@ const GAP = 6;
 const KEY_HEIGHT = 52;
 
 /**
- * The Kurmancî keyboard, coloured by what each letter has scored so far.
+ * The Kurmancî keyboard, coloured by each letter's best score so far. QWERTY with ç ê î ş û as full keys on their
+ * own row, or alphabetical (Settings → Keyboard and accents), as on the web. Every row spans the width, so keys
+ * are as wide as possible (about 33 pt on a 390 pt phone, the Kurdish letters twice that), and each key's touch
+ * area takes half the gap beside it, leaving no dead space.
  *
- * QWERTY with ç ê î ş û as full keys on a row of their own, or the alphabet
- * in order (Settings → Keyboard and accents) — the same layout the browser
- * draws. Every row stretches across the whole width, so a letter key is as
- * wide as the phone allows (about 33pt on a 390pt phone, the five Kurdish
- * letters twice that), and each key's touch area takes in half the gap beside
- * it, so there is nowhere between two keys that is neither.
- *
- * A key only ever upgrades — grey to yellow to green, never back — and a screen
- * reader hears the letter with how it scored: "ê, in the word, wrong place".
- *
- * While a guess is with the server (`checking`) the keys take no press and
- * Enter turns where its arrow was: the one key that was pressed says it is
- * being seen to. The whole keyboard used to fade and come back on every
- * guess, thirty-three keys flickering for the sake of one. `disabled` is for
- * a board that is not being played (a battle that is over), and that does
- * fade.
+ * A key's colour only upgrades (grey, yellow, green), and screen readers hear the letter with its score ("ê, in
+ * the word, wrong place"). While a guess is checking (`checking`) keys ignore presses and Enter shows a spinner
+ * in place of its arrow; `disabled` is for a board no longer in play (a finished battle), and that fades.
  */
 export function WordleKeyboard({
   keyboard,
@@ -44,7 +34,7 @@ export function WordleKeyboard({
   keyboard: Record<string, Feedback>;
   onKey: (key: string) => void;
   disabled?: boolean;
-  /** a guess is being scored: no key is taken, and Enter says so */
+  /** A guess is being scored: no key is taken, and Enter says so. */
   checking?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
@@ -56,8 +46,8 @@ export function WordleKeyboard({
   return (
     <View style={[styles.keyboard, style]} accessibilityLabel={t('games.wordle.keyboard')}>
       {rows.map((row, ri) => {
-        // QWERTY's middle row sits half a key in, as on every phone; every
-        // other row, the Kurdish letters' included, fills the width
+        // QWERTY's middle row sits half a key in, as on every phone; every other row, the Kurdish letters'
+        // included, fills the width.
         const inset = prefs.wordleLayout === 'qwerty' && ri === 1 ? 0.5 : 0;
         return (
           <View key={ri} style={styles.keyRow}>
@@ -99,7 +89,7 @@ export function WordleKeyboard({
                       <Icon name="key-return" size={22} color={colors.textPrimary} />
                     )
                   ) : (
-                    // a key is as wide as a tenth of the row: its letter grows only as far as still fits it
+                    // A key is as wide as a tenth of the row: its letter grows only as far as still fits it.
                     <Text style={[styles.keyText, { color: feedbackInk(fb ?? null, colors) }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
                       {key.toUpperCase()}
                     </Text>

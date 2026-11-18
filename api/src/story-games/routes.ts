@@ -84,18 +84,14 @@ export interface StoryGameRouteDeps {
 }
 
 /**
- * Story games (contract §A3). Members only on every route — anyone else, and
- * a player the host removed, gets the same 404 as for a game that does not
- * exist. Creating and joining need the birth month, like everything else that
- * puts people together.
+ * Story games (contract §A3). Every route is members-only: anyone else, and a player the host removed, gets the same
+ * 404 as a missing game. Creating and joining need a birth month.
  *
- * `GET /story-games/:id?v=` is a long-poll: it answers at once when the game
- * has moved past version `v`, else when it does (or after 20 s). Every action
- * answers with the caller's new view, so a solo game never polls at all.
+ * `GET /story-games/:id?v=` is a long-poll: it answers at once if the game is past version `v`, else when it moves (or
+ * after 20 s). Every action answers with the caller's new view, so solo games never poll.
  *
- * Whether the setup screen offers "Open" is `GET /story-games/options`
- * (`canHostOpen`), rather than a field on the profile: it is a rule of this
- * feature, read only by its setup screen.
+ * `GET /story-games/options` (`canHostOpen`) says whether setup offers "Open"; it is this feature's rule, read only by
+ * its setup screen.
  */
 export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRouteDeps): StoryGamesService {
   const notifier = new StoryGameNotifier(deps.bus, app.log);

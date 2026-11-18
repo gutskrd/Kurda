@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 /*
- * Rules every screen that comes and goes keeps, read from the sources: a
- * Modal closes on Android's back and does not slide under Reduce Motion, and
- * every native stack moves as the others do and goes back to a place already
- * open rather than stacking it again.
+ * Rules every screen that comes and goes keeps, read from the sources: a Modal closes on Android's back and does not
+ * slide under Reduce Motion, and every native stack moves alike and goes back to a place already open.
  */
 
 /** Node's file system, which this workspace's types do not describe: the test reads the sources it runs beside. */
@@ -43,7 +41,7 @@ describe('every Modal', () => {
 });
 
 describe('every native stack', () => {
-  // the navigators made by `createNativeStackNavigator`, by the names they are given, and each one's opening tag
+  // The navigators made by `createNativeStackNavigator`, by name, with each one's opening tag.
   const navigators = files.flatMap(({ file, text }) =>
     [...text.matchAll(/const (\w+) = createNativeStackNavigator\b/g)].flatMap(([, name]) =>
       [...text.matchAll(new RegExp(`<${name}\\.Navigator\\b[\\s\\S]*?\\n\\s*>`, 'g'))].map((m) => ({ file, tag: m[0] })),

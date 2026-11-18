@@ -9,17 +9,15 @@ import { Icon } from '../theme/Icon';
 import { ToggleRow } from '../theme/Toggle';
 import { useTheme } from '../theme/ThemeProvider';
 import { useDirection } from '../reports/direction';
-import { radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography, wash } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { getExpectedGains, setLobbyRated } from './api';
 import { friendlyReasonKey, rankName, signed } from './format';
 import { pressedDim } from '../theme/motion';
 
 /**
- * The Rated / Friendly badge (contract 4 §R2), shown before anyone joins: in
- * the invite banner, the game card, the lobby and the game's header. Rated
- * wears the gold, Friendly is quiet — and both say it in words, with an
- * icon, so colour is never the only difference.
+ * The Rated / Friendly badge, shown before anyone joins: in the invite banner, the game card, the lobby and the game's
+ * header. Rated wears gold and Friendly is quiet; both have a word and an icon, so colour is never the only difference.
  */
 export function RatedPill({ rated, small = false, style }: { rated: boolean; small?: boolean; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const { colors } = useTheme();
@@ -43,16 +41,9 @@ export function RatedPill({ rated, small = false, style }: { rated: boolean; sma
 }
 
 /**
- * The host's choice in a setup or invite sheet: two wide cards, one under the
- * other, each saying what it means, read out as a radio group.
- *
- * They stood side by side, and a word for either that is longer than half a
- * phone's width ("Freundschaftlich", "Vriendschappelijk") ran out of its card
- * at the edge. One under the other, the name has the card's whole width, and
- * the sentence under it two lines rather than four. The one chosen is marked
- * as everything chosen in the app is, a wash of the violet with a violet
- * edge, and by a tick as well as by its colour; it used to be filled solid,
- * Rated in the gold that is kept for what is earned.
+ * The host's choice in a setup or invite sheet: two full-width cards, one under the other so long names fit, each
+ * saying what it means and read out as a radio group. The chosen one is marked as every choice in the app is, a violet
+ * wash and edge, and by a tick as well as colour.
  */
 export function RatedChoice({ value, onChange }: { value: boolean; onChange: (rated: boolean) => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -80,7 +71,7 @@ export function RatedChoice({ value, onChange }: { value: boolean; onChange: (ra
               styles.tile,
               {
                 flexDirection: dir.row,
-                backgroundColor: on ? `${colors.primary}1F` : colors.controlTrack,
+                backgroundColor: on ? wash(colors.primary) : colors.controlTrack,
                 borderColor: on ? colors.primary : 'transparent',
                 opacity: pressed ? pressedDim : 1,
               },
@@ -105,14 +96,12 @@ export function RatedChoice({ value, onChange }: { value: boolean; onChange: (ra
 export type SeatName = (seat: number) => string;
 
 /**
- * The lobby's Rated/Friendly panel: the badge for everyone, the host's switch,
- * and — while it is Rated — the chess.com line per opponent ("Win ≈ +24 ·
- * Lose ≈ −8") from the ratings as they are now, or the plain reason it would
- * play as friendly if it started now. Everyone else is told the host may
- * change it, and that they may leave without penalty if they do.
+ * The lobby's Rated/Friendly panel: the badge for everyone, the host's switch and, while Rated, the expected change per
+ * opponent ("Win ≈ +24 · Lose ≈ −8") or why it would play as friendly if started now. Everyone else is told the host
+ * may change it, and that they may then leave without penalty.
  *
- * `players` is how many are in the lobby: the expected gains are asked again
- * whenever someone comes or goes, and when the badge changes.
+ * `players` is the lobby's head count: the expected gains are asked again whenever someone comes or goes, and when the
+ * badge changes.
  */
 export function LobbyRated({
   game,
@@ -129,7 +118,7 @@ export function LobbyRated({
   isHost: boolean;
   players: number;
   seatName: SeatName;
-  /** the lobby changed (refetch its view) */
+  /** The lobby changed (refetch its view). */
   onChanged: () => void;
 }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -180,8 +169,7 @@ export function LobbyRated({
       </View>
 
       {isHost ? (
-        // the app's own switch, in its violet: the one drawn here was gold when on, and by day its white track was lost on the panel;
-        // the whole line turns it, its words as well as the switch
+        // The app's own switch in its violet; the whole line toggles it, its words as well as the switch.
         <ToggleRow label={t('ranks.lobby.ratedSwitch')} value={isRated} onValueChange={(next) => void change(next)} disabled={busy}>
           <Text style={[styles.switchLabel, dir.text, { color: colors.textPrimary }]}>{t('ranks.lobby.ratedSwitch')}</Text>
         </ToggleRow>

@@ -41,10 +41,8 @@ interface ActiveEvent {
 }
 
 /**
- * Event quests progress + explicit claim buttons (KUR-091). A reward is drawn
- * with the app's own coin and gem, and a claim that goes through is felt and
- * heard as a reward is everywhere else (`haptic('celebrate')`, the reward
- * chime), with a few sparks off the quest — a chest's moment, made small.
+ * Event quest progress with explicit claim buttons. Rewards use the app's coin and gem art, and a successful
+ * claim gets the usual reward feedback (`haptic('celebrate')`, the reward chime) and a few sparks off the quest.
  */
 export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
@@ -53,24 +51,22 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const [events, setEvents] = useState<EventQuestsView[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
-  // the quest claimed just now, whose row throws its sparks once
+  // The quest just claimed, whose row throws its sparks once.
   const [justClaimed, setJustClaimed] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
 
-  // tick so the ends-in countdown stays live while the screen is open
+  // Tick so the ends-in countdown stays live while the screen is open.
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
   /*
-   * An event whose quests did not load is not an event that is not running.
-   * Dropping it said "No events" while one was on; now the ones that loaded
-   * show with a line about the rest and a way to ask again, and when none of
-   * them loaded the screen is one that did not load, with its retry.
+   * Events whose quests failed to load are kept: the loaded ones show with a note about the rest and a retry, and
+   * when none loaded the screen shows a failed load with its retry.
    */
   const [missing, setMissing] = useState<ApiError | null>(null);
-  // a claim that did not go through, said above the quests rather than not at all
+  // A claim that did not go through, said above the quests rather than not at all.
   const [claimError, setClaimError] = useState<ApiError | null>(null);
 
   const load = useCallback(async () => {
@@ -100,7 +96,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
       void load();
     }, [load]),
   );
-  // pulled down, the events and their quests are read again
+  // Pulled down, the events and their quests are read again.
   const pull = usePullRefresh(load);
 
   const claim = useCallback(
@@ -114,12 +110,12 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
         playSound('reward');
         setJustClaimed(quest.id);
       }
-      // Hevalo offline for a while is said by the screen over the app
+      // Hevalo offline for a while is said by the screen over the app.
       if (!res.ok && !isMaintenance(res.error)) {
         haptic('error');
         setClaimError(res.error);
       }
-      // either way the quests are read again: a refusal usually means the server sees them differently
+      // Either way the quests are read again: a refusal usually means the server sees them differently.
       await load();
     },
     [client, load],
@@ -166,9 +162,8 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
 }
 
 /**
- * What went wrong with the list, said above it in the reader's words, with
- * the way on: put away (a claim that did not go through), or asked again
- * (events that did not load). Drawn as the app's other failure notices are.
+ * A notice above the list: a failed claim (dismissable) or events that failed to load (retry), styled like the
+ * app's other failure notices.
  */
 function Notice({ title, text, onDismiss, onRetry }: { title?: string; text: string; onDismiss?: () => void; onRetry?: () => void }) {
   const { t } = useI18n();
@@ -183,11 +178,7 @@ function Notice({ title, text, onDismiss, onRetry }: { title?: string; text: str
           <Text style={[styles.noticeText, dir.text, { color: colors.danger }]}>{text}</Text>
         </View>
         {onDismiss ? (
-          /*
-           * The cross is drawn 16 across and answers over 48. Sideways that is
-           * the notice's own padding; up it reaches past the notice's top edge
-           * into the list's padding, since the notice is the first thing there.
-           */
+          /* The 16 pt cross answers over 48: sideways within the notice's padding, upward into the list's padding above it. */
           <Pressable
             onPress={onDismiss}
             reachSize={CLOSE_SIZE}
@@ -217,7 +208,7 @@ function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boo
       <View style={styles.rowTop}>
         <Text style={[styles.questTitle, { color: colors.textPrimary }]}>{questTitle(quest, t)}</Text>
         {parts.length > 0 ? (
-          // the shop's coin and gem, read out as what the quest pays
+          // The shop's coin and gem, read out as what the quest pays.
           <View style={styles.reward} accessible accessibilityLabel={rewardSpoken(quest.reward, t, (n) => formatNumber(n, locale))}>
             {parts.map((p) => (
               <View key={p.currency} style={styles.rewardPart}>
@@ -238,7 +229,7 @@ function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boo
         {state === 'claimed' ? (
           <ClaimedMark fresh={fresh} seed={quest.target * 13 + (quest.reward.zer ?? 0) + (quest.reward.gems ?? 0)} />
         ) : state === 'claimable' ? (
-          // the app's own button, a fingertip tall; a spinner in place of the word while the claim is out
+          // The app's own button, a fingertip tall; a spinner in place of the word while the claim is out.
           <ClayButton label={t('events.claim')} tone="primary" busy={busy} onPress={onClaim} style={styles.claimBtn} />
         ) : (
           <Text style={[styles.locked, { color: colors.textSecondary }]}>{t('events.inProgress')}</Text>
@@ -248,11 +239,7 @@ function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boo
   );
 }
 
-/**
- * "Claimed", with a few gold sparks off it when the claim was made just now —
- * the sparks a daily quest throws as it finishes (QuestRows), once. Under
- * Reduce Motion there are none; the buzz and the chime still say it.
- */
+/** "Claimed", with a few gold sparks when the claim was just made (as QuestRows does). No sparks under Reduce Motion. */
 function ClaimedMark({ fresh, seed }: { fresh: boolean; seed: number }): React.JSX.Element {
   const { t } = useI18n();
   const { colors } = useTheme();

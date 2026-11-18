@@ -14,7 +14,7 @@ import { NEIGHBOURS_AFTER_MS, SwipePager } from './SwipePager';
 
 patchReactNativeWeb({ reduceMotion: true });
 
-/** jsdom lays nothing out, so the window is given a phone's width: the pager's pages are as wide until it is measured. */
+/** jsdom lays nothing out, so the window gets a phone's width; pages are that wide until the pager is measured. */
 const WIDTH = 390;
 Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: WIDTH });
 window.dispatchEvent(new Event('resize'));
@@ -22,7 +22,7 @@ window.dispatchEvent(new Event('resize'));
 const PAGES = ['one', 'two', 'three'] as const;
 type Page = (typeof PAGES)[number];
 
-/** The pager under a switch of three buttons, as a tab has it. */
+/** The pager under a three-button switch, as a tab has it. */
 function Book({ first = 'one', onTurn }: { first?: Page; onTurn?: (page: Page) => void }): React.JSX.Element {
   const [page, setPage] = useState<Page>(first);
   const turn = (next: Page): void => {
@@ -39,12 +39,12 @@ function Book({ first = 'one', onTurn }: { first?: Page; onTurn?: (page: Page) =
   );
 }
 
-/** The row of pages is dragged to where `page` (from the left) fills it, as a swipe leaves it. */
+/** Drags the row of pages to where `page` (from the left) fills it, as a swipe leaves it. */
 function swipeTo(page: number): void {
   const row = screen.getByTestId('book');
   Object.defineProperty(row, 'scrollLeft', { configurable: true, value: page * WIDTH });
   fireEvent.scroll(row);
-  // the web's scroller holds back events that come faster than a finger moves, and tells of the last one when it stops
+  // The web scroller throttles events faster than a finger moves, and reports the last one when it stops.
   vi.advanceTimersByTime(150);
 }
 
@@ -89,7 +89,7 @@ describe('pages under a switch', () => {
     const turned: Page[] = [];
     renderWithProviders(<Book onTurn={(p) => turned.push(p)} />);
     fireEvent.click(screen.getByRole('button', { name: 'show three' }));
-    // the tap is the only choice made: the pages passed on the way are not
+    // Only the tapped page is chosen, not those passed on the way.
     expect(turned).toEqual(['three']);
     expect(screen.getByText('three, showing')).toBeTruthy();
     expect(screen.getByTestId('book-one').getAttribute('aria-hidden')).toBe('true');

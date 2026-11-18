@@ -4,14 +4,9 @@ import { refreshFelt } from '../feedback/haptics';
 import { useTheme } from '../theme/ThemeProvider';
 
 /**
- * Pull down to read a screen again, as Home, Messages, Learn and the rest
- * already do: the same control in the same quiet grey, felt the same way
- * (`refreshFelt`), handed to a list's or a scroller's `refreshControl`.
- *
- * `reload` reads what the screen shows; the spinner turns until what it
- * returns has settled, whether the reading worked or not — a failure is the
- * screen's own to say, as it says one on opening. A screen that has gone
- * meanwhile is left alone.
+ * Pull to refresh with the app's shared control, tint and haptic (`refreshFelt`), for a list's or scroller's
+ * `refreshControl`. The spinner turns until `reload` settles, whether or not it succeeds; failures are the
+ * screen's to show. Nothing is updated after the screen unmounts.
  */
 export function usePullRefresh(reload: () => unknown): React.JSX.Element {
   const { colors } = useTheme();

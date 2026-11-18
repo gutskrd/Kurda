@@ -1,11 +1,8 @@
 import { DEVICE_NAME_MAX, deviceNameFrom } from '@kurda/shared';
 
 /**
- * The name a session is listed under when the app that opened it sent none,
- * read from the request's User-Agent: a browser says which it is and what it
- * runs on ("Chrome on Windows"), the same way the website names itself; the
- * phone app's own networking says only the system. Undefined when the agent
- * says nothing worth showing, and the list then says it does not know.
+ * The name a session is listed under when the app sent none, read from the User-Agent ("Chrome on Windows" for a
+ * browser; the phone app's networking only names the system). Undefined when the agent says nothing useful.
  */
 export function sessionNameFromAgent(userAgent: unknown): string | undefined {
   if (typeof userAgent !== 'string' || userAgent.length === 0) return undefined;

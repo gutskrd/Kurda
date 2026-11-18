@@ -1,14 +1,10 @@
 import { foldDiacritics } from '@kurda/shared';
 
 /**
- * Profanity / slur filter (KUR-086). Pure and evasion-resistant: text is
- * normalized (diacritics folded, leetspeak un-mapped, separators and repeated
- * letters collapsed) *before* matching, so "f.u.c.k", "shıt", and "fuuuck" all
- * catch. Masks matched words on delivery; flagged messages feed repeat-offender
- * escalation. Wordlists are a small extensible seed across the languages Kurda
- * serves (Kurdish, English, Turkish, Arabic transliteration) — real deployments
- * load fuller curated lists, and a false-positive appeal path is left for the
- * admin panel.
+ * Profanity and slur filter, pure and evasion-resistant: text is normalized (diacritics folded, leetspeak mapped back,
+ * separators and repeated letters collapsed) before matching, so "f.u.c.k", "shıt" and "fuuuck" all match. Matches are
+ * masked on delivery and flagged messages feed repeat-offender escalation. The wordlists are a small extensible seed
+ * across Kurdish, English, Turkish and Arabic transliteration.
  */
 
 // Seed lists — deliberately small; extend/replace with curated wordlists.

@@ -13,7 +13,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** Hand over the app's state changes, so a test can send it to the back and bring it to the front. */
+/** Captures the app-state listener so a test can background and foreground the app. */
 function appState(): (state: string) => void {
   const listeners: Array<(state: string) => void> = [];
   vi.spyOn(AppState, 'addEventListener').mockImplementation(((_type: string, cb: (state: string) => void) => {
@@ -48,7 +48,7 @@ describe('the badges’ counts', () => {
     const rounds = () => client.calls.filter((c) => c.path === '/chat/conversations').length;
     expect(rounds()).toBe(1);
 
-    // iOS: the app stood behind Control Centre, running, with its connection open
+    // iOS: the app sat behind Control Centre, still running with its connection open.
     send('inactive');
     send('active');
     await act(async () => {

@@ -11,17 +11,10 @@ import { formatDay } from '../reports/sendErrors';
 import { isGroupNotice, type DeepLink, type InboxItem } from './inbox';
 
 /**
- * Where a notification goes when it is tapped — one place, for the inbox tab
- * and the notification centre, which used to map the links each on its own.
- * The centre sent "Profile" to the tab of that name — your own profile — with
- * the other person's id thrown away (rootStack.ts says why that route is
- * called UserProfile); the same mapping now serves both.
- *
- * An invite is accepted on the way, and lands in the game's lobby; one that
- * can no longer be accepted still opens the game, which says why it cannot be
- * joined. A gift opens the chat it was sent in, with the gift to unwrap
- * (reports/deepLinks.ts). A caring message has no screen of its own: the
- * caller shows it where it was tapped.
+ * Where a tapped notification goes, for both the inbox and the notification centre. An invite is accepted on the way
+ * and lands in the game's lobby; one that can no longer be accepted still opens the game, which says why. A gift opens
+ * its chat with the gift to unwrap (reports/deepLinks.ts). A caring message has no screen: the caller shows it where
+ * tapped.
  */
 export async function followDeepLink(link: DeepLink, navigation: RootNavigation, client: ApiClient): Promise<void> {
   switch (link.screen) {
@@ -50,8 +43,8 @@ export async function followDeepLink(link: DeepLink, navigation: RootNavigation,
       return;
     }
     default: {
-      // a screen another part of the app adds to DeepLink (a group thread,
-      // My reports, Account standing) opens by its own name, with its own params
+      // A screen another part of the app adds to DeepLink (a group thread, My reports, Account standing) opens by its
+      // own name and params.
       const other = link as { screen: string; params?: object };
       (navigation.navigate as (screen: string, params?: object) => void)(other.screen, other.params);
     }
@@ -59,10 +52,9 @@ export async function followDeepLink(link: DeepLink, navigation: RootNavigation,
 }
 
 /**
- * A notification's title and body. The server stores finished English text;
- * for an invite, a gift, progress or a group's news the app writes its own line
- * from the kind, in the reader's language. (English readers keep the server's line, which can name
- * the friend; the data the app gets does not.)
+ * A notification's title and body. The server stores finished English text; for an invite, gift, progress or group news
+ * the app writes its own line from the kind, in the reader's language. English readers keep the server's line, which
+ * can name the friend where the data cannot.
  */
 export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'>, t: Translate, locale: string): { title: string; body: string } {
   if (locale === 'en') return { title: item.title, body: item.body };
@@ -70,7 +62,7 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
     return { title: t('play.notification.inviteTitle'), body: t('play.notification.inviteBody', { game: t(GAME_NAME_KEY[item.data.game]) }) };
   }
   if (item.data.kind === 'gift') return { title: t('play.notification.giftTitle'), body: t('play.notification.giftBody') };
-  // your own bird home with an answer is said as that, so the tap promises what the window then shows
+  // Your own bird home with an answer is said as that, so the tap promises what the window then shows.
   const letter = letterNoticeOf(item.data);
   if (letter) {
     return letter.how === 'home'
@@ -83,11 +75,9 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
 }
 
 /**
- * A group's news about one's place in it, in the reader's language, from what
- * the server puts in `data` beside its English line: the group's name, how
- * long a ban is and why, how many ask to come back, whether the person is
- * back in, and when they may ask again. Without the group's name there is
- * nothing to say it with, and the server's line stays.
+ * A group's news about one's place in it, in the reader's language, from `data`: the group's name, a ban's length and
+ * reason, how many ask to come back, whether the person is back in, and when they may ask again. Without the group's
+ * name the server's line stays.
  */
 function groupText(data: Record<string, unknown>, t: Translate, locale: string): { title: string; body: string } | null {
   const group = typeof data.groupName === 'string' && data.groupName ? data.groupName : null;
@@ -98,7 +88,7 @@ function groupText(data: Record<string, unknown>, t: Translate, locale: string):
     case 'group_banned': {
       const span = data.duration === '1d' ? 'notifications.group.bannedDay' : data.duration === '7d' ? 'notifications.group.bannedWeek' : data.duration === 'perm' ? 'notifications.group.bannedForGood' : null;
       if (!span) return null;
-      // the reason is theirs as they typed it: ended, so the next sentence does not run on from it
+      // The reason is theirs as typed: ended, so the next sentence does not run on from it.
       const said = typeof data.reason === 'string' ? data.reason.trim() : '';
       const reason = said ? t('groups.standing.reason', { reason: /[.!?…؟]$/.test(said) ? said : `${said}.` }) : null;
       return { title: t('notifications.group.bannedTitle'), body: [t(span, { group }), reason, t('notifications.group.askBack')].filter(Boolean).join(' ') };
@@ -111,7 +101,7 @@ function groupText(data: Record<string, unknown>, t: Translate, locale: string):
       };
     }
     case 'group_request_approved': {
-      // let back but not put back in: nobody comes into a group by themselves, so an admin has to add them
+      // Let back but not put back in: nobody joins a group by themselves, so an admin has to add them.
       const back = data.rejoined === 'true' || data.rejoined === true;
       return { title: t('notifications.group.approvedTitle'), body: t(back ? 'notifications.group.approvedBack' : 'notifications.group.approvedAdd', { group }) };
     }
@@ -126,9 +116,8 @@ function groupText(data: Record<string, unknown>, t: Translate, locale: string):
 }
 
 /**
- * A badge or league notification in the reader's language, from its kind and
- * ids alone — the server's stored line is English and names the badge in
- * Kurmancî. Calm words: what happened, never what you might lose.
+ * A badge or league notification in the reader's language, from its kind and ids alone (the server's line is English
+ * and names the badge in Kurmancî). Calm words: what happened, never what you might lose.
  */
 function progressText(data: Record<string, unknown>, t: Translate): { title: string; body: string } | null {
   switch (data.kind) {

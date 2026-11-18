@@ -1,9 +1,7 @@
 /**
- * "Your streak was kept": what Learn says once after a streak freeze has
- * covered a missed day. The server spends the freeze by itself and notes the
- * day it covered (`freezeUsedOn`); this phone remembers the last such day it
- * has said, so each is said once. Pure, so when it is said and what with is
- * tested apart from the screen.
+ * "Your streak was kept": what Learn says once after a freeze covered a missed day. The server spends the freeze
+ * and records the day (`freezeUsedOn`); this device remembers the last day it announced, so each is said once.
+ * Pure.
  */
 import { freezeLine } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
@@ -25,11 +23,9 @@ function daysBetween(from: string, to: string): number {
 }
 
 /**
- * Whether to say that a freeze kept the streak: one has been spent on a day
- * this phone has not said yet (`acknowledged` is the last it did), and the
- * run it kept is the one going on now — the kept day is the last day counted,
- * or the one before today's. A freeze spent weeks ago, read on a phone signed
- * in today, is old news and stays unsaid.
+ * Whether to announce a kept streak: a freeze was spent on a day not yet announced (`acknowledged` is the last),
+ * and it kept the current run (the kept day is the last counted day, or the one before today). A freeze from
+ * weeks ago, seen on a newly signed-in device, stays unsaid.
  */
 export function streakKept(streak: Streak | null, acknowledged: string | null): boolean {
   const used = streak?.freezeUsedOn;
@@ -57,9 +53,8 @@ export function keptTitle(streak: Streak): KeptWords {
 }
 
 /**
- * How the next freeze comes: one is ready already (a lesson since has earned
- * it back), or so many more lessons earn it. Null when the server does not
- * say how far along it is.
+ * How the next freeze comes: one is ready (a later lesson earned it back), or so many more lessons earn it. Null
+ * when the server does not say.
  */
 export function nextFreeze(streak: Streak): KeptWords | null {
   const line = freezeLine(streak);

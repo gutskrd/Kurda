@@ -1,24 +1,14 @@
 /**
- * The book's drawings, from SVG into the PDF: the svg-to-pdfkit converter
- * with one change to how it clips.
+ * The book's drawings from SVG into the PDF: the svg-to-pdfkit converter with one change to how it clips.
  *
- * The converter draws every SVG clip-path as a soft mask, a group of white
- * shapes the viewer has to composite under whatever it clips. Not every PDF
- * viewer does that composite, and one that skips it drops what lies under the
- * mask: Hamo's moustache, drawn as two clipped halves so its end can lift,
- * went missing from the downloaded book that way, and every iris and every
- * set of teeth was drawn the same way. A real PDF clipping path is honoured by every
- * viewer, and is smaller and quicker to draw besides, so a clip-path made of
- * one plain shape (a path, a rectangle, a circle, an ellipse, a line, a
- * polygon) is laid down as one here. Anything the clipping path cannot say
- * alone (several shapes, text, a clip-path on the clip-path itself) keeps the
- * soft mask, as before.
+ * The converter draws every SVG clip-path as a soft mask, which some PDF viewers do not composite, dropping what lies
+ * under it (Hamo's moustache, irises, teeth). A real PDF clipping path works in every viewer and is smaller and faster,
+ * so a clip-path of one plain shape (path, rect, circle, ellipse, line, polygon) becomes one here. Anything else
+ * (several shapes, text, a clip-path on the clip-path) keeps the soft mask.
  *
- * The converter keeps its drawing code private, inside the one function it
- * exports, so the change is made to its source as it is loaded: each piece is
- * found by its exact text and replaced, and if the package ever changes under
- * us the book refuses to print rather than printing without its clips. The
- * package is MIT-licensed, and is used unchanged apart from these lines.
+ * The converter keeps its drawing code private in its one exported function, so the change is patched into its source
+ * at load time: each piece is found by exact text and replaced, and if the package changes the book refuses to print
+ * rather than printing without clips. The package is MIT-licensed and otherwise unchanged.
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -38,11 +28,9 @@ const CLIP_TO = `          let clipPath = new SvgElemClipPath(this.get('clip-pat
           return true;`;
 
 /**
- * The clip path's own native clip, beside its mask. It answers false, drawing
- * nothing, unless it is one visible plain shape with no clip of its own; then
- * it sets that shape, moved by its own transform and the clip path's units,
- * as the clipping path of the current graphics state. Returning false from
- * the element's clip also spares it the transparency group a mask needs.
+ * The clip path's native clip beside its mask. Returns false and draws nothing unless the clip-path is one visible
+ * plain shape with no clip of its own; then it sets that shape (moved by its transform and the clip path's units) as
+ * the current clipping path. Returning false also spares the element the transparency group a mask needs.
  */
 const PATH_AT = `    var SvgElemClipPath = function(obj, inherits) {
       SvgElemHasChildren.call(this, obj, inherits);

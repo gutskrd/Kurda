@@ -33,7 +33,7 @@ export type ImpostorView = MultiView<ImpostorBoard | null>;
 type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<ImpostorBoard | null, ImpostorOutcome>>>;
 
 /** How each way the game can end reads, above the places. */
-export const IMPOSTOR_END_KEY: Record<NonNullable<ImpostorBoard['endedBy']>, TranslationKey> = {
+const IMPOSTOR_END_KEY: Record<NonNullable<ImpostorBoard['endedBy']>, TranslationKey> = {
   escaped: 'games.impostor.end.escaped',
   caught: 'games.impostor.end.caught',
   guessed: 'games.impostor.end.guessed',
@@ -60,15 +60,11 @@ export function kurdishStyle(dialect: ImpostorBoard['dialect']): { writingDirect
 }
 
 /**
- * Impostor's own staging on the phone, inside the room
- * (play/GameRoom.tsx) — the website's staging in the phone's parts: the table
- * with the players along its two sides and the one giving a clue in a pool of
- * light (a soft pulse, still under Reduce Motion), your card on the tabletop
- * with the category everyone is shown and the word for all but the impostor,
- * the clues round by round, and the box for your part: a clue on your turn, a
- * vote, or the caught impostor's four words. The vote has a choice for each
- * other player and one for not being sure, which names nobody and still
- * counts as a vote, so the table is not kept waiting.
+ * Impostor's staging inside the room (play/GameRoom.tsx), as the website stages it: the players along the table's two
+ * sides with the one giving a clue lit (a soft pulse, still under Reduce Motion), your card with the category and, for
+ * all but the impostor, the word, the clues by round, and the box for your part (a clue, a vote, or the caught
+ * impostor's four words). The vote includes "not sure", which names nobody but still counts, so the table is not kept
+ * waiting.
  */
 export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; skew: number; move: Move }): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -77,7 +73,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
   const now = useServerNow(skew, view.status === 'active');
   const glow = useRef(new Animated.Value(1)).current;
   const speaking = board?.phase === 'clues' ? (board.turn?.seat ?? null) : null;
-  // the mark on whose turn it is breathes only while the table is the screen in front
+  // The mark on whose turn it is breathes only while the table is the screen in front.
   const alive = useMotionAlive();
   useEffect(() => {
     if (!alive || speaking === null) {
@@ -138,7 +134,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
         accessibilityState={{ selected: lit }}
         style={[styles.seat, { opacity: s.left ? 0.5 : 1 }]}
       >
-        {/* who is speaking is lit in the violet that marks the place you are in: gold is kept for what is earned */}
+        {/* The speaker is lit in the violet that marks where you are; gold is kept for what is earned. */}
         {lit ? <Animated.View style={[styles.light, { backgroundColor: colors.primary, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }]} /> : null}
         <View style={[styles.disc, { borderColor: lit || p?.isMe ? colors.primary : colors.clayBorder, backgroundColor: lit ? colors.primary : colors.glassFill }]}>
           <Text style={[styles.discText, { color: lit ? colors.textOnPrimary : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
@@ -254,7 +250,7 @@ function Vote({ view, board, name, move }: { view: ImpostorView; board: Impostor
   const [error, setError] = useState<string | null>(null);
   const others = board.seats.filter((s) => !s.left && s.seat !== view.me?.seat);
   const mine = board.vote?.mine ?? null;
-  // a seat, or IMPOSTOR_UNSURE_VOTE for "not sure"
+  // A seat, or IMPOSTOR_UNSURE_VOTE for "not sure".
   const vote = async (seat: number): Promise<void> => {
     haptic('select');
     setBusy(true);
@@ -286,7 +282,8 @@ function Vote({ view, board, name, move }: { view: ImpostorView; board: Impostor
               <Text style={[styles.optionText, { color: colors.textPrimary }]}>{t('games.impostor.vote.pick', { name: name(s.seat) })}</Text>
             </Pressable>
           ))}
-          {/* the quieter choice, set apart by its dashed edge: it names nobody, and still counts as this player's vote */}
+          {/* The quieter choice, set apart by its dashed edge: it names nobody, and still counts as this player's
+             vote. */}
           <Pressable
             disabled={busy}
             accessibilityRole="button"
@@ -325,7 +322,7 @@ function Guess({ board, move }: { board: ImpostorBoard; move: Move }): React.JSX
             setBusy(false);
             if (res.ok) haptic(res.data.outcome.kind === 'guess' && res.data.outcome.right ? 'correct' : 'wrong');
           }}
-          // edged in the violet of what can be pressed, as the guess on one phone is: gold is kept for what is earned
+          // Edged in the violet of what can be pressed, as on one phone; gold is kept for what is earned.
           style={({ pressed }) => [styles.option, { borderColor: colors.primary, backgroundColor: colors.glassFill, opacity: !board.yourGuess ? 0.6 : pressed ? pressedDim : 1 }]}
         >
           <Text style={[styles.guessText, script, { color: colors.textPrimary }]}>{o}</Text>
@@ -336,11 +333,9 @@ function Guess({ board, move }: { board: ImpostorBoard; move: Move }): React.JSX
 }
 
 /**
- * The reveal on the phone: every seat's card turns over in turn — the
- * impostor's shows who they were, the rest the word (at once under Reduce
- * Motion) — then the word with its meaning, how it ended (and, when the
- * impostor got away, why: a tied vote, or the table voting out someone else),
- * every clue and who voted for whom.
+ * The reveal: every seat's card turns over in turn (at once under Reduce Motion), then the word with its meaning, how
+ * it ended and, when the impostor got away, why (a tied vote, or the table voting out someone else), every clue, and
+ * who voted for whom.
  */
 export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -363,12 +358,11 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
     return p ? multiSeatName(p, t) : t('stories.player', { seat });
   };
   const script = kurdishStyle(board.dialect);
-  // these lines are about someone, so they read with names, the viewer's own included (the room calls the viewer "You",
-  // so it comes from the account): "You" in their place reads wrongly in Kurdish, where the one who voted takes
-  // another form (te, not tu), and in English after "wasn't"
+  // These lines read with names, the viewer's own included: "You" in its place reads wrongly in Kurdish, where the
+  // voter takes another form (te, not tu), and in English after "wasn't".
   const mine = user ? user.displayName || user.username : null;
   const named = (seat: number): string => (view.players.find((p) => p.seat === seat)?.isMe && mine ? mine : name(seat));
-  // a server from before the reasons were kept sends none, and the reveal simply says the impostor got away
+  // An older server sends no reason, and the reveal simply says the impostor got away.
   const escape = reveal.escape ?? null;
   const why =
     escape === 'tie'
@@ -377,7 +371,7 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
         ? t('games.impostor.end.wrongOut', { name: named(board.accused.seat) })
         : null;
   const scaleX = turn.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] });
-  // the turn comes a touch past flat before it settles: the face is simply there by then
+  // The turn goes a touch past flat before it settles, so the face is already there by then.
   const face = turn.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [0, 0, 1, 1], extrapolate: 'clamp' });
   return (
     <View style={styles.reveal}>

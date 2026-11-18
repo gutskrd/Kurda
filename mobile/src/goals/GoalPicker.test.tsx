@@ -12,10 +12,7 @@ import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { GoalPicker } from './GoalPicker';
 
-/*
- * The day's goal, one of four, as a new guest picks it and as the Learn bar
- * changes it: read out as one choice of four, each named for what it means.
- */
+/* The daily goal picker, as a guest first picks it and as the Learn bar changes it. */
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {

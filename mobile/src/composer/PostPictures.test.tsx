@@ -50,14 +50,14 @@ describe('PostPictures', () => {
   });
 
   it('on the wall, shows several one at a time, the width of the post, and says how many', () => {
-    // a phone 390 wide: the pictures sit inside its 16pt margins
+    // A phone 390pt wide: the pictures sit inside its 16pt margins.
     Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 390 });
     window.dispatchEvent(new Event('resize'));
     renderWithProviders(<PostPictures images={[img(1, 'Çiyayên Zagrosê'), img(2), img(3)]} wall />);
-    // each whole, in the order posted, side by side in a strip that is swiped
+    // Each whole, in the order posted, side by side in a strip that is swiped.
     expect(named()).toEqual(['Çiyayên Zagrosê', 'Picture 2 of 3', 'Picture 3 of 3']);
     expect(screen.getByText('1/3')).toBeTruthy();
-    // swiped on by one picture's width, the corner says so
+    // Swiped on by one picture's width, the corner says so.
     const strip = screen.getByLabelText('Çiyayên Zagrosê').closest('[class*="overflowX"]') as HTMLElement;
     Object.defineProperty(strip, 'scrollLeft', { configurable: true, value: 358 });
     fireEvent.scroll(strip);
@@ -97,7 +97,7 @@ describe('pictures on the wall and on a post', () => {
 
   it('puts every picture on the card, each one a way into the post', async () => {
     renderWithProviders(<FeedCard item={item({ images: [img(1, 'Mal'), img(2)] })} />);
-    // a button named by what it shows, not an image: tapping it opens the post (once it is not a double tap)
+    // A button named by what it shows, not an image: tapping it opens the post (once it is not a double tap).
     fireEvent.click(screen.getByRole('button', { name: 'Mal' }));
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('LibraryPost', { postId: '1' }));
     expect(screen.getByRole('button', { name: 'Picture 2 of 2' })).toBeTruthy();

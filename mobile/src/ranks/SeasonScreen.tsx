@@ -44,14 +44,12 @@ interface OwnedItem {
 }
 
 /**
- * The season (contract 4 §R5, §U): its name and how many days it has left —
- * days, calmly, never a clock — what it gives for each tier (an emblem kept
- * for good, a frame for the avatar, a few Gems), how far each game is towards
- * counting for it, and what last season left you. The frames you were given
- * are worn from here.
+ * The season: its name and days left (calmly, never a clock), what each tier gives (an emblem kept for good, an avatar
+ * frame, a few Gems), how far each game is towards counting, and what last season left you. Frames you were given are
+ * worn from here.
  */
 export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
-  // a row starts where its language reads from: in Soranî and Arabic the emblem and the game's name are on the right
+  // A row starts where its language reads from: in right-to-left languages the emblem and game name are on the right.
   const dir = useDirection();
   const { client, user } = useAuth();
   const { colors, scheme } = useTheme();
@@ -76,7 +74,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       if (o.ok) setOverview(o.data);
       else setError(o.error);
       if (r.ok) setRanks(r.data);
-      // an emblem won in a game Hevalo no longer has names a game this screen has no word for: it is left out
+      // An emblem from a game Hevalo no longer has names a game this screen has no word for, so it is left out.
       if (e.ok) setEmblems(e.data.emblems.filter((x) => isRankedGame(x.game)));
       if (inv.ok) setFrames((inv.data.items ?? []).filter((i) => i.category === 'frame' && frameTierOf(i.sku)).map((i) => i.sku));
       if (me?.ok) setWearing(me.data.frameSku ?? null);
@@ -268,7 +266,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 type Translate = Parameters<typeof seasonTitle>[0];
 
 /** The best tier reached this season in any game, or null before the first rated game counts. */
-export function bestPeak(ranks: MyRanks | null): PointsTier | null {
+function bestPeak(ranks: MyRanks | null): PointsTier | null {
   let best: PointsTier | null = null;
   for (const card of ranks?.ranks ?? []) {
     const peak = card.season.peakTier;
@@ -297,10 +295,7 @@ function FramePreview({ tier }: { tier: RankTier }): React.JSX.Element {
   );
 }
 
-/**
- * The season while it loads, in the page's own column: the emblem and its
- * name, the three games' meters, and the rewards' first rows.
- */
+/** The season while it loads, in the page's own column. */
 function SeasonSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   return (
@@ -335,7 +330,7 @@ function SeasonSkeleton(): React.JSX.Element {
         <SkeletonText size={typography.sizes.xs} width={80} />
         <SkeletonText size={typography.sizes.sm} lineHeight={19} width="76%" />
         <GlassCard padding="tight">
-          {/* one for each tier with a reward, as the season pays them */}
+          {/* One for each tier with a reward, as the season pays them. */}
           {[0, 1, 2, 3, 4].map((i) => (
             <View key={i} style={styles.reward}>
               <Skeleton width={52} height={52} radius={radii.pill} />
@@ -351,11 +346,11 @@ function SeasonSkeleton(): React.JSX.Element {
   );
 }
 
-/** display(34) sets 1.12 */
+/** display(34) sets 1.12. */
 const HERO_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
 
 const styles = StyleSheet.create({
-  // a centred line in the hero spans it, so a bar given as a share of it has something to be a share of
+  // A centred line in the hero spans it, so a bar sized as a share of it has something to be a share of.
   stretch: { alignSelf: 'stretch' },
   heroSkeleton: { marginTop: spacing.sm },
   daysSkeleton: { marginTop: spacing.xs },

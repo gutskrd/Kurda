@@ -70,7 +70,7 @@ describe('getPushToken', () => {
     expect(easProjectId()).toBeNull();
     expect(await getPushToken()).toBeNull();
     phone.extra = { eas: { projectId: 'p1' } };
-    // a simulator, no connection, an Android build without its Firebase file
+    // A simulator, no connection, an Android build without its Firebase file.
     phone.token.mockRejectedValueOnce(new Error('no APNs here'));
     expect(await getPushToken()).toBeNull();
   });

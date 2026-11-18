@@ -16,8 +16,7 @@ const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) }
 // confirmUsername: the person's username, which the only moderator types to confirm a permanent ban
 const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional(), confirmUsername: z.string().max(60).optional() });
 /**
- * The most one admin change may add or take away. A grant mints currency: a
- * slip of the keyboard (1000000 for 1000) should be refused, not credited.
+ * The most one admin change may add or take away. A grant mints currency, so a typo (1000000 for 1000) must be refused.
  */
 export const WALLET_ADJUST_MAX = 1_000_000;
 const walletBody = z.object({
@@ -59,7 +58,7 @@ function sendResult(reply: FastifyReply, res: ActionResult) {
   return reply.code(402).send({ code: res.code, message: 'insufficient balance for this debit' });
 }
 
-/** Admin user management: search, detail, moderation actions (KUR-101). */
+/** Admin user management: search, detail, moderation actions. */
 export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminService, totp: AdminTotpService): void {
   const canView = [requireAuth, requireAdmin(totp, 'superadmin', 'moderator', 'support')];
   // moderators, superadmins and the legacy admin role, like every moderation route
@@ -165,11 +164,8 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
   };
 
   /**
-   * Give or take away the content editor role (UserAdminService.setContentEditor):
-   * how someone joins the team that writes and records lessons — the person a
-   * conversation's other part is sent to — without anything about people or
-   * money. A superadmin's alone, with 2FA, and like every admin change it is in
-   * the audit log.
+   * Give or take away the content editor role (UserAdminService.setContentEditor): lessons and recording, nothing about
+   * people or money. Superadmin only, with 2FA, and audited.
    */
   app.put(
     '/admin/users/:id/content-editor',
@@ -184,10 +180,8 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
   );
 
   /**
-   * Give or take away the voice actor role (UserAdminService.setVoiceActor):
-   * someone who lends a voice records their own lines from the "Record by
-   * person" page and can open nothing else in the console. Like the content
-   * editor's, a superadmin's alone, with 2FA, into the person's history.
+   * Give or take away the voice actor role (UserAdminService.setVoiceActor): records their own lines from the "Record
+   * by person" page and opens nothing else. Superadmin only, with 2FA, into the person's history.
    */
   app.put(
     '/admin/users/:id/voice-actor',
@@ -202,9 +196,8 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
   );
 
   /**
-   * The voices a person records (recording/links.ts): read and set by a
-   * superadmin from the person's page. Setting them asks for a reason, which
-   * the audit log keeps with the change (every write under /admin is logged).
+   * The voices a person records (recording/links.ts), read and set by a superadmin from the person's page. Setting them
+   * needs a reason, which the audit log keeps.
    */
   app.get('/admin/users/:id/voices', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: canAdjustEconomy }, async (req) => {
     return { voices: await voicesOf(app.db, (req.params as z.infer<typeof idParam>).id) };
@@ -248,10 +241,8 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
   );
 
   /**
-   * Give Hevalo+ for a number of days, or extend it by them: for testers and
-   * reviewers while membership cannot be bought. A superadmin's, like a
-   * balance change, with the same limit on how often and a reason kept in the
-   * person's history.
+   * Give Hevalo+ for a number of days, or extend it, for testers and reviewers while membership cannot be bought.
+   * Superadmin only, rate-limited like a balance change, with a reason in the person's history.
    */
   app.post(
     '/admin/users/:id/plus',

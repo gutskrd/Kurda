@@ -3,9 +3,8 @@ import { ART_LEAGUE_METAL, ART_RANK_METAL, ART_TIER_METAL, type LeagueTier, type
 type Scheme = 'light' | 'dark';
 
 /**
- * The colours drawn around an emblem — a bar's fill, a glow, a confetti
- * fleck — taken from the emblem's own metal. On a dark page the lighter half
- * of the metal glows; on a light one the stronger half keeps its edge.
+ * The colours drawn around an emblem (a bar's fill, a glow, a fleck), from the emblem's own metal: the lighter half
+ * glows on a dark page, the stronger half keeps its edge on a light one.
  */
 export function rankTint(tier: RankTier | null, scheme: Scheme): readonly [string, string] {
   const m = ART_RANK_METAL[tier ?? 'dest'];

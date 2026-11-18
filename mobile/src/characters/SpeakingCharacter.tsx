@@ -60,67 +60,65 @@ export type { CharacterReaction } from '@kurda/shared';
 
 export interface SpeakingCharacterProps {
   speaker: SpeakerId;
-  /** the player the screen already plays the recording with; null before it has one */
+  /** The player the screen already plays the recording with; null before it has one. */
   player: PlaybackClock | null;
-  /** whether the screen is playing this recording now: the character follows it only then */
+  /** Whether the screen is playing this recording now; the character follows it only then. */
   playing: boolean;
-  /** the recording, so that another one starts from its own timeline */
+  /** The recording, so that another one starts from its own timeline. */
   source?: string | null;
   voice?: RecordingVoice | null;
-  /** the words said, to move the mouth from when the recording has no timeline of its own */
+  /** The words said, to move the mouth from when the recording has no timeline of its own. */
   text?: string | null;
-  /** the whole figure, head to waist, head and shoulders (in a rounded tile), or head and neck (in at a window, HevaloWindow) */
+  /** The whole figure, head to waist, head and shoulders (in a rounded tile), or head and neck (at a window, HevaloWindow). */
   crop?: CharacterCrop;
-  /** how wide it is drawn, in points; the height follows from the drawing */
+  /** How wide it is drawn, in points; the height follows from the drawing. */
   size?: number;
-  /** or how tall, and the width follows */
+  /** Or how tall, and the width follows. */
   height?: number;
-  /** turned the other way round, to face what lies to its left */
+  /** Turned the other way round, to face what lies to its left. */
   flip?: boolean;
   /**
-   * a steady look, each way from -1 to 1 in the drawing's own terms (shared `lookAcross`), at whoever it is
-   * talking with: its eyes stay on them, with no glances about and no following a finger, and its head leans
-   * a little their way
+   * A steady look, each axis from -1 to 1 in the drawing's terms (shared `lookAcross`), at its conversation
+   * partner: the eyes stay on them, with no glances or finger-following, and the head leans slightly their way.
    */
   gaze?: CharacterPoint | null;
-  /** listening, not saying: its mouth never moves with what plays; it breathes, blinks and reacts as ever */
+  /** Listening, not speaking: the mouth never moves with what plays; it still breathes, blinks and reacts. */
   quiet?: boolean;
   /**
-   * what it has just seen: it reacts each time this changes, and when it arrives with one. `cheer` and `hmm` for an answer;
-   * the rest (shared `CharacterReaction`) for the moments in between, each played the character's own way
+   * What it has just seen: it reacts whenever this changes, and on arrival with one. `cheer` and `hmm` for
+   * answers; the rest (shared `CharacterReaction`) for moments in between, each played in the character's own
+   * way.
    */
   reaction?: CharacterReaction | null;
-  /** asleep, where there is nothing to do yet: eyes shut, a slow breath, a "z" drifting up (shared `RESTING`) */
+  /** Asleep where there is nothing to do yet: eyes shut, a slow breath, a drifting "z" (shared `RESTING`). */
   resting?: boolean;
   /**
-   * a tap on the character: it greets you, and then this (say it again, usually). Quick taps in a row get more: the second a
-   * giggle, the third a start and a laugh, with a light buzz (shared `tapActs`)
+   * A tap on the character: it greets, then calls this (usually to replay). Quick repeated taps escalate: a
+   * giggle on the second, a start and a laugh with a light haptic on the third (shared `tapActs`).
    */
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
-/** How many of each character are on the screen right now, for the browser's one document (see where it is read). */
+/** How many of each character are on screen now, for the web build's single document (see where it is read). */
 const onScreen = new Map<SpeakerId, number>();
 
-/** The widest a turn of the head goes, with room to spare: Animated maps the angle onto a string. */
+/** The widest head turn, with margin: Animated maps the angle onto a string. */
 const TURN_RANGE = 30;
 
 /** A bust this wide or wider sits in the larger corner. */
 const LARGE_TILE = 88;
 
 /**
- * In a tile, the head and shoulders are drawn this much smaller than the tile
- * and stand on its foot, centred: room above for antlers, a hop or a nod, and
- * a little either side for the ears, so no part of a head is ever cut off.
- * The website's tile leaves the same room.
+ * In a tile, the head and shoulders are drawn this much smaller and stand centred on its foot, leaving room for
+ * antlers, hops, nods and ears so no part is clipped. The web tile leaves the same room.
  */
 const TILE_ROOM = 0.12;
 
 /** How long a look takes to reach what it looks at, and to come back. */
 const LOOK_MS = { to: 140, back: 420, glance: 260 } as const;
 
-/** A finger's place is measured against the character's at most this often (ms); a drag in between uses the last. */
+/** A finger's position is compared with the character's at most this often (ms); a drag in between reuses the last. */
 const REMEASURE_MS = 300;
 
 const ease = Easing.inOut(Easing.quad);
@@ -132,10 +130,7 @@ const shadowSvg = (colour: string, depth: number): string =>
   '<ellipse cx="50" cy="10" rx="50" ry="10" fill="url(#ground)"/></svg>';
 const SHADOW = { light: shadowSvg('#2a1408', 0.3), dark: shadowSvg('#000000', 0.55) } as const;
 
-/**
- * One part of the drawing. Memoised on its markup, so when the mouth changes
- * the body, the head and the eyes are not drawn again.
- */
+/** One part of the drawing, memoised on its markup, so a mouth change does not redraw the body, head and eyes. */
 const Layer = memo(function Layer({ xml, width, height }: { xml: string; width: number; height: number }) {
   return <SvgXml xml={xml} width={width} height={height} style={styles.layer} />;
 });
@@ -145,41 +140,15 @@ const degrees = (value: Animated.AnimatedInterpolation<number> | Animated.Value 
   value.interpolate({ inputRange: [-TURN_RANGE, TURN_RANGE], outputRange: [`${-sign * TURN_RANGE}deg`, `${sign * TURN_RANGE}deg`] });
 
 /**
- * Hevalo, Hamo or Xezo saying the recording the screen is playing — and, in
- * between, alive.
+ * Hevalo, Hamo or Xezo saying the screen's recording, and idling between words. It follows the screen's own
+ * player, reading the position every frame and computing mouth and nod with `speakingFrame`, as the web does.
+ * Between words it breathes, blinks, glances and plays its habits (shared `HABITS`, `CHARACTER_HABITS`); its eyes
+ * follow a finger (`GazeArea`) unless `gaze` fixes them on a partner. Taps, `reaction` and `quiet` are described
+ * on the props.
  *
- * The character follows the screen's own player — never a second one — by
- * reading where the recording is on every animation frame while it plays,
- * and works out the mouth and the nod for that moment with `speakingFrame`,
- * the same as the website does.
- *
- * Between the words it breathes, its head drifts a degree, it blinks every
- * few seconds and glances about now and then; the deer twitches an ear or
- * sniffs (shared `HABITS`). Its eyes follow a finger anywhere on the screen
- * (`GazeArea`), unless it has been told where to look (`gaze`), as the people
- * in a conversation are: then its eyes stay on whoever it talks with and its
- * head leans a little their way. A tap gets a greeting — a hop, ears up, a
- * smile — and then `onPress`; a second quick tap gets a giggle and a third a
- * start and a laugh (shared `tapActs`). `reaction` gets a cheer for a right
- * answer and a curious tilt of the head for one that was not yet, or a wink,
- * a start, a giggle, Hamo's chuckle, Xezal's pout or the tongue (shared
- * `actFor`: each plays an act its own way, Hamo with a brow raised and his
- * moustache lifted, Xezal with a wink and a blush, the deer with one eye
- * narrowed). Each has habits of its own as well (shared `CHARACTER_HABITS`).
- * Every movement is a transform on the native driver, so none of it redraws
- * a picture; only the eyes, the brows, the cheeks and the mouth are drawn
- * again, when their shape changes. A `quiet` one listens: its mouth never
- * moves with what plays.
- *
- * Drawn as stacked layers in one frame: the body, then the head and what is
- * on it. The deer's ears, pupils and nose are layers of their own so they can
- * move; the people's eyes and mouths are drawn whole, their irises moved
- * within the eyes when they look aside; the brows, the cheeks, Xezal's loose
- * hair and the near end of Hamo's moustache are layers of their own too.
- *
- * Under Reduce Motion nothing moves but the mouth (it says what the sound
- * says), the blinks, and the face a reaction or a tap puts on. Timers stop
- * when the app goes to the background or the character goes.
+ * Movement is native-driver transforms over stacked SVG layers (body, then head parts), so only the eyes, brows,
+ * cheeks and mouth redraw when their shape changes. Under Reduce Motion only the mouth, blinks and faces change.
+ * Timers stop when the app is backgrounded or the character unmounts.
  */
 export function SpeakingCharacter({
   speaker,
@@ -203,10 +172,10 @@ export function SpeakingCharacter({
   const { t } = useI18n();
   const reduce = useReducedMotion();
   const finger = useGaze();
-  // in a browser every drawing shares one document, so a second Hevalo on the page would take the first one's fills
-  // unless its ids are its own; the first keeps the kept layers, a phone scopes ids per drawing and never needs this.
-  // The seat is taken when the drawing is committed, not while it renders: a drawing that is replaced (a new key, a
-  // remount) renders before the old one lets go, and taking the seat during render made it the second of itself.
+  // In a browser every drawing shares one document, so a second Hevalo needs its own ids or it takes the first
+  // one's fills; the first keeps the cached layers, and phones scope ids per drawing. The seat is taken on
+  // commit, not during render: a replacing drawing renders before the old one releases, and taking it in render
+  // made it a second of itself.
   const own = useId().replace(/[^a-zA-Z0-9]/g, '');
   const [seat, setSeat] = useState(0);
   useEffect(() => {
@@ -222,32 +191,32 @@ export function SpeakingCharacter({
   const layers = useMemo(() => characterLayers(speaker, crop, idPrefix), [speaker, crop, idPrefix]);
   const art = characterArt(speaker);
   const rig = layers.rig;
-  // the place it takes, and the drawing inside it: the same but in a tile, where the drawing leaves room
+  // The space it takes, and the drawing inside it: the same except in a tile, where the drawing leaves room.
   const boxWidth = size ?? ((tall ?? 0) * layers.frame.w) / layers.frame.h;
   const boxHeight = (boxWidth * layers.frame.h) / layers.frame.w;
   const room = crop === 'bust' ? TILE_ROOM : 0;
   const width = boxWidth * (1 - room);
   const height = boxHeight * (1 - room);
-  /** points per drawing unit */
+  /** Points per drawing unit. */
   const unit = width / layers.frame.w;
-  // a steady look, by its value: the same look given again as a new object changes nothing
+  // A steady look, by its value: the same look given again as a new object changes nothing.
   const steady = gaze !== null;
   const gazeX = gaze?.x ?? 0;
   const gazeY = gaze?.y ?? 0;
 
-  // ---- what the face shows ----
+  // ---- What the face shows ----
   const [speech, setSpeech] = useState<Viseme>('rest');
   const [blink, setBlink] = useState<EyeState>('open');
   const [actEyes, setActEyes] = useState<EyeState | null>(null);
   const [actMouth, setActMouth] = useState<MouthShape | null>(null);
   const [actBrows, setActBrows] = useState<BrowState | null>(null);
   const [actCheeks, setActCheeks] = useState<CheekState | null>(null);
-  // where an act turns a person's eyes (the deer's pupils move on the native driver instead)
+  // Where an act turns a person's eyes (the deer's pupils move on the native driver instead).
   const [actLook, setActLook] = useState<CharacterPoint | null>(null);
-  // in front and on a focused screen: a character on a tab behind another has nobody to breathe for
+  // In front and on a focused screen: a character on a tab behind another has nobody to breathe for.
   const awake = useScreenAwake();
 
-  // ---- what moves, all on the native driver ----
+  // ---- What moves, all on the native driver ----
   const values = useRef({
     nod: new Animated.Value(0),
     sway: new Animated.Value(0),
@@ -271,12 +240,12 @@ export function SpeakingCharacter({
   const born = useRef(Date.now());
   const shownNod = useRef(0);
 
-  // the recording's length once the player knows it, kept with the recording it belongs to
+  // The recording's length once the player knows it, kept with the recording it belongs to.
   const [length, setLength] = useState<{ source: string | null; ms: number } | null>(null);
   const durationMs = length && length.source === source ? length.ms : null;
   const timeline = useMemo(() => voiceTimeline(voice, text, durationMs), [voice, text, durationMs]);
 
-  // ---- the words, unless it is listening ----
+  // ---- The words, unless it is listening ----
   const live = !quiet && playing && player !== null && awake;
   useEffect(() => {
     const rest = (): void => {
@@ -314,7 +283,7 @@ export function SpeakingCharacter({
     };
   }, [live, player, timeline, durationMs, source, reduce, values]);
 
-  // ---- timers, all cleared together ----
+  // ---- Timers, all cleared together ----
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
   const later = useCallback((ms: number, run: () => void) => {
     const id = setTimeout(() => {
@@ -332,9 +301,9 @@ export function SpeakingCharacter({
     };
   }, []);
 
-  // ---- looking ----
+  // ---- Looking ----
   const looking = useRef<Animated.CompositeAnimation | null>(null);
-  // a look as seen, turned round for a figure drawn the other way; or, `drawn`, one already in the drawing's terms
+  // A look as seen, flipped for a figure drawn the other way; or, when `drawn`, already in the drawing's terms.
   const look = useCallback(
     (x: number, y: number, focus: number, ms: number, drawn = false) => {
       looking.current?.stop();
@@ -344,12 +313,12 @@ export function SpeakingCharacter({
     },
     [values, flip],
   );
-  // where the eyes come back to: whoever it has been told to look at, or straight ahead
+  // Where the eyes come back to: whoever it has been told to look at, or straight ahead.
   const lookBack = useCallback((ms: number) => (steady ? look(gazeX, gazeY, 1, ms, true) : look(0, 0, 0, ms)), [look, steady, gazeX, gazeY]);
   const following = useRef(false);
 
-  // ---- acts ----
-  /** the movement under way, for the habits to wait on; done before the face it holds is, so the holds are kept apart */
+  // ---- Acts ----
+  /** The movement under way, for habits to wait on; done before the face it holds, so holds are kept apart. */
   const acting = useRef<Animated.CompositeAnimation | null>(null);
   const holding = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stopAct = useCallback(() => {
@@ -408,7 +377,7 @@ export function SpeakingCharacter({
           look(x, y, 1, LOOK_MS.glance);
           holds.push(later(act.ms * 0.8, () => (following.current ? undefined : lookBack(LOOK_MS.back))));
         } else if (!steady) {
-          // a person's irises are drawn where they look; back to the middle before the act ends
+          // A person's irises are drawn where they look; back to the middle before the act ends.
           const where = act.look;
           holds.push(later(LOOK_MS.glance, () => setActLook(where)));
           holds.push(later(act.ms * 0.8, () => setActLook(null)));
@@ -424,11 +393,11 @@ export function SpeakingCharacter({
     [stopAct, reduce, rig, values, later, look, lookBack, speaker, layers, steady],
   );
 
-  // the latest `play`, for the effects below that should run when what they watch changes and not when it does
+  // The latest `play`, for effects that should run when what they watch changes and not when `play` does.
   const playRef = useRef(play);
   playRef.current = play;
 
-  // a reaction plays when it is given, and each time it changes, as this character plays it; the deer pricks up his ears on arriving
+  // A reaction plays when given and each time it changes, in this character's way; the deer pricks his ears on arrival.
   const arrived = useRef(false);
   useEffect(() => {
     if (reaction) {
@@ -443,11 +412,11 @@ export function SpeakingCharacter({
   }, [reaction, rig, later, resting, speaker]);
   useEffect(() => stopAct, [stopAct]);
 
-  // ---- breathing, and the head's drift ----
+  // ---- Breathing, and the head's drift ----
   useEffect(() => {
     if (reduce || !awake) return;
     const { breathe, sway } = values;
-    // asleep, a breath is slower and deeper
+    // Asleep, a breath is slower and deeper.
     const half = (resting ? RESTING.breathMs : BREATH.ms) / 2;
     const depth = resting ? RESTING.depth : BREATH.depth;
     const breath = Animated.loop(
@@ -474,7 +443,7 @@ export function SpeakingCharacter({
     };
   }, [reduce, awake, values, resting]);
 
-  // ---- resting: the head dips to one side, and comes back up on waking ----
+  // ---- Resting: the head dips to one side, and comes back up on waking ----
   useEffect(() => {
     const to = resting ? RESTING.dip : 0;
     if (reduce) {
@@ -486,17 +455,17 @@ export function SpeakingCharacter({
     return () => settle.stop();
   }, [resting, reduce, values]);
 
-  // ---- a steady look: the deer's pupils turn to whoever it talks with (the people's irises are drawn there) ----
+  // ---- A steady look: the deer's pupils turn to the partner (the people's irises are drawn there) ----
   const steadied = useRef(false);
   useEffect(() => {
-    // and back to the middle when it has nobody to look at any more
+    // And back to centre when there is nobody to look at.
     if (!rig || (!steady && !steadied.current)) return;
     steadied.current = steady;
     following.current = false;
     lookBack(reduce ? 0 : LOOK_MS.to);
   }, [rig, steady, lookBack, reduce]);
 
-  // ---- and the head leans a little their way: a pose, so under Reduce Motion it is simply there ----
+  // ---- The head leans slightly their way: a pose, so under Reduce Motion it is just there ----
   const lean = steady ? leanToward({ x: gazeX, y: gazeY }) : 0;
   useEffect(() => {
     if (reduce) {
@@ -508,9 +477,9 @@ export function SpeakingCharacter({
     return () => turning.stop();
   }, [lean, reduce, values]);
 
-  // ---- habits: blinks for everyone, the deer's glances, and each character's own (an ear, a sniff, a moustache, a wisp of hair) ----
+  // ---- Habits: blinks for everyone, the deer's glances, and each character's own (an ear, a sniff, a moustache, a wisp of hair) ----
   useEffect(() => {
-    // asleep it is still: no blinks, glances, twitches or sniffs
+    // Asleep it is still: no blinks, glances, twitches or sniffs.
     if (!awake || resting) return;
     const habits: ReturnType<typeof setTimeout>[] = [];
     const every = (range: readonly [number, number], run: () => void): void => {
@@ -535,7 +504,7 @@ export function SpeakingCharacter({
       if (Math.random() < HABITS.doubleBlink) blinkOnce(2 * BLINK_STEPS.half + BLINK_STEPS.shut + 120);
     });
     if (rig && !reduce && !steady) {
-      // told where to look, it keeps its eyes there
+      // Told where to look, it keeps its eyes there.
       every(HABITS.glance, () => {
         if (following.current || acting.current) return;
         const target = glanceTarget();
@@ -552,7 +521,7 @@ export function SpeakingCharacter({
     };
   }, [awake, rig, reduce, look, resting, steady, speaker]);
 
-  // ---- following a finger, when it has not been told where to look ----
+  // ---- Following a finger, when it has not been told where to look ----
   const root = useRef<View>(null);
   const placed = useRef<{ x: number; y: number; w: number; h: number; at: number } | null>(null);
   useEffect(() => {
@@ -560,11 +529,11 @@ export function SpeakingCharacter({
     const aim = (point: { x: number; y: number }): void => {
       const box = placed.current;
       if (!box || box.w === 0) return;
-      // in a tile the drawing stands on the foot, centred, `room` smaller than the box measured
+      // In a tile the drawing stands on the foot, centred, `room` smaller than the box measured.
       const inner = 1 - room;
       const eyeX = box.x + box.w * (room / 2 + (flip ? 1 - layers.eyesAt.x : layers.eyesAt.x) * inner);
       const eyeY = box.y + box.h * (room + layers.eyesAt.y * inner);
-      // measured on the screen; `look` turns it round for a character drawn facing the other way
+      // Measured on the screen; `look` turns it round for a character drawn facing the other way.
       const where = lookToward(point.x - eyeX, point.y - eyeY, Math.max(box.w, box.h) * 1.2);
       following.current = true;
       look(where.x, where.y, 1, LOOK_MS.to);
@@ -587,14 +556,14 @@ export function SpeakingCharacter({
     });
   }, [finger, steady, rig, reduce, flip, layers, look, room, resting]);
 
-  // taps close together are one run: a greeting, then a giggle, then a start and a laugh, with a light buzz for that one
+  // Taps close together form one run: a greeting, then a giggle, then a start and a laugh with a light haptic.
   const taps = useRef({ count: 0, at: 0 });
   const greet = (): void => {
     const now = Date.now();
     const count = now - taps.current.at < TAP_RUN_MS ? taps.current.count + 1 : 1;
     taps.current = { count, at: now };
     const [first, then] = tapActs(speaker, count);
-    // the knock of the first tap, as ever; the start on the third is felt as a tick, and nothing louder
+    // The knock of the first tap, as ever; the start on the third is felt as a tick, and nothing louder.
     if (count === 1) haptic('tap');
     else if (then) haptic('select');
     playRef.current(first ?? 'greet');
@@ -602,7 +571,7 @@ export function SpeakingCharacter({
     onPress?.();
   };
 
-  // ---- drawing ----
+  // ---- Drawing ----
   const eyes: EyeState = actEyes ?? (resting ? 'closed' : blink);
   const mouth: MouthShape = live && speech !== 'rest' ? speech : actMouth ?? speech;
   const brows: BrowState = actBrows ?? 'neutral';
@@ -613,10 +582,10 @@ export function SpeakingCharacter({
       transformOrigin: '50% 100%',
       transform: [
         { translateY: Animated.multiply(values.rise, -height) },
-        // a giggle rocks the whole figure about its feet
+        // A giggle rocks the whole figure about its feet.
         { rotate: degrees(values.wiggle) },
         { scaleY: Animated.multiply(values.breathe, values.stretch) },
-        // a crouch spreads a little and a stretch narrows, as something soft does
+        // A crouch spreads a little and a stretch narrows, as something soft does.
         { scaleX: values.stretch.interpolate({ inputRange: [0.9, 1, 1.1], outputRange: [1.06, 1, 0.94] }) },
       ],
     }),
@@ -629,7 +598,7 @@ export function SpeakingCharacter({
     }),
     [layers, values],
   );
-  // a person's open eyes, the irises moved to look, at whoever it talks with or where an act turns them; drawn again only when the look changes
+  // A person's open eyes with irises shifted to look; redrawn only when the look changes.
   const openEyes = useMemo(() => {
     if (rig) return layers.eyes.open;
     if (steady) return irisesMoved(layers.eyes.open, eyeShift(art, { x: gazeX, y: gazeY }));
@@ -656,7 +625,7 @@ export function SpeakingCharacter({
     [values],
   );
 
-  // the deer's ears and nose, each about its own point; made once, so a new mouth does not rebuild them
+  // The deer's ears and nose, each about its own point; made once, so a new mouth does not rebuild them.
   const parts = useMemo(
     () =>
       rig
@@ -668,7 +637,7 @@ export function SpeakingCharacter({
         : null,
     [rig, values],
   );
-  // the near end of Hamo's moustache, lifting about its root, and Xezal's loose hair, swinging about where it parts
+  // The near end of Hamo's moustache, lifting about its root, and Xezal's loose hair, swinging about its parting.
   const moving = useMemo(
     () => ({
       end: layers.moustache ? { transformOrigin: origin(layers.moustache.pivot), transform: [{ rotate: degrees(values.lift) }] } : null,
@@ -710,7 +679,7 @@ export function SpeakingCharacter({
       <Layer xml={eyes === 'open' ? openEyes : layers.eyes[eyes]} width={width} height={height} />
     </>
   );
-  // the brows as they sit (the deer's lids), over the eyes, and the cheeks if they blush
+  // The brows as they sit (the deer's lids), over the eyes, and the cheeks if they blush.
   const expression = (
     <>
       {layers.brows[brows] ? <Layer xml={layers.brows[brows]} width={width} height={height} /> : null}
@@ -738,7 +707,7 @@ export function SpeakingCharacter({
     <View style={[styles.frame, tile, flip && styles.flip]}>
       <View style={[styles.drawn, { left: (boxWidth - width) / 2, width, height }]}>
         {crop === 'full' ? (
-          // the ground under the feet: a soft shadow that shrinks and fades as the figure leaves it
+          // The ground under the feet: a soft shadow that shrinks and fades as the figure leaves it.
           <Animated.View
             pointerEvents="none"
             style={[
@@ -769,7 +738,7 @@ export function SpeakingCharacter({
   );
 
   const label = t(resting ? 'characters.resting' : 'characters.saidBy', { name: CHARACTER_NAMES[speaker] });
-  // where the "z"s start: just above and beside the head, on the side it faces away from
+  // Where the "z"s start: just above and beside the head, on the side it faces away from.
   const inner = 1 - room;
   const eyeX = boxWidth * (room / 2 + (flip ? 1 - layers.eyesAt.x : layers.eyesAt.x) * inner);
   const eyeY = boxHeight * (room + layers.eyesAt.y * inner);
@@ -800,7 +769,7 @@ export function SpeakingCharacter({
   );
 }
 
-/** The "z"s by a resting character's head: three at a time, each growing as it drifts up and away, then gone. */
+/** The "z"s by a resting character's head: three at a time, each growing as it drifts up and away. */
 function Snooze({ x, y, rise, side, reduce, awake }: { x: number; y: number; rise: number; side: 1 | -1; reduce: boolean; awake: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const drift = useRef([new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)]).current;
@@ -823,7 +792,7 @@ function Snooze({ x, y, rise, side, reduce, awake }: { x: number; y: number; ris
   return (
     <View pointerEvents="none" style={[styles.snooze, { left: x, top: y }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {drift.map((value, i) => {
-        // under Reduce Motion, two still "z"s, the second higher and bigger
+        // Under Reduce Motion, two still "z"s, the second higher and bigger.
         const still = { opacity: i === 2 ? 0 : 0.8, transform: [{ translateX: side * i * size * 0.7 }, { translateY: -i * size * 0.9 }, { scale: 0.8 + i * 0.3 }] };
         const moving = {
           opacity: value.interpolate({ inputRange: [0, 0.15, 0.7, 1], outputRange: [0, 0.85, 0.85, 0] }),
@@ -848,7 +817,7 @@ const styles = StyleSheet.create({
   frame: { flex: 1 },
   layer: { position: 'absolute', left: 0, top: 0 },
   flip: { transform: [{ scaleX: -1 }] },
-  // the drawing in its box, on the foot: the whole box but in a tile
+  // The drawing in its box, on the foot: the whole box but in a tile.
   drawn: { position: 'absolute', bottom: 0 },
   shadow: { position: 'absolute' },
   snooze: { position: 'absolute', width: 1, height: 1, overflow: 'visible' },

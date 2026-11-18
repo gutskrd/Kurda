@@ -7,9 +7,9 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 const navigate = vi.fn();
-// the catch-up when the screen comes back into focus (realtime/catchUp) is not under test here
+// The catch-up when the screen comes back into focus (realtime/catchUp) is not under test here.
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }), useFocusEffect: () => undefined }));
-// the thread's live events are not under test here
+// The thread's live events are not under test here.
 vi.mock('./useChatSocket', () => ({ useChatSocket: () => undefined }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { GiftCard } from '@kurda/shared';
@@ -70,12 +70,12 @@ describe('ChatScreen', () => {
           msg({ id: 'm3', kind: 'gift', body: null, gift }),
         ],
       }),
-      // an old invite link is drawn as the game's live card (play/ChatGameCard)
+      // An old invite link is drawn as the game's live card (play/ChatGameCard).
       'GET /play/cards/wordle-battle/abc12345': wordleCard,
     });
     renderWithProviders(<ChatScreen userId="u2" username="" onExit={() => undefined} />);
     expect(await screen.findByText('silav')).toBeTruthy();
-    // the name comes from the conversation when the way in did not bring it
+    // The name comes from the conversation when the way in did not bring it.
     expect(screen.getAllByText('rojda').length).toBeGreaterThan(0);
     expect(screen.getByText('Werin!')).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: 'Join: Pêşbaziya Peyvan' }));
@@ -103,10 +103,10 @@ describe('ChatScreen', () => {
       'POST /gifts/g1/open': ok({ card: { ...gift, myOpened: true }, equippable: 'background' }),
     });
     renderWithProviders(<ChatScreen userId="u2" username="rojda" openGift="g1" onExit={() => undefined} />);
-    // from the banner: the unwrap starts as soon as the thread is here
+    // From the banner: the unwrap starts as soon as the thread is here.
     expect(await screen.findByText('From rojda')).toBeTruthy();
-    // a test's animations end as they start, so the moment has played and the gift is shown, with its buttons
-    // (skipping it part-way is the unwrap's own test, gifts/gifts.test.tsx)
+    // Test animations end as they start, so the moment has played and the gift shows with its buttons (skipping
+    // part-way is tested in gifts/gifts.test.tsx).
     fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Send a gift' }));
@@ -116,9 +116,8 @@ describe('ChatScreen', () => {
 });
 
 describe('ChatScreen reports', () => {
-  // A hold is a real 350 ms long press, then the report sheet slides up in a
-  // Modal: findBy's default one second leaves too little room on a busy CI
-  // runner, so these waits allow for the hold itself.
+  // A hold is a real 350 ms long press followed by the report sheet sliding up in a Modal, so these waits allow
+  // for the hold itself on a busy machine.
   const HOLD = { timeout: 3000 };
   const thread = () =>
     fakeClient({
@@ -132,11 +131,8 @@ describe('ChatScreen reports', () => {
       'GET /play/cards/wordle-battle/abc12345': wordleCard,
     });
   /*
-   * The thread is opened inside act(), so it has loaded and finished drawing
-   * before a finger goes down. A bubble is signed up for presses in an effect
-   * that runs after it is drawn; a hold that began in between — which waiting
-   * only for the bubble to appear allowed, on a busy machine — reached nothing
-   * and never became a long press.
+   * Open the thread inside act(), so it has loaded and drawn before a finger goes down: bubbles register for
+   * presses in an effect after drawing, and a hold begun in between never became a long press.
    */
   const openThread = async (): Promise<void> => {
     testAuth.client = thread();
@@ -149,7 +145,7 @@ describe('ChatScreen reports', () => {
     await openThread();
     fireEvent.mouseDown(screen.getByRole('button', { name: 'A gift from rojda. Tap to open.' }), { button: 0, buttons: 1 });
     expect(await screen.findByText('Report this message', {}, HOLD)).toBeTruthy();
-    // a hold is not a tap: nothing was unwrapped
+    // A hold is not a tap, so nothing was unwrapped.
     expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
   });
 
@@ -157,16 +153,16 @@ describe('ChatScreen reports', () => {
     await openThread();
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Join: Pêşbaziya Peyvan' }), { button: 0, buttons: 1 });
     expect(await screen.findByText('Report this message', {}, HOLD)).toBeTruthy();
-    // and the game did not open
+    // And the game did not open.
     expect(navigate).not.toHaveBeenCalled();
   });
 });
 
 describe('hasControls', () => {
   it('marks the messages a screen reader must reach part by part', () => {
-    // plain words are one element, with Report among its actions
+    // Plain words are one element, with Report among its actions.
     expect(hasControls(msg({}))).toBe(false);
-    // a link to a game the phone opens is a button inside the message
+    // A link to a game the phone opens is a button inside the message.
     expect(hasControls(msg({ body: 'Werin! https://hevalo.app/app/games/wordle-battle?id=abc12345' }))).toBe(true);
     expect(hasControls(msg({ kind: 'gift', body: null, gift }))).toBe(true);
     expect(hasControls(msg({ kind: 'game', body: null }))).toBe(true);

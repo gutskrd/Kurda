@@ -48,10 +48,10 @@ import { Hills } from './components/Hills';
 import { lessonTitle } from './lessonTitle';
 import { CARD } from './valley';
 
-/** Endpoint paths for a playable session — lessons and practice differ only here. */
+/** Endpoint paths for a playable session; lessons and practice differ only here. */
 export interface SessionPaths {
   answers: (sessionId: string) => string;
-  /** a second try at a missed item: graded, never recorded */
+  /** A second try at a missed item: graded, never recorded. */
   retry: (sessionId: string) => string;
   complete: (sessionId: string) => string;
 }
@@ -63,12 +63,9 @@ const LESSON_PATHS: SessionPaths = {
 };
 
 /*
- * The server keeps every answer, and a lesson resumes from it; it does not keep
- * the second tries, which count for nothing. Which of those were asked is kept
- * on the phone for the session, so a lesson opened again after the app was
- * closed does not ask one twice (the shared player's `ResumeMemory`), as the
- * website keeps it for the tab. Losing it costs one extra question, never an
- * answer.
+ * The server keeps every answer for resuming but not the second tries, which count for nothing. Which were asked is
+ * kept on the phone per session (the shared player's `ResumeMemory`), as the website keeps it per tab, so a reopened
+ * lesson does not ask one twice. Losing it costs one extra question, never an answer.
  */
 const reaskedKey = (sessionId: string): string => `hevalo:reasked:${sessionId}`;
 
@@ -88,24 +85,18 @@ function writeReasked(sessionId: string, ids: readonly string[] | null): void {
 }
 
 /** Where a finished lesson can go next, given by whoever opened it. */
-export interface LessonWaysOn {
-  /** open another lesson in this one's place ("Next lesson") */
+interface LessonWaysOn {
+  /** Opens another lesson in this one's place ("Next lesson"). */
   onNext?: (lessonId: string) => void;
-  /** practise these exercises now, in this one's place */
+  /** Practises these exercises now, in this one's place. */
   onPractise?: (exerciseIds: string[]) => void;
-  /** back to the lesson path */
+  /** Back to the lesson path. */
   onPath?: () => void;
 }
 
 /**
- * The lesson player (KUR-029). Loads a session, drives the pure player
- * reducer, renders each exercise type, grades answers server-side, and
- * shows a completion summary. Answers submitted while offline are queued
- * and flushed on reconnect. The core is shared with practice mode (KUR-034)
- * via SessionPlayer.
- *
- * `courseId` is the course it was opened from, so the results can offer the
- * course's next lesson.
+ * The lesson player: loads a session and plays it through SessionPlayer, which it shares with practice. `courseId`
+ * is the course it was opened from, so the results can offer the course's next lesson.
  */
 export function LessonPlayerScreen({
   lessonId,
@@ -118,7 +109,7 @@ export function LessonPlayerScreen({
   const [loaded, setLoaded] = useState<{ view: SessionView; memory: ResumeMemory } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  // the lesson's own name, from its course's map, read beside the session: null while it is on its way, gone if it cannot be had
+  // The lesson's name from its course map: null while loading, undefined if unavailable.
   const [title, setTitle] = useState<string | null | undefined>(courseId ? null : undefined);
 
   useEffect(() => {
@@ -169,10 +160,8 @@ export function LessonPlayerScreen({
 }
 
 /**
- * A lesson or a practice session on its way: the exercise's shape in grey on
- * the lesson's paper under its hills, and the ✕ where the player will have
- * it. Both open as full-screen modals with no header of their own, so without
- * it the only way out of a slow load was to wait for the request to give up.
+ * A lesson or practice session loading: the exercise's shape in grey under the hills, and the ✕ where the player
+ * will have it. Both open as headerless full-screen modals, so this is the only way out of a slow load.
  */
 export function SessionLoading({ onExit }: { onExit: () => void }): React.JSX.Element {
   return (
@@ -201,10 +190,7 @@ function SessionLoadingBody({ onExit }: { onExit: () => void }): React.JSX.Eleme
   );
 }
 
-/**
- * The way out of a lesson, at the start of its bar: a round cream button on
- * the lesson's hairline, a fingertip's reach round a smaller circle.
- */
+/** The way out of a lesson, at the start of its bar: a round cream button reaching a fingertip round a smaller circle. */
 function CloseButton({ label, onPress }: { label: string; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const valley = useValley();
@@ -222,20 +208,16 @@ function CloseButton({ label, onPress }: { label: string; onPress: () => void })
   );
 }
 
-/** How far above the lesson's bar its hills start: the bar sits on the far ridge, as the painted valley has it. */
+/** How far above the lesson's bar its hills start, so the bar sits on the far ridge. */
 const HILLS_ABOVE = 18;
 
 /** How long "No more listening in this lesson" stays, with its Undo. */
 const UNDO_MS = 5000;
 
 /**
- * The playable session core, shared by lessons and practice. Given an
- * initial view and the endpoint paths, it drives the reducer, renders
- * exercises, grades answers (with offline queueing), and shows results.
- *
- * While it is open, an invite to play waits (play/quietInvites.ts): the
- * lesson is the one thing on the screen, and the invite shows the moment the
- * learner leaves it.
+ * The playable session core shared by lessons and practice: given an initial view and endpoint paths, it drives the
+ * reducer, renders exercises, grades answers (queueing them offline), and shows results. Invites wait while it is
+ * open (play/quietInvites.ts).
  */
 export function SessionPlayer(props: SessionPlayerProps): React.JSX.Element {
   return (
@@ -249,21 +231,20 @@ type SessionPlayerProps = {
   view: SessionView;
   paths: SessionPaths;
   onExit: () => void;
-  /** a finished lesson may offer reminders; practice does not */
+  /** A finished lesson may offer reminders; practice does not. */
   offerReminders?: boolean;
-  /** a lesson, or a practice session (which is never called a perfect lesson) */
+  /** A lesson, or a practice session (never called a perfect lesson). */
   kind?: 'lesson' | 'practice';
-  /** what this phone remembers of the session from before (`ResumeMemory`) */
+  /** What this phone remembers of the session from before (`ResumeMemory`). */
   memory?: ResumeMemory;
-  /** the course a lesson was opened from, for its next lesson */
+  /** The course a lesson was opened from, for its next lesson. */
   courseId?: string;
   /**
-   * The lesson's own name, written small in the pomegranate's red over each
-   * question. Null while it is still being looked up: its line is kept, so
-   * nothing moves when it arrives. Absent where there is none (practice).
+   * The lesson's name, written small in red over each question. Null while still loading, with its line kept so
+   * nothing moves when it arrives; absent where there is none (practice).
    */
   title?: string | null;
-  /** what a finished session shows in place of a lesson's results (a test to jump ahead says whether it passed) */
+  /** What a finished session shows instead of a lesson's results (a jump test says whether it passed). */
   renderResults?: (results: SessionResults) => React.ReactNode;
 } & LessonWaysOn;
 
@@ -288,24 +269,21 @@ function SessionPlayerBody({
   const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
   const bottomInset = useScreenBottomInset(spacing.lg);
-  // the way out and the bar read from the right in Soranî and Arabic, as every other screen's header does
+  // The way out and the bar mirror for right-to-left languages, like every screen's header.
   const dir = useDirection();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v, memory));
   const queue = useRef(new AnswerQueue()).current;
-  // right answers in a row (shared `nextRun`), which the chime climbs with, the banner names from the third and the bar warms for
+  // Right answers in a row (shared `nextRun`): the chime climbs with it, the banner names it from the third, and the bar warms.
   const run = useRef(0);
   const [inARow, setInARow] = useState(0);
-  /*
-   * How the verdict on screen is met: the run's milestone it reached, if it
-   * did, and whether it was the first answer given this time — when Hevalo
-   * comes in to react where nobody else is on screen.
-   */
+  // How the verdict on screen is met: the run milestone it reached, if any, and whether it was the first answer given
+  // this time (when Hevalo reacts where nobody else is on screen).
   const answers = useRef(0);
   const [reacting, setReacting] = useState<{ milestone: number | null; first: boolean }>({ milestone: null, first: false });
-  // the last Kurdish praise said, so the next right answer is told something else
+  // The last Kurdish praise used, so the next right answer gets a different one.
   const praised = useRef<string | null>(null);
   const [praise, setPraise] = useState<string | null>(null);
-  // a run's milestone, held on the screen between this exercise and the next
+  // A run milestone, shown between this exercise and the next.
   const [celebrating, setCelebrating] = useState<number | null>(null);
   useQuietInvites(true);
 
@@ -315,25 +293,21 @@ function SessionPlayerBody({
   const [recorded, setRecorded] = useState(false);
   const [selfRating, setSelfRating] = useState<SelfRating | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  /*
-   * An answer that did not get through: 'offline' when there was no
-   * connection (it waits in the queue), 'failed' when the server could not
-   * take it just then. Each says which — "you're offline" to somebody who is
-   * not is the app blaming their phone for its own hiccup.
-   */
+  // An answer that did not get through: 'offline' (queued) or 'failed' (the server could not take it). Each says which,
+  // since telling an online learner "you're offline" would blame their phone for the app's hiccup.
   const [stall, setStall] = useState<'offline' | 'failed' | null>(null);
   const [results, setResults] = useState<SessionResults | null>(null);
   const [skipSpeaking, setSkipSpeaking] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const tipsSlide = useModalSlide();
   const [leaving, setLeaving] = useState(false);
-  // the finished lesson could not be added up (offline, a server hiccup): said, with a retry, never a spinner for ever
+  // The finished lesson could not be totalled (offline, a server hiccup): say so with a retry, never an endless spinner.
   const [completeFailed, setCompleteFailed] = useState(false);
   const [completeAttempt, setCompleteAttempt] = useState(0);
 
   const ex = currentExercise(state);
 
-  // this sitting, for the results' time: from the first exercise shown to the last answer (a resumed lesson counts only this time)
+  // This sitting, for the results' time: from the first exercise shown to the last answer (only this time, if resumed).
   const shownAt = useRef<number | null>(null);
   const [sitting, setSitting] = useState<{ ms: number; answers: number } | null>(null);
   useEffect(() => {
@@ -344,17 +318,16 @@ function SessionPlayerBody({
     }
   }, [ex, state.status]);
 
-  // what a finished lesson is compared with (moments.ts): the level, the
-  // streak, today's goal and the league as they stood when it opened
+  // What a finished lesson is compared with (moments.ts): level, streak, today's goal and league as they stood at the start.
   const before = useRef<Standing | null>(null);
   const [moments, setMoments] = useState<LessonMoments>(NO_MOMENTS);
-  // where a finished lesson can go next: the course's next lesson, and whether today's goal is met
+  // Where a finished lesson can go next: the course's next lesson, and whether today's goal is met.
   const [next, setNext] = useState<{ lessonId: string; title: string } | null>(null);
   const [goalDone, setGoalDone] = useState(false);
-  // "no more listening in this lesson", said with its Undo for a few seconds after it was asked for
+  // "No more listening in this lesson", shown with its Undo for a few seconds after it was chosen.
   const [awayAt, setAwayAt] = useState<number | null>(null);
 
-  // the second tries asked so far, kept on the phone until the lesson is finished
+  // The second tries asked so far, kept on the phone until the lesson is finished.
   useEffect(() => {
     if (kind === 'lesson') writeReasked(view.sessionId, state.status === 'finished' ? null : state.reasked);
   }, [kind, view.sessionId, state.reasked, state.status]);
@@ -365,7 +338,7 @@ function SessionPlayerBody({
     return () => clearTimeout(id);
   }, [awayAt]);
 
-  // learner's course-wide "skip speaking" preference (KUR-036), and where they stand
+  // The learner's course-wide "skip speaking" preference, and their standing.
   useEffect(() => {
     void readStanding(client, isGuest).then(({ standing, skipSpeaking: skip }) => {
       before.current = standing;
@@ -373,15 +346,14 @@ function SessionPlayerBody({
     });
   }, [client, isGuest]);
 
-  // auto-skip speaking exercises when the learner has opted out. One that is
-  // about to be passed over is never drawn: it would open its microphone for
-  // a frame, and then be seen sliding away as if it had been asked.
+  // Speaking exercises are skipped when the learner opted out. One about to be skipped is never drawn, since it would
+  // open its microphone for a frame and then slide away as if it had been asked.
   const passedOver = ex?.type === 'speaking' && skipSpeaking && state.status === 'answering';
   useEffect(() => {
     if (passedOver) dispatch({ type: 'SKIP' });
   }, [ex, passedOver]);
 
-  // reset the input whenever a new exercise comes on screen
+  // Reset the input whenever a new exercise comes on screen.
   useEffect(() => {
     setChoice(null);
     setText('');
@@ -397,7 +369,7 @@ function SessionPlayerBody({
       case 'multiple_choice':
         return { type: 'multiple_choice' as const, choice };
       case 'conversation':
-        // the question after it is chosen as a multiple-choice answer is
+        // The question after it is answered like a multiple-choice item.
         return { type: 'conversation' as const, choice };
       case 'translate':
         return { type: 'translate' as const, text };
@@ -423,16 +395,15 @@ function SessionPlayerBody({
       case 'writing':
         return draft.text.trim().length > 0;
       case 'speaking':
-        // recorded, heard beside the model, and rated
+        // Recorded, heard beside the model, and rated.
         return draft.recorded && draft.selfRating !== null;
       case 'match_pairs':
         return draft.matches.length === (ex.lefts?.length ?? 0);
     }
   }, [ex, draft]);
 
-  // finish → complete the session and show results; then ask again where
-  // things stand, for what else this lesson did (a goal met, a new level, the
-  // league), and read the course again for the lesson that comes next
+  // Finished: complete the session and show results, then re-read the standing for what else the lesson did (a goal
+  // met, a new level, the league), and the course map for the next lesson.
   useEffect(() => {
     if (state.status !== 'finished' || results) return;
     setCompleteFailed(false);
@@ -442,7 +413,7 @@ function SessionPlayerBody({
         return;
       }
       setResults(res.data);
-      // results of its own: nothing a lesson's moments compare
+      // Custom results compare no lesson moments.
       if (renderResults) return;
       const streakNow: StreakMark = { current: res.data.streak.current, lastActiveOn: res.data.streak.lastActiveOn };
       const outcome = { kind, accuracy: res.data.accuracy, skipped: state.skipped.length };
@@ -456,24 +427,21 @@ function SessionPlayerBody({
         });
       }
     });
-    // once as the session finishes, and again on a retry
+    // Once as the session finishes, and again on a retry.
   }, [state.status, results, client, view.sessionId, paths, completeAttempt]);
 
-  // what was typed, so the feedback can set it beside the right answer
+  // What was typed, so the feedback can show it beside the right answer.
   const given =
     draft?.type === 'translate' || draft?.type === 'listening' || draft?.type === 'writing' ? draft.text.trim() : undefined;
   const reask = isReask(state);
-  // how the answer on screen was graded, for the exercise to answer back with
+  // How the answer on screen was graded, for the exercise to react to.
   const verdict = state.feedback ? (state.feedback.accepted ? 'right' : 'wrong') : null;
-  // a picture item's right answer is a picture, already checked where it stands: its name in the bar would be the catalogue's id
+  // A picture answer is already checked where it stands; its name in the bar would be a catalogue id.
   const picture = ex?.ask === 'picture';
   const shownFeedback = useMemo(() => (state.feedback && picture ? { ...state.feedback, correction: undefined } : state.feedback), [state.feedback, picture]);
 
-  /*
-   * A verdict arriving: felt and heard (`feelAnswer`), the run counted on, and
-   * what it is met with decided — a run's milestone, Hevalo on the first
-   * answer, a word of Kurdish praise for a right one.
-   */
+  // A verdict arriving: haptic and sound (`feelAnswer`), the run updated, and its reaction chosen: a run milestone,
+  // Hevalo on the first answer, or Kurdish praise for a right one.
   const heard = (feedback: Pick<Feedback, 'exerciseType' | 'accepted' | 'verdict'>): void => {
     feelAnswer(feedback, run);
     setInARow(run.current);
@@ -485,7 +453,7 @@ function SessionPlayerBody({
     setPraise(word);
   };
 
-  /** "Can't listen now" / "Can't speak now": this one, and every one of its kind still to come in the lesson. */
+  /** "Can't listen now" / "Can't speak now": this exercise and every one of its kind left in the lesson. */
   const putOff = (type: PutAwayType): void => {
     dispatch({ type: 'SKIP', all: type });
     setAwayAt(Date.now());
@@ -495,8 +463,7 @@ function SessionPlayerBody({
     if (!ex || !draft || submitting) return;
     setSubmitting(true);
     const body = { exerciseId: ex.id, answer: encodeAnswer(draft) };
-    // a second try at a miss is graded and never recorded, so it is not queued
-    // for later either: offline, the learner simply tries again
+    // A second try is graded and never recorded, so it is not queued either; offline, the learner simply tries again.
     if (reask) {
       const res = await client.post<RetryResult>(paths.retry(view.sessionId), body);
       setSubmitting(false);
@@ -505,8 +472,7 @@ function SessionPlayerBody({
         heard({ exerciseType: ex.type, accepted: res.data.accepted, verdict: res.data.verdict });
         dispatch({ type: 'ANSWERED', result: res.data, given });
       }
-      // refused (the session ended, say): the second try counts for nothing,
-      // so it is let go rather than asked over and over
+      // Refused (the session ended, say): the second try counts for nothing, so it is dropped rather than retried.
       else if (res.error.kind === 'client') dispatch({ type: 'SKIP' });
       else setStall(res.error.kind === 'network' ? 'offline' : 'failed');
       return;
@@ -514,7 +480,7 @@ function SessionPlayerBody({
     const res = await client.post<AnswerResult>(paths.answers(view.sessionId), body);
     setSubmitting(false);
     if (res.ok) {
-      // a retry that went through puts the verdict back where the retry was
+      // A retry that went through puts the verdict back where the retry was.
       setStall(null);
       heard({ exerciseType: ex.type, accepted: res.data.accepted, verdict: res.data.verdict });
       dispatch({ type: 'ANSWERED', result: res.data, given });
@@ -522,7 +488,7 @@ function SessionPlayerBody({
       queue.enqueue({ exerciseId: ex.id, answer: body.answer });
       setStall('offline');
     } else {
-      setStall('failed'); // surface a retry for transient server errors too
+      setStall('failed'); // Offer a retry for transient server errors too.
     }
   }, [ex, draft, submitting, client, view.sessionId, queue, paths, reask, given]);
 
@@ -548,7 +514,7 @@ function SessionPlayerBody({
     }
   }, [queue, client, view.sessionId, paths, check, given, ex]);
 
-  // pairs answered as they are made (`pairOf`): the last one made sends the answer itself, once, with no Check
+  // Pairs graded as made (`pairOf`): the last pair submits the answer itself, once, with no Check.
   const answersItself = ex?.type === 'match_pairs' && pairKey(ex.lefts ?? [], ex.rights ?? [], ex.pairOf) !== null;
   const sentItself = useRef<number | null>(null);
   useEffect(() => {
@@ -557,17 +523,15 @@ function SessionPlayerBody({
     void check();
   }, [answersItself, canCheck, state.status, state.index, check]);
 
-  /** On from a verdict — by way of a run's milestone, when it reached one. */
+  /** On from a verdict, via a run milestone when one was reached. */
   const goOn = (): void => {
     if (reacting.milestone !== null && celebrating === null) setCelebrating(reacting.milestone);
     else dispatch({ type: 'CONTINUE' });
   };
 
   /*
-   * The ✕ before anything is answered just goes. After that it asks once,
-   * saying how far the lesson has come and that nothing is lost — the answers
-   * stay on the server and the lesson opens where it stopped — so a stray tap
-   * near the corner does not end it, and leaving is never made to feel bad.
+   * The ✕ before any answer just leaves. After that it asks once, saying how far the lesson has come and that
+   * nothing is lost (answers stay on the server and the lesson resumes), so a stray tap does not end it.
    */
   const quit = () => {
     if (state.answeredCount === 0) {
@@ -576,7 +540,7 @@ function SessionPlayerBody({
     }
     setLeaving(true);
   };
-  // Android's back is the ✕ too, asking the same once something is answered; a finished session's results go as they please
+  // Android's back acts as the ✕, asking the same once something is answered; a finished session's results leave freely.
   useHardwareBack(state.status === 'finished' ? null : quit);
 
   if (state.status === 'finished' && results && renderResults) return <GradientBackground>{renderResults(results)}</GradientBackground>;
@@ -587,7 +551,7 @@ function SessionPlayerBody({
           results={results}
           exercises={state.exercises}
           skipped={state.skipped.length}
-          // a lesson finished can be shared, by its name where the map gave it; a review is practice and is not
+          // A finished lesson can be shared by its name where the map gave it; a review is practice and cannot.
           lesson={kind === 'lesson' ? { title: title ?? null } : null}
           moments={moments}
           offerReminders={offerReminders}
@@ -623,14 +587,10 @@ function SessionPlayerBody({
   }
 
   /*
-   * Somebody on screen already reacts to the verdict when the exercise has a
-   * character of its own: whoever asks a question, a translation or a
-   * listening clip from beside its speech bubble (Hevalo, when nobody says
-   * it), a speaking model's on its stage, a conversation's — or the banner's
-   * own, beside "Hear it". Otherwise Hevalo comes in: on the first answer, at
-   * every miss (curious, never sad) and at a run's milestone — not at every
-   * right answer, so the moment keeps its value. A spoken answer is the
-   * learner's own rating, and is left to them.
+   * Someone on screen already reacts when the exercise has its own character: the asker beside a speech bubble, a
+   * speaking model on its stage, a conversation's cast, or the banner's "Hear it" speaker. Otherwise Hevalo comes in
+   * on the first answer, at every miss and at run milestones, but not at every right answer, so it keeps its value. A
+   * spoken answer is the learner's own rating and gets no reaction.
    */
   const staged =
     ex?.type === 'listening' ||
@@ -639,9 +599,9 @@ function SessionPlayerBody({
     (ex?.type === 'speaking' && !!ex.modelAudioUrl && knownVoice(ex.modelAudioVoice) !== null) ||
     (ex?.type === 'conversation' && conversationCast(ex.speakers ?? []) !== null);
   const fb = state.feedback;
-  // the words this question brings in, said over it in the lesson name's place: in a lesson, and the first time it is asked
+  // The words this question introduces, shown in the lesson name's place: in a lesson, the first time it is asked.
   const fresh: NewWord[] | null = kind === 'lesson' && !reask && ex?.newWords && ex.newWords.length > 0 ? ex.newWords : null;
-  // a lesson that brings in new words keeps the kicker's line as tall as their badge, so nothing moves as it comes and goes
+  // A lesson with new words keeps the kicker line as tall as their badge, so nothing moves as it comes and goes.
   const badged = kind === 'lesson' && state.exercises.some((e) => (e.newWords?.length ?? 0) > 0);
   const standIn: CharacterReaction | null =
     !fb || staged || fb.exerciseType === 'speaking'
@@ -651,13 +611,13 @@ function SessionPlayerBody({
         : reacting.first || reacting.milestone !== null
           ? 'cheer'
           : null;
-  // what kind of slip a typed answer was, when it was one thing (shared `typedHint`)
+  // The kind of slip a typed answer was, when it was a single one (shared `typedHint`).
   const typed = fb?.exerciseType === 'translate' || fb?.exerciseType === 'writing' || fb?.exerciseType === 'listening';
   const hint =
     fb && typed && fb.verdict !== 'correct' && fb.given !== undefined && fb.correction
       ? hintWords(typedHint(fb.given, fb.correction, ex?.dialect ?? view.dialect), t)
       : null;
-  // a run of right answers long enough to be named, and to warm the bar
+  // A run long enough to be named and to warm the bar.
   const running = inARow >= RUN_SHOWN_FROM;
   const putOffLink =
     (ex?.type === 'listening' || ex?.type === 'speaking') && state.status === 'answering'
@@ -666,14 +626,14 @@ function SessionPlayerBody({
 
   return (
     <GradientBackground>
-      {/* the Check button rides above the keyboard while an answer is typed, rather than under it */}
+      {/* Check rides above the keyboard while an answer is typed. */}
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/* the valley's hills behind the bar and the lesson's name, drawn first so everything sits over them */}
+        {/* The hills behind the bar and the lesson's name, drawn first so everything sits over them. */}
         <Hills top={topInset - HILLS_ABOVE} />
         <View style={[styles.header, { flexDirection: dir.row, paddingTop: topInset }]}>
           <CloseButton label={t('lesson.quit')} onPress={quit} />
           <View style={styles.progressWrap}>
-            {/* a run of right answers, named from the third over the bar it warms: the chime has been climbing, and this says why */}
+            {/* A run of right answers, named from the third over the bar it warms. */}
             {running ? <RunLabel count={inARow} end={dir.row === 'row-reverse'} /> : null}
             <ProgressBar value={progress(state)} warm={running} />
           </View>
@@ -684,7 +644,7 @@ function SessionPlayerBody({
               accessibilityLabel={t('lesson.grammarTips')}
               style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
             >
-              {/* a cream pill on the hairline, as the way out is */}
+              {/* A cream pill on the hairline, like the way out. */}
               <View style={[styles.pill, { backgroundColor: valley.card, borderColor: valley.line }]}>
                 <Icon name="lightbulb" size={18} color={colors.goldText} />
               </View>
@@ -705,7 +665,7 @@ function SessionPlayerBody({
 
       {view.grammarMd ? (
         <Modal visible={showTips} animationType={tipsSlide} onRequestClose={() => setShowTips(false)}>
-          {/* the tips are a screen of their own over the lesson: nothing in the lesson caps their reach */}
+          {/* The tips are a screen of their own over the lesson, so nothing in it caps their reach. */}
           <ReachReset>
             <GrammarTips source={view.grammarMd} onClose={() => setShowTips(false)} />
           </ReachReset>
@@ -714,12 +674,12 @@ function SessionPlayerBody({
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {fresh ? (
-          // a new word in this question: said where the lesson's name is, in a line as tall, so nothing under it moves
+          // A new word in this question, shown in the lesson name's place in a line as tall, so nothing under it moves.
           <View style={[styles.kickerRow, styles.badged]}>
             <NewWordBadge words={fresh} />
           </View>
         ) : title !== undefined ? (
-          // the lesson's name over its questions, which stays where it is as they turn; its line is kept while it is on its way
+          // The lesson's name over its questions, staying put as they turn; its line is kept while it loads.
           <View style={[styles.kickerRow, badged && styles.badged]}>
             <Text style={[styles.kicker, dir.free, { color: valley.redText }]} numberOfLines={1} testID="lesson-title">
               {title ?? ' '}
@@ -727,12 +687,8 @@ function SessionPlayerBody({
           </View>
         ) : null}
         {/*
-          One question leaves and the next arrives, the way the intro's slides
-          and the steps of signing in turn, where an exercise used to be
-          replaced by the next between two frames. Only the exercise turns:
-          the bar above and the verdict's footer below stay where they are.
-          Each step is a slide of its own, held as it leaves rather than
-          drawn again, so it goes exactly as it stood (ExerciseSlide).
+          Only the exercise turns, as the intro's slides do; the bar above and the footer below stay. Each step is its own
+          slide, held as it leaves rather than redrawn, so it goes exactly as it stood (ExerciseSlide).
         */}
         <SlideSwap id={String(state.index)} direction="forward" mirrored={dir.rtl} held>
           {ex && !passedOver ? (
@@ -760,7 +716,7 @@ function SessionPlayerBody({
       </ScrollView>
 
         {stall ? (
-          // a card to press: it gives under the finger, so asking again is answered before the server is
+          // It gives under the finger, so the tap is answered before the server is.
           <PressableScale
             onPress={retry}
             disabled={submitting}
@@ -801,7 +757,7 @@ function SessionPlayerBody({
           />
         )}
         {celebrating !== null ? (
-          // a run's milestone, over the lesson for a moment between this exercise and the next
+          // A run milestone, over the lesson between this exercise and the next.
           <RunMoment
             count={celebrating}
             onDone={() => {
@@ -815,10 +771,7 @@ function SessionPlayerBody({
   );
 }
 
-/**
- * Something the lesson needed did not come — the lesson itself, or its
- * results. Said plainly, with the one thing that may fix it and a way out.
- */
+/** Something the lesson needed did not arrive (the lesson or its results), said plainly with a retry and a way out. */
 function Stuck({ title, detail, onRetry, onExit }: { title: string; detail?: string; onRetry: () => void; onExit: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -837,11 +790,9 @@ function Stuck({ title, detail, onRetry, onExit }: { title: string; detail?: str
 }
 
 /**
- * Felt and heard as the verdict arrives (`answerFeel`): crisp when right, a
- * gentle double when not. A right answer's chime climbs a step for each one
- * in a row (`run`, counted per lesson by the shared `nextRun`); a miss starts
- * the run again, and a spoken answer — the learner's own rating — leaves it
- * where it was.
+ * The verdict's haptic and sound (`answerFeel`): crisp when right, a gentle double when not. The right-answer chime
+ * climbs a step per answer in a row (`run`, via shared `nextRun`); a miss resets the run, and a spoken answer leaves
+ * it unchanged.
  */
 function feelAnswer(feedback: Pick<Feedback, 'exerciseType' | 'accepted'>, run: { current: number }): void {
   const feel = answerFeel(feedback.exerciseType, feedback.accepted);
@@ -867,11 +818,7 @@ function hintWords(hint: TypedHint | null, t: (key: TranslationKey, params?: Rec
   }
 }
 
-/**
- * "e → ê": the letter written, and the one it should be. The arrow follows the
- * letters' own script, so it points from the one to the other however the
- * line around it runs: Soranî's letters read from the right.
- */
+/** "e → ê": the letter written and the one expected, with the arrow following the letters' script so it points right in Soranî. */
 function pairText([from, to]: [string, string]): string {
   return ARABIC_SCRIPT.test(to) ? `${from} ← ${to}` : `${from} → ${to}`;
 }
@@ -895,10 +842,8 @@ interface LeagueReply {
 }
 
 /**
- * `/me`, `/me/daily-goal` and `/me/league`, read together: where the learner
- * stands, for `lessonMoments`. The league counts only while the learner races
- * in one — never in their own week, never opted out. A guest is in no league
- * and is refused the question, so for one it is not asked.
+ * `/me`, `/me/daily-goal` and `/me/league` read together, for `lessonMoments`. The league counts only while the
+ * learner races in one. Guests are refused the league, so for them it is not requested.
  */
 async function readStanding(client: ApiClient, guest = false): Promise<{ standing: Standing | null; skipSpeaking: boolean }> {
   const [me, goal, league] = await Promise.all([
@@ -929,19 +874,19 @@ async function readStanding(client: ApiClient, guest = false): Promise<{ standin
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
-  // under the ✕, where the player's exercise will start
+  // Under the ✕, where the player's exercise will start.
   loading: { flex: 1, gap: spacing.lg, padding: spacing.lg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    // over a run's milestone, which covers the rest of the lesson
+    // Over a run milestone, which covers the rest of the lesson.
     zIndex: 2,
     gap: spacing.sm + 4,
     paddingHorizontal: layout.gutter,
     paddingTop: spacing.xl,
     paddingBottom: spacing.sm,
   },
-  // a fingertip's reach round the 36-point circle or pill drawn in it; the row's own gap does the spacing
+  // A fingertip's reach round the 36-point circle or pill; the row's own gap does the spacing.
   headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: -spacing.xs },
   round: { width: 36, height: 36, borderRadius: radii.pill, borderWidth: CARD.edge, alignItems: 'center', justifyContent: 'center' },
   pill: { height: 36, paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill, borderWidth: CARD.edge, alignItems: 'center', justifyContent: 'center' },
@@ -949,10 +894,10 @@ const styles = StyleSheet.create({
   reask: { fontSize: typography.sizes.sm, paddingHorizontal: layout.gutter },
   progressWrap: { flex: 1 },
   body: { paddingHorizontal: layout.gutter, paddingTop: spacing.md + 6, paddingBottom: spacing.lg, flexGrow: 1 },
-  // the lesson's name: small, tracked capitals in the pomegranate's red, just over the question
+  // The lesson's name: small tracked capitals in red, just over the question.
   kicker: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase' },
   kickerRow: { justifyContent: 'center', marginBottom: spacing.xs },
-  // the kicker's line, as tall as the new word's badge that takes its place on some questions
+  // The kicker's line, as tall as the "New word" badge that replaces it on some questions.
   badged: { minHeight: BADGE },
   tallying: { fontSize: typography.sizes.md },
   leaveBody: { fontSize: typography.sizes.md, lineHeight: 22 },

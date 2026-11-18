@@ -6,24 +6,16 @@ import { assetUrl } from '../api/env';
 import type { DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * The pictures an admin has put in place of the app's own art: a badge, a rank
- * or league emblem, a season frame, a default profile picture, an event's
- * banner (shared `art-slots.ts`).
+ * The pictures an admin has set in place of the app's own art: badges, rank and league emblems, season frames,
+ * default profile pictures and event banners (shared `art-slots.ts`).
  *
- * One list for the whole app, kept here rather than in a context, so every
- * medallion on a screen can look its slot up with one call wherever it is
- * drawn. It is read from the copy kept on the phone as the app starts, asked
- * of the server (`GET /art/overrides`, which needs no session) once, and again
- * when the app comes back to the front after a quarter of an hour. A request
- * that fails keeps the list the phone already had: a picture never disappears
- * because a train went into a tunnel, and nothing here throws into a screen.
+ * One app-wide list in a module rather than a context, so any medallion can look up its slot in one call. It
+ * loads from the stored copy at startup, then from `GET /art/overrides` (no session needed), and again on
+ * returning to the foreground after 15 minutes. A failed request keeps the current list, and nothing here throws
+ * into a screen. A slot missing from the list draws the built-in art.
  *
- * A slot that is not in the list is drawn from the art that ships, exactly as
- * it was before there was a list at all.
- *
- * Nothing here loads React Native or the device's storage itself: they are
- * handed in where the app boots (ArtOverridesLoader.tsx), so the profile
- * picture's address, which reads this list, stays plain code a test can run.
+ * React Native and device storage are injected at boot (ArtOverridesLoader.tsx), so code that reads this list
+ * (the profile picture address) stays testable as plain code.
  */
 
 /** Where the copy on the phone is kept. */
@@ -37,7 +29,7 @@ let overrides: ArtOverrides = EMPTY;
 let version: string | null = null;
 /** When the server last answered (ms); 0 before it ever has. */
 let fetchedAt = 0;
-/** A list from the server has arrived, so the copy on the phone is older and must not replace it. */
+/** A server list has arrived, so the older stored copy must not replace it. */
 let fresh = false;
 let restoring: Promise<void> | null = null;
 let fetching: Promise<void> | null = null;
@@ -55,9 +47,8 @@ function subscribe(listener: () => void): () => void {
 const snapshot = (): ArtOverrides => overrides;
 
 /**
- * A list as the server (or the copy on the phone) gave it, or null when it is
- * not one. Each slot must be a slot's name and each picture an address the
- * phone can load; anything else is left out rather than drawn as a hole.
+ * A list as the server or the stored copy gave it, or null if it is not one. Entries with an unknown slot or an
+ * unloadable address are dropped.
  */
 function readList(value: unknown): { version: string; overrides: ArtOverrides } | null {
   if (!value || typeof value !== 'object') return null;
@@ -85,7 +76,7 @@ function sameList(a: ArtOverrides, b: ArtOverrides): boolean {
   return keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k]);
 }
 
-/** The copy kept on the phone, for the moments before the server has answered (and for when it cannot). */
+/** The stored copy, for before the server answers or when it cannot. */
 export function restoreArtOverrides(store: DeviceStore): Promise<void> {
   restoring ??= store
     .get(ART_OVERRIDES_KEY)
@@ -95,15 +86,12 @@ export function restoreArtOverrides(store: DeviceStore): Promise<void> {
       if (list) apply(list);
     })
     .catch(() => {
-      // a copy that cannot be read is no copy: the art that ships is drawn until the server answers
+      // A copy that cannot be read is no copy: the art that ships is drawn until the server answers.
     });
   return restoring;
 }
 
-/**
- * Ask the server for the list. One request at a time; an answer that is not
- * a list, or no answer at all, leaves the list as it was. Never rejects.
- */
+/** Fetch the list, one request at a time. Anything but a valid list leaves the current one. Never rejects. */
 export function refreshArtOverrides(client: ApiClient, store: DeviceStore, now: () => number = Date.now): Promise<void> {
   fetching ??= (async () => {
     try {
@@ -112,10 +100,10 @@ export function refreshArtOverrides(client: ApiClient, store: DeviceStore, now: 
       if (!list) return;
       fresh = true;
       fetchedAt = now();
-      // kept for the next start only when it changed: the same list is already the copy on the phone
+      // Kept for the next start only when it changed: the same list is already the copy on the phone.
       if (apply(list)) await store.set(ART_OVERRIDES_KEY, JSON.stringify({ version: list.version, overrides: list.overrides }));
     } catch {
-      // the list the phone had stays: nothing a screen draws depends on this succeeding
+      // The list the phone had stays: nothing a screen draws depends on this succeeding.
     } finally {
       fetching = null;
     }
@@ -128,10 +116,8 @@ interface AppStateLike {
 }
 
 /**
- * Start keeping the list, where the app boots: the copy on the phone first,
- * then the server's, then the server's again whenever the app comes back to
- * the front with a list more than a quarter of an hour old. Answers the
- * function that stops listening.
+ * Start keeping the list at boot: the stored copy, then the server's, refreshed on returning to the foreground
+ * when it is more than 15 minutes old. Returns a function that stops listening.
  */
 export function startArtOverrides(
   client: ApiClient,
@@ -149,20 +135,19 @@ export function artOverrides(): ArtOverrides {
   return overrides;
 }
 
-/** The uploaded picture for a slot as the list stands, outside React; null to draw the art that ships. */
+/** The uploaded picture for a slot, outside React; null means draw the built-in art. */
 export function artOverride(family: ArtSlotFamily, key: string | null | undefined, level?: string | null): string | null {
   return key ? overrideFor(overrides, family, key, level) : null;
 }
 
-/** The whole list, kept current: for a component that looks up slots it only knows of later (a profile picture's address). */
+/** The whole list, kept current, for a component that only learns its slots later (a profile picture's address). */
 export function useArtOverrides(): ArtOverrides {
   return useSyncExternalStore(subscribe, snapshot, snapshot);
 }
 
 /**
- * The uploaded picture for a slot, kept current as the list arrives or
- * changes; null to draw the art that ships. A level's own picture wins over
- * the one for every level (`overrideFor`).
+ * The uploaded picture for a slot, kept current; null means draw the built-in art. A level's own picture wins
+ * over the all-levels one (`overrideFor`).
  */
 export function useArtOverride(family: ArtSlotFamily, key: string | null | undefined, level?: string | null): string | null {
   const read = (): string | null => artOverride(family, key, level);

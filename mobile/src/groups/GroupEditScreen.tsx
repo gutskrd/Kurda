@@ -23,15 +23,9 @@ import { Loading } from '../theme/Loading';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * Change how a group presents itself, as its owner or an admin: its picture,
- * its name and what it is about.
- *
- * The picture changes the moment one is chosen — it is its own act, as it is
- * on a profile — and the words change on Save, which stays grey until there is
- * something new to save and the name is long enough, and is violet, as what
- * can be pressed is, once there is. Each field says how much
- * room is left. What the server refuses (a word not allowed here, a role taken
- * away meanwhile) is said in words under the fields, and nothing is lost.
+ * Change a group's picture, name and description, as its owner or an admin. The picture changes as soon as one is
+ * chosen; the words change on Save, which is enabled once there is something new and the name is long enough. What the
+ * server refuses is said under the fields, and nothing typed is lost.
  */
 export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -46,7 +40,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // the group could not be read at all: said, with the way to ask again
+  // The group could not be read at all: said, with the way to ask again.
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -67,7 +61,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
     return () => {
       active = false;
     };
-    // a retry reads the group again
+    // A retry reads the group again.
   }, [client, groupId, attempt]);
 
   const editable = canEditGroup(detail?.myRole ?? null);
@@ -91,7 +85,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
   };
 
   const pickPhoto = async (): Promise<void> => {
-    // the system picker hands back only the chosen picture, so there is no permission to ask for
+    // The system picker hands back only the chosen picture, so there is no permission to ask for.
     const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.85 });
     const asset = picked.canceled ? null : picked.assets[0];
     if (!asset) return;
@@ -177,7 +171,8 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
                   </View>
                 )}
               </Pressable>
-              {/* drawn 32 tall round its line, so the Pressable reaches it to a fingertip; 12 under the picture keeps it clear of the camera badge */}
+              {/* Drawn 32pt tall round its line so the Pressable's reach makes it a fingertip; 12pt under the picture
+                 clears the camera badge. */}
               <Pressable
                 onPress={photoChoices}
                 disabled={!editable || uploading}
@@ -216,7 +211,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
   );
 }
 
-/** A labelled field with how much of it is used, the count turning to the warning colour only at the end. */
+/** A labelled field with its used length, turning to the warning colour only near the limit. */
 function Field({
   label,
   value,
@@ -270,7 +265,7 @@ const styles = StyleSheet.create({
   saveText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   photo: { alignItems: 'center', gap: spacing.sm + 4, paddingTop: spacing.md },
   uploading: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: Math.round(PHOTO * 0.22), alignItems: 'center', justifyContent: 'center' },
-  // a small camera badge at the picture's corner: the picture is the button
+  // A small camera badge at the picture's corner: the picture is the button.
   camera: {
     position: 'absolute',
     end: -4,

@@ -10,45 +10,37 @@ import {
 } from '@kurda/shared';
 
 /**
- * Collects the app's crashes and sends them to the API in small batches
- * (POST /client-errors; shapes and limits in `@kurda/shared` client-errors.ts).
+ * Collects crashes and sends them to the API in small batches (POST /client-errors; shapes and limits in
+ * `@kurda/shared` client-errors.ts). It must never make things worse:
  *
- * Three rules shape it, all about the reporter never making things worse:
- *
- * - It cannot loop. Nothing in here throws: a report that cannot be built, an
- *   answer that never comes and a request that fails are all let go, and a
- *   failed request is not reported, so a broken network cannot turn into a
- *   report about the report.
- * - It cannot flood. A burst of errors (a render that throws on every frame) is
- *   one report with a count, sent once per launch; reports wait a few seconds
- *   to travel together; batches are spaced out; and one launch sends only a
- *   handful. The server limits each network as well.
- * - It says nothing about the person. Only the error, the screen's route name
- *   and the build are sent, each cleaned and cut to its limit here; the request
- *   carries no token and no device id.
+ * - No loops: nothing here throws, and a failed request is dropped rather than reported.
+ * - No floods: a burst of identical errors is one report with a count, sent once per launch; reports wait a few
+ *   seconds to batch, batches are spaced out, and a launch sends only a handful. The server rate-limits too.
+ * - No personal data: only the error, the route name and the build, each sanitised and truncated here; no token
+ *   and no device id.
  */
 
 export interface ReporterOptions {
-  /** off in development, where the error is on the screen already */
+  /** Off in development, where the error is on the screen already. */
   enabled: boolean;
-  /** delivers one batch; whatever it answers or throws is ignored */
+  /** Delivers one batch; whatever it answers or throws is ignored. */
   send: (batch: ClientErrorBatch) => Promise<unknown>;
-  /** the platform and the build, read when a batch is made */
+  /** The platform and the build, read when a batch is made. */
   about: () => Omit<ClientErrorBatch, 'reports'>;
-  /** how long the first report waits for others to travel with it */
+  /** How long the first report waits for others to travel with it. */
   batchDelayMs?: number;
-  /** the least time between two batches */
+  /** The least time between two batches. */
   minGapMs?: number;
-  /** batches one launch may send */
+  /** Batches one launch may send. */
   maxBatches?: number;
   now?: () => number;
 }
 
 export interface CaptureContext {
   kind: ClientErrorKind;
-  /** the app is about to close because of it */
+  /** The app is about to close because of it. */
   fatal: boolean;
-  /** which components were rendering, for a render that threw */
+  /** Which components were rendering, for a render that threw. */
   componentStack?: string;
 }
 
@@ -58,9 +50,9 @@ export const REPORT_MAX_BATCHES = 5;
 
 export class CrashReporter {
   private readonly options: Required<ReporterOptions>;
-  /** waiting to be sent, one per distinct error */
+  /** Waiting to be sent, one per distinct error. */
   private readonly pending = new Map<string, ClientErrorReport>();
-  /** errors already sent this launch: a repeat adds nothing the first did not say */
+  /** Errors already sent this launch: a repeat adds nothing the first did not say. */
   private readonly sent = new Set<string>();
   private screen: string | undefined;
   private batches = 0;
@@ -82,7 +74,7 @@ export class CrashReporter {
     return this.options.enabled;
   }
 
-  /** The route on screen now, for the reports that follow; anything but a route name is ignored. */
+  /** The current route, for later reports; anything but a route name is ignored. */
   noteScreen(name: string | undefined): void {
     this.screen = name && CLIENT_ERROR_TOKEN.test(name) ? name.slice(0, LIMIT.screen) : undefined;
   }
@@ -100,20 +92,18 @@ export class CrashReporter {
         same.fatal = same.fatal || report.fatal;
         return;
       }
-      // a batch is full: the rest of this burst is very likely the same failure seen from elsewhere
+      // A batch is full: the rest of this burst is very likely the same failure seen from elsewhere.
       if (this.pending.size >= LIMIT.reports) return;
       this.pending.set(key, report);
       this.schedule();
     } catch {
-      // a report that cannot be made is not worth a second error
+      // A report that cannot be made is not worth a second error.
     }
   }
 
   /**
-   * Send what is waiting now, without waiting for the batch to fill. For an
-   * error that is about to close the app, which would otherwise take its report
-   * with it. Resolves once the request has been answered or has failed; never
-   * rejects.
+   * Send what is queued now without waiting to batch, for an error about to close the app. Resolves when answered
+   * or failed; never rejects.
    */
   flush(): Promise<void> {
     if (this.timer !== null) {
@@ -141,7 +131,7 @@ export class CrashReporter {
       try {
         await this.options.send(batch);
       } catch {
-        // lost: a failed report is not retried and not reported, or a bad network would make reports of reports
+        // Dropped: a failed report is neither retried nor reported, or a bad network would produce reports of reports.
       }
     })().finally(() => {
       this.inFlight = null;
@@ -166,13 +156,12 @@ export interface ErrorUtilsLike {
   setGlobalHandler(handler: (error: unknown, isFatal?: boolean) => void): void;
 }
 
-/** How long a fatal error's report may hold up the app closing: long enough to leave on a fair connection. */
+/** How long a fatal error's report may delay the app closing: enough to send on a fair connection. */
 export const FATAL_REPORT_WAIT_MS = 1_500;
 
 /**
- * Wraps the global handler: every error nothing else caught is captured, then
- * handed on to whoever handled it before. A fatal one closes the app as soon as
- * it is handed on, so its report is given a moment to leave first.
+ * Wrap the global handler: capture every uncaught error, then pass it to the previous handler. A fatal error
+ * closes the app once passed on, so its report gets a moment to leave first.
  */
 export function installGlobalErrorHandler(reporter: CrashReporter, errorUtils: ErrorUtilsLike | undefined, fatalWaitMs = FATAL_REPORT_WAIT_MS): void {
   if (!errorUtils || !reporter.enabled) return;
@@ -184,7 +173,7 @@ export function installGlobalErrorHandler(reporter: CrashReporter, errorUtils: E
       previous(error, isFatal);
       return;
     }
-    // already on its way down: this one is reported, and the first is the one the app closes with
+    // Already on its way down: this one is reported, and the first is the one the app closes with.
     if (closing) return;
     closing = true;
     let handed = false;
@@ -201,7 +190,7 @@ export function installGlobalErrorHandler(reporter: CrashReporter, errorUtils: E
 /** What a thrown value says, as a report may carry it. */
 function buildReport(error: unknown, context: CaptureContext, screen: string | undefined): ClientErrorReport {
   const e = error instanceof Error ? error : null;
-  // a thrown object can be anything the code was holding, a server's answer included, so only its kind is said
+  // A thrown object can be anything, a server response included, so only its type is reported.
   const said = e ? String(e.message ?? '') : typeof error === 'string' ? error : `a value of type ${error === null ? 'null' : typeof error} was thrown`;
   const report: ClientErrorReport = {
     kind: context.kind,
@@ -216,7 +205,7 @@ function buildReport(error: unknown, context: CaptureContext, screen: string | u
   return report;
 }
 
-/** Errors are the same when they are the same kind, say the same thing and were thrown from the same place. */
+/** Errors are the same when they have the same type, message and throw site. */
 function fingerprint(report: ClientErrorReport): string {
   const top = report.stack?.split('\n').find((line) => line.startsWith('at ')) ?? '';
   return [report.kind, report.name ?? '', report.message, top].join('|');
@@ -238,10 +227,9 @@ function utf8Length(text: string): number {
 }
 
 /**
- * The batch, cut down until the server will read it: the last reports go
- * first, then the stacks of the one left. Text in a script outside Latin takes
- * two or three bytes a character, so a batch inside every length limit can
- * still be over the body limit.
+ * Shrink the batch until the server accepts it: drop the last reports first, then the remaining one's stacks.
+ * Non-Latin text takes two or three bytes per character, so a batch within every length limit can still exceed
+ * the body limit.
  */
 export function fitBatch(batch: ClientErrorBatch, maxBytes = CLIENT_ERROR_BODY_MAX): ClientErrorBatch {
   const fitted = { ...batch, reports: [...batch.reports] };

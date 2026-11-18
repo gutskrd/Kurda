@@ -13,14 +13,14 @@ export interface FeedFilterValue {
   section: FeedSection;
   kind: string | null;
   sort: FeedSort;
-  /** how far back a ranked order looks; newest and oldest read everything */
+  /** How far back a ranked order looks; newest and oldest read everything. */
   period: FeedPeriod;
 }
 
 /** The wall as it opens: everything, newest first. */
 export const DEFAULT_FILTER: FeedFilterValue = { section: 'all', kind: null, sort: DEFAULT_FEED_SORT, period: DEFAULT_FEED_PERIOD };
 
-/** The same choice said once: a kind only within its half, and a range only for an order that ranks. */
+/** The same choice normalised: a kind only within its half, and a range only for an order that ranks. */
 export function normalise(v: FeedFilterValue): FeedFilterValue {
   return { section: v.section, kind: kindWithin(v.section, v.kind), sort: v.sort, period: sortRanks(v.sort) ? v.period : DEFAULT_FEED_PERIOD };
 }
@@ -47,7 +47,7 @@ const PERIOD_WORD: Record<FeedPeriod, TranslationKey> = {
   all: 'feed.period.all',
 };
 
-/** Which posts the wall is narrowed to, in words — "Pictures · Meme" — or null when it shows every kind. */
+/** Which posts the wall is narrowed to, in words ("Pictures · Meme"), or null when it shows every kind. */
 export function filterLabel(t: (key: TranslationKey) => string, value: Pick<FeedFilterValue, 'section' | 'kind'>): string | null {
   if (value.section === 'all') return null;
   const section = SECTIONS.find((s) => s.key === value.section);
@@ -56,34 +56,18 @@ export function filterLabel(t: (key: TranslationKey) => string, value: Pick<Feed
   return kind ? `${t(section.labelKey)} · ${t(kind.labelKey)}` : t(section.labelKey);
 }
 
-/** The order the wall is in, in words — "Most popular · This week" — or null while it is newest first. */
+/** The wall's order in words ("Most popular · This week"), or null while it is newest first. */
 export function sortLabel(t: (key: TranslationKey) => string, value: Pick<FeedFilterValue, 'sort' | 'period'>): string | null {
   if (value.sort === DEFAULT_FEED_SORT) return null;
   const word = t(SORT_WORD[value.sort]);
   return sortRanks(value.sort) && value.period !== DEFAULT_FEED_PERIOD ? `${word} · ${t(PERIOD_WORD[value.period])}` : word;
 }
 
-/** Everything that is not as the wall opens, for the button's name: "Most popular, This week, Pictures · Meme". */
-export function filterSummary(t: (key: TranslationKey) => string, value: FeedFilterValue): string | null {
-  const n = normalise(value);
-  const parts = [
-    n.sort === DEFAULT_FEED_SORT ? null : t(SORT_WORD[n.sort]),
-    sortRanks(n.sort) && n.period !== DEFAULT_FEED_PERIOD ? t(PERIOD_WORD[n.period]) : null,
-    filterLabel(t, n),
-  ].filter((p): p is string => !!p);
-  return parts.length ? parts.join(', ') : null;
-}
-
 /**
- * Sort and filter the wall, in one sheet: in what order (newest, oldest, most
- * popular, most discussed), from how far back for the two that rank, and which
- * posts. Nothing changes until "Show posts" — choosing three things should not
- * reload the wall three times behind the sheet — and closing it any other way
- * leaves the wall as it was. "Reset" puts the choices back to how the wall
- * opens.
- *
- * The sheet and its rows are theme/FilterSheet.tsx, which the stories library
- * is built from as well; the chips under the faces are its FilterChip.
+ * Sort and filter the wall in one sheet: the order (newest, oldest, most popular, most discussed), the time range
+ * for the two that rank, and which posts. Nothing applies until "Show posts", so choosing three things does not
+ * reload the wall three times, and closing any other way leaves it unchanged. "Reset" restores the defaults.
+ * Built from theme/FilterSheet.tsx, as the stories library is; the chips under the faces are its FilterChip.
  */
 export function FeedFilterSheet({
   visible,
@@ -98,7 +82,7 @@ export function FeedFilterSheet({
 }): React.JSX.Element {
   const { t } = useI18n();
   const [draft, setDraft] = useState(value);
-  // each time it opens, it starts from what the wall shows
+  // Each time it opens, it starts from what the wall shows.
   useEffect(() => {
     if (visible) setDraft(value);
   }, [visible, value]);
@@ -160,7 +144,7 @@ export function FeedFilterSheet({
   );
 }
 
-/** a glyph for each order, so the four read apart at a glance */
+/** A glyph for each order, so the four read apart at a glance. */
 const SORT_ICON: Record<FeedSort, IconName> = { newest: 'clock', oldest: 'history', popular: 'heart', discussed: 'chat' };
 
 const styles = StyleSheet.create({

@@ -10,7 +10,7 @@ const auth = vi.hoisted(() => ({ oauthSignIn: vi.fn(), continueAsGuest: vi.fn(),
 vi.mock('../../auth/AuthContext', () => ({ useAuth: () => auth }));
 vi.mock('../../auth/google', () => ({ signInWithGoogle: vi.fn(), isGoogleConfigured: false }));
 const apple = vi.hoisted(() => ({ signInAsync: vi.fn() }));
-// Apple's sheet is native: its button is a plain one here, and the sheet answers what each test says
+// Apple's sheet is native: the button is a plain one here, and the sheet answers as each test says.
 vi.mock('expo-apple-authentication', async () => {
   const { createElement } = await import('react');
   return {
@@ -36,7 +36,7 @@ const en = TRANSLATIONS.en;
 const g = globalThis as typeof globalThis & { __DEV__?: boolean };
 
 beforeEach(() => {
-  // a release build: no connection readout, so no health check to stand in for
+  // A release build has no connection readout, so no health check to stub.
   g.__DEV__ = false;
   auth.oauthSignIn.mockResolvedValue(null);
 });
@@ -91,11 +91,7 @@ describe('continuing with Apple', () => {
     });
   });
 
-  /*
-   * The sheet’s own failure is English and technical, with a code in
-   * brackets; the reader is told which step failed and what to do, in their
-   * own language, and nothing else.
-   */
+  // The SDK's own message is English and technical, with a code.
   it('says a failed Apple sheet in the reader’s words, without the SDK’s message or code', async () => {
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     apple.signInAsync.mockRejectedValue(Object.assign(new Error('The authorization attempt failed for an unknown reason'), { code: 'ERR_REQUEST_UNKNOWN' }));
@@ -130,11 +126,6 @@ describe('the sign-in choice', () => {
 });
 
 describe('trying Hevalo first', () => {
-  /*
-   * Under the ways in, the quiet one: a guest session, for somebody not ready
-   * to choose. The line opens Hevalo's introduction in the screen's place, and
-   * its last step makes the session; the answer signs them in like any other.
-   */
   it('offers a guest session under the sign-in methods, introduces Hevalo, and starts one at the end', async () => {
     auth.continueAsGuest.mockResolvedValue(null);
     const navigation = renderWelcome();
@@ -153,7 +144,7 @@ describe('trying Hevalo first', () => {
       fireEvent.click(screen.getByRole('button', { name: en['guide.guest.start'] }));
     });
     await waitFor(() => expect(auth.continueAsGuest).toHaveBeenCalledTimes(1));
-    // the way in is a session, not a screen: nothing is navigated to
+    // A guest session signs in; nothing is navigated to.
     expect(navigation.navigate).not.toHaveBeenCalled();
   });
 

@@ -1,25 +1,16 @@
 /**
- * Starter content written for the learning games, seeded once each: today,
- * Detective's first case (api/content/games), and then Impostor's curated
- * deck (impostor-deck.ts), which supersedes the cards the starter library
- * made for it.
+ * Starter content written for the games, each seeded once: Detective's first case (api/content/games), and Impostor's
+ * curated deck (impostor-deck.ts), which supersedes the starter library's cards for it.
  *
- * A starter case is written in the interface languages only — its title,
- * suspects, questions and solution — and its evidence names lines of the
- * course's own conversations by the conversation and the line's English
- * rather than holding any Kurdish. Seeding copies each line's Kurdish, its
- * English, who says it and the key its recording is filed under from the
- * conversation as it is in the database (published, else its newest
- * version), so nothing Kurdish is written for the game. The row goes in
- * published, as the rest of the starter library does (starter-library.ts):
- * `source = 'starter'`, approved with no reviewer named, which the admin
- * panel shows as not yet read by a person.
+ * A starter case is written in interface languages only (title, suspects, questions, solution), and its evidence names
+ * course conversation lines by conversation and English rather than holding Kurdish. Seeding copies each line's
+ * Kurdish, English, speaker and recording key from the conversation in the database (published, else its newest
+ * version). The row goes in published like the rest of the starter library (`source = 'starter'`, approved with no
+ * named reviewer).
  *
- * Each starter is seeded once, as the starter stories are (stories/import.ts):
- * a row in `content_seeds` remembers it, so a starter an editor deleted stays
- * gone. One whose lines are not in the database yet (the course not seeded)
- * waits for a later start; one that fails its kind's checks is logged and
- * skipped. Nothing here throws: a broken file must not stop the API starting.
+ * Each starter is seeded once, like the starter stories (stories/import.ts), remembered in `content_seeds`, so a
+ * deleted one stays gone. One whose lines are not in the database yet waits for a later start; one failing its checks
+ * is logged and skipped. Nothing here throws.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -75,8 +66,7 @@ const sameEnglish = (a: string, b: string): boolean => {
 };
 
 /**
- * A starter case with its evidence filled in from the conversations (pure,
- * for the tests): the case file's payload, or the lines that could not be
+ * A starter case with its evidence filled in from the conversations (pure, for tests): the payload, or the lines not
  * found. The English is the lesson's own, so a line found is the line meant.
  */
 export function resolveStarterCase(
@@ -126,10 +116,8 @@ async function conversationsNamed(pool: pg.Pool, ids: readonly string[]): Promis
 }
 
 /**
- * What to seed besides the case files: Impostor's deck, which by default goes
- * in with the case files the API ships and not with case files a caller names
- * itself (a test seeding one case of its own wants that case alone), and the
- * cache whose pools and counts are read afresh after it.
+ * What to seed besides the case files: Impostor's deck (by default only with the shipped case files, not with case
+ * files a caller names, e.g. a test seeding one case), and the cache to refresh pools and counts in afterwards.
  */
 export interface StarterSeedOptions {
   deck?: URL | null;

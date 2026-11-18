@@ -1,34 +1,22 @@
 /**
- * The `stories:import` command (api/scripts/import-stories.ts), apart from
- * the process it runs in so its rules can be tested: the flags it takes, who
- * it publishes as, and what it prints.
+ * The `stories:import` command (api/scripts/import-stories.ts), separate from its process so its rules can be tested:
+ * flags, who it publishes as, and what it prints.
  *
  *   npm run stories:import --workspace api -- <file.json> [--dry-run] [--force] [--starter]
  *                                                         [--publish --by <editor email>]
  *
- * It reads a file in the import format (`{ stories: [...] }`, as in
- * api/content/stories), checks every story with the same `validateStory`
- * the admin panel uses, and imports them all or none (see `importStories`):
- * a new slug becomes a draft, a draft whose content changed is updated, and
- * a story in review, published or archived is left alone, as is a draft
- * someone changed in the admin panel unless --force says to replace it.
- * --dry-run reports what would happen and writes nothing. --starter marks new
- * stories as starter content (written by Claude, waiting for a native
- * speaker), as the API's own seeding does.
+ * It validates every story in an import file (`{ stories: [...] }`, as in api/content/stories) with `validateStory` and
+ * imports all or none (see `importStories`). --dry-run reports and writes nothing. --starter marks new stories as
+ * starter content awaiting a native speaker, as the API's seeding does.
  *
- * --publish also publishes every story it created or that is a draft, after
- * the full check, as the editor --by names: that person is recorded as the
- * publisher and in the audit, as in the admin panel, and must be able to
- * publish there. A real publish empties the hub's cached list when Redis is
- * configured, so the story appears in the app at once.
+ * --publish also publishes every story it created or that is a draft, after the full check, as the editor --by names
+ * (recorded as publisher and in the audit, and who must be allowed to publish). A real publish empties the hub's cached
+ * list when Redis is configured.
  *
- * The options go after `--`. Before it, npm takes them as its own and hides
- * them from the command: `npm run stories:import file.json --dry-run` hands
- * it only `file.json` and sets npm_config_dry_run=true instead, so a run
- * meant as a dry run would write. The command therefore also looks for its
- * options where npm puts them: a dry run is honoured (it can only write
- * less), and an option that would write more or differently is refused with
- * the right command line rather than guessed at.
+ * Options go after `--`: before it npm swallows them (`npm run stories:import file.json --dry-run` sets
+ * npm_config_dry_run=true and passes only the file), so a dry run would write. The command also reads npm's copies: a
+ * dry run there is honoured (it only writes less), and anything that would write more is refused with the right command
+ * line.
  */
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -61,10 +49,8 @@ function keptByNpm(env: Record<string, string | undefined>, option: string): boo
 }
 
 /**
- * The command line, or why it cannot be run. Anything it does not know is
- * refused rather than ignored: a misspelt --dry-run must not become a write.
- * `env` is where npm leaves the options it kept (see the top of the file);
- * `notes` say what was read from there.
+ * The command line, or why it cannot run. Unknown options are refused, so a misspelt --dry-run never becomes a write.
+ * `env` holds the options npm kept (see the top of the file); `notes` say what was read from there.
  */
 export function parseStoryImportArgs(
   argv: readonly string[],

@@ -57,7 +57,7 @@ const rowNames = () =>
     .map((row) => row.getAttribute('data-testid')!.replace('conversation-', ''));
 
 describe('Messages', () => {
-  /* the one thing in here waiting on the reader, so it cannot sink under the chats */
+  /* The one thing in here waiting on the reader, so it cannot sink under the chats. */
   it('puts the friend requests in a row of their own above the conversations', async () => {
     open();
     const row = await screen.findByRole('button', { name: 'Friend requests (2)' });
@@ -66,7 +66,7 @@ describe('Messages', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('FriendRequests');
   });
 
-  /* a bird at your window waits on you before anything else in letters */
+  /* A bird at your window waits on you before anything else in letters. */
   it('leads the letters row with a bird waiting at your window, and opens letters from it', async () => {
     const baran = { id: 'u-baran', name: 'Baran', bird: 3 };
     const home: LettersHome = {
@@ -108,9 +108,9 @@ describe('Messages', () => {
     await screen.findByTestId('conversation-dm:u-azad');
     expect(rowNames()).toEqual(['group:g1', 'dm:u-azad', 'dm:u-rojhat', 'group:g2']);
     expect(screen.getByTestId('conversation-dm:u-azad').getAttribute('aria-label')).toBe('azad, 2 unread. Sibê em lîstikekê bikin?');
-    // a message you sent says so
+    // A message you sent says so.
     expect(screen.getByText('You: Baş e')).toBeTruthy();
-    // a group says how many are in it
+    // A group says how many are in it.
     expect(screen.getByText('14 members')).toBeTruthy();
   });
 
@@ -125,7 +125,7 @@ describe('Messages', () => {
   it('narrows to what is unread, and to groups', async () => {
     open();
     await screen.findByTestId('conversation-dm:u-azad');
-    // the chip counts the conversations with something unread
+    // The chip counts the conversations with something unread.
     fireEvent.click(screen.getByRole('button', { name: 'Unread, 2' }));
     expect(rowNames()).toEqual(['group:g1', 'dm:u-azad']);
     fireEvent.click(screen.getByRole('button', { name: 'Groups' }));
@@ -135,7 +135,7 @@ describe('Messages', () => {
     expect(rowNames()).toHaveLength(4);
   });
 
-  /* every group is private: the reader's own are all there are, and the server is asked for no others */
+  /* Every group is private: only the reader's own are listed and the server is asked for no others. */
   it('offers no groups to find or join, under any filter', async () => {
     const client = open();
     await screen.findByTestId('conversation-dm:u-azad');
@@ -150,9 +150,9 @@ describe('Messages', () => {
 
   it('starts a group in one tap from the list: a name is all it asks, and its chat opens on adding friends', async () => {
     const client = open({}, { 'POST /groups': ok({ id: 'g-new' }) });
-    // one tap, at the head of the list everyone lands on
+    // One tap, at the head of the list everyone lands on.
     fireEvent.click(await screen.findByTestId('messages-new-group'));
-    // nothing to choose about who may find or join it
+    // Nothing to choose about who may find or join it.
     expect(screen.queryByText(/privacy|invite-only|anyone can|everyone/i)).toBeNull();
     const create = screen.getByRole('button', { name: 'Create group' });
     expect(create.getAttribute('aria-disabled')).toBe('true');
@@ -162,7 +162,7 @@ describe('Messages', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Create group' }));
     });
     expect(client.calls.find((c) => c.method === 'POST' && c.path === '/groups')?.body).toEqual({ name: 'Koma nû' });
-    // on to its chat, told to open the sheet for adding friends by itself
+    // On to its chat, told to open the sheet for adding friends by itself.
     expect(navigation.navigate).toHaveBeenCalledWith('GroupThread', { groupId: 'g-new', name: 'Koma nû', addFriends: true });
   });
 
@@ -195,7 +195,7 @@ describe('Messages', () => {
     expect(rowNames()).toEqual(['dm:u-rojhat']);
     fireEvent.change(screen.getByLabelText('Search messages'), { target: { value: 'nobody' } });
     expect(screen.getByText('No conversations match “nobody”.')).toBeTruthy();
-    // no request per letter: the list is filtered where it is
+    // No request per letter: the list is filtered where it is.
     expect(client.calls.length).toBe(asked);
     fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
     expect(rowNames()).toHaveLength(4);
@@ -206,7 +206,7 @@ describe('Messages', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Find friends' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Search');
     expect(screen.getByText('No messages yet')).toBeTruthy();
-    // the empty state carries New group itself, so the row above it is not drawn twice
+    // The empty state carries New group itself, so the row above it is not drawn twice.
     expect(screen.queryByTestId('messages-new-group')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'New group' }));
     expect(screen.getByLabelText('Name')).toBeTruthy();
@@ -223,13 +223,13 @@ describe('Friend requests', () => {
     const client = open();
     cleanup();
     renderWithProviders(<FriendRequestsScreen onExit={() => undefined} />);
-    // each Accept says whose request it is, since there is one on every row
+    // Each Accept says whose request it is, since there is one on every row.
     fireEvent.click(await screen.findByRole('button', { name: 'Accept friend request from dilan' }));
-    // answered at once: the ticket is stamped, and nothing on it can be pressed again …
+    // Answered at once: the ticket is stamped, and nothing on it can be pressed again …
     expect(screen.queryByRole('button', { name: 'Accept friend request from dilan' })).toBeNull();
     expect(screen.getByText('Friends')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/friends/requests/u-dilan/accept')).toBe(true));
-    // … and it leaves the list a moment later
+    // … and it leaves the list a moment later.
     await waitFor(() => expect(screen.queryByRole('button', { name: 'dilan, Dilan' })).toBeNull());
     expect(screen.getByRole('button', { name: 'baran' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Decline friend request from baran' })).toBeTruthy();
@@ -237,7 +237,7 @@ describe('Friend requests', () => {
 });
 
 describe('Messages, when the conversations cannot be read', () => {
-  /* an error is not an empty inbox: it says what happened and offers to try again */
+  /* An error is not an empty inbox: it says what happened and offers to try again. */
   it('offers to try again instead of saying there are no messages', async () => {
     testAuth.client = fakeClient({
       'GET /me/groups': ok({ groups: [] }),

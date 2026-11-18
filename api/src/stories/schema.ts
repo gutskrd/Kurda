@@ -1,19 +1,13 @@
 /**
- * The shape of a story on the wire: what the admin routes accept and what an
- * import file holds (api/content/stories/*.json).
+ * A story's wire shape: what the admin routes accept and what an import file holds (api/content/stories/*.json).
  *
- * Deliberately loose about content. Zod checks types and keeps a request to a
- * sane size; whether a title is too long, an option empty or a gloss missing
- * from the text is `validateStory`'s to say, because it says it with a path
- * and a reason the editor can show beside the field — and because a draft is
- * allowed to be unfinished in ways a schema cannot express.
+ * Deliberately loose about content: Zod checks types and size, while length limits, empty options or missing glosses
+ * are `validateStory`'s to report, with a field path the editor can show, and because drafts may be unfinished in ways
+ * a schema cannot express.
  *
- * The library fields (category, tradition, attribution, translations, cover,
- * reading time) are all optional on the wire: a content file written before
- * the library existed still imports, as a story with the defaults an editor
- * has yet to fill in. So are what a legend carries besides its text (the
- * title and summary per language, reflections, notes, sources, the record of
- * which translations were reviewed, each question's translations).
+ * The library fields (category, tradition, attribution, translations, cover, reading time) and the legend extras
+ * (per-language title and summary, reflections, notes, sources, translation review, question translations) are
+ * optional, so older content files still import.
  */
 import { z } from 'zod';
 import { STORY_CATEGORY_SLUG_PATTERN, STORY_DIALECTS, STORY_SLUG_PATTERN, type StoryGlossEntry, type StoryInput } from '@kurda/shared';
@@ -100,9 +94,8 @@ export const storyContentSchema = z.object({
 });
 
 /**
- * An import file: `{ stories: [...] }`, each with its slug. A starter file may
- * hold none yet (one waiting for the stories written for it): it seeds nothing,
- * and the import command reports nothing to import.
+ * An import file: `{ stories: [...] }`, each with its slug. A starter file may hold none yet; it seeds nothing and the
+ * import reports nothing to import.
  */
 export const storyFileSchema = z.object({
   stories: z.array(storyContentSchema.extend({ slug: storySlugSchema })),

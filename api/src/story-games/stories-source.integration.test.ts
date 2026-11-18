@@ -1,7 +1,6 @@
 /**
- * The stand-in for API-stories' StoriesService, against real Postgres. It has
- * to behave as that service does — the same two methods, the same answers,
- * the same lock — so the games' suites test what will run after the merge.
+ * The local story catalogue against real Postgres: it must answer like the stories service (same two methods, same
+ * results, same lock).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

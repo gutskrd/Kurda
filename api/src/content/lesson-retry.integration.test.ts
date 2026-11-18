@@ -1,8 +1,7 @@
 /**
- * Re-asking a missed item (`POST /sessions/:id/retry`) against real Postgres:
- * it grades exactly as an answer does and records nothing — no answer row, no
- * score, no XP, no review — and it cannot be used to read an answer before the
- * learner's own first attempt.
+ * Re-asking a missed item (`POST /sessions/:id/retry`) against real Postgres: it grades exactly like an answer and
+ * records nothing (no answer row, score, XP or review), and cannot reveal an answer before the learner's own first
+ * attempt.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

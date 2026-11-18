@@ -13,8 +13,8 @@ import {
 describe('isRTL', () => {
   it('is true for the Arabic-script locales (Arabic + Soranî)', () => {
     expect(isRTL('ar')).toBe(true);
-    expect(isRTL('ckb')).toBe(true); // Soranî — Arabic script
-    expect(isRTL('ku')).toBe(false); // Kurmancî — Latin script
+    expect(isRTL('ckb')).toBe(true); // Soranî — Arabic script.
+    expect(isRTL('ku')).toBe(false); // Kurmancî — Latin script.
     expect(isRTL('en')).toBe(false);
     expect(isRTL('fr')).toBe(false);
   });
@@ -30,7 +30,7 @@ describe('interpolate', () => {
 
 describe('countdownParts', () => {
   it('breaks ms into d/h/m/s', () => {
-    const ms = ((2 * 24 + 3) * 60 + 4) * 60_000 + 5_000; // 2d 3h 4m 5s
+    const ms = ((2 * 24 + 3) * 60 + 4) * 60_000 + 5_000; // 2d 3h 4m 5s.
     expect(countdownParts(ms)).toMatchObject({ days: 2, hours: 3, minutes: 4, seconds: 5, done: false });
   });
 
@@ -46,7 +46,7 @@ describe('formatCountdown', () => {
     expect(formatCountdown((2 * 24 + 3) * 3_600_000, t)).toBe('2d 3h');
     expect(formatCountdown((5 * 60 + 12) * 60_000, t)).toBe('5h 12m');
     expect(formatCountdown(3 * 60_000 + 40_000, t)).toBe('3m');
-    // the last minute is a minute, not seconds counting down
+    // The last minute is a minute, not seconds counting down.
     expect(formatCountdown(20_000, t)).toBe('1m');
     expect(formatCountdown(0, t)).toBe('');
   });
@@ -78,10 +78,10 @@ describe('formatCompact', () => {
 });
 
 describe('formatExpectedAt', () => {
-  // a Monday morning in Berlin; the times are asked for in that zone, as a phone there would
+  // A Monday morning in Berlin; the times are asked for in that zone, as a phone there would.
   const now = new Date('2026-10-26T08:00:00.000Z');
   const zone = 'Europe/Berlin';
-  // newer ICU puts a narrow no-break space before AM/PM; the words are what is checked here
+  // Newer ICU puts a narrow no-break space before AM/PM; the words are what is checked here.
   const said = (iso: string, locale: 'en' | 'de', timeZone = zone): string => formatExpectedAt(iso, locale, now, timeZone).replace(/\s/g, ' ');
 
   it('is the time alone when it is today', () => {
@@ -95,7 +95,7 @@ describe('formatExpectedAt', () => {
   });
 
   it('goes by the reader’s own day, not the server’s', () => {
-    // 23:30 in Berlin is still Monday there, and already Tuesday in Baghdad
+    // 23:30 in Berlin is still Monday there, and already Tuesday in Baghdad.
     expect(said('2026-10-26T22:30:00.000Z', 'en')).toBe('11:30 PM');
     expect(said('2026-10-26T22:30:00.000Z', 'en', 'Asia/Baghdad')).toMatch(/^Tuesday,? 1:30 AM$/);
   });
@@ -120,7 +120,7 @@ describe('formatDay', () => {
   });
 
   it('goes by the reader’s own day', () => {
-    // a minute before midnight UTC is already Thursday in Baghdad
+    // A minute before midnight UTC is already Thursday in Baghdad.
     expect(formatDay(day, 'en', 'Asia/Baghdad')).toMatch(/^Thursday/);
   });
 

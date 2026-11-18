@@ -31,17 +31,15 @@ function assertPasswordPolicy(password: string): void {
   }
 }
 
-/** Optional client device fingerprint (#110), supplied as a header. */
+/** Optional client device fingerprint, supplied as a header. */
 function deviceIdOf(headers: Record<string, unknown>): string | null {
   const raw = headers['x-device-id'];
   if (typeof raw === 'string' && raw.length > 0 && raw.length <= 200) return raw;
   return null;
 }
 
-// an unknown zone is dropped (the account gets UTC) rather than stored:
-// see safeTimeZone in streaks/streak-logic.ts for what one used to break.
-// One the database does not know is dropped the same way, in the route
-// (`knownTimeZone`), since that needs the database's own list.
+// An unknown zone is dropped (the account gets UTC) rather than stored; see safeTimeZone in streaks/streak-logic.ts.
+// One the database does not know is dropped in the route (`knownTimeZone`), since that needs the database's own list.
 const timezoneField = z
   .string()
   .max(50)
@@ -60,24 +58,19 @@ export const registerBodySchema = z.object({
   timezone: timezoneField,
   deviceName: z.string().max(80).optional(),
   captchaToken: z.string().max(3_000).optional(),
-  /** Explicit, versioned consent to ToS + privacy policy (KUR-109). */
+  /** Explicit, versioned consent to ToS + privacy policy. */
   acceptTerms: z.literal(true),
   /**
-   * Birth month and year, always. The forms ask with no default, and every
-   * protection for minors rests on the answer: an account made without one
-   * would be nobody's age at all, so none is made. (Google and Apple sign-up,
-   * which tell us nothing about age, are asked once after signing in, and
-   * until then are treated as not known to be adults — users/age.ts.)
+   * Birth month and year, always: every protection for minors rests on it, so no account is made without one. (Google
+   * and Apple sign-ups are asked once after signing in and treated as not known adults until then; users/age.ts.)
    */
   birthYear: birthYearSchema,
   birthMonth: birthMonthSchema,
 });
 
 /**
- * "Try Hevalo without an account" (auth/guest.ts): what the app knows about
- * itself and nothing about a person. The locale and time zone are optional, as
- * at sign-up, so the first lesson is in the right language and the streak day
- * ends at the learner's midnight.
+ * "Try Hevalo without an account" (auth/guest.ts): app facts only, nothing about a person. Locale and time zone are
+ * optional, as at sign-up, so the first lesson's language and the streak day are right.
  */
 export const guestBodySchema = z.object({
   deviceName: z.string().max(80).optional(),
@@ -86,9 +79,8 @@ export const guestBodySchema = z.object({
 });
 
 /**
- * A guest claims the account: what sign-up asks, minus what the guest already
- * has (a username, which they may keep or replace) and the device, which is
- * already signed in.
+ * A guest claims the account: what sign-up asks, minus the username (kept or replaced) and the device (already signed
+ * in).
  */
 export const claimBodySchema = z.object({
   email: emailAddress,
@@ -106,9 +98,8 @@ export const loginBodySchema = z.object({
   password: z.string().min(1).max(128),
   deviceName: z.string().max(80).optional(),
   /**
-   * "Remember me": false keeps the session a day after it was last used
-   * instead of thirty (auth/tokens.ts UNREMEMBERED_TTL_DAYS). Absent means
-   * remembered, as every sign-in was before the apps said.
+   * "Remember me": false keeps the session one day after last use instead of thirty (auth/tokens.ts
+   * UNREMEMBERED_TTL_DAYS). Absent means remembered.
    */
   remember: z.boolean().optional(),
   /** only once a sign-in has answered CAPTCHA_REQUIRED (auth/service.ts) */
@@ -167,7 +158,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     await app.securityLog.record('signup.rejected', { details: { why } });
     return signupRejected();
   };
-  // Risk scoring (KUR-296): assesses signup/login, enforces per-device/IP caps,
+  // Risk scoring: assesses signup/login, enforces per-device/IP caps,
   // logs decisions for tuning + audit. IP reputation defaults to neutral until a
   // provider is configured (graceful degradation).
   const risk = new RiskService(app.db, { redis: app.redis });
@@ -200,9 +191,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       // a password every attacker tries first is refused with its own reason
       await service.assertNotBreached(body.password);
 
-      // Risk decision: a per-device/IP cap breach hard-blocks (generic rejection
-      // so we never reveal which anti-abuse control fired, KUR-025). Lower bands
-      // proceed — CAPTCHA above is the baseline step-up.
+      // A per-device/IP cap breach hard-blocks with a generic rejection, so the response never reveals which control
+      // fired. Lower bands proceed; the CAPTCHA above is the baseline step-up.
       const { assessment, decisionId } = await risk.assessSignup({
         email: body.email,
         ip: req.ip,
@@ -229,12 +219,10 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   );
 
   /**
-   * A guest account, signed in (auth/guest.ts). The same anti-abuse caps as
-   * sign-up — the per-IP limit here, the per-device and per-network account
-   * caps in the risk service — so this is not a cheaper way to mint accounts;
-   * no CAPTCHA, since there is nothing typed to protect and the caps are what
-   * stop a script. A device asking again within a day is handed the guest it
-   * made (200, not 201), before any of that: reopening the app is not a sign-up.
+   * A guest account, signed in (auth/guest.ts). Same anti-abuse caps as sign-up (the per-IP limit here, per-device and
+   * per-network caps in the risk service), so this is no cheaper way to mint accounts. No CAPTCHA: nothing typed to
+   * protect, and the caps stop scripts. A device asking again within a day gets its guest back (200, not 201) before
+   * any of that.
    */
   app.post(
     '/auth/guest',
@@ -263,12 +251,9 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   );
 
   /**
-   * A guest claims the account (auth/service.ts `claim`): the checks sign-up
-   * makes, in the same order and with the same answers, then the row is
-   * upgraded in place and the verification code sent. Answers with the /me
-   * shape, since the app replaces everything it holds about the person with
-   * it. Per account, since a guest is signed in: a stolen guest session must
-   * not become a way to try addresses.
+   * A guest claims the account (auth/service.ts `claim`): sign-up's checks in the same order with the same answers,
+   * then the row is upgraded in place and the code sent. Answers with the /me shape, since the app replaces everything
+   * it holds. Rate-limited per account so a stolen guest session cannot probe addresses.
    */
   app.post(
     '/auth/claim',
@@ -342,12 +327,9 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   );
 
   /**
-   * The admin console's own sign-in: the same checks as above (risk, lockouts,
-   * CAPTCHA, one password check's time whatever happens), but it signs in only
-   * the console's owner (admin/owner-access.ts). Every other account, even with
-   * the right password, is answered exactly as a wrong password is and gets no
-   * session: nothing here tells anyone that their account exists, that their
-   * password was right, or that it is not staff. Its own, stricter budget.
+   * The admin console's own sign-in: the same checks (risk, lockouts, CAPTCHA, constant password-check time) but it
+   * signs in only the console's owner (admin/owner-access.ts). Every other account, even with the right password, gets
+   * exactly the wrong-password answer and no session. Its own, stricter budget.
    */
   if (adminAccess) {
     const access = adminAccess;
@@ -402,11 +384,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   );
 
   /**
-   * Sign out: ends the session the refresh token belongs to, on the server.
-   * The apps used to forget their tokens and nothing else, which left the
-   * session alive for its thirty days to whoever else held a copy. The refresh
-   * token is the credential, so no access token is needed (it may already have
-   * expired), and the answer is the same whatever was sent.
+   * Sign out: end the refresh token's session on the server so no other copy stays alive. The refresh token is the
+   * credential, so no access token is needed, and the answer is the same whatever was sent.
    */
   app.post(
     '/auth/logout',
@@ -487,9 +466,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   );
 
   /**
-   * Change the password while signed in: the current one first, then the new
-   * one under the same policy and breach check as sign-up. Every other session
-   * ends; this one carries on with the access token in the answer.
+   * Change the password while signed in: the current one first, then the new one under sign-up's policy and breach
+   * check. Every other session ends; this one continues with the returned access token.
    */
   app.post(
     '/me/password',
@@ -507,7 +485,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     },
   );
 
-  // Email ownership by code (KUR-014). Authenticated: a just-registered user
+  // Email ownership by code. Authenticated: a just-registered user
   // has a session but an unverified email; the code is bound to that user id.
   app.post(
     '/auth/verify-email-code',
@@ -538,7 +516,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     {
       preHandler: requireAuth,
       config: {
-        // no input fields — accept an empty/absent body (KUR-005 opt-out)
+        // no input fields — accept an empty/absent body (opt-out)
         skipValidation: true,
         // a new code must not become a mail-spam vector, and each new code
         // comes with a fresh set of guesses — so the limit is the account's,
@@ -560,10 +538,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   );
 
   /**
-   * A sign-up that has not confirmed its address puts the address right
-   * (a typo is the commonest reason a code never arrives) and is sent the
-   * code there. Checked as sign-up checks an address; counted against the
-   * same ceiling of confirmation emails as asking for the code again.
+   * An unconfirmed sign-up corrects its address (a typo is the commonest reason a code never arrives) and is sent the
+   * code there. Checked like a sign-up address and counted against the same confirmation-email ceiling.
    */
   app.post(
     '/auth/change-pending-email',

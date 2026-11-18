@@ -145,9 +145,7 @@ describe('multiple-choice shuffle', () => {
   });
 
   /**
-   * Every seeded item had its answer first, so tapping the top option scored
-   * 100% without recalling anything. With the shuffle that learner scores
-   * about one in four.
+   * Every seeded item had its answer first; with the shuffle, always tapping the top option scores about one in four.
    */
   it('no longer gives full marks to a learner who always taps the first option', () => {
     const right = seeds.filter((seed) => grade('multiple_choice', payload, { choice: 0 }, seed).accepted).length;
@@ -299,8 +297,8 @@ describe('checkAnswer — match_pairs', () => {
   });
 
   /**
-   * Cards the grading key cannot tell apart are still different cards: the
-   * letters h and e, or a capital and a small letter in an alphabet lesson.
+   * Cards with the same grading key are still different cards: the letters h and e, or a capital and a small letter in
+   * an alphabet lesson.
    */
   it('grades cards that share a grading key by what they are', () => {
     const letters = {
@@ -358,7 +356,7 @@ describe('checkAnswer — match_pairs', () => {
   });
 });
 
-describe('listening (KUR-035)', () => {
+describe('listening', () => {
   const payload = {
     audioUrl: 'https://cdn.kurda.app/audio/sev.mp3',
     prompt: 'Type what you hear',
@@ -388,7 +386,7 @@ describe('listening (KUR-035)', () => {
   });
 });
 
-describe('speaking (KUR-036)', () => {
+describe('speaking', () => {
   const payload = { prompt: 'Say: Ez baş im', reference: 'Ez baş im' };
 
   it('validates a well-formed payload and rejects a missing reference', () => {
@@ -402,10 +400,7 @@ describe('speaking (KUR-036)', () => {
     expect(JSON.stringify(safe)).not.toContain('reference');
   });
 
-  /**
-   * The v1 stub passed every recording. Nothing on the server can hear one, so
-   * the learner rates it after comparing it with the native model.
-   */
+  /** Nothing on the server can hear a recording, so the learner rates it after comparing with the native model. */
   it('grades by the learner’s own rating: good, close, try again', () => {
     const key = { audioKey: 'speaking/abc.m4a' };
     expect(grade('speaking', payload, { ...key, selfRating: 'good' })).toEqual({
@@ -452,7 +447,7 @@ describe('speaking (KUR-036)', () => {
   });
 });
 
-describe('writing (KUR-037)', () => {
+describe('writing', () => {
   const payload = {
     prompt: 'Translate: I am learning Kurdish',
     accepted: ['Ez fêrî kurdî dibim'],
@@ -493,9 +488,8 @@ describe('writing (KUR-037)', () => {
 });
 
 /**
- * ê and e, ş and s tell Kurmancî words apart (sêv apple, sev nothing; şer
- * war, ser head). A spelling or dictation item that forgave them would count
- * its target errors as successes, so an item can ask for the letter.
+ * ê and e, ş and s tell Kurmancî words apart (sêv apple, sev nothing; şer war, ser head), so a spelling or dictation
+ * item can ask for the exact letter.
  */
 describe('who records an item (voice)', () => {
   const items: Array<[ExerciseType, Record<string, unknown>]> = [
@@ -587,9 +581,8 @@ describe('strict spelling', () => {
 const ZWNJ = '‌';
 
 /**
- * A Soranî answer typed on an Arabic or Persian keyboard is the same word in
- * different code points: ك for ک, ي for ی, ه for ە at the end of a word, ه +
- * ZWNJ for ە inside one. Graded on the letters, it is right.
+ * A Soranî answer typed on an Arabic or Persian keyboard is the same word in different code points (ك for ک, ي for ی, ه
+ * for ە word-finally, ه + ZWNJ for ە inside a word); graded on the letters, it is right.
  */
 describe('Soranî answers typed on an Arabic or Persian keyboard', () => {
   it('translate accepts them as correct, not as typos', () => {

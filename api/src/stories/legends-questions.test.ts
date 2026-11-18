@@ -1,12 +1,8 @@
 /**
- * The legends' questions as a player meets them (api/content/stories/legends.json):
- * a bank of twenty, so a second game of a saga is not the first one again; a
- * mix of kinds; no true-or-false item without its third answer (the story does
- * not say); the right option never given away by being the one long option;
- * and every question carried whole into each language the legend is read in,
- * its options in the same order, so a translated reveal names the right one.
- * Each legend is told in both varieties, and both tellings ask the same
- * questions, so neither is the easier game.
+ * The legends' questions (api/content/stories/legends.json): a bank of twenty so a second game differs, a mix of kinds,
+ * every true-or-false item with its third answer (the story does not say), the right option never the one long option,
+ * and every question translated whole into each language with options in the same order. Both tellings of a legend ask
+ * the same questions.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

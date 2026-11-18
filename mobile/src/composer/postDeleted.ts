@@ -1,13 +1,8 @@
 import type { FeedItem } from '../feed/types';
 
 /**
- * "This post is gone" — from wherever it was deleted to every list showing it.
- *
- * A post can be deleted from its own page, which sits on top of the list it
- * was opened from: the wall, Saved, a profile, the library or the pictures.
- * Most of those load again when they come back into view, but the card would
- * still be there for the moment that takes, and a profile does not reload at
- * all. Each list drops the card as soon as it hears instead (the same way
+ * "This post is gone", from wherever it was deleted to every list showing it. A post's page sits over the list it was
+ * opened from, and some lists only reload on focus or not at all, so each list drops the card as soon as it hears (as
  * postSaved.ts tells a post's page about an edit).
  */
 export type DeletedPost = Pick<FeedItem, 'targetType' | 'id'>;
@@ -21,8 +16,8 @@ export function postDeleted(post: DeletedPost): void {
 }
 
 /**
- * Whether a card shows the deleted post. By table and id, not by the card's
- * key: a repost of it is a card with a key of its own and the same post in it.
+ * Whether a card shows the deleted post. By table and id, not the card's key: a repost is a card with its own key and
+ * the same post.
  */
 export function samePost(item: DeletedPost, gone: DeletedPost): boolean {
   return item.targetType === gone.targetType && item.id === gone.id;

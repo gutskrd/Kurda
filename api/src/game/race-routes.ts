@@ -7,14 +7,10 @@ import type { MilestoneRecorder } from '../achievements/service.js';
 import { RaceService, RaceTextService } from './race-service.js';
 
 /**
- * Typing race: a solo time trial over an admin-curated text.
+ * Typing race: a solo time trial over an admin-curated text. Speed is server-authoritative: start records when the text
+ * was handed out and finish measures against that, so clients cannot report their own time.
  *
- * Speed is server-authoritative. The start endpoint records when it handed the
- * text over and the finish endpoint measures against that, so a client cannot
- * report its own time — the leaderboard would be worthless if it could.
- *
- * The shapes are @kurda/shared `RaceStartRequest`, `RaceGameView`,
- * `RaceResultView` and `RaceBestView`.
+ * Shapes: @kurda/shared `RaceStartRequest`, `RaceGameView`, `RaceResultView`, `RaceBestView`.
  */
 
 const raceLength = z.coerce.number().int().min(1).max(3);
@@ -41,10 +37,8 @@ const finishBody = z.object({
 });
 
 /**
- * A text as the admin sends it. It is saved normalised (race-service
- * `normalizeText`) and answered with `untypeable`: the characters nobody could
- * type, for the screen to warn about. The length is checked again after
- * normalising, which can shorten a text.
+ * A text as the admin sends it. Saved normalised (race-service `normalizeText`) and answered with `untypeable`, the
+ * characters nobody could type. Length is checked again after normalising, which can shorten a text.
  */
 const textBody = z.object({
   title: z.string().min(1).max(120),

@@ -8,7 +8,7 @@ vi.mock('expo-image-picker', () => ({ launchImageLibraryAsync: vi.fn(async () =>
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// the upload reads files off the phone, which is not under test here
+// The upload reads files off the phone, which is not under test here.
 vi.mock('../profile/photoUpload', () => ({ uploadProfilePhoto: vi.fn() }));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { cleanup, fireEvent, screen } from '@testing-library/react';
@@ -44,7 +44,7 @@ function open({ league = null as { tier: string } | null } = {}) {
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /friends?limit=1': ok({ friends: [], total: 23 }),
     'GET /me/inventory': ok({ items: [] }),
-    // the badge count is the public profile's: `/me` does not send one
+    // The badge count comes from the public profile; `/me` does not send one.
     'GET /users/u1': ok({ ranks: [], league, badges: [], frameSku: null, achievements: 4 }),
     'GET /users/u1/activity': ok({ items: [] }),
   });
@@ -63,7 +63,7 @@ describe('your profile', () => {
     expect(screen.getByText('Rojda')).toBeTruthy();
     expect(screen.getByText(/@rojda\s+·\s+Joined\s2026/)).toBeTruthy();
     expect(screen.getByText('Fêrî Kurmancî dibim.')).toBeTruthy();
-    // the three numbers, and the quiet line under them
+    // The three numbers, and the line under them.
     expect(screen.getByRole('button', { name: '23 Friends' })).toBeTruthy();
     expect(await screen.findByRole('button', { name: '4 Badges' })).toBeTruthy();
     expect(screen.getByLabelText('5 Level')).toBeTruthy();
@@ -105,12 +105,12 @@ describe('your profile', () => {
     const edit = await screen.findByRole('button', { name: 'Edit profile' });
     const share = screen.getByRole('button', { name: 'Share profile' });
     const add = screen.getByRole('button', { name: 'Add friends' });
-    // one row, in this order
+    // One row, in this order.
     expect(edit.parentElement).toBe(share.parentElement);
     expect(share.parentElement).toBe(add.parentElement);
     expect(edit.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(share.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // what you can do comes before how you are doing
+    // Actions come before progress.
     const friends = await screen.findByRole('button', { name: /Friends$/ });
     expect(edit.compareDocumentPosition(friends) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
@@ -124,7 +124,7 @@ describe('your profile', () => {
     open();
     const edit = await screen.findByTestId('profile-edit');
     const share = screen.getByTestId('profile-share');
-    // the words alone, with no line limit, so "Profil bearbeiten" at 320 points wraps inside its button
+    // Text only, with no line limit, so "Profil bearbeiten" wraps inside its button at 320 points.
     for (const button of [edit, share]) {
       expect(button.querySelector('svg')).toBeNull();
       const label = button.querySelector('div[dir], div') ?? button;
@@ -137,7 +137,7 @@ describe('your profile', () => {
   });
 
   it('shows a dash for the badges, not a made-up zero, when the public profile does not answer', async () => {
-    // no route for `/users/u1`: it fails as a server error would
+    // No route for `/users/u1`, so it fails like a server error.
     testAuth.client = fakeClient({
       'GET /me': ok({ user: { id: 'u1', username: 'rojda', displayName: null, bio: null, xp: 0, streak: null, profilePhotoUrl: null } }),
       'GET /me/wallet': ok({ balances: { zer: 0 } }),

@@ -1,12 +1,7 @@
 /**
- * What a learner has met in a game (`game_seen`), and the order a round takes
- * items in because of it: never met first, then those met longest ago that
- * were not answered right lately, and last those answered right within the
- * repeat window — which pay nothing again, so a round reaches for them only
- * when nothing else is left.
- *
- * Read once per round, for one learner and one game: the learner's own rows,
- * however large the game's pool is.
+ * What a learner has met in a game (`game_seen`) and the order rounds take items in because of it: unseen first, then
+ * those met longest ago and not answered right lately, and last those answered right within the repeat window (which
+ * pay nothing again). Read once per round for one learner and game.
  */
 import type pg from 'pg';
 import { GAME_REPEAT_XP_DAYS } from '@kurda/shared';
@@ -29,9 +24,8 @@ export async function seenFor(db: Pick<pg.Pool, 'query'>, userId: string, game: 
 }
 
 /**
- * Items in the order a round should take them: unseen (in the order given,
- * which the caller has shuffled), then seen and due, oldest first, then
- * answered right lately, oldest first.
+ * Items in the order a round should take them: unseen (in the given, already shuffled order), then seen and due, oldest
+ * first, then answered right lately, oldest first.
  */
 export function freshestFirst<T extends { key: string }>(items: readonly T[], seen: ReadonlyMap<string, SeenItem>): T[] {
   const rank = (item: T): [number, number] => {

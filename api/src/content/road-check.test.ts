@@ -1,9 +1,7 @@
 /**
- * Guards The Kurmanji Road in CI: the plan is complete and consistent, and
- * every unit file that exists passes every check, so a unit only lands when
- * it is clean. The check itself is proved end to end on a small example
- * unit written here — two lessons against a two-lesson plan — which passes,
- * and then fails in the one way each change to it should.
+ * Guards the Kurmanji Road in CI: the plan is complete and consistent, and every existing unit file passes every check.
+ * The check itself is proved on a small example unit (two lessons against a two-lesson plan) that passes, then fails in
+ * the one way each change should.
  */
 import { describe, expect, it } from 'vitest';
 import {

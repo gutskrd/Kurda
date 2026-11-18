@@ -1,15 +1,10 @@
 /**
- * The games' starter library against a real database: it reads the course as
- * it stands (a draft story here), puts each game's first rows in published,
- * publishes what was waiting untouched and leaves alone what a person has
- * touched, and does all of it once. Then Who Am I?'s curated deck: its cards
- * and questions published, the untouched starter cards and questions it
- * replaces archived, a card a person edited kept, and once. Needs
- * DATABASE_URL.
+ * The games' starter library against a real database: it reads the course as it stands (a draft story here), inserts
+ * each game's first rows published, publishes untouched waiting rows, leaves person-touched rows alone, and does it
+ * once. Then Who Am I?'s curated deck: cards and questions published, untouched starter cards and questions it replaces
+ * archived, person-edited cards kept, once. Needs DATABASE_URL.
  *
- * Whatever the test changes it puts back: the rows it made are deleted and
- * the rows it published are drafts again, so the suites that count a
- * variety's content find it as they left it.
+ * The test restores what it changes: its rows are deleted and the rows it published become drafts again.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

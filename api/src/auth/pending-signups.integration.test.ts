@@ -1,9 +1,7 @@
 /**
- * A sign-up whose address is never confirmed, against real Postgres: it does
- * not keep the address from whoever can confirm it, a mistyped address can be
- * put right, the mail it can cause in a day has a ceiling, it is closed at
- * once when deleted, and after a week it is ended — closed when it was made
- * from nothing, a guest again when a guest made it.
+ * An unconfirmed sign-up against real Postgres: it does not keep the address from whoever can confirm it, a mistyped
+ * address can be corrected, its daily mail is capped, it closes at once when deleted, and after a week it is ended
+ * (closed when made from nothing, a guest again when a guest made it).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

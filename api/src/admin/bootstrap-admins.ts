@@ -4,37 +4,24 @@ import { AuditService } from './audit-service.js';
 import { maskEmail } from '../observability/redact.js';
 
 /**
- * Bootstrap admin grants (BOOTSTRAP_ADMIN_EMAILS).
+ * Bootstrap admin grants (BOOTSTRAP_ADMIN_EMAILS). The first admin cannot be created in the panel, so the API
+ * reconciles a configured allowlist on every boot:
+ * - **Bound to proven mailbox control, not the address.** Only an account that CONFIRMED its email is granted, so
+ *   registering someone else's address is not enough. An unverified match is refused, logged and re-evaluated next
+ *   boot.
+ * - **Addresses live in configuration, never in the repository.** The repo is public; committing them would publish
+ *   which accounts to attack.
+ * - **Never revokes.** Removing an address stops future grants but keeps roles, so a config slip cannot lock everyone
+ *   out. Revoke from the panel or database.
+ * - **Skips deleted and banned accounts**, so a disabled account is never re-elevated.
+ * - **Audited** in the same transaction as the role change: if the audit write fails, the grant rolls back.
  *
- * The first admin cannot be created through the admin panel — something has to
- * grant it — so the API reconciles a configured allowlist of addresses on every
- * boot. Deliberate properties:
- *
- * - **Bound to proven control of the mailbox, not to the address.** A grant only
- *   happens once the account has CONFIRMED its email, so registering someone
- *   else's address is not enough: the code sent to that inbox must have been
- *   entered. An unverified match is refused and logged, not granted later by
- *   accident — it is re-evaluated on the next boot.
- * - **Addresses live in configuration, never in the repository.** This repo is
- *   public; committing them would publish exactly which accounts to attack.
- * - **Never revokes.** Removing an address stops future grants but will not strip
- *   a role, so a config slip can't lock everyone out of the panel. Revoke
- *   deliberately, from the panel or the database.
- * - **Skips deleted and banned accounts**, so a disabled account can't be
- *   silently re-elevated.
- * - **Audited.** Every grant is written to the append-only admin audit log in the
- *   same transaction as the role change: if the audit write fails, the grant
- *   rolls back, so there is no unlogged elevation.
- *
- * Holding the role is still not sufficient on its own — sensitive admin routes
- * additionally require enrolled TOTP 2FA (see `requireAdmin`).
+ * Sensitive admin routes still require enrolled TOTP 2FA (see `requireAdmin`).
  */
 
 /**
- * Granting both is intentional. `superadmin` is the RBAC role the admin app's
- * capability checks use, while a large number of older routes (moderation,
- * economy, events, experiments, fraud, analytics, tournaments, …) still accept
- * only the legacy `admin`. Without both, half the panel answers 403.
+ * Both on purpose: `superadmin` is the RBAC role the admin app's capability checks use, while many routes (moderation,
+ * economy, events, experiments, fraud, analytics, tournaments, …) still accept only the legacy `admin`.
  */
 export const BOOTSTRAP_ADMIN_ROLES = ['admin', 'superadmin'] as const;
 
@@ -75,9 +62,8 @@ interface UserRow {
 }
 
 /**
- * Reconcile the configured admin allowlist. Safe to run on every boot: it is
- * idempotent, and an address that isn't ready yet (no account, or unverified) is
- * simply picked up on a later start once it is.
+ * Reconcile the configured admin allowlist. Idempotent and safe on every boot; an address not ready yet (no account, or
+ * unverified) is picked up on a later start.
  */
 export async function grantBootstrapAdmins(
   pool: pg.Pool,

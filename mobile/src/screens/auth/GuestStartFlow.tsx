@@ -12,7 +12,7 @@ import { Icon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/tokens';
 
-/** The daily goal a new guest starts with, the server's own default. */
+/** A new guest's daily goal, the server's default. */
 const STARTING_GOAL: GoalOption = 20;
 
 /** What a guest can do straight away, and the promise about later. */
@@ -24,13 +24,9 @@ const CAN_DO: ReadonlyArray<{ icon: IconName; key: TranslationKey }> = [
 ];
 
 /**
- * Trying Hevalo first, as a guest, in two steps: Hevalo says who he is and
- * what a guest can do — the lessons, the games played alone, the dictionary,
- * and that an account later keeps it all — and then asks how much to learn
- * each day. Start learning makes the guest session (`continueAsGuest`, as the
- * sign-in choice did in one tap) and sets the goal on it; the app root then
- * shows the signed-in screens. A refusal is said under the picker, unless
- * Hevalo is offline for a while, which the screen over the app says.
+ * Trying Hevalo as a guest, in two steps: what a guest can do, then the daily goal. Start learning creates the guest
+ * session (`continueAsGuest`) and sets the goal, and the app root then shows the signed-in screens. A refusal shows
+ * under the picker, except during maintenance, which the screen over the app shows.
  */
 export function GuestStartFlow({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { continueAsGuest, client } = useAuth();
@@ -68,9 +64,9 @@ export function GuestStartFlow({ onExit }: { onExit: () => void }): React.JSX.El
       ),
       commit: async () => {
         const error = await continueAsGuest();
-        // Hevalo offline for a while is said by the screen over the app, not under the picker
+        // Maintenance is shown by the screen over the app, not under the picker.
         if (error) return { ok: false, error: currentMaintenance() ? null : error.message };
-        // the session is applied: the goal chosen goes onto the new account, and the screens change under it meanwhile
+        // The session is already applied, so the goal is sent while the screens change.
         if (goal !== STARTING_GOAL) void client.put('/me/daily-goal', { goal });
         return { ok: true };
       },

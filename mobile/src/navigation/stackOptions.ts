@@ -16,10 +16,8 @@ export function stackOptions(reduceMotion: boolean, background: string): NativeS
 }
 
 /**
- * A pushed page: one a press opened fades in while it grows out of what was
- * pressed (theme/origin), any other slides in. A faded page's swipe back runs
- * the fade under the finger; without that, iOS faded it out at once as the
- * swipe began, with no way to change one's mind.
+ * A pushed page: one opened by a press fades in while growing out of what was pressed (theme/origin), any other slides
+ * in. A faded page's swipe back runs the fade under the finger; otherwise iOS fades it out at once as the swipe begins.
  */
 export function cardOptions(grows: boolean): NativeStackNavigationOptions {
   return grows ? { presentation: 'card', animation: 'fade', animationMatchesGesture: true } : { presentation: 'card' };

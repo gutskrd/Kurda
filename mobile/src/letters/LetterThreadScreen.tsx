@@ -27,30 +27,17 @@ import { letterErrorText } from './errors';
 import { keepDraft, threadDraft, useLetterDrafts } from './drafts';
 import { onLetterNotice } from './letterPushes';
 
-/** Coming back to the app reads the correspondence again, but not more often than this. */
+/** The minimum gap between re-reads when the app returns to the front. */
 const FRONT_GAP_MS = 5000;
 
 /**
- * One correspondence, on the phone (the website's /app/letters/:id,
- * web/src/letters/LetterThreadPage.tsx): every letter, oldest first, each on
- * its own sheet, and at the foot either the paper to write back on — when it
- * is your turn — or a line saying your bird is with them.
+ * One correspondence (the website's web/src/letters/LetterThreadPage.tsx): every letter oldest first, each on its own
+ * paper, and at the foot either the paper to write back on, when it is your turn, or a line saying your bird is with
+ * them. A received letter can be pinned to the widget or reported. The pen pal's ⋯ menu holds report, block and
+ * goodbye, which asks first and closes the letters for both.
  *
- * Each letter is on the paper it was written on, with its drawing and its
- * notes, and the answer is written on paper of your own, drawn on if you
- * like: two pen pals may send each other drawings. A letter written to you
- * can be kept on your home-screen widget for good — "Show on my widget" —
- * until it is taken off again, when the widget goes back to the newest.
- *
- * The pen pal's ⋯ holds what ends things, plainly named: report them, block
- * them, and say goodbye, asked first, which closes the letters for both. A
- * letter written to you can be reported on its own, from under it.
- *
- * While it is in view it is read again when the server says something
- * changed in your letters, when a letter's notification for it arrives, and
- * when the app comes back to the front, so their next letter appears here
- * while it is open (it still lands at your window once, as every letter
- * does). A letter being written back is kept as it is written (drafts.ts).
+ * While in view it is re-read on `letters_changed`, on a notification for it, and on return to the front, so a new
+ * letter appears here (it still lands at your window once). An answer in progress is kept as a draft (drafts.ts).
  */
 export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onExit: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -65,9 +52,9 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   const [sendError, setSendError] = useState<string | null>(null);
   const [sent, setSent] = useState<LetterItem | null>(null);
   const [reporting, setReporting] = useState<ReportTarget | null>(null);
-  // a letter sent is shown at once; a fresh sheet of paper only with their answer
+  // A sent letter shows at once; a fresh sheet only comes with their answer.
   const [paperKey, setPaperKey] = useState(0);
-  // the page the paper lies on: held still while drawing, and kept with the writing above the keyboard
+  // The page the paper lies on: held still while drawing, with the writing kept above the keyboard.
   const page = usePaperScroll();
   const widget = useWidgetPin(client);
 
@@ -87,7 +74,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
     }, [load]),
   );
 
-  // while it is in view: a letter in it, an answer, a goodbye, said by the server or by a notification for it
+  // While in view, re-read on server changes and on notifications for this correspondence.
   const focused = useIsFocused();
   const inView = useRef(focused);
   inView.current = focused;
@@ -163,7 +150,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
     ]);
   }, [client, threadId, name, onExit, t]);
 
-  /** The menu about them: what ends things, each plainly named. */
+  /** The menu about them, each action plainly named. */
   const more = useCallback(() => {
     if (!thread) return;
     showActions({
@@ -177,11 +164,11 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
     });
   }, [thread, name, goodbye, block, t]);
 
-  // a letter just sent shows at once, until a read of the correspondence has it; from then on the server says whose turn it is
+  // A just-sent letter shows until a read includes it; from then on the server says whose turn it is.
   const pending = thread && sent && !thread.letters.some((l) => l.id === sent.id) ? sent : null;
   const letters = thread ? (pending ? [...thread.letters, pending] : thread.letters) : [];
   const yourTurn = thread !== null && thread.yourTurn && !pending;
-  // the paper you last wrote on anywhere, or else the one you last wrote on to them
+  // The paper you last wrote on anywhere, else the one you last wrote to them on.
   const ownPaper = rememberedPaper() ?? [...letters].reverse().find((l) => l.mine && l.decor)?.decor?.paper ?? null;
 
   return (
@@ -220,7 +207,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
                         ? {
                             pinned: widget.pinned === l.id,
                             busy: widget.busy === l.id,
-                            // a letter taken down meanwhile cannot be pinned: the letters are read again, and it shows as taken down
+                            // A letter removed meanwhile cannot be pinned: re-read, and it shows as removed.
                             onToggle: () => void widget.toggle(l.id).then((code) => (code === 'LETTER_REMOVED' ? load() : undefined)),
                           }
                         : undefined
@@ -276,11 +263,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   );
 }
 
-/**
- * The correspondence while it is read, in its own shape: their bird and their
- * name, and a sheet of paper with a few lines on it — not a blank under the
- * header.
- */
+/** The loading state in the correspondence's own shape: their bird and name, and a sheet with a few lines. */
 function ThreadSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();

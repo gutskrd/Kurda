@@ -18,13 +18,6 @@ import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { ageRange, birthYearFrom, offsetForAge } from '../../auth/guide/age';
 import { RegisterScreen } from './RegisterScreen';
 
-/*
- * Signing up one question at a time: the name, the age on the ruler, the
- * month, the address, the password, and the last look with the rules; what
- * the server gets is exactly what the one form sent; and its refusals go
- * back to the question they are about, or become the calm notice.
- */
-
 patchReactNativeWeb({ reduceMotion: true });
 const en = TRANSLATIONS.en;
 
@@ -41,7 +34,7 @@ function renderRegister() {
   return navigation;
 }
 
-/** a step on its way out has gone */
+/** Waits for the outgoing step to leave. */
 async function turned(): Promise<void> {
   await waitFor(() => expect(document.querySelector('[data-testid^="slide-out"]')).toBeNull());
 }
@@ -60,11 +53,11 @@ function chooseAge(age: number): void {
   });
 }
 
-/** Answers the questions as somebody `age` years old signing up would, up to the last look, and sends them. */
+/** Answers every question as someone `age` years old would, up to the review, and sends them. */
 async function signUp(email: string, { send = true, age = 34, name = 'rojda_k' }: { send?: boolean; age?: number; name?: string } = {}) {
   fireEvent.change(screen.getByTestId('username'), { target: { value: name } });
   await press(en['common.continue']);
-  // the ruler starts with no age, so it is slid to one
+  // The ruler starts with no age, so slide to one.
   expect(await screen.findByRole('slider')).toBeTruthy();
   chooseAge(age);
   await press(en['common.continue']);
@@ -96,11 +89,7 @@ describe('signing up', () => {
     });
   });
 
-  /*
-   * A username is lowercase, so capitals are written as lowercase letters as
-   * they are typed, and the name is sent so. A keyboard that ends a word with
-   * a full stop still leaves the address as it was meant.
-   */
+  // A keyboard that ends a word with a full stop still leaves the address as typed.
   it('writes the name in lowercase as it is typed, and sends it so', async () => {
     auth.register.mockResolvedValue(null);
     renderRegister();
@@ -114,10 +103,6 @@ describe('signing up', () => {
     expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ email: 'rojda@example.com', username: 'rojda.k' }));
   });
 
-  /*
-   * Nothing typed is dropped without a word: an "@" before the name is named
-   * under the field as it is typed, and the step does not go on with it.
-   */
   it('names a character a username cannot have as it is typed, and keeps it in the field', async () => {
     renderRegister();
     expect(screen.getByTestId('username-line').textContent).toBe('3–30 characters: lowercase letters, ç ê î ş û, numbers, dots and underscores.');
@@ -133,7 +118,7 @@ describe('signing up', () => {
   it('waits for Continue to say what more typing may still mend', async () => {
     renderRegister();
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda.' } });
-    // on its way to rojda.k, perhaps: the rule is still what is under the field
+    // The rule stays under the field while a name is still being typed.
     expect(screen.getByTestId('username-line').textContent).toBe(en['username.hint'].replace('{min}', '3').replace('{max}', '30'));
     await press(en['common.continue']);
     expect(screen.getByTestId('step-error').textContent).toBe(en['username.rule.edge']);
@@ -147,7 +132,7 @@ describe('signing up', () => {
     fireEvent.select(field);
     fireEvent.click(screen.getByRole('button', { name: en['keyboard.bar.type'].replace('{letter}', 'ê') }));
     expect(field.value).toBe('sêr');
-    // the five letters a username may have beside a–z, lowercase, and no shift
+    // The five extra letters a username may have, lowercase, with no shift key.
     expect(screen.queryByRole('button', { name: en['keyboard.bar.shift'] })).toBeNull();
   });
 
@@ -161,10 +146,7 @@ describe('signing up', () => {
     expect(auth.register).not.toHaveBeenCalled();
   });
 
-  /*
-   * The server reads the birth year as the age, so an age the ruler already
-   * stood on would make a known adult of anyone who only tapped Continue.
-   */
+  // The server reads the birth year as the age, so a preset age would make an adult of anyone who only tapped Continue.
   it('does not go on from the age until the ruler is moved, and chooses none for them', async () => {
     renderRegister();
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda_k' } });
@@ -174,7 +156,7 @@ describe('signing up', () => {
     await press(en['common.continue']);
     expect(screen.getByTestId('step-error').textContent).toBe(en['guide.register.age.required']);
     expect(screen.getByText(en['guide.register.age.question'])).toBeTruthy();
-    // sliding to an age takes the line away, and then it goes on
+    // Sliding to an age removes the message, and then it continues.
     chooseAge(16);
     expect(screen.queryByTestId('step-error')).toBeNull();
     await press(en['common.continue']);
@@ -195,12 +177,7 @@ describe('signing up', () => {
     expect(screen.getByRole('radio', { name: 'March' })).toBeTruthy();
   });
 
-  /*
-   * An address that already has an account is refused with 409
-   * REGISTRATION_FAILED, kept vague so nobody can learn which addresses are
-   * registered. It reads as what it may be, with the two ways on, and still
-   * never says the address exists.
-   */
+  // The 409 REGISTRATION_FAILED is deliberately vague so nobody can learn which addresses are registered.
   it('offers Sign in and Reset password, carrying the address, when the address may already have an account', async () => {
     auth.register.mockResolvedValue({ message: 'unable to register', code: 'REGISTRATION_FAILED' });
     const navigation = renderRegister();
@@ -209,7 +186,7 @@ describe('signing up', () => {
     const notice = await screen.findByTestId('register-may-have-account');
     expect(notice.textContent).toContain('We couldn’t create an account with these details. If you already have one, sign in or reset your password.');
     expect(notice.textContent).not.toMatch(/already (registered|in use|exists)/i);
-    // the address went to the server as typed, capitals and plus tag and all
+    // The address reaches the server exactly as typed.
     expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ email: 'Name.Surname+tag@example.com', birthMonth: 3 }));
 
     await act(async () => undefined);
@@ -231,7 +208,6 @@ describe('signing up', () => {
     expect(screen.queryByTestId('register-may-have-account')).toBeNull();
   });
 
-  /* a password found in a data leak is about the password, so it is said on its step */
   it('goes back to the password when it has been in a data leak', async () => {
     const message = 'This password has shown up in a data leak, so it isn’t safe. Choose a different one.';
     auth.register.mockResolvedValue({ message, code: 'PASSWORD_BREACHED' });
@@ -255,7 +231,7 @@ describe('signing up', () => {
     auth.register.mockResolvedValue({ message: 'accounts are for people aged 13 and over', code: 'UNDER_MINIMUM_AGE' });
     renderRegister();
     await signUp('name@example.com', { age: 9 });
-    // the age they slid to is the one sent, for the server to refuse
+    // The age slid to is sent, for the server to refuse.
     await waitFor(() => expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ birthYear: birthYearFrom(9, 3), birthMonth: 3 })));
     await waitFor(() => expect(auth.stopForAge).toHaveBeenCalledWith('refused'));
     expect(screen.queryByText('accounts are for people aged 13 and over')).toBeNull();
@@ -269,11 +245,7 @@ describe('signing up', () => {
     expect(screen.queryByText('Enter a valid email address')).toBeNull();
   });
 
-  /*
-   * The email keyboard, and nothing that rewrites what is typed: an
-   * address capitalised or "corrected" by the keyboard is an address the
-   * person did not mean.
-   */
+  // A keyboard that capitalises or corrects an address produces one the person did not mean.
   it('asks for the email with the email keyboard, no capitals and no autocorrect', async () => {
     renderRegister();
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda_k' } });

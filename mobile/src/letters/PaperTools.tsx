@@ -8,26 +8,22 @@ import { useDirection } from '../reports/direction';
 import { PressableScale } from '../theme/MotionParts';
 import { ReachGroup } from '../theme/Pressable';
 import { Icon, type IconName } from '../theme/Icon';
-import { fontScaleCap, radii, typography } from '../theme/tokens';
+import { fontScaleCap, radii, typography, wash } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { HIDDEN } from './PaperSheet';
 import { PEN_WIDTHS, type PenSize } from './paperKit';
 
 /**
- * The composer's tools (LetterComposer.tsx), kept quiet so the paper is what
- * is looked at: a bar of four — Write, Draw, Text, Paper — in the track the
- * app's segmented controls sit in, and under it the one chosen's few
- * controls. Every choice is a small live picture of itself rather than a
- * word — a pen's line in the colour it will draw, a sheet in the paper's own
- * tone with its own lines, the ink written on the paper it will be written on —
- * and each is a fingertip wide and says what it is to a screen reader.
+ * The composer's tools (LetterComposer.tsx), kept quiet so the paper stays the focus: a bar of Write, Draw, Text and
+ * Paper, and under it the chosen tool's controls. Each choice is a small live sample of itself rather than a word,
+ * at least a fingertip wide, and named for screen readers.
  */
 
 export type PaperTool = 'write' | 'draw' | 'text' | 'paper';
 const TOOLS: readonly PaperTool[] = ['write', 'draw', 'text', 'paper'];
 
-/** The four tools along the top of the paper. Draw stays in its place on a first letter, dimmed with a lock, and says why when touched. */
+/** The four tools above the paper. On a first letter Draw stays in place, dimmed with a lock, and says why when touched. */
 export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (tool: PaperTool) => void; canDraw: boolean }): React.JSX.Element {
   const { t } = useI18n();
   const { colors } = useTheme();
@@ -43,12 +39,12 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
     <View style={[styles.bar, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]} accessibilityRole="tablist" accessibilityLabel={t('letters.paper.tools')}>
       {TOOLS.map((each, i) => {
         const active = each === tool;
-        // the bar is all tools: each answers in its half of the gaps beside it, and the two at the ends out to the bar's own edge
+        // Each tool takes half the gaps beside it, and the end ones reach the bar's own edge.
         const atLeft = mirrored ? i === TOOLS.length - 1 : i === 0;
         const atRight = mirrored ? i === 0 : i === TOOLS.length - 1;
         const reach = { top: BAR_PAD, bottom: BAR_PAD, left: atLeft ? BAR_PAD : BAR_GAP / 2, right: atRight ? BAR_PAD : BAR_GAP / 2 };
         const locked = each === 'draw' && !canDraw;
-        // the tool in use as the tab bar and the segmented control show where you are: a wash of violet, in violet ink
+        // The active tool gets the violet wash, like the tab bar and segmented controls.
         const tint = active ? colors.primary : colors.textSecondary;
         return (
           <PressableScale
@@ -63,7 +59,7 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
             accessibilityHint={locked ? t('letters.paper.drawLocked') : undefined}
             testID={`letter-tool-${each}`}
             hitSlop={reach}
-            style={[styles.barItem, active ? { backgroundColor: `${colors.primary}${CHOSEN_WASH}` } : null, locked ? styles.locked : null]}
+            style={[styles.barItem, active ? { backgroundColor: wash(colors.primary) } : null, locked ? styles.locked : null]}
           >
             {each === 'draw' ? locked ? <Icon name="lock" size={17} color={tint} /> : <Glyph kind="draw" color={tint} /> : <Icon name={TOOL_ICON[each]} size={17} color={tint} />}
             <Text maxFontSizeMultiplier={fontScaleCap.fixedBox} numberOfLines={1} style={[styles.barText, { color: tint }, active ? styles.barTextOn : null]}>
@@ -83,21 +79,13 @@ const BAR_PAD = 3;
 const BAR_GAP = 2;
 
 /**
- * Choices and actions stand 2pt apart in their rows, and their rows at least
- * 4pt apart: each answers a finger in its half of the gaps around it, so no
- * strip between two of them presses nothing and none reaches into another.
+ * Choices sit 2pt apart and their rows at least 4pt apart; each answers taps in its half of the gaps around it, so
+ * no gap is dead and none reaches into a neighbour.
  */
 const ROW_GAP = 2;
 const ROWS_APART = 4;
 
-/** How much of the violet the chosen tool's ground is, as the last two digits of its colour: the segmented control's own wash (theme/glass). */
-const CHOSEN_WASH = '1F';
-
-/**
- * A row of choices that scrolls sideways when it is wider than the phone, as
- * the app's chips do: right to left, the first choice is on the right and the
- * row starts there. A group, under the name of what is being chosen.
- */
+/** A named group of choices that scrolls sideways when wider than the phone, starting from the right in right-to-left languages. */
 export function SwatchRow({ label, shown = false, children, testID }: { label: string; shown?: boolean; children: ReactNode; testID?: string }): React.JSX.Element {
   const dir = useDirection();
   const { colors } = useTheme();
@@ -105,7 +93,7 @@ export function SwatchRow({ label, shown = false, children, testID }: { label: s
   const scroller = useRef<ScrollView>(null);
   return (
     <View style={styles.rowBlock}>
-      {/* named on the screen where rows of like choices sit together (the paper's lines, colour and ink); the row is a group by that name either way */}
+      {/* A visible label where rows of similar choices sit together; the row is a group by that name either way. */}
       {shown ? (
         <Text {...HIDDEN} style={[styles.rowLabel, dir.text, { color: colors.textSecondary }]}>
           {label}
@@ -130,7 +118,7 @@ export function SwatchRow({ label, shown = false, children, testID }: { label: s
   );
 }
 
-/** One choice in a row: a fingertip-wide round, ringed in violet when it is the one chosen, as whatever is chosen is. */
+/** One choice in a row: a fingertip-wide round, ringed in violet when chosen. */
 export function Choice({
   label,
   checked,
@@ -168,7 +156,7 @@ export function Choice({
   );
 }
 
-/** A square button among the tools, for what is done rather than chosen: undo, redo, clear, delete. */
+/** A square tool button for actions rather than choices: undo, redo, clear, delete. */
 export function ToolAction({
   label,
   onPress,
@@ -200,7 +188,7 @@ export function ToolAction({
   );
 }
 
-/** A dot of paint, on a little round of the paper it will go on, so a white or a sand paint shows on a pale screen. */
+/** A paint dot on a round of the paper it will go on, so white or sand paint shows on a pale screen. */
 export function PaintDot({ paint, tone, size = 26 }: { paint: Paint; tone: PaperTone; size?: number }): React.JSX.Element {
   const { colors } = useTheme();
   const sheet = paperColors({ style: 'plain', tone, ink: 'navy' });
@@ -211,11 +199,7 @@ export function PaintDot({ paint, tone, size = 26 }: { paint: Paint; tone: Paper
   );
 }
 
-/**
- * A tool as a sample of what it draws: a short stroke in the colour chosen,
- * fine for the pen, wide and soft for the brush, see-through for the marker,
- * on a little square of the paper.
- */
+/** A tool as a sample stroke in the chosen colour on a square of the paper: fine pen, soft wide brush, translucent marker. */
 export function ToolSample({ tool, paint, tone }: { tool: DrawTool; paint: Paint; tone: PaperTone }): React.JSX.Element {
   const sheet = paperColors({ style: 'plain', tone, ink: 'navy' });
   const color = paintColor(paint, tone);
@@ -243,10 +227,7 @@ export function SizeDot({ tool, size, paint, tone }: { tool: DrawTool; size: Pen
   );
 }
 
-/**
- * A sheet in miniature: its tone, its lines, margin, squares or dots, and a
- * stroke of its ink across the top, as the paper choices show themselves.
- */
+/** A miniature sheet: its tone, its lines, and a stroke of its ink across the top. */
 export function MiniSheet({ paper }: { paper: LetterPaper }): React.JSX.Element {
   const c = paperColors(paper);
   const rules = [14, 20, 26, 32, 38];
@@ -276,11 +257,7 @@ export function MiniSheet({ paper }: { paper: LetterPaper }): React.JSX.Element 
   );
 }
 
-/**
- * An ink as its writing on the paper it would be written on: a line of a
- * hand's loops in that ink, on a little round of the sheet. A stroke rather
- * than letters, so it is the same sample in every language and script.
- */
+/** An ink as a looped stroke on a round of the sheet: a stroke rather than letters, so it is the same in every script. */
 export function InkSample({ ink, tone }: { ink: Ink; tone: PaperTone }): React.JSX.Element {
   const c = paperColors({ style: 'plain', tone, ink });
   return (
@@ -292,11 +269,7 @@ export function InkSample({ ink, tone }: { ink: Ink; tone: PaperTone }): React.J
   );
 }
 
-/**
- * The few glyphs the icon set has no word for, drawn in its manner (a fine
- * round-ended line): a stroke for Draw, and the arrows that turn back and
- * forward for undo and redo.
- */
+/** Glyphs the icon set lacks, drawn in its style (fine round-ended lines): Draw's stroke, and undo and redo arrows. */
 export function Glyph({ kind, color, size = 17 }: { kind: 'draw' | 'undo' | 'redo'; color: string; size?: number }): React.JSX.Element {
   const d =
     kind === 'draw'

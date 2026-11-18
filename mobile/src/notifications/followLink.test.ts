@@ -79,9 +79,9 @@ describe('notificationText', () => {
       title: 'letters.notify.title',
       body: 'letters.notify.body',
     });
-    // from before `how`: a pen pal’s letter
+    // From before `how`: a pen pal's letter.
     expect(notificationText({ ...home, data: { kind: 'letter', threadId: T } }, t as never, 'de').title).toBe('letters.notify.title');
-    // the server writes in the reader’s language now, and an English reader keeps its line
+    // The server writes in the reader's language, and an English reader keeps its line.
     expect(notificationText(home, t as never, 'en')).toEqual({ title: 'Your bird came home', body: 'It brought an answer to your letter.' });
   });
 
@@ -93,7 +93,7 @@ describe('notificationText', () => {
   });
 });
 
-describe('progress notifications (contract 4)', () => {
+describe('progress notifications', () => {
   const t = (key: string, vars?: Record<string, string | number>) =>
     vars ? `${key}(${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join(',')})` : key;
 
@@ -138,12 +138,12 @@ describe('a group’s news, in the reader’s language', () => {
   it('says what happened from what the server sends beside its English line', () => {
     const removed = { title: 'Aus einer Gruppe entfernt', body: 'Du wurdest aus Newroz entfernt. Ein Admin kann dich wieder hinzufügen.' };
     expect(news({ kind: 'group_removed' })).toEqual(removed);
-    // a line written while groups could still be open reads the same now that none is
+    // A line written while groups could still be open reads the same now that none is.
     expect(news({ kind: 'group_removed', privacy: 'open' })).toEqual(removed);
     expect(news({ kind: 'group_banned', duration: '7d', reason: 'Spam' }).body).toBe('Du wurdest für eine Woche aus Newroz gesperrt. Grund: Spam. Du kannst um Rückkehr bitten.');
     expect(news({ kind: 'group_request', count: '3' }).body).toBe('3 Personen möchten zurück in Newroz.');
     expect(news({ kind: 'group_request_approved', rejoined: 'true' }).body).toBe('Du bist wieder in Newroz.');
-    // let back but not put back in: nobody comes into a group by themselves
+    // Let back but not put back in: nobody comes into a group by themselves.
     expect(news({ kind: 'group_request_approved', rejoined: 'false' }).body).toBe('Ein Admin kann dich wieder zu Newroz hinzufügen.');
     expect(news({ kind: 'group_request_approved', rejoined: 'false', privacy: 'open' }).body).toBe('Ein Admin kann dich wieder zu Newroz hinzufügen.');
     expect(news({ kind: 'group_request_declined', closed: 'true' }).body).toBe(
@@ -164,7 +164,7 @@ describe('a group’s news, in the reader’s language', () => {
 
   it('opens the group by its name, for someone it is still shown to', () => {
     expect(resolveDeepLink({ kind: 'group_banned', groupId: 'g1', groupName: 'Newroz' })).toEqual({ screen: 'GroupThread', params: { groupId: 'g1', name: 'Newroz' } });
-    // removed, they are out of it: the line is read where it is, and opens nothing that would only say "not found"
+    // Removed, they are out of it: the line is read where it is and opens nothing that would only say "not found".
     expect(resolveDeepLink({ kind: 'group_removed', groupId: 'g1', groupName: 'Newroz' })).toBeNull();
   });
 });

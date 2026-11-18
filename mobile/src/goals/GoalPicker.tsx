@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
+import { fontScaleCap, radii, spacing, typography, wash } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -15,23 +15,9 @@ interface Props {
   disabled?: boolean;
 }
 
-/** How much of the violet the chosen goal is, as the last two digits of its colour: the tab bar's own wash. */
-const CHOSEN_WASH = '1F';
-
 /**
- * The day's goal, one of four: 10, 20, 30 or 50 XP.
- *
- * Drawn as the app draws a choice of one among a few: four places on a quiet
- * track, the one chosen a wash of the violet with its number in the violet,
- * as the tab you are on is, and the others in the page's grey. It was the one
- * chosen ringed in the page's ink and the rest ringed in the glass's white,
- * which on a white sheet is no ring at all: three numbers floating on
- * nothing beside one in a box. The numbers are the reader's own digits, and
- * the places run from the reading side.
- *
- * A screen reader hears it as what it is, one choice of four: each place a
- * radio named for what it means ("20 XP a day", where a bare "20" said
- * nothing), and the goal set is the one checked.
+ * The daily goal, one of 10, 20, 30 or 50 XP, drawn as a segmented track with the chosen place washed in violet.
+ * Screen readers hear a radio group whose options are named in full ("20 XP a day"), not as bare numbers.
  */
 export function GoalPicker({ value, onChange, disabled }: Props) {
   const { colors } = useTheme();
@@ -50,14 +36,14 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
             key={option}
             disabled={disabled}
             onPress={() => {
-              // a tick for a new goal, nothing for the one already set
+              // A tick for a new goal, nothing for the one already set.
               if (!selected) haptic('select');
               onChange(option);
             }}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected, disabled: !!disabled }}
             accessibilityLabel={t('learn.today.goalOption', { xp: formatNumber(option, locale) })}
-            style={[styles.segment, selected && { backgroundColor: `${colors.primary}${CHOSEN_WASH}` }]}
+            style={[styles.segment, selected && { backgroundColor: wash(colors.primary) }]}
           >
             <Text
               style={[styles.label, selected && styles.chosen, { color: selected ? colors.primary : colors.textSecondary }]}

@@ -27,30 +27,19 @@ interface Log {
 }
 
 /**
- * Pay a finished game's players, inside the transaction that closed its last
- * question — so nothing depends on anyone coming back to read the results, and
- * a game finished at 23:59 is learning on the day it was played.
+ * Pay a finished game's players inside the transaction that closed its last question, so payment never depends on
+ * anyone reading the results and a game finished at 23:59 counts for that day.
  *
- * What a story game pays for is learning, the way a lesson does: the answers a
- * player gave on their own local today (a game left open overnight does not
- * buy tomorrow's streak) must be at least half the questions (`countsAsLearning`).
- * Then XP as for a lesson, a quarter of it for a story they had already
- * finished before (`story_completions`, kept beyond the games themselves),
- * and none at all once the same story has paid them PAID_STORY_REPEATS_PER_DAY
- * times on their local day — a lesson's third repeat pays nothing either, and
- * a story read once an hour would otherwise be the easiest XP in the app.
- * The day learned, the streak (which also unlocks the daily reward) and the
- * daily goal are still recorded then: reading again is learning, it just stops
- * being a way to climb. No Gems, no rating, and the place in the game never
- * changes the XP — two friends reading together are not racing for it.
+ * A story game pays for learning like a lesson: the answers a player gave on their own local today must be at least
+ * half the questions (`countsAsLearning`), so a game left open overnight does not buy tomorrow's streak. XP is as for a
+ * lesson, a quarter for a story finished before (`story_completions`, kept beyond the games), and none once the same
+ * story has paid PAID_STORY_REPEATS_PER_DAY times that local day. The day learned, the streak (which unlocks the daily
+ * reward) and the daily goal are still recorded. No Gems, no rating, and placing never changes the XP.
  *
- * Players are paid in user-id order, each in a savepoint: two games finishing
- * at once with the same people take the users' rows in the same order (no
- * deadlock), and a failure paying one player leaves that player unpaid and
- * logged — it never rolls back the game, or the others. An advisory lock per
- * (player, story) makes "had they finished this story before?" one answer even
- * when two of their games on it finish together. XP is keyed on
- * `${gameId}:${userId}`, so it can never be paid twice.
+ * Players are paid in user-id order, each in a savepoint: concurrent games with the same people lock users in the same
+ * order (no deadlock), and a failure leaves that player unpaid and logged without rolling back the game or the others.
+ * An advisory lock per (player, story) makes "finished this story before?" consistent when two of their games on it
+ * finish together. XP is keyed on `${gameId}:${userId}`, so it is never paid twice.
  */
 export async function payRewards(
   client: pg.PoolClient,

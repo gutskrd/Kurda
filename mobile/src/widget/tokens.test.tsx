@@ -3,10 +3,9 @@ import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
- * The token's life on a phone: made at sign-in and once each time the app
- * starts (replacing the one before), kept in the place the widget reads it,
- * taken away from the server and the phone at sign-out, and the widget asked
- * to reload whenever what it shows may have changed.
+ * The token's lifecycle: created at sign-in and on each app start (replacing the previous one), stored where the
+ * widget reads it, revoked on the server and removed at sign-out, with a widget reload whenever its content may
+ * have changed.
  */
 
 const native = vi.hoisted(() => {
@@ -82,7 +81,7 @@ function client(routes: Record<string, unknown> = {}) {
   });
 }
 
-/** A fetch that records what the widget token's own requests were. */
+/** A fetch that records the widget token's own requests. */
 function recordingFetch() {
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const fn = vi.fn(async (url: string, init: RequestInit) => {
@@ -127,7 +126,7 @@ describe('this phone’s widget token', () => {
     await ensureWidgetToken({ client: api, apiBase: 'https://api.test', locale: 'ku' });
     expect(await ensureWidgetToken({ client: api, apiBase: 'https://api.test', locale: 'ku' })).toBe('kept');
     expect(posts(api.calls)).toHaveLength(1);
-    // the app starts again: a fresh token, naming the old one so the server drops it
+    // The app starts again: a fresh token, naming the old one so the server drops it.
     resetTokenRun();
     expect(await ensureWidgetToken({ client: api, apiBase: 'https://api.test', locale: 'ku' })).toBe('made');
     expect(posts(api.calls)[1]!.body).toEqual({ replaces: 'hvw_token1' });
@@ -173,7 +172,7 @@ describe('this phone’s widget token', () => {
     expect(group.get(WIDGET_KEYS.token)).toBe('hvw_token1');
     expect(await ensureWidgetToken({ client: down, apiBase: 'https://api.test', locale: 'ku' }, { now: 2_000 })).toBe('kept');
     expect(posts(down.calls)).toHaveLength(1);
-    // with no token at all, it says it failed, and tries again half an hour on
+    // With no token at all, it says it failed, and tries again half an hour on.
     group.clear();
     expect(await ensureWidgetToken({ client: down, apiBase: 'https://api.test', locale: 'ku' }, { now: 3_000 })).toBe('failed');
     expect(posts(down.calls)).toHaveLength(1);
@@ -193,7 +192,7 @@ describe('this phone’s widget token', () => {
     expect(group.has(WIDGET_KEYS.token)).toBe(false);
     expect(group.has(WIDGET_KEYS.apiBase)).toBe(false);
     expect(reloads).toEqual([WIDGET_KIND]);
-    // nothing left: nothing to send, nothing to reload
+    // Nothing left: nothing to send, nothing to reload.
     expect(await forgetWidgetToken({ fetchFn: net.fn })).toBe(false);
     expect(net.calls).toHaveLength(1);
   });
@@ -233,7 +232,7 @@ describe('this phone’s widget token', () => {
     await ensureWidgetToken({ client: api, apiBase: 'https://api.test', locale: 'ku' });
     expect(await removeEveryWidget({ client: api, apiBase: 'https://api.test', locale: 'ku' })).toBe(true);
     expect(api.calls.some((c) => c.method === 'DELETE' && c.path === '/letters/widget/tokens')).toBe(true);
-    // the old one is gone with the rest, so the new one replaces nothing
+    // The old one is gone with the rest, so the new one replaces nothing.
     expect(posts(api.calls)[1]!.body).toEqual({});
     expect(group.get(WIDGET_KEYS.token)).toBe('hvw_token2');
   });

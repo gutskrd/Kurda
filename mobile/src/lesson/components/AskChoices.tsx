@@ -17,11 +17,9 @@ import { CARD } from '../valley';
 import { OptionChip } from './OptionChip';
 
 /*
- * The answers of two kinds of question that are not a list of lines: the
- * pictures a word is chosen among, and the short Kurdish words one of which
- * fills a line's gap. Both answer back as the option cards do — the one
- * chosen ringed in the pomegranate's red, then green with a check when it was
- * right, or red with a cross and the right one checked beside it.
+ * Answers that are not a list of lines: pictures to choose a word's meaning among, and short Kurdish words to fill a
+ * line's gap. Both react like the option cards: ringed red when chosen, then a green check when right, or a red
+ * cross with the right one checked.
  */
 
 interface ChoiceProps {
@@ -29,12 +27,12 @@ interface ChoiceProps {
   choice: number | null;
   onSelect: (index: number) => void;
   disabled: boolean;
-  /** graded: whether an option is the right one; false for all while choosing */
+  /** Once graded, whether an option is the right one; false for all while choosing. */
   isRight: (index: number) => boolean;
   graded: boolean;
 }
 
-/** How a choice stands, by its place: what the option cards are told. */
+/** A choice's tile state by its index, as the option cards are told. */
 function stateOf(i: number, { choice, isRight, graded }: Pick<ChoiceProps, 'choice' | 'isRight' | 'graded'>): TileState {
   const selected = choice === i;
   if (isRight(i)) return 'right';
@@ -43,35 +41,32 @@ function stateOf(i: number, { choice, isRight, graded }: Pick<ChoiceProps, 'choi
   return selected ? 'picked' : 'idle';
 }
 
-/** Between picture cards, along a row and from one row to the next. */
+/** The gap between picture cards, across and between rows. */
 const GRID_GAP = spacing.sm + 4;
 
-/** A picture card is at least this wide to stand three in a row, and never wider than the last. */
+/** A picture card's minimum width for three to a row. */
 const MIN_CARD = 100;
 const MAX_CARD = 168;
 
-/** The picture on its card: at least this, and at most that, whatever the card's size. */
+/** The picture's size bounds on its card. */
 const MIN_PICTURE = 72;
 const MAX_PICTURE = 112;
 
-/** How many cards stand in a row: three in a row where three fit, four where four do, otherwise two by two. */
-export function pictureColumns(count: number, width: number): number {
+/** Cards per row: three where three fit, four where four do, otherwise two by two. */
+function pictureColumns(count: number, width: number): number {
   const fits = (n: number): boolean => MIN_CARD <= (width - (n - 1) * GRID_GAP) / n;
   if (count < 3) return Math.max(1, count);
   if (count === 3) return fits(3) ? 3 : 2;
-  // four in a row only where each could be as large as a card gets: a tablet, not a phone held sideways
+  // Four only where each could be full size: a tablet, not a phone held sideways.
   return count === 4 && 4 * MAX_CARD <= width ? 4 : 2;
 }
 
 let grids = 0;
 
 /**
- * Which picture the word in the bubble is: square cream cards, each with its
- * picture and its number in the corner, and no word under it — reading the
- * answer off the card would be no question at all. Two by two, or three in a
- * row where three fit. A screen reader hears each card by what it shows, in
- * English, the language the pictures were named in; a picture the app cannot
- * draw (a newer server's) is a card with that name on it instead.
+ * Pictures to choose what the bubble's word is: square cards with a number but no word, since reading the answer
+ * off the card would be no question. Screen readers hear each picture's English name; a picture the app cannot draw
+ * (from a newer server) shows its name instead.
  */
 export function PictureChoices({ options, choice, onSelect, disabled, isRight, graded }: ChoiceProps): React.JSX.Element {
   const { t, locale } = useI18n();
@@ -121,7 +116,7 @@ export function PictureChoices({ options, choice, onSelect, disabled, isRight, g
   );
 }
 
-/** One card's picture, or the picture's name when the app has none of that name. */
+/** One card's picture, or its name when the app has no such picture. */
 function PictureOf({ option, size, ink, idPrefix }: { option: string; size: number; ink: string; idPrefix: string }): React.JSX.Element {
   const { scheme } = useTheme();
   const known = Object.prototype.hasOwnProperty.call(WORD_PICTURES, option);
@@ -144,11 +139,9 @@ function PictureOf({ option, size, ink, idPrefix }: { option: string; size: numb
 }
 
 /**
- * The words one of which fills the line's gap: short Kurdish tiles in a row
- * that wraps, like the word bank's. The one chosen leaves a ghost of its own
- * size where it was and stands in the gap instead (`GapSlot`), so the line
- * reads as it would be said; another tap puts another there. Once graded, the
- * right one is checked where it stands, if it was not the one chosen.
+ * Words to fill the line's gap: short Kurdish tiles in a wrapping row like the word bank's. The chosen one leaves a
+ * same-size ghost and stands in the gap (`GapSlot`), so the line reads as said. Once graded, the right one is checked
+ * where it stands if it was not chosen.
  */
 export function WordChoices({ options, choice, onSelect, disabled, isRight, graded }: ChoiceProps): React.JSX.Element {
   const { t } = useI18n();
@@ -200,7 +193,7 @@ const styles = StyleSheet.create({
   cornerRight: { right: spacing.sm },
   unknown: { alignItems: 'center', justifyContent: 'center' },
   words: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm + 2 },
-  // a word tile, as the word bank's are: a smaller card than an answer, on the same hairline edge
+  // A word tile like the word bank's: smaller than an answer card, on the same hairline edge.
   word: { alignItems: 'center', gap: spacing.xs + 2, borderRadius: radii.md + 2, borderWidth: CARD.edge, paddingHorizontal: spacing.md + 2 },
   wordText: { ...display(typography.sizes.md + 2) },
   ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.md + 2 },

@@ -34,17 +34,12 @@ export const MODERATION_SWEEP_MS = 5 * 60 * 1000;
 export const RETENTION_FIRST_RUN_MS = 10 * 60 * 1000;
 
 /**
- * Reports, cases, sanctions and appeals, wired once: the services share one
- * sanctions service (so the second-approval count is the same everywhere), the
- * user and admin routes are registered, and two timers run — the five-minute
- * sweep (sync the automated feeds, expire unconfirmed bans, send any urgent
- * alert that did not go, finish moving quarantined evidence off the public
- * bucket) and the evidence retention (first after ten minutes, then daily),
- * which also puts any permanent ban the banned-address registry is missing on
- * it.
+ * Reports, cases, sanctions and appeals, wired once. The services share one sanctions service (so the second-approval
+ * count is consistent), the user and admin routes are registered, and two timers run: the five-minute sweep (sync
+ * automated feeds, expire unconfirmed bans, send any missed urgent alert, finish quarantine moves) and evidence
+ * retention (after ten minutes, then daily), which also backfills the banned-address registry.
  *
- * Returns the services, so the older per-surface report routes can write
- * through the same report service.
+ * Returns the services so the older per-surface report routes write through the same report service.
  */
 export function registerModeration(app: FastifyInstance, config: AppConfig, options: ModerationOptions = {}): ModerationKit {
   const mailer: ModerationMailer = options.mailer ?? {

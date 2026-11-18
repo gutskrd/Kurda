@@ -4,9 +4,8 @@ import type { TranslationKey } from '../i18n/translations';
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 /**
- * The words for a tree: each kind's Kurdish name with what it means, a line
- * about it, the names of its seven stages, and how it is faring. Written out
- * key by key, so a key that is missing is a type error and not a blank.
+ * The words for a tree: each kind's Kurdish name and meaning, a line about it, its seven stage names, and its
+ * health. Written key by key, so a missing key is a type error, not a blank.
  */
 const KIND: Record<TreeSpecies, { name: TranslationKey; meaning: TranslationKey; about: TranslationKey }> = {
   beru: { name: 'tree.kind.beru.name', meaning: 'tree.kind.beru.meaning', about: 'tree.kind.beru.about' },
@@ -38,7 +37,7 @@ const HEALTH: Record<TreeHealth, TranslationKey> = {
   withered: 'tree.health.withered',
 };
 
-/** A kind's name and what it means; the meaning is left out where it is the name (a reader of Kurdish). */
+/** A kind's name and meaning; the meaning is omitted where it equals the name (for a Kurdish reader). */
 export function treeNamed(t: Translate, species: TreeSpecies): { name: string; meaning: string | null } {
   const name = t(KIND[species].name);
   const meaning = t(KIND[species].meaning);
@@ -52,7 +51,7 @@ export const stageName = (t: Translate, stage: TreeStage): string => t(STAGE[sta
 
 export const healthName = (t: Translate, health: TreeHealth): string => t(HEALTH[health]);
 
-/** What a picture of a tree is called: its kind, how far it has grown, and how it fares when that is not well. */
+/** What a tree picture is called: its kind, its growth, and its health when poor. */
 export function treeTitle(t: Translate, tree: { species: TreeSpecies; stage: TreeStage; health: TreeHealth }): string {
   const parts = [treeNamed(t, tree.species).name, stageName(t, tree.stage)];
   if (tree.health !== 'fresh') parts.push(healthName(t, tree.health));

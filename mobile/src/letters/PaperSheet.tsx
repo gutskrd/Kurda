@@ -34,24 +34,18 @@ import { Icon } from '../theme/Icon';
 import { DRAWING_DEEPEST, NOTE_WIDTH, WRITING_TOP, pagesFor, writingInsets } from './paperKit';
 
 /**
- * A sheet of letter paper on the phone, as it is read and as it is written
- * on (LetterComposer.tsx): the paper itself from the shared picture
- * (art/letter-paper.ts), what is drawn on it, the writing on its rules in the
- * paper's ink, and the notes stuck to it. The website draws the same page.
+ * A sheet of letter paper, as read and as written on (LetterComposer.tsx): the paper from the shared picture
+ * (art/letter-paper.ts), the drawing, the writing on its rules, and the notes. The website draws the same page.
  *
- * The page is laid out in its own units (shared PAPER_W across) and shown as
- * wide as the screen allows, so the writing is set at the page's own size for
- * its width — a line's height is one rule — and wraps where it wrapped for the
- * one who wrote it, on any phone. A paper keeps its colours in the dark: it is
- * paper, not part of the screen. The writing and the notes are the phone's own
- * text, so Kurmancî and Soranî shape properly and a screen reader reads them;
- * the picture under them is decoration, and the sheet says in words what it is
- * — its paper, and that something is drawn on it.
+ * The page is laid out in its own units (shared PAPER_W wide) and scaled to the screen, so writing wraps exactly
+ * where it did for its writer on any phone. Paper keeps its colours in dark mode. The writing and notes are real
+ * text, so Kurdish scripts shape properly and screen readers read them; the picture is decorative, and the sheet
+ * describes itself in words.
  */
 
 export const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
-/** Each paper, line style and colour by its name, for whoever cannot see it. */
+/** Each paper's line style and colour by name, for screen readers. */
 export const STYLE_NAME: Readonly<Record<PaperStyle, TranslationKey>> = {
   plain: 'letters.paper.style.plain',
   lined: 'letters.paper.style.lined',
@@ -87,7 +81,7 @@ export const PAINT_NAME: Readonly<Record<Paint, TranslationKey>> = {
 };
 export const inkName = (ink: Ink): TranslationKey => PAINT_NAME[ink];
 
-/** What a sheet is, in words: its paper, and whether something is drawn or stuck on it. */
+/** The sheet described in words: its paper, and whether something is drawn or stuck on it. */
 export function describePaper(t: Translate, decor: { paper: LetterPaper; strokes: readonly PaperStroke[]; notes: readonly PaperNote[] }): string {
   const { paper, strokes, notes } = decor;
   const parts = [t('letters.paper.describe', { tone: t(TONE_NAME[paper.tone]), style: t(STYLE_NAME[paper.style]) })];
@@ -97,10 +91,7 @@ export function describePaper(t: Translate, decor: { paper: LetterPaper; strokes
   return parts.join(' ');
 }
 
-/**
- * How wide a sheet is shown before the screen has said: the screen's width
- * inside its gutters, or, where there is no screen to ask (a test), a phone's.
- */
+/** A sheet's width before layout reports it: the screen width inside its gutters, or a phone's where there is no screen (tests). */
 export function useSheetWidth(): [number, (w: number) => void] {
   const { width: screen } = useWindowDimensions();
   const [measured, setMeasured] = useState(0);
@@ -108,30 +99,30 @@ export function useSheetWidth(): [number, (w: number) => void] {
   return [measured > 0 ? measured : guess, setMeasured];
 }
 
-/** The colours of a sheet on this screen: its own, whatever the theme, but for the hairline round it. */
+/** A sheet's colours: its own whatever the theme, except the hairline round it. */
 export function useSheetColors(paper: LetterPaper): PaperColors {
   const { scheme } = useTheme();
   return useMemo(() => paperColors(paper, scheme), [paper, scheme]);
 }
 
-/** The writing's type on a sheet `scale` points to a page unit: the page's own size, its lines one rule apart. */
+/** The writing's type at `scale` points per page unit: the page's own size, lines one rule apart. */
 export function writingType(scale: number): TextStyle {
   return { fontSize: PAPER_TEXT * scale, lineHeight: PAPER_RULE * scale, includeFontPadding: false };
 }
 
-/** Where the writing sits on a sheet: from its first line down, inset from the edges as the paper's style asks. */
+/** The writing's frame: from its first line down, inset as the paper's style asks. */
 export function writingFrame(style: PaperStyle, scale: number): ViewStyle {
   const inset = writingInsets(style);
   return { paddingTop: WRITING_TOP * scale, paddingLeft: inset.left * scale, paddingRight: inset.right * scale };
 }
 
-/** Which way a letter reads and lines up: its own script decides, and an empty one follows the screen. */
+/** A letter's direction comes from its own script; an empty one follows the screen. */
 export function writingDirection(body: string, screenRtl: boolean): TextStyle {
   const rtl = body.trim().length > 0 ? isRtlText(body) : screenRtl;
   return { writingDirection: rtl ? 'rtl' : 'ltr', textAlign: rtl ? 'right' : 'left' };
 }
 
-/** The paper itself, its rules, margin, squares or dots, and what is drawn on it when it is only to be looked at. */
+/** The paper with its rules, margin, squares or dots, plus the drawing when it is only being looked at. */
 export const PaperPicture = memo(function PaperPicture({
   paper,
   strokes,
@@ -140,13 +131,13 @@ export const PaperPicture = memo(function PaperPicture({
 }: {
   paper: LetterPaper;
   strokes?: readonly PaperStroke[];
-  /** in page units: the picture goes no further than a drawing may, and the sheet's own colour is under the rest */
+  /** In page units: the picture goes no further than a drawing may, and the sheet's colour fills the rest. */
   length: number;
   width: number;
 }): React.JSX.Element | null {
   const { t } = useI18n();
   const drawn = Math.min(length, DRAWING_DEEPEST);
-  // the picture names itself in the reader's language (it would say so in English otherwise), though the sheet round it is what is read out
+  // Titled in the reader's language (it would default to English), though screen readers read the sheet around it.
   const title = describePaper(t, { paper, strokes: NONE, notes: NONE_NOTES });
   const xml = useMemo(() => (width > 0 ? letterPaperSvg({ paper, strokes, length: drawn, width, title }) : ''), [paper, strokes, drawn, width, title]);
   if (!xml) return null;
@@ -157,7 +148,7 @@ export const PaperPicture = memo(function PaperPicture({
   );
 });
 
-/** One line drawn on the paper, as the shared picture draws it: the brush with its soft edge, the marker see-through. */
+/** One stroke as the shared picture draws it: the brush with a soft edge, the marker translucent. */
 const StrokeShape = memo(function StrokeShape({ stroke, tone }: { stroke: Pick<PaperStroke, 'tool' | 'color' | 'width' | 'points'>; tone: PaperTone }) {
   const d = strokePath(stroke);
   if (!d) return null;
@@ -172,9 +163,8 @@ const StrokeShape = memo(function StrokeShape({ stroke, tone }: { stroke: Pick<P
 });
 
 /**
- * The drawing as lines the phone draws itself, over the paper, while it is
- * being made: a line added draws only that line, and the one under the finger
- * follows it (`live`) without the page being drawn again.
+ * The drawing as native lines over the paper while it is being made, so adding a line draws only that line and the
+ * one under the finger (`live`) follows it without redrawing the page.
  */
 export function StrokeLines({
   strokes,
@@ -202,13 +192,12 @@ export function StrokeLines({
   );
 }
 
-/** How tall the box a note is centred in is, in page units: taller than any note, so the note is in its middle whatever its lines. */
+/** The height of the box a note is centred in, in page units: taller than any note. */
 const NOTE_BOX = 520;
 
 /**
- * A note stuck on the paper: its words in its colour and size, centred where
- * it was put and turned as it was placed. Its box lets touches through except
- * on the note itself, so the paper round it can still be touched.
+ * A note on the paper, in its colour and size, centred where it was put and turned as placed. Only the note itself
+ * takes touches, so the paper round it stays touchable.
  */
 export function NoteMark({
   note,
@@ -224,7 +213,7 @@ export function NoteMark({
   note: PaperNote;
   tone: PaperTone;
   scale: number;
-  /** the note being changed: ringed, so it is clear which one the tools are for */
+  /** The note being edited, ringed so it is clear which one the tools act on. */
   selected?: boolean;
   handlers?: GestureResponderHandlers;
   label: string;
@@ -267,9 +256,8 @@ export function NoteMark({
 }
 
 /**
- * A letter as it is read, on its own paper: who wrote it and when at the top
- * of the sheet, the writing on its rules, the drawing and the notes. A letter
- * with no decor is on the default paper with nothing on it.
+ * A letter as it is read on its own paper: sender and time at the top, then the writing, drawing and notes. A letter
+ * without decor is on the default paper.
  */
 export function LetterOnPaper({
   body,
@@ -283,7 +271,7 @@ export function LetterOnPaper({
   decor: LetterDecor | null;
   from: string;
   when: string;
-  /** the letter is the one on your widget */
+  /** The letter is the one on your widget. */
   pinned?: boolean;
   testID?: string;
 }): React.JSX.Element {
@@ -341,7 +329,7 @@ const NONE: readonly PaperStroke[] = [];
 const NONE_NOTES: readonly PaperNote[] = [];
 
 const styles = StyleSheet.create({
-  // a sheet of paper: its corners barely rounded, a hairline where it meets the screen
+  // Barely rounded corners, and a hairline where the paper meets the screen.
   sheet: { alignSelf: 'stretch', overflow: 'hidden', borderRadius: radii.xs, borderWidth: StyleSheet.hairlineWidth },
   picture: { position: 'absolute', left: 0, right: 0, top: 0 },
   head: { position: 'absolute', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },

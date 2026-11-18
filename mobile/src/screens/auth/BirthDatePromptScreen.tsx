@@ -16,25 +16,13 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/tokens';
 
 /**
- * The one question an account without a birth month is asked before anything
- * else: a Google or Apple sign-up, which tells us nothing about age, and every
- * account made before the question existed.
+ * The question an account without a birth month must answer first: a Google or Apple sign-up, or an account made
+ * before the question existed. It blocks the app because the answer decides discoverability, requests and leagues.
+ * It can be answered once, or left by signing out or deleting the account.
  *
- * Blocking, because the answer decides what the rest of the app may do — who
- * can find you, who can send you a request, whether you are in a league — and
- * every one of those would otherwise run on a guess. It can be answered once,
- * and it can be left by signing out or by deleting the account, which is
- * still an account while it is held here.
- *
- * It is asked the way sign-up asks it (auth/guide/StepFlow): how old, on the
- * ruler, then which month, in Hevalo's words, so somebody who came in through
- * Google or Apple meets the same two steps as somebody who typed an address.
- * It was a card with two pickers, a month and a year back to 1900. Because
- * the answer cannot be changed, the last step shows it back as the month and
- * year it comes to before it is saved; the chevron goes back to the ruler.
- *
- * Under 13 the server closes the account; the session goes with it and the
- * explanation takes over (AgeStopScreen).
+ * Asked the way sign-up asks it (auth/guide/StepFlow): age on the ruler, then month. Since the answer is final, the
+ * last step shows the resulting month and year before saving. Under 13 the server closes the account and
+ * AgeStopScreen takes over.
  */
 export function BirthDatePromptScreen() {
   const { client, refreshUser, stopForAge, logout } = useAuth();
@@ -42,7 +30,7 @@ export function BirthDatePromptScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
-  // unchosen until the ruler is moved, as on the sign-up: an age set for them would be the answer of whoever only taps on
+  // Unset until the ruler moves, so an age is never chosen for someone who only taps on.
   const [age, setAge] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
 
@@ -88,7 +76,7 @@ export function BirthDatePromptScreen() {
             }}
             disabled={tools.busy}
           />
-          {/* what the two answers come to, to be read over: it is saved once and for good */}
+          {/* The resulting month and year, to check before the one-time save. */}
           {age !== null && month !== null ? (
             <View style={styles.month}>
               <AnswerSummary rows={[{ label: t('age.label'), value: `${t(MONTH_KEYS[month - 1]!)} ${birthYearFrom(age, month)}` }]} testID="birth-summary" />
@@ -99,12 +87,12 @@ export function BirthDatePromptScreen() {
       ),
       footer: waysOut,
       commit: async () => {
-        // the age is answered on its own step; this is only for the types
+        // The age has its own step; this only narrows the type.
         if (age === null) return { ok: false, error: t('guide.register.age.required'), at: 'age' };
         if (month === null) return { ok: false, error: t('guide.register.month.required') };
         const res = await client.post('/me/birth-date', { birthYear: birthYearFrom(age, month), birthMonth: month });
         if (res.ok) {
-          // the gate lifts once the account no longer says a birth month is needed
+          // The gate lifts once the account no longer needs a birth month.
           await refreshUser();
           return { ok: true };
         }
@@ -112,7 +100,7 @@ export function BirthDatePromptScreen() {
           await stopForAge('closed');
           return { ok: false, error: null };
         }
-        // answered from another device in the meantime: nothing left to ask
+        // Already answered from another device.
         if (res.error.code === 'BIRTH_DATE_ALREADY_SET') {
           await refreshUser();
           return { ok: true };
@@ -122,7 +110,7 @@ export function BirthDatePromptScreen() {
     },
   ];
 
-  // answered, the app root shows the signed-in screens: nothing to do here
+  // Once answered, the app root shows the signed-in screens.
   return <StepFlow steps={steps} onFinish={() => undefined} testID="birth-flow" />;
 }
 

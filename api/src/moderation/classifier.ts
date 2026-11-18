@@ -1,10 +1,8 @@
 import { onClassifierError, type CategoryScores, type PolicyResult, type Surface, evaluateForSurface } from './policy.js';
 
 /**
- * Provider-agnostic text-classification seam (KUR-293). A hosted moderation API
- * (OpenAI / Perspective-style) or a self-hosted model implements `classify`;
- * call sites never know which. Keep it thin: return per-category confidence in
- * [0,1] plus the model version (stored for auditability + threshold tuning).
+ * Provider-agnostic text classification seam: a hosted moderation API or self-hosted model implements `classify`.
+ * Returns per-category confidence in [0,1] plus the model version (stored for audit and threshold tuning).
  */
 export interface ClassifierResult {
   scores: CategoryScores;
@@ -16,11 +14,9 @@ export interface ModerationClassifier {
 }
 
 /**
- * Default backend until a provider is configured: a deterministic **spam/scam**
- * heuristic. Spam is the tier we can score well without a model — link-spam,
- * scam keywords, shouting, and character-flooding. Toxicity / hate / sexual /
- * self-harm are left at 0 here (they need the hosted model behind this same
- * interface); the policy engine + wiring are provider-ready regardless.
+ * Default backend until a provider is configured: a deterministic spam and scam heuristic (link spam, scam keywords,
+ * shouting, character flooding). Toxicity, hate, sexual and self-harm scores stay 0 here; they need a real model behind
+ * the same interface.
  */
 export class HeuristicSpamClassifier implements ModerationClassifier {
   readonly modelVersion = 'heuristic-spam-v1';
@@ -59,10 +55,8 @@ export class HeuristicSpamClassifier implements ModerationClassifier {
 }
 
 /**
- * Classify + evaluate against a surface policy, degrading gracefully: any
- * classifier error yields the configured fail-open/closed result (no throw), so
- * a provider outage never blocks a low-risk surface nor silently publishes on a
- * high-risk one.
+ * Classify and evaluate against a surface policy. Any classifier error yields the configured fail-open or fail-closed
+ * result without throwing, so an outage never blocks a low-risk surface nor silently publishes on a high-risk one.
  */
 export async function classifyForSurface(
   classifier: ModerationClassifier,

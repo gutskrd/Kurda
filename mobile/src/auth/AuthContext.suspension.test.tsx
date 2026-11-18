@@ -60,7 +60,7 @@ describe('AuthProvider and a suspended account', () => {
       await result.current.login('kawa@example.com', 'long-enough-password');
     });
     expect(result.current.suspension).toEqual(details);
-    // back to the sign-in form, on purpose
+    // Back to the sign-in form, on purpose.
     act(() => result.current.clearSuspension());
     expect(result.current.suspension).toBeNull();
   });

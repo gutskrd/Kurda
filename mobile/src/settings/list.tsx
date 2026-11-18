@@ -14,16 +14,9 @@ import { ToggleRow } from '../theme/Toggle';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 
 /**
- * Settings as a list: what a phone's own settings look like, so nothing has
- * to be learned to use them.
- *
- * Rows run the width of the screen, one thing each — an icon, its name, what
- * it is set to now, and a chevron when there is a page behind it. Sections
- * have a plain name and a band between them, rather than a box around each:
- * a box per group made the screen a stack of cards to read one by one, where
- * a list is scanned down its left edge. Only a few rows to a section, so a
- * section can be taken in at a glance; what each row is set to is shown on
- * the row, so it need not be opened to be known.
+ * Settings as a plain list, like the phone's own settings. Full-width rows each show an icon, a name, the current
+ * value and a chevron when a page is behind them. Sections have a plain name and a band between them instead of a
+ * box each, so the list scans down its left edge. Sections stay short, and values are shown on the row.
  */
 
 /** A group of rows under a plain name; every section after the first has a band above it. */
@@ -34,7 +27,7 @@ export function SettingsSection({
   children,
 }: {
   title?: string;
-  /** a sentence under the rows: what the setting above it does, said once */
+  /** A sentence under the rows: what the setting above it does, said once. */
   footer?: string;
   first?: boolean;
   children: ReactNode;
@@ -57,7 +50,7 @@ export function SettingsSection({
   );
 }
 
-/** The band between two sections, on its own: for a section that may or may not be there above the next. */
+/** The band between two sections, on its own, for a section that may or may not be there above the next. */
 export function SettingsBand(): React.JSX.Element {
   const { colors } = useTheme();
   return <View style={[styles.band, { backgroundColor: colors.separator }]} />;
@@ -74,38 +67,24 @@ interface RowLook {
   icon?: IconName;
   title: string;
   subtitle?: string;
-  /** what it is set to now, before the chevron */
+  /** The current value, before the chevron. */
   value?: string;
-  /** cannot be undone (deleting the account): red, the one red on the screen */
+  /** Cannot be undone (deleting the account): red, the one red on the screen. */
   destructive?: boolean;
-  /**
-   * Wants something done (notifications blocked on the phone, an account
-   * that is limited): its icon, value and what is under it in the app's
-   * violet, the colour this app keeps for what is to be acted on. Only then;
-   * a row that is merely set to something stays in ink, so the violet one is
-   * seen.
-   */
+  /** Needs action (notifications blocked, a limited account): icon, value and subtitle in violet, kept for what needs acting on. */
   attention?: boolean;
 }
 
 /**
- * How wide a letter of a row's name is taken to be, as a share of its size:
- * a little over the average at 17 points in Latin script, and well over it in
- * Arabic script, so an estimate errs on the side of the name.
+ * Estimated width of a letter in a row's name, as a share of its size: a little over average for Latin at 17 pt,
+ * well over for Arabic script, to err toward the name.
  */
 const LETTER = 0.6;
 
 /**
- * The room a row's name keeps beside what the row is set to: its longest word.
- *
- * The value used to take up to 45% of the row whatever the name needed, and a
- * name whose longest word did not fit what was left was broken inside the
- * word — "Benutze/rname" and "Sichtbar/keit des Profils" at 320 points, the
- * Soranî "ناوی بەکارهێنەر" in three pieces, Dutch's "Gebruikersnaam" even at
- * 390. A phone cannot measure text before it is laid out, so the word is
- * estimated from its letters; the value then takes what is left, and ends in
- * an ellipsis rather than the name. Never more than three fifths of the row,
- * so the value always keeps some of it.
+ * The width a row's name keeps beside its value: its longest word, estimated from its letters since text cannot
+ * be measured before layout. The value takes what is left and ends in an ellipsis, so the name is never broken
+ * inside a word. The name takes at most three fifths of the row, so the value always keeps some.
  */
 export function titleRoom(title: string, fontScale: number, rowWidth: number): number {
   const longest = Math.max(0, ...title.split(/\s+/).map((word) => [...word].length));
@@ -138,10 +117,8 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
 }
 
 /**
- * One row. With `onPress` it is a button, with a chevron when it opens a page
- * (`opens`, the default) and none when it does something there and then. A
- * `badge` counts what waits behind it (requests to answer), in the app's
- * violet, the colour of what is to be acted on, and is read out in words.
+ * One row. With `onPress` it is a button, with a chevron when it opens a page (`opens`, the default). A `badge`
+ * counts what waits behind it (requests to answer), in violet, and is read out in words.
  */
 export function SettingsRow({
   onPress,
@@ -153,10 +130,10 @@ export function SettingsRow({
   ...look
 }: RowLook & {
   onPress?: () => void;
-  /** a page behind it, so a chevron at its end */
+  /** A page behind it, so a chevron at its end. */
   opens?: boolean;
   trailing?: ReactNode;
-  /** how many wait behind it, and that number in words for a screen reader */
+  /** How many wait behind it, and that number in words for a screen reader. */
   badge?: { count: number; label: string };
   accessibilityHint?: string;
   testID?: string;
@@ -192,11 +169,7 @@ export function SettingsRow({
   );
 }
 
-/**
- * A row that is a switch: the whole row turns it, not only the switch at its
- * end. It is the app's `ToggleRow`, laid out as every other settings row and
- * as tall (56), with the switch where the row's end goes.
- */
+/** A switch row: the whole row toggles it. The app's `ToggleRow`, laid out like other rows and as tall (56). */
 export function SettingsSwitch({
   icon,
   title,
@@ -227,11 +200,7 @@ export function SettingsSwitch({
   );
 }
 
-/**
- * One of a few: each choice a row, with what it means under its name, and a
- * check at the end of the one chosen. Every choice's consequence is read
- * before it is made, rather than after.
- */
+/** One of a few: each choice a row with its meaning under its name, and a check on the chosen one. */
 export function SettingsChoice<T extends string>({
   label,
   options,
@@ -241,10 +210,10 @@ export function SettingsChoice<T extends string>({
   isDisabled,
   onChange,
 }: {
-  /** what is being chosen, for a screen reader */
+  /** What is being chosen, for a screen reader. */
   label: string;
   options: readonly T[];
-  /** nothing chosen yet (still loading) when null */
+  /** Nothing chosen yet (still loading) when null. */
   value: T | null;
   labelOf: (option: T) => string;
   hintOf?: (option: T) => string | undefined;
@@ -275,7 +244,7 @@ export function SettingsChoice<T extends string>({
             <RowBody
               title={labelOf(option)}
               subtitle={hintOf?.(option)}
-              // the choice that is on is ticked in the violet everything chosen wears
+              // The choice that is on is ticked in the violet everything chosen wears.
               end={<View style={styles.check}>{chosen ? <Icon name="check" size={22} color={colors.primary} /> : null}</View>}
             />
           </Pressable>

@@ -1,8 +1,7 @@
 /**
  * The learning games' routes: playing them, and writing their content.
  *
- * For learners (any signed-in learner, a guest included: these are learning,
- * as lessons and practice are):
+ * For learners (any signed-in learner, guests included, as for lessons and practice):
  *   GET  /games/availability?dialect=kmr|ckb          which games have enough approved content, per level (no account needed)
  *   GET  /games/build-sentence/ladder?dialect=         the ladder, how far this learner has climbed, a round to come back to
  *   GET  /games/solo/open?game=&dialect=               the round of a game left unfinished, if any
@@ -18,15 +17,11 @@
  *   GET  /games/impostor/couch?dialect=                Impostor on one phone: the difficulties and categories it is offered in
  *   POST /games/impostor/couch/deck                    { dialect, difficulty, category?, count? }: an evening's cards (10 a minute)
  *
- * The games played alone: Build a Sentence, The Memory Thief, Hear
- * It, Find It and Detective, each an engine registered with the solo
- * round, and each counting its own availability where rows alone do not say
- * it. What Would You Say? is no longer part of Hevalo: it has no engine here,
- * so a round of it cannot be made, and a round left in the table is not
- * opened.
+ * The solo games (Build a Sentence, The Memory Thief, Hear It, Find It, Detective) are engines registered with the solo
+ * round, each counting its own availability where rows alone do not say it. What Would You Say? is retired: it has no
+ * engine, so its rounds can neither be made nor opened.
  *
- * For the people who edit lessons and stories (content.edit), and who publish
- * them (content.publish), behind the admin 2FA gate like every staff route:
+ * For lesson and story editors (content.edit) and publishers (content.publish), behind the admin 2FA gate:
  *   GET    /admin/game-content?game&kind&dialect&level&status&review&source&q&limit&offset
  *   GET    /admin/game-content/readiness                each game's approved content per variety, and every row's state
  *   GET    /admin/game-content/:id
@@ -44,9 +39,8 @@
  *   PUT    /admin/game-content/:id/translations/:locale         { payload }: a riddle's or a proverb's text in one language (content-translations.ts)
  *   POST   /admin/game-content/:id/translations/:locale/review  { status, note? }: that language read, or to be read again   (content.publish)
  *
- * The Stories' riddles and proverbs are game content too, for the workflow
- * above, and their learner routes are registered here (lore/routes.ts): the
- * proverbs' round is a solo round, made and paid by the same kit.
+ * Riddles and proverbs are game content too, for the workflow above, and their learner routes are registered here
+ * (lore/routes.ts): the proverbs' round is a solo round, made and paid by the same kit.
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -137,10 +131,8 @@ const vocabularyQuery = z.object({
 const hintBody = z.object({ evidence: z.string().max(40).optional() });
 const beginBody = z.object({ index: z.number().int().min(0).max(SOLO_ROUND_ITEMS * 4) });
 /**
- * Rounds a learner may start in a minute: a fifth of what any other route
- * allows. Making one reads the pools the game draws from and lays out every
- * item, so it is the one solo call with a cost worth a limit of its own, and
- * nobody plays a round in three seconds.
+ * Rounds a learner may start per minute, a fifth of other routes' limit: making one reads the game's pools and lays out
+ * every item, and nobody plays a round in three seconds.
  */
 const ROUNDS_PER_MINUTE = 20;
 const linesQuery = z.object({ dialect: z.enum(GAME_DIALECTS), q: z.preprocess(absentIfEmpty, z.string().max(80).optional()) });

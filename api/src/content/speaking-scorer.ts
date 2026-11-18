@@ -1,16 +1,9 @@
 import type { Verdict } from './exercises.js';
 
 /**
- * Pronunciation scoring seam (KUR-036). Grading a spoken answer is behind
- * this interface so a real acoustic model (KUR-120) can drop in later
- * without touching the exercise/grading code.
- *
- * v1 shipped a stub that passed every recording, which told every learner
- * they had said it right whatever they had said. There is no Kurdish
- * pronunciation model to replace it with, so the learner judges instead:
- * they record, play their recording back beside the native model, and rate
- * it. That is honest about who is judging, and comparing one's own attempt
- * with a model is itself the practice.
+ * Pronunciation scoring seam: grading a spoken answer sits behind this interface so a real acoustic model could drop in
+ * without touching grading code. With no Kurdish pronunciation model available, the learner judges: they record, play
+ * it back beside the native model, and rate it.
  */
 
 /** How the learner judged their recording: "Sounded right / Close / Try again". */
@@ -34,13 +27,11 @@ export interface PronunciationScorer {
 }
 
 /**
- * Maps the learner's self-rating to a verdict: good → correct, close → typo
- * (accepted, with a nudge), retry → wrong. A client that sends no rating
- * predates the contract; it gets 'typo', accepted — it recorded something,
- * and nobody heard it, so neither a pass nor a fail would be true.
+ * Maps the learner's self-rating to a verdict: good → correct, close → typo (accepted with a nudge), retry → wrong. A
+ * client that sends no rating predates the contract and gets 'typo': it recorded something nobody heard, so neither
+ * pass nor fail would be true.
  *
- * None of these is evidence about pronunciation that the server can check,
- * which is why speaking answers never move the spaced-review schedule.
+ * None of this is evidence the server can check, which is why speaking answers never move the spaced-review schedule.
  */
 export class SelfRatingScorer implements PronunciationScorer {
   score(input: PronunciationInput): PronunciationScore {
@@ -56,5 +47,5 @@ export class SelfRatingScorer implements PronunciationScorer {
   }
 }
 
-/** The scorer used by grading until KUR-120 brings a real model. */
+/** The scorer grading uses until a real pronunciation model exists. */
 export const defaultScorer: PronunciationScorer = new SelfRatingScorer();

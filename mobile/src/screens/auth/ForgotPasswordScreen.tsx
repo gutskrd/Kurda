@@ -26,21 +26,12 @@ export function ForgotPasswordScreen({ navigation, route }: Props) {
 }
 
 /**
- * Ask for a reset link. Signed out, from the sign-in form; signed in, from
- * Change password, for an account that signs in with Google or Apple and has
- * no password to change yet — where there is no sign-in to go back to.
+ * Requests a reset link: signed out from the sign-in form, or signed in from Change password for a Google or Apple
+ * account without a password. Asked as a StepFlow step with the sign-in's address prefilled.
  *
- * It is asked the way signing in is (auth/guide/StepFlow), because it is
- * reached from there: Hevalo asks where to send the link, over the one
- * field, with the address the sign-in had already filled in. It was a card of
- * its own, and what came after sending was one grey sentence in its middle.
- *
- * What comes after is now a step: the address is shown back as it was typed,
- * since a typo is only ever caught by seeing it, and the chevron goes back to
- * put it right. The sentence still says "if an account exists": whether one
- * does is not something to tell whoever is asking. A request that never
- * reached the server (offline, a fault, too many tries) stays on the question
- * and says why, because "on its way" would not be true.
+ * The confirmation step shows the address as typed so a typo can be caught, with the chevron going back to fix it.
+ * It says "if an account exists" so it never reveals whether one does. A request that never reached the server
+ * stays on the question and says why.
  */
 export function ForgotPasswordForm({
   email: initialEmail,

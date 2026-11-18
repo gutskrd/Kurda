@@ -19,14 +19,11 @@ const idParam = z.object({ id: z.uuid() });
 const notFound = (reply: FastifyReply) => reply.code(404).send({ code: 'NOT_FOUND', message: 'no such battle' });
 
 /**
- * Peyvok Battle routes (KUR-306) — server-authoritative multiplayer. All
- * authenticated; the guess endpoint is rate-limited (#010). State/results are
- * poll-safe; the realtime gateway (#049) pushing opponent progress is an additive
- * transport on top of these same endpoints.
+ * Peyvok Battle routes, server-authoritative and authenticated; the guess endpoint is rate-limited and state and
+ * results are poll-safe (realtime progress is layered on the same endpoints).
  *
- * Creating and joining reach other people, so they need a birth month on
- * record like every other social write. Only members get a battle's state or
- * results; to anyone else it does not exist (the join rule, play/access.ts).
+ * Creating and joining need a birth month on record. Only members get a battle's state or results; to anyone else it
+ * does not exist (the join rule, play/access.ts).
  */
 export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<WordleBattleDeps, 'publicUrl'> = {}): void {
   const battles = new WordleBattleService(app.db, {
@@ -80,8 +77,8 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   });
 
   /**
-   * Leave: out of a lobby (the host leaving calls it off), or out of a battle
-   * under way (finished where you stand; the others stop waiting for you).
+   * Leave a lobby (a host leaving calls it off) or a battle under way (finished where you stand, so the others stop
+   * waiting).
    */
   app.post('/wordle/battles/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await battles.leave((req.params as { id: string }).id, req.user!.id);
@@ -119,9 +116,8 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   );
 
   /**
-   * The caller's live match view (own guesses + opponents' progress only).
-   * Someone who may join sees the lobby first; a latecomer is told the battle
-   * already started (409 GAME_STARTED) rather than shown a game they are not in.
+   * The caller's live match view (own guesses, opponents' progress only). Someone who may join sees the lobby; a
+   * latecomer gets 409 GAME_STARTED.
    */
   app.get('/wordle/battles/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await battles.read((req.params as { id: string }).id, req.user!.id);
