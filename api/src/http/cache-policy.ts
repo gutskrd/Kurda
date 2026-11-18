@@ -1,10 +1,7 @@
 /**
- * Edge/CDN cache policy for API responses (KUR-117). Classifies which endpoints
- * a CDN may cache and derives their `Cache-Control`. The load-bearing invariant:
- * an AUTHENTICATED response is NEVER edge-cacheable (always `private, no-store`),
- * so one user's data can never be served to another from an edge — regardless of
- * the route. Only anonymous GETs of explicitly public, shareable resources get a
- * shared-cache max-age.
+ * Edge cache policy for API responses. An authenticated response is never edge-cacheable (`private, no-store`) on
+ * any route, so one user's data can never be served to another; only anonymous GETs of explicitly public resources
+ * get a shared max-age.
  */
 
 /** Public, anonymously-shareable GET routes → their edge max-age (seconds). */
@@ -20,13 +17,9 @@ export interface CachePolicy {
   vary?: string;
 }
 
-/**
- * The cache policy for a request. `routeUrl` is the route TEMPLATE
- * (e.g. `/dictionary/entries/:id`), not the raw URL.
- */
+/** The cache policy for a request; `routeUrl` is the route template (e.g. `/dictionary/entries/:id`), not the raw URL. */
 export function cachePolicy(routeUrl: string, method: string, authenticated: boolean): CachePolicy {
-  // Authenticated → never edge-cacheable. This is the invariant (edge case):
-  // it holds for EVERY route, including otherwise-public ones.
+  // Authenticated responses are never edge-cacheable, on every route.
   if (authenticated) return { cacheControl: 'private, no-store' };
 
   if (method.toUpperCase() !== 'GET') return { cacheControl: 'no-store' };
@@ -36,8 +29,7 @@ export function cachePolicy(routeUrl: string, method: string, authenticated: boo
 
   return {
     cacheControl: `public, max-age=${maxAge}, s-maxage=${maxAge}`,
-    // vary on Authorization so an anonymous cache entry is never served to an
-    // authenticated request (defense in depth alongside the auth check above)
+    // Vary on Authorization so an anonymous entry is never served to an authenticated request.
     vary: 'Authorization, Accept-Encoding',
   };
 }
