@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { jsonResponse, renderApp } from '../test/utils';
 import type { FeedItem } from '../lib/types';
 import { FeedCard, shortCount } from './FeedCard';
+import { onNotice } from '../lib/notice';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -56,7 +57,7 @@ const picture = (over: Partial<FeedItem> = {}): FeedItem =>
     ...over,
   });
 
-/** Answers /me, logs every write to a post, and toggles a like as the server does. */
+/** Answers /me, logs every write to a post, and sets a like to the state asked for, as the server does. */
 function serve(): { calls: string[] } {
   const calls: string[] = [];
   let liked = false;
@@ -69,7 +70,7 @@ function serve(): { calls: string[] } {
       // Only writes to posts; the app's presence heartbeat is not this card's.
       if (method !== 'GET' && !path.startsWith('/me')) calls.push(`${method} ${path}`);
       if (url.includes('/like')) {
-        liked = !liked;
+        liked = (JSON.parse(String(init?.body)) as { on: boolean }).on;
         return jsonResponse(200, { on: liked, engagement: engagement({ likes: liked ? 1 : 0, liked }) });
       }
       return jsonResponse(200, {});
@@ -175,6 +176,60 @@ describe('FeedCard', () => {
     expect(calls).toEqual(['POST /posts/library/s1/like', 'POST /posts/library/s1/like']);
   });
 
+  it('likes at once, and takes the like back with the reason when the server refuses', async () => {
+    signIn();
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.endsWith('/me')) return jsonResponse(200, { user: ME });
+        if (init?.method === 'POST' && url.includes('/like')) return new Promise<Response>((r) => (answer = r));
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Live start={item()} />);
+
+    const like = await screen.findByRole('button', { name: 'Like' });
+    await waitFor(() => expect(like).toBeEnabled());
+    await userEvent.click(like);
+    // Red, and counted, before the server has said anything.
+    expect(screen.getByRole('button', { name: 'Unlike (1)' })).toHaveAttribute('aria-pressed', 'true');
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Like' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('status')).toHaveTextContent('Something went wrong on our end. Please try again shortly.');
+  });
+
+  it('ends quick presses on the heart in the last one, one request at a time', async () => {
+    signIn();
+    const sent: Array<{ on: boolean; answer: (res: Response) => void }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.endsWith('/me')) return jsonResponse(200, { user: ME });
+        if (init?.method === 'POST' && url.includes('/like')) {
+          const { on } = JSON.parse(String(init.body)) as { on: boolean };
+          return new Promise<Response>((answer) => sent.push({ on, answer }));
+        }
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Live start={item()} />);
+
+    const like = await screen.findByRole('button', { name: 'Like' });
+    await waitFor(() => expect(like).toBeEnabled());
+    await userEvent.click(like);
+    await userEvent.click(screen.getByRole('button', { name: 'Unlike (1)' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Like' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Unlike (1)' }));
+    expect(screen.getByRole('button', { name: 'Like' })).toHaveAttribute('aria-pressed', 'false');
+    expect(sent.map((s) => s.on)).toEqual([true]);
+    sent[0]!.answer(jsonResponse(200, { on: true, engagement: engagement({ likes: 1, liked: true }) }));
+    await waitFor(() => expect(sent.map((s) => s.on)).toEqual([true, false]));
+    sent[1]!.answer(jsonResponse(200, { on: false, engagement: engagement() }));
+    expect(await screen.findByRole('button', { name: 'Like' })).toHaveAttribute('aria-pressed', 'false');
+    expect(sent).toHaveLength(2);
+  });
+
   it('likes a picture post on a double click, with a heart over the picture — and never unlikes it that way', async () => {
     signIn();
     const { calls } = serve();
@@ -228,6 +283,34 @@ describe('FeedCard', () => {
     await userEvent.click(del);
     await waitFor(() => expect(removed).toHaveBeenCalled());
     expect(calls).toEqual(['DELETE /library/posts/s1']);
+  });
+
+  it('takes your post away at once, and puts it back in its place if the server keeps it', async () => {
+    signIn();
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.endsWith('/me')) return jsonResponse(200, { user: ME });
+        if (init?.method === 'DELETE') return new Promise<Response>((r) => (answer = r));
+        return jsonResponse(200, {});
+      }),
+    );
+    const removed = vi.fn();
+    renderApp(<Live start={item({ author: { id: ME.id, username: ME.username, avatarUrl: null } })} onRemoved={removed} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'More about this post' }));
+    const del = screen.getByRole('menuitem', { name: 'Delete this post' });
+    await userEvent.click(del);
+    await userEvent.click(del);
+    expect(screen.queryByText('Çîroka min')).not.toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByText('Çîroka min')).toBeInTheDocument();
+    expect(removed).not.toHaveBeenCalled();
+    expect(notices).toHaveLength(1);
+    stop();
   });
 
   it('gives a guest no ⋯ at all', () => {

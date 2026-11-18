@@ -9,6 +9,10 @@ import { EmptyState } from '../components/states';
 import { formatUntil, untilOf } from '../reports/restriction';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from './GroupAvatar';
+import { failureText, useOptimisticSend } from '../lib/optimistic';
+
+/** Refusals that say where asking stands rather than what went wrong. */
+const STANDING_CODES = ['REQUEST_WAIT', 'REQUESTS_CLOSED', 'REQUEST_PENDING', 'NOT_BANNED', 'GROUP_NOT_FOUND'];
 
 /** Someone banned from a group: until when, why, and where asking to come back stands. */
 type Banned = Extract<GroupStanding, { kind: 'banned' }>;
@@ -37,7 +41,7 @@ export function GroupOutside({
   const t = useT();
   const locale = useLocale();
   const id = useId();
-  const [busy, setBusy] = useState(false);
+  const sendShown = useOptimisticSend();
   const [error, setError] = useState<string | null>(null);
   /** Where asking stands as this page last heard, so a request sent or withdrawn shows at once. */
   const [request, setRequest] = useState<GroupRequestState | null>(banned?.request ?? null);
@@ -69,14 +73,54 @@ export function GroupOutside({
     setError(describeError(e, t));
   }
 
+  /** Withdrawn at once (lib/optimistic.ts); a refusal puts back where asking stood, or shows where it now stands. */
   async function withdraw(): Promise<void> {
-    setBusy(true);
+    const before = request;
     setError(null);
-    const res = await client.delete(`/groups/${group.id}/requests`);
-    setBusy(false);
-    if (!res.ok) return refused(res.error);
     setRequest({ kind: 'can_ask' });
     setSaid(t('groups.ask.withdrawn'));
+    await sendShown(
+      () => client.delete(`/groups/${group.id}/requests`),
+      {
+        undo: () => {
+          setRequest(before);
+          setSaid(null);
+        },
+      },
+      { onFailed: (e) => void refused(e) },
+    );
+  }
+
+  /**
+   * Asked at once: the sheet closes and the request shows as waiting while it is sent. A refusal puts back where asking
+   * stood; one about the request itself shows where it now stands, and a refused note or a request that did not go
+   * opens the sheet again with the words kept, returning why for it to say.
+   */
+  async function ask(note: string | null): Promise<string | null> {
+    const before = request;
+    setAsking(false);
+    setError(null);
+    setRequest({ kind: 'pending', sentAt: new Date().toISOString() });
+    setSaid(t('groups.ask.sent'));
+    let why: string | null = null;
+    const res = await sendShown(
+      () => client.post<{ request?: GroupRequestState }>(`/groups/${group.id}/requests`, { note }),
+      {
+        undo: () => {
+          setRequest(before);
+          setSaid(null);
+        },
+      },
+      {
+        onFailed: (e) => {
+          if (STANDING_CODES.includes(e.code ?? '')) return void refused(e);
+          why = e.code === 'GROUP_TEXT_REJECTED' ? t('groups.textRejected') : failureText(e, t);
+          setAsking(true);
+        },
+      },
+    );
+    if (res.ok && res.data.request) setRequest(res.data.request);
+    return why;
   }
 
   return (
@@ -102,7 +146,7 @@ export function GroupOutside({
                 <span className="gstand-label">{t('groups.banned.reason')}</span> <bdi>{banned.reason}</bdi>
               </p>
             )}
-            {request && <AskState request={request} busy={busy} onAsk={() => setAsking(true)} onWithdraw={() => void withdraw()} />}
+            {request && <AskState request={request} onAsk={() => setAsking(true)} onWithdraw={() => void withdraw()} />}
           </>
         ) : (
           <p className="gstand-title" id={`${id}-title`}>
@@ -119,21 +163,7 @@ export function GroupOutside({
         </p>
       </div>
 
-      <AskSheet
-        open={asking}
-        groupId={group.id}
-        groupName={group.name}
-        onClose={() => setAsking(false)}
-        onSent={(state) => {
-          setAsking(false);
-          setRequest(state);
-          setSaid(t('groups.ask.sent'));
-        }}
-        onRefused={(e) => {
-          setAsking(false);
-          void refused(e);
-        }}
-      />
+      <AskSheet open={asking} groupName={group.name} onClose={() => setAsking(false)} onSend={ask} />
     </div>
   );
 }
@@ -155,23 +185,13 @@ export function GroupMissing(): React.JSX.Element {
 }
 
 /** Where asking to come back stands, and the one action, if any. */
-function AskState({
-  request,
-  busy,
-  onAsk,
-  onWithdraw,
-}: {
-  request: GroupRequestState;
-  busy: boolean;
-  onAsk: () => void;
-  onWithdraw: () => void;
-}): React.JSX.Element {
+function AskState({ request, onAsk, onWithdraw }: { request: GroupRequestState; onAsk: () => void; onWithdraw: () => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   switch (request.kind) {
     case 'can_ask':
       return (
-        <Button className="gstand-act" onClick={onAsk} disabled={busy} aria-haspopup="dialog">
+        <Button className="gstand-act" onClick={onAsk} aria-haspopup="dialog">
           {t('groups.ask.button')}
         </Button>
       );
@@ -179,7 +199,7 @@ function AskState({
       return (
         <>
           <p className="gstand-line">{t('groups.ask.pending', { when: formatUntil(request.sentAt, locale) })}</p>
-          <Button variant="secondary" size="sm" className="gstand-act" onClick={onWithdraw} disabled={busy}>
+          <Button variant="secondary" size="sm" className="gstand-act" onClick={onWithdraw}>
             {t('groups.ask.withdraw')}
           </Button>
         </>
@@ -194,44 +214,30 @@ function AskState({
 /** Asking to come back with an optional note for the admins; the server enforces one request at a time and the rest. */
 function AskSheet({
   open,
-  groupId,
   groupName,
   onClose,
-  onSent,
-  onRefused,
+  onSend,
 }: {
   open: boolean;
-  groupId: string;
   groupName: string;
   onClose: () => void;
-  onSent: (state: GroupRequestState) => void;
-  /** A refusal about the request itself, such as a wait or an already pending request. */
-  onRefused: (error: ApiError) => void;
+  /** Sends the note, closing the sheet at once; resolves to why when it opens again to say so, or null. */
+  onSend: (note: string | null) => Promise<string | null>;
 }): React.JSX.Element | null {
-  const { client } = useAuth();
   const t = useT();
   const id = useId();
+  // Kept while the sheet is closed, so a refused note comes back as it was written.
   const [note, setNote] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
   async function send(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    if (busy) return;
-    setBusy(true);
     setError(null);
-    const res = await client.post<{ request?: GroupRequestState }>(`/groups/${groupId}/requests`, { note: note.trim() || null });
-    setBusy(false);
-    if (res.ok) {
-      setNote('');
-      onSent(res.data.request ?? { kind: 'pending', sentAt: new Date().toISOString() });
-      return;
-    }
-    const e2 = res.error;
-    if (['REQUEST_WAIT', 'REQUESTS_CLOSED', 'REQUEST_PENDING', 'NOT_BANNED', 'GROUP_NOT_FOUND'].includes(e2.code ?? '')) onRefused(e2);
-    else setError(e2.code === 'GROUP_TEXT_REJECTED' ? t('groups.textRejected') : describeError(e2, t));
+    const why = await onSend(note.trim() || null);
+    if (why) setError(why);
+    else setNote('');
   }
 
   return (
@@ -271,12 +277,10 @@ function AskSheet({
           </div>
         )}
         <div className="report-actions">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+          <Button type="button" variant="ghost" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button type="submit" disabled={busy}>
-            {busy ? t('report.sending') : t('groups.ask.send')}
-          </Button>
+          <Button type="submit">{t('groups.ask.send')}</Button>
         </div>
       </form>
     </Sheet>

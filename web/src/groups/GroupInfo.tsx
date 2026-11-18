@@ -27,6 +27,7 @@ import { BanSheet } from './BanSheet';
 import { OptionsMenu, type MenuItem } from './OptionsMenu';
 import { BansSection, RequestsSection, useModeration } from './GroupModeration';
 import { announceGroupsChanged } from './groupsChanged';
+import { useLeaveGroup } from './leave';
 import { membersLine } from './memberCount';
 
 /** Something irreversible, waiting for confirmation. */
@@ -62,6 +63,7 @@ export function GroupInfo({
   showRequests?: boolean;
 }): React.JSX.Element {
   const { client, user } = useAuth();
+  const leave = useLeaveGroup();
   const t = useT();
   const { openProfile } = useProfileModal();
   const [editing, setEditing] = useState(false);
@@ -145,13 +147,10 @@ export function GroupInfo({
         void act(() => client.post(`/groups/${detail.id}/transfer`, { userId: ask.member.userId }));
         return;
       case 'leave':
-        void act(
-          () => client.post(`/groups/${detail.id}/leave`),
-          () => {
-            announceGroupsChanged();
-            onLeft();
-          },
-        );
+        // Out at once once confirmed (groups/leave.ts); a refusal is said by the app's notice, since this view has gone.
+        setAsk(null);
+        onLeft();
+        void leave(detail.id);
         return;
       case 'delete':
         void act(

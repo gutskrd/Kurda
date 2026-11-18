@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { Translate } from '../i18n/I18nProvider';
@@ -7,6 +7,7 @@ import { pageVisible } from '../lib/pollWhileVisible';
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { socialNotification } from '../reports/notifications';
+import type { ShownChange } from '../lib/optimistic';
 
 export interface LiveActivity {
   game: string;
@@ -21,6 +22,8 @@ export interface RailFriend {
   online: boolean;
   lastSeenAt: string | null;
   activity: LiveActivity | null;
+  /** A request answered here that the server may not have yet; never sent by the server. */
+  answered?: boolean;
 }
 
 export interface RailGroup {
@@ -82,6 +85,89 @@ export function toastsHere(arrivals: readonly Arrival[], pathname: string): Arri
   return arrivals.filter((a) => !a.letter || (path !== '/app/letters' && (a.letter.threadId === null || path !== `/app/letters/${a.letter.threadId}`)));
 }
 
+/**
+ * A change drawn on the rail before the server has it (lib/optimistic.ts). Each is applied to every read until one
+ * begun after the server took the change, so it must give the same result on a read that already includes it.
+ */
+export type RailEdit = (data: SocialRailData) => SocialRailData;
+
+/** The rail's optimistic changes, each safe to apply to a read that already has it. */
+export const railEdits = {
+  notificationRead:
+    (id: string): RailEdit =>
+    (d) => {
+      if (!d.notifications.some((n) => n.id === id && n.readAt === null)) return d;
+      const at = new Date().toISOString();
+      return {
+        ...d,
+        notifications: d.notifications.map((n) => (n.id === id ? { ...n, readAt: at } : n)),
+        unread: { ...d.unread, notifications: Math.max(0, d.unread.notifications - 1) },
+      };
+    },
+  allNotificationsRead: (): RailEdit => (d) => {
+    const at = new Date().toISOString();
+    return { ...d, notifications: d.notifications.map((n) => (n.readAt === null ? { ...n, readAt: at } : n)), unread: { ...d.unread, notifications: 0 } };
+  },
+  notificationRemoved:
+    (id: string): RailEdit =>
+    (d) => {
+      const gone = d.notifications.find((n) => n.id === id);
+      if (!gone) return d;
+      const unread = gone.readAt === null ? Math.max(0, d.unread.notifications - 1) : d.unread.notifications;
+      return { ...d, notifications: d.notifications.filter((n) => n !== gone), unread: { ...d.unread, notifications: unread } };
+    },
+  /** Kept in the list, marked, so its ticket can show the answer; the count drops at once. */
+  requestAnswered:
+    (userId: string): RailEdit =>
+    (d) => {
+      if (!d.requests.some((r) => r.userId === userId && !r.answered)) return d;
+      return {
+        ...d,
+        requests: d.requests.map((r) => (r.userId === userId ? { ...r, answered: true } : r)),
+        unread: { ...d.unread, requests: Math.max(0, d.unread.requests - 1) },
+      };
+    },
+  /** Blocked: gone from friends and requests, and from the request count if they had asked. */
+  personGone:
+    (userId: string): RailEdit =>
+    (d) => {
+      const asked = d.requests.some((r) => r.userId === userId && !r.answered);
+      if (!asked && !d.friends.some((f) => f.userId === userId) && !d.requests.some((r) => r.userId === userId)) return d;
+      return {
+        ...d,
+        friends: d.friends.filter((f) => f.userId !== userId),
+        requests: d.requests.filter((r) => r.userId !== userId),
+        unread: { ...d.unread, requests: asked ? Math.max(0, d.unread.requests - 1) : d.unread.requests },
+      };
+    },
+  /** Left: gone from the groups, its unread messages with it. */
+  groupGone:
+    (groupId: string): RailEdit =>
+    (d) => {
+      const group = d.groups.find((g) => g.id === groupId);
+      if (!group) return d;
+      return { ...d, groups: d.groups.filter((g) => g !== group), unread: { ...d.unread, groups: Math.max(0, d.unread.groups - group.unread) } };
+    },
+  groupRead:
+    (groupId: string): RailEdit =>
+    (d) => {
+      const group = d.groups.find((g) => g.id === groupId);
+      if (!group || group.unread === 0) return d;
+      return {
+        ...d,
+        groups: d.groups.map((g) => (g === group ? { ...g, unread: 0 } : g)),
+        unread: { ...d.unread, groups: Math.max(0, d.unread.groups - group.unread) },
+      };
+    },
+};
+
+interface HeldEdit {
+  id: number;
+  edit: RailEdit;
+  /** When the server took it, or null while it is still on its way. */
+  kept: number | null;
+}
+
 const EMPTY: SocialRailData = {
   you: null,
   friends: [],
@@ -122,6 +208,8 @@ export function useSocialRail(): {
   dismiss: (key: string) => void;
   refresh: () => void;
   soon: () => void;
+  /** Draws `edit` at once; `undo` takes it back, `keep` once the server has it (lib/optimistic.ts `ShownChange`). */
+  adjust: (edit: RailEdit) => ShownChange;
 } {
   const { client, status, user } = useAuth();
   const t = useT();
@@ -129,6 +217,8 @@ export function useSocialRail(): {
   const signedIn = status === 'signedIn';
   const live = useRealtime().state === 'open';
   const [data, setData] = useState<SocialRailData>(EMPTY);
+  const [edits, setEdits] = useState<HeldEdit[]>([]);
+  const editCount = useRef(0);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [arrivals, setArrivals] = useState<Arrival[]>([]);
@@ -143,7 +233,8 @@ export function useSocialRail(): {
 
   const refresh = useCallback(() => {
     if (!signedIn) return;
-    lastRead.current = Date.now();
+    const began = Date.now();
+    lastRead.current = began;
     void (async () => {
       // Retrying after a first answer that never came is loading, not failing.
       if (seen.current === null) {
@@ -159,6 +250,8 @@ export function useSocialRail(): {
       }
       const next = { ...EMPTY, ...res.data };
       setData(next);
+      // A read begun after the server took a change already has it.
+      setEdits((list) => (list.some((e) => e.kept !== null && e.kept < began) ? list.filter((e) => e.kept === null || e.kept >= began) : list));
       setLoading(false);
       setFailed(false);
 
@@ -208,6 +301,7 @@ export function useSocialRail(): {
   useEffect(() => {
     if (!signedIn) {
       setData(EMPTY);
+      setEdits([]);
       seen.current = null;
       return;
     }
@@ -247,7 +341,27 @@ export function useSocialRail(): {
     setArrivals((prev) => prev.filter((a) => a.key !== key));
   }, []);
 
-  return { data, loading, failed, arrivals, dismiss, refresh, soon: onEvent };
+  const adjust = useCallback(
+    (edit: RailEdit): ShownChange => {
+      editCount.current += 1;
+      const id = editCount.current;
+      setEdits((list) => [...list, { id, edit, kept: null }]);
+      return {
+        undo: () => setEdits((list) => list.filter((e) => e.id !== id)),
+        keep: () => {
+          const at = Date.now();
+          setEdits((list) => list.map((e) => (e.id === id ? { ...e, kept: at } : e)));
+          // The server's own copy takes over at the next read.
+          onEvent();
+        },
+      };
+    },
+    [onEvent],
+  );
+
+  const shown = useMemo(() => edits.reduce((d, e) => e.edit(d), data), [data, edits]);
+
+  return { data: shown, loading, failed, arrivals, dismiss, refresh, soon: onEvent, adjust };
 }
 
 /** Everything in this answer that could be announced, with a stable key each. */

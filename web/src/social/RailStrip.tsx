@@ -23,7 +23,7 @@ export function rungs(data: SocialRailData): Rung[] {
     {
       key: 'waiting',
       labelKey: 'rail.waitingOnYou',
-      count: data.challenges.length + data.requests.length,
+      count: data.challenges.length + data.requests.filter((r) => !r.answered).length,
       // A person asking, not a bell, since the top bar's bell is notifications.
       icon: <InviteIcon size={20} />,
       urgent: true,

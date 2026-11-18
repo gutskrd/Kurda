@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../auth/AuthProvider';
@@ -8,6 +8,7 @@ import type { RealtimeClient } from '../realtime/RealtimeClient';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { MessagesProvider, useMessages } from './MessagesProvider';
 import { jsonResponse } from '../test/utils';
+import { showNotice } from '../lib/notice';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -38,10 +39,17 @@ function makeFakeClient(): { client: RealtimeClient; emit: (env: RealtimeEventEn
   return { client: fake as unknown as RealtimeClient, emit: (env) => listeners.forEach((h) => h(env)) };
 }
 
-/** Shows the unread total so a test can assert on it. */
+/** Shows the unread total so a test can assert on it, and reads one conversation as opening it does. */
 function UnreadProbe(): React.JSX.Element {
-  const { unreadTotal } = useMessages();
-  return <span data-testid="unread">{unreadTotal}</span>;
+  const { unreadTotal, markSeen } = useMessages();
+  return (
+    <>
+      <span data-testid="unread">{unreadTotal}</span>
+      <button type="button" onClick={() => markSeen('dm', 'u2')}>
+        Read zana
+      </button>
+    </>
+  );
 }
 
 function setup(route: string, fetchImpl?: (url: string) => Promise<Response>) {
@@ -199,6 +207,9 @@ describe('MessagesProvider', () => {
     });
 
     expect(await screen.findByText('5')).toBeInTheDocument();
+    // Reading one conversation takes its messages off the total before any receipt is answered.
+    await userEvent.click(screen.getByRole('button', { name: 'Read zana' }));
+    expect(screen.getByTestId('unread')).toHaveTextContent('3');
   });
 
   it('counts again each minute and says it is here every two while the tab is in view, and asks nothing while it is hidden', async () => {
@@ -250,5 +261,18 @@ describe('MessagesProvider', () => {
     expect(await screen.findByText('dismiss me')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /dismiss message from zana/i }));
     expect(screen.queryByText('dismiss me')).not.toBeInTheDocument();
+  });
+
+  it('shows a notice once, however often it is raised, and lets it be closed', async () => {
+    setup('/app/games');
+    await ready();
+    act(() => {
+      showNotice('That didn’t save.');
+      showNotice('That didn’t save.');
+    });
+    expect(screen.getAllByText('That didn’t save.')).toHaveLength(1);
+    expect(screen.getByText('That didn’t save.').closest('[role="status"]')).not.toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByText('That didn’t save.')).not.toBeInTheDocument();
   });
 });

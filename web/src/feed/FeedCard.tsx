@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import { describeError } from '../lib/api';
+import { failureText, useOptimistic, useOptimisticSend } from '../lib/optimistic';
 import { Avatar } from '../components/Avatar';
 import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
@@ -10,7 +10,7 @@ import { PostMenu } from './PostMenu';
 import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { Translate } from '../i18n/I18nProvider';
-import type { FeedItem } from '../lib/types';
+import type { ApiError, FeedItem } from '../lib/types';
 import { useGrowsFrom, useGrowsInto } from '../lib/viewTransition';
 import { lastSeen } from '../social/time';
 
@@ -38,7 +38,7 @@ export function FeedCard({
   onRemoved?: (item: FeedItem) => void;
   /** On the post's own page: `onComment` is the comment button, and `pending` holds the actions while counts load. */
   onPage?: { onComment: () => void; pending?: boolean };
-}): React.JSX.Element {
+}): React.JSX.Element | null {
   const { client, status } = useAuth();
   const { openProfile } = useProfileModal();
   const t = useT();
@@ -47,13 +47,15 @@ export function FeedCard({
   const engage = useEngagement(item, onChanged, waiting);
   // The big heart over a picture, once per double click.
   const [pop, setPop] = useState(0);
+  const [gone, setGone] = useState(false);
+  const sendShown = useOptimisticSend();
   const signedIn = status === 'signedIn';
 
   /** A double click on a picture likes the post; another never takes the like back. */
   function likeFromPicture(): void {
     if (waiting) return;
     setPop((n) => n + 1);
-    if (!engage.engagement.liked) void engage.toggle('like');
+    if (!engage.engagement.liked) engage.toggle('like');
   }
 
   const badge = cardKind(item);
@@ -63,11 +65,15 @@ export function FeedCard({
   const fromWall = useGrowsFrom(onPage ? null : `post:${item.key}`, { shape: 'card' });
   const intoPage = useGrowsInto(onPage ? `post:${item.key}` : null, { shape: 'card' });
 
+  /** Gone at once once confirmed; the list drops it when the server agrees, and a refusal brings it back in its place. */
   async function remove(): Promise<void> {
     const path = item.targetType === 'image' ? `/images/${item.id}` : `/library/posts/${item.id}`;
-    const res = await client.delete(path);
-    if (res.ok && onRemoved) onRemoved(item);
+    setGone(true);
+    const res = await sendShown(() => client.delete(path), { undo: () => setGone(false) }, { goneIsDone: true });
+    if (res.ok || res.error.status === 404) onRemoved?.(item);
   }
+
+  if (gone) return null;
 
   // dir=auto: a post is in the language it was written in, not the interface's.
   const body = (
@@ -142,7 +148,7 @@ interface Engage {
   justOn: { kind: Kind; n: number } | null;
   /** Why the last press was undone, shown under the row for a few seconds; null otherwise. */
   refused: string | null;
-  toggle: (kind: Kind) => Promise<void>;
+  toggle: (kind: Kind) => void;
 }
 
 /** How long the refusal message stays under the row. */
@@ -150,13 +156,14 @@ const REFUSED_MS = 4000;
 
 const STATE: Record<Kind, 'liked' | 'reposted' | 'bookmarked'> = { like: 'liked', repost: 'reposted', bookmark: 'bookmarked' };
 const COUNT: Record<Kind, 'likes' | 'reposts' | 'bookmarks'> = { like: 'likes', repost: 'reposts', bookmark: 'bookmarks' };
+const KINDS: Kind[] = ['like', 'repost', 'bookmark'];
 
-/** The server's numbers with the reader's unanswered presses laid over them. */
-function withPresses(e: FeedItem['engagement'], pressed: Partial<Record<Kind, boolean>>): FeedItem['engagement'] {
+/** The server's numbers with the reader's presses laid over them. */
+function withPresses(e: FeedItem['engagement'], shown: Record<Kind, boolean>): FeedItem['engagement'] {
   const next = { ...e };
-  for (const kind of Object.keys(pressed) as Kind[]) {
-    const on = pressed[kind];
-    if (on === undefined || on === e[STATE[kind]]) continue;
+  for (const kind of KINDS) {
+    const on = shown[kind];
+    if (on === e[STATE[kind]]) continue;
     next[STATE[kind]] = on;
     next[COUNT[kind]] = Math.max(0, (e[COUNT[kind]] ?? 0) + (on ? 1 : -1));
   }
@@ -164,22 +171,19 @@ function withPresses(e: FeedItem['engagement'], pressed: Partial<Record<Kind, bo
 }
 
 /**
- * Liking, reposting and saving a post as optimistic toggles. The server's answer has the last word: its totals replace
- * the guess, and a refused or lost press is undone with a message. The three are independent, and a second press on
- * one still unanswered is ignored, so the server never gets two toggles that cancel out.
+ * Liking, reposting and saving a post as optimistic toggles (lib/optimistic.ts), each independent of the others. Each
+ * request sets a state rather than flipping it, quick presses end in the last one, and the server's totals replace the
+ * guess; a refused or lost press is undone with a message.
  */
 export function useEngagement(item: FeedItem, onChanged: ((next: FeedItem) => void) | undefined, waiting = false): Engage {
   const { client, status } = useAuth();
   const t = useT();
-  const [pressed, setPressed] = useState<Partial<Record<Kind, boolean>>>({});
-  const sending = useRef<Partial<Record<Kind, boolean>>>({});
   // Never for a post that was already liked when the page drew it.
   const [justOn, setJustOn] = useState<{ kind: Kind; n: number } | null>(null);
   const [refused, setRefused] = useState<string | null>(null);
   // The post as it is now, for an answer that arrives after another has changed it.
   const latest = useRef(item);
   latest.current = item;
-  const engagement = withPresses(item.engagement, pressed);
 
   useEffect(() => {
     if (!refused) return;
@@ -187,31 +191,35 @@ export function useEngagement(item: FeedItem, onChanged: ((next: FeedItem) => vo
     return () => window.clearTimeout(id);
   }, [refused]);
 
-  async function toggle(kind: Kind): Promise<void> {
-    if (status !== 'signedIn' || waiting || sending.current[kind]) return;
-    const on = !engagement[STATE[kind]];
-    sending.current[kind] = true;
-    setRefused(null);
-    setPressed((p) => ({ ...p, [kind]: on }));
-    if (on) setJustOn((j) => ({ kind, n: (j?.n ?? 0) + 1 }));
-    const res = await client.post<{ on: boolean; engagement: FeedItem['engagement'] }>(
-      `/posts/${item.targetType}/${item.id}/${kind}`,
-    );
-    sending.current[kind] = false;
-    // Answered either way: from here the server's state shows, or what it was before the press.
-    setPressed((p) => {
-      const rest = { ...p };
-      delete rest[kind];
-      return rest;
-    });
-    if (res.ok) {
+  const line = (kind: Kind) => ({
+    send: (on: boolean) => client.post<{ on: boolean; engagement: FeedItem['engagement'] }>(`/posts/${item.targetType}/${item.id}/${kind}`, { on }),
+    options: {
+      fromAnswer: (data: { on: boolean }) => data.on,
       // The server's fresh totals keep the count right even if someone else liked it meanwhile.
-      onChanged?.({ ...latest.current, engagement: res.data.engagement });
-      return;
-    }
-    // Undone, with the reason shown, so nothing looks done that was not.
-    setJustOn((j) => (j?.kind === kind ? null : j));
-    setRefused(describeError(res.error, t));
+      onSaved: (data: { engagement: FeedItem['engagement'] }) => onChanged?.({ ...latest.current, engagement: data.engagement }),
+      // Undone, with the reason shown, so nothing looks done that was not.
+      onFailed: (error: ApiError) => {
+        setJustOn((j) => (j?.kind === kind ? null : j));
+        setRefused(failureText(error, t));
+      },
+    },
+  });
+  const like = line('like');
+  const repost = line('repost');
+  const bookmark = line('bookmark');
+  const lines = {
+    like: useOptimistic(item.engagement.liked, like.send, like.options),
+    repost: useOptimistic(item.engagement.reposted, repost.send, repost.options),
+    bookmark: useOptimistic(item.engagement.bookmarked, bookmark.send, bookmark.options),
+  };
+  const engagement = withPresses(item.engagement, { like: lines.like[0], repost: lines.repost[0], bookmark: lines.bookmark[0] });
+
+  function toggle(kind: Kind): void {
+    if (status !== 'signedIn' || waiting) return;
+    const on = !lines[kind][0];
+    setRefused(null);
+    lines[kind][1](on);
+    if (on) setJustOn((j) => ({ kind, n: (j?.n ?? 0) + 1 }));
   }
 
   return { engagement, justOn, refused, toggle };
@@ -266,7 +274,7 @@ export function PostActions({
         aria-pressed={e.liked}
         aria-label={actionLabel(t('feed.like'), e.liked ? t('feed.unlike') : t('feed.like'), e.likes)}
         title={signedIn ? (e.liked ? t('feed.unlike') : t('feed.like')) : t('feed.signInToLike')}
-        onClick={() => void toggle('like')}
+        onClick={() => toggle('like')}
       >
         <HeartIcon size={20} weight={e.liked ? 'fill' : 'regular'} />
         {/* A fresh element per like, so the sparks play once per press, only around a filled heart (styles/motion.css). */}
@@ -292,7 +300,7 @@ export function PostActions({
         aria-pressed={e.reposted}
         aria-label={actionLabel(t('repost.do'), e.reposted ? t('repost.undo') : t('repost.do'), e.reposts)}
         title={signedIn ? (e.reposted ? t('repost.undo') : t('repost.do')) : t('repost.signIn')}
-        onClick={() => void toggle('repost')}
+        onClick={() => toggle('repost')}
       >
         <RepostIcon size={20} weight={e.reposted ? 'bold' : 'regular'} />
         {e.reposts > 0 && <span className="fcard-count">{count(e.reposts)}</span>}
@@ -307,7 +315,7 @@ export function PostActions({
         aria-pressed={e.bookmarked}
         aria-label={actionLabel(t('feed.save'), e.bookmarked ? t('feed.removeFromSaved') : t('feed.save'))}
         title={signedIn ? (e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')) : t('feed.signInToSave')}
-        onClick={() => void toggle('bookmark')}
+        onClick={() => toggle('bookmark')}
       >
         <BookmarkIcon size={20} weight={e.bookmarked ? 'fill' : 'regular'} />
       </button>

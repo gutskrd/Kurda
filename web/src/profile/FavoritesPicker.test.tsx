@@ -78,4 +78,22 @@ describe('FavoritesPicker', () => {
     expect(await within(storyRow).findByText('None')).toBeInTheDocument();
     expect(calls.some((c) => c.method === 'DELETE')).toBe(true);
   });
+
+  it('takes a favourite off at once, and puts it back with the reason when the server refuses', async () => {
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) =>
+        init?.method === 'DELETE' ? new Promise<Response>((r) => (answer = r)) : jsonResponse(200, url.includes('/library/posts') ? { posts: [] } : {}),
+      ),
+    );
+    renderApp(<FavoritesPicker me={me} onChanged={() => {}} />, ['/app/profile']);
+
+    const storyRow = screen.getByText('Favourite story').closest('.fav-kind') as HTMLElement;
+    await userEvent.click(within(storyRow).getByRole('button', { name: 'Remove' }));
+    expect(within(storyRow).getByText('None')).toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await within(storyRow).findByText('Old Tale')).toBeInTheDocument();
+    expect(within(storyRow).getByText('Something went wrong on our end. Please try again shortly.')).toBeInTheDocument();
+  });
 });

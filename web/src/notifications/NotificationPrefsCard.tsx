@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
+import { useOptimistic } from '../lib/optimistic';
 import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import {
   CATEGORY_LABEL,
@@ -10,6 +11,7 @@ import {
   formatMinute,
   parseMinute,
   quietEnabled,
+  prefsChange,
   quietPatch,
   type NotificationCategory,
   type NotificationPrefs,
@@ -17,13 +19,13 @@ import {
 
 /**
  * Which notification categories the reader gets, and quiet hours (`GET`/`PUT /me/notification-prefs`). Each control
- * saves on change; a failure puts the switch back and says why.
+ * moves at once and saves on change (lib/optimistic.ts), sending only what differs from what the server has; a failure
+ * puts the controls back and says why.
  */
 export function NotificationPrefsCard(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState<NotificationPrefs | null>(null);
   /*
    * The error itself rather than its message, so the effect below needs no translator (and does not refetch on a
    * language change), and a message on screen follows a language change.
@@ -32,30 +34,23 @@ export function NotificationPrefsCard(): React.JSX.Element {
 
   useEffect(() => {
     void client.get<NotificationPrefs>('/me/notification-prefs').then((res) => {
-      if (res.ok) setPrefs(res.data);
+      if (res.ok) setLoaded(res.data);
       else setFailure(res.error);
     });
   }, [client]);
 
-  /** Sends a patch after moving the control optimistically, keeping the previous value to restore on a rejection. */
+  const [prefs, want] = useOptimistic<NotificationPrefs | null, NotificationPrefs>(
+    loaded,
+    (wanted, held) => client.put<NotificationPrefs>('/me/notification-prefs', prefsChange(wanted!, held!)),
+    { fromAnswer: (data) => data, onFailed: setFailure },
+  );
+
   const save = useCallback(
     (patch: Partial<NotificationPrefs>) => {
-      setPrefs((current) => (current ? { ...current, ...patch } : current));
-      setBusy(true);
       setFailure(null);
-      void client.put<NotificationPrefs>('/me/notification-prefs', patch).then((res) => {
-        setBusy(false);
-        if (res.ok) setPrefs(res.data);
-        else {
-          setFailure(res.error);
-          // The server knows what is stored, so ask it again.
-          void client
-            .get<NotificationPrefs>('/me/notification-prefs')
-            .then((again) => again.ok && setPrefs(again.data));
-        }
-      });
+      want((current) => (current ? { ...current, ...patch } : current));
     },
-    [client],
+    [want],
   );
 
   const quiet = prefs ? quietEnabled(prefs) : false;
@@ -105,7 +100,6 @@ export function NotificationPrefsCard(): React.JSX.Element {
                   <input
                     type="checkbox"
                     checked={prefs[category]}
-                    disabled={busy}
                     onChange={(e) => save({ [category]: e.target.checked } as Partial<NotificationPrefs>)}
                   />
                   <span className="section-toggle-text">
@@ -127,7 +121,6 @@ export function NotificationPrefsCard(): React.JSX.Element {
             <input
               type="checkbox"
               checked={quiet}
-              disabled={busy}
               onChange={(e) => save(quietPatch(e.target.checked, prefs.quietStartMin, prefs.quietEndMin))}
             />
             <span className="section-toggle-text">
@@ -141,14 +134,12 @@ export function NotificationPrefsCard(): React.JSX.Element {
               <QuietEnd
                 label={t('notifications.quietFrom')}
                 value={prefs.quietStartMin}
-                disabled={busy}
-                onPick={(min) => save({ quietStartMin: min, quietEndMin: prefs.quietEndMin })}
+                  onPick={(min) => save({ quietStartMin: min, quietEndMin: prefs.quietEndMin })}
               />
               <QuietEnd
                 label={t('notifications.quietTo')}
                 value={prefs.quietEndMin}
-                disabled={busy}
-                onPick={(min) => save({ quietStartMin: prefs.quietStartMin, quietEndMin: min })}
+                  onPick={(min) => save({ quietStartMin: prefs.quietStartMin, quietEndMin: min })}
               />
             </div>
           )}
@@ -162,17 +153,7 @@ export function NotificationPrefsCard(): React.JSX.Element {
  * One end of quiet hours, as a native time input, which is localised and keyboard-friendly. A cleared or half-typed
  * field parses to null and sends nothing, so the window is never half set.
  */
-function QuietEnd({
-  label,
-  value,
-  disabled,
-  onPick,
-}: {
-  label: string;
-  value: number | null;
-  disabled: boolean;
-  onPick: (min: number) => void;
-}): React.JSX.Element {
+function QuietEnd({ label, value, onPick }: { label: string; value: number | null; onPick: (min: number) => void }): React.JSX.Element {
   // The label sits over its field, so the two line up whatever their length.
   return (
     <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
@@ -180,7 +161,6 @@ function QuietEnd({
       <input
         type="time"
         className="input"
-        disabled={disabled}
         value={value === null ? '' : formatMinute(value)}
         onChange={(e) => {
           const min = parseMinute(e.target.value);

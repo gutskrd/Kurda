@@ -149,6 +149,32 @@ describe('NotificationPrefsCard', () => {
     await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Streak reminders' })).toBeChecked());
   });
 
+  it('moves every switch at once, and sends what changed meanwhile when the first answer comes', async () => {
+    const puts: Array<{ patch: Partial<NotificationPrefs>; answer: (res: Response) => void }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        if (init?.method === 'PUT') return new Promise<Response>((answer) => puts.push({ patch: JSON.parse(String(init.body)), answer }));
+        return jsonResponse(200, stored());
+      }),
+    );
+    renderApp(<NotificationPrefsCard />);
+
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Streak reminders' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Game invites & results' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Streak reminders' }));
+    // Both moved on screen; only the first change is out.
+    expect(screen.getByRole('checkbox', { name: 'Streak reminders' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Game invites & results' })).not.toBeChecked();
+    expect(puts.map((p) => p.patch)).toEqual([{ streak: false }]);
+    puts[0]!.answer(jsonResponse(200, stored({ streak: false })));
+    // Next, everything that now differs from what the server holds, and nothing it already has.
+    await waitFor(() => expect(puts.map((p) => p.patch)).toEqual([{ streak: false }, { streak: true, games: false }]));
+    puts[1]!.answer(jsonResponse(200, stored({ games: false })));
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Game invites & results' })).not.toBeChecked());
+    expect(screen.getByRole('checkbox', { name: 'Streak reminders' })).toBeChecked();
+  });
+
   it('reads in the chosen language', async () => {
     localStorage.setItem('hevalo_locale', 'tr');
     vi.stubGlobal('fetch', server(stored({ quietStartMin: 1320, quietEndMin: 420 })).fetch);

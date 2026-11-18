@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { BADGES, badgeTierKey, resolveThresholds, type BadgeView, type BadgesResponse } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { en } from '../i18n/en';
+import { onNotice } from '../lib/notice';
 import { BadgesPage } from './BadgesPage';
 
 afterEach(() => {
@@ -153,5 +154,32 @@ describe('BadgesPage', () => {
     });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Heval', { selector: '.badges-slot-name' })).toBeInTheDocument();
+  });
+
+  it('shows the chosen badges as the picker closes, and the old ones again with a notice if the server refuses', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let put!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) =>
+        init?.method === 'PUT'
+          ? new Promise<Response>((r) => (put = r))
+          : jsonResponse(200, response({ agir: { tier: 1, progress: 9 }, heval: { tier: 1, progress: 1 } }, { showcase: ['agir'] })),
+      ),
+    );
+    renderApp(<BadgesPage />);
+    expect(await screen.findByText('Agir', { selector: '.badges-slot-name' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: en['badges.showcase.choose'] }));
+    const dialog = await screen.findByRole('dialog', { name: en['badges.showcase.title'] });
+    await userEvent.click(within(dialog).getByRole('button', { name: /Heval/ }));
+    await userEvent.click(within(dialog).getByRole('button', { name: en['badges.showcase.save'] }));
+
+    expect(screen.getByText('Heval', { selector: '.badges-slot-name' })).toBeInTheDocument();
+    put(jsonResponse(503, {}));
+    await waitFor(() => expect(screen.queryByText('Heval', { selector: '.badges-slot-name' })).not.toBeInTheDocument());
+    expect(screen.getByText('Agir', { selector: '.badges-slot-name' })).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
   });
 });

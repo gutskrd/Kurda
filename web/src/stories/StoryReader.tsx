@@ -17,6 +17,7 @@ import {
   type StoryTradition,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import { useOptimistic } from '../lib/optimistic';
 import { Button } from '../components/Button';
 import { ErrorState, Loading } from '../components/states';
 import { ArrowIcon, BookmarkIcon, HeadphonesIcon, LockIcon } from '../components/icons';
@@ -133,8 +134,11 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
   const { lang, dir } = storyTextDirection(story.dialect);
   const [me, setMe] = useState<StoryMe | null>(story.me ?? null);
   const [size, setSize] = useState(rememberedTextSize);
-  const [bookmarked, setBookmarked] = useState(story.me?.bookmarked === true);
   const [bookmarkProblem, setBookmarkProblem] = useState<string | null>(null);
+  const [bookmarked, wantBookmark] = useOptimistic(story.me?.bookmarked === true, (on) => setBookmark(client, story.id, on), {
+    fromAnswer: (data) => data.bookmarked,
+    onFailed: () => setBookmarkProblem(t('stories.library.bookmarkFailed')),
+  });
   const audio = useStoryAudio(story.paragraphs, story.audio, story.voices, false, story.narration);
   const categories = useStoryCategories();
   const text = useRef<HTMLDivElement>(null);
@@ -178,14 +182,9 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
     audio.playStory();
   };
 
-  async function toggleBookmark(): Promise<void> {
-    const next = !bookmarked;
-    setBookmarked(next);
+  function toggleBookmark(): void {
     setBookmarkProblem(null);
-    const res = await setBookmark(client, story.id, next);
-    if (res.ok) return;
-    setBookmarked(!next);
-    setBookmarkProblem(t('stories.library.bookmarkFailed'));
+    wantBookmark((on) => !on);
   }
 
   // A legend's chapters: where the reader is among them and how far they have read.
@@ -291,7 +290,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
                 className={`btn btn-ghost btn-lg story-overview-bookmark${bookmarked ? ' is-on' : ''}`}
                 aria-pressed={bookmarked}
                 aria-label={bookmarked ? t('stories.library.unbookmark', { title: story.title }) : t('stories.library.bookmark', { title: story.title })}
-                onClick={() => void toggleBookmark()}
+                onClick={toggleBookmark}
               >
                 <BookmarkIcon size={18} weight={bookmarked ? 'fill' : 'regular'} />
                 <span>{bookmarked ? t('stories.overview.bookmarked') : t('stories.overview.bookmark')}</span>

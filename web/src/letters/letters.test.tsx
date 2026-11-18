@@ -657,7 +657,7 @@ describe('letters by bird', () => {
 
     it('says your bird is with them while it is theirs to answer', async () => {
       at(thread({ yourTurn: false }));
-      expect(await screen.findByText('Your bird is with Baran. Their letter will come to your window.')).toBeInTheDocument();
+      expect(await screen.findByText('Your letter is with Baran. When they write back, their bird will bring it to your window.')).toBeInTheDocument();
       expect(screen.queryByLabelText('Write back to Baran')).toBeNull();
     });
 
@@ -689,7 +689,7 @@ describe('letters by bird', () => {
         ),
       );
       await userEvent.click(screen.getByRole('button', { name: /Send/ }));
-      expect(await screen.findByText('Your bird is with Baran. Their letter will come to your window.')).toBeInTheDocument();
+      expect(await screen.findByText('Your letter is with Baran. When they write back, their bird will bring it to your window.')).toBeInTheDocument();
       expect(sent(open.calls, 'GET', '/letters/threads/t1').length).toBeGreaterThan(before);
     });
 
@@ -730,7 +730,7 @@ describe('letters by bird', () => {
 
     it('shows their next letter while it is open, and gives the paper back', async () => {
       const open = at(thread({ yourTurn: false }));
-      expect(await screen.findByText('Your bird is with Baran. Their letter will come to your window.')).toBeInTheDocument();
+      expect(await screen.findByText('Your letter is with Baran. When they write back, their bird will bring it to your window.')).toBeInTheDocument();
       const base = thread();
       open.answers['GET /letters/threads/t1'] = thread({
         letters: [...base.letters, { id: 'l3', mine: false, body: 'Ez jî baş im!', decor: null, removed: false, sentAt: '2026-11-14T10:00:00.000Z', readAt: null }],

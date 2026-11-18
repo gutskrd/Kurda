@@ -30,7 +30,7 @@ export function NotificationsBell(): React.JSX.Element | null {
   const locale = useLocale();
   const present = useRailPresent();
   const { data, loading, failed, refresh } = useRail();
-  const reads = useNotificationReads(data.notifications, refresh);
+  const reads = useNotificationReads();
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const titleId = useId();
@@ -97,7 +97,7 @@ export function NotificationsBell(): React.JSX.Element | null {
 
   const label = unread > 0 ? t('notifications.bellUnread', { count: unread }) : t('notifications.title');
   // A removed one leaves the list at once, and the empty state shows when the last goes.
-  const items = data.notifications.filter((n) => !reads.isRemoved(n));
+  const items = data.notifications;
 
   let body: React.ReactNode;
   if (items.length > 0) {
