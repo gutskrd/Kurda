@@ -347,7 +347,7 @@ describe('CODE_COPY', () => {
     }
   });
 
-  it('says a wrong password in French, not in the API\'s English', () => {
+  it('says a wrong password in French, not in the API’s English', () => {
     const wrong = { kind: 'unauthorized' as const, code: 'INVALID_CREDENTIALS', message: 'invalid email or password' };
     expect(describeError(wrong, translator(fr))).toBe(fr['error.code.invalidCredentials']);
   });

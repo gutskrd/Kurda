@@ -14,33 +14,27 @@ import type { MessageKey } from '../i18n/en';
 
 interface Entry {
   userId: string;
-  /** ties share a place, so two rows can carry the same one */
+  /** Ties share a place, so two rows can carry the same one. */
   rank: number;
   username: string;
   score: number;
-  /** already resolved; an older server sends none, and the row draws the silhouette */
+  /** Already resolved; older servers send none, and the row draws the silhouette. */
   avatarUrl?: string | null;
 }
 interface Board {
   type: BoardType;
   scope: Scope;
-  /** one page of the board, highest first */
+  /** One page of the board, highest first. */
   top: Entry[];
   total: number;
-  /** your own place is null only below the cut of a board that stops at `depth` */
+  /** Your own place; its rank is null only below the cut of a board that stops at `depth`. */
   me: { rank: number | null; score: number } | null;
-  /** Zêr and Gewher: the board lists the top this many and no further */
+  /** Zêr and Gewher boards list only this many. */
   depth?: number;
-  /** country scope only; null when no country is set on the profile */
+  /** Country scope only; null when the profile has no country. */
   country?: string | null;
 }
 
-/*
- * The all-time rating board went with the ranked quiz that fed it: nothing
- * earns rating any more, so a board of it would only ever show who played a
- * game that is gone. Weekly XP is the first board; the Zêr and Gewher people
- * hold now are the others (ui/BoardSwitch).
- */
 type Scope = 'global' | 'friends' | 'country';
 
 const PAGE = 25;
@@ -58,11 +52,8 @@ const TABS: { key: Tab; labelKey: MessageKey }[] = [
 ];
 
 /**
- * Where you stand, as two tabs, the way the phone has it: your league this
- * week — its own page, with nothing boxed — and the leaderboard of everyone.
- * The league comes first because it is the one with a week and a group; the
- * tab is in the address (`?tab=board`), so either can be linked to, and so is
- * what the leaderboard ranks (`&board=zer`).
+ * Where you stand, as two tabs as on the phone: your league this week, then the leaderboard of everyone. The tab
+ * (`?tab=board`) and what the board ranks (`&board=zer`) are in the address, so either can be linked to.
  */
 export function Rankings(): React.JSX.Element {
   const t = useT();
@@ -81,7 +72,7 @@ export function Rankings(): React.JSX.Element {
     );
     if (focus) buttons.current[TABS.findIndex((x) => x.key === next)]?.focus();
   };
-  // the arrow keys move between the two, as tabs do; the order follows the reading direction
+  // Arrow keys move between the tabs, in reading order.
   const onKey = (e: React.KeyboardEvent): void => {
     const rtl = document.documentElement.dir === 'rtl';
     const step = e.key === 'ArrowRight' ? (rtl ? -1 : 1) : e.key === 'ArrowLeft' ? (rtl ? 1 : -1) : 0;
@@ -126,11 +117,8 @@ export function Rankings(): React.JSX.Element {
 }
 
 /**
- * The leaderboard of everyone, a page at a time, from most to least: this
- * week's XP, or the Zêr or Gewher people hold now (BoardSwitch); worldwide,
- * among your friends, or in your country. What it ranks is in the address, as
- * the tab is, so a link to the Zêr board opens on it; who it compares you
- * with is a choice of the moment, and starts at everyone.
+ * The leaderboard a page at a time: this week's XP, or Zêr or Gewher held now (BoardSwitch), worldwide, among friends or
+ * in your country. What it ranks is in the address; the scope is a choice of the moment, starting at everyone.
  */
 function Leaderboard(): React.JSX.Element {
   const { client, user } = useAuth();
@@ -152,12 +140,12 @@ function Leaderboard(): React.JSX.Element {
   };
   const [scope, setScope] = useState<Scope>('global');
   const [board, setBoard] = useState<Board | null>(null);
-  /** every page loaded so far, so "Show more" appends instead of replacing */
+  /** Every page loaded so far, so "Show more" appends. */
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** which board the last request was for: an answer for one switched away from is dropped, not shown under the next */
+  /** The board the last request was for; an answer for one switched away from is dropped. */
   const asking = useRef('');
 
   const meta = BOARD_KINDS.find((b) => b.key === type)!;
@@ -169,7 +157,7 @@ function Leaderboard(): React.JSX.Element {
       asking.current = key;
       if (first) {
         setLoading(true);
-        // the last board's own place and paging say nothing about this one
+        // The last board's own place and paging say nothing about this one.
         setBoard(null);
       } else setLoadingMore(true);
       setError(null);
@@ -177,7 +165,7 @@ function Leaderboard(): React.JSX.Element {
       if (asking.current !== key) return;
       if (res.ok) {
         setBoard(res.data);
-        // append on a later page; replace when the board or scope changed
+        // Append a later page; replace when the board or scope changed.
         setEntries((prev) => (first ? res.data.top : [...prev, ...res.data.top]));
       } else {
         setError(describeError(res.error, t));
@@ -188,7 +176,7 @@ function Leaderboard(): React.JSX.Element {
     [client, type, scope],
   );
 
-  // switching board or scope starts a fresh list
+  // Switching board or scope starts a fresh list.
   useEffect(() => {
     setEntries([]);
     void load(0);
@@ -196,7 +184,7 @@ function Leaderboard(): React.JSX.Element {
 
   const shown = entries.length;
   const hasMore = board !== null && shown < board.total;
-  // your own row is highlighted in place rather than repeated above the list
+  // Your own row is highlighted in place rather than repeated above the list.
   const meInList = board?.me != null && entries.some((e) => e.userId === user?.id);
 
   return (
@@ -218,7 +206,7 @@ function Leaderboard(): React.JSX.Element {
         ))}
       </div>
 
-      {/* your standing on THIS board — a global rank would be misleading here — pinned above it while the page does not reach you */}
+      {/* Your standing on this board, pinned above it while the page does not reach you. */}
       {board?.me && !meInList && (
         <div className="rank-standing">
           <RankList>
@@ -298,11 +286,7 @@ function Leaderboard(): React.JSX.Element {
   );
 }
 
-/**
- * What the foot of a board says once every row is shown: that this is
- * everyone, or, on a board that stops at its depth and reached it, that this
- * is the top of it, which is not the same thing.
- */
+/** What a fully shown board's foot says: that this is everyone, or, for a board cut at its depth, that this is its top. */
 function endOfBoard(t: ReturnType<typeof useT>, board: Board, shown: number, locale: string): string {
   if (shown === 0 || shown < board.total) return '';
   if (board.depth && board.total >= board.depth) return t('rankings.topOnly', { count: board.depth.toLocaleString(locale) });
@@ -315,7 +299,7 @@ function emptyTitleKey(scope: Scope): MessageKey {
   return 'rankings.empty.global';
 }
 
-/** The weekly board's empty states talk about earning this week; a balance has no week to talk about. */
+/** The weekly board's empty states talk about this week; a balance has no week. */
 function emptyMessageKey(scope: Scope, type: BoardType): MessageKey {
   if (scope === 'friends') return 'rankings.empty.friendsBody';
   if (scope === 'country') return type === 'weekly_xp' ? 'rankings.empty.countryBody' : 'rankings.empty.balanceCountryBody';

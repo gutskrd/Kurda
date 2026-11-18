@@ -10,16 +10,13 @@ import { PasswordInput } from '../components/PasswordInput';
 import { useT } from '../i18n/I18nProvider';
 import { challengeSiteKey } from '../auth/challenge';
 
-/** The codes that are not a mistake in the form: sign-in is paused, or asks for a challenge. */
+/** Codes that are not a form mistake: sign-in is paused, or asks for a challenge. */
 const NOT_THE_FORM = new Set(['LOCKED', 'CAPTCHA_REQUIRED']);
 
 /**
- * Sign in (/login).
- *
- * A refusal is said where it is: a wrong pair under the password, which is
- * marked, shaken once and given the caret (auth/fieldProblem.ts); an address
- * that is not one under the address. What is not about a field — no
- * connection, a paused sign-in — is said above the form.
+ * Sign in (/login). A wrong pair is said under the password, which is marked, shaken and focused
+ * (auth/fieldProblem.ts); an invalid address under the address; anything else (no connection, a paused sign-in) above
+ * the form.
  */
 export function Login(): React.JSX.Element {
   const { login } = useAuth();
@@ -45,7 +42,7 @@ export function Login(): React.JSX.Element {
     setError(null);
     setErrorCode(null);
     problems.clear();
-    // signed in, the page stays a moment for Hevalo to be pleased, then leaves by itself
+    // Signed in, the page stays a moment for Hevalo, then leaves by itself.
     const release = holdArrival();
     held.current = release;
     const err = await login(email, password, remember);
@@ -66,11 +63,10 @@ export function Login(): React.JSX.Element {
     navigate(from, { replace: true });
   }
 
-  // Sign-in paused after failed attempts, or asking for a challenge this build
-  // has no way to show: not a mistake in the form, so said calmly, with the
-  // other way in beside it.
+  // A paused sign-in, or a challenge this build cannot show, is not a form mistake, so it is said calmly with the other
+  // way in.
   const paused = errorCode === 'LOCKED' || (errorCode === 'CAPTCHA_REQUIRED' && challengeSiteKey() === null);
-  // paused, he naps until it is time to try again
+  // Paused, he naps until it is time to try again.
   const companion: CompanionStatus = inside ? 'success' : busy ? 'busy' : error ? (paused ? 'waiting' : 'error') : problems.any ? 'error' : 'idle';
   const emailProblem = problems.of('email');
   const passwordProblem = problems.of('password');
@@ -112,7 +108,7 @@ export function Login(): React.JSX.Element {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                // a wrong pair is either of the two: mending either takes the mark off
+                // A wrong pair is either field, so mending either clears the mark.
                 problems.clear();
               }}
               autoComplete="username"
@@ -167,7 +163,7 @@ export function Login(): React.JSX.Element {
 
         <p className="auth-alt">
           {t('auth.login.noAccount')}{' '}
-          {/* where they were going goes with them, if they make an account instead */}
+          {/* Where they were going comes along if they make an account instead. */}
           <Link to="/register" state={location.state}>
             {t('auth.login.createAccount')}
           </Link>

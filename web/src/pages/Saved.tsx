@@ -12,18 +12,12 @@ import { useArrival } from '../lib/motion';
 
 const PAGE = 20;
 
-/**
- * Everything you have saved, most recently saved first.
- *
- * The same card as the wall, deliberately — a reading list that rendered posts
- * differently from where you found them would make you re-read each one to work
- * out what it was.
- */
+/** Everything you saved, newest saves first, on the wall's own card so each post looks as it did where you found it. */
 export function Saved(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const [items, setItems] = useState<FeedItem[] | null>(null);
-  // once in a tab: a list opened again does not rise in again (lib/motion.ts)
+  // Once per tab: a list opened again does not rise in again (lib/motion.ts).
   const arriving = useArrival(!!items && items.length > 0, 'saved');
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
@@ -48,13 +42,7 @@ export function Saved(): React.JSX.Element {
     void load(0);
   }, [load]);
 
-  /**
-   * Unsaving something here takes it off the list.
-   *
-   * Everywhere else the card stays and the bookmark empties, which is right —
-   * you are looking at the wall, not at your saves. Here the list *is* the
-   * saves, so a post you just removed sitting in it would be a lie.
-   */
+  /** Unsaving here removes the post from the list, since this list is the saves; elsewhere the card stays. */
   const changed = useCallback((next: FeedItem) => {
     setItems((prev) =>
       (prev ?? []).flatMap((i) => (i.key !== next.key ? [i] : next.engagement.bookmarked ? [next] : [])),
@@ -84,7 +72,7 @@ export function Saved(): React.JSX.Element {
         </div>
       ) : (
         <>
-          {/* the first screenful rises in once, as the wall arrives (styles/motion.css) */}
+          {/* The first screenful rises in once as the list arrives (styles/motion.css). */}
           <div className={arriving ? 'feed rise-in' : 'feed'}>
             {items.map((item) => (
               <FeedCard key={item.key} item={item} onChanged={changed} onRemoved={(gone) => changed({ ...gone, engagement: { ...gone.engagement, bookmarked: false } })} />

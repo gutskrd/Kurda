@@ -5,14 +5,7 @@ import { ContactPoints, ProviderIdentityBlock } from '../copyright/ProviderDetai
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
-/*
- * What Hevalo is, what it does today, and what it does not do yet.
- *
- * The two lists are the point of the page. A visitor who has just read the
- * front page should be able to tell, without asking, which of those things
- * they can use this afternoon — the lessons among them, now that they run in
- * the browser; the apps are still to come.
- */
+/* What Hevalo is, what it does today and what it does not do yet; the two lists say what a visitor can use this afternoon. */
 const NOW: MessageKey[] = [
   'about.now.lessons',
   'about.now.games',
@@ -25,11 +18,7 @@ const NOW: MessageKey[] = [
 
 const NEXT: MessageKey[] = ['about.next.apps', 'about.next.varieties'];
 
-/**
- * Whose work Hevalo uses, and under which licence: the fonts (OFL), the icons
- * (MIT) and the emoji (Apache 2.0). The shop's art and the stickers are
- * Hevalo's own, drawn by scripts/generate-cosmetic-art.mjs.
- */
+/** Whose work Hevalo uses and under which licence: fonts (OFL), icons (MIT), emoji (Apache 2.0); the shop art and stickers are Hevalo's own. */
 const CREDITS: MessageKey[] = ['about.credits.fonts', 'about.credits.icons', 'about.credits.emoji'];
 
 export function About(): React.JSX.Element {
@@ -92,7 +81,7 @@ export function About(): React.JSX.Element {
           ),
         },
         { title: 'about.makerTitle', body: <MadeBy inline /> },
-        // who provides Hevalo and how to reach them, from shared/src/provider.ts (contract-3 §C)
+        // Who provides Hevalo and how to reach them, from shared/src/provider.ts.
         {
           id: 'provider',
           title: 'about.providerTitle',

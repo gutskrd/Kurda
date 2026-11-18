@@ -22,7 +22,7 @@ const seat = (n: number, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-// the API's shape since the play layer: players by seat, and nobody else's account id
+// The API's shape since the play layer: players by seat, and nobody else's account id.
 const lobby = {
   id: 'b1',
   status: 'lobby',
@@ -70,7 +70,7 @@ describe('WordleBattle', () => {
     const ticket = await screen.findByRole('group', { name: 'Join code' });
     expect(within(ticket).getByRole('button', { name: 'Copy the join code A B C 2 3 4' })).toBeInTheDocument();
     expect(within(ticket).getByRole('button', { name: 'Invite friends' })).toBeInTheDocument();
-    // the invite link and its Copy link are gone: nothing on the page builds one
+    // The invite link and its Copy link are gone: nothing on the page builds one.
     expect(screen.queryByText(/invite link/i)).toBeNull();
     expect(screen.queryByText(/\/app\/games\/peyvok-battle\?id=/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Copy link' })).toBeNull();
@@ -118,7 +118,7 @@ describe('WordleBattle', () => {
     expect(within(players).getByText('You')).toBeInTheDocument();
     expect(within(players).getByText('Rojda')).toBeInTheDocument();
     expect(within(players).getByText('Player 3')).toBeInTheDocument();
-    // the host can ask friends in, and take someone out (asked twice)
+    // The host can ask friends in, and take someone out (asked twice).
     expect(screen.getByRole('button', { name: /invite friends/i })).toBeInTheDocument();
     expect(within(players).getByRole('button', { name: 'Remove Rojda from the game' })).toBeInTheDocument();
   });
@@ -138,7 +138,7 @@ describe('WordleBattle', () => {
 
     const remove = await screen.findByRole('button', { name: 'Remove Rojda from the game' });
     await userEvent.click(remove);
-    // asked twice: it cannot be taken back
+    // Asked twice: it cannot be taken back.
     await userEvent.click(screen.getByRole('button', { name: /^Remove Rojda from the game — press again/ }));
     await waitFor(() => expect(removed).toEqual({ seat: 2 }));
   });
@@ -254,7 +254,7 @@ describe('WordleBattle', () => {
     expect(await screen.findByText('Rated')).toBeInTheDocument();
     expect(await screen.findByText('Win ≈ +24 · Lose ≈ −8')).toBeInTheDocument();
     expect(screen.getByText('Çiya III')).toBeInTheDocument();
-    // only the host changes it
+    // Only the host changes it.
     expect(screen.queryByRole('radio', { name: /Friendly/ })).not.toBeInTheDocument();
   });
 
@@ -292,7 +292,7 @@ describe('WordleBattle', () => {
     await userEvent.click(await screen.findByRole('radio', { name: 'Hard' }));
     await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
     await waitFor(() => expect(created).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard', rated: false } }));
-    // its lobby, with the code to hand out
+    // Its lobby, with the code to hand out.
     expect(await screen.findByRole('button', { name: 'Copy the join code A B C 2 3 4' })).toBeInTheDocument();
   });
 });

@@ -20,17 +20,9 @@ import { ReportAction } from '../reports/ReportAction';
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
 
 /**
- * One written post, in full: a gotin, a çîrok or a helbest, its pictures, who
- * wrote it, its source, and its comments.
- *
- * It only knew stories and poems, so a gotin — a saying, with no title — had a
- * "Story" badge, an empty heading and a link back to the stories. A post can
- * carry pictures now, laid out as the wall lays them out and opening full size;
- * "Source / credit" sits under the words; and the author can edit it here.
- *
- * Under it, the same row of actions the wall has — the heart, comments,
- * repost, share and save — with the counts fetched for whoever is reading
- * (the post itself is public and cached the same for everyone).
+ * One written post in full (a gotin, çîrok or helbest): its pictures, laid out as on the wall and opening full size, its
+ * author, source and comments, and editing for the author. Under it, the wall's action row with counts fetched for the
+ * reader, since the post itself is public and cached for everyone.
  */
 export function LibraryPostPage(): React.JSX.Element {
   const t = useT();
@@ -38,20 +30,20 @@ export function LibraryPostPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>();
   const { data: post, error, loading, reload } = useApiGet<ComposedPost>(`/library/posts/${id}`);
   const [editing, setEditing] = useState(false);
-  // kept with the post it is for, so another post's numbers never show for a moment on this one
+  // Kept with its post, so another post's numbers never show here for a moment.
   const [counts, setCounts] = useState<{ id: string; engagement: PostEngagement } | null>(null);
   const commentsRef = useRef<HTMLDivElement>(null);
-  // where the post's card lands when it is opened from a wall, and what goes back to the card (the wall names it the same way)
+  // Where the post's card lands from a wall, and what goes back to it (the wall names it the same way).
   const whole = useGrowsInto(`post:library:${id}`, { shape: 'card' });
 
   useEffect(() => {
-    // asked once whoever is reading is known, so "liked" is yours and not a guest's
+    // Fetched once the reader is known, so "liked" is yours and not a guest's.
     if (status === 'restoring' || !id) return;
     let cancelled = false;
     void (async () => {
       const res = await client.get<{ engagement?: PostEngagement }>(`/posts/library/${id}/engagement`);
       if (cancelled) return;
-      // a failed count must not take the post down with it
+      // A failed count must not take the post down with it.
       setCounts({ id, engagement: res.ok && res.data.engagement ? res.data.engagement : NO_ENGAGEMENT });
     })();
     return () => {
@@ -74,7 +66,7 @@ export function LibraryPostPage(): React.JSX.Element {
       : post.type === 'story'
         ? { to: '/app/civak?section=gotin&kind=cirok', label: t('library.allStories') }
         : { to: '/app/civak', label: t('civak.title') };
-  // a meme is badged as one, not as the saying it is stored as (feed/postKinds)
+  // A meme is badged as one, not as the saying it is stored as (feed/postKinds).
   const kindKey = CARD_LABEL_KEY[post.meme ? 'meme' : post.type];
   const mine = user?.id === post.authorId;
   const pictures = post.media
@@ -124,8 +116,7 @@ export function LibraryPostPage(): React.JSX.Element {
           </audio>
         )}
 
-        {/* pre-wrap: a poem's line breaks are the poem */}
-        {/* dir=auto: the post's own language decides its direction, not the interface's */}
+        {/* Pre-wrap keeps a poem's line breaks; dir=auto lets the post's language set its direction. */}
         {post.body && (
           <div className={`post-body${post.title ? '' : ' post-body-saying'}`} dir="auto">
             {post.body}
@@ -136,7 +127,7 @@ export function LibraryPostPage(): React.JSX.Element {
 
         {post.sourceCredit && (
           <p className="post-source">
-            {/* isolated (FSI…PDI), so a Latin credit under a Soranî label keeps its own order */}
+            {/* Isolated (FSI…PDI), so a Latin credit under a Soranî label keeps its order. */}
             {t('post.source', { source: `\u2068${post.sourceCredit}\u2069` })}
           </p>
         )}

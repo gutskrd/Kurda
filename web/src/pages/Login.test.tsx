@@ -31,13 +31,8 @@ describe('Login', () => {
     expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
   });
 
-  /**
-   * The screen used to print the server's own sentence, which is English
-   * whoever is reading it. It now answers INVALID_CREDENTIALS from the
-   * catalogue, so the reader gets their own language and the API keeps its
-   * message for the log.
-   */
-  it('answers a rejected sign-in from the catalogue, not with the server\'s English', async () => {
+  // INVALID_CREDENTIALS is answered from the catalogue in the reader's language, not with the server's English sentence.
+  it('answers a rejected sign-in from the catalogue, not with the server’s English', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => jsonResponse(401, { code: 'INVALID_CREDENTIALS', message: 'invalid email or password' })),
@@ -52,12 +47,7 @@ describe('Login', () => {
     expect(alert).not.toHaveTextContent('invalid email or password');
   });
 
-  /**
-   * One red box above the first field said every refusal, three rows from the
-   * button that caused it. A wrong pair is said under the password now: the
-   * field is marked and shaken, the caret is in it, and it is named to a
-   * screen reader as what is wrong.
-   */
+  // A wrong pair is said under the password: the field is marked, shaken, focused and named as what is wrong.
   it('says a wrong pair under the password, marks and shakes that field, and puts the caret in it', async () => {
     vi.stubGlobal(
       'fetch',
@@ -77,14 +67,14 @@ describe('Login', () => {
     expect(password).toHaveAttribute('aria-invalid', 'true');
     expect(password).toHaveAccessibleDescription(en['error.code.invalidCredentials']);
     await waitFor(() => expect(password).toHaveFocus());
-    // nothing above the form: the banner is for what is not about a field
+    // Nothing above the form: the banner is for what is not about a field.
     expect(document.querySelector('.msg')).toBeNull();
 
-    // refused again, it shakes again: the same shake under its other name
+    // Refused again, it shakes again: the same shake under its other name.
     await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
     await waitFor(() => expect(password.closest('.field')).toHaveClass('is-shake-b'));
 
-    // and the mark goes as soon as either half of the pair is being mended
+    // And the mark goes as soon as either half of the pair is being mended.
     await userEvent.type(password, 'x');
     expect(password.closest('.field')).not.toHaveClass('has-problem');
     expect(screen.queryByText(en['error.code.invalidCredentials'])).not.toBeInTheDocument();
@@ -126,10 +116,7 @@ describe('Login', () => {
     await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument(), MOVES_ON);
   });
 
-  /**
-   * The name is what Settings lists this session under; the id is what the
-   * server's sign-in protection keys on, and goes in a header, never the body.
-   */
+  // The name is what Settings lists the session under; the id is what sign-in protection keys on, sent as a header.
   it('says which browser this is: a name for the devices list, an id for sign-in protection', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
@@ -148,7 +135,7 @@ describe('Login', () => {
     await screen.findByText('App home', {}, MOVES_ON);
 
     const [url, init] = fetchMock.mock.calls.find(([u]) => String(u).endsWith('/auth/login'))!;
-    // remembered unless the box is unticked: the server keeps the session a month, not a day
+    // Remembered unless the box is unticked: the server keeps the session a month, not a day.
     expect(JSON.parse(String(init!.body))).toEqual({ email: 'a@b.com', password: 'rightpass1', deviceName: 'Chrome on Windows', remember: true });
     expect((init!.headers as Record<string, string>)['x-device-id']).toBe(deviceId());
     expect(url).not.toContain(deviceId());
@@ -173,10 +160,7 @@ describe('Login', () => {
     expect(JSON.parse(String(init!.body)).remember).toBe(false);
   });
 
-  /**
-   * Production has no challenge to show yet, so a sign-in that asks for one
-   * says to wait or set a new password, calmly, with the way to do the second.
-   */
+  // Production has no challenge to show yet, so a sign-in asking for one says to wait or set a new password.
   it('answers a sign-in that asks for a challenge with a wait, or a new password', async () => {
     vi.stubGlobal(
       'fetch',

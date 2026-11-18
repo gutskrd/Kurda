@@ -34,10 +34,10 @@ type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
 
 interface OpponentView {
-  /** `seat:N`: never another player's account */
+  /** `seat:N`, never another player's account. */
   userId: string;
   seat: number;
-  /** only when this viewer may see it (a friend, or an open battle) */
+  /** Only when this viewer may see it (a friend, or an open battle). */
   name: string | null;
   avatarUrl: string | null;
   guessCount: number;
@@ -55,13 +55,13 @@ interface BattleState {
   maxPlayers: number;
   createdBy: string;
   isHost: boolean;
-  /** who may join: the host's friends, or any adult with the code */
+  /** Who may join: the host's friends, or any adult with the code. */
   access?: GameAccess;
-  /** the code a friend types to join, while the lobby can still be joined; null after */
+  /** The code a friend types while the lobby can be joined; null after. */
   code?: string | null;
-  /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
+  /** Rated or Friendly, shown before anyone joins and decided at the start. */
   rated?: RatedState;
-  /** everyone in it, by seat, as this viewer may see them */
+  /** Everyone in it by seat, as this viewer may see them. */
   players: SeatPlayer[];
   me: {
     guesses: WordleGuessRow[];
@@ -76,11 +76,11 @@ interface BattleState {
 interface BattleResults {
   id: string;
   target: string;
-  /** what the word means, in every language a word card gives; absent from a server from before it */
+  /** The word's meanings in every language a word card gives; absent from older servers. */
   meanings?: WordMeanings;
   difficulty: Difficulty;
   ranking: Array<{
-    /** yours on your own row, `seat:N` on everyone else's */
+    /** Yours on your own row, `seat:N` on everyone else's. */
     userId: string;
     seat: number;
     name: string | null;
@@ -105,7 +105,7 @@ function guessMsg(err: ApiError, t: (key: MessageKey) => string): string {
   }
 }
 
-/** Peyvok Battle (KUR-306): race the same word. Create → invite, or hand out the code → play. */
+/** Peyvok Battle: race to the same word. Create and invite, or hand out the code, then play. */
 export function WordleBattle(): React.JSX.Element {
   const [params] = useSearchParams();
   const t = useT();
@@ -118,11 +118,7 @@ export function WordleBattle(): React.JSX.Element {
   );
 }
 
-/**
- * A new battle: its difficulty and the friends to ask, in one step — the
- * invite sheet's form, in place (play/InviteSheet). Nobody asked is fine too:
- * the lobby has its code to hand out.
- */
+/** A new battle: its difficulty and friends to ask in one step, the invite sheet's form in place; asking nobody is fine. */
 function CreateBattle(): React.JSX.Element {
   const t = useT();
   return (
@@ -137,7 +133,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const navigate = useNavigate();
-  // your own face, from the poll the nav already runs
+  // Your own face, from the poll the nav already runs.
   const myAvatar = useRail().data.you?.avatarUrl ?? null;
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [results, setResults] = useState<BattleResults | null>(null);
@@ -147,7 +143,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refusals, setRefusals] = useState(0);
-  // your last guess's row is still turning over: what it means for you waits for the tiles to have said it
+  // Your last guess's row is still turning over; what it means for you waits for the tiles.
   const { revealing, hold } = useReveal();
   const loadedOnce = useRef(false);
 
@@ -158,10 +154,10 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
       setGone(null);
       loadedOnce.current = true;
     } else if (res.error.code === 'GAME_STARTED') {
-      // a latecomer: the battle is running without them
+      // A latecomer: the battle is running without them.
       setGone('started');
     } else if (res.error.status === 404) {
-      // not found, not theirs to see, or they were removed — one answer
+      // Not found, not theirs to see, or removed: one answer.
       setGone('gone');
     } else if (!loadedOnce.current) {
       setError(describeError(res.error, t));
@@ -172,8 +168,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     void load();
   }, [load]);
 
-  // the server says when the lobby or the battle moves (`play_changed`); a
-  // slow read covers a missed event, and stops once it is over
+  // The server says when the lobby or battle moves (`play_changed`); a slow read covers a missed event, until it is over.
   const live = battle?.status === 'lobby' || battle?.status === 'active';
   useLobbyUpdates('wordle-battle', id, load, live && gone === null);
 
@@ -186,12 +181,12 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   }, [battle?.status, results, client, id]);
 
   const active = battle?.status === 'active' && battle.me != null && battle.me.status === 'playing' && !battle.me.solved;
-  // while guessing, an invite to something else waits as a chip
+  // While guessing, an invite to something else waits as a chip.
   useQuietInvites(active);
-  // the rating box hears of a battle that ended while you watched (not one opened finished)
+  // The rating box hears of a battle that ended while you watched, not one opened finished.
   useGameFinished('wordle-battle', battle?.me ? id : null, battle?.status === 'finished');
 
-  // a guess the game would not take shakes the row it was typed in (components/WordleBoard.tsx)
+  // A refused guess shakes the row it was typed in (components/WordleBoard.tsx).
   const refuse = useCallback((why: string) => {
     setNotice(why);
     setRefusals((n) => n + 1);
@@ -212,7 +207,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     if (res.ok) {
       setBattle(res.data);
       setCurrent('');
-      // this guess finished your board: found, or out of tries
+      // This guess finished your board: found, or out of tries.
       const after = res.data.me;
       if (after && (after.solved || after.status !== 'playing')) {
         haptic(after.solved ? 'correct' : 'wrong');
@@ -225,7 +220,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
 
   const press = useCallback(
     (key: string) => {
-      // while a guess is being judged the keys are let go, not dimmed: the board is about to answer
+      // While a guess is judged the keys are ignored, not dimmed.
       if (!active || busy) return;
       setNotice(null);
       if (key === 'Enter') return void submit();
@@ -242,7 +237,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     const res = await client.post<BattleState>(`/wordle/battles/${id}/join`);
     setBusy(false);
     if (res.ok) setBattle(res.data);
-    // full, started, or not theirs to join: said as every game says it
+    // Full, started, or not theirs to join, said as every game says it.
     else setNotice(playError(res.error, t));
   }
 
@@ -276,11 +271,11 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const playerCount = present.length;
   const room = Math.max(0, battle.maxPlayers - playerCount);
 
-  // ---- lobby ----
+  // ---- Lobby ----
   if (battle.status === 'lobby') {
     return (
       <div className="match-lobby match-room">
-        {/* the code anyone can be told, and Invite friends for the friends already here */}
+        {/* The code anyone can be told, and Invite friends for friends on Hevalo. */}
         <CodeTicket
           game="wordle-battle"
           code={battle.code}
@@ -288,7 +283,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
           invite={battle.isHost ? <InviteFriendsButton game="wordle-battle" lobbyId={id} room={room} /> : undefined}
         />
         <LobbyRoster players={battle.players} max={battle.maxPlayers} canRemove={battle.isHost} onRemove={remove} game="wordle-battle" gameId={battle.id} />
-        {/* Rated or Friendly: everyone sees it before joining, the host changes it here */}
+        {/* Rated or Friendly: seen before joining, changed by the host here. */}
         <LobbyRated
           game="wordle-battle"
           lobbyId={id}
@@ -319,7 +314,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     );
   }
 
-  // ---- results ----
+  // ---- Results ----
   if (battle.status === 'finished') {
     const mine = results?.ranking.find((r) => r.isMe);
     const others = results?.ranking.filter((r) => !r.isMe) ?? [];
@@ -330,12 +325,12 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
           {mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}
         </h2>
         {battle.rated && <RatedBadge rated={shownRated(battle.rated)} size="sm" className="match-rated" />}
-        {/* what the game did to your rank, then the badges it earned */}
+        {/* What the game did to your rank, then the badges it earned. */}
         {battle.me != null && <RankResult game="wordle-battle" gameRef={battle.id} />}
         {results && (
           <>
             <p className="muted">{t('games.wordle.theWordWas', { word: results.target })}</p>
-            {/* the word everyone raced for, and what it means: the one thing a battle teaches */}
+            {/* The word everyone raced for and its meaning: what a battle teaches. */}
             <WordMeaningLine word={results.target} meanings={results.meanings} />
             <RankList>
               {results.ranking.map((r) => {
@@ -355,7 +350,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
                     trailing={
                       <>
                         {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
-                        {/* another player, reported by seat — the page never has their account */}
+                        {/* Another player, reported by seat; the page never has their account. */}
                         {!me && <PlayerReport game="wordle-battle" gameId={battle.id} seat={r.seat} name={seatName(r, t)} />}
                       </>
                     }
@@ -378,12 +373,12 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     );
   }
 
-  // ---- active ----
+  // ---- Active ----
   const me = battle.me;
   return (
     <div className="wordle-battle-play">
       {battle.rated && <RatedBadge rated={shownRated(battle.rated)} size="sm" className="match-rated" />}
-      {/* the same chips the front page draws above its battle: you, and how close everyone else is */}
+      {/* The same chips the front page draws above its battle: you, and how close everyone else is. */}
       {battle.opponents.length > 0 && (
         <div className="players battle-players">
           {me && (
@@ -399,7 +394,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
             />
           )}
           {battle.opponents.map((o, i) => {
-            // the name the server lets this viewer see, else "Opponent (N)"; the ⋯ says the same
+            // The name the server lets this viewer see, else "Opponent (N)"; the ⋯ says the same.
             const name = o.name ?? (battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent'));
             return (
               <PlayerChip

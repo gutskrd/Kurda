@@ -33,21 +33,10 @@ import { useRaceCapture } from '../race/useRaceCapture';
 import { reportGameFinished, reportGameStarted } from '../feedback/gameFinished';
 
 /**
- * Typing race: reproduce a Kurdish text as fast and as accurately as you can.
- *
- * The clock shown here is for the racer's benefit only. The score comes from
- * the server, which timed the race from when it handed the text over — so what
- * this page displays can never be what counts.
- *
- * What is typed is read the way the server scores it (@kurda/shared
- * `compareTyping`): normalised, aligned word by word so a missed letter spoils
- * only its own word, in the accent mode the race was started in. The field
- * only ever takes typing at its end (race/useRaceCapture) — a click, an arrow
- * key or select-all can no longer put the next letter in the middle.
- *
- * A race is run alone, so it earns no XP: the result gives the speed, the
- * accuracy and the time, counts for the rankings unless the server would not
- * score it, and says in one line where XP is earned.
+ * Typing race: copy a Kurdish text as fast and accurately as you can. The clock here is only for the racer; the server
+ * times and scores the race. Typing is compared as the server scores it (@kurda/shared `compareTyping`), word by word in
+ * the race's accent mode, and the field only takes typing at its end (race/useRaceCapture). A race is solo, so it earns
+ * no XP; the result shows speed, accuracy and time, and counts for the rankings unless the server would not score it.
  */
 
 const LENGTHS: Array<{ value: RaceLength; labelKey: MessageKey }> = [
@@ -67,7 +56,7 @@ const MODE_LABEL: Record<AccentMode, MessageKey> = {
   hidden: 'keyboard.accent.hidden',
 };
 
-/** A refusal from the server, in the racer's language. */
+/** A server refusal in the racer's language. */
 function raceError(err: ApiError, t: (key: MessageKey) => string): string {
   switch (err.code) {
     case 'EMPTY_RACE_POOL':
@@ -85,10 +74,10 @@ export function Race(): React.JSX.Element {
   const { locale } = useI18n();
   const [prefs, setPrefs] = useKeyboardPrefs();
   const ids = useId();
-  // where the game's card lands when it is pressed on the Games page: its cover, large, before a race is on
+  // Where the game's card lands from the Games page: its cover, large, before a race starts.
   const cover = useGrowsInto('game:race');
 
-  // the variety the last race was in; a Soranî interface starts in Soranî
+  // The last race's variety; a Soranî interface starts in Soranî.
   const [dialect, setDialect] = useState<TypingDialect>(
     () => prefs.raceDialect ?? (locale === 'ckb' ? 'sorani' : 'kurmanci'),
   );
@@ -97,24 +86,24 @@ export function Race(): React.JSX.Element {
   const [typed, setTyped] = useState('');
   const [result, setResult] = useState<RaceResultView | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
-  // a finish that failed; `closed` when the server has already ended that race
+  // A failed finish; `closed` when the server already ended that race.
   const [finishError, setFinishError] = useState<{ message: string; closed: boolean } | null>(null);
   const [starting, setStarting] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [focused, setFocused] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // the keyboard guide as a dialog; `thenStart` when it stands before a first race
+  // The keyboard guide dialog; `thenStart` when it stands before a first race.
   const [guide, setGuide] = useState<{ thenStart: boolean } | null>(null);
   const [nudgeHidden, setNudgeHidden] = useState(false);
-  // the guide stood before this very race: its result does not offer it again
+  // The guide preceded this race, so its result does not offer it again.
   const [guided, setGuided] = useState(false);
-  // the text to copy is on this very screen, so the box takes keystrokes only
+  // The text is on this very screen, so the box takes keystrokes only.
   const { handlers: typeOnly, notice, refuse: refusePaste } = useTypeOnly(t('games.race.noPasting'));
   const startedAt = useRef<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
-  // one finish at a time, whichever of the ways to finish gets there first
+  // One finish at a time, whichever way gets there first.
   const finishingRef = useRef(false);
   const startingRef = useRef(false);
 
@@ -139,8 +128,7 @@ export function Race(): React.JSX.Element {
     if (startingRef.current) return;
     startingRef.current = true;
     reportGameStarted();
-    // a new race starts from nothing: the old text is gone before the new one
-    // is asked for, so nothing typed in between lands in either
+    // A new race starts from nothing: the old text goes before the new one is asked for.
     setStarting(true);
     setGame(null);
     setResult(null);
@@ -152,8 +140,7 @@ export function Race(): React.JSX.Element {
     setElapsed(0);
     startedAt.current = null;
     finishingRef.current = false;
-    // read at the moment of asking: "Make accents forgiving" in the guide
-    // changes it in the same click that starts the race
+    // Read now: "Make accents forgiving" in the guide changes it in the click that starts the race.
     const { accentMode } = getKeyboardPrefs();
     const res = await client.post<RaceGameView>('/race', { length, dialect, accentMode });
     startingRef.current = false;
@@ -168,8 +155,7 @@ export function Race(): React.JSX.Element {
 
   const start = useCallback(() => {
     setPrefs({ raceDialect: dialect });
-    // the first Kurmancî race on this device begins with the keyboard guide,
-    // and closing it starts the race
+    // The first Kurmancî race on this device starts with the keyboard guide; closing it starts the race.
     if (dialect === 'kurmanci' && !prefs.guideOffered) {
       setPrefs({ guideOffered: true });
       setGuide({ thenStart: true });
@@ -194,8 +180,7 @@ export function Race(): React.JSX.Element {
       setFinishing(false);
       if (res.ok) {
         setResult(res.data);
-        // a run the server would not score is no happy ending either; and a
-        // result that offers the keyboard guide asks enough for one race
+        // An unscored run is no happy ending, and a result offering the keyboard guide asks enough for one race.
         reportGameFinished({
           game: 'race',
           gaveUp: gaveUp || res.data.implausible,
@@ -206,8 +191,7 @@ export function Race(): React.JSX.Element {
         });
         return;
       }
-      // a race the server has already closed cannot be finished again; any
-      // other failure can be tried again from the same typing
+      // A race the server already closed cannot be finished again; other failures can be retried from the same typing.
       const closed = res.error.code === 'ALREADY_FINISHED';
       setFinishError({ message: raceError(res.error, t), closed });
       finishingRef.current = closed;
@@ -224,28 +208,19 @@ export function Race(): React.JSX.Element {
     backtick: prefs.backtick,
   });
 
-  /**
-   * Typing begins the moment the text appears, and the clock is already running.
-   *
-   * An effect rather than a timer after the fetch: the box does not exist yet
-   * when the response lands. On a phone this is also what opens the keyboard.
-   */
+  /** Focuses the box as soon as the text appears (it does not exist when the response lands); on a phone this opens the keyboard. */
   useEffect(() => {
     if (game && !result) inputRef.current?.focus();
   }, [game, result]);
 
-  /*
-   * The result takes the focus from the field, which is read-only now: a
-   * screen reader hears the heading (and, reading on, the figures) instead of
-   * silence, and on a phone the soft keyboard goes down off the results.
-   */
+  /* The result takes focus from the now read-only field, so screen readers hear it and a phone's keyboard closes. */
   useEffect(() => {
     if (!result) return;
     inputRef.current?.blur();
     resultHeadingRef.current?.focus();
   }, [result]);
 
-  // a running clock, for the racer — the score is timed server-side
+  // A running clock for the racer; the score is timed by the server.
   useEffect(() => {
     if (!game || result) return;
     const timer = setInterval(() => {
@@ -255,11 +230,9 @@ export function Race(): React.JSX.Element {
   }, [game, result]);
 
   /*
-   * Reaching the end of the text ends the race on its own — but never on half
-   * a letter: not while an input method is still composing one (a dead key
-   * waiting for its vowel), and not straight after the e of a final ê that a
-   * backtick may still finish, which waits a moment first. After a failed
-   * finish it waits for "Try again", rather than trying on every key.
+   * Reaching the end of the text finishes the race, but never on half a letter: not while an input method is composing,
+   * and only after a moment following a final e that a backtick may still turn into ê. After a failed finish it waits for
+   * "Try again".
    */
   useEffect(() => {
     if (!game || result || finishing || composing || finishError || !comparison) return;
@@ -276,7 +249,7 @@ export function Race(): React.JSX.Element {
   const typeKey = useCallback(
     (letter: string) => {
       setTyped((prev) => capTyping(prev + letter, total));
-      // a key reached with Tab hands the focus back, so typing carries on
+      // A key reached with Tab hands focus back, so typing carries on.
       if (document.activeElement !== inputRef.current) inputRef.current?.focus();
     },
     [total],
@@ -406,10 +379,8 @@ export function Race(): React.JSX.Element {
           )}
 
           {/*
-            The text and the box you type in are the same thing: the
-            characters colour themselves as you go, the caret is drawn on the
-            character you are on, and the field that takes the keys is an
-            invisible layer over the top whose own caret is kept at its end.
+            The text and the box are one: characters colour themselves as you type and the caret is drawn on the current
+            one, while the field taking keys is an invisible layer on top with its caret kept at its end.
           */}
           <div
             className={`race-type${focused ? ' is-focused' : ''}${result ? ' is-done' : ''}`}
@@ -486,18 +457,14 @@ export function Race(): React.JSX.Element {
                   <span className="race-badge">{t('games.race.personalBest')}</span>
                 )}
               </div>
-              {/*
-                Said out loud rather than shown as a silent zero. Somebody who
-                hits this has almost certainly found a way around the typing box,
-                and a result that just reads 0 looks like the game is broken.
-              */}
+              {/* Said rather than shown as a silent zero, which would look broken; this usually means the box was bypassed. */}
               {result.implausible && <p className="race-refused">{t('games.race.refused')}</p>}
               <div className="race-figures">
                 <Figure value={result.wpm.toFixed(1)} label={t('games.race.wpm')} />
                 <Figure value={`${Math.round(result.accuracy * 100)}%`} label={t('games.race.accuracy')} />
                 <Figure value={(result.elapsedMs / 1000).toFixed(1) + 's'} label={t('games.race.time')} />
               </div>
-              {/* a race alone earns no XP: no figure of it among the others, and one line that says where XP is earned */}
+              {/* A solo race earns no XP, so none is shown, and one line says where XP is earned. */}
               <p className="gs-alone">{t('games.noXpAlone')}</p>
               {result.accentMode !== 'hidden' && result.accented > 0 && (
                 <p className="race-accents">
@@ -517,7 +484,7 @@ export function Race(): React.JSX.Element {
                 )}
               </div>
 
-              {/* after the result and "Race again", so neither waits behind it */}
+              {/* After the result and "Race again", so neither waits behind it. */}
               {showNudge && (
                 <div className="race-nudge">
                   <KeyboardGuide
@@ -537,11 +504,7 @@ export function Race(): React.JSX.Element {
         </>
       )}
 
-      {/*
-        Escape, the backdrop and the X only close it: somebody backing out of
-        the guide has not asked for the clock to start. Its own buttons
-        ("Start race", the two ways out) are what go on into the race.
-      */}
+      {/* Escape, the backdrop and ✕ only close the guide; its own buttons go on into the race. */}
       <Modal
         open={guide !== null}
         onClose={() => setGuide(null)}
