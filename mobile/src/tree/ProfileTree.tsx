@@ -13,14 +13,10 @@ import { TreeArt } from './TreeArt';
 import { TreePicture } from './TreeScene';
 
 /**
- * Somebody's tree on their profile: the tree as it stands today, its kind,
- * how far it has grown, how long it has stood and what it has borne. How it
- * fares is said only when that is not well, and then plainly. On one's own
- * profile it leads to the tree (`onOpen`), and before one is planted invites
- * planting; on anybody else's, nothing is shown until they have a tree.
- *
- * `tree` is undefined on a server that has no trees yet: then there is no
- * such part of a profile.
+ * Somebody's tree on their profile: the tree today, its kind, growth, age and harvest. Its health is mentioned
+ * only when poor, and then plainly. On your own profile it opens the tree (`onOpen`), or invites planting before
+ * there is one; on others' profiles nothing shows until they have a tree. `tree` is undefined when the server has
+ * no trees.
  */
 export function ProfileTree({ tree, onOpen }: { tree: TreeGlimpse | null | undefined; onOpen?: () => void }): React.JSX.Element | null {
   const { colors } = useTheme();

@@ -28,7 +28,7 @@ const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: '
 const SWING_WAVE = treeWave(TREE_SWING.lag);
 
 let drawings = 0;
-/** An id prefix of this drawing's own, so two trees on a screen (or one left behind in the stack, in the browser build) never share a clip. */
+/** An id prefix unique to this drawing, so two trees on screen (or one left in the web build's stack) never share a clip. */
 function useArtId(): string {
   const id = useRef<string | null>(null);
   if (id.current === null) {
@@ -39,10 +39,8 @@ function useArtId(): string {
 }
 
 /**
- * The breeze, as one clock from 0 to 1 over its period on the native thread:
- * started where the shared clock has it (`treePhase`), so a tree drawn again
- * — grown, revived, or come back to the front — carries on swaying where it
- * was instead of starting over with a jerk.
+ * The breeze as one native-thread clock from 0 to 1, started from the shared clock (`treePhase`), so a redrawn
+ * tree keeps swaying where it was instead of jerking back.
  */
 function useBreeze(on: boolean): Animated.Value {
   const clock = useRef(new Animated.Value(0)).current;
@@ -70,24 +68,16 @@ function useBreeze(on: boolean): Animated.Value {
 }
 
 /**
- * A tree, drawn (shared `art/trees.ts`), the same picture the website shows.
+ * A tree, drawn from shared `art/trees.ts`, as on the web.
  *
- * `alive`, it is drawn in its layers: the ground, which stands still; the
- * plant over it, which sways about its foot in the shared breeze
- * (`TREE_SWAY`) while the screen is the one in front, and which `plant` can
- * move besides (dropped in as a seed, grown, watered, shaken); the swing a
- * great tree has, which hangs from the plant and leans a little after it,
- * its seat level; and the front, which stands still over the plant's foot.
- * `soil` moves the ground and the front together (the fade as one stage's
- * picture gives way to the next). Otherwise it is one still picture, which
- * is what a profile and a list want. A kind this build has no drawing for is
- * not drawn at all.
+ * When `alive` it is drawn in layers: the still ground; the plant, which sways about its foot in the shared
+ * breeze (`TREE_SWAY`) while the screen is focused and which `plant` can also move (dropped in as a seed, grown,
+ * watered, shaken); a great tree's swing, hanging from the plant and lagging a little with its seat level; and
+ * the still front over the plant's foot. `soil` moves ground and front together (the fade between stages).
+ * Otherwise it is one still picture, for profiles and lists. A kind this build cannot draw is not drawn.
  *
- * It is drawn in a season, standing on its round of grass with its long
- * shadow: the one given, or the learner's own today.
- *
- * `label` names it for a screen reader; leave it empty where the words
- * beside it already say what it is.
+ * It stands in a season (the one given, or the learner's today) on its disc of grass with a long shadow. `label`
+ * names it for screen readers; leave it empty when nearby text says what it is.
  */
 export function TreeArt({
   species,
@@ -108,9 +98,9 @@ export function TreeArt({
   size: number;
   label?: string;
   alive?: boolean;
-  /** more movement for the plant alone, laid over its sway */
+  /** More movement for the plant alone, laid over its sway. */
   plant?: Animated.WithAnimatedValue<ViewStyle>;
-  /** movement for the ground and the front, which stand still otherwise */
+  /** Movement for the ground and the front, which stand still otherwise. */
   soil?: Animated.WithAnimatedValue<ViewStyle>;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element | null {
@@ -118,7 +108,7 @@ export function TreeArt({
   const moving = useMotionAlive();
   const today = useTreeSeason();
   const drawnIn = season ?? today;
-  // a withered tree does not sway, nor a seed: there is nothing on them for the air to move
+  // A withered tree does not sway, nor a seed: there is nothing on them for the air to move.
   const deg = treeSwayDeg(stage);
   const sways = alive && moving && health !== 'withered' && deg > 0;
   const clock = useBreeze(sways);
