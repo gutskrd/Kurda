@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   BATTLE_PARTICIPATION_XP,
   BATTLE_WIN_XP,
-  battleWinners,
   compareBattlePlayers,
   placementXp,
   rankBattle,
@@ -84,21 +83,21 @@ describe('rankBattle', () => {
   });
 });
 
-describe('battleWinners', () => {
-  it('returns the single rank-1 player', () => {
+describe('rankBattle winners', () => {
+  it('gives rank 1 to a single winner', () => {
     const ranked = rankBattle([
       player('a', { guesses: 4 }),
       player('b', { guesses: 1 }),
     ]);
-    expect(battleWinners(ranked).map((p) => p.userId)).toEqual(['b']);
+    expect(ranked.filter((p) => p.rank === 1).map((p) => p.userId)).toEqual(['b']);
   });
 
-  it('returns everyone tied at rank 1', () => {
+  it('gives rank 1 to everyone tied for first', () => {
     const ranked = rankBattle([
       player('a', { guesses: 2, timeMs: 3000 }),
       player('b', { guesses: 2, timeMs: 3000 }),
     ]);
-    expect(battleWinners(ranked).map((p) => p.userId).sort()).toEqual(['a', 'b']);
+    expect(ranked.filter((p) => p.rank === 1).map((p) => p.userId).sort()).toEqual(['a', 'b']);
   });
 });
 

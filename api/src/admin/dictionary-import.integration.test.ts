@@ -45,9 +45,8 @@ describe.skipIf(!DATABASE_URL)('admin dictionary import (integration)', () => {
   }
 
   /**
-   * One empty file. The real source downloads 65 MB over ninety minutes, and
-   * the test that asserts a start returns 202 would begin exactly that — the
-   * whole point of the endpoint is that it answers before the work is done.
+   * One empty file, because the real source downloads 65 MB over ninety minutes and the 202 test would start exactly
+   * that.
    */
   const emptySource = {
     manifest: () => Promise.resolve({ totalWords: 0, files: [{ file: 'none.json', count: 0 }] }),
@@ -80,9 +79,8 @@ describe.skipIf(!DATABASE_URL)('admin dictionary import (integration)', () => {
   });
 
   /**
-   * Importing a language is not editing content: it writes several hundred
-   * thousand rows and has no undo. A content editor curates words; this is a
-   * different thing behind a different door.
+   * Importing a language writes several hundred thousand rows with no undo, so it sits behind a different role than
+   * curating words.
    */
   it('refuses a content editor, who may still curate words', async () => {
     expect((await authed('GET', '/admin/dictionary/import', editorToken)).statusCode).toBe(403);
@@ -94,10 +92,7 @@ describe.skipIf(!DATABASE_URL)('admin dictionary import (integration)', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  /**
-   * The request returns long before the work does — an import is about ninety
-   * minutes and no browser holds a connection open for that. 202 says so.
-   */
+  /** An import takes about ninety minutes, so the start answers 202 at once. */
   it('accepts the start and answers immediately', async () => {
     const res = await authed('POST', '/admin/dictionary/import', adminToken, { lang: 'ku' });
     expect(res.statusCode).toBe(202);

@@ -1,13 +1,10 @@
 /**
- * Impostor's deck against a real database: it goes in once, published as the
- * starters are, with each card's hint built from its category; it archives
- * the starter cards it replaces that nobody has touched, and leaves a row a
- * person has edited exactly as it is, never dealing that word twice. Needs
- * DATABASE_URL.
+ * Impostor's deck against a real database: it goes in once, published like the starters, each card's hint built from
+ * its category; it archives untouched starter cards it replaces and leaves person-edited rows exactly as they are,
+ * never dealing a word twice. Needs DATABASE_URL.
  *
- * The test seeds a small deck of its own, and puts back what it changed: the
- * rows it made go, the rows it archived are published again, and the deck's
- * mark in `content_seeds` is as it was.
+ * The test seeds a small deck and restores everything it changed: its rows go, archived rows are republished, and the
+ * deck's `content_seeds` mark is reset.
  */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

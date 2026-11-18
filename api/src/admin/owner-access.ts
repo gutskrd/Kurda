@@ -3,23 +3,15 @@ import { parseAdminEmails } from './bootstrap-admins.js';
 import { isPrivileged } from './roles.js';
 
 /**
- * Who may use the admin console at all: the staff, and no one else.
+ * Who may use the admin console: staff only, meaning an account holding a staff role (roles.ts) that is neither deleted
+ * nor banned. Roles are only given through BOOTSTRAP_ADMIN_EMAILS or by hand in the database.
  *
- * Staff means an account holding a staff role (roles.ts) that is neither
- * deleted nor banned. Roles are only ever given through BOOTSTRAP_ADMIN_EMAILS
- * or by hand in the database, so this is the owner and the admins they made.
+ * ADMIN_ACCESS_EMAILS, when set, is a second lock: only accounts whose CONFIRMED address is on it may use the console,
+ * whatever roles others hold, so a mistaken grant or leftover moderator opens nothing. It lives only in configuration,
+ * since the repository is public. Unset, roles alone decide.
  *
- * ADMIN_ACCESS_EMAILS, when set, is a second lock on top: only the accounts
- * whose CONFIRMED address is on it may use the console, whatever roles anyone
- * else holds. A mistaken grant, a leftover moderator or a row written by
- * something that should not have written it then opens nothing either. It
- * lives in configuration only, never in this repository, which is public. Left
- * unset, roles alone decide, so no admin is shut out by a list nobody wrote.
- *
- * To anyone else the console's sign-in answers exactly as a wrong password does
- * (auth/routes.ts), and every staff route answers exactly as a route that does
- * not exist (admin-gate.ts): nothing says the account was right, that it is
- * not staff, or that the route is there.
+ * To anyone else the console sign-in answers exactly like a wrong password (auth/routes.ts) and every staff route like
+ * a missing one (admin-gate.ts).
  */
 export interface AccessConfig {
   ADMIN_ACCESS_EMAILS: string;
@@ -55,9 +47,8 @@ export class AdminAccess {
   }
 
   /**
-   * Whether the account `userId` may use the console, read afresh on every
-   * staff request (one row by its key): a revoked role, a ban or a changed
-   * address shuts the console at once, and a grant opens it at once.
+   * Whether `userId` may use the console, read afresh on every staff request (one keyed row), so a revoked role, a ban
+   * or a changed address takes effect at once.
    */
   async allows(userId: string): Promise<boolean> {
     const { rows } = await this.pool.query<AccountRow>(

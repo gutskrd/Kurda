@@ -1,28 +1,18 @@
 /**
  * A round's recordings, played by handle (GET /games/solo/sessions/:id/clips/:clip).
  *
- * A listening game must not hand the app a recording's address: lesson
- * recordings are filed by their bytes, so the same address appears beside its
- * text elsewhere (a lesson's cards, a conversation's lines), and a dictionary
- * pronunciation's address often names its word outright. So each item of a
- * round that plays a recording carries a handle of its own instead — random,
- * minted when the round is made, and good only while that round is — and the
- * recording is sent from here, read through the API (speakers/recording-file.ts:
- * our bucket by its object key, a dictionary pronunciation only from the hosts
- * allowed). Nothing in the address or the reply says what is said.
+ * A listening game must not give the app a recording's address: lesson recordings are filed by their bytes, so the
+ * address appears beside its text elsewhere, and a dictionary pronunciation's address often names the word. So each
+ * item carries a random handle minted with the round and valid only while it lasts, and the recording is streamed from
+ * here (speakers/recording-file.ts: our bucket by object key, dictionary pronunciations only from allowed hosts).
+ * Nothing in the address or reply says what is said.
  *
- * The address is the permission, as a media address is: an <audio> element
- * and a phone's player fetch it without the learner's token, so it asks for
- * none. It is unguessable (the round's id and a 128-bit handle), it stops
- * answering when the round expires, and it is rate-limited per address.
+ * The address is the permission, like a media address: <audio> elements and phone players fetch without the learner's
+ * token. It is unguessable (round id plus a 128-bit handle), stops answering when the round expires, and is
+ * rate-limited per address.
  *
- * The file is read whole (a sentence's recording is small, and capped) so the
- * reply can answer a byte range: Safari and the phones' players ask for the
- * start of a file before they play it. The reply may be kept by the browser
- * for the hour a round takes, never by a shared cache.
- *
- * Any learning game's items may play clips this way: an item with a `clip`
- * and the `recording` it stands for.
+ * The file is read whole (sentence recordings are small and capped) so the reply can serve byte ranges, which some
+ * players request before playing. Browsers may cache it for the hour a round takes; shared caches may not.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';

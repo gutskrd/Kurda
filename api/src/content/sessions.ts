@@ -47,7 +47,7 @@ function sessionOf(row: SessionColumns): SessionRow | null {
   };
 }
 
-/** The grammar note on a lesson's skill (KUR-038) and the variety of its course. */
+/** The grammar note on a lesson's skill and the variety of its course. */
 interface LessonNotes {
   grammar_md: string | null;
   dialect: string | null;
@@ -67,16 +67,15 @@ export interface SessionView {
   lessonId: string;
   expiresAt: string;
   completed: boolean;
-  /** answer fields stripped (KUR-028), with what the client shows beside them (`deliverExercises`) */
+  /** answer fields stripped, with what the client shows beside them (`deliverExercises`) */
   exercises: Array<{ id: string; position: number; type: ExerciseType } & DeliveredFields>;
   /** exercises already answered in this session (resume) */
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
-  /** markdown grammar note for this lesson's skill, if any (KUR-038) */
+  /** markdown grammar note for this lesson's skill, if any */
   grammarMd: string | null;
   /**
-   * The course's variety of Kurdish ('kurmanji', 'sorani', …), so a client
-   * offers the letters this lesson is typed in: ê î û ç ş for Kurmancî, the
-   * Soranî letters for a Soranî lesson.
+   * The course's variety of Kurdish ('kurmanji', 'sorani', …), so the client offers the right extra letters (ê î û ç ş
+   * for Kurmancî, the Soranî letters for Soranî).
    */
   dialect: string | null;
 }
@@ -86,9 +85,8 @@ export interface AnswerResult {
   accepted: boolean;
   correction?: string;
   /**
-   * The native recording of the item's Kurdish, to hear now that it is
-   * answered — also on items that could not send it beforehand because it
-   * would have said the answer (lessonaudio/delivery.ts).
+   * The native recording of the item's Kurdish to hear once answered, including on items that could not send it
+   * beforehand without giving the answer away (lessonaudio/delivery.ts).
    */
   modelAudioUrl?: string;
   /** who says `modelAudioUrl`, when a character is chosen for it */
@@ -97,34 +95,27 @@ export interface AnswerResult {
   duplicate: boolean;
 }
 
-/**
- * A second try at an item, graded exactly as an answer is but never recorded
- * (`retry`), so it carries no `duplicate`: there is nothing it could duplicate.
- */
+/** A second try at an item, graded like an answer but never recorded (`retry`), so it has no `duplicate`. */
 export type RetryResult = Omit<AnswerResult, 'duplicate'>;
 
 export interface SessionResults {
   correct: number;
   /**
-   * The exercises the score is out of: the lesson's, less any listening or
-   * speaking item put off and never answered (`SKIPPABLE_TYPES`).
+   * The exercises the score is out of: the lesson's, minus listening or speaking items put off and never answered
+   * (`SKIPPABLE_TYPES`).
    */
   total: number;
   /** `correct / total` */
   accuracy: number;
-  /**
-   * What was missed, with the question and its right answer, so a results
-   * screen can show the answers rather than only that something was wrong.
-   */
+  /** What was missed, with each question and its right answer, for the results screen. */
   mistakes: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   /** XP awarded for this completion (0 on a repeat replay). */
   xpAwarded: number;
-  /** Streak after this completion counted toward today's goal (KUR-031), with the days lately learned for the week row. */
+  /** Streak after this completion counted toward today's goal, with the days lately learned for the week row. */
   streak: SessionStreak;
   /**
-   * True only for the first time this learner completes this lesson — any
-   * version of it (`LessonSlot`). Rewards that should not be farmable by
-   * replaying an easy lesson key on it.
+   * True only for this learner's first completion of this lesson in any version (`LessonSlot`). Rewards that must not
+   * be farmable by replays key on it.
    */
   firstCompletion: boolean;
   /** today's quests this completion moved, before and after; absent when it moved none */
@@ -134,41 +125,37 @@ export interface SessionResults {
 }
 
 /**
- * Where a lesson sits: its skill and position. Re-importing changed content
- * makes a new lesson row (a new version, with a new id) at the same place, and
- * to a learner that is still the lesson they finished, so whether they have
- * finished it is asked of the place, not of the row.
+ * Where a lesson sits: its skill and position. Re-importing changed content makes a new row (new version, new id) at
+ * the same place, which to a learner is still the lesson they finished, so completion is asked of the place, not the
+ * row.
  */
 interface LessonSlot {
   skillId: string;
   position: number;
 }
 
-/** Grants Gems for a rule/refId; injected so content stays decoupled (KUR-068). */
+/** Grants Gems for a rule/refId; injected so content stays decoupled. */
 export interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
 /**
- * The Gem rule a perfect first completion pays out under (KUR-068). Switched
- * off since migration 1751000312000, so the grant is asked for and answered
- * with nothing: free gems are rare now that they restore a streak. The asking
- * stays, for an admin who switches the rule back on.
+ * The Gem rule a perfect first completion pays under. Switched off since migration 1751000312000 (free gems are rare
+ * now that they restore a streak), so the grant is requested and answers with nothing; the request stays for an admin
+ * who switches it back on.
  */
 export const PERFECT_LESSON_GEM_RULE = 'perfect_lesson';
 
 /**
- * The idempotency reference perfect-lesson Gems are paid under: the learner and
- * the lesson's place, so they are paid at most once per learner per lesson,
- * whichever version was played and however the completion was reached.
+ * The idempotency reference for perfect-lesson Gems: the learner and the lesson's place, so they are paid at most once
+ * per learner per lesson, whatever version or path reached the completion.
  */
 function perfectLessonRef(slot: LessonSlot, userId: string): string {
   return `${slot.skillId}:${slot.position}:${userId}`;
 }
 
 /**
- * Lesson delivery + grading (KUR-028). Sessions pin a lesson id, grade
- * every answer server-side (KUR-027), and record each answer exactly
+ * Lesson delivery and grading. Sessions pin a lesson id, grade every answer server-side, and record each answer exactly
  * once per (session, exercise).
  */
 export class LessonSessionService {
@@ -198,10 +185,7 @@ export class LessonSessionService {
     this.milestones = deps.milestones;
   }
 
-  /**
-   * The grammar note on a lesson's skill (KUR-038) and the variety of its
-   * course, read on their own when nothing else has read them yet.
-   */
+  /** The grammar note on a lesson's skill and its course's variety, read separately when nothing else has read them. */
   private async notesOf(lessonId: string): Promise<LessonNotes> {
     const r = await this.pool.query<LessonNotes>(
       `SELECT s.grammar_md, c.dialect
@@ -216,9 +200,8 @@ export class LessonSessionService {
   }
 
   /**
-   * The session as the learner sees it. The lesson's exercises come with this
-   * session's answer to each, if any, in one read: an answer is only ever
-   * recorded for an exercise of the session's own lesson (`openSessionWith`).
+   * The session as the learner sees it. Exercises come with this session's answer to each in one read; answers are only
+   * recorded for exercises of the session's own lesson (`openSessionWith`).
    */
   private async buildView(session: SessionRow, known?: LessonNotes): Promise<SessionView> {
     const [rows, notes] = await Promise.all([
@@ -308,9 +291,8 @@ export class LessonSessionService {
   }
 
   /**
-   * The learner's session, still open to answers (not completed, not
-   * expired), with one exercise of its lesson and whether this session has
-   * answered it yet: everything an answer or a retry checks first, in one read.
+   * The learner's session while still open to answers (not completed, not expired), with one exercise of its lesson and
+   * whether it was answered yet: everything an answer or retry checks first, in one read.
    */
   private async openSessionWith(
     sessionId: string,
@@ -351,10 +333,9 @@ export class LessonSessionService {
     const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
     const heard = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
 
-    // Idempotent per (session, exercise): first answer wins. The answer, the
-    // session's count of right answers, and for a repeat the answer that won,
-    // are one statement: its SELECT does not see the statement's own insert,
-    // so it reads back only an answer given before.
+    // Idempotent per (session, exercise): first answer wins. The answer, the session's right-answer count, and for a
+    // repeat the winning answer are one statement; its SELECT does not see the statement's own insert, so it only reads
+    // back an earlier answer.
     const record = async (db: Pick<pg.Pool, 'query'>) =>
       (
         await db.query<{ inserted: boolean; verdict: Verdict | null; accepted: boolean | null }>(
@@ -382,8 +363,8 @@ export class LessonSessionService {
       try {
         await client.query('BEGIN');
         recorded = await record(client);
-        // Feed the answer into spaced repetition (KUR-033), keyed on the
-        // exercise until a lexeme model exists (KUR-043). First answer only;
+        // Feed the answer into spaced repetition, keyed on the
+        // exercise until a lexeme model exists. First answer only;
         // never a self-rated speaking answer (`feedsReview`).
         if (recorded.inserted) {
           const quality = qualityFromVerdict(result.verdict, result.accepted);
@@ -417,17 +398,12 @@ export class LessonSessionService {
   }
 
   /**
-   * Grade a second try at an item and record nothing: no answer row, no
-   * accuracy, no XP, no review, no Gems. This is the re-ask a client makes a
-   * few exercises after a miss — a retrieval with the right answer still fresh,
-   * which is practice, and which the score and the schedule must not count as
-   * if it were the first attempt. Graded with the same seed as the answer, so a
-   * multiple-choice position means the option it meant the first time.
+   * Grade a second try at an item and record nothing (no answer row, accuracy, XP, review or Gems). This is the re-ask
+   * a client makes a few exercises after a miss: practice with the answer fresh, which must not count as a first
+   * attempt. Graded with the same seed, so a multiple-choice position means the same option.
    *
-   * Only an item already answered in this session can be retried. Grading
-   * hands back the correction and the model recording, so a retry before the
-   * first answer would read every right answer off the server, and the first
-   * answer — the one that counts — could then never be wrong.
+   * Only items already answered in this session can be retried: grading returns the correction and model recording, so
+   * retrying first would reveal every answer and make the counting first answer unloseable.
    */
   async retry(sessionId: string, userId: string, exerciseId: string, answer: unknown): Promise<RetryResult> {
     const { session, ex, answered } = await this.openSessionWith(sessionId, userId, exerciseId);
@@ -446,28 +422,17 @@ export class LessonSessionService {
   }
 
   /**
-   * Finalizes a session and returns the results summary. Idempotent:
-   * XP is awarded exactly once, on the transition to completed, keyed on
-   * the session id in the ledger. Re-calling returns the same summary but
-   * awards no further XP.
+   * Finalize a session and return the results summary. Idempotent: XP is awarded exactly once, on the transition to
+   * completed, keyed on the session id in the ledger; re-calling returns the same summary with no further XP.
    *
-   * A perfect first completion pays perfect-lesson Gems while that rule is on
-   * (it is off now, see `PERFECT_LESSON_GEM_RULE`), keyed on the learner
-   * and the lesson's place rather than the session (`perfectLessonRef`): a
-   * replay is never a first completion, so an easy lesson cannot be replayed
-   * into the daily Gem cap, and a corrected version of a lesson is not a new
-   * lesson to be paid for again. Like the XP, they are paid only on the
-   * transition to completed. Sessions completed before this rule were paid
-   * under their session id, so paying on a repeated call would pay a learner
-   * already paid for that completion a second time.
+   * A perfect first completion pays perfect-lesson Gems while that rule is on (it is off; see
+   * `PERFECT_LESSON_GEM_RULE`), keyed on the learner and the lesson's place (`perfectLessonRef`), so replays and
+   * corrected versions are never paid again. Like XP, they are paid only on the transition, because sessions completed
+   * earlier were paid under their session id.
    *
-   * A listening or speaking item put off and never answered ("Can't listen
-   * now", `SKIPPABLE_TYPES`) is left out of the score: the accuracy, and the
-   * XP that follows it, are out of the exercises that were answered or could
-   * have been, so putting one off costs nothing. It earns nothing either: a
-   * lesson with anything put off is not a perfect one, for the Gems or for
-   * the first-perfect milestone — otherwise putting off the items that might
-   * go wrong would be the way to a perfect lesson.
+   * A listening or speaking item put off and never answered (`SKIPPABLE_TYPES`) is left out of the score, so putting
+   * one off costs no accuracy or XP. It earns nothing either: a lesson with anything put off is not perfect for the
+   * Gems or the first-perfect milestone, or putting off risky items would be the way to a perfect lesson.
    */
   async complete(sessionId: string, userId: string): Promise<SessionResults> {
     // the session, where its lesson sits, the learner's time zone, and how
@@ -523,11 +488,9 @@ export class LessonSessionService {
       const client = await this.pool.connect();
       try {
         await client.query('BEGIN');
-        // Claim the completion transition; only the winner awards XP + streak.
-        // The claim takes the slot's lock as it succeeds (RETURNING runs only
-        // for a row it updated): one completion of this lesson slot at a time
-        // per learner, or sessions completed in parallel each counted no prior
-        // completion and each was paid first-time XP.
+        // Claim the completion transition; only the winner awards XP and streak. The claim takes the slot's lock as it
+        // succeeds (RETURNING runs only for an updated row), so one completion per lesson slot per learner runs at a
+        // time; otherwise parallel completions each saw no prior completion and each paid first-time XP.
         const claimed = await client.query(
           `UPDATE lesson_sessions SET completed_at = now()
            WHERE id = $1 AND completed_at IS NULL
@@ -537,12 +500,10 @@ export class LessonSessionService {
         if ((claimed.rowCount ?? 0) > 0) {
           claimedNow = true;
           const tz = safeTimeZone(timeZone);
-          // Repeat = this learner already completed this lesson before, in
-          // this version or any other. Today's completions (UTC, the league's
-          // day) decide whether a repeat still pays (xp/rules.ts `lessonXp`).
-          // Read after the lock, in a statement of its own, so it sees a
-          // completion that committed while this one waited; with it, how many
-          // of this session's answers were given today (see below).
+          // Repeat = this learner completed this lesson before, in any version. Today's completions (UTC, the league's
+          // day) decide whether a repeat still pays (xp/rules.ts `lessonXp`). Read after the lock in its own statement so
+          // it sees a completion committed while this one waited, along with how many of this session's answers were
+          // given today (see below).
           const prior = await client.query<{ n: string; today: string; answered_today: number }>(
             `SELECT count(*)::text n,
                     count(*) FILTER (
@@ -570,7 +531,7 @@ export class LessonSessionService {
           if (learning) {
             streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           }
-          // Credit the daily goal if this XP crossed it (KUR-032). Runs in
+          // Credit the daily goal if this XP crossed it. Runs in
           // the same txn so it sees the award above; idempotent.
           const goal = await this.goals.evaluate(client, userId, timeZone);
           // and today's quests, the XP one by the day's XP as the goal just counted it
@@ -628,10 +589,7 @@ export class LessonSessionService {
     };
   }
 
-  /**
-   * Whether no other session of this lesson — any version of it — by this
-   * learner finished before this one.
-   */
+  /** Whether no other session of this lesson (any version) by this learner finished before this one. */
   private async wasFirstCompletion(sessionId: string, userId: string, slot: LessonSlot): Promise<boolean> {
     const earlier = await this.pool.query(
       `SELECT 1 FROM lesson_sessions other

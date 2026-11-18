@@ -62,27 +62,17 @@ import { copyrightCaseInfo } from '../copyright/service.js';
 
 /**
  * A moderation case from claim to decision.
+ * - **Claim**: a 15-minute lease, renewed by claiming again. Deciding needs the lease or an unclaimed case.
+ * - **Decide**: an outcome, a rule, any actions on the reported person or reporters (false reports are sanctionable),
+ *   removing the content, notifying reporters. `preview` returns the exact messages and changes nothing.
+ * - **Permanent bans** wait for a second admin when there are two or more (with an emergency suspension meanwhile),
+ *   apply at once for child safety (confirmed afterwards), and need the username typed with a single admin.
+ * - **CSAM**: hide everywhere, preserve, zero-tolerance ban, and a filing task with hotline links; admins file by hand.
+ * - **Reopen**, **escalate**, **notes**, and the full **detail** for the case view.
  *
- * - **Claim**: a 15-minute lease, refreshed by claiming again. Deciding is only
- *   possible with the lease or on an unclaimed case — the old queue let any
- *   admin resolve anything, claimed or not.
- * - **Decide**: an outcome, a rule, any number of actions on the reported person
- *   or on reporters (a false report is sanctionable too), removing the content,
- *   telling the reporters. With `preview` it returns the exact messages people
- *   would get and changes nothing.
- * - **Permanent bans** wait for a second admin when there are two or more
- *   (with an emergency suspension until then), apply at once for child safety
- *   (confirmed afterwards), and with a single admin need the username typed.
- * - **CSAM**: hide everywhere, preserve, zero-tolerance ban, and a filing task
- *   with the hotlines' links — admins file by hand.
- * - **Reopen**, **escalate**, **notes**, and the full **detail** the case view
- *   reads.
- *
- * Nobody handles a case they are part of — the reported person or one of its
- * reporters (`assertNotParty`): they cannot open it (the detail names the
- * reporters), claim it (a lease held for ever would block everyone else),
- * note, decide, escalate, reopen it, or confirm or turn down a ban on it; and
- * the queue does not show a moderator the cases about themselves.
+ * Nobody handles a case they are part of, as the reported person or a reporter (`assertNotParty`): they cannot open it
+ * (the detail names reporters), claim it (a held lease would block everyone), note, decide, escalate, reopen, or
+ * confirm or reject a ban on it, and the queue hides cases about the moderator.
  */
 
 export interface CaseRow extends CaseSourceRow {
@@ -202,10 +192,8 @@ interface ResolvedAction {
 }
 
 /**
- * The rule a reporter is sanctioned under unless the action says otherwise.
- * Sanctioning a false reporter under the case's own rule would tell them they
- * broke "a child is being put at risk" for having reported it; abusing the
- * report button is filed with spam, as the platforms that sanction it do.
+ * The rule a reporter is sanctioned under by default. Sanctioning a false reporter under the case's own rule would tell
+ * them they broke, say, the child-safety rule by reporting; report abuse is filed as spam.
  */
 const REPORTER_POLICY: ReportCategory = 'spam';
 
@@ -284,9 +272,8 @@ export class CasesService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Decide a case. Validates everything before changing anything, so a refused
-   * decision leaves no half-applied sanction behind; `preview` stops there and
-   * returns the messages.
+   * Decide a case. Everything is validated before anything changes, so a refused decision leaves nothing half-applied;
+   * `preview` stops there and returns the messages.
    */
   async decide(caseId: string, adminId: string, req: DecideRequest): Promise<DecideResult> {
     return inTransaction(this.pool, async (client) => {
@@ -424,18 +411,15 @@ export class CasesService {
   }
 
   /**
-   * Check every action and attach who it is for; nothing is written.
+   * Check every action and attach its target; nothing is written.
    *
-   * A removal is a restriction the person must be told about with its reasons
-   * (DSA Art. 17), and one they can appeal on its own: when the content goes and
-   * no action says so, a content removal is added for the reported person, with
-   * the statement of their first sanction (the same reason) or a plain default.
-   * Not for someone at risk of self-harm — their post may be taken down to
-   * protect others, but what reaches them is the caring message, never a
-   * sanction.
+   * A removal is a restriction the person must be told about with reasons (DSA Art. 17) and can appeal on its own, so
+   * when content goes and no action says so, a content removal is added for the reported person, with their first
+   * sanction's statement or a plain default. Not for someone at risk of self-harm: their post may be removed to protect
+   * others, but they receive the caring message, never a sanction.
    *
-   * A permanent ban that only the one moderator can confirm needs their username
-   * typed; a preview says so instead of refusing, so the panel knows to ask.
+   * A permanent ban only one moderator can confirm needs their username typed; a preview reports this instead of
+   * refusing, so the panel knows to ask.
    */
   private async resolveActions(
     db: Executor,
@@ -687,19 +671,15 @@ export class CasesService {
   }
 
   /**
-   * Child sexual abuse material. Hides the content and every copy of its media
-   * everywhere (`removeMedia` for each file: every picture post carrying it,
-   * every profile it is the photo of), takes the originals off the public
-   * bucket into private storage (quarantine.ts — the bucket is public-read, so
-   * a database flag alone left the file on the CDN for anyone with its URL),
-   * keeps them and the snapshot as evidence, closes the account for good (zero
-   * tolerance: at once, confirmed afterwards by a second admin when there is
-   * one), and opens the filing task with the hotlines' links and the files.
-   * Nothing is sent to anyone outside Hevalo automatically.
+   * Child sexual abuse material. Hides the content and every copy of its media everywhere (`removeMedia` per file:
+   * every picture post and profile using it), moves the originals from the public bucket to private storage
+   * (quarantine.ts; the bucket is public-read, so a database flag alone would leave the file on the CDN), keeps them
+   * and the snapshot as evidence, closes the account for good (zero tolerance: at once, confirmed afterwards by a
+   * second admin when there is one), and opens the filing task with hotline links and the files. Nothing is sent
+   * outside Hevalo automatically.
    *
-   * It does not wait: a case another moderator holds, or one whose ban waits
-   * for a second admin, is acted on anyway (the override is logged) — only
-   * someone who is part of the case is refused.
+   * It does not wait for another moderator's claim or a pending second approval (the override is logged); only a party
+   * to the case is refused.
    */
   async csam(caseId: string, adminId: string, note?: string): Promise<CsamActionResult> {
     const done = await inTransaction(this.pool, async (client) => {
@@ -862,10 +842,9 @@ export class CasesService {
   // ---------------------------------------------------------------------------
 
   /**
-   * A sanction from the user page rather than a case, through the same rules: a
-   * permanent ban waits for a second admin when there is one (emergency
-   * suspension meanwhile), applies at once for child safety, and with a single
-   * admin needs the username typed — from every page, the old ones included.
+   * A sanction from the user page rather than a case, under the same rules: a permanent ban waits for a second admin
+   * when there is one (emergency suspension meanwhile), applies at once for child safety, and with a single admin needs
+   * the username typed.
    */
   async sanctionUser(
     adminId: string,
@@ -962,9 +941,8 @@ export class CasesService {
   }
 
   /**
-   * A second admin confirms a permanent ban. The one who asked for it cannot,
-   * nor can anyone the ban's case is about or was reported by — a reporter is
-   * not a second opinion on the person they reported.
+   * A second admin confirms a permanent ban. Not the admin who asked for it, nor anyone the case is about or reported
+   * by.
    */
   async approve(sanctionId: string, adminId: string): Promise<CaseSanctionView> {
     return inTransaction(this.pool, async (client) => {
@@ -1025,9 +1003,8 @@ export class CasesService {
   }
 
   /**
-   * Turn a permanent ban down (or withdraw your own). A waiting one is dropped
-   * with its emergency suspension; a zero-tolerance one already in force is
-   * lifted. Either way the case goes back to the queue.
+   * Reject a permanent ban (or withdraw your own). A waiting one is dropped with its emergency suspension; a
+   * zero-tolerance one in force is lifted. Either way the case returns to the queue.
    */
   async reject(sanctionId: string, adminId: string, reason: string): Promise<CaseSanctionView> {
     return inTransaction(this.pool, async (client) => {
@@ -1125,8 +1102,8 @@ export class CasesService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Everything the case view shows. With a viewer, it is refused to someone
-   * the case is about or was reported by: it names the reporters.
+   * Everything the case view shows. With a viewer, refused to anyone the case is about or reported by, since it names
+   * the reporters.
    */
   async detail(caseId: string, viewerId?: string): Promise<CaseDetail | null> {
     const r = await this.pool.query<CaseRow & CasePersonColumns>(
@@ -1317,10 +1294,7 @@ export class CasesService {
     return r.rows.map((a) => ({ at: a.at.toISOString(), adminId: a.admin_id, action: a.action, detail: a.detail }));
   }
 
-  /**
-   * Media from the evidence, as short-lived signed links (five minutes): to the
-   * private copy once a file is quarantined, since the public one is gone.
-   */
+  /** Evidence media as five-minute signed links, to the private copy once a file is quarantined. */
   private async signedMedia(keys: string[]): Promise<CaseDetail['media']> {
     if (keys.length === 0) return [];
     const where = await mediaWhereabouts(this.pool, keys);
@@ -1356,9 +1330,8 @@ export class CasesService {
 }
 
 /**
- * Accounts that shared a device or a network with this one, strongest first.
- * What counts as a shared network — seen there within two days of each other,
- * on a network few other accounts use — is net/evidence.ts.
+ * Accounts that shared a device or network with this one, strongest first. What counts as a shared network (seen there
+ * within two days of each other, on a network few accounts use) is defined in net/evidence.ts.
  */
 export async function linkedAccounts(db: Executor, userId: string): Promise<CaseSubjectView['linkedAccounts']> {
   const evidence = await linkedEvidence(db, userId);

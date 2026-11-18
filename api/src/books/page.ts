@@ -1,10 +1,7 @@
 /**
- * What every page of the Hevalo book is made with: its type, the app's
- * drawings as the press lays them down, a chapter's stamp, the head and foot
- * of a page, and the run of measured blocks that flow.ts breaks into pages.
- *
- * The pages themselves are in chapter.ts (a chapter's own) and pdf.ts (the
- * ones before and after the chapters, and the whole book in order).
+ * What every page of the book is made with: type, the app's drawings as the press lays them down, a chapter's stamp,
+ * page head and foot, and the measured blocks flow.ts breaks into pages. The pages themselves are in chapter.ts
+ * (chapters) and pdf.ts (front and back matter, and the whole book).
  */
 import {
   BOOK_APPLE_BITES,
@@ -114,22 +111,16 @@ export function drawPicture(press: Press, picture: BookPicture, x: number, y: nu
 // ───────────────────────────────────────────────────────────── the stamp
 
 /**
- * The size a chapter's stamp is drawn at before it is scaled: everything
- * inside it is placed in these points. It is the book's own and not the
- * app's (`stampSize`): the app's stamp keeps room under its picture for a
- * name of two lines and its meaning at the reader's text size, while a
- * printed one carries its number and its name on one line, and is scaled
- * whole with its width.
+ * A chapter stamp's design size in points, before scaling. The book's own, not the app's (`stampSize`): the app keeps
+ * room for a two-line name and meaning at the reader's text size, while the printed stamp carries number and name on
+ * one line and scales whole.
  */
 export const STAMP = { w: 100, h: 126 } as const;
 
 /**
- * A chapter's stamp with its paper's top left at (x, y), `w` wide: the
- * perforated paper in the chapter's tint, its drawing, its number in the
- * corner as a stamp's price is, and its name along the foot in the hue's
- * deep shade. Given only a number it is a stamp not yet in the book: plain
- * paper and the number. `glow` is how much of its light it gives off (none
- * for a small one in a row); `cancelled` lays the postmark over its corner.
+ * A chapter's stamp with its paper's top left at (x, y), `w` wide: perforated paper in the chapter's tint, its drawing,
+ * its number in the corner and its name along the foot in the hue's deep shade. Given only a number it is a stamp not
+ * yet earned: plain paper and the number. `glow` sets its light (none in a small row); `cancelled` adds the postmark.
  */
 export function drawStamp(press: Press, x: number, y: number, w: number, chapter: { number: number; titleKu: string } | number, options: { glow?: number; cancelled?: boolean } = {}): void {
   const number = typeof chapter === 'number' ? chapter : chapter.number;
@@ -221,10 +212,8 @@ export function furnish(press: Press, f: Furniture, page: number): void {
 export type Filler = (y: number, height: number, last: boolean, index: number, page: number) => void;
 
 /**
- * A run of blocks broken into pages by rule, each page a sheet with the
- * furniture it is to have. The anchors among the blocks are noted as they
- * land; a page left short (more than the rule will spread) hands its empty
- * foot to `filler`.
+ * A run of blocks broken into pages, each a sheet with its furniture. Anchors are noted as they land; a page left short
+ * (beyond what the rule spreads) hands its empty foot to `filler`.
  */
 export function runSheets(
   press: Press,

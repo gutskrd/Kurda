@@ -1,7 +1,6 @@
 /**
- * Filing reports (M1/M2) against real Postgres: one report path for every
- * surface, evidence frozen at report time, one open case per target, the queue
- * that never breaks, and the P0 email.
+ * Filing reports (M1/M2) against real Postgres: one path for every surface, evidence frozen at report time, one open
+ * case per target, a queue that never breaks, and the P0 email.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

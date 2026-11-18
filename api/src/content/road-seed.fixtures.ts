@@ -1,7 +1,6 @@
 /**
- * Road unit files for the seeder's tests: the format the writers use (a
- * course import document with the course header and one unit, each lesson
- * with its authoring key), small enough to read at a glance.
+ * Road unit files for the seeder's tests, in the writers' format (a course import document with the course header and
+ * one unit, each lesson with its authoring key), small enough to read at a glance.
  */
 
 /** A lesson's exercises: something of each kind a road lesson has, each recordable one with its voice. */

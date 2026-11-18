@@ -1,8 +1,7 @@
 /**
- * Ez kî me?'s curated deck (api/content/games/who-am-i.json), read as the
- * seeder reads it: enough cards at every difficulty and of every kind, each
- * card honest and of its course unit, no two of a kind a player could never
- * tell apart, and deals made from it that a player can win by asking.
+ * Ez kî me?'s curated deck (api/content/games/who-am-i.json), read as the seeder reads it: enough cards at every
+ * difficulty and kind, each card honest and tied to its course unit, no two of a kind indistinguishable, and deals from
+ * it winnable by asking.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

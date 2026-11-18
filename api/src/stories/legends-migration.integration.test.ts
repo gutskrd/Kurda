@@ -1,10 +1,7 @@
 /**
- * Migration 1751000520000 against real Postgres: a story's text may run to
- * 16,000 characters and be a saga, a game may be played at that length, and
- * the new columns hold the shapes they are for. Run down and up through
- * node-pg-migrate itself, as `migrate down`/`migrate up` would: a saga goes
- * back to being long, a longer text written meanwhile is kept, and the
- * columns come back with their defaults.
+ * Migration 1751000520000 against real Postgres: a story's text may run to 16,000 characters and be a saga, games may
+ * be played at that length, and the new columns hold their shapes. Down and up through node-pg-migrate: a saga reverts
+ * to long, a longer text written meanwhile is kept, and the columns return with their defaults.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dirname, join } from 'node:path';

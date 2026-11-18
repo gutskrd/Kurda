@@ -1,13 +1,10 @@
 /**
- * Seeding the road's lessons against real Postgres: each once, as a draft at
- * its own unit, skill and place, with the course, units and skills made when
- * missing; never again after an editor deletes it; never over a lesson an
- * editor put in its place; never stopped by a broken file; and an untouched
- * draft brought up to its rewritten file, while one an editor saved, sent
- * for review or published is left alone.
+ * Seeding the road's lessons against real Postgres: each once, as a draft at its own unit, skill and place, creating
+ * the course, units and skills when missing; never again after an editor deletes it; never over a lesson an editor put
+ * there; never stopped by a broken file; and an untouched draft updated to its rewritten file while one an editor
+ * saved, submitted or published is left alone.
  *
- * Each run seeds a course of its own, whose markers are filed under its slug
- * (`roadSeedName`), so the road itself is never touched.
+ * Each run seeds its own course, with markers filed under its slug (`roadSeedName`), so the road is never touched.
  */
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -318,8 +315,8 @@ describe.skipIf(!DATABASE_URL)('road lessons (integration)', () => {
   });
 
   /**
-   * The lesson path groups a course's units into sections by their level, and
-   * the plan beside the unit files is where the road writes each unit's.
+   * The lesson path groups units into sections by level, and the plan beside the unit files is where the road sets each
+   * unit's level.
    */
   describe('the units’ levels, from the plan', () => {
     const levelled = `road-d-${s}`;

@@ -1,13 +1,11 @@
 /**
- * Which learning games can be played, per variety and level: the approved
- * content each one has, against its minimum (GET /games/availability, and the
- * admin's readiness view).
+ * Which learning games can be played, per variety and level: each game's approved content against its minimum (GET
+ * /games/availability and the admin readiness view).
  *
- * Counted only from what a game may show — the trusted readers and published
- * `game_content` rows — so a game is never offered on drafts. A game whose
- * content has no levels (recordings, the dictionary) counts the same pool at
- * every level. Cached per variety for a couple of minutes: the games page asks
- * on every visit, and the answer changes only when something is published.
+ * Counted only from what a game may show (the trusted readers and published `game_content` rows), so a game is never
+ * offered on drafts. A game whose content has no levels (recordings, the dictionary) counts the same pool at every
+ * level. Cached per variety for a couple of minutes, since the games page asks on every visit and the answer changes
+ * only on publish.
  */
 import type pg from 'pg';
 import {
@@ -52,11 +50,9 @@ const UNLEVELLED: ReadonlySet<LearnGameId> = new Set(['hear-it', 'last-letter'])
 const WHO_AM_I_TEMPLATES = WHO_AM_I_MIN_TEMPLATES;
 
 /**
- * A game's own count, when what it can be played with is more than rows or
- * readers counted as they are: The Memory Thief counts the passages that hold
- * enough words to take, Hear It, Find It the recordings each rung can ask
- * about. `difficulties`, when given, are the game's own word on which
- * difficulties a round can be made at; otherwise they follow from the levels.
+ * A game's own count when its playable content is not a plain row or reader count: The Memory Thief counts passages
+ * with enough words to take, Hear It, Find It the recordings each rung can ask about. `difficulties`, when given, says
+ * which difficulties a round can be made at; otherwise they follow from the levels.
  */
 export interface GameCounter {
   count(dialect: GameDialect): Promise<{ levels: Levels; difficulties?: GameDifficulty[] }>;

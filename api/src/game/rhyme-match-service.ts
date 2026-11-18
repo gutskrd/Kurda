@@ -144,8 +144,8 @@ export interface RhymeMatchDeps {
   xp?: XpService;
   now?: () => Date;
   /**
-   * called after every committed change (the play module's `play_changed`); `also` is someone just
-   * removed, `card: false` a scored word that ended nothing, which no chat card shows
+   * Called after every committed change (the play module's `play_changed`); `also` is someone just removed, and `card:
+   * false` marks a scored word that ended nothing, which no chat card shows.
    */
   onChange?: (matchId: string, opts?: LobbyChange) => void;
   publicUrl?: PublicUrl;
@@ -154,16 +154,13 @@ export interface RhymeMatchDeps {
 }
 
 /**
- * Rhyme multiplayer 1v1 / free-for-all (KUR-299) — server-authoritative match
- * service parallel to Peyvok Battle (#306). Every player races the same server-held
- * prompt within one shared window; each submission is validated + scored by the
- * #298 engine here (client never decides). When the window elapses the match
- * finalizes: rank by score (pure `rhyme-match.ts`) → placement XP. Poll-safe, so
- * the whole flow is integration-testable without the realtime gateway.
+ * Rhyme multiplayer (1v1 and free-for-all), server-authoritative, parallel to Peyvok Battle. Every player races the
+ * same server-held prompt in one shared window; each submission is validated and scored here, never by the client. When
+ * the window elapses the match is ranked (pure `rhyme-match.ts`) and placement XP paid. Poll-safe, so it is testable
+ * without the realtime gateway.
  *
- * Joining, seeing each other and leaving follow the rules every online game
- * shares (play/access.ts, play/lobby.ts), as Peyvok Battle does. The prompt is
- * drawn from the match's own dialect.
+ * Joining, seeing each other and leaving follow the shared online-game rules (play/access.ts, play/lobby.ts). The
+ * prompt comes from the match's dialect.
  */
 export class RhymeMatchService {
   private readonly xp: XpService;
@@ -342,11 +339,8 @@ export class RhymeMatchService {
   }
 
   /**
-   * `GET /rhyme/matches/:id`: a member's live view (finished lazily once the
-   * window has passed). Someone the join rule would let in sees an open lobby,
-   * and is told 'started' about a match under way — a latecomer's "this match
-   * has already started", not the "time's up" they used to get. Everyone else
-   * is told it does not exist.
+   * `GET /rhyme/matches/:id`: a member's live view (finished lazily once the window has passed). Someone the join rule
+   * admits sees an open lobby and 'started' for a match under way; everyone else is told it does not exist.
    */
   async read(matchId: string, userId: string): Promise<ReadResult> {
     const now = this.now();
@@ -365,8 +359,8 @@ export class RhymeMatchService {
   }
 
   /**
-   * Leave: a lobby (the host leaving calls it off), or a match under way —
-   * marked gone, their score stands, and they can still read it.
+   * Leave a lobby (a host leaving calls it off) or a match under way (marked gone; their score stands and they can
+   * still read it).
    */
   async leave(matchId: string, userId: string): Promise<LeaveResult> {
     const now = this.now();
@@ -417,9 +411,8 @@ export class RhymeMatchService {
   }
 
   /**
-   * The view, as `userId` may see it: own score/used words + the shared
-   * scoreboard by seat + remaining time. Callers decide who may have it
-   * (`read`); this builds it, finishing the match first if its window passed.
+   * The view as `userId` may see it: own score and words, the shared scoreboard by seat, and time left. `read` decides
+   * who may have it; this builds it, finishing the match first if its window passed.
    */
   async state(matchId: string, userId: string): Promise<RhymeMatchState> {
     const now = this.now();
@@ -523,9 +516,8 @@ export class RhymeMatchService {
   // ---- playing again ----------------------------------------------------------
 
   /**
-   * A two-player rematch both asked for: a new match with the same settings
-   * (a new prompt of the same dialect) and both in it, started at once. Still
-   * the join rule's call. Asking twice gives the same one.
+   * A two-player rematch both asked for: a new match with the same settings (a new prompt in the same dialect) and both
+   * players, started at once, still subject to the join rule. Asking twice gives the same one.
    */
   async startPairRematch(matchId: string): Promise<NextResult> {
     const old = (await this.pool.query<MatchRow>(`SELECT * FROM rhyme_matches WHERE id = $1`, [matchId])).rows[0];
@@ -718,9 +710,8 @@ export class RhymeMatchService {
   }
 
   /**
-   * Finalize the match if it's active and its window has elapsed. Only ever
-   * called once a plain read found it due, so a poll of a running match takes
-   * no lock; this judges again on the locked row.
+   * Finalize the match if active and past its window. Called only after a plain read found it due, so polling a running
+   * match takes no lock; this re-checks on the locked row.
    */
   private async finalizeIfElapsed(matchId: string): Promise<void> {
     const now = this.now();

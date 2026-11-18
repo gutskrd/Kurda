@@ -23,20 +23,15 @@ export function knownHash(secret: string, userId: string, kind: KnownKind, value
 }
 
 /**
- * Devices and networks that have signed in to an account before, kept per
- * account as a keyed hash, never the id or the address itself.
+ * Devices and networks that have signed in to an account before, stored per account as keyed hashes, never raw ids or
+ * addresses.
  *
- * Something known keeps a failure budget of its own: someone typing the
- * owner's address with wrong passwords from anywhere else can lock those other
- * attempts out, but not the phone the owner always uses, nor the network at
- * home. A network is the weaker of the two (a carrier's shared address is
- * known for everyone on it), and it is what there is until every app sends a
- * device id. And a sign-in from a device the account has never used is worth
- * an email to its owner (a new network is not: they change all the time).
+ * Each known device or network has its own failure budget, so someone guessing the owner's password elsewhere cannot
+ * lock out the owner's phone or home network. Networks are weaker (a carrier address is shared) and serve apps that
+ * send no device id. A sign-in from a new device emails the owner; a new network does not.
  *
- * A device id is chosen by the app, so it proves nothing on its own; what it
- * buys is that a stranger, who does not have it, cannot spend the owner's
- * budget.
+ * A device id is chosen by the app and proves nothing alone; it only stops a stranger, who lacks it, spending the
+ * owner's budget.
  */
 export class KnownDevices {
   constructor(
@@ -59,11 +54,9 @@ export class KnownDevices {
   }
 
   /**
-   * Note a successful sign-in (or the sign-up) from this device or network.
-   * `isNew` when the account had not seen it (or it had expired);
-   * `firstForAccount` when the account had nothing of this kind at all, which
-   * for a device is the sign-in straight after a sign-up made without one, and
-   * nothing to warn anyone about.
+   * Note a successful sign-in (or sign-up) from this device or network. `isNew` when the account had not seen it (or it
+   * expired); `firstForAccount` when the account had nothing of this kind, such as the sign-in right after a sign-up
+   * without one, which needs no warning.
    */
   async remember(userId: string, kind: KnownKind, value: string): Promise<{ isNew: boolean; firstForAccount: boolean }> {
     const hashed = this.hash(userId, kind, value);

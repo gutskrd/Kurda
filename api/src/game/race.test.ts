@@ -1,12 +1,15 @@
+import { compareTyping } from '@kurda/shared';
 import { describe, expect, it } from 'vitest';
 import {
-  countCorrect,
   HUMAN_WPM_CEILING,
   MIN_RACE_MS,
   scoreRace,
 } from './race.js';
 
-describe('countCorrect', () => {
+/** Characters of the target typed exactly, in strict mode, as a finished race counts them. */
+const countCorrect = (target: string, typed: string): number => compareTyping(target, typed, 'strict', { final: true }).correct;
+
+describe('strict typing count', () => {
   it('counts characters that match in place', () => {
     expect(countCorrect('welat', 'welat')).toBe(5);
     expect(countCorrect('welat', 'welax')).toBe(4);
@@ -28,11 +31,7 @@ describe('countCorrect', () => {
     expect(countCorrect('welat', '')).toBe(0);
   });
 
-  /*
-   * The regression that made a race unwinnable after one slip: positions were
-   * compared one by one, so one missed letter early on made every later letter
-   * wrong — a run that only missed its first letter scored 0 of 26.
-   */
+  // An alignment, not a position-by-position compare, so one slip costs one letter.
   it('counts one missed letter once, not against everything after it', () => {
     const text = 'ez ji welatê xwe hez dikim';
     expect(countCorrect(text, text.slice(1))).toBe(25);
@@ -51,11 +50,7 @@ describe('countCorrect', () => {
 describe('scoring what a keyboard actually sends', () => {
   const target = 'ez ji welatê xwe hez dikim';
 
-  /*
-   * A race text saved decomposed (e + U+0302) could never be typed: every
-   * keyboard sends the precomposed ê, so it read 27 characters against 26 and
-   * scored 0.41 for a perfect run.
-   */
+  /* A text stored decomposed (e + U+0302) must score a keyboard's precomposed ê as right. */
   it('scores a perfect run on a text stored decomposed as perfect', () => {
     const s = scoreRace({ target: 'ez ji welate\u0302 xwe hez dikim', typed: target, elapsedMs: 30_000 });
     expect(s.accuracy).toBe(1);
@@ -87,9 +82,8 @@ describe('scoring what a keyboard actually sends', () => {
   });
 
   /*
-   * The race ended the moment a dead key's ˆ arrived on a text ending in î,
-   * before the i did. The app should not send it; if it does, the accent is
-   * not a character, and the letter it was waiting for is simply missing.
+   * A dead key's ˆ arriving before its letter on a text ending in î is not a character; the letter it waits for is
+   * simply missing.
    */
   it('does not score a dead key’s accent as a character', () => {
     const s = scoreRace({ target: 'ez kurd im û ez kurdî', typed: 'ez kurd im û ez kurdˆ', elapsedMs: 10_000 });
@@ -99,9 +93,8 @@ describe('scoring what a keyboard actually sends', () => {
   });
 
   /*
-   * Slips used to add up over a long text: once the letters left out and typed
-   * twice came to more than 64 between them, every letter typed after that
-   * scored wrong, and a race typed to its end was scored as not finished.
+   * Slips must not accumulate over a long text: many letters left out and typed twice still score the letters after
+   * them, and a race typed to the end counts as finished.
    */
   describe('a long text with slips all through it', () => {
     // a Stories text (kmr-barana-newroze), which never repeats itself
@@ -252,9 +245,8 @@ describe('scoreRace', () => {
 });
 
 /**
- * The browser will not let anyone paste into the race, but the browser is not
- * the boundary — the finish endpoint takes whatever it is posted. This is where
- * a pasted run stops being worth anything.
+ * The browser blocks pasting, but the finish endpoint accepts whatever is posted; this is where a pasted run stops
+ * being worth anything.
  */
 describe('a speed no person reaches', () => {
   const target = 'ez ji welatê xwe hez dikim';

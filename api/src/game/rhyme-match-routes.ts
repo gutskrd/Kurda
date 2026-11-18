@@ -20,13 +20,9 @@ const idParam = z.object({ id: z.uuid() });
 const notFound = (reply: FastifyReply) => reply.code(404).send({ code: 'NOT_FOUND', message: 'no such match' });
 
 /**
- * Rhyme multiplayer routes (KUR-299) — 1v1 / free-for-all, server-authoritative.
- * All authenticated; submit is rate-limited (#010). State/results are poll-safe;
- * the realtime scoreboard push (#049) + matchmaking (#050) layer onto these
- * endpoints. Solo training stays on the existing /rhyme routes.
- *
- * As for Peyvok Battle: creating and joining need a birth month on record,
- * and only members get a match's state or results.
+ * Rhyme multiplayer routes (1v1 and free-for-all), server-authoritative and authenticated; submit is rate-limited and
+ * state and results are poll-safe. Solo training stays on /rhyme. As for Peyvok Battle, creating and joining need a
+ * birth month, and only members get a match's state or results.
  */
 export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeMatchDeps, 'publicUrl'> = {}): void {
   const matches = new RhymeMatchService(app.db, {
@@ -122,9 +118,8 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   );
 
   /**
-   * The caller's live match view (own words + shared scoreboard + time left).
-   * Someone who may join sees the lobby first; a latecomer is told the match
-   * already started (409 GAME_STARTED), not that its time is up.
+   * The caller's live match view (own words, shared scoreboard, time left). Someone who may join sees the lobby; a
+   * latecomer gets 409 GAME_STARTED rather than "time's up".
    */
   app.get('/rhyme/matches/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await matches.read((req.params as { id: string }).id, req.user!.id);

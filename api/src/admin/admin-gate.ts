@@ -6,54 +6,25 @@ import { isPrivileged } from './roles.js';
 import type { AdminTotpService } from './totp-service.js';
 
 /**
- * Mandatory 2FA on every staff-only route.
+ * Mandatory 2FA on every staff-only route, as one hook rather than per-route guards, because a per-route guard fails
+ * silently when someone forgets it.
  *
- * The TOTP machinery already existed, but only four routes used the guard that
- * checks it — `requireAdmin`. Everything else (analytics, economy, moderation,
- * users, shop, game content, config, …) was behind `requireRoles('admin')`,
- * which never looks at 2FA. So a password alone reached almost the whole panel.
+ * A route is staff surface when its guard requires a role: `requireRoles` and `requireAdmin` mark themselves, the route
+ * table is read once at boot, and staff routes anywhere in the app are covered (the shop, gem pack and tournament
+ * writes live outside /admin). The /admin prefix is honoured on top, so nothing reaching the panel another way falls
+ * through.
  *
- * This is deliberately ONE hook rather than a change to forty route
- * definitions: the failure mode of per-route guards is that somebody forgets,
- * and nothing tells them.
+ * Before 2FA, the gate checks the account may use the console at all (owner-access.ts). To any other signed-in account
+ * every staff route answers like a missing route, so nothing reveals it exists. A request with no session still gets
+ * the route's own 401 so the console can renew an expired session.
  *
- * It used to decide what counted as staff surface from the URL — anything under
- * /admin. That was the same failure in a different place. Six routes just as
- * privileged as anything in the panel did not live under that prefix:
- *
- *   POST  /shop/items                              define a catalogue item
- *   PATCH /shop/items/:sku/stock                   pull an item in or out of stock
- *   POST  /iap/packs                               define a real-money gem pack
- *   POST  /tournaments                             schedule a tournament
- *   POST  /tournaments/:id/start                   seed and generate the bracket
- *   POST  /tournaments/:id/matches/:matchId/result declare a winner
- *
- * Each one asked for an admin role and each one skipped the gate, so a stolen
- * password — with no second factor — could price the shop, mint gem packs, and
- * decide who won a tournament.
- *
- * So the question the gate asks is no longer "where does this URL live" but
- * "does this route require a role", which is what actually makes a route staff
- * surface. `requireRoles` and `requireAdmin` mark themselves, the route table is
- * read once at boot, and a staff route added anywhere in the app is covered on
- * the day it is written. The /admin prefix is still honoured on top of that, so
- * a route that reaches the panel some other way does not fall through.
- *
- * Before 2FA, the gate asks whether the account is the console's owner at all
- * (owner-access.ts). To any other signed-in account every staff route answers
- * exactly as a route that does not exist would, the console's own included, so
- * nothing tells it that the route is there or what would open it. A request
- * with no session at all still gets the route's own 401, as every route gives,
- * so the console can renew an expired session.
- *
- * Two distinct refusals for the owner, so the panel can show the right screen:
+ * Two refusals for the owner, so the panel shows the right screen:
  *   TOTP_ENROLLMENT_REQUIRED — no confirmed secret yet; set one up
  *   TOTP_REQUIRED            — enrolled, but this session has not entered a code
  */
 
 /**
- * Paths that must stay reachable, or an admin could never get through the gate.
- * Each still requires an admin role of its own, so this is not an open door.
+ * Paths that must stay reachable or nobody could get through the gate. Each still requires an admin role of its own.
  */
 const EXEMPT = new Set([
   '/admin/session', // tells the panel which screen to show
@@ -64,9 +35,8 @@ const EXEMPT = new Set([
 ]);
 
 /**
- * The staff route patterns each app found at boot, so the audit log can record
- * a staff write that does not live under /admin (the shop's catalogue). Keyed
- * by the app, because a test suite builds several.
+ * The staff route patterns each app found at boot, so the audit log records staff writes outside /admin too. Keyed by
+ * app because a test suite builds several.
  */
 const staffRoutes = new WeakMap<FastifyInstance, Set<string>>();
 
@@ -79,19 +49,13 @@ export function isStaffRoute(app: FastifyInstance, pattern: string): boolean {
 const clearance = new WeakMap<FastifyInstance, { totp: AdminTotpService; access: AdminAccess }>();
 
 /**
- * Whether the staff account signed in on this request may use a staff power
- * outside the console: editing or taking down somebody else's post, picture or
- * comment through the routes every member uses (library/routes.ts,
- * images/routes.ts and their comments), which grant more to a staff role.
+ * Whether the staff account on this request may use a staff power outside the console: editing or removing someone
+ * else's post, picture or comment through the member routes (library/routes.ts, images/routes.ts and their comments),
+ * which grant more to staff.
  *
- * The gate below guards the routes that ask for a role, and only those. These
- * others answer to anyone signed in, so a staff password alone reached
- * somebody else's post through them: no code from the second step, and no
- * matter whether the console's own lock (owner-access.ts) lets the account in
- * at all. A staff power anywhere now asks what the console asks — the account
- * may use the console, and this session has entered its code — and without
- * both the account is what any member is: the author of its own posts and of
- * nobody else's. With no gate (no database) nothing is cleared.
+ * Those routes answer anyone signed in, so they ask what the console asks: the account may use the console
+ * (owner-access.ts) and this session has entered its code. Without both, the account is an ordinary member. With no
+ * gate (no database) nothing is cleared.
  */
 export async function staffCleared(app: FastifyInstance, req: FastifyRequest): Promise<boolean> {
   const gate = clearance.get(app);
@@ -115,9 +79,8 @@ const SIGN_IN = '/admin/auth/login';
 
 export function installAdminGate(app: FastifyInstance, totp: AdminTotpService, access: AdminAccess): void {
   /**
-   * Route patterns — `/tournaments/:id/start`, not `/tournaments/abc/start` —
-   * whose guards say they are staff surface. Collected at boot, matched exactly,
-   * so nothing here depends on how a URL is spelled or normalised.
+   * Route patterns (`/tournaments/:id/start`, not `/tournaments/abc/start`) whose guards mark them staff surface.
+   * Collected at boot and matched exactly, so URL spelling or normalisation cannot bypass it.
    */
   const privileged = new Set<string>();
   staffRoutes.set(app, privileged);

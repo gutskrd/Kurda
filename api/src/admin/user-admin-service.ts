@@ -33,8 +33,7 @@ export interface UserSearchResult {
 }
 
 /**
- * The list's filters: accounts that cannot sign in now (suspended or banned),
- * accounts that cannot send messages now, and staff.
+ * The list's filters: accounts that cannot sign in now (suspended or banned), that cannot send messages now, and staff.
  */
 export const USER_FILTERS = ['restricted', 'muted', 'staff'] as const;
 export type UserFilter = (typeof USER_FILTERS)[number];
@@ -50,9 +49,8 @@ export const USERS_PAGE_SIZE = 25;
 export const USERS_PAGE_MAX = 100;
 
 /**
- * The user page. The moderation fields (AdminUserModeration: reports, sanctions,
- * appeals, cases, linked accounts) are there only for a reader who can
- * moderate; support staff see the page without them.
+ * The user page. The moderation fields (AdminUserModeration: reports, sanctions, appeals, cases, linked accounts) are
+ * present only for readers who can moderate.
  */
 export interface UserDetail extends Partial<AdminUserModeration> {
   id: string;
@@ -92,12 +90,9 @@ export const PLUS_GRANT_MAX_DAYS = 366;
 export type PlusGrantResult = { ok: true; premiumUntil: Date; duplicate?: boolean } | { ok: false; code: 'NOT_FOUND' };
 
 /**
- * Admin user lookup + moderation (KUR-101). Bans bump `token_version` so every
- * live session dies on the next request (KUR-016), temp bans carry an expiry
- * that lapses on its own, and wallet changes go through the double-entry ledger
- * with the `admin_adjustment` reason — never a direct balance edit. Hevalo+
- * membership is given or extended by days (`grantPlus`). Every action
- * is recorded in `admin_actions` with its mandatory reason.
+ * Admin user lookup and moderation. Bans bump `token_version` so every live session dies on its next request, temp bans
+ * lapse on their own, and wallet changes go through the double-entry ledger with the `admin_adjustment` reason. Hevalo+
+ * is given by days (`grantPlus`). Every action is recorded in `admin_actions` with its mandatory reason.
  */
 /** A shop item a user owns, as shown in the admin panel. */
 export interface OwnedItem {
@@ -125,19 +120,9 @@ export class UserAdminService {
   }
 
   /**
-   * One page of users: everybody, or the ones matching `query`.
-   *
-   * An empty query used to answer with nothing, which meant the only way to
-   * see a user was to already know their name. An admin panel should be able
-   * to answer "who is here" without being told who to look for, so no query
-   * lists everyone, newest first — the order an admin actually wants, because
-   * the account you need is usually the one that just signed up.
-   *
-   * A query still narrows it the same three ways: a uuid is an id, anything
-   * with an `@` is an email prefix, anything else is a username prefix.
-   *
-   * `total` counts the whole match, not the page, and rides along via
-   * `count(*) OVER ()` so the heading costs no second query.
+   * One page of users: everyone (newest first) or those matching `query`. A uuid matches the id, anything with `@` an
+   * email prefix, anything else a username prefix. `total` counts the whole match via `count(*) OVER ()`, so the
+   * heading needs no second query.
    */
   async search(query = "", limit = USERS_PAGE_SIZE, offset = 0, filter?: UserFilter): Promise<UserPage> {
     const q = query.trim();
@@ -273,10 +258,8 @@ export class UserAdminService {
   }
 
   /**
-   * The moderation side of a person: reports about them and by them, their
-   * sanctions and appeals, the cases about them, accounts linked by device or
-   * network, and the automatic chat-mute ladder — so the user page and the case
-   * view tell the same story.
+   * The moderation side of a person: reports about and by them, sanctions and appeals, cases about them, accounts
+   * linked by device or network, and the chat-mute ladder, so the user page and the case view agree.
    */
   private async moderationOf(userId: string): Promise<AdminUserModeration> {
     type ReportRow = { id: string; target_type: ReportTargetType; category: ReportCategory; status: ReportStatus; case_id: string | null; created_at: Date };
@@ -335,12 +318,9 @@ export class UserAdminService {
   }
 
   /*
-   * The Users page's warn / mute / ban / unban. They used to write the user
-   * columns directly; they are sanctions now, through the same rules as a case
-   * decision — the person is told why, a permanent ban waits for a second admin
-   * when there is one — with the admin's reason kept as the internal note and a
-   * plain statement sent to the person (the old form's reason was written for
-   * staff, not for them).
+   * The Users page's warn / mute / ban / unban are sanctions under the same rules as a case decision: the person is
+   * told why, a permanent ban waits for a second admin when there is one, the admin's reason is the internal note, and
+   * a plain statement goes to the person.
    */
 
   warn(adminId: string, userId: string, reason: string): Promise<ActionResult> {
@@ -392,13 +372,9 @@ export class UserAdminService {
   }
 
   /**
-   * Ledger-backed wallet adjustment (positive = credit, negative = debit).
-   *
-   * Never to the admin's own wallet: a grant mints currency, and minting it for
-   * yourself is the one change nobody else gets to see before it lands. And
-   * once per `requestKey`, filed under the admin who sent it, so a double
-   * click or a retried request credits once: the repeat answers `duplicate`
-   * with the balance as it is, and adds nothing to the audit log.
+   * Ledger-backed wallet adjustment (positive credits, negative debits). Never to the admin's own wallet, since minting
+   * for yourself is the one change nobody else sees first. Once per `requestKey` per admin, so a double click or retry
+   * credits once; the repeat answers `duplicate` with the current balance and adds nothing to the audit log.
    */
   async adjustWallet(
     adminId: string,
@@ -431,19 +407,13 @@ export class UserAdminService {
   }
 
   /**
-   * Give someone Hevalo+ for a number of days, or add them to the membership
-   * they have: the new end is `days` after the later of now and the end they
-   * had, so extending never shortens and a membership that ran out starts
-   * again from today. It is how testers and reviewers are given membership
-   * while it cannot be bought.
+   * Give someone Hevalo+ for `days`, or extend it: the new end is `days` after the later of now and the current end, so
+   * extending never shortens and a lapsed membership restarts today. Used for testers and reviewers while it cannot be
+   * bought.
    *
-   * The change and its entry in the person's history (`plus_grant`, with the
-   * reason and the end before and after) are one transaction under the
-   * account's lock. Once per `requestKey`, filed under the admin who sent it,
-   * so a double click or a retried request adds the days once: the repeat
-   * answers `duplicate` with the end as it is. An admin may give it to their
-   * own account — the owner is often the only one there is, and has to be able
-   * to see what a member sees — and that, too, is in the history.
+   * The change and its history entry (`plus_grant`, with reason and end before and after) are one transaction under the
+   * account's lock. Once per `requestKey` per admin; the repeat answers `duplicate`. Admins may grant their own account
+   * (the owner is often the only one and needs to see what members see), and that is recorded too.
    */
   async grantPlus(adminId: string, userId: string, days: number, reason: string, requestKey?: string, now: Date = new Date()): Promise<PlusGrantResult> {
     if (!Number.isInteger(days) || days < 1 || days > PLUS_GRANT_MAX_DAYS) {
@@ -509,9 +479,8 @@ export class UserAdminService {
   }
 
   /**
-   * Give a user a catalog item without charging them. The SKU must exist, so a
-   * typo can't create an entitlement to nothing. Re-granting an item they own
-   * bumps the quantity, matching how a repeat purchase behaves.
+   * Give a user a catalog item free. The SKU must exist, so a typo cannot grant nothing. Re-granting an owned item
+   * bumps the quantity, like a repeat purchase.
    */
   async grantItem(adminId: string, userId: string, sku: string, reason: string): Promise<ActionResult> {
     if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
@@ -526,10 +495,7 @@ export class UserAdminService {
     return this.record(adminId, userId, 'item_grant', reason, { sku });
   }
 
-  /**
-   * Take an item back. Un-equips it in the same transaction: leaving it equipped
-   * would keep it on the user's profile after they stopped owning it.
-   */
+  /** Take an item back, un-equipping it in the same transaction so it does not stay on the profile. */
   async revokeItem(adminId: string, userId: string, sku: string, reason: string): Promise<ActionResult> {
     if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
     const client = await this.pool.connect();
@@ -558,24 +524,18 @@ export class UserAdminService {
   }
 
   /**
-   * Give someone the content editor role, or take it away: lessons, stories
-   * and the audio studio, and nothing about people or money — what a person
-   * recording their part of a conversation needs, and no more. Given only to
-   * an account that has confirmed its address (the role binds to the mailbox,
-   * as a bootstrap grant does) and is neither banned nor deleted; taken away
-   * from anyone. Roles are read on every request, so either takes effect at
-   * once. The change and its entry in the person's history are one
-   * transaction, so there is never a grant without its record.
+   * Give or take away the content editor role: lessons, stories and the audio studio, nothing about people or money.
+   * Given only to a confirmed address (bound to the mailbox, as a bootstrap grant is) that is neither banned nor
+   * deleted; taken from anyone. Roles are read per request, so both take effect at once. The change and its history
+   * entry are one transaction.
    */
   async setContentEditor(adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
     return this.setRole(CONTENT_EDITOR, adminId, userId, on, reason);
   }
 
   /**
-   * Give someone the voice actor role, or take it away: the "Record by
-   * person" page and the lines of the voices linked to them, and nothing else
-   * in the console (recording/access.ts). Given and taken under the same rules
-   * as the content editor's, into the same history.
+   * Give or take away the voice actor role: the "Record by person" page and the lines of their linked voices, nothing
+   * else (recording/access.ts). Same rules and history as the content editor role.
    */
   async setVoiceActor(adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
     return this.setRole(VOICE_ACTOR, adminId, userId, on, reason);

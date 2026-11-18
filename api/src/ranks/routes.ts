@@ -20,10 +20,8 @@ const seasonParam = z.object({ id: z.string().max(10) });
 const notFound = () => new AppError('NOT_FOUND', 404, 'not found');
 
 /**
- * Game Ranks (contract-4 §R; shapes in @kurda/shared `ranks`). Everything is
- * about the signed-in player or a game they are in; a game they are not in is
- * "not found", like one that does not exist. The admin routes are staff-only
- * (and behind the admin 2FA gate, like every /admin route).
+ * Game Ranks routes (contract-4 §R; shapes in @kurda/shared `ranks`). A game the player is not in answers "not found",
+ * like one that does not exist. Admin routes are staff-only and behind the admin 2FA gate.
  */
 export function registerRankRoutes(
   app: FastifyInstance,
@@ -47,7 +45,7 @@ export function registerRankRoutes(
     return result;
   });
 
-  /** In a lobby you are in: "Win ≈ +24 · Lose ≈ −8" per opponent, and whether it would count now (`ExpectedGains`). */
+  /** Per opponent in a lobby you are in: expected win and loss points, and whether it would count now (`ExpectedGains`). */
   app.get('/ranks/expected/:game/:lobbyId', { schema: { params: lobbyParams }, preHandler: requireAccount }, async (req) => {
     const p = req.params as { game: RankedGame; lobbyId: string };
     const gains = await ranks.expected(req.user!.id, p.game, p.lobbyId);
@@ -66,9 +64,8 @@ export function registerRankRoutes(
   );
 
   /**
-   * Your remembered Rated/Friendly choice per game (what a setup sheet starts
-   * on). Only for the games there are: a choice kept for a game that is no
-   * longer part of Hevalo has no sheet to start.
+   * Your remembered Rated/Friendly choice per game, for current games only: a choice kept for a retired game has no
+   * setup sheet.
    */
   app.get('/ranks/preferences', { preHandler: requireAccount }, async (req) => {
     const rows = await app.db.query<{ game: RankedGame; rated: boolean }>(
@@ -159,9 +156,8 @@ export function registerRankRoutes(
   app.get('/admin/seasons', { preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () => seasons.adminList());
 
   /**
-   * A season's rewards (`AdminSeasonRewards`): who its close would reward now,
-   * and with what — an open season's players included, as if it closed now —
-   * and what it has handed out already.
+   * A season's rewards (`AdminSeasonRewards`): who its close would reward now (an open season as if it closed now) and
+   * what it has handed out.
    */
   app.get('/admin/seasons/:id/rewards', { schema: { params: seasonParam }, preHandler: requireRoles(...RANK_TOOL_ROLES) }, async (req) => {
     const { id } = req.params as { id: string };

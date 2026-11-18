@@ -1,17 +1,11 @@
 /**
- * What a game word means, for the end of a round: Peyvok's answer, and the
- * rhymes a player missed.
+ * What a game word means, for the end of a round (Peyvok's answer, missed rhymes).
  *
- * The course's word cards (`game_content` kind `word_card`, published and
- * approved) say what a word means in every interface language, the other
- * Kurdish included, and somebody reviewed them; they come first. A word no card
- * has falls back to the short English gloss of its curated dictionary entry,
- * which is all the dictionary has. Nothing is translated here, and a meaning
- * nobody wrote is left out rather than guessed.
+ * Reviewed course word cards (`game_content` kind `word_card`, published and approved) give meanings in every interface
+ * language and come first; otherwise the short English gloss of the curated dictionary entry. Nothing is translated
+ * here, and an unwritten meaning is left out.
  *
- * Every language is sent and the app shows the reader's own (`meaningIn`), as
- * the riddles and proverbs do, so the answer is the same for every reader and
- * the server need not know who is reading.
+ * Every language is sent and the app shows the reader's own (`meaningIn`), so the server need not know who is reading.
  */
 import type pg from 'pg';
 import { dictionaryDialect, lookupSpellings, dictionaryKey, wordKey, type AppLocale, type LetterDialect } from '@kurda/shared';
@@ -36,8 +30,8 @@ function cleanMeanings(raw: unknown): WordMeanings | null {
 }
 
 /**
- * The meanings of `words` (each in the dialect's letters), keyed by that same
- * spelling. A word with no card and no curated gloss is simply absent.
+ * The meanings of `words` (in the dialect's letters), keyed by the same spelling. Words without a card or curated gloss
+ * are absent.
  */
 export async function meaningsOf(db: Executor, dialect: LetterDialect, words: readonly string[]): Promise<Map<string, WordMeanings>> {
   const keys = [...new Set(words.map((w) => wordKey(dialect, w)).filter((k): k is string => !!k))].slice(0, MAX_WORDS);

@@ -123,11 +123,10 @@ export interface ViewInput {
 }
 
 /**
- * Whether the viewer may see this player's name and picture: themselves, an
- * accepted friend, or — in an open game, where every member is a known adult —
- * anyone they have no block with. Everyone else is "Player {seat}": in a
- * friends game a missing name means "not my friend", and says nothing about
- * age (a rule keyed on age would be a way to find the children in a game).
+ * Whether the viewer may see this player's name and picture: themselves, an accepted friend, or, in an open game where
+ * every member is a known adult, anyone without a block either way. Everyone else is "Player {seat}". In a friends game
+ * a hidden name means only "not my friend", never anything about age, so the rule cannot be used to find children in a
+ * game.
  */
 export function mayShowIdentity(access: GameAccess, p: Pick<ViewPlayer, 'friend' | 'blocked' | 'deleted'>, isMe: boolean): boolean {
   if (isMe) return true;
@@ -154,9 +153,8 @@ function phasePlayer(p: ViewPlayer, answeredNow: boolean): PhasePlayer {
 const iso = (d: Date | null): string | null => (d ? d.toISOString() : null);
 
 /**
- * A planned question's translations as a view carries them: only interface
- * languages, and the explanation only once the answer is out (the reveal and
- * the review) — before that an explanation could give the answer away.
+ * A planned question's translations for a view: interface languages only, and the explanation only once the answer is
+ * out (reveal and review), since earlier it could give the answer away.
  */
 function translationsOf(q: PlannedQuestion, withExplanation: boolean): Partial<Record<AppLocale, StoryQuestionTranslation>> {
   const out: Partial<Record<AppLocale, StoryQuestionTranslation>> = {};
@@ -168,13 +166,9 @@ function translationsOf(q: PlannedQuestion, withExplanation: boolean): Partial<R
 }
 
 /**
- * One viewer's view of a game. Pure: everything it needs is in `input`.
- *
- * It never carries another member's user id — seats are the only handle —
- * and never anything that tells who is doing what: reading, answering and
- * continuing are counts. Scores are the totals as of the last reveal (they
- * only move then), and the right answer appears only once a question is
- * revealed.
+ * One viewer's view of a game, pure. It never carries another member's user id (seats are the only handle) or who is
+ * doing what (reading, answering and continuing are counts). Scores are the totals as of the last reveal, and the right
+ * answer appears only once a question is revealed.
  */
 export function renderView(input: ViewInput): StoryGameView {
   const { game, viewerId, now } = input;

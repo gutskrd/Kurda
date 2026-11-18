@@ -64,8 +64,8 @@ describe('pickDailyWord', () => {
   });
 
   /**
-   * A pool that grew reorders the permutation, so the day's own word can be
-   * one players were set a few days ago: the pick walks on past those.
+   * A grown pool reorders the permutation, so the day's own word may be one set a few days ago; the pick walks past
+   * those.
    */
   it('walks on past words set lately, and takes the day’s own word when every word was', () => {
     const own = pickDailyWord(pool, 7, 'easy')!;

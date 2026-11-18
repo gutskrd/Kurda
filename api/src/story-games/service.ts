@@ -103,7 +103,7 @@ interface Log {
 }
 
 export interface StoryGamesDeps {
-  /** the stories (API-stories' StoriesService once merged; a local reader until then) */
+  /** the stories to play on (default: `LocalStoryCatalog`) */
   stories?: StoryCatalog;
   /** long-poll waiters and the cross-instance wake-ups; none in a worker */
   notifier?: StoryGameNotifier | null;
@@ -117,9 +117,8 @@ export interface StoryGamesDeps {
   /** Game Ranks: duo and group games may be Rated, decided when the questions start */
   ranks?: RankService;
   /**
-   * Arm deadline timers (default true). Off for a one-off use outside the API
-   * process — account deletion in the worker — where nothing would be left to
-   * run them for.
+   * Arm deadline timers (default true). Off for one-off use outside the API process (account deletion in the worker),
+   * where nothing would run them.
    */
   timers?: boolean;
 }
@@ -182,23 +181,15 @@ const notFound = () => new AppError('GAME_NOT_FOUND', 404, 'no such game');
 /**
  * Story games: solo, duo and group quizzes on a story.
  *
- * The rules that keep it correct with several API instances and a pool of ten
- * connections (contract §A3):
- *
- * - Every change happens in a transaction that locks the game row first
- *   (`SELECT … FOR UPDATE`), then checks who the caller is — never the other
- *   way round, or "host leaves" races "start". Each one bumps `version`, and
- *   the waiting long-polls are woken only after COMMIT.
- * - Deadlines are columns. On each instance one timer per game is armed at
- *   the next instant something becomes due (a question closing, a reveal
- *   ending, the reading cap, a lobby going idle, a player turning away); when
- *   it fires, one advance per game runs — `SKIP LOCKED`, so an instance that
- *   finds another one already at it re-arms in 250 ms instead of queueing a
- *   connection behind it — and judges due-ness from the locked row with the
- *   database clock read after the lock.
+ * Invariants for several API instances sharing a ten-connection pool (contract §A3):
+ * - Every change is a transaction that locks the game row first (`SELECT … FOR UPDATE`) and then checks the caller,
+ *   never the reverse, or "host leaves" races "start". Each bumps `version`; long-polls wake only after COMMIT.
+ * - Deadlines are columns. Each instance arms one timer per game for the next due instant (a question closing, a reveal
+ *   ending, the reading cap, a lobby going idle, a player turning away). When it fires, one advance per game runs with
+ *   `SKIP LOCKED` (an instance finding another at it re-arms in 250 ms instead of queueing) and judges due-ness on the
+ *   locked row with the database clock.
  * - A long-poll holds nothing while it waits: a promise in the notifier.
- * - Scoring and rewards happen in the transaction that closes the last
- *   question, so nothing depends on anyone reading the results.
+ * - Scoring and rewards happen in the transaction that closes the last question.
  */
 export class StoryGamesService {
   private readonly stories: StoryCatalog;
@@ -253,8 +244,8 @@ export class StoryGamesService {
   }
 
   /**
-   * For the play module (an invite, a game shared into a chat): a duo or group
-   * lobby with the host in it. Same rules as `create`.
+   * For the play module (an invite, a game shared into a chat): a duo or group lobby with the host in it, under the
+   * same rules as `create`.
    */
   async createFromInvite(hostId: string, input: CreateGameInput): Promise<{ gameId: string }> {
     if (input.mode === 'solo') throw new AppError('BAD_SETTINGS', 400, 'a solo game has nobody to invite');
@@ -352,12 +343,9 @@ export class StoryGamesService {
   }
 
   /**
-   * Insert a game and its host, inside the caller's transaction. Duo and group
-   * games count against the host's limit of unfinished games (@kurda/shared
-   * MAX_HOSTED_GAMES, the same for every game): a fourth closes
-   * the oldest lobby, or is refused when none of the three is a lobby. A game
-   * the host has left does not count — the others may play it on for a while,
-   * but the host is no longer in it.
+   * Insert a game and its host inside the caller's transaction. Duo and group games count against the host's
+   * unfinished-game limit (MAX_HOSTED_GAMES): one more closes the oldest lobby, or is refused when none is a lobby.
+   * Games the host has left do not count.
    */
   private async insertGame(
     client: pg.PoolClient,
@@ -443,10 +431,9 @@ export class StoryGamesService {
   }
 
   /**
-   * `POST /story-games/join {code} | {id}`. Everything that would tell the
-   * joiner something about the people in the game — not found, not allowed,
-   * removed, blocked, a cancelled game — is the same 404; only then whether the
-   * questions have started (joining while people read is fine) or it is full.
+   * `POST /story-games/join {code} | {id}`. Everything that would reveal something about the people in the game (not
+   * found, not allowed, removed, blocked, cancelled) is the same 404; only after that come "questions started" (joining
+   * while people read is fine) and "full".
    */
   async join(userId: string, target: JoinTarget, opts: { extraTime?: boolean } = {}): Promise<StoryGameView> {
     let gameId: string | null = null;
@@ -567,14 +554,12 @@ export class StoryGamesService {
   }
 
   /**
-   * `GET /story-games/:id?v=`: the view now if it moved past `v` (or none was
-   * given), else once it does — or after at most 20 s, or at the next deadline.
+   * `GET /story-games/:id?v=`: the view now if it moved past `v` (or no `v`), else once it does, after at most 20 s, or
+   * at the next deadline.
    *
-   * The order matters (lost wakeups, a pinned pool): register the waiter, then
-   * ONE plain query (no lock, no transaction) for membership and the version,
-   * then wait holding nothing, then deregister and build the view with fresh
-   * reads. `onClose` hands over a way to stop waiting when the client goes
-   * away; null is returned then, there being nobody to answer.
+   * Order matters (lost wakeups, a pinned pool): register the waiter, then ONE plain query (no lock, no transaction)
+   * for membership and version, then wait holding nothing, then deregister and build the view from fresh reads.
+   * `onClose` hands over a stop function for when the client goes away; null is returned then.
    */
   async poll(
     gameId: string,
@@ -630,25 +615,16 @@ export class StoryGamesService {
   }
 
   /**
-   * `GET /story-games/:id/story`: the text the game is played on, for its
-   * members — the game's own copy once the questions are built, whatever has
-   * happened to the story since (a reviewer unpublishing it to fix a typo must
-   * not take the text away mid-game); before that, and after the copy is
-   * cleared, the story as published. Recordings are looked up now.
+   * `GET /story-games/:id/story`: the game's text for its members. Once questions are built it is the game's own frozen
+   * copy, so an unpublish to fix a typo cannot pull the text mid-game; before that, and after the copy is cleared, the
+   * story as published. Recordings are looked up now.
    *
-   * The translations and the attribution are never copied into the game, so
-   * they are read from the story as it is now, and only while it is published
-   * and approved. A story that went back to draft or was archived may carry
-   * a translation or a source nobody has reviewed yet, and those must not
-   * reach a game's members any more than the story's own list would show
-   * them: the frozen text is served without its translations, and with no
-   * author or source, until the story is published again. The same goes for
-   * the title and summary in other languages, the reflections, the notes and
-   * the sources. The sections are the frozen text's own headings.
+   * Translations, attribution, other-language titles and summaries, reflections, notes and sources are never copied, so
+   * they are read live and only while the story is published and approved: a story back in draft may carry unreviewed
+   * edits. Sections are the frozen text's own headings.
    *
-   * `frozen` says which it was: only the game's own copy stays the same at
-   * this address. In the lobby the host can still pick another story, and the
-   * address would not change with it.
+   * `frozen` says which text was served: only the game's copy is stable at this address, since the host can still pick
+   * another story in the lobby.
    */
   async story(gameId: string, userId: string): Promise<{ story: StoryDetail; frozen: boolean }> {
     if (!UUID_RE.test(gameId)) throw notFound();
@@ -827,14 +803,9 @@ export class StoryGamesService {
       }
       const access = patch.access ?? t.game.access;
       if (access !== t.game.access) {
-        // Everyone in a lobby got in under its access: the host's friends (any
-        // of them may be a child) in a friends game, known adults who may be
-        // strangers to each other in an open one. Switching either way with
-        // anyone else in it would put the two together — a lobby holding the
-        // host's fifteen-year-old friend opened to strangers, or the host's
-        // teenage friends let into one strangers already sit in. So the access
-        // changes only while the host is alone in the lobby, whoever is in it:
-        // the refusal must not depend on whether anyone there is a child.
+        // A lobby's members joined under its access: the host's friends (possibly children) in a friends game, adult
+        // strangers in an open one. Switching either way with anyone else present would mix the two, so access changes only
+        // while the host is alone, regardless of who is there (the refusal must not reveal whether anyone is a child).
         const others = t.players.filter((p) => !p.removed && p.user_id !== userId);
         if (others.length > 0) {
           throw new AppError('ACCESS_LOCKED', 409, 'who can join can be changed only before anyone else has joined');
@@ -918,10 +889,8 @@ export class StoryGamesService {
   }
 
   /**
-   * `POST /:id/answers {index, choice}`. `receipt` is taken at the top of the
-   * handler, before anything is awaited. A right answer and a wrong one do the
-   * same work — one row — so neither the response time nor anyone's score
-   * gives the answer away before the reveal.
+   * `POST /:id/answers {index, choice}`. `receipt` is taken at the top of the handler, before any await. Right and
+   * wrong answers do the same work (one row), so neither timing nor scores reveal the answer before the reveal.
    */
   async answer(gameId: string, userId: string, index: number, choice: number, receipt: number): Promise<StoryGameView> {
     await this.inGame(gameId, async (t) => {
@@ -985,12 +954,9 @@ export class StoryGamesService {
   }
 
   /**
-   * `POST /:id/advance {from}`: the host moves the game on early — the
-   * questions after the reading's soft cap, "Reveal now" on an untimed
-   * question. A reveal is never skipped for anyone (solo's own Next is
-   * `continue`). The control carries the state it was pressed on: if the game
-   * has moved on since, it does nothing, so a tap racing a deadline cannot
-   * reveal the next question unread.
+   * `POST /:id/advance {from}`: the host moves the game on early (questions after the reading's soft cap, "Reveal now"
+   * on an untimed question). A reveal is never skipped (solo's Next is `continue`). The control carries the state it
+   * was pressed on, so a tap racing a deadline does nothing instead of revealing the next question unread.
    */
   async advanceByHost(
     gameId: string,
@@ -1035,10 +1001,9 @@ export class StoryGamesService {
   }
 
   /**
-   * `POST /:id/leave`. Leaving a lobby takes you out of it (you never played),
-   * and the host leaving closes it: who could join was decided against that
-   * host. Leaving a started game keeps your seat, score and read access, as
-   * gone; when nobody is left in it, it ends. Solo: the game ends.
+   * `POST /:id/leave`. Leaving a lobby removes you, and the host leaving closes it (joining was decided against that
+   * host). Leaving a started game keeps your seat, score and read access, marked gone; with nobody left it ends. Solo:
+   * the game ends.
    */
   async leave(gameId: string, userId: string): Promise<void> {
     await this.inGame(gameId, async (t) => {
@@ -1136,9 +1101,8 @@ export class StoryGamesService {
   }
 
   /**
-   * A game card as one viewer sees it: its live state for members and for
-   * people the join rule lets in; for anyone else, 'unavailable' — the same as
-   * a game that does not exist.
+   * A game card as one viewer sees it: live state for members and people the join rule admits, else 'unavailable', the
+   * same as a missing game.
    */
   async card(viewerId: string, gameId: string): Promise<LobbyCard> {
     const unavailable: LobbyCard = {
@@ -1210,12 +1174,10 @@ export class StoryGamesService {
   }
 
   /**
-   * A group's "Play again": the host (or the stand-in) opens the next round —
-   * a new lobby with the same settings and only themselves in it. Everyone else
-   * sees `nextGameId` and joins with one tap, through the join rule like any
-   * game; nobody is put into a game they did not choose. Asking twice returns
-   * the same round. The story is the one asked for, else the same one if it is
-   * still published, else another of the same variety and length.
+   * A group's "Play again": the host (or stand-in) opens the next round, a new lobby with the same settings and only
+   * themselves in it. Others see `nextGameId` and join through the join rule, so nobody is put in a game they did not
+   * choose. Asking twice returns the same round. The story is the one asked for, else the same if still published, else
+   * another of the same variety and length.
    */
   async openNextRound(userId: string, gameId: string, opts: { storyId?: string } = {}): Promise<{ gameId: string }> {
     let next = '';
@@ -1250,12 +1212,9 @@ export class StoryGamesService {
   }
 
   /**
-   * A duo's rematch, once both players asked for it (the play module keeps the
-   * offers): a new game with the same settings and both of them in it, started
-   * at once — they both chose it. The next story is the one asked for, else
-   * another of the same variety and length — one the host has not finished,
-   * while there is one (the stories' pick takes one person to prefer for) —
-   * else the same one. Asking twice returns the same game.
+   * A duo's rematch once both asked (the play module keeps the offers): a new game with the same settings and both
+   * players, started at once. The story is the one asked for, else another of the same variety and length the host has
+   * not finished, else the same one. Asking twice returns the same game.
    */
   async startPairRematch(gameId: string, opts: { storyId?: string } = {}): Promise<{ gameId: string }> {
     let next = '';
@@ -1334,17 +1293,13 @@ export class StoryGamesService {
   // blocks, account deletion, housekeeping
 
   /**
-   * After a block between A (who blocked) and B commits: in every lobby with
-   * both of them, B is taken out — A, if B is the host — exactly as a host's
-   * removal looks, so nobody learns of the block. In a started game nobody is
-   * removed (that would tell); their names are hidden from each other by the
-   * identity rule, and neither can join a lobby the other is in. Game rows are
-   * locked one at a time in id order, never inside the block's transaction.
+   * After a block between A (blocker) and B commits: in every lobby with both, B is removed (A, if B hosts) exactly
+   * like a host's removal, so nobody learns of the block. In a started game nobody is removed (that would reveal it);
+   * the identity rule hides their names from each other and neither can join a lobby the other is in. Game rows are
+   * locked one at a time in id order, outside the block's transaction.
    *
-   * There is no such hook for an account found to be a minor's, on purpose: a
-   * birth month is set once (from none, never changed), and creating or joining
-   * a game needs one, so nobody already in a game can later turn out to be a
-   * minor. A hook for it would be code that never runs.
+   * There is deliberately no hook for an account found to be a minor's: a birth month is set once and is required to
+   * create or join a game, so nobody in a game can later turn out to be a minor.
    */
   async onBlock(blockerId: string, blockedId: string): Promise<void> {
     const games = await this.pool.query<{ id: string }>(
@@ -1370,9 +1325,8 @@ export class StoryGamesService {
   }
 
   /**
-   * Take someone out of every game they are still in, through the leave path
-   * (account deletion: before their rows are erased, so the others' games carry
-   * on without waiting for a player who will never come back).
+   * Remove someone from every game they are still in through the leave path (account deletion, before their rows are
+   * erased, so the others' games carry on).
    */
   async leaveAll(userId: string): Promise<void> {
     const games = await this.pool.query<{ id: string }>(
@@ -1390,11 +1344,9 @@ export class StoryGamesService {
   }
 
   /**
-   * The 6-hourly sweep (nothing of this runs in a request): lobbies and reading
-   * phases nobody touched for 6 h are closed; questions and reveals left that
-   * long are closed and finished the normal way (rewards included); two days
-   * after a game ends its questions, text and answers go (the totals stay, for
-   * history and quests); after 400 days the game goes. Deletes run in batches.
+   * The 6-hourly sweep: lobbies and reading phases untouched for 6 h are closed; questions and reveals left that long
+   * are closed and finished normally (rewards included); two days after a game ends its questions, text and answers are
+   * deleted (totals stay for history and quests); after 400 days the game goes. Deletes run in batches.
    */
   async housekeeping(): Promise<{ closed: number; finished: number; cleared: number; deleted: number }> {
     const stats = { closed: 0, finished: 0, cleared: 0, deleted: 0 };
@@ -1469,10 +1421,8 @@ export class StoryGamesService {
   // the deadline timer and the advance
 
   /**
-   * Apply whatever is due on a game, once per game per instance at a time
-   * (a call while one runs makes it run once more after). Skips a game another
-   * transaction holds and tries again in 250 ms, rather than parking a
-   * connection behind it.
+   * Apply whatever is due on a game, once per game per instance at a time (a call during a run makes it run once more).
+   * A game another transaction holds is skipped and retried in 250 ms instead of parking a connection.
    */
   advance(gameId: string): Promise<void> {
     const running = this.inflight.get(gameId);
@@ -1543,13 +1493,10 @@ export class StoryGamesService {
   }
 
   /**
-   * The timer went off. Most of the time that is a player's presence running
-   * out while they are in fact still polling (every 20 s or sooner), so
-   * before taking the game's lock check, from what this instance last read of
-   * the game and has heard since, whether anything can have changed: no phase
-   * deadline due, nobody newly away, no newer version heard of. If not, just
-   * re-arm — a transaction per game every half minute would be the cost of
-   * presence otherwise.
+   * The timer fired. Usually that is a presence expiry for a player who is in fact still polling, so before taking the
+   * lock check this instance's last read and what it has heard since: no phase deadline due, nobody newly away, no
+   * newer version. If nothing changed, just re-arm; otherwise presence would cost a transaction per game every half
+   * minute.
    */
   private fire(gameId: string): void {
     const st = this.lastState.get(gameId);
@@ -1592,11 +1539,9 @@ export class StoryGamesService {
   }
 
   /**
-   * One transaction on one game: lock it (waiting up to 5 s; the advance skips
-   * instead), run `fn`, notice a change of presence nothing else recorded,
-   * commit; then, outside the transaction, wake the waiters, arm the timer and
-   * credit streak milestones. A deadlock or serialization failure is retried
-   * once.
+   * One transaction on one game: lock it (waiting up to 5 s; the advance skips instead), run `fn`, record any unnoticed
+   * presence change, commit; then, outside the transaction, wake waiters, arm the timer and credit streak milestones. A
+   * deadlock or serialization failure is retried once.
    */
   private async run<T>(gameId: string, fn: (t: Tx) => Promise<T>, opts: { skipLocked?: boolean } = {}): Promise<RunResult<T>> {
     for (let attempt = 0; ; attempt++) {
@@ -1701,9 +1646,8 @@ export class StoryGamesService {
   }
 
   /**
-   * Bump the version with an update of the locked row. Every update carries
-   * the version it was decided on, so one that somehow did not hold the lock
-   * changes nothing rather than something else.
+   * Bump the version with an update of the locked row. Each update carries the version it was decided on, so one that
+   * somehow lacked the lock changes nothing.
    */
   private async bump(t: Tx, set: string, params: unknown[] = [], opts: { idle?: boolean } = {}): Promise<void> {
     const res = await t.client.query<GameRow>(
@@ -1766,10 +1710,9 @@ export class StoryGamesService {
   }
 
   /**
-   * Someone turned away, or came back, and nothing else changed: bump the
-   * version so every view shows it — the counts, the away marks, and who holds
-   * the host controls. Compared with what the last version was decided with
-   * on this instance; it does not count as activity for the lobby's idle clock.
+   * Someone turned away or came back and nothing else changed: bump the version so every view shows the counts, away
+   * marks and host controls. Compared with what this instance last decided on; does not count as lobby activity for the
+   * idle clock.
    */
   private async presenceChanged(t: Tx): Promise<void> {
     if (!LIVE.includes(t.game.status) || t.game.mode === 'solo') return;
@@ -1804,10 +1747,8 @@ export class StoryGamesService {
   }
 
   /**
-   * The questions are built and the reading starts: the plan (chosen and
-   * shuffled now, kept server-side), the text it is about, and the reading
-   * caps for a duo or group. A solo reader who has just read the story in the
-   * reader goes straight to the first question.
+   * The questions are built and reading starts: the plan (chosen and shuffled now, kept server-side), its text, and the
+   * reading caps for duo or group. A solo reader who just read the story goes straight to the first question.
    */
   private async beginGame(t: Tx, story: GameStory, skipReading: boolean): Promise<void> {
     const recent = await this.recentlyAnswered(t);
@@ -1835,10 +1776,8 @@ export class StoryGamesService {
   }
 
   /**
-   * The questions this game's players answered in each one's last three games
-   * of the same story, by question id, for the plan to ask last: a story with
-   * a bank only just above its minimum otherwise asks most of the same
-   * questions the second time round.
+   * Questions each player answered in their last three games of this story, by id, for the plan to ask last; otherwise
+   * a bank just above its minimum repeats most questions the second time.
    */
   private async recentlyAnswered(t: Tx): Promise<Set<string>> {
     const players = t.players.filter((p) => !p.removed && !p.left_at).map((p) => p.user_id);
@@ -1877,9 +1816,8 @@ export class StoryGamesService {
   }
 
   /**
-   * Close the open question: the totals move (only now — never while it is
-   * open), the reveal starts, and when it was the last question the game is
-   * finished and everyone in it paid, in this same transaction.
+   * Close the open question: totals move (only now), the reveal starts, and after the last question the game is
+   * finished and everyone paid in this same transaction.
    */
   private async closeQuestion(t: Tx): Promise<void> {
     await t.client.query(
@@ -1916,8 +1854,8 @@ export class StoryGamesService {
   }
 
   /**
-   * A game ending before its end: cancelled — unless its last question has
-   * closed, in which case it is finished properly and its results stand.
+   * A game ending early is cancelled, unless its last question has closed, in which case it finishes properly and its
+   * results stand.
    */
   private async endEarly(t: Tx): Promise<void> {
     if (t.game.finished_at) {

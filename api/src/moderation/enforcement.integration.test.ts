@@ -1,7 +1,6 @@
 /**
- * Enforcement (M3) against real Postgres: a ban is checked at sign-in and on
- * refresh and answered with the reasons and an appeal-only token; mutes stop
- * every way text or media is created, and lift again.
+ * Enforcement (M3) against real Postgres: bans are checked at sign-in and refresh and answered with reasons and an
+ * appeal-only token; mutes stop every way of creating text or media, and lift again.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

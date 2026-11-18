@@ -47,12 +47,9 @@ interface GameRow {
 }
 
 /**
- * Rhyming Words — training (solo) backend (KUR-299). Server-authoritative: the
- * game holds the prompt + a timed window; each submission is scored by the #298
- * engine against the dictionary (the "is it a real word" lexicon) and the pure
- * rhyme phonetics. Finishing pays no XP: training is played alone, and XP is
- * for lessons and for games online with other people. `xpAwarded` stays in
- * what the apps are sent, always nothing, for the app versions that read it.
+ * Rhyme training (solo), server-authoritative: the game holds the prompt and a timed window, and each submission is
+ * scored against the dictionary and the pure rhyme phonetics. Finishing pays no XP (XP is for lessons and games with
+ * other people); `xpAwarded` is still sent, always zero, for app versions that read it.
  */
 export class RhymeService {
   private readonly now: () => Date;
@@ -76,11 +73,7 @@ export class RhymeService {
     return rhymeAvailability(this.pool);
   }
 
-  /**
-   * Start a training round with a random prompt **of the round's dialect**: a
-   * Soranî learner used to be handed a Kurmancî prompt in the Latin alphabet,
-   * which no Soranî answer could rhyme with.
-   */
+  /** Start a training round with a random prompt in the round's dialect. */
   async startTraining(userId: string, dialect: Dialect = 'kurmanci'): Promise<StartResult> {
     const prompt = await pickRhymePrompt(this.pool, dialect);
     if (!prompt) return { ok: false, reason: 'empty-lexicon' };
@@ -95,9 +88,8 @@ export class RhymeService {
   }
 
   /**
-   * Score one submission. A rejected guess (not a word / doesn't rhyme / dup /
-   * the prompt) does not change the score. Submitting after the window closes
-   * ends the game instead of scoring.
+   * Score one submission. A rejected guess (not a word, no rhyme, duplicate, the prompt itself) leaves the score
+   * unchanged. A submission after the window closes ends the game instead.
    */
   async submit(userId: string, gameId: string, word: string): Promise<SubmitResult> {
     const client = await this.pool.connect();

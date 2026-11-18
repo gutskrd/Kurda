@@ -26,12 +26,9 @@ const QUOTE = /["“”«»„]/;
 const wordsIn = (text: string): string[] => tokenize(text).flatMap((t) => (t.word ? [t.text] : []));
 
 /**
- * The language of each word of a prompt, in order; null where it cannot be
- * told. Arabic-script Kurdish tells by script, and a prompt the item says is
- * in one language (`promptLang`) is in it. Otherwise a question may hold
- * Kurdish in quotes inside English, or English inside Kurdish, so each stretch
- * between quote marks goes the way its words lean, and one that leans no way
- * goes the way the whole prompt does.
+ * The language of each prompt word, in order (null where unknown). Arabic-script Kurdish tells by script, and a prompt
+ * with a stated language (`promptLang`) is in it. Otherwise a question may quote Kurdish inside English or the reverse,
+ * so each stretch between quote marks follows its words' leaning, and a neutral stretch follows the whole prompt.
  */
 export function wordLangs(prompt: string, promptLang: Lang | null, dialect: string | null | undefined, lexicon: Lexicon): Array<Lang | null> {
   if (varietyOf(dialect) === 'sorani') return wordsIn(prompt).map((word) => langOf(word, null, dialect));
@@ -61,19 +58,13 @@ function partsOf(text: string): string[] {
 }
 
 /**
- * The prompts of a session's translate, multiple-choice and conversation items
- * as words, each word the course knows carrying its meanings (`PromptToken`),
- * in two steps: what to look up in the dictionary (`lookups`, every Kurdish word
- * once, for one statement), then the tokens with what it found (`finish`, given
- * each lookup's meanings in the same order). An item none of whose words has a
- * meaning gets none (undefined).
+ * The prompts of a session's translate, multiple-choice and conversation items as words, each known word carrying its
+ * meanings (`PromptToken`). Two steps: `lookups` lists the Kurdish words for one dictionary statement, then `finish`
+ * builds tokens from the results in the same order. An item with no meaningful word gets undefined.
  *
- * A word's meanings come first from the session itself — a match card and its
- * partner, either way round; a one-word translation; a one-word question and its
- * one-word answer — and then, for a Kurdish word, from the dictionary. Never one
- * that hands the item's answer over: a word meaning one of a multiple-choice
- * item's options (or a part of one) has no meanings there, nor one meaning a
- * translation's whole answer.
+ * Meanings come first from the session itself (a match card and its partner either way round, a one-word translation, a
+ * one-word question and answer), then from the dictionary for Kurdish words. Never a meaning that gives away the
+ * answer: a word meaning a multiple-choice option (or part of one), or a translation's whole answer, gets none.
  */
 export function promptTokens(items: readonly SessionItem[]): {
   lookups: DictionaryLookup[];

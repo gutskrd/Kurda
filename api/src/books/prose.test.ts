@@ -1,9 +1,7 @@
 /**
- * What the Hevalo book says in its own words (prose.ts): Hamo's letter, the
- * three friends on the people pages, and the author's note. Each is held to
- * what the owner asked of it: nothing the reader already knows, nobody's
- * family where the course does not bring them in, Sêvan said plainly to be
- * made up, and the author's note in the author's own words and name.
+ * The book's own prose (prose.ts): Hamo's letter, the three friends on the people pages, and the author's note. Held to
+ * the owner's brief: nothing the reader already knows, no families the course does not introduce, Sêvan plainly made
+ * up, and the author's note in the author's own words and name.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

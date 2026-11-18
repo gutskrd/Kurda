@@ -3,10 +3,8 @@ import { pointsOf, seasonOf, tierOf, type RankedGame } from '@kurda/shared';
 import { freshState, seasonReset, type PlayerState } from './engine.js';
 
 /**
- * Reading and writing a player's standing (`game_ratings`) and its history
- * (`rating_events`). Shared by the live path (a game finishing), the season
- * job and an admin's void or reset, so all three write the same rows the same
- * way — which is what makes a replay come out like the original.
+ * Reading and writing standings (`game_ratings`) and their history (`rating_events`). The live path, the season job and
+ * admin void/reset all write through here so a replay matches the original.
  */
 
 export type Executor = Pick<pg.Pool, 'query'>;
@@ -60,11 +58,9 @@ export function fromStored(s: StoredState): PlayerState {
 }
 
 /**
- * Lock the standings of `userIds` in `game` (user-id order, so two games
- * sharing players never deadlock), creating a fresh one for a first game. A
- * standing still in an earlier season is rolled into the current one first
- * (its result recorded, σ raised) — the same roll the season job makes, for
- * whoever plays before the job reached them.
+ * Lock the standings of `userIds` in `game` in user-id order (so games sharing players never deadlock), creating fresh
+ * ones for a first game. A standing still in an earlier season is rolled into the current one first, as the season job
+ * would.
  */
 export async function lockStates(
   client: pg.PoolClient,
@@ -76,9 +72,7 @@ export async function lockStates(
   const out = new Map<string, PlayerState>();
   const ids = [...new Set(userIds)].sort();
   if (ids.length === 0) return out;
-  // every player in two statements rather than two each: the missing rows
-  // made, then all of them locked, both in user-id order (the insert takes
-  // its rows in the order given, the lock in the order sorted)
+  // Two statements for all players, both in user-id order: insert the missing rows (in the order given), then lock them all.
   await client.query(
     `INSERT INTO game_ratings (user_id, game, mu, sigma, season_id)
      SELECT u.id, $2::text, $3::double precision, $4::double precision, $5::text FROM unnest($1::uuid[]) WITH ORDINALITY AS u(id, n) ORDER BY u.n
@@ -99,9 +93,8 @@ export async function lockStates(
 }
 
 /**
- * Close a standing's season: record its result (the emblem) and start the
- * new one with σ raised to at least 4 (R5). Recorded as a 'season-reset' event
- * so a replay crosses the season the same way. Call with the row locked.
+ * Close a standing's season: record its result (the emblem) and start the next with σ raised to at least 4 (R5), as a
+ * 'season-reset' event so a replay crosses the season the same way. Call with the row locked.
  */
 export async function rollSeason(
   client: pg.PoolClient,
@@ -232,9 +225,8 @@ export async function insertEvents(client: Executor, events: readonly EventInput
 }
 
 /**
- * Every rated write of one game type takes this lock shared; an admin's void
- * (which replays history) takes it alone, so no game is applied halfway
- * through a replay of the same game's ratings.
+ * Every rated write of one game type takes this lock shared; an admin's void takes it exclusively, so no game is
+ * applied halfway through a replay.
  */
 export async function lockGameRatings(client: Executor, game: RankedGame, exclusive = false): Promise<void> {
   await client.query(

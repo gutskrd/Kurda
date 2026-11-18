@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { banState, expiryFrom, isBanned, isMuted, normalizeReason } from './moderation.js';
+import { banState, expiryFrom, normalizeReason } from './moderation.js';
 
 const now = new Date('2026-07-12T00:00:00.000Z');
 const future = new Date('2026-07-13T00:00:00.000Z');
@@ -11,16 +11,6 @@ describe('banState', () => {
     expect(banState(now, past, null)).toBe('perm_banned');
     expect(banState(now, past, future)).toBe('temp_banned');
     expect(banState(now, past, past)).toBe('active'); // temp ban expired
-    expect(isBanned(now, past, future)).toBe(true);
-    expect(isBanned(now, past, past)).toBe(false);
-  });
-});
-
-describe('isMuted', () => {
-  it('is true only while the mute is in the future', () => {
-    expect(isMuted(now, future)).toBe(true);
-    expect(isMuted(now, past)).toBe(false);
-    expect(isMuted(now, null)).toBe(false);
   });
 });
 

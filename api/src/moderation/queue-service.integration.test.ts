@@ -1,4 +1,4 @@
-/** Unified moderation queue vs real Postgres (CI job). KUR-102. */
+/** Unified moderation queue vs real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import type { CaseQueueItem } from '@kurda/shared';
@@ -77,9 +77,8 @@ describe.skipIf(!DATABASE_URL)('moderation queue (integration)', () => {
   });
 
   /*
-   * Changed on purpose with the rebuilt queue: cases are ordered by priority
-   * (P0 first) rather than the old 0–100 severity, which is still recorded for
-   * the automated feeds, and `queue()` returns a page rather than an array.
+   * Cases are ordered by priority (P0 first) rather than the 0–100 severity still recorded for automated feeds, and
+   * `queue()` returns a page.
    */
   it('syncs all sources into one priority-sorted queue (idempotent)', async () => {
     const added = await svc.sync();
@@ -115,10 +114,8 @@ describe.skipIf(!DATABASE_URL)('moderation queue (integration)', () => {
   });
 
   /*
-   * Changed on purpose: a permanent ban by one of two moderators is an
-   * emergency suspension until the second confirms (M4), so the subject is
-   * banned at once but the case waits — and the decision is logged against the
-   * case with its rule, not "moderation queue".
+   * A permanent ban by one of two moderators is an emergency suspension until the second confirms (M4): the subject is
+   * banned at once but the case waits, and the decision is logged on the case with its rule.
    */
   it('resolves with a ban: subject banned, source closed, decision logged on the case', async () => {
     const textCase = (await mine()).find((c) => c.source === 'text_flag' && c.subject?.id === subject)!;

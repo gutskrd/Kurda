@@ -1,33 +1,19 @@
 /**
- * Stories from JSON files: the `stories:import` command, and the starter
- * stories the API seeds on its own.
+ * Stories from JSON files: the `stories:import` command and the starter stories the API seeds itself. Both read the
+ * same format (schema.ts) and store through `saveStory` with the same `validateStory`.
  *
- * Both read the same format (schema.ts) and store through `saveStory`, with
- * the same `validateStory` — a file the command accepts is one the admin
- * panel could have produced, and the reverse.
+ * Starter stories (api/content/stories: kurmanci.json, sorani.json, the road's chapter stories and the legends) are the
+ * app's own library and arrive published and approved, marked `source = 'starter'`; one whose file is not complete
+ * enough to publish waits as a draft. Each is seeded once and remembered in `content_seeds`, so an archived or deleted
+ * starter stays gone and a newly added one still arrives.
  *
- * Starter stories (api/content/stories: kurmanci.json, sorani.json, the
- * road's chapter stories and the legends) are the app's own library, and the
- * owner wants learners to have them, so each arrives published and approved,
- * marked `source = 'starter'`. A story a file says too little for to publish
- * waits as a draft until its file is fixed. Each is seeded once and
- * remembered in `content_seeds`, so a starter an editor archived or deleted
- * stays gone after the next restart, and a starter added to the files later
- * still arrives.
+ * Until someone changes a starter in the panel (every admin action sets `updated_by`), its file is the source: each
+ * start brings the stored story up to the file, so a Kurdish correction ships with the next deploy. After that, the
+ * panel owns it. Translation reviews stay as reviewers left them; publishing does not claim a native speaker checked
+ * the text.
  *
- * Until a person changes a starter in the admin panel (every admin action
- * sets `updated_by`), its file is where it is written: a later start brings
- * the stored story up to the file, so a correction to the Kurdish reaches the
- * app with the next deploy. Once a native speaker has touched it, the panel
- * is where it lives and the file no longer speaks for it. The review of each
- * translation stays as the reviewers left it, or unreviewed: publishing is
- * not a claim that a native speaker has checked the text.
- *
- * Some starters are one story told in both varieties (the legends). A file
- * cannot say so, so the pairs are named here (`STARTER_STORY_VERSIONS`), and
- * the seeding links each pair once, as an editor would in the panel: the
- * reader then offers the other telling, and the library shows the story once
- * per variety rather than twice side by side.
+ * Some starters are one story in both varieties (the legends). Files cannot say so, so the pairs are listed here
+ * (`STARTER_STORY_VERSIONS`) and seeding links each pair once, as an editor would.
  */
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -141,9 +127,7 @@ const STORED_COLUMNS = `id, status, updated_by, review_status, dialect, language
   meta_translations, reflections, notes, sources, translation_review`;
 
 /**
- * The stored story in the file's own shape, so "unchanged" compares what the
- * file says with what is there — every field the file can set, the library
- * fields included: a file that only adds a category to a story is a change.
+ * The stored story in the file's shape, so "unchanged" compares every field a file can set, library fields included.
  */
 async function storedInput(db: pg.PoolClient, row: StoredRow): Promise<StoryInput> {
   const questions = await db.query<QuestionRow>(`SELECT * FROM story_questions WHERE story_id = $1 ORDER BY position`, [row.id]);
@@ -186,10 +170,8 @@ async function storedInput(db: pg.PoolClient, row: StoredRow): Promise<StoryInpu
 }
 
 /**
- * `canonicalContent` plus the library fields, which the importer owns as much
- * as the text — the sources among them. The per-language review counts only
- * when the file says something about it; a file that does not leaves the
- * stored review to follow from what changed.
+ * `canonicalContent` plus the library fields, which the importer owns as much as the text. The per-language review
+ * counts only when the file sets it; otherwise it follows from what changed.
  */
 function canonicalFile(story: StoryInput, withReview = true): string {
   const review = Object.entries(story.translationReview ?? {})
@@ -226,28 +208,17 @@ export interface StoryImportOptions {
 }
 
 /**
- * Import a file of stories, all or nothing, idempotent by slug: a new slug
- * is created as a draft, a draft whose content changed is updated (and its
- * lock version bumped, so an editor with it open reloads before saving over
- * it), and a story in review, published or archived is never overwritten —
- * people are looking at it. A draft that was approved loses the approval when
- * its content is replaced, as it does when an editor changes it in the panel:
- * the approval was given to the text that is gone, and publishing asks only
- * whether the story is approved.
+ * Import a file of stories, all or nothing, idempotent by slug: new slugs become drafts, changed drafts are updated
+ * (lock version bumped so an open editor reloads), and stories in review, published or archived are never overwritten.
+ * An approved draft loses its approval when its content is replaced.
  *
- * Nor, without `force`, is a draft someone changed in the admin panel: a
- * native speaker correcting a starter there must not lose the corrections to
- * the next import of the file. The importer knows them by `updated_by`, which
- * every admin action sets and every import clears. (An editor whose account
- * is deleted leaves it null, and their drafts unprotected.)
+ * Without `force`, a draft someone changed in the panel is also left alone, so a native speaker's corrections survive
+ * the next import. Panel edits are known by `updated_by`, which admin actions set and imports clear (a deleted editor
+ * leaves it null, unprotected).
  *
- * With `publish`, every story the file created or that is a draft is
- * approved and published through the admin's own review and status change,
- * as `publishedBy` — the editor named has read the file — so it is checked,
- * attributed and audited like a publish in the panel, and the hub's cached
- * list is emptied once it is committed. A dry run does everything inside a
- * transaction it then rolls back, so it reports exactly what a real run
- * would do.
+ * With `publish`, every created story or draft is approved and published through the admin review and status change as
+ * `publishedBy`, so it is checked, attributed and audited like a panel publish; the hub's cached list is emptied after
+ * commit. A dry run does everything in a transaction it rolls back, so it reports exactly what a real run would do.
  */
 export async function importStories(pool: pg.Pool, raw: unknown, options: StoryImportOptions = {}): Promise<StoryImportResult> {
   const dryRun = options.dryRun === true;
@@ -331,11 +302,9 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
 }
 
 /**
- * Where the starter stories are, beside the other content the API ships with:
- * the starter stories, the stories Hamo tells at the end of each chapter of
- * the road (road.json), which go online with their chapter (content/road-chapters.ts),
- * and the legends (legends.json): long tellings in sections, with their notes,
- * sources and translations.
+ * The starter story files: the everyday starters, the stories Hamo tells at the end of each road chapter (road.json,
+ * published with their chapter by content/road-chapters.ts), and the legends (legends.json: long tellings in sections
+ * with notes, sources and translations).
  */
 export const STARTER_STORY_FILES = ['kurmanci.json', 'sorani.json', 'road.json', 'legends.json'].map(
   (name) => new URL(`../../content/stories/${name}`, import.meta.url),
@@ -347,15 +316,11 @@ const seedName = (slug: string): string => `stories:starter:${slug}`;
 export type StoryVersionPair = readonly [kurmanci: string, sorani: string];
 
 /**
- * The starters that are one story told in both varieties: the five legends,
- * each written twice in legends.json under the same tale, cover and English
- * title.
+ * The starters that are one story in both varieties: the five legends, each written twice in legends.json under the
+ * same tale, cover and English title.
  *
- * Only tellings of the same tale belong here. The everyday starters share
- * themes across the two files — a ball in a stern neighbour's garden, a bus
- * that fails on the way to the village, a first day at a new school — but
- * each is a story of its own, with its own people, places and ending; linked,
- * a reader who switched variety would land in a different story.
+ * Only tellings of the same tale belong here. The everyday starters share themes across the two files but are separate
+ * stories; linked, a reader switching variety would land in a different story.
  */
 export const STARTER_STORY_VERSIONS: readonly StoryVersionPair[] = [
   ['kmr-kawaye-hesinkar', 'ckb-kaway-asinger'],
@@ -368,22 +333,15 @@ export const STARTER_STORY_VERSIONS: readonly StoryVersionPair[] = [
 const versionsSeedName = (pair: StoryVersionPair): string => `stories:versions:${pair[0]}+${pair[1]}`;
 
 /**
- * Link starters that are one story told in both varieties, each pair once:
- * the two are given one translation group, as "same story as" does in the
- * panel. A pair is linked when both starters are in the table and neither is
- * in a group; either way it is then remembered in `content_seeds` and never
- * looked at again, so a pair an editor unlinks, or links to something else,
- * stays as the editor left it after the next start. A pair with a story still
- * missing waits for a later start.
+ * Link starter pairs that are one story in both varieties, each pair once, by giving them one translation group as
+ * "same story as" does. A pair is linked when both are present and neither is in a group; either way it is then
+ * remembered in `content_seeds` and never revisited, so an editor's change sticks. A pair with a story missing waits
+ * for a later start.
  *
- * An existing database had its legends linked by migration legend-versions;
- * this is what links them on a new one, where the stories arrive after the
- * migrations have run. Nothing else in this file writes a story's group, so
- * bringing a starter up to its file leaves the link alone.
+ * Existing databases had the legends linked by the legend-versions migration; this links them on a new database, where
+ * stories arrive after migrations. Nothing else here writes a story's group.
  *
- * Both rows are locked, in one order, before they are looked at: two
- * instances starting together take turns, and the second finds the pair
- * linked. Never throws.
+ * Both rows are locked in one order first, so concurrent starts take turns. Never throws.
  */
 export async function linkStarterVersions(
   pool: pg.Pool,
@@ -428,25 +386,17 @@ export async function linkStarterVersions(
 }
 
 /**
- * Seed the starter stories, each once, and keep the ones nobody has changed
- * in the panel as their files say (see the top of the file). Runs at every
- * start and costs a few queries once everything is seeded and current. A
- * story that fails the draft check is skipped and logged — it is seeded on a
- * later start, once its file is fixed — and nothing here ever throws: a
- * broken content file must not stop the API from starting.
+ * Seed the starter stories once each and keep those nobody changed in the panel in step with their files (see the top
+ * of the file). Runs at every start and costs a few queries once current. A story failing the draft check is skipped
+ * and logged until its file is fixed; nothing here throws, since a broken content file must not stop the API.
  *
- * A starter is published, and approved, only once its file passes the check
- * a publish in the panel makes; a published one is brought up to its file
- * only by a file that still passes it, so learners never meet half a story.
+ * A starter is published and approved only once its file passes the publish check, and a published one is updated only
+ * by a file that still passes it.
  *
- * Last, the starters that are one story told in both varieties are linked
- * (`linkStarterVersions`): the pairs among `versions` whose two stories these
- * files hold.
+ * Then links the version pairs among `versions` whose stories these files hold (`linkStarterVersions`).
  *
- * Two instances starting together (a deploy's overlap) both try the same
- * slugs; the insert skips a slug that exists, the marker insert skips a
- * marker that exists, and each story is brought up to its file under a row
- * lock, so neither fails and nothing is doubled.
+ * Concurrent starts during a deploy are safe: inserts skip existing slugs and markers, and updates run under a row
+ * lock.
  */
 export async function seedStarterStories(
   pool: pg.Pool,

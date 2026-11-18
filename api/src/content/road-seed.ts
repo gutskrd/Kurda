@@ -1,39 +1,24 @@
 /**
- * The Kurmanji Road's lessons, seeded from the files the API ships with
- * (api/content/lessons/road/unit-NN.json) into the course `kurmanji-road`.
+ * The Kurmanji Road's lessons, seeded from api/content/lessons/road/unit-NN.json into the course `kurmanji-road`.
  *
- * Each unit file is a course import document (`courseContentSchema`) holding
- * the course's header and one unit, its lessons in order. A lesson also
- * carries its authoring key (`u01s1l1`: unit, skill, lesson), which names it
- * in the plan and here; it is not stored with the lesson.
+ * Each unit file is a course import document (`courseContentSchema`) with the course header and one unit, lessons in
+ * order. A lesson also carries its authoring key (`u01s1l1`: unit, skill, lesson), used by the plan and here but not
+ * stored.
  *
- * Each lesson is seeded once, as the starter lessons are: a row in
- * `content_seeds` (`lessons:road:<key>`) remembers it, so a lesson an editor
- * deleted stays gone rather than coming back on the next restart. It goes in
- * as a draft at its own place — its unit, skill and lesson position — with
- * the course, the unit and the skill made when they are missing (their
- * titles, and the skill's grammar note). A course of drafts is listed to no
- * learner until an editor publishes a lesson in it, so the road can arrive a
- * unit at a time and be reviewed before anyone meets it.
+ * Each lesson is seeded once, like the starter lessons: a `content_seeds` row (`lessons:road:<key>`) remembers it, so a
+ * deleted lesson stays gone. It goes in as a draft at its own place, creating the course, unit and skill (titles,
+ * grammar note) when missing. A course of drafts is listed to no learner until a lesson is published, so the road can
+ * arrive and be reviewed a unit at a time.
  *
- * A place that already has a lesson keeps it: whatever an editor put there
- * is theirs, and the road's lesson is marked seeded and left out, with a line
- * in the log saying so. A lesson the road seeded and nobody has touched since
- * — still its first version, still a draft, never saved by an editor — keeps
- * following its file: when the file is rewritten, the draft takes the new
- * titles and exercises on the next start (`refreshRoadDrafts`), and so do its
- * skill's and unit's titles and grammar note while every lesson under them is
- * untouched in the same way. Anything an editor has saved, sent for review or
- * published is never changed. A lesson whose exercises do not pass their schemas is
- * left out until its file is fixed, and tried again on the next start; the
- * rest of its unit goes in. Nothing here throws: a broken file must not stop
- * the API from starting.
+ * A place that already has a lesson keeps it: the road's lesson is marked seeded, skipped and logged. A road lesson
+ * nobody has touched (first version, still a draft, never saved by an editor) follows its file: a rewritten file
+ * updates its titles and exercises on the next start (`refreshRoadDrafts`), and its skill's and unit's titles and
+ * grammar note while every lesson under them is untouched. Anything an editor saved, submitted or published is never
+ * changed. A lesson failing its schemas is skipped until its file is fixed; the rest of its unit goes in. Nothing here
+ * throws: a broken file must not stop the API.
  *
- * Each unit's level (A1, A2, B1: the course plan's `cefr`) is the one thing
- * read from the plan beside the unit files, since the plan is the only place
- * it is written: the lesson path groups the units into sections by it. It
- * follows the plan on every start (`setRoadLevels`), as no editor's screen
- * sets a level.
+ * Each unit's level (A1, A2, B1: the plan's `cefr`) is read from the plan, the only place it is written, and applied on
+ * every start (`setRoadLevels`), since no editor screen sets it.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import type pg from 'pg';
@@ -89,20 +74,17 @@ export function roadKey(unit: number, skill: number, lesson: number): string {
 }
 
 /**
- * What remembers that a lesson was seeded. A course other than the road — a
- * test's own — files its markers under its slug, so it never touches the
- * road's.
+ * The marker that remembers a seeded lesson. Other courses (a test's own) file markers under their slug, so they never
+ * touch the road's.
  */
 export function roadSeedName(key: string, course: string = ROAD_COURSE): string {
   return course === ROAD_COURSE ? `lessons:road:${key}` : `lessons:road:${course}:${key}`;
 }
 
 /**
- * One unit file, read: its course header and its lessons, each with its key
- * (the file's, or one made from its place) and where it goes. The structure
- * is checked here, the exercises by `validateRoadLesson`, so a lesson with a
- * mistake in one exercise does not take its whole unit down with it. A file
- * for another course is refused.
+ * One unit file, read: its course header and lessons, each with its key (from the file, or made from its place) and
+ * destination. Structure is checked here and exercises by `validateRoadLesson`, so one bad exercise does not take the
+ * unit down. A file for another course is refused.
  */
 export function parseRoadUnit(raw: unknown, file: string, course: string = ROAD_COURSE): RoadUnitParse {
   const parsed = roadFileSchema.safeParse(raw);
@@ -138,10 +120,8 @@ export function parseRoadUnit(raw: unknown, file: string, course: string = ROAD_
 export type RoadLessonCheck = { ok: true; exercises: Array<{ position: number; type: ExerciseType; payload: unknown }> } | { ok: false; issues: ImportIssue[] };
 
 /**
- * A lesson's exercises in order, each payload as its schema stores it — the
- * same check every exercise an editor saves passes, so `voice` and `say` are
- * kept and anything the schema does not know is dropped — or every problem,
- * located by exercise.
+ * A lesson's exercises in order, each payload as its schema stores it (the same check an editor's save passes, so
+ * `voice` and `say` are kept and unknown fields dropped), or every problem located by exercise.
  */
 export function validateRoadLesson(lesson: Pick<RoadLesson, 'exercises'>): RoadLessonCheck {
   const issues: ImportIssue[] = [];
@@ -214,11 +194,9 @@ export async function readRoadFiles(dir: URL = ROAD_DIR, course: string = ROAD_C
 }
 
 /**
- * Each unit's level by its number, as the plan beside the unit files gives
- * it. Read leniently: the plan is the writers' document, checked by the road
- * check (road-check.ts), and one that is missing, unreadable or shaped
- * otherwise gives no levels rather than stopping a start; a unit whose level
- * is not one of the six is left without one.
+ * Each unit's level by number, from the plan beside the unit files. Read leniently: the plan is the writers' document
+ * (checked by road-check.ts), so a missing, unreadable or misshapen one gives no levels rather than stopping a start; a
+ * unit with an unknown level gets none.
  */
 export async function readRoadLevels(dir: URL = ROAD_DIR): Promise<Map<number, string>> {
   const levels = new Map<number, string>();
@@ -241,9 +219,8 @@ export async function readRoadLevels(dir: URL = ROAD_DIR): Promise<Map<number, s
 }
 
 /**
- * Give the course's units the plan's levels where theirs differ, in one
- * statement for the whole course; the positions of the units changed come
- * back. A unit the plan does not give a level keeps whatever it has.
+ * Give the course's units the plan's levels where they differ, in one statement; returns the positions of units
+ * changed. A unit the plan gives no level keeps its own.
  */
 export async function setRoadLevels(pool: pg.Pool, levels: ReadonlyMap<number, string>, course: string = ROAD_COURSE): Promise<number[]> {
   if (levels.size === 0) return [];
@@ -290,11 +267,9 @@ async function findOrCreate(find: () => Promise<string | null>, create: () => Pr
 }
 
 /**
- * Seed every road lesson not seeded yet, each as a draft at its own place.
- * Two instances starting together (a deploy's overlap) both try: the course,
- * units and skills are found or made either way, and each lesson's marker is
- * written first in the lesson's own transaction, so the second waits on the
- * first and then finds the lesson done.
+ * Seed every road lesson not yet seeded, each as a draft at its own place. Concurrent starts during a deploy are safe:
+ * the course, units and skills are found or made either way, and each lesson's marker is written first in its own
+ * transaction, so the second instance waits and then finds it done.
  */
 export async function seedRoadLessons(
   pool: pg.Pool,
@@ -399,9 +374,8 @@ export async function seedRoadLessons(
 }
 
 /**
- * One lesson, in its own transaction: the marker first, then — unless its
- * place already has a lesson, of any version or status — the lesson as a
- * draft with all its exercises in one statement.
+ * One lesson in its own transaction: the marker first, then, unless its place already holds a lesson of any version or
+ * status, the lesson as a draft with all its exercises in one statement.
  */
 async function seedOne(
   pool: pg.Pool,
@@ -457,14 +431,11 @@ interface PlacedLesson {
 }
 
 /**
- * Bring the road's untouched drafts up to their files: each lesson seeded on
- * an earlier start whose place still holds only that lesson, at version 1,
- * as a draft, with `lock_version` 0 (an editor's every save raises it). Its
- * titles and exercises are replaced when the file's differ, in the lesson's
- * own transaction with its row locked, so an editor who opens it in the
- * meantime either sees it before or after, never half. A skill whose lessons
- * are all untouched takes its file's titles and grammar note, and a unit
- * whose lessons are all untouched its titles. The keys refreshed come back.
+ * Bring the road's untouched drafts up to their files: lessons seeded earlier whose place still holds only that lesson,
+ * at version 1, as a draft, with `lock_version` 0 (every editor save raises it). Titles and exercises are replaced when
+ * the file differs, in the lesson's own transaction with its row locked, so an editor opening it sees before or after,
+ * never half. A skill whose lessons are all untouched takes its file's titles and grammar note, and likewise a unit its
+ * titles. Returns the keys refreshed.
  */
 export async function refreshRoadDrafts(
   pool: pg.Pool,

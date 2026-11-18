@@ -1,20 +1,15 @@
 /**
  * Dizê Bîrê and Hear It, Find It against real Postgres and Redis.
  *
- * Dizê Bîrê: rounds are made of published stories and lesson
- * conversations only (never a draft story), sent without the words that
- * vanish, graded on the server from tiles or typed, nudged by gap, corrected
- * with each word's meaning, and paid by performance once.
+ * Dizê Bîrê: rounds use only published stories and lesson conversations, are sent without the vanishing words, graded
+ * on the server from tiles or typing, nudged by gap, corrected with each word's meaning, and paid by performance once.
  *
- * Hear It, Find It: only people's recordings are played (never a letter's
- * sound read as a word), a round never sends a recording's address or text,
- * its clips are read through the API by handles good for that round only
- * (byte ranges included, refused once the round has expired), a text recorded
- * in two voices is heard in the other voice the next time, and a round is paid
- * by performance, learning only at half right.
+ * Hear It, Find It: only human recordings play (never a letter's sound as a word), a round never sends a recording's
+ * address or text, clips are read through the API by round-scoped handles (byte ranges too, refused once the round
+ * expires), a text in two voices plays in the other next time, and a round pays by performance, learning only at half
+ * right.
  *
- * The media bucket is held in memory (the storage's read is stubbed), so what
- * is under test is what the API reads, refuses and sends.
+ * The media bucket is in memory (storage reads stubbed), so the test covers what the API reads, refuses and sends.
  */
 import { Readable } from 'node:stream';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

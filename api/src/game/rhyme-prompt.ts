@@ -1,19 +1,9 @@
 /**
- * Choosing the word a rhyme round opens on.
+ * Choosing the word a rhyme round opens on. A prompt nothing rhymes with is an unscoreable round; since a rhyme is a
+ * shared ending (1751000117000), "has this word any partner" is one indexed lookup, checked before the round starts.
+ * The check is against the dictionary (what players may answer with), not the pool.
  *
- * Both modes — training and a live match — picked a random pool word and hoped.
- * A prompt nothing rhymes with is a round a player cannot score in, and that
- * was invisible until somebody hit one; `is_rhyme_prompt` exists so a curator
- * can keep those out by hand.
- *
- * They no longer have to. A rhyme is a shared ending (1751000117000), so
- * "has this word got any partner at all" is one indexed lookup, and asking it
- * before the round starts is cheaper than a curator deciding it afterwards.
- * The check is against the **dictionary**, which is what a player may answer
- * with — not the pool, which is only what the game asks.
- *
- * A curated prompt still wins: the flag chooses the candidates, and this
- * chooses between them.
+ * Curated prompts still win: `is_rhyme_prompt` chooses the candidates, and this chooses among them.
  */
 import type pg from 'pg';
 import { rhymePattern, type Dialect } from './rhyme.js';
@@ -29,23 +19,16 @@ interface Candidate {
 }
 
 /**
- * The dictionary files Kurmancî under 'kurmanji' (the spelling the courses
- * use); a rhyme game says 'kurmanci', as Stories do.
+ * The dictionary files Kurmancî under 'kurmanji' (the courses' spelling); rhyme games say 'kurmanci', as Stories do.
  */
 const DICTIONARY_DIALECT: Record<Dialect, string> = { kurmanci: 'kurmanji', sorani: 'sorani' };
 
 /**
- * A random prompt from the pool that something in the dictionary rhymes with.
+ * A random pool prompt that something in the dictionary rhymes with. With a `dialect`, candidates and partners are
+ * limited to that dialect, so a Soranî round never gets a Latin-script prompt; without one any word will do.
  *
- * With a `dialect`, only words of that dialect are candidates, and only words
- * of that dialect count as partners: a Soranî round used to be handed a
- * Kurmancî prompt in the Latin alphabet, which no Soranî answer could rhyme
- * with. Both modes pass one now; without one, any word will do.
- *
- * Returns null only when the pool (of that dialect) is empty. If none of the
- * candidates has a partner — which takes a dictionary with nothing else ending
- * in any of their last letters — it returns the first anyway: a thin round is
- * worse than a good one and better than no game at all.
+ * Null only when the pool (of that dialect) is empty. If no candidate has a partner, the first is returned anyway: a
+ * thin round beats no game.
  */
 export async function pickRhymePrompt(executor: Executor, dialect?: Dialect): Promise<string | null> {
   const dict = dialect ? DICTIONARY_DIALECT[dialect] : null;

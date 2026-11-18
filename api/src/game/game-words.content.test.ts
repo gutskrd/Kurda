@@ -1,9 +1,7 @@
 /**
- * The game words a migration put in the pool (1751000580000), checked as the
- * games will use them: every Peyvok band deep enough for a daily word, every
- * word a lemma the keyboard can type and the word filter lets through, and
- * every curated rhyme prompt with at least eight partners by its dialect's
- * own rule. Read from the migration itself, so what is checked is what ran.
+ * The game words migration 1751000580000 put in the pool, checked as the games use them: every Peyvok band deep enough
+ * for a daily word, every word a typeable lemma the filter allows, and every curated rhyme prompt with at least eight
+ * partners by its dialect's rule. Read from the migration itself.
  */
 import { describe, expect, it } from 'vitest';
 import { wordKey } from '@kurda/shared';

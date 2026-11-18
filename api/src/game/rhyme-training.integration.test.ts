@@ -1,4 +1,4 @@
-/** Peyvên Hevserwa training backend against real Postgres (CI job). KUR-299. */
+/** Peyvên Hevserwa training backend against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';
@@ -48,10 +48,8 @@ describe.skipIf(!DATABASE_URL)('rhyme training service (integration)', () => {
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    // The service picks its prompt at random from the WHOLE dictionary, so this
-    // suite must own that table rather than assume it is empty (a baseline word
-    // pool ships in a seed migration). Integration files run serially — see
-    // api/vitest.config.ts — and every suite seeds the words it needs.
+    // The service picks its prompt from the WHOLE dictionary, so this suite owns that table rather than assume it empty
+    // (a seed migration ships a word pool). Integration files run serially, and each suite seeds the words it needs.
     await pool.query(`DELETE FROM dict_entries`);
     await Promise.all(['kul', 'roj'].map((w) => seedWord(w))); // 'kul' rhymes with 'gul'; 'roj' does not
   });
@@ -158,9 +156,8 @@ describe.skipIf(!DATABASE_URL)('rhyme training service (integration)', () => {
   });
 
   /**
-   * A word the course teaches is a word to rhyme with, as its card spells it:
-   * a Soranî h written ه in the card and read as ھ from the keyboard is the
-   * same letter, and the same word.
+   * A word the course teaches counts as its card spells it: a Soranî h written ه on the card and ھ from the keyboard is
+   * the same letter and word.
    */
   it('takes a Soranî word the course teaches, however its h is written', async () => {
     const card = await pool.query<{ id: string }>(

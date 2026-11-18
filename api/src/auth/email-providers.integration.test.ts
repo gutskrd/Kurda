@@ -1,10 +1,7 @@
 /**
- * Every common mail provider can make an account and sign in (integration).
- *
- * Nothing about an address's provider is held against it: these all go through
- * the whole sign-up path (address rules, disposable list, CAPTCHA, risk scoring,
- * the banned-address registry, the insert) and come out 201. One address in
- * different letter case is one account, for sign-up and for sign-in.
+ * Every common mail provider can sign up and sign in (integration): each address goes through the whole sign-up path
+ * (address rules, disposable list, CAPTCHA, risk scoring, banned-address registry, insert) and gets 201. One address in
+ * different case is one account.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

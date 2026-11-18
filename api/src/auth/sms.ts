@@ -1,9 +1,7 @@
 /**
- * Provider-agnostic SMS sender (KUR-297). The real provider (Twilio /
- * MessageBird / SNS) implements this seam and is wired by config; nothing else
- * in the codebase knows which provider is used. Until one is configured we use
- * {@link StubSmsSender}, which records the last message (so dev/tests can read
- * the code) instead of sending — production must supply a real sender.
+ * Provider-agnostic SMS sender. A real provider implements this seam and is wired by config. Until one is configured,
+ * {@link StubSmsSender} records the last message (so dev and tests can read the code) instead of sending; production
+ * must supply a real sender.
  */
 export interface SmsSender {
   send(toE164: string, message: string): Promise<void>;

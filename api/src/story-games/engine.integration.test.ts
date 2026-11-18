@@ -1,10 +1,7 @@
 /**
- * The story game engine against real Postgres, below the HTTP layer: what has
- * to hold with a pool of ten connections, several API instances and clocks
- * that do not wait — long-polls that hold nothing, wakeups that cannot be
- * lost, the answer grace, presence, one advance however many ask for it,
- * rewards that are paid once and survive one player's failure, the sweep, and
- * what the play module calls.
+ * The story game engine against real Postgres below the HTTP layer: what must hold with a ten-connection pool, several
+ * instances and real clocks (long-polls that hold nothing, wakeups that cannot be lost, the answer grace, presence, one
+ * advance however many ask, rewards paid once and isolated per player, the sweep, and the play module's calls).
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import pg from 'pg';

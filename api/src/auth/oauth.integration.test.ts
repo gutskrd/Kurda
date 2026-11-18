@@ -116,10 +116,8 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   /*
-   * Whoever registered an address first and never confirmed it must not end
-   * up holding the account of the person a provider says owns it: the
-   * sign-in is never linked to that account. Nor does that account stand in
-   * the owner's way: it is ended, and the sign-in makes a new one.
+   * An account that registered an address and never confirmed it must not capture the provider-confirmed owner's
+   * sign-in: it is never linked, it is ended, and the sign-in makes a new account.
    */
   it('never links to an account that did not confirm the address: that sign-up is ended and a new account made (takeover guard)', async () => {
     const email = `unverified_${suffix}@example.com`;
@@ -159,11 +157,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     expect(linked.rowCount).toBe(0);
   });
 
-  /*
-   * An address the provider has not confirmed is not the signer's to take: an
-   * account made under it would sit on somebody else's address, and would
-   * still open for whoever made it after its real owner claimed it.
-   */
+  /* An address the provider has not confirmed is not the signer's to take, so the new account is made without it. */
   it('makes the new account without an address the provider has not confirmed', async () => {
     const email = `notmine_${suffix}@example.com`;
     const token = await makeToken('google', { sub: `g-unconfirmed-${suffix}`, email, emailVerified: false });
@@ -202,9 +196,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   /*
-   * The app and the deletion notice promise that signing in again before the
-   * grace period ends keeps the account. That has to hold however the person
-   * signs in, not only with a password.
+   * Signing in again before the deletion grace period ends keeps the account, however the person signs in.
    */
   it('signing in with Google or Apple during the deletion grace period keeps the account', async () => {
     const pending = async (id: string) =>
@@ -233,8 +225,8 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   /*
-   * Changed on purpose: a banned account is answered ACCOUNT_SUSPENDED with the
-   * statement of reasons and an appeal token, like password sign-in (M1/M3).
+   * A banned account is answered ACCOUNT_SUSPENDED with the statement of reasons and an appeal token, like password
+   * sign-in (M1/M3).
    */
   it('disabled linked accounts cannot sign in', async () => {
     const token = await makeToken('google', {

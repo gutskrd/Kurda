@@ -28,10 +28,8 @@ export async function createEmailToken(
 }
 
 /**
- * Atomically consumes a token: marks it used and returns the owning
- * user id, or null if unknown/expired/already used. Single-use is
- * enforced by the conditional UPDATE — two racing consumers can't both
- * succeed.
+ * Atomically consume a token: mark it used and return the owner's id, or null if unknown, expired or used. The
+ * conditional UPDATE enforces single use, so two racing consumers cannot both succeed.
  */
 export async function consumeEmailToken(
   pool: Pick<pg.Pool, 'query'>,

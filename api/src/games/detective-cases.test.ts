@@ -1,11 +1,8 @@
 /**
- * Detective's cases (api/content/games/detective): every case in the folder
- * is resolved against the course's own conversations and the stories' own
- * sentences, as the seeder resolves it, and must pass the case file's checks
- * and the rules a case is written to: three to six suspects, four to six
- * questions of three options, no option naming the culprit before the
- * accusation, every card proving something, every text a player reads in
- * all nine languages, and a level that follows the course units it cites.
+ * Detective's cases (api/content/games/detective), resolved against the course's conversations and stories as the
+ * seeder does, must pass the case-file checks and the writing rules: three to six suspects, four to six three-option
+ * questions, no option naming the culprit before the accusation, every card proving something, every player-facing text
+ * in all nine languages, and a level matching the course units cited.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

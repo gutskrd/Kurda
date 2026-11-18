@@ -1,8 +1,7 @@
 /**
- * The Memory Thief's word deck without a database: each entry becomes one
- * passage row cut as the game cuts the story, its words checked against the
- * paragraph as a glossary's are, and what does not fit is skipped with why.
- * The stories here are stand-ins, never shown to a learner.
+ * The Memory Thief's word deck without a database: each entry becomes one passage row cut as the game cuts the story,
+ * its words checked against the paragraph like glossary terms, and misfits skipped with a reason. The stories are
+ * stand-ins.
  */
 import { describe, expect, it } from 'vitest';
 import { deckOrigin, deckRows, readDeck, type DeckStory, type MemoryThiefDeck } from './memory-thief-deck.js';

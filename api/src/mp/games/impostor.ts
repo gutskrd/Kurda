@@ -38,30 +38,20 @@ import type { GameModule, LobbyChoices } from '../module.js';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * Impostor on the server: what the pure rules
- * (shared/src/games/impostor/rules.ts) cannot decide alone.
+ * Impostor's server side: what the pure rules (shared/src/games/impostor/rules.ts) cannot decide alone.
  *
- * - The deal. When the host starts, one word card is drawn from the approved
- *   word cards of the lobby's variety and difficulty — published rows only,
- *   read through the trusted readers, so a draft or a card waiting for review
- *   never reaches a table — with three other approved words for the caught
- *   impostor's guess, of the same category where it has enough. The deal goes
- *   to the rules alone: it is in the game's state, never in the lobby's stored
- *   settings, never in a link, and leaves only through the rules' per-seat
- *   view.
- * - The clue. Every clue has passed the chat pipeline's gate (the engine runs
- *   it before the game's lock); the rules then refuse one that is not in the
- *   variety's script, too long, or says the word or one of its forms.
- * - Whether it is offered. A variety is offered at a difficulty once its
- *   approved word cards there reach the registry's minimum (`minimum`), the
- *   same count Learn's list makes (api/src/games/availability.ts).
- * - The category. A host may ask for the word to come from one category; the
- *   lobby is made only if that category has enough approved cards at the
- *   lobby's difficulty (`IMPOSTOR_CATEGORY_MIN`), and the deal then draws the
- *   word from it. A game for any category draws only from the categories that
- *   have that many, so the caught impostor always picks among real rivals of
- *   the word rather than strays from elsewhere.
- * - The vote. A seat, or `IMPOSTOR_UNSURE_VOTE` from someone who cannot tell.
+ * - The deal: at the start one word card is drawn from the approved, published cards of the lobby's variety and
+ *   difficulty (through the trusted readers, so drafts never reach a table), plus three other approved words for the
+ *   caught impostor's guess, from the same category where possible. The deal lives only in the game's state and leaves
+ *   through the rules' per-seat view, never in stored settings or a link.
+ * - The clue: it has already passed the chat gate (the engine runs it before the game's lock); the rules then refuse
+ *   one outside the variety's script, too long, or naming the word or a form of it.
+ * - Offering: a variety is offered at a difficulty once its approved cards there reach the registry's `minimum`, the
+ *   same count Learn uses (api/src/games/availability.ts).
+ * - The category: a host may pick one; the lobby is made only if it has `IMPOSTOR_CATEGORY_MIN` approved cards at that
+ *   difficulty. An any-category game draws only from categories that large, so the guess is always among real rivals of
+ *   the word.
+ * - The vote: a seat, or `IMPOSTOR_UNSURE_VOTE` for "not sure".
  */
 
 const MINIMUM = learnGame('impostor').minimum;
@@ -70,7 +60,7 @@ const clueSeconds = z.custom<ImpostorClueSeconds>((v) => (IMPOSTOR_CLUE_SECONDS 
   message: `one of ${IMPOSTOR_CLUE_SECONDS.join(', ')}`,
 });
 
-// an object read field by field: anything else sent (a deal, say) is dropped
+// An object read field by field: anything else sent (a deal, say) is dropped.
 const lobbySchema = z
   .object({
     dialect: z.enum(['kmr', 'ckb']).default('kmr'),
@@ -130,10 +120,8 @@ export function dealableCategories(pool: ReadonlyArray<Pick<PublishedContent<'wo
 }
 
 /**
- * The other words a caught impostor picks the word from, pure: of the word's
- * own category first, then any other, each drawn in the seed's order, and
- * none too close to the word or to one another (`impostorTooClose`: the word
- * give or take an ending, or the same meaning under another name).
+ * The words a caught impostor chooses from, pure: the word's own category first, then any other, in the seed's order,
+ * none too close to the word or each other (`impostorTooClose`: the word give or take an ending, or a synonym).
  */
 export function decoysFor(
   chosen: Pick<WordCardContent, 'word' | 'meanings' | 'category'>,
@@ -154,9 +142,8 @@ export function decoysFor(
 }
 
 /**
- * The deal from a pool, pure: one card drawn by the seed from a category with
- * enough cards (the one the lobby asked for, or any that qualifies), and the
- * other words for the guess (`decoysFor`).
+ * The deal from a pool, pure: one card drawn by the seed from a category with enough cards (the lobby's, or any that
+ * qualifies), and the guess options (`decoysFor`).
  */
 export function dealFrom(
   pool: ReadonlyArray<Pick<PublishedContent<'word_card'>, 'payload'>>,

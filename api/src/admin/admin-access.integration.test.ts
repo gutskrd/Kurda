@@ -1,11 +1,7 @@
 /**
- * Every staff route refuses everyone who is not staff (integration).
- *
- * Read from the app's own route table, so a route added tomorrow is covered
- * the day it is written: anonymous callers and ordinary members get nothing
- * from any of them. Each is refused by its guard (401 for a stranger, 403 for
- * a member); a request whose body or query fails validation is refused before
- * the guard is reached, which is a refusal all the same.
+ * Every staff route refuses non-staff callers (integration). Routes are read from the app's own route table, so new
+ * routes are covered automatically: strangers get 401 and members 403 from each guard, and a request failing validation
+ * first is refused all the same.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

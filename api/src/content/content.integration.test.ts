@@ -1,4 +1,4 @@
-/** Content schema + versioning invariants (KUR-026) against Postgres. */
+/** Content schema + versioning invariants against Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { ContentRepository } from './repository.js';
@@ -115,20 +115,20 @@ describe.skipIf(!DATABASE_URL)('content schema (integration)', () => {
 
   it('exercise types are constrained to the known set', async () => {
     const draft = await repo.createLesson(skillId, 9, 'Draft', 'Draft');
-    // rejected by payload validation (KUR-027) before hitting the DB
+    // rejected by payload validation before hitting the DB
     await expect(
       repo.addExercise(draft, 1, 'flashcard' as never, { prompt: 'x' }),
     ).rejects.toThrow(/unknown exercise type/i);
   });
 
-  it('rejects a malformed payload for a valid type (KUR-027)', async () => {
+  it('rejects a malformed payload for a valid type', async () => {
     const draft = await repo.createLesson(skillId, 10, 'Draft2', 'Draft2');
     await expect(
       repo.addExercise(draft, 1, 'multiple_choice', { prompt: 'x', options: ['a'], correctIndex: 3 }),
     ).rejects.toThrow(/invalid multiple_choice payload/i);
   });
 
-  it('attaches and reads a markdown grammar note per skill (KUR-038)', async () => {
+  it('attaches and reads a markdown grammar note per skill', async () => {
     expect(await repo.grammarForSkill(skillId)).toBeNull();
     await repo.setGrammarNote(skillId, '# Silav\n\nUse **silav** to greet.');
     expect(await repo.grammarForSkill(skillId)).toContain('**silav**');

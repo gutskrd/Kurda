@@ -1,11 +1,8 @@
 /**
- * A chapter of the road going online by itself against real Postgres: not
- * while one line is still unrecorded, then every lesson of it at once when
- * the last take is in; never twice; never a chapter with nothing to record;
- * never over a lesson an editor is reworking; and the chapter's story, told
- * by Hamo, waited for and published with it.
- *
- * Each run builds a course of its own, so the road itself is never touched.
+ * A road chapter going online by itself against real Postgres: not while a line is unrecorded, then every lesson at
+ * once when the last take is in; never twice; never a chapter with nothing to record; never over a lesson an editor is
+ * reworking; and the chapter's story waited for and published with it. Each run builds its own course, so the road is
+ * never touched.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyBaseLogger } from 'fastify';

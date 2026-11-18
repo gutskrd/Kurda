@@ -1,4 +1,4 @@
-/** Rhyme multiplayer (1v1 / FFA) flow against real Postgres (CI job). KUR-299. */
+/** Rhyme multiplayer (1v1 / FFA) flow against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';
@@ -35,10 +35,8 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    // The match prompt is drawn at random from the WHOLE dictionary, so every word
-    // present must rhyme with these fixtures. Own the table rather than assume it
-    // is empty (a baseline word pool ships in a seed migration); integration files
-    // run serially — see api/vitest.config.ts.
+    // The match prompt is drawn from the WHOLE dictionary, so every word present must rhyme with these fixtures. Own the
+    // table rather than assume it empty (a seed migration ships a word pool); integration files run serially.
     await pool.query(`DELETE FROM dict_entries`);
     for (const w of RHYMES) {
       const r = await pool.query<{ id: string }>(

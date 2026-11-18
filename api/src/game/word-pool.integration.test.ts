@@ -23,11 +23,7 @@ describe.skipIf(!DATABASE_URL)('the Wordle word pool (integration)', () => {
     );
   }
 
-  /**
-   * Run with a pool holding nothing but `words`, inside a transaction that is
-   * rolled back: the rest of the dictionary is left out of the games for the
-   * length of the test and nobody else sees it.
-   */
+  /** Run with a pool of only `words`, inside a rolled-back transaction, so nobody else sees the change. */
   async function withPool<T>(words: Array<[string, string]>, run: (client: pg.PoolClient) => Promise<T>): Promise<T> {
     const client = await pool.connect();
     try {

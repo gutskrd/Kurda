@@ -2,20 +2,14 @@ import { createHmac } from 'node:crypto';
 import { DEV_JWT_SECRET } from '../config/env.js';
 
 /**
- * Keyed pseudonyms for moderation records.
+ * Keyed pseudonyms for moderation records. Reports, sanctions and audit rows outlive their accounts: ids are nulled on
+ * hard delete while these hashes stay, so reporter accuracy and a person's history can still be counted without keeping
+ * who they were. The banned-address registry uses the same key, so a permanently banned email is recognised at sign-up
+ * without being stored.
  *
- * A report, a sanction or an audit row outlives the account it is about: the
- * id is nulled if a row is ever hard-deleted, and these hashes stay, so a
- * reporter's accuracy and a person's history can still be counted without
- * keeping who they were. The banned-address registry uses the same key, so a
- * permanently banned person's email can be recognised at signup without the
- * address itself being stored.
- *
- * Keyed with a server secret (set from the app's JWT secret at start-up, like
- * the lesson shuffle) rather than plain hashes: a plain hash of a uuid or an
- * email is one dictionary away from the original. Rotating that secret makes
- * old registry entries unrecognisable — a deliberate, documented trade: the
- * registry is a brake on re-registration, not a permanent list.
+ * Keyed with a server secret (set from the JWT secret at start-up, like the lesson shuffle) because a plain hash of a
+ * uuid or email is one dictionary away from the original. Rotating the secret makes old registry entries
+ * unrecognisable, a deliberate trade: the registry slows re-registration, it is not a permanent list.
  */
 let moderationKey: string = DEV_JWT_SECRET;
 
@@ -33,27 +27,25 @@ export function userHash(userId: string): string {
 }
 
 /**
- * A network address as the public copyright form's per-address limit counts
- * it: the notice keeps this, never the address.
+ * A network address as the public copyright form's per-address limit counts it; the notice keeps this hash, never the
+ * address.
  */
 export function networkHash(ip: string): string {
   return keyed('ip', ip);
 }
 
 /**
- * A network as account linking, the signup caps and the network sightings
- * store it: the keyed hash of `networkKey` (net/network-key.ts), never the
- * address. Plain hashes of IPv4 addresses are not a minimisation at all — there
- * are only 2^32 of them to try.
+ * A network as account linking, sign-up caps and network sightings store it: the keyed hash of `networkKey`
+ * (net/network-key.ts), never the address. Plain hashes of IPv4 addresses protect nothing, since there are only 2^32 to
+ * try.
  */
 export function networkKeyHash(key: string): string {
   return keyed('network-v2', key);
 }
 
 /**
- * An email as the ban registry compares it: lower-cased and trimmed, without a
- * `+tag`, and for Gmail without the dots Gmail ignores — the cheap tricks for
- * making "a new address" that delivers to the same inbox.
+ * An email as the ban registry compares it: lower-cased and trimmed, without a `+tag`, and without the dots some
+ * providers ignore, which are the cheap ways to make a "new address" that reaches the same inbox.
  */
 export function normalizeEmailForRegistry(email: string): string {
   const lower = email.trim().toLowerCase();
@@ -74,10 +66,8 @@ export function emailRegistryHash(email: string): string {
 }
 
 /**
- * Where a quarantined file is kept: `quarantine/<keyed hash>/<its key>`. Keyed,
- * so nobody can work out the private copy's address from the public one; and
- * the same for the same file every time, so two runs that race to move it
- * write the same object and neither leaves a stray copy behind.
+ * Where a quarantined file is kept: `quarantine/<keyed hash>/<its key>`. Keyed, so the private copy's address cannot be
+ * derived from the public one, and stable, so racing moves write the same object and leave no stray copy.
  */
 export function evidenceObjectKey(key: string): string {
   return `quarantine/${keyed('evidence-object', key).slice(0, 40)}/${key}`;

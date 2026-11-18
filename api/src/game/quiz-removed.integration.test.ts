@@ -1,11 +1,7 @@
 /**
- * The ranked quiz is gone (Stories replaced it), and with it every way into
- * a live quiz match: the queue, private rooms, friend challenges and rematches.
- *
- * Kept as a regression test because one of those routes was removed before,
- * for a reason that still holds: `POST /matchmaking/party` let a caller start
- * a game with a roster they named — anyone, including a stranger's child. None
- * of these may come back by accident with an old file.
+ * The ranked quiz and every way into a live quiz match (queue, private rooms, friend challenges, rematches) are gone.
+ * Kept as a regression test: `POST /matchmaking/party` once let a caller start a game with any roster, a stranger's
+ * child included, and none of these routes may return by accident.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

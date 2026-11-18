@@ -5,28 +5,18 @@ import type { Executor } from './tx.js';
 /**
  * Evidence snapshots: what the server freezes when something is reported.
  *
- * Every target type has a resolver that reads the thing as it is right now —
- * text, title or caption, author, created and edited times, media keys, and for
- * chats the messages around it — and returns it as an `EvidenceSnapshot`, which
- * the report stores and never changes. So the admin reads what the reporter
- * saw, even after the author edits or deletes it (the old queue re-read the live
- * row, and an author deleting a post made the report vanish).
+ * Each target type has a resolver that reads the thing as it is now (text, title or caption, author, created and edited
+ * times, media keys, and for chats the surrounding messages) and returns an `EvidenceSnapshot`, stored with the report
+ * and never changed. The admin reads what the reporter saw even if the author later edits or deletes it.
  *
- * The resolvers also decide whether the reporter may report it at all: only
- * what they can see. A chat only from inside it (a stranger must not be able to
- * pull a private conversation into anyone's view), a group only by a member
- * (every group is private), a post or comment only as the reader would find it — published,
- * not removed, and not a minor's written for their friends (users/age.ts
- * `writtenForSql`) — a game player only by someone in that game, and nobody
- * reports themselves. Anything else is "not found": an id is not a key to a
- * draft's title or a private group's name, which the receipt and "My reports"
- * would otherwise hand back as its label, with the text frozen into evidence.
- * Once reported, the snapshot is what matters: an author who unpublishes or
- * deletes it afterwards changes nothing.
+ * Resolvers also decide whether the reporter may report it: only what they can see. A chat only from inside it, a group
+ * only by a member (groups are private), a post or comment only as a reader would find it (published, not removed, not
+ * a minor's friends-only writing, users/age.ts `writtenForSql`), a game player only by someone in that game, and never
+ * oneself. Anything else is "not found", so an id cannot reveal a draft's title or a private group's name via the
+ * receipt or "My reports".
  *
- * Game players are reported by seat, and each game says how seats map to
- * people through a small registry (`registerGameSeats`), so a new game plugs in
- * with one reader instead of a change to the report path.
+ * Game players are reported by seat; each game registers how seats map to people (`registerGameSeats`), so a new game
+ * needs only a reader.
  */
 
 export interface ResolveContext {
@@ -168,10 +158,8 @@ const resolveLibraryPost: Resolver = async (db, targetId, ctx) => {
   const self = selfRefusal(ctx, p.author_id);
   if (self) return self;
   if (!visibleTo(ctx, p.visible)) return { refused: 'not_found' };
-  // a written post carries up to four pictures (library_post_media): they are
-  // part of what was reported, with the words written for them, and are kept
-  // from cleanup with the rest of the evidence — an author who edits them off
-  // or deletes the post takes nothing from the case
+  // A written post's pictures (up to four, library_post_media) and their alt text are part of the report and kept from
+  // cleanup with the evidence, so editing them off or deleting the post removes nothing from the case.
   const pictures = await db.query<{ media_key: string; alt_text: string | null }>(
     `SELECT media_key, alt_text FROM library_post_media WHERE post_id = $1 ORDER BY position`,
     [p.id],
@@ -324,11 +312,9 @@ function toEvidenceMessage(m: MessageRow, reportedId: string): EvidenceMessage {
 }
 
 /**
- * The reported message with the ones before and after it, in order. `scope` is
- * the SQL that picks the conversation (a literal from this file, never input);
- * its parameters come first, then the message's id. The message's own time is
- * read in SQL rather than passed in: a JavaScript Date drops the microseconds
- * Postgres keeps, and the message would then count as "after" itself.
+ * The reported message with those before and after it, in order. `scope` is the SQL selecting the conversation (a
+ * literal from this file, never input); its parameters come first, then the message id. The message's time is read in
+ * SQL because a JavaScript Date drops Postgres's microseconds and the message would count as "after" itself.
  */
 async function contextAround(
   db: Executor,
@@ -429,13 +415,10 @@ function toLetterMessage(m: MessageRow & { decor: LetterDecor | null }, reported
 }
 
 /**
- * A letter between pen pals (letters/service.ts): reported only by somebody in
- * its correspondence and never by its writer, kept with the letters before and
- * after it, as a chat message is. A letter still out with its bird can be
- * reported by whoever called the bird to their window and read it, kept on
- * its own; to anybody else it is not found. The whole letter is kept: its
- * paper, what was drawn on it and its notes (`decor`), as the reader saw them;
- * the letters round it keep their notes, which are words like any other.
+ * A pen-pal letter (letters/service.ts): reportable only by someone in its correspondence, never its writer, kept with
+ * the letters around it like a chat message. A letter still in flight can be reported, on its own, by whoever received
+ * and read it; to anyone else it is not found. The whole letter is kept as the reader saw it (paper, drawings, notes in
+ * `decor`); surrounding letters keep their notes too.
  */
 const resolveLetter: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
@@ -508,25 +491,17 @@ export type GameSeatsReader = (db: Executor, gameId: string) => Promise<GameSeat
 const gameSeatReaders = new Map<string, GameSeatsReader>();
 
 /**
- * Teach the report endpoint how a game's seats map to people. Seats are the
- * order the game shows its players in; the mapping is done here, on the server,
- * so a client reports "seat 2" and never needs anyone's account id.
+ * Register how a game's seats map to people. Seats are the order the game shows its players; mapping on the server
+ * means a client reports "seat 2" without ever needing an account id.
  */
 export function registerGameSeats(game: ReportableGame, reader: GameSeatsReader): void {
   gameSeatReaders.set(game, reader);
 }
 
-export function hasGameSeats(game: string): boolean {
-  return gameSeatReaders.has(game);
-}
-
 /**
- * Peyvok Battle and Rhyme Match seats: the `seat` column the shared lobby
- * rules give their players (migration 1751000149000), handed out in join
- * order and never given to a second person, which is what their views show
- * ("Player 2"). A player who left a started game keeps theirs (`left_at`);
- * leaving a lobby before it started deletes the row, so there is nobody to
- * report there.
+ * Peyvok Battle and Rhyme Match seats: the `seat` column from the shared lobby rules (migration 1751000149000),
+ * assigned in join order and never reused, as their views show ("Player 2"). A player who left a started game keeps
+ * theirs (`left_at`); leaving an unstarted lobby deletes the row, so there is nobody to report.
  */
 function battleSeats(gameTable: string, playerTable: string, fk: string): GameSeatsReader {
   return async (db, gameId) => {
@@ -544,10 +519,8 @@ registerGameSeats('wordle-battle', battleSeats('wordle_battles', 'wordle_battle_
 registerGameSeats('rhyme-match', battleSeats('rhyme_matches', 'rhyme_match_players', 'match_id'));
 
 /**
- * Stories keeps real seats (`story_game_players.seat`, migration
- * 1751000147000, never reused within a game), so they are read as they are. A
- * player who left or was removed keeps their seat: what they did before
- * leaving is still reportable.
+ * Stories keeps real seats (`story_game_players.seat`, migration 1751000147000, never reused within a game). A player
+ * who left or was removed keeps their seat, so what they did before is still reportable.
  */
 registerGameSeats('stories', async (db, gameId) => {
   const g = await db.query<{ status: string }>(`SELECT status FROM story_games WHERE id = $1`, [gameId]);
@@ -560,12 +533,9 @@ registerGameSeats('stories', async (db, gameId) => {
 });
 
 /**
- * The multiplayer learning games share the generic engine's seats
- * (`game_lobby_players.seat`, given once and never reused in a game). A
- * computer seat has nobody to report. What the reported player typed in the
- * game is frozen with the report (`extra.typed`): a report about a game is
- * judged on what was written in it, and the game clears its own copy a month
- * after it ends.
+ * The multiplayer games share the engine's seats (`game_lobby_players.seat`, never reused in a game); a computer seat
+ * has nobody to report. What the reported player typed is frozen with the report (`extra.typed`), since the game clears
+ * its own copy a month after it ends.
  */
 const multiSeats =
   (game: string): GameSeatsReader =>
@@ -649,13 +619,4 @@ const RESOLVERS: Readonly<Record<ReportTargetType, Resolver>> = {
 /** Snapshot a report's target, or say why it cannot be reported. */
 export function resolveTarget(db: Executor, targetType: ReportTargetType, targetId: string, ctx: ResolveContext): Promise<ResolveResult> {
   return RESOLVERS[targetType](db, targetId, ctx);
-}
-
-/** Parse a stored game-player target id back into its parts. */
-export function parseGamePlayerTarget(stored: string): { game: string; gameId: string; seat: number } | null {
-  const parts = stored.split(':');
-  if (parts.length !== 3) return null;
-  const seat = Number(parts[2]);
-  if (!Number.isInteger(seat) || seat < 1) return null;
-  return { game: parts[0]!, gameId: parts[1]!, seat };
 }

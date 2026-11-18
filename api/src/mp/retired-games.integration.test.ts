@@ -1,14 +1,8 @@
 /**
- * The games that are no longer part of Hevalo, against real Postgres and
- * Redis: Don't Say the Word!, Kurdish Bluff and The Village.
- *
- * Two promises are kept here. Nothing starts one: every route that takes a
- * game's name refuses theirs, and the village's routes are gone. And what was
- * stored while they were played is never in the way: a lobby, an invitation,
- * a join code or a card written for one of them stays in the database, is
- * answered as something that is not there, and is passed over by the timers,
- * the sweep and every list, so the games there are go on untouched. The
- * migration that calls the open ones off is run here as it is written.
+ * Retired games (Don't Say the Word!, Kurdish Bluff, The Village) against real Postgres and Redis. Nothing starts one:
+ * every route taking a game name refuses theirs, and the village routes are gone. Their stored lobbies, invitations,
+ * join codes and cards stay in the database but answer as missing and are skipped by timers, the sweep and every list.
+ * The migration that calls the open ones off is run here as written.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

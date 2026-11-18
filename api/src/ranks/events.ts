@@ -1,20 +1,13 @@
 import type { PointsTier, RankedGame } from '@kurda/shared';
 
 /**
- * What Game Ranks tells the rest of the API, for the badges (contract-4 §B2:
- * evaluators "triggered by events … game finished … season closed").
+ * Events Game Ranks emits for the badges (contract-4 §B2). The badges subscribe in `listenToRanks`
+ * (badges/rank-hooks.ts), wired by `createProgression`.
  *
- * The badges subscribe in `listenToRanks` (badges/rank-hooks.ts), which
- * `createProgression` calls with the events of the RankService that rates the
- * process's games (app.ts, and the worker's standalone story games).
- *
- * Both are told only after the transaction that did it has committed, so a
- * listener reading the tables sees the game or the season; and each is told
- * once per game / season on the instance that did the work. A listener may be
- * async; a throw or a rejection is logged and never reaches the game. They are
- * prompts to re-evaluate from the tables (`game_ratings`, `rating_events`,
- * `rank_season_results`, `rated_leaves`), not a ledger: an evaluator must stay
- * idempotent and must not count events.
+ * Listeners run after the transaction commits, once per game or season on the instance that did the work. A throw or
+ * rejection is logged and never reaches the game. Events are prompts to re-evaluate from the tables (`game_ratings`,
+ * `rating_events`, `rank_season_results`, `rated_leaves`), not a ledger: evaluators must stay idempotent and must not
+ * count events.
  */
 
 /** One player of a rated game that has just been applied. */

@@ -1,11 +1,8 @@
 /**
- * Ez kî me? beside its table, and the cards made of picked words, against
- * real Postgres and Redis: the game on one phone (where it is offered, and a
- * card for everyone in the room, with "sometimes" for a phone that has four
- * answers and without it for one that has two), a wrong card reported from
- * one phone, no round of it alone any more and what becomes of one left
- * open; the admin picking approved words for identities without retyping
- * the Kurdish; and the starter questions, drafts nobody meets until they are
+ * Ez kî me? beside its table, and cards made from picked words, against real Postgres and Redis: the one-phone game
+ * (where offered, and a card per person, with "sometimes" for four-answer phones and without it for two-answer ones), a
+ * wrong card reported from one phone, no solo rounds any more and what happens to one left open; the admin picking
+ * approved words for identities without retyping Kurdish; and the starter questions as drafts nobody meets until
  * approved.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

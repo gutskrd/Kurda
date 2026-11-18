@@ -1,23 +1,15 @@
 /**
- * The press the Hevalo book is printed on: one PDF being written, with the
- * book's type, its measure, and the app's drawings as stamps it can lay down
- * as often as it likes.
+ * The press the book is printed on: one PDF being written, with the book's type, measure, and the app's drawings as
+ * reusable stamps.
  *
- * Three things a page of the book needs that the PDF writer does not give:
+ * Three things the PDF writer does not provide:
+ * - Text measured before it is set: paragraphs are broken here (`wrap`), in mixed type where a grammar note marks
+ *   Kurdish, so heights are known in advance and pages break by rule (flow.ts).
+ * - Each drawing written once: a character is thirty kilobytes of curves and Hamo appears two hundred times, so each
+ *   drawing becomes a form on first use (`art`) and is only placed after that.
+ * - The same few shapes everywhere: rounded panel, speech bubble, dotted writing line.
  *
- *  - Text measured before it is set. A paragraph is broken into lines here
- *    (`wrap`), in mixed type where a grammar note marks its Kurdish, so its
- *    height is known before anything is drawn and the pages can be broken by
- *    rule (flow.ts) rather than wherever the paper runs out.
- *  - Every drawing made once. A character is thirty kilobytes of curves and
- *    the book shows Hamo two hundred times; each drawing is written into the
- *    file as a form the first time it is used (`art`) and only placed after
- *    that, which keeps the whole book small and quick to make.
- *  - The same few shapes everywhere: a rounded panel, a speech bubble, a
- *    dotted line to write on.
- *
- * Headings are set in Fraunces and reading text in Literata, both under the
- * SIL Open Font Licence and shipped by their packages.
+ * Headings are set in Fraunces and text in Literata, both SIL Open Font Licence, shipped by their packages.
  */
 import { createRequire } from 'node:module';
 import PDFDocument from 'pdfkit';
@@ -140,25 +132,17 @@ export class Press {
   }
 
   /**
-   * A paragraph broken into lines no wider than `width`. Words are never
-   * split, a space between two spans may break and a join without one may
-   * not (so a comma stays with the bold word before it), and a line that
-   * would end the paragraph on a single short word takes a companion down
-   * with it where it can.
+   * A paragraph broken into lines no wider than `width`. Words are never split; a space between spans may break, a join
+   * without one may not (so a comma stays with the bold word before it); a paragraph's last line takes a companion word
+   * down rather than ending on one short word.
    *
-   * A no-break space (U+00A0) holds what it joins on one line: an option's
-   * letter and the option, an answer's number and the answer. It is set as
-   * an ordinary space once the lines are broken, so the file carries plain
-   * spaces and no face needs a glyph for it. An en or em space (U+2002,
-   * U+2003) is the other way round: a line may break there like at any
-   * space, but within a line it keeps its own width, which is how a list run
-   * into one paragraph (a question's options, a chapter's answers) holds its
-   * items apart; any other run of spaces is set as one.
+   * A no-break space (U+00A0) keeps what it joins on one line (an option's letter and text, an answer's number and
+   * answer) and is written as a plain space after breaking, so no face needs its glyph. An en or em space (U+2002,
+   * U+2003) may break, but keeps its width within a line, which is how a run-in list holds its items apart; other runs
+   * of spaces collapse to one.
    *
-   * `balance` evens the lines out instead of filling each to the measure,
-   * for a speech bubble, whose last line should not be one word under a
-   * long one: the paragraph keeps its number of lines and is broken at the
-   * narrowest width that still holds it in them.
+   * `balance` evens the lines instead of filling each (for speech bubbles): the paragraph keeps its line count at the
+   * narrowest width that still holds it.
    */
   wrap(text: string | readonly Span[], width: number, type: Type, maxLines = Infinity, balance = false): Line[] {
     if (balance && Number.isFinite(width)) {
@@ -311,9 +295,8 @@ export class Press {
   // ───────────────────────────────────────────────────────────── drawings
 
   /**
-   * A drawing as a form in the file: made from its SVG the first time it is
-   * asked for under `key`, and the same form after that. `w` by `h` is the
-   * box it is drawn into, in the form's own points; it is placed at any size.
+   * A drawing as a reusable form in the file: made from its SVG the first time `key` is asked for, reused after. `w` by
+   * `h` is its box in the form's own points; it can be placed at any size.
    */
   art(key: string, w: number, h: number, svg: () => string): Stamp {
     const made = this.stamps.get(key);
@@ -345,9 +328,8 @@ export class Press {
   }
 
   /**
-   * A drawing placed with its top left at (x, y), `w` wide (and as tall as
-   * its own shape makes it): mirrored left to right with `flip`, turned by
-   * `turn` degrees about its middle.
+   * Place a drawing with its top left at (x, y), `w` wide (height from its shape), mirrored with `flip` and rotated
+   * `turn` degrees about its centre.
    */
   place(stamp: Stamp, x: number, y: number, w: number, options: { flip?: boolean; turn?: number } = {}): void {
     const k = w / stamp.w;
@@ -399,8 +381,8 @@ export class Press {
   }
 
   /**
-   * A speech bubble: a rounded box with a small tail on its left or right
-   * edge (`tail` is how far down that edge it points out), or underneath.
+   * A speech bubble: a rounded box with a small tail on its left or right edge (`tail.at` is how far down it points
+   * out), or underneath.
    */
   bubble(x: number, y: number, w: number, h: number, fill: string, tail: { side: 'left' | 'right' | 'down'; at: number } | null = null, r = 6): void {
     const doc = this.doc;

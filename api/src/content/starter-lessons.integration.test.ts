@@ -1,7 +1,6 @@
 /**
- * Seeding the starter lessons against real Postgres: once each, as a draft at
- * the end of the skill its file names, never again after an editor deletes
- * it, and only once its course is loaded.
+ * Seeding the starter lessons against real Postgres: once each, as a draft at the end of the skill its file names,
+ * never again after an editor deletes it, and only once its course is loaded.
  */
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

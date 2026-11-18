@@ -1,10 +1,7 @@
 /**
- * A refused request changes nothing. The admin guards sent their 403 and
- * returned without waiting for it; the app's onSend hooks are async, so the
- * reply was not finished yet and Fastify went on to run the handler too — a
- * moderator asking to change a balance was told 403, and the balance changed.
- * Each guard is tried here by someone it refuses, and the database is read
- * after the handler would have had time to run.
+ * A refused request changes nothing. Fastify's onSend hooks are async, so a guard that sends 403 without waiting lets
+ * the handler run too. Each guard is tried by someone it refuses, and the database is read after the handler would have
+ * run.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

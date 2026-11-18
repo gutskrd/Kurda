@@ -1,10 +1,9 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 /**
- * TOTP (RFC 6238) for mandatory admin 2FA (KUR-099) — no external dependency.
- * Standard HMAC-SHA1, 6 digits, 30-second step, compatible with Google
- * Authenticator / 1Password / Authy. Verification checks a ±1 step window to
- * tolerate clock skew and compares in constant time.
+ * TOTP (RFC 6238) for mandatory admin 2FA, with no external dependency: HMAC-SHA1, 6 digits, 30-second step, as
+ * standard authenticator apps expect. Verification checks a ±1 step window for clock skew and compares in constant
+ * time.
  */
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -69,9 +68,8 @@ export function totpCode(secretBase32: string, time: number = Date.now(), digits
 }
 
 /**
- * The time step a code belongs to, checked against a ±`window`-step range in
- * constant time per candidate; null when it matches none. Knowing the step is
- * what lets a caller refuse the same code twice (see AdminTotpService).
+ * The time step a code belongs to within ±`window` steps, compared in constant time per candidate; null when none
+ * matches. The step lets callers refuse a code reused (see AdminTotpService).
  */
 export function matchTotpStep(
   secretBase32: string,
@@ -93,16 +91,6 @@ export function matchTotpStep(
     }
   }
   return matched;
-}
-
-/** Verify a code against a ±`window`-step range, constant-time per candidate. */
-export function verifyTotp(
-  secretBase32: string,
-  code: string,
-  time: number = Date.now(),
-  window = 1,
-): boolean {
-  return matchTotpStep(secretBase32, code, time, window) !== null;
 }
 
 /** otpauth:// URI for provisioning in an authenticator app (QR code). */

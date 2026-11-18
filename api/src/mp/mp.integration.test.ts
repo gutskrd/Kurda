@@ -1,9 +1,7 @@
 /**
- * The multiplayer learning games' engine and Tîpa Dawî on it, through
- * the routes, against real Postgres: a lobby's life from invite to rematch,
- * turns that run out, players who go away or leave, what each player may see,
- * placement XP and Game Ranks, the join rule for minors and blocks, reports by
- * seat, and the database's lists of games.
+ * The multiplayer engine and Tîpa Dawî through the routes against real Postgres: a lobby from invite to rematch, turns
+ * running out, players going away or leaving, per-player views, placement XP and Game Ranks, the join rule for minors
+ * and blocks, reports by seat, and the database's game lists.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -27,9 +25,8 @@ interface User {
 type View = MultiView<LastLetterBoard | null>;
 
 /**
- * Words that chain (each ends with the letter the next begins with), and a
- * pile of generated filler so the dialect's dictionary is big enough for the
- * game to be offered. All of it is removed again at the end.
+ * Words that chain (each ends with the letter the next begins with), plus generated filler so the dialect's dictionary
+ * is big enough to offer the game. All removed at the end.
  */
 const CHAIN = ['qaxar', 'roqax', 'xazaq', 'qerox', 'xoreq', 'qazix'];
 
