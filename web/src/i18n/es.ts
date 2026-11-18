@@ -882,6 +882,7 @@ export const es: Catalogue = {
   'letters.error.notYourTurn': 'Espera su carta antes de volver a escribir.',
   'letters.error.today': 'Por hoy ya está. Mañana tu pájaro podrá volar otra vez.',
   'letters.error.bands': 'Esta correspondencia no puede seguir: las cartas solo van entre personas de edad parecida.',
+  'letters.thread.earlier': 'Ver cartas anteriores',
   'letters.thread.closed': 'Esta correspondencia ha terminado. Ninguno de los dos puede volver a escribir aquí.',
   'letters.thread.waiting': 'Tu carta está con {name}. Cuando te responda, su pájaro te la traerá a la ventana.',
   'letters.goodbye': 'Despedirse',

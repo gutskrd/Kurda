@@ -886,6 +886,7 @@ export const ku: Catalogue = {
   'letters.error.notYourTurn': 'Berî ku dîsa binivîsî, li benda nameya wan be.',
   'letters.error.today': 'Ji bo îro bes e. Balindeyê te dikare sibê dîsa bifire.',
   'letters.error.bands': 'Hûn êdî nikarin ji hev re binivîsin: name tenê di navbera kesên ku temenê wan nêzî hev e de diçin.',
+  'letters.thread.earlier': 'Nameyên berê nîşan bide',
   'letters.thread.closed': 'Ev name bi dawî bûn. Êdî tu kes ji we nikare li vir binivîse.',
   'letters.thread.waiting': 'Nameya te li cem {name} e. Gava bersivê binivîsin, balindeyê wan dê wê bîne ber pencereya te.',
   'letters.goodbye': 'Xatir bixwaze',

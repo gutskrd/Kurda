@@ -884,6 +884,7 @@ export const de: Catalogue = {
   'letters.error.notYourTurn': 'Warte auf die Antwort, bevor du wieder schreibst.',
   'letters.error.today': 'Für heute reicht es. Morgen kann dein Vogel wieder fliegen.',
   'letters.error.bands': 'Ihr könnt euch nicht mehr schreiben: Briefe gehen nur zwischen Menschen ähnlichen Alters.',
+  'letters.thread.earlier': 'Frühere Briefe anzeigen',
   'letters.thread.closed': 'Dieser Briefwechsel ist beendet. Keiner von euch kann hier noch schreiben.',
   'letters.thread.waiting': 'Dein Brief ist bei {name}. Die Antwort bringt dir ein Vogel ans Fenster.',
   'letters.goodbye': 'Verabschieden',

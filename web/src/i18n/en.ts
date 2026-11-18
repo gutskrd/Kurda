@@ -944,6 +944,7 @@ export const en = {
   'letters.error.notYourTurn': 'Wait for their letter before you write again.',
   'letters.error.today': 'That’s enough letters for today. Your bird can fly again tomorrow.',
   'letters.error.bands': 'You can’t write to each other any more: letters only go between people of a similar age.',
+  'letters.thread.earlier': 'Show earlier letters',
   'letters.thread.closed': 'These letters have ended. Neither of you can write here again.',
   'letters.thread.waiting': 'Your letter is with {name}. When they write back, their bird will bring it to your window.',
   'letters.goodbye': 'Say goodbye',

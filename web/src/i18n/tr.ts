@@ -879,6 +879,7 @@ export const tr: Catalogue = {
   'letters.error.notYourTurn': 'Tekrar yazmadan önce onun mektubunu bekle.',
   'letters.error.today': 'Bugünlük bu kadar. Kuşun yarın yine uçabilir.',
   'letters.error.bands': 'Artık birbirinize yazamazsınız: mektuplar yalnızca yaşça yakın kişiler arasında gider.',
+  'letters.thread.earlier': 'Önceki mektupları göster',
   'letters.thread.closed': 'Bu yazışma sona erdi. Artık ikiniz de buraya yazamazsınız.',
   'letters.thread.waiting': 'Mektubun ulaştı. {name} cevap yazınca kuşu onu pencerene getirecek.',
   'letters.goodbye': 'Veda et',

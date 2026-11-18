@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { LETTERS_CHANGED, type LetterItem, type LetterThread } from '@kurda/shared';
+import { LETTERS_CHANGED, freshLetters, letterThreadPath, withEarlierLetters, type LetterItem, type LetterThread } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useMemoryOwner } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import { ErrorState } from '../components/states';
+import { Button } from '../components/Button';
 import { ChevronIcon } from '../components/icons';
 import { UserActions } from '../profile/UserActions';
 import { ReportSheet } from '../reports/ReportSheet';
@@ -20,11 +21,20 @@ import './letters.css';
 /** Coming back to the tab reads the correspondence again, but not more often than this. */
 const VISIBLE_GAP_MS = 5000;
 
+interface CorrespondenceRead {
+  data: LetterThread | null;
+  error: string | null;
+  reload: () => void;
+  /** Reads the letters before the first shown; `busy` while it does, `error` if it could not. */
+  earlier: { show: () => void; busy: boolean; error: string | null };
+}
+
 /**
- * The correspondence, always fetched fresh since whose turn it is must be current. A network or server failure keeps
- * the letters and the paper on the page; a refusal, such as after a block, is shown since there is nothing to show.
+ * The correspondence, always fetched fresh since whose turn it is must be current: its newest letters, with the earlier
+ * ones already shown kept before them (shared `freshLetters`). A network or server failure keeps the letters and the
+ * paper on the page; a refusal, such as after a block, is shown since there is nothing to show.
  */
-function useCorrespondence(threadId: string): { data: LetterThread | null; error: string | null; reload: () => void } {
+function useCorrespondence(threadId: string): CorrespondenceRead {
   const t = useT();
   const { client } = useAuth();
   const [state, setState] = useState<{ data: LetterThread | null; error: string | null }>({ data: null, error: null });
@@ -34,9 +44,9 @@ function useCorrespondence(threadId: string): { data: LetterThread | null; error
     let cancelled = false;
     // asked again after an error with nothing to show: the page waits for the answer rather than showing the old error
     setState((s) => (s.data || !s.error ? s : { data: null, error: null }));
-    void client.get<LetterThread>(`/letters/threads/${encodeURIComponent(threadId)}`).then((res) => {
+    void client.get<LetterThread>(letterThreadPath(threadId)).then((res) => {
       if (cancelled) return;
-      if (res.ok) setState({ data: res.data, error: null });
+      if (res.ok) setState((s) => ({ data: freshLetters(s.data, res.data), error: null }));
       else
         setState((s) => (s.data && (res.error.kind === 'network' || res.error.kind === 'server' || res.error.kind === 'rate_limited') ? s : { data: null, error: describeError(res.error, t) }));
     });
@@ -45,14 +55,26 @@ function useCorrespondence(threadId: string): { data: LetterThread | null; error
       cancelled = true;
     };
   }, [client, threadId, asked, t]);
-  return { ...state, reload };
+
+  const [earlier, setEarlier] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
+  const first = state.data?.letters[0]?.id;
+  const show = useCallback(() => {
+    if (!first) return;
+    setEarlier({ busy: true, error: null });
+    void client.get<LetterThread>(letterThreadPath(threadId, first)).then((res) => {
+      if (res.ok) setState((s) => (s.data ? { ...s, data: withEarlierLetters(s.data, res.data) } : s));
+      setEarlier({ busy: false, error: res.ok ? null : describeError(res.error, t) });
+    });
+  }, [client, threadId, first, t]);
+  return { ...state, reload, earlier: { show, ...earlier } };
 }
 
 /**
- * One correspondence (/app/letters/:threadId): every letter oldest first, then the paper to reply on when theirs is
- * last, or a line saying the reader's bird is with them. The pen pal's ⋯ offers report, block and goodbye (confirmed
- * twice), which ends the letters for both; a single letter can be reported from under it. It refetches when the server
- * reports a change and when the tab is shown again. A reply in progress is kept as a draft (letters/drafts.ts).
+ * One correspondence (/app/letters/:threadId): its newest letters oldest first, with the earlier ones a press away, then
+ * the paper to reply on when theirs is last, or a line saying the reader's bird is with them. The pen pal's ⋯ offers
+ * report, block and goodbye (confirmed twice), which ends the letters for both; a single letter can be reported from
+ * under it. It refetches when the server reports a change and when the tab is shown again. A reply in progress is kept
+ * as a draft (letters/drafts.ts).
  */
 export function LetterThreadPage(): React.JSX.Element {
   const { threadId = '' } = useParams();
@@ -137,6 +159,18 @@ function Correspondence({ threadId }: { threadId: string }): React.JSX.Element {
         />
       </header>
 
+      {data.earlier && (
+        <div className="letters-earlier">
+          <Button variant="ghost" size="sm" disabled={thread.earlier.busy} aria-busy={thread.earlier.busy} onClick={thread.earlier.show}>
+            {t('letters.thread.earlier')}
+          </Button>
+          {thread.earlier.error && (
+            <p className="letters-earlier-error" role="status">
+              {thread.earlier.error}
+            </p>
+          )}
+        </div>
+      )}
       <ol className="letters-list">
         {letters.map((l) => (
           <li key={l.id}>

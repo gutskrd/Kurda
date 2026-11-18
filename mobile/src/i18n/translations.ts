@@ -2333,6 +2333,7 @@ export type TranslationKey =
   | 'letters.error.notYourTurn'
   | 'letters.error.today'
   | 'letters.error.bands'
+  | 'letters.thread.earlier'
   | 'letters.thread.closed'
   | 'letters.thread.waiting'
   | 'letters.goodbye'
@@ -5731,6 +5732,7 @@ const en: Catalog = {
   'letters.error.notYourTurn': 'Wait for their letter before you write again.',
   'letters.error.today': 'That’s enough letters for today. Your bird can fly again tomorrow.',
   'letters.error.bands': 'You can’t write to each other any more: letters only go between people of a similar age.',
+  'letters.thread.earlier': 'Show earlier letters',
   'letters.thread.closed': 'These letters have ended. Neither of you can write here again.',
   'letters.thread.waiting': 'Your letter is with {name}. When they write back, their bird will bring it to your window.',
   'letters.goodbye': 'Say goodbye',
@@ -9626,6 +9628,7 @@ const ku: Catalog = {
   'letters.error.notYourTurn': 'Berî ku dîsa binivîsî, li benda nameya wan be.',
   'letters.error.today': 'Ji bo îro bes e. Balindeyê te dikare sibê dîsa bifire.',
   'letters.error.bands': 'Hûn êdî nikarin ji hev re binivîsin: name tenê di navbera kesên ku temenê wan nêzî hev e de diçin.',
+  'letters.thread.earlier': 'Nameyên berê nîşan bide',
   'letters.thread.closed': 'Ev name bi dawî bûn. Êdî tu kes ji we nikare li vir binivîse.',
   'letters.thread.waiting': 'Nameya te li cem {name} e. Gava bersivê binivîsin, balindeyê wan dê wê bîne ber pencereya te.',
   'letters.goodbye': 'Xatir bixwaze',
@@ -13521,6 +13524,7 @@ const de: Catalog = {
   'letters.error.notYourTurn': 'Warte auf die Antwort, bevor du wieder schreibst.',
   'letters.error.today': 'Für heute reicht es. Morgen kann dein Vogel wieder fliegen.',
   'letters.error.bands': 'Ihr könnt euch nicht mehr schreiben: Briefe gehen nur zwischen Menschen ähnlichen Alters.',
+  'letters.thread.earlier': 'Frühere Briefe anzeigen',
   'letters.thread.closed': 'Dieser Briefwechsel ist beendet. Keiner von euch kann hier noch schreiben.',
   'letters.thread.waiting': 'Dein Brief ist bei {name}. Die Antwort bringt dir ein Vogel ans Fenster.',
   'letters.goodbye': 'Verabschieden',
@@ -17416,6 +17420,7 @@ const es: Catalog = {
   'letters.error.notYourTurn': 'Espera su carta antes de volver a escribir.',
   'letters.error.today': 'Por hoy ya está. Mañana tu pájaro podrá volar otra vez.',
   'letters.error.bands': 'Esta correspondencia no puede seguir: las cartas solo van entre personas de edad parecida.',
+  'letters.thread.earlier': 'Ver cartas anteriores',
   'letters.thread.closed': 'Esta correspondencia ha terminado. Ninguno de los dos puede volver a escribir aquí.',
   'letters.thread.waiting': 'Tu carta está con {name}. Cuando te responda, su pájaro te la traerá a la ventana.',
   'letters.goodbye': 'Despedirse',
@@ -21311,6 +21316,7 @@ const tr: Catalog = {
   'letters.error.notYourTurn': 'Tekrar yazmadan önce onun mektubunu bekle.',
   'letters.error.today': 'Bugünlük bu kadar. Kuşun yarın yine uçabilir.',
   'letters.error.bands': 'Artık birbirinize yazamazsınız: mektuplar yalnızca yaşça yakın kişiler arasında gider.',
+  'letters.thread.earlier': 'Önceki mektupları göster',
   'letters.thread.closed': 'Bu yazışma sona erdi. Artık ikiniz de buraya yazamazsınız.',
   'letters.thread.waiting': 'Mektubun ulaştı. {name} cevap yazınca kuşu onu pencerene getirecek.',
   'letters.goodbye': 'Veda et',
@@ -25206,6 +25212,7 @@ const ar: Catalog = {
   'letters.error.notYourTurn': 'انتظر رسالته قبل أن تكتب مرة أخرى.',
   'letters.error.today': 'يكفي هذا لليوم. يمكن لطائرك أن يطير مجددًا غدًا.',
   'letters.error.bands': 'لم يعد بإمكانكما المراسلة: الرسائل لا تُرسَل إلا بين أشخاص متقاربين في العمر.',
+  'letters.thread.earlier': 'عرض الرسائل السابقة',
   'letters.thread.closed': 'انتهت هذه المراسلة. لم يعد بإمكان أيٍّ منكما الكتابة هنا.',
   'letters.thread.waiting': 'رسالتك عند {name}. وحين يُكتب الرد، سيحمله طائرٌ إلى نافذتك.',
   'letters.goodbye': 'ودّع',
@@ -29101,6 +29108,7 @@ const fr: Catalog = {
   'letters.error.notYourTurn': 'Attends sa lettre avant d’écrire à nouveau.',
   'letters.error.today': 'C’est assez pour aujourd’hui. Ton oiseau pourra repartir demain.',
   'letters.error.bands': 'Vous ne pouvez plus vous écrire : les lettres ne circulent qu’entre personnes d’âge proche.',
+  'letters.thread.earlier': 'Voir les lettres précédentes',
   'letters.thread.closed': 'Cette correspondance est terminée. Aucun de vous deux ne peut plus écrire ici.',
   'letters.thread.waiting': 'Ta lettre est chez {name}. Sa réponse arrivera à ta fenêtre avec son oiseau.',
   'letters.goodbye': 'Dire au revoir',
@@ -32996,6 +33004,7 @@ const nl: Catalog = {
   'letters.error.notYourTurn': 'Wacht op het antwoord voordat je weer schrijft.',
   'letters.error.today': 'Genoeg voor vandaag. Morgen kan je vogel weer vliegen.',
   'letters.error.bands': 'Jullie kunnen elkaar niet meer schrijven: brieven gaan alleen tussen mensen van ongeveer dezelfde leeftijd.',
+  'letters.thread.earlier': 'Eerdere brieven tonen',
   'letters.thread.closed': 'Deze briefwisseling is afgelopen. Jullie kunnen hier geen van beiden meer schrijven.',
   'letters.thread.waiting': 'Je brief is bij {name}. Een vogel brengt het antwoord naar je raam.',
   'letters.goodbye': 'Afscheid nemen',
@@ -36892,6 +36901,7 @@ const ckb: Catalog = {
   'letters.error.notYourTurn': 'پێش ئەوەی دووبارە بنووسیت، چاوەڕێی نامەکەیان بکە.',
   'letters.error.today': 'بۆ ئەمڕۆ بەسە. باڵندەکەت سبەی دەتوانێت دووبارە بفڕێت.',
   'letters.error.bands': 'ئیتر ناتوانن بۆ یەکتر بنووسن: نامەکان تەنها لە نێوان کەسانی تەمەن نزیک دەچن.',
+  'letters.thread.earlier': 'نامەکانی پێشوو پیشان بدە',
   'letters.thread.closed': 'ئەم نامانە کۆتاییان هات. ئیتر هیچ کامتان ناتوانن لێرە بنووسن.',
   'letters.thread.waiting': 'نامەکەت لای {name}یە. کاتێک وەڵام دەنووسنەوە، باڵندەکەیان دەیهێنێتە بەر پەنجەرەکەت.',
   'letters.goodbye': 'ماڵئاوایی بکە',

@@ -22,7 +22,7 @@ vi.mock('./letterPushes', () => ({
 }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { AppState } from 'react-native';
-import { DEFAULT_PAPER, type LetterLanding, type LetterThread, type LetterVisitor, type LettersHome, type VisitorAnswer } from '@kurda/shared';
+import { DEFAULT_PAPER, letterThreadPath, type LetterLanding, type LetterThread, type LetterVisitor, type LettersHome, type VisitorAnswer } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -351,7 +351,7 @@ describe('the letters screen', () => {
 describe('a correspondence', () => {
   it('stands in its own shape while it is read, never a blank under the header', async () => {
     let answer: (r: unknown) => void = () => undefined;
-    testAuth.client = fakeClient({ [`GET /letters/threads/${THREAD}`]: () => new Promise((resolve) => (answer = resolve)) } as never);
+    testAuth.client = fakeClient({ [`GET ${letterThreadPath(THREAD)}`]: () => new Promise((resolve) => (answer = resolve)) } as never);
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     expect(screen.getByTestId('letters-thread-loading')).toBeTruthy();
     await act(async () => answer(ok(thread())));
@@ -361,7 +361,7 @@ describe('a correspondence', () => {
 
   it('gives the paper to write back on when it is your turn, and sends the letter', async () => {
     const client = fakeClient({
-      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+      [`GET ${letterThreadPath(THREAD)}`]: ok(thread()),
       [`POST /letters/threads/${THREAD}`]: ok({ letter: { id: 'l3', mine: true, body: 'Spas Baran! Çi xweş e.', removed: false, sentAt: '2026-11-13T11:00:00.000Z', readAt: null, decor: null } }),
     });
     testAuth.client = client;
@@ -376,7 +376,7 @@ describe('a correspondence', () => {
   });
 
   it('says your bird is with them, and offers no paper, when it is their turn', async () => {
-    testAuth.client = fakeClient({ [`GET /letters/threads/${THREAD}`]: ok(thread({ yourTurn: false })) });
+    testAuth.client = fakeClient({ [`GET ${letterThreadPath(THREAD)}`]: ok(thread({ yourTurn: false })) });
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     expect(await screen.findByTestId('letters-waiting')).toBeTruthy();
     expect(screen.getByText('Your letter is with Baran. When they write back, their bird will bring it to your window.')).toBeTruthy();
@@ -384,14 +384,37 @@ describe('a correspondence', () => {
   });
 
   it('lets a letter written to you be reported, and not your own', async () => {
-    testAuth.client = fakeClient({ [`GET /letters/threads/${THREAD}`]: ok(thread()) });
+    testAuth.client = fakeClient({ [`GET ${letterThreadPath(THREAD)}`]: ok(thread()) });
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     expect(await screen.findByTestId('letter-report-l2')).toBeTruthy();
     expect(screen.queryByTestId('letter-report-l1')).toBeNull();
   });
 
+  it('opens on the newest letters and shows the earlier ones when asked, keeping them when read again', async () => {
+    const page = (from: number, to: number) =>
+      Array.from({ length: to - from + 1 }, (_, i) => ({ id: `n${from + i}`, mine: (from + i) % 2 === 0, body: `Name ${from + i}`, decor: null, removed: false, sentAt: '2026-11-13T10:00:00.000Z', readAt: null }));
+    let newest = thread({ letters: page(11, 20), earlier: true, yourTurn: false });
+    const client = fakeClient({
+      [`GET ${letterThreadPath(THREAD)}`]: () => Promise.resolve(ok(newest)),
+      [`GET ${letterThreadPath(THREAD, 'n11')}`]: ok(thread({ letters: page(1, 10), earlier: false, yourTurn: false })),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    expect(await screen.findByText('Name 20')).toBeTruthy();
+    expect(screen.queryByText('Name 10')).toBeNull();
+    fireEvent.click(screen.getByTestId('letters-earlier'));
+    expect(await screen.findByText('Name 1')).toBeTruthy();
+    expect(screen.queryByTestId('letters-earlier')).toBeNull();
+    // their answer: the newest page moves on by one, and the earlier letters stay above it
+    newest = thread({ letters: page(12, 21), earlier: true, yourTurn: true });
+    act(() => pushes.listeners.forEach((hear) => hear({ threadId: THREAD, how: 'window', letterId: 'n21', fromUserId: null })));
+    expect(await screen.findByText('Name 21')).toBeTruthy();
+    expect(screen.getAllByText(/^Name \d+$/).map((el) => el.textContent)).toEqual(page(1, 21).map((l) => l.body));
+    expect(screen.queryByTestId('letters-earlier')).toBeNull();
+  });
+
   it('is read only once it has ended', async () => {
-    testAuth.client = fakeClient({ [`GET /letters/threads/${THREAD}`]: ok(thread({ closed: true, yourTurn: false })) });
+    testAuth.client = fakeClient({ [`GET ${letterThreadPath(THREAD)}`]: ok(thread({ closed: true, yourTurn: false })) });
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     expect(await screen.findByTestId('letters-closed')).toBeTruthy();
     await waitFor(() => expect(screen.queryByTestId('letters-reply-input')).toBeNull());
@@ -800,7 +823,7 @@ describe('every bird lands at the window', () => {
         at = null;
         return Promise.resolve(fail({ code: 'BIRD_GONE', status: 409 }));
       },
-      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+      [`GET ${letterThreadPath(THREAD)}`]: ok(thread()),
     } as never);
     const shown = renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.change(await screen.findByTestId('letters-visitor-answer-input'), { target: { value: 'Silav Baran, ez Rojda me.' } });
@@ -832,11 +855,11 @@ describe('every bird lands at the window', () => {
 describe('a correspondence, kept up to date', () => {
   it('reads itself again when a letter for it arrives, and not for another correspondence', async () => {
     let letters = thread({ yourTurn: false }).letters;
-    const client = fakeClient({ [`GET /letters/threads/${THREAD}`]: () => Promise.resolve(ok(thread({ letters, yourTurn: letters.length > 2 }))) } as never);
+    const client = fakeClient({ [`GET ${letterThreadPath(THREAD)}`]: () => Promise.resolve(ok(thread({ letters, yourTurn: letters.length > 2 }))) } as never);
     testAuth.client = client;
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     expect(await screen.findByTestId('letters-waiting')).toBeTruthy();
-    const asked = () => client.calls.filter((c) => c.path === `/letters/threads/${THREAD}`).length;
+    const asked = () => client.calls.filter((c) => c.path === letterThreadPath(THREAD)).length;
     const before = asked();
     act(() => pushes.listeners.forEach((hear) => hear({ threadId: T2, how: 'window', letterId: L2, fromUserId: null })));
     await flush();
@@ -855,7 +878,7 @@ describe('a correspondence, kept up to date', () => {
       let closed = false;
       testAuth.client = fakeClient({
         'POST /realtime/ticket': ok({ ticket: 'tk' }),
-        [`GET /letters/threads/${THREAD}`]: () => Promise.resolve(ok(thread({ closed, yourTurn: !closed }))),
+        [`GET ${letterThreadPath(THREAD)}`]: () => Promise.resolve(ok(thread({ closed, yourTurn: !closed }))),
       } as never);
       renderWithProviders(
         <RealtimeProvider>
@@ -876,7 +899,7 @@ describe('a correspondence, kept up to date', () => {
 
   it('keeps a letter being written back, and lets it go once it is sent', async () => {
     const client = fakeClient({
-      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+      [`GET ${letterThreadPath(THREAD)}`]: ok(thread()),
       [`POST /letters/threads/${THREAD}`]: ok({ letter: { id: 'l3', mine: true, body: 'Spas Baran!', removed: false, sentAt: '2026-11-13T11:00:00.000Z', readAt: null, decor: null } }),
     });
     testAuth.client = client;
