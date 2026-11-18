@@ -1,9 +1,4 @@
-/**
- * The admin's small parts: the page heading, a section card, a badge, a
- * number tile, a button that says it is busy. Each replaces a pattern that was
- * written out by hand on every page with its own inline styles, so a page
- * looked a little different from the next for no reason.
- */
+/** The console's small parts: the page heading, a section card, a badge, a number tile, a button that says it is busy. */
 import { useId, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Icon, type IconName } from './icons';
 

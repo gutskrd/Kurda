@@ -1,9 +1,6 @@
 /**
- * The three states a page is in before it has something to show: still
- * loading, nothing there, or a failure. Kept apart because the old pages ran
- * them together — a 403 or a 500 drew "Queue is empty — nothing to review",
- * which is the most dangerous thing a moderation screen can say when it is not
- * true.
+ * The three states before a page has something to show: loading, nothing there, or a failure. Kept distinct, since a
+ * failure shown as "Queue is empty" is the most dangerous thing a moderation screen can say.
  */
 import type { ReactNode } from 'react';
 import { describeError } from './errors';
@@ -32,11 +29,7 @@ export function EmptyState({
   );
 }
 
-/**
- * A failure, said the way it can be fixed: a role that cannot open this (ask a
- * superadmin), a 2FA check that has run out (enter a code), no connection, or
- * a server error to retry — with the request id for a bug report.
- */
+/** A failure said the way it can be fixed (ask a superadmin, enter a code, retry), with the request id for a bug report. */
 export function ErrorState({
   error,
   onRetry,

@@ -1,8 +1,6 @@
 /**
- * A panel that slides over the page: the phone's menu from the side, a detail
- * or a form from the other side — which on a phone rises from the bottom as a
- * sheet, where a thumb reaches it. Same keyboard and focus rules as a dialog
- * (modal.tsx).
+ * A panel that slides over the page: the phone's menu from the start side, a detail or form from the end (a bottom
+ * sheet on a phone). Same keyboard and focus rules as a dialog (modal.tsx).
  */
 import { useId, useRef, type ReactNode } from 'react';
 import { Layer, useModal } from './modal';

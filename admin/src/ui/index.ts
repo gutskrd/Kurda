@@ -1,4 +1,4 @@
-/** The admin's component kit — one import for a page. */
+/** The console's component kit, one import for a page. */
 export { Badge, Banner, Button, Note, PageHeader, Section, Stat, VisuallyHidden, type Tone } from './basics';
 export { ConfirmDialog, Dialog, DialogProvider, useDialogs, type ConfirmOptions, type PromptOptions } from './Dialog';
 export { Drawer } from './Drawer';

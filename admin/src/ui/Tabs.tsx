@@ -1,13 +1,7 @@
 /**
- * Tabs: one row of choices, one chosen. Arrow keys move along the row and
- * choose (Home and End jump to the ends); Tab leaves it — the keyboard pattern
- * every tab list on the web uses. A tab with an `href` is a link, so a tab
- * that has an address of its own (#/audio/lessons) can be opened in a new tab
- * or bookmarked.
- *
- * On a phone the row scrolls sideways rather than wrapping (kit.css), so the
- * chosen tab is brought into view — a page opened on its fifth tab would
- * otherwise show the first four and no sign of which one is on.
+ * Tabs: one row of choices, one chosen. The arrows move and choose, Home and End jump to the ends, Tab leaves. A tab
+ * with an `href` is a link, so it can be bookmarked. On a phone the row scrolls sideways (kit.css), so the chosen tab
+ * is scrolled into view.
  */
 import { useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 

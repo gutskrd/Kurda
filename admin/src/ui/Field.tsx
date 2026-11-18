@@ -1,9 +1,6 @@
 /**
- * Form fields with their label, a hint and an error, wired together the way a
- * screen reader needs: the label names the control, the hint and the error
- * describe it, and an error marks it invalid. Pages used placeholders as
- * labels ("lesson id (uuid)"), which vanish as soon as you type and which most
- * screen readers do not announce as a name.
+ * Form fields with a label, hint and error wired for screen readers: the label names the control, the hint and error
+ * describe it, and an error marks it invalid.
  */
 import { cloneElement, isValidElement, useId, type InputHTMLAttributes, type ReactElement, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 

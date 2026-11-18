@@ -1,8 +1,6 @@
 /**
- * A person, everywhere the admin names one: their username, a link to their
- * page (#/users/<id>), and a "Minor" badge when they are under 18 — which
- * changes what a moderator may do, so it must never be a click away. Pages
- * used to show the first eight characters of a UUID, which nobody can act on.
+ * A person wherever the console names one: their username, a link to their page (#/users/<id>), and a "Minor" badge
+ * when under 18, which changes what a moderator may do and so is never a click away.
  */
 import { Badge } from './basics';
 

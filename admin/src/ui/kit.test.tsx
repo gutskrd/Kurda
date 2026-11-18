@@ -48,10 +48,7 @@ const COLUMNS: Column<Item>[] = [
   { key: 'price', header: 'Price', cell: (i) => i.price, sort: (a, b) => a.price - b.price, align: 'end' },
 ];
 
-/**
- * Gives the table's box and the table a width, for as long as a test needs
- * them: jsdom lays nothing out, so both are 0 otherwise.
- */
+/** Gives the table's box and the table a width for a test, as jsdom lays nothing out. */
 function layout({ box, table }: { box: number; table: number }): () => void {
   const clientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
   const offsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')!;

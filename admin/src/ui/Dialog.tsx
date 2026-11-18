@@ -1,13 +1,7 @@
 /**
- * Dialogs: the one place the admin asks "are you sure?".
- *
- * They replace the browser's alert, confirm and prompt, which every page used.
- * Those cannot say which button is the dangerous one, cannot ask for a typed
- * confirmation, block the whole tab (and every timer in it), look different in
- * every browser and are suppressed outright by some — a "Remove" that silently
- * did nothing on a phone that had blocked them.
- *
- * `useDialogs()` keeps call sites as short as the old ones:
+ * Dialogs, the one place the console asks "are you sure?", instead of the browser's alert, confirm and prompt, which
+ * cannot mark the dangerous button or ask for typed confirmation, block the tab, and are suppressed by some browsers.
+ * With `useDialogs()`:
  *
  *   if (!(await dialogs.confirm({ title: 'Remove “heval”?', confirmLabel: 'Remove', tone: 'danger' }))) return;
  *   const name = await dialogs.prompt({ title: 'Rename', label: 'New name', initial: word });
@@ -73,10 +67,7 @@ export interface ConfirmOptions {
   confirmLabel?: string;
   cancelLabel?: string;
   tone?: 'default' | 'danger';
-  /**
-   * For what cannot be undone: the confirm button stays off until this exact
-   * text is typed (a username, a key) — a deliberate act, not a reflex click.
-   */
+  /** For what cannot be undone: confirm stays off until this exact text (a username, a key) is typed. */
   typed?: { phrase: string; label?: string };
 }
 
@@ -155,11 +146,7 @@ export interface PromptOptions {
   validate?: (value: string) => string | null;
   multiline?: boolean;
   maxLength?: number;
-  /**
-   * A dangerous change asked with a reason (voiding a game, resetting a
-   * rating): the confirm button is the red one, and a stray tap on the scrim
-   * cannot close it and lose what was typed.
-   */
+  /** A dangerous change asked with a reason: confirm is the red one, and the scrim cannot close it and lose the text. */
   tone?: 'default' | 'danger';
 }
 

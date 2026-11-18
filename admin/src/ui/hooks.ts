@@ -1,9 +1,7 @@
 /**
- * Loading what a page shows, the same way on every page: the data, the
- * failure (kept, never turned into "nothing here"), whether a load is running,
- * and a reload. A slower, older request that answers after a newer one is
- * dropped — the Games search fired a request per keystroke, and whichever
- * answered last won, so the list could show the results for "hev" under "heval".
+ * The hooks every page shares. `useLoad` gives the data, the failure (never turned into "nothing here"), whether a
+ * load is running and a reload, and drops an older request that answers after a newer one, so a search box never
+ * shows the results for an earlier query.
  */
 import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';
 
@@ -52,12 +50,7 @@ export function useLoad<T>(load: () => Promise<T>, deps: DependencyList): Loaded
   return { data, error, loading, reload, setData };
 }
 
-/**
- * Whether a media query matches, kept up to date — for a layout that is
- * different markup on a phone, not only different CSS (the case view's
- * decision panel: beside the case on a wide screen, a sheet from the bottom on
- * a narrow one). Where there is no matchMedia (tests), `fallback`.
- */
+/** Whether a media query matches, kept up to date, for markup that differs on a phone; `fallback` without matchMedia. */
 export function useMediaQuery(query: string, fallback = true): boolean {
   const read = (): boolean => (typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(query).matches : fallback);
   const [matches, setMatches] = useState(read);
@@ -78,11 +71,8 @@ export function reducedMotion(): boolean {
 }
 
 /**
- * Whole seconds left until `until` (a Date.now() time), counting down once a
- * second, and 0 once it has passed or with nothing to wait for — for a
- * lockout, whose button says how long is left and comes back by itself.
- * Worked out on every render, so the first render after a lockout already
- * knows it is waiting.
+ * Whole seconds left until `until` (a Date.now() time), ticking each second, 0 once passed: for a lockout's button.
+ * Worked out on every render, so the first render after a lockout already knows it is waiting.
  */
 export function useCountdown(until: number | null): number {
   const [, tick] = useState(0);

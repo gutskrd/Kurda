@@ -1,9 +1,6 @@
 /**
- * What every layer over the page shares — a dialog, a drawer, the phone's
- * menu: it takes the keyboard's focus when it opens and gives it back when it
- * closes, keeps Tab inside itself, closes on Escape, and makes the page behind
- * it unreachable (inert) and still, so a screen reader cannot wander off into a
- * page the eye cannot see.
+ * What every layer over the page shares (a dialog, a drawer, the phone's menu): it takes focus on open and returns it
+ * on close, keeps Tab inside, closes on Escape, and makes the page behind it inert and still.
  */
 import { useEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';

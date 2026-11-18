@@ -1,7 +1,6 @@
 /**
- * A "More" menu: the actions a row has beyond its main one, so a table row on
- * a phone is not a pile of six buttons. A real menu for the keyboard — arrow
- * keys move, Escape closes and returns to the button, a click outside closes.
+ * A "More" menu for a row's actions beyond its main one. A real menu for the keyboard: arrows move, Escape closes and
+ * returns to the button, a click outside closes.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from './icons';

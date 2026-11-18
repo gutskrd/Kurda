@@ -1,20 +1,8 @@
 /**
- * The admin's table: sortable headings, a row for each state (loading,
- * nothing there, failed) instead of an empty grid, paging, and — on a narrow
- * screen — each row as a card with its fields labelled, so nothing scrolls
- * sideways on a phone. The old tables were 520 px wide at least and scrolled
- * off the side of a phone, with their action buttons last, out of sight.
- *
- * Whether the rows are cards is decided by the table's own box, not the
- * window, so a table in a narrow panel turns into cards too: below a width
- * (640 px, or later for a table with many columns), and at any width where the
- * table would not fit — a long name in one row could make a table wider than
- * its card, which cut off its last column, buttons and all, even on a laptop.
- * A table of numbers read across (a day per row) can instead stay a table
- * that scrolls sideways in its own box, its first column pinned, since thirty
- * days as cards is a very long page. The markup stays a table with its roles
- * spelled out either way, because a table restyled as blocks loses them in
- * some browsers.
+ * The console's table: sortable headings, a row for loading, empty and failed states, paging, and on a narrow screen
+ * each row as a labelled card. The table's own box decides, not the window: rows become cards below a width (640 px,
+ * or later with many columns) and whenever the table would not fit. A 'scroll' table instead scrolls sideways with its
+ * first column pinned. The markup keeps explicit table roles, which some browsers drop from a table restyled as blocks.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Icon } from './icons';
@@ -27,10 +15,7 @@ export interface Column<T> {
   /** Sorting by this column: how two rows compare (ascending). */
   sort?: (a: T, b: T) => number;
   align?: 'start' | 'end';
-  /**
-   * On a phone's card: 'title' heads the card (no label), 'hidden' leaves it
-   * off (something the title already says), and by default it is a labelled line.
-   */
+  /** On a phone's card: 'title' heads it, 'hidden' leaves it off, and by default it is a labelled line. */
   card?: 'title' | 'hidden';
   /** The label on the card when the header is not plain text. */
   cardLabel?: string;
@@ -80,17 +65,9 @@ export function Table<T>({
   rowClassName?: (row: T) => string | undefined;
   /** For the error's "your role doesn't include …" */
   what?: string;
-  /**
-   * Many columns: cards below 960 px rather than 640, so a tablet never cuts
-   * the row off; 'medium' for a few wide ones, cards below 860 px
-   */
+  /** Many columns: cards below 960 px instead of 640; 'medium' for a few wide ones, cards below 860 px. */
   wide?: boolean | 'medium';
-  /**
-   * 'cards' (the default): rows become cards when the table does not fit.
-   * 'scroll': it stays a table and scrolls sideways in its own box, the first
-   * column pinned — for numbers compared down a column, where cards would
-   * stretch thirty short rows into a long page.
-   */
+  /** 'cards' (default) turns rows into cards when the table does not fit; 'scroll' keeps a table of numbers scrolling. */
   layout?: TableLayout;
 }): React.JSX.Element {
   const [sort, setSort] = useState<SortState | null>(null);
@@ -222,10 +199,8 @@ export type TableLayout = 'cards' | 'scroll';
 type Fit = 'table' | 'cards' | 'scrolls';
 
 /**
- * Measures the table against its box after every render and whenever the box
- * changes width. A table that is cards is laid out as a table for the length
- * of one measurement, inside the same task, so the screen never shows it.
- * `cardsBelow` 0 is a 'scroll' table: never cards, only told whether it scrolls.
+ * Measures the table against its box after every render and on each width change. Cards are laid out as a table for
+ * one measurement within the same task, so it never shows. `cardsBelow` 0 is a 'scroll' table.
  */
 function useFit(ref: RefObject<HTMLDivElement | null>, cardsBelow: number, deps: readonly unknown[]): Fit {
   const [fit, setFit] = useState<Fit>('table');

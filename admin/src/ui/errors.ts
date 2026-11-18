@@ -1,9 +1,6 @@
 /**
- * What went wrong, in words an admin can act on. Every page used to print the
- * server's message as it came ("insufficient permissions", "Failed"), or show
- * an empty table, so "your role cannot do this", "enter your 2FA code" and "the
- * server fell over" all looked the same. They need different answers: ask a
- * superadmin, enter a code, or try again later.
+ * What went wrong, in words an admin can act on: a role that cannot do this, a 2FA code needed, or a server to try
+ * again later each need a different answer.
  */
 import { ApiError } from '../api';
 import { waitText } from './Time';
@@ -40,10 +37,8 @@ function serverMessage(err: ApiError): string {
 }
 
 /**
- * 403s that are not about the role: a moderator who is the reported person or
- * a reporter on a case, the admin who asked for a ban approving it, someone
- * reviewing their own decision. "Your role can't open this" would be untrue —
- * the same role, held by somebody else, can.
+ * 403s about the person, not the role: a moderator who is part of the case, an admin approving their own ban request,
+ * someone reviewing their own decision. The same role held by somebody else can, so "your role can't" would be untrue.
  */
 const SOMEONE_ELSE: ReadonlySet<string> = new Set(['CONFLICT_OF_INTEREST', 'SAME_ADMIN', 'DIFFERENT_ADMIN_REQUIRED', 'SELF_APPROVE']);
 
@@ -66,8 +61,7 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
         requestId,
       };
     }
-    // A refusal about who, not about the role: the person is part of the case,
-    // or the second pair of eyes cannot be the first.
+    // A refusal about who: the person is part of the case, or the second pair of eyes cannot be the first.
     if (err.status === 403 && SOMEONE_ELSE.has(err.code)) {
       return {
         kind: 'conflict',
@@ -94,7 +88,7 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
       return { kind: 'conflict', title: 'Something changed', message: serverMessage(err) || 'Reload and try again.', requestId };
     }
     if (err.status === 429) {
-      // The server says how long; "wait a minute" was wrong for a fifteen-minute lockout.
+      // The server says how long, which may be a fifteen-minute lockout.
       const wait = err.retryAfterSec ? waitText(err.retryAfterSec) : 'a few minutes';
       if (err.code === 'TOTP_LOCKED') {
         return {
