@@ -1,14 +1,7 @@
 import type pg from 'pg';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
-/**
- * Who wrote something.
- *
- * Every surface where users post — library stories and poems, image posts, and
- * the comments under both — needs the same three fields, resolved the same way.
- * One loader means one face per person across the whole app; two would drift the
- * moment one of them forgot that an uploaded photo outranks a chosen avatar.
- */
+/** Who wrote something: one loader for every posting surface, so each person has one face across the app. */
 export interface Author {
   id: string;
   username: string;
@@ -16,12 +9,7 @@ export interface Author {
   avatarUrl: string | null;
 }
 
-/**
- * Look up a batch of authors at once.
- *
- * Callers pass every id on the page — duplicates included, since a thread is
- * mostly the same few people — and get one query back rather than one per row.
- */
+/** Looks up a batch of authors in one query; callers pass every id on the page, duplicates included. */
 export async function loadAuthors(
   pool: pg.Pool,
   ids: readonly string[],
@@ -43,10 +31,7 @@ export async function loadAuthors(
   );
 }
 
-/**
- * Stand-in for an author whose row has gone (a deleted account).
- * The post survives deletion, so it still needs a name to show.
- */
+/** A stand-in for an author whose account was deleted; the post survives, so it still needs a name. */
 export function unknownAuthor(id: string): Author {
   return { id, username: 'Deleted account', avatarUrl: null };
 }

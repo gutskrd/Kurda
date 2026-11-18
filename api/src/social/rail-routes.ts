@@ -17,14 +17,8 @@ interface RailDeps {
 }
 
 /**
- * The social rail's one read.
- *
- * Everything on it already had an endpoint — friends, requests, groups, unread
- * counts. What did not exist was a way to ask "what is happening with my
- * people" without five round trips.
- *
- * The rail polls, so this is the shape that matters: one request, one coherent
- * answer, and no half-updated rail where the badge and the list disagree.
+ * The social rail's one read: friends, requests, groups and unread counts in one coherent answer, since the rail
+ * polls and separate requests could leave its badge and list disagreeing.
  */
 export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): void {
   const rail = new SocialRailService(app.db);
@@ -43,9 +37,8 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
       deps.inbox.recent(me, RECENT_NOTIFICATIONS),
     ]);
 
-    // activity needs the friend list, so it waits for it; `self` does not, and
-    // rides along rather than costing another round trip (with the unopened-gift
-    // badge, so the apps need not poll `/me/gifts/unseen` for it)
+    // Activity needs the friend list, so it waits; `self` does not, and rides along with the unopened-gift count so the
+    // apps need not poll `/me/gifts/unseen`.
     const [activity, { you, unseenGifts }] = await Promise.all([
       rail.liveActivity(friends.map((f) => f.userId)),
       rail.self(me, publicUrl),
@@ -62,10 +55,8 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
       you,
       friends: withActivity,
       requests,
-      // Friend challenges were invites to the ranked quiz, which is gone. The
-      // field stays, always empty: phone builds already installed read
-      // `challenges.length` and add `unread.challenges` without a default, and
-      // would crash or show NaN if either went missing.
+      // Friend challenges are gone, but installed phone builds read `challenges.length` and `unread.challenges` without a
+      // default, so the fields stay, always empty.
       challenges: [] as never[],
       groups: groups
         .filter((g) => g.archivedAt === null)
