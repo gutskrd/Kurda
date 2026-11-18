@@ -41,10 +41,11 @@ const upsertBody = z
 
 /** Config-driven events: the public active list and admin editing. */
 export function registerEventRoutes(app: FastifyInstance, events: EventService): void {
-  /** Events live now, highest priority first, cached until the next boundary. */
-  app.get('/events/active', { preHandler: requireAuth }, async () => ({
-    events: await events.active(),
-  }));
+  /**
+   * Events live now, highest priority first, and `nextChangeAt`, when that can next change (or null), so a phone
+   * can ask again then rather than on a timer. Cached until that boundary.
+   */
+  app.get('/events/active', { preHandler: requireAuth }, async () => events.active());
 
   /** Admin: every definition regardless of window/enabled. */
   app.get(
