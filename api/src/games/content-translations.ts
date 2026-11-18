@@ -1,26 +1,20 @@
 /**
- * The translations of a riddle or a proverb in the admin panel, one language
- * at a time (`game_content_translations`, shared/src/lore.ts):
+ * Riddle and proverb translations in the admin panel, one language at a time (`game_content_translations`,
+ * shared/src/lore.ts):
  *
  *   PUT  /admin/game-content/:id/translations/:locale          { payload }          (content.edit)
  *   POST /admin/game-content/:id/translations/:locale/review   { status, note? }    (content.publish)
  *
- * A row's Kurdish is reviewed and approved as a whole, and a change to it
- * takes the approval away (content-admin.ts). Its translations are not part
- * of that: each language has a review of its own, so a translation can be
- * corrected on a row in any state but archived — a published one included —
- * without the row being unpublished, its lock version moving or its
- * approval being touched. A changed translation is marked unreviewed in that
- * language only; saving it unchanged leaves its review as it was.
+ * A row's Kurdish is reviewed and approved as a whole (content-admin.ts), but each translation language has its own
+ * review, so a translation can be corrected on a row in any state but archived, published included, without
+ * unpublishing, moving the lock version or touching the approval. A changed translation is marked unreviewed in that
+ * language only; an unchanged save keeps its review.
  *
- * Learners are sent every language a row has, whatever its review: the
- * review is the record of who read which language, and one put right goes
- * out as soon as it is saved. What may be stored is `checkLoreTranslation`:
- * the kind's fields, never the row's own language, the two Kurdish interface
+ * Learners get every language a row has regardless of review (the review records who read which language). What may be
+ * stored is `checkLoreTranslation`: the kind's fields, never the row's own language, the two Kurdish interface
  * languages in their own scripts, and a riddle's hints one for one.
  *
- * Both changes are audited with the language's text before and after, beside
- * the automatic audit of every admin call.
+ * Both changes are audited with the language's text before and after, beside the audit of every admin call.
  */
 import type pg from 'pg';
 import {
@@ -114,9 +108,8 @@ export class GameContentTranslations {
   }
 
   /**
-   * The row a translation belongs to, held against a change to its Kurdish
-   * while the translation is checked against it (a riddle's hints): 404, and
-   * 409 for a kind without translations or an archived row.
+   * The row a translation belongs to, locked against Kurdish changes while the translation is checked against it (a
+   * riddle's hints): 404, or 409 for a kind without translations or an archived row.
    */
   private async owner(client: pg.PoolClient, id: string): Promise<TranslatedRow & { status: string }> {
     if (!UUID_RE.test(id)) throw new AppError('NOT_FOUND', 404, 'no such content');

@@ -1,34 +1,21 @@
 /**
- * Detective's cases (api/content/games/detective/kmr.json and ckb.json),
- * written for the game and kept as their files say until a person changes
+ * Detective's cases (api/content/games/detective/kmr.json and ckb.json), kept as their files say until a person changes
  * one in the admin.
  *
- * A case is written in the app's languages only — its title, suspects,
- * questions, solution and hints, each in all nine — and its evidence names
- * lines the course already has instead of holding any Kurdish: a line of a
- * lesson's conversation, by the conversation and the line's English, or a
- * sentence of a published story, by the story, the paragraph and the
- * sentence's place in it (`storySentences`, as the reader and the recording
- * studio cut them). Seeding copies each line's Kurdish, who says it and the
- * key its recording is filed under from where it stands, so nothing Kurdish
- * is typed for the game; what a line means is the lesson's English with the
- * case's own translations over it (a story's sentences have no English of
- * their own, so the case gives it).
+ * A case is written in the app's languages only (title, suspects, questions, solution and hints, each in all nine), and
+ * its evidence names lines the course already has instead of holding Kurdish: a lesson conversation line by
+ * conversation and English, or a published story sentence by story, paragraph and position (`storySentences`, as the
+ * reader and studio cut them). Seeding copies each line's Kurdish, speaker and recording key from its source; a line's
+ * meaning is the lesson's English, overridden by the case's own translations (story sentences have no English, so the
+ * case gives it).
  *
- * A case's row is `starter:<slug>` in `origin`, the same as the first case
- * had when it was seeded once (games/starters.ts), so that row is the one
- * kept current here. A case no row has yet goes in published; one whose row
- * nobody has changed (`updated_by`) is brought up to its file at every
- * start, so a correction reaches learners with the next deploy; one a person
- * has changed is theirs. A case taken out of its file, or marked
- * `"retired": true`, is archived if nobody has changed it. A case seeded
- * here is remembered in `content_seeds` under both its starter name (so the
- * one-time seeding never puts it in again) and this file's (so a case gone
- * from the file is known to have been this file's).
+ * A case's row has `origin` `starter:<slug>`, as the first case had when seeded once (games/starters.ts), so that row
+ * is kept current here. A case with no row goes in published; one nobody changed (`updated_by`) is updated to its file
+ * on every start; one a person changed is theirs. A case removed from its file, or marked `"retired": true`, is
+ * archived if unchanged. Seeded cases are recorded in `content_seeds` under both the starter name and this file's.
  *
- * A case whose lines are not there (the course or the story not seeded yet)
- * waits for a later start; one that fails its kind's checks is logged and
- * skipped. Nothing here throws: a broken file must not stop the API starting.
+ * A case whose lines are missing (course or story not seeded yet) waits for a later start; one failing its checks is
+ * logged and skipped. Nothing here throws: a broken file must not stop the API.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -127,11 +114,9 @@ const sameEnglish = (a: string, b: string): boolean => {
 const isStoryLine = (l: DetectiveCase['evidence'][number]['line']): l is z.infer<typeof storyLine> => 'story' in l;
 
 /**
- * A case with its evidence filled in from the conversations and the stories
- * (pure, for the tests): the case file's payload, or the lines that could not
- * be found. A conversation's line is found by its English, which is the
- * lesson's own, so a line found is the line meant; a story's sentence by its
- * place, checked against its first words when the case gives them.
+ * A case with its evidence filled in from conversations and stories (pure, for tests): the payload, or the lines not
+ * found. A conversation line is found by its English (the lesson's own, so unambiguous); a story sentence by position,
+ * checked against its first words when the case gives them.
  */
 export function resolveCase(
   kase: DetectiveCase,

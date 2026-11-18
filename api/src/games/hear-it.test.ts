@@ -1,9 +1,7 @@
 /**
- * Hear It, Find It's rounds without a database: recordings grouped by what
- * they say with every voice kept, the next voice each time a text comes back,
- * the look-alike words and sentences and the other meanings, the ladder a
- * round climbs, a round that never sends what a clip says, and the grading of
- * a pick and of what is typed.
+ * Hear It, Find It rounds without a database: recordings grouped by text with every voice kept, the next voice each
+ * time a text returns, look-alike words and sentences and other meanings, the ladder a round climbs, rounds that never
+ * send what a clip says, and grading of picks and typing.
  */
 import { describe, expect, it } from 'vitest';
 import { HEAR_OPTIONS, HEAR_REPLAYS, SOLO_ROUND_ITEMS, textScript, type GameDialect, type HearStage } from '@kurda/shared';

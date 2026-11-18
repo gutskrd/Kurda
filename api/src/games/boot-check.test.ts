@@ -1,8 +1,7 @@
 /**
- * The learning games' routes are registered and pass the app's boot checks
- * (every write declares its body, every path parameter its schema, every
- * staff route sits behind the 2FA gate), with a database configured but not
- * asked anything: building the app talks to nobody until a request comes.
+ * The learning games' routes register and pass the app's boot checks (every write declares its body, every path
+ * parameter its schema, every staff route sits behind the 2FA gate) with a database configured but unused: building the
+ * app makes no queries.
  */
 import { describe, expect, it } from 'vitest';
 import { buildApp } from '../app.js';

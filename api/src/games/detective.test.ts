@@ -1,11 +1,8 @@
 /**
- * Detektîf without a database: a round is one published case of the
- * difficulty's levels, its deduction steps then the accusation; the board
- * holds no answer and no card's meaning until it is found or a hint buys it;
- * hints are counted on the round and cost XP at the finish; the accusation's
- * correction walks back through every deduction, its suspects shown in an
- * order drawn for the round. A case file's evidence is filled in from the
- * course's own lines and the stories' own sentences (detective-cases.ts).
+ * Detektîf without a database: a round is one published case at the difficulty's levels, its deduction steps then the
+ * accusation; the board holds no answer or card meaning until found or bought with a hint; hints are counted and cost
+ * XP at the finish; the accusation's correction walks back through every deduction, with suspects in a per-round order.
+ * Case evidence is filled from the course's lines and stories (detective-cases.ts).
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

@@ -1,44 +1,30 @@
 /**
- * Who Am I?'s curated deck (api/content/games/who-am-i.json): every card the
- * game is played with and every question it asks, per variety, written and
- * checked by hand, and put in published once per deck version.
+ * Who Am I?'s curated deck (api/content/games/who-am-i.json): every card and question per variety, written and checked
+ * by hand, published once per deck version.
  *
- * Why a file and not the course's English glosses alone. The starter library
- * (starter-library.ts) made the first cards by matching each course word's
- * English meaning against a table of things, and published what it made
- * unread: that is how a nanny became a nurse who helps the sick and "the
- * kitchen" became a card. A card is a set of facts only a person can judge
- * (whether a dog lives in the house, whether a pomegranate is sweet), so the
- * deck says them itself, with "sometimes" where honest people would answer
- * either way, and each card leaves out the questions that make no sense for
- * its kind ("Does it sell things?" is never asked of a cat).
+ * A file rather than course glosses alone: the starter library matched English meanings against a table and published
+ * unread results, mislabelling things. A card is a set of facts only a person can judge, so the deck states them, with
+ * "sometimes" where honest people could answer either way, and leaves out questions that make no sense for the card's
+ * kind.
  *
- * The file holds, for each variety:
- *   questions    one per fact: the question, and what it means in the app's
- *                languages and in the other variety;
- *   identities   one per card: the word, its kind, its level (the level of
- *                the course unit that first teaches the word; a word the
- *                course does not teach, `taught: false`, sits beside words as
- *                easy), its meanings in the app's languages and the other
- *                variety's word, and its facts.
- * Every row is checked with `checkGameContent` before anything is written,
- * and a file with any problem is not seeded at all.
+ * The file holds, per variety:
+ *   questions    one per fact: the question, with its meaning in the app's languages and the other variety;
+ *   identities   one per card: the word, its kind, its level (that of the course unit first teaching the word; an
+ * untaught word,
+ *                `taught: false`, sits beside equally easy words), its meanings and the other variety's word, and its
+ * facts.
+ * Every row is checked with `checkGameContent` before anything is written, and a file with any problem is not seeded.
  *
- * Seeding (`seedWhoAmIDeck`), once per variety and deck version (a row in
- * `content_seeds`, `game_content:who-am-i-deck:<version>:<variety>`), in one
- * transaction per variety:
- *   1. the deck's cards and questions go in published as starters, each with
- *      the place it came from (`deck:who-am-i:<variety>:<word or fact>`); a
- *      row from an earlier deck that nobody has touched since is brought in
- *      line with the file, so a later version corrects what an earlier one
- *      got wrong;
- *   2. every other starter card and question of the variety that nobody has
- *      touched — the matcher's cards, the migration's first questions, a card
- *      a later deck leaves out — is archived;
- *   3. a row a person has edited or reviewed (`updated_by`, `reviewed_by`)
- *      is theirs, and stays exactly as it is.
- * Then every pool and count is read afresh. Nothing here throws: a failure is
- * logged and the API starts without it.
+ * Seeding (`seedWhoAmIDeck`), once per variety and deck version (`content_seeds`:
+ * `game_content:who-am-i-deck:<version>:<variety>`), one transaction per variety:
+ *   1. the deck's cards and questions go in published as starters, each with its origin (`deck:who-am-i:<variety>:<word
+ * or fact>`);
+ *      an untouched row from an earlier deck is updated to the file, so later versions correct earlier ones;
+ *   2. every other untouched starter card and question of the variety (the matcher's cards, the migration's first
+ * questions, cards a
+ *      later deck drops) is archived;
+ *   3. a row a person edited or reviewed (`updated_by`, `reviewed_by`) stays exactly as it is.
+ * Then every pool and count is reread. Nothing here throws: a failure is logged and the API starts without it.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -75,7 +61,6 @@ const deckFile = z.strictObject({
   questions: z.strictObject({ kmr: z.array(question), ckb: z.array(question) }),
   identities: z.strictObject({ kmr: z.array(card), ckb: z.array(card) }),
 });
-export type WhoAmIDeckFile = z.infer<typeof deckFile>;
 
 /** One row of the deck, ready to store. */
 export interface WhoAmIDeckRow<P> {

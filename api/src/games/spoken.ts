@@ -1,18 +1,14 @@
 /**
- * The recordings of the lines a round shows, read once for the whole round.
+ * The recordings of a round's lines, read once for the whole round.
  *
- * Detective plays the remarks pinned to its board in the voice a
- * person recorded them in. A line taken from a conversation is filed under
- * the conversation, its part and its words (`conversationLineKey`), and a
- * sentence recorded on its own under its words alone (`lessonAudioKey`); each
- * line names the keys it may be found under, most particular first, and gets
- * the first that has a recording. One query, however many lines.
+ * Detective plays the remarks on its board in a person's recorded voice. A conversation line is filed under
+ * conversation, part and words (`conversationLineKey`), a standalone sentence under its words (`lessonAudioKey`); each
+ * line lists its possible keys, most specific first, and takes the first with a recording. One query for all lines.
  *
- * The recording's address travels beside the line's own words, as a lesson's
- * conversation sends its lines (lessonaudio/delivery.ts): nothing is behind
- * it that the screen does not already show. Who is seen saying it is always
- * the character playing the line's part, whichever voice it was saved under,
- * with the recording's own mouth timeline, or one made from its words.
+ * The recording's address travels beside the line's words, as lesson conversations send theirs
+ * (lessonaudio/delivery.ts), revealing nothing the screen does not show. The speaker shown is always the character
+ * playing the line's part, whatever voice it was saved under, with the recording's mouth timeline or one made from its
+ * words.
  */
 import type pg from 'pg';
 import { lessonAudioKey, type SpeakerId, type SpokenAudio } from '@kurda/shared';

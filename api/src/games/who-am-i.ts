@@ -1,45 +1,29 @@
 /**
- * Who Am I? on the server, beside the table itself (mp/games/who-am-i.ts):
- * what a table is dealt from, how a whole table is dealt, and the game on one
- * phone passed round a room (shared/src/games/who-am-i/couch.ts).
+ * Who Am I? on the server beside the table itself (mp/games/who-am-i.ts): what a table is dealt from, how a whole table
+ * is dealt, and the game on one phone passed round a room (shared/src/games/who-am-i/couch.ts).
  *
  *   GET  /games/who-am-i/couch?dialect=kmr|ckb   the difficulties it can be played at on one phone
  *   POST /games/who-am-i/couch/deal              { dialect, difficulty, players, answers? }: a card for everyone in the room (10 a minute)
  *   POST /games/who-am-i/report                  a card's answer to a question that a player thinks is wrong (5 a minute)
  *
- * Everything dealt is approved: identities and question templates are
- * published `game_content` rows of the variety, read through the trusted
- * readers (an identity's word was picked from published lessons' vocabulary,
- * never typed), so a draft or a row waiting for review never reaches a table.
+ * Everything dealt is approved: identities and question templates are published `game_content` rows of the variety,
+ * read through the trusted readers (an identity's word was picked from published vocabulary), so drafts never reach a
+ * table.
  *
- * A table is dealt whole (`dealTable`). Every seat gets a different identity,
- * and no seat's tiles hold an identity another seat wears: a player reads the
- * others' cards, so a tile that was one of them would be a tile they could
- * strike out without asking anything. Each seat's tiles and questions are
- * drawn with a draw keyed by the server's own secret (`unitFor`), so their
- * order says nothing of which tile is the hidden one.
+ * A table is dealt whole (`dealTable`). Every seat gets a different identity, and no seat's tiles include another seat's
+ * identity, since players read each other's cards and could strike it out for free. Tiles and questions are ordered by a
+ * server-keyed draw (`unitFor`), so their order reveals nothing about the hidden one.
  *
- * How many answers the friends are offered is the app's to ask for: four
- * (yes, could be, no, not sure) from today's apps, two (yes and no) from apps
- * made before there were four, which send nothing. The server's own rules
- * score a "sometimes" card fairly whichever the friends say, so a table is
- * dealt the cards as they are, at either count. A phone from before the four
- * plays its one-phone game by rules of its own, which read anything but
- * `true` as no: the cards it is dealt (`asTwoAnswerDeal`) come without their
- * "sometimes" rows and without the questions those rows answered, so it
- * never meets a third answer. Its game has no tiles to tell apart, so only
- * the card itself is trimmed.
+ * The app asks for the number of answers: four (yes, could be, no, not sure) from current apps, two (yes and no) from
+ * older ones, which send nothing. The server's rules score "sometimes" cards fairly either way, so tables are dealt the
+ * cards as they are. An older phone's one-phone game reads anything but `true` as no, so its cards (`asTwoAnswerDeal`)
+ * drop their "sometimes" rows and those rows' questions; it shows no tiles, so only the card is trimmed.
  *
- * A wrong card is reported by a player who read it (`/games/who-am-i/report`):
- * no text, only which card and which question, counted in the card's review
- * note for the people who keep the cards. A count is all it is: nothing a
- * player sends changes what a card says, and one player counts once a day.
+ * A wrong card is reported by a player who read it (`/games/who-am-i/report`): no text, only card and question, counted
+ * in the card's review note for the card keepers. It never changes the card, and one player counts once a day.
  *
- * What the one-phone game does not do, on purpose. It is told nothing about
- * the people in the room: no names, no result. The phone is sent every card,
- * with the facts that answer its questions, so it cannot be trusted to say
- * who won, and a game played this way is never paid or rated; there is no
- * route here that a result could be sent to.
+ * The one-phone game is deliberately told nothing about the people in the room (no names, no result): the phone holds
+ * every card and its facts, so it cannot be trusted with a result, and these games are never paid or rated.
  */
 import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
@@ -126,10 +110,8 @@ export function tableDifficulties(pool: WhoAmIPool): GameDifficulty[] {
 const DEAL_TRIES = 4;
 
 /**
- * Whether a deal's questions can tell every one of its tiles apart: each tile
- * answers them in a way of its own. A deal offers at most a dozen questions,
- * so two tiles that differ only in a question left off the list could never
- * be told apart by asking, and the round would end in a coin toss.
+ * Whether a deal's questions tell every tile apart (each tile answers them uniquely). A deal offers at most a dozen
+ * questions, so tiles differing only in an unlisted question would end the round in a coin toss.
  */
 export function tellsTilesApart(deal: WhoAmIDeal, pool: readonly WhoAmIIdentity[]): boolean {
   const byId = new Map(pool.map((i) => [i.id, i]));
@@ -145,10 +127,9 @@ export function tellsTilesApart(deal: WhoAmIDeal, pool: readonly WhoAmIIdentity[
 }
 
 /**
- * A one-phone deal as a phone from before the four answers can play it: its
- * card without its "sometimes" rows, and without the questions those rows
- * answered, so every question it can ask has a plain yes or no. Such a phone
- * shows no tiles, so the questions left need tell none apart.
+ * A one-phone deal as an older two-answer phone can play it: the card without its "sometimes" rows or those rows'
+ * questions, so every question has a plain yes or no. Such phones show no tiles, so the remaining questions need not
+ * tell any apart.
  */
 export function asTwoAnswerDeal(deal: WhoAmIDeal): WhoAmIDeal {
   const identity = asTwoAnswers(deal.identity);
@@ -156,10 +137,8 @@ export function asTwoAnswerDeal(deal: WhoAmIDeal): WhoAmIDeal {
 }
 
 /**
- * One seat's deal: its hidden identity among tiles from `among`. A deal whose
- * questions cannot tell its tiles apart is drawn again (another salt, so other
- * tiles), a few times, before the first one is kept as it was. Null when the
- * identity cannot be dealt at all.
+ * One seat's deal: its hidden identity among tiles from `among`. A deal whose questions cannot tell its tiles apart is
+ * redrawn with another salt a few times before the first is kept. Null when the identity cannot be dealt at all.
  */
 export function dealSeat(
   target: WhoAmIIdentity,
@@ -180,11 +159,9 @@ export function dealSeat(
 }
 
 /**
- * A hidden identity for every seat, pure: each a different one, drawn in the
- * seed's keyed order from the difficulty's identities, and dealt its tiles
- * from a pool without the identities the other seats wear (`dealSeat`). Null
- * when even one seat cannot be dealt, so a table is never begun without
- * somebody.
+ * A hidden identity for every seat, pure: all different, drawn in the seed's keyed order from the difficulty's
+ * identities, each dealt tiles from a pool without the other seats' identities (`dealSeat`). Null when any seat cannot
+ * be dealt, so a table never starts short.
  */
 export function dealTable(pool: WhoAmIPool, difficulty: GameDifficulty, seats: readonly number[], seed: string): Array<{ seat: number; deal: WhoAmIDeal }> | null {
   // every draw is keyed here: the order of a seat's tiles and questions says nothing of who is hidden, on any seat
@@ -226,10 +203,8 @@ const dealBody = z.strictObject({
 });
 
 /**
- * A report names a card and a question, and nothing else: on one phone, the
- * card's and the question's ids from the deal the phone holds; at a table the
- * server runs, the game, the seat whose card it is and the question, since a
- * player there is never sent another card's id.
+ * A report names a card and a question, nothing else: on one phone, the ids from the phone's deal; at a server-run
+ * table, the game, the seat whose card it is and the question, since players there are never sent another card's id.
  */
 const reportBody = z.union([
   z.strictObject({ identity: z.uuid(), question: z.uuid() }),
@@ -245,10 +220,8 @@ const REPORTED = 'Players flagged an answer as wrong:';
 const REPORT_LINE_MAX = 300;
 
 /**
- * A card's review note with one more report of a fact counted on its first
- * line, and whatever an editor wrote kept below it. The counts are the only
- * thing the line holds (`at-home ×2, sweet ×1`), most reported first, so the
- * note says at a glance which row of the facts table to look at.
+ * A card's review note with one more report of a fact counted on its first line, keeping whatever an editor wrote
+ * below. The line holds only counts (`at-home ×2, sweet ×1`), most reported first.
  */
 export function countReport(note: string | null, fact: string): string {
   const lines = (note ?? '').split('\n');

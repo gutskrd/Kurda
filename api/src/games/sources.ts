@@ -1,59 +1,36 @@
 /**
- * The approved Kurdish the learning games are made of, read where it already
- * is — and nowhere else.
+ * The approved Kurdish the learning games are made of, read only where it already is.
  *
  * A game may show a learner only Kurdish a person approved:
- *   - published lessons (the newest published version at each place in a
- *     skill, as practice reads them): their translations and conversation
- *     lines with the English beside them, and the word pairs they teach;
- *   - published stories (published means approved: the table checks it), by
- *     paragraph, with the glossary terms each paragraph holds;
- *   - people's recordings, never the synthesised clips the apps ship: of
- *     `lesson_audio` only those filed under a text published content says
- *     now (a published lesson's, a published conversation's line, an approved
- *     story's sentence) — the studio records drafts too, and a text corrected
- *     since keeps its old recording — shown with the text as it is published;
- *     the alphabet's words; and the pronunciations of dictionary entries an
- *     admin curated for the games (`in_games`);
- *   - `game_content` rows that are published, and so approved.
- * Drafts, lessons in review, unpublished stories and unapproved rows are never
- * read here, so no game can reach them.
+ * - published lessons (the newest published version at each skill place, as practice reads them): translations and
+ *   conversation lines with their English, and the word pairs they teach;
+ * - published stories (published means approved; the table checks it), by paragraph, with each paragraph's glossary
+ *   terms;
+ * - human recordings, never the apps' synthesised clips: `lesson_audio` only under a text published content says now
+ *   (the studio records drafts too, and a corrected text keeps its old recording), shown with the published text; the
+ *   alphabet's words; and pronunciations of dictionary entries curated for the games (`in_games`);
+ * - published, and so approved, `game_content` rows.
+ * Drafts, lessons in review, unpublished stories and unapproved rows are never read here.
  *
- * One reader looks further, and no game holds it: the starter library
- * (games/starter-library.ts) reads the course as it stands (`scope: 'course'`)
- * — the lessons and stories Hevalo ships, published or not yet — to make each
- * game's first set of rows from them. What it makes are `game_content` rows,
- * published, which the games then read like any other row. `game_content` and
- * the recordings are read the same way in both scopes.
+ * One reader looks further, for no game: the starter library (games/starter-library.ts) reads the course as it stands
+ * (`scope: 'course'`, published or not) to make each game's first `game_content` rows, published, which games then read
+ * like any other. `game_content` and recordings read the same in both scopes.
  *
- * Every item is in exactly one variety. The variety comes from where the item
- * lives (a course's, a story's or a row's dialect, read through `toDialect`),
- * and the item's Kurdish must also be written in that variety's script
- * (`fitsDialect`): a Latin word in a Soranî lesson, or a recording whose text
- * is in the other script, is left out of both.
+ * Every item is in exactly one variety: from where it lives (course, story or row dialect, via `toDialect`), and its
+ * Kurdish must be in that variety's script (`fitsDialect`).
  *
- * What a word means is shown only where the item itself attests it: a
- * sentence's words by the meanings its own lesson teaches for exactly those
- * words (`lessonWordMeanings`: the same letters, marks and capitals, never a
- * folded look-alike from somewhere else — tê is not te, xwe is not xwê, Baran
- * the name is not baran the rain, and ne in "xemlandî ne" is not the ne a
- * lesson elsewhere teaches as "not"), a recording's text by the meaning its
- * own lesson item gives it (`publishedRecordingTexts`), a dictionary entry's
- * by its own first sense. Where nothing attests a meaning, none is shown.
+ * A word's meaning is shown only where the item itself attests it: a sentence's words by its own lesson's meanings for
+ * exactly those words (`lessonWordMeanings`: same letters, marks and capitals; tê is not te, xwe is not xwê, Baran is
+ * not baran), a recording's text by its own lesson item (`publishedRecordingTexts`), a dictionary entry by its first
+ * sense. Otherwise none.
  *
- * Every item carries a key that stays the same while its Kurdish does: a
- * sentence is keyed by its text, not by the exercise it came from, so a
- * lesson published again, or the same sentence taught in two lessons, is the
- * same item to a learner's `game_seen`.
+ * Each item's key stays the same while its Kurdish does (a sentence is keyed by its text, not its exercise), so
+ * republishing or teaching it in two lessons is the same item in `game_seen`.
  *
- * Each reader is cached in Redis per variety for a few minutes: a round is
- * made from the cached pool, and the pool is read from Postgres at most once
- * per variety in that time, however many rounds are played. A change in the
- * admin panel shows within those minutes (game content also bumps the cache
- * itself: `bustGamePools`). What a game works out from the pools — its maps
- * of words and meanings, its decoy buckets — is kept in this process too
- * (`derived`), under the same generation, so a round is made from them
- * without building them again.
+ * Each reader is cached in Redis per variety for a few minutes, so Postgres is read at most once per variety in that
+ * time; admin changes show within those minutes (game content also busts the cache: `bustGamePools`). What a game
+ * derives from the pools (word and meaning maps, decoy buckets) is kept in-process under the same generation
+ * (`derived`).
  */
 import { createHash, randomBytes } from 'node:crypto';
 import type pg from 'pg';
@@ -196,9 +173,8 @@ export interface PublishedContent<K extends GameContentKind> {
 }
 
 /**
- * One line of a published conversation, where it stands and who says it: for
- * a case's evidence and for the admin's line picker, so neither types the
- * Kurdish again.
+ * One published conversation line, with where it stands and who says it, for case evidence and the admin line picker,
+ * so neither retypes the Kurdish.
  */
 export interface TaughtLine {
   /** the exercise, the conversation's own id, and its title when it is in the variety's script */
@@ -233,12 +209,9 @@ interface ExerciseRow {
 const QUOTED = /[“"«‘]([^”"»’]+)[”"»’]/gu;
 
 /**
- * The English a translation into Kurdish asks for. Lesson prompts set the
- * scene around it ("Your turn to be the guide. Say: “This is a wall.”"), so
- * the meaning is the last quoted text; else the text after a label ("In
- * Kurdish: Good morning"); else the prompt itself when it is short enough to
- * be nothing but the meaning. Anything else gives no meaning, and the item is
- * left out rather than shown with a scene as its meaning.
+ * The English a translation into Kurdish asks for. Lesson prompts set a scene ("Your turn to be the guide. Say: “This
+ * is a wall.”"), so it is the last quoted text; else the text after a label ("In Kurdish: Good morning"); else the
+ * whole prompt when short enough to be only the meaning. Otherwise no meaning, and the item is left out.
  */
 export function meaningOfPrompt(prompt: string): string | null {
   const quoted = [...prompt.matchAll(QUOTED)].map((m) => m[1]!.trim()).filter((q) => q !== '');
@@ -303,11 +276,9 @@ const PAIRING_TYPES = ['match_pairs', 'translate', 'multiple_choice'] as const;
 const meaningKeyOf = (m: Partial<Meanings>): string => (m.en ?? '').trim().toLowerCase().replace(/[\s.!?…]+$/u, '');
 
 /**
- * What each published lesson teaches its single words to mean (pure, for the
- * tests): a match card and its partner, a one-word translation, a one-word
- * question and its answer — by lesson, each word exactly as the lesson writes
- * it (NFC, marks and capitals kept). A word one lesson gives two different
- * meanings is no word with a meaning there: which it is cannot be told.
+ * What each published lesson teaches its single words to mean (pure, for tests): match card pairs, one-word
+ * translations, one-word questions and answers, by lesson, each word exactly as written (NFC, marks and capitals kept).
+ * A word one lesson gives two meanings has none there.
  */
 export function lessonWordMeanings(rows: ReadonlyArray<Pick<ExerciseRow, 'type' | 'payload' | 'lesson_id'>>, dialect: GameDialect): Map<string, Map<string, Partial<Meanings>>> {
   const found = new Map<string, Map<string, Partial<Meanings> | null>>();
@@ -381,9 +352,8 @@ export function pairsOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payload'>, diale
 }
 
 /**
- * One conversation exercise whole (pure, for the tests): only when its title
- * and every line are in the variety's own script, so a passage made of it
- * never mixes the two.
+ * One conversation exercise whole (pure, for tests), only when its title and every line are in the variety's script, so
+ * a passage never mixes scripts.
  */
 export function conversationOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payload'>, dialect: GameDialect): ConversationText | null {
   if (row.type !== 'conversation') return null;
@@ -409,9 +379,8 @@ export function wordsOfExercise(row: Pick<ExerciseRow, 'type' | 'payload'>, dial
 }
 
 /**
- * The level of a conversation from where its unit stands in its course: the
- * first fifth of the units is level 1, the last fifth level 5. A course is
- * written to grow harder unit by unit, so this is the course's own order.
+ * A conversation's level from its unit's place in the course: the first fifth of units is level 1, the last fifth level
+ * 5, since courses grow harder unit by unit.
  */
 export function unitLevel(unitPosition: number, unitCount: number): GameLevel {
   if (!(unitCount > 0) || !(unitPosition > 0)) return 1;
@@ -420,9 +389,8 @@ export function unitLevel(unitPosition: number, unitCount: number): GameLevel {
 }
 
 /**
- * Every line of one conversation exercise in the variety's script (pure, for
- * the tests), each with the key its recording is filed under and the level
- * its unit gives it.
+ * Every line of one conversation exercise in the variety's script (pure, for tests), each with its recording key and
+ * its unit's level.
  */
 export function conversationLinesOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payload'>, dialect: GameDialect, level: GameLevel): TaughtLine[] {
   if (row.type !== 'conversation') return [];
@@ -453,14 +421,10 @@ export function conversationLinesOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payl
 }
 
 /**
- * The recordings a game may play, by the `lesson_audio` key each is filed
- * under, with the text as published content writes it now (pure, for the
- * tests): every text a live published lesson asks to be heard
- * (`lessonAudioTargets`), every line of its conversations (by the line's own
- * key, `conversationClips`), and every sentence of an approved published
- * story (`storyAudioSentences`) — the same keys the recording studio files
- * them under. A recording under any other key is of a draft, of a story in
- * review or rejected, or of a text corrected since.
+ * The recordings a game may play, by `lesson_audio` key, with the text as published content writes it now (pure, for
+ * tests): every text a live published lesson asks to be heard (`lessonAudioTargets`), every conversation line (by its
+ * own key, `conversationClips`), and every sentence of an approved published story (`storyAudioSentences`), keyed as
+ * the studio files them. Any other key is a draft's, a story's in review or rejected, or a since-corrected text's.
  */
 export function publishedRecordingTexts(
   exercises: ReadonlyArray<Pick<ExerciseRow, 'type' | 'payload'>>,
@@ -506,9 +470,8 @@ export function publishedRecordingTexts(
 // ---------- the readers ----------
 
 /**
- * What a reader counts as the course: `published` is what learners can meet,
- * and the only scope a game reads; `course` is every lesson and story that
- * has not been archived, drafts among them, for the starter library alone.
+ * What a reader counts as the course: `published` is what learners can meet and the only scope games read; `course` is
+ * every non-archived lesson and story, drafts included, for the starter library alone.
  */
 export type SourceScope = 'published' | 'course';
 
@@ -536,11 +499,9 @@ export class TrustedSources {
   }
 
   /**
-   * Something a game works out from the pools (`name` says which game and
-   * what), kept in this process for DERIVED_TTL_MS under the pools'
-   * generation, so a publish retires it on every instance at once. Rounds
-   * made together share one build. Without a cache there is no generation to
-   * follow, and it is built every time.
+   * Something a game derives from the pools (`name` says which game and what), kept in-process for DERIVED_TTL_MS under
+   * the pools' generation, so a publish retires it on every instance at once. Concurrent rounds share one build.
+   * Without a cache there is no generation, and it is built every time.
    */
   async derived<T>(name: string, dialect: GameDialect, build: () => Promise<T>): Promise<T> {
     if (!this.cache) return build();
@@ -560,10 +521,8 @@ export class TrustedSources {
   }
 
   /**
-   * The exercises of every live published lesson in a course of this variety:
-   * the newest published version at each place in a skill, of these types (or
-   * of every type, for null). A draft or a lesson in review is never among
-   * them, nor a version replaced.
+   * The exercises of every live published lesson in this variety's courses: the newest published version per skill
+   * place, of these types (or all, for null). Never drafts, lessons in review, or replaced versions.
    */
   private async publishedExercises(dialect: GameDialect, types: readonly string[] | null): Promise<ExerciseRow[]> {
     const res = await this.db.query<ExerciseRow>(
@@ -640,9 +599,8 @@ export class TrustedSources {
   }
 
   /**
-   * Single words with their meanings: the pairs published lessons teach, then
-   * published stories' one-word glossary terms (with meanings in more
-   * languages, which win when the two disagree on nothing but coverage).
+   * Single words with meanings: published lessons' pairs, then published stories' one-word glossary terms (whose wider
+   * language coverage wins when they otherwise agree).
    */
   vocabulary(dialect: GameDialect): Promise<VocabularyWord[]> {
     return this.pooled('vocabulary', dialect, async () => {
@@ -690,12 +648,9 @@ export class TrustedSources {
   }
 
   /**
-   * People's recordings with the Kurdish they say, in this variety's script:
-   * the published lessons' and approved stories' texts (each with the text as
-   * published, `publishedRecordingTexts`: a recording of anything else is
-   * left out), the alphabet's words, and the pronunciations of the curated
-   * dictionary entries of this variety. The synthesised clips the apps ship
-   * are never rows here.
+   * Human recordings with the Kurdish they say, in this variety's script: published lessons' and approved stories'
+   * texts (with their published text, `publishedRecordingTexts`; recordings of anything else are left out), the
+   * alphabet's words, and curated dictionary pronunciations. Never the apps' synthesised clips.
    */
   recordings(dialect: GameDialect): Promise<HumanRecording[]> {
     return this.pooled('published-recordings', dialect, async () => {
@@ -748,9 +703,8 @@ export class TrustedSources {
   }
 
   /**
-   * Published rows of one kind and variety, each checked again against its
-   * kind's schema and script: a row stored before a rule tightened is left
-   * out rather than shown.
+   * Published rows of one kind and variety, each rechecked against its kind's schema and script, so a row stored before
+   * a rule tightened is left out.
    */
   content<K extends GameContentKind>(kind: K, dialect: GameDialect): Promise<Array<PublishedContent<K>>> {
     return this.pooled(`content-${kind}`, dialect, async () => {
@@ -772,10 +726,8 @@ export class TrustedSources {
   }
 
   /**
-   * Every line of every live published lesson's conversations in this
-   * variety, in order, each with its level: where its unit stands in its
-   * course, the first units easiest. A draft, a lesson in review or a version
-   * replaced is never among them.
+   * Every line of every live published lesson's conversations in this variety, in order, each with its level from its
+   * unit's place in the course. Never drafts, lessons in review, or replaced versions.
    */
   conversationLines(dialect: GameDialect): Promise<TaughtLine[]> {
     return this.pooled('conversation-lines', dialect, async () => {

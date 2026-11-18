@@ -1,36 +1,23 @@
 /**
  * Detective: a round is one case, solved from Kurdish evidence.
  *
- * The cases are published `case_file` rows (approved by a reviewer, in one
- * variety). Each holds suspects, evidence cards whose Kurdish was picked from
- * published lessons and stories in the admin panel (never typed again), the
- * deduction steps, the culprit and a solution that walks back through the
- * evidence. A round takes one case at the levels of the difficulty chosen,
- * one never met first; its items are the deduction steps and, last, the
- * accusation (shared detective/rules.ts), whose suspects are shown in an
- * order drawn for the round, so where a case lists its culprit gives nothing
- * away.
+ * Cases are published `case_file` rows (reviewer-approved, one variety): suspects, evidence cards whose Kurdish was
+ * picked from published lessons and stories in the admin, deduction steps, the culprit and a solution walking back
+ * through the evidence. A round takes one case at the chosen difficulty's levels, unseen ones first; its items are the
+ * deduction steps and, last, the accusation (shared detective/rules.ts), with suspects in a per-round order so a case's
+ * listing order reveals nothing.
  *
- * The board — the case, its suspects and its cards — is sent with the round
- * (`board`), but what a card means stays here until the player has found it:
- * by making a deduction it proves (the correction brings the meanings, and
- * the notebook keeps the deduction), or by spending a hint on it. A hint can
- * instead read the case's next written hint. A case has DETECTIVE_HINTS of
- * them and no more: that they run out is what a hint costs, since a case
- * played alone pays no XP to take one from. An overheard remark plays in the
- * voice it was recorded in (games/spoken.ts).
+ * The board (case, suspects, cards) is sent with the round, but a card's meaning stays server-side until found: by a
+ * deduction it proves (the correction brings meanings and the notebook keeps them) or by spending a hint. A hint can
+ * instead read the case's next written hint. A case has DETECTIVE_HINTS hints and no more; their running out is the
+ * cost, since solo cases pay no XP to deduct from. Overheard remarks play in their recorded voice (games/spoken.ts).
  *
- * Hints do not come back for a round given up. A round of a case left
- * unfinished (replaced by a new round, or expired) keeps what its hints
- * showed, and the next round of the same case within GAME_REPEAT_XP_DAYS
- * starts with them spent (`carriedHints`): the cards it translated already
- * translated, the hints it read already read — so a case cannot be opened up
- * with hints, dropped, and played again with all of them to spend.
+ * Hints do not come back for an abandoned round: a case left unfinished (replaced or expired) keeps what its hints
+ * showed, and the next round of it within GAME_REPEAT_XP_DAYS starts with them spent (`carriedHints`), so hints cannot
+ * be farmed by dropping and replaying.
  *
- * A wrong first try is answered with the cards to read again, never the
- * answer; once an item is done, the right answer and the cards it rests on
- * with what they mean, and for the accusation the culprit and the solution,
- * every deduction walked back through.
+ * A wrong first try is told which cards to reread, never the answer; once done, the right answer and its cards with
+ * their meanings, and for the accusation the culprit and solution through every deduction.
  */
 import type pg from 'pg';
 import { z } from 'zod';
@@ -107,15 +94,10 @@ function metaOf(meta: Record<string, unknown>): CaseMeta | null {
 }
 
 /**
- * The hints already spent on this case in the learner's last round of it,
- * when that round was not played out, within the repeat window: what the
- * next round of the case starts with. A round left unfinished (given up for
- * another, or expired) keeps its hints spent, and so does one finished
- * without counting: were that second kind let go, a case's hints would all
- * come back to anyone who finished a round empty and played the case again
- * knowing what they had shown.
- * Nothing when the last round of it was finished and counted: that case was
- * solved, and its next round begins afresh.
+ * The hints spent on this case in the learner's last round of it, within the repeat window, when that round was not
+ * played out: the next round starts with them. A round left unfinished (abandoned or expired) keeps its hints spent, as
+ * does one finished without counting; otherwise finishing a round empty would restore all hints for a replay. Nothing
+ * when the last round was finished and counted: the case was solved, and the next round starts fresh.
  */
 export async function carriedHints(db: Pick<pg.Pool, 'query'>, userId: string, dialect: string, caseId: string): Promise<CaseMeta['spent'] | null> {
   const res = await db.query<{ spent: CaseMeta['spent'] | null; paid: boolean }>(

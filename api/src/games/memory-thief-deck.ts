@@ -1,37 +1,24 @@
 /**
- * The Memory Thief's word deck (api/content/games/memory-thief/kmr.json and
- * ckb.json): words chosen by hand for the story paragraphs the game plays,
- * so a paragraph whose story has no glossary, or too thin a one, still has
- * words to lose — and the intermediate and advanced rounds have passages to
- * be made of.
+ * The Memory Thief's word deck (api/content/games/memory-thief/kmr.json and ckb.json): hand-chosen words for story
+ * paragraphs, so paragraphs with a thin or missing glossary still have words to lose and intermediate and advanced
+ * rounds have passages.
  *
- * Each entry names a story by its slug, a paragraph by its place (as the
- * stories are split into paragraphs everywhere), the paragraph's first words
- * (`opens`), and the words, each as the paragraph writes it with what it
- * means there. `opens` is how an entry notices its story was edited: when the
- * paragraph at that place no longer starts so, the entry is skipped and
- * logged rather than laid over a paragraph it was not written for. A word the
- * paragraph does not hold exactly as written, a name, or one too short to
- * take is skipped and logged the same way.
+ * Each entry names a story by slug, a paragraph by position, the paragraph's first words (`opens`), and the words as
+ * the paragraph writes them with their meaning there. If the paragraph no longer starts with `opens`, the story was
+ * edited and the entry is skipped and logged. Words not in the paragraph exactly as written, names, and too-short words
+ * are skipped and logged likewise.
  *
- * An entry becomes one published `passage` row whose text is the paragraph as
- * the story is published now (with the next paragraph, where the game reads
- * the two together: `storyWindows`) and whose hidden words are the deck's
- * words, then the paragraph's own glossary terms, two to six in all. Its text
- * is the story's, so the game reads the row and the paragraph as one passage
- * with the deck's words first. The row is `deck:memory-thief:<slug>:<n>` in
- * `origin` and is kept as its file says until a person changes it in the
- * admin (`updated_by`); an untouched row whose entry is gone is archived, and
- * a row an editor deleted stays gone (`content_seeds`).
+ * An entry becomes one published `passage` row: the paragraph as currently published (with the next one where the game
+ * reads both: `storyWindows`), hidden words being the deck's then the glossary's, two to six in all. Since its text is
+ * the story's, the game treats row and paragraph as one passage. The row's `origin` is `deck:memory-thief:<slug>:<n>`;
+ * it follows its file until a person changes it (`updated_by`), an untouched row whose entry is gone is archived, and a
+ * row an editor deleted stays gone (`content_seeds`).
  *
- * The starter library once copied the stories' paragraphs and the lessons'
- * conversations into passage rows. The game reads both directly now, so an
- * untouched copy is a duplicate of what it reads, or, when the story or the
- * lesson has changed since, a stale line the course no longer has. Those are
- * archived; a copy of something the course has but the game does not read yet
- * (a lesson still in draft) is the only way that passage plays, and is kept.
+ * The starter library once copied story paragraphs and lesson conversations into passage rows. The game reads both
+ * directly now, so untouched copies are duplicates or stale and are archived; a copy of content the game does not read
+ * yet (a lesson still in draft) is kept.
  *
- * Nothing here throws: a broken file must not stop the API starting.
+ * Nothing here throws: a broken file must not stop the API.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -96,10 +83,8 @@ export interface DeckSkip {
 }
 
 /**
- * The rows a deck makes against the stories as they are published (pure, for
- * the tests and the content checks): each entry's passage cut as the game
- * cuts it, its words checked against the passage as `candidatesIn` checks a
- * glossary, and what was skipped, with why.
+ * The rows a deck makes against the published stories (pure, for tests and content checks): each entry's passage cut as
+ * the game cuts it, its words checked like glossary terms (`candidatesIn`), and what was skipped, with why.
  */
 export function deckRows(dialect: GameDialect, deck: MemoryThiefDeck, stories: ReadonlyMap<string, DeckStory>): { rows: DeckRow[]; skipped: DeckSkip[] } {
   const skipped: DeckSkip[] = [];

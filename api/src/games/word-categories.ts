@@ -1,31 +1,20 @@
 /**
- * The starter categories Impostor's word cards are sorted into, for
- * the admin's "starter word cards" import (content-admin.ts): each a slug, its
- * name in each variety, what it means in the interface languages, and the
- * English meanings of the published words that belong in it.
+ * The starter categories Impostor's word cards are sorted into, for the admin's starter word card import
+ * (content-admin.ts): each a slug, its name in each variety, its meaning in the interface languages, and the English
+ * meanings of the published words that belong in it.
  *
- * The import never writes a learner's word: every card's word and meaning are
- * copied from published vocabulary, and only the category is put beside it,
- * matched by the word's English meaning. The category names here are the one
- * new Kurdish — the hint the impostor is shown — and every row made from them
- * is a draft (source 'starter', unreviewed) that a native speaker reviews
- * before it can be published. Until then nothing here reaches a learner.
+ * The import never writes a learner's word: card words and meanings are copied from published vocabulary and only the
+ * category is added, matched by English meaning. The category names are the one new Kurdish (the impostor's hint), so
+ * every row made from them is a 'starter' draft for native review before publishing.
  *
- * A meaning is listed once, under the category it belongs in first. A verb
- * ("to run") is matched against the `verbs` of a category before anything
- * else, so that the verb "to light" and the adjective "light" each find their
- * own; and a word with several meanings ("box, chest") goes where its first
- * meaning goes, which is the one the lesson taught.
+ * A meaning is listed once, under its first-fitting category. A verb ("to run") is matched against a category's `verbs`
+ * first, so the verb "to light" and the adjective "light" each find their own; a word with several meanings ("box,
+ * chest") goes where its first, taught meaning goes.
  *
- * The same categories name the cards of Impostor's curated deck
- * (impostor-deck.ts, api/content/games/impostor.json): a deck card names its
- * category by slug, and its hint is built from the name here, so renaming a
- * category renames every card's hint. Two categories are folded into others
- * the deck's way: drinks into food ("food and drink"), since there are too
- * few drinks for a round of their own, and play into sports. An English
- * meaning that sorted words into the wrong place is not listed at all (a saw
- * is also "saw", the scales of a fish are not the scales of a shop, the
- * spring of water is not the season), so such a word waits for a person.
+ * The same categories name the curated deck's cards (impostor-deck.ts, api/content/games/impostor.json) by slug, and
+ * each hint is built from the name here, so renaming a category renames its hints. Drinks are folded into food ("food
+ * and drink") and play into sports, as the deck does. Meanings that misfiled words are not listed at all (saw, scales,
+ * spring), so such words wait for a person.
  *
  * [native-speaker review] every `kmr` and `ckb` name below.
  */
@@ -495,19 +484,17 @@ function meaningParts(en: string): MeaningPart[] {
 }
 
 /**
- * A published word's English meaning as the categories list them: lower
- * case, without an article or "to", without anything in brackets, each of its
- * alternatives ("cat / kitten", "the cat, a cat") on its own.
+ * A published word's English meaning as the categories list it: lower case, without article, "to" or anything in
+ * brackets, each alternative ("cat / kitten", "the cat, a cat") separately.
  */
 export function meaningKeys(en: string): string[] {
   return meaningParts(en).map((part) => part.key);
 }
 
 /**
- * The starter category a published word belongs in, by its English meaning,
- * or null: the category of its first alternative that has one. A verb looks
- * among the categories' verbs first, and only then among their words (a
- * category that lists "dance" takes "to dance" where no other lists the verb).
+ * The starter category a published word belongs in by English meaning, or null: the category of its first alternative
+ * that has one. A verb looks among categories' verbs first, then their words (a category listing "dance" takes "to
+ * dance" where none lists the verb).
  */
 export function starterCategoryOf(en: string | undefined): StarterCategory | null {
   if (!en) return null;

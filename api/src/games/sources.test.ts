@@ -1,13 +1,9 @@
 /**
- * Reading approved lessons for the learning games, without a database: which
- * English a translation asks for, which sentences an exercise teaches and in
- * which orders, a conversation as line pairs, whole and line by line with
- * each line's level, the alphabet's letter sounds told from its words, and
- * the rule that a sentence in the other variety's script is left out. Then
- * which recordings a game may
- * play and what each one's own item says it means, what a lesson attests its
- * words mean (exactly as written, never a look-alike), and the pools' own
- * memo, which follows the cache's generation.
+ * Reading approved lessons for the games, without a database: the English a translation asks for, the sentences and
+ * orders an exercise teaches, conversations as line pairs (whole and per line with levels), the alphabet's letter
+ * sounds told from its words, and the rule excluding sentences in the other variety's script. Then which recordings a
+ * game may play and their own meanings, what a lesson attests its words mean (exactly as written), and the pools' memo
+ * following the cache generation.
  */
 import { describe, expect, it } from 'vitest';
 import { LEARN_GAME_XP_SOURCES, conversationLineKey, lessonAudioKey } from '@kurda/shared';

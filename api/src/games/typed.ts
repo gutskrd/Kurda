@@ -1,16 +1,12 @@
 /**
- * How a typed answer in a learning game is taken: the way a lesson takes a
- * typed answer, and then each variety's own lenient letters.
+ * How a typed game answer is graded: as a lesson grades one, then with the variety's lenient letters.
  *
- * First `checkAnswer`, as a lesson's listening item is graded: case,
- * punctuation, spacing and the keyboard a Soranî answer was typed on do not
- * matter, and an answer right but for Kurmancî's marks (e for ê, s for ş) is a
- * typo, accepted. Then `foldForDialect`'s lenient key, which also forgives
- * what a Soranî learner's keyboard loses (ی for ێ, و for ۆ, ل for ڵ, ر for ڕ):
- * that too is a typo, accepted. Anything else is wrong.
+ * First `checkAnswer`, as for a lesson's listening item: case, punctuation, spacing and the Soranî keyboard used do not
+ * matter, and missing Kurmancî marks (e for ê, s for ş) are an accepted typo. Then `foldForDialect`'s lenient key,
+ * which also forgives what a Soranî keyboard loses (ی for ێ, و for ۆ, ل for ڵ, ر for ڕ), also an accepted typo.
+ * Anything else is wrong.
  *
- * The Memory Thief grades each vanished word this way at the advanced
- * difficulty, and Hear It, Find It what is typed on its last rung.
+ * Used by The Memory Thief at advanced difficulty and by Hear It, Find It's last rung.
  */
 import { foldForDialect, gameWords, sameInDialect, type GameDialect } from '@kurda/shared';
 import { checkAnswer } from '../content/exercises.js';
@@ -28,9 +24,8 @@ export function typedVerdict(typed: string, accepted: string | readonly string[]
 }
 
 /**
- * Which typed words are right where they stand, for the nudge after a wrong
- * try: one mark per word typed, each against the word at the same place, by
- * the lenient key (a slip of a mark is not what the nudge is about).
+ * Which typed words are right in place, for the nudge after a wrong try: one flag per typed word, compared with the
+ * answer word at the same position by the lenient key (a mark slip is not what the nudge is about).
  */
 export function wordsInPlace(typed: string, answer: string, dialect: GameDialect): boolean[] {
   const want = gameWords(answer).map((w) => foldForDialect(w, dialect, true));

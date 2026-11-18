@@ -1,42 +1,26 @@
 /**
- * Hear It, Find It: a round of people's recordings, each asked about on one
- * rung of a ladder — pick how a word is written, pick what a phrase means,
- * pick how a sentence is written, and at the advanced difficulty type what
- * is heard (shared games/hear-it/rules.ts).
+ * Hear It, Find It: a round of people's recordings, each asked about on one ladder rung: pick how a word is written,
+ * what a phrase means, how a sentence is written, and at advanced difficulty type what is heard (shared
+ * games/hear-it/rules.ts).
  *
- * Only people's recordings are played (`lesson_audio`, `alphabet_audio`'s
- * words, `dict_audio`), each with the text it was filed under, in the
- * learner's variety only; never the synthesised clips the apps ship. The same
- * text recorded more than once (another character, another person) is one
- * item with several voices, and each time a learner meets it again it is
- * played in the next voice, so a learner hears how the same words sound from
- * different people.
+ * Only human recordings are played (`lesson_audio`, `alphabet_audio` words, `dict_audio`), with the text each was filed
+ * under, in the learner's variety; never the apps' synthesised clips. The same text recorded more than once is one item
+ * with several voices, played in the next voice each time it returns.
  *
- * Every wrong option is approved Kurdish of the same variety: for a word,
- * the approved words closest to it in spelling (edit distance, then the
- * letters they share), from the lessons' vocabulary, their sentences and the
- * other recordings; for a sentence, the approved sentences closest to it word
- * by word; for a phrase, other approved phrases' meanings. A meaning is only
- * ever one an approved source gives, and what a recording's own text means is
- * only what its own item says (a lesson's English for that very text, a
- * dictionary entry's own sense: `HumanRecording.meanings`), never a meaning
- * found by folding its letters into another word's — when its items disagree,
- * or none says, it has none, and is not asked about on the phrase rung.
+ * Every wrong option is approved Kurdish of the same variety: for a word, the approved words closest in spelling (edit
+ * distance, then shared letters); for a sentence, the closest approved sentences word by word; for a phrase, other
+ * approved phrases' meanings. A recording's own meaning is only what its own item says (a lesson's English for that
+ * text, a dictionary entry's sense: `HumanRecording.meanings`), never one found by folding letters; with conflicting or
+ * no meanings it is not asked about on the phrase rung.
  *
- * The clip never travels with its text. Each item of a round gets a handle of
- * its own, random and good for that round only, and the app plays it from
- * `hearItClipPath` (games/clips.ts), which streams the recording without
- * saying what it is. The text, its meaning and who says it come back once the
- * item is done. Replays are counted by the app, by `HEAR_REPLAYS`: hearing a
- * clip again pays nothing and gives nothing away, so the server does not
- * meter it beyond the route's rate limit.
+ * The clip never travels with its text: each item gets a random handle valid for its round, played from
+ * `hearItClipPath` (games/clips.ts) without saying what it is. Text, meaning and speaker come back once the item is
+ * done. Replays are counted by the app (`HEAR_REPLAYS`); they pay and reveal nothing, so the server meters them only by
+ * the route's rate limit.
  *
- * A round costs little to make, however large the dictionary grows: the pool
- * (texts, words, sentences, meanings, and the words and sentences bucketed by
- * length) is worked out once per variety and kept (`TrustedSources.derived`),
- * each item draws from one seeded generator (games/draw.ts), and the
- * look-alikes are looked for among at most LOOK_ALIKE_CANDIDATES of the
- * nearest lengths rather than across the whole pool.
+ * Rounds stay cheap however large the dictionary: the pool (texts, words, sentences, meanings, length buckets) is built
+ * once per variety and cached (`TrustedSources.derived`), each item draws from one seeded generator (games/draw.ts),
+ * and look-alikes are sought among at most LOOK_ALIKE_CANDIDATES of the nearest lengths.
  */
 import { randomBytes } from 'node:crypto';
 import type pg from 'pg';
@@ -149,9 +133,8 @@ export function recordingRef(r: Pick<HumanRecording, 'key' | 'source'>): Recordi
 }
 
 /**
- * Recordings grouped by what they say (its strict key in the variety), each
- * text once with all its voices, a voice once (pure, for the tests). Texts
- * longer than a sentence a game can ask about are left out.
+ * Recordings grouped by text (its strict key in the variety), each text once with all its voices, each voice once
+ * (pure, for tests). Texts longer than an askable sentence are left out.
  */
 export function groupRecordings(recordings: readonly HumanRecording[], dialect: GameDialect): HearText[] {
   const byKey = new Map<string, HearText>();
@@ -181,9 +164,8 @@ export function groupRecordings(recordings: readonly HumanRecording[], dialect: 
 }
 
 /**
- * The voice a text is played in this time: the next one after the voice it
- * was heard in last, by how many rounds it was met in; and whether that is
- * another voice than last time (pure, for the tests).
+ * The voice a text plays in this time: the next after the one heard last, by how many rounds it was met in, and whether
+ * that is a new voice (pure, for tests).
  */
 export function pickVariant(variants: readonly Variant[], seen: Pick<SeenItem, 'attempts'> | undefined): { variant: Variant; newVoice: boolean } {
   const met = seen?.attempts ?? 0;
@@ -232,9 +214,8 @@ const letters = (key: string): number => [...key].length;
 const wordCount = (key: string): number => key.split(' ').length;
 
 /**
- * Up to `cap` entries of the lengths nearest `length`, nearest first: a
- * length's bucket whole while it fits, a random part of the one that does not
- * (pure, for the tests). Never further than `maxDelta` from it.
+ * Up to `cap` entries of the lengths nearest `length`, nearest first: whole buckets while they fit, a random part of
+ * the one that does not (pure, for tests). Never further than `maxDelta`.
  */
 export function nearestEntries(buckets: LengthBuckets, length: number, cap: number, draw: Draw, maxDelta = Infinity, keep: (key: string) => boolean = () => true): Array<readonly [string, string]> {
   const lengths = [...buckets.keys()].filter((l) => Math.abs(l - length) <= maxDelta).sort((a, b) => Math.abs(a - length) - Math.abs(b - length) || a - b);
@@ -249,10 +230,8 @@ export function nearestEntries(buckets: LengthBuckets, length: number, cap: numb
 }
 
 /**
- * The approved words that look most like `target`: fewest letters changed,
- * then most letters in common, then closest in length; never the word itself
- * (pure, for the tests). They are looked for among the words nearest it in
- * length (`nearestEntries`): a word many letters longer is never the closest.
+ * The approved words most like `target`: fewest letters changed, then most letters shared, then closest length; never
+ * the word itself (pure, for tests). Sought among words nearest in length (`nearestEntries`).
  */
 export function lookAlikeWords(target: string, words: LengthBuckets, n: number, seed: string, dialect: GameDialect): string[] {
   const t = foldForDialect(target, dialect);
@@ -270,10 +249,9 @@ export function lookAlikeWords(target: string, words: LengthBuckets, n: number, 
 }
 
 /**
- * The approved sentences that look most like `target`: fewest words changed,
- * then fewest letters, within three words of its length; never the sentence
- * itself (pure, for the tests). Looked for among the sentences nearest it in
- * length, at most LOOK_ALIKE_CANDIDATES of them.
+ * The approved sentences most like `target`: fewest words changed, then fewest letters, within three words of its
+ * length; never the sentence itself (pure, for tests). Sought among at most LOOK_ALIKE_CANDIDATES sentences nearest in
+ * length.
  */
 export function lookAlikeSentences(target: string, sentences: LengthBuckets, n: number, seed: string, dialect: GameDialect): string[] {
   const t = foldForDialect(target, dialect);
@@ -299,10 +277,8 @@ const meaningKey = (m: Partial<Meanings>): string => (m.en ?? '').trim().toLower
 const MEANINGS_LOOKED_AT = 600;
 
 /**
- * Meanings of other approved phrases to pick among: none the same as the
- * right one, each once, phrases about as long as the right one's first
- * (pure, for the tests). Drawn one at a time in a random order, so a large
- * pool is not shuffled whole for three of them.
+ * Meanings of other approved phrases to choose among: none equal to the right one, each once, phrases of similar length
+ * first (pure, for tests). Drawn one at a time so a large pool is not shuffled whole for three.
  */
 export function meaningChoices(
   target: Partial<Meanings>,
@@ -350,11 +326,9 @@ export function stagesFor(t: Pick<HearText, 'words' | 'meanings'>, pool: Pick<He
 }
 
 /**
- * Which texts a round asks about, and on which rung: each rung of the
- * difficulty its share (`HEAR_STAGE_MIX`), never-met texts first, then
- * whatever is short made up from the difficulty's other rungs; each text once.
- * Lowest rung first, so the round climbs. Null when the pool cannot fill a
- * round (pure, for the tests).
+ * Which texts a round asks about and on which rung: each rung of the difficulty its share (`HEAR_STAGE_MIX`), unseen
+ * texts first, any shortfall made up from the difficulty's other rungs, each text once, lowest rung first so the round
+ * climbs. Null when the pool cannot fill a round (pure, for tests).
  */
 export function planRound(
   difficulty: GameDifficulty,
@@ -386,10 +360,8 @@ export class HearItGame implements SoloEngine<HearItem, HearItItemView, HearItAn
   constructor(private readonly sources: TrustedSources) {}
 
   /**
-   * The recordings of a variety, by text, with the rungs each can stand on,
-   * and the approved words, sentences and meanings the wrong options come
-   * from (all read from the cached pools, so a round costs no reading), worked
-   * out once and kept while the pools stand (`derived`).
+   * A variety's recordings by text with the rungs each can stand on, plus the approved words, sentences and meanings
+   * wrong options come from, all from cached pools and derived once while the pools stand (`derived`).
    */
   pool(dialect: GameDialect): Promise<HearPool> {
     return this.sources.derived('hear-it:pool', dialect, () => this.readPool(dialect));
@@ -457,9 +429,8 @@ export class HearItGame implements SoloEngine<HearItem, HearItItemView, HearItAn
   }
 
   /**
-   * What the availability count shows: the texts that can be asked about at
-   * all (recordings have no levels, so every level shows the same pool), and
-   * the difficulties whose rungs hold at least the game's minimum of them.
+   * What the availability count shows: the askable texts (recordings have no levels, so every level shows the same
+   * pool) and the difficulties whose rungs hold at least the game's minimum.
    */
   async availability(dialect: GameDialect): Promise<{ levels: Record<GameLevel, number>; difficulties: GameDifficulty[] }> {
     const { texts } = await this.pool(dialect);
