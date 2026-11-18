@@ -16,7 +16,7 @@ import { SocialSlide } from './SocialSlide';
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(cleanup);
 
-// a phone's screen: jsdom's window has no size, and the panel is a share of its width
+// A phone's screen: jsdom's window has no size, and the panel is a share of its width.
 Object.defineProperty(window, 'visualViewport', { value: { height: 800, width: 400, scale: 1 }, configurable: true });
 window.dispatchEvent(new Event('resize'));
 
@@ -31,7 +31,7 @@ function swipe(from: Element, dx: number, msPerStep?: number): void {
     time += msPerStep ?? 1;
   }
   fireEvent.mouseMove(from, at(200 + dx));
-  // let go slowly: held still a moment first, so it lifts with no speed
+  // Let go slowly: held still a moment first, so it lifts with no speed.
   if (msPerStep === undefined) time += 200;
   fireEvent.mouseUp(from, at(200 + dx));
   clock.mockRestore();
@@ -75,7 +75,7 @@ describe('the new-message panel with nobody about', () => {
     const note = await screen.findByText('Nobody right now.');
     const online = screen.getByText('Friends online');
     const away = screen.getByText('Offline');
-    // in the order the panel reads: the heading, its note, and then the friends who are away
+    // In the order the panel reads: the heading, its note, and then the friends who are away.
     expect(online.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(note.compareDocumentPosition(away) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

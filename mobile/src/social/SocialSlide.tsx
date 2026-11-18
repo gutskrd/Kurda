@@ -25,25 +25,13 @@ import { useDirection } from '../reports/direction';
 const WIDTH_RATIO = 0.86;
 
 /**
- * Your people, over the side of the app.
+ * Your people, from the side of the app: friends and what they are doing now, who is waiting on you, and groups with
+ * unread messages, from one request (`GET /me/social`). An invite that expires in two minutes needs to be reachable
+ * from anywhere.
  *
- * The browser has had this since the rail was built — "modelled on the one every
- * game client has, because it solves a real problem: an invite that expires in
- * two minutes is useless on a page you have to navigate to". The phone had the
- * same problem and none of the answer: friends live on one tab, groups on
- * another, and who is *in a game right now* was not anywhere at all.
- *
- * It comes from the side its button is on — the right, and the left in
- * Soranî and Arabic, where Messages' header is mirrored — with its rows
- * mirrored too, and it moves as the profile's menu does (`useEdgePanel`): the same spring in and out, a drag or
- * a flick towards its edge to shut it, and Android's back. The two are never
- * open on one screen — the menu belongs to Profile, this to Messages — so
- * there is no guessing which panel a swipe meant. It used to run a timing of
- * its own and could only be tapped away, which made two panels from one edge
- * feel like two different things.
- *
- * Everything it shows comes from one request. Six would not be a drawer anybody
- * opened twice.
+ * It comes from the side its button is on (the right, the left in right-to-left languages) and moves as the profile's
+ * menu does (`useEdgePanel`): the same spring, a drag or flick to shut it, and Android's back. The two panels are never
+ * on one screen (the menu belongs to Profile, this to Messages), so a swipe is never ambiguous.
  */
 export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => void }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -52,7 +40,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   const { t } = useI18n();
   const dir = useDirection();
   const insets = useSafeAreaInsets();
-  // the end edge, where the new-message button is: the right, or the left when the reading runs right to left
+  // The end edge, where the new-message button is: the right, or the left in right-to-left languages.
   const fromRight = dir.row !== 'row-reverse';
   const sign = fromRight ? 1 : -1;
 
@@ -60,15 +48,12 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   const [loading, setLoading] = useState(false);
 
   const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
-  // how far it is from open, towards the right edge: 0 is open, `width` is gone
+  // How far it is from open towards its edge: 0 is open, `width` is gone.
   const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign });
 
   /*
-   * Read when it opens, not on a timer.
-   *
-   * The panel is the only thing that wants this payload and it aggregates six
-   * queries, so polling it in the background would be the most expensive request
-   * in the app running constantly for a drawer nobody had opened.
+   * Read when it opens, not on a timer: it aggregates six queries, so polling it would be the app's most expensive
+   * request running constantly for a closed drawer.
    */
   useEffect(() => {
     if (!open) return;
@@ -127,7 +112,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
     <View
       style={StyleSheet.absoluteFill}
       pointerEvents={open ? 'box-none' : 'none'}
-      // closed, it is not something a screen reader should find its way into
+      // Hidden from screen readers while closed.
       accessibilityElementsHidden={!open}
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
     >
@@ -161,19 +146,17 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
           },
         ]}
       >
-        {/* past the screen's edge, so a panel pulled further open than it goes shows more panel, not a gap */}
+        {/* Past the screen's edge, so a panel pulled further open shows more panel rather than a gap. */}
         <View pointerEvents="none" style={[styles.skirt, fromRight ? styles.skirtRight : styles.skirtLeft, { width, backgroundColor: colors.background }]} />
         <View style={[styles.head, { flexDirection: dir.row }]}>
-          {/*
-            Opened by Messages' new-message pencil: your people, by who is
-            around, and a tap on one opens the conversation with them.
-          */}
+          {/* Opened by Messages' new-message pencil: your people by who is around, and a tap on one opens the
+             conversation. */}
           <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
             {t('messages.new')}
           </Text>
           <Pressable
             onPress={onClose}
-            // a 20-point glyph, caught at a fingertip
+            // A 20pt glyph, reaching a fingertip.
             reachSize={{ width: 20, height: 20 }}
             accessibilityRole="button"
             accessibilityLabel={t('rail.closePanel')}
@@ -187,7 +170,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
           <Loading style={{ marginTop: spacing.lg }} />
         ) : (
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-            {/* what goes stale, first: a challenge is gone in two minutes */}
+            {/* What goes stale first: a challenge is gone in two minutes. */}
             {data && (data.challenges.length > 0 || data.requests.length > 0) ? (
               <View style={styles.group}>
                 {heading('rail.waitingOnYou')}
@@ -216,7 +199,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                     accessibilityRole="button"
                     accessibilityLabel={t('rail.wantsToBeFriendsWith', { name: r.displayName ?? r.username })}
                   >
-                    {/* a friend request is a ticket, as an invite to play is: its glyph on the face's corner */}
+                    {/* A friend request is a ticket, as an invite to play is: its glyph on the face's corner. */}
                     <View>
                       <InitialsAvatar name={r.username} id={r.userId} size={34} photoUrl={r.avatarUrl ?? undefined} />
                       <View style={[styles.ticketBadge, fromRight ? styles.ticketBadgeRight : styles.ticketBadgeLeft]}>
@@ -247,7 +230,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                 {online.map((f) => person(f, ''))}
               </View>
             ) : friends.length > 0 && playing.length === 0 ? (
-              // friends, and none of them about: said where they would be, not under the ones who are away
+              // Friends, none of them about: said where they would be, not under the ones who are away.
               <View style={styles.group}>
                 {heading('rail.friendsOnline')}
                 <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('rail.nobodyRightNow')}</Text>
@@ -265,7 +248,8 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                     accessibilityRole="button"
                     accessibilityLabel={g.name}
                   >
-                    {/* a group in its rounded square, as Messages draws it, so it is never mistaken for a person of that name */}
+                    {/* A group in its rounded square, as Messages draws it, so it is never mistaken for a person of
+                       that name. */}
                     <GroupAvatar name={g.name} id={g.id} size={34} photoUrl={g.photoUrl ?? null} />
                     <View style={styles.rowMain}>
                       <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>{g.name}</Text>
@@ -290,7 +274,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
               </View>
             ) : null}
 
-            {/* no friends at all is a different thing to say than none about today */}
+            {/* No friends at all is a different thing to say than none about today. */}
             {data && friends.length === 0 ? (
               <Pressable
                 onPress={() => go(() => navigation.navigate('Search'))}
@@ -316,7 +300,7 @@ const styles = StyleSheet.create({
   skirt: { position: 'absolute', top: 0, bottom: 0 },
   skirtRight: { left: '100%' },
   skirtLeft: { right: '100%' },
-  // on the face's corner on the side its row ends on
+  // On the face's corner on the side its row ends on.
   ticketBadge: { position: 'absolute', bottom: -4 },
   ticketBadgeRight: { right: -5 },
   ticketBadgeLeft: { left: -5 },
@@ -344,9 +328,8 @@ const styles = StyleSheet.create({
 });
 
 /*
- * Opening it, the way the side menu is opened: a context holding one function,
- * so a screen puts a button in its header without knowing where the panel lives
- * or holding its state.
+ * Opening it as the side menu is opened: a context holding one function, so a screen can put a button in its header
+ * without knowing where the panel lives.
  */
 const OpenSlide = createContext<() => void>(() => {});
 
