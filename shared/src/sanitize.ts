@@ -28,6 +28,17 @@ export function stripControlChars(input: string): string {
   return out;
 }
 
+/**
+ * Invisible characters a name can hide behind or use to turn the text around it: zero-width space, byte-order mark, bidi
+ * embeddings, overrides and isolates. The joiners and direction marks are not here, since Soranî spelling and emoji use them.
+ */
+const HIDING_CHARS = /[​﻿‪-‮⁦-⁩]/g;
+
+/** A name others read beside their own words (a display name, a group's name): control and hiding characters removed. */
+export function stripHiddenChars(input: string): string {
+  return stripControlChars(input).replace(HIDING_CHARS, '');
+}
+
 /** A plain object, as untrusted JSON gives one: not null and not an array. */
 export function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);

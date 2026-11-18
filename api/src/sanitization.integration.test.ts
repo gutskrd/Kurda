@@ -1,6 +1,6 @@
 /**
- * Control and invisible characters are stripped from user-visible text on the display name and group name and
- * description write paths, while Kurdish diacritics survive; stripControlChars itself is unit-tested elsewhere.
+ * Control and invisible characters are stripped from user-visible text on the display name (profile and sign-up) and
+ * group name and description write paths, while Kurdish diacritics survive; the helpers are unit-tested in shared.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -69,6 +69,42 @@ describe.skipIf(!DATABASE_URL)('input sanitization (integration)', () => {
     expect(hasControl(display)).toBe(false);
     expect(display).toContain('Şêrko');
     expect(display).toContain('Bêkes');
+  });
+
+  it('strips the characters a display name could hide behind or reverse the line with, keeping Soranî joiners', async () => {
+    const patch = await app.inject({
+      method: 'PATCH',
+      url: '/me',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { displayName: 'Hevalo‮gnp.exe ⁦ad​min⁩ می‌ن' },
+    });
+    expect(patch.statusCode).toBe(200);
+    expect(patch.json().user.displayName).toBe('Hevalognp.exe admin می‌ن');
+
+    // nothing visible left is no name at all, so the username shows instead
+    const blank = await app.inject({ method: 'PATCH', url: '/me', headers: { authorization: `Bearer ${token}` }, payload: { displayName: '‮​﻿' } });
+    expect(blank.statusCode).toBe(200);
+    expect(blank.json().user.displayName).toBeNull();
+  });
+
+  it('cleans the display name given at sign-up the same way', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        email: `san2_${suffix}@it.kurda.app`,
+        username: `san2_${suffix}`.slice(0, 30),
+        password: 'a-strong-password1',
+        displayName: `Şêrko${CONTROLS}‮  Bêkes⁦`,
+        acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
+      },
+      remoteAddress: '10.108.0.2',
+    });
+    expect(res.statusCode).toBe(201);
+    const row = await pool.query<{ display_name: string }>(`SELECT display_name FROM users WHERE id = $1`, [res.json().user.id]);
+    expect(row.rows[0]!.display_name).toBe('Şêrko Bêkes');
   });
 
   it('strips control chars from a group name + description, keeping diacritics', async () => {

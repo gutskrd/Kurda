@@ -12,7 +12,7 @@ export * from './username.js';
 export { matchedParts, type TextPart } from './search-highlight.js';
 export { plan, toLexicon, type Chunk, type ConvertedEntry, type SourceEntry } from './ferheng.js';
 export { FERHENG_LANGS, publishedFerheng, type FerhengSource, type Manifest } from './ferheng-source.js';
-export { escapeHtml, stripControlChars } from './sanitize.js';
+export { escapeHtml, stripControlChars, stripHiddenChars } from './sanitize.js';
 export { XSS_PAYLOADS } from './xss-corpus.js';
 export { COUNTRIES, countriesIn, countryName, type Country } from './countries.js';
 export {
