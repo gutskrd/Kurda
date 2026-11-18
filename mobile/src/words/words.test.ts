@@ -31,7 +31,7 @@ describe('the words on the phone', () => {
 });
 
 describe('the grid of a set', () => {
-  /** each width less the 16-point gutters either side: a 375, a 430, and a tablet's 680 column */
+  /** Each width less the 16-point gutters either side: a 375, a 430, and a tablet's 680 column. */
   it('fits three colours or months, four numbers and two days across a phone', () => {
     expect(wordGrid(343, 'colours').columns).toBe(3);
     expect(wordGrid(343, 'months').columns).toBe(3);
@@ -50,7 +50,7 @@ describe('the grid of a set', () => {
       for (const set of WORD_SET_IDS) {
         const { columns, tile } = wordGrid(width, set);
         expect(columns * tile + (columns - 1) * TILE_GAP).toBeLessThanOrEqual(width);
-        // a fingertip's width and more
+        // A fingertip's width and more.
         expect(tile).toBeGreaterThanOrEqual(44);
       }
     }

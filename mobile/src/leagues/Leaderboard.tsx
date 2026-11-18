@@ -19,22 +19,15 @@ import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 
 /**
- * The Leaderboard tab of the league screen: everyone ranked, a page at a
- * time, from most to least. What is ranked — this week's XP, or the Zêr or
- * Gewher each person holds now — and who it compares you with are two rows of
- * the same segmented control the screen opens with; the screen keeps both
- * choices, so going to the League tab and back finds the board as it was left.
+ * The league screen's Leaderboard tab: everyone ranked, a page at a time. What is ranked (this week's XP, or Zêr
+ * or Gewher held now) and who you are compared with are two rows of segmented controls; the screen keeps both
+ * choices, so returning from the League tab finds the board as it was.
  */
 
 /** What a board ranks; the ids are the API's (`GET /leaderboards/:type`). */
 export type BoardType = 'weekly_xp' | 'zer' | 'gewher';
 
-/**
- * The weekly XP board's three scopes, as the browser offers them. The second
- * board this screen had — the all-time skill rating — read
- * `/leaderboards/rating`, which Game Ranks replaced; a game's rank and its
- * boards live on the Ranks screen now.
- */
+/** The weekly XP board's three scopes, as on the web. Game ranks and their boards live on the Ranks screen. */
 export type Scope = 'global' | 'friends' | 'country';
 const SCOPES: { key: Scope; labelKey: TranslationKey }[] = [
   { key: 'global', labelKey: 'rankings.scope.global' },
@@ -52,19 +45,19 @@ export interface BoardEntry {
   userId: string;
   username: string;
   score: number;
-  /** ties share a place, so two rows can carry the same one */
+  /** Ties share a place, so two rows can carry the same one. */
   rank: number;
-  /** already resolved; an older server sends none, and the row draws initials */
+  /** Already resolved; an older server sends none, and the row draws initials. */
   avatarUrl?: string | null;
 }
 interface Board {
   top: BoardEntry[];
   total: number;
-  /** your own place is null only below the cut of a board that stops at `depth` */
+  /** Your own place is null only below the cut of a board that stops at `depth`. */
   me: { rank: number | null; score: number } | null;
-  /** Zêr and Gewher: the board lists the top this many and no further */
+  /** Zêr and Gewher: the board lists the top this many and no further. */
   depth?: number;
-  /** country scope only; null when the profile has no country set */
+  /** Country scope only; null when the profile has no country set. */
   country?: string | null;
 }
 
@@ -88,7 +81,7 @@ export function Leaderboard({
   const [entries, setEntries] = useState<BoardEntry[]>([]);
   const [error, setError] = useState<ApiError | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  /** which board the last request was for: an answer for one switched away from is dropped, not shown under the next */
+  /** Which board the last request was for; an answer for a board switched away from is dropped. */
   const asking = useRef('');
 
   const load = useCallback(
@@ -111,7 +104,7 @@ export function Leaderboard({
 
   useFocusEffect(useCallback(() => load(0), [load]));
 
-  // a different board starts from its skeleton: the last one's rows, amounts and place say nothing about it
+  // A different board starts from its skeleton: the last one's rows, amounts and place do not apply.
   const reset = (): void => {
     setBoard(null);
     setEntries([]);
@@ -149,14 +142,9 @@ export function Leaderboard({
 }
 
 /**
- * The switch between the three boards, as a segmented control read out as one
- * choice of three. A second segmented control rather than a filter button and
- * a sheet: changing what the board ranks is the first thing anyone does here,
- * and three short words fit across a phone, so they are all in view, a tap
- * apart. Not every language's words are short: the weekly board's name takes
- * a second line where a third of a narrow phone is too little for it, rather
- * than being cut. The coin and the gem are on every row of their boards,
- * beside the amounts, where they say what the number is.
+ * The switch between the three boards, a segmented control announced as one choice of three. It is all in view
+ * because switching boards is the first thing anyone does here. A long name takes a second line on a narrow phone
+ * rather than being cut. The coin and gem sit beside the amounts on every row of their boards.
  */
 export function BoardSwitch({ value, onChange }: { value: BoardType; onChange: (next: BoardType) => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -182,9 +170,8 @@ export function amountLabel(t: I18n['t'], type: BoardType, amount: number, local
 }
 
 /**
- * An amount on a board, short enough for the end of a row: XP as the league
- * table writes it, and Zêr and Gewher as the app's own coin or gem beside the
- * number, as the shop's purse shows them.
+ * An amount short enough for a row's end: XP as the league table writes it, Zêr and Gewher as the coin or gem
+ * beside the number, as in the shop's purse.
  */
 export function BoardAmount({ type, amount }: { type: BoardType; amount: number }): React.JSX.Element {
   const { t, locale } = useI18n();
@@ -200,11 +187,9 @@ export function BoardAmount({ type, amount }: { type: BoardType; amount: number 
 }
 
 /**
- * One row of a board: the place, the face, the name and the amount. Your own
- * row is drawn as it is in the league's table, filled and edged, so it is
- * found at a glance; it reads as one line to a screen reader. A place is null
- * only for your own row below the cut of a board that stops: a dash, and the
- * reason in words.
+ * One board row: place, face, name and amount. Your own row is filled and edged as in the league table, and reads
+ * as one line to a screen reader. A place is null only for your row below the cut of a capped board: a dash, with
+ * the reason in words.
  */
 export function BoardRow({
   entry,
@@ -219,12 +204,12 @@ export function BoardRow({
 }): React.JSX.Element {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
-  // a row starts where its language reads from: in Soranî and Arabic the place is on the right and the amount on the left
+  // A row starts from the reading side: in Soranî and Arabic the place is on the right and the amount on the left.
   const dir = useDirection();
   const place = entry.rank;
   const name = self ? t('games.you') : entry.username;
   const amount = amountLabel(t, type, entry.score, locale);
-  // read as "#2, azad, 500 Zêr", and below the cut "You, 35 Zêr, Not in the top 1,000 yet."
+  // Read as "#2, azad, 500 Zêr", and below the cut "You, 35 Zêr, Not in the top 1,000 yet.".
   const label =
     place === null ? [name, amount, t('rankings.notInTop', { count: formatNumber(depth ?? 0, locale) })].join(', ') : [`#${place}`, name, amount].join(', ');
   return (
@@ -244,10 +229,9 @@ export function BoardRow({
 }
 
 /**
- * A board, a page at a time, with your own row pinned above it until a page
- * reaches you. The empty state names the scope — nobody at all, none of your
- * friends, or nobody from your country are three different things — and the
- * foot of a balance board that stops at its depth says it is the top of it.
+ * A board a page at a time, with your row pinned above until a page reaches you. The empty state names the scope
+ * (nobody at all, none of your friends, nobody from your country), and a capped balance board's foot says it
+ * shows the top.
  */
 function BoardList({
   board,
@@ -278,7 +262,7 @@ function BoardList({
   }
   const empty = emptyKeys(scope, type);
   const kind = KINDS.find((k) => k.key === type)!;
-  // your own row is picked out in place once a page reaches it, and pinned above the list until then
+  // Your own row is picked out in place once a page reaches it, and pinned above the list until then.
   const myId = user?.id ?? null;
   const meInList = entries.some((e) => e.userId === myId);
   const more = Math.min(PAGE, board.total - entries.length);
@@ -305,7 +289,7 @@ function BoardList({
                 self
                 depth={board.depth}
               />
-              {/* said in words for everyone who reads the screen; the row already says it to a screen reader */}
+              {/* Said in words for everyone who reads the screen; the row already says it to a screen reader. */}
               {board.me.rank === null && board.depth ? (
                 <Text
                   style={[styles.hint, styles.note, { color: colors.textSecondary }]}
@@ -347,7 +331,7 @@ function BoardList({
   );
 }
 
-/** The weekly board's empty states talk about earning this week; a balance has no week to talk about. */
+/** The weekly board's empty states talk about earning this week; a balance has no week. */
 function emptyKeys(scope: Scope, type: BoardType): readonly [TranslationKey, TranslationKey] {
   if (scope === 'friends') return ['rankings.empty.friends', 'rankings.empty.friendsBody'];
   if (scope === 'country') return ['rankings.empty.country', type === 'weekly_xp' ? 'rankings.empty.countryBody' : 'rankings.empty.balanceCountryBody'];
@@ -357,7 +341,7 @@ function emptyKeys(scope: Scope, type: BoardType): readonly [TranslationKey, Tra
 /** The height of a row, for how many grey ones fill the screen while the board loads. */
 const ROW = MIN_TOUCH_TARGET + 4 + spacing.xs;
 
-/** The board in grey while it loads: the line about it, then rows of the place, the face, the name and the amount. */
+/** The loading placeholder: the board's line, then rows of place, face, name and amount. */
 function BoardSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const { height } = useWindowDimensions();

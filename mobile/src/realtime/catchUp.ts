@@ -3,12 +3,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useRealtimeReconnect } from './RealtimeProvider';
 
 /**
- * A thread held on screen, brought up to date with the latest page the server
- * has: a message both have is replaced by the server's copy (it may have been
- * read or deleted since), a new one is added, and the whole stays oldest
- * first. When the two do not meet at all, more arrived than one page holds;
- * the latest page is then the thread, and older messages page in from there
- * as they would on a fresh open, so the thread never shows a hidden gap.
+ * Merge the server's latest page into a thread on screen: shared messages take the server's copy (they may have
+ * been read or deleted since), new ones are added, and the result stays oldest first. If the two do not overlap,
+ * more arrived than one page holds, so the latest page becomes the thread and older messages page in from there,
+ * never leaving a hidden gap.
  */
 export function mergeLatest<T extends { id: string; createdAt: string }>(held: readonly T[], latest: readonly T[]): T[] {
   if (latest.length === 0) return [...held];
@@ -17,26 +15,23 @@ export function mergeLatest<T extends { id: string; createdAt: string }>(held: r
   const fresh = new Map(latest.map((m) => [m.id, m]));
   const merged = held.map((m) => fresh.get(m.id) ?? m);
   for (const m of latest) if (!heldIds.has(m.id)) merged.push(m);
-  // ISO timestamps sort as text; a stable sort keeps same-instant messages in order
+  // ISO timestamps sort as text; a stable sort keeps same-instant messages in order.
   return merged.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
 }
 
 /**
- * A message added to a thread once. The same message can reach the screen
- * twice — read by a catch-up refetch and then pushed live, or both pushed and
- * returned by the send — and a second copy would show twice under one key.
+ * Add a message to a thread once. It can arrive twice (a catch-up refetch then a live push, or a push and the
+ * send's response), and a copy would show twice under one key.
  */
 export function appendOnce<T extends { id: string }>(held: T[], message: T): T[] {
   return held.some((m) => m.id === message.id) ? held : [...held, message];
 }
 
 /**
- * Refetch a live thread whenever it may have missed something: each time the
- * shared connection comes back (the app was in the background, or the network
- * dropped — the gateway does not replay what it could not deliver), and each
- * time the screen is shown again after another one covered it (a game the
- * host started from this chat posted a card here while the lobby was in
- * front). Not on the first showing: the screen's own first load covers that.
+ * Refetch a live thread whenever it may have missed something: each time the shared connection comes back (the
+ * gateway does not replay undelivered events), and each time the screen is shown again after being covered (a
+ * game started from this chat posted a card while the lobby was in front). Not on first show, which the screen's
+ * own load covers.
  */
 export function useCatchUp(refetch: () => void): void {
   const handler = useRef(refetch);

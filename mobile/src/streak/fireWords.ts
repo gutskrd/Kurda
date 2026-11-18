@@ -23,7 +23,7 @@ export const FIRE_GREW: Record<LitFireStage, TranslationKey> = {
   newroz: 'fire.grew.newroz',
 };
 
-/** The next stage as a near goal, and the day it comes; never the spark, which a kept streak has already lit. */
+/** The next stage as a near goal with its day; never the spark, which a kept streak has already lit. */
 export const FIRE_NEXT: Record<Exclude<LitFireStage, 'spark'>, TranslationKey> = {
   kindling: 'fire.next.kindling',
   campfire: 'fire.next.campfire',

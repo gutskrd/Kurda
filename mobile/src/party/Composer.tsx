@@ -8,10 +8,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 
 /**
- * The box a clue or a guess is typed into on the phone, in a party game: in
- * the game's Kurdish (right to left for Soranî), with the slip the box can see
- * said before it is sent and the server's refusal said after, both read out.
- * Sent with the keyboard's Send or the button; cleared once the move is taken.
+ * The box a party-game clue or guess is typed into, in the game's Kurdish (right to left for Soranî). Local slips
+ * are shown before sending and server refusals after, both announced. Cleared once the move is taken.
  */
 export function PartyComposer({
   label,
@@ -83,9 +81,8 @@ export function PartyComposer({
 }
 
 /**
- * How much of the present wait is left, as a flat bar that empties (drawn
- * from the server's clock), read out as the seconds left. Under five seconds
- * on the viewer's own turn it turns to the warning colour.
+ * How much of the current wait is left, as a bar that empties by the server's clock and is announced in seconds.
+ * It turns to the warning colour under five seconds on the viewer's own turn.
  */
 export function PartyTimer({ share, low, label, color }: { share: number; low: boolean; label: string; color?: string }): React.JSX.Element {
   const { colors } = useTheme();

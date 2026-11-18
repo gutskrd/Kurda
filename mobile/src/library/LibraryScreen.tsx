@@ -26,16 +26,15 @@ import { Loading } from '../theme/Loading';
 const PAGE = 20;
 
 /**
- * Community library browse (KUR-284): stories & poems, filter by type + sort,
- * infinite scroll, pull-to-refresh. Tapping a post opens it to read/listen +
- * comment; "Write" opens the composer.
+ * The community library: stories and poems with type filter and sort, infinite scroll and pull to refresh. A post
+ * opens to read, listen and comment; "Write" opens the composer.
  */
 export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  // in Soranî and Arabic the cards and the button mirror, and a title keeps its own direction
+  // In Soranî and Arabic the cards and the button mirror, and a title keeps its own direction.
   const dir = useDirection();
 
   const [type, setType] = useState<PostType>('story');
@@ -51,12 +50,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     [client, type, sort],
   );
 
-  /*
-   * Come back to from a post, the list is as it was left — every page that
-   * was loaded, at the same place — and is brought up to date quietly
-   * (feed/keep.ts). It used to be replaced by its first page each time, so
-   * somebody reading the fortieth post came back to twenty and the top.
-   */
+  /* Returning from a post keeps the list as it was, every loaded page at the same place, and refreshes it quietly (feed/keep.ts). */
   const { onScroll, forget } = useQuietRefocus<LibraryPost>({
     loaded: posts !== null,
     list: fetchPage,
@@ -70,7 +64,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     retry: error ? () => void refresh() : undefined,
   });
 
-  // the list as it first opens, and again for another kind of writing or another order
+  // The list as it first opens, and again for another kind of writing or another order.
   useEffect(() => {
     let active = true;
     forget();
@@ -88,10 +82,10 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     return () => {
       active = false;
     };
-    // `forget` is the same function for as long as the screen is there
+    // `forget` is the same function for as long as the screen is there.
   }, [fetchPage]);
 
-  // a post deleted on its own page is gone from here before the list reloads
+  // A post deleted on its own page is gone from here before the list reloads.
   useEffect(
     () =>
       onPostDeleted((gone) => {
@@ -110,7 +104,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
       setError(null);
     }
     setRefreshing(false);
-    // `forget` is the same function for as long as the screen is there
+    // `forget` is the same function for as long as the screen is there.
   }, [fetchPage]);
 
   const loadMore = useCallback(async () => {
@@ -124,7 +118,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     setLoadingMore(false);
   }, [fetchPage, loadingMore, end, posts]);
 
-  // the first screenful rises in once, as the list arrives
+  // The first screenful rises in once, as the list arrives.
   const entering = useListEntrance(!!posts && posts.length > 0);
   const renderItem = useCallback(
     ({ item, index }: { item: LibraryPost; index: number }) => (
@@ -144,7 +138,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           <Text style={[styles.preview, dir.free, { color: colors.textSecondary }]} numberOfLines={2}>
             {bodyPreview(item.body)}
           </Text>
-          {/* how many have read it and how many have answered: the app's own glyphs, in the caption's colour */}
+          {/* Read and reply counts, with the app's glyphs in the caption colour. */}
           <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
             <View style={[styles.stat, { flexDirection: dir.row }]}>
               <Icon name="eye" size={STAT_GLYPH} color={colors.textSecondary} />
@@ -203,7 +197,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           />
         </AsyncBoundary>
 
-        {/* at the end of the line, which is the left in Soranî and Arabic */}
+        {/* At the end of the line, which is the left in Soranî and Arabic. */}
         <View style={[styles.fab, dir.row === 'row-reverse' ? styles.fabLeft : styles.fabRight]}>
           <ClayButton label={t('library.emptyAction')} tone="primary" onPress={() => navigation.navigate('Compose')} />
         </View>
@@ -212,13 +206,13 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   );
 }
 
-/** The list while it loads: the same cards — a title, two lines, the counts — as many as fill the screen. */
+/** The loading placeholder: cards like the real ones (a title, two lines, the counts), as many as fill the screen. */
 function LibrarySkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const { height, width } = useWindowDimensions();
   const count = Math.max(3, Math.ceil(height / 130));
-  // the two-line preview fits on one across a wide tablet
+  // The two-line preview fits on one across a wide tablet.
   const wide = width >= 900;
   return (
     <View style={styles.list} accessibilityLabel={t('common.loading')}>

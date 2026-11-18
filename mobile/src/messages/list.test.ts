@@ -18,11 +18,7 @@ const GROUPS = [group('g1', 'Zozan', 0), group('g2', 'Ava', 4), group('g3', 'Ber
 const keys = (rows: ReturnType<typeof messageRows>) => rows.map((r) => r.key);
 
 describe('the Messages list', () => {
-  /*
-   * A group sends no time, so it cannot be slotted between chats by when it
-   * last spoke. One with something unread is recent by definition and goes
-   * first; the quiet ones follow the chats, by name.
-   */
+  /* Groups carry no time, so unread ones go first (they are recent by definition) and quiet ones follow the chats, by name. */
   it('puts busy groups first, then chats newest first, then the quiet groups by name', () => {
     expect(keys(messageRows({ chats: CHATS, groups: GROUPS, filter: 'all' }))).toEqual([
       'group:g2',
@@ -65,7 +61,7 @@ describe('the Messages list', () => {
 });
 
 describe('the number on the Messages tab', () => {
-  /* three messages from one person is three things not read, not one conversation */
+  /* Three messages from one person is three things not read, not one conversation. */
   it('counts messages, not conversations, and every waiting request', () => {
     expect(messagesUnread({ chats: [3, 2], groups: [4], requests: 1 })).toBe(10);
     expect(messagesUnread({ chats: [], groups: [], requests: 0 })).toBe(0);

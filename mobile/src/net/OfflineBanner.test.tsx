@@ -9,7 +9,7 @@ import { OfflineBanner } from './OfflineBanner';
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
-// online throughout: the banner is at rest in its hidden place, which is where the two motions differ
+// Online throughout: the banner rests in its hidden position, where the two motion settings differ.
 vi.mock('./useNetworkStatus', () => ({ useIsOnline: () => true }));
 
 afterEach(cleanup);

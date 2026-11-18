@@ -29,15 +29,11 @@ import { dialectNameKey } from '../i18n/dialectName';
 /** A dialect is called by its own name in every language, the way a language is. */
 
 /**
- * The Last Letter on the phone: a word chain in one Kurdish, with friends or
- * against Hevalo. Without an id, the start: how to play, a game with friends
- * (the invite sheet) and a game against Hevalo, each only in the dialects
- * that have what it needs. With one, the room (play/GameRoom.tsx) with the
- * chain inside. A code, an invite, a card or a rematch opens a room here as
- * new params on the same screen, and the room follows them.
- *
- * A game with friends earns XP by where it is finished; a game against Hevalo
- * is played alone and earns none, which the room's results say in one line.
+ * The Last Letter: a word chain in one Kurdish, with friends or against Hevalo. Without an id it shows the start
+ * (how to play, a game with friends via the invite sheet, a game against Hevalo, each only in dialects that
+ * support it); with one, the room (play/GameRoom.tsx) with the chain inside. Codes, invites, cards and rematches
+ * open a room as new params on this screen. Games with friends earn XP by finishing place; games against Hevalo
+ * earn none.
  */
 export function LastLetterScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -96,7 +92,7 @@ function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Elemen
     <>
       <GlassCard>
         <View style={styles.card}>
-          {/* the game's own cover, as its stamp shows it: a link in the brand's violet was a picture of nothing in the game */}
+          {/* The game's own cover, as its stamp shows it. */}
           <GameArt game="last-letter" size={72} />
           <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.intro')}</Text>
           <Text style={[styles.note, { color: colors.textSecondary }]}>{t('games.lastLetter.softRule')}</Text>
@@ -138,7 +134,7 @@ function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Elemen
           </View>
         </GlassCard>
       ) : null}
-      {/* a game somebody else made: its code opens it, whichever game it turns out to be */}
+      {/* A game somebody else made: its code opens it, whichever game it turns out to be. */}
       <JoinCodeCard />
       {inviting ? <InviteSheet target={{ kind: 'new', game: 'last-letter' }} onClose={() => setInviting(false)} /> : null}
     </>
@@ -199,7 +195,7 @@ function Room({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (i
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
+  // Lay out a card's contents on an inner View: a GlassCard's own style only dresses its outside.
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   loading: { marginTop: spacing.xl },

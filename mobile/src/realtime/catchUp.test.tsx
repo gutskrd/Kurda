@@ -15,10 +15,10 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// the loading skeleton asks the OS about Reduce Motion, which the web stand-in cannot answer
+// The loading skeleton asks the OS about Reduce Motion, which the web stand-in cannot answer.
 vi.mock('../a11y/useReducedMotion', () => ({ useReducedMotion: () => false }));
 
-/** navigation whose focus the test can give back, as when a screen on top is closed */
+/** Navigation whose focus the test can give back, as when a screen on top is closed. */
 const focus = vi.hoisted(() => ({ effects: new Set<() => void>() }));
 vi.mock('@react-navigation/native', async () => {
   const React = await import('react');
@@ -108,7 +108,7 @@ describe('a thread on the shared connection', () => {
     act(() => FakeSocket.all[0]!.hello());
     await flush();
 
-    // away: the socket closed, and the friend wrote meanwhile
+    // Away: the socket closed, and the friend wrote meanwhile.
     page = [msg('m1', 1), msg('m2', 2)];
     act(() => {
       FakeSocket.all[0]!.close();
@@ -134,11 +134,11 @@ describe('a thread on the shared connection', () => {
     );
     expect(await screen.findByText('message m1')).toBeTruthy();
     await flush();
-    // the connection comes back: the catch-up reads m2, which was saved a moment ago
+    // The connection comes back: the catch-up reads m2, saved a moment ago.
     page = [msg('m1', 1), msg('m2', 2)];
     act(() => FakeSocket.all[0]!.hello());
     expect(await screen.findByText('message m2')).toBeTruthy();
-    // and only then is m2 pushed live
+    // And only then is m2 pushed live.
     act(() => FakeSocket.all[0]!.push('user:me', { type: 'dm', from: 'u2', message: msg('m2', 2) }));
     await flush();
     expect(screen.getAllByText('message m2')).toHaveLength(1);

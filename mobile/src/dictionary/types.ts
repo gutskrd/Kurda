@@ -1,4 +1,4 @@
-/** Dictionary contract — mirrors the server (KUR-044/043). */
+/** Dictionary types, mirroring the server. */
 import type { DictionaryAudio } from '@kurda/shared';
 
 export type MatchType = 'exact' | 'prefix' | 'contains' | 'definition' | 'fuzzy';
@@ -9,7 +9,7 @@ export interface SearchHit {
   dialect: string;
   pos: string | null;
   definitionEn: string | null;
-  /** most of an imported lexicon is defined in Kurdish alone, with no English at all */
+  /** Most of an imported lexicon is defined in Kurdish alone, with no English at all. */
   definitionKu: string | null;
   matchType: MatchType;
 }
@@ -24,7 +24,7 @@ export interface Sense {
   id: string;
   position: number;
   pos: string;
-  /** null when the word is defined in Kurdish alone */
+  /** Null when the word is defined in Kurdish alone. */
   definitionEn: string | null;
   definitionKu: string | null;
   examples: Array<{ textKu: string; textEn: string | null }>;
@@ -35,10 +35,10 @@ export interface Entry {
   headword: string;
   dialect: string;
   senses: Sense[];
-  /** its pronunciations, each with who says it when an editor has chosen somebody */
+  /** Its pronunciations, each with who says it when an editor has chosen somebody. */
   audio: DictionaryAudio[];
   xrefs: Array<{ entryId: string; headword: string; relation: string }>;
-  /** whether the learner has bookmarked this entry (KUR-047) */
+  /** Whether the learner has bookmarked this entry. */
   saved?: boolean;
 }
 

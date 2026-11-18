@@ -42,9 +42,9 @@ interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
-  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose): the face they have everywhere else */
+  /** Their picture as the server resolves it: an uploaded photo, else their chosen avatar. */
   avatarUrl?: string | null;
-  /** on search results: already friends with whoever searched */
+  /** On search results: already friends with whoever searched. */
   friend?: boolean;
 }
 
@@ -56,7 +56,7 @@ interface Suggestion extends UserRow {
 /** Where the searches you made are kept, on this device only. */
 const RECENTS_KEY = 'hevalo_search_recents_v1';
 const SHOWN_RECENTS = 6;
-/** between two rows of a list on this page */
+/** Between two rows of a list on this page. */
 const ROWS_GAP = 2;
 
 interface LessonRow {
@@ -66,43 +66,16 @@ interface LessonRow {
 }
 
 /**
- * One field for the whole app.
- *
- * There were two searches before this and each could only see its own tab:
- * usernames on Friends, headwords on Dictionary. Nothing found a lesson or a
- * game, so reaching either meant remembering which tab it lived behind, which
- * is the one thing a search is supposed to spare you.
- *
- * Four scopes. Two ask the server and two are lists the app already holds:
- *
- *   people   `/users/search`, which is rate-limited, so it waits for two
- *            characters and for you to stop typing; a leading "@" is not
- *            part of the name looked for
- *   words    `/dictionary/search`, same
- *   lessons  the skill nodes of your first course, fetched once and matched
- *            as each letter is typed
- *   games    every game with a card on the Games screen (games/gameCards.ts),
- *            matched on the spot
- *
- * The debounce is 250ms. Typing "kurd" at a normal speed is four keystrokes
- * inside 300ms; without it that is four calls against a budget of thirty a
- * minute, and the first three are answers to a question nobody asked. From
- * the last letter until the server has answered, the people and the words
- * are held in grey where they will be: the page used to be blank for that
- * long, which read as nothing found.
- *
- * The field is the screen's header, pinned at the top. With nothing in it the
- * screen is not blank: it offers the searches you made before (kept on this
- * phone only) and people you may know, so the first thing a new reader sees
- * is somewhere to start rather than an instruction.
+ * One search field for the whole app over four scopes: people (`/users/search`) and words (`/dictionary/search`)
+ * from the server, rate-limited, so they wait for two characters and a 250 ms typing pause; lessons (the first
+ * course's skills, fetched once) and games (games/gameCards.ts) matched locally. Pending server results are held
+ * in grey. With nothing typed it offers recent searches (this device only) and people you may know.
  */
 export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   /*
-   * A guest searches the words, the lessons and the games, not the people:
-   * finding somebody leads to befriending or writing to them, which an
-   * account does, and the people search is one of the routes refused to a
-   * guest. The scope is not offered rather than offered and refused.
+   * Guests search words, lessons and games but not people: finding someone leads to befriending or messaging,
+   * which needs an account, and the route refuses guests.
    */
   const { isGuest } = useAccountGate();
   const scopes = useMemo(() => (isGuest ? SCOPES.filter((s) => s !== 'people') : SCOPES), [isGuest]);
@@ -111,7 +84,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const { t } = useI18n();
   const dir = useDirection();
   const insets = useSafeAreaInsets();
-  // nothing floats over the foot of this page: its last row only has to clear the home indicator
+  // Nothing floats over the foot of this page: its last row only has to clear the home indicator.
   const bottomInset = useScreenBottomInset(spacing.lg);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -119,27 +92,25 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [scope, setScope] = useState<Scope>('all');
   const [people, setPeople] = useState<UserRow[]>([]);
   const [words, setWords] = useState<SearchHit[]>([]);
-  // the search the server has answered (or been spared), as `asking` names one: until it is this one, it is still looked for
+  // The search the server has answered (or was not needed for); until it matches `asking`, results are pending.
   const [answered, setAnswered] = useState<string | null>(null);
-  // counts the searches asked, so an answer that comes back after a later one was asked is let go
+  // Counts searches, so an answer arriving after a later search is ignored.
   const asked = useRef(0);
-  // a search the server could not answer, which is not the same as one that found nothing
+  // A search the server could not answer, which is not the same as one that found nothing.
   const [failure, setFailure] = useState<ApiError | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [recents, setRecents] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  // how many pictures the grid found (null while it looks): with none, the empty state says where to start
+  // How many pictures the grid found (null while loading); with none, the empty state suggests where to start.
   const [discovered, setDiscovered] = useState<number | null>(null);
   const { width: screenWidth } = useWindowDimensions();
-  // people you may know are on their way: their place is held, rather than "search for something" flashing first
+  // People you may know are loading, so their place is held rather than flashing the empty prompt.
   const [suggestionsSettled, setSuggestionsSettled] = useState(false);
 
   /*
-   * What the empty field offers: the searches made before, read once from
-   * this device, and people you may know, asked once — it is a friends-of-
-   * friends join the server rate-limits, answering a question that does not
-   * change between two visits.
+   * The empty field offers recent searches, read once from this device, and people you may know, fetched once (a
+   * rate-limited friends-of-friends query that rarely changes).
    */
   useEffect(() => {
     let live = true;
@@ -149,11 +120,11 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
         const list: unknown = JSON.parse(raw);
         if (Array.isArray(list)) setRecents(list.filter((x): x is string => typeof x === 'string'));
       } catch {
-        // a list that will not parse is a list that is not there
+        // A list that will not parse is a list that is not there.
       }
     });
     if (isGuest) {
-      // nobody to suggest to a guest, and the suggestions are refused to one: settled at once
+      // Guests get no suggestions and the route refuses them, so settle at once.
       setSuggestionsSettled(true);
     } else {
       void client.get<{ suggestions: Suggestion[] }>('/friends/suggestions').then((r) => {
@@ -167,7 +138,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     };
   }, [client, isGuest]);
 
-  /** Keep what was searched for, once it led somewhere (or was sent with the return key). */
+  /** Remember a search once it led somewhere or was submitted with the return key. */
   const remember = useCallback((term: string) => {
     setRecents((list) => {
       const next = pushRecent(list, term);
@@ -181,13 +152,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     void deviceStore.remove(RECENTS_KEY);
   }, []);
 
-  /*
-   * The lessons are fetched once and filtered here.
-   *
-   * A course map is one request for every skill in a course, and it does not
-   * change while you are typing. Asking the server per keystroke for something
-   * that is already in memory would be a call per letter for no new answer.
-   */
+  /* The course map is fetched once and filtered here: it does not change while typing. */
   const [allLessons, setAllLessons] = useState<LessonRow[]>([]);
   useEffect(() => {
     let live = true;
@@ -200,8 +165,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       if (!live || !map.ok) return;
       const rows: LessonRow[] = [];
       for (const row of flattenMap(map.data)) {
-        // a skill you have not unlocked has no first lesson, so there is
-        // nothing for a tap to open and it is not offered
+        // A locked skill has no first lesson to open, so it is not offered.
         if (row.kind === 'node' && row.node.firstLessonId) {
           rows.push({ lessonId: row.node.firstLessonId, title: row.node.title });
         }
@@ -213,10 +177,10 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     };
   }, [client]);
 
-  // "all" is every scope a guest has, which is every scope but the people
+  // "all" is every scope a guest has, which is every scope but the people.
   const wanted = useMemo(() => scopesToRun(scope).filter((s) => s !== 'people' || !isGuest), [scope, isGuest]);
   const term = query.trim();
-  // who is looked for, without the "@" the app writes before a handle
+  // Who is looked for, without the "@" the app writes before a handle.
   const person = peopleQuery(query);
   const asksPeople = wanted.includes('people') && readyForServer(person);
   const asksWords = wanted.includes('words') && readyForServer(term);
@@ -231,7 +195,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
         who !== null ? client.get<{ results: UserRow[] }>(`/users/search?q=${encodeURIComponent(who)}`) : null,
         what !== null ? client.get<SearchResult>(`/dictionary/search?q=${encodeURIComponent(what)}`) : null,
       ]);
-      // another search was asked meanwhile: this answer is to a question nobody is waiting on any more
+      // Another search started meanwhile, so nobody is waiting on this answer.
       if (mine !== asked.current) return;
       setPeople(p?.ok ? p.data.results : []);
       setWords(w?.ok ? w.data.results : []);
@@ -250,16 +214,16 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-    // a retry runs the same search again: `asking` names the try as well
+    // A retry runs the same search again: `asking` names the try as well.
   }, [asking, run]);
 
-  // the lessons are a list held here: matched on the letter just typed, with no wait
+  // The lessons are a list held here: matched on the letter just typed, with no wait.
   const lessons = useMemo(
     () => (wanted.includes('lessons') ? filterByLabel(allLessons, (l) => l.title, term) : []),
     [wanted, allLessons, term],
   );
 
-  // every game with a card that can be played now: the ones with screens of their own, and the learning games listed for this learner
+  // Every game with a playable card: those with their own screens, and the learning games listed for this learner.
   const learnGames = useListedLearnGames();
   const cards = useMemo<GameCard[]>(
     () => [
@@ -277,9 +241,9 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   }, [wanted, cards, term, t]);
 
   const typed = term.length > 0;
-  // asked of the server and not answered yet: from the letter just typed, through the pause, to the answer
+  // Sent to the server and not answered yet, from the letter just typed, through the pause, to the answer.
   const looking = (asksPeople || asksWords) && answered !== asking;
-  // what the server last said is shown only where it is still what is asked for
+  // What the server last said is shown only where it is still what is asked for.
   const peopleShown = asksPeople ? people : NOBODY;
   const wordsShown = asksWords ? words : NO_WORDS;
   const nothing = typed && !looking && !failure && peopleShown.length === 0 && wordsShown.length === 0 && lessons.length === 0 && games.length === 0;
@@ -295,9 +259,8 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     );
 
   /**
-   * A line with what was searched for marked in it, folded the way the
-   * searches match (@kurda/shared search-highlight.ts): "serk" is marked
-   * inside "berserker". A line the query is not in shows as written.
+   * A line with the query highlighted, folded the way searches match (@kurda/shared search-highlight.ts), so
+   * "serk" marks inside "berserker".
    */
   const marked = (text: string, found: string = term): React.ReactNode =>
     typed && found
@@ -338,32 +301,20 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     </Pressable>
   );
 
-  /** A glyph in a soft circle, the same size as an avatar, so every row's text starts at the same place. */
+  /** A glyph in a soft circle the size of an avatar, so every row's text starts at the same place. */
   const glyph = (name: IconName) => (
     <View style={[styles.glyph, { backgroundColor: colors.controlTrack }]}>
       <Icon name={name} size={20} color={colors.textPrimary} />
     </View>
   );
 
-  /*
-   * A word opens where it opens on the Dictionary tab.
-   *
-   * `EntryDetail` is a component there rather than a route, so the tab swaps
-   * itself for it and swaps back. Doing the same here means a word found in a
-   * search and a word found in the dictionary land on the same screen, and
-   * that the back out of it returns to the results you were reading.
-   */
+  /* A word opens as on the Dictionary tab: `EntryDetail` replaces the results rather than being a route, so back returns to them. */
   if (openEntry) return <EntryDetail entryId={openEntry} onBack={() => setOpenEntry(null)} />;
 
   return (
     <GradientBackground>
       <View style={[styles.controls, { paddingTop: insets.top + spacing.xs }]}>
-        {/*
-          The way back, and the field in the room the magnifier and the bell
-          had, in the same rounded shape: the page grows out of the magnifier
-          that was tapped (theme/origin), and the keyboard is up for it at
-          once.
-        */}
+        {/* Back, and the field in the magnifier and bell's place: the page grows out of the tapped magnifier (theme/origin), with the keyboard up at once. */}
         <View style={[styles.bar, { flexDirection: dir.row }]}>
           <BackButton onPress={onExit} />
           <View style={styles.fieldWrap}>
@@ -399,8 +350,8 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 accessibilityRole="button"
                 accessibilityLabel={t('search.clearRecent')}
                 /*
-                 * One 18-point line of words, alone at the end of its line: it reaches a fingertip up into the room
-                 * above the list and to either side, and down only half of the 4 to the first recent search.
+                 * A single 18 pt line alone at its line's end: it reaches a full fingertip up and sideways, and
+                 * down only half the 4 to the first recent search.
                  */
                 hitSlop={reachSlop(null, 18, { edge: REACH_OPEN, limit: { bottom: spacing.xs / 2 } })}
                 style={({ pressed }) => pressed && heldDim}
@@ -409,7 +360,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
               </Pressable>
             </View>
             <View style={styles.rows}>
-              {/* each 44 tall and 2 apart: each reaches toward the next only half of that */}
+              {/* Each 44 tall and 2 apart: each reaches toward the next only half of that. */}
               <ReachGroup rowGap={ROWS_GAP}>
                 {recents.slice(0, SHOWN_RECENTS).map((term) => (
                   <Pressable
@@ -448,7 +399,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
         {!typed && !suggestionsSettled ? <SuggestionsSkeleton /> : null}
 
-        {/* kept while a search is typed, so clearing it does not ask for the pictures again */}
+        {/* Kept while a search is typed, so clearing it does not ask for the pictures again. */}
         <View style={[styles.discover, typed && styles.hidden]}>
           <DiscoverGrid width={screenWidth} onCount={setDiscovered} />
         </View>
@@ -464,7 +415,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
               'p-' + u.userId,
               <InitialsAvatar name={u.username} id={u.userId} size={40} photoUrl={u.avatarUrl ?? undefined} />,
               u.username,
-              // a friend says so, the way a list of people you follow does
+              // A friend says so, the way a list of people you follow does.
               u.friend ? [u.displayName, t('search.friend')].filter(Boolean).join(' · ') : (u.displayName ?? null),
               () => navigation.navigate('UserProfile', { userId: u.userId }),
               u.username,
@@ -504,7 +455,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
         {section(
           'search.scope.games',
           games.map((g) => {
-            // two ways into one game under one name are told apart by the word on the card's button
+            // Two ways into one game under one name are told apart by the word on the card's button.
             const way = wayWord(cards, g.key);
             const name = t(g.labelKey);
             return row(
@@ -518,7 +469,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           }),
         )}
 
-        {/* still looking, with nothing from the server to show yet: its rows in grey, where they will be */}
+        {/* Still waiting on the server: its rows in grey, where they will be. */}
         {looking && peopleShown.length === 0 && wordsShown.length === 0 ? <ResultsSkeleton /> : null}
 
         {nothing ? (
@@ -531,7 +482,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   );
 }
 
-/** No answer from the server, or none wanted: the same list each time, so nothing redraws for it. */
+/** No answer from the server, or none wanted: a stable empty list, so nothing re-renders for it. */
 const NOBODY: UserRow[] = [];
 const NO_WORDS: SearchHit[] = [];
 
@@ -540,7 +491,7 @@ function SuggestionsSkeleton(): React.JSX.Element {
   return <RowsSkeleton rows={5} testID="search-suggestions-loading" />;
 }
 
-/** What a search is still looking for, in grey: a heading and three rows, where its first answers will be. */
+/** A pending search in grey: a heading and three rows, where its first results will be. */
 function ResultsSkeleton(): React.JSX.Element {
   return <RowsSkeleton rows={3} testID="search-looking" />;
 }
@@ -579,7 +530,7 @@ const styles = StyleSheet.create({
   sectionTitleSkeleton: { paddingHorizontal: spacing.sm },
   sectionAction: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   rows: { gap: ROWS_GAP },
-  // edge to edge, out past the list's own inset
+  // Edge to edge, out past the list's own inset.
   discover: { marginHorizontal: -spacing.sm },
   hidden: { display: 'none' },
   row: {
@@ -595,6 +546,6 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, gap: 2 },
   rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   rowSub: { fontSize: typography.sizes.sm },
-  /** the part of a line that is what was searched for */
+  /** The part of a line that matches the query. */
   match: { fontWeight: typography.weights.bold },
 });

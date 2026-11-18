@@ -26,10 +26,8 @@ describe('typingLabel', () => {
   });
 
   /**
-   * The reason there are three keys rather than one sentence built from parts.
-   * Kurmancî agrees the verb with the count — `dinivîse` for one, `dinivîsin` for
-   * more — and puts `û` between the names, so no amount of joining fragments in
-   * code would produce the right sentence in every language.
+   * Why there are three keys rather than one sentence built from parts: Kurmancî agrees the verb with the count
+   * (`dinivîse`, `dinivîsin`) and puts `û` between names, so joined fragments cannot be right in every language.
    */
   it('lets each language choose its own shape', () => {
     const ku = translator('ku');
@@ -39,9 +37,8 @@ describe('typingLabel', () => {
   });
 
   /*
-   * Every shape in every language, with its placeholders filled. A translation
-   * that dropped `{second}` would read "zana and are typing…", which no type can
-   * catch and nobody would notice in English.
+   * Every shape in every language with its placeholders filled: a translation that dropped `{second}` would read
+   * "zana and are typing…", which no type can catch.
    */
   it('leaves no placeholder unfilled, in any language', () => {
     for (const loc of LOCALES) {
@@ -64,10 +61,7 @@ describe('typingLabel', () => {
 });
 
 describe('the two intervals', () => {
-  /*
-   * A name has to outlive the gap between its owner's pings, or a steady typist
-   * would flicker on and off.
-   */
+  /* A name must outlive the gap between its owner's pings, or a steady typist would flicker. */
   it('expire later than the send interval', () => {
     expect(EXPIRE_MS).toBeGreaterThan(SEND_EVERY_MS);
   });

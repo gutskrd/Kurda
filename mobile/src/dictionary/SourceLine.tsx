@@ -5,21 +5,15 @@ import { useI18n } from '../i18n/I18nContext';
 
 const SOURCE = 'https://ku.wiktionary.org/';
 const LICENCE = 'https://creativecommons.org/licenses/by-sa/4.0/';
-// names, not copy: a licence identifier and a wiki are the same in every language
+// Names, not copy: a licence identifier and a wiki are the same in every language.
 const SOURCE_NAME = 'Wîkîferheng';
 const LICENCE_NAME = 'CC BY-SA 4.0';
 
 /**
- * Where the words came from, and under what.
- *
- * The bulk of the lexicon is imported from Wîkîferheng, which is CC BY-SA 4.0:
- * naming the source and linking the licence is the condition of using it, not a
- * courtesy, so this belongs on every screen that shows a definition.
- *
- * The sentence is translated whole, with `{source}` and `{licence}` still in it,
- * because word order differs in all nine languages — Turkish puts the source
- * first, Arabic reads the other way. Splitting it back apart here is what lets
- * each language keep its own shape and still have two tappable links in it.
+ * Where the words came from and under what licence. Most of the lexicon is from Wîkîferheng (CC BY-SA 4.0), whose
+ * licence requires naming the source and linking the licence, so this belongs on every screen with a definition.
+ * The sentence is translated whole with `{source}` and `{licence}` placeholders, because word order differs by
+ * language; it is split here so each link stays tappable.
  */
 export function SourceLine() {
   const { colors } = useTheme();
@@ -46,7 +40,7 @@ export function SourceLine() {
 const styles = StyleSheet.create({
   line: {
     fontSize: typography.sizes.xs,
-    // a link inside a line of text cannot reach past its own line, so the line is set taller than its type: each link answers over its full 24
+    // An inline link cannot reach past its own line, so the line is taller than its type: each link answers over the full 24.
     lineHeight: 24,
     marginTop: spacing.lg,
     marginBottom: spacing.md,

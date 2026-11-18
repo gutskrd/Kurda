@@ -50,14 +50,17 @@ import { TreeArt, WaterDrop, WateringCan } from './TreeArt';
 import { TreePicture, TreeSeasonAmbient, TreeStudioScene, studioColour, treePlace } from './TreeScene';
 import { useTreeSeason } from './season';
 
-/** How long the can pours for before the screen shows what the water did, and how long a tree is watched growing before the app says that it grew. */
+/**
+ * How long the can pours before the screen shows the water's effect, and how long a growing tree is watched
+ * before the app says it grew.
+ */
 const POUR_MS = 1500;
 const GROW_MS = 1150;
 
 /** What the screen is in the middle of: nothing, the can pouring, or the tree growing under it. */
 type Phase = 'idle' | 'pour' | 'grow';
 
-/** The tree as it stood before the water: kept a moment over the new one, which grows out of it or is revived from under it. */
+/** The tree as it stood before watering, kept briefly over the new one, which grows out of it or revives from under it. */
 interface Was {
   tree: TreeView;
   kind: 'grow' | 'revive';
@@ -71,31 +74,11 @@ interface Moment {
 }
 
 /**
- * The learner's own tree.
- *
- * Before one is planted, the screen is the choice of a first seed: the kinds
- * that are free to start from, each as its own seed, and over them the great
- * tree the chosen one will be. After, it is the tree itself, standing in the
- * scene of the season with the season blowing past it, as big as the phone allows;
- * then how far it is to its next stage, with that stage shown as what is
- * being grown toward; the water held, which a lesson earns, and the button
- * to pour it with; and a way to the nursery, where another kind can be
- * bought and planted in its place.
- *
- * Pouring is the screen's one moment, and it is played in the scene, not in
- * a box over it: the can comes in and tips, the water falls and lands, the
- * tree drinks and starts. When that grows it, the tree is seen to grow where
- * it stands — the new one coming up out of a burst of light — and only then
- * does the app's celebration say so. A full-grown tree that bears gets the
- * celebration at once. A tree that has gone dry has a thought of water
- * floating by it, is said plainly to be thirsty, wilting or withered, with
- * no blame in it, and the first water brings it back.
- *
- * For somebody who has asked for less motion none of this moves: the screen
- * goes straight to how things stand after the water.
- *
- * On a server that has no trees yet there is nothing here but a line saying
- * so; nowhere else in the app mentions them then.
+ * The learner's own tree. Before planting, a choice of free first seeds under the tree each becomes. After, the
+ * tree in its season's scene, progress to the next stage, the water held with a pour button, and the nursery.
+ * Pouring plays in the scene, and growth is shown before the celebration; a dry tree is described plainly and the
+ * first water revives it. Under Reduce Motion it jumps to the result. When the server has no trees, only a line
+ * says so.
  */
 export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -111,7 +94,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
-  // each counts the times it has happened, so the same moment can be played again
+  // Each counts the times it has happened, so the same moment can be played again.
   const [grown, setGrown] = useState(0);
   const [planted, setPlanted] = useState(0);
   const [cheer, setCheer] = useState(0);
@@ -197,7 +180,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
           setMoment({ kind: 'grew', tree: watered.tree, zer: watered.zer });
         };
         if (still) return say();
-        // it grows where it stands, out of the tree it was, and is looked at, before anything is said about it
+        // It grows in place out of the old tree and is shown before anything is said.
         if (before.tree) setWas({ tree: before.tree, kind: 'grow' });
         setGrown((n) => n + 1);
         setPhase('grow');
@@ -208,7 +191,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
       }
       setPhase('idle');
       if (!still && before.tree && before.tree.health !== watered.tree.health) {
-        // brought back: the tree as it drooped fades off the one the water revived
+        // Brought back: the tree as it drooped fades off the one the water revived.
         setWas({ tree: before.tree, kind: 'revive' });
         if (fade.current) clearTimeout(fade.current);
         fade.current = setTimeout(() => setWas(null), TREE_REVIVE.ms);
@@ -238,14 +221,14 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
         settle(data, res.data, true);
         return;
       }
-      // the can pours over the tree as it was; what the water did is shown once it has landed
+      // The can pours over the tree as it was; the water's effect shows once it has landed.
       setPhase('pour');
       after.current = setTimeout(() => settle(data, res.data, false), POUR_MS);
     },
     [client, data, busy, phase, reduce, settle, t],
   );
 
-  // the scene is square, as wide as the phone allows and never smaller than a tree can be read at
+  // The scene is square, as wide as the phone allows and never smaller than a tree can be read at.
   const side = Math.max(220, Math.min(420, width - layout.gutter * 2));
   const tree = data?.tree ?? null;
   const tint = tree ? treeColour(tree.species) : colors.success;
@@ -281,7 +264,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               ) : null}
               {note ? (
                 <View style={[styles.health, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite">
-                  {/* the note across the pill, from the reading side: in Soranî it sat on the left */}
+                  {/* The note across the pill, from the reading side: in Soranî it sat on the left. */}
                   <Text style={[styles.healthName, styles.noteText, dir.text, { color: colors.textPrimary }]}>{note}</Text>
                 </View>
               ) : null}
@@ -362,9 +345,12 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 /** A plant's foot in its picture: what it is turned and stretched about. */
 const FOOT = `${TREE_FOOT.x * 100}% ${TREE_FOOT.y * 100}%`;
 
-/** The water that falls from the can: when in the pour each drop sets off, how far to one side of the tree's middle it lands, and how big it is, as shares of the picture. */
+/**
+ * The falling water: when in the pour each drop starts, how far from the tree's centre it lands, and its size, as
+ * shares of the picture.
+ */
 const DROPS = Array.from({ length: 13 }, (_, i) => ({ from: (330 + i * 54) / POUR_MS, aside: (((i * 5) % 9) - 4) / 100, size: 0.04 + (i % 3) * 0.009 }));
-/** What flies out of a tree as it grows, each at its own angle, and the sparks that stand round one that has drunk, each at its own place. */
+/** What flies out of a growing tree, each at its own angle, and the sparks around one that has drunk, each in its own place. */
 const RAYS = Array.from({ length: 12 }, (_, i) => i * 30 + (i % 2 === 0 ? 0 : 9));
 const SPARKS = [
   [0.22, 0.3],
@@ -383,11 +369,9 @@ function run(clock: Animated.Value, duration: number, easing: (t: number) => num
 }
 
 /**
- * Where the tree stands, and everything that happens to it there. The
- * season's scene is behind it; the season blows past it to the left; and the
- * tree itself stands on its round of grass, rising a little as if it
- * breathed. Touching it shakes it, which is of no use at all
- * and is there because a tree asks to be touched.
+ * Where the tree stands and everything that happens to it: the season's scene behind, the season blowing past to
+ * the left, and the tree on its disc of grass, rising a little as if breathing. Touching it shakes it, just
+ * because.
  */
 function Stage({
   tree,
@@ -414,13 +398,13 @@ function Stage({
   const alive = useMotionAlive();
   const { size, bottom } = treePlace(side);
   const tint = treeColour(tree.species);
-  // one clock to a movement: arriving, breathing, pouring, growing, dropping in, being shaken, the sparks, the thought
+  // One clock per movement: arriving, breathing, pouring, growing, dropping in, shaking, the sparks, the thought.
   const arrive = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   const bob = useRef(new Animated.Value(0)).current;
   const pour = useRef(new Animated.Value(0)).current;
   const grow = useRef(new Animated.Value(1)).current;
   const revive = useRef(new Animated.Value(1)).current;
-  // a seed that was planted a moment ago starts above its heap of earth, so it is never seen in it before it falls
+  // A just-planted seed starts above its heap of earth, so it is never seen inside it before it falls.
   const drop = useRef(new Animated.Value(planted > 0 && tree.stage === 0 ? 0 : 1)).current;
   const shake = useRef(new Animated.Value(0)).current;
   const spark = useRef(new Animated.Value(1)).current;
@@ -446,7 +430,7 @@ function Stage({
   useEffect(() => {
     if (phase === 'pour') run(pour, POUR_MS);
   }, [phase, pour]);
-  // before the new picture is painted, so the grown tree is not seen at its full size for a frame and then small
+  // Before the new picture is painted, so the grown tree does not flash at full size for a frame.
   useLayoutEffect(() => {
     if (grown > 0 && !reduce) run(grow, TREE_GROW.ms);
   }, [grown, grow, reduce]);
@@ -468,7 +452,7 @@ function Stage({
     run(shake, TREE_SHAKE.ms, Easing.out(Easing.quad));
   };
 
-  // the whole picture: in with the screen, and rising a little as if it breathed
+  // The whole picture: in with the screen, and rising a little as if it breathed.
   const whole = {
     opacity: arrive.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 1, 1] }),
     transform: [
@@ -476,15 +460,16 @@ function Stage({
       { scale: arrive.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) },
     ],
   };
-  // grown (shared `TREE_GROW`): the new plant comes up from the old one's size, a little past its own and back, as the old one swells toward it and goes
+  // Grown (shared `TREE_GROW`): the new plant rises from the old one's size, overshoots slightly and settles, as
+  // the old one swells toward it and fades.
   const from = was?.kind === 'grow' ? treeGrowFrom(was.tree.stage, tree.stage) : 1;
   const heft = treeHeft(tree.stage);
-  // watered (shared `TREE_DRINK`): where in the pour each of its stretches falls, and how far, by the plant's heft
+  // Watered (shared `TREE_DRINK`): where in the pour each stretch falls, and how far, by the plant's heft.
   const drinkAt = [0, ...TREE_DRINK.stops.map((t) => (TREE_DRINK.delayMs + t * TREE_DRINK.ms) / POUR_MS), 1];
   const stretch = (by: readonly number[]): Animated.AnimatedInterpolation<number> =>
     pour.interpolate({ inputRange: drinkAt, outputRange: [1, ...by.map((k) => 1 + (k - 1) * heft), 1] });
   const grows = grow.interpolate({ inputRange: [0, 0.72, 1], outputRange: [from, TREE_GROW.past, 1] });
-  // the plant alone: dropped in as a seed, grown, shaken when touched, and the start it gives as it drinks
+  // The plant alone: dropped in as a seed, grown, shaken when touched, and its start as it drinks.
   const plantOf = {
     opacity: grow.interpolate({ inputRange: [0, TREE_GROW.inBy, 1], outputRange: [0, 1, 1] }),
     transform: [
@@ -499,7 +484,7 @@ function Stage({
       { scaleY: Animated.multiply(stretch(TREE_DRINK.sy), grows) },
     ],
   };
-  // the tree that was, over the new one while it goes: swelling as it fades when it has grown, only fading when it has been revived
+  // The previous tree over the new one as it fades: swelling as it fades after growing, only fading after a revival.
   const goes = grow.interpolate({ inputRange: [0, TREE_GROW.outFrom, TREE_GROW.outBy], outputRange: [1, 1, 0], extrapolate: 'clamp' });
   const leaving =
     was?.kind === 'grow'
@@ -554,7 +539,7 @@ function Stage({
 
 const UNSEEN = { pointerEvents: 'none' as const, accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
-/** The can, the water and where it lands: it comes in over the tree's shoulder, tips, pours, and goes, on one clock. */
+/** The can, the water and where it lands: it comes in over the tree's shoulder, tips, pours and leaves, on one clock. */
 function Pour({ clock, size, lands }: { clock: Animated.Value; size: number; lands: number }): React.JSX.Element {
   const wide = size * 0.31;
   const can = {
@@ -575,7 +560,7 @@ function Pour({ clock, size, lands }: { clock: Animated.Value; size: number; lan
         <WateringCan size={Math.round(wide)} />
       </Animated.View>
       {DROPS.map((d, i) => {
-        // from the can's rose down to where it lands on the tree
+        // From the can's rose down to where it lands on the tree.
         const fall = clock.interpolate({ inputRange: [d.from, d.from + 520 / POUR_MS], outputRange: [0, 1], extrapolate: 'clamp' });
         const big = Math.round(size * d.size);
         return (
@@ -588,7 +573,7 @@ function Pour({ clock, size, lands }: { clock: Animated.Value; size: number; lan
                 opacity: fall.interpolate({ inputRange: [0, 0.14, 0.86, 1], outputRange: [0, 1, 1, 0] }),
                 transform: [
                   { translateX: fall.interpolate({ inputRange: [0, 1], outputRange: [0, size * (0.5 + d.aside - 0.56)] }) },
-                  // it gathers speed as it falls
+                  // It gathers speed as it falls.
                   { translateY: fall.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, size * (lands - 0.22) * 0.3, size * (lands - 0.22)] }) },
                   { scale: fall.interpolate({ inputRange: [0, 0.86, 1], outputRange: [0.6, 1, 1.2] }) },
                 ],
@@ -600,7 +585,7 @@ function Pour({ clock, size, lands }: { clock: Animated.Value; size: number; lan
           </Animated.View>
         );
       })}
-      {/* and where it reaches the ground, a ring goes out from the foot of the tree */}
+      {/* And where it reaches the ground, a ring goes out from the foot of the tree. */}
       {[0.5, 0.65].map((from) => (
         <Animated.View key={from} style={[styles.ring, { left: size * 0.24, top: size * (TREE_FOOT.y - 0.045), width: size * 0.52, height: size * 0.09 }, ring(from)]} />
       ))}
@@ -619,7 +604,7 @@ function Burst({ clock, size, tint }: { clock: Animated.Value; size: number; tin
   return (
     <View {...UNSEEN} style={StyleSheet.absoluteFill} testID="tree-burst">
       <Animated.View style={[styles.burstLight, { left: size * 0.5 - wide / 2, top: size * 0.56 - wide / 2, width: wide, height: wide }, light]}>
-        {/* a light with no edge to it: bright at its middle, gone before its rim */}
+        {/* A light with no edge to it: bright at its middle, gone before its rim. */}
         <Svg width={wide} height={wide} viewBox="0 0 100 100">
           <Defs>
             <RadialGradient id="hv-tree-burst" cx="50%" cy="50%" r="50%">
@@ -679,14 +664,13 @@ function Sparks({ clock, size }: { clock: Animated.Value; size: number }): React
   );
 }
 
-/** The ring round what is being grown toward: its length, which is what a share of it is measured on. */
+/** The length of the ring around the next stage, which shares are measured on. */
 const GOAL = 84;
 const GOAL_ROUND = 2 * Math.PI * 38;
 
 /**
- * How far it is to what comes next: what is being grown toward — the next
- * stage's picture, or what a full-grown tree bears — in a ring that closes
- * as the tree is watered; and its seven stages as a row of beads.
+ * Progress to what comes next: the next stage's picture (or a grown tree's harvest) in a ring that closes as the
+ * tree is watered, and the seven stages as a row of beads.
  */
 function Growth({ tree, tint }: { tree: TreeView; tint: string }): React.JSX.Element {
   const { colors } = useTheme();
@@ -725,10 +709,8 @@ function Growth({ tree, tint }: { tree: TreeView; tint: string }): React.JSX.Ele
 }
 
 /**
- * The choice of a first tree. Each kind that is free to start from is its
- * own seed to pick up; over them stands the great tree the one picked will
- * be, in the season it will grow in, so the choice is of something seen.
- * Nothing is planted until the button is pressed.
+ * The choice of a first tree: each free kind as its own seed, with the great tree the chosen one will become
+ * above them, in the season it will grow in. Nothing is planted until the button is pressed.
  */
 function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; season: TreeSeason; side: number; busy: boolean; failed: string | null; onPlant: (species: TreeSpecies) => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -766,16 +748,16 @@ function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; 
               aria-checked={on}
               accessibilityLabel={said(k.species)}
               onPress={() => {
-                // a tick for another seed, nothing for the one already picked
+                // A tick for another seed, nothing for the one already picked.
                 if (!on) haptic('select');
                 setPicked(k.species);
               }}
-              // the seed picked is ringed in the violet of every choice: in its own tree's colour the oak's ring was a right
-              // answer's green and the pomegranate's a wrong one's red
+              // The chosen seed is ringed in violet like every choice, not in its tree's colour, which read as
+              // right or wrong answers.
               style={[styles.seed, { backgroundColor: colors.surface, borderColor: on ? colors.primary : 'transparent' }]}
               testID={`tree-seed-${k.species}`}
             >
-              {/* the seed's picture closes in on the seed itself */}
+              {/* The seed's picture closes in on the seed itself. */}
               <View style={styles.seedArt}>
                 <TreeArt species={k.species} stage={0} size={132} style={styles.seedPicture} />
               </View>
@@ -810,7 +792,7 @@ function Failed({ text }: { text: string }): React.JSX.Element {
   );
 }
 
-/** One kind of tree as a row: the tree it will be, its name and what it means, a line about it, and what can be done with it. */
+/** One kind of tree as a row: the tree it becomes, its name and meaning, a line about it, and its action. */
 function KindRow({
   kind,
   busy,
@@ -820,10 +802,10 @@ function KindRow({
 }: {
   kind: TreeKindOffer;
   busy: boolean;
-  /** the button's words; none for the kind that stands */
+  /** The button's words; none for the kind that stands. */
   action: string | null;
   onAct: () => void;
-  /** in place of a price: "Free", "Yours", "Growing now" */
+  /** In place of a price: "Free", "Yours", "Growing now". */
   note?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -834,7 +816,7 @@ function KindRow({
   return (
     <View style={[styles.kind, { backgroundColor: colors.surface }]} testID={`tree-kind-${kind.species}`}>
       <View style={[styles.kindMain, { flexDirection: dir.row }]}>
-        {/* each kind in summer, in its own leaves: in spring every one that flowers is pink, and a choice between them has to be seen */}
+        {/* Each kind in summer leaves, since in spring every flowering kind is pink and the choice must be visible. */}
         <TreePicture species={kind.species} stage={TREE_FULL} season="summer" size={104} />
         <View style={styles.kindText}>
           <Text style={[styles.kindName, dir.text, { color: colors.textPrimary }]}>{named.name}</Text>
@@ -856,12 +838,9 @@ function KindRow({
 }
 
 /**
- * The nursery: every kind there is. One that is free or already bought can
- * be planted, which is asked about first, because the tree that stands is
- * gone when another is planted; one that is not can be bought with Zêr, which
- * plants nothing by itself. The question is the sheet's second step, in the
- * sheet itself, so nothing opens over anything. What cannot be afforded says
- * how much is missing rather than only refusing.
+ * The nursery: every kind. A free or owned kind can be planted, after a confirmation, because planting replaces
+ * the current tree; others can be bought with Zêr, which plants nothing by itself. The confirmation is the
+ * sheet's second step, so nothing opens over anything. An unaffordable kind says how much is missing.
  */
 function Nursery({
   data,
@@ -893,7 +872,7 @@ function Nursery({
       const done = buying ? await onBuy(asking.kind.species) : await onPlant(asking.kind.species);
       if (!done) return;
       setAsking(null);
-      // planted: back to the tree, which is a seed now; bought: back to the kinds, where it is now theirs to plant
+      // Planted: back to the tree, now a seed. Bought: back to the kinds, where it is now theirs to plant.
       if (!buying) onClose();
     };
     return (
@@ -959,9 +938,9 @@ const styles = StyleSheet.create({
   head: { gap: 2 },
   lead: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center', letterSpacing: -0.4 },
   sub: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
-  // where the tree stands: the scene of the season, its floor at the foot
+  // Where the tree stands: the scene of the season, its floor at the foot.
   stage: { width: '100%', alignItems: 'center', borderRadius: radii.xl, overflow: 'hidden' },
-  // the tree's own square of the scene, its foot on the floor
+  // The tree's own square of the scene, its foot on the floor.
   plot: { position: 'absolute' },
   thought: { position: 'absolute', alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill, backgroundColor: '#ffffff' },
   thoughtDot: { position: 'absolute', borderRadius: radii.pill, backgroundColor: '#ffffff' },
@@ -977,7 +956,7 @@ const styles = StyleSheet.create({
   healthSince: { flexShrink: 1, fontSize: typography.sizes.sm },
   growth: { alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   goal: { width: GOAL, height: GOAL, alignItems: 'center', justifyContent: 'center' },
-  // the ring starts at the top and closes clockwise
+  // The ring starts at the top and closes clockwise.
   goalRing: { position: 'absolute', top: 0, left: 0, transform: [{ rotate: '-90deg' }] },
   goalArt: { width: GOAL - 22, height: GOAL - 22, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill, overflow: 'hidden' },
   growthText: { flex: 1, gap: spacing.sm },
@@ -989,12 +968,12 @@ const styles = StyleSheet.create({
   stepNow: { borderWidth: 2 },
   harvests: { fontSize: typography.sizes.sm },
   seeds: { gap: spacing.sm },
-  // a seed to pick: its edge takes its kind's colour when it is the one picked
+  // A seed to pick: its edge takes its kind's colour when it is the one picked.
   seed: { flex: 1, alignItems: 'center', gap: 2, borderRadius: radii.lg, borderWidth: 2, paddingTop: spacing.sm, paddingBottom: spacing.sm + 2, paddingHorizontal: 2 },
   seedArt: { width: 76, height: 76, overflow: 'hidden' },
   seedPicture: { position: 'absolute', top: -50, left: -28 },
   seedName: { fontSize: typography.sizes.sm + 1, fontWeight: typography.weights.bold, textAlign: 'center' },
-  // small enough for a long word to stay on its line in a quarter of the phone's width
+  // Small enough for a long word to stay on its line in a quarter of the phone's width.
   seedMeaning: { fontSize: 11, fontWeight: typography.weights.semibold, textAlign: 'center' },
   water: { gap: spacing.sm },
   held: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm },

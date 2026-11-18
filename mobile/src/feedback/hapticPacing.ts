@@ -1,5 +1,2 @@
-/**
- * The pacing rules live in @kurda/shared (haptics.ts), so the phone and the
- * website buzz by the same rules; this is where the phone reads them.
- */
+/** The phone's view of the shared haptic pacing rules (@kurda/shared haptics.ts), so phone and web buzz alike. */
 export { HAPTIC_EVENTS, PACING, createPacer, type HapticEvent, type Pacer, type PacingRules } from '@kurda/shared';

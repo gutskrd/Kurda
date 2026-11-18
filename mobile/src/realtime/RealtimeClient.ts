@@ -1,29 +1,15 @@
 /**
- * The phone's one realtime connection.
+ * The phone's single realtime connection, which reconnects by itself after a dropped network, a server restart or
+ * time in the background.
  *
- * It used to be four. `useUserEvents`, `useChatSocket`, `useRoomEvents` and the
- * quiz's game socket each fetched a ticket and opened a socket of their own,
- * and none of them reconnected. The gateway allowed one connection per person
- * then, so opening a chat pushed the app-wide listener off with 4001 and it
- * stayed dead until the app restarted: invites and matches sent in the
- * meantime were simply lost. The gateway allows a few connections per person
- * now (a phone, a tablet, some browser tabs), but a phone still needs only
- * one, and it has to come back by itself — after a dropped network, after the
- * server restarts, and after the app has been in the background.
- *
- * Protocol (api/src/realtime/gateway.ts): POST /realtime/ticket for a
- * single-use 30 s ticket, open `ws(s)://…/realtime?ticket=…` (never the JWT),
- * receive `hello` with a resume token, then `{type:'event', room, event}`
- * frames. Reconnecting with `&resume=` rejoins the same rooms; any room the
- * resume did not bring back is joined again by name. The server pings at the
- * protocol level and React Native answers by itself, so there is no heartbeat
+ * Protocol (api/src/realtime/gateway.ts): POST /realtime/ticket for a single-use 30 s ticket, open
+ * `ws(s)://…/realtime?ticket=…` (never the JWT), receive `hello` with a resume token, then `{type:'event', room,
+ * event}` frames. Reconnecting with `&resume=` rejoins the same rooms; any room the resume did not restore is
+ * joined again by name. The server pings at the protocol level and React Native answers, so there is no heartbeat
  * here.
  *
- * Plain TypeScript with nothing from React Native in it, so it can be driven
- * by a fake socket and fake timers in a test. The provider owns the instance.
- *
- * The ticket and the resume token are kept in memory only, never logged and
- * never stored.
+ * Plain TypeScript, so tests drive it with a fake socket and timers; the provider owns the instance. The ticket
+ * and resume token stay in memory only and are never logged.
  */
 
 const WS_OPEN = 1;
@@ -32,7 +18,7 @@ const WS_OPEN = 1;
 export const CLOSE_CONNECTED_ELSEWHERE = 4001;
 export const CLOSE_BAD_TICKET = 4003;
 
-/** A join refused before the feature let us in is asked again this many times, this far apart (growing). */
+/** A join refused before the feature admitted us is retried this many times, at growing intervals. */
 const ROOM_JOIN_RETRIES = 3;
 const ROOM_JOIN_RETRY_MS = 1_500;
 
@@ -59,23 +45,22 @@ export interface WebSocketLike {
 export type WebSocketCtor = new (url: string) => WebSocketLike;
 
 export interface RealtimeClientOptions {
-  /** the API's http(s) origin; turned into ws(s) */
+  /** The API's http(s) origin; turned into ws(s). */
   baseUrl: string;
-  /** a fresh single-use ticket, or null when it could not be had (offline, signed out) */
+  /** A fresh single-use ticket, or null when it could not be had (offline, signed out). */
   fetchTicket: () => Promise<string | null>;
   WebSocketImpl?: WebSocketCtor;
-  /** first reconnect delay; doubles each failed attempt */
+  /** First reconnect delay; doubles each failed attempt. */
   initialBackoffMs?: number;
   maxBackoffMs?: number;
-  /** open this long before a drop counts as a new run of failures */
+  /** Open this long before a drop counts as a new run of failures. */
   stableAfterMs?: number;
   /**
-   * After a 4001 (a sixth connection somewhere pushed this one off): wait at
-   * least this long, or two clients of the same person take turns pushing each
-   * other off for ever. The browser waits the same 30 s.
+   * After a 4001 (another connection pushed this one off), wait at least this long, or two clients of the same
+   * person take turns pushing each other off. The web app waits the same 30 s.
    */
   takeoverCooldownMs?: number;
-  /** jitter in [0, 1); injectable so tests are deterministic */
+  /** Jitter in [0, 1); injectable so tests are deterministic. */
   random?: () => number;
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (handle: unknown) => void;
@@ -98,9 +83,8 @@ export function realtimeUrl(baseUrl: string, ticket: string, resumeToken?: strin
 }
 
 /**
- * How long to wait before reconnect attempt `attempt` (1-based): 1 s, 2 s,
- * 4 s … up to the cap, each with up to a third added at random so a server
- * restart is not answered by every phone in the same instant.
+ * The delay before reconnect attempt `attempt` (1-based): 1 s, 2 s, 4 s… up to the cap, plus up to a third at
+ * random so phones do not all reconnect at once after a restart.
  */
 export function backoffDelay(attempt: number, initialMs: number, maxMs: number, random: () => number): number {
   const base = Math.min(maxMs, initialMs * 2 ** Math.max(0, attempt - 1));
@@ -123,25 +107,25 @@ export class RealtimeClient {
   private socket: WebSocketLike | null = null;
   private _state: RealtimeState = 'idle';
   #resumeToken: string | undefined;
-  /** rooms someone on screen is watching, with how many are watching each */
+  /** Rooms someone on screen is watching, with how many are watching each. */
   private readonly rooms = new Map<string, number>();
-  /** rooms the server has us in on the current socket */
+  /** Rooms the server has us in on the current socket. */
   private readonly joined = new Set<string>();
   private readonly listeners = new Set<RealtimeListener>();
   private readonly openListeners = new Set<() => void>();
   private readonly stateListeners = new Set<(state: RealtimeState) => void>();
   private attempt = 0;
-  /** when the current connection said hello; null while there is none */
+  /** When the current connection said hello; null while there is none. */
   private openedAt: number | null = null;
   private retryTimer: unknown = null;
-  /** bumped whenever the socket being built is abandoned, so a late ticket is dropped */
+  /** Bumped whenever the socket being built is abandoned, so a late ticket is dropped. */
   private generation = 0;
   private wanted = false;
   private paused = false;
   private takenOver = false;
-  /** when a takeover cooldown ends; only meaningful while `takenOver` */
+  /** When a takeover cooldown ends; only meaningful while `takenOver`. */
   private cooldownUntil = 0;
-  /** NOT_INVITED answers per room on this connection, so a refused join is retried a few times and then left */
+  /** NOT_INVITED answers per room on this connection, so a refused join is retried a few times and then dropped. */
   private readonly refusals = new Map<string, number>();
 
   constructor(opts: RealtimeClientOptions) {
@@ -179,10 +163,8 @@ export class RealtimeClient {
   }
 
   /**
-   * The app went to the background. The socket is closed rather than left for
-   * the operating system to kill quietly — a socket iOS froze looks open and
-   * delivers nothing, which is the dying listener all over again. The resume
-   * token is kept, so coming back rejoins the same rooms.
+   * The app went to the background. Close the socket rather than leave it for the OS: a socket iOS froze looks
+   * open and delivers nothing. The resume token is kept, so returning rejoins the same rooms.
    */
   pause(): void {
     if (!this.wanted || this.paused) return;
@@ -192,12 +174,10 @@ export class RealtimeClient {
   }
 
   /**
-   * The app is in front again: connect now, without waiting out a backoff —
-   * unless a takeover cooldown still stands, because the other connection is
-   * still there. Then the cooldown timer is kept (or, coming back from the
-   * background, set again for what is left of it). iOS calls this after every
-   * Control Centre swipe or Face ID prompt, so it must never leave the client
-   * waiting with nothing scheduled.
+   * The app is in the foreground again: connect now without waiting out a backoff, unless a takeover cooldown
+   * still applies, in which case its timer is kept (or re-armed for what is left after the background). iOS calls
+   * this after every Control Centre swipe or Face ID prompt, so it must never leave the client with nothing
+   * scheduled.
    */
   resume(): void {
     if (!this.wanted) return;
@@ -225,9 +205,8 @@ export class RealtimeClient {
   }
 
   /**
-   * Each time a connection is ready (after `hello`), including the first.
-   * Whatever happened while the phone was disconnected was not delivered, so a
-   * screen that shows live state refetches it here.
+   * Called each time a connection is ready (after `hello`), including the first. Nothing is delivered while
+   * disconnected, so screens with live state refetch here.
    */
   onOpen(listener: () => void): () => void {
     this.openListeners.add(listener);
@@ -239,7 +218,7 @@ export class RealtimeClient {
     return () => this.stateListeners.delete(listener);
   }
 
-  /** Watch a room for as long as the returned function is not called; counted, so two screens can share one. */
+  /** Watch a room until the returned function is called; reference-counted, so two screens can share one. */
   joinRoom(room: string): () => void {
     const n = this.rooms.get(room) ?? 0;
     this.rooms.set(room, n + 1);
@@ -263,7 +242,7 @@ export class RealtimeClient {
       try {
         this.socket.send(JSON.stringify(message));
       } catch {
-        /* a socket closing under us; the reconnect re-sends what matters */
+        /* A socket closing under us; the reconnect re-sends what matters. */
       }
     }
   }
@@ -330,14 +309,14 @@ export class RealtimeClient {
     this.socket = socket;
     socket.onmessage = (ev) => this.onFrame(ev.data);
     socket.onerror = () => {
-      /* the close that follows decides what happens */
+      /* The close that follows decides what happens. */
     };
     socket.onclose = (ev) => {
       if (this.socket !== socket) return;
       this.socket = null;
       this.joined.clear();
       if (ev?.code === CLOSE_CONNECTED_ELSEWHERE) this.takenOver = true;
-      // a ticket refused is a ticket expired on the way, not a reason to give up
+      // A ticket refused is a ticket expired on the way, not a reason to give up.
       if (ev?.code === CLOSE_BAD_TICKET) this.#resumeToken = undefined;
       if (this.openedAt !== null && this.now() - this.openedAt >= this.stableAfterMs) this.attempt = 0;
       this.openedAt = null;
@@ -380,7 +359,7 @@ export class RealtimeClient {
       const resumed = Array.isArray(frame.resumedRooms) ? frame.resumedRooms.filter((r): r is string => typeof r === 'string') : [];
       for (const room of resumed) {
         if (this.rooms.has(room)) this.joined.add(room);
-        // a room nobody watches any more came back with the resume: leave it
+        // A room nobody watches any more came back with the resume: leave it.
         else this.send({ type: 'leave', room });
       }
       for (const room of this.rooms.keys()) {
@@ -394,11 +373,9 @@ export class RealtimeClient {
       return;
     }
     /*
-     * A room is joined only after the feature has let us in, and the group
-     * chat lets you in when it hands you the history — which a screen asks
-     * for at the same moment it asks to watch the room. So the first join can
-     * arrive before the permission; it is asked again a little later, a few
-     * times, and then left alone (somebody removed from a group stays out).
+     * A room is joined only once the feature admits us, and the group chat admits you when it returns the
+     * history, which a screen requests at the same moment it watches the room. So the first join can arrive
+     * before the permission; it is retried a few times and then dropped (someone removed from a group stays out).
      */
     if (frame.type === 'error' && frame.code === 'NOT_INVITED' && typeof frame.room === 'string') {
       const room = frame.room;
@@ -419,7 +396,7 @@ export class RealtimeClient {
         try {
           l(event, room);
         } catch {
-          /* one screen's bug must not stop the others hearing it */
+          /* One screen's bug must not stop the others hearing it. */
         }
       }
     }

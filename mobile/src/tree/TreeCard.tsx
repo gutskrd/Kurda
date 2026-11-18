@@ -19,14 +19,10 @@ import { TreePicture } from './TreeScene';
 const ART = 52;
 
 /**
- * The learner's tree on Learn, in one slim card that leads to it: the tree
- * as it stands, its name and stage, and the one thing worth knowing now —
- * that there is water to pour, that it is thirsty, or that it is doing well.
- * Before a tree is planted it is the invitation to plant one.
- *
- * Read each time Learn comes into view, so the water a lesson just earned is
- * on it. It takes no room until it knows what to say, and on a server that
- * has no trees yet it is never there at all.
+ * The learner's tree on Learn in one slim card that opens it: the tree, its name and stage, and the one thing
+ * worth knowing (water to pour, thirsty, or doing well), or an invitation to plant before there is a tree.
+ * Reloaded whenever Learn regains focus, so water a lesson just earned shows. It takes no room until loaded, and
+ * never appears when the server has no trees.
  */
 export function TreeCard(): React.JSX.Element | null {
   const { client } = useAuth();
@@ -39,7 +35,7 @@ export function TreeCard(): React.JSX.Element | null {
   const load = useCallback(() => {
     let live = true;
     void getTree(client).then((res) => {
-      // a read that failed keeps what was shown; one that never worked shows nothing
+      // A failed reload keeps what was shown; if it never loaded, show nothing.
       if (live && res.ok) setData(res.data);
     });
     return () => {
@@ -58,7 +54,7 @@ export function TreeCard(): React.JSX.Element | null {
           <TreeArt species="beru" stage={1} size={ART} />
         </View>
         <View style={styles.main}>
-          {/* the invitation is one sentence, said whole: in German it is three lines of this card, and two cut it at "deine Lektionen …" */}
+          {/* The invitation is one sentence shown whole, since long translations take three lines here. */}
           <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
             {t('tree.card.plant')}
           </Text>
@@ -68,7 +64,7 @@ export function TreeCard(): React.JSX.Element | null {
       </PressableScale>
     );
   }
-  // water to pour comes first: it is what there is to do; then how it fares; then that all is well
+  // Water to pour comes first: it is what there is to do; then how it fares; then that all is well.
   const sub =
     tree.water > 0
       ? tree.health === 'fresh'

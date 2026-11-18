@@ -1,14 +1,8 @@
 /**
- * The Android letter widget's picture in the phone's list of widgets.
- *
- * Android shows a widget's preview image while somebody chooses one to add;
- * without it the list shows an empty box. This draws what the widget looks
- * like with a letter on it — lined cream paper, the top of a page, and a
- * pigeon standing in the lower right corner facing back into it — from the
- * same art the server draws the widget's own picture with
- * (api/src/letters/widget-image.ts), at a medium widget's shape. No words:
- * the widget's words are set by the phone, in whatever language it is in,
- * and a picture cannot be in all nine.
+ * The Android letter widget's preview image in the system widget picker, which otherwise shows an empty box. It
+ * draws the widget with a letter (lined cream paper and a pigeon in the lower right corner facing into it) from
+ * the same art the server uses for the widget's picture (api/src/letters/widget-image.ts), at a medium widget's
+ * shape. No text, since the phone sets the widget's words in its own language.
  *
  * Run from the repo root after the art changes:
  *

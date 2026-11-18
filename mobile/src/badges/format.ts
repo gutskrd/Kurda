@@ -1,10 +1,7 @@
 /**
- * Pure badge view helpers (contract 4 §B, §U) — no React Native.
- *
- * A badge's words are catalogue keys the shared catalogue names
- * (`badges.<key>.name`, `.meaning`, `.how`, and `.hint` for a secret), so the
- * phone, the browser and the admin translate the same badge under the same
- * key; a test checks every badge has its words here in every language.
+ * Pure badge view helpers. A badge's words are shared catalogue keys (`badges.<key>.name`, `.meaning`, `.how`,
+ * and `.hint` for a secret), so the phone, web and admin translate it under the same keys; a test checks every
+ * badge has its words in every language.
  */
 import {
   BADGE_FAMILIES,
@@ -129,13 +126,10 @@ export function tierKeyAt(n: number): BadgeTierKey {
   return BADGE_TIERS[Math.max(1, Math.min(4, n)) - 1]!;
 }
 
-/** How a count is written into a line: the reader's own digits, where the caller knows the reader's language. */
+/** How a count is written into a line: the reader's own digits where the caller knows the language. */
 type Numeral = (value: number) => string;
 
-/**
- * "7 / 30 days", and past halfway what is left ("3 days to go"), the smaller
- * part being the one that keeps people going; null once every tier is earned.
- */
+/** "7 / 30 days", or past halfway what is left ("3 days to go"); null once every tier is earned. */
 export function progressText(
   t: Translate,
   view: Pick<BadgeView, 'progress' | 'next' | 'unit' | 'tier' | 'thresholds'> & { hidden?: boolean },
@@ -150,11 +144,7 @@ export function progressText(
 /** 0…1 towards the next tier, from the last one reached. */
 export const nextFraction = badgeViewFraction;
 
-/**
- * The tier after the one just won ("Next: Zîv at 75 lessons"), so a new goal
- * is in view the moment the last is reached: effort tends to drop once a badge
- * is won, and picks up again with the next in sight. Null for the last tier.
- */
+/** The tier after the one just won ("Next: Zîv at 75 lessons"), so a new goal is in view at once; null for the last tier. */
 export function nextTierLine(t: Translate, key: string, tier: number, n: Numeral = String): string | null {
   const def = badgeDef(key);
   if (!def || tier >= def.tiers.length) return null;

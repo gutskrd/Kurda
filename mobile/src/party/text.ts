@@ -5,11 +5,9 @@ import type { TranslationKey } from '../i18n/translations';
 import { restrictionOf, restrictionText } from '../reports/sendErrors';
 
 /**
- * Why a clue or a guess typed in a party game was not taken, in the reader's
- * words, the same sentences the website says (web/src/party/text.ts): the chat
- * pipeline's refusals first (too fast, a word that cannot be said here,
- * blocked by moderation; a mute with its time, as every send path says it),
- * then the game's own (not in this Kurdish's letters, too long, says the word).
+ * Why a party-game clue or guess was refused, in the reader's words; the web app says the same sentences
+ * (web/src/party/text.ts). The chat pipeline's refusals come first (rate, blocked word, moderation, mute), then
+ * the game's own (letters outside the variety, too long, says the word).
  */
 export const SLIP_KEY: Record<TextSlip | 'repeat', TranslationKey | null> = {
   empty: null,

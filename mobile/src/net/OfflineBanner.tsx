@@ -10,13 +10,9 @@ import { useIsOnline } from './useNetworkStatus';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
- * A slim banner that drops in at the top while the device is offline (KUR-278).
- * Mounted once over the whole app, so it covers every screen (signed in or out).
- * Non-interactive — it only informs; each screen still handles its own retries.
- *
- * It arrives and leaves in the time every banner in the app takes (`duration.base`),
- * on the shared out-curve. Under Reduce Motion it does not travel: it fades in
- * where it sits, where it used to slide for everybody.
+ * A slim banner that drops in at the top while the device is offline. Mounted once over the whole app and
+ * informational only; screens handle their own retries. It moves in `duration.base` on the shared out-curve, and
+ * fades in place under Reduce Motion.
  */
 export function OfflineBanner(): React.JSX.Element {
   const online = useIsOnline();
@@ -24,7 +20,7 @@ export function OfflineBanner(): React.JSX.Element {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const reduce = useReducedMotion();
-  const anim = useRef(new Animated.Value(0)).current; // 0 = hidden, 1 = shown
+  const anim = useRef(new Animated.Value(0)).current; // 0 = hidden, 1 = shown.
 
   useEffect(() => {
     const run = timing(anim, online ? 0 : 1, duration.base);

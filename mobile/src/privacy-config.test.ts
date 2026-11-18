@@ -1,7 +1,6 @@
 /**
- * Guards the iOS privacy configuration (KUR-277) against silent regressions: no
- * tracking, honest permission strings, only permissions the app actually uses, and
- * a complete Privacy Manifest. Reads mobile/app.json directly.
+ * Guards the iOS privacy configuration against silent regressions: no tracking, honest permission strings, only
+ * permissions the app uses, and a complete Privacy Manifest. Reads mobile/app.json directly.
  */
 import { describe, expect, it } from 'vitest';
 import rawAppJson from '../app.json';
@@ -31,7 +30,7 @@ describe('iOS privacy config (KUR-277)', () => {
   it('declares no tracking and no tracking domains', () => {
     expect(privacyManifests.NSPrivacyTracking).toBe(false);
     expect(privacyManifests.NSPrivacyTrackingDomains).toEqual([]);
-    // no collected data type may be flagged as used for tracking
+    // No collected data type may be flagged as used for tracking.
     for (const d of privacyManifests.NSPrivacyCollectedDataTypes) {
       expect(d.NSPrivacyCollectedDataTypeTracking).toBe(false);
     }
@@ -44,18 +43,14 @@ describe('iOS privacy config (KUR-277)', () => {
     expect(mic).toBeTruthy();
     expect(photos!.length).toBeGreaterThan(20);
     expect(mic!.length).toBeGreaterThan(20);
-    // the app never opens the camera or asks for Face ID. Leaving the option
-    // out is not enough: each plugin then writes its own generic "Allow Hevalo
-    // to access…" string into the app, which App Review rejects as vague.
-    // `false` is what keeps the key out altogether.
+    // The app never opens the camera or uses Face ID. Omitting the option is not enough, since each plugin then
+    // writes its own generic "Allow Hevalo to access…" string, which App Review rejects as vague; `false` keeps
+    // the key out.
     expect(pluginConfig('expo-image-picker')?.cameraPermission).toBe(false);
     expect(pluginConfig('expo-secure-store')?.faceIDPermission).toBe(false);
   });
 
-  /*
-   * Nothing plays while the app is in the background, so it does not claim
-   * the background audio mode, which App Review checks is actually used.
-   */
+  /* Nothing plays in the background, so the app does not claim the background audio mode, which App Review checks is used. */
   it('does not claim background audio', () => {
     expect(pluginConfig('expo-audio')?.enableBackgroundPlayback).toBe(false);
   });
@@ -73,12 +68,10 @@ describe('iOS privacy config (KUR-277)', () => {
   });
 
   /*
-   * What the app and its server actually keep, no more and no less: the
-   * manifest and the App Store privacy label have to match what is collected.
-   * Messages, game results, feedback, the install's random device id, the
-   * birth month and self-chosen identity tags are kept; a phone number is
-   * never asked for. Crash reports are sent (errors/crashReporting.ts), but
-   * without an account or a device id, so they are declared as not linked.
+   * What the app and its server keep, exactly: the manifest and the App Store privacy label must match what is
+   * collected. Messages, game results, feedback, the install's random device id, birth month and self-chosen
+   * identity tags are kept; no phone number is ever asked for. Crash reports are sent (errors/crashReporting.ts)
+   * without an account or device id, so they are declared as not linked.
    */
   it('declares exactly the data the app collects', () => {
     const types = new Set(privacyManifests.NSPrivacyCollectedDataTypes.map((d) => d.NSPrivacyCollectedDataType));

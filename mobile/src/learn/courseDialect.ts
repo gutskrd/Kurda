@@ -3,14 +3,10 @@ import { isSoraniDialect } from '@kurda/shared';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * Which Kurdish the learner is learning: the variety of the course on their
- * lesson path, the one they chose or the one they are furthest into.
- *
- * Learn is where that is known — it reads every course and decides which one
- * the path shows — so it says so here as the path settles on a course, and
- * whatever else wants to speak to the learner in their own Kurdish (an empty
- * group chat's greetings) reads it. Kept on this device so it is known the
- * next time the app opens; Kurmancî until Learn has said otherwise.
+ * Which Kurdish the learner is learning: the variety of the course on their path. Learn knows this, since it
+ * reads every course and picks the one the path shows, so it records it here as the path settles; anything else
+ * that speaks to the learner in their Kurdish (an empty group chat's greetings) reads it. Kept on this device for
+ * the next launch; Kurmancî until Learn says otherwise.
  */
 export type CourseScript = 'kmr' | 'ckb';
 

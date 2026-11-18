@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-// the pull to refresh as a button: the web's RefreshControl draws nothing to pull
+// The pull to refresh as a button: the web's RefreshControl draws nothing to pull.
 vi.mock('react-native', async () => {
   const rn = (await import('../play/testing/native')) as unknown as Record<string, unknown>;
   const { createElement, Fragment } = await import('react');
@@ -11,7 +11,7 @@ vi.mock('react-native', async () => {
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
-// the reminder banner reads the phone's answer (push/ReminderNudge.tsx)
+// The reminder banner reads the phone's answer (push/ReminderNudge.tsx).
 vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
@@ -31,7 +31,7 @@ import { keptKey } from '../streak/kept';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => {
-  // the game Games puts forward changes with the day: on this one it is the race, so Peyvok's card is a card
+  // The featured game changes daily: on this day it is the race, so Peyvok's card is a regular card.
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(2 * 86_400_000);
   localStorage.clear();
@@ -104,7 +104,7 @@ function client(
     'GET /me': ok({ user: { streak } }),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /practice/due': ok(due),
-    // the library asks for one variety, and with nothing chosen and an English interface that is Kurmancî
+    // The library asks for one variety; with nothing chosen and an English interface that is Kurmancî.
     'GET /stories/library?dialect=kurmanci': ok(LIBRARY),
     'GET /story-games/active': ok({ games: [] }),
     'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
@@ -129,9 +129,8 @@ const exercises = (sentence: boolean, hear: boolean) =>
 
 describe('Learn', () => {
   /*
-   * Build a Sentence and Hear It, Find It are part of the lessons:
-   * each has a tile among the Lessons half's tools while it can be done in
-   * the course's Kurdish, and opens its own screen from there.
+   * Build a Sentence and Hear It, Find It each have a tile among the Lessons tools while available in the
+   * course's Kurdish, and open their own screens.
    */
   it('offers the lessons’ two exercises among the tools on Lessons, and opens each', async () => {
     client(STREAK, undefined, { 'GET /games/availability?dialect=kmr': exercises(true, true) });
@@ -140,8 +139,8 @@ describe('Learn', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('BuildSentence');
     fireEvent.click(screen.getByRole('button', { name: 'Hear It, Find It, Find what you heard' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('HearIt');
-    // A game is not a tool of the lessons. The Games half is mounted beside this one and lists the game
-    // once it has drawn, so the claim is about the tools, and holds whether or not it has.
+    // A game is not a lessons tool. The Games half, mounted beside this one, lists the game once drawn, so the
+    // claim is about the tools and holds either way.
     const tools = within(screen.getByTestId('learn-tools'));
     expect(tools.getByRole('button', { name: /^Hear It, Find It, / })).toBeTruthy();
     expect(tools.queryByText('Dizê Bîrê')).toBeNull();
@@ -168,14 +167,14 @@ describe('Learn', () => {
     renderWithProviders(<LearnScreen />);
     expect(lessonsTab().getAttribute('aria-selected')).toBe('true');
     expect(gamesTab().getAttribute('aria-selected')).toBe('false');
-    // the next open skill, how far the course has come, and one button
+    // The next open skill, how far the course has come, and one button.
     expect(await screen.findByText('Malbat', { selector: '[role="heading"]' })).toBeTruthy();
     expect(screen.getByText('1 of 3 skills done')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'l2', courseId: 'c1' });
   });
 
-  // the path comes straight after the next step and the tools; the week and the day's extras wait under it
+  // The path comes right after the next step and the tools; the week and the day's extras wait below it.
   it('puts the path before the rest of today', async () => {
     client();
     renderWithProviders(<LearnScreen />);
@@ -185,10 +184,7 @@ describe('Learn', () => {
     expect(screen.getByRole('button', { name: 'Chapter 1 trophy, not earned yet' }).compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  /*
-   * The corner of Learn says where today stands at a glance — the streak, the
-   * day's goal, the Zêr — and each opens onto more.
-   */
+  /* Learn's corner shows today's status at a glance (streak, daily goal, Zêr), and each opens more. */
   it('says how today is going in the top corner, and opens each onto more', async () => {
     client();
     renderWithProviders(<LearnScreen />);
@@ -197,13 +193,13 @@ describe('Learn', () => {
     fireEvent.click(screen.getByRole('button', { name: '1,240 Zêr. Open the shop' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Shop');
 
-    // the streak's whole story: the run, and the numbers that never go down
+    // The streak's whole story: the run, and the numbers that never go down.
     fireEvent.click(streak);
     expect(await screen.findByText('Longest streak')).toBeTruthy();
     expect(screen.getByText('31')).toBeTruthy();
     fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
 
-    // the day's goal, where it can be changed
+    // The day's goal, where it can be changed.
     fireEvent.click(screen.getByRole('button', { name: '12 of 20 XP today' }));
     expect(await screen.findByText('Goal: 20 XP')).toBeTruthy();
   });
@@ -211,21 +207,18 @@ describe('Learn', () => {
   it('keeps the practice tools one tap away, and says what is due for review', async () => {
     client();
     renderWithProviders(<LearnScreen />);
-    // practice opens on its hub, the count of words due on its tile
+    // Practice opens on its hub, the count of words due on its tile.
     fireEvent.click(await screen.findByRole('button', { name: 'Practice, 8 words due' }));
     expect(navigation.navigate).toHaveBeenCalledWith('PracticeHub');
     fireEvent.click(screen.getByRole('button', { name: 'Dictionary, Look up any word' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Dictionary');
-    // the letters are the first step of Letters and words, not a tile of their own
+    // The letters are the first step of Letters and words, not a tile of their own.
     expect(screen.queryByRole('button', { name: /^Alphabet,/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Letters and words, Letters, colours, numbers, days, months' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Words');
   });
 
-  /*
-   * A review left part-way through is picked up where it stopped, as the
-   * website offers it: its own session, not a new one beside it.
-   */
+  /* A review left part-way is resumed as on the web: its own session, not a new one beside it. */
   it('offers a review left part-way through, and opens that one where it stopped', async () => {
     client(STREAK, { due: 8, available: 20, open: 'p9' });
     renderWithProviders(<LearnScreen />);
@@ -241,12 +234,7 @@ describe('Learn', () => {
     expect(screen.queryByRole('button', { name: 'Continue review' })).toBeNull();
   });
 
-  /*
-   * Three groups, in the order reading sits between the course and the
-   * games: Lessons · Stories · Games. The Stories view is the library, and
-   * the games no longer carry a Stories card, so the way to a story is this
-   * switch and nothing else.
-   */
+  /* Three groups in order, Lessons · Stories · Games. Stories is the library, and this switch is the only way to a story. */
   it('offers Lessons, Stories and Games in that order, and shows the library under Stories', async () => {
     client();
     renderWithProviders(<LearnScreen />);
@@ -256,7 +244,7 @@ describe('Learn', () => {
     fireEvent.click(storiesTab());
     expect(storiesTab().getAttribute('aria-selected')).toBe('true');
     expect(await screen.findByRole('heading', { name: 'Featured' })).toBeTruthy();
-    // on two shelves (featured, and the newest); either opens the story
+    // On two shelves (featured, and the newest); either opens the story.
     fireEvent.click(screen.getAllByRole('button', { name: 'Nanê Germ' })[0]!);
     expect(navigation.navigate).toHaveBeenCalledWith('StoryReader', { slug: 'nane-germ' });
     await waitFor(() => expect(localStorage.getItem(LEARN_VIEW_KEY)).toBe('stories'));
@@ -274,17 +262,13 @@ describe('Learn', () => {
     expect(await screen.findByTestId('game-featured')).toBeTruthy();
     await waitFor(() => expect(localStorage.getItem(LEARN_VIEW_KEY)).toBe('games'));
 
-    // the next time Learn opens, it opens where it was left
+    // The next time Learn opens, it opens where it was left.
     cleanup();
     renderWithProviders(<LearnScreen />);
     await waitFor(() => expect(gamesTab().getAttribute('aria-selected')).toBe('true'));
   });
 
-  /*
-   * hevalo://play is the old Play tab's address. It arrives as `view: games`
-   * and opens the games — without becoming the remembered choice, because
-   * following a link is not choosing.
-   */
+  /* Hevalo://play arrives as `view: games` and opens the games without becoming the remembered choice: following a link is not choosing. */
   it('opens on Games for the old Play link, and lets the link go once it is shown', async () => {
     client();
     const shown = vi.fn();
@@ -299,14 +283,14 @@ describe('Learn', () => {
     client();
     renderWithProviders(<LearnScreen view="games" />);
     await screen.findByTestId('game-featured');
-    // Peyvok's ways in are under its stamp on the day it is put forward, and behind its stamp on any other
+    // Peyvok's ways in are under its stamp on the day it is featured, and behind its stamp on other days.
     const onShelf = screen.queryByTestId('card-wordle');
     if (onShelf) fireEvent.click(onShelf);
     const battle = await screen.findByTestId('game-battle');
     expect(battle.getAttribute('aria-label')).toBe('Peyvok, With friends');
     fireEvent.click(battle);
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
-    // the rankings and the league, small, at the top
+    // The rankings and the league, small, at the top.
     fireEvent.click(screen.getByRole('button', { name: /^Ranks/ }));
     expect(navigation.navigate).toHaveBeenCalledWith('Ranks');
     fireEvent.click(screen.getByRole('button', { name: 'Leagues' }));
@@ -323,8 +307,8 @@ describe('Learn', () => {
   });
 
   /*
-   * A freeze spent by itself overnight is said once, on the next visit: what
-   * happened, the freezes held, how the next is earned, and the next lesson.
+   * A freeze spent overnight is announced once on the next visit: what happened, the freezes held, how the next
+   * is earned, and the next lesson.
    */
   it('says once that a freeze kept the streak, with the next lesson one tap away', async () => {
     const kept = { ...STREAK, maxFreezes: 1, lastActiveOn: '2026-10-27', freezeUsedOn: '2026-10-27', freezeProgress: 3, sessionsPerFreeze: 5 };
@@ -345,7 +329,7 @@ describe('Learn', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'l2', courseId: 'c1' });
     stop();
 
-    // the same kept day is not said again
+    // The same kept day is not said again.
     cleanup();
     renderWithProviders(<LearnScreen />);
     await screen.findByRole('button', { name: 'Continue' });

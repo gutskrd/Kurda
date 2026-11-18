@@ -1,12 +1,10 @@
 import type { BadgeTierKey, BadgeUnlockedEvent, UnseenBadge } from '@kurda/shared';
 
 /**
- * The badges waiting to be celebrated, one at a time and each once (no React
- * Native). Unlocks arrive two ways — `badge_unlocked` on the realtime channel
- * while the app is open, and `GET /me/badges/unseen` when it opens — and the
- * same unlock can arrive both ways, so a badge at a tier is one entry however
- * it came. A higher tier of a badge already waiting replaces it: two pop-ups
- * for Agir's copper and silver in the same minute is one too many.
+ * The badges waiting to be celebrated, one at a time and each once. Unlocks arrive from `badge_unlocked` on the
+ * realtime channel and from `GET /me/badges/unseen` at launch, and the same unlock can come both ways, so a badge
+ * at a tier is one entry. A higher tier of a waiting badge replaces it, so two tiers earned together celebrate
+ * once.
  */
 export interface PendingBadge {
   key: string;

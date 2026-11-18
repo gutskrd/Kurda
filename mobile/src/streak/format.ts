@@ -1,4 +1,4 @@
-/** Streak display helpers (KUR-031). Pure so they can be unit-tested. */
+/** Streak display helpers. Pure. */
 import type { StreakRepairOffer } from '@kurda/shared';
 
 export interface Streak {
@@ -6,19 +6,18 @@ export interface Streak {
   longest: number;
   freezes: number;
   lastActiveOn: string | null;
-  /** days with a finished lesson or practice session, ever; absent on older responses */
+  /** Days with a finished lesson or practice session, ever; absent on older responses. */
   daysLearned?: number;
-  /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
+  /** Finished sessions towards the next freeze, out of `sessionsPerFreeze`. */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
-  /** the most freezes that can be held at once */
+  /** The most freezes that can be held at once. */
   maxFreezes?: number;
-  /** the missed day the last freeze spent covered, 'YYYY-MM-DD', or null; absent on older responses */
+  /** The missed day the last freeze covered, 'YYYY-MM-DD', or null; absent on older responses. */
   freezeUsedOn?: string | null;
   /**
-   * The streak that ended and can still be restored: how long it was, what
-   * that costs now, and when the offer ends. Null when there is nothing to
-   * restore; absent on older responses.
+   * The ended streak that can still be restored: its length, the current cost and when the offer ends. Null when
+   * there is none; absent on older responses.
    */
   repair?: StreakRepairOffer | null;
 }
@@ -27,12 +26,8 @@ export interface Streak {
 const SESSIONS_PER_FREEZE = 5;
 
 /**
- * The numbers shown beside the streak.
- *
- * The streak is the one a missed day takes to zero, which is the number most
- * likely to make somebody stop just after a lapse. Beside it go the two that
- * never go down — the longest run and the days learned in all — and the
- * freezes learning has earned, with what one costs.
+ * The numbers shown beside the streak: the longest run and days learned, which never go down, and the freezes
+ * earned with their cost. They soften the streak, which a missed day resets.
  */
 export function learningStats(streak: Streak): {
   longest: number;
@@ -48,22 +43,7 @@ export function learningStats(streak: Streak): {
   };
 }
 
-/**
- * Which of the two day-count forms the flame label needs.
- *
- * It used to build the string — `${current} days` — which put English in a
- * pure module and on every profile in the app. The choice between one and many
- * is still this function's, because it is the only place that knows the number;
- * the words belong to the catalogue.
- */
+/** Which day-count form the flame label needs; the words themselves live in the catalogue. */
 export function streakLabelKey(current: number): 'streak.day' | 'streak.days' {
   return current === 1 ? 'streak.day' : 'streak.days';
-}
-
-/**
- * The flame reads as "lit" only while the run is alive. A zeroed streak
- * shows a cold flame to nudge the learner back.
- */
-export function isFlameLit(current: number): boolean {
-  return current > 0;
 }

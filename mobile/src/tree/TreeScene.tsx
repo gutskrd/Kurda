@@ -4,22 +4,17 @@ import { SvgXml } from 'react-native-svg';
 import { TREE_FOOT, TREE_STUDIO, TREE_STUDIO_PLACE, treeStudioSvg, type TreeHealth, type TreeSeason, type TreeSeasonAir, type TreeStage } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { radii } from '../theme/tokens';
-import { TreeArt } from './TreeArt';
+import { HIDDEN, TreeArt } from './TreeArt';
 import { useTreeSeason } from './season';
 
 /**
- * Where the tree stands, as in the owner's reference and as the website has
- * it: a soft scene in the colour of the season — blush in spring, sky blue in
- * summer, cream in autumn, deep blue in winter — with the tree on its round of
- * grass on the floor, and the season blowing past it to the left (shared
- * `art/tree-scene.ts`). All of it is decoration: a screen reader is told
- * about the tree, not about its weather, and none of it moves for somebody
- * who has asked for less motion or while the screen is not the one in front.
+ * Where the tree stands, as on the web: a soft scene in the season's colour (blush in spring, sky blue in summer,
+ * cream in autumn, deep blue in winter) with the tree on its disc of grass and the season blowing past to the
+ * left (shared `art/tree-scene.ts`). All decoration: screen readers hear about the tree, not the weather, and
+ * nothing moves under Reduce Motion or while the screen is not focused.
  */
 
-const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
-
-/** The season's own colour, for the moment before its picture is drawn and wherever the scene is wider than its square. */
+/** The season's colour, for before its picture is drawn and wherever the scene is wider than its square. */
 export function studioColour(season: TreeSeason): string {
   return TREE_STUDIO[season].wall[0];
 }
@@ -27,7 +22,7 @@ export function studioColour(season: TreeSeason): string {
 /** How far a tree's own scene has gone to dust, by how it fares. */
 const DRY: Record<TreeHealth, number> = { fresh: 0, thirsty: 0.2, wilting: 0.55, withered: 1 };
 
-/** Where the tree's own square stands in a scene `side` points tall: how big it is drawn, and how far its foot of the square is off the bottom. */
+/** Where the tree's square sits in a scene `side` points tall: its drawn size and how far its foot is from the bottom. */
 export function treePlace(side: number): { size: number; bottom: number } {
   return { size: Math.round(side * TREE_STUDIO_PLACE.share), bottom: side * (1 - TREE_STUDIO_PLACE.foot - TREE_STUDIO_PLACE.share * (1 - TREE_FOOT.y)) };
 }
@@ -57,9 +52,8 @@ export function TreeStudioScene({ season, health, side }: { season: TreeSeason; 
 }
 
 /**
- * A tree in its season as a still picture: what a profile, a card and the
- * nursery show, where nothing needs to move. It is today's season unless one
- * is given. `label` names the tree; the scene behind it is never read out.
+ * A tree in its season as a still picture, for profiles, cards and the nursery. Today's season unless given;
+ * `label` names the tree, and the scene is never read out.
  */
 export function TreePicture({
   species,
@@ -92,9 +86,8 @@ export function TreePicture({
 }
 
 /**
- * What blows past the tree, each on a course of its own: where it leaves the
- * crown (as shares of the scene), how long it takes to cross, and how far it
- * falls on the way. The wind is the reference's, always toward the left.
+ * What blows past the tree, each on its own course: where it leaves the crown (as shares of the scene), how long
+ * it takes to cross and how far it falls. The wind always blows left.
  */
 const BLOWN = Array.from({ length: 14 }, (_, i) => ({
   x: 0.4 + ((i * 29) % 40) / 100,
@@ -105,7 +98,7 @@ const BLOWN = Array.from({ length: 14 }, (_, i) => ({
   scale: 0.75 + (i % 3) * 0.2,
 }));
 
-/** Snow, across the whole scene: where each flake starts, how slowly it falls, and how far the wind takes it. */
+/** Snow across the whole scene: where each flake starts, how slowly it falls and how far the wind carries it. */
 const FLAKES = Array.from({ length: 24 }, (_, i) => ({
   x: 0.02 + ((i * 41) % 104) / 100,
   seconds: 9 + (i % 5) * 1.7,
@@ -118,10 +111,8 @@ const FLAKES = Array.from({ length: 24 }, (_, i) => ({
 const GUST = Easing.bezier(0.35, 0.1, 0.6, 1);
 
 /**
- * The season in the air round the tree, moving: petals or leaves blown off
- * the crown to the left, turning over and over as they fall (the squeeze in
- * their height), or snow coming down over the whole scene. It lies over the
- * tree, as the reference's leaves cross before it, and never takes a touch.
+ * The season in the air around the tree: petals or leaves blown left off the crown, tumbling as they fall (the
+ * squeeze in their height), or snow over the whole scene. It lies over the tree and never takes a touch.
  */
 export function TreeSeasonAmbient({ air, side }: { air: TreeSeasonAir | null; side: number }): React.JSX.Element | null {
   const alive = useMotionAlive();
@@ -141,7 +132,7 @@ export function TreeSeasonAmbient({ air, side }: { air: TreeSeasonAir | null; si
     return () => runs.forEach((run) => run.stop());
   }, [on, snow, courses, clocks]);
   if (!on || !air) return null;
-  // the distances were drawn for a scene 360 points square
+  // The distances were designed for a 360-point square scene.
   const k = side / 360;
   return (
     <View {...HIDDEN} pointerEvents="none" style={[StyleSheet.absoluteFill, styles.air]} testID={`tree-air-${air.air}`}>
@@ -182,7 +173,7 @@ const styles = StyleSheet.create({
   picture: { borderRadius: radii.md, overflow: 'hidden', alignItems: 'center' },
   pictureTree: { position: 'absolute' },
   air: { overflow: 'hidden' },
-  // a petal is rounder than a leaf; both are flat shapes of colour, as the trees are
+  // A petal is rounder than a leaf; both are flat shapes of colour, as the trees are.
   petal: { position: 'absolute', width: 12, height: 9, borderTopLeftRadius: radii.pill, borderBottomRightRadius: radii.pill, borderTopRightRadius: radii.xs, borderBottomLeftRadius: radii.xs },
   leaf: { position: 'absolute', width: 15, height: 9, borderTopLeftRadius: radii.pill, borderBottomRightRadius: radii.pill },
   flake: { position: 'absolute', width: 6, height: 6, borderRadius: radii.pill },

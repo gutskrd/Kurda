@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The screen over the app while Hevalo is offline: the admin's words and
- * picture, or the app's own in the reader's language; when Hevalo is expected
- * back, only when that was said; and `GET /status` asked every half minute, at
- * once on "Try again" and on coming back to the front, until it says Hevalo
- * is open — when the screen goes.
+ * The maintenance screen: the admin's words and picture or the app's own, the expected return time only when one
+ * was given, and `GET /status` polled every 30 s, on "Try again" and on returning to the foreground until open.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('react-native-web'));
@@ -49,7 +46,7 @@ async function picture(container: HTMLElement): Promise<string | null | undefine
   return container.querySelector('img')?.getAttribute('src');
 }
 
-/** Hand over the app's state changes, so a test can send it to the back and bring it to the front. */
+/** Captures the app-state listener so a test can background and foreground the app. */
 function appState(): (state: string) => void {
   const listeners: Array<(state: string) => void> = [];
   vi.spyOn(AppState, 'addEventListener').mockImplementation(((_type: string, cb: (state: string) => void) => {
@@ -113,14 +110,14 @@ describe('MaintenanceScreen', () => {
     renderWithProviders(<MaintenanceScreen />);
     expect(statusCalls(client)).toBe(0);
 
-    // still offline, with the admin's newer words
+    // Still offline, with the admin's newer words.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(POLL_MS);
     });
     expect(statusCalls(client)).toBe(1);
     expect(screen.getByRole('alert').textContent).toBe('Nearly there');
 
-    // open: the screen goes, and what was waiting on it hears so
+    // Open: the screen goes, and whatever waited on it is told.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(POLL_MS);
     });
@@ -129,7 +126,7 @@ describe('MaintenanceScreen', () => {
     expect(currentMaintenance()).toBeNull();
     expect(over).toHaveBeenCalledTimes(1);
 
-    // and nothing asks any more
+    // And polling stops.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(3 * POLL_MS);
     });
@@ -177,7 +174,7 @@ describe('MaintenanceScreen', () => {
       await vi.advanceTimersByTimeAsync(0);
     });
     expect(statusCalls(client)).toBe(1);
-    // and every half minute from then on
+    // And every half minute from then on.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(POLL_MS);
     });

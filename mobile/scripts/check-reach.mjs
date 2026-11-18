@@ -1,39 +1,28 @@
 /**
- * Every control answers a finger a little off the mark, and no two take each
- * other's taps.
+ * Checks that every control answers a slightly missed tap and no two steal each other's taps.
  *
- * The app's Pressable (src/theme/Pressable.tsx) works out how far past what
- * it draws a control answers, from the size its style already states, up to
- * `MIN_REACH`. That only holds while the ways around it stay few, and each of
- * them is a habit somebody had before it existed:
+ * The app's Pressable (src/theme/Pressable.tsx) computes how far past its drawn size a control answers, from the
+ * size its style states, up to `MIN_REACH`. That holds only while the ways around it stay rare:
  *
- *   a hitSlop written in numbers  a reach tuned once, by eye, that nothing keeps right
+ *   a hitSlop written in numbers  a reach tuned once by eye that nothing keeps right
  *   <Text onPress>                a link that cannot take a reach at all
- *   a bare <Toggle>               a 31pt switch beside the words that should turn it
+ *   a bare <Toggle>               a 31 pt switch beside the words that should turn it
  *   a <Modal> without ReachReset  a sheet whose controls are capped by the screen under it
- *   a horizontal scroller         which cuts off the reach of every chip it holds,
+ *   a horizontal scroller         which clips the reach of every chip it holds,
  *     without reachRoom           unless it leaves room for it
  *   pressDelay={0}                a press with no reach and no wait, for the two
  *                                 places that set their own
  *
- * Each is counted per file and the counts are kept in reach-baseline.json. A
- * count may fall and may not rise, so the habits go as files are touched and
- * do not come back; `--update` lowers the baseline to what is there now and
- * never raises it. Once a habit has gone from every file it is a rule with no
- * baseline (`HARD`): a bare switch, a sheet without ReachReset or a list
- * that drops taps under the keyboard now fails wherever it appears, since
- * there is no old code left to excuse it.
+ * Each is counted per file against reach-baseline.json. A count may fall but not rise; `--update` lowers the
+ * baseline to the current counts and never raises it. A habit gone from every file becomes a rule with no
+ * baseline (`HARD`): a bare switch, a sheet without ReachReset, or a list that drops taps under the keyboard now
+ * fails anywhere.
  *
- * That last one: a list in a file with a text field keeps a tap that lands on
- * it while the keyboard is up (`keyboardShouldPersistTaps`). Without it the
- * first tap on a button under a search field only closes the keyboard, and a
- * person taps again thinking they missed.
+ * The last: a list in a file with a text field must keep taps while the keyboard is up
+ * (`keyboardShouldPersistTaps`), or the first tap on a button under a search field only closes the keyboard.
  *
- * `--report` prints every pressable with where it is, the size its style
- * declares, where its reach comes from (auto, open, explicit, group, none)
- * and what that reach is: the work list for making every control reachable.
- *
- * Runs inside `npm run lint --workspace @kurda/mobile`.
+ * `--report` prints every pressable with its location, declared size, reach source (auto, open, explicit, group,
+ * none) and resulting reach. Runs inside `npm run lint --workspace @kurda/mobile`.
  */
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -44,7 +33,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'src');
 const BASELINE = join(ROOT, 'scripts', 'reach-baseline.json');
 
-/** The numbers `src/a11y/a11y.ts` exports: this file is .mjs and cannot import a .ts module, so they are written once more here. */
+/** The numbers `src/a11y/a11y.ts` exports, repeated because this .mjs file cannot import a .ts module. */
 const MIN_REACH = 48;
 const REACH_OPEN = 8;
 
@@ -59,16 +48,16 @@ const RATCHETS = {
   persistTaps: 'a list in a file with a text field without keyboardShouldPersistTaps — its first tap only closes the keyboard',
 };
 
-/** The habits no file has any more: each is allowed nowhere, whatever the baseline says, and `--update` never writes them. */
+/** Habits no file has any more: allowed nowhere, whatever the baseline says, and never written by `--update`. */
 const HARD = new Set(['bareToggle', 'modal', 'persistTaps']);
 
 /** Where a habit is the point rather than a slip, and why. */
 const EXEMPT = {
-  // the switch itself, and the settings row that turns it from its words
+  // The switch itself, and the settings row that turns it from its words.
   bareToggle: new Set(['theme/Toggle.tsx', 'settings/list.tsx']),
-  // the tab bar answers the moment it is touched and sets its own reach; the couch card is held to be read
+  // The tab bar responds on touch and sets its own reach; the couch card is held to be read.
   pressDelayZero: new Set(['navigation/TabBar.tsx', 'impostor/CouchGame.tsx']),
-  // a pager holds whole pages, not a row of controls with reach to keep
+  // A pager holds whole pages, not a row of controls with reach to keep.
   scroller: new Set(['theme/SwipePager.tsx']),
 };
 
@@ -134,10 +123,9 @@ function lineOf(sf, node) {
 }
 
 /*
- * Numbers a style or a reach can be written in: literals, the token scales
- * (spacing, radii, layout), the a11y constants, and a file's own constants,
- * with the arithmetic between them. Anything else is not known, and a size
- * that is not known gets no reach, exactly as the Pressable does.
+ * Numbers a style or reach can be written in: literals, the token scales (spacing, radii, layout), the a11y
+ * constants and a file's own constants, with arithmetic between them. Anything else is unknown, and an unknown
+ * size gets no reach, as in the Pressable.
  */
 function constantTable(file) {
   const sf = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
@@ -199,7 +187,7 @@ function evaluate(e, scope, depth = 0) {
     }
   }
   if (ts.isCallExpression(e) && ts.isIdentifier(e.expression) && e.expression.text === 'reachSlop') {
-    // the helper in src/a11y/a11y.ts, for its plain two-number form
+    // The helper in src/a11y/a11y.ts, for its plain two-number form.
     const [w, h] = e.arguments.map((x) => evaluate(x, scope, depth + 1));
     if (typeof w !== 'number' || typeof h !== 'number' || e.arguments.length > 2) return undefined;
     return reachSlop(w, h);
@@ -237,10 +225,8 @@ function evaluate(e, scope, depth = 0) {
 }
 
 /**
- * A hitSlop written by hand: one that can be worked out without running the
- * app — numbers, constants and the arithmetic between them, or such a value
- * as one branch of a condition. One computed from a size, a measurement or
- * `reachSlop` is not counted; that is the reach being said, not guessed.
+ * A hand-written hitSlop: one computable without running the app (numbers, constants and arithmetic, or such a
+ * value as one branch of a condition). One computed from a size, a measurement or `reachSlop` is not counted.
  */
 function handWritten(e, scope) {
   e = unwrap(e);
@@ -272,7 +258,7 @@ function fullyConstant(e, scope, depth = 0) {
     );
   }
   if (ts.isIdentifier(e)) {
-    // an imported name is a token or a constant: a module does not export a measurement
+    // An imported name is a token or a constant: a module does not export a measurement.
     if (scope.imported.has(e.text)) return true;
     const init = scope.own.get(e.text);
     return init ? fullyConstant(init, scope, depth + 1) : false;
@@ -303,10 +289,9 @@ function styleSheets(sf) {
 const SIZE_KEYS = ['width', 'height', 'minWidth', 'minHeight'];
 
 /**
- * The sizes a style declares, merged in order as React Native flattens them:
- * a number where it is known, null where it is set to something that is not
- * (a percentage, a prop). A function style is read at rest, as the Pressable
- * reads it. Both branches of a condition count; where they disagree it is not known.
+ * The sizes a style declares, merged in order as React Native flattens them: a number where known, null where set
+ * to something unknown (a percentage, a prop). A function style is read at rest, as the Pressable reads it. Both
+ * branches of a condition count; where they disagree the size is unknown.
  */
 function declaredSize(e, ctx, depth = 0) {
   e = unwrap(e);
@@ -367,8 +352,8 @@ function tighter(a, b) {
 }
 
 /**
- * The caps of the ReachGroups around a JSX element in the same file, or null:
- * the nearest ReachReset ends the search, as it ends the groups' reach.
+ * The caps of the ReachGroups around a JSX element in the same file, or null; the nearest ReachReset ends the
+ * search, as it ends the groups' reach.
  */
 function groupLimit(element, scope) {
   let limit = null;
@@ -437,7 +422,7 @@ function scan(file) {
   };
   const elements = jsxElements(sf);
 
-  // the names a reachRoom(…) is kept under, so `rr.content` counts as room
+  // The names a reachRoom(…) is kept under, so `rr.content` counts as room.
   const roomNames = new Set();
   const visit = (n) => {
     if (ts.isCallExpression(n)) {
@@ -467,7 +452,7 @@ function scan(file) {
     const slop = attr(open, 'hitSlop');
     if (slop && handWritten(attrValue(slop), scope)) count('hitSlop', open);
     if (tag === 'Text' && attr(open, 'onPress')) count('textOnPress', open);
-    // a switch that nothing turns (a loading row's stand-in, drawn unseen for its size) is no control, and has no words to be turned by
+    // A switch nothing turns (a loading row's invisible stand-in, drawn for its size) is not a control and has no words to be turned by.
     const turnable = attr(open, 'onValueChange') || attributes(open).some((a) => ts.isJsxSpreadAttribute(a));
     if (tag === 'Toggle' && turnable && !EXEMPT.bareToggle.has(where)) count('bareToggle', open);
     if (tag === 'Modal') {
@@ -521,7 +506,7 @@ for (const f of files) {
 const baseline = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : null;
 
 if (args.has('--update')) {
-  // lower only: a count above the baseline stays a failure until the code is fixed
+  // Lower only: a count above the baseline stays a failure until the code is fixed.
   const next = {};
   for (const where of Object.keys(current).sort()) {
     const was = baseline ? (baseline[where] ?? {}) : current[where];

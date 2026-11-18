@@ -11,17 +11,14 @@ import { assetUrl } from '../api/env';
 import { knownVoice } from '../characters/voice';
 
 /**
- * The alphabet's sounds on the phone.
- *
- * Every sound has a synthesised clip: a small MP3 the website serves, played
- * from the website here too (`assetUrl`), by the same file names. A recording
- * made in the admin panel plays in its place, and GET /alphabet/audio says
- * which there are and who says them; which file or recording a key plays is
- * worked out in @kurda/shared, the same as on the website.
+ * The alphabet's sounds. Every sound has a synthesised MP3 served by the website and played from there
+ * (`assetUrl`), by the same file names. An admin-panel recording replaces it; GET /alphabet/audio lists
+ * recordings and their speakers. Which file or recording a key plays is worked out in @kurda/shared, as on the
+ * web.
  */
 export const SYNTHESISED_BASE = assetUrl(SYNTHESISED_ALPHABET_PATH) ?? SYNTHESISED_ALPHABET_PATH;
 
-/** Who says a recording, and the words it says, for the mouth to follow when no timeline came with it. */
+/** A recording's speaker and its words, for the mouth to follow when no timeline came with it. */
 export interface Spoken {
   voice: RecordingVoice;
   text: string | null;
@@ -29,11 +26,11 @@ export interface Spoken {
 
 export interface AlphabetAudio {
   sounds: AlphabetSounds;
-  /** who says the recording at `src`; null for a synthesised clip and for a recording nobody was chosen for */
+  /** The speaker of the recording at `src`; null for a synthesised clip or a recording without one. */
   voiceOf: (src: string | null) => Spoken | null;
 }
 
-/** The screen's sounds from GET /alphabet/audio's answer: only the recordings worth playing, and only speakers this app can draw. */
+/** The screen's sounds from GET /alphabet/audio: only recordings worth playing, and only speakers this app can draw. */
 export function alphabetAudio(answer: Partial<AlphabetAudioResponse> | null | undefined): AlphabetAudio {
   const recorded = alphabetRecordings(answer?.clips);
   const voices = new Map<string, Spoken>();

@@ -6,34 +6,30 @@ import { markWidgetTokenRejected, readWidgetConfig } from '../storage';
 import type { WidgetShows } from './LetterWidget';
 
 /**
- * What the Android widget shows, and the last of it kept for when the phone
- * is offline.
+ * What the Android widget shows, with the last result kept for offline use.
  *
- * Android asks the widget to update every half hour, and the app asks it when
- * a letter comes or a setting changes. Each time, this reads the token the app
- * left (storage.ts), and asks the server for the feed only when the last feed
- * said it was time to (its `refreshAfter`) or the app asked: a home screen
- * looked at fifty times a day is not fifty requests. The feed and the picture
- * for each size of widget on the home screen are kept in the app's own files,
- * so with no network the widget keeps showing the last letter it had, as the
- * iPhone widget keeps its last entry. They belong to one token: signing out,
- * or signing in as somebody else, never shows the last person's letter.
+ * Android updates the widget every half hour, and the app asks when a letter arrives or a setting changes. Each
+ * time this reads the app's token (storage.ts) and fetches the feed only when the last feed's `refreshAfter` has
+ * passed or the app asked, so a frequently viewed home screen does not mean frequent requests. The feed and each
+ * widget size's picture are cached in the app's files, so offline the widget keeps its last letter, as the iPhone
+ * widget keeps its last entry. The cache belongs to one token: signing out or switching account never shows the
+ * previous letter.
  */
 
 const DIR = `${FileSystem.documentDirectory ?? ''}letter-widget/`;
 const KEPT = `${DIR}feed.json`;
 
 interface Kept {
-  /** whose this is: a fingerprint of the token and the server, never the token itself */
+  /** Whose this is: a fingerprint of the token and the server, never the token itself. */
   owner: string;
   feed: WidgetFeed;
-  /** when the feed was fetched, in ms */
+  /** When the feed was fetched, in ms. */
   fetchedAt: number;
-  /** for each picture on disk (by its size), what it is a picture of: a letter's id, or the empty sill at a sky */
+  /** For each cached picture (by size), what it shows: a letter's id, or the empty sill at a given sky. */
   images: Record<string, string>;
 }
 
-/** A short fingerprint of a string (FNV-1a), enough to tell one token from another without keeping it. */
+/** A short fingerprint of a string (FNV-1a), enough to tell tokens apart without storing one. */
 export function fingerprint(text: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
@@ -59,11 +55,11 @@ async function writeKept(kept: Kept): Promise<void> {
     await FileSystem.makeDirectoryAsync(DIR, { intermediates: true });
     await FileSystem.writeAsStringAsync(KEPT, JSON.stringify(kept));
   } catch {
-    // kept for next time only; this time is drawn either way
+    // Kept for next time only; this time is drawn either way.
   }
 }
 
-/** Forget the last letter and its pictures: what is drawn next is whatever the app has left now. */
+/** Forget the last letter and its pictures, so what is drawn next is whatever the app has left now. */
 export async function dropKept(): Promise<void> {
   try {
     await FileSystem.deleteAsync(DIR, { idempotent: true });
@@ -84,7 +80,7 @@ function askOnce(config: WidgetConfig, fetchFn: FetchLike): Promise<FeedAnswer> 
   return answer;
 }
 
-/** What one widget on the home screen is, as the library reports it: its size in dp and the screen's density. */
+/** One widget on the home screen as the library reports it: its size in dp and the screen density. */
 export interface WidgetPlace {
   width: number;
   height: number;
@@ -93,20 +89,18 @@ export interface WidgetPlace {
 
 export interface Loaded {
   shows: WidgetShows;
-  /** the language the app left for the widget, or null when there is none (signed out) */
+  /** The language the app left for the widget, or null when there is none (signed out). */
   locale: string | null;
 }
 
 /**
- * The picture for a widget of this size, as a data URI: fetched when what it
- * should show changed, else the one on disk. Null when there is none to show
- * that matches — a new letter's text over the last letter's paper would be
- * worse than the paper's plain colour.
+ * The picture for a widget of this size, as a data URI: fetched when its subject changed, else the cached one.
+ * Null when none matches, since new text over the last letter's paper is worse than the paper's plain colour.
  */
 async function pictureFor(config: WidgetConfig, feed: WidgetFeed, place: WidgetPlace, kept: Kept, now: Date): Promise<string | null> {
   const size = widgetImageSize(place.width, place.height, place.density);
   const sky = widgetSkyAt(now.getHours());
-  // the writer may choose another pigeon for a letter already sent, and the picture shows it
+  // The writer may choose another pigeon for a letter already sent, and the picture shows it.
   const subject = feed.letter ? `letter:${feed.letter.id}:${feed.letter.from.bird}` : `empty:${sky}`;
   const key = `${size.w}x${size.h}@${size.scale}`;
   const file = `${DIR}picture-${key}.png`;
@@ -133,10 +127,7 @@ async function pictureFor(config: WidgetConfig, feed: WidgetFeed, place: WidgetP
   }
 }
 
-/**
- * What one widget should show now. `fresh` asks the server whatever the last
- * feed said (the widget was just added, or the app asked).
- */
+/** What one widget should show now. `fresh` fetches regardless of the last feed (the widget was just added, or the app asked). */
 export async function loadLetterWidget(place: WidgetPlace, opts: { fresh: boolean; now?: Date; fetchFn?: FetchLike }, retried = false): Promise<Loaded> {
   const now = opts.now ?? new Date();
   const config = await readWidgetConfig();
@@ -146,14 +137,14 @@ export async function loadLetterWidget(place: WidgetPlace, opts: { fresh: boolea
   }
   const owner = fingerprint(`${config.apiBase} ${config.token}`);
   const before = await readKept();
-  // somebody else's letter, from before a sign-out: not a word of it is shown, and its pictures go
+  // Somebody else's letter, from before a sign-out: not a word of it is shown, and its pictures go.
   if (before && before.owner !== owner) await dropKept();
   let kept = before?.owner === owner ? before : null;
   const due = !kept || opts.fresh || now.getTime() >= kept.fetchedAt + refreshSeconds(kept.feed.refreshAfter) * 1000;
   if (due) {
     const answer = await askOnce(config, opts.fetchFn ?? fetch);
     if (answer.kind === 'rejected') {
-      // the app may have made a new token while this one was being refused (it replaces the old as it starts): ask once more with it
+      // The app may have made a new token while this one was refused (it replaces the old at startup), so try once more with it.
       const current = await readWidgetConfig();
       if (!retried && current && current.token !== config.token) return loadLetterWidget(place, { ...opts, fresh: true }, true);
       await markWidgetTokenRejected();
@@ -165,7 +156,7 @@ export async function loadLetterWidget(place: WidgetPlace, opts: { fresh: boolea
       await writeKept(kept);
     }
   }
-  // offline, or asked too often: the last letter stays, as long as there is one
+  // Offline, or asked too often: the last letter stays, as long as there is one.
   if (!kept) return { shows: { kind: 'waiting' }, locale: config.locale };
   const image = await pictureFor(config, kept.feed, place, kept, now);
   const { feed } = kept;

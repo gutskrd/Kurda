@@ -3,28 +3,24 @@ import { DEFAULT_ACCENT_MODE, isAccentMode, isTypingDialect, type AccentMode, ty
 import { deviceStore, type DeviceStore } from './deviceStore';
 
 /**
- * How this device types Kurdish: the settings the typing race, Peyvok and the
- * keyboard guide share, kept on the device (contract §K3 — "per device").
- *
- * Per device rather than per account because they are about the keyboard in
- * front of you: the phone may have Kurdish (Latin) installed and the laptop
- * not, and accents that are forgiving on one should not quietly become strict
- * on the other.
+ * How this device types Kurdish: settings shared by the typing race, Peyvok and the keyboard guide. Kept per
+ * device, not per account, because they are about the keyboard at hand: a phone may have Kurdish (Latin)
+ * installed and a laptop not.
  */
 export type WordleLayout = 'qwerty' | 'alphabet';
 
 export interface KeyboardPrefs {
-  /** how the race treats e for ê; the server stores the mode with each race */
+  /** How the race treats e for ê; the server stores the mode with each race. */
   accentMode: AccentMode;
-  /** ç ê î ş û (or the Soranî letters) as keys above the text box */
+  /** ç ê î ş û (or the Soranî letters) as keys above the text box. */
   keyBar: boolean;
-  /** e then ` is ê — for a hardware keyboard with no Kurdish layout */
+  /** E then ` is ê — for a hardware keyboard with no Kurdish layout. */
   backtick: boolean;
-  /** Peyvok's on-screen keyboard: QWERTY, or the 31 letters in alphabet order */
+  /** Peyvok's on-screen keyboard: QWERTY, or the 31 letters in alphabet order. */
   wordleLayout: WordleLayout;
-  /** the variety the last race was in; null until one was chosen */
+  /** The variety of the last race; null until one was chosen. */
   raceDialect: TypingDialect | null;
-  /** the keyboard guide has opened by itself once (before a first Kurmancî race) */
+  /** The keyboard guide has opened by itself once (before a first Kurmancî race). */
   guideShown: boolean;
 }
 
@@ -40,9 +36,8 @@ export const DEFAULT_KEYBOARD_PREFS: KeyboardPrefs = {
 export const KEYBOARD_PREFS_KEY = 'hevalo.keyboard.v1';
 
 /**
- * Settings read back from the device. Anything unrecognised — an older shape,
- * a value written by hand, plain garbage — falls back to its default one
- * field at a time, so a single bad field never resets the rest.
+ * Settings read back from storage. Anything unrecognised falls back to its default field by field, so one bad
+ * field never resets the rest.
  */
 export function parseKeyboardPrefs(raw: string | null | undefined): KeyboardPrefs {
   let v: Record<string, unknown> = {};
@@ -51,7 +46,7 @@ export function parseKeyboardPrefs(raw: string | null | undefined): KeyboardPref
       const parsed: unknown = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') v = parsed as Record<string, unknown>;
     } catch {
-      // not JSON: every field takes its default
+      // Not JSON: every field takes its default.
     }
   }
   const bool = (x: unknown, fallback: boolean): boolean => (typeof x === 'boolean' ? x : fallback);
@@ -67,10 +62,7 @@ export function parseKeyboardPrefs(raw: string | null | undefined): KeyboardPref
 
 type Listener = (prefs: KeyboardPrefs) => void;
 
-/**
- * One copy of the settings for the whole app, so the race screen, its settings
- * sheet and Settings all show the same values the moment one of them changes.
- */
+/** One app-wide copy, so the race, its settings sheet and Settings show the same values the moment one changes. */
 export class KeyboardPrefsStore {
   private prefs: KeyboardPrefs = DEFAULT_KEYBOARD_PREFS;
   private loading: Promise<void> | null = null;
@@ -91,7 +83,7 @@ export class KeyboardPrefsStore {
   load(): Promise<void> {
     if (!this.loading) {
       this.loading = this.store.get(KEYBOARD_PREFS_KEY).then((raw) => {
-        // a change made before the read finished wins over what was saved
+        // A change made before the read finished wins over what was saved.
         if (!this.loaded) this.prefs = parseKeyboardPrefs(raw);
         this.loaded = true;
         this.emit();

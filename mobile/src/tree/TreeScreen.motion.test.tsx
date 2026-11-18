@@ -17,7 +17,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import type { MyTree, Watered } from './api';
 import { TreeScreen } from './TreeScreen';
 
-// the screen as it moves, for somebody who has not asked for less motion: `TreeScreen.test.tsx` has it standing still
+// The screen in motion, with motion allowed; `TreeScreen.test.tsx` covers it standing still.
 patchReactNativeWeb({ reduceMotion: false });
 beforeEach(() => navigation.navigate.mockReset());
 afterEach(cleanup);
@@ -33,14 +33,14 @@ describe('the tree’s screen, moving', () => {
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 6, water: 2 }))), 'POST /me/tree/water': ok(watered) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Water the tree' }));
-    // the can is over the tree, with the water falling from it, and there is no pouring twice
+    // The can is over the tree, with the water falling from it, and there is no pouring twice.
     expect(await screen.findByTestId('tree-pour')).toBeTruthy();
     expect(screen.getAllByTestId('tree-pour-drop').length).toBeGreaterThan(8);
     expect(screen.getByTestId('tree-water').getAttribute('aria-disabled')).toBe('true');
-    // it still shows the tree as it was: what the water did comes once it has landed
+    // It still shows the tree as it was: the water's effect comes once it has landed.
     expect(screen.getByText('Oak · Seedling · Day 13')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'It grew!' })).toBeNull();
-    // then it grows in the scene itself, out of a burst of light and out of the tree it was, before anything is said
+    // Then it grows in the scene itself, out of a burst of light and out of the old tree, before anything is said.
     await waitFor(() => expect(screen.queryByTestId('tree-burst')).not.toBeNull(), { timeout: 3000 });
     expect(screen.getByTestId('tree-was-grow')).toBeTruthy();
     expect(screen.queryByTestId('tree-pour')).toBeNull();

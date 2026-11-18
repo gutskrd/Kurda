@@ -38,7 +38,7 @@ describe('the thread, before the server answers', () => {
     expect(ids(withReply.replies.b)).toEqual(['b1', 'r']);
     expect(withReply.top?.find((x) => x.id === 'b')?.replyCount).toBe(2);
 
-    // a branch nobody opened opens with the reply in it
+    // A branch nobody opened opens with the reply in it.
     const opened = addToThread(start, c('r2', { parentCommentId: 'a', depth: 1 }));
     expect(ids(opened.replies.a)).toEqual(['r2']);
   });
@@ -75,7 +75,7 @@ describe('the thread, before the server answers', () => {
 
   it('keeps a reply sent while its branch was loading', () => {
     expect(ids(mergeBranch([c('a1'), c('a2')], [c('pending-1')]))).toEqual(['a1', 'a2', 'pending-1']);
-    // and does not draw one the server already has twice
+    // And does not draw one the server already has twice.
     expect(ids(mergeBranch([c('a1'), c('mine')], [c('mine')]))).toEqual(['a1', 'mine']);
   });
 });

@@ -19,11 +19,9 @@ export function easProjectId(): string | null {
 }
 
 /**
- * This device's Expo push token (KUR-094), for the API to send to through
- * Expo's push service — or null: on the web, while notifications are not
- * allowed, and wherever the token cannot be had (a simulator, no connection,
- * an Android build without its Firebase file). Never asks for permission;
- * asking is for a moment the person can see a reason for (permission.ts).
+ * This device's Expo push token, for the API to send through the push service, or null: on the web, while
+ * notifications are not allowed, and wherever no token can be had (a simulator, no connection, an Android build
+ * without its push configuration). Never asks for permission (see permission.ts).
  */
 export async function getPushToken(channelName?: string): Promise<DevicePush | null> {
   const platform = devicePlatform();
@@ -32,8 +30,8 @@ export async function getPushToken(channelName?: string): Promise<DevicePush | n
   if (permission.status !== 'granted') return null;
   const projectId = easProjectId();
   if (!projectId) return null;
-  // allowed in the phone's settings rather than through the app: the channel
-  // may not exist yet, and its name is the one the phone's settings show
+  // Allowed in the phone's settings rather than through the app: the channel may not exist yet, and its name is
+  // what the phone's settings show.
   if (channelName) await ensureChannel(channelName);
   try {
     const { data } = await Notifications.getExpoPushTokenAsync({ projectId });

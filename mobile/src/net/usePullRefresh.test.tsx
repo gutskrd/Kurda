@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-// the control as a button that shows what it was given: whether it turns, and its tint
+// The control as a button that shows what it was given: whether it spins, and its tint.
 vi.mock('react-native', async () => {
   const rn = (await import('react-native-web')) as unknown as Record<string, unknown>;
   const { createElement } = await import('react');

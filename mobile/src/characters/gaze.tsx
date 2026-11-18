@@ -5,7 +5,7 @@ import { View, type GestureResponderEvent, type StyleProp, type ViewStyle } from
 export type GazePoint = { x: number; y: number } | null;
 
 export interface GazeSource {
-  /** told of every finger that touches or moves, and of null a moment after the last one lifts */
+  /** Told of every finger that touches or moves, and of null a moment after the last one lifts. */
   subscribe(listener: (point: GazePoint) => void): () => void;
 }
 
@@ -15,15 +15,9 @@ const GazeContext = createContext<GazeSource | null>(null);
 export const GAZE_LINGER_MS = 1500;
 
 /**
- * Lets the characters on screen see a finger: wrap the app in it, and a
- * character's eyes follow wherever somebody touches — a button, the field
- * they are typing in, the character itself — and wander back a moment after
- * the finger lifts.
- *
- * It only listens. The raw touch events bubble up to it from whatever was
- * touched, so it never takes a touch, never stands in a scroll's way and
- * needs nothing from the screens inside it. With no character on screen
- * nobody is listening, and a touch costs a function call.
+ * Lets on-screen characters see a finger: wrapped around the app, it makes their eyes follow touches anywhere and
+ * drift back a moment after the finger lifts. It only listens to touch events bubbling up, so it never takes a
+ * touch or blocks scrolling; with no character on screen a touch costs one function call.
  */
 export function GazeArea({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const listeners = useRef(new Set<(point: GazePoint) => void>());

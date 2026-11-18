@@ -18,9 +18,8 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 
 /**
- * The league screen's Leaderboard tab: the switch between this week's XP and
- * the Zêr and Gewher people hold, the rows a page at a time, your own place
- * pinned until a page reaches it, and the states a board can be in.
+ * The league screen's Leaderboard tab: this week's XP versus Zêr and Gewher held, rows a page at a time, your
+ * place pinned until a page reaches it, and the board's states.
  */
 
 const week: LeagueView = {
@@ -47,7 +46,7 @@ const entry = (i: number, username: string, score: number, rank = i) => ({ userI
 const page = (type: string, offset: number) => `GET /leaderboards/${type}?scope=global&limit=25&offset=${offset}`;
 
 const XP = { type: 'weekly_xp', scope: 'global', top: [entry(1, 'baran', 300)], total: 1, me: null };
-/** Four people, two tied for second, the reader fourth; a board that stops at four and reached it. */
+/** Four people, two tied for second and the reader fourth, on a board that stops at four. */
 const ZER = {
   type: 'zer',
   scope: 'global',
@@ -90,13 +89,13 @@ describe('the leaderboard tab', () => {
     expect(screen.getByRole('radio', { name: 'Zêr' }).getAttribute('aria-checked')).toBe('true');
     expect(client.calls.map((c) => `${c.method} ${c.path}`)).toContain(page('zer', 0));
     expect(screen.getByText('The learners holding the most Zêr right now.')).toBeTruthy();
-    // the tie shares second, and the place after it is fourth
+    // The tie shares second, and the place after it is fourth.
     expect(screen.getByLabelText('#2, azad, 500 Zêr')).toBeTruthy();
     expect(screen.getByLabelText('#2, rojin, 500 Zêr')).toBeTruthy();
-    // you are on this page, so you are picked out where you are rather than pinned above it too
+    // You are on this page, so you are picked out where you are rather than pinned above it too.
     expect(screen.getAllByLabelText('#4, You, 100 Zêr')).toHaveLength(1);
     expect(screen.queryByLabelText('#1, baran, 300 XP')).toBeNull();
-    // the board stops at its depth and reached it, and says so
+    // The board stops at its depth and reached it, and says so.
     expect(screen.getByText('The top 4, from most to least.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Show \d+ more$/ })).toBeNull();
   });
@@ -113,17 +112,17 @@ describe('the leaderboard tab', () => {
     await screen.findByLabelText('#1, baran, 300 XP');
     fireEvent.click(screen.getByRole('radio', { name: 'Gems' }));
 
-    // below the cut of a board of a thousand: your balance, a dash for the place, and why
+    // Below the cut of a board of a thousand: your balance, a dash for the place, and why.
     expect(await screen.findByLabelText('You, 35 Gems, Not in the top 1,000 yet.')).toBeTruthy();
     expect(screen.getByText('Not in the top 1,000 yet.')).toBeTruthy();
     expect(screen.getByLabelText('#2, gem2, 999 Gems')).toBeTruthy();
     expect(client.calls.map((c) => `${c.method} ${c.path}`)).not.toContain(page('gewher', 25));
 
-    // one page at a time: the button offers what is left, up to a page, and goes once nothing is
+    // One page at a time: the button offers what is left, up to a page, and goes once nothing is.
     fireEvent.click(screen.getByRole('button', { name: 'Show 1 more' }));
     await waitFor(() => expect(screen.queryByRole('button', { name: /^Show \d+ more$/ })).toBeNull());
     expect(client.calls.map((c) => `${c.method} ${c.path}`)).toContain(page('gewher', 25));
-    // the page is added to the one shown, not put in its place
+    // The page is added to the one shown, not put in its place.
     expect(screen.getByLabelText('#2, gem2, 999 Gems')).toBeTruthy();
   });
 
@@ -171,7 +170,7 @@ describe('the board switch', () => {
     expect(onChange).toHaveBeenCalledWith('weekly_xp');
   });
 
-  // "XP-ya heftane" in a third of a 360-point phone: a second line, never "XP-ya h…"
+  // "XP-ya heftane" in a third of a 360-point phone: a second line, never "XP-ya h…".
   it('lets a long board name take a second line rather than cutting it short', () => {
     renderWithProviders(<BoardSwitch value="weekly_xp" onChange={() => undefined} />);
     for (const name of ['Weekly XP', 'Zêr', 'Gems']) {

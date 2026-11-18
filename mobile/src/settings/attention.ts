@@ -6,13 +6,9 @@ import { pushSupported, readPermission } from '../push/device';
 import { accountStanding } from '../reports/api';
 
 /**
- * What in Settings wants something done, so its row can say so in gold: the
- * phone not letting notifications through (off, or never asked), and an
- * account that is limited, suspended or closed.
- *
- * Read each time Settings comes into view, since either can change away
- * from it (in the phone's own settings, or by a moderator). Until each is
- * known it is taken as nothing to do, so a row never turns gold and back.
+ * What in Settings needs action, so its row can show it: notifications blocked or never asked, and an account
+ * that is limited, suspended or closed. Read whenever Settings comes into view, since either can change
+ * elsewhere. Unknown counts as nothing to do, so a row never flickers.
  */
 export function useSettingsAttention(): { pushOff: boolean; standing: StandingStatus | null } {
   const { client, isGuest } = useAuth();
@@ -27,7 +23,7 @@ export function useSettingsAttention(): { pushOff: boolean; standing: StandingSt
           if (active) setPushOff(state.status === 'denied' || state.status === 'undetermined');
         });
       }
-      // a guest has no standing to be limited, and the route is refused to one: nothing to ask
+      // A guest cannot be limited and the route refuses guests, so do not ask.
       if (!isGuest) {
         void accountStanding(client).then((res) => {
           if (active && res.ok) setStanding(res.data.status);

@@ -26,24 +26,16 @@ const CIRCLE = FACE + 2 * (RING + AIR);
 const MOST = 20;
 
 /**
- * The row of faces at the top of the wall: you first, with a "+" to post
- * something, then your friends — those playing a game now with a warm ring,
- * those online with a green one, the rest as they are, the most recently
- * around first. A tap opens their profile.
+ * The row of faces atop the wall: you first, with a "+" to post, then your friends, those playing a game now with
+ * a warm ring and those online with a green one, the most recently active first. A tap opens their profile.
+ * Nobody is ranked or counted; the rings only show who is around. With no friends yet, the second circle finds
+ * some.
  *
- * It is the first thing on Home because the wall is about people, and seeing
- * the people you know there, some of them here right now, is what makes it
- * feel like somewhere to be rather than a list to read. Nobody is ranked or
- * counted; the rings only say who is about.
- *
- * With no friends yet, the second circle finds some.
- *
- * The faces spring in one after another the first time they arrive, the way
- * people turn up; a row drawn again later is simply there.
+ * Faces spring in one after another the first time they arrive; a later render shows them in place.
  */
 export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.JSX.Element {
   const { client, user } = useAuth();
-  // a guest has no friends yet and the social summary is refused to one: the row is you and the way to some
+  // A guest has no friends and the social summary refuses guests, so the row is you and the way to find some.
   const { isGuest, require } = useAccountGate();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
@@ -67,20 +59,20 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
       return () => {
         active = false;
       };
-      // a pull on the wall asks again
+      // A pull on the wall asks again.
     }, [client, refreshKey, isGuest]),
   );
 
   const { playing, online, offline } = bucket(friends ?? []);
   const ordered = [...playing, ...online, ...offline].slice(0, MOST);
   const me = user?.displayName ?? user?.username ?? '';
-  // the first faces spring in once, as the friends arrive; "you" is there from the start
+  // The first faces spring in once, as the friends arrive; "you" is there from the start.
   const entering = useListEntrance(friends !== null);
 
   return (
     <ScrollView
       ref={scroller}
-      // right to left, you are on the right: start the row there, until it has been scrolled by hand
+      // Right to left, you are on the right: start the row there, until it has been scrolled by hand.
       onContentSizeChange={() => {
         if (mirrored && !dragged.current) scroller.current?.scrollToEnd({ animated: false });
       }}
@@ -132,10 +124,9 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
 }
 
 /**
- * A face springing in: from a little smaller, on the bouncy spring, `delay`
- * after the row arrives (useListEntrance's beat for its place). Null is a
- * face that is simply there — every face after the first screenful, every
- * face on a later visit, and every face under Reduce Motion.
+ * A face springing in from slightly smaller on the bouncy spring, `delay` after the row arrives
+ * (useListEntrance's beat for its place). Null means static: faces after the first screenful, on later visits,
+ * and under Reduce Motion.
  */
 function SpringIn({ delay, children }: { delay: number | null; children: ReactNode }): React.JSX.Element {
   const arrive = useRef(new Animated.Value(delay === null ? 1 : 0)).current;
@@ -144,7 +135,7 @@ function SpringIn({ delay, children }: { delay: number | null; children: ReactNo
     const run = springTo(arrive, 1, 'bouncy', delay);
     run.start();
     return () => run.stop();
-    // once, as the face mounts
+    // Once, as the face mounts.
   }, []);
   const scale = arrive.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
   const opacity = arrive.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
@@ -162,12 +153,11 @@ function Face({
 }: {
   label: string;
   spoken: string;
-  /** when the face springs in, or null for one that is simply there */
+  /** When the face springs in, or null for one that is simply there. */
   delay?: number | null;
   /**
-   * Who is about, as a ring: a warm gradient for a friend playing a game now
-   * (the liveliest thing on the row, and the one worth a tap), quiet green for
-   * one who is online, nothing for the rest.
+   * Who is around, as a ring: a warm gradient for a friend playing now (the liveliest thing in the row), quiet
+   * green for online, nothing otherwise.
    */
   ring?: 'playing' | 'online' | 'none';
   onPress: () => void;
@@ -175,11 +165,7 @@ function Face({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const r = (CIRCLE - RING) / 2;
-  /*
-   * The warm ring round a friend who is playing now: orange running into
-   * pink, two of the shared hues. It was the app's gold running into a coral,
-   * and gold is kept for what is earned; being in a game is not.
-   */
+  /* The warm ring for a friend playing now: orange into pink, two of the shared hues (gold is kept for what is earned). */
   const from = hueSteps(colors.scheme, 'orange').base;
   const to = hueSteps(colors.scheme, 'pink').base;
   return (
@@ -230,7 +216,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   name: { fontSize: 12, maxWidth: CIRCLE + 6, textAlign: 'center' },
-  // the "+" on your own face, sitting on its rim at the bottom corner
+  // The "+" on your own face, sitting on its rim at the bottom corner.
   plus: {
     position: 'absolute',
     right: AIR,

@@ -1,12 +1,4 @@
-/**
- * User tags & badges (KUR-286/287) — re-exported from `@kurda/shared`.
- *
- * The shapes and the three view helpers moved there when the browser needed
- * them too: none of it touches a UI framework or a catalogue, so a second copy
- * would have been two places to disagree about which tags to offer. The
- * re-export keeps every `./types` import in this folder working, and is the only
- * thing left here.
- */
+/** User tags and badges, re-exported from `@kurda/shared` so this folder's `./types` imports keep working. */
 export {
   claimableCatalog,
   purchasableTags,

@@ -27,7 +27,7 @@ describe('the next step on Learn', () => {
     expect(step).toMatchObject({ kind: 'start', lessonId: 'l-1', unitTitle: 'Unit 1', done: 0, total: 2 });
   });
 
-  /* a skill is several lessons long: with one of them done, "Start your first lesson" would not be true */
+  /* A skill is several lessons long: with one of them done, "Start your first lesson" would not be true. */
   it('continues once one lesson of the first skill is finished, at the next lesson of that skill', () => {
     const begun: SkillNode = {
       ...skill('1', 'unlocked'),
@@ -50,7 +50,7 @@ describe('the next step on Learn', () => {
     expect(step).toMatchObject({ kind: 'continue', lessonId: 'l-3', unitTitle: 'Unit 2', courseTitle: 'Course a', done: 2, total: 4 });
   });
 
-  /* the card and the path's bubble must name the same lesson; a rusty skill is refreshed by review */
+  /* The card and the path's bubble must name the same lesson; a rusty skill is refreshed by review. */
   it('leaves a rusty skill to review and continues where the path is', () => {
     const step = nextStep([course('a', [[skill('1', 'decayed'), skill('2', 'unlocked')]])]);
     expect(step).toMatchObject({ kind: 'continue', lessonId: 'l-2', done: 1, total: 2 });

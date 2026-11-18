@@ -1,16 +1,11 @@
 import { applyBacktickShortcut } from '@kurda/shared';
 
 /**
- * What a key press did to the race's typing, worked out from the field's text.
- *
- * A phone keyboard does not say which key was pressed — Android's `onKeyPress`
- * only reports some of them — so the field's new text is compared with the
- * text it had, and the difference is the keystroke. And every keystroke is read
- * as happening at the end, where the racer is: the field's cursor is pinned
- * there, but a tap, the iPhone's space-bar trackpad or Gboard's space-bar swipe
- * can still move it for a moment, and a letter put in the middle of the typing
- * used to shift everything after it and turn the rest of the race red (the
- * "clicks up" bug, map3-race-keyboards §1).
+ * What a key press did to the race's typing, worked out from the field's text. Phone keyboards do not report
+ * every key (Android's `onKeyPress` reports only some), so the new text is diffed against the old. Every
+ * keystroke is read as happening at the end: the cursor is pinned there, but a tap, the iPhone's space-bar
+ * trackpad or a keyboard's space-bar swipe can still move it briefly, and a letter inserted mid-text would shift
+ * everything after it.
  */
 
 /** An insertion of more than one word at once is a paste, not typing. */
@@ -19,9 +14,9 @@ export const PASTE_WORDS = 2;
 export const PASTE_CHARS = 24;
 
 export interface TypingChange {
-  /** the typing after this change */
+  /** The typing after this change. */
   typed: string;
-  /** the change was refused as a paste: `typed` is what it was before */
+  /** The change was refused as a paste; `typed` is what it was before. */
   pasted: boolean;
 }
 
@@ -30,7 +25,7 @@ function commonPrefix(a: string, b: string): number {
   const n = Math.min(a.length, b.length);
   let i = 0;
   while (i < n && a.charCodeAt(i) === b.charCodeAt(i)) i++;
-  // never split a surrogate pair
+  // Never split a surrogate pair.
   if (i > 0 && i < a.length && isLowSurrogate(a.charCodeAt(i))) i--;
   return i;
 }
@@ -57,12 +52,12 @@ export function looksPasted(inserted: string): boolean {
 /**
  * The typing after the field changed from `before` to `after`.
  *
- * - Whatever was taken out and put in, it is taken from and put at the end:
- *   a letter typed with the cursor moved into the middle is still the next
- *   letter, and a backspace there still takes the last one.
- * - More than a word arriving at once is a paste, and is refused (the race
- *   is typed, not copied; the field's menu is hidden, but a keyboard's
- *   clipboard chip can still paste).
+ * - Whatever was removed or inserted is applied at the end: a letter typed with the cursor moved is still the
+ *   next
+ *   letter, and a backspace there still removes the last one.
+ * - More than a word arriving at once is a paste and is refused (the menu is hidden, but a keyboard's clipboard
+ *   chip
+ *   can still paste).
  * - With the backtick shortcut on, e then ` is ê (`applyBacktickShortcut`).
  * - The typing never grows past `maxLength`.
  */
@@ -79,7 +74,7 @@ export function applyTypingChange(
 
   if (looksPasted(inserted)) return { typed: before, pasted: true };
 
-  // the edit, as if it had been made at the end
+  // The edit, as if made at the end.
   let typed = before.slice(0, before.length - removed);
   if (options.backtick) {
     for (const ch of inserted) typed = applyBacktickShortcut(typed, ch);
@@ -88,7 +83,7 @@ export function applyTypingChange(
   }
   if (options.maxLength !== undefined && typed.length > options.maxLength) {
     typed = typed.slice(0, options.maxLength);
-    // a cut that left half a surrogate pair would show a broken glyph
+    // A cut that left half a surrogate pair would show a broken glyph.
     const last = typed.charCodeAt(typed.length - 1);
     if (last >= 0xd800 && last <= 0xdbff) typed = typed.slice(0, -1);
   }

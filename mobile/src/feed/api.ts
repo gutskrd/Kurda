@@ -6,9 +6,9 @@ import type { EngagementKind, FeedItem, FeedSection, PostEngagement } from './ty
 export interface FeedQuery {
   section?: FeedSection;
   kind?: string | null;
-  /** newest first unless asked */
+  /** Newest first unless asked. */
   sort?: FeedSort;
-  /** how far back a ranked order looks */
+  /** How far back a ranked order looks. */
   period?: FeedPeriod;
   limit?: number;
   offset?: number;
@@ -18,7 +18,7 @@ function query(q: FeedQuery): string {
   const p = new URLSearchParams();
   if (q.section) p.set('section', q.section);
   if (q.kind) p.set('kind', q.kind);
-  // only what differs from how the wall opens: the plain wall asks the plain question
+  // Only what differs from how the wall opens: the plain wall asks the plain question.
   if (q.sort && q.sort !== DEFAULT_FEED_SORT) p.set('sort', q.sort);
   if (q.sort && sortRanks(q.sort) && q.period && q.period !== DEFAULT_FEED_PERIOD) p.set('period', q.period);
   if (q.limit != null) p.set('limit', String(q.limit));
@@ -27,24 +27,14 @@ function query(q: FeedQuery): string {
   return s ? `?${s}` : '';
 }
 
-/**
- * One page of the wall.
- *
- * The same `/feed` the web app reads, rather than `/library/posts` and the
- * image endpoints separately — which is the whole point: a poem posted this
- * morning was invisible to anyone on the meme feed, and the two screens were
- * the same screen twice.
- */
+/** One page of the wall, from the same `/feed` the web app reads, so written posts and pictures share one wall. */
 export const getFeed = (client: ApiClient, q: FeedQuery = {}): Promise<ApiResult<{ items: FeedItem[] }>> =>
   client.get(`/feed${query(q)}`);
 
 /**
- * Where a shared link points.
- *
- * The web derives this from `window.location.origin`; a phone has no such
- * thing, so it is named. It matters that it is the real site: a link to
- * hevalo.app goes through the Worker that writes the post's own title, author
- * and picture into the page head, so it unfurls properly wherever it is pasted.
+ * Where a shared link points. The web derives it from `window.location.origin`; a phone has none, so it is named.
+ * It must be the real site, which writes the post's title, author and picture into the page head so the link
+ * unfurls wherever it is pasted.
  */
 export const SITE_ORIGIN = 'https://hevalo.app';
 
@@ -58,11 +48,8 @@ export const getEngagement = (
 ): Promise<ApiResult<{ engagement: PostEngagement }>> => client.get(`/posts/${item.targetType}/${item.id}/engagement`);
 
 /**
- * Like / save / repost, as one toggle.
- *
- * A second press is how somebody takes it back, and the server decides what the
- * state actually was — it answers with the fresh totals, which is what keeps
- * the count right when somebody else liked it while this screen was open.
+ * Like, save or repost as one toggle; a second press undoes it. The server answers with fresh totals, which keeps
+ * counts right when others act meanwhile.
  */
 export const toggleEngagement = (
   client: ApiClient,
@@ -72,8 +59,8 @@ export const toggleEngagement = (
   client.post(`/posts/${item.targetType}/${item.id}/${kind}`);
 
 /**
- * Delete your own post, written or a picture — the calls the website's card
- * makes. The server checks it is yours; the app only decides whether to offer.
+ * Delete your own post, written or a picture, as the web card does. The server checks ownership; the app only
+ * decides whether to offer it.
  */
 export const deletePost = (client: ApiClient, item: Pick<FeedItem, 'targetType' | 'id'>): Promise<ApiResult<unknown>> =>
   client.delete(item.targetType === 'image' ? `/images/${item.id}` : `/library/posts/${item.id}`);

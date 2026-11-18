@@ -1,21 +1,13 @@
 /**
- * The comment thread under a post — its shape and the changes made to it on
- * the phone before the server has answered. Native-free, so the bookkeeping
- * (where a reply goes, what a delete takes away, how either is undone) is
- * unit-tested without drawing anything.
- *
- * Two surfaces have threads, library posts and pictures. Their APIs are the
- * same shape at different paths, so one thread serves both (api.ts has the
- * table of paths).
+ * The comment thread under a post and the optimistic changes made to it before the server answers. Native-free,
+ * so reply placement, deletes and their undo are unit-tested. Library posts and pictures share it (paths in
+ * api.ts).
  */
 
 /** Which set of endpoints a thread talks to. */
 export type CommentSurface = 'library' | 'images';
 
-/**
- * Who wrote a comment, as the API's read paths send it (api/src/social/authors.ts).
- * The avatar is already resolved: an uploaded photo outranks a chosen avatar.
- */
+/** A comment's author as the API sends it (api/src/social/authors.ts); the avatar is already resolved. */
 export interface CommentAuthor {
   id: string;
   username: string;
@@ -28,7 +20,7 @@ export interface ThreadComment {
   postId: string;
   authorId: string;
   authorRole: string;
-  /** sent on reads; a library comment just posted comes back without one */
+  /** Sent on reads; a library comment just posted comes back without one. */
   author?: CommentAuthor;
   parentCommentId: string | null;
   depth: number;
@@ -38,15 +30,13 @@ export interface ThreadComment {
   status: 'visible' | 'removed';
   replyCount: number;
   createdAt: string;
-  /** written on this phone and not yet taken by the server */
+  /** Written on this phone and not yet taken by the server. */
   pending?: boolean;
 }
 
 /**
- * The thread as loaded: the top level (newest first, as the post's page asks
- * for it), and each branch that has been opened, oldest first so a
- * conversation reads down. A branch that is in `replies` is open; one that is
- * not still shows "View N replies".
+ * The loaded thread: the top level, newest first, and each opened branch, oldest first so a conversation reads
+ * down. A branch in `replies` is open; others still show "View N replies".
  */
 export interface ThreadState<C extends ThreadComment = ThreadComment> {
   top: C[] | null;
@@ -61,9 +51,8 @@ export interface Me {
 }
 
 /**
- * The byline a comment is drawn with. Your own comment, just posted, has no
- * author from the library API (only its reads attach one), and it is
- * obviously you; anybody else's without one is drawn from the id alone.
+ * The byline a comment is drawn with. Your own fresh comment has no author from the library API (only reads
+ * attach one) and is obviously you; anyone else's without one is drawn from the id.
  */
 export function authorOf(c: Pick<ThreadComment, 'author' | 'authorId'>, me: Me | null): CommentAuthor {
   if (c.author) return c.author;
@@ -83,11 +72,7 @@ export function updateComment<C extends ThreadComment>(state: ThreadState<C>, id
   return mapLists(state, (list) => (list.some((c) => c.id === id) ? list.map((c) => (c.id === id ? fn(c) : c)) : list));
 }
 
-/**
- * A comment arrives: a new one at the top of the thread, a reply at the end of
- * its branch — which opens, so the reply is seen where it went — with one
- * more on its parent's count.
- */
+/** Add a comment: a new one at the top, a reply at the end of its branch (which opens), adding one to its parent's count. */
 export function addToThread<C extends ThreadComment>(state: ThreadState<C>, c: C): ThreadState<C> {
   const parent = c.parentCommentId;
   if (!parent) return { ...state, top: [c, ...(state.top ?? [])] };
@@ -105,18 +90,14 @@ export function withdrawFromThread<C extends ThreadComment>(state: ThreadState<C
 /** Where a removed comment stood, so a refused delete can put it back exactly there. */
 export interface Removal<C extends ThreadComment = ThreadComment> {
   comment: C;
-  /** 'top', or the id of the branch it was in */
+  /** 'top', or the id of the branch it was in. */
   list: string;
   index: number;
-  /** it had replies, so it stayed as a placeholder holding them up */
+  /** It had replies, so it stayed as a placeholder holding them up. */
   tombstoned: boolean;
 }
 
-/**
- * Take a comment off the thread. One with replies stays as the server keeps
- * it — "This comment was removed." with its branch under it — so the replies
- * do not vanish along with it; one without simply goes.
- */
+/** Remove a comment. One with replies stays as the server keeps it ("This comment was removed.") so its replies remain. */
 export function removeFromThread<C extends ThreadComment>(
   state: ThreadState<C>,
   id: string,
@@ -135,7 +116,7 @@ export function removeFromThread<C extends ThreadComment>(
   return { state, removal: null };
 }
 
-/** A delete the server refused: the comment back as it was, where it was. */
+/** A delete the server refused: put the comment back where it was. */
 export function restoreToThread<C extends ThreadComment>(state: ThreadState<C>, removal: Removal<C>): ThreadState<C> {
   const { comment, list, index, tombstoned } = removal;
   if (tombstoned) return updateComment(state, comment.id, () => comment);
@@ -149,11 +130,7 @@ export function restoreToThread<C extends ThreadComment>(state: ThreadState<C>, 
   return { ...state, replies: { ...state.replies, [list]: insert(state.replies[list]!) } };
 }
 
-/**
- * A branch as the server sent it, keeping whatever was written here that the
- * server's page does not have yet — a reply sent while the branch was still
- * loading must not disappear when the load lands.
- */
+/** A branch as the server sent it, keeping local additions the server's page lacks, such as a reply sent while it loaded. */
 export function mergeBranch<C extends ThreadComment>(server: C[], local: C[] | undefined): C[] {
   const seen = new Set(server.map((c) => c.id));
   return [...server, ...(local ?? []).filter((c) => !seen.has(c.id))];

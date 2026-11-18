@@ -25,7 +25,7 @@ import { APP_VERSION, appPlatform } from './appInfo';
 import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 
-/** The violet wash an option that is on wears, as the tab bar and the segmented control mark where you are. */
+/** The violet wash for a selected option, as the tab bar and segmented control use. */
 const CHOSEN_WASH = '1F';
 
 const CATEGORY_LABEL: Record<AppFeedbackCategory, TranslationKey> = {
@@ -47,27 +47,22 @@ const STAR_LABEL: Record<number, TranslationKey> = {
 };
 
 /**
- * "How are you enjoying Hevalo?" — Hevalo the deer holds up a board of five
- * stars.
+ * "How are you enjoying Hevalo?": the deer holds up a board of five stars.
  *
- * After a first finished game (source `first_game`) it asks for the stars
- * first, then: under three, "what could be better?" with a few chips and a
- * box; three and up, a thank-you and an optional "what do you love?". From
- * Settings (source `settings`) it is the same form with everything at once
- * and the stars optional — somebody who opened it has something to say.
+ * After a first finished game (source `first_game`) it asks for stars first: under three, "what could be better?"
+ * with chips and a box; three and up, a thank-you and an optional "what do you love?". From Settings (source
+ * `settings`) it shows the whole form at once with stars optional.
  *
- * Every answer goes to the admin's feedback inbox and ends with a thank-you
- * from a deer that is happy whatever the stars were. Nothing here links to a
- * store: sending only the happy ones on to rate the app is review gating,
- * which Apple, Google and the FTC all forbid (shared/src/feedback.ts). "Not
- * now" closes it, and counts as shown.
+ * Every answer goes to the admin feedback inbox and ends in a thank-you from a happy deer. Nothing here links to
+ * a store: sending only happy users to rate the app is review gating, which store and consumer rules forbid
+ * (shared/src/feedback.ts). "Not now" closes it and counts as shown.
  */
 export function RatingBox({
   source,
   onClose,
 }: {
   source: AppFeedbackSource;
-  /** `answered`: something was sent; `dismissed`: "Not now" */
+  /** `answered`: something was sent; `dismissed`: "Not now". */
   onClose: (how: 'answered' | 'dismissed') => void;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -83,8 +78,7 @@ export function RatingBox({
   const settings = source === 'settings';
   const followUp = stars > 0 ? feedbackFollowUp(stars) : null;
 
-  // a screen reader hears the question when the box appears (it did not open
-  // it), and the thank-you when it has been sent
+  // Screen readers hear the question when the box appears (the user did not open it) and the thank-you once sent.
   useEffect(() => {
     if (source === 'first_game' || sent) {
       AccessibilityInfo.announceForAccessibility?.(sent ? t('appFeedback.thanksRead') : t('appFeedback.question'));
@@ -103,7 +97,7 @@ export function RatingBox({
     setError(null);
     const res = await sendFeedback(client, {
       ...(stars > 0 ? { stars } : {}),
-      // the chips belong to "what could be better?", so a happy answer sends none
+      // The chips belong to "what could be better?", so a happy answer sends none.
       ...(categories.length > 0 && (settings || followUp === 'improve') ? { categories } : {}),
       ...(trimmed ? { comment: trimmed } : {}),
       source,
@@ -117,9 +111,8 @@ export function RatingBox({
   };
 
   const notNow = () => {
-    // Counts as shown on every device; if this fails the box may ask again,
-    // which is harmless. Stars already tapped are an answer, and every answer
-    // reaches the admin — so they are sent rather than thrown away.
+    // Counts as shown on every device; if this fails the box may ask again, which is harmless. Stars already
+    // tapped are an answer, and every answer reaches the admin, so they are sent.
     if (!settings) {
       if (stars > 0) {
         void sendFeedback(client, { stars, source, platform: appPlatform(Platform.OS), appVersion: APP_VERSION, locale });
@@ -128,9 +121,8 @@ export function RatingBox({
     onClose('dismissed');
   };
 
-  // Android's back button is "Not now" for the box over a game's results, not
-  // a step back underneath it. From Settings it sits in a sheet that handles
-  // back itself.
+  // Over a game's results, Android's back means "Not now", not a step back underneath. From Settings it sits in a
+  // sheet that handles back itself.
   const notNowRef = useRef(notNow);
   notNowRef.current = notNow;
   const thanksRef = useRef<() => void>(() => onClose('answered'));
@@ -148,8 +140,7 @@ export function RatingBox({
   if (sent) {
     return (
       <View style={styles.box}>
-        {/* the stars they gave, never more: a thank-you does not change the answer (the smile is never sad);
-            words without stars get a heart */}
+        {/* The stars they gave, never more (the smile is never sad); text without stars gets a heart. */}
         <HevaloDeer size={settings ? 120 : 96} board={stars > 0 ? { kind: 'stars', stars } : { kind: 'letters', letters: '♥' }} />
         <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header" accessibilityLiveRegion="polite">
           {t('appFeedback.thanksRead')}
@@ -170,9 +161,8 @@ export function RatingBox({
           <Text style={[styles.lead, { color: colors.textSecondary }]}>{t('appFeedback.question')}</Text>
         </>
       ) : (
-        // Over a game's results it starts small — the deer beside the
-        // question, the stars, "Not now" — so the results and their buttons
-        // stay in sight above it; it grows only once a star is tapped.
+        // Over a game's results it starts small (deer, question, stars, "Not now") so the results stay in sight,
+        // and grows only once a star is tapped.
         <View style={[styles.head, { flexDirection: dir.row }]}>
           <HevaloDeer size={72} board={{ kind: 'stars', stars }} />
           <Text style={[styles.title, styles.headTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
@@ -181,10 +171,7 @@ export function RatingBox({
         </View>
       )}
 
-      {/*
-        The stars fill from the side the language starts from, and the ones
-        chosen are violet, as a choice is: gold is kept for what is earned.
-      */}
+      {/* The stars fill from the reading-start side, and chosen ones are violet like any choice; gold is kept for what is earned. */}
       <View style={[styles.stars, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={t('appFeedback.question')}>
         {[1, 2, 3, 4, 5].map((n) => {
           const on = n <= stars;
@@ -218,7 +205,7 @@ export function RatingBox({
       ) : null}
 
       {settings || followUp === 'improve' ? (
-        // what it is about, as many as apply: one that is on is a wash of violet with violet words
+        // What it is about, as many as apply: one that is on is a wash of violet with violet words.
         <View style={[styles.chips, { flexDirection: dir.row }]}>
           {APP_FEEDBACK_CATEGORIES.map((c) => {
             const on = categories.includes(c);
@@ -239,8 +226,7 @@ export function RatingBox({
         </View>
       ) : null}
 
-      {/* a field says what it is for in words that stay, not only in a placeholder that goes —
-          unless the line just above already asks it (the under-3 thank-you does) */}
+      {/* A field is labelled in persistent text, not only a placeholder, unless the line just above already asks it (the under-3 thank-you does). */}
       {settings || followUp === 'love' ? (
         <Text style={[styles.fieldLabel, dir.text, { color: colors.textSecondary }]}>
           {t(followUp === 'love' && !settings ? 'appFeedback.loveLabel' : 'appFeedback.improveLabel')}
@@ -255,7 +241,7 @@ export function RatingBox({
           placeholder={t('appFeedback.improvePlaceholder')}
           placeholderTextColor={colors.textSecondary}
           accessibilityLabel={t(followUp === 'love' && !settings ? 'appFeedback.loveLabel' : 'appFeedback.improveLabel')}
-          // right to left, what is typed starts at the right
+          // Right to left, what is typed starts at the right.
           style={[styles.input, dir.row === 'row-reverse' && styles.inputMirrored, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
         />
       ) : null}

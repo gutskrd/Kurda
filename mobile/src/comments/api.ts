@@ -5,11 +5,9 @@ import * as images from '../memes/api';
 import type { CommentSurface, ThreadComment } from './thread';
 
 /**
- * A thread's calls, whichever surface it is on. The two APIs are the same
- * shape at different paths, so the difference is this table rather than a
- * second copy of the thread to keep in step (the website does the same).
- * Posting is not here: a library comment can carry a voice note, which the
- * post's own page uploads first, so each page sends its own.
+ * A thread's API paths for each surface. The two APIs have the same shape at different paths, so this table
+ * replaces a second copy of the thread (the web app does the same). Posting is not here: a library comment can
+ * carry a voice note, which its page uploads first.
  */
 export interface ThreadCalls {
   list: (client: ApiClient, postId: string) => Promise<ApiResult<{ comments: ThreadComment[] }>>;

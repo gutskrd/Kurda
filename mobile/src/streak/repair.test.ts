@@ -3,7 +3,7 @@ import { gemsShort, repairLastDay, repairRefusal } from './repair';
 
 describe('restoring a streak, as the sheet reads it', () => {
   it('names the last day by a moment inside it, not the instant after it', () => {
-    // the offer ends as the 12th begins: the last day is the 11th
+    // The offer ends as the 12th begins: the last day is the 11th.
     expect(repairLastDay({ until: '2026-11-12T00:00:00.000Z' })!.toISOString()).toBe('2026-11-11T23:59:00.000Z');
     expect(repairLastDay({ until: 'not a date' })).toBeNull();
   });
@@ -13,7 +13,7 @@ describe('restoring a streak, as the sheet reads it', () => {
     expect(gemsShort(paid, 49)).toBe(true);
     expect(gemsShort(paid, 0)).toBe(true);
     expect(gemsShort(paid, 50)).toBe(false);
-    // not read yet: the button stays live and the server answers
+    // Not read yet: the button stays live and the server answers.
     expect(gemsShort(paid, null)).toBe(false);
   });
 

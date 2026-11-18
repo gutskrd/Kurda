@@ -1,17 +1,11 @@
 import { WIDGET_IMAGE, WIDGET_SKIES, type WidgetFeed, type WidgetLetter, type WidgetSky } from '@kurda/shared';
 
 /**
- * What the app and its home-screen letter widget agree on.
- *
- * The widget is two small programs the app never runs itself: a WidgetKit
- * extension on iPhone (mobile/targets/letter-widget, Swift) and an Android
- * app widget drawn by this app's own code in the background
- * (src/widget/android). Both read the same three things the app leaves for
- * them — the widget's own token, the server it belongs to and the language
- * the app is in — under the names below, and both ask the server the same
- * two questions: the feed, and the picture of the letter's paper. The Swift
- * side repeats these names and rules by hand, so widget.test.ts reads the
- * Swift files and holds the two to each other.
+ * What the app and its home-screen letter widget agree on. The widget is two programs the app never runs itself:
+ * a WidgetKit extension on iPhone (mobile/targets/letter-widget, Swift) and an Android widget drawn by this app's
+ * code in the background (src/widget/android). Both read the widget token, server address and app language under
+ * the names below, and ask the server for the feed and the paper's picture. The Swift side repeats these names
+ * and rules by hand, so widget.test.ts reads the Swift files and checks them against these.
  */
 
 /** The App Group the app and its iPhone widget share: the one place both can read and write. */
@@ -25,7 +19,7 @@ export const WIDGET_KEYS = {
   token: 'letterWidget.token',
   apiBase: 'letterWidget.apiBase',
   locale: 'letterWidget.locale',
-  /** set by the widget when the server refused its token, so the app makes a new one next time it is open */
+  /** Set by the widget when the server refused its token, so the app makes a new one next time it opens. */
   rejected: 'letterWidget.rejected',
 } as const;
 
@@ -40,7 +34,7 @@ export interface WidgetConfig {
 export const WIDGET_FEED_PATH = '/letters/widget/feed';
 /** The picture of the letter's paper and drawing, or of the empty windowsill. */
 export const WIDGET_IMAGE_PATH = '/letters/widget/image';
-/** Making this phone's widget token (the account's session), and taking it away again (the token itself). */
+/** Create this device's widget token (with the account's session), and revoke it again (with the token itself). */
 export const WIDGET_TOKENS_PATH = '/letters/widget/tokens';
 export const WIDGET_TOKEN_CURRENT_PATH = '/letters/widget/tokens/current';
 /** What the account chooses for its widgets. */
@@ -52,10 +46,8 @@ export function widgetAuthorization(token: string): string {
 }
 
 /**
- * Never ask again sooner than this, whatever a feed says, and never wait
- * longer than this either: a widget that asked every minute would use up its
- * hour's allowance by lunchtime, and one that waited a day would show
- * yesterday's letter all day.
+ * Bounds on any refresh interval a feed asks for: asking every minute would exhaust the hourly budget, and
+ * waiting a day would show yesterday's letter.
  */
 export const REFRESH_MIN_SECONDS = 5 * 60;
 export const REFRESH_MAX_SECONDS = 12 * 60 * 60;
@@ -77,7 +69,7 @@ export const LETTERS_LINK = 'hevalo://app/letters';
 /** The app itself, for a widget that is signed out. */
 export const APP_LINK = 'hevalo://';
 
-/** The sky the empty windowsill shows at an hour of the phone's own clock, as the letters' window does (shared treeSkyAt). */
+/** The sky the empty windowsill shows at an hour of the phone's clock, as the letters' window does (shared treeSkyAt). */
 export function widgetSkyAt(hour: number): WidgetSky {
   if (hour >= 5 && hour < 8) return 'dawn';
   if (hour >= 8 && hour < 17) return 'day';
@@ -85,7 +77,7 @@ export function widgetSkyAt(hour: number): WidgetSky {
   return 'night';
 }
 
-/** The next hour of the clock at which the sky changes: an empty widget asks again then, so its window keeps time. */
+/** The next hour at which the sky changes; an empty widget refreshes then so its window keeps time. */
 export function nextSkyChange(now: Date): Date {
   const turns = [5, 8, 17, 20];
   const at = new Date(now);
@@ -101,9 +93,8 @@ export function nextSkyChange(now: Date): Date {
 }
 
 /**
- * The picture's size as the server takes it: whole points, each side within
- * its bounds, and a density no higher than keeps the longer side inside the
- * pixels it will draw.
+ * The picture size as the server accepts it: whole points, each side within bounds, and a density low enough to
+ * keep the longer side within the pixel limit.
  */
 export function widgetImageSize(width: number, height: number, scale: number): { w: number; h: number; scale: number } {
   const side = (v: number): number => Math.min(WIDGET_IMAGE.maxSide, Math.max(WIDGET_IMAGE.minSide, Math.round(v)));
@@ -113,12 +104,12 @@ export function widgetImageSize(width: number, height: number, scale: number): {
   return { w, h, scale: Math.max(1, Math.floor(s * 100) / 100) };
 }
 
-/** The picture's address for a widget of this size (in points) at this density, with the sky of the phone's hour for an empty sill. */
+/** The picture's URL for a widget of this size (in points) and density, with the phone's current sky for an empty sill. */
 export function widgetImageUrl(apiBase: string, size: { w: number; h: number; scale: number }, sky: WidgetSky): string {
   return `${apiBase}${WIDGET_IMAGE_PATH}?w=${size.w}&h=${size.h}&scale=${size.scale}&sky=${sky}`;
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+export const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function isWidgetLetter(v: unknown): v is WidgetLetter {
   if (!isRecord(v) || !isRecord(v.from) || !isRecord(v.paper)) return false;
@@ -132,7 +123,7 @@ function isWidgetLetter(v: unknown): v is WidgetLetter {
   );
 }
 
-/** Whether an answer is a feed the widget can show: anything else is treated as the server not answering. */
+/** Whether an answer is a feed the widget can show; anything else counts as the server not answering. */
 export function isWidgetFeed(v: unknown): v is WidgetFeed {
   if (!isRecord(v)) return false;
   return (v.letter === null || isWidgetLetter(v.letter)) && typeof v.pinned === 'boolean' && typeof v.showWords === 'boolean' && typeof v.refreshAfter === 'number';

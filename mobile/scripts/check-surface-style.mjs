@@ -1,52 +1,19 @@
 /**
  * No frames, no frost, one radius scale.
  *
- * Two kinds of drift that nothing was watching for, both measured before this
- * was written:
- *
- *   Eighty-nine bordered surfaces existed in fifteen different shapes. Of the
- *   ones whose edge is only ever `colors.glassBorder` — a passive edge, there
- *   to separate a surface from the gradient behind it rather than to be seen —
- *   thirty-nine drew a hairline, twenty drew 1pt and three drew 2pt. On a 3×
- *   screen a hairline is one physical pixel and 1pt is three, so a feed card's
- *   edge was three times the weight of a settings row's, and an answer field's
- *   was six times, in the same app and often on the same screen.
- *
- *   That first version of this rule picked one weight and stopped there,
- *   which was answering the wrong question. Seventy-four of those edges sat
- *   round a surface that already had a fill, where the line says nothing the
- *   fill has not said and reads as a box drawn on glass. They are gone, and
- *   the rule is now that they stay gone: an edge that is always the same grey
- *   is a frame. An edge that changes — selected, wrong, live, gold — is a
- *   state, and a state is allowed to be seen.
- *
- *   And eight corners were written as numbers beside a radius scale that
- *   mirrors the website's `--r-*` tokens to the pixel: two sheets at 20 where
- *   the scale says 18, a row at 14 where it says 12, four that were already
- *   exactly a token but spelled as digits, and circles that said `20` on a 40pt
- *   box and `60` on a 120pt one — the same idea written twice, and wrong the
- *   moment either size changes.
- *
- * And nine dividers were drawn in the colour of an edge. The palette has both
- * and says which is which: `glassBorder` is "hairline edge — kept subtle" and
- * `separator` is "faint divider between rows inside a surface". In dark mode
- * they are rgba(255,255,255,0.14) and rgba(255,255,255,0.08), so the edge is
- * 1.75× the divider — and a chat screen had one of each, the nav bar line in
- * one grey and the composer line above the keyboard in the other.
- *
- * And nine text fields were 39pt tall: a hairline edge, `radii.md`, and 8pt of
- * padding around 16pt text. That is under the 44 a fingertip needs, and a miss
- * on a text field is worse than a miss on a button — it dismisses the keyboard
- * or focuses the one above.
- *
- * So: a surface has no passive edge and nothing blurred behind it, a corner
- * is a token, a border on one side only is a divider and takes
- * `colors.separator`, a colour has a width to draw it, and a style a
- * `TextInput` wears declares a minHeight.
- *
- * An edge that carries a colour is not passive and is not checked — the brand
- * on a selected option, danger on a live recording, the gold rim on a badge are
- * all meant to be seen at whatever weight they were given.
+ * - A surface has no passive edge: a border that is always `colors.glassBorder` around a surface with a fill says
+ *   nothing the fill does not and reads as a box drawn on glass. An edge that changes (selected, wrong, live, gold) is
+ *   a state and is allowed. An edge carrying another colour is not passive and is not checked.
+ * - Nothing is blurred behind a surface.
+ * - A corner is a radius token (the scale mirrors the web's `--r-*` tokens to the pixel), unless it is a listed
+ *   geometric consequence.
+ * - A border on one side only is a divider and takes `colors.separator`, not the edge colour: the palette has
+ *   both, and
+ *   in dark mode the edge is 1.75× the divider.
+ * - A colour has a width to draw it.
+ * - A style a `TextInput` wears declares a minHeight, since a 39 pt field is under the 44 a fingertip needs and a
+ *   missed
+ *   field dismisses the keyboard or focuses the one above.
  *
  * Runs inside `npm run lint --workspace @kurda/mobile`.
  */
@@ -56,20 +23,16 @@ import { join, dirname, relative, sep } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Apple HIG / WCAG, the same number `src/a11y/a11y.ts` exports — this file is
- * .mjs and cannot import a .ts module, so it is written once more here. */
+/** Apple HIG and WCAG minimum, the number `src/a11y/a11y.ts` exports, repeated because this .mjs file cannot import a .ts module. */
 const MIN_TOUCH_TARGET = 44;
 const SRC = join(ROOT, 'src');
 
 /**
- * Corners that are a measurement rather than a choice.
- *
- * Each has to say why. A number here is a geometric consequence — half of a
- * known size, a scale's own definition — not a decision somebody made about
- * how round a card should look.
+ * Corners that are measurements rather than choices: each says why, as a geometric consequence (half a known
+ * size, a scale's own definition).
  */
 const ALLOWED_RAW_RADII = new Set([
-  // the scale itself, where the numbers are the definition
+  // The scale itself, where the numbers are the definition.
   'theme/tokens.ts',
 ]);
 
@@ -116,7 +79,7 @@ for (const file of sources(SRC)) {
   const src = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
   const where = rel(file);
 
-  // a corner written as a number, anywhere in the file
+  // A corner written as a number, anywhere in the file.
   if (!ALLOWED_RAW_RADII.has(where)) {
     src.split('\n').forEach((line, i) => {
       const m = /borderRadius:\s*(\d+)/.exec(line);
@@ -124,23 +87,23 @@ for (const file of sources(SRC)) {
     });
   }
 
-  // the frost, which is the one thing here that is a single import away
+  // The frost, which is the one thing here that is a single import away.
   if (/from '(expo-blur|@react-native-community\/blur)'/.test(src)) {
     problems.push(`${where}  a backdrop blur — surfaces are clear now; the edge is LensRim, not frost`);
   }
 
-  // a frame round a shape that already has one
+  // A frame round a shape that already has one.
   const body = src.split('const styles = StyleSheet.create(')[0];
   for (const s of styleObjects(src)) {
     const width = /borderWidth:\s*([^,}]+)/.exec(s.body)?.[1]?.trim();
     if (!width) continue;
-    // a colour fixed in the style object is the author naming the edge; leave it
+    // A colour fixed in the style object is the author naming the edge; leave it.
     if (/borderColor:/.test(s.body)) continue;
 
     const uses = [...body.matchAll(new RegExp(`styles\\.${s.key}\\b`, 'g'))];
     if (uses.length === 0) continue;
 
-    // what every call site paints this edge
+    // What every call site paints this edge.
     const colours = new Set();
     for (const u of uses) {
       const near = body.slice(u.index, u.index + 400);
@@ -154,11 +117,9 @@ for (const file of sources(SRC)) {
   }
 
   /*
-   * A field you type into is a field you have to hit.
-   *
-   * Every style named in a `<TextInput>`'s own `style` prop has to say how
-   * tall it is at least. A multi-line field declares a bigger one of its own,
-   * which is why the rule asks for a minHeight rather than for the number.
+   * A field you type into is a field you have to hit: every style in a `<TextInput>`'s own `style` prop must
+   * state a minimum height. A multi-line field declares a bigger one, so the rule asks for a minHeight rather
+   * than a number.
    */
   for (const m of src.matchAll(/<TextInput[\s\S]{0,600}?\/>/g)) {
     const tag = m[0];
@@ -174,16 +135,9 @@ for (const file of sources(SRC)) {
   }
 
   /*
-   * A colour with nothing to draw it.
-   *
-   * Width and colour live in two places in this app — the width in the
-   * StyleSheet, the colour at the call site — so removing one leaves the
-   * other looking complete. Taking the frames out cost two states this way
-   * before anyone noticed: the goal picker's selected ring and the gold rim
-   * on a gift you have not opened, both reduced to a colour with no border.
-   *
-   * Nothing shows and nothing warns, so the question has to be asked of every
-   * style array that names a colour: does anything in it have a width?
+   * A colour with nothing to draw it. Width lives in the StyleSheet and colour at the call site, so removing one
+   * leaves the other looking complete, and nothing shows or warns. So every style array naming a colour is asked
+   * whether anything in it has a width.
    */
   for (const m of src.matchAll(/style=\{(\(\{[^}]*\}\) =>\s*)?\[/g)) {
     const open = src.indexOf('[', m.index);
@@ -209,7 +163,7 @@ for (const file of sources(SRC)) {
     );
   }
 
-  // a line on one side only is a divider, and takes the divider colour
+  // A line on one side only is a divider, and takes the divider colour.
   src.split('\n').forEach((line, i) => {
     const m = /border(Top|Bottom|Left|Right)Color:\s*colors\.glassBorder/.exec(line);
     if (m) {

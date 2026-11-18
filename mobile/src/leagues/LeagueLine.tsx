@@ -20,10 +20,8 @@ import { knownTier, leagueLabel, leagueName } from './format';
 import { useDirection } from '../reports/direction';
 
 /**
- * The week in one line on the home of learning (contract 4 §U): the league
- * and your place in it, or your own week when you are out of the leagues, and
- * the weekly goal as a small ring — a check in it once you are safe. One tap
- * opens the league. Nothing here counts down.
+ * The week in one line on Learn: the league and your place, or your own week when out of the leagues, and the
+ * weekly goal as a small ring with a check once safe. One tap opens the league. Nothing counts down.
  */
 export function LeagueLine(): React.JSX.Element | null {
   const { client, isGuest } = useAuth();
@@ -32,12 +30,12 @@ export function LeagueLine(): React.JSX.Element | null {
   const { t, locale } = useI18n();
   const dir = useDirection();
   const [league, setLeague] = useState<LeagueView | null>(null);
-  // until the first answer, the row's place is held in grey; after a failed one it is given up
+  // Until the first answer, the row's place is held in grey; after a failed one it is given up.
   const [settled, setSettled] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      // a guest is in no league, and the server refuses the question: the line stays away
+      // A guest is in no league, and the server refuses the question: the line stays away.
       if (isGuest) {
         setSettled(true);
         return;

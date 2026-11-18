@@ -43,7 +43,7 @@ describe('progressPct', () => {
 
 describe('questTitle', () => {
   it('prefers titleEn, falls back per type', () => {
-    // the server's own title passes through untranslated; ours does not
+    // The server's own title passes through untranslated; ours does not.
     expect(questTitle(q({ titleEn: 'Welcome spring' }), t)).toBe('Welcome spring');
     expect(questTitle(q({ type: 'win_games', titleEn: undefined }), t)).toBe(TRANSLATIONS.en['events.quest.winGames']);
     expect(questTitle(q({ type: 'win_games', titleEn: undefined }), tr('ku'))).toBe(

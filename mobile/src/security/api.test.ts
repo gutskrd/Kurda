@@ -62,7 +62,7 @@ describe('the picture beside a device', () => {
     expect(deviceIcon('iPad')).toBe('device-tablet');
     expect(deviceIcon('Android tablet (Samsung SM-X710)')).toBe('device-tablet');
     expect(deviceIcon('Firefox on Windows')).toBe('device-computer');
-    // what the server calls an older build of this app, which sent no name
+    // What the server calls an older build of this app, which sent no name.
     expect(deviceIcon('Hevalo app on iOS')).toBe('device-phone');
     expect(deviceIcon('Hevalo app on Android')).toBe('device-phone');
     expect(deviceIcon('Admin console · Chrome on Mac')).toBe('device-computer');
@@ -90,7 +90,7 @@ describe('after signing the others out', () => {
   it('says how many', () => {
     expect(sessionsEnded(1, t)).toBe('Signed out of 1 other device.');
     expect(sessionsEnded(3, t)).toBe('Signed out of 3 other devices.');
-    // they had gone already by the time it landed
+    // They had gone already by the time it landed.
     expect(sessionsEnded(0, t)).toBe('You’re not signed in anywhere else.');
   });
 });

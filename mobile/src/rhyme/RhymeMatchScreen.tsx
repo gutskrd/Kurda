@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
-import { ClayButton, ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, ErrorRetry, GlassCard, Segmented } from '../theme/glass';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useGameBack } from '../navigation/hardwareBack';
 import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
@@ -45,6 +44,7 @@ import { GameArt } from '../games/GameArt';
 import { useDirection } from '../reports/direction';
 import { useCourseDialect } from '../learn/courseDialect';
 import { MissedRhymes, wordDirection } from '../wordle/WordAnswer';
+import { Shell } from '../wordle/WordleBattleScreen';
 import { isRhymeOffered, offeredRhymeDialects, openingRhymeDialect, useRhymeOffered } from './availability';
 import { dialectNameKey } from '../i18n/dialectName';
 
@@ -54,7 +54,7 @@ const REJECT_KEY: Record<RhymeReject, TranslationKey> = {
   'already-used': 'games.rhyme.reject.alreadyUsed',
   'no-rhyme': 'games.rhyme.reject.noRhyme',
   profane: 'games.rhyme.reject.profane',
-  // an ending doing all the rhyming (malan for baran) has no sentence of its own yet: the general one says it fairly
+  // An ending doing all the rhyming (malan for baran) has no sentence of its own yet; the general one is fair.
   inflected: 'games.rhyme.reject.other',
   'window-closed': 'games.rhymeMatch.timeUpMatch',
 };
@@ -64,40 +64,29 @@ const REJECT_KEY: Record<RhymeReject, TranslationKey> = {
 const TICK_MS = 200;
 
 /**
- * Rhyme Match (KUR-299) on the phone: out-rhyme a friend against the clock.
+ * Rhyme Match: out-rhyme a friend against the clock. Built like Peyvok Battle on the poll-safe REST endpoints, so
+ * a realtime scoreboard can be layered on later without changing this screen.
  *
- * Built like Peyvok Battle, for the reason the API gives — its REST endpoints
- * are poll-safe and the realtime scoreboard "layers onto these endpoints" — so
- * the socket can arrive later without this screen changing.
+ * Without `id` the screen creates a room or joins one by code; with one it is that room, so a code, an invite or
+ * an old invite link opens straight into a match. Backing out of the lobby leaves it after asking (play/backOut),
+ * the host can remove a player by seat, and Android's back during a round asks before leaving.
  *
- * `id` is optional: without one the screen creates a room (or joins one by its
- * code), with one it is that room. That is what lets a code, an invite or an
- * old invite link open straight into a match.
- *
- * Going back from the lobby leaves it (play/backOut), asked first; the host
- * can take a player out by seat; and Android's back while the clock runs asks
- * before it leaves the round.
- *
- * A match is made in the learner's own variety when matches are offered in it
- * (availability.ts); one without enough prompts yet is left out of the choice,
- * where it used to fail with "no words" once Create was pressed. The
- * prompt and the rhymes are written in the match's own direction, and the
- * results end with the rhymes nobody at the table found, with their meanings.
+ * Matches are made in the learner's own variety when offered there (availability.ts); a variety without enough
+ * prompts is left out of the choice. The prompt and rhymes are written in the match's direction, and the results
+ * end with the rhymes nobody found, with their meanings.
  */
 export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const [id, setId] = useState<string | null>(initialId ?? null);
   /*
-   * Another match opened while this screen is up — an invite's Join, a game
-   * card, "Invite someone else" — arrives as new params on this same screen
-   * (navigating to the screen you are on updates it rather than pushing a
-   * second one), so the room follows them.
+   * Another match opened while this screen is up (an invite's Join, a game card, "Invite someone else") arrives
+   * as new params on this screen, so the room follows them.
    */
   useEffect(() => {
     if (initialId) setId(initialId);
   }, [initialId]);
-  // a game's results are left when another game opens here, or the screen closes:
-  // a rating box that came with them goes too (feedback/gameFinished)
+  // A game's results are left when another game opens here or the screen closes, and their rating box goes with
+  // them (feedback/gameFinished).
   useEffect(() => () => leftResults(), [id]);
 
   return (
@@ -115,9 +104,9 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
   const dir = useDirection();
   const offered = useRhymeOffered();
   const course = useCourseDialect();
-  // the learner's own variety where matches are offered in it, until the host picks one
+  // The learner's own variety where matches are offered in it, until the host picks one.
   const [picked, setPicked] = useState<Dialect | null>(null);
-  // a pick made before the server answered that it turns out not to offer falls back to the opening one
+  // A variety picked before the server answered that turns out not to be offered falls back to the opening one.
   const dialect = picked && isRhymeOffered(offered, picked) ? picked : openingRhymeDialect(offered, course, locale);
   const canCreate = isRhymeOffered(offered, dialect);
   const choices = offeredRhymeDialects(offered);
@@ -138,7 +127,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
     <>
       <GlassCard>
         <View style={styles.card}>
-          {/* the game's own cover, as its stamp and the round alone show it: a chat bubble in the brand's violet said nothing of rhymes */}
+          {/* The game's own cover, as its stamp and the solo round show it. */}
           <GameArt game="rhyme" size={72} />
           <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.rhymeMatch.intro')}</Text>
           {choices.length > 1 ? (
@@ -159,15 +148,15 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
               </View>
             </>
           ) : null}
-          {/* Rated or Friendly, before the room exists: the host can still change it in the lobby */}
+          {/* Rated or Friendly, before the room exists: the host can still change it in the lobby. */}
           <View style={styles.stretch}>
             <RatedChoice value={rated} onChange={setRated} />
           </View>
-          {/* a variety with no matches yet says so where Create would be: nothing to press that cannot work */}
+          {/* A variety with no matches yet says so where Create would be. */}
           {canCreate ? (
             <ClayButton
               label={t('games.rhymeMatch.create')}
-              // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
+              // Working: the button spins and ignores a second press, and screen readers are told what it is doing.
               accessibilityLabel={busy ? t('games.creating') : undefined}
               busy={busy}
               icon="play"
@@ -184,7 +173,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
         </View>
       </GlassCard>
 
-      {/* a match somebody else made: its code opens it, whichever game it turns out to be */}
+      {/* A match somebody else made: its code opens it, whichever game it turns out to be. */}
       <JoinCodeCard />
     </>
   );
@@ -198,10 +187,10 @@ function MatchRoom({
   onExit,
 }: {
   id: string;
-  /** to a new match, in this screen */
+  /** To a new match, in this screen. */
   onLeave: () => void;
   onOpen: (id: string) => void;
-  /** the screen's own back */
+  /** The screen's own back. */
   onExit: () => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -217,9 +206,9 @@ function MatchRoom({
   const [remaining, setRemaining] = useState(0);
   const [found, setFound] = useState<Array<{ word: string; quality: RhymeQuality; points: number }>>([]);
   const loadedOnce = useRef(false);
-  // results: "Invite someone else" opens the invite sheet for this game
+  // Results: "Invite someone else" opens the invite sheet for this game.
   const [inviting, setInviting] = useState(false);
-  // the server has no match here for this viewer any more: never one, not theirs, or the host took them out
+  // The server has no match here for this viewer: never one, not theirs, or the host removed them.
   const [gone, setGone] = useState(false);
 
   const load = useCallback(async () => {
@@ -231,23 +220,22 @@ function MatchRoom({
     } else if (res.error.status === 404) {
       setGone(true);
     } else if (!loadedOnce.current) {
-      // a later poll failing is a blip; the first one failing is the whole screen
+      // A later poll failing is a blip; the first one failing is the whole screen.
       setError(res.error.code === 'GAME_STARTED' ? t('stories.join.started') : describeError(res.error, t));
     }
   }, [client, id, t]);
 
   /*
-   * Every scored word, join and start is pushed as `play_changed`, and the
-   * screen asks then — with a slow poll underneath in case one was missed. It
-   * used to ask every 1.5 s from the moment the lobby opened.
+   * Every scored word, join and start is pushed as `play_changed` and the screen refetches then, with a slow poll
+   * underneath in case one is missed.
    */
   useEffect(() => {
     void load();
   }, [load]);
   useLobbyRefresh('rhyme-match', id, () => void load(), !gone && match?.status !== 'finished' && match?.status !== 'cancelled');
 
-  // the results are asked for once the match is over, when nothing polls any more: one that does not come is said,
-  // with a way to ask again, rather than left as a spinner
+  // Results are fetched once the match is over and nothing polls; a failed fetch is shown with a retry, not an
+  // endless spinner.
   const [resultsFailed, setResultsFailed] = useState(false);
   const [resultsAsk, setResultsAsk] = useState(0);
   useEffect(() => {
@@ -259,8 +247,7 @@ function MatchRoom({
     });
   }, [match?.status, results, client, id, resultsAsk]);
 
-  // A match played here to its end is a finished game for the rating box; one
-  // opened already finished, from an old link, is not.
+  // A match played to its end here counts as a finished game for the rating box; one opened already finished does not.
   const played = useRef(false);
   useEffect(() => {
     if (match?.status === 'active' && match.me) played.current = true;
@@ -272,11 +259,7 @@ function MatchRoom({
     if (mine) reportGameFinished({ moment: mine.rank === 1 ? 'won' : 'other' });
   }, [results, user?.id]);
 
-  /*
-   * The clock runs locally between polls and is resynced by every one of them.
-   * A timer that only moved when the server answered would stutter in whole
-   * seconds; a timer that only ran locally would drift away from the truth.
-   */
+  /* The clock runs locally between polls and resyncs on each, so it neither stutters in whole seconds nor drifts. */
   useEffect(() => {
     if (match?.status !== 'active' || remaining <= 0) return;
     const timer = setTimeout(() => setRemaining((ms) => Math.max(0, ms - TICK_MS)), TICK_MS);
@@ -284,10 +267,10 @@ function MatchRoom({
   }, [remaining, match?.status]);
 
   const active = match?.status === 'active' && match.me != null && remaining > 0;
-  // an invite waits while a match is on (the banner would sit over the clock)
+  // An invite waits while a match is on (the banner would sit over the clock).
   useQuietInvites(match?.status === 'active');
   const isHost = match ? (match.isHost ?? match.createdBy === user?.id) : false;
-  // backing out of the lobby leaves it, asked first; while the clock runs Android's back asks and the iOS swipe is off
+  // Backing out of the lobby leaves it after asking; during a round Android's back asks and the iOS swipe is off.
   useLeaveLobbyOnBack(!gone && match?.status === 'lobby' && match.me != null, isHost, () => leaveMatch(client, id));
   useGameBack(active ? () => askLeaveGame(t, onExit) : null);
 
@@ -299,7 +282,7 @@ function MatchRoom({
     const res = await submitRhyme(client, id, typed);
     setBusy(false);
     if (!res.ok) {
-      // time running out is the game, not a failure; anything else kept the word from going
+      // Time running out is the game, not a failure; anything else kept the word from going.
       if (res.error.code !== 'NOT_ACTIVE') haptic('error');
       setNotice(res.error.code === 'NOT_ACTIVE' ? t('games.rhymeMatch.timeUpMatch') : describeError(res.error, t));
       return;
@@ -325,7 +308,7 @@ function MatchRoom({
     else setNotice(describeError(res.error, t));
   };
 
-  // called off by its host, or not here for this viewer any more: said plainly, with a match of their own one tap away
+  // Cancelled by the host, or gone for this viewer: said plainly, with a new match one tap away.
   if (gone || match?.status === 'cancelled') {
     return (
       <GlassCard>
@@ -357,7 +340,7 @@ function MatchRoom({
   if (match.status === 'lobby') {
     return (
       <>
-        {/* the code to tell people, with Invite friends beside it: for whoever is in the lobby */}
+        {/* The code to tell people, with Invite friends beside it: for whoever is in the lobby. */}
         {match.me != null ? (
           <LobbyShare
             game="rhyme-match"
@@ -381,7 +364,7 @@ function MatchRoom({
                 onRemove={isHost ? (seat) => void act(() => removeFromMatch(client, id, seat)) : undefined}
               />
             ) : null}
-            {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+            {/* Rated or Friendly, said before anyone joins; the host may change it here and only here. */}
             {match.me != null ? (
               <LobbyRated
                 game="rhyme-match"
@@ -422,7 +405,7 @@ function MatchRoom({
                 {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
               </Text>
             )}
-            {/* the lobby's own way out is the screen's back, which asks and then leaves (play/backOut) */}
+            {/* The lobby's own way out is the screen's back, which asks and then leaves (play/backOut). */}
             {match.me != null ? (
               <ClayButton
                 label={isHost ? t('stories.lobby.cancelGame') : t('stories.lobby.leave')}
@@ -445,7 +428,7 @@ function MatchRoom({
       <GlassCard>
         <View style={styles.card}>
           <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</Verdict>
-          {/* what this game did to your rank, with its one plain reason — before the table */}
+          {/* What this game did to your rank, with its one plain reason — before the table. */}
           {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} /> : null}
           {results ? (
             <>
@@ -463,14 +446,14 @@ function MatchRoom({
                       {t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
                     </Text>
                     {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
-                    {/* anyone else in the game can be reported, by seat */}
+                    {/* Anyone else in the game can be reported, by seat. */}
                     {r.userId !== user?.id && r.seat !== undefined ? (
                       <PlayerReportButton game="rhyme-match" gameId={results.id} seat={r.seat} name={r.name ?? null} />
                     ) : null}
                   </View>
                 ))}
               </View>
-              {/* what nobody at the table found, each with its meaning: the next match goes better for it */}
+              {/* What nobody at the table found, each with its meaning: the next match goes better for it. */}
               <MissedRhymes hints={results.missed} dialect={results.dialect} tone="card" />
             </>
           ) : resultsFailed ? (
@@ -478,7 +461,7 @@ function MatchRoom({
           ) : (
             <Loading />
           )}
-          {/* play again with the same people: a rematch for two, the host's next round for more */}
+          {/* Play again with the same people: a rematch for two, the host's next round for more. */}
           <View style={styles.stretch}>
             <RematchPanel
               game="rhyme-match"
@@ -499,7 +482,7 @@ function MatchRoom({
   // ---- the timed round -------------------------------------------------------
   return (
     <>
-      {/* the game's header says what it is playing for, decided at the start */}
+      {/* The game's header says what it is playing for, decided at the start. */}
       {match.rated ? <RatedPill rated={match.rated.counts ?? match.rated.rated} small /> : null}
       <View style={styles.stage}>
         <View>
@@ -575,39 +558,12 @@ function MatchRoom({
   );
 }
 
-/** The screen's frame: back, title, and a scroller that clears the notch. */
-function Shell({
-  title,
-  onExit,
-  children,
-}: {
-  title: string;
-  onExit: () => void;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <GradientBackground>
-      <ScreenHeader title={title} onBack={onExit} />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {children}
-      </ScrollView>
-    </GradientBackground>
-  );
-}
-
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  // flex + centre so a long translated name shares the row with the back
-  // button instead of wrapping over it
-  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
+  // Lay out a card's contents on an inner View: a GlassCard's own style only dresses its outside.
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
-  // a field's name stands at the start of the line, over the control it names, not in the middle of the card
+  // A field's label sits at the start of the line above its control, not centred in the card.
   label: { alignSelf: 'stretch', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
   input: {
     minHeight: MIN_TOUCH_TARGET,

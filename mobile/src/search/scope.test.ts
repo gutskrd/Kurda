@@ -3,18 +3,12 @@ import { GAME_CARDS, learnGameCard } from '../games/gameCards';
 import { GAMES, SCOPES, SCOPE_LABEL, filterByLabel, gameDestinations, matches, peopleQuery, readyForServer, scopesToRun, wayWord } from './scope';
 
 describe('matches', () => {
-  /*
-   * The whole reason this is not `includes`.
-   *
-   * Kurmanjî has five letters a phone keyboard does not offer without a long
-   * press — ê î û ç ş — and nobody searching for a word types them. Folding
-   * both sides means the query and the text meet in the middle.
-   */
+  /* Matching folds diacritics on both sides: nobody types ê î û ç ş on a phone keyboard when searching. */
   it('finds a word through its diacritics', () => {
     expect(matches('sê', 'se')).toBe(true);
     expect(matches('şev', 'sev')).toBe(true);
     expect(matches('çûn', 'cun')).toBe(true);
-    // and the other way round, for somebody who does type them
+    // And the other way round, for somebody who does type them.
     expect(matches('sev', 'şev')).toBe(true);
   });
 
@@ -28,13 +22,7 @@ describe('matches', () => {
     expect(matches('Pêşbaziya Peyvan', 'peyv')).toBe(true);
   });
 
-  /*
-   * An empty field shows nothing.
-   *
-   * `''.includes('')` is true, so the obvious implementation returns every row
-   * in the app the moment the screen opens and again every time the field is
-   * cleared.
-   */
+  /* An empty query matches nothing, although `''.includes('')` is true. */
   it('matches nothing on an empty query', () => {
     expect(matches('anything', '')).toBe(false);
     expect(matches('anything', '   ')).toBe(false);
@@ -74,10 +62,7 @@ describe('scopesToRun', () => {
 });
 
 describe('readyForServer', () => {
-  /*
-   * `/users/search` allows thirty calls a minute and a single letter matches
-   * most of the table. Two characters is where a search starts being one.
-   */
+  /* `/users/search` allows thirty calls a minute and one letter matches most users, so a search starts at two characters. */
   it('waits for a second character', () => {
     expect(readyForServer('')).toBe(false);
     expect(readyForServer('a')).toBe(false);
@@ -99,12 +84,7 @@ describe('the registries', () => {
     for (const g of GAMES) expect(g.route).toMatch(/^[A-Z]/);
   });
 
-  /*
-   * Search kept a list of its own, five ways into three games, and the games
-   * added after it could not be found by name. It reads the cards the Games
-   * screen shows now, so a way into a game is a row in a search or the test
-   * says so.
-   */
+  /* Search reads the cards the Games screen shows, so every way into a game is a search row. */
   it('finds every way into every game that has a card', () => {
     expect(GAMES.map((g) => g.key)).toEqual(GAME_CARDS.flatMap((c) => c.ways.map((w) => w.key)));
     expect(GAMES.map((g) => g.route)).toEqual(['Wordle', 'WordleBattle', 'Rhyme', 'RhymeMatch', 'Race']);
@@ -139,10 +119,10 @@ describe('the registries', () => {
       ['who-am-i-phone', 'WhoAmI', 'phone'],
       ['who-am-i-friends', 'WhoAmI', 'friends'],
     ]);
-    // two rows under one name are told apart by the word on the card's button; a game with one way needs none
+    // Two rows under one name are told apart by the card's button word; a game with one way needs none.
     expect(wayWord([impostor, whoAmI], 'who-am-i-phone')).toBe('games.whoAmI.onePhone');
     expect(wayWord([impostor, whoAmI], 'impostor')).toBeNull();
-    // and a way with a name of its own says it in its name
+    // And a way with a name of its own says it in its name.
     expect(wayWord(GAME_CARDS, 'battle')).toBeNull();
     expect(wayWord(GAME_CARDS, 'wordle')).toBe('games.mode.solo');
   });

@@ -33,15 +33,10 @@ const FORM: Record<'alone' | 'start' | 'middle' | 'end', TranslationKey> = {
 };
 
 /**
- * One letter, open: the letter large, its sound and the character who says
- * it standing beside it, what it sounds like in the reader's own language, a
- * word to remember it by with its own sound, its partner in the other script —
- * and, for Soranî, the shapes it takes inside a word. The way to the letter
- * before and after is at the foot, so a whole alphabet can be walked through
- * without closing.
- *
- * A sheet from the foot of the screen, as the website's is on a phone; on a
- * tablet it stays a sheet, centred, rather than a band across the screen.
+ * One letter, opened: the letter large with its sound and speaker beside it, what it sounds like in the reader's
+ * language, a word to remember it by with its own sound, its partner in the other script, and for Soranî its
+ * shapes inside a word. Previous and next sit at the foot, so the alphabet can be walked through without closing.
+ * A bottom sheet as on the web; on a tablet it stays a centred sheet.
  */
 export function LetterSheet({
   script,
@@ -52,14 +47,14 @@ export function LetterSheet({
   onClose,
 }: {
   script: AlphabetScript;
-  /** the letter open; null when the sheet is closed */
+  /** The letter open; null when the sheet is closed. */
   letterId: string | null;
   audio: AlphabetAudio;
   player: ClipPlayer;
   onStep: (by: number) => void;
   onClose: () => void;
 }): React.JSX.Element {
-  // the letter stays on the sheet while it fades away
+  // The letter stays on the sheet while it fades away.
   const last = useRef<{ script: AlphabetScript; id: string } | null>(null);
   if (letterId) last.current = { script, id: letterId };
   const shown = last.current;
@@ -67,7 +62,7 @@ export function LetterSheet({
   const sorani = shown?.script === 'ckb' ? SORANI_LETTERS.find((l) => l.id === shown.id) : undefined;
 
   return (
-    // no title in the header: the letter itself, large, heads the card
+    // No title in the header: the letter itself, large, heads the card.
     <BottomSheet visible={letterId !== null} onClose={onClose} contentStyle={styles.scroller}>
       <SheetScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         {latin ? <LatinCard letter={latin} audio={audio} player={player} /> : null}
@@ -79,10 +74,9 @@ export function LetterSheet({
 }
 
 /**
- * The letter large, and its sound beside it: the head of either card. When
- * the letter's recordings have a character, it stands whole on a stage with
- * the letter beside it, and says the letter and the word below it both;
- * without one, the letter and its button stand on the card as they are.
+ * The large letter and its sound, the head of either card. When its recordings have a speaker, the character
+ * stands on a stage beside the letter and says both it and the word below; otherwise the letter and its button
+ * stand alone.
  */
 function Head({
   script,
@@ -101,7 +95,7 @@ function Head({
   ipa: string;
   label: string;
   sound: string | null;
-  /** the example word's sound, which the same character says */
+  /** The example word's sound, which the same character says. */
   word: string | null;
   audio: AlphabetAudio;
   player: ClipPlayer;
@@ -126,7 +120,7 @@ function Head({
       {small ? <Text style={[styles.glyphSmall, { color: colors.textSecondary }]}>{` ${small}`}</Text> : null}
     </Text>
   );
-  // the sound in the phonetic alphabet, for whoever reads it; a screen reader has the button
+  // The sound in the phonetic alphabet, for whoever reads it; a screen reader has the button.
   const phonetic = (
     <View style={[styles.ipa, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Text style={[styles.ipaText, { color: colors.textSecondary }]}>{`/${ipa}/`}</Text>
@@ -172,7 +166,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }):
   );
 }
 
-/** The example word with its meaning, and the word's own sound beside them (said by the character on the stage above). */
+/** The example word with its meaning, and its sound beside them (said by the character on the stage above). */
 function WordRow({ word, sound, player }: { word: React.ReactNode; sound: string | null; player: ClipPlayer }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
@@ -264,7 +258,7 @@ function SoraniCard({ letter, audio, player }: { letter: SoraniLetter; audio: Al
       <Head script="ckb" glyph={letter.char} ipa={letter.ipa} label={letter.char} sound={sound} word={word} audio={audio} player={player} />
       {locale === 'ar' && letter.kurdishOnly ? (
         <View style={[styles.badge, startOf(dir.row), { backgroundColor: colors.controlTrack }]}>
-          {/* "look at this", in the app's violet */}
+          {/* "look at this", in the app's violet. */}
           <Text style={[styles.badgeText, { color: colors.primary }]}>{t('alphabet.notInArabic')}</Text>
         </View>
       ) : null}
@@ -315,7 +309,7 @@ function SoraniCard({ letter, audio, player }: { letter: SoraniLetter; audio: Al
   );
 }
 
-/** The letter before and the letter after, at either end of the foot, pointing the way the reader reads. */
+/** Previous and next letters at either end of the foot, pointing in the reading direction. */
 function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -325,7 +319,7 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
       onPress={() => onStep(by)}
       accessibilityRole="button"
       accessibilityLabel={label}
-      // each is alone at its end of the foot, with nothing near: it answers 8 past every edge
+      // Each is alone at its end of the foot, with nothing near: it answers 8 past every edge.
       reach="open"
       style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
@@ -349,7 +343,7 @@ const GLYPH = 64;
 const GLYPH_STAGED = 84;
 
 const styles = StyleSheet.create({
-  // the gutter is the scroll view's own, so the card scrolls edge to edge
+  // The gutter is the scroll view's own, so the card scrolls edge to edge.
   scroller: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.md },
   flex: { flex: 1 },
@@ -358,7 +352,7 @@ const styles = StyleSheet.create({
   glyphColumn: { gap: spacing.sm },
   glyph: { ...display(GLYPH), lineHeight: Math.round(GLYPH * 1.1) },
   glyphArabic: { fontSize: GLYPH, lineHeight: Math.round(GLYPH * 1.5) },
-  // beside the character on its stage the letter is bigger still: the thing to look at
+  // Beside the character on its stage the letter is bigger still: the thing to look at.
   glyphBig: { ...display(GLYPH_STAGED), lineHeight: Math.round(GLYPH_STAGED * 1.1) },
   glyphArabicBig: { fontSize: GLYPH_STAGED, lineHeight: Math.round(GLYPH_STAGED * 1.4) },
   glyphSmall: { fontSize: Math.round(GLYPH * 0.55) },

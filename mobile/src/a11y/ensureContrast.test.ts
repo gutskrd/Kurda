@@ -7,15 +7,15 @@ const HEX = /^#[0-9a-f]{6}$/;
 describe('ensureContrast', () => {
   it('leaves an already-compliant colour unchanged', () => {
     expect(ensureContrast('#000000', '#FFFFFF', AA_NORMAL).toLowerCase()).toBe('#000000');
-    // brand green already clears AA against white
+    // Brand green already clears AA against white.
     expect(ensureContrast('#2D6A4F', '#FFFFFF', AA_NORMAL).toLowerCase()).toBe('#2d6a4f');
   });
 
   it('darkens a low-contrast colour until it meets the target against white', () => {
-    // teal at 5.01:1 vs white fails AAA (7:1)
+    // Teal at 5.01:1 vs white fails AAA (7:1).
     const fixed = ensureContrast('#147D6F', '#FFFFFF', AAA_NORMAL);
     expect(contrastRatio(fixed, '#FFFFFF')).toBeGreaterThanOrEqual(AAA_NORMAL);
-    // it moved darker (lower luminance) since the counterpart is white
+    // It moved darker (lower luminance) since the counterpart is white.
     expect(relativeLuminance(fixed)).toBeLessThan(relativeLuminance('#147D6F'));
   });
 
@@ -39,7 +39,7 @@ describe('ensureContrast', () => {
   });
 
   it('returns a valid hex even when the target is unreachable', () => {
-    // nothing contrasts 21:1 with mid-grey → best effort, no throw
+    // Nothing contrasts 21:1 with mid-grey → best effort, no throw.
     const fixed = ensureContrast('#808080', '#808080', 21);
     expect(fixed).toMatch(HEX);
   });

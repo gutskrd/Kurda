@@ -2,16 +2,12 @@ import { interpolate } from '../i18n/format';
 import WIDGET_STRINGS from './widget-strings.json';
 
 /**
- * The widget's own few words, in the app's nine languages.
- *
- * Not in the app's catalogue (i18n/translations.ts): they are said by the
- * widget, not by a screen of the app, and two of them are not said by this
- * code at all — the name and the line under it in the phone's list of
- * widgets, which iPhone reads from the extension's Localizable.strings
- * (targets/letter-widget/<lang>.lproj) and Android from resources a config
- * plugin writes at build time (plugins/withLetterWidgetStrings.cjs). This one
- * file is where all three come from; widget.test.ts holds the iPhone files to
- * it word for word.
+ * The widget's own few words in the app's nine languages, kept apart from the app catalogue
+ * (i18n/translations.ts) because the widget says them, and two are not said by this code at all: the widget's
+ * name and description in the system widget gallery, which iPhone reads from the extension's Localizable.strings
+ * (targets/letter-widget/ <lang>.lproj) and Android from resources a config plugin writes at build time
+ * (plugins/withLetterWidgetStrings.cjs). This file is the source of all three; widget.test.ts checks the iPhone
+ * files against it word for word.
  */
 
 export type WidgetStringKey = keyof (typeof WIDGET_STRINGS)['en'];
@@ -27,7 +23,7 @@ export function widgetText(locale: string, key: WidgetStringKey, vars?: Record<s
   return interpolate(table[key] ?? WIDGET_STRINGS.en[key], vars);
 }
 
-/** A letter's date as the widget says it: the day and the month, and the year when it is not this one. */
+/** A letter's date as the widget shows it: day and month, plus the year when it is not this one. */
 export function widgetDate(iso: string, locale: string, now: Date = new Date()): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
@@ -35,7 +31,7 @@ export function widgetDate(iso: string, locale: string, now: Date = new Date()):
   try {
     return new Intl.DateTimeFormat(locale, options).format(at);
   } catch {
-    // a language the phone has no dates for falls back to the phone's own
+    // A language the phone has no dates for falls back to the phone's own.
     return new Intl.DateTimeFormat(undefined, options).format(at);
   }
 }

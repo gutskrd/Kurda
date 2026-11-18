@@ -3,9 +3,8 @@ import type { PersistedOnboarding } from './flow';
 
 const KEY = 'kurda_onboarding_v1';
 
-// Lazily loaded so the web bundle never evaluates the native module (its web
-// entry throws at import time here). Only DeviceOnboardingStorage — created on
-// native only — ever touches it.
+// Loaded lazily so the web bundle never evaluates the native module, whose web entry throws at import; only the
+// native DeviceOnboardingStorage touches it.
 type AsyncStorageLike = {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;
@@ -21,14 +20,9 @@ function asyncStorage(): AsyncStorageLike {
 }
 
 /**
- * Persists the first-launch onboarding record (KUR-271): the completed flag so
- * onboarding never shows again, plus the chosen preferred language (#184).
- *
- * Stored in AsyncStorage (the app container / UserDefaults), NOT the Keychain:
- * a first-launch flag must clear when the app is uninstalled so a reinstall
- * re-onboards. expo-secure-store keeps the Keychain across uninstalls, which
- * made onboarding wrongly skip after a reinstall. A localStorage fallback backs
- * web. `clear()` powers Settings → Reset onboarding (#270).
+ * Stores the onboarding record: the completed flag and the preferred language. It uses AsyncStorage, not the
+ * Keychain, because the flag must clear on uninstall so a reinstall shows onboarding again; the Keychain survives
+ * uninstalls. Web falls back to localStorage. `clear()` backs Settings → Reset onboarding.
  */
 export interface OnboardingStorage {
   get(): Promise<PersistedOnboarding | null>;

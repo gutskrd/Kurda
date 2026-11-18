@@ -31,11 +31,7 @@ import {
 import { Loading } from '../theme/Loading';
 import { pressedDim } from '../theme/motion';
 
-/**
- * The measurements a device row and its placeholder share, so the grey rows
- * that hold the place are the rows that arrive: a 44pt sign-out button is the
- * tallest thing in a row, and the two lines of text beside it are 22 and 20.
- */
+/** Measurements a device row and its placeholder share: the 44 pt sign-out button is the tallest thing, beside lines of 22 and 20. */
 const ROW = {
   padV: spacing.sm + 2,
   padH: spacing.md - 4,
@@ -48,12 +44,9 @@ const ROW = {
 const ROW_HEIGHT = ROW.padV * 2 + Math.max(MIN_TOUCH_TARGET, ROW.nameLine + ROW.metaLine);
 
 /**
- * The devices signed in to your account (GET /me/sessions), and signing them
- * out: one at a time, or every one but this.
- *
- * This device comes first and says so. Each of the others says when it was
- * last used, so an old tablet in a drawer reads as one, and one you do not
- * recognise stands out. Signing out this device from here is signing out.
+ * The devices signed in to the account (GET /me/sessions), with sign-out one at a time or for all but this one.
+ * This device comes first and is labelled; the others show when they were last used. Signing this device out here
+ * signs out.
  */
 export function DevicesScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, logout } = useAuth();
@@ -65,9 +58,9 @@ export function DevicesScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const [sessions, setSessions] = useState<DeviceSession[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  // the session being signed out, or 'others'
+  // The session being signed out, or 'others'.
   const [busy, setBusy] = useState<string | null>(null);
-  // what the last sign-out did, said above the list
+  // What the last sign-out did, said above the list.
   const [notice, setNotice] = useState<{ text: string; tone: 'done' | 'failed' } | null>(null);
 
   const load = useCallback(async () => {
@@ -96,7 +89,7 @@ export function DevicesScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     setBusy(null);
     if (res.ok) {
       haptic('tap');
-      // this phone's own session has just ended: the tokens here are spent
+      // This phone's own session has just ended: the tokens here are spent.
       if (res.data.current) {
         void logout();
         return;
@@ -105,7 +98,7 @@ export function DevicesScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
       return;
     }
     if (res.error.code === 'SESSION_NOT_FOUND') {
-      // gone already, from somewhere else: the row goes, and the reason is said
+      // Gone already, from somewhere else: the row goes, and the reason is said.
       setSessions((list) => list?.filter((x) => x.id !== s.id) ?? list);
       setNotice({ text: describeError(res.error, t), tone: 'done' });
       return;
@@ -215,7 +208,7 @@ export function DevicesScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   );
 }
 
-/** One device: what it is, whether it is this one or when it was last used, and the way to sign it out. */
+/** One device: what it is, whether it is this one or when it was last used, and its sign-out button. */
 function DeviceRow({
   name,
   icon,
@@ -240,7 +233,7 @@ function DeviceRow({
         <Icon name={icon} size={22} color={colors.textPrimary} />
       </View>
       <View style={styles.main}>
-        {/* a device's name is what it called itself, so it reads in its own direction */}
+        {/* A device's name is what it called itself, so it reads in its own direction. */}
         <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
           {name}
         </Text>
@@ -248,7 +241,7 @@ function DeviceRow({
           {meta}
         </Text>
       </View>
-      {/* the confirm that follows is where it is marked as destructive; the row stays calm */}
+      {/* The confirm that follows is where it is marked as destructive; the row stays calm. */}
       <View style={styles.action}>
         {busy ? (
           <Loading />
@@ -269,10 +262,7 @@ function DeviceRow({
   );
 }
 
-/**
- * The list while it loads: the same rows, in grey, as many as the screen
- * holds, each bar on the line its words will take.
- */
+/** The loading placeholder: grey rows matching the real ones, as many as fit, each bar on its text's line. */
 function DeviceListSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
@@ -280,7 +270,7 @@ function DeviceListSkeleton(): React.JSX.Element {
   const widths = ['58%', '72%', '46%'] as const;
   return (
     <View style={styles.rows} accessibilityLabel={t('common.loading')}>
-      {/* three: most accounts are signed in on a phone or two and a computer */}
+      {/* Three: most accounts are signed in on a phone or two and a computer. */}
       {widths.map((width, i) => (
         <View key={i} style={[styles.row, { flexDirection: dir.row }]}>
           <Skeleton width={ROW.tile} height={ROW.tile} radius={radii.pill} />
@@ -299,7 +289,7 @@ function DeviceListSkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // a column in the middle of a tablet, on the 16pt gutter on a phone
+  // A column in the middle of a tablet, on the 16pt gutter on a phone.
   column: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter, gap: spacing.md },
   intro: { fontSize: typography.sizes.sm, lineHeight: 21 },
   notice: { fontSize: typography.sizes.sm, lineHeight: 21 },

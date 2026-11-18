@@ -25,23 +25,18 @@ const LIFT_SCALE = 1.02;
 const CHEST = 46;
 
 /**
- * Today's quests, a row each: what the quest asks, a thick bar of how far it
- * has come with the count on it, and its chest at the end of the bar.
+ * Today's quests, one row each: what it asks, a thick progress bar with the count on it, and its chest at the
+ * bar's end.
  *
- * With `play`, each bar moves from where the session found it to where it
- * left it, one after another, the count climbing with it; a quest finished
- * just now lifts a little, takes a gold edge and throws a few sparks from its
- * chest as its bar arrives. With `arrive`, the bars fill from empty to where
- * they stand, one after another, as the list opens — the quests seen for the
- * first time today. Under Reduce Motion every bar is simply where it is. A
- * quest already finished has the gold edge; a chest that can be opened
- * shakes now and then (ChestWobble) and its lock glints; one whose chest has
- * been opened shows it open.
+ * With `play`, each bar moves in turn from where the session found it to where it left it, the count climbing; a
+ * quest just finished lifts, gains a gold edge and throws sparks from its chest. With `arrive`, bars fill from
+ * empty in turn as the list opens (first view today). Under Reduce Motion bars are static. A finished quest has
+ * the gold edge; an openable chest shakes now and then (ChestWobble) and glints; an opened chest shows open.
  */
 export function QuestRows({ rows, play = false, arrive = false }: { rows: readonly QuestRow[]; play?: boolean; arrive?: boolean }): React.JSX.Element {
-  // whether the list is arriving is settled as it mounts: a bar half-way to where it stands is not sent back for a prop that changed
+  // Whether the list is arriving is fixed at mount, so a bar mid-fill is not reset by a changed prop.
   const arriving = useRef(arrive).current;
-  // the bars that move take their turns; the rest wait for nothing
+  // The bars that move take their turns; the rest wait for nothing.
   let turn = 0;
   return (
     <View style={styles.list}>
@@ -60,7 +55,7 @@ function Row({ row, play, arrive, delayMs }: { row: QuestRow; play: boolean; arr
   const dir = useDirection();
   const reduce = useReducedMotion();
   const moving = (play || arrive) && !reduce;
-  // where the bar starts: before the session, at nothing as the list opens, or where it stands
+  // Where the bar starts: before the session, at nothing as the list opens, or where it stands.
   const from = !moving ? row.to : play ? row.from : 0;
   const share = (n: number) => Math.min(1, n / Math.max(1, row.target));
   const fill = useRef(new Animated.Value(share(from))).current;
@@ -69,7 +64,7 @@ function Row({ row, play, arrive, delayMs }: { row: QuestRow; play: boolean; arr
   const [width, setWidth] = useState(0);
   const count = useCountUp(row.to, { from, delayMs, ms: FILL_MS });
   const finished = row.to >= row.target;
-  // finished by the session just done: the lift, the sparks and the knock are for that moment alone
+  // Finished by the session just done: the lift, the sparks and the knock are for that moment alone.
   const fresh = justDone(row) && play && !reduce;
 
   useEffect(() => {
@@ -83,17 +78,17 @@ function Row({ row, play, arrive, delayMs }: { row: QuestRow; play: boolean; arr
       steps.push(Animated.parallel([springTo(lift, 1, 'bouncy'), timing(sparks, 1, duration.celebrate)]));
     }
     const run = Animated.sequence(steps);
-    // felt as the bar arrives at the end, once
+    // Felt as the bar arrives at the end, once.
     const felt = fresh ? setTimeout(() => haptic('tap'), delayMs + FILL_MS) : null;
     run.start();
     return () => {
       run.stop();
       if (felt) clearTimeout(felt);
     };
-    // once, for these numbers
+    // Once, for these numbers.
   }, [moving, row.from, row.to, row.target, delayMs]);
 
-  // the fill slides in from the reading side, as every bar's fill does
+  // The fill slides in from the reading side, as every bar's fill does.
   const translateX = fill.interpolate({ inputRange: [0, 1], outputRange: [dir.rtl ? width : -width, 0] });
   const raised = {
     transform: [
@@ -105,9 +100,8 @@ function Row({ row, play, arrive, delayMs }: { row: QuestRow; play: boolean; arr
   const progress = t('quests.progress', { done: formatNumber(row.to, locale), target: formatNumber(row.target, locale) });
   const state = row.claimable ? `, ${t('quests.ready')}` : row.claimed ? `, ${t('quests.opened')}` : '';
   /*
-   * The count sits on the bar twice: in the page's grey on the track, and in
-   * dark ink on the gold, held still inside the fill as it slides — so each
-   * part of it reads on whichever lies under it.
+   * The count is drawn twice, grey on the track and dark on the gold fill (held still as the fill slides), so
+   * each part reads on what lies under it.
    */
   const held = fill.interpolate({ inputRange: [0, 1], outputRange: [dir.rtl ? -width : width, 0] });
   const counted = `${formatNumber(count, locale)} / ${formatNumber(row.target, locale)}`;
@@ -167,7 +161,7 @@ const styles = StyleSheet.create({
   fill: { ...StyleSheet.absoluteFill, borderRadius: radii.pill, overflow: 'hidden' },
   onFill: { position: 'absolute', top: 0, bottom: 0, left: 0, justifyContent: 'center' },
   count: { textAlign: 'center', fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  // the chest sits over the end of its bar, as a prize at the finish
+  // The chest sits over the end of its bar, as a prize at the finish.
   chest: { marginStart: -spacing.sm - 2, alignItems: 'center', justifyContent: 'center' },
   chestRtl: { marginStart: 0, marginEnd: -spacing.sm - 2 },
 });

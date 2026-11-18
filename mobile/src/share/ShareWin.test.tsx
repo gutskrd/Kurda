@@ -12,10 +12,7 @@ import { haptic, onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { ShareWin, shareOut } from './ShareWin';
 
-/*
- * The quiet Share on a win: one button that hands its message to the system's
- * sheet, and does nothing else whatever becomes of it.
- */
+/* The Share button on a win hands its message to the system sheet and does nothing else. */
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -34,7 +31,7 @@ describe('the Share button', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
-    // one message, its address last: a link handed over beside the words is dropped by some share targets
+    // One message with its address last: some share targets drop a link passed beside the text.
     expect(share.mock.calls[0]?.[0]).toEqual({ message: TEXT });
   });
 
@@ -51,7 +48,7 @@ describe('the Share button', () => {
   it('is quiet about a phone that will not open the sheet', async () => {
     vi.spyOn(Share, 'share').mockRejectedValue(new Error('no sheet'));
     expect(() => shareOut(TEXT)).not.toThrow();
-    // the refusal is swallowed: nothing is left unhandled for the app to trip over
+    // The refusal is swallowed, so nothing is left unhandled.
     await new Promise((r) => setTimeout(r, 0));
   });
 
@@ -60,7 +57,6 @@ describe('the Share button', () => {
     const felt: HapticEvent[] = [];
     const stop = onHaptic((e) => felt.push(e));
     try {
-      // a buzz would be heard here: this one is
       haptic('tap');
       expect(felt).toEqual(['tap']);
       resetHaptics();

@@ -16,15 +16,11 @@ let rings = 0;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 /**
- * The weekly goal as a ring (contract 4 §L3, §U): XP this week against the
- * goal, filled in the league's own water colour, and a check in the middle
- * once it is met — the moment demotion stops being possible. The same ring
- * in league and personal mode: the goal is the learner's either way.
+ * The weekly goal as a ring: XP this week against the goal, in the league's water colour, with a check once met
+ * (when demotion stops being possible). The same ring in league and personal mode.
  *
- * It fills to its value as it appears, and to each new value after, on the
- * out-curve in `duration.progress`. A stroke along a circle is not something
- * the native driver can move, so this one short animation runs on the JS
- * thread; under Reduce Motion the ring is simply where it is.
+ * It fills to each new value on the out-curve in `duration.progress`. A stroke along a circle cannot run on the
+ * native driver, so this short animation runs on the JS thread; under Reduce Motion the ring is static.
  */
 export function GoalRing({
   xp,
@@ -37,7 +33,7 @@ export function GoalRing({
   goal: number;
   size?: number;
   tint: readonly [string, string];
-  /** the XP in the middle; a small ring shows only the check or nothing */
+  /** The XP in the middle; a small ring shows only the check or nothing. */
   showNumbers?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -59,7 +55,7 @@ export function GoalRing({
     return () => run.stop();
   }, [f, reduce, shown]);
   const offset = shown.interpolate({ inputRange: [0, 1], outputRange: [c, 0] });
-  // its own gradient id: a ring left on a screen behind this one must not own this one's fill (browser build)
+  // Its own gradient id, so a ring on a screen behind this one does not own this fill (web build).
   const ref = useRef<string | null>(null);
   if (ref.current === null) {
     rings += 1;

@@ -7,12 +7,12 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('./storeReview', () => ({ requestStoreReview: vi.fn(async () => true) }));
-// the host reads the app's navigation from this context; a test hands it a fake one
+// The host reads the app's navigation from this context; a test hands it a fake one.
 vi.mock('@react-navigation/native', async () => {
   const { createContext } = await import('react');
   return { NavigationContainerRefContext: createContext<unknown>(undefined) };
 });
-// every control noted as it is drawn, so its reach can be read
+// Every control noted as it is drawn, so its reach can be read.
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { NavigationContainerRefContext } from '@react-navigation/native';
@@ -46,7 +46,7 @@ afterEach(() => {
 });
 
 describe('RatingBox, as a choice is marked', () => {
-  // a rating given is a choice, so violet; gold is kept for what is earned
+  // A rating given is a choice, so violet; gold is kept for what is earned.
   it('fills the chosen stars in violet, not gold, and marks a chosen topic with the violet wash', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<RatingBox source="settings" onClose={() => undefined} />);
@@ -57,7 +57,7 @@ describe('RatingBox, as a choice is marked', () => {
     const bugs = screen.getByRole('checkbox', { name: 'Bugs' });
     fireEvent.click(bugs);
     expect(bugs.getAttribute('aria-checked')).toBe('true');
-    // a wash is the violet with a little of it showing, not the solid
+    // A wash is the violet with a little of it showing, not the solid.
     expect(getComputedStyle(bugs).backgroundColor).not.toBe(getComputedStyle(screen.getByRole('button', { name: 'Send' }).firstElementChild as HTMLElement).backgroundColor);
   });
 });
@@ -114,7 +114,7 @@ describe('RatingBox after a first game', () => {
     testAuth.client = fakeClient({});
     renderWithProviders(<RatingBox source="first_game" onClose={() => undefined} />);
     fireEvent.click(screen.getByRole('radio', { name: '2 stars' }));
-    // the thank-you line already asks; the box keeps its name for a screen reader only
+    // The thank-you line already asks; the box keeps its name for a screen reader only.
     expect(screen.queryByText('What could be better?')).toBeNull();
     expect(screen.getByLabelText('What could be better?').getAttribute('placeholder')).toBe('Tell us more (optional)');
     fireEvent.click(screen.getByRole('radio', { name: '4 stars' }));
@@ -162,7 +162,7 @@ describe('RatingBox after a first game', () => {
     fireEvent.click(screen.getByRole('radio', { name: '1 star' }));
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await screen.findByText('Thank you — we read every message.');
-    // the deer's board holds up one lit star
+    // The deer's board holds up one lit star.
     const board = [...container.querySelectorAll('[data-markup]')].map((el) => el.getAttribute('data-markup')!).find((m) => m.includes('deer-star'))!;
     expect(board.match(/deer-star is-on/g)).toHaveLength(1);
   });
@@ -184,7 +184,7 @@ describe('Send feedback from Settings', () => {
     const client = fakeClient({ 'POST /me/app-feedback': ok({ id: 'f4' }) });
     testAuth.client = client;
     renderWithProviders(<FeedbackSettingsRows os="ios" />);
-    // no store address in app.json yet, so no "Rate Hevalo"
+    // No store address in app.json yet, so no "Rate Hevalo".
     expect(screen.queryByRole('button', { name: 'Rate Hevalo' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Send feedback' }));
     expect(await screen.findByRole('checkbox', { name: 'Stories' })).toBeTruthy();
@@ -198,7 +198,7 @@ describe('Send feedback from Settings', () => {
 
   it('starts its sheet afresh from the settings’ own groups, with a close that reaches past every edge', async () => {
     testAuth.client = fakeClient();
-    // the settings list's rows, as tightly grouped as a list can be: nothing of that reaches the sheet
+    // The settings list's rows, as tightly grouped as a list can be: nothing of that reaches the sheet.
     renderWithProviders(
       <ReachGroup gap={0} rowGap={0}>
         <FeedbackSettingsRows os="ios" />
@@ -207,7 +207,7 @@ describe('Send feedback from Settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send feedback' }));
     await screen.findByRole('checkbox', { name: 'Stories' });
     expect(reachLimitOf('Close')).toBeNull();
-    // 44 and alone at the top of the sheet: 8 past every edge
+    // 44 and alone at the top of the sheet: 8 past every edge.
     expect(reachOf('Close')).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
   });
 
@@ -221,11 +221,8 @@ describe('Send feedback from Settings', () => {
 });
 
 /*
- * The host asks the server, then waits on the clock: the box a moment into
- * the results, the store's prompt a little later. These tests move the clock
- * rather than sleep through it, so a busy machine cannot stretch a wait past
- * the test's own time, and "never opens" is checked well past the moment it
- * would have, not after a guess at how long is long enough.
+ * The host asks the server, then waits: the box shortly into the results, the store prompt a little later. Tests
+ * advance the clock rather than sleep, and check "never opens" well past the moment it would have.
  */
 describe('GameFeedbackHost', () => {
   beforeEach(() => {
@@ -255,7 +252,7 @@ describe('GameFeedbackHost', () => {
     after(1);
     expect(screen.getByText('How are you enjoying Hevalo?')).toBeTruthy();
     expect(session.boxShown).toBe(true);
-    // a second game this session does not open it again
+    // A second game this session does not open it again.
     await finished({ moment: 'won' });
     after(APP_FEEDBACK_DELAY_MS);
     expect(screen.getAllByText('How are you enjoying Hevalo?')).toHaveLength(1);
@@ -289,10 +286,10 @@ describe('GameFeedbackHost', () => {
     expect(screen.getByText('How are you enjoying Hevalo?')).toBeTruthy();
     go('play-tab');
     expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
-    // unanswered, so the server is not told; this session does not offer it again
+    // Unanswered, so the server is not told; this session does not offer it again.
     expect(session.boxShown).toBe(true);
 
-    // a player who left before it appeared never sees it, and a later game may offer it
+    // A player who left before it appeared never sees it, and a later game may offer it.
     const later = new FeedbackSession();
     cleanup();
     route = 'race-2';
@@ -323,7 +320,7 @@ describe('GameFeedbackHost', () => {
     await finished({ moment: 'other' });
     after(APP_FEEDBACK_DELAY_MS);
     expect(screen.getByText('How are you enjoying Hevalo?')).toBeTruthy();
-    // the results make room for the box while it is there (its height comes from its layout)
+    // The results make room for the box while it is there (its height comes from its layout).
     act(() => setRatingBoxInset(240));
     expect(screen.getByTestId('room').textContent).toBe('240');
     act(() => leftResults());
@@ -359,11 +356,11 @@ describe('GameFeedbackHost', () => {
       expect(requestStoreReview).not.toHaveBeenCalled();
       after(1);
       expect(requestStoreReview).toHaveBeenCalledOnce();
-      // the system says it asked (a promise), and the server is told
+      // The system says it asked (a promise), and the server is told.
       await act(async () => undefined);
       expect(client.calls.map((c) => c.path)).toContain('/me/store-review/prompted');
       expect(client.calls.find((c) => c.path === '/me/store-review/prompted')?.body).toEqual({ appVersion: APP_VERSION });
-      // and never the box in the same session
+      // And never the box in the same session.
       expect(session.storeAsked).toBe(true);
       expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
     } finally {

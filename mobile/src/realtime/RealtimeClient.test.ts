@@ -28,7 +28,7 @@ class FakeSocket implements WebSocketLike {
     this.closed = code;
     this.readyState = 3;
   }
-  /** the server's side */
+  /** The server's side. */
   hello(resumeToken = 'tok', resumedRooms: string[] = []): void {
     this.readyState = 1;
     this.onopen?.();
@@ -147,7 +147,7 @@ describe('RealtimeClient', () => {
     expect(pending()[0]!.ms).toBe(2000);
     await fire();
     socket().hello('resume-2');
-    advance(15_000); // open long enough to count as stable
+    advance(15_000); // Open long enough to count as stable.
     socket().drop();
     expect(pending()[0]!.ms).toBe(1000);
   });
@@ -190,11 +190,11 @@ describe('RealtimeClient', () => {
     socket().frame({ type: 'joined', room: 'group:a' });
     socket().frame({ type: 'joined', room: 'group:b' });
     leaveA();
-    expect(socket().sent).toHaveLength(2); // someone still watches group:a
+    expect(socket().sent).toHaveLength(2); // Someone still watches group:a.
     leaveA2();
     expect(socket().sent.at(-1)).toEqual({ type: 'leave', room: 'group:a' });
 
-    // a resume that brought group:b back needs no join; one nobody watches is left
+    // A resume that brought group:b back needs no join; one nobody watches is left.
     socket().drop();
     await fire();
     socket().hello('r2', ['group:b', 'group:gone']);
@@ -230,7 +230,7 @@ describe('RealtimeClient', () => {
     client.pause();
     expect(first.closed).toBe(1000);
     expect(client.state).toBe('paused');
-    expect(pending()).toHaveLength(0); // nothing reconnects in the background
+    expect(pending()).toHaveLength(0); // Nothing reconnects in the background.
     client.resume();
     await flush();
     expect(FakeSocket.all).toHaveLength(2);
@@ -242,7 +242,7 @@ describe('RealtimeClient', () => {
     client.start();
     await flush();
     socket().drop();
-    // still waiting on the first retry
+    // Still waiting on the first retry.
     expect(pending()).toHaveLength(1);
     client.resume();
     await flush();

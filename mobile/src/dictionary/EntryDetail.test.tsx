@@ -7,7 +7,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// Android's back, pressed by the test (`pressBack`)
+// Android's back, pressed by the test (`pressBack`).
 vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { encodeLipsync, type DictionaryAudio } from '@kurda/shared';
@@ -68,9 +68,8 @@ describe('a dictionary entry’s pronunciations', () => {
     expect(play).toHaveLength(1);
 
     fireEvent.click(play[0]!);
-    // the player starts on a later turn of the event loop, and the screen may
-    // make it afresh as it settles: put every one made for the word at 0.2 s
-    // and draw a frame until the character shows that moment's mouth
+    // The player starts on a later tick and may be recreated as the screen settles: seek every one made for the
+    // word to 0.2 s and draw frames until the character shows that moment's mouth.
     await waitFor(() => {
       const clips = FakeAudio.made.filter((a) => a.src === 'https://media.test/mal.wav');
       if (clips.length === 0) throw new Error('no player yet');
@@ -108,7 +107,7 @@ describe('a saved word', () => {
       'DELETE /dictionary/entries/e1/save': ok({ saved: false }),
     });
     renderWithProviders(<EntryDetail entryId="e1" onBack={() => undefined} />);
-    // the app opens by night until the reader chooses otherwise, and nobody has here
+    // The app opens by night until the reader chooses otherwise, and nobody has here.
     const night = PALETTES.dark;
     const mark = (name: string): string | null | undefined => screen.getByRole('button', { name }).querySelector('path')?.getAttribute('fill');
     await waitFor(() => expect(mark('Remove bookmark')).toBe(night.primary));
@@ -117,11 +116,7 @@ describe('a saved word', () => {
   });
 });
 
-/*
- * The entry takes the results' place rather than being pushed over them, so
- * the navigator does not know it is there: Android's back used to go past it
- * and the results both.
- */
+/* The entry replaces the results rather than being pushed over them, so Android's back must return to the results. */
 describe('a dictionary entry and Android’s back', () => {
   it('goes back to the results, the way its chevron does', async () => {
     resetHardwareBack();
@@ -129,7 +124,7 @@ describe('a dictionary entry and Android’s back', () => {
     testAuth.client = fakeClient({ 'GET /dictionary/entries/e1': ok(entry([])) });
     renderWithProviders(<EntryDetail entryId="e1" onBack={onBack} />);
     expect(await screen.findByText('mal')).toBeTruthy();
-    // taken by the entry, and not left to leave the screen
+    // Taken by the entry, and not left to leave the screen.
     expect(pressBack()).toBe(true);
     expect(onBack).toHaveBeenCalledTimes(1);
   });

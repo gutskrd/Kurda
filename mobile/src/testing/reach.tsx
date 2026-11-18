@@ -4,26 +4,18 @@ import type * as Real from '../theme/Pressable';
 import type { AppPressableProps, ReachLimit } from '../theme/Pressable';
 
 /**
- * A control's reach, in a component test.
- *
- * react-native-web drops `hitSlop` before anything reaches the page, so a
- * test of a primitive cannot read its reach from the DOM. This stands in for
- * `theme/Pressable`: every Pressable is still the real one, drawn as it
- * always is, and as it renders it is noted down under its testID or label
- * with the caps of the `ReachGroup` it sits in. `reachOf(name)` then works
- * its reach out with the real `resolveReach`, so a test checks the very
- * numbers a phone would be given.
+ * Reads a control's reach in component tests. react-native-web drops `hitSlop` before it reaches the DOM, so this
+ * stands in for `theme/Pressable`: it renders the real Pressable and records each one under its testID or label
+ * with its `ReachGroup` caps, and `reachOf(name)` resolves the reach with the real `resolveReach`.
  *
  *   vi.mock('../theme/Pressable', () => import('../testing/reach'));
  *   import { reachOf } from '../testing/reach';
  *   expect(reachOf('Close')).toEqual({ top: 9, bottom: 9, left: 9, right: 9 });
- *
- * The path in `vi.mock` is the test file's own way to `theme/Pressable`.
  */
 
 const real = await vi.importActual<typeof Real>('../theme/Pressable');
 
-// everything else the module has, unchanged; Pressable.test.tsx checks that nothing is missing
+// Everything else from the module, unchanged; Pressable.test.tsx checks nothing is missing.
 export const { PRESS_DELAY_MS, TAP_FLASH_MS, QUICK_RELEASE_MS, ReachGroup, ReachReset, useReachLimit, resolveReach } = real;
 export type { AppPressableProps, Reach, ReachLimit, ReachSize } from '../theme/Pressable';
 
@@ -34,7 +26,7 @@ interface Drawn {
 
 const drawn = new Map<string, Drawn>();
 
-/** The name a pressable is found by: its testID, else what a screen reader calls it. */
+/** The name a pressable is found by: its testID, else its accessibility label. */
 function nameOf(props: AppPressableProps): string | undefined {
   return props.testID ?? props.accessibilityLabel ?? props['aria-label'] ?? undefined;
 }
@@ -52,13 +44,13 @@ function find(name: string): Drawn {
   return found;
 }
 
-/** The hitSlop the named pressable is given as it was last drawn: what a phone would answer over past its edges. */
+/** The hitSlop the named pressable was last drawn with. */
 export function reachOf(name: string): Insets | number | undefined {
   const { props, limit } = find(name);
   return real.resolveReach({ ...props, pressDelay: props.pressDelay ?? real.PRESS_DELAY_MS }, limit);
 }
 
-/** The props the named pressable was last drawn with, for a test that checks what a primitive passed on. */
+/** The props the named pressable was last drawn with. */
 export function pressablePropsOf(name: string): AppPressableProps {
   return find(name).props;
 }

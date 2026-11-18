@@ -5,13 +5,7 @@ import { formatNumber, interpolate } from '../i18n/format';
 import { LOCALES, TRANSLATIONS, type Locale, type TranslationKey } from '../i18n/translations';
 import { SITE_URL, badgeShare, leagueShare, lessonShare, streakShare, wordGameShare } from './winText';
 
-/*
- * What each win says when it is shared, word for word: the catalogue's line
- * ended on its mark, and the win's own address on the site, which is drawn
- * as its postcard wherever it is pasted. The buttons that send these are
- * tested where they stand (the lesson's results, the streak's card, a badge's
- * and a league week's moment, the word game's screen).
- */
+/* What each win says when shared: the catalogue line ending on its mark, then the win's address on the site. */
 
 const translate =
   (locale: Locale) =>
@@ -116,7 +110,7 @@ describe('every share', () => {
       expect(links).toHaveLength(1);
       expect(text.endsWith(links[0]!)).toBe(true);
       expect(links[0]!.startsWith(`${SITE}/win/`)).toBe(true);
-      // the address is one the site reads as a win, and it says a kind and at most one detail
+      // The address is one the site reads as a win, with a kind and at most one detail.
       const path = links[0]!.slice(SITE.length);
       expect(parseWinLink(path)).not.toBeNull();
       expect(path).not.toMatch(/[?#]/);
@@ -136,7 +130,7 @@ describe('every share', () => {
       expect(up, locale).toContain('Çem');
       expect(place, locale).toContain('Kanî');
       expect(place, locale).toContain('3');
-      // each language has its own words for these: none is left in English
+      // Every language has its own words for these; none is left in English.
       if (locale === 'en') continue;
       for (const key of ['share.win.lesson', 'share.win.lessonPlain', 'share.win.streak', 'share.win.badge', 'share.win.leagueUp', 'share.win.leaguePlace'] as const) {
         expect(TRANSLATIONS[locale][key], `${locale} ${key}`).not.toBe(TRANSLATIONS.en[key]);

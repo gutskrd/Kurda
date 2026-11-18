@@ -37,7 +37,7 @@ describe('commentText', () => {
     expect(commentText(base, t)).toBe('hello');
     expect(commentText({ ...base, body: null, audioMediaId: 'k' }, t)).toBe(TRANSLATIONS.en['comments.voice']);
     expect(commentText({ ...base, status: 'removed', body: null }, t)).toBe(TRANSLATIONS.en['comments.removed']);
-    // the placeholder follows the reader; the body never does
+    // The placeholder follows the reader; the body never does.
     expect(commentText({ ...base, status: 'removed', body: null }, tr('ku'))).toBe(TRANSLATIONS.ku['comments.removed']);
     expect(commentText(base, tr('ku'))).toBe('hello');
   });

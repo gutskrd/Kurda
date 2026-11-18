@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 const navigate = vi.fn();
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }), useFocusEffect: () => undefined }));
-// the thread's live events are not under test here
+// The thread's live events are not under test here.
 vi.mock('./useChatSocket', () => ({ useChatSocket: () => undefined }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { Alert, type AlertButton } from 'react-native';
@@ -22,14 +22,8 @@ patchReactNativeWeb();
 afterEach(cleanup);
 
 describe('reporting from the top of a conversation', () => {
-  /*
-   * Holding a message offers a report of that message; the "⋯" at the top is
-   * about the person — their profile, a report, a block — where anybody looks first.
-   */
-  /*
-   * Nothing sits beside a message: held, it offers its words to copy and,
-   * being someone else's, a report — Report last, as the system orders it.
-   */
+  /* Holding a message offers a report of that message; the "⋯" at the top is about the person: their profile, a report, a block. */
+  /* Nothing sits beside a message: held, it offers its words to copy and, for someone else's, a report, listed last as the system orders it. */
   it('offers Copy and Report when a message is held, and copies its words', async () => {
     testAuth.client = fakeClient({
       'GET /chat/u2/messages': ok({
@@ -48,7 +42,7 @@ describe('reporting from the top of a conversation', () => {
     expect(clipboardStub.text).toBe('silav');
   });
 
-  // the name at the top, with their face, is the quickest way to their profile, as in any conversation
+  // The name and face at the top are the quickest way to their profile.
   it('opens their profile from the name at the top', async () => {
     navigate.mockReset();
     testAuth.client = fakeClient({ 'GET /chat/u2/messages': ok({ messages: [] }) });
@@ -83,7 +77,7 @@ describe('reporting from the top of a conversation', () => {
     act(() => menu.buttons[1]!.onPress?.());
     expect(await screen.findByText('What’s wrong?')).toBeTruthy();
 
-    // a block is asked again before it is done, and ends the conversation
+    // A block is asked again before it is done, and ends the conversation.
     act(() => menu.buttons[2]!.onPress?.());
     const confirm = alerts[1]!;
     expect(confirm.title).toBe('Block rojda?');

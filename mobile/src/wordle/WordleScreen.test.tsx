@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// the result holds a badge's celebration back while its own plays, and that host listens to the navigator
+// The result holds back a badge celebration while its own plays, and that host listens to the navigator.
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn() }));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
@@ -20,17 +20,13 @@ import { buildBoard } from './board';
 import { TURN_MS, TURN_STAGGER_MS, WordleBoard, turnMs } from './WordleBoard';
 import { WordleScreen } from './WordleScreen';
 
-/**
- * Peyvok's result on the phone. The game is played alone, so it earns no XP,
- * daily or practice: the result says where XP does come from in one quiet
- * line, and neither it nor the statistics under it show an XP figure.
- */
+/** Peyvok's result: played alone, so it earns no XP, daily or practice; one line says where XP comes from, and no XP figure appears. */
 
 patchReactNativeWeb({ reduceMotion: true });
 
 afterEach(cleanup);
 
-// stand-in words, never shown to a learner
+// stand-in words, never shown to a learner.
 const row = (word: string, feedback: string) => ({
   letters: [...word],
   feedback: [...feedback].map((f) => (f === 'g' ? 'green' : f === 'y' ? 'yellow' : 'gray')),
@@ -50,7 +46,7 @@ const over = (status: 'won' | 'lost', mode: 'daily' | 'practice' = 'daily') => (
   xpAwarded: 0,
 });
 
-// what the server keeps of Peyvok for a player; `totalXp` is still sent, and no longer grows
+// What the server keeps of Peyvok for a player; `totalXp` is still sent but no longer grows.
 const STATS = {
   played: 12,
   wins: 9,
@@ -78,10 +74,10 @@ describe('Peyvok’s result', () => {
     expect(await screen.findByText('Solved it!')).toBeTruthy();
     expect(screen.getByText('Solved in 2/6')).toBeTruthy();
     expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
-    // nothing earned is shown, not even a zero
+    // Nothing earned is shown, not even a zero.
     expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
 
-    // the statistics are what was played and won, and no XP figure among them
+    // The statistics are games played and won, with no XP figure among them.
     const stats = screen.getByText('Statistics').parentElement!;
     for (const label of ['Played', 'Win %', 'Streak', 'Best', 'Avg']) expect(within(stats).getByText(label)).toBeTruthy();
     expect(within(stats).getByText('3.4')).toBeTruthy();
@@ -101,9 +97,8 @@ describe('Peyvok’s result', () => {
 });
 
 /*
- * The result's Share: the grid of squares with the score over it and the
- * site's address under it, the same message the website's game sends. Squares
- * and counts only, so neither a guess nor the word is in it.
+ * The result's Share: the grid of squares with the score above and the site's address below, as the web game
+ * sends. Squares and counts only, so no guess or word leaks.
  */
 describe('Peyvok’s result, shared', () => {
   afterEach(() => vi.restoreAllMocks());
@@ -118,7 +113,7 @@ describe('Peyvok’s result, shared', () => {
     expect(share).toHaveBeenCalledTimes(1);
     const { message } = share.mock.calls[0]?.[0] as { message: string };
     expect(message).toBe('Hevalo Peyvok (Medium) 2/6\n\n🍋🍏⚪\n🍏🍏🍏\n\nhttps://hevalo.app/win/peyvok');
-    // "mal" and "dar" were the guesses, "dar" the word; the account is "rojda"
+    // "mal" and "dar" were the guesses, "dar" the word; the account is "rojda".
     expect(message).not.toMatch(/mal|dar/i);
     for (const theirs of [testAuth.user.username, testAuth.user.email, '/users/', '@']) expect(message).not.toContain(theirs);
   });
@@ -136,11 +131,7 @@ describe('Peyvok’s result, shared', () => {
   });
 });
 
-/*
- * The game's own moments. A guess used to grey the whole keyboard while it
- * was scored, and its colours appeared between two frames; a word found was a
- * card that was simply there.
- */
+/* The game's own moments: the keyboard stays drawn while a guess is scored, its colours turn in, and a found word has its celebration. */
 describe('Peyvok while it is played', () => {
   const playing = { ...over('won'), status: 'playing' as const, guesses: [row('mal', 'ygx')], remainingAttempts: 5, target: null };
 
@@ -163,13 +154,13 @@ describe('Peyvok while it is played', () => {
     const answer = await open();
     expect(screen.getByTestId('peyvok-checking')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Enter' }).getAttribute('aria-busy')).toBe('true');
-    // every key is drawn as it was, not faded, and none of them takes a press meanwhile
+    // Every key is drawn as it was, not faded, and none takes a press meanwhile.
     const key = screen.getByRole('button', { name: 'z' });
     expect(key.style.opacity).toBe('1');
     fireEvent.click(key);
     await answer(ok({ ...playing, guesses: [row('mal', 'ygx'), row('dar', 'gxg')], remainingAttempts: 4 }));
     expect(screen.queryByTestId('peyvok-checking')).toBeNull();
-    // the letter pressed while it was being scored was not typed into the next row: only its key is called "z"
+    // The letter pressed while scoring was not typed into the next row: only its key is labelled "z".
     expect(screen.getAllByLabelText('z')).toHaveLength(1);
   });
 
@@ -206,7 +197,7 @@ describe('Peyvok while it is played', () => {
 const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
 
 describe('Peyvok’s board', () => {
-  // the squares were edged in the glass's white hairline, which the day's pale page swallowed: an empty board was not there at all
+  // The squares have a visible edge on the day's pale page, so an empty board shows.
   it('edges an empty square so it shows on the day’s page, as a tile waiting to be chosen is edged', async () => {
     localStorage.setItem('kurda_theme_pref_v1', 'light');
     try {
@@ -221,12 +212,9 @@ describe('Peyvok’s board', () => {
 });
 
 /*
- * The result names the word and what it means, in the reader's language, from
- * the word card for exactly that word, which comes with the finished game; and
- * Save to vocabulary saves it by the game, so the server keeps the word the
- * game was about and counts it once. The dictionary used to be searched for the
- * word afterwards, and its first hit, a different word, was shown when none was
- * spelt exactly so.
+ * The result names the word and its meaning in the reader's language, from the word card that comes with the
+ * finished game, and Save to vocabulary saves by the game, so the server stores that exact word and counts it
+ * once.
  */
 describe('Peyvok’s word, once the game is over', () => {
   const card = { entryId: 'e-dar', meanings: { en: 'tree', ku: 'dar', de: 'Baum' }, saved: false };
@@ -249,7 +237,7 @@ describe('Peyvok’s word, once the game is over', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Zum Wortschatz hinzufügen' }));
     const done = await screen.findByRole('button', { name: 'Zum Wortschatz hinzugefügt' });
     expect(done.getAttribute('aria-disabled')).toBe('true');
-    // saved by the game, once, and the dictionary never searched for a word that might not be this one
+    // Saved by the game, once, and the dictionary never searched for a word that might not be this one.
     expect(client.calls.filter((c) => c.path === '/wordle/games/w1/save')).toHaveLength(1);
     expect(client.calls.some((c) => c.path.startsWith('/dictionary/'))).toBe(false);
   });
@@ -296,7 +284,7 @@ describe('Peyvok’s word, once the game is over', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Daily' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Save to vocabulary' }));
     const answer = screen.getByTestId('peyvok-answer');
-    // the reason is said where the button is, to a screen reader as well
+    // The reason is said where the button is, to a screen reader as well.
     await waitFor(() => expect(answer.querySelector('[aria-live="polite"]')?.textContent).toMatch(/\w/));
     expect(screen.getByRole('button', { name: 'Save to vocabulary' }).getAttribute('aria-disabled')).not.toBe('true');
   });
@@ -327,7 +315,7 @@ describe('Peyvok’s word, once the game is over', () => {
     renderWithProviders(<WordleScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Practice' }));
     await screen.findByText('Out of tries.');
-    // the day’s word is slow to come; another practice word is pressed meanwhile, and comes at once
+    // The day’s word is slow to come; another practice word is pressed meanwhile, and comes at once.
     fireEvent.click(screen.getByRole('button', { name: 'Daily' }));
     fireEvent.click(screen.getByRole('button', { name: 'Practice' }));
     expect(await screen.findByRole('button', { name: 'Enter' })).toBeTruthy();

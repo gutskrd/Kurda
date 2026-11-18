@@ -1,22 +1,14 @@
 /**
- * Where each message sits in a conversation as it is read, with no React in it.
- *
- * A thread drawn as one bubble per message, each with a face and a name,
- * reads as a wall: nothing says who is still talking, or when anything was
- * said. Conversation comes in bursts, so the messages are placed in
+ * Where each message sits in a conversation, with no React. Conversation comes in bursts, so messages are grouped
  *
  *   day  →  run (one sender, one burst)  →  message
  *
- * and each message is told four things: whether a day begins above it,
- * whether it is the first or the last of its run (which decides the bubble's
- * corners, its tail, the face at its foot and the name over it), and whether
- * its run is where a moment of the conversation ends, which is where the time
- * is printed.
+ * and each message learns four things: whether a day begins above it, whether it is the first or last of its run
+ * (which decides the bubble's corners, the tail, the face at its foot and the name over it), and whether its run
+ * ends a moment of the conversation, where the time is printed.
  *
- * The same rules as the website's `chat/messageGroups.ts`, to the minute. A
- * copy rather than a shared module because the website folds the list into
- * nested sections it can draw as it is, and a phone's list is flat: every
- * message is a row of its own, so each row has to carry its own place.
+ * The same rules as the web's `chat/messageGroups.ts`, to the minute. A copy because the web folds the list into
+ * nested sections while a phone list is flat, so each row must carry its own place.
  */
 
 /** The least a message needs to be placed. */
@@ -28,13 +20,13 @@ export interface Threaded {
 
 /** Where one message sits. */
 export interface Place {
-  /** the name of the day that begins with this message, to print above it; null when its day has begun */
+  /** The name of the day that begins with this message, printed above it; null once its day has begun. */
   day: string | null;
-  /** the first of its run: the name goes over it (in a group), and the run stands a little apart from the one before */
+  /** The first of its run: the name goes over it (in a group), and the run stands slightly apart from the one before. */
   first: boolean;
-  /** the last of its run: it wears the tail, and the face sits at its foot */
+  /** The last of its run: it wears the tail, and the face sits at its foot. */
   last: boolean;
-  /** its run ends a moment of the conversation, so the time is printed under this, the run's last message */
+  /** Its run ends a moment of the conversation, so the time is printed under this, the run's last message. */
   timed: boolean;
 }
 
@@ -43,18 +35,17 @@ export interface DayWords {
   locale?: string;
   today: string;
   yesterday: string;
-  /** the heading over a message whose time will not parse */
+  /** The heading over a message whose time will not parse. */
   earlier: string;
 }
 
 /**
- * A gap longer than this starts a new run even for the same sender: long
- * enough to keep a burst together, short enough that a reply an hour later
- * is seen to be a separate moment.
+ * A gap longer than this starts a new run even for the same sender: long enough to keep a burst together, short
+ * enough that a reply an hour later reads as separate.
  */
 const RUN_GAP_MS = 5 * 60 * 1000;
 
-/** Longer than this between two runs and the conversation paused there: the run before the pause says when it was. */
+/** A gap longer than this between runs is a pause, and the run before it shows its time. */
 const MOMENT_GAP_MS = 10 * 60 * 1000;
 
 /** The local calendar day, not UTC: a message at one in the morning belongs to the day it was read on. */
@@ -70,7 +61,7 @@ function daysApart(a: Date, b: Date): number {
   return Math.round((bt - at) / 86_400_000);
 }
 
-/** A date in the reader's language; a language the phone has no data for falls back to the phone's own. */
+/** A date in the reader's language; a language without date data on the phone falls back to the phone's own. */
 function written(date: Date, locale: string | undefined, options: Intl.DateTimeFormatOptions): string {
   try {
     return new Intl.DateTimeFormat(locale, options).format(date);
@@ -79,11 +70,7 @@ function written(date: Date, locale: string | undefined, options: Intl.DateTimeF
   }
 }
 
-/**
- * What a day is called over its messages. The last two have names, because
- * that is how people speak of them; the rest of the week is a weekday, and
- * anything older a date, since "Tuesday" stops meaning one Tuesday after a week.
- */
+/** A day's name over its messages: today and yesterday by name, the rest of the week by weekday, anything older by date. */
 export function dayLabel(date: Date, now: Date, words: DayWords): string {
   const diff = daysApart(date, now);
   if (diff === 0) return words.today;
@@ -94,10 +81,8 @@ export function dayLabel(date: Date, now: Date, words: DayWords): string {
 }
 
 /**
- * The time on the clock, "14:05" or "7:46 PM"; the language decides between
- * twelve hours and twenty-four, and the hour is written as the list of
- * conversations writes it (messages/list.ts), with no zero before it in a
- * language that does not put one there.
+ * The clock time, "14:05" or "7:46 PM": the language chooses 12 or 24 hours, and the hour is written as the
+ * conversation list writes it (messages/list.ts), without a leading zero where the language omits one.
  */
 export function timeLabel(iso: string, locale?: string): string {
   const d = new Date(iso);
@@ -106,16 +91,13 @@ export function timeLabel(iso: string, locale?: string): string {
 }
 
 /**
- * Place every message of a thread given oldest first.
- *
- * A message starts a new run when the sender changes, when the day changes,
- * or when more than five minutes have passed. One whose time will not parse
- * never joins a neighbour's run: better a single bubble on its own than a
- * message quietly filed under the wrong day.
+ * Place every message of a thread given oldest first. A new run starts when the sender or day changes, or after
+ * more than five minutes. A message whose time does not parse never joins a neighbour's run, rather than being
+ * filed under the wrong day.
  */
 export function placeMessages<T extends Threaded>(messages: readonly T[], now: Date, words: DayWords): Map<string, Place> {
   const places = new Map<string, Place>();
-  // the start of each run, to find where a run ends and whether the talk paused after it
+  // The start of each run, to find where a run ends and whether the talk paused after it.
   const runs: { from: number; to: number; day: string }[] = [];
   let lastAt: number | null = null;
   let lastDay: string | null = null;
@@ -149,7 +131,7 @@ export function placeMessages<T extends Threaded>(messages: readonly T[], now: D
     const place = places.get(messages[run.to]!.id)!;
     place.last = true;
     const next = runs[i + 1];
-    // the last run of its day always says when; so does one the conversation paused after
+    // The last run of its day always says when; so does one the conversation paused after.
     if (!next || next.day !== run.day) {
       place.timed = true;
       return;
@@ -162,7 +144,7 @@ export function placeMessages<T extends Threaded>(messages: readonly T[], now: D
   return places;
 }
 
-/** Characters that only join or dress the emoji beside them: the joiner, the picture selector, a skin tone, a keycap's ring. */
+/** Characters that only join or modify adjacent emoji: the joiner, the presentation selector, skin tones, a keycap's ring. */
 function isEmojiGlue(code: number): boolean {
   return code === 0x200d || code === 0xfe0f || code === 0x20e3 || (code >= 0x1f3fb && code <= 0x1f3ff);
 }
@@ -170,25 +152,21 @@ function isEmojiGlue(code: number): boolean {
 /** One half of a flag. */
 const isFlagHalf = (code: number): boolean => code >= 0x1f1e6 && code <= 0x1f1ff;
 
-/**
- * The blocks emoji are drawn from. Written as ranges rather than asked of the
- * engine as a Unicode property: a property the engine does not know is an
- * error the moment the file is read, on a phone nobody is holding a debugger to.
- */
+/** The emoji blocks, as ranges rather than a Unicode property escape: an engine that does not know a property fails when the file loads. */
 function isEmojiBase(code: number): boolean {
   return (
-    (code >= 0x1f300 && code <= 0x1faff) || // pictographs, faces, hands, transport, the later additions
-    (code >= 0x2600 && code <= 0x27bf) || // the sun, the heart, the stars, dingbats
-    (code >= 0x2b00 && code <= 0x2bff) || // the star and the large squares
-    (code >= 0x1f000 && code <= 0x1f2ff) || // tiles, cards, the enclosed signs
+    (code >= 0x1f300 && code <= 0x1faff) || // Pictographs, faces, hands, transport, the later additions.
+    (code >= 0x2600 && code <= 0x27bf) || // The sun, the heart, the stars, dingbats.
+    (code >= 0x2b00 && code <= 0x2bff) || // The star and the large squares.
+    (code >= 0x1f000 && code <= 0x1f2ff) || // Tiles, cards, the enclosed signs.
     code === 0x203c ||
     code === 0x2049 ||
     code === 0x00a9 ||
     code === 0x00ae ||
     code === 0x2122 ||
     (code >= 0x2190 && code <= 0x21ff) || // arrows
-    (code >= 0x2300 && code <= 0x23ff) || // the watch, the hourglass, the media keys
-    (code >= 0x25a0 && code <= 0x25ff) || // the small squares and triangles
+    (code >= 0x2300 && code <= 0x23ff) || // The watch, the hourglass, the media keys.
+    (code >= 0x25a0 && code <= 0x25ff) || // The small squares and triangles.
     (code >= 0x2900 && code <= 0x297f) ||
     (code >= 0x3030 && code <= 0x303d) ||
     code === 0x3297 ||
@@ -196,17 +174,13 @@ function isEmojiBase(code: number): boolean {
   );
 }
 
-/**
- * Whether a message is nothing but one to three emoji, which a chat shows
- * large and without a bubble: a heart sent on its own is the whole message,
- * and reads as one at that size.
- */
+/** Whether a message is only one to three emoji, which a chat shows large without a bubble. */
 export function isEmojiOnly(body: string | null | undefined): boolean {
   if (!body) return false;
   const text = body.trim();
   if (text.length === 0 || text.length > 40) return false;
   let count = 0;
-  // whether the last character joined two emoji into one (a family, a flag's first half)
+  // Whether the last character joined two emoji into one (a family, a flag's first half).
   let joined = false;
   let flagOpen = false;
   for (const char of text) {
@@ -222,7 +196,7 @@ export function isEmojiOnly(body: string | null | undefined): boolean {
       continue;
     }
     if (isFlagHalf(code)) {
-      // two halves are one flag
+      // Two halves are one flag.
       if (flagOpen) flagOpen = false;
       else {
         flagOpen = true;

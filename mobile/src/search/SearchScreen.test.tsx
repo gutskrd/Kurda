@@ -26,11 +26,7 @@ afterEach(() => {
 });
 
 describe('Search with nothing typed', () => {
-  /*
-   * People you may know take a moment to arrive. "Type to search"
-   * used to show first and then be replaced by them — the screen changing
-   * its mind under the reader. Their place is held in grey instead.
-   */
+  /* People you may know take a moment to arrive, so their place is held in grey instead of flashing "Type to search" first. */
   it('holds the place of people you may know while they load, rather than saying there is nothing', async () => {
     let answer: (v: unknown) => void = () => undefined;
     testAuth.client = fakeClient({ 'GET /friends/suggestions': () => new Promise((go) => (answer = go)) as never });
@@ -50,12 +46,7 @@ describe('Search with nothing typed', () => {
     expect(screen.queryAllByTestId('skeleton')).toHaveLength(0);
   });
 
-  /*
-   * Clear is one line of words over the recent searches, 4 above the first;
-   * the searches are 44 tall and 2 apart. Each reaches toward its neighbour
-   * only half of the gap between them, so a tap between two lands on the
-   * nearer one rather than on whichever comes later.
-   */
+  /* Clear sits 4 above the first recent search, and searches are 44 tall and 2 apart: each reaches half the gap toward its neighbour. */
   it('lets Clear and the recent searches share the gaps between them', async () => {
     localStorage.setItem('hevalo_search_recents_v1', JSON.stringify(['dar', 'av']));
     testAuth.client = fakeClient({ 'GET /friends/suggestions': ok({ suggestions: [] }) });
@@ -68,7 +59,7 @@ describe('Search with nothing typed', () => {
 });
 
 describe('Search when the server cannot answer', () => {
-  // a search that failed is not a search that found nothing, and it can be tried again
+  // A search that failed is not a search that found nothing, and it can be tried again.
   it('says it could not search, not that nothing was found, and tries again', async () => {
     let calls = 0;
     testAuth.client = fakeClient({
@@ -87,12 +78,7 @@ describe('Search when the server cannot answer', () => {
   });
 });
 
-/*
- * From the last letter typed until the server answered, the page was blank:
- * a quarter of a second's pause and the round trip, which read as nothing
- * found. The rows are held in grey now, and the lists the phone holds answer
- * on the letter.
- */
+/* From the last letter typed until the server answers, the rows are held in grey, and the local lists answer immediately. */
 describe('Search while it is looking', () => {
   const course = {
     'GET /courses': ok({ courses: [{ id: 'c1', title: 'Kurmancî', dialect: 'kurmanji' }] }),
@@ -112,14 +98,14 @@ describe('Search while it is looking', () => {
     renderWithProviders(<SearchScreen onExit={() => {}} />);
     expect(await screen.findByText('Type to search across the app.')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'azad' } });
-    // at once: before the pause is over, before anything is asked
+    // At once: before the pause is over, before anything is asked.
     expect(screen.getByTestId('search-looking')).toBeTruthy();
     expect(screen.queryByText('Nothing found for “azad”.')).toBeNull();
     await waitFor(() => expect(answer).not.toBe(undefined));
     await act(async () => {
       await new Promise((r) => setTimeout(r, 300));
     });
-    // asked, and still unanswered: still grey, still not "nothing found"
+    // Asked, and still unanswered: still grey, still not "nothing found".
     expect(screen.getByTestId('search-looking')).toBeTruthy();
     await act(async () => answer(ok({ results: [{ userId: 'u2', username: 'azad', displayName: null }] })));
     expect(await screen.findByText('azad')).toBeTruthy();
@@ -133,7 +119,7 @@ describe('Search while it is looking', () => {
     await waitFor(() => expect(client.calls.some((c) => c.path === '/courses/c1/map')).toBe(true));
     await act(async () => undefined);
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 's' } });
-    // one letter is not asked of the server at all, and the lesson is there in the same breath
+    // One letter is not asked of the server at all, and the lesson is there in the same breath.
     expect(screen.getByRole('button', { name: 'Silavkirin' })).toBeTruthy();
     expect(screen.queryByTestId('search-looking')).toBeNull();
   });
@@ -153,7 +139,7 @@ describe('Search while it is looking', () => {
     await waitFor(() => expect(answers.az).toBeTruthy());
     fireEvent.change(field, { target: { value: 'azad' } });
     expect(await screen.findByText('azad')).toBeTruthy();
-    // the slow answer to the shorter search arrives last, and changes nothing
+    // The slow answer to the shorter search arrives last, and changes nothing.
     await act(async () => answers.az!(ok({ results: [{ userId: 'u9', username: 'azize', displayName: null }] })));
     expect(screen.queryByText('azize')).toBeNull();
     expect(screen.getByText('azad')).toBeTruthy();
@@ -174,10 +160,7 @@ describe('Search for a person or a game', () => {
     expect(client.calls.some((c) => c.path.startsWith('/users/search?q=%40'))).toBe(false);
   });
 
-  /*
-   * The games' own register is what is searched: a game added to the Games
-   * screen since the search was written is found by name like the first five.
-   */
+  /* Games are searched from the games' own register, so a game added to the Games screen is found by name. */
   it('finds a game that has a card on the Games screen, and opens it the way its card does', async () => {
     forgetLastLetterAvailability();
     navigation.navigate.mockReset();
@@ -196,11 +179,11 @@ describe('Search for a person or a game', () => {
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'impostor' } });
     fireEvent.click(await screen.findByRole('button', { name: 'Xapînok' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Impostor');
-    // one name, two ways in: each row says which, and opens that one
+    // One name, two ways in: each row says which, and opens that one.
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'who am' } });
     fireEvent.click(await screen.findByRole('button', { name: 'Ez kî me?, With friends' }));
     expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'friends' });
-    // and the first games are found as they always were
+    // And the original games are still found.
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'battle' } });
     expect(await screen.findByRole('button', { name: 'Pêşbaziya Peyvan' })).toBeTruthy();
   });

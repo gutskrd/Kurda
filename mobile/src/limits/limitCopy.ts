@@ -5,12 +5,9 @@ import type { TranslationKey } from '../i18n/translations';
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 /**
- * What each limit says when it is reached (@kurda/shared limits): what the
- * limit is, its number, and the one thing that makes room — never that the
- * reader did something wrong. `theirs` is for a limit that is somebody
- * else's: the friend whose list is full, the member who already runs as many
- * groups as anyone may. The browser says the same sentences
- * (web/src/lib/limits.ts).
+ * The sentence each limit says when it is reached (@kurda/shared limits): the limit, its number, and what makes
+ * room, never blame. `theirs` is for someone else's limit, such as a friend whose list is full. The web app says
+ * the same sentences (web/src/lib/limits.ts).
  */
 const LIMIT_COPY: Record<LimitKind, { mine: TranslationKey; theirs?: TranslationKey }> = {
   groups_owned: { mine: 'limits.groupsOwned', theirs: 'limits.groupsOwnedTheirs' },
@@ -18,12 +15,12 @@ const LIMIT_COPY: Record<LimitKind, { mine: TranslationKey; theirs?: Translation
   group_members: { mine: 'limits.groupMembers' },
   friends: { mine: 'limits.friends', theirs: 'limits.friendsTheirs' },
   friend_requests_sent: { mine: 'limits.friendRequestsSent' },
-  // only ever somebody else's
+  // Only ever somebody else's.
   friend_requests_received: { mine: 'limits.friendRequestsReceived' },
   blocks: { mine: 'limits.blocks' },
   saved_words: { mine: 'limits.savedWords' },
   play_invites_pending: { mine: 'limits.playInvites' },
-  // the games and the reports said these before there was a limit list
+  // Codes the games and reports used before the shared limit list existed.
   hosted_games: { mine: 'stories.error.tooManyGames' },
   library_drafts: { mine: 'limits.drafts' },
   reports_per_day: { mine: 'report.error.limit' },

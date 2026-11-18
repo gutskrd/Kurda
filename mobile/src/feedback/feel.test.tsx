@@ -4,7 +4,7 @@ vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
-// the lesson's end may offer reminders (push/ReminderOffer.tsx)
+// The lesson's end may offer reminders (push/ReminderOffer.tsx).
 vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
@@ -12,7 +12,7 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn(), addListener: () => () => undefined, isFocused: () => true }),
   useFocusEffect: (run: () => void | (() => void)) => {
-    // a screen in front: its focus effect runs once, as it would on arrival
+    // A focused screen: its focus effect runs once, as on arrival.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { useEffect } = require('react') as typeof import('react');
     useEffect(() => run(), [run]);
@@ -44,9 +44,8 @@ import type { FeedItem } from '../feed/types';
 patchReactNativeWeb();
 
 /*
- * Which buzz each moment is felt as, and that the moments that are not worth
- * one stay still. The pacing rules themselves are tested in shared haptics.ts;
- * here the question is only "did the right event fire, at the right moment".
+ * Which haptic each moment fires, and that moments not worth one stay still. Pacing is tested in shared
+ * haptics.ts; here only the right event at the right moment.
  */
 let felt: HapticEvent[] = [];
 let stop: () => void = () => undefined;
@@ -137,7 +136,7 @@ describe('a pull to refresh', () => {
     resetHaptics();
     as('ios', () => refreshFelt(refresh)());
     expect(felt).toEqual(['tap']);
-    // and the list reloads either way
+    // And the list reloads either way.
     expect(refresh).toHaveBeenCalledTimes(2);
   });
 });
@@ -174,8 +173,8 @@ describe('a celebration is felt once, as the art lands', () => {
 
   it('or at the tap that skips it, before it has landed — once', () => {
     vi.useFakeTimers();
-    // the stage's own skip (a Pressable over the art) calls this; tests run React Native's
-    // animations as instant, so the moment is skipped through the hook itself
+    // The stage's own skip (a Pressable over the art) calls this; tests run animations instantly, so the moment
+    // is skipped through the hook.
     const { result } = renderHook(() => useCelebration(), { wrapper: Providers });
     act(() => result.current.skip());
     expect(felt).toEqual(['celebrate']);
@@ -239,25 +238,25 @@ describe('an answer, as its verdict arrives', () => {
           : ok({ verdict: 'wrong', accepted: false, correction: 'nan', duplicate: false }),
     });
     renderWithProviders(<SessionPlayer view={view} paths={paths} onExit={() => undefined} />);
-    // an option chosen is a tick, then the verdict as it arrives
+    // An option chosen is a tick, then the verdict as it arrives.
     fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     await waitFor(() => expect(felt).toEqual(['select', 'correct']));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    // both questions offer "av": the second one's, once it is the question asked, not the first one's on its way out
+    // Both questions offer "av": press the second one's, once it is asked, not the first one's on its way out.
     await screen.findByText('Bread?');
-    // two answers a test gives faster than a person can: the pacing of the buzzes and the chimes is not what this is
-    // about, and a tick within a moment of the last verdict's buzz is one the phone leaves out on purpose
+    // Two answers faster than a person could give: pacing is not under test here, and a tick right after a
+    // verdict's buzz is dropped on purpose.
     resetHaptics();
     fireEvent.click(screen.getByRole('radio', { name: 'av' }));
     resetSounds();
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     await waitFor(() => expect(felt).toEqual(['select', 'correct', 'select', 'wrong']));
-    // and heard: a bright pair for the right answer, a low soft one for the miss
+    // And heard: a bright pair for the right answer, a low soft one for the miss.
     expect(heard).toEqual(['correct-1', 'wrong']);
     stopHearing();
-    // and the right answer is marked where it was asked
+    // And the right answer is marked where it was asked.
     expect(screen.getByRole('radio', { name: 'nan, Correct' })).toBeTruthy();
   });
 });
@@ -281,7 +280,7 @@ describe('something given', () => {
     const { rerender } = renderWithProviders(<FeedCard item={item} />);
     fireEvent.click(screen.getByRole('button', { name: 'Like' }));
     expect(felt).toEqual(['tap']);
-    // the heart fills at once, before the server has answered
+    // The heart fills at once, before the server has answered.
     await waitFor(() => expect(screen.getByRole('button', { name: /Unlike/ })).toBeTruthy());
     resetHaptics();
     rerender(<FeedCard item={{ ...item, engagement: { ...item.engagement, liked: true, likes: 1 } }} />);
