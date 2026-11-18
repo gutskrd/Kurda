@@ -6,11 +6,8 @@ export interface RateLimitOptions {
   max: number;
   windowMs: number;
   /**
-   * 'ip' — always key by client IP (pre-auth routes like login, where the
-   *        attacker has no user identity yet)
-   * 'user-or-ip' (default) — key by userId when authenticated, else IP.
-   *        Users behind shared IPs (schools, mobile carriers) are limited
-   *        individually, not collectively.
+   * 'ip' always keys by client address (pre-auth routes such as login, where there is no user yet); 'user-or-ip', the
+   * default, keys by user when signed in, so users behind shared addresses are limited individually.
    */
   per?: 'ip' | 'user-or-ip';
 }
@@ -24,16 +21,14 @@ export const DEFAULT_RATE_LIMIT: Required<RateLimitOptions> = {
 const EXEMPT_ROUTES = new Set(['/health', '/metrics']);
 
 /**
- * An address is limited by its network (net/network-key.ts): the address itself
- * for IPv4, the /64 for IPv6, so a caller cannot get a fresh budget by moving to
- * another address in its own /64. `req.ip` is the client as net/client-ip.ts
- * resolved it, not the proxy in front.
+ * An address is limited by its network (net/network-key.ts): itself for IPv4, its /64 for IPv6, so moving within a
+ * /64 gives no fresh budget. `req.ip` is the client as net/client-ip.ts resolved it.
  */
 function limitKey(req: FastifyRequest, route: string, per: 'ip' | 'user-or-ip'): string {
   const principal =
     per === 'user-or-ip' && req.user?.id ? `user:${req.user.id}` : `ip:${networkKey(req.ip) ?? req.ip}`;
-  // a read and a write at the same address are two routes with two budgets: reading a correspondence again and again
-  // (it reloads whenever a letter comes) must never use up the few replies a minute that writing to it allows
+  // Reads and writes at the same address have separate budgets, so reloading a correspondence never uses up the few
+  // replies a minute writing to it allows.
   return `ratelimit:${req.method}:${route}:${principal}`;
 }
 
@@ -43,10 +38,8 @@ export interface RateLimitHooks {
 }
 
 /**
- * Sliding-window rate limiting (KUR-010). Global default of
- * 100 req/min/user; routes override via
- *   { config: { rateLimit: { max, windowMs, per } } }
- * Exceeding returns the standard envelope with 429 + Retry-After.
+ * Sliding-window rate limiting: 100 requests a minute per user by default; routes override it with
+ * `{ config: { rateLimit: { max, windowMs, per } } }`. Exceeding answers the standard envelope with 429 and Retry-After.
  */
 export function setupRateLimit(app: FastifyInstance, store: RateLimitStore, hooks: RateLimitHooks = {}): void {
   app.addHook('onRequest', async (req, reply) => {
