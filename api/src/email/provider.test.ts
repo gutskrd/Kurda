@@ -132,10 +132,8 @@ describe('ResendEmailProvider', () => {
 });
 
 /**
- * A rush: many people asking for a code in the same minute. The account may
- * ask the provider ten times a second, and the queue's workers are faster
- * than that, so sends take turns under the limit, and one that is still told
- * "too fast" waits and asks again instead of being lost.
+ * Many people asking for a code in the same minute: the account may call the provider ten times a second and the
+ * queue's workers are faster, so sends take turns under the limit, and one still told "too fast" waits and retries.
  */
 describe('ResendEmailProvider in a rush', () => {
   afterEach(() => {
@@ -212,7 +210,7 @@ describe('ResendEmailProvider in a rush', () => {
     const both = Promise.all([provider.send(mail(1)), provider.send(mail(2))]);
     await vi.runAllTimersAsync();
     await both;
-    // nothing was asked again inside the three seconds the provider asked for
+    // Nothing was retried inside the three seconds the provider asked for.
     const during = calls.slice(1).filter((c) => c.at > 200 && c.at < 3000);
     expect(during, JSON.stringify(calls)).toEqual([]);
     expect(calls.filter((c) => c.to === 'u1@e.com')).toHaveLength(2);

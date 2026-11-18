@@ -19,12 +19,7 @@ describe('renderEmail', () => {
     expect(renderEmail('deletion-notice', 'en', {}).text).toContain('{graceDays}');
   });
 
-  /**
-   * The deletion notice asked for `{date}` while the sender passes the
-   * account's name and the number of days left, so every notice went out
-   * reading "will be deleted on {date}". It is written for the variables
-   * the sender has, in both languages.
-   */
+  /** The deletion notice is written for the variables the sender passes (name and days left), in both languages. */
   it('fills the deletion notice from what the sender passes', () => {
     for (const locale of EMAIL_LOCALES) {
       const r = renderEmail('deletion-notice', locale, { username: 'dilan', graceDays: '14' });
@@ -102,28 +97,20 @@ describe('branded auth emails', () => {
     }
   });
 
-  /**
-   * These two used to carry the Kurmancî copy in the `en` slot as well, byte for
-   * byte, because nothing passed a locale and `en` was what everyone got — so
-   * duplicating it was how Kurdish readers got Kurdish mail. It also sent
-   * Kurmancî to everyone else, in the two messages you cannot finish signing up
-   * or recover an account without. Callers pass the account's locale now.
-   */
+  /** Each language gets its own copy, so English readers never get Kurmancî sign-up or recovery mail. */
   it('sends each language its own copy', () => {
     for (const tpl of ['verify-email-code', 'password-reset'] as const) {
       const en = renderEmail(tpl, 'en', { code: '1', link: 'x' });
       const ku = renderEmail(tpl, 'ku', { code: '1', link: 'x' });
       expect(en, `${tpl} still sends the same text to both`).not.toEqual(ku);
-      // the letters Kurmancî needs and English does not — a cheap way to catch
-      // the Kurdish text reappearing in the English slot
+      // Letters Kurmancî needs and English does not catch Kurdish text in the English copy.
       expect(en.subject + en.text + (en.html ?? ''), `${tpl} en`).not.toMatch(/[îûêşçÎÛÊŞÇ]/);
       expect(ku.subject + ku.text, `${tpl} ku`).toMatch(/[îûêşç]/);
     }
   });
 
   it('gives Kurmancî readers Kurmancî and everyone else English', () => {
-    // ckb is deliberately English: there is no Soranî copy yet, and Kurmancî in
-    // a script a Soranî reader may not read is worse than English
+    // Soranî gets English: there is no Soranî copy yet, and Kurmancî in a script its readers may not read is worse.
     expect(emailLocaleFor('ku')).toBe('ku');
     for (const other of ['en', 'ckb', 'de', 'fr', 'nl', 'ar', 'tr', 'es', '', null, undefined]) {
       expect(emailLocaleFor(other), `${other} should get English`).toBe('en');
@@ -149,11 +136,7 @@ describe('the urgent-report email to moderators', () => {
   });
 });
 
-/**
- * Every email is drawn from its own text (layout.ts): the same words, one
- * picture, and the link or the code as the one thing to act on. These hold
- * for all of them, so a template added later is held to them too.
- */
+/** Every email is designed from its own text: the same words, one picture, and one link or code to act on. */
 describe('every email, designed', () => {
   const VARS = {
     username: 'rojda',

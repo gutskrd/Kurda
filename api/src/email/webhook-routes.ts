@@ -11,10 +11,8 @@ const webhookBody = z.object({
 });
 
 /**
- * Email bounce/complaint webhook (KUR-098). A hard bounce or spam complaint
- * suppresses future sends to that address. Guarded by a shared secret compared
- * in constant time (same pattern as the IAP webhook); fails closed — 503 when no
- * secret is configured, 401 on mismatch — so it can't be spammed to suppress
+ * Email bounce and complaint webhook: a hard bounce or spam complaint suppresses the address. Guarded by a shared
+ * secret compared in constant time, and fails closed (503 with no secret, 401 on mismatch) so nobody can suppress
  * arbitrary addresses.
  */
 export function registerEmailWebhookRoutes(
