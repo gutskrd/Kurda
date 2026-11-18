@@ -75,7 +75,7 @@ export function Ranks(): React.JSX.Element {
   );
 }
 
-// ---- the spread -----------------------------------------------------------------------
+// ---- The spread -----------------------------------------------------------------------
 
 function Spread(): React.JSX.Element {
   const loaded = useLoad(() => api<{ games: TierSpread[] }>('/admin/ranks/spread').then((r) => r.games), []);
@@ -187,7 +187,7 @@ function SpreadChart({ spread }: { spread: TierSpread }): React.JSX.Element {
   );
 }
 
-// ---- the top ---------------------------------------------------------------------------
+// ---- The top ---------------------------------------------------------------------------
 
 function Top({ game }: { game: RankedGame }): React.JSX.Element {
   const loaded = useLoad(() => api<{ players: TopPlayer[] }>(`/admin/ranks/top/${encodeURIComponent(game)}`).then((r) => r.players), [game]);
@@ -286,7 +286,7 @@ function PlayerGamesDrawer({ player, onClose, onChanged }: { player: TopPlayer; 
   );
 }
 
-// ---- the pairs --------------------------------------------------------------------------
+// ---- The pairs --------------------------------------------------------------------------
 
 /** The score adds the signals up (a shared device 3, many games in a day 2, lopsided results 2, a shared network 1). */
 function scoreTone(score: number): Tone {

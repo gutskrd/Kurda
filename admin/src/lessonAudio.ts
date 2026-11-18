@@ -1,13 +1,7 @@
 /**
- * The lessons side of the audio studio, as data: what the API says the
- * lessons need, how the page filters and groups it, and which item comes next
- * when an editor is working through what is missing. Kept apart from the page
- * so it can be tested without a browser.
- *
- * It also reads the recording plan: who each text is for (`plannedSpeaker`,
- * from the exercises' `voice`), so the page can show one character's lines,
- * count what is left for each, and lay out a character's script — their lines
- * in course order, numbered, for one person to record in a row.
+ * The lessons side of the audio studio as data: what the lessons need recorded, how the page filters and groups it,
+ * what comes next while working through the missing ones, and the recording plan (who each text is for, from the
+ * exercises' `voice`), kept apart from the page so it tests without a browser.
  */
 import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, type LipsyncData, type SpeakerId } from '@kurda/shared';
 import { VOICE_ORDER } from './voicePlan';
@@ -15,19 +9,12 @@ import { VOICE_ORDER } from './voicePlan';
 export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing' | 'conversation';
 
 /**
- * One lesson that uses a text (GET /admin/lesson-audio) — or one story: the
- * API lists every sentence of every story that is not archived in the same
- * shape, a story filed as a course of its own per variety ("Stories —
- * Kurmancî", courseId `stories:<variety>`) with the story as both its unit
- * and its one lesson, and no exercise types.
+ * One lesson that uses a text (GET /admin/lesson-audio), or one story: unarchived stories' sentences come in the same
+ * shape, each variety a course of its own (courseId `stories:<variety>`) with the story as its unit and its one lesson.
  */
 export interface Usage {
   courseId: string;
-  /**
-   * What the course filter names the course by (`?course=kurmanji-road`); a
-   * story's is its courseId. Missing from an API older than this panel, which
-   * a deploy can leave running for a few minutes: `courseKey` falls back.
-   */
+  /** The course filter's name for it (`?course=kurmanji-road`); absent from an older API mid-deploy, where `courseKey` falls back. */
   courseSlug?: string;
   courseTitle: string;
   unitId: string;
@@ -55,26 +42,16 @@ export interface Item {
   updatedAt: string | null;
   /** Who is shown saying it, or null for no character. */
   speaker?: SpeakerId | null;
-  /**
-   * Who is to record it: the `voice` of the first exercise in course order
-   * that names one, or a conversation line's character; null when nothing
-   * plans it (missing from an older API, and on a phrase added here)
-   */
+  /** Who is to record it: the first `voice` in course order, or a conversation line's character; null when unplanned. */
   plannedSpeaker?: SpeakerId | null;
   /** It has a mouth timeline. */
   hasLipsync?: boolean;
-  /**
-   * The timeline itself, null for none: the list carries it only when asked
-   * (`withLipsync`), and a save made here answers with it; missing while not known
-   */
+  /** The timeline, null for none; the list carries it only `withLipsync`, and absent means not known yet. */
   lipsync?: LipsyncData | null;
   usedIn: Usage[];
   /** Recorded, but no lesson uses it (or added here by hand). */
   unused: boolean;
-  /**
-   * A conversation's line: which conversation, and who says it. Recorded with
-   * `&line=<conversation>:<part>` (`recordPath`), and filed under that part only.
-   */
+  /** A conversation's line and who says it, recorded with `&line=<conversation>:<part>` and filed under that part only. */
   line?: { conversation: string; part: number; name: string; character: SpeakerId | null };
 }
 
@@ -124,11 +101,7 @@ export function counts(items: readonly Item[]): Record<Filter, number> {
   };
 }
 
-/**
- * Soranî is written in Arabic script, right to left; Kurmancî in Latin. Set
- * on the element so the browser shapes and orders the text, and a screen
- * reader says it in the right voice.
- */
+/** Soranî is in Arabic script, right to left, and Kurmancî in Latin; set on the element for shaping and screen readers. */
 export function scriptOf(text: string): { lang: 'ckb' | 'ku'; dir: 'rtl' | 'ltr' } {
   return /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/.test(text) ? { lang: 'ckb', dir: 'rtl' } : { lang: 'ku', dir: 'ltr' };
 }
@@ -155,11 +128,7 @@ export interface CourseGroup {
   units: UnitGroup[];
 }
 
-/**
- * Course → unit → lesson, in the order the API lists them (course order).
- * A text several lessons use is filed once, under the first; what no lesson
- * uses is returned apart.
- */
+/** Course → unit → lesson in course order. A text several lessons use is filed under the first; unused ones come apart. */
 export function group(items: readonly Item[]): { courses: CourseGroup[]; loose: Item[] } {
   const courses: CourseGroup[] = [];
   const loose: Item[] = [];
@@ -200,11 +169,7 @@ export function displayOrder(items: readonly Item[]): Item[] {
   return [...courses.flatMap((c) => c.units.flatMap((u) => u.lessons.flatMap((l) => l.items))), ...loose];
 }
 
-/**
- * The next item still to record after `afterKey`, in page order, wrapping
- * round — what "Record next missing" moves to after each save. Null when
- * everything is recorded. With no `afterKey`, the first missing item.
- */
+/** The next item still to record after `afterKey` (or the first), in page order and wrapping; null when all are recorded. */
 export function nextMissing(ordered: readonly Item[], afterKey: string | null): Item | null {
   const at = afterKey ? ordered.findIndex((i) => i.key === afterKey) : -1;
   for (let step = 1; step <= ordered.length; step++) {
@@ -224,10 +189,7 @@ export function neighbour(ordered: readonly Item[], key: string | null, step: nu
 
 export type AddResult = { ok: true; items: Item[]; key: string; existed: boolean } | { ok: false; problem: string };
 
-/**
- * Add a phrase of the editor's own to record. If the lessons already use it
- * (spelled however), that item is the one to record, and nothing is added.
- */
+/** Add a phrase of the editor's own to record; one the lessons already use, however spelled, is that item instead. */
 export function addPhrase(items: readonly Item[], raw: string): AddResult {
   const text = raw.normalize('NFC').trim().replace(/\s+/g, ' ');
   const key = lessonAudioKey(text);
@@ -266,10 +228,7 @@ export function withRecording(items: readonly Item[], saved: Saved): Item[] {
   );
 }
 
-/**
- * The stored timelines from the list read `withLipsync`, on the items that do
- * not know theirs yet — where it is still the same take, not one saved since.
- */
+/** Stored timelines from a `withLipsync` read, on items that do not know theirs yet and still hold the same take. */
 export function withTimelines(items: readonly Item[], read: readonly Item[]): Item[] {
   const stored = new Map(read.map((i) => [i.key, i]));
   return items.map((i) => {
@@ -317,10 +276,8 @@ export function describeUsage(u: Usage): string {
 }
 
 /**
- * A lesson across its versions (its skill and position), or a story — what
- * the studio files a text under, and what a "Record" link from the lesson or
- * story list points at (#/audio/lessons?lesson=<skillId>:<position>,
- * #/audio/stories?story=<storyId>).
+ * A lesson across its versions (skill and position), or a story: what the studio files a text under, and what a
+ * "Record" link points at (#/audio/lessons?lesson=<skillId>:<position>, #/audio/stories?story=<storyId>).
  */
 export function lessonGroupId(u: Pick<Usage, 'skillId' | 'lessonPosition'>): string {
   return `${u.skillId}:${u.lessonPosition}`;
@@ -330,10 +287,8 @@ export function lessonGroupId(u: Pick<Usage, 'skillId' | 'lessonPosition'>): str
 export type Scope = 'lessons' | 'stories';
 
 /**
- * An item as one side of the studio sees it — with only its uses on that side
- * (and, with `focus`, in that one lesson or story) — or null when it has none
- * there. A text both a lesson and a story use is on both sides. What nothing
- * uses, a recording left behind or a phrase added by hand, is on the lessons'.
+ * An item with only its uses on one side of the studio (and, with `focus`, in one lesson or story), or null when it
+ * has none there. What nothing uses belongs to the lessons' side.
  */
 export function inScope(item: Item, scope: Scope, focus?: string | null): Item | null {
   const uses = item.usedIn.filter((u) => (scope === 'stories' ? isStoryUsage(u) : !isStoryUsage(u)));
@@ -362,11 +317,7 @@ export function coursesOf(items: readonly Item[]): Array<{ slug: string; title: 
   return [...out].map(([slug, title]) => ({ slug, title }));
 }
 
-/**
- * An item as one course sees it — with only its uses in that course, the
- * first of which is where it is filed there — or null when the course does
- * not use it. Without a course, the item as it is.
- */
+/** An item with only its uses in one course, or null when the course does not use it; without a course, unchanged. */
 export function inCourse(item: Item, course: string | null): Item | null {
   if (!course) return item;
   const here = item.usedIn.filter((u) => courseKey(u) === course);
@@ -374,11 +325,7 @@ export function inCourse(item: Item, course: string | null): Item | null {
   return here.length === item.usedIn.length ? item : { ...item, usedIn: here };
 }
 
-/**
- * Whose line an item is: who it is planned for, else — once it is recorded —
- * who was heard saying it. A text no lesson uses is nobody's: it belongs to
- * no script.
- */
+/** Whose line an item is: who it is planned for, else who was recorded saying it; a text no lesson uses is nobody's. */
 export function voiceOf(item: Item): SpeakerId | null {
   if (isLoose(item)) return null;
   return item.plannedSpeaker ?? (item.recorded ? (item.speaker ?? null) : null);
@@ -418,10 +365,8 @@ export interface CoursePlan {
 }
 
 /**
- * The recording plan, course by course: for each character, how much of what
- * is theirs is recorded. A text used in two courses counts in both, since
- * each course needs it. A course nothing in which is planned for anyone has
- * no plan, and is left out.
+ * The recording plan per course: how much of each character's lines is recorded. A text in two courses counts in
+ * both; a course with nothing planned is left out.
  */
 export function recordingPlan(items: readonly Item[]): CoursePlan[] {
   return coursesOf(items).flatMap(({ slug, title }) => {

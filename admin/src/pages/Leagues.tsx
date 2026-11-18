@@ -293,7 +293,7 @@ function RunDialog({ kind, onClose, onDone }: { kind: 'settle' | 'merge'; onClos
   );
 }
 
-// ---- one group --------------------------------------------------------------------------
+// ---- One group --------------------------------------------------------------------------
 
 type Standing = LeagueGroupDetail['standings'][number];
 

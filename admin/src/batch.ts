@@ -1,18 +1,9 @@
 /**
- * Working through a long list a few items at a time, as the Characters page
- * does over every recording: with pause, resume and cancel, and an outcome
- * for each item, so one that fails is set aside and the rest go on.
- *
- * Pausing lets the items already started finish and starts no more until
- * resumed. Cancelling starts no more either, and aborts what the work passed
- * the signal to (a download); an item stopped that way is neither done nor
- * failed, only not done.
- *
- * The items come from a source: a list in hand, or pages read from the server
- * as the run gets to them (`pagedSource`), so a run over thousands starts at
- * once. When the server says to slow down (`retryAfter` recognises it), the
- * whole run waits as long as it asked and the item is tried again: a busy
- * server is no fault of the item, and failing every item left would be wrong.
+ * Working through a long list a few items at a time (the Characters page's jobs), with pause, resume and cancel and an
+ * outcome per item, so a failure is set aside and the rest go on. Pausing lets started items finish; cancelling also
+ * aborts their signal, and an item stopped that way is only not done. Items come from a list or from pages read as
+ * the run reaches them (`pagedSource`). When the server asks to slow down (`retryAfter`), the whole run waits and the
+ * item is tried again, since a busy server is no fault of the item.
  */
 
 export interface BatchControl {
@@ -108,9 +99,8 @@ export function chainSources<T>(...sources: BatchSource<T>[]): BatchSource<T> {
 }
 
 /**
- * Items read a page at a time, the next page asked for only when the last is
- * used up. Two workers asking at once share one request; a request that fails
- * is made again from the same cursor the next time an item is asked for.
+ * Items read a page at a time, the next asked for when the last is used up. Workers asking at once share one request,
+ * and a failed request is retried from the same cursor on the next ask.
  */
 export function pagedSource<T>(page: (cursor: string | null) => Promise<{ items: T[]; nextCursor: string | null }>): BatchSource<T> {
   const buffer: T[] = [];
@@ -153,9 +143,8 @@ export interface BatchOptions<T> {
 }
 
 /**
- * Run `work` over the items, at most `concurrency` at once, in order.
- * Resolves when every item has an outcome, or once cancelled and the items in
- * hand are finished. Never rejects: a failure is an item's outcome.
+ * Run `work` over the items in order, at most `concurrency` at once. Resolves when every item has an outcome, or once
+ * cancelled and the items in hand are finished; never rejects.
  */
 export async function runBatch<T>(
   items: readonly T[] | BatchSource<T>,

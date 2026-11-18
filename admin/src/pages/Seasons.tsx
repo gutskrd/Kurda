@@ -225,7 +225,7 @@ function RewardTable(): React.JSX.Element {
   );
 }
 
-// ---- one season ---------------------------------------------------------------------
+// ---- One season ---------------------------------------------------------------------
 
 type Given = AdminSeasonRewards['given'][number];
 

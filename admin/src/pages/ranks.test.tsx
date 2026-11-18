@@ -30,7 +30,7 @@ function at(hash: string): void {
   location.hash = hash;
 }
 
-// ---- ranks ----------------------------------------------------------------------------
+// ---- Ranks ----------------------------------------------------------------------------
 
 const tiers = (counts: number[]): TierSpread['tiers'] => {
   const total = counts.reduce((a, b) => a + b, 0);
@@ -195,7 +195,7 @@ describe('Game ranks', () => {
   });
 });
 
-// ---- seasons ----------------------------------------------------------------------------
+// ---- Seasons ----------------------------------------------------------------------------
 
 const CURRENT = seasonOf(new Date()).id;
 const SEASONS: SeasonList = {
@@ -276,7 +276,7 @@ describe('Seasons', () => {
   });
 });
 
-// ---- leagues ----------------------------------------------------------------------------
+// ---- Leagues ----------------------------------------------------------------------------
 
 const WEEK = weekStart(new Date());
 const settle = (over: Partial<LeagueRunStatus> = {}): LeagueRunStatus => ({
@@ -406,7 +406,7 @@ describe('Leagues', () => {
   });
 });
 
-// ---- badges -----------------------------------------------------------------------------
+// ---- Badges -----------------------------------------------------------------------------
 
 const CATALOGUE: BadgeCatalogue = {
   families: ['learning', 'habit', 'games', 'ranked', 'friends', 'events', 'secret'],

@@ -53,7 +53,7 @@ import {
   gameName,
 } from '../progress';
 
-// ---- the art ----------------------------------------------------------------------
+// ---- The art ----------------------------------------------------------------------
 
 /** A plain identifier for the art's gradient ids, unique on the page (React's ids carry colons). */
 function useArtId(): string {
@@ -139,7 +139,7 @@ export function BadgeArt({ badgeKey, tier, tiers, size = 56, label }: { badgeKey
   return <Art svg={svg} label={label} className="art-badge" />;
 }
 
-// ---- a weekly run -------------------------------------------------------------------
+// ---- A weekly run -------------------------------------------------------------------
 
 /** Where a settle or merge stands, with when, and what it did or why it failed. */
 export function RunLine({ title, run }: { title: string; run: LeagueRunStatus | null }): React.JSX.Element {
@@ -169,7 +169,7 @@ export function RunLine({ title, run }: { title: string; run: LeagueRunStatus | 
   );
 }
 
-// ---- changing a rating ----------------------------------------------------------------
+// ---- Changing a rating ----------------------------------------------------------------
 
 /** What `POST /admin/ranks/games/:game/:ref/void` answers. */
 interface VoidResult {
@@ -254,7 +254,7 @@ export function useResetRating(): (user: { id: string; username: string }, game:
   };
 }
 
-// ---- rated games ------------------------------------------------------------------------
+// ---- Rated games ------------------------------------------------------------------------
 
 function GameState({ g }: { g: { voided: boolean; voidReason: string | null; weight: number } }): React.JSX.Element {
   if (g.voided) {

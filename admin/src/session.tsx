@@ -1,8 +1,4 @@
-/**
- * What this login may do in the admin, from GET /admin/session — read once by
- * the 2FA gate and shared with everything under it, so the nav, the landing
- * page and every page's own checks agree.
- */
+/** What this login may do, from GET /admin/session: read once by the 2FA gate and shared, so every check agrees. */
 import { createContext, useContext, type ReactNode } from 'react';
 import type { SessionAccess } from './navigation';
 

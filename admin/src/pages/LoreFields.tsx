@@ -357,7 +357,7 @@ export function ProverbFields({ payload, onChange, dialect, readOnly }: { payloa
   );
 }
 
-// ---------- translations ----------
+// ---------- Translations ----------
 
 const REVIEW_TONE: Record<TranslationReview, Tone> = { unreviewed: 'warn', reviewed: 'ok' };
 

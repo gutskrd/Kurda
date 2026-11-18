@@ -41,11 +41,7 @@ import { Badges } from './pages/Badges';
 import { Email } from './pages/Email';
 import { GameContent } from './pages/GameContent';
 
-/**
- * Each page by its key (navigation.ts has who may open it and where it sits
- * in the nav). A page gets the route, for the parts of the address below it:
- * #/users/<id>, #/moderation/<caseId>, #/audio/lessons?show=missing.
- */
+/** Each page by its key (navigation.ts has its guard); a page gets the route for the address below it (#/users/<id>). */
 const PAGES: Record<string, (route: Route) => ReactNode> = {
   dashboard: () => <Dashboard />,
   analytics: () => <Analytics />,
@@ -87,11 +83,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   system: () => <System />,
 };
 
-/**
- * The console itself, once signed in: every page, behind the shell. Its own
- * module, so the sign-in loads without it and fetches it in the background
- * while the email and the password are being typed (pages/SignIn).
- */
+/** The signed-in console. A module of its own, so the sign-in loads without it and fetches it while the form is typed in. */
 export default function Console({ onSignOut }: { onSignOut: () => void }): React.JSX.Element {
   const session = useSession();
   const route = useRoute();

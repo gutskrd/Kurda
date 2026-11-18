@@ -1,18 +1,8 @@
 /**
- * This browser's device id for the admin console, sent with every request as
- * `X-Device-Id`, as the website and the phone app send theirs.
- *
- * The API lists a signed-in device once however many times it signs in
- * (GET /me/sessions groups by it), and sign-in protection keys on it
- * (api/src/auth/known-devices.ts). Without one, every sign-in here was a new
- * unnamed device in the admin's own Settings.
- *
- * A random UUID, made once and kept in this origin's localStorage with a copy
- * in a cookie, so a browser that purges one store does not come back as a
- * "new device". The cookie is this module's own second copy — the server
- * never reads it; the id travels only as the header. It says nothing about
- * the browser or the person, only "the same browser as last time". Where both
- * stores are blocked it lives for this tab only.
+ * This browser's device id, sent as `X-Device-Id` like the website's and the app's: the API groups sessions by it and
+ * sign-in protection keys on it (api/src/auth/known-devices.ts). A random UUID kept in localStorage with a copy in a
+ * cookie, so a browser that purges one store is not a new device; the server never reads the cookie. With both stores
+ * blocked it lives for this tab only.
  */
 const KEY = 'kurda_admin_device_id';
 /** What the API accepts (api/src/auth/routes.ts `deviceIdOf`). */

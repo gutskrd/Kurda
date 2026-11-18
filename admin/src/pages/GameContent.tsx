@@ -361,7 +361,7 @@ function Readiness(): React.JSX.Element {
   );
 }
 
-// ---------- one row ----------
+// ---------- One row ----------
 
 /** The meanings of a field, English first: the one every other language falls back to. */
 function MeaningsFields({ value, onChange, label, readOnly }: { value: Record<string, string>; onChange: (v: Record<string, string>) => void; label: string; readOnly: boolean }): React.JSX.Element {

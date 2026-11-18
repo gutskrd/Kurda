@@ -13,14 +13,7 @@ export interface RatioLike {
   faucet: number;
 }
 
-/**
- * Text for the faucet/sink ratio tile.
- *
- * A null ratio means faucets with no sinks at all — infinite, which JSON cannot
- * represent, so the API sends null. Calling `.toFixed()` on it threw and took the
- * whole page down with it, so the infinite case gets its own symbol here rather
- * than being confused with "no data".
- */
+/** Text for the faucet/sink ratio tile. JSON has no infinity, so a null ratio with faucets but no sinks shows "∞". */
 export function ratioLabel(drift: RatioLike | null): string {
   if (!drift) return '—';
   if (drift.ratio === null) return drift.faucet > 0 ? '∞' : '—';

@@ -1,6 +1,6 @@
 /**
- * The learning games' own content, as the admin's Game content page uses it:
- * the calls, the names it shows, and a blank of each kind to start from.
+ * The learning games' content as the Game content page uses it: the calls, the names it shows, and a blank of each
+ * kind to start from.
  *
  *   GET    /admin/game-content?game&kind&dialect&level&status&review&source&q&limit&offset   { rows, total }
  *   GET    /admin/game-content/readiness      what each game can be played with per variety, and every row's state
@@ -16,17 +16,10 @@
  *   PUT    /admin/game-content/:id/translations/:locale          { payload }: a riddle's or a proverb's text in one language
  *   POST   /admin/game-content/:id/translations/:locale/review   { status, note? }: that language read, or to be read again
  *
- * The rules are the stories': every change names the version it was made on
- * (409 STALE when someone else changed it first), publishing needs a
- * reviewer's approval (409 NOT_REVIEWED), and a change to approved content
- * takes the approval away. What may be saved is `checkGameContent` in
- * @kurda/shared, which this page runs as the editor types, so the issues the
- * server would refuse a save for are shown before it is tried.
- *
- * The Stories' riddles and proverbs are rows here too, though they belong to
- * no game. Their translations are saved and reviewed one language at a time
- * (`checkLoreTranslation`), on a row in any state but archived: correcting a
- * language never unpublishes the row nor takes its approval away.
+ * The rules are the stories': every change names its version (409 STALE), publishing needs approval (409
+ * NOT_REVIEWED), and changing approved content takes the approval away. The page runs `checkGameContent`
+ * (@kurda/shared) while typing, so what the server would refuse shows first. The Stories' riddles and proverbs are
+ * rows here too; their translations are saved and reviewed one language at a time, which keeps the row's approval.
  */
 import {
   GAME_NAMES,
@@ -65,12 +58,7 @@ export const DEFAULT_GAME_FILTER: GameContentFilter = { game: 'all', kind: 'all'
 
 export const GAME_PAGE_SIZE = 50;
 
-/**
- * What the panel calls each game: its own name, which is Kurmancî in every
- * language the apps speak, so that what a reviewer reads here is what a
- * player reads there. The lessons' two exercises are not games and keep
- * plain names.
- */
+/** Each game by its own Kurmancî name, as players see it; the lessons' two exercises are not games and keep plain names. */
 export const GAME_NAME: Record<LearnGameId, string> = {
   'build-sentence': 'Build a Sentence',
   'memory-thief': GAME_NAMES['memory-thief'],
@@ -129,11 +117,7 @@ export const GAME_DIALECT_NAME: Record<GameDialect, string> = { kmr: 'Kurmancî'
 export const STATUS_LABEL: Record<GameContentStatus, string> = { draft: 'Draft', in_review: 'In review', published: 'Published', archived: 'Archived' };
 export const REVIEW_LABEL: Record<GameContentReview, string> = { unreviewed: 'Unreviewed', approved: 'Approved' };
 
-/**
- * A blank of each kind, the way the editor opens a new row: every field there
- * and empty. Nothing Kurdish is filled in — that is the editor's to write, or
- * an importer's to copy from approved content.
- */
+/** A blank of each kind, every field present and empty; the Kurdish is the editor's to write or an import's to copy. */
 export function blankPayload(kind: GameContentKind): Record<string, unknown> {
   const meanings = { en: '' };
   switch (kind) {

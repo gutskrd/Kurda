@@ -1,19 +1,11 @@
 /**
- * Getting a take from the microphone on every browser an editor is likely to
- * hold: Chrome and Edge on a laptop, Chrome on Android, Safari on an iPhone or
- * an iPad.
- *
- * They disagree in small ways that each broke a recording somewhere:
- * - the format MediaRecorder writes (webm/opus on Chrome, mp4/aac on Safari) —
- *   so the type is asked for, not assumed, and anything the browser can decode
- *   goes through the same pipeline (audioClip.ts);
- * - Safari before 14.3 has no MediaRecorder at all — there the samples are
- *   collected straight from Web Audio and written as a WAV;
- * - iOS starts an AudioContext made outside a tap suspended, so the level
- *   meter sat still: the context is made the moment Record is pressed, before
- *   the permission prompt, and resumed;
- * - a page served over plain http on a phone (a LAN address) gets no
- *   microphone at all, and the old message blamed the permission.
+ * A take from the microphone on the browsers editors use: Chrome and Edge on a laptop, Chrome on Android, Safari on an
+ * iPhone or iPad. Their differences:
+ * - MediaRecorder writes webm/opus on Chrome and mp4/aac on Safari, so the type is asked for, and anything decodable
+ *   goes through audioClip.ts;
+ * - Safari before 14.3 has no MediaRecorder, so the samples are collected from Web Audio and written as a WAV;
+ * - iOS suspends an AudioContext made outside a tap, so it is made and resumed the moment Record is pressed;
+ * - a page served over plain http (a LAN address on a phone) gets no microphone at all.
  */
 import { audioContextClass, encodeWav } from './audioClip';
 
@@ -75,12 +67,9 @@ export interface Capture {
 }
 
 /**
- * Start recording. Call it straight from the tap or the key press: the audio
- * context is made and resumed before the permission prompt, while the browser
- * still counts this as the person's own action. iOS Safari creates a context
- * suspended and only lets it run from inside the tap; after the first `await`
- * it no longer counts, so a resume there alone would leave the level meter
- * flat and, on the path without MediaRecorder, the take empty.
+ * Start recording. Call it straight from the tap or key press: iOS Safari lets an audio context run only from inside
+ * the tap, and after the first `await` it no longer counts, so the context is made and resumed before the permission
+ * prompt. Otherwise the level meter stays flat and, without MediaRecorder, the take is empty.
  */
 export async function startCapture(): Promise<Capture> {
   const Ctx = audioContextClass();

@@ -1,14 +1,7 @@
 /**
- * Every recording at once, for the Characters page's jobs: which ones have
- * no character yet, which have one but no mouth timeline, and making a
- * timeline for one that was recorded before the studio made them.
- *
- * Lesson and alphabet recordings come in two lists read whole; the
- * dictionary's pronunciations, which an import can bring by the thousand, a
- * page at a time (GET /admin/dictionary/audio).
- *
- * Kept apart from the page so the filters, the download and what a failure
- * says are tested without a browser.
+ * Every recording at once, for the Characters page's jobs: which have no character, which have no mouth timeline, and
+ * making one for an older recording. Lesson and alphabet recordings are read whole; the dictionary's pronunciations,
+ * which can run to thousands, a page at a time (GET /admin/dictionary/audio).
  */
 import {
   ALPHABET_CLIPS,
@@ -120,11 +113,7 @@ export function needsSpeaker(r: VoiceRecording, kinds: KindFilter): boolean {
   return ofKind(r.kind, kinds) && r.speaker === null;
 }
 
-/**
- * What "Make timelines" works on: the recordings with a character and no
- * timeline — or, with `remake`, every recording with a character, its old
- * timeline replaced. One with no character shows no mouth, so it is left out.
- */
+/** What "Make timelines" works on: recordings with a character and no timeline, or with `remake` every one with a character. */
 export function needsTimeline(r: VoiceRecording, kinds: KindFilter, remake: boolean): boolean {
   return ofKind(r.kind, kinds) && r.speaker !== null && (remake || !r.hasLipsync);
 }
@@ -155,11 +144,8 @@ export function countByKind(recordings: readonly VoiceRecording[], dictionary: D
 export class TimelineError extends Error {}
 
 /**
- * A stored recording's timeline: its file read through the API (GET
- * /admin/audio/:kind/file), decoded here and matched to its words. Through
- * the API, so a file on the media bucket or on another site is read without
- * either allowing this origin. A refusal is the API's (an ApiError, which
- * `failureLine` puts into words); `signal` stops the download.
+ * A stored recording's timeline, its file read through the API (GET /admin/audio/:kind/file) so no other origin has to
+ * allow this one, then decoded and matched to its words. A refusal is an ApiError for `failureLine`.
  */
 export async function timelineFromFile(r: VoiceRecording, signal?: AbortSignal): Promise<LipsyncData> {
   const data = await apiFile(`/admin/audio/${r.kind}/file?key=${encodeURIComponent(r.key)}`, { signal });
@@ -170,11 +156,7 @@ export async function timelineFromFile(r: VoiceRecording, signal?: AbortSignal):
   }
 }
 
-/**
- * Why the API could not send a file, by the reason it gives
- * (recording-file.ts), where its own message is about the file rather than a
- * site.
- */
+/** Why the API could not send a file, for the reasons (recording-file.ts) whose own message is not about a site. */
 const UNREACHABLE: Record<string, string> = {
   storage: 'The file could not be read from media storage.',
   too_large: 'The file is too large to be a recording.',

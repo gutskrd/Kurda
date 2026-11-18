@@ -1,12 +1,7 @@
 /**
- * Who records what: the characters an exercise's Kurdish is planned for
- * (`voice` on its payload), in the order the panel offers them, and what the
- * plan calls each of them.
- *
- * Hamo comes first because he records most of a course: he is its main
- * voice, Xezal most of the rest, and Hevalo, the guide, little. The plan uses
- * the names the story gives the characters, so the niece is Xezal here,
- * where the apps label her as her uncle calls her, Xezo.
+ * The characters an exercise's Kurdish can be planned for (`voice` on its payload), in the panel's order, and their
+ * names in the plan. Hamo comes first as the main voice of a course. The plan calls the niece Xezal, her name in the
+ * story, where the apps label her Xezo.
  */
 import { CHARACTER_NAMES, type SpeakerId } from '@kurda/shared';
 

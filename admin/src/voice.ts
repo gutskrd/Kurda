@@ -1,15 +1,8 @@
 /**
- * Who says a recording, and how their mouth moves while it plays: the studio's
- * side of the speaking characters (Hevalo, Hamo and Xezo in @kurda/shared).
- *
- * The speaker is the editor's choice, and the last one made for a new
- * recording is the default for the next. The mouth's timeline is made here, in
- * the browser, from the recording's own sound and its words
- * (lipsyncFromAudio), and goes up with the recording. A timeline is never
- * worth a recording: when the sound cannot be read the words are spread over
- * its length instead, and when that fails too, or the server will not take
- * it, the recording is saved without one — the apps then time the mouth from
- * the text themselves, and the Characters page can make it later.
+ * Who says a recording and how their mouth moves while it plays: the studio's side of the speaking characters. The
+ * last speaker picked is the default for the next new recording. The mouth timeline is made in the browser from the
+ * sound and words (lipsyncFromAudio) and goes up with the recording; when that fails it falls back to the words over
+ * the length, and when even that is refused the recording is saved without one, as a timeline is never worth a take.
  */
 import {
   DEFAULT_CHARACTER,
@@ -98,10 +91,8 @@ export interface MadeTimeline {
 }
 
 /**
- * A recording's timeline, ready to store: from its sound, or from its words
- * spread over `durationMs` when the sound cannot be read. Null when neither
- * works. Never throws. `audio` is used up (decoding takes it over), so pass a
- * copy of anything still to be sent.
+ * A recording's timeline, from its sound or else its words over `durationMs`; null when neither works, never throws.
+ * Decoding takes `audio` over, so pass a copy of anything still to be sent.
  */
 export async function makeTimeline(
   audio: ArrayBuffer,
@@ -122,10 +113,8 @@ export async function makeTimeline(
 }
 
 /**
- * `&speaker=…&lipsync=…` for an upload's query string, after the text or key.
- * With the speaker `undefined` it is left out, and the server keeps whoever
- * the old take was said by (none, for a first take): a narrator's take, which
- * no character of its own says, changes nobody an editor chose.
+ * `&speaker=…&lipsync=…` for an upload's query string. An `undefined` speaker is left out, so the server keeps the old
+ * take's speaker; a narrator's take then changes nobody an editor chose.
  */
 export function voiceQuery(speaker: Speaker | undefined, lipsync: LipsyncData | null): string {
   const who = speaker === undefined ? '' : `&speaker=${speaker ?? 'none'}`;
@@ -141,11 +130,7 @@ export interface SavedVoice {
 /** Refusals of the timeline alone, or of an address grown too long with it: the recording goes up again without it. */
 const TIMELINE_REFUSED: ReadonlySet<string> = new Set(['INVALID_LIPSYNC', 'LIPSYNC_TOO_LONG']);
 
-/**
- * Upload a recording (a WAV from the recorder) to `path`, which already
- * carries its text or key in the query string, with who says it and the
- * timeline made from it.
- */
+/** Upload a recording to `path` (which already carries its text or key), with who says it and its timeline. */
 export async function uploadWithVoice<T>(
   path: string,
   wav: Uint8Array,

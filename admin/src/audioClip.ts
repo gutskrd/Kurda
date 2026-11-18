@@ -1,10 +1,6 @@
 /**
- * Turning whatever an editor records or picks into a clip to play to learners
- * — a letter on the alphabet page or a sentence in a lesson: one voice, no
- * dead air, the same loudness as the clip next to it.
- *
- * Every recording goes through the same steps, so a phone memo, a studio WAV
- * and a laptop microphone come out alike:
+ * Turns whatever an editor records or picks into a clip for learners: one voice, no dead air, the same loudness as
+ * the clip beside it. Every recording takes the same steps, so a phone memo and a studio WAV come out alike:
  *
  *   decode   any format the browser can read (m4a, mp3, wav, ogg, webm, flac)
  *   mono     the channels averaged
@@ -14,9 +10,8 @@
  *   fade     10 ms in and out, so no click at either end
  *   encode   16-bit PCM WAV, which every browser plays
  *
- * A second of speech is about 44 KB. The server checks it is a WAV and how long
- * it lasts; everything else happens here, where the editor can hear the result
- * before saving it.
+ * A second of speech is about 44 KB. The server checks only the format and length; the rest happens here, where the
+ * editor hears the result before saving.
  */
 export const RATE = 22050;
 /** Before the voice starts and after it stops. */
@@ -51,10 +46,7 @@ export function voicedRange(samples: Float32Array, rate = RATE): [number, number
   return [first * win, Math.min(samples.length, (last + 1) * win)];
 }
 
-/**
- * Trim, level and fade. Throws a ClipError the editor can act on; `what` is
- * how the error names the thing to say ("one letter or one word").
- */
+/** Trim, level and fade, throwing a ClipError the editor can act on; `what` names the thing to say ("one letter or one word"). */
 export function shape(samples: Float32Array, rate = RATE, maxSeconds = 4, what = 'one letter or one word'): Float32Array {
   const range = voicedRange(samples, rate);
   if (!range) throw new ClipError('No voice in it — check the microphone is the right one, and speak a little closer.');
@@ -109,20 +101,13 @@ export function encodeWav(samples: Float32Array, rate = RATE): Uint8Array {
   return bytes;
 }
 
-/**
- * The Web Audio constructor, under either name: Safari before 14.1 has only
- * the prefixed one, and an iPad kept on an old iOS is a likely recording device.
- */
+/** The Web Audio constructor under either name: Safari before 14.1 has only the prefixed one, common on old iPads. */
 export function audioContextClass(): typeof AudioContext | null {
   const w = globalThis as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
   return w.AudioContext ?? w.webkitAudioContext ?? null;
 }
 
-/**
- * Straight-line resampling, for a browser whose offline renderer will not run
- * at 22.05 kHz (older Safari renders only at its own rates). Speech loses
- * nothing a learner would hear by it.
- */
+/** Linear resampling, for a browser whose offline renderer will not run at 22.05 kHz (older Safari); fine for speech. */
 export function resampleLinear(samples: Float32Array, from: number, to: number): Float32Array {
   if (from === to) return samples;
   const out = new Float32Array(Math.max(1, Math.round((samples.length * to) / from)));

@@ -1,15 +1,7 @@
 /**
- * Conversations in the audio studio, as data: what the API says of one
- * (GET /admin/lesson-audio/conversations/:id), the address of a part's page,
- * how far each part has got, which line comes next and what plays before it,
- * and the list of every conversation the lessons have. Kept apart from the
- * page so it can be tested without a browser.
- *
- * A conversation is recorded by several people, each in their own place and
- * at their own time: each opens the page on their own part (a link someone
- * sent them, `?part=`), hears the line before each of theirs, and says it.
- * The page asks the server again every few seconds, so the others' takes
- * appear as they are made.
+ * Conversations in the audio studio as data: one conversation (GET /admin/lesson-audio/conversations/:id), a part's
+ * address, each part's progress, the next line and the one before it, and every conversation the lessons have. Several
+ * people record one, each on their own part (`?part=`) and at their own time, hearing the line before each of theirs.
  */
 import { isSpeakerId, type ConversationPayload, type SpeakerId } from '@kurda/shared';
 import type { ContentStatus } from './lessons';
@@ -138,12 +130,7 @@ export interface ConversationSummary {
   total: number;
 }
 
-/**
- * Every conversation the lessons have, from the studio's list of what to
- * record (GET /admin/lesson-audio): its lines are the items with a `line`.
- * In the order the list has them (course order), each with how far each part
- * has got.
- */
+/** Every conversation in the studio's list (the items with a `line`), in course order, with each part's progress. */
 export function conversationsIn(items: readonly Item[]): ConversationSummary[] {
   const found = new Map<string, ConversationSummary>();
   for (const item of items) {

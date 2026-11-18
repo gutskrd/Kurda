@@ -1,14 +1,6 @@
 /**
- * Hevalo Admin — calm, readable frosted glass.
- *
- * Violet ribbons of light fold over one another on black behind a scrim
- * (backdrop/), and the content sits on near-opaque frosted surfaces: the glass
- * is the frame, never something to read text through. Neutral zinc for
- * structure; colour only where it means something (a status, a warning, a
- * failure). Dark in every scheme, as the backdrop is: light panels and dark
- * headings over black would be grey cards and unreadable titles.
- *
- * Pure CSS on shared class names — every page inherits it. The kit's own
+ * The console's base styles: content on near-opaque frosted surfaces over the ribbon backdrop (backdrop/), neutral zinc
+ * for structure and colour only where it means something. Dark in every scheme, as the backdrop is. The kit's own
  * pieces (tables, dialogs, drawers, toasts, fields) are in ui/kit.css.
  */
 :root {
@@ -17,8 +9,7 @@
   --text-2: #d4d4d8;
   --text-dim: #a1a1aa;
 
-  /* The backdrop the glass samples: the ribbons' own black (backdrop/ribbons.ts), so whatever of the page
-     shows past them, scrolled with a phone's keyboard up or pulled past its end, is the same colour. */
+  /* The ribbons' own black (backdrop/ribbons.ts), so any page showing past them (overscroll, a keyboard) matches. */
   --bg-1: #0d0d10;
   --bg-2: #030208;
   /* Light enough that the ribbons show between the panels, dark enough that a page's own headings read over them. */
@@ -88,15 +79,8 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   /*
-   * The backdrop the glass panels sample: violet ribbons on black, drawn live
-   * behind everything (backdrop/Backdrop.tsx). It is fixed so it never
-   * scrolls, and it sits UNDER a scrim (::before) rather than behind raw text:
-   * moving light straight behind dense tables destroys legibility, which is the
-   * usual way a background like this goes wrong. The base colour stays where
-   * the ribbons cannot be drawn: on the root, not here. A body with a
-   * background of its own (while the root has one too) paints it over
-   * everything fixed below zero, the ribbons included, which is how they once
-   * went missing behind a plain black page.
+   * The ribbons (backdrop/Backdrop.tsx) are fixed and sit under a scrim (::before), since moving light straight behind
+   * dense tables is unreadable. The base colour belongs on the root: a body background would paint over the ribbons.
    */
   background: transparent;
 }
@@ -200,14 +184,8 @@ input[type='checkbox'], input[type='radio'] {
 input::placeholder, textarea::placeholder { color: var(--text-dim); }
 input:disabled, select:disabled, textarea:disabled { opacity: 0.6; }
 
-/*
- * Dropdown options need OPAQUE colours.
- *
- * The popup is drawn by the OS, not on the page, so a translucent control fill
- * composites against the system surface rather than the frosted panel behind
- * it. Options inherit the control's text colour, which left the list nearly
- * invisible — light text on a light popup.
- */
+/* Dropdown options need opaque colours: the system draws the popup, so a translucent fill would put light text on a
+   light surface. */
 option, optgroup { background-color: #1c1c21; color: #f4f4f5; }
 input:focus, select:focus, textarea:focus {
   outline: none;
@@ -219,10 +197,8 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 }
 label { font-weight: 500; color: var(--text-2); }
 
-/* A phone, or any touch screen: everything a finger presses is at least 44 px,
-   and fields are 16 px — below that iOS Safari zooms the page on focus and
-   never zooms back out. `:root` outranks a page's own smaller field (a 13 px
-   select, a monospace code box), which otherwise brought the zoom back. */
+/* A touch screen: everything pressed is at least 44 px, and fields are 16 px, below which iOS Safari zooms in on focus
+   and stays zoomed. `:root` outranks a page's own smaller field. */
 @media (pointer: coarse), (max-width: 760px) {
   :root { --control-h: var(--target); }
   :root input:not([type='checkbox']):not([type='radio']):not([type='range']), :root select, :root textarea { font-size: 16px; }
@@ -399,11 +375,10 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .badge.ok { background: var(--ok-bg); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 24%, transparent); }
 .badge.mid { background: var(--warn-bg); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 24%, transparent); }
 .badge.hi,
-/* "danger" was used in three places and never defined, so an empty Wordle band,
-   an inactive shop item and an unplayable base word all rendered as plain grey. */
+/* For an empty Peyvok band, an inactive shop item and an unplayable base word. */
 .badge.danger { background: var(--bad-bg); color: var(--bad); border-color: color-mix(in srgb, var(--bad) 24%, transparent); }
 
-/* ---- key/value detail grid --------------------------------------------- */
+/* ---- Key/value detail grid --------------------------------------------- */
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; }
 .grid2 .k { color: var(--text-dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
 .grid2 .v { color: var(--text); }
@@ -436,17 +411,14 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 /* ---- Login: liquid-glass card on the consistent base color ------------- */
 .login { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 24px; overflow: hidden; }
 
-/* The sign-in is all ribbons: nothing on this screen is read but the card, so it has
-   next to no scrim and the light shows at its full strength. Focus rings follow the
-   white type. */
+/* Only the card is read on the sign-in, so it has next to no scrim; focus rings follow the white type. */
 .login :focus-visible { outline-color: #fff; }
 :root:has(.login) {
   --scrim-top: rgba(4, 2, 9, 0);
   --scrim-bottom: rgba(4, 2, 9, 0.2);
 }
 
-/* The card: large radius, dark frosted glass so the white type reads over the brightest
-   fold of the ribbons behind it, rim highlight. */
+/* Dark frosted glass, so the white type reads over the brightest fold of the ribbons. */
 .login-card {
   position: relative; z-index: 1;
   width: 452px; max-width: 100%; min-width: 0;
@@ -472,13 +444,9 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 }
 .login-brand { display: inline-flex; align-items: center; gap: 10px; }
 /*
- * Hevalo leans in over the card (brand/Companion) as over a windowsill, seen from the chest up:
- * the stage keeps room above the card for him, and his box (shared COMPANION_VIEW, 660 by 1103,
- * 540 of it as wide as --cp-w, with room either side for a hoof he lifts out to his cheeks) has
- * its sill, 818 down it, on the card's top edge. He is drawn in front of the card, cut at the edge
- * himself, so his forelegs hang down over its top padding (shared COMPANION_OVERHANG, 285, inside
- * his box, which the padding keeps clear). No filter on him: a browser may cut what it filters at
- * the element's edge, and it would redraw the shadow on every frame he moves.
+ * Hevalo leans over the card (brand/Companion). His box is shared COMPANION_VIEW (660 by 1103, 540 of it as wide as
+ * --cp-w) with its sill 818 down on the card's top edge, and his forelegs hang COMPANION_OVERHANG (285) into the card's
+ * top padding. No filter on him: a browser may clip what it filters and would redraw the shadow on every frame.
  */
 .login-stage {
   --cp-w: min(160px, 38vw);
@@ -497,7 +465,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .login-title { margin: 0 0 10px; font-size: 44px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; color: #fff; }
 .login-welcome { margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 
-/* Each field has its label above it: a placeholder alone vanished as soon as typing began. */
+/* Each field has its label above it, as a placeholder vanishes once typing begins. */
 .login-field { margin-bottom: 15px; }
 .login-label { display: block; margin: 0 0 7px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
 .login-field-error { margin-top: 7px; font-size: 13px; line-height: 1.45; color: #ffb3a7; }
@@ -523,9 +491,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 }
 .login-input input.has-eye { padding-right: 58px; }
 .login-eye {
-  /* Centre vertically with top/bottom+margin (not transform) so the global
-     `button:active { transform: translateY(0.5px) }` can't knock it out of
-     place on click — the eye stays put. */
+  /* Centred with top, bottom and margin, not a transform, so the global `button:active` nudge cannot move it. */
   position: absolute; right: 7px; top: 0; bottom: 0; margin: auto 0;
   display: flex; align-items: center; justify-content: center;
   width: var(--target); height: var(--target); min-width: 0; padding: 0;
@@ -537,14 +503,13 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .login-eye:hover { color: #fff; background: rgba(255, 255, 255, 0.14); }
 .login-eye:active { transform: none; }
 
-/* remember (left) + forgot (right) */
+/* Remember me on the left, forgot on the right. */
 .login-actions {
   display: flex; justify-content: space-between; align-items: center;
   gap: 12px; margin: 2px 0 20px; font-size: 14px;
 }
 .login-remember { display: flex; align-items: center; gap: 9px; min-height: var(--target); color: rgba(255, 255, 255, 0.9); cursor: pointer; }
-/* A clean, normal-looking checkbox: reset the global glass-input styling and
-   draw a small square that shows a checkmark when ticked. */
+/* A plain checkbox, reset from the global glass-input styling. */
 .login-remember input[type='checkbox'] {
   appearance: none; -webkit-appearance: none;
   flex: none; width: 18px; height: 18px; margin: 0; padding: 0;
@@ -632,8 +597,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   padding: 7px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--glass-border);
-  /* Tabs sit directly on the backdrop rather than inside a card, so they need
-     their own glass or they read as flat chips on the photo. */
+  /* Tabs sit straight on the backdrop, so they need glass of their own. */
   background: var(--glass);
   -webkit-backdrop-filter: blur(var(--blur));
   backdrop-filter: blur(var(--blur));

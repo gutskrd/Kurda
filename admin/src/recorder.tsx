@@ -47,13 +47,9 @@ export interface TakeState {
 }
 
 /**
- * Record → stop → hear it back → keep, or take a file instead: the steps of
- * one take, for every recorder in the console (ClipRecorder below, and the
- * person-by-person page's own). Every take goes through the same pipeline
- * (audioClip.ts): trimmed, levelled and encoded as a short mono WAV before
- * the editor hears it, so what they approve is exactly what is saved. The
- * microphone side (micCapture.ts) works the same on a laptop, an Android
- * phone and an iPhone, and is let go of when the recorder goes.
+ * Record → stop → hear it back → keep, or take a file instead: the steps of one take, for every recorder in the
+ * console. Each take is trimmed, levelled and encoded (audioClip.ts) before the editor hears it, so what they approve
+ * is what is saved; the microphone (micCapture.ts) is let go of when the recorder goes.
  */
 export function useTake(maxSeconds: number, what: string): TakeState {
   const [phase, setPhase] = useState<TakePhase>({ name: 'idle' });
@@ -81,7 +77,7 @@ export function useTake(maxSeconds: number, what: string): TakeState {
     };
   }, []);
 
-  // let go of a preview URL once it is no longer shown
+  // Let go of a preview URL once it is no longer shown.
   const previewUrl = phase.name === 'ready' || phase.name === 'saving' ? phase.clip.url : null;
   useEffect(
     () => () => {
@@ -166,8 +162,7 @@ export function useTake(maxSeconds: number, what: string): TakeState {
     setPhase({ name: 'saving', clip: ready });
     try {
       await store(ready.wav);
-      // The parent usually moves on to the next item, which mounts a fresh
-      // recorder; when it stays here (nothing left to record), show the saved one.
+      // The parent usually moves on to a fresh recorder; when it stays (nothing left to record), show the saved one.
       setPhase({ name: 'idle' });
     } catch (err) {
       setProblem(err instanceof ApiError ? err.message : 'Could not save it. Try again.');
@@ -194,14 +189,9 @@ export function useTake(maxSeconds: number, what: string): TakeState {
 }
 
 /**
- * Record → stop → hear it back → save, or take a file instead: the one
- * recorder the audio studio has, for a letter and for a lesson sentence alike
- * (the steps are `useTake`'s). The parent does the upload; this only hands it
- * the WAV.
- *
- * With `shortcuts`, R records and stops, Space plays the take back, Enter
- * saves and the arrows move between items — none of them while the editor is
- * typing in a field. Only one recorder on a page should have them.
+ * The audio studio's recorder, for a letter and a lesson sentence alike; the parent does the upload. With `shortcuts`,
+ * R records and stops, Space plays back, Enter saves and the arrows move between items, never while typing in a field;
+ * only one recorder on a page should have them.
  */
 export function ClipRecorder({
   say,

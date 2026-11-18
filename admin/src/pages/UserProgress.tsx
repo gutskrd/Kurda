@@ -36,7 +36,7 @@ interface Person {
   username: string;
 }
 
-// ---- ranks ------------------------------------------------------------------------------
+// ---- Ranks ------------------------------------------------------------------------------
 
 /**
  * The person's rank in each game, as they see it themselves (placing, the "?"
@@ -131,7 +131,7 @@ function RankCardView({ card: r, onReset }: { card: RankCard; onReset: () => voi
   );
 }
 
-// ---- badges -----------------------------------------------------------------------------
+// ---- Badges -----------------------------------------------------------------------------
 
 type Draft = { key: string; action: 'award' | 'revoke'; tier: number; reason: string };
 
