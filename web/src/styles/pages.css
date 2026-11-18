@@ -2873,6 +2873,51 @@ a.mkp-activity-row:hover {
   color: var(--ink-2);
   padding: 48px 0;
 }
+/* Peyvok's figures at the foot of its result: side by side under a hairline as a profile's are, each figure over its label. */
+.wordle-stats {
+  justify-self: stretch;
+  width: 100%;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--separator);
+}
+.wordle-stats-title {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+.wordle-stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+}
+.wordle-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  padding: 2px 4px;
+}
+.wordle-stat + .wordle-stat {
+  border-inline-start: 1px solid var(--separator);
+}
+.wordle-stat dt {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.wordle-stat dd {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
 
 @media (max-width: 560px) {
   /* claw back the page gutter: the keyboard is the widest thing on the screen
