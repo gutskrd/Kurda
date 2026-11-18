@@ -24,6 +24,7 @@ vi.mock('../messages/unread', async (original) => ({
   useUnread: () => ({ counts: { chats: 0, groups: 0, requests: 0, notifications: 0, gifts: 0 }, messages: 0, refresh: () => undefined, report }),
 }));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { Alert } from 'react-native';
 import type { IncomingInvite } from '@kurda/shared';
 import type { InboxItem } from './inbox';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -115,6 +116,28 @@ describe('the notification list', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Mark all as read' })).toBeNull());
     expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/notifications/read-all')).toBe(true);
     expect(screen.getAllByRole('button').some((b) => b.getAttribute('aria-label')?.startsWith('Unread'))).toBe(false);
+  });
+
+  it('marks everything read and the bell clear before the server answers, and puts both back with the reason when refused', async () => {
+    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'GET /me/notifications': ok({ notifications: [notice('n1', {}), notice('n2', { title: 'Safe this week', readAt: null })] }),
+      'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+      'POST /me/notifications/read-all': () => new Promise((resolve) => (answer = resolve)),
+    } as never);
+    renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
+    const all = await screen.findByRole('button', { name: 'Mark all as read' });
+    await settle();
+    expect(report).toHaveBeenLastCalledWith({ notifications: 2 });
+    fireEvent.click(all);
+    await waitFor(() => expect(report).toHaveBeenLastCalledWith({ notifications: 0 }));
+    expect(screen.queryByRole('button', { name: 'Mark all as read' })).toBeNull();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(report).toHaveBeenLastCalledWith({ notifications: 2 });
+    expect(screen.getByRole('button', { name: 'Mark all as read' })).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    said.mockRestore();
   });
 
   /*
@@ -252,7 +275,8 @@ describe('a notification row pulled aside', () => {
     expect(screen.getByText('A new badge')).toBeTruthy();
   });
 
-  it('puts a row back when the server would not delete it', async () => {
+  it('puts a row back when the server would not delete it, and says why', async () => {
+    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     // Something went wrong on the server's side, a moment after it was asked.
     const refused = { ok: false as const, error: { kind: 'server' as const, message: 'boom', status: 500 } };
     serve(two(), [], { 'DELETE /me/notifications/n2': () => new Promise((answer) => setTimeout(() => answer(refused), 60)) });
@@ -266,6 +290,8 @@ describe('a notification row pulled aside', () => {
     await waitFor(() => expect(report).toHaveBeenLastCalledWith({ notifications: 2 }));
     await act(() => new Promise((done) => setTimeout(done, 400)));
     expect(screen.getByText('Safe this week')).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Something went wrong on our end. Please try again shortly.');
+    said.mockRestore();
   });
 
   it('springs back closed when let go short of halfway, and closes on a tap rather than opening', async () => {

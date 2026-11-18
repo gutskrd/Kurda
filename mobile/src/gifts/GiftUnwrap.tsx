@@ -29,6 +29,7 @@ import { useDirection } from '../reports/direction';
 import { SHEET_MAX_WIDTH } from '../reports/sheet';
 import { SendErrorNotice } from '../reports/SendError';
 import { openGift, wearGift } from './api';
+import { giftsSeen, refreshGiftBadge } from '../shop/useUnseenGifts';
 import { GiftBox, NewrozFlame, Seed, Spark } from './art';
 import { unwrapPlan, type Particle } from './motion';
 import { heldDim } from '../theme/MotionParts';
@@ -94,10 +95,15 @@ export function GiftUnwrap({
   const opened = useRef(onOpened);
   opened.current = onOpened;
 
+  // Whether it was opened before this moment, read once: the card is replaced by the opened one.
+  const openedBefore = useRef(target.card.myOpened);
   // Open it on the server as the moment starts, so "Opened ✓" reaches the sender.
   useEffect(() => {
     let alive = true;
+    // An unopened gift leaves the badge at once; a refusal reads the count again.
+    if (!openedBefore.current) giftsSeen(1);
     void openGift(client, target.giftId).then((res) => {
+      if (!res.ok) refreshGiftBadge();
       if (!alive) return;
       if (res.ok) {
         setEquippable(res.data.equippable);

@@ -45,6 +45,7 @@ import {
   type MessageRow,
 } from './list';
 import { useUnread } from './unread';
+import { useHiddenByBlock } from '../social/blocks';
 import { BirdBadge } from '../letters/LetterParts';
 import { LETTERS_HOME_PATH } from '../letters/homePath';
 
@@ -163,9 +164,11 @@ export function MessagesScreen(): React.JSX.Element {
     [t],
   );
 
+  // Somebody just blocked from their chat or profile leaves the list at once (social/blocks.ts).
+  const gone = useHiddenByBlock();
   const rows = useMemo(
-    () => messageRows({ chats: chats ?? [], groups, filter, query, preview }),
-    [chats, groups, filter, query, preview],
+    () => messageRows({ chats: (chats ?? []).filter((c) => !gone.has(c.userId)), groups, filter, query, preview }),
+    [chats, gone, groups, filter, query, preview],
   );
   // The first screenful of conversations rises in once, as the list arrives.
   const entering = useListEntrance(chats !== null && rows.length > 0);
@@ -174,10 +177,27 @@ export function MessagesScreen(): React.JSX.Element {
     [chats, groups],
   );
 
-  const open = (row: MessageRow) =>
-    row.kind === 'direct'
-      ? navigation.navigate('Chat', { userId: row.chat.userId, username: row.chat.username })
-      : navigation.navigate('GroupThread', { groupId: row.group.id, name: row.group.name });
+  /*
+   * The conversation marks itself read as it opens, so its count leaves the row and the tab at once; the lists read on
+   * coming back have the last word if that did not get through.
+   */
+  const open = (row: MessageRow) => {
+    if (row.kind === 'direct') {
+      const { userId, unread } = row.chat;
+      if (unread > 0) {
+        setChats((list) => list && list.map((c) => (c.userId === userId ? { ...c, unread: 0 } : c)));
+        report((now) => ({ chats: Math.max(0, now.chats - unread) }));
+      }
+      navigation.navigate('Chat', { userId, username: row.chat.username });
+      return;
+    }
+    const { id, unread } = row.group;
+    if (unread > 0) {
+      setGroups((list) => list.map((g) => (g.id === id ? { ...g, unread: 0 } : g)));
+      report((now) => ({ groups: Math.max(0, now.groups - unread) }));
+    }
+    navigation.navigate('GroupThread', { groupId: id, name: row.group.name });
+  };
 
   const findFriends = () => navigation.navigate('Search');
   const newGroup = () => setComposing(true);

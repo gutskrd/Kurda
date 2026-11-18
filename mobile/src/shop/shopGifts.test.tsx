@@ -16,6 +16,7 @@ import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { GiftSheet } from './GiftSheet';
 import { GiftSentNote } from '../gifts/GiftSentNote';
 import { refreshGiftBadge, useUnseenGifts } from './useUnseenGifts';
+import { ReceivedGifts } from './ReceivedGifts';
 
 patchReactNativeWeb();
 afterEach(() => {
@@ -140,6 +141,23 @@ describe('useUnseenGifts', () => {
     // A gift arrives (GiftArrivals calls this): counted again.
     unseen = 2;
     act(() => refreshGiftBadge());
+    await waitFor(() => expect(result.current).toBe(2));
+  });
+
+  it('drops as soon as the gifts are on screen, and the count read after the mark has the last word', async () => {
+    let marked: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'GET /me/gifts/unseen': ok({ unseen: 2 }),
+      'GET /me/gifts': ok({ gifts: [], unseen: 2 }),
+      'POST /me/gifts/seen': () => new Promise((resolve) => (marked = resolve)),
+    } as never);
+    const { result } = renderHook(() => useUnseenGifts());
+    await waitFor(() => expect(result.current).toBe(2));
+    renderWithProviders(<ReceivedGifts />);
+    // Cleared before the server has answered the mark.
+    await waitFor(() => expect(result.current).toBe(0));
+    // The mark did not take: the count read after it says so.
+    await act(async () => marked({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
     await waitFor(() => expect(result.current).toBe(2));
   });
 
