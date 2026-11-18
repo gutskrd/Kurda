@@ -31,7 +31,7 @@ import { pressedDim } from '../theme/motion';
 
 interface Item {
   q: AlphabetQuestion;
-  /** a miss coming back later in the round; it does not count toward the score */
+  /** A miss coming back later in the round; it does not count toward the score. */
   retry: boolean;
 }
 
@@ -49,15 +49,10 @@ function clipOf(q: AlphabetQuestion): string | null {
 }
 
 /**
- * "Check yourself": a round of eight short questions, the website's own
- * (`alphabetRound` in @kurda/shared says how a round is made and why). A miss
- * shows the right answer with its sound at once and comes back later in the
- * round; nothing is scored, saved or ranked, and the end names what to look
- * at again, with a round of just those.
- *
- * A listening question speaks as it appears — Start was the tap that lets it
- * — and its character, when the recording has one, says it beside the button
- * that plays it again.
+ * "Check yourself": eight short questions, as on the web (`alphabetRound` in @kurda/shared). A miss shows the
+ * right answer with its sound and returns later in the round; nothing is scored or saved, and the end names what
+ * to revisit, with a round of just those. A listening question speaks as it appears (the Start tap allows it),
+ * and its character, when there is one, says it beside the replay button.
  */
 export function Practice({
   script,
@@ -69,9 +64,9 @@ export function Practice({
   script: AlphabetScript;
   audio: AlphabetAudio;
   player: ClipPlayer;
-  /** a round has begun and grown to its height: the screen brings it into view */
+  /** A round has begun and grown to its height: the screen brings it into view. */
   onBegin: () => void;
-  /** open a letter missed in the round */
+  /** Open a letter missed in the round. */
   onOpen: (id: string) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -84,11 +79,7 @@ export function Practice({
   const [missed, setMissed] = useState<AlphabetTopic[]>([]);
   const [results, setResults] = useState<Array<boolean | null>>([]);
   const { play } = player;
-  /*
-   * A round just begun is brought into view once the card has grown to hold
-   * it: scrolled at once, the page would stop short at the end of what it was
-   * before the questions arrived.
-   */
+  /* Scroll a new round into view once the card has grown to hold it; scrolling at once would stop short of the questions. */
   const begun = useRef(false);
 
   const start = (focus: string[] | null = null): void => {
@@ -153,12 +144,12 @@ export function Practice({
     }
   };
 
-  // a question asked out loud: the button that says it again, and for a spelling the meaning of the word
+  // A spoken question: the replay button, and for a spelling question the word's meaning.
   const sounded =
     q && (q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair') ? (
       <>
         <PlayButton src={q.clip} label={t('alphabet.practice.replay')} player={player} size="large" />
-        {/* for a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead */}
+        {/* For a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead. */}
         {q.kind === 'spell' ? <Meaning meaning={q.meaning} script="kmr" style={styles.promptMeaning} /> : null}
       </>
     ) : null;
@@ -205,7 +196,7 @@ export function Practice({
           <Text style={[styles.ask, dir.text, { color: colors.textSecondary }]}>{ask(q)}</Text>
 
           {q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair' ? (
-            // whoever says the sound stands on a stage beside its button, and is pleased with a right answer
+            // Whoever says the sound stands on a stage beside its button, and is pleased with a right answer.
             <SpokenStage
               srcs={[q.clip]}
               audio={audio}
@@ -330,7 +321,7 @@ function Glyph({ o, size }: { o: AlphabetOption; size: number }): React.JSX.Elem
   );
 }
 
-/** One answer: a tile that says, once chosen, whether it was the one — in colour, with a mark, and with a pop or a shake. */
+/** One answer tile that shows, once chosen, whether it was right: colour, a mark, and a pop or a shake. */
 function Choice({
   option,
   words,
@@ -369,7 +360,7 @@ function Choice({
   );
 }
 
-/** The round so far: a dot for each first try, green when it was right and red when it was not (the word sets' round too). */
+/** The round so far: a dot per first try, green when right and red when not (the word sets' round uses it too). */
 export function Dots({ results, label }: { results: Array<boolean | null>; label?: string }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
@@ -478,7 +469,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm + 4 },
   title: { ...display(typography.sizes.lg) },
   body: { fontSize: typography.sizes.sm, lineHeight: 21 },
-  // at the reading side: the right, in Soranî and Arabic
+  // At the reading side: the right, in Soranî and Arabic.
   action: { alignSelf: 'flex-start' },
   actionEnd: { alignSelf: 'flex-end' },
   flex: { flex: 1 },
@@ -518,7 +509,7 @@ const styles = StyleSheet.create({
 
   dots: { flexWrap: 'wrap', gap: 6 },
   dot: { width: 10, height: 10, borderRadius: radii.pill },
-  // still to come: the grey of the words, faint, so it shows on the card in either theme
+  // Still to come: the grey of the words, faint, so it shows on the card in either theme.
   dotOpen: { opacity: 0.3 },
 
   done: { gap: spacing.sm + 4 },

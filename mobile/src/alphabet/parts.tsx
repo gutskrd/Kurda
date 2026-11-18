@@ -23,21 +23,13 @@ import type { ClipPlayer } from './useClipPlayer';
 import { pressedDim } from '../theme/motion';
 
 /**
- * The small parts the alphabet screen and its practice are made of: a sound's
- * play button, the stage the character who says it stands on, a comparison
- * with its sound picked out, a Kurdish word with its letter picked out, and
- * what the word means.
- *
- * The app's violet is its colour for "look at this", so it marks exactly one
- * thing here: the sound inside a comparison and the letter inside the Kurdish
- * word, underlined as well, so it is never said by colour alone. It was the
- * sun's gold, which the app keeps for what is earned.
+ * The small parts of the alphabet screen and its practice: a play button, the speaker's stage, a comparison with
+ * its sound highlighted, a Kurdish word with its letter highlighted, and the word's meaning. Violet marks exactly
+ * one thing here, the sound in a comparison and the letter in the word, also underlined so colour is not the only
+ * cue.
  */
 
-/**
- * Which way a row of a script's letters runs: Kurmancî left to right and
- * Soranî right to left, whatever language the app is read in.
- */
+/** Which way a row of a script's letters runs: Kurmancî left to right, Soranî right to left, whatever the app's language. */
 export function scriptRow(script: AlphabetScript): 'row' | 'row-reverse' {
   return (script === 'ckb') !== !!I18nManager.isRTL ? 'row-reverse' : 'row';
 }
@@ -49,14 +41,13 @@ export function scriptText(script: AlphabetScript): TextStyle {
 export const scriptLanguage = (script: AlphabetScript): string => (script === 'ckb' ? 'ckb' : 'ku');
 
 const BUTTON = { regular: MIN_TOUCH_TARGET, large: 52 } as const;
-/** How much of the violet a sounding button is, as the last two digits of its colour: the tab bar's own wash. */
+/** Hex alpha suffix for a sounding button's violet wash, as the tab bar uses. */
 const ON_WASH = '1F';
 
 /**
- * A round button that plays one sound. Nothing at all when there is no clip,
- * or nothing to play it with: a button that does nothing is worse than none.
- * Its style says how big it is drawn, and the Pressable reaches from that to
- * a fingertip's 48: 2 past each edge of the regular one, none past the large.
+ * A round button that plays one sound, or nothing when there is no clip or nothing to play it with. Its style
+ * sets the drawn size, and the Pressable reaches from that to 48: 2 past each edge of the regular one, none for
+ * the large.
  */
 export function PlayButton({
   src,
@@ -71,7 +62,7 @@ export function PlayButton({
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   if (!src || !player.supported) return null;
-  // sounding: on, as a switch that is on is, in a wash of the violet with a violet edge
+  // Sounding: on, as a switch that is on is, in a wash of the violet with a violet edge.
   const on = player.isPlaying(src);
   const side = BUTTON[size];
   return (
@@ -90,22 +81,17 @@ export function PlayButton({
         },
       ]}
     >
-      {/* the speaker points the same way in every language */}
+      {/* The speaker points the same way in every language. */}
       <Icon name="speaker" size={size === 'large' ? 24 : 20} color={colors.primary} />
     </Pressable>
   );
 }
 
 /**
- * Whoever says the recordings at `srcs`, standing whole on a stage of their
- * own with `children` — the letter, the button that plays it — beside them:
- * the one sounding now, else the last that sounded, else the first. A tap on
- * them greets you and says it again; `reaction` gets a cheer for a right
- * answer and a curious tilt of the head for one that was not yet.
- *
- * `fallback` instead when none of the recordings has a character (a
- * synthesised clip, or a recording nobody was chosen for), so the place is as
- * it always was without one.
+ * The speaker of the recordings at `srcs` on a stage of their own, with `children` (the letter and its play
+ * button) beside them: the one sounding now, else the last that sounded, else the first. A tap greets and
+ * replays; `reaction` cheers a right answer and tilts the head at a wrong one. `fallback` renders instead when no
+ * recording has a speaker.
  */
 export function SpokenStage({
   srcs,
@@ -116,7 +102,7 @@ export function SpokenStage({
   children,
 }: {
   srcs: ReadonlyArray<string | null>;
-  /** who says each recording: the alphabet's, or the word sets' (words/audio.ts) */
+  /** Who says each recording: the alphabet's, or the word sets' (words/audio.ts). */
   audio: Pick<AlphabetAudio, 'voiceOf'>;
   player: ClipPlayer;
   reaction?: 'cheer' | 'hmm' | null;
@@ -180,10 +166,7 @@ export function MarkedWord({ word, letter, style }: { word: string; letter: stri
   );
 }
 
-/**
- * What the example word means — or, for a reader who already speaks that
- * dialect, the same word in the other one (`exampleMeaningLocale`).
- */
+/** The example word's meaning, or for a reader who speaks that dialect the same word in the other one (`exampleMeaningLocale`). */
 export function Meaning({ meaning, script, style }: { meaning: AlphabetMeaning; script: AlphabetScript; style?: StyleProp<TextStyle> }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
@@ -200,7 +183,7 @@ export function Meaning({ meaning, script, style }: { meaning: AlphabetMeaning; 
   );
 }
 
-/** The little grey word over a part of a letter's card. Arabic script keeps its letters joined: no tracking there. */
+/** The small grey label over part of a letter's card; Arabic script keeps its letters joined, so no letter spacing there. */
 export function CardLabel({ children, style }: { children: string; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();

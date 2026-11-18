@@ -18,7 +18,7 @@ import { FakeAudio, fakeFrames } from '../characters/testing/audio';
 import { onHaptic, setHapticDriver } from '../feedback/haptics';
 import { AlphabetScreen } from './AlphabetScreen';
 
-/** Where the phone plays a synthesised clip from: the website, under the file the manifest names. */
+/** Where the phone plays a synthesised clip from: the website, at the file the manifest names. */
 const synthesised = (key: string) => `https://hevalo.app/audio/alphabet/${SYNTHESISED_ALPHABET_CLIPS[key]}`;
 
 const SAID = encodeLipsync({ durationMs: 600, cues: [{ startMs: 0, viseme: 'a' }] });
@@ -29,7 +29,7 @@ function serve(answer: AlphabetAudioResponse | null = { clips: {} }): void {
 
 async function show(): Promise<void> {
   renderWithProviders(<AlphabetScreen onExit={() => undefined} />);
-  // the recordings' answer, and the stored ticks, arrive on later turns
+  // The recordings' answer, and the stored ticks, arrive on later turns.
   await act(async () => undefined);
 }
 
@@ -101,18 +101,18 @@ describe('the alphabet', () => {
     expect(within(card).getByText('Sounds like')).toBeTruthy();
     expect(within(card).getByText('neighbour')).toBeTruthy();
     expect(within(card).getByText('ج')).toBeTruthy();
-    // a computer's voice says so, under the card
+    // A computer's voice says so, under the card.
     expect(within(card).getByText('Computer voice — a guide, not a native speaker.')).toBeTruthy();
 
-    // the letter's sound, from the website, the moment it opens
+    // The letter's sound, from the website, the moment it opens.
     await waitFor(() => expect(FakeAudio.of(synthesised('kmr:sound:c'))?.paused).toBe(false));
 
-    // the word's own button plays the word, in place of the letter
+    // The word's own button plays the word, in place of the letter.
     await press('Listen to the word', { inside: card });
     await waitFor(() => expect(FakeAudio.of(synthesised('kmr:word:c'))?.paused).toBe(false));
     expect(FakeAudio.of(synthesised('kmr:sound:c'))?.paused).toBe(true);
 
-    // the way on: the next letter in the grid, played as it opens
+    // The way on: the next letter in the grid, played as it opens.
     await press('Next letter', { inside: card });
     await waitFor(() => expect(FakeAudio.of(synthesised('kmr:sound:e'))?.paused).toBe(false));
     expect(within(card).getByRole('heading', { name: 'E e' })).toBeTruthy();
@@ -142,12 +142,12 @@ describe('the alphabet', () => {
     const card = await sheet();
     expect(await within(card).findByRole('img', { name: 'Said by Xezo' })).toBeTruthy();
     expect(within(card).getByTestId('character-stage')).toBeTruthy();
-    // one character on the card, who says the word too: nobody squeezed in beside the word's button
+    // One character on the card, who says the word too: nobody squeezed in beside the word's button.
     expect(within(card).queryByRole('img', { name: 'Said by Hamo' })).toBeNull();
-    // a recording, not a computer: nothing to own up to
+    // A recording, not a computer: nothing to own up to.
     expect(within(card).queryByText('Computer voice — a guide, not a native speaker.')).toBeNull();
 
-    // the word is Hamo's: he takes the stage to say it, and stays there after
+    // The word is Hamo's: he takes the stage to say it, and stays there after.
     await press('Listen to the word', { inside: card });
     expect(await within(card).findByRole('img', { name: 'Said by Hamo' })).toBeTruthy();
     expect(within(card).queryByRole('img', { name: 'Said by Xezo' })).toBeNull();
@@ -156,13 +156,13 @@ describe('the alphabet', () => {
     await act(async () => word.finish());
     expect(within(card).getByRole('img', { name: 'Said by Hamo' })).toBeTruthy();
 
-    // a tap on him says it again
+    // A tap on him says it again.
     await act(async () => {
       fireEvent.click(within(card).getByRole('img', { name: 'Said by Hamo' }));
     });
     await waitFor(() => expect(word.paused).toBe(false));
 
-    // ç has a recording that nobody was chosen for: its button stands alone, with no stage
+    // ç has a recording with no assigned speaker, so its button stands alone without a stage.
     await press('Close', { inside: card });
     await press('Ç, like ch');
     const next = await sheet();
@@ -181,7 +181,7 @@ describe('the alphabet', () => {
   });
 
   it('shows the letters and plays their clips before the server has answered', async () => {
-    // a server that never answers
+    // A server that never answers.
     testAuth.client = fakeClient({ 'GET /alphabet/audio': () => new Promise(() => undefined) });
     await show();
     expect(screen.getByRole('button', { name: 'C, like j' })).toBeTruthy();
@@ -244,7 +244,7 @@ describe('check yourself', () => {
     await show();
     await press('Start');
     expect(await screen.findByLabelText('Question 1 of 8')).toBeTruthy();
-    // an English reader starts by listening, and the sound plays by itself
+    // An English reader starts by listening, and the sound plays by itself.
     expect(screen.getByText('Listen. Which letter is it?')).toBeTruthy();
     await waitFor(() => expect(FakeAudio.made.some((a) => !a.paused)).toBe(true));
     expect(screen.getByRole('button', { name: 'Play again' })).toBeTruthy();
@@ -254,11 +254,11 @@ describe('check yourself', () => {
     await act(async () => {
       fireEvent.click(options[0]!);
     });
-    // said on the screen, and to a screen reader
+    // Said on the screen, and to a screen reader.
     const [verdict] = await screen.findAllByText(/^(Right\.|Not quite: it’s)/);
     expect(felt.at(-1)).toMatch(/correct|wrong/);
     if (/Not quite/.test(verdict!.textContent ?? '')) expect(screen.getByText(/It comes back later in this round\./)).toBeTruthy();
-    // every option is closed once one is chosen
+    // Every option is closed once one is chosen.
     for (const o of options) expect(o.getAttribute('aria-disabled')).toBe('true');
 
     await press('Next');
@@ -285,7 +285,7 @@ describe('check yourself', () => {
     serve();
     await show();
     await press('Start');
-    // answer every question with the first option until the round ends
+    // Answer every question with the first option until the round ends.
     for (let i = 0; i < 20 && !screen.queryByText(/right first time/); i++) {
       const first = await waitFor(() => {
         const open = screen.getAllByRole('button').filter((b) => b.getAttribute('aria-disabled') !== 'true' && b.closest('[data-testid="alphabet-options"]'));
@@ -299,6 +299,6 @@ describe('check yourself', () => {
     }
     expect(screen.getByText(/of 8 right first time/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'New round' })).toBeTruthy();
-    // a whole round, up to sixteen questions each drawn and answered, takes longer than one question's five seconds
+    // A whole round of up to sixteen questions takes longer than one question's five seconds.
   }, 20_000);
 });

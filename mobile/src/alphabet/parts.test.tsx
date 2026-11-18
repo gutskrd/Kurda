@@ -13,11 +13,7 @@ import { forgetReach, reachOf } from '../testing/reach';
 import { PlayButton } from './parts';
 import type { ClipPlayer } from './useClipPlayer';
 
-/*
- * The round button that plays one sound (alphabet/parts.tsx `PlayButton`):
- * its reach is worked out from the size it is drawn at, so the regular one
- * answers a fingertip's 48 and the large one, already bigger, adds nothing.
- */
+/* The round play button's reach follows its drawn size: the regular one answers over 48 and the large one, already bigger, adds nothing. */
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
