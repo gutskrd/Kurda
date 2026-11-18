@@ -11,6 +11,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { useOptimistic } from '../lib/optimistic';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Sheet } from '../components/Sheet';
@@ -26,6 +27,9 @@ import { Medal, TierPips, badgeWash, progressFraction, progressText, tierClass }
  * until found, and the three shown on the profile. Unearned badges are grey with their progress, never hidden, and
  * the few nearest their next tier come first. Rarity shows only when the server sends it.
  */
+/** No badges on show; one array, so an empty showcase is the same value from render to render. */
+const NONE: string[] = [];
+
 export function BadgesPage(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -44,6 +48,13 @@ export function BadgesPage(): React.JSX.Element {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // The three on the profile change as the picker closes (lib/optimistic.ts); the server's answer has the last word.
+  const [showcaseKeys, wantShowcase] = useOptimistic<string[], { showcase?: string[] }>(
+    data?.showcase ?? NONE,
+    (keys) => client.request<{ showcase?: string[] }>('PUT', '/me/badges/showcase', { body: { keys } }),
+    { fromAnswer: (answer, sent) => answer.showcase ?? sent },
+  );
 
   const byFamily = useMemo(() => {
     const groups = new Map<BadgeFamily, BadgeView[]>();
@@ -71,7 +82,7 @@ export function BadgesPage(): React.JSX.Element {
     );
 
   const earned = data.badges.filter((b) => b.tier > 0).length;
-  const showcase = data.showcase.map((k) => data.badges.find((b) => b.key === k)).filter((b): b is BadgeView => Boolean(b));
+  const showcase = showcaseKeys.map((k) => data.badges.find((b) => b.key === k)).filter((b): b is BadgeView => Boolean(b));
   const month = data.monthlyChallenge;
   const nearest = nearestBadges(data.badges);
 
@@ -182,10 +193,10 @@ export function BadgesPage(): React.JSX.Element {
       {picking && (
         <ShowcasePicker
           badges={data.badges.filter((b) => b.tier > 0)}
-          initial={data.showcase}
+          initial={showcaseKeys}
           onClose={() => setPicking(false)}
           onSaved={(keys) => {
-            setData((d) => (d ? { ...d, showcase: keys } : d));
+            wantShowcase(keys);
             setPicking(false);
           }}
         />
@@ -324,25 +335,14 @@ function ShowcasePicker({
   onClose: () => void;
   onSaved: (keys: string[]) => void;
 }): React.JSX.Element {
-  const { client } = useAuth();
   const t = useT();
   const [keys, setKeys] = useState<string[]>(initial.filter((k) => badges.some((b) => b.key === k)));
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const full = keys.length >= SHOWCASE_SIZE;
 
   function toggle(key: string): void {
     setKeys((k) => (k.includes(key) ? k.filter((x) => x !== key) : k.length >= SHOWCASE_SIZE ? k : [...k, key]));
   }
 
-  async function save(): Promise<void> {
-    setBusy(true);
-    setError(null);
-    const res = await client.request<{ showcase: string[] }>('PUT', '/me/badges/showcase', { body: { keys } });
-    setBusy(false);
-    if (res.ok) onSaved(res.data.showcase ?? keys);
-    else setError(describeError(res.error, t));
-  }
 
   return (
     <Modal open onClose={onClose} label={t('badges.showcase.title')}>
@@ -374,14 +374,9 @@ function ShowcasePicker({
           })}
         </ul>
         {full && <p className="story-setup-note">{t('badges.showcase.full')}</p>}
-        {error && (
-          <p className="msg msg-error" role="alert">
-            {error}
-          </p>
-        )}
         <div className="story-setup-submit">
-          <Button size="lg" block disabled={busy} onClick={() => void save()}>
-            {busy ? t('common.loading') : t('badges.showcase.save')}
+          <Button size="lg" block onClick={() => onSaved(keys)}>
+            {t('badges.showcase.save')}
           </Button>
         </div>
       </div>

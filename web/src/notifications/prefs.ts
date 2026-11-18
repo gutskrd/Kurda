@@ -81,6 +81,17 @@ export function quietPatch(enabled: boolean, start: number | null, end: number |
   };
 }
 
+/** What differs between two sets of choices, as a patch; quiet hours go as a pair whenever either end changed. */
+export function prefsChange(wanted: NotificationPrefs, held: NotificationPrefs): Partial<NotificationPrefs> {
+  const patch: Partial<NotificationPrefs> = {};
+  for (const category of NOTIFICATION_CATEGORIES) if (wanted[category] !== held[category]) patch[category] = wanted[category];
+  if (wanted.quietStartMin !== held.quietStartMin || wanted.quietEndMin !== held.quietEndMin) {
+    patch.quietStartMin = wanted.quietStartMin;
+    patch.quietEndMin = wanted.quietEndMin;
+  }
+  return patch;
+}
+
 /** The default window, 22:00–07:00. */
 export const DEFAULT_QUIET_START = 22 * 60;
 export const DEFAULT_QUIET_END = 7 * 60;

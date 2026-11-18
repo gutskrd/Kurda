@@ -26,8 +26,8 @@ export interface LineOptions<T, R> {
   onShow: (shown: T) => void;
   /** The server accepted `sent` and answered `data`. */
   onSaved?: (data: R, sent: T) => void;
-  /** The server refused and the shown state went back to the confirmed one. */
-  onFailed: (error: ApiError) => void;
+  /** The server refused and the shown state went back to `confirmed`. */
+  onFailed: (error: ApiError, confirmed: T) => void;
   same?: (a: T, b: T) => boolean;
 }
 
@@ -68,7 +68,7 @@ export function intentLine<T, R>(initial: T, options: LineOptions<T, R>): Line<T
     if (next && !same(next.value, confirmed)) return run(next.value);
     show(confirmed);
     // When a newer tap already asked for what the server holds, nothing looks undone, so nothing is said.
-    if (!res.ok && !next) options.onFailed(res.error);
+    if (!res.ok && !next) options.onFailed(res.error, confirmed);
   };
 
   return {
@@ -103,7 +103,7 @@ export interface OptimisticOptions<T, R> {
   fromAnswer?: (data: R, sent: T) => T;
   onSaved?: (data: R, sent: T) => void;
   /** Says why in place of the notice, for a control that already shows its own message beside it. */
-  onFailed?: (error: ApiError) => void;
+  onFailed?: (error: ApiError, confirmed: T) => void;
   same?: (a: T, b: T) => boolean;
 }
 
@@ -128,9 +128,9 @@ export function useOptimistic<T, R = unknown>(
     fromAnswer: (data, sent) => (hands.current.options.fromAnswer ? hands.current.options.fromAnswer(data, sent) : sent),
     onShow: setShown,
     onSaved: (data, sent) => hands.current.options.onSaved?.(data, sent),
-    onFailed: (error) => {
+    onFailed: (error, confirmed) => {
       const { options: o, t: tr } = hands.current;
-      if (o.onFailed) o.onFailed(error);
+      if (o.onFailed) o.onFailed(error, confirmed);
       else showNotice(failureText(error, tr));
     },
     same: (a, b) => (hands.current.options.same ?? sameValue)(a, b),
