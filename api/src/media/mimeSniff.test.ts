@@ -14,7 +14,7 @@ describe('sniffImageType', () => {
   it('detects the ISO-BMFF photo formats a phone actually produces', () => {
     // size, "ftyp", then the brand at offset 8
     const bmff = (brand: string) =>
-      new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, ...[...brand].map((c) => c.charCodeAt(0)), 0, 0, 0, 0]);
+      new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, ...[...brand].map((c) => c.charCodeAt(0)), 0, 0, 0, 0, ...new Array<number>(8).fill(0)]);
 
     for (const brand of ['heic', 'heix', 'hevc', 'mif1', 'msf1']) {
       expect(sniffImageType(bmff(brand)), brand).toBe('image/heic');
@@ -29,7 +29,7 @@ describe('sniffImageType', () => {
 
   it('does not mistake other ISO-BMFF files for photographs', () => {
     const bmff = (brand: string) =>
-      new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, ...[...brand].map((c) => c.charCodeAt(0)), 0, 0, 0, 0]);
+      new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, ...[...brand].map((c) => c.charCodeAt(0)), 0, 0, 0, 0, ...new Array<number>(8).fill(0)]);
 
     // the same container carries video and audio; only the image brands qualify
     expect(sniffImageType(bmff('isom'))).toBeNull();
@@ -37,6 +37,17 @@ describe('sniffImageType', () => {
     expect(sniffImageType(bmff('M4A '))).toBeNull();
     // "ftyp" present but the brand is cut off
     expect(sniffImageType(new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65]))).toBeNull();
+  });
+
+  it('does not take text dressed as a HEIF header for a photograph', () => {
+    // An SVG that starts with a comment holding "ftypavif": the brand is in place, but the box size is the text "<!--".
+    const disguised = new TextEncoder().encode('<!--ftypavif--><svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+    expect(sniffImageType(disguised)).toBeNull();
+    // a box size larger than the file, or not whole brands
+    const sized = (size: number) => new Uint8Array([0, 0, 0, size, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66, ...new Array<number>(20).fill(0)]);
+    expect(sniffImageType(sized(0x18))).toBe('image/avif');
+    expect(sniffImageType(sized(0x40))).toBeNull();
+    expect(sniffImageType(sized(0x17))).toBeNull();
   });
 
   it('returns null for non-images and RIFF-but-not-WEBP', () => {
