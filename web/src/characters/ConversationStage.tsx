@@ -20,15 +20,14 @@ import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 /** Room left above the heads, so none touches the top edge. */
 const HEADROOM = 16;
 
-/** How far over the stage's top edge a hop may carry a head, as a share of its height, before anything cuts it off. */
+/** How far above the stage's top edge a hop may carry a head, as a share of its height. */
 const HOP_ROOM = 0.3;
 
 const NO_VOICES: ReadonlyArray<RecordingVoice | null> = [];
 
 /**
- * The line heard last: the one the conversation is playing through (`at`), or
- * else the last of its lines the app's one player started, whichever way it
- * was started (a line's own button). Null before any has been heard.
+ * The line heard last: the one being played through (`at`), else the last line the app's player started, however it
+ * was started. Null before any has been heard.
  */
 function useHeardLine(audio: ReadonlyArray<string | null>, at: number | null): number | null {
   const [heard, setHeard] = useState<string | null>(null);
@@ -39,30 +38,20 @@ function useHeardLine(audio: ReadonlyArray<string | null>, at: number | null): n
       if (src !== null && list.includes(src)) setHeard(src);
     });
   }, [key]);
-  // one part saying the same words twice is one recording: the play-through knows which of the two lines it is at
+  // A part saying the same words twice is one recording, so the play-through decides which line it is.
   if (at !== null && (heard === null || audio[at] === heard)) return at;
   const i = heard === null ? -1 : audio.indexOf(heard);
   return i >= 0 ? i : null;
 }
 
 /**
- * The people in a conversation, side by side on one stage and looking at
- * each other: the characters playing its parts, in the order they first
- * appear, the first on the start side, every one head to waist at the same
- * size in their own light (shared `standTogether`, `togetherBackdrop`).
+ * A conversation's characters side by side on one stage, in order of appearance, head to waist at the same size
+ * (shared `standTogether`, `togetherBackdrop`). The speaker of the line heard last says it as that line's part's
+ * character (shared `conversationLineVoice`); the others look at them, and they look back at the previous speaker
+ * (shared `gazeTargets`, `lookAcross`). Faces drawn slightly turned are mirrored where they would face away.
  *
- * Whoever says the line heard last speaks it, mouth moving with the sound,
- * and is always that line's own part's character, whichever voice its
- * recording was saved under (shared `conversationLineVoice`). Everyone else
- * stays quiet and looks at them, and they look back at whoever spoke before
- * them (shared `gazeTargets`, `lookAcross`). A face drawn turned a little is
- * stood the other way round where that would turn it from the others.
- *
- * The learner's own part, when they have one, is not on the stage: they are
- * the one the characters face, so a character talking with them looks out.
- *
- * Decorative: the lines below say who says what; the stage shows it. Nothing
- * at all for a conversation with a part no character plays.
+ * The learner's own part is not on stage; characters talking with them look out. Decorative, since the lines below
+ * say who says what. Nothing shows when a part has no character.
  */
 export function ConversationStage({
   speakers,
@@ -75,10 +64,10 @@ export function ConversationStage({
 }: {
   speakers: readonly ConversationSpeaker[];
   lines: readonly ConversationLine[];
-  /** each line's recording, by its place; null for one not recorded */
+  /** Each line's recording by position; null for one not recorded. */
   audio: ReadonlyArray<string | null>;
   voices?: ReadonlyArray<RecordingVoice | null>;
-  /** the line the conversation is playing through, if it is */
+  /** The line being played through, if any. */
   at?: number | null;
   reaction?: CharacterReaction | null;
   height?: number;
@@ -96,12 +85,12 @@ export function ConversationStage({
     return () => watch.disconnect();
   }, []);
   const heard = useHeardLine(audio, at);
-  // the characters on stage, in order; the learner's own part stands in front of it, not on it
+  // The characters on stage in order; the learner's own part is not among them.
   const cast = stageCast(speakers);
   const complete = cast !== null;
-  // the cast as one string, so a new array of the same characters changes nothing
+  // The cast as one string, so a new array of the same characters changes nothing.
   const castKey = cast ? cast.join(',') : '';
-  // each line by who says it on stage; the learner's lines by nobody there, so whoever is on stage looks out at them
+  // Each line by its speaker on stage; the learner's lines have none, so the cast looks out at them.
   const staged = useMemo(() => stageLines(speakers, lines), [speakers, lines]);
   const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
   const places = useMemo(() => {
@@ -156,7 +145,7 @@ export function ConversationStage({
               <SpeakingCharacter
                 speaker={place.id}
                 audio={soundPlayer}
-                // the part's own line, said by the part's own character; nobody else speaks while it plays
+                // The part's own line, said by its own character; nobody else speaks while it plays.
                 src={src}
                 voice={src && said ? conversationLineVoice(speakers, said, voices[saying!]) : null}
                 text={src && said ? said.text : null}

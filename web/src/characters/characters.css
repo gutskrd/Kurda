@@ -1,8 +1,4 @@
-/*
- * A speaking character (SpeakingCharacter.tsx): one inline drawing whose box
- * has the drawing's own shape from the first paint, so nothing moves when it
- * arrives. The place it sits in decides how wide it is.
- */
+/* A speaking character (SpeakingCharacter.tsx), its box shaped like the drawing from the first paint; its holder sets the width. */
 .speaking-character {
   display: inline-block;
   flex: none;
@@ -17,13 +13,9 @@
   overflow: hidden;
 }
 
-/*
- * A portrait tile: the place a character speaks from, beside the buttons that
- * play it. The bust stands on the tile's bottom edge with a little room above
- * the head, and the tile is lit, as a playing button is, while it speaks.
- */
+/* A portrait tile beside the play buttons: the bust stands on its bottom edge, and it lights up while speaking. */
 .speaker-tile {
-  /* each place sets --speaker-size; the padding and the corners follow it (a percentage would follow the container) */
+  /* Each place sets --speaker-size, which padding and corners follow (a percentage would follow the container). */
   width: var(--speaker-size, 64px);
   padding: calc(var(--speaker-size, 64px) * 0.08) calc(var(--speaker-size, 64px) * 0.06) 0;
   border: 1px solid var(--border);
@@ -39,10 +31,7 @@
   box-shadow: 0 0 0 3px var(--gold-soft);
 }
 
-/*
- * The parts that move turn and grow about points in the drawing's own units
- * (set on each group), so their box is the drawing's.
- */
+/* Moving parts turn and scale about points in the drawing's units, set on each group. */
 .speaking-character .sc-breathe,
 .speaking-character .sc-drift,
 .speaking-character [data-sc],
@@ -50,7 +39,7 @@
 .speaking-character [data-iris] {
   transform-box: view-box;
 }
-/* a look eases to where it goes, as an eye does, rather than jumping */
+/* A look eases to its target rather than jumping. */
 .speaking-character [data-pupil],
 .speaking-character [data-iris] {
   transition: transform var(--dur-fast) var(--ease-out);
@@ -61,10 +50,8 @@
 }
 
 /*
- * Alive between the words: a breath, and the head drifting a degree either
- * way. Only while it can be seen (`is-alive`, set as it comes on screen) and
- * for a reader who has not asked for less motion. The numbers are the shared
- * ones (BREATH, SWAY), handed over as custom properties.
+ * Between words: a breath and a slight head drift, only while on screen (`is-alive`) and without Reduce Motion. The
+ * timings are the shared BREATH and SWAY, passed as custom properties.
  */
 @media (prefers-reduced-motion: no-preference) {
   .speaking-character.is-alive .sc-breathe {
@@ -89,11 +76,8 @@
 }
 
 /*
- * Resting (`resting`): a "z" drifting up beside the head, three at a time,
- * each a third of the way behind the one before, growing as it rises and
- * fading out (shared RESTING). The drawing lets them past its top edge. While
- * the character is still — off screen, or for a reader who asked for less
- * motion — two of them stay where they are, the second higher and bigger.
+ * Resting: three staggered "z"s drift up beside the head, growing and fading (shared RESTING), past the drawing's top
+ * edge. While still (off screen or under Reduce Motion) two stay put, the second higher and bigger.
  */
 .speaking-character.is-resting > svg {
   overflow: visible;
@@ -138,12 +122,8 @@
 }
 
 /*
- * A stage (CharacterStage.tsx): where a lesson's character stands to say what
- * it says, head to waist in its own light, and the buttons or the words it is
- * saying standing beside it. The script sizes the character's side
- * (--stage-spot) and places the whole figure in it; the side cuts the figure
- * off at the stage's bottom edge, and reaches --stage-hop above the top edge
- * so a hop is not cut short.
+ * A lesson's character stage (CharacterStage.tsx). The script sizes the character's side (--stage-spot) and places the
+ * figure in it; the side clips at the bottom edge and reaches --stage-hop above the top so a hop is not cut short.
  */
 .character-stage {
   position: relative;
@@ -157,7 +137,7 @@
   background: var(--surface);
   isolation: isolate;
 }
-/* the backdrop keeps to the card's rounded corners */
+/* The backdrop keeps to the card's rounded corners. */
 .character-stage-backdrop {
   position: absolute;
   inset: 0;
@@ -179,7 +159,7 @@
   border-end-start-radius: var(--r-xl);
   pointer-events: none;
 }
-/* placed by the script (top and left), centred in the character's side whichever way the page reads */
+/* Placed by the script (top and left), centred in the character's side in either direction. */
 .character-stage-place {
   position: absolute;
   line-height: 0;
@@ -194,7 +174,7 @@
 .character-stage[data-speaking-within] {
   box-shadow: 0 0 0 3px var(--gold-soft);
 }
-/* the backdrop drawn for the page's own scheme: dark unless the page is light */
+/* The backdrop for the page's scheme: dark unless the page is light. */
 .character-stage-backdrop.is-light {
   display: none;
 }
@@ -209,7 +189,7 @@
   width: 100%;
   height: 100%;
 }
-/* beside the character there is less room than a whole line: a long label wraps rather than running off the stage */
+/* Beside the character a long label wraps rather than running off the stage. */
 .character-stage-side .btn {
   max-width: 100%;
   height: auto;
@@ -218,12 +198,7 @@
   text-align: start;
 }
 
-/*
- * A conversation's stage (ConversationStage.tsx): its characters side by side
- * in their own light, looking at each other, each placed by the script. The
- * figures are cut off at the stage's bottom edge and may hop --stage-hop over
- * its top edge.
- */
+/* A conversation's stage (ConversationStage.tsx): characters placed by the script, clipped at the bottom, free to hop --stage-hop above. */
 .conversation-stage {
   position: relative;
   height: var(--stage-h, 260px);
@@ -248,12 +223,9 @@
 }
 
 /*
- * Hevalo putting his head in at the window (HevaloWindow.tsx): the outside
- * and the wall behind him, him cut off at the sill and nowhere else, then the
- * curtains, the sill and the flowers on our side of him, and his shadow on
- * the sill, all in one box of the picture's shape. The script sets the
- * sill's height (--window-sill), and how far under it (--window-drop) and how
- * small (--window-far) he waits outside to come in.
+ * Hevalo at the window (HevaloWindow.tsx): the outside, then him cut off at the sill, then the room's curtains, sill
+ * and flowers, in one box of the picture's shape. The script sets the sill height (--window-sill) and how far below
+ * (--window-drop) and how small (--window-far) he starts.
  */
 .hevalo-window {
   position: relative;
@@ -271,7 +243,7 @@
   width: 100%;
   height: 100%;
 }
-/* drawn for the page's own scheme: dusk unless the page is light */
+/* Drawn for the page's scheme: dusk unless the page is light. */
 .hevalo-window-art.is-light {
   display: none;
 }
@@ -281,7 +253,7 @@
 :root[data-theme='light'] .hevalo-window-art.is-dark {
   display: none;
 }
-/* on a page read from the right, the flowers and the view change sides */
+/* On a right-to-left page the flowers and the view change sides. */
 .hevalo-window.is-mirrored .hevalo-window-art > svg {
   transform: scaleX(-1);
 }
@@ -304,7 +276,7 @@
     animation: hevalo-window-shade var(--window-pop-ms, 560ms) var(--ease-out) var(--window-pop-delay, 140ms) both;
   }
 }
-/* up over the sill from outside, growing as he comes closer */
+/* Up over the sill, growing as he comes closer. */
 @keyframes hevalo-window-rise {
   from {
     transform: translateY(var(--window-drop, 120px)) scale(var(--window-far, 0.8));

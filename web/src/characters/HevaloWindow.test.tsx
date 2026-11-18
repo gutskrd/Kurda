@@ -5,12 +5,8 @@ import { I18nProvider } from '../i18n/I18nProvider';
 import { HevaloWindow } from './HevaloWindow';
 
 /*
- * Hevalo putting his head in at the window on the website: the outside and
- * the wall behind him, his head and neck cut off at the sill, the curtains,
- * the sill and the pot on our side of him, and his shadow on the sill; his
- * coming in from outside as it appears, but not for a reader who asked for
- * less motion; his reactions as ever; the window mirrored on a page read from
- * the right.
+ * Hevalo at the window: his head and neck cut at the sill between the outside and the room's curtains, sill and pot;
+ * his entrance (skipped under Reduce Motion); his reactions; and the window mirrored on a right-to-left page.
  */
 
 afterEach(() => {
@@ -36,7 +32,7 @@ describe('HevaloWindow', () => {
       'hevalo-window-art is-light is-shadow',
       'hevalo-window-art is-dark is-shadow',
     ]);
-    // his head and neck, never the whole figure, drawn as tall as his box in the window
+    // His head and neck, never the whole figure, as tall as his box in the window.
     const deer = win.querySelector<HTMLElement>('.hevalo-window-cut .speaking-character')!;
     expect(deer).toHaveAttribute('data-speaker', 'hevalo');
     expect(deer).toHaveAttribute('data-crop', 'head');
@@ -44,9 +40,9 @@ describe('HevaloWindow', () => {
     expect(deer.querySelector('svg')).toHaveAttribute('viewBox', `${box.x} ${box.y} ${box.w} ${box.h}`);
     expect(parseFloat(deer.style.height)).toBeCloseTo(WINDOW_PLACE.figure.height * 200);
     expect(parseFloat(win.style.width)).toBeCloseTo((200 * WINDOW_VIEW.w) / WINDOW_VIEW.h);
-    // cut off at the sill
+    // Cut off at the sill.
     expect(win.style.getPropertyValue('--window-sill')).toBe(`${WINDOW_PLACE.sill * 100}%`);
-    // a picture beside words that say it all
+    // Decorative, beside words that say it all.
     expect(win).toHaveAttribute('aria-hidden', 'true');
   });
 
@@ -65,10 +61,10 @@ describe('HevaloWindow', () => {
   it('brings him in from outside, rising over the sill and growing as he comes, but only for a reader who has not asked for less motion', () => {
     const win = show(<HevaloWindow size={200} />);
     expect(win).toHaveClass('is-popping');
-    // from all under the sill, farther off, the top of his antlers at it
+    // He starts below the sill and farther off, the tops of his antlers at it.
     expect(win.style.getPropertyValue('--window-drop')).toBe(`${WINDOW_PLACE.drop * 200}px`);
     expect(win.style.getPropertyValue('--window-far')).toBe(String(WINDOW_PLACE.far));
-    // growing from the middle of his neck where it comes in over the sill
+    // Growing from the middle of his neck where it crosses the sill.
     const { through } = WINDOW_PLACE;
     expect(win.querySelector<HTMLElement>('.hevalo-window-place')!.style.transformOrigin).toBe(`${through.x * 100}% ${through.y * 100}%`);
     expect(show(<HevaloWindow size={200} pop={false} />)).not.toHaveClass('is-popping');

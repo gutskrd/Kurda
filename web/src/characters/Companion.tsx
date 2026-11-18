@@ -4,11 +4,9 @@ import { CompanionPlayer } from '@kurda/shared/src/characters/companion-player';
 import '@kurda/shared/src/characters/companion.css';
 
 /**
- * Hevalo beside a form (@kurda/shared characters/companion): he watches the
- * boxes in `watch` as they are filled in, covers his eyes for a password,
- * and takes the form's `status` (thinking while it is sent, a question for a
- * mistake, a hop and `word` for getting in). Decorative: the form says in
- * words whatever he shows.
+ * Hevalo beside a form (@kurda/shared characters/companion): he watches the fields in `watch`, covers his eyes for a
+ * password, and reacts to `status` (thinking while sending, puzzled at a mistake, a hop and `word` on success).
+ * Decorative, since the form says everything in words.
  */
 export function Companion({
   status,

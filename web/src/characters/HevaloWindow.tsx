@@ -5,18 +5,10 @@ import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import './characters.css';
 
 /**
- * Hevalo putting his head in at the window, as on the phone (shared
- * `windowArt`): we are in a village room, and he is outside and pokes his head
- * and neck in over the sill, the sky and the mountains behind him. As the
- * window appears he comes in from outside, rising over the sill and growing a
- * little as he comes closer, on a spring, his shadow coming onto the sill
- * with him (stylesheet animations); for a reader who asked for less motion he
- * is simply there. Alive as ever: he blinks, glances about, follows the
- * pointer, and cheers or tilts his head at a `reaction`.
- *
- * The window is drawn once for a light page and once for a dark one, and
- * mirrored on a page read from the right, its pot and its view changing
- * sides. Decorative: the words beside him say whatever he does.
+ * Hevalo putting his head and neck in over a window sill, as on the phone (shared `windowArt`). As the window appears
+ * he rises over the sill on a spring with his shadow (stylesheet animations), or is simply there under Reduce Motion.
+ * He blinks, glances, follows the pointer and reacts to `reaction`. The window is drawn for light and dark and
+ * mirrored on a right-to-left page. Decorative, since the words beside him say everything.
  */
 export function HevaloWindow({
   size,
@@ -24,15 +16,15 @@ export function HevaloWindow({
   pop = true,
   className,
 }: {
-  /** how tall the window is drawn, in pixels; its width follows */
+  /** The window's height in pixels; its width follows. */
   size: number;
   reaction?: CharacterReaction | null;
-  /** he comes in at the window as it appears; false, he is there already */
+  /** He comes in as the window appears; false means he is already there. */
   pop?: boolean;
   className?: string;
 }): React.JSX.Element {
   const id = `hw${useId().replace(/[^A-Za-z0-9]/g, '')}`;
-  // asked for less motion as he appears, he is simply there (and the stylesheet keeps him still for one who asks later)
+  // Under Reduce Motion at mount he is simply there; the stylesheet keeps him still if it is turned on later.
   const [still] = useState(prefersReducedMotion);
   const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
   const art = useMemo(
@@ -62,7 +54,7 @@ export function HevaloWindow({
       aria-hidden="true"
     >
       {layer('back')}
-      {/* cut off at the sill and nowhere else: an ear or an antler may reach past the window's top and sides, into the room */}
+      {/* Cut off at the sill only; an ear or antler may reach past the window's top and sides. */}
       <span className="hevalo-window-cut">
         <span
           className="hevalo-window-place"

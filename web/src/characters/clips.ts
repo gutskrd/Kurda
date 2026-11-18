@@ -4,7 +4,7 @@ import type { RecordingVoice } from '@kurda/shared';
 export interface SpokenClip {
   src: string;
   voice: RecordingVoice;
-  /** the words, for moving the mouth when no timeline was saved with the recording */
+  /** The words, for moving the mouth when no timeline was saved with the recording. */
   text?: string | null;
 }
 
@@ -15,10 +15,7 @@ export interface MaybeSpoken {
   text?: string | null;
 }
 
-/**
- * The recordings in `list` that an editor gave a character, once each. A
- * recording without one shows nobody: Hevalo speaks only where he was chosen.
- */
+/** The recordings in `list` that an editor gave a character, once each; one without a character shows nobody. */
 export function spokenClips(list: readonly MaybeSpoken[]): SpokenClip[] {
   const out: SpokenClip[] = [];
   for (const { src, voice, text } of list) {
