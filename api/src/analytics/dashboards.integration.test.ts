@@ -1,4 +1,4 @@
-/** Core dashboards (KUR-106) against real Postgres: DAU, retention, funnel. */
+/** Core dashboards against real Postgres: DAU, retention, funnel. */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -36,7 +36,7 @@ describe.skipIf(!DATABASE_URL)('dashboards (integration)', () => {
       [randomUUID(), userId, type, day],
     );
 
-  /** Active-user history now comes from the heartbeat's per-day rows, not events. */
+  /** Active-user history comes from the heartbeat's per-day rows. */
   const active = (userId: string, day: string) =>
     pool.query(`INSERT INTO user_activity_days (day, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [day, userId]);
 
@@ -57,8 +57,7 @@ describe.skipIf(!DATABASE_URL)('dashboards (integration)', () => {
     // D1: only u1 returns
     await insert(u1, 'lesson_start', D1);
 
-    // Activity + retention read server-side truth now: per-day activity rows, and
-    // cohorts by signup date — so place both accounts' signup on D0.
+    // Activity and retention read per-day rows and signup dates, so both accounts sign up on D0.
     await pool.query(`UPDATE users SET created_at = $1::date WHERE id = ANY($2)`, [D0, [u1, u2]]);
     await active(u1, D0);
     await active(u2, D0);

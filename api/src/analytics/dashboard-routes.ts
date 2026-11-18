@@ -17,7 +17,7 @@ function range(q: { from?: string; to?: string }): { from: string; to: string } 
   return { from, to };
 }
 
-/** Core analytics dashboards (KUR-106), admin-only. */
+/** Core analytics dashboards, admin-only. */
 export function registerDashboardRoutes(app: FastifyInstance, dashboards: DashboardService): void {
   app.get(
     '/admin/analytics/activity',
