@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { unreadLabel } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { UsersIcon } from '../components/icons';
-import { badgeLabel } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import { useT } from '../i18n/I18nProvider';
 
@@ -34,7 +34,7 @@ export function RailToggle(): React.JSX.Element | null {
       <UsersIcon size={19} />
       {total > 0 && (
         <span key={popKey} className="rail-badge rail-badge-pop">
-          {badgeLabel(total)}
+          {unreadLabel(total)}
         </span>
       )}
     </button>

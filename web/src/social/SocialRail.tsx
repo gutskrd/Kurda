@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { unreadLabel } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CloseButton } from '../components/CloseButton';
@@ -7,7 +8,7 @@ import { ChatsIcon, GameIcon, ChevronIcon } from '../components/icons';
 import { DmThread } from '../chat/DmThread';
 import { GroupThread } from '../chat/GroupThread';
 import { RailStrip } from './RailStrip';
-import { badgeLabel, elapsed, lastSeen } from './time';
+import { elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import { railEdits, toastsHere, type RailFriend, type SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
@@ -167,7 +168,7 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
                 <span className="rail-row-sub">{t('rail.members', { count: g.memberCount.toLocaleString() })}</span>
               </span>
             </Link>
-            {g.unread > 0 && <span className="rail-badge">{badgeLabel(g.unread)}</span>}
+            {g.unread > 0 && <span className="rail-badge">{unreadLabel(g.unread)}</span>}
             {onChat && (
               <button
                 type="button"

@@ -4,6 +4,7 @@ import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { unreadLabel } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useEdgePanel } from '../navigation/edgePanel';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -259,7 +260,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                     </View>
                     {g.unread > 0 ? (
                       <View style={[styles.unread, { backgroundColor: colors.primary }]}>
-                        <Text style={[styles.unreadText, { color: colors.textOnPrimary }]}>{g.unread > 99 ? '99+' : g.unread}</Text>
+                        <Text style={[styles.unreadText, { color: colors.textOnPrimary }]}>{unreadLabel(g.unread)}</Text>
                       </View>
                     ) : null}
                   </PressableScale>

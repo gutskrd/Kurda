@@ -1,5 +1,5 @@
+import { unreadLabel } from '@kurda/shared';
 import { ChatsIcon, GameIcon, InviteIcon, UsersIcon } from '../components/icons';
-import { badgeLabel } from './time';
 import type { SocialRailData } from './useSocialRail';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -55,7 +55,7 @@ export function RailStrip({
           aria-label={t('rail.rungOpen', { label: t(r.labelKey), count: r.count })}
         >
           {r.icon}
-          {r.count > 0 && <span className="rail-badge rail-rung-count">{badgeLabel(r.count)}</span>}
+          {r.count > 0 && <span className="rail-badge rail-rung-count">{unreadLabel(r.count)}</span>}
         </button>
       ))}
     </div>

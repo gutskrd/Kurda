@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { groupLimits, type LettersHome, type LimitDetails } from '@kurda/shared';
+import { groupLimits, unreadLabel, type LettersHome, type LimitDetails } from '@kurda/shared';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
@@ -420,7 +420,7 @@ function ConversationRow({
   // A gift or a game has no words of its own: its mark goes before the line that stands in for them.
   const mark = row.kind === 'direct' ? previewIcon(row.chat.lastKind) : null;
   const when = row.kind === 'direct' ? listTime(row.at, locale) : '';
-  const label = unread ? t('messages.unreadLabel', { name: row.name, count: row.unread }) : row.name;
+  const label = unread ? t('messages.unreadLabel', { name: row.name, count: unreadLabel(row.unread) }) : row.name;
   return (
     <Pressable
       onPress={onPress}
@@ -455,7 +455,7 @@ function ConversationRow({
           </Text>
           {unread ? (
             <View style={[styles.count, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{row.unread > 99 ? '99+' : row.unread}</Text>
+              <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{unreadLabel(row.unread)}</Text>
             </View>
           ) : null}
         </View>
