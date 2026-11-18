@@ -1,9 +1,4 @@
-/**
- * A random order every replica agrees on: the multiplayer games draw who goes
- * first, who speaks when and how options are laid out from the seed a game
- * was started with, never from a clock or `Math.random`, so their rules stay
- * pure and a state can be judged anywhere.
- */
+/** A random order every replica agrees on, drawn from the game's seed rather than a clock or `Math.random`, so the rules stay pure. */
 import { seededUnit } from '../last-letter/rules.js';
 
 /** The items in an order drawn from the seed and a salt. */

@@ -1,11 +1,12 @@
 /** GDPR deletion + export flows (CI integration job; export needs MinIO). */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { CreateBucketCommand, S3Client } from '@aws-sdk/client-s3';
+import { CreateBucketCommand, HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { createStorage } from '../media/storage.js';
+import { PrivateStorageUnavailable, createStorage } from '../media/storage.js';
+import { FakeStorage } from '../test/fake-storage.js';
 import { GdprService, DELETION_GRACE_DAYS } from './service.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
@@ -79,6 +80,41 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(login.statusCode).toBe(200);
     const cancelled = await pool.query(`SELECT deletion_requested_at FROM users WHERE id = $1`, [user.id]);
     expect(cancelled.rows[0].deletion_requested_at).toBeNull();
+  });
+
+  /*
+   * Signing in again is what calls a deletion off, so no device may simply
+   * carry on as before: every session ends when the deletion is asked for,
+   * the one that asked and every other, and the next thing each sees is the
+   * sign-in screen.
+   */
+  it('DELETE /me ends every session the account has, on every device', async () => {
+    const user = await makeUser('graceall');
+    const elsewhere = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: user.email, password: 'a-strong-password1' },
+      remoteAddress: '10.13.1.5',
+    });
+    expect(elsewhere.statusCode).toBe(200);
+    const other = elsewhere.json().tokens as { accessToken: string; refreshToken: string };
+    const me = (token: string) => app.inject({ method: 'GET', url: '/me', headers: { authorization: `Bearer ${token}` }, remoteAddress: '10.13.1.6' });
+    expect((await me(other.accessToken)).statusCode).toBe(200);
+
+    const del = await app.inject({ method: 'DELETE', url: '/me', headers: { authorization: `Bearer ${user.token}` }, remoteAddress: '10.13.1.7' });
+    expect(del.statusCode).toBe(200);
+    expect(del.json().deletionScheduled).toBe(true);
+
+    // neither the device that asked nor the other one goes on working, and the other cannot renew its session
+    expect((await me(user.token)).statusCode).toBe(401);
+    expect((await me(other.accessToken)).statusCode).toBe(401);
+    const renewed = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: other.refreshToken }, remoteAddress: '10.13.1.6' });
+    expect(renewed.statusCode).toBe(401);
+    const live = await pool.query(`SELECT 1 FROM refresh_tokens WHERE user_id = $1 AND revoked_at IS NULL`, [user.id]);
+    expect(live.rowCount).toBe(0);
+    // the deletion itself is still on its way, until somebody signs in
+    const marked = await pool.query(`SELECT deletion_requested_at FROM users WHERE id = $1`, [user.id]);
+    expect(marked.rows[0].deletion_requested_at).not.toBeNull();
   });
 
   it('deletion scrubs PII after the grace period but keeps the row', async () => {
@@ -329,8 +365,9 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
 
   it.skipIf(!S3_READY)('export request → fulfillment → signed download', async () => {
     const user = await makeUser('export');
-    // loadConfig() from process.env so the CI job's S3_* vars are seen
-    const fullConfig = loadConfig();
+    // loadConfig() from process.env so the CI job's S3_* vars are seen, with a
+    // private bucket beside the public one: an export is kept nowhere else
+    const fullConfig = loadConfig({ ...process.env, S3_EVIDENCE_BUCKET: `${process.env.S3_BUCKET ?? 'kurda-test'}-private` });
     // test files run in arbitrary order — ensure the bucket exists
     const s3 = new S3Client({
       region: fullConfig.S3_REGION,
@@ -342,6 +379,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       },
     });
     await s3.send(new CreateBucketCommand({ Bucket: fullConfig.S3_BUCKET })).catch(() => undefined);
+    await s3.send(new CreateBucketCommand({ Bucket: fullConfig.S3_EVIDENCE_BUCKET })).catch(() => undefined);
     const storage = createStorage(fullConfig);
     const service = new GdprService(pool, { storage });
 
@@ -362,6 +400,9 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(doc.format).toBe('kurda-user-export/v1');
     expect(doc.user.email).toBe(user.email);
     expect(JSON.stringify(doc)).not.toContain('password');
+    // and the bucket the CDN serves never held it
+    const key = (await pool.query<{ storage_key: string }>(`SELECT storage_key FROM user_exports WHERE id = $1`, [exportId])).rows[0]!.storage_key;
+    await expect(s3.send(new HeadObjectCommand({ Bucket: fullConfig.S3_BUCKET, Key: key }))).rejects.toBeDefined();
   });
 
   it('export without storage returns 503 via the route', async () => {
@@ -375,5 +416,51 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     // app built without S3 config in this test file → EXPORT_NOT_AVAILABLE
     expect(res.statusCode).toBe(503);
     expect(res.json().code).toBe('EXPORT_NOT_AVAILABLE');
+  });
+
+  /*
+   * An export holds a person's account, sessions and linked identities, and
+   * is kept only where nobody can read it without its short-lived signed
+   * link: never in the public bucket the CDN serves, whatever is configured.
+   */
+  it('makes no export without a private bucket: asking is refused, and a request already made is withdrawn', async () => {
+    const user = await makeUser('noprivate');
+    const storage = new FakeStorage();
+    storage.hasPrivateBucket = false;
+    const service = new GdprService(pool, { storage: storage.asStorage });
+    await expect(service.requestExport(user.id)).rejects.toMatchObject({ code: 'EXPORT_NOT_AVAILABLE', statusCode: 503 });
+
+    // asked for while there was one, and come to after it was lost
+    storage.hasPrivateBucket = true;
+    const exportId = await service.requestExport(user.id);
+    storage.hasPrivateBucket = false;
+    await expect(service.fulfillExport(exportId)).rejects.toBeInstanceOf(PrivateStorageUnavailable);
+    expect(storage.publicObjects.size).toBe(0);
+    expect(storage.privateFiles.size).toBe(0);
+    // nothing says one is on its way, and the person may ask again later
+    expect(await service.exportStatus(user.id)).toEqual({ status: 'none' });
+  });
+
+  it('deletes the earlier export’s file once a newer one is ready', async () => {
+    const user = await makeUser('exportagain');
+    const storage = new FakeStorage();
+    const service = new GdprService(pool, { storage: storage.asStorage });
+    const keyOf = async (id: string) =>
+      (await pool.query<{ storage_key: string | null }>(`SELECT storage_key FROM user_exports WHERE id = $1`, [id])).rows[0]!.storage_key;
+    const first = await service.requestExport(user.id);
+    await service.fulfillExport(first);
+    const firstKey = (await keyOf(first))!;
+    expect([...storage.privateFiles.keys()]).toEqual([firstKey]);
+
+    // a day later, another
+    await pool.query(`UPDATE user_exports SET requested_at = now() - interval '25 hours' WHERE id = $1`, [first]);
+    const second = await service.requestExport(user.id);
+    expect(second).not.toBe(first);
+    await service.fulfillExport(second);
+    const secondKey = (await keyOf(second))!;
+    expect(secondKey).not.toBe(firstKey);
+    expect([...storage.privateFiles.keys()]).toEqual([secondKey]);
+    expect(await keyOf(first)).toBeNull();
+    expect(await service.exportStatus(user.id)).toMatchObject({ status: 'ready', downloadUrl: `https://signed.test/private/${secondKey}?ttl=900` });
   });
 });

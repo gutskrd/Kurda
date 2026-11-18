@@ -46,7 +46,8 @@ export function BackButton({
     <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={label ?? (kind === 'close' ? t('common.cancel') : t('common.back'))}
+      // a × closes the page, it cancels nothing: "Close", as the Quests page already said by hand
+      accessibilityLabel={label ?? (kind === 'close' ? t('common.close') : t('common.back'))}
       testID="header-back"
       reach="open"
       style={[styles.button, floating.control, { backgroundColor: colors.barFill, shadowColor: colors.softShadow }]}

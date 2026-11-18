@@ -29,7 +29,7 @@ export function registerQuestRoutes(app: FastifyInstance, quests: QuestService):
     async (req, reply) => {
       const { key } = req.params as z.infer<typeof keyParam>;
       const view = await quests.progress(req.user!.id, key);
-      if (!view) return reply.code(404).send({ error: { code: 'NO_EVENT', message: 'no such event' } });
+      if (!view) return reply.code(404).send({ code: 'NO_EVENT', message: 'no such event' });
       return view;
     },
   );
@@ -49,7 +49,8 @@ export function registerQuestRoutes(app: FastifyInstance, quests: QuestService):
       if (!result.ok) {
         return reply
           .code(CLAIM_STATUS[result.code] ?? 400)
-          .send({ error: { code: result.code, message: CLAIM_MESSAGE[result.code] ?? 'cannot claim' } });
+          // the flat { code, message } every route answers with, so the apps can say which refusal it was
+          .send({ code: result.code, message: CLAIM_MESSAGE[result.code] ?? 'cannot claim' });
       }
       return result;
     },

@@ -7,7 +7,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import type { BattleState } from './battleApi';
 import { WordleBattleScreen } from './WordleBattleScreen';
 import { backOut, navigation } from '../play/testing/navigation';
-import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
+import { pressBack, resetHardwareBack, swipeHeld } from '../navigation/testing/hardwareBack';
 import { reportGameFinished } from '../feedback/gameFinished';
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -133,6 +133,8 @@ describe('WordleBattleScreen', () => {
       const alert = answerAlerts('destructive');
       renderWithProviders(<WordleBattleScreen id="b1" onExit={backOut} />);
       await screen.findByRole('button', { name: 'Leave game' });
+      // the lobby asks through the stack itself, so its swipe is left to it
+      expect(swipeHeld()).toBe(false);
       fireEvent.click(screen.getByRole('button', { name: 'Back' }));
       expect(alert.mock.calls[0]?.[0]).toBe('Leave this game?');
       await waitFor(() => expect(navigation.dispatch).toHaveBeenCalledWith({ type: 'GO_BACK' }));
@@ -215,6 +217,8 @@ describe('WordleBattleScreen', () => {
       expect(alert.mock.calls[0]?.[0]).toBe('Leave this game?');
       expect(alert.mock.calls[0]?.[1]).toBe('The game carries on without you.');
       expect(onExit).toHaveBeenCalledTimes(1);
+      // and the iOS swipe from the edge cannot leave it without a word either
+      expect(swipeHeld()).toBe(true);
     });
   });
 

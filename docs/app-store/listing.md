@@ -11,8 +11,10 @@ the same change that makes it so. `node scripts/check-listing.mjs` checks every
 field against the store's limits.
 
 The screenshots are made from the app's own screens at 1320 × 2868, the
-6.9-inch iPhone size the store scales down for every smaller iPhone; they need
-no iPad set, because the app is not offered on iPad (`supportsTablet: false`).
+6.9-inch iPhone size the store scales down for every smaller iPhone. They need
+no iPad set: the build is iPhone-only (`supportsTablet: false`), so an iPad
+runs it in its iPhone window and the store asks for iPad screenshots only from
+apps built for iPad.
 
 ## English (U.S.), the primary language
 

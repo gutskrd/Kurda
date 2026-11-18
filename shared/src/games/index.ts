@@ -1,8 +1,4 @@
-/**
- * The learning games' shared kit, in one import: the registry, the varieties
- * and their script rules, the content schemas and the shapes the apps are
- * sent, the solo round's rules, and each game's own module (one line each).
- */
+/** The learning games' shared kit in one import: the registry, varieties and script rules, content schemas, the solo rules and each game's module. */
 export * from './registry.js';
 export * from './names.js';
 export * from './dialect.js';

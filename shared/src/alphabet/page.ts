@@ -3,10 +3,8 @@ import { LATIN, SORANI, bandOf, compareLocaleOf, likeFor, type LatinLetter, type
 import type { Script } from './practice.js';
 
 /**
- * How an alphabet page lays the letters out, the same on the website and the
- * phone: which groups, in which order, and the few words under each letter.
- * The titles and the sentences are each app's own catalogue's; the groups are
- * named here by what they are.
+ * How an alphabet page lays the letters out on the website and the phone: the groups, their order, and the words under
+ * each letter. Titles and sentences come from each app's catalogue.
  */
 
 /** A group of letters, by what it holds. */
@@ -18,9 +16,8 @@ export interface LetterGroup<L> {
 }
 
 /**
- * Kurmancî, sorted against the reader's language — the false friends first,
- * because that is where the mistakes are. A reader with no language to compare
- * against (a Kurdish one) gets the vowels and the consonants instead.
+ * Kurmancî sorted against the reader's language, false friends first since that is where the mistakes are. A Kurdish
+ * reader, with no language to compare against, gets the vowels and the consonants instead.
  */
 export function latinGroups(locale: AppLocale): LetterGroup<LatinLetter>[] {
   const lang = compareLocaleOf(locale);
@@ -54,12 +51,7 @@ export function latinHint(letter: LatinLetter, locale: AppLocale): string | null
   return sound && sound.toLocaleLowerCase() !== letter.id ? sound : null;
 }
 
-/**
- * Which language an example word's meaning is shown in: the reader's — or, for
- * a reader who already speaks that dialect, the same word in the other one,
- * which is the more useful thing to put under it: a Soranî reader learns the
- * Kurmancî word, and the reverse.
- */
+/** The language an example word's meaning is shown in: the reader's, or for a reader of that dialect the word in the other one. */
 export function meaningLocale(script: Script, locale: AppLocale): AppLocale {
   if (script === 'kmr' && locale === 'ku') return 'ckb';
   if (script === 'ckb' && locale === 'ckb') return 'ku';

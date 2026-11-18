@@ -17,9 +17,10 @@ import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { getRiddle, getRiddles, revealRiddle } from './api';
-import { centred, dialectOfSlug, inReaderLanguage, kurdishIn, traditionLine, varietyName } from './labels';
+import { centred, dialectOfSlug, inReaderLanguage, kurdishIn, traditionLine } from './labels';
 import { EnglishNote, InLanguage, Section, SourcesList } from './parts';
 import { nextRiddle, rememberAnswer, rememberList, rememberedAnswer, rememberedList } from './store';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
  * A riddle's answer, on a screen of its own: reached by solving it (a right
@@ -163,7 +164,7 @@ export function RiddleAnswerScreen({ slug, onExit }: { slug: string; onExit: () 
           {next ? (
             <ClayButton label={t('lore.answer.next')} tone="primary" size="large" icon="question" onPress={() => navigation.replace('Riddle', { slug: next.slug })} testID="riddle-next" />
           ) : list ? (
-            <Note icon="check">{t('lore.answer.allDone', { variety: varietyName(dialect) })}</Note>
+            <Note icon="check">{t('lore.answer.allDone', { variety: t(dialectNameKey(dialect)) })}</Note>
           ) : null}
           <ClayButton label={t('lore.answer.back')} variant="outline" onPress={onExit} />
         </View>

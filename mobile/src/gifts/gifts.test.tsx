@@ -517,7 +517,7 @@ describe('GiftArrivals', () => {
   });
 
   it('shows a banner for a gift that arrives elsewhere, and opens it in its chat', () => {
-    testAuth.client = fakeClient({ 'GET /me/social': ok({ unread: { gifts: 1 } }) });
+    testAuth.client = fakeClient({ 'GET /me/gifts/unseen': ok({ unseen: 1 }) });
     renderWithProviders(<GiftArrivals />);
     act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
     expect(screen.getByText('Rojda sent you a gift')).toBeTruthy();
@@ -543,7 +543,7 @@ describe('GiftArrivals', () => {
   });
 
   it('shows the banner for a chat that is open but behind another screen', () => {
-    testAuth.client = fakeClient({ 'GET /me/social': ok({ unread: { gifts: 1 } }) });
+    testAuth.client = fakeClient({ 'GET /me/gifts/unseen': ok({ unseen: 1 }) });
     function OpenChat() {
       useOpenChat({ kind: 'dm', userId: 'u2' });
       return null;
@@ -568,7 +568,7 @@ describe('GiftArrivals', () => {
 
   it('tells VoiceOver in words, where a live region says nothing', () => {
     const announce = vi.spyOn(AccessibilityInfo, 'announceForAccessibility');
-    testAuth.client = fakeClient({ 'GET /me/social': ok({ unread: { gifts: 1 } }) });
+    testAuth.client = fakeClient({ 'GET /me/gifts/unseen': ok({ unseen: 1 }) });
     renderWithProviders(<GiftArrivals />);
     act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
     expect(announce).toHaveBeenCalledWith('Rojda sent you a gift');

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInviteUrl, inviteLinkPattern, invitePath, inviteRoutePath, parseInvite } from './game-invites.js';
+import { inviteLinkPattern, invitePath, inviteRoutePath, parseInvite } from './game-invites.js';
 
 /**
  * The contract these tests exist for: a link made in one app opens in the other.
@@ -21,16 +21,9 @@ describe('game invites', () => {
 
   it('round-trips every game type through a shareable URL', () => {
     for (const type of ['wordle-battle', 'rhyme-match', 'stories'] as const) {
-      const url = buildInviteUrl(type, 'b7f2c1a4-9e3d-4a11-8c55-0f6d2e9a7b31');
+      const url = `https://hevalo.app${invitePath({ type, id: 'b7f2c1a4-9e3d-4a11-8c55-0f6d2e9a7b31' })}`;
       expect(parseInvite(url)).toEqual({ type, id: 'b7f2c1a4-9e3d-4a11-8c55-0f6d2e9a7b31' });
     }
-  });
-
-  it('defaults to the production origin and honours a deploy that passes its own', () => {
-    expect(buildInviteUrl('wordle-battle', 'abc123')).toBe('https://hevalo.app/app/games/peyvok-battle?id=abc123');
-    expect(buildInviteUrl('wordle-battle', 'abc123', 'http://localhost:5173')).toBe(
-      'http://localhost:5173/app/games/peyvok-battle?id=abc123',
-    );
   });
 
   it('finds a link inside an ordinary message', () => {

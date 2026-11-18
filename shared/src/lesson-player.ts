@@ -1,27 +1,11 @@
 /**
- * The lesson player's logic, once, for every client that plays a lesson.
+ * The lesson player's logic for every client that plays a lesson: which exercise is on screen, what follows an answer,
+ * and where a resumed lesson picks up, so the browser and the phone agree on what counts. Pure: no UI, network or clock;
+ * the server grades every answer.
  *
- * It lived in the phone app (mobile/src/lesson/player.ts), and the browser
- * needed the same thing: which exercise is on screen, what happens after an
- * answer, where a resumed lesson picks up. Two copies of that would disagree
- * about the one thing a learner notices first — what counts — so both clients
- * run this. It is pure: no React, no network, no clock. The server grades every
- * answer; this only decides what comes next.
- *
- * Two rules changed on the way here.
- *
- * Mistakes no longer end a lesson. There were five hearts, and the fifth wrong
- * answer ended the lesson then and there — which ends practice exactly when
- * the learner most needs it, for the learners who most need it. A mistake is
- * feedback now, and nothing else.
- *
- * A missed item comes back once, about three exercises later (`REASK_GAP`), or
- * at the end when fewer are left. Retrieving it again after a gap, with the
- * right answer fresh from the feedback, is the cheapest well-supported way to
- * make it stick; the web alphabet already does the same (`COMEBACK`). The
- * second try is graded through the session's retry endpoint, which records
- * nothing, so it never changes the score, the XP or the review schedule — the
- * first answer is the one that counts.
+ * Mistakes never end a lesson. A missed item comes back once, about `REASK_GAP` exercises later or at the end, graded
+ * through the session's retry endpoint, which records nothing: the first answer alone decides the score, the XP and the
+ * review schedule.
  */
 
 import type { ConversationLine, ConversationSpeaker } from './conversation.js';
@@ -29,21 +13,18 @@ import type { RecordingVoice } from './lipsync/speakers.js';
 
 export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing' | 'conversation';
 
-/** 'correct' | 'typo' (right word, a letter slip) | 'wrong', as the server grades. */
+/** As the server grades: 'correct', 'typo' (the right word with a letter slip) or 'wrong'. */
 export type Verdict = 'correct' | 'typo' | 'wrong';
 
-/** How a learner judged their own recording, beside the native model. */
+/** How a learner judged their own recording beside the native model. */
 export type SelfRating = 'good' | 'close' | 'retry';
 
 /**
- * What an item asks of the learner, which names its headline: the road's items
- * say it, so the bubble can hold the line alone; an item without one is asked
- * as its type always was. `meaning`: what the Kurdish line means. `picture`:
- * which picture the Kurdish word is (its options are `WORD_PICTURES` ids).
- * `reply`: what to answer a character's Kurdish line, in Kurdish. `missing`: the
- * word for the line's gap (`GAP`). `to-english` / `to-kurdish`: put the line
- * into the other language. `hear`: what the recording says. `repeat`: say the
- * line after its speaker. `choose-kurdish`: which Kurdish says the English line.
+ * What an item asks, which names its headline, so the bubble can hold the line alone; an item without one is asked as its
+ * type always was. `meaning`: what the Kurdish line means. `picture`: which picture the Kurdish word is (options are
+ * `WORD_PICTURES` ids). `reply`: what to answer a character's line, in Kurdish. `missing`: the word for the line's gap
+ * (`GAP`). `to-english` and `to-kurdish`: translate the line. `hear`: what the recording says. `repeat`: say the line after
+ * its speaker. `choose-kurdish`: which Kurdish says the English line.
  */
 export type ExerciseAsk = 'meaning' | 'choose-kurdish' | 'picture' | 'reply' | 'missing' | 'to-english' | 'to-kurdish' | 'hear' | 'repeat';
 
@@ -61,7 +42,7 @@ export const ASKS_BY_TYPE: Readonly<Partial<Record<ExerciseType, readonly Exerci
 /** The gap in a `missing` item's line, where the chosen word goes. */
 export const GAP = '___';
 
-/** A `missing` item's line around its gap: what comes before it and after it; null when the line has no single gap. */
+/** A `missing` item's line around its gap, or null when the line has no single gap. */
 export function splitGap(line: string): { before: string; after: string } | null {
   const at = line.indexOf(GAP);
   if (at < 0 || line.indexOf(GAP, at + GAP.length) >= 0) return null;
@@ -82,9 +63,9 @@ export interface DeliveredExercise {
   type: ExerciseType;
   /** the line the bubble holds when `ask` is said; otherwise the item's whole question */
   prompt?: string;
-  /** what the item asks, which names its headline; absent on items written before there were asks */
+  /** what the item asks; absent on items written before asks existed */
   ask?: ExerciseAsk;
-  /** a few words of context shown beside the line, where the line alone could be read two ways */
+  /** a few words of context beside the line, where the line alone could be read two ways */
   cue?: string;
   /** the words this item brings in for the first time, with their meanings */
   newWords?: NewWord[];
@@ -93,23 +74,23 @@ export interface DeliveredExercise {
   /** match pairs: the Kurdish cards, and their meanings, each side shuffled */
   lefts?: string[];
   rights?: string[];
-  /** match pairs: for each card in `lefts` (as shown), the index in `rights` (as shown) of its meaning, so a pair is answered as it is made */
+  /** match pairs: for each card in `lefts` as shown, the index in `rights` as shown of its meaning */
   pairOf?: number[];
-  /** translate and listening: the tiles to build the answer from — its words and a few that are not — in the order shown */
+  /** translate and listening: the tiles to build the answer from, its words and a few decoys, in the order shown */
   bank?: string[];
-  /** the prompt as its words and what lies between them, in order (their texts joined give `prompt` back) */
+  /** the prompt as its words and what lies between them, in order; joined they give `prompt` back */
   promptTokens?: PromptToken[];
   /** listening: the clip to play */
   audioUrl?: string;
-  /** who says `audioUrl`, and how their mouth moves; only when a character is chosen for it */
+  /** who says `audioUrl` and how their mouth moves, when a character is chosen for it */
   audioVoice?: RecordingVoice;
-  /** a native recording that may be played before answering (its presence says so) */
+  /** a native recording that may be played before answering; present only when there is one */
   modelAudioUrl?: string;
-  /** who says `modelAudioUrl`; only when a character is chosen for it */
+  /** who says `modelAudioUrl`, when a character is chosen for it */
   modelAudioVoice?: RecordingVoice;
   /** match pairs: recordings of the Kurdish cards, by the card's exact text */
   audio?: Record<string, string>;
-  /** who says the cards' recordings, by the same text; only the ones with a character */
+  /** who says the cards' recordings, by the same text, for those with a character */
   audioVoices?: Record<string, RecordingVoice>;
   /** conversation: what it is about, when the author named it */
   title?: string;
@@ -117,21 +98,18 @@ export interface DeliveredExercise {
   speakers?: ConversationSpeaker[];
   /** conversation: what is said, in order; `options` then holds the answers to `prompt`, the question about it */
   lines?: ConversationLine[];
-  /** conversation: each line's recording by its place, null for one not recorded yet */
+  /** conversation: each line's recording by its place, null when not recorded yet */
   lineAudio?: Array<string | null>;
   /** conversation: who says each line's recording, null where there is none or no character is chosen */
   lineVoices?: Array<RecordingVoice | null>;
-  /**
-   * The variety of Kurdish the item's course is in. A review mixes items from
-   * any course, so each says its own; a lesson's session says it once for all.
-   */
+  /** The variety of the item's course: a review mixes courses so each item says its own, while a lesson's session says it once. */
   dialect?: string;
 }
 
 /** A piece of a prompt: a word, or what lies between two. */
 export interface PromptToken {
   text: string;
-  /** what this word means, most likely first (at most 3); absent for spaces, punctuation and words the course does not know */
+  /** what this word means, likeliest first (at most 3); absent for spaces, punctuation and words the course does not know */
   meanings?: string[];
 }
 
@@ -145,7 +123,7 @@ export interface RecordedAnswer {
 export interface PlayableSession {
   sessionId: string;
   exercises: DeliveredExercise[];
-  /** exercises already answered (a resumed lesson); practice starts with none */
+  /** exercises already answered in a resumed lesson; practice starts with none */
   answered?: Record<string, RecordedAnswer>;
   completed?: boolean;
 }
@@ -157,9 +135,9 @@ export interface GradeResult {
   correction?: string;
   /** the native recording of the item's Kurdish, to hear now that it is answered */
   modelAudioUrl?: string;
-  /** who says `modelAudioUrl`; only when a character is chosen for it */
+  /** who says `modelAudioUrl`, when a character is chosen for it */
   modelAudioVoice?: RecordingVoice;
-  /** the server had this answer already (a replay); a retry never has one */
+  /** the server had this answer already (a replay); a retry never does */
   duplicate?: boolean;
 }
 
@@ -181,7 +159,7 @@ export interface Feedback {
   correction?: string;
   modelAudioUrl?: string;
   modelAudioVoice?: RecordingVoice;
-  /** what was answered: a recording is not graded the way typed text is */
+  /** what was answered, since a recording is not graded the way typed text is */
   exerciseType?: ExerciseType;
   /** the text the learner typed, for an answer that was typed */
   given?: string;
@@ -201,15 +179,11 @@ export interface PlayerState {
   feedback: Feedback | null;
   /** exercises with a first answer recorded */
   answeredCount: number;
-  /** exercises whose second try has been answered — keep these to resume without asking twice */
+  /** exercises whose second try was answered, kept to resume without asking twice */
   reasked: string[];
-  /** exercises put off this time ("can't listen now"): not answered, not mistakes */
+  /** exercises put off this time ("can't listen now"): neither answered nor mistakes */
   skipped: string[];
-  /**
-   * The last time a whole kind of exercise was put off for the rest of the
-   * session ("no more listening in this lesson"): what was taken out, so it
-   * can be put back. Null when nothing was, or once it has been put back.
-   */
+  /** The last kind of exercise put off for the rest of the session ("no more listening"), so it can be put back; else null. */
   putAway: PutAway | null;
 }
 
@@ -218,28 +192,24 @@ export type PutAwayType = 'listening' | 'speaking';
 
 export interface PutAway {
   type: PutAwayType;
-  /**
-   * The steps taken out, in order, each with the step that came after it and
-   * stayed (null for one that was last), which is where it goes back.
-   */
+  /** The steps taken out, in order, each with the step after it that stayed (null when it was last), where it goes back. */
   removed: Array<{ step: Step; before: Step | null }>;
 }
 
 export type PlayerAction =
-  /** `given` is the text the learner typed, so feedback can set it beside the right answer */
+  /** `given` is the typed text, so feedback can set it beside the right answer */
   | { type: 'ANSWERED'; result: GradeResult; given?: string }
   | { type: 'CONTINUE' }
   /**
-   * Put the exercise on screen off. With `all`, every exercise of that type
-   * still to come goes with it, for the rest of the session ("can't listen
-   * now" meant for the whole lesson); `UNSKIP` puts those back.
+   * Puts the exercise on screen off. With `all`, every exercise of that type still to come goes too, for the rest of the
+   * session; `UNSKIP` brings them back.
    */
   | { type: 'SKIP'; all?: PutAwayType }
   | { type: 'UNSKIP' }
   | { type: 'FINISH' };
 
 export interface ResumeMemory {
-  /** exercises whose second try was already answered before the learner left */
+  /** exercises whose second try was answered before the learner left */
   reasked?: readonly string[];
 }
 
@@ -250,16 +220,10 @@ function insertAt<T>(list: T[], at: number, item: T): T[] {
 }
 
 /**
- * The player for a session, fresh or resumed.
- *
- * A resumed lesson picks up at the first exercise it has no answer for, in the
- * order the lesson asks them — skipping over answered ones, so an exercise put
- * off earlier is asked again and nothing answered is asked twice. A miss whose
- * second try had not happened yet comes back as it would have: `REASK_GAP`
- * exercises on, or at the end. The server knows the answers but not the second
- * tries (they are never recorded), so a client that remembers which it has
- * done passes them in `memory`; one that does not re-asks them, which costs
- * the learner one extra question and nothing else.
+ * The player for a session, fresh or resumed. A resumed lesson picks up at the first unanswered exercise in lesson order,
+ * so a skipped one is asked again and nothing answered twice. A miss whose second try had not happened comes back as it
+ * would have. The server never records second tries, so a client that remembers them passes them in `memory`; without it
+ * the learner just gets one extra question.
  */
 export function initPlayer(session: PlayableSession, memory: ResumeMemory = {}): PlayerState {
   const answered = session.answered ?? {};
@@ -296,39 +260,33 @@ export function currentExercise(state: PlayerState): DeliveredExercise | null {
   return step ? (state.exercises.find((ex) => ex.id === step.exerciseId) ?? null) : null;
 }
 
-/** Whether the step on screen is a second try — graded by retry, recorded nowhere. */
+/** Whether the step on screen is a second try, graded by retry and recorded nowhere. */
 export function isReask(state: PlayerState): boolean {
   return currentStep(state)?.reask ?? false;
 }
 
-/**
- * How far through the session the learner is, 0..1: turns taken out of turns
- * there are. A miss adds a turn (its second try), so it moves the bar on less
- * than a right answer does, and never back.
- */
+/** Progress through the session, 0..1: turns taken of turns there are. A miss adds a turn, so it moves the bar less and never back. */
 export function progress(state: PlayerState): number {
   if (state.status === 'finished') return 1;
   if (state.steps.length === 0) return 0;
   return (state.index + (state.status === 'feedback' ? 1 : 0)) / state.steps.length;
 }
 
-/** Past the last step: the session is finished. */
+/** Moves past the last step: the session is finished. */
 function advance(state: PlayerState): PlayerState {
   const next = state.index + 1;
   if (next >= state.steps.length) return { ...state, index: state.steps.length, status: 'finished', feedback: null };
   return { ...state, index: next, status: 'answering', feedback: null };
 }
 
-/** Two steps are the same turn: an exercise is asked at most once first and once again. */
+/** Whether two steps are the same turn; an exercise is asked at most once first and once again. */
 function sameStep(a: Step, b: Step): boolean {
   return a.exerciseId === b.exerciseId && a.reask === b.reask;
 }
 
 /**
- * Every step after the one on screen whose exercise is of `type` comes out —
- * a first ask counted as put off and a second try simply dropped, as when one
- * is skipped alone — and each remembers the step that stayed after it, so
- * `putBack` can return it to its place.
+ * Takes out every later step whose exercise is of `type`, a first ask counted as put off and a second try dropped, each
+ * remembering the step that stayed after it so `putBack` can restore it.
  */
 function putAway(state: PlayerState, type: PutAwayType): PlayerState {
   const typeOf = new Map(state.exercises.map((ex) => [ex.id, ex.type]));
@@ -346,10 +304,8 @@ function putAway(state: PlayerState, type: PutAwayType): PlayerState {
 }
 
 /**
- * What `putAway` took out goes back, each step before the one it came before.
- * One whose place has gone by meanwhile (an answer was given in between) is
- * asked next, and one that was last is last again. The exercise on screen
- * when they were put away stays put off, as a single skip leaves it.
+ * Puts back what `putAway` took out, each before the step it came before; one whose place has passed is asked next. The
+ * exercise that was on screen at the time stays put off, as a single skip leaves it.
  */
 function putBack(state: PlayerState, away: PutAway): PlayerState {
   const from = state.index + (state.status === 'feedback' ? 1 : 0);
@@ -374,7 +330,7 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
       if (state.status !== 'answering' || !step) return state;
       const { verdict, accepted, correction, modelAudioUrl, modelAudioVoice, duplicate } = action.result;
       const id = step.exerciseId;
-      // a miss comes back once: never a second try at a second try
+      // A miss comes back once: never a second try at a second try.
       const comesBack =
         !step.reask &&
         !accepted &&
@@ -397,7 +353,7 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
         steps,
         status: 'feedback',
         feedback,
-        // a second try is not an answer, and a replayed one was counted already
+        // A second try is not an answer, and a replayed one was counted already.
         answeredCount: step.reask || duplicate ? state.answeredCount : state.answeredCount + 1,
         reasked: step.reask ? [...state.reasked, id] : state.reasked,
       };
@@ -405,8 +361,7 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
     case 'CONTINUE':
       return state.status === 'feedback' ? advance(state) : state;
     case 'SKIP': {
-      // put the exercise off: no answer, no mistake, no second try
-      // ("can't listen now", KUR-035)
+      // Put the exercise off ("can't listen now"): no answer, no mistake, no second try.
       const step = currentStep(state);
       if (state.status !== 'answering' || !step) return state;
       const skipped = step.reask || state.skipped.includes(step.exerciseId) ? state.skipped : [...state.skipped, step.exerciseId];
@@ -420,13 +375,9 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
 }
 
 /**
- * What the feedback says of an answer, which must be true of it.
- *
- * A strict spelling item grades a letter slip (e for ê) as a typo that is NOT
- * accepted — the letter is what it tests — so "almost" comes in two kinds. A
- * spoken answer is not judged by the server at all: its verdict is the
- * learner's own rating of their recording beside the native model, and the
- * feedback says so rather than "correct".
+ * What the feedback says of an answer, which must be true of it. A strict spelling item grades a letter slip as a typo that
+ * is not accepted, so "almost" comes in two kinds. The server never judges a spoken answer: its verdict is the learner's
+ * own rating, and the feedback says so rather than "correct".
  */
 export type FeedbackKind = 'correct' | 'almost' | 'almostStrict' | 'notYet' | 'spokenGood' | 'spokenClose' | 'spokenRetry';
 
@@ -440,10 +391,8 @@ export function feedbackKind(feedback: Pick<Feedback, 'verdict' | 'accepted' | '
 }
 
 /**
- * A run: right answers in a row. It is shown from `RUN_SHOWN_FROM` ("3 in a
- * row") and named out loud at a milestone (`runMilestone`). A spoken answer
- * is the learner's own rating of a recording, not a grade, so it neither adds
- * to a run nor breaks one; any other miss starts it again.
+ * A run of right answers in a row, shown from this count and called out at a milestone (`runMilestone`). A spoken answer is
+ * a self-rating, so it neither extends nor breaks a run; any other miss starts it again.
  */
 export const RUN_SHOWN_FROM = 3;
 
@@ -452,35 +401,37 @@ export function nextRun(run: number, feedback: Pick<Feedback, 'accepted' | 'exer
   return feedback.accepted ? run + 1 : 0;
 }
 
-/**
- * The runs worth a word and a cheer: 5, 10, then every fifth from 15. Not
- * every right answer is a milestone, so the moment keeps its value.
- */
+/** The runs worth a cheer: 5, 10, then every fifth from 15, so a milestone keeps its value. */
 export function runMilestone(run: number): number | null {
   return run >= 5 && run % 5 === 0 ? run : null;
 }
 
 /**
- * When the parts of a verdict arrive, in ms from the answer, the same on both
- * apps: the sheet rises (`sheetMs`), the character reacts (`actAtMs`), a
- * milestone's run pill pops (`runAtMs`, over `runMs`), and the native
- * recording plays itself (`modelAtMs`) once the chime has had its moment.
+ * When a verdict's parts arrive, in ms from the answer, alike on both apps: the sheet rises (`sheetMs`), the character
+ * reacts (`actAtMs`), a milestone's run pill pops (`runAtMs`, over `runMs`), and the native recording plays (`modelAtMs`)
+ * after the chime.
  */
 export const VERDICT_TIMING = { sheetMs: 200, actAtMs: 120, runAtMs: 160, runMs: 320, modelAtMs: 350 } as const;
 
+/** Items in one practice session; the server builds and accepts no more (api practice/practice-select.ts). */
+export const PRACTICE_SESSION_SIZE = 10;
+
 /**
- * The exercises answered wrong for the first time in a session's results that
- * practice can take ("practise these now"): practice cannot grade speaking.
+ * The first-time misses of a session's results that practice can take ("practise these now"), first missed first
+ * and at most `PRACTICE_SESSION_SIZE`; practice cannot grade speaking.
  */
 export function practisableMistakes(
   mistakes: ReadonlyArray<{ exerciseId: string }>,
   exercises: ReadonlyArray<DeliveredExercise>,
 ): string[] {
   const types = new Map(exercises.map((ex) => [ex.id, ex.type]));
-  return mistakes.map((m) => m.exerciseId).filter((id) => types.has(id) && types.get(id) !== 'speaking');
+  return mistakes
+    .map((m) => m.exerciseId)
+    .filter((id) => types.has(id) && types.get(id) !== 'speaking')
+    .slice(0, PRACTICE_SESSION_SIZE);
 }
 
-/** A pending answer, waiting for the network (KUR-029 edge case). */
+/** An answer waiting for the network. */
 export interface PendingAnswer {
   exerciseId: string;
   answer: unknown;
@@ -490,10 +441,8 @@ export interface PendingAnswer {
 export type SubmitFn<R> = (pending: PendingAnswer) => Promise<R | null>;
 
 /**
- * Offline answer buffer. When the network drops mid-lesson, answers are
- * appended here and flushed in order on reconnect. FIFO and order-preserving:
- * a failed submit stops the flush and keeps the remaining answers queued, so
- * nothing is lost or reordered.
+ * The offline answer buffer: answers made while the network is down queue here and are sent in order on reconnect. A failed
+ * send stops the flush and keeps the rest queued, so nothing is lost or reordered.
  */
 export class AnswerQueue {
   private items: PendingAnswer[] = [];
@@ -511,17 +460,15 @@ export class AnswerQueue {
   }
 
   /**
-   * Flush queued answers in order. `submit` returns the server result, or
-   * `null` to signal a still-failing network — flushing halts and the
-   * unsent answers (including the failed one) remain queued. Returns the
-   * results of the answers that went through, in order.
+   * Sends queued answers in order and returns the results of those that went through. `submit` returns null while the
+   * network still fails; the flush then stops with that answer and the rest still queued.
    */
   async flush<R>(submit: SubmitFn<R>): Promise<R[]> {
     const sent: R[] = [];
     while (this.items.length > 0) {
       const next = this.items[0]!;
       const result = await submit(next);
-      if (result === null) break; // still offline — keep it and stop
+      if (result === null) break; // still offline: keep it and stop
       this.items.shift();
       sent.push(result);
     }

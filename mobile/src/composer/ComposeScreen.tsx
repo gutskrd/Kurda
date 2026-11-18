@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  BackHandler,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -25,11 +24,13 @@ import {
   type WrittenPostType,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDirection } from '../reports/direction';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -153,6 +154,8 @@ export function ComposeScreen({
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  // in Arabic and Soranî the rows start on the right and what is typed is set right to left, as on every other screen
+  const dir = useDirection();
   const topInset = useScreenTopInset();
 
   const [mode, setMode] = useState<'new' | 'edit' | 'finish'>(postId ? 'edit' : 'new');
@@ -441,12 +444,8 @@ export function ComposeScreen({
     return true;
   }, [changed, ready, posting, onExit]);
 
-  // Android's back button asks too, rather than dropping an edit
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', requestClose);
-    return () => sub.remove();
-  }, [requestClose]);
+  // Android's back asks too, rather than dropping an edit; only while the composer is in front, not under Account standing
+  useHardwareBack(requestClose);
 
   const deleteDraft = async () => {
     setClosing(false);
@@ -468,7 +467,7 @@ export function ComposeScreen({
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[styles.top, styles.column, { paddingTop: topInset }]}>
+        <View style={[styles.top, styles.column, { flexDirection: dir.row, paddingTop: topInset }]}>
           <Pressable
             onPress={requestClose}
             accessibilityRole="button"
@@ -487,9 +486,9 @@ export function ComposeScreen({
 
         <SendErrorNotice error={refusal} onDismiss={() => setRefusal(null)} style={styles.column} />
         {error ? (
-          <View style={[styles.banner, styles.column, { backgroundColor: colors.dangerFill }]} accessibilityLiveRegion="assertive" accessibilityRole="alert">
+          <View style={[styles.banner, styles.column, { flexDirection: dir.row, backgroundColor: colors.dangerFill }]} accessibilityLiveRegion="assertive" accessibilityRole="alert">
             <Icon name="alert" size={18} color={colors.danger} />
-            <Text style={[styles.bannerText, { color: colors.textPrimary }]}>{error}</Text>
+            <Text style={[styles.bannerText, dir.text, { color: colors.textPrimary }]}>{error}</Text>
           </View>
         ) : null}
 
@@ -508,17 +507,19 @@ export function ComposeScreen({
               <PressableScale
                 onPress={() => setDraftsOpen(true)}
                 accessibilityRole="button"
-                style={[styles.oldDrafts, { backgroundColor: colors.glassFill }]}
+                style={[styles.oldDrafts, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
               >
                 <Icon name="pencil" size={18} tone="primary" />
                 <Text style={[styles.oldDraftsText, { color: colors.textPrimary }]}>
                   {t('composer.oldDrafts', { count: serverDrafts.length })}
                 </Text>
-                <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+                <View style={dir.flip}>
+                  <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+                </View>
               </PressableScale>
             ) : null}
 
-            <View style={styles.writeRow}>
+            <View style={[styles.writeRow, { flexDirection: dir.row }]}>
               <InitialsAvatar name={who} id={user?.id ?? 'me'} size={40} photoUrl={user?.profilePhotoUrl ?? null} />
               <View style={styles.writeMain}>
                 {showTitle ? (
@@ -530,7 +531,7 @@ export function ComposeScreen({
                       placeholder={t('composer.titlePlaceholder')}
                       placeholderTextColor={colors.textSecondary}
                       accessibilityLabel={t('composer.titleLabel')}
-                      style={[styles.titleInput, { color: colors.textPrimary }]}
+                      style={[styles.titleInput, dir.free, { color: colors.textPrimary }]}
                       returnKeyType="next"
                       onSubmitEditing={() => bodyRef.current?.focus()}
                     />
@@ -551,7 +552,7 @@ export function ComposeScreen({
                   multiline
                   autoFocus={mode === 'new'}
                   textAlignVertical="top"
-                  style={[styles.bodyInput, state.pictures.length > 0 && styles.bodyInputShort, { color: colors.textPrimary }]}
+                  style={[styles.bodyInput, dir.free, state.pictures.length > 0 && styles.bodyInputShort, { color: colors.textPrimary }]}
                 />
               </View>
             </View>
@@ -616,7 +617,7 @@ export function ComposeScreen({
                   placeholder={t('composer.sourcePlaceholder')}
                   placeholderTextColor={colors.textSecondary}
                   accessibilityLabel={t('composer.sourceLabel')}
-                  style={[styles.sourceInput, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
+                  style={[styles.sourceInput, dir.free, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
                 />
                 {sourceCounter.show ? <Counter counter={sourceCounter} /> : null}
               </View>
@@ -629,7 +630,7 @@ export function ComposeScreen({
         {ready ? (
           <View style={[styles.toolbarWrap, { borderTopColor: colors.separator }]}>
             <Text style={[styles.copyHint, styles.column, { color: colors.textSecondary }]}>{t('composer.copyHint')}</Text>
-            <View style={[styles.toolbar, styles.column]}>
+            <View style={[styles.toolbar, styles.column, { flexDirection: dir.row }]}>
               <Tool
                 icon="image"
                 label={t('composer.addPicture')}
@@ -781,19 +782,20 @@ function SwitchCard({
   onValueChange: (on: boolean) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const dir = useDirection();
   return (
     <ToggleRow
       label={title}
       hint={hint}
       value={value}
       onValueChange={onValueChange}
-      style={({ pressed }) => [styles.switchRow, { backgroundColor: colors.glassFill }, pressed && heldDim]}
+      style={({ pressed }) => [styles.switchRow, { flexDirection: dir.row, backgroundColor: colors.glassFill }, pressed && heldDim]}
     >
       {(toggle) => (
         <>
           <View style={styles.flex}>
-            <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{title}</Text>
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>{hint}</Text>
+            <Text style={[styles.switchTitle, dir.text, { color: colors.textPrimary }]}>{title}</Text>
+            <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{hint}</Text>
           </View>
           {toggle}
         </>

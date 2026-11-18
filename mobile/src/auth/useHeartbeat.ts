@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import type { ApiClient } from '../api/client';
 
-/** The window the server treats as "recently seen"; the browser beats at this too. */
-const BEAT_MS = 60_000;
+/** Well inside the server's five-minute online window (social/presence.ts); the website beats at the same pace. */
+const BEAT_MS = 120_000;
 
 /**
  * Tell the server somebody is here (KUR-091).

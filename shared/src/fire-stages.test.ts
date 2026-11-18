@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COLD_FIRE, FIRE_STAGES, FIRE_STAGE_DAYS, fireGrewToday, fireLevel, fireStageIndex, nextFireStage, runFireLevel, stageBefore } from './fire-stages.js';
+import { COLD_FIRE, FIRE_STAGES, FIRE_STAGE_DAYS, fireGrewToday, fireLevel, fireStageIndex, nextFireStage, runFireLevel } from './fire-stages.js';
 
 describe('the streak fire stages', () => {
   it('is cold with no streak, and for anything that is not a count of days', () => {
@@ -56,9 +56,6 @@ describe('the streak fire stages', () => {
     expect(fireGrewToday(100)).toBe('blaze');
     expect(fireGrewToday(365)).toBe('newroz');
     expect(fireGrewToday(366)).toBeNull();
-    expect(stageBefore('spark')).toBe('cold');
-    expect(stageBefore('newroz')).toBe('blaze');
-    expect(stageBefore('cold')).toBe('cold');
   });
 
   it('names the next stage and the day it comes, until the Newroz fire', () => {

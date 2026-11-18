@@ -7,6 +7,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
 vi.mock('expo-image-picker', () => ({}));
 vi.mock('expo-file-system/legacy', () => ({ documentDirectory: null }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
@@ -21,6 +22,7 @@ import { ComposeScreen, type PickedPicture } from './ComposeScreen';
 import type { PictureUpload } from './upload';
 import { onPostSaved } from './postSaved';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
+import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
 import type { HapticEvent } from '../feedback/hapticPacing';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -66,7 +68,10 @@ const disabled = (el: HTMLElement) => el.getAttribute('aria-disabled') === 'true
 beforeEach(() => {
   testAuth.user = { ...testAuth.user, id: 'me' };
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  resetHardwareBack();
+});
 
 describe('writing a post', () => {
   it('posts words as a saying, and forgets the draft once it is up', async () => {
@@ -302,6 +307,30 @@ describe('drafts', () => {
     // the save that was waiting when Delete was tapped does not bring it back
     await pastSaveDelay();
     expect(store.data.has(KEY)).toBe(false);
+  });
+
+  it('asks before Android’s back drops what was written, and closes at once when nothing was', async () => {
+    testAuth.client = fakeClient({ [DRAFTS]: ok({ posts: [] }) });
+    const store = memoryStore({
+      [KEY]: JSON.stringify({ version: 1, type: 'gotin', title: '', body: 'Stêrk', pictures: [], meme: false, sourceCredit: '', savedAt: Date.now() }),
+    });
+    const onExit = vi.fn();
+    await act(async () => {
+      renderWithProviders(<ComposeScreen onExit={onExit} store={store} />);
+    });
+    await act(async () => {
+      expect(pressBack()).toBe(true);
+    });
+    expect(screen.getByText('Keep this draft?')).toBeTruthy();
+    expect(onExit).not.toHaveBeenCalled();
+    cleanup();
+
+    renderWithProviders(<ComposeScreen onExit={onExit} store={memoryStore()} />);
+    await screen.findByLabelText('Your post');
+    await act(async () => {
+      expect(pressBack()).toBe(true);
+    });
+    expect(onExit).toHaveBeenCalledTimes(1);
   });
 
   it('closes at once when nothing was written', async () => {

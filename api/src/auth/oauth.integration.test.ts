@@ -202,6 +202,37 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   /*
+   * The app and the deletion notice promise that signing in again before the
+   * grace period ends keeps the account. That has to hold however the person
+   * signs in, not only with a password.
+   */
+  it('signing in with Google or Apple during the deletion grace period keeps the account', async () => {
+    const pending = async (id: string) =>
+      (await pool.query<{ at: Date | null }>(`SELECT deletion_requested_at AS at FROM users WHERE id = $1`, [id])).rows[0]!.at;
+
+    // an identity already linked to the account
+    const google = await makeToken('google', { sub: `g-grace-${suffix}`, email: `grace_${suffix}@example.com`, emailVerified: true });
+    const first = await service.signIn('google', google);
+    await pool.query(`UPDATE users SET deletion_requested_at = now() WHERE id = $1`, [first.user.id]);
+    expect(await pending(first.user.id)).not.toBeNull();
+    const again = await service.signIn('google', google);
+    expect(again.user.id).toBe(first.user.id);
+    expect(await pending(first.user.id)).toBeNull();
+
+    // and an account a provider is linked to as it signs in for the first time
+    const email = `gracelink_${suffix}@example.com`;
+    const created = await pool.query<{ id: string }>(
+      `INSERT INTO users (email, username, password_hash, email_verified_at, deletion_requested_at)
+       VALUES ($1, $2, $3, now(), now()) RETURNING id`,
+      [email, `gracelink_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
+    );
+    const apple = await makeToken('apple', { sub: `a-grace-${suffix}`, email, emailVerified: 'true' });
+    const linked = await service.signIn('apple', apple);
+    expect(linked.user.id).toBe(created.rows[0]!.id);
+    expect(await pending(created.rows[0]!.id)).toBeNull();
+  });
+
+  /*
    * Changed on purpose: a banned account is answered ACCOUNT_SUSPENDED with the
    * statement of reasons and an appeal token, like password sign-in (M1/M3).
    */

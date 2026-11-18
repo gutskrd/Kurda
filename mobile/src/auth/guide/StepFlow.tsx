@@ -6,6 +6,7 @@ import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { haptic } from '../../feedback/haptics';
 import { useI18n } from '../../i18n/I18nContext';
+import { useHardwareBack } from '../../navigation/hardwareBack';
 import { useDirection } from '../../reports/direction';
 import { springTo, useShake } from '../../theme/animate';
 import { display } from '../../theme/fonts';
@@ -83,6 +84,7 @@ export function StepFlow({
   steps,
   onFinish,
   onExit,
+  presented = false,
   notice,
   progress = true,
   testID = 'step-flow',
@@ -92,6 +94,8 @@ export function StepFlow({
   onFinish: () => void;
   /** back from the first step; without it the first step has no way back */
   onExit?: () => void;
+  /** opened over the app rather than pushed: the first step's way out is ✕, as on every presented page */
+  presented?: boolean;
   notice?: ReactNode;
   /** false leaves the bar out: a flow of one question (the emailed code) has nothing to count */
   progress?: boolean;
@@ -112,6 +116,7 @@ export function StepFlow({
 
   const step = steps[Math.min(index, steps.length - 1)]!;
   const canBack = index > 0 || onExit !== undefined;
+  const closes = presented && index === 0;
 
   const goTo = (next: number, way: SlideDirection): void => {
     setIndex(next);
@@ -166,6 +171,8 @@ export function StepFlow({
     if (index > 0) goTo(index - 1, 'back');
     else onExit?.();
   };
+  // Android's back goes back a question as the chevron does; from the first it leaves as any screen does
+  useHardwareBack(index > 0 ? back : null);
 
   const tools: StepTools = {
     submit: () => void submit(),
@@ -183,12 +190,16 @@ export function StepFlow({
               <Pressable
                 onPress={back}
                 accessibilityRole="button"
-                accessibilityLabel={t('common.back')}
+                accessibilityLabel={t(closes ? 'common.close' : 'common.back')}
                 hitSlop={8}
                 style={({ pressed }) => [styles.back, pressed && heldDim]}
                 testID="step-back"
               >
-                <Icon name="chevron-left" size={26} color={colors.textPrimary} style={dir.flip ?? undefined} />
+                {closes ? (
+                  <Icon name="close" size={24} color={colors.textPrimary} />
+                ) : (
+                  <Icon name="chevron-left" size={26} color={colors.textPrimary} style={dir.flip ?? undefined} />
+                )}
               </Pressable>
             ) : (
               <View style={styles.back} />

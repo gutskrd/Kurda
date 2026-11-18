@@ -74,7 +74,7 @@ describe('the league page', () => {
     // and his own word on it
     expect(screen.getByText('Do a lesson and I’ll wake up — then we take our place at this week’s table.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Start a lesson' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
+    expect(navigation.popTo).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
   });
 
   it('leaves the leagues from a button at the end, asked once and plainly, and shows your own week after', async () => {

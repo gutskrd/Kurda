@@ -72,7 +72,8 @@ describe('trying Hevalo as a guest', () => {
   it('asks for a guest session with the phone’s name and language, and is signed in as a guest on its tokens', async () => {
     const calls = stubFetch((url) => (url.endsWith('/auth/guest') ? json(201, GUEST) : json(200, { user: GUEST.user })));
     const { result, storage } = await startAsGuest(calls);
-    expect(calls.find((c) => c.url.endsWith('/auth/guest'))!.body).toEqual({ deviceName: 'iPhone', locale: 'en' });
+    // and the phone's own time zone, so the account's days are the learner's from the first lesson
+    expect(calls.find((c) => c.url.endsWith('/auth/guest'))!.body).toEqual({ deviceName: 'iPhone', locale: 'en', timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone });
     expect(await storage.get()).toEqual({ accessToken: 'guest-acc', refreshToken: 'guest-ref' });
     expect(result.current.status).toBe('signedIn');
     expect(result.current.isGuest).toBe(true);

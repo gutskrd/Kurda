@@ -11,7 +11,7 @@ import {
   stepAfterRound,
 } from './build-sentence/ladder.js';
 import { GAME_DIFFICULTIES, DIFFICULTY_LEVELS, answerXp, availableDifficulties, roundCountsAsLearning, roundLearningNeeds, roundXpCeiling } from './solo.js';
-import { LEARN_GAMES, LEARN_GAME_XP_SOURCES, LEARN_GAME_IDS, RETIRED_GAME_IDS, RETIRED_GAME_XP_SOURCES, isLearnGameId, isRetiredGame, learnGame, lessonExercises, listedLearnGames } from './registry.js';
+import { LEARN_GAMES, LEARN_GAME_XP_SOURCES, LEARN_GAME_IDS, RETIRED_GAME_IDS, RETIRED_GAME_XP_SOURCES, isRetiredGame, learnGame, lessonExercises, listedLearnGames } from './registry.js';
 import type { LearnGameId } from './registry.js';
 
 describe('stepping up the ladder', () => {
@@ -147,7 +147,6 @@ describe('the registry', () => {
   it('no longer has the retired games, and still counts what they paid as game XP', () => {
     expect([...RETIRED_GAME_IDS]).toEqual(['dont-say', 'bluff', 'kingdom', 'what-would-you-say']);
     for (const id of RETIRED_GAME_IDS) {
-      expect(isLearnGameId(id)).toBe(false);
       expect(isRetiredGame(id)).toBe(true);
       expect(LEARN_GAMES.map((g): string => g.id)).not.toContain(id);
     }

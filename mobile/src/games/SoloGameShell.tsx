@@ -33,6 +33,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { displayFont } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GameArt } from './GameArt';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
  * What every learning game played alone has around its own staging, on the
@@ -394,12 +395,12 @@ export function SoloGameShell<Item, H, C, B = unknown>({
               {title}
             </Text>
             <Text style={[...text, styles.blurb]}>{blurb}</Text>
-            <Text style={muted}>{t('games.solo.variety', { variety: dialect === 'ckb' ? 'Soranî' : 'Kurmancî' })}</Text>
+            <Text style={muted}>{t('games.solo.variety', { variety: t(dialectNameKey(dialect)) })}</Text>
           </>
         ) : (
           <Cloth style={styles.hero}>
             {emblem ? <GameArt game={emblem} size={132} moving /> : null}
-            <Text style={styles.heroKicker}>{t('games.solo.variety', { variety: dialect === 'ckb' ? 'Soranî' : 'Kurmancî' })}</Text>
+            <Text style={styles.heroKicker}>{t('games.solo.variety', { variety: t(dialectNameKey(dialect)) })}</Text>
             {/* the screen's header already says the game's name as the heading; here it is the picture's caption */}
             <Text style={styles.heroName}>{title}</Text>
             <Text style={styles.heroLine}>{blurb}</Text>

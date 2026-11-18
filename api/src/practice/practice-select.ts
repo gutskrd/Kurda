@@ -5,7 +5,10 @@
  * is still worthwhile (edge case: "only 2 due items").
  */
 
-export const PRACTICE_TARGET = 10;
+import { PRACTICE_SESSION_SIZE } from '@kurda/shared';
+
+/** One session's size, shared with the apps, which hand over at most this many items of their own (lesson-player.ts). */
+export const PRACTICE_TARGET = PRACTICE_SESSION_SIZE;
 export const PRACTICE_MIN = 4;
 
 export interface SelectOptions {

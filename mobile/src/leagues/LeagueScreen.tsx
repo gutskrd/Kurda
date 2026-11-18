@@ -7,6 +7,7 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { useAuth } from '../auth/AuthContext';
+import { describeError, isMaintenance } from '../api/errors';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -94,8 +95,9 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
       setJoining(true);
       const res = await client.patch('/me', { leaguesEnabled: on });
       setJoining(false);
+      // refused as Settings' switch is refused: the reason said, and nothing over Hevalo's own maintenance notice
       if (res.ok) void loadLeague();
-      else Alert.alert(t('error.generic'), t('common.tryAgain'));
+      else if (!isMaintenance(res.error)) Alert.alert(t('settings.leagues.title'), describeError(res.error, t));
     },
     [client, loadLeague, t],
   );
@@ -382,7 +384,7 @@ function Resting(): React.JSX.Element {
         label={t('leagues.notJoined.start')}
         icon="book"
         tone="primary"
-        onPress={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+        onPress={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
         style={styles.stretch}
       />
     </View>

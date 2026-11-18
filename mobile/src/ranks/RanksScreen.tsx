@@ -22,7 +22,7 @@ import { usePullRefresh } from '../net/usePullRefresh';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { Chips } from '../theme/Chips';
-import { GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -286,17 +286,23 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
   const dir = useDirection();
   const [scope, setScope] = useState<RankBoardScope>('friends');
   const [board, setBoard] = useState<RankBoard | null>(null);
+  // the table on its way is a shimmer of rows, and one that did not come is said with a way to ask again
+  const [boardFailed, setBoardFailed] = useState(false);
+  const [boardAsk, setBoardAsk] = useState(0);
 
   useEffect(() => {
     let live = true;
     setBoard(null);
+    setBoardFailed(false);
     void getRankBoard(client, game, scope).then((res) => {
-      if (live && res.ok) setBoard(res.data);
+      if (!live) return;
+      if (res.ok) setBoard(res.data);
+      else setBoardFailed(true);
     });
     return () => {
       live = false;
     };
-  }, [client, game, scope]);
+  }, [client, game, scope, boardAsk]);
 
   return (
     <View style={styles.section}>
@@ -309,7 +315,17 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
         onChange={setScope}
         labelOf={(s) => (s === 'friends' ? t('ranks.board.friends') : t('ranks.board.top'))}
       />
-      {!board ? null : board.hidden ? (
+      {!board ? (
+        boardFailed ? (
+          <ErrorRetry onRetry={() => setBoardAsk((n) => n + 1)} />
+        ) : (
+          <View style={styles.boardLoading}>
+            <Skeleton height={44} />
+            <Skeleton height={44} />
+            <Skeleton height={44} />
+          </View>
+        )
+      ) : board.hidden ? (
         <Text style={[styles.small, styles.boardNote, { color: colors.textSecondary }]}>{t('ranks.board.hidden', { count: FEW_PLAYERS })}</Text>
       ) : board.entries.length === 0 ? (
         <Text style={[styles.small, styles.boardNote, { color: colors.textSecondary }]}>
@@ -385,6 +401,7 @@ const styles = StyleSheet.create({
   here: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
   hereText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   boardNote: { paddingVertical: spacing.sm },
+  boardLoading: { gap: spacing.xs },
   entry: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.sm, minHeight: MIN_TOUCH_TARGET + 8 },
   pos: { width: 24, textAlign: 'center', fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   noEmblem: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },

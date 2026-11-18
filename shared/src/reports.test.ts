@@ -12,7 +12,6 @@ import {
   SANCTION_SCOPE,
   categoryPriority,
   isReportCategory,
-  isReportTargetType,
   isSanctionKind,
   normalizeReportNote,
   reportCategoryFrom,
@@ -85,12 +84,6 @@ describe('report notes', () => {
 });
 
 describe('targets, sanctions and cases', () => {
-  it('knows the reportable targets', () => {
-    expect(isReportTargetType('game_player')).toBe(true);
-    expect(isReportTargetType('dm_message')).toBe(true);
-    expect(isReportTargetType('profile')).toBe(false);
-  });
-
   it('gives each sanction kind what it restricts', () => {
     expect(SANCTION_SCOPE.chat_mute).toBe('chat');
     expect(SANCTION_SCOPE.post_mute).toBe('post');

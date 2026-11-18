@@ -10,6 +10,7 @@ import {
   isReask,
   nextRun,
   practisableMistakes,
+  PRACTICE_SESSION_SIZE,
   progress,
   reduce,
   runMilestone,
@@ -331,6 +332,13 @@ describe('practisableMistakes', () => {
       'x',
       'z',
     ]);
+  });
+
+  it('holds one practice session’s worth, the first missed first', () => {
+    const list: DeliveredExercise[] = Array.from({ length: 16 }, (_, i) => ({ id: `e${i}`, type: 'translate' }));
+    const missed = list.slice(0, 12).map((ex) => ({ exerciseId: ex.id }));
+    expect(practisableMistakes(missed, list)).toEqual(list.slice(0, PRACTICE_SESSION_SIZE).map((ex) => ex.id));
+    expect(PRACTICE_SESSION_SIZE).toBe(10);
   });
 });
 

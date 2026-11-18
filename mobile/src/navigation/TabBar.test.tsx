@@ -34,7 +34,7 @@ function open({ index = 0, chats = [] as number[], groups = [] as number[], requ
     'GET /me/groups/unread': ok({ unread: groups.map((unread, i) => ({ groupId: `g${i}`, unread })) }),
     'GET /friends/requests': ok({ requests: Array.from({ length: requests }, (_, i) => ({ userId: `r${i}`, username: `r${i}` })) }),
     'GET /me/notifications/unread-count': ok({ count: 0 }),
-    'GET /me/social': ok({ unread: { gifts } }),
+    'GET /me/gifts/unseen': ok({ unseen: gifts }),
   });
   const emitted: { type: string; target?: string }[] = [];
   const navigation = {

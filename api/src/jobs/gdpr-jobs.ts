@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { GdprService } from '../gdpr/service.js';
+import { PrivateStorageUnavailable } from '../media/storage.js';
 import { defineJob, type JobDefinition } from './registry.js';
 
 export const ANONYMIZE_JOB_NAME = 'anonymize-deleted-accounts';
@@ -23,7 +24,13 @@ export function makeExportJob(service: GdprService): JobDefinition<{ exportId: s
     name: EXPORT_JOB_NAME,
     schema: z.object({ exportId: z.uuid() }),
     handler: async (payload, ctx) => {
-      await service.fulfillExport(payload.exportId);
+      try {
+        await service.fulfillExport(payload.exportId);
+      } catch (err) {
+        // said plainly, at once: with no private bucket the export is withdrawn, not tried again
+        if (err instanceof PrivateStorageUnavailable) ctx.log.error({ exportId: payload.exportId }, `user data export withdrawn: ${err.message}`);
+        throw err;
+      }
       ctx.log.info({ exportId: payload.exportId }, 'user data export fulfilled');
     },
   });

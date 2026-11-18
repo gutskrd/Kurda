@@ -1,7 +1,7 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { PROVIDER, foldForSearch } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError, isMaintenance } from '../api/errors';
 import { haptic } from '../feedback/haptics';
@@ -14,6 +14,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { PREFERENCE_LABEL } from '../theme/appearance';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALE_LABEL } from '../i18n/translations';
+import { formatDay } from '../i18n/format';
 import { VISIBILITY_LABEL } from '../social/format';
 import { ACCENT_LABEL } from '../keyboard/KeyboardSettings';
 import { useKeyboardPrefs } from '../keyboard/prefs';
@@ -29,6 +30,13 @@ import { VersionLine } from '../settings/VersionLine';
 
 /** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
 export const COPYRIGHT_URL = LEGAL_URLS.copyright;
+
+/** Where the copy of one's data is (GET /me/export): the link is fresh, and works for a short while. */
+interface ExportStatus {
+  status: 'none' | 'pending' | 'ready';
+  downloadUrl?: string;
+  requestedAt?: string;
+}
 
 /** One row of the list, and the words it can be found by. */
 interface Entry {
@@ -101,19 +109,49 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   };
 
   /**
-   * Ask for a copy of everything.
+   * A copy of everything, asked for and then fetched here.
    *
-   * The answer is 202 and an email later, not a file now, so the only honest
-   * acknowledgement is that it was asked for.
+   * The server prepares it in the background and keeps it privately; it is
+   * handed out only to the account, as a link that works for a short while,
+   * by GET /me/export. So the row says where the copy is: none asked for, being
+   * prepared, or ready, when it becomes the way to download it (with a fresh
+   * link each time) or to prepare a newer one. Nothing is emailed: the copy
+   * was only ever reachable from here.
    */
   const [exporting, setExporting] = useState(false);
+  const [exported, setExported] = useState<ExportStatus | null>(null);
+  const readExport = useCallback(async (): Promise<ExportStatus | null> => {
+    const res = await client.get<ExportStatus>('/me/export');
+    if (!res.ok) return null;
+    setExported(res.data);
+    return res.data;
+  }, [client]);
+  useEffect(() => {
+    void readExport();
+  }, [readExport]);
   const requestExport = () => {
     if (exporting) return;
     setExporting(true);
     void client.post('/me/export').then((res) => {
       setExporting(false);
-      if (res.ok) Alert.alert(t('settings.data.title'), t('settings.data.requested'));
-      else Alert.alert(t('settings.data.failed'), describeError(res.error, t));
+      if (res.ok) {
+        setExported({ status: 'pending' });
+        Alert.alert(t('settings.data.title'), t('settings.data.requested'));
+      } else Alert.alert(t('settings.data.failed'), describeError(res.error, t));
+    });
+  };
+  const exportReadyText = (status: ExportStatus): string =>
+    t('settings.data.ready', { date: status.requestedAt ? formatDay(new Date(status.requestedAt), locale) : '' });
+  const openExport = () => {
+    void readExport().then((status) => {
+      if (status?.status === 'ready' && status.downloadUrl) {
+        Alert.alert(t('settings.data.title'), exportReadyText(status), [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('settings.data.again'), onPress: requestExport },
+          { text: t('settings.data.download'), onPress: () => void Linking.openURL(status.downloadUrl!) },
+        ]);
+      } else if (status?.status === 'pending') Alert.alert(t('settings.data.title'), t('settings.data.requested'));
+      else requestExport();
     });
   };
 
@@ -206,11 +244,11 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
       entries: [
         {
           key: 'notifications',
-          terms: [t('notifications.title'), t('notifications.categories'), t('notifications.quietHours')],
+          terms: [t('settings.notifications'), t('notifications.title'), t('notifications.categories'), t('notifications.quietHours')],
           row: (
             <SettingsRow
               icon="bell"
-              title={t('notifications.title')}
+              title={t('settings.notifications')}
               // the phone is not letting them through: the one thing in this section to act on
               value={attention.pushOff ? t('settings.off') : undefined}
               attention={attention.pushOff}
@@ -369,15 +407,15 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
       entries: [
         {
           key: 'export',
-          terms: [t('settings.data.request'), t('settings.data.title'), t('settings.data.help')],
+          terms: [t('settings.data.request'), t('settings.data.download'), t('settings.data.title'), t('settings.data.help')],
           row: (
             <SettingsRow
               icon="download"
-              title={t('settings.data.request')}
-              subtitle={t('settings.data.help')}
-              value={exporting ? t('settings.data.requesting') : undefined}
+              title={exported?.status === 'ready' ? t('settings.data.download') : t('settings.data.request')}
+              subtitle={exported?.status === 'ready' ? exportReadyText(exported) : t('settings.data.help')}
+              value={exporting ? t('settings.data.requesting') : exported?.status === 'pending' ? t('settings.data.preparing') : undefined}
               opens={false}
-              onPress={requestExport}
+              onPress={exported && exported.status !== 'none' ? openExport : requestExport}
             />
           ),
         },

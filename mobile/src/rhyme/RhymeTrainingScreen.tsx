@@ -20,8 +20,9 @@ import { TABLE } from '../impostor/table';
 import { useDirection } from '../reports/direction';
 import { useCourseDialect } from '../learn/courseDialect';
 import { MissedRhymes, wordDirection, type RhymeHint } from '../wordle/WordAnswer';
-import { DIALECT_NAME, RHYME_DIALECTS, isRhymeOffered, openingRhymeDialect, useRhymeOffered } from './availability';
+import { isRhymeOffered, offeredRhymeDialects, openingRhymeDialect, useRhymeOffered } from './availability';
 import type { Dialect } from './matchApi';
+import { dialectNameKey } from '../i18n/dialectName';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane' | 'inflected';
@@ -82,8 +83,8 @@ function clock(ms: number): string {
  *
  * A round is in Kurmancî or Soranî, chosen at the start. The screen opens on
  * the learner's own variety when rounds are offered in it (availability.ts);
- * a variety without rounds yet keeps its place in the choice, marked coming
- * soon, and says so where Start would be. The prompt and the rhymes are
+ * a variety without rounds yet is left out of the choice, and a choice of one
+ * is not shown. The prompt and the rhymes are
  * written in the round's own direction, so a Soranî word reads right to left
  * on any screen.
  */
@@ -96,8 +97,10 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const course = useCourseDialect();
   // the variety the start opens on until one is pressed: the learner's own, where rounds are offered in it
   const [picked, setPicked] = useState<Dialect | null>(null);
-  const dialect = picked ?? openingRhymeDialect(offered, course, locale);
+  // a pick made before the server answered that it turns out not to offer falls back to the opening one
+  const dialect = picked && isRhymeOffered(offered, picked) ? picked : openingRhymeDialect(offered, course, locale);
   const canStart = isRhymeOffered(offered, dialect);
+  const choices = offeredRhymeDialects(offered);
 
   const [game, setGame] = useState<RhymeGameView | null>(null);
   const [found, setFound] = useState<Found[]>([]);
@@ -199,17 +202,19 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
               <Text style={styles.stageName}>{t('games.rhyme.name')}</Text>
               <Text style={styles.stageLine}>{t('games.rhyme.rules')}</Text>
             </Cloth>
-            <Segmented<Dialect>
-              options={RHYME_DIALECTS}
-              value={dialect}
-              onChange={(d) => {
-                setPicked(d);
-                setNote(null);
-              }}
-              labelOf={(d) => (isRhymeOffered(offered, d) ? DIALECT_NAME[d] : `${DIALECT_NAME[d]} · ${t('games.comingSoon')}`)}
-              groupLabel={t('games.dialect')}
-              wrap
-            />
+            {choices.length > 1 ? (
+              <Segmented<Dialect>
+                options={choices}
+                value={dialect}
+                onChange={(d) => {
+                  setPicked(d);
+                  setNote(null);
+                }}
+                labelOf={(d) => t(dialectNameKey(d))}
+                groupLabel={t('games.dialect')}
+                wrap
+              />
+            ) : null}
             {/* a variety with no rounds yet says so where its Start would be: nothing to press that cannot work */}
             {!canStart ? (
               <Text style={[styles.unoffered, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">

@@ -6,7 +6,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { GameRoom } from '../play/GameRoom';
 import { useGameView } from '../play/useGameView';
-import { PARTY_DIALECT_NAME, PARTY_LEVEL_KEY } from '../party/PartyStart';
+import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
@@ -14,6 +14,7 @@ import { categoriesAt, useImpostorCategories } from './categories';
 import { CouchGame } from './CouchGame';
 import { ImpostorBoardView, ImpostorReveal } from './ImpostorBoard';
 import { ImpostorStart, type CouchAsk } from './ImpostorStart';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
  * Impostor on the phone: without an id, the start (ImpostorStart.tsx:
@@ -64,7 +65,7 @@ function LobbyNote({ dialect, settings }: { dialect: GameDialect; settings: Lobb
   const level = settings.difficulty && PARTY_LEVEL_KEY[settings.difficulty] ? ` · ${t(PARTY_LEVEL_KEY[settings.difficulty])}` : '';
   return (
     <Text style={[styles.note, { color: colors.textSecondary }]}>
-      {PARTY_DIALECT_NAME[dialect]}
+      {t(dialectNameKey(dialect))}
       {level}
       {category ? ` · ${category.ku}` : ''}
       {settings.clueSeconds ? ` · ${t('games.party.seconds', { count: settings.clueSeconds })}` : ''}

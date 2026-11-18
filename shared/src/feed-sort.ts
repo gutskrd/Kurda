@@ -1,14 +1,7 @@
 /**
- * How the wall can be ordered, and how far back a ranked wall looks.
- *
- * Newest is the wall as it always was. Oldest reads it from the beginning.
- * Most popular ranks by what people did with a post — its hearts, its reposts
- * and its comments, each counted once — and most discussed by its comments
- * alone. The two ranked orders look back over a time range, because "the most
- * liked post ever" is the same post every day; newest and oldest do not.
- *
- * One list, read by the server, the phone and the website, so the three never
- * offer a choice the others do not understand.
+ * How the wall can be ordered, read alike by the server and both apps. Most popular ranks by hearts, reposts and comments,
+ * each counted once; most discussed by comments alone. The ranked orders look back over a time range, since "the most
+ * liked post ever" is the same post every day.
  */
 export const FEED_SORTS = ['newest', 'oldest', 'popular', 'discussed'] as const;
 export type FeedSort = (typeof FEED_SORTS)[number];

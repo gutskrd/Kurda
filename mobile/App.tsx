@@ -22,15 +22,19 @@ import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AccountGateProvider, GuestWall, useAccountGate } from './src/auth/AccountGate';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
-import { holdLink, takeHeldLink } from './src/navigation/heldLink';
+import { holdLink, launchLinkKeeper, linkHolding, takeHeldLink } from './src/navigation/heldLink';
+import { authRouter, rootRouter } from './src/navigation/returnTo';
+import { cardOptions, stackOptions } from './src/navigation/stackOptions';
 import { TabBar } from './src/navigation/TabBar';
 import { prepareAudioSession } from './src/recording/useMicRecorder';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
+import { useCloseOnBlur } from './src/navigation/edgePanel';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
 import {
   chatRouteId,
   groupThreadRouteId,
+  userProfileRouteId,
   type RootNavigation,
   type RootStackParamList,
   type TabParamList,
@@ -90,7 +94,7 @@ import { GroupBansScreen } from './src/groups/GroupBansScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { PushHost } from './src/push/PushHost';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
-import { EventThemeProvider } from './src/theme/EventThemeContext';
+import { EventThemeProvider, useEventTheme } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
@@ -231,6 +235,14 @@ const linking: LinkingOptions<RootStackParamList> = {
  * the signed-in screens it names are there to open. A path the app cannot
  * place is dropped; Home is where it would have landed anyway.
  */
+/**
+ * Back from a screen, only while it is the one in front. A second tap during the transition, or an exit that
+ * arrives after a page was pushed over it, would otherwise close whichever screen is on top.
+ */
+const backFrom = (navigation: { isFocused(): boolean; goBack(): void }) => (): void => {
+  if (navigation.isFocused()) navigation.goBack();
+};
+
 function OpenHeldLink(): null {
   const linkTo = useLinkTo();
   useEffect(() => {
@@ -264,6 +276,8 @@ function OpenHeldLink(): null {
  */
 function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof useAccountGate>['require']): MenuGroup[] {
   const giftBadge = unreadBadge(useUnread().counts.gifts) ?? undefined;
+  // the events page only while one runs: between events it could say nothing but "check back soon"
+  const { live: eventLive } = useEventTheme();
   return [
     {
       titleKey: null,
@@ -276,7 +290,7 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
       links: [
         { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
         { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
-        { key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') },
+        ...(eventLive ? [{ key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') } as const] : []),
         { key: 'league', labelKey: 'leagues.screenTitle', icon: 'trophy', onPress: () => require('league') && navigation.navigate('League') },
         { key: 'ranks', labelKey: 'ranks.title', icon: 'mountains', onPress: () => require('league') && navigation.navigate('Ranks') },
       ],
@@ -307,6 +321,11 @@ function SignedInTabs() {
   const [slideOpen, setSlideOpen] = useState(false);
   const openSlide = useCallback(() => setSlideOpen(true), []);
   const closeSlide = useCallback(() => setSlideOpen(false), []);
+  const closePanels = useCallback(() => {
+    setMenuOpen(false);
+    setSlideOpen(false);
+  }, []);
+  useCloseOnBlur(navigation, closePanels);
   return (
     <MenuProvider value={openMenu}>
     <SlideProvider value={openSlide}>
@@ -369,10 +388,11 @@ function SignedInRoot() {
    * over the card it came from.
    */
   const card = useCallback(
-    ({ route }: { route: { key: string } }): NativeStackNavigationOptions =>
-      !reduceMotion && originOf(route.key) ? { presentation: 'card', animation: 'fade' } : { presentation: 'card' },
+    ({ route }: { route: { key: string } }): NativeStackNavigationOptions => cardOptions(!reduceMotion && originOf(route.key) !== null),
     [reduceMotion],
   );
+  // a card whose swipe would leave a game or a round under way: it still grows out of what opened it
+  const heldCard = useCallback((args: { route: { key: string } }): NativeStackNavigationOptions => ({ ...card(args), gestureEnabled: false }), [card]);
   return (
     <RealtimeProvider>
       {/* the badges' counts, for the tab bar, the bell and the profile's menu */}
@@ -383,13 +403,10 @@ function SignedInRoot() {
       {/* one offer to create an account, for every screen that finds a guest at something only an account can do */}
       <AccountGateProvider>
       <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-          // scene paints the theme background during the push/pop so a transition
-          // never flashes a white frame; reduced-motion disables the slide entirely.
-          contentStyle: { backgroundColor: colors.background },
-          animation: reduceMotion ? 'none' : 'default',
-        }}
+        // the options every stack shares (navigation/stackOptions)
+        screenOptions={stackOptions(reduceMotion, colors.background)}
+        // a place already open is gone back to, not stacked again (navigation/returnTo)
+        UNSTABLE_router={rootRouter}
         // every page stands in `Arrive`, which draws one a press opened (the ones that fade in) growing out of what was pressed
         screenLayout={({ children, route, options }) => (
           <Arrive routeKey={route.key} grows={options.animation === 'fade'}>
@@ -400,7 +417,7 @@ function SignedInRoot() {
         <RootStack.Screen name="Tabs" component={SignedInTabs} />
       {/* search opens out of the magnifier that was tapped, as any page opens out of what opened it */}
       <RootStack.Screen name="Search" options={card}>
-        {({ navigation }) => <SearchScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <SearchScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Lesson" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
@@ -408,10 +425,10 @@ function SignedInRoot() {
           <LessonPlayerScreen
             lessonId={route.params.lessonId}
             courseId={route.params.courseId}
-            onExit={() => navigation.goBack()}
+            onExit={backFrom(navigation)}
             onNext={(lessonId) => navigation.replace('Lesson', { lessonId, courseId: route.params.courseId })}
             onPractise={(exerciseIds) => navigation.replace('Practice', { exerciseIds })}
-            onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+            onPath={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
           />
         )}
       </RootStack.Screen>
@@ -423,20 +440,20 @@ function SignedInRoot() {
             mode={route.params?.mode}
             unitId={route.params?.unitId}
             sessionId={route.params?.sessionId}
-            onExit={() => navigation.goBack()}
+            onExit={backFrom(navigation)}
           />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="PracticeHub" options={card}>
-        {({ navigation }) => <PracticeHubScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <PracticeHubScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="JumpTest" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
           <JumpTestScreen
             courseId={route.params.courseId}
             unitId={route.params.unitId}
-            onExit={() => navigation.goBack()}
-            onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+            onExit={backFrom(navigation)}
+            onPath={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
             onAgain={() => navigation.replace('JumpTest', route.params)}
           />
         )}
@@ -450,126 +467,127 @@ function SignedInRoot() {
       */}
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
-          <GuestWall reason="shop" onBack={() => navigation.goBack()}>
+          <GuestWall reason="shop" onBack={backFrom(navigation)}>
             {/* Zêr is earned by learning, so "earn more" opens the lessons */}
             <ShopScreen
-              onExit={() => navigation.goBack()}
-              onEarnMore={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+              onExit={backFrom(navigation)}
+              onEarnMore={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
             />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
-          <GuestWall reason="league" onBack={() => navigation.goBack()}>
-            <LeagueScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="league" onBack={backFrom(navigation)}>
+            <LeagueScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Ranks" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="league" onBack={() => navigation.goBack()}>
-            <RanksScreen game={route.params?.game} onExit={() => navigation.goBack()} />
+          <GuestWall reason="league" onBack={backFrom(navigation)}>
+            <RanksScreen game={route.params?.game} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Season" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="league" onBack={() => navigation.goBack()}>
-            <SeasonScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="league" onBack={backFrom(navigation)}>
+            <SeasonScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Badges" options={card}>
-        {({ navigation }) => <BadgesScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <BadgesScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Tree" options={card}>
-        {({ navigation }) => <TreeScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <TreeScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      <RootStack.Screen name="UserProfile" options={card}>
+      {/* one page per person, as per conversation (rootStack.userProfileRouteId) */}
+      <RootStack.Screen name="UserProfile" options={card} getId={userProfileRouteId}>
         {({ route, navigation }) => (
-          <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
+          <PublicProfileScreen userId={route.params.userId} onExit={backFrom(navigation)} />
         )}
       </RootStack.Screen>
       {/* one route per person and per group (rootStack.chatRouteId) */}
       <RootStack.Screen name="Chat" options={card} getId={chatRouteId}>
         {({ route, navigation }) => (
-          <GuestWall reason="message" onBack={() => navigation.goBack()}>
+          <GuestWall reason="message" onBack={backFrom(navigation)}>
             <ChatScreen
               userId={route.params.userId}
               username={route.params.username}
               openGift={route.params.openGift}
-              onExit={() => navigation.goBack()}
+              onExit={backFrom(navigation)}
             />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="BlockedUsers" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <BlockedUsersScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <BlockedUsersScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="MyReports" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <MyReportsScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <MyReportsScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="AccountStanding" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <AccountStandingScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <AccountStandingScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       {/* leaving unwinds past the thread: the club is gone from under it */}
-      <RootStack.Screen name="GroupMembers" options={card}>
+      <RootStack.Screen name="GroupMembers" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
             <GroupMembersScreen
               groupId={route.params.groupId}
-              onExit={() => navigation.goBack()}
-              onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+              onExit={backFrom(navigation)}
+              onLeft={() => navigation.popTo('Tabs', { screen: 'Messages' })}
               onEdit={() => navigation.navigate('GroupEdit', { groupId: route.params.groupId })}
             />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupEdit" options={card}>
+      <RootStack.Screen name="GroupEdit" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
-            <GroupEditScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
+            <GroupEditScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupRequests" options={card}>
+      <RootStack.Screen name="GroupRequests" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
-            <GroupRequestsScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
+            <GroupRequestsScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupBans" options={card}>
+      <RootStack.Screen name="GroupBans" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
-            <GroupBansScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
+            <GroupBansScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="GroupThread" options={card} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
             <GroupThreadScreen
               groupId={route.params.groupId}
               name={route.params.name}
               openGift={route.params.openGift}
               addFriends={route.params.addFriends}
               onFindPeople={() => navigation.navigate('Search')}
-              onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
-              onExit={() => navigation.goBack()}
+              onLeft={() => navigation.popTo('Tabs', { screen: 'Messages' })}
+              onExit={backFrom(navigation)}
               onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
             />
           </GuestWall>
@@ -577,99 +595,99 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="FriendRequests" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="friends" onBack={() => navigation.goBack()}>
-            <FriendRequestsScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="friends" onBack={backFrom(navigation)}>
+            <FriendRequestsScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       {/* letters by bird: a guest has no bird, and is shown the way to an account instead */}
       <RootStack.Screen name="Letters" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="message" onBack={() => navigation.goBack()}>
+          <GuestWall reason="message" onBack={backFrom(navigation)}>
             {/* a notification's bird is let go once the window has acted on it, so coming back does not act on it again */}
-            <LettersScreen bird={route.params?.bird} onBirdUsed={() => navigation.setParams({ bird: undefined })} onExit={() => navigation.goBack()} />
+            <LettersScreen bird={route.params?.bird} onBirdUsed={() => navigation.setParams({ bird: undefined })} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="LetterThread" options={card} getId={({ params }) => params.threadId}>
         {({ route, navigation }) => (
-          <GuestWall reason="message" onBack={() => navigation.goBack()}>
-            <LetterThreadScreen threadId={route.params.threadId} onExit={() => navigation.goBack()} />
+          <GuestWall reason="message" onBack={backFrom(navigation)}>
+            <LetterThreadScreen threadId={route.params.threadId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="LetterWidget" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="message" onBack={() => navigation.goBack()}>
-            <LetterWidgetScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="message" onBack={backFrom(navigation)}>
+            <LetterWidgetScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="EventQuests" options={card}>
-        {({ navigation }) => <EventQuestsScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <EventQuestsScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Notifications" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <NotificationsScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <NotificationsScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="NotificationCenter" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <NotificationCenterScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <NotificationCenterScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Settings" options={card}>
-        {({ navigation }) => <SettingsScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <SettingsScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="SettingsPage" options={card}>
-        {({ route, navigation }) => <SettingsPageScreen page={route.params.page} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <SettingsPageScreen page={route.params.page} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Wordle" options={card}>
-        {({ navigation }) => <WordleScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <WordleScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="WordleBattle" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <WordleBattleScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <WordleBattleScreen id={route.params?.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Rhyme" options={card}>
-        {({ navigation }) => <RhymeTrainingScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <RhymeTrainingScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="RhymeMatch" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <RhymeMatchScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <RhymeMatchScreen id={route.params?.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="LastLetter" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <LastLetterScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <LastLetterScreen id={route.params?.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Impostor" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <ImpostorScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <ImpostorScreen id={route.params?.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       {/* Who Am I? on one phone reaches nobody else, so a guest may play it; its room with friends keeps the play wall inside (whoami/WhoAmIScreen) */}
       <RootStack.Screen name="WhoAmI" options={card}>
-        {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} way={route.params?.way} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} way={route.params?.way} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Race" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <RaceScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <RaceScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
@@ -686,29 +704,29 @@ function SignedInRoot() {
       </RootStack.Screen>
       {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
       <RootStack.Screen name="MemoryThief" options={card}>
-        {({ navigation }) => <MemoryThiefScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <MemoryThiefScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Detective" options={card}>
-        {({ navigation }) => <DetectiveScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <DetectiveScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/* the library is reading, which a guest may do; the games behind it keep their own wall */}
       <RootStack.Screen name="Stories" options={card}>
-        {({ route, navigation }) => <StoriesScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <StoriesScreen id={route.params?.id} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="StoryReader" options={card}>
-        {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/* a game is not left by a swipe that was meant to scroll the story */}
-      <RootStack.Screen name="StoryGame" options={{ presentation: 'card', gestureEnabled: false }}>
+      <RootStack.Screen name="StoryGame" options={heldCard}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <StoryGameScreen key={route.params.id} id={route.params.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       {/* the riddles and the proverbs are reading and thinking, which a guest may do; the proverbs' round counts a guest's day too */}
       <RootStack.Screen name="Riddles" options={card}>
-        {({ route, navigation }) => <RiddlesScreen dialect={route.params?.dialect} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <RiddlesScreen dialect={route.params?.dialect} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Riddle" options={card} getId={({ params }) => params.slug}>
         {({ route, navigation }) => <RiddleScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
@@ -717,17 +735,17 @@ function SignedInRoot() {
         {({ route, navigation }) => <RiddleAnswerScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
       </RootStack.Screen>
       <RootStack.Screen name="Proverbs" options={card}>
-        {({ route, navigation }) => <ProverbsScreen dialect={route.params?.dialect} theme={route.params?.theme} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <ProverbsScreen dialect={route.params?.dialect} theme={route.params?.theme} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Proverb" options={card} getId={({ params }) => params.slug}>
         {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Proverbs')} />}
       </RootStack.Screen>
       {/* a round is not left by a swipe meant to scroll its choices */}
-      <RootStack.Screen name="ProverbRound" options={{ presentation: 'card', gestureEnabled: false }}>
-        {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={() => navigation.goBack()} />}
+      <RootStack.Screen name="ProverbRound" options={heldCard}>
+        {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={card}>
-        {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <MemeFeedScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/*
         Writing a post — words, pictures or both — and editing one. Full screen
@@ -736,99 +754,99 @@ function SignedInRoot() {
       */}
       <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
         {({ route, navigation }) => (
-          <GuestWall reason="post" onBack={() => navigation.goBack()}>
+          <GuestWall reason="post" onBack={backFrom(navigation)}>
             <ComposeScreen
               postId={route.params?.postId}
               startWithPictures={route.params?.pickPictures}
               asMeme={route.params?.meme}
-              onExit={() => navigation.goBack()}
+              onExit={backFrom(navigation)}
             />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="MemeDetail" options={card}>
-        {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="EditProfile" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="profile" onBack={() => navigation.goBack()}>
-            <EditProfileScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="profile" onBack={backFrom(navigation)}>
+            <EditProfileScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Friends" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="friends" onBack={() => navigation.goBack()}>
-            <SocialScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="friends" onBack={backFrom(navigation)}>
+            <SocialScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Dictionary" options={card}>
-        {({ navigation }) => <DictionaryScreen onBack={() => navigation.goBack()} />}
+        {({ navigation }) => <DictionaryScreen onBack={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Alphabet" options={card}>
-        {({ route, navigation }) => <AlphabetScreen script={route.params?.script} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <AlphabetScreen script={route.params?.script} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Words" options={card}>
-        {({ navigation }) => <WordsScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <WordsScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/* over Learn, as something looked at and closed: a chest opened in it takes the whole screen */}
       <RootStack.Screen name="Quests" options={{ presentation: 'fullScreenModal' }}>
-        {({ navigation }) => <QuestsScreen place="learn" onDone={() => navigation.goBack()} />}
+        {({ navigation }) => <QuestsScreen place="learn" onDone={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="WordSet" options={card}>
         {/* a link to a set this version does not have opens the list of sets instead */}
         {({ route, navigation }) =>
           isWordSetId(route.params.set) ? (
-            <WordSetScreen set={route.params.set} script={route.params.script} onExit={() => navigation.goBack()} />
+            <WordSetScreen set={route.params.set} script={route.params.script} onExit={backFrom(navigation)} />
           ) : (
-            <WordsScreen onExit={() => navigation.goBack()} />
+            <WordsScreen onExit={backFrom(navigation)} />
           )
         }
       </RootStack.Screen>
       <RootStack.Screen name="Saved" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="save" onBack={() => navigation.goBack()}>
-            <SavedScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="save" onBack={backFrom(navigation)}>
+            <SavedScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Tags" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="profile" onBack={() => navigation.goBack()}>
-            <TagsScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="profile" onBack={backFrom(navigation)}>
+            <TagsScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="ChangeUsername" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="profile" onBack={() => navigation.goBack()}>
-            <ChangeUsernameScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="profile" onBack={backFrom(navigation)}>
+            <ChangeUsernameScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="ChangePassword" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <ChangePasswordScreen onExit={() => navigation.goBack()} onSetPassword={(email) => navigation.navigate('ForgotPassword', { email })} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <ChangePasswordScreen onExit={backFrom(navigation)} onSetPassword={(email) => navigation.navigate('ForgotPassword', { email })} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Devices" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <DevicesScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <DevicesScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="ForgotPassword" options={card}>
-        {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={() => navigation.goBack()} />}
+        {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Library" options={card}>
-        {({ navigation }) => <LibraryScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <LibraryScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="LibraryPost" options={card}>
-        {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/*
         A guest's two ways to an account, over the app: the sign-up form that
@@ -838,14 +856,15 @@ function SignedInRoot() {
       <RootStack.Screen name="ClaimAccount" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
           <ClaimAccountScreen
-            onExit={() => navigation.goBack()}
+            presented
+            onExit={backFrom(navigation)}
             onSignIn={(email) => navigation.navigate('SignIn', email ? { email } : undefined)}
             onForgotPassword={(email) => navigation.navigate('ForgotPassword', { email })}
           />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="SignIn" options={{ presentation: 'fullScreenModal' }}>
-        {({ route, navigation }) => <SignInModal email={route.params?.email} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <SignInModal email={route.params?.email} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       </RootStack.Navigator>
       {/* a push shown while the app is open, and a tapped one opened where it belongs */}
@@ -865,14 +884,18 @@ function Root() {
   const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
   const reduceMotion = useReducedMotion();
+  const { colors } = useTheme();
 
-  // a link opened while signed out (the one that started the app, or one tapped since) waits for the sign-in
+  // a link opened before the signed-in screens are there waits for them; the launch link only for the first screens (navigation/heldLink)
+  const [keepLaunchLink] = useState(launchLinkKeeper);
+  const holding = linkHolding(status, user);
   useEffect(() => {
-    if (status !== 'signedOut') return;
-    void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    if (status === 'restoring') return;
+    if (keepLaunchLink(holding)) void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    if (holding === 'none') return;
     const sub = Linking.addEventListener('url', ({ url }) => holdLink(url, linking.prefixes));
     return () => sub.remove();
-  }, [status]);
+  }, [status, holding, keepLaunchLink]);
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
@@ -913,7 +936,9 @@ function Root() {
       <AuthStack.Navigator
         initialRouteName={AUTH_INITIAL_ROUTE}
         // signing in slides between its screens as the app does, and does not slide for somebody who asked for less motion
-        screenOptions={{ headerShown: false, animation: reduceMotion ? 'none' : 'default' }}
+        screenOptions={stackOptions(reduceMotion, colors.background)}
+        // each form once: "Create account" and "Sign in" go back to the other form rather than stack it again
+        UNSTABLE_router={authRouter}
       >
         {/* Welcome's back walks into the intro (KUR-271): choice → notifications → welcome → language */}
         <AuthStack.Screen name="Welcome">

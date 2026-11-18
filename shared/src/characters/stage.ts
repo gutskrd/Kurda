@@ -1,10 +1,7 @@
 import { n, prefixFor } from '../art/svg.js';
 import type { CharacterId } from './types.js';
 
-/**
- * The light each character stands in on a stage: the deer in the purple of
- * his app icon, Hamo in the gold of an evening, Xezo in rose.
- */
+/** The light each character stands in on a stage: the deer in his app icon's purple, Hamo in evening gold, Xezo in rose. */
 export const CHARACTER_GLOW: Readonly<Record<CharacterId, { light: string; deep: string }>> = {
   hevalo: { light: '#db7df5', deep: '#9a6cf1' },
   hamo: { light: '#f6c27a', deep: '#de8746' },
@@ -12,21 +9,17 @@ export const CHARACTER_GLOW: Readonly<Record<CharacterId, { light: string; deep:
 };
 
 export interface StageOptions {
-  /** drawn for a dark screen: the same light, a little stronger on the dark */
+  /** drawn for a dark screen: the same light, a little stronger */
   dark?: boolean;
   /** for gradient ids, so two stages can share a page */
   idPrefix?: string;
 }
 
 /**
- * What a character stands in front of on a stage: nothing but its own light,
- * a soft wash of its colour that deepens a little toward the stage's foot and
- * is brightest behind its head, so the figure is all there is to look at.
- *
- * Drawn to the stage's own size in points; everything is a tint over the
- * surface beneath, so it sits on a light card and a dark one alike. `standAt`
- * is the share of the width the character stands at, where the light is
- * centred.
+ * What a character stands in front of: only its own light, a soft wash of its colour deepening toward the stage's foot and
+ * brightest behind its head, so the figure is all there is to look at. Drawn to the stage's size in points, as tints over
+ * the surface beneath, so it sits on light and dark cards alike. `standAt` is the share of the width where the character
+ * stands and the light is centred.
  */
 export function stageBackdrop(id: CharacterId, width: number, height: number, standAt = 0.32, options: StageOptions = {}): string {
   const glow = CHARACTER_GLOW[id];

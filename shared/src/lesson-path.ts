@@ -1,23 +1,11 @@
 /**
- * The lesson path: a course map read as one winding line of skills, a
- * chapter at a time, in sections.
+ * The lesson path: a course map (GET /courses/:id/map) laid out as one winding line of skills, a chapter at a time, in
+ * sections. Both apps only paint what this returns, so they agree on the current skill, each stop's state, ring and
+ * place, where units end, which units make a section and each unit's colour.
  *
- * Both apps draw the same path from the same course map (GET
- * /courses/:id/map), so the rules live here once: which skill is the one to
- * do now, what every other one is (done, open, still closed), how far round
- * its ring each skill has come (lesson-rounds.ts), where each unit ends, which
- * units make a section, which colour each unit takes, and where on the page
- * each stop sits. The browser and the phone only paint what this returns, so
- * they cannot disagree about which skill is "current" or which way the path
- * turns.
- *
- * The words are the server's: the path is a line of *skills* (topics, to a
- * learner), each a round stop named by its title, and each skill holds its
- * *lessons*, which the card a stop opens lists and counts. A unit (a chapter)
- * is its skills and one stop after them that closes it: the story Hamo tells,
- * or a chest where a unit has no story. A course's units are grouped into
- * *sections* by their level in the course plan (A1, A2, B1), so a learner is
- * shown one stretch of the road at a time rather than all of it at once.
+ * The path is a line of skills (topics, to a learner), each holding its lessons. A unit (a chapter) is its skills plus one
+ * closing stop: its story, or a chest where it has none. Units are grouped into sections by their level in the course plan
+ * (A1, A2, B1), so a learner sees one stretch of the road at a time.
  */
 import { TOPIC_STARS, nextInRound, topicRounds, type TopicRounds } from './lesson-rounds.js';
 
@@ -29,7 +17,7 @@ export interface PathLesson {
   lessonId: string;
   title: string;
   completed: boolean;
-  /** how many times this learner has finished it; an older response does not say, and it reads as once when completed */
+  /** how many times this learner finished it; older responses omit it, and a completed lesson then reads as once */
   times?: number;
 }
 
@@ -41,13 +29,9 @@ export interface PathSkill {
   strength: number;
   hasGrammar: boolean;
   firstLessonId: string | null;
-  /** the skill's published lessons in order; an older response may not carry them */
+  /** the skill's published lessons in order; older responses may omit them */
   lessons?: readonly PathLesson[];
-  /**
-   * Its rounds and its ring's pieces filled (`topicRounds`), as the server
-   * counted them; worked out here from `lessons` when an older response does
-   * not carry them.
-   */
+  /** Its rounds and filled ring pieces (`topicRounds`) as the server counted them; worked out from `lessons` when absent. */
   rounds?: number;
   pieces?: number;
 }
@@ -56,32 +40,21 @@ export interface PathUnitInput<S extends PathSkill> {
   unitId: string;
   title: string;
   skills: readonly S[];
-  /** the story that closes the unit, once learners can read it (a chapter of the road ends with Hamo's) */
+  /** the story that closes the unit, once learners can read it */
   story?: { slug: string; title: string } | null;
-  /**
-   * Its level in the course plan ('A1', 'A2', 'B1', …): the units of one
-   * level make a section. Absent or null in a course without levels, which
-   * is one section.
-   */
+  /** Its level in the course plan ('A1', 'A2', 'B1', …); a level's units make a section. Null in a course without levels: one section. */
   level?: string | null;
 }
 
 export interface PathMapInput<S extends PathSkill> {
   units: readonly PathUnitInput<S>[];
-  /**
-   * How far a test let the learner through: skills up to this place in the
-   * course (from 1, in the order the course is written) are open, whatever
-   * came before them. 0 or absent when no test has.
-   */
+  /** Skills up to this place in the course (from 1, in course order) are open because a test let the learner through; 0 or absent when none did. */
   unlockedThrough?: number;
 }
 
 /**
- * A lesson in a skill:
- *   done   — finished, and open to play again;
- *   next   — the first unfinished lesson of a skill that is open;
- *   locked — the rest: the lessons of a skill not open yet, and those after
- *            `next`, which are taken in order.
+ * A lesson in a skill: `done`, finished and open to replay; `next`, the first unfinished one of an open skill; `locked`,
+ * the rest, since lessons are taken in order.
  */
 export type LessonState = 'done' | 'next' | 'locked';
 
@@ -96,61 +69,42 @@ export function lessonStates(skill: Pick<PathSkill, 'state' | 'lessons'>): Lesso
 }
 
 /**
- * A skill on the path:
- *   done      — every lesson in it finished;
- *   current   — the one to do now: the first open skill not yet finished,
- *               from where a test last let the learner through;
- *   available — open but not the one up next (a placement test can open
- *               several at once, and jumping ahead leaves the skills it
- *               skipped open to come back to);
- *   locked    — not open yet.
+ * A skill on the path: `done`, every lesson finished; `current`, the first open unfinished skill from where a test last
+ * let the learner through; `available`, open but not next (a placement test can open several, and jumped-over skills stay
+ * open); `locked`, not open yet.
  */
 export type StopState = 'done' | 'current' | 'available' | 'locked';
 
-/**
- * How a finished skill is holding up, from its reviews: strong (the server's
- * gold), steady, or ready for a refresh (the server's decayed).
- */
+/** How a finished skill is holding up in reviews: strong (the server's gold), steady, or due a refresh (the server's decayed). */
 export type Finish = 'strong' | 'steady' | 'refresh';
 
 export interface SkillStop<S extends PathSkill> {
   kind: 'skill';
   key: string;
   skill: S;
-  /** its place in its unit, from 1 — the number on an open stop */
+  /** its place in its unit, from 1, shown on an open stop */
   number: number;
   state: StopState;
   /** set on a finished skill only */
   finish: Finish | null;
   lessonsDone: number;
   lessonsTotal: number;
-  /**
-   * Full rounds of its lessons played, 0 to `TOPIC_STARS`: the stars it
-   * wears. A skill is done once it has one.
-   */
+  /** Full rounds of its lessons played, 0 to `TOPIC_STARS`: the stars it wears. Done once it has one. */
   rounds: number;
-  /**
-   * Its ring's pieces filled, of `lessonsTotal` (one for each lesson): the
-   * lessons of the round being played that are finished, and every piece
-   * once all the rounds are played.
-   */
+  /** Ring pieces filled of `lessonsTotal`: the finished lessons of the round in play, or all of them once every round is played. */
   pieces: number;
   /**
-   * The lesson the stop's button opens: the next unfinished one, or once all
-   * are done, the one finished the fewest times, so playing it again fills
-   * the next round lesson by lesson. Null for a locked skill, and for one
-   * with nothing published yet.
+   * The lesson the stop opens: the next unfinished one, or once all are done the one finished fewest times, so replays fill
+   * the next round. Null for a locked skill or one with nothing published.
    */
   launch: string | null;
-  /** the skill that opens this one when finished; named on a locked one */
+  /** the skill whose finishing opens this one; named on a locked stop */
   after: S | null;
 }
 
 /**
- * Review, as a stop on the path: there only when the learner has words due,
- * because then it is real work waiting, and placed where the learner is —
- * just before the current skill — rather than in every unit, since a review
- * takes words from the whole course, not from one unit.
+ * Review as a stop: only when words are due, and just before the current skill rather than in every unit, since review
+ * draws words from the whole course.
  */
 export interface ReviewStop {
   kind: 'review';
@@ -158,11 +112,7 @@ export interface ReviewStop {
   due: number;
 }
 
-/**
- * The end of a unit that has no story to close it (a course other than the
- * road, or a chapter whose story is not out yet): its prize, earned when
- * every skill in it is done.
- */
+/** A unit's closing prize where it has no story (another course, or a chapter whose story is not out), earned when every skill is done. */
 export interface TrophyStop {
   kind: 'trophy';
   key: string;
@@ -172,11 +122,8 @@ export interface TrophyStop {
 }
 
 /**
- * The story that closes a unit, its last stop: the chapter's last scene, told
- * by Hamo. It is the unit's prize — it opens when every skill of the unit is
- * done, and is drawn as won from then on — so it is the reward for the
- * chapter rather than a way round it. Where a unit has a story it takes the
- * place of the trophy.
+ * The story that closes a unit, told by Hamo, in place of the trophy. It opens when every skill of the unit is done and
+ * is drawn as won from then, so it rewards the chapter rather than skipping it.
  */
 export interface StoryStop {
   kind: 'story';
@@ -193,19 +140,11 @@ export type PathStop<S extends PathSkill> = SkillStop<S> | ReviewStop | TrophySt
 /** A stop and where it sits. */
 export interface PlacedStop<S extends PathSkill> {
   stop: PathStop<S>;
-  /**
-   * Across: from the middle of the path, toward the end of the line a reader
-   * reads (right in English, left in Soranî), in points. The apps mirror it
-   * for right-to-left by drawing in logical (start/end) terms.
-   */
+  /** Across, in points, from the path's middle toward the end of a line of text; the apps mirror it for right-to-left. */
   x: number;
-  /** Down: the stop's centre from the top of its unit's path, in points. */
+  /** Down, in points: the stop's centre from the top of its unit's path. */
   y: number;
-  /**
-   * The line in from the stop before it: walked when both ends have been
-   * reached, ahead otherwise. Null for a unit's first stop, which the
-   * unit's heading leads into.
-   */
+  /** The line in from the previous stop: walked once both ends are reached, else ahead. Null for a unit's first stop. */
   trail: 'walked' | 'ahead' | null;
 }
 
@@ -214,10 +153,8 @@ export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose', 's
 export type UnitTone = (typeof UNIT_TONES)[number];
 
 /**
- * The order units take their colours in: the warm ones only, earth, sun,
- * field and pomegranate, so a path reads as the land it teaches and never
- * cold. The blue and the violet stay named for what still wears them (a
- * streak's ice) and are not dealt to units.
+ * The order units take their colours in: only the warm ones, so a path reads as the land it teaches. The blue and the
+ * violet stay named for what still uses them (a streak's ice) and are never dealt to units.
  */
 export const UNIT_TONE_ORDER: readonly UnitTone[] = ['clay', 'saffron', 'meadow', 'rose', 'pine'];
 
@@ -229,16 +166,14 @@ export function unitTone(index: number): UnitTone {
 export interface PathUnit<S extends PathSkill> {
   unitId: string;
   title: string;
-  /** from 1, through the whole course: "Chapter 5" is the fifth wherever its section starts, as the book and the stories number it */
+  /** from 1, through the whole course, as the book and the stories number chapters */
   number: number;
   tone: UnitTone;
   /** the section it is in, from 1 */
   section: number;
   /**
-   * The learner may test out to here (`jumpPlan`): a unit after the one they
-   * are in, whose first skill is still closed. Its first skill's stop is where
-   * the offer is made (`jumpKey`), or its section's card while the section is
-   * shut.
+   * The learner may test out to here (`jumpPlan`): a later unit whose first skill is still closed. The offer is made on
+   * that skill's stop (`jumpKey`), or on its section's card while the section is shut.
    */
   jump: boolean;
   /** the stop that offers the jump: the unit's first skill, when `jump` */
@@ -249,24 +184,16 @@ export interface PathUnit<S extends PathSkill> {
   /** skills finished, of `total` */
   done: number;
   total: number;
-  /** the unit's skills' names, in order: what it covers, said in one line */
+  /** the unit's skill names in order: what it covers, in one line */
   topics: string[];
   /** the skills with a grammar note, for the unit's guide; empty when there is none */
   guide: S[];
 }
 
-/**
- * Where a section stands for the learner:
- *   done   — every skill in it finished;
- *   open   — begun, or opened by a test, and not finished;
- *   locked — nothing in it open yet.
- */
+/** Where a section stands: `done`, every skill finished; `open`, begun or opened by a test; `locked`, nothing open yet. */
 export type SectionState = 'done' | 'open' | 'locked';
 
-/**
- * A stretch of the course: its units of one level, shown together, the rest
- * of the course folded away round it as cards.
- */
+/** A stretch of the course: its units of one level, shown together, with the other sections folded away as cards. */
 export interface PathSection<S extends PathSkill> {
   /** `x:` and its number */
   key: string;
@@ -287,17 +214,13 @@ export interface PathSection<S extends PathSkill> {
 
 export interface LessonPath<S extends PathSkill> {
   units: PathUnit<S>[];
-  /** the units in their sections, in order: one section for a course without levels */
+  /** the units in their sections, in order; one section for a course without levels */
   sections: PathSection<S>[];
-  /** the section the learner is in, from 0: the one holding the stop the map opens on */
+  /** the section the learner is in, from 0: the one holding `focus` */
   section: number;
   /** the current skill's key, if any skill is open and unfinished */
   current: string | null;
-  /**
-   * The stop the map opens on: the current skill; else, with nothing open
-   * left to do, the furthest stop reached (the last story of a finished
-   * course); else the first stop.
-   */
+  /** The stop the map opens on: the current skill; else, with nothing open left, the furthest stop reached; else the first. */
   focus: string | null;
   /** skills finished in the whole course, of `total` */
   done: number;
@@ -305,21 +228,14 @@ export interface LessonPath<S extends PathSkill> {
 }
 
 /**
- * The path's measurements, in points, shared so both apps space it alike.
- * `node` is a stop's button; `step` the distance between two stops'
- * centres; `sway` how far a stop leans off the middle; `lift` the extra room
- * above the current skill for the learner standing on it and the "Start" flag
- * over them (and above a unit's first skill for "Jump here?"); `pad` the room
- * above the first stop and below the last, which the unit's landmark stands in
- * at the top (path-world.ts).
+ * The path's measurements in points, shared so both apps space it alike: `node` a stop's button, `step` between stop
+ * centres, `sway` how far a stop leans off the middle, `lift` the extra room above the current skill (and a jumpable unit's
+ * first skill) for its bubble, `pad` the room above the first stop and below the last, where the landmark stands
+ * (path-world.ts).
  */
 export const PATH_GEOMETRY = { node: 72, step: 104, sway: 72, lift: 64, pad: 92 } as const;
 
-/**
- * Where a stop leans, by its place in its unit: middle, toward the start of
- * the line, middle, toward the end — a soft zigzag that every unit begins
- * again from the middle, under its heading.
- */
+/** Where a stop leans by its place in its unit: a soft zigzag that every unit starts again from the middle. */
 const LEAN = [0, -1, 0, 1] as const;
 
 export function lean(index: number): number {
@@ -335,12 +251,12 @@ function finishOf(state: PathSkillState): Finish | null {
   return null;
 }
 
-/** How many times a lesson was finished: what the server counted, or once for a lesson an older response only marks completed. */
+/** How many times a lesson was finished: the server's count, or once for a completed lesson in an older response. */
 function timesOf(lesson: PathLesson): number {
   return lesson.times ?? (lesson.completed ? 1 : 0);
 }
 
-/** A skill's rounds and filled pieces: the server's, held to what a ring can show, or worked out from its lessons. */
+/** A skill's rounds and filled pieces: the server's, capped to what a ring shows, or worked out from its lessons. */
 function roundsOf(skill: PathSkill): TopicRounds {
   const lessons = skill.lessons ?? [];
   if (typeof skill.rounds === 'number' && typeof skill.pieces === 'number') {
@@ -357,7 +273,7 @@ function launchOf(skill: PathSkill): string | null {
   return lessons[nextInRound(lessons.map(timesOf))]?.lessonId ?? skill.firstLessonId;
 }
 
-/** Is an open skill still to finish? (One with no lessons published has nothing to do yet.) */
+/** Whether an open skill is still to finish; one with no lessons published has nothing to do yet. */
 function unfinished(skill: PathSkill): boolean {
   if (FINISHED.has(skill.state)) return false;
   const lessons = skill.lessons;
@@ -365,23 +281,14 @@ function unfinished(skill: PathSkill): boolean {
 }
 
 /**
- * Lay a course map out as a path.
- *
- * `due` is how many review words are waiting (GET /practice/due); with any,
- * a review stop goes in just before the current skill — or, with nothing
- * open left to do, just after the last skill finished.
- *
- * `offerJumps`: a client that draws the offer to jump ahead (`PathUnit.jump`)
- * asks for it, and the first stop of each unit on offer gets room above it for
- * the offer's bubble; one that does not draw it gets neither.
- *
- * Each unit's stops are its skills, then the one stop that closes it: its
- * story where it has one, its trophy where it has none. The unit's grammar
- * notes are not a stop: they are the guide its heading opens (`guide`).
+ * Lays a course map out as a path. With `due` review words waiting (GET /practice/due), a review stop goes just before the
+ * current skill, or just after the last skill finished when nothing open is left. `offerJumps` adds room above each
+ * jumpable unit's first stop for the offer's bubble; only a client that draws the offer asks. Each unit's stops are its
+ * skills, then its story or trophy; grammar notes are its heading's guide, not a stop.
  */
 export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0, offerJumps = false }: { due?: number; offerJumps?: boolean } = {}): LessonPath<S> {
   const { currentSkill, lastDone, here } = whereIs(map);
-  // review sits before the skill to do now, or after the last one done
+  // Review sits before the skill to do now, or after the last one done.
   const reviewBefore = due > 0 && currentSkill ? currentSkill : null;
   const reviewAfter = due > 0 && !currentSkill && lastDone ? lastDone : null;
   const sectionOf = sectionNumbers(map.units);
@@ -418,7 +325,7 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0,
     done += unitDone;
     total += unit.skills.length;
     if (unit.skills.length > 0) {
-      // the unit's prize: its story, opened when every skill is done; a unit without one keeps its trophy
+      // The unit's prize: its story, opened when every skill is done; a unit without one keeps its trophy.
       const won = unitDone === unit.skills.length;
       if (unit.story) stops.push({ kind: 'story', key: `b:${unit.unitId}`, slug: unit.story.slug, title: unit.story.title, open: won, unitNumber: u + 1 });
       else stops.push({ kind: 'trophy', key: `t:${unit.unitId}`, earned: won, unitNumber: u + 1 });
@@ -454,11 +361,8 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0,
 }
 
 /**
- * Each unit's section, from 1, and the section's level. A run of units of
- * one level is a section; a unit whose level is not given goes with the unit
- * before it (or, at the start of the course, the first that has one), so a
- * unit added without one does not split a section in two; and a course with
- * no levels at all is one section.
+ * Each unit's section, from 1, and the section's level. A run of units of one level is a section; a unit without a level
+ * joins the one before it (or the first with one), so it never splits a section; a course without levels is one section.
  */
 function sectionNumbers(units: readonly PathUnitInput<PathSkill>[]): Array<{ number: number; level: string | null }> {
   const given = units.map((u) => (typeof u.level === 'string' && u.level.trim() !== '' ? u.level.trim() : null));
@@ -498,10 +402,8 @@ function sectionsOf<S extends PathSkill>(units: PathUnit<S>[], levels: readonly 
 }
 
 /**
- * Where the learner is: the skill to do now — the first open one not yet
- * finished, from where a test last let them through (or else from the start),
- * so jumping ahead moves them on — the last one finished, and the unit they
- * are in (the current skill's, else the last finished one's, else the first).
+ * Where the learner is: the current skill (the first open unfinished one from where a test last let them through, else
+ * from the start), the last one finished, and the unit they are in.
  */
 function whereIs<S extends PathSkill>(map: PathMapInput<S>): { currentSkill: S | null; lastDone: S | null; here: number } {
   const all = map.units.flatMap((u) => u.skills);
@@ -513,40 +415,33 @@ function whereIs<S extends PathSkill>(map: PathMapInput<S>): { currentSkill: S |
   return { currentSkill, lastDone, here: Math.max(0, at ? map.units.findIndex((u) => u.skills.includes(at)) : 0) };
 }
 
-/** A unit's first skill, closed, with lessons to open once a test lets the learner through. */
+/** Whether a unit's first skill is closed and has lessons for a passed test to open. */
 function opensOnJump(first: PathSkill | undefined): boolean {
   if (!first || first.state !== 'locked') return false;
   return first.lessons ? first.lessons.length > 0 : first.firstLessonId !== null;
 }
 
 /**
- * The test that jumps ahead (`jumpPlan`), in the numbers the server keeps and
- * the apps say: how many questions at most (fewer when the skills it skips
- * have fewer), the mistakes a full one allows, and how many tests a learner
- * may start at one unit in a day — so passing is learning, not luck tried
- * until it lands.
+ * The jump-ahead test's numbers, as the server keeps them and the apps say them: at most this many questions (fewer when
+ * fewer skills are skipped), the mistakes a full test allows, and the tests a learner may start at one unit a day, so
+ * passing is learning, not retried luck.
  */
 export const PATH_JUMP = { questions: 10, maxMistakes: 2, triesPerDay: 3 } as const;
 
-/** The mistakes a test of `total` questions allows: 2 in 10, and one in five of a shorter one. */
+/** The mistakes a test of `total` questions allows: 2 in 10, one in five of a shorter one. */
 export function jumpMistakesAllowed(total: number): number {
   return Math.floor((Math.max(0, total) * PATH_JUMP.maxMistakes) / PATH_JUMP.questions);
 }
 
-/** Passed: no more mistakes than allowed, an item not answered counting as one. */
+/** Passed: no more mistakes than allowed, an unanswered item counting as one. */
 export function jumpPassed(correct: number, total: number): boolean {
   return total > 0 && total - correct <= jumpMistakesAllowed(total);
 }
 
 /**
- * Jumping ahead to a unit: a short test on the skills it skips, which when
- * passed opens every skill up to the unit's first (`position`, its place in
- * the course from 1) — and those skipped stay open to come back to. Null when
- * the unit may not be jumped to (`PathUnit.jump`): the server and the apps
- * read the same rule from the same map.
- *
- * `skipped` are the skills not yet finished from the unit the learner is in up
- * to the one before the target, in course order; the test is drawn from them.
+ * Jumping ahead to a unit: a short test on the skills it skips that, when passed, opens every skill up to the unit's first
+ * (`position`, its place in the course from 1), the skipped ones staying open. `skipped` are the unfinished skills from
+ * the learner's unit up to the target, in course order. Null when the unit may not be jumped to (`PathUnit.jump`).
  */
 export function jumpPlan<S extends PathSkill>(map: PathMapInput<S>, unitId: string): { position: number; skipped: S[] } | null {
   const target = map.units.findIndex((u) => u.unitId === unitId);
@@ -560,7 +455,7 @@ export function jumpPlan<S extends PathSkill>(map: PathMapInput<S>, unitId: stri
   return { position: map.units.flatMap((u) => u.skills).indexOf(first) + 1, skipped };
 }
 
-/** Reached: a stop the learner has got to — done, current, the review beside them, a prize won. */
+/** Whether the learner has got to a stop: done, current, the review beside them, or a prize won. */
 function reached<S extends PathSkill>(stop: PathStop<S>): boolean {
   if (stop.kind === 'review') return true;
   if (stop.kind === 'trophy') return stop.earned;
@@ -568,11 +463,7 @@ function reached<S extends PathSkill>(stop: PathStop<S>): boolean {
   return stop.state === 'done' || stop.state === 'current';
 }
 
-/**
- * Down the page, a step apart, leaning in turn; the current skill gets room
- * above it for its bubble, and so does the first skill of a unit that can be
- * jumped to (`jumpKey`), for its own.
- */
+/** Places stops down the page a step apart, leaning in turn, with room above the current skill and above `jumpKey` for their bubbles. */
 function place<S extends PathSkill>(stops: PathStop<S>[], jumpKey: string | null): { placed: PlacedStop<S>[]; height: number } {
   const { step, sway, lift, pad } = PATH_GEOMETRY;
   let y = pad;
@@ -599,19 +490,8 @@ function frontier<S extends PathSkill>(units: PathUnit<S>[]): string | null {
 }
 
 /**
- * A stop's neighbours in reading order, for moving along the path with the
- * arrow keys: every stop of every unit, top to bottom.
- */
-export function stopKeys<S extends PathSkill>(path: LessonPath<S>): string[] {
-  return path.units.flatMap((u) => u.stops.map((p) => p.stop.key));
-}
-
-/**
- * The lesson "Next lesson" opens when a lesson is finished: the one the
- * current skill's button opens, read from the map fetched after the lesson
- * (so a skill just finished hands on to the one it opened). Null when there
- * is nothing open left to do, or when it would only open `finished`, the
- * lesson just played, again.
+ * The lesson "Next lesson" opens after a lesson, read from the map fetched afterwards so a skill just finished hands on to
+ * the one it opened. Null when nothing open is left, or when it would only replay `finished`.
  */
 export function nextLaunch<S extends PathSkill>(map: PathMapInput<S>, finished: string | null = null): { lessonId: string; title: string } | null {
   const path = lessonPath(map);
@@ -622,10 +502,8 @@ export function nextLaunch<S extends PathSkill>(map: PathMapInput<S>, finished: 
 }
 
 /**
- * How the path stood, skill by skill: its state, its lessons done, and its
- * rounds and ring. Each app keeps the last one it drew, so coming back after a
- * lesson can show what the lesson changed (`pathChanges`) rather than only
- * the new state. A snapshot kept from before rings were drawn has no rounds.
+ * How the path stood, skill by skill. Each app keeps the last one it drew so returning after a lesson can show what changed
+ * (`pathChanges`). Snapshots from before rings were drawn have no rounds.
  */
 export type PathSnapshot = Record<string, { state: StopState; done: number; rounds?: number; pieces?: number }>;
 
@@ -645,11 +523,7 @@ export interface RingAt {
   pieces: number;
 }
 
-/**
- * A skill's ring moving on: from how it stood to how it stands, `of` pieces
- * round. When `to` has more rounds than `from`, the ring filled to whole
- * (and earned a star) before the next round began.
- */
+/** A skill's ring moving on, `of` pieces round. When `to` has more rounds than `from`, the ring filled and earned a star first. */
 export interface RingChange {
   key: string;
   of: number;
@@ -661,7 +535,7 @@ export interface RingChange {
 export interface PathChanges {
   /** skills whose ring moved on: a piece filled, a round completed (a star), or both */
   ring: RingChange[];
-  /** skills finished since: their first round whole, so they turn gold */
+  /** skills finished since, their first round whole, so they turn gold */
   finished: string[];
   /** skills opened since: closed then, open now */
   opened: string[];
@@ -683,7 +557,7 @@ export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path
     for (const { stop } of unit.stops) {
       const then = stop.kind === 'skill' ? prev[stop.key] : undefined;
       if (stop.kind !== 'skill' || !then) continue;
-      // a snapshot from before rings had none: a skill done then is taken to be where it is now, one not done in its first round
+      // A snapshot from before rings: a skill done then is taken as it is now, one not done as in its first round.
       const from: RingAt =
         then.rounds !== undefined && then.pieces !== undefined
           ? { rounds: then.rounds, pieces: then.pieces }
@@ -702,16 +576,11 @@ export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path
 }
 
 /**
- * Coming back to the path after a lesson, in ms from when the path is drawn,
- * the same on the phone and the website: the page settles first
- * (`settleMs`), then the ring's pieces fill (over `ringMs`) up to the moment a
- * finished stop pops and turns gold (`finishAtMs`, a `popMs` pop), a star
- * earned drops in on its coin (`starAtMs`, over `starMs`) and a ring made
- * whole starts its next round as the star lands, the opened stop's lock gives
- * way to its number (`openAtMs`, the glyphs crossing in `glyphMs`) and it
- * pops, and the bubble arrives at the new current stop as the page scrolls to
- * it and Hevalo cheers (`bubbleAtMs`, over `bubbleMs`). Under Reduce Motion
- * none of it plays: the path is drawn as it now is.
+ * Returning to the path after a lesson, in ms from when it is drawn, alike on the phone and the website: the page settles
+ * (`settleMs`); the ring fills (`ringMs`) up to a finished stop's gold pop (`finishAtMs`, `popMs`); an earned star drops
+ * onto its coin (`starAtMs`, `starMs`) as a whole ring starts its next round; an opened stop's lock turns into its number
+ * (`openAtMs`, `glyphMs`); and the bubble reaches the new current stop as the page scrolls there (`bubbleAtMs`,
+ * `bubbleMs`). Under Reduce Motion nothing plays.
  */
 export const PATH_RETURN = {
   settleMs: 300,
@@ -726,18 +595,10 @@ export const PATH_RETURN = {
   bubbleMs: 200,
 } as const;
 
-/**
- * Hevalo beside the current stop: how big he is drawn (`size`), and how far
- * from the path's middle he stands — across from a stop in the middle, or on
- * the far side from one that leans (`away`), so he never stands on the line.
- */
+/** Hevalo beside the current stop: his `size`, and how far from the middle he stands, on the far side of a leaning stop (`away`), never on the line. */
 export const PATH_MASCOT = { size: 88, across: 110, away: 96 } as const;
 
-/**
- * Where Hevalo stands beside a placed stop: `x` his middle, across from the
- * path's middle in the stops' own logical terms (mirrored for right-to-left as
- * they are), and `y` his top, so he stands level with the stop.
- */
+/** Where Hevalo stands beside a placed stop: `x` his middle, in the stops' logical terms; `y` his top, level with the stop. */
 export function mascotSpot(placed: { x: number; y: number }): { x: number; y: number } {
   const side = Math.sign(placed.x);
   return { x: side === 0 ? PATH_MASCOT.across : -side * PATH_MASCOT.away, y: placed.y - PATH_MASCOT.size / 2 };

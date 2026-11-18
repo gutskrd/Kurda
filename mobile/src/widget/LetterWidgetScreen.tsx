@@ -151,14 +151,12 @@ function WidgetSettingsBody({
   const width = Math.max(PREVIEW_MIN, Math.min(PREVIEW_MAX, screen - layout.gutter * 2));
   const iphone = (
     <HowToAdd
-      key="iphone"
       title={t('keyboard.guide.onIphone')}
       steps={[t('letterWidget.add.iphone1'), t('letterWidget.add.iphone2'), t('letterWidget.add.iphone3')]}
     />
   );
   const android = (
     <HowToAdd
-      key="android"
       title={t('keyboard.guide.onAndroid')}
       steps={[t('letterWidget.add.android1'), t('letterWidget.add.android2'), t('letterWidget.add.android3')]}
     />
@@ -184,8 +182,8 @@ function WidgetSettingsBody({
         <View style={styles.bird} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <SvgXml xml={letterBirdSvg({ bird: settings.letter?.from.bird ?? 0, pose: 'hello', letter: true, size: 96, idPrefix: 'lwb' })} width={96} height={96} />
         </View>
-        {/* this phone's way first */}
-        {Platform.OS === 'android' ? [android, iphone] : [iphone, android]}
+        {/* this phone's way only: an iPhone app that explains another platform's home screen reads as made for both */}
+        {Platform.OS === 'android' ? android : iphone}
       </SettingsSection>
       {settings.widgets > 1 || othersGone ? (
         <SettingsSection title={t('letterWidget.othersTitle')}>

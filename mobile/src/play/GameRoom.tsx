@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import type { MultiGame, MultiResult, MultiSeat, MultiView } from '@kurda/shared';
 import { describeError, type Translate } from '../api/errors';
 import { haptic } from '../feedback/haptics';
@@ -12,6 +13,8 @@ import { ClayButton, GlassCard } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useGameBack } from '../navigation/hardwareBack';
+import { askLeaveGame } from './backOut';
 import { LobbyShare } from './CodeTicket';
 import { InviteSheet } from './InviteSheet';
 import { LobbyPeople } from './lobby';
@@ -87,6 +90,9 @@ export function GameRoom<Board>({
   const { load } = room;
   const view = load.state === 'ready' ? load.view : null;
   useQuietInvites(view?.status === 'active');
+  const navigation = useNavigation();
+  // a game you are playing asks before Android's back leaves it, and is not swiped away on iOS, as a battle is
+  useGameBack(view?.status === 'active' && view.me ? () => askLeaveGame(t, () => navigation.goBack()) : null);
 
   // a game played here to its end is a finished game for the rating box; one opened already finished is not
   const played = useRef(false);

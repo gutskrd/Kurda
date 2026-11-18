@@ -10,7 +10,7 @@ import { isBannedEmail } from '../moderation/ban-registry.js';
 import { suspensionError } from '../moderation/suspension.js';
 import { signupRejected } from './rejections.js';
 import type { AppleTokens } from './apple-tokens.js';
-import { GdprService } from '../gdpr/service.js';
+import { GdprService, cancelPendingDeletion } from '../gdpr/service.js';
 
 export type OAuthProvider = 'google' | 'apple';
 
@@ -182,7 +182,7 @@ export class OAuthService {
     if (known.rows[0]) {
       const user = await this.activeUser(known.rows[0].user_id);
       await this.refuseIfSuspended(user);
-      const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
+      const tokens = await this.session(user, deviceName, deviceId);
       return { user: toPublicUser(user), tokens, created: false };
     }
 
@@ -217,7 +217,7 @@ export class OAuthService {
       if (account) {
         await this.refuseIfSuspended(account);
         await this.link(account.id, identity);
-        const tokens = await issueTokenPair(this.config, this.pool, account, { deviceName, deviceId });
+        const tokens = await this.session(account, deviceName, deviceId);
         return { user: toPublicUser(account), tokens, created: false };
       }
     }
@@ -259,7 +259,7 @@ export class OAuthService {
       const claimed = await this.claimGuest(guestId, email, name);
       if (claimed) {
         await this.link(claimed.id, identity);
-        const tokens = await issueTokenPair(this.config, this.pool, claimed, { deviceName, deviceId });
+        const tokens = await this.session(claimed, deviceName, deviceId);
         return { user: toPublicUser(claimed), tokens, created: true };
       }
       // not a guest any more (claimed elsewhere a moment ago): a new account, as for anyone
@@ -295,8 +295,19 @@ export class OAuthService {
     }
     const user = created.rows[0] as UserRow;
     await this.link(user.id, identity);
-    const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
+    const tokens = await this.session(user, deviceName, deviceId);
     return { user: toPublicUser(user), tokens, created: true };
+  }
+
+  /**
+   * The session a sign-in through a provider hands out, for every path above:
+   * signing in this way calls off a deletion still in its grace period, as a
+   * password sign-in does, since the app and the deletion notice promise that
+   * signing in again keeps the account however the person signs in.
+   */
+  private async session(user: UserRow, deviceName: string | undefined, deviceId: string | null | undefined): Promise<IssuedTokens> {
+    await cancelPendingDeletion(this.pool, user.id);
+    return issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
   }
 
   /**

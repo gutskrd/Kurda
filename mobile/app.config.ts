@@ -12,6 +12,12 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
  * (src/auth/googleClientIds.ts), and both are read in the same build, so a
  * binary has the scheme and the button or neither.
  *
+ * It also points the Android build at Firebase's google-services.json when
+ * the build environment names one. Android push tokens are issued through
+ * Firebase, so an Android binary built without that file gets no token and
+ * no reminders; the file is the project's own, kept out of the repository
+ * and handed to the build as a file variable.
+ *
  * Self-contained on purpose: the build evaluates this file on its own, and a
  * TypeScript file it imports would not be compiled.
  */
@@ -21,6 +27,9 @@ export const GOOGLE_IOS_CLIENT_ID_ENV = 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID';
 
 /** The package whose config plugin registers the URL scheme in the iOS project. */
 export const GOOGLE_SIGNIN_PLUGIN = '@react-native-google-signin/google-signin';
+
+/** Where the build reads the path of Firebase's google-services.json for Android. */
+export const GOOGLE_SERVICES_FILE_ENV = 'GOOGLE_SERVICES_JSON';
 
 /** A Google OAuth client id: the project number and a key, then Google's fixed domain. */
 const CLIENT_ID = /^([a-z0-9-]+)\.apps\.googleusercontent\.com$/i;
@@ -52,6 +61,8 @@ export function googleSignInPlugin(iosClientId: string | null | undefined): [str
 export default function appConfig({ config }: ConfigContext): ExpoConfig {
   const google = googleSignInPlugin(process.env[GOOGLE_IOS_CLIENT_ID_ENV]);
   const plugins = [...(config.plugins ?? []), ...(google ? [google] : [])];
+  const servicesFile = process.env[GOOGLE_SERVICES_FILE_ENV]?.trim();
+  const android = servicesFile ? { ...config.android, googleServicesFile: servicesFile } : config.android;
   // app.json supplies the name and the slug, which is all that separates a partial config from a whole one
-  return { ...config, plugins } as ExpoConfig;
+  return { ...config, plugins, ...(android ? { android } : {}) } as ExpoConfig;
 }

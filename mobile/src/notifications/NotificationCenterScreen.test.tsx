@@ -349,7 +349,7 @@ describe('the notification list’s filters and pictures', () => {
 
   it('names who sent a gift, in bold, when they are a friend, with the time after the words', async () => {
     serve([notice('n1', { category: 'friends', title: 'You have a gift', body: 'berfin sent you Gola Şîn.', data: { kind: 'gift', giftId: 'g1', chat: 'dm:u-berfin', fromUserId: 'u-berfin' } })], [], {
-      'GET /me/social': ok({ friends: [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: null }] }),
+      'GET /friends': ok({ total: 1, friends: [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: null }] }),
     });
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     expect(await screen.findByText('Berfin')).toBeTruthy();
