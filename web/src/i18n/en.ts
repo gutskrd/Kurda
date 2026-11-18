@@ -3283,10 +3283,10 @@ export const en = {
   'games.whoAmI.notOffered': 'Ez kî me? needs more reviewed words and questions before it can be played in this Kurdish.',
   'games.whoAmI.share': 'Play Ez kî me? with me on Hevalo! Open Games → Join with a code and type {code}.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} {tier} League',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'Notifications',
   'notifications.pref.streak': 'Streak reminders',
   'notifications.pref.friends': 'Friend activity',
@@ -3300,7 +3300,7 @@ export const en = {
   'notifications.quietFrom': 'From',
   'notifications.quietTo': 'To',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'Tags',
   'tags.main': 'Main tag',
   'tags.noMain': 'No main tag yet.',

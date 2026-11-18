@@ -3185,10 +3185,10 @@ export const ku: Catalogue = {
   'games.whoAmI.notOffered': 'Ji bo ku Ez kî me? bi vê kurdiyê were lîstin, hê peyv û pirsên kontrolkirî pêwîst in.',
   'games.whoAmI.share': 'Li ser Hevalo bi min re Ez kî me? bilîze! Lîstik → Bi kodekê beşdar bibe veke û {code} binivîse.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} Lîga {tier}',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'Agahdarî',
   'notifications.pref.streak': 'Bîrxistinên rêzeyê',
   'notifications.pref.friends': 'Çalakiya hevalan',
@@ -3202,7 +3202,7 @@ export const ku: Catalogue = {
   'notifications.quietFrom': 'Ji',
   'notifications.quietTo': 'Heta',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'Nîşan',
   'tags.main': 'Nîşana sereke',
   'tags.noMain': 'Hê nîşana sereke tune.',

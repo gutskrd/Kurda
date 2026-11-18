@@ -862,11 +862,7 @@
   box-shadow: 0 0 0 2px var(--hue-wash);
   cursor: pointer;
 }
-.story-sentence.is-evidence,
-.story-para p.is-evidence {
-  background: color-mix(in srgb, var(--success) 18%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 18%, transparent);
-}
+
 /* the band's own wash, with the violet of what can be pressed on it: 4.6:1 by day, 5.4:1 by night */
 .story-replay {
   display: inline-grid;

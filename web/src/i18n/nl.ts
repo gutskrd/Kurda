@@ -3181,10 +3181,10 @@ export const nl: Catalogue = {
   'games.whoAmI.notOffered': 'Ez kî me? heeft meer nagekeken woorden en vragen nodig voordat het in dit Koerdisch gespeeld kan worden.',
   'games.whoAmI.share': 'Speel Ez kî me? met me op Hevalo! Open Spellen → Meedoen met een code en typ {code}.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} Competitie {tier}',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'Meldingen',
   'notifications.pref.streak': 'Reeksherinneringen',
   'notifications.pref.friends': 'Vriendenactiviteit',
@@ -3198,7 +3198,7 @@ export const nl: Catalogue = {
   'notifications.quietFrom': 'Van',
   'notifications.quietTo': 'Tot',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'Tags',
   'tags.main': 'Hoofdtag',
   'tags.noMain': 'Nog geen hoofdtag.',

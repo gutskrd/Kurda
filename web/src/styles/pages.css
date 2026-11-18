@@ -4655,11 +4655,7 @@ a.mkp-activity-row:hover {
   gap: 12px;
 }
 
-/* ── dictionary (KUR-045) ───────────────────────────────────────────────────
-   The browser had no dictionary at all while the phone had a whole tab of it.
-   Laid out as a reading column rather than a grid: looking a word up is one
-   thing at a time, and a second column only gives the eye somewhere else to be.
-*/
+/* Dictionary: a single reading column, since a lookup is one thing at a time. */
 .dict {
   display: grid;
   gap: 18px;

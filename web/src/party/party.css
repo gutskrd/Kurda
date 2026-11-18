@@ -73,10 +73,7 @@
   margin: 0;
   color: var(--danger);
 }
-.mp-start-problem {
-  margin: 0;
-  color: var(--ink-3);
-}
+
 
 @media (prefers-reduced-motion: reduce) {
   .party-timer-fill {

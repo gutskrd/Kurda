@@ -40,14 +40,14 @@ function stubApi(routes: Array<[method: string, path: RegExp, answer: (call: Cal
   return calls;
 }
 
-describe("a group's picture", () => {
+describe('a group’s picture', () => {
   it('stands in with initials, the way the phone does', () => {
     expect(groupInitials('Hevalên Kurmancî')).toBe('HK');
     expect(groupInitials('şev')).toBe('ŞE');
     expect(groupInitials('  ')).toBe('?');
   });
 
-  it("names a picture's type by its ending when the system did not", () => {
+  it('names a picture’s type by its ending when the system did not', () => {
     expect(pictureBlob(new File(['x'], 'cat.png', { type: 'image/png' })).type).toBe('image/png');
     expect(pictureBlob(new File(['x'], 'IMG_0001.JPG', { type: '' })).type).toBe('image/jpeg');
     expect(pictureBlob(new File(['x'], 'photo.heic', { type: '' })).type).toBe('image/heic');
@@ -81,7 +81,7 @@ async function menuOf(name: string): Promise<string[] | null> {
   return items;
 }
 
-describe("a group's page", () => {
+describe('a group’s page', () => {
   it('shows the group, its members plainly, and for the owner every action behind each ⋯', async () => {
     stubApi([]);
     renderApp(<GroupInfo detail={detailFor('owner')} onChanged={async () => undefined} onLeft={() => undefined} />);

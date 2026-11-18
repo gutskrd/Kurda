@@ -107,7 +107,7 @@ describe('My reports', () => {
     expect(calls.find((c) => c.url.endsWith('/me/appeals'))!.body).toEqual({ caseId: 'case-9', text: 'It happened again.' });
   });
 
-  it('says in the app\'s words, not the server\'s, that a second look was already asked for', async () => {
+  it('says in the app’s words, not the server’s, that a second look was already asked for', async () => {
     stub({
       '/me/reports': { reports: [report({ status: 'no_violation', canAppeal: true, caseId: 'case-9', closedAt: '2026-10-02T10:00:00.000Z' })] },
       '/me/appeals': () => jsonResponse(409, { code: 'ALREADY_APPEALED', message: 'you have already asked for a review of this decision' }),

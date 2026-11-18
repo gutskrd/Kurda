@@ -301,7 +301,7 @@ describe('gifts in a group thread', () => {
     await waitFor(() => expect(opens).toHaveLength(1));
   });
 
-  it('keeps the recipient\'s own card when it comes before the room\'s', async () => {
+  it('keeps the recipient’s own card when it comes before the room’s', async () => {
     const rt = mount(<GroupThread groupId="g1" />, '/app/messages?group=g1', groupFetch);
     // Wait until the thread is listening, once its history has loaded.
     await waitFor(() => {

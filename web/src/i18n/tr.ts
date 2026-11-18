@@ -3177,10 +3177,10 @@ export const tr: Catalogue = {
   'games.whoAmI.notOffered': 'Ez kî me? oyununun bu Kürtçeyle oynanabilmesi için daha fazla incelenmiş kelime ve soru gerekiyor.',
   'games.whoAmI.share': 'Hevalo’da benimle Ez kî me? oyna! Oyunlar → Kodla katıl’ı aç ve {code} yaz.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} {tier} Ligi',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'Bildirimler',
   'notifications.pref.streak': 'Seri hatırlatmaları',
   'notifications.pref.friends': 'Arkadaş etkinliği',
@@ -3194,7 +3194,7 @@ export const tr: Catalogue = {
   'notifications.quietFrom': 'Başlangıç',
   'notifications.quietTo': 'Bitiş',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'Etiketler',
   'tags.main': 'Ana etiket',
   'tags.noMain': 'Henüz ana etiket yok.',

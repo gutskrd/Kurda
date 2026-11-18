@@ -3174,10 +3174,10 @@ export const ar: Catalogue = {
   'games.whoAmI.notOffered': 'تحتاج لعبة Ez kî me? إلى مزيد من الكلمات والأسئلة المراجَعة قبل أن تُلعب بهذه الكردية.',
   'games.whoAmI.share': 'العب معي Ez kî me? على Hevalo! افتح الألعاب ← انضم برمز واكتب {code}.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} دوري {tier}',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'الإشعارات',
   'notifications.pref.streak': 'تذكيرات السلسلة',
   'notifications.pref.friends': 'نشاط الأصدقاء',
@@ -3191,7 +3191,7 @@ export const ar: Catalogue = {
   'notifications.quietFrom': 'من',
   'notifications.quietTo': 'إلى',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'الوسوم',
   'tags.main': 'الوسم الرئيسي',
   'tags.noMain': 'لا يوجد وسم رئيسي بعد.',

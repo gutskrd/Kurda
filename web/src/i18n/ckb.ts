@@ -3188,10 +3188,10 @@ export const ckb: Catalogue = {
   'games.whoAmI.notOffered': 'بۆ ئەوەی من کێم؟ بەم کوردییە یاری بکرێت، هێشتا وشە و پرسیاری پشکنراوی زیاتر پێویستە.',
   'games.whoAmI.share': 'لەسەر Hevalo لەگەڵم یاری من کێم؟ بکە! یاری ← بە کۆدێک بەشدار بە بکەرەوە و {code} بنووسە.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} لیگی {tier}',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'ئاگادارکردنەوەکان',
   'notifications.pref.streak': 'بیرخستنەوەی زنجیرە',
   'notifications.pref.friends': 'چالاکی هاوڕێکان',
@@ -3205,7 +3205,7 @@ export const ckb: Catalogue = {
   'notifications.quietFrom': 'لە',
   'notifications.quietTo': 'بۆ',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'تاگەکان',
   'tags.main': 'تاگی سەرەکی',
   'tags.noMain': 'هێشتا تاگی سەرەکی نییە.',
