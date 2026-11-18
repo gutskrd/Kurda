@@ -1,8 +1,6 @@
 /**
- * XSS corpus against a real user-text endpoint (KUR-108). Pushes every known
- * attack payload through the profile bio (a representative UGC field) and
- * asserts the stored value can't form executable HTML once rendered — and that
- * Kurdish text with diacritics survives sanitization intact.
+ * XSS corpus against a real user-text endpoint: every known payload goes through the profile bio, and the stored value
+ * must not form executable HTML once rendered, while Kurdish text with diacritics survives intact.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
