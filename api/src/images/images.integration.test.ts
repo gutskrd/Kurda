@@ -83,6 +83,13 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
     // known but blocked by moderation
     await seedMedia('media/blocked.webp', 'blocked');
     expect((await call('POST', '/images', authorTok, { imageMediaId: 'media/blocked.webp' })).statusCode).toBe(422);
+    // a path or an address made from the author's own upload, or someone else's upload
+    await seedMedia('media/pathed.webp');
+    await seedMedia('media/founders.webp', 'cleared', founderId);
+    const refused = ['../media/pathed.webp', '/media/pathed.webp', 'media/pathed.webp/../founders.webp', 'https://cdn.test/media/pathed.webp'];
+    for (const imageMediaId of [...refused, 'media/founders.webp']) {
+      expect((await call('POST', '/images', authorTok, { imageMediaId })).statusCode, imageMediaId).toBe(422);
+    }
   });
 
   it('browse is public, filters by category, and read increments views', async () => {

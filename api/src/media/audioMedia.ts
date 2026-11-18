@@ -75,7 +75,7 @@ export function registerAudioParser(app: FastifyInstance, maxUploadBytes: number
  * Stores a voice note cost-safely and returns its confirmed key. Audio is not transcoded, so cost is capped by a tight
  * size limit and the shared ceilings: size, op ceiling, container check (media/audioCheck.ts: real type, sound only,
  * length, anything riding along emptied), storage ceiling (fail-closed), PUT of the checked bytes, confirm. Keys are
- * content-addressed, so re-uploads are idempotent. Audio is not image-scanned; reports are its moderation path.
+ * hashes of the checked bytes, so re-uploads are idempotent. Audio is not image-scanned; reports are its moderation path.
  *
  * The file is kept under its uploader, so it counts against them (`AUDIO_DAILY_UPLOADS`), goes with their account and
  * can be traced when reported; one no post or comment uses is removed a day later (media/service.ts
@@ -110,7 +110,12 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
     }
   }
 
-  const key = mediaKey(kind, createHash('sha256').update(bytes).digest('hex'), type);
+  // A member's recording is keyed to them as well as to its bytes, so the same file from two people is an upload each and
+  // only its uploader can attach it (moderation/restrictions.ts `voiceAttachable`). The course's audio is keyed by its
+  // bytes alone. `content_sha256` is what the copies share, so a takedown reaches every one.
+  const contentHash = createHash('sha256').update(bytes).digest('hex');
+  const ownHash = uploaderId === null ? contentHash : createHash('sha256').update(bytes).update(`\nowner:${uploaderId}`).digest('hex');
+  const key = mediaKey(kind, ownHash, type);
 
   if (wouldExceedStorage(await usage.totalStoredBytes(), bytes.length, limits.storageLimitBytes)) {
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
@@ -121,8 +126,14 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
        FROM media_uploads WHERE key = $1`,
     [key],
   );
-  // the same bytes moderation took down are not put back on the public bucket
-  if (existing.rows[0]?.taken_down) {
+  // Bytes moderation took down are not put back on the public bucket under any key; a recording stored before keys
+  // carried their owner has the plain hash of its bytes as its key.
+  const takenDown = await pool.query(
+    `SELECT 1 FROM media_uploads
+      WHERE (content_sha256 = $1 OR key = $2) AND (scan_status = 'blocked' OR quarantine_state IS NOT NULL) LIMIT 1`,
+    [contentHash, mediaKey(kind, contentHash, type)],
+  );
+  if (existing.rows[0]?.taken_down || takenDown.rowCount) {
     return reject(422, 'MEDIA_REJECTED', 'this file was removed by moderation', 'moderation');
   }
   // identical bytes already stored + confirmed → reuse, no new R2 write
@@ -131,11 +142,11 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
   }
 
   await pool.query(
-    `INSERT INTO media_uploads (key, content_type, content_length, kind, uploader_id)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length,
+    `INSERT INTO media_uploads (key, content_type, content_length, kind, uploader_id, content_sha256)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length, content_sha256 = EXCLUDED.content_sha256,
        uploader_id = COALESCE(media_uploads.uploader_id, EXCLUDED.uploader_id)`,
-    [key, type, bytes.length, kind, uploaderId],
+    [key, type, bytes.length, kind, uploaderId, contentHash],
   );
   try {
     await storage.put(key, bytes, type);
