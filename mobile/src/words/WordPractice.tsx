@@ -30,7 +30,7 @@ import { pressedDim } from '../theme/motion';
 
 interface Item {
   q: WordQuestion;
-  /** a miss coming back later in the round; it does not count toward the score */
+  /** A miss coming back later in the round; it does not count toward the score. */
   retry: boolean;
 }
 
@@ -57,12 +57,9 @@ function askKey(q: WordQuestion): TranslationKey {
 }
 
 /**
- * "Check yourself" for a word set: a round of eight short questions made in
- * @kurda/shared (`makeWordRound` says how and why), drawn the way the
- * alphabet's round is (alphabet/Practice.tsx) — a miss shows the right answer
- * with its sound at once and comes back later in the round; nothing is scored,
- * saved or ranked, and the end names the words to look at again, with a round
- * of just those.
+ * "Check yourself" for a word set: eight short questions from @kurda/shared (`makeWordRound`), drawn like the
+ * alphabet's round (alphabet/Practice.tsx). A miss shows the right answer with its sound and returns later in the
+ * round; nothing is scored or saved, and the end names the words to revisit, with a round of just those.
  */
 export function WordPractice({
   set,
@@ -76,9 +73,9 @@ export function WordPractice({
   dialect: AlphabetScript;
   audio: WordsAudio;
   player: ClipPlayer;
-  /** a round has begun and grown to its height: the screen brings it into view */
+  /** A round has begun and grown to its height: the screen brings it into view. */
   onBegin: () => void;
-  /** open a word missed in the round */
+  /** Open a word missed in the round. */
   onOpen: (id: string) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -91,7 +88,7 @@ export function WordPractice({
   const [missed, setMissed] = useState<SetWord[]>([]);
   const [results, setResults] = useState<Array<boolean | null>>([]);
   const { play } = player;
-  // brought into view once the card has grown to hold the round, as the alphabet's is
+  // Brought into view once the card has grown to hold the round, as the alphabet's is.
   const begun = useRef(false);
 
   const start = (focus: string[] | null = null): void => {
@@ -108,7 +105,7 @@ export function WordPractice({
   const q = item?.q;
   const done = queue !== null && at >= queue.length;
 
-  // a listening question speaks as it appears: Start, or Next, was the tap that lets it
+  // A listening question speaks as it appears: the Start or Next tap allows it.
   useEffect(() => {
     if (q?.clip) play(q.clip);
   }, [q, play]);
@@ -181,7 +178,7 @@ export function WordPractice({
           <Text style={[styles.ask, dir.text, { color: colors.textSecondary }]}>{t(askKey(q))}</Text>
 
           {q.clip ? (
-            // whoever says the word stands on a stage beside its button, and is pleased with a right answer
+            // Whoever says the word stands on a stage beside its button, and is pleased with a right answer.
             <SpokenStage
               srcs={[q.clip]}
               audio={audio}
@@ -277,9 +274,8 @@ export function WordPractice({
 const FACE = { prompt: { word: 34, digits: 52, swatch: 72, text: typography.sizes.lg }, option: { word: 20, digits: 30, swatch: 40, text: typography.sizes.sm } } as const;
 
 /**
- * A word as a question or an option shows it: the Kurdish word (a day with its
- * number marked) — or what it means: a colour's swatch, a number's digits, the
- * reader's own word for a day or a month.
+ * A word as a question or option shows it: the Kurdish word (a day with its number marked), or its meaning (a
+ * colour's swatch, a number's digits, the reader's word for a day or month).
  */
 function Face({ word, dialect, shows, size }: { word: SetWord; dialect: AlphabetScript; shows: 'word' | 'meaning'; size: keyof typeof FACE }): React.JSX.Element {
   const { colors } = useTheme();
@@ -307,7 +303,7 @@ function Face({ word, dialect, shows, size }: { word: SetWord; dialect: Alphabet
   );
 }
 
-/** One answer: a tile that says, once chosen, whether it was the one — in colour, with a mark, and with a pop or a shake. */
+/** One answer tile that shows, once chosen, whether it was right: colour, a mark, and a pop or a shake. */
 function Choice({
   word,
   dialect,
@@ -327,7 +323,7 @@ function Choice({
   const { t, locale } = useI18n();
   const fill = state === 'right' ? colors.successFill : state === 'wrong' ? colors.dangerFill : colors.controlTrack;
   const edge = state === 'right' ? colors.success : state === 'wrong' ? colors.danger : 'transparent';
-  // a swatch or a number is read out as what it is
+  // A swatch or a number is read out as what it is.
   const said = shows === 'word' ? wordIn(word, dialect) : meaningOf(word, dialect, locale, t).text;
   return (
     <AnswerMotion verdict={picked ? (state === 'right' ? 'right' : 'wrong') : null} style={styles.choiceWrap}>
@@ -369,7 +365,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm + 4 },
   title: { ...display(typography.sizes.lg) },
   body: { fontSize: typography.sizes.sm, lineHeight: 21 },
-  // at the reading side: the right, in Soranî and Arabic
+  // At the reading side: the right, in Soranî and Arabic.
   action: { alignSelf: 'flex-start' },
   actionEnd: { alignSelf: 'flex-end' },
   flex: { flex: 1 },

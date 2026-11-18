@@ -35,13 +35,11 @@ import { DayName, Digits, Swatch, WordText, dateIn, meaningOf } from './parts';
 import { pressedDim } from '../theme/motion';
 
 /**
- * One word, open, as a letter opens on the alphabet (LetterSheet): the word
- * large — a colour's swatch or a number's digits above it — its sound, and
- * the character who says it when a recording has one; what it means in the
- * reader's language; the same word in the other dialect; and one small thing
- * to do with it: a colour in a phrase, any number spelled out as it is typed,
- * a day between yesterday and tomorrow, a month's season. The words before
- * and after are at the foot, so a set can be walked through without closing.
+ * One word, opened like a letter in the alphabet (LetterSheet): the word large (with a colour's swatch or a
+ * number's digits), its sound and the speaker when a recording has one, its meaning, the same word in the other
+ * dialect, and one small activity (a colour in a phrase, any number spelled out as typed, a day between yesterday
+ * and tomorrow, a month's season). Previous and next sit at the foot, so a set can be walked through without
+ * closing.
  */
 export function WordSheet({
   set,
@@ -54,14 +52,14 @@ export function WordSheet({
 }: {
   set: WordSetId;
   dialect: AlphabetScript;
-  /** the word open; null when the sheet is closed */
+  /** The word open; null when the sheet is closed. */
   wordId: string | null;
   audio: WordsAudio;
   player: ClipPlayer;
   onStep: (by: number) => void;
   onClose: () => void;
 }): React.JSX.Element {
-  // the word stays on the sheet while it fades away
+  // The word stays on the sheet while it fades away.
   const last = useRef<{ dialect: AlphabetScript; id: string } | null>(null);
   if (wordId) last.current = { dialect, id: wordId };
   const shown = last.current;
@@ -77,7 +75,7 @@ export function WordSheet({
   );
 }
 
-/** A word as the page writes it: a day with the number inside it marked, Soranî with its Latin letters under it. */
+/** A word as the page writes it: a day with its number marked, Soranî with its Latin letters under it. */
 function Said({ word, dialect, size, align }: { word: SetWord; dialect: AlphabetScript; size: number; align: 'center' | 'start' }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
@@ -104,7 +102,7 @@ function Card({ word, dialect, audio, player }: { word: SetWord; dialect: Alphab
   const meaning = meaningOf(word, dialect, locale, t);
   const glossLocale = exampleMeaningLocale(dialect, locale);
   const kurdishMonth = word.set === 'months' && word.calendar === 'kurdish';
-  // a Kurdish reader's meaning is the other dialect's word, which the row after it already gives
+  // A Kurdish reader's meaning is the other dialect's word, which the row after it already gives.
   const showMeaning = locale !== 'ku' && locale !== 'ckb' && word.set !== 'numbers' && !kurdishMonth;
 
   const head = (big: boolean) => (
@@ -220,11 +218,7 @@ function Card({ word, dialect, audio, player }: { word: SetWord; dialect: Alphab
   );
 }
 
-/**
- * Any number typed, spelled out at once in the dialect on the page — the
- * thirty words of the set put to work. Digits from any keyboard are read:
- * Western, Arabic or Persian.
- */
+/** Any number typed, spelled out at once in the page's dialect. Digits from any keyboard are read: Western, Arabic or Persian. */
 function MakeNumber({ dialect }: { dialect: AlphabetScript }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -240,7 +234,7 @@ function MakeNumber({ dialect }: { dialect: AlphabetScript }): React.JSX.Element
     <View style={styles.make}>
       <TextInput
         value={text}
-        // `v`, not `t`: the translator is in scope
+        // `v`, not `t`: the translator is in scope.
         onChangeText={(v) => setText(v.replace(/[^0-9٠-٩۰-۹]/g, '').slice(0, 4))}
         keyboardType="number-pad"
         maxLength={4}
@@ -271,7 +265,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }):
   );
 }
 
-/** The word before and the word after, at either end of the foot: a tick for each step, as a picker gives. */
+/** Previous and next words at either end of the foot, with a tick for each step like a picker. */
 function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -284,7 +278,7 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
       }}
       accessibilityRole="button"
       accessibilityLabel={label}
-      // each is alone at its end of the foot, with nothing near: it answers 8 past every edge
+      // Each is alone at its end of the foot, with nothing near: it answers 8 past every edge.
       reach="open"
       style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
@@ -307,7 +301,7 @@ const WORD = 34;
 const WORD_STAGED = 40;
 
 const styles = StyleSheet.create({
-  // the gutter is the scroll view's own, so the card scrolls edge to edge
+  // The gutter is the scroll view's own, so the card scrolls edge to edge.
   scroller: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.md },
   flex: { flex: 1 },

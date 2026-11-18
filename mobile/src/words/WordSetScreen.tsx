@@ -62,22 +62,18 @@ const GROUP_TITLE: Partial<Record<WordGroupId, TranslationKey>> = {
   kurdish: 'words.group.kurdish',
 };
 
-/** A season's tint over a month's tile: faint enough that its words keep their contrast in either theme. */
+/** A season's tint over a month's tile, faint enough to keep its text's contrast in either theme. */
 const TINT = '2E';
 
 /**
- * One word set — the colours, the numbers, the days or the months — taught
- * the way the alphabet is (AlphabetScreen): Kurmancî or Soranî at the switch,
- * the words as tiles drawn to fit the set, each opening from the foot of the
- * screen and saying itself at once, and a round of questions to check
- * yourself with. The colours are swatches with their names on a label that
- * reads on any of them; the numbers show their digits, Soranî's own beside
- * the Western ones; the days run from Saturday with the number inside each
- * name marked, and today's says so; the months carry their season's tint, the
- * calendar's first and then the Kurdish year from Newroz.
+ * One word set (colours, numbers, days or months), taught like the alphabet (AlphabetScreen): Kurmancî or Soranî
+ * at the switch, words as tiles drawn to suit the set, each opening in a bottom sheet and speaking at once, and a
+ * self-check round. Colours are swatches with labels that read on any of them; numbers show their digits,
+ * Soranî's beside the Western ones; days run from Saturday with the number in each name marked and today flagged;
+ * months carry their season's tint, the calendar's first and then the Kurdish year from Newroz.
  *
- * Nothing waits on the server: the words and their synthesised clips ship
- * with the app, and the recordings take the clips' place when they arrive.
+ * Nothing waits on the server: words and synthesised clips ship with the app, and recordings replace the clips
+ * when they arrive.
  */
 export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; script?: AlphabetScript; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -90,7 +86,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
   const fontScale = useFontScale();
   const grid = wordGrid(Math.min(width, layout.column) - layout.gutter * 2, set, fontScale);
 
-  // a link may ask for either dialect; anything else it says is ignored
+  // A link may ask for either dialect; anything else it says is ignored.
   const [chosen, setChosen] = useState<AlphabetScript | null>(asked === 'kmr' || asked === 'ckb' ? asked : null);
   const dialect: AlphabetScript = chosen ?? (locale === 'ckb' ? 'ckb' : 'kmr');
 
@@ -104,7 +100,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
   const order = useMemo(() => groups.flatMap((g) => g.words.map((w) => w.id)), [groups]);
   const today = set === 'days' ? kurdishWeekday(new Date()) : null;
 
-  // hearing it the moment it is tapped is the point of tapping: the word and its sound, together
+  // Hearing it the moment it is tapped is the point of tapping: the word and its sound, together.
   const open = (id: string): void => {
     setOpenId(id);
     markSeen(id);
@@ -141,7 +137,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
           />
           <View style={styles.intro}>
             <Text style={[styles.summary, dir.text, { color: colors.textPrimary }]}>{summary}</Text>
-            {/* what a tap does here: the list's own lead ("Start with the letters…") is for the page the sets are on */}
+            {/* What a tap does here; the list's own lead ("Start with the letters…") belongs to the sets page. */}
             <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('words.setLead')}</Text>
             <Progress explored={explored} total={order.length} />
           </View>
@@ -201,10 +197,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
   );
 }
 
-/**
- * One word in the grid, drawn to fit its set, with a tick once it has been
- * opened. Read out as the word and then what it means: "sor, red".
- */
+/** One word in the grid, drawn to suit its set, ticked once opened. Read out as the word and its meaning: "sor, red". */
 function WordTile({
   word,
   dialect,
@@ -226,8 +219,7 @@ function WordTile({
   const said = t('words.tileLabel', { word: wordIn(word, dialect), meaning: meaning.text });
   const label = today ? t('words.tileLabel', { word: said, meaning: glossIn(RELATIVE_DAYS.today, locale) }) : said;
   const arabic = dialect === 'ckb';
-  // the tick sits where the script's line starts
-  // opened, in the violet of what is on: green is for a right answer
+  // The tick sits where the script's line starts, in the violet for "on" (green is for a right answer).
   const tick = seen ? <Icon name="check" size={12} color={colors.primary} style={[styles.corner, arabic ? styles.right : styles.left]} /> : null;
   const press = { onPress, accessibilityRole: 'button' as const, accessibilityLabel: label };
 
@@ -274,7 +266,7 @@ function WordTile({
   );
 }
 
-/** A colour's tile: filled with it, the name on a label of its own, so it reads the same on white, on yellow and on black. */
+/** A colour's tile, filled with it, with the name on its own label so it reads on white, yellow and black alike. */
 function ColourTile({
   word,
   dialect,
@@ -340,7 +332,7 @@ function SeasonLegend({ dialect }: { dialect: AlphabetScript }): React.JSX.Eleme
 }
 
 const DIGITS = 28;
-/** display(22) at the summary's own leading */
+/** display(22) at the summary's own leading. */
 const SUMMARY_LINE = Math.round(typography.sizes.lg * 1.3);
 
 const styles = StyleSheet.create({
