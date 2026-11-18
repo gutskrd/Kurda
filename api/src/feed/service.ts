@@ -129,14 +129,27 @@ const POPULARITY = `(SELECT count(*) FROM post_engagements e
                         AND e.kind IN ('like', 'repost'))::int + wall.comment_count`;
 
 /**
+ * The two time orders per table, as the wall indexes hold them (migration `wall-in-time-order`). Ordered by these,
+ * each half of the wall reads no further than the page's end instead of sorting every post.
+ */
+const HALF_ORDER: Partial<Record<FeedSort, { library: string; image: string }>> = {
+  newest: { library: 'COALESCE(l.published_at, l.created_at) DESC, l.id DESC', image: 'i.created_at DESC, i.id DESC' },
+  oldest: { library: 'COALESCE(l.published_at, l.created_at) ASC, l.id ASC', image: 'i.created_at ASC, i.id ASC' },
+};
+
+/** One half of the wall, cut at the page's end when the wall is in time order; a ranked wall needs every row. */
+const half = (select: string, order: string | undefined): string =>
+  order ? `(${select}\n     ORDER BY ${order} LIMIT ($3::int + $4::int))` : select;
+
+/**
  * Both tables in one shape and one ordering. A UNION, because paging a merge done in code needs over-fetching both
  * sides to find the boundary. The order is one of four fixed strings, and `$6` is how far back a ranked wall looks
- * (null for all time).
+ * (null for all time, and always for the time orders, whose halves are cut at the page's end).
  */
 const feedSql = (sort: FeedSort): string => `
   SELECT ${COLUMNS} FROM (
     SELECT wall.*, ${sort === 'popular' ? POPULARITY : '0'} AS score FROM (
-    SELECT ${LIBRARY_COLUMNS}
+    ${half(`SELECT ${LIBRARY_COLUMNS}
       FROM library_posts l
      WHERE l.status = 'published'
        AND ($1 = 'all'
@@ -145,15 +158,15 @@ const feedSql = (sort: FeedSort): string => `
             -- the pictured half: photos, or memes, or both
             OR ($1 = 'dimen' AND ${HAS_PICTURES} AND ($2::text IS NULL OR l.is_meme = ($2 = 'meme'))))
        AND ${writtenForSql('l.author_id', '$5::uuid')}
-       AND ${notBlockedSql('l.author_id', '$5::uuid')}
+       AND ${notBlockedSql('l.author_id', '$5::uuid')}`, HALF_ORDER[sort]?.library)}
     UNION ALL
-    SELECT ${IMAGE_COLUMNS}
+    ${half(`SELECT ${IMAGE_COLUMNS}
       FROM image_posts i
      WHERE i.status = 'published'
        AND ($1 = 'all' OR $1 = 'dimen')
        AND ($2::text IS NULL OR i.category = $2)
        AND ${writtenForSql('i.author_id', '$5::uuid')}
-       AND ${notBlockedSql('i.author_id', '$5::uuid')}
+       AND ${notBlockedSql('i.author_id', '$5::uuid')}`, HALF_ORDER[sort]?.image)}
     ) AS wall
      WHERE ($6::timestamptz IS NULL OR wall.at >= $6::timestamptz)
   ) AS ranked
