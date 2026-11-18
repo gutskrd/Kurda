@@ -29,9 +29,8 @@ const appealBody = z.object({
 });
 
 /**
- * Who is asking for their standing: a signed-in user, or a suspended one with
- * the appeal token login gave them. The appeal token reaches these two routes
- * and nothing else; it is refused once anything ends the account's sessions.
+ * Who is asking for their standing: a signed-in user, or a suspended one with the appeal token from login. That token
+ * reaches only these two routes and is refused once anything ends the account's sessions.
  */
 async function standingUserId(config: AppConfig, req: FastifyRequest): Promise<string> {
   if (req.user) return req.user.id;
@@ -54,14 +53,12 @@ async function standingUserId(config: AppConfig, req: FastifyRequest): Promise<s
 
 /**
  * Reporting and account standing, for everyone (M1).
- *
- * - `POST /reports` — report anything: a person, a message, a group, a post, a
- *   comment, a game player (by seat). Answers with a receipt; for "someone may
- *   hurt themselves" also with where to find help, at once.
- * - `GET /me/reports` — your reports and what became of them.
- * - `GET /me/standing`, `POST /me/standing/ack` — your sanctions with their
- *   reasons, what is limited and until when; warnings shown once.
- * - `POST /me/appeals` — ask for a review, once per decision, for six months.
+ * - `POST /reports`: report a person, message, group, post, comment or game player (by seat). Answers with a receipt,
+ *   and for "someone may hurt themselves" with where to find help at once.
+ * - `GET /me/reports`: your reports and their outcomes.
+ * - `GET /me/standing`, `POST /me/standing/ack`: your sanctions with reasons, what is limited and until when; warnings
+ *   shown once.
+ * - `POST /me/appeals`: appeal once per decision, within six months.
  */
 export function registerReportRoutes(
   app: FastifyInstance,

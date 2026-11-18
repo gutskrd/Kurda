@@ -1,9 +1,7 @@
 /**
- * The CSAM action against real Postgres, with storage faked in memory: the
- * original leaves the public bucket for private storage and the CDN is told to
- * forget it; every post and profile carrying the picture is cleared, not only
- * the one reported; a failed move is finished by the sweep; and the action does
- * not wait for another moderator's claim or a pending second approval.
+ * The CSAM action against real Postgres with in-memory storage: the original moves from the public bucket to private
+ * storage and the CDN is purged; every post and profile with the picture is cleared, not just the reported one; a
+ * failed move is finished by the sweep; and the action ignores other moderators' claims and pending second approvals.
  */
 import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

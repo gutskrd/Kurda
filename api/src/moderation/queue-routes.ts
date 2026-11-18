@@ -77,11 +77,9 @@ const appealDecideBody = z.object({
 });
 
 /**
- * The moderation admin API (M4). Every route here needs the `moderation.act`
- * capability — moderators, superadmins and the legacy `admin` role (the queue
- * used to accept only the last, so moderators got 403 on everything) — and,
- * being under /admin, a verified second factor. Every successful call is in the
- * audit log with its case (or sanction, or user) as the target.
+ * The moderation admin API (M4). Every route needs the `moderation.act` capability (moderators, superadmins and the
+ * legacy `admin` role) and, being under /admin, a verified second factor. Every successful call is audited with its
+ * case, sanction or user as target.
  */
 export function registerModerationQueueRoutes(
   app: FastifyInstance,
@@ -93,9 +91,8 @@ export function registerModerationQueueRoutes(
   // ---- the queue ---------------------------------------------------------------
 
   /**
-   * The queue, a page at a time. Syncs the automated feeds first, but a sync
-   * that fails is logged and the page still loads: the queue must never answer
-   * 500 because one feed has a bad row.
+   * The queue, a page at a time. Syncs the automated feeds first, but a failed sync is logged and the page still loads:
+   * one bad feed row must never make the queue answer 500.
    */
   app.get('/admin/moderation/queue', { schema: { querystring: queueQuery }, preHandler: guard }, async (req) => {
     let added = 0;

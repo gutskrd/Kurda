@@ -7,11 +7,9 @@ import {
 } from './image-scan.js';
 
 /**
- * Provider-agnostic image-scan seam (KUR-294). A cloud vision moderation API or
- * a self-hosted model + a CSAM hashing service implements `scan`; call sites
- * never know which. Returns NSFW/violence scores, a CSAM hash-match flag, and
- * the model/hash-db version (stored for audit + tuning). Kept thin so vendors
- * swap by config.
+ * Provider-agnostic image scan seam: a vision moderation API or a self-hosted model plus a CSAM hashing service
+ * implements `scan`. Returns NSFW and violence scores, a CSAM hash-match flag and the model or hash-db version (stored
+ * for audit and tuning).
  */
 export interface ImageScanReport extends ImageScanResult {
   modelVersion: string;
@@ -22,9 +20,8 @@ export interface ImageScanner {
 }
 
 /**
- * Default scanner until a provider is configured: reports every image clean.
- * A per-key override map lets tests (and a staging harness) inject NSFW/CSAM
- * verdicts deterministically without real content.
+ * Default scanner until a provider is configured: every image is clean. A per-key override map lets tests inject NSFW
+ * or CSAM verdicts without real content.
  */
 export class StubImageScanner implements ImageScanner {
   readonly modelVersion = 'stub-clean-v1';
@@ -42,9 +39,8 @@ export class StubImageScanner implements ImageScanner {
 }
 
 /**
- * Scan + evaluate against a surface policy. **Fails closed** on any scanner
- * error — an unscanned image is gated (withheld), never served — since there is
- * no safe fail-open for image uploads.
+ * Scan and evaluate against a surface policy. Fails closed on any scanner error: an unscanned image is withheld, never
+ * served.
  */
 export async function scanImageForSurface(
   scanner: ImageScanner,

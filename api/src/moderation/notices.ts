@@ -9,18 +9,13 @@ import {
 } from '@kurda/shared';
 
 /**
- * Every message moderation sends to a person, in one place.
+ * Every message moderation sends to a person, in one place. Pure, so the decision preview and the delivery call the
+ * same functions and cannot drift.
  *
- * Pure, because the admin's decision preview has to show exactly what will be
- * sent: the preview and the delivery both call these, so they cannot drift.
- *
- * The wording follows the research: a sanctioned person is told what happened,
- * which rule, until when, whether it came from a report or our own checks,
- * whether a person reviewed it, and how to ask for a review (DSA Art. 17); a
- * reporter is told only that we acted or that it does not break the rules —
- * never what the other person got. Calm and plain, short enough for a child to
- * read. The text is English; `data` carries the same facts for apps that render
- * their own words.
+ * A sanctioned person is told what happened, which rule, until when, whether it came from a report or our own checks,
+ * whether a person reviewed it, and how to appeal (DSA Art. 17). A reporter is told only that we acted or that it does
+ * not break the rules, never what the other person got. Calm, plain and short enough for a child. The text is English;
+ * `data` carries the same facts for apps that render their own words.
  */
 
 export interface Notice {
@@ -139,8 +134,8 @@ export function reportOutcomeNotice(outcome: 'actioned' | 'no_violation', report
 }
 
 /**
- * For someone who may be at risk — never a sanction (Samaritans' guidance:
- * signpost help at the point of contact). An admin's own words go first.
+ * For someone who may be at risk: never a sanction, but a signpost to help at the point of contact. An admin's own
+ * words go first.
  */
 export function caringMessage(extra?: string | null): Notice {
   const personal = extra?.trim();

@@ -2,19 +2,13 @@ import type pg from 'pg';
 import { emailLocaleFor, type EmailLocale } from '../email/templates.js';
 
 /**
- * Telling the moderators when something cannot wait.
+ * Alerting moderators when something cannot wait. A P0 case (a child at risk, possible self-harm, a threat) emails
+ * every moderation admin once per case: the claim on `alert_sent_at` is one atomic update, so simultaneous reports send
+ * one email; a round that reached nobody releases the claim for the five-minute sweep, while one that reached some
+ * keeps it (at most one email each).
  *
- * Nothing used to alert anyone: the queue only filled when somebody happened to
- * open the page. A P0 case — a child at risk, someone who may hurt themselves,
- * a threat — now emails every moderation admin through the existing provider
- * (Resend in production), once per case: the claim on `alert_sent_at` is one
- * atomic update, so two reports arriving together send one email, and a round
- * that reached nobody releases the claim for the five-minute sweep to try again
- * (one that reached some moderators keeps it: at most one email each).
- *
- * The email never contains the content, the people or the category — only that
- * an urgent report is waiting and a link to the admin panel. Email is not a safe
- * place for what a report holds.
+ * The email never contains the content, people or category, only that an urgent report is waiting and a link to the
+ * panel: email is not a safe place for report contents.
  */
 
 export interface ModerationMailer {

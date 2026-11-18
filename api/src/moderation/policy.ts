@@ -1,11 +1,7 @@
 /**
- * AI-assisted moderation policy engine (KUR-293). Pure and deterministic: given
- * per-category confidence scores from a text classifier, map them to an action
- * — allow / flag / auto-hide / auto-block — using per-surface thresholds. This
- * is the decision layer that sits *after* the fast wordlist filter (#086) and
- * feeds the moderation queue (#102); the classifier itself (a hosted API or a
- * self-hosted model) is injected elsewhere behind a provider-agnostic seam.
- * No I/O here, so every threshold branch is unit-testable.
+ * AI-assisted moderation policy engine, pure and deterministic: maps a text classifier's per-category confidence scores
+ * to an action (allow, flag, auto-hide, auto-block) using per-surface thresholds. It runs after the wordlist filter and
+ * feeds the moderation queue; the classifier is injected elsewhere.
  */
 
 export type ModerationCategory =
@@ -33,7 +29,7 @@ export type Surface = 'chat' | 'library' | 'caption' | 'profile';
 
 /**
  * `allow` — publish untouched.
- * `flag` — publish but enqueue for human review (#102).
+ * `flag` — publish but enqueue for human review.
  * `auto_hide` — hide pending review (also enqueued).
  * `auto_block` — reject on write (still logged + appealable).
  */
@@ -83,17 +79,16 @@ export interface PolicyResult {
   /** the category that drove the decision (null when everything is allowed) */
   topCategory: ModerationCategory | null;
   topScore: number;
-  /** enters the moderation queue (#102) — flag or worse */
+  /** enters the moderation queue — flag or worse */
   queueForReview: boolean;
   /** rejected on write */
   blocked: boolean;
 }
 
 /**
- * Evaluate classifier scores against a surface policy. The overall action is
- * the most severe any category triggers; the driving category is the one that
- * produced it (ties broken by higher score). Anything above `allow` enters the
- * review queue; `auto_block` also marks the content blocked.
+ * Evaluate classifier scores against a surface policy. The overall action is the most severe any category triggers; the
+ * driving category is the one producing it (ties broken by higher score). Anything above `allow` enters the review
+ * queue; `auto_block` also marks the content blocked.
  */
 export function evaluatePolicy(scores: CategoryScores, policy: SurfacePolicy): PolicyResult {
   let action: ModerationAction = 'allow';
@@ -127,9 +122,8 @@ export function evaluateForSurface(scores: CategoryScores, surface: Surface): Po
 }
 
 /**
- * The action to take when the classifier is unavailable. High-risk surfaces
- * fail closed (hide pending review) rather than publish unscreened content;
- * low-risk surfaces may fail open (publish, rely on reports + the wordlist).
+ * The action when the classifier is unavailable: high-risk surfaces fail closed (hide pending review); low-risk
+ * surfaces may fail open (publish, relying on reports and the wordlist).
  */
 export function onClassifierError(failClosed: boolean): PolicyResult {
   const action: ModerationAction = failClosed ? 'auto_hide' : 'allow';

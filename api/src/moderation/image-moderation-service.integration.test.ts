@@ -1,4 +1,4 @@
-/** Automatic image scanning + visibility gating vs real Postgres (CI job). KUR-294. */
+/** Automatic image scanning + visibility gating vs real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { ImageModerationService } from './image-moderation-service.js';

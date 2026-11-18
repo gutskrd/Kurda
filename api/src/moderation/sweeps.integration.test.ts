@@ -1,7 +1,6 @@
 /**
- * The moderation timers against real Postgres: missed urgent alerts, lapsed
- * second approvals, cases decided on another page, expired claims, and the
- * evidence retention — plus every cleanup path keeping evidence media.
+ * The moderation timers against real Postgres: missed urgent alerts, lapsed second approvals, cases decided on another
+ * page, expired claims and evidence retention, plus every cleanup path keeping evidence media.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

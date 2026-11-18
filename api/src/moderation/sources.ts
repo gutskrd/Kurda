@@ -3,13 +3,10 @@ import { AppError } from '../plugins/errors.js';
 import type { Executor } from './tx.js';
 
 /**
- * What a case's source needs when the case is decided or reopened.
- *
- * Most cases now come from `reports`, which the decision closes directly. The
- * automated feeds (text flags, image scans, bot scores, anti-cheat reviews) and
- * the old per-surface report tables still feed the queue, and each keeps its own
- * state: a decided case marks its source row so the next sync does not open the
- * same case again, and a reopened one puts it back.
+ * What a case's source needs when the case is decided or reopened. Most cases come from `reports`, which the decision
+ * closes directly. The automated feeds (text flags, image scans, bot scores, anti-cheat reviews) and the old
+ * per-surface report tables keep their own state: a decision marks the source row so the next sync does not reopen the
+ * case, and a reopen puts it back.
  */
 
 export type Outcome = 'actioned' | 'no_violation';
@@ -32,10 +29,8 @@ export function parseTargetRef(ref: string): { type: string; id: string } | null
 }
 
 /**
- * A CSAM hash match is never cleared by "no violation": the image stays blocked
- * and its record preserved (the same rule as the image-flag page). The old queue
- * let a dismissal mark it reversed; now the decision is refused, before anything
- * else is applied.
+ * A CSAM hash match is never cleared by "no violation": the image stays blocked with its record preserved (as on the
+ * image-flag page), so the decision is refused before anything is applied.
  */
 export async function assertDismissible(db: Executor, c: CaseSourceRow, outcome: Outcome): Promise<void> {
   if (outcome !== 'no_violation' || c.source !== 'image_flag') return;
@@ -46,8 +41,7 @@ export async function assertDismissible(db: Executor, c: CaseSourceRow, outcome:
 }
 
 /**
- * Mark the source row decided, with the deciding admin (the old queue dropped who).
- * `removed` says whether the decision took the content down: a copyright
+ * Mark the source row decided, with the deciding admin. `removed` says whether the content was taken down: a copyright
  * notice's sender is told "removed" only when something was.
  */
 export async function closeSource(
@@ -129,9 +123,8 @@ export async function closeSource(
 }
 
 /**
- * Confirm a flagged account as a bot: take back its XP through a compensating
- * ledger entry and mark the verdict confirmed. The same steps as the Antibot
- * page's confirm, inside the caller's transaction.
+ * Confirm a flagged account as a bot: take back its XP with a compensating ledger entry and mark the verdict confirmed,
+ * as the Antibot page's confirm does, inside the caller's transaction.
  */
 export async function confirmBot(db: Executor, userId: string, adminId: string | null): Promise<number> {
   const bal = await db.query<{ xp: number }>(`SELECT xp FROM users WHERE id = $1 FOR UPDATE`, [userId]);
