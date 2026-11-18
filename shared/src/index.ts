@@ -542,6 +542,8 @@ export * from './games/index.js';
 /** Shop items by kind: the categories, search, filters and orders the shop, the inventory and the gift picker share. */
 export * from './shop-items.js';
 export * from './chat-cards.js';
+/** Unread chat counts for the badges, a group's capped, and how a badge writes one. */
+export * from './chat-unread.js';
 
 /** Typing Kurdish (the race, Peyvok's keyboard, the keyboard guide): how typed text is read and scored, and the race's shapes. */
 export * from './typing.js';

@@ -2,6 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
+import { GROUP_UNREAD_CAP } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { GroupService } from './service.js';
@@ -129,6 +130,22 @@ describe.skipIf(!DATABASE_URL)('group chat (integration)', () => {
     await chat.markRead(id.b!, gid);
     const after = (await chat.unread(id.b!)).find((u) => u.groupId === gid);
     expect(after!.unread).toBe(0);
+  });
+
+  it('counts a group’s unread messages up to the cap and no further', async () => {
+    await chat.markRead(id.b!, gid);
+    const insert = (n: number) =>
+      pool.query(
+        `INSERT INTO group_messages (group_id, sender_id, body) SELECT $1, $2, 'many ' || i FROM generate_series(1, $3::int) i`,
+        [gid, id.a, n],
+      );
+    const count = async () => (await chat.unread(id.b!)).find((u) => u.groupId === gid)!.unread;
+    await insert(GROUP_UNREAD_CAP - 1);
+    expect(await count()).toBe(GROUP_UNREAD_CAP - 1);
+    await insert(GROUP_UNREAD_CAP + 5);
+    expect(await count()).toBe(GROUP_UNREAD_CAP);
+    await chat.markRead(id.b!, gid);
+    expect(await count()).toBe(0);
   });
 
   it('publishes a typing ping to the room, named, and only for members', async () => {
