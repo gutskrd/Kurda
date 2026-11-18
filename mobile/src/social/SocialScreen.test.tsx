@@ -19,6 +19,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { SocialScreen } from './SocialScreen';
 import { hideBlocked, unhideBlocked } from './blocks';
+import { watchNotices } from '../testing/notices';
 
 /* Friends: incoming requests are friendship tickets, and asking somebody you may know hands them one. */
 
@@ -82,7 +83,8 @@ describe('Friends', () => {
   });
 
   it('takes a withdrawn request away at once, once confirmed, and brings it back with the reason when refused', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.at(-1)?.onPress?.());
+    const said = watchNotices();
+    const confirm = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.at(-1)?.onPress?.());
     let answer: (r: unknown) => void = () => undefined;
     let outgoing = [{ userId: 'u9', username: 'baran', displayName: null }];
     open({
@@ -95,12 +97,12 @@ describe('Friends', () => {
     outgoing = [{ userId: 'u9', username: 'baran', displayName: null }];
     await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
     expect(await screen.findByRole('button', { name: 'Cancel your request to baran' })).toBeTruthy();
-    expect(said).toHaveBeenLastCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
-    said.mockRestore();
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    confirm.mockRestore();
   });
 
   it('brings a declined request back with the reason when the answer did not get through', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     let answer: (r: unknown) => void = () => undefined;
     open({ 'POST /friends/requests/u3/decline': () => new Promise((resolve) => (answer = resolve)) });
     fireEvent.click(await screen.findByRole('button', { name: 'Decline friend request from rojin' }));
@@ -108,7 +110,6 @@ describe('Friends', () => {
     await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
     expect(await screen.findByRole('button', { name: 'Decline friend request from rojin' })).toBeTruthy();
     expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
-    said.mockRestore();
   });
 
   it('leaves somebody just blocked out of every list at once, and brings them back if the block was refused', async () => {

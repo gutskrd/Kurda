@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { heldRow, heldDim } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
-import { describeError, isMaintenance } from '../api/errors';
+import { useSayNotSaved } from '../api/optimistic';
 import { EntryDetail } from '../dictionary/EntryDetail';
 import { SourceLine } from '../dictionary/SourceLine';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -31,6 +31,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const say = useSayNotSaved();
   // Rows mirror right to left, while headwords and meanings keep their own direction.
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
@@ -102,7 +103,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
       if (res.ok) return;
       // The removal failed: put the word back in its place and say why, as the entry's own bookmark does.
       setSaved((s) => (s.some((w) => w.entryId === entryId) ? s : [...s.slice(0, at), word, ...s.slice(at)]));
-      if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
+      say(res.error);
     });
   };
 

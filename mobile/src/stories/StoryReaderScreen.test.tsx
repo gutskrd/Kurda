@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { Alert } from 'react-native';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StoryDetail, StoryMe } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -10,6 +9,7 @@ import { resetPrefsCache } from './prefs';
 import { NANE_GERM, gameView } from './testing/views';
 import { StoryReaderScreen, minutesLeft, readingPosition, translationFor } from './StoryReaderScreen';
 import { forgetReach, reachOf } from '../testing/reach';
+import { watchNotices } from '../testing/notices';
 
 // jsdom has no matchMedia, which react-native-web uses for the colour scheme and Reduce Motion.
 vi.hoisted(() => {
@@ -319,7 +319,7 @@ describe('StoryReaderScreen', () => {
   });
 
   it('puts a refused bookmark back and says why', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     let answer: (r: unknown) => void = () => undefined;
     testAuth.client = routes({ 'PUT /stories/s1/bookmark': () => new Promise((resolve) => (answer = resolve)) } as never);
     renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
@@ -328,7 +328,6 @@ describe('StoryReaderScreen', () => {
     await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
     expect(screen.getByRole('button', { name: 'Bookmark' })).toBeTruthy();
     expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
-    said.mockRestore();
   });
 
   describe('a story told in both varieties', () => {

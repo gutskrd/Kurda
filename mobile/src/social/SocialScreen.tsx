@@ -15,7 +15,6 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
-import { describeError, isMaintenance } from '../api/errors';
 import { useIntents, useSayNotSaved } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { PlayWithButton } from '../play/PlayWithButton';
@@ -221,11 +220,11 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
       void Promise.all([client.post('/friends/requests', { userId }), wait(reduce ? 0 : ASKED_HOLD_MS)]).then(([res]) => {
         setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
         // A request that did not go (a full friend list, too many outgoing) says why (limits/limitCopy.ts).
-        if (!res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
+        if (!res.ok) say(res.error);
         loadLists();
       });
     },
-    [client, loadLists, t, reduce, announce],
+    [client, loadLists, t, reduce, announce, say],
   );
 
   const openProfile = (userId: string) => navigation.navigate('UserProfile', { userId });
