@@ -1,16 +1,11 @@
-import { ART_LEAGUE_METAL, ART_RANK_METAL, ART_TIER_METAL, type LeagueTier, type RankTier } from '@kurda/shared';
+import { ART_LEAGUE_METAL, ART_TIER_METAL, type LeagueTier } from '@kurda/shared';
 
 type Scheme = 'light' | 'dark';
 
 /**
- * The colours drawn around an emblem (a bar's fill, a glow, a fleck), from the emblem's own metal: the lighter half
- * glows on a dark page, the stronger half keeps its edge on a light one.
+ * The colours drawn around an emblem (a bar's fill, a glow), from the emblem's own metal: the lighter half glows on a
+ * dark page, the stronger half keeps its edge on a light one.
  */
-export function rankTint(tier: RankTier | null, scheme: Scheme): readonly [string, string] {
-  const m = ART_RANK_METAL[tier ?? 'dest'];
-  return scheme === 'dark' ? [m.light, m.mid] : [m.mid, m.dark];
-}
-
 export function leagueTint(tier: LeagueTier | null, scheme: Scheme): readonly [string, string] {
   const m = ART_LEAGUE_METAL[tier ?? 'dilop'];
   return scheme === 'dark' ? [m.light, m.mid] : [m.mid, m.dark];
@@ -22,19 +17,3 @@ export function badgeTint(tier: number, scheme: Scheme): readonly [string, strin
   return scheme === 'dark' ? [m.light, m.mid] : [m.mid, m.dark];
 }
 
-/** The placement's violet, the one colour the placing emblem counts in. */
-export const PLACING_TINT: Readonly<Record<Scheme, readonly [string, string]>> = {
-  dark: ['#e3c4ff', '#b874f0'],
-  light: ['#b874f0', '#6b3fa0'],
-};
-
-/** The glow behind an emblem in a celebration. */
-export function rankGlow(tier: RankTier): string {
-  return ART_RANK_METAL[tier].mid;
-}
-
-/** A celebration's flecks: the tier's metal, from its brightest to its strongest. */
-export function confettiColours(tier: RankTier): string[] {
-  const m = ART_RANK_METAL[tier];
-  return [m.hi, m.light, m.mid, m.dark];
-}

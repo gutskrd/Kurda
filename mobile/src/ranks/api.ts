@@ -1,12 +1,8 @@
-import type { BadgesResponse, LeagueView, RankResult, RankedGame, UnseenBadge } from '@kurda/shared';
+import type { BadgesResponse, LeagueView, UnseenBadge } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
-/** The weekly leagues, badges and frames over the API, and what is left of game ranks. The shapes are @kurda/shared's. */
-
-/** What a finished game did to your rank, with its one plain reason. */
-export const getRankResult = (client: ApiClient, game: RankedGame, ref: string): Promise<ApiResult<RankResult>> =>
-  client.get(`/ranks/results/${game}/${ref}`);
+/** The weekly leagues, badges and frames over the API. The shapes are @kurda/shared's. */
 
 export const getLeague = (client: ApiClient): Promise<ApiResult<LeagueView>> => client.get('/me/league');
 

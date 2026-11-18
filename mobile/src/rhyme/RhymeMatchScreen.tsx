@@ -17,7 +17,6 @@ import { FriendPicker, togglePick, useFriendsToAsk } from '../play/FriendPicker'
 import { inviteFriends } from '../play/api';
 import { showNotice } from '../theme/notice';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
-import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { LobbyShare } from '../play/CodeTicket';
@@ -123,7 +122,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
   const create = async (): Promise<void> => {
     setBusy(true);
     setError(null);
-    const res = await createMatch(client, dialect, false);
+    const res = await createMatch(client, dialect);
     if (res.ok && asked.length > 0) {
       // The room exists whatever happens to the invites; one that did not go is said, and the room can ask again.
       const sent = await inviteFriends(client, 'rhyme-match', res.data.id, asked);
@@ -437,7 +436,6 @@ function MatchRoom({
         <View style={styles.card}>
           <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</Verdict>
           {/* What this game did to your rank, with its one plain reason — before the table. */}
-          {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} /> : null}
           {results ? (
             <>
               <Text style={[styles.blurb, { color: colors.textSecondary }]}>

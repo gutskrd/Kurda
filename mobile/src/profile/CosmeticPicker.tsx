@@ -42,27 +42,17 @@ const MIN_TILE: Record<'wide' | 'square', number> = { wide: 100, square: 72 };
 
 type Way = { action: TranslationKey; to: 'Shop' | 'Season' };
 
-/**
- * What a kind says when there is none of it, and where to get some. A frame has two ways in: a season hands one out,
- * and the shop sells its own.
- */
+/** What a kind says when there is none of it, and where to get some: the shop. */
 const EMPTY: Partial<Record<Kind, { text: TranslationKey; ways: readonly Way[] }>> = {
   background: { text: 'edit.noBackgrounds', ways: [{ action: 'shop.refreshed.open', to: 'Shop' }] },
   icon: { text: 'edit.noIcons', ways: [{ action: 'shop.refreshed.open', to: 'Shop' }] },
-  frame: {
-    text: 'edit.noFrames',
-    ways: [
-      { action: 'edit.seeSeason', to: 'Season' },
-      { action: 'shop.refreshed.open', to: 'Shop' },
-    ],
-  },
+  frame: { text: 'edit.noFrames', ways: [{ action: 'shop.refreshed.open', to: 'Shop' }] },
 };
 
 /**
  * The things you own, and putting them on. Sorted by kind as the shop is (Backgrounds, Icons, Frames, and Tags and More
  * when you own any), each with its count; every tile is named under it, and past eight of a kind there is a search
- * field. Buying stays in the Shop. Tapping what you are wearing takes it off. Frames are worn here as on the Season
- * screen.
+ * field. Buying stays in the Shop. Tapping what you are wearing takes it off.
  */
 export function CosmeticPicker({
   equippedBackground,
