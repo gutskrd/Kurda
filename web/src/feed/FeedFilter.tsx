@@ -26,7 +26,7 @@ export const DEFAULT_FILTER: FeedFilterValue = { section: 'all', kind: null, sor
 
 type T = ReturnType<typeof useT>;
 
-/** "All writing", "All pictures": a half chosen whole, as it reads in the list. */
+/** "All writing" or "All pictures": a whole section chosen. */
 const ALL_OF: Partial<Record<FeedSection, MessageKey>> = { gotin: 'civak.filter.allWriting', dimen: 'civak.filter.allPictures' };
 
 const SORT_LABEL: Record<FeedSort, MessageKey> = {
@@ -45,7 +45,7 @@ const PERIOD_LABEL: Record<FeedPeriod, MessageKey> = {
 };
 
 /** A range only belongs to the two ranked orders; newest and oldest always read everything. */
-export function normalised(value: FeedFilterValue): FeedFilterValue {
+function normalised(value: FeedFilterValue): FeedFilterValue {
   return sortRanks(value.sort) ? value : { ...value, period: DEFAULT_FEED_PERIOD };
 }
 
@@ -60,8 +60,8 @@ const same = (a: FeedFilterValue, b: FeedFilterValue): boolean => {
   return x.section === y.section && x.kind === y.kind && x.sort === y.sort && x.period === y.period;
 };
 
-/** What the wall is narrowed to, in words — "Pictures · Meme" — or null while it shows everything. */
-export function filterLabel(t: T, value: Pick<FeedFilterValue, 'section' | 'kind'>): string | null {
+/** What the wall is narrowed to, such as "Pictures · Meme", or null while it shows everything. */
+function filterLabel(t: T, value: Pick<FeedFilterValue, 'section' | 'kind'>): string | null {
   if (value.section === 'all') return null;
   const section = SECTIONS.find((s) => s.key === value.section);
   if (!section) return null;
@@ -69,14 +69,14 @@ export function filterLabel(t: T, value: Pick<FeedFilterValue, 'section' | 'kind
   return kind ? `${t(section.labelKey)} · ${t(kind.labelKey)}` : t(section.labelKey);
 }
 
-/** The order and its range, in words — "Most popular · This week" — or null for the newest first. */
-export function sortLabel(t: T, value: Pick<FeedFilterValue, 'sort' | 'period'>): string | null {
+/** The order and its range, such as "Most popular · This week", or null for newest first. */
+function sortLabel(t: T, value: Pick<FeedFilterValue, 'sort' | 'period'>): string | null {
   if (value.sort === DEFAULT_FEED_SORT) return null;
   const ranged = sortRanks(value.sort) && value.period !== DEFAULT_FEED_PERIOD;
   return ranged ? `${t(SORT_LABEL[value.sort])} · ${t(PERIOD_LABEL[value.period])}` : t(SORT_LABEL[value.sort]);
 }
 
-/** Everything that differs from the plain wall, for the button's name: "Most popular, This week, Pictures · Meme". */
+/** Everything that differs from the plain wall, for the button's name, such as "Most popular, This week, Pictures · Meme". */
 function activeParts(t: T, value: FeedFilterValue): string[] {
   const v = normalised(value);
   const parts: string[] = [];
@@ -88,20 +88,10 @@ function activeParts(t: T, value: FeedFilterValue): string[] {
 }
 
 /**
- * The wall's sort and filter: a funnel beside the Post button, and behind it
- * one panel with everything about how the wall is shown — in what order
- * (newest, oldest, most popular, most discussed), from how far back for the
- * two that rank, and which kinds of post.
- *
- * Choices in the panel are a draft: nothing on the wall moves until "Show
- * posts", and ✕, Escape or a press outside leave it as it was. "Reset" puts
- * the draft back to the plain wall. While anything differs from the plain
- * wall the funnel is filled and a chip under the heading says what — one for
- * the order, one for the kinds — each opening the panel again and each with a
- * ✕ that undoes just that part.
- *
- * The panel, its keyboard and where it opens are components/FilterSheet.tsx,
- * which the stories library is built from as well.
+ * The wall's sort and filter: a funnel beside the Post button opening one panel for the order, the range of the two
+ * ranked orders, and the kinds of post. The panel holds a draft applied only by "Show posts"; "Reset" returns it to
+ * the plain wall. While anything differs, the funnel is filled and chips under the heading name the order and kinds,
+ * each reopening the panel or clearing its part. The panel itself is components/FilterSheet.tsx.
  */
 export function FeedFilter({ value, onChange }: { value: FeedFilterValue; onChange: (next: FeedFilterValue) => void }): React.JSX.Element {
   const t = useT();

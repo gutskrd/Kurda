@@ -22,22 +22,10 @@ type Kind = 'like' | 'bookmark' | 'repost';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * One post on the wall: one link in a single chain of posts.
- *
- * No box round it: a hairline across the column ends one post and starts the
- * next. Every post has the same order, whatever kind it is, read top to
- * bottom as a list is: who posted it, what kind of post and when, all on one
- * line; then its words — a bold title and a few lines; then its pictures, set
- * in from the edges with round corners; then what can be done with it, as a
- * row of soft pills, each with its count.
- *
- * The whole post is not one big link: the name opens a person, the actions
- * act, and only the words take you to the post. A post that swallowed every
- * click would make liking something a navigation.
- *
- * On the post's own page (`onPage`) the same post is drawn in full: its words
- * do not link to where the reader already is, and the comment button goes to
- * the comments under it.
+ * One post on the wall, separated from the next by a hairline. Every kind has the same order: the author, kind and
+ * age on one line, then the words, the pictures and the action pills with their counts. Only the words link to the
+ * post, so liking never navigates. On the post's own page (`onPage`) the words do not link and the comment button
+ * goes to the comments below.
  */
 export function FeedCard({
   item,
@@ -47,13 +35,9 @@ export function FeedCard({
 }: {
   item: FeedItem;
   onChanged?: (next: FeedItem) => void;
-  /** told when the author deletes this post, so the list can drop it */
+  /** Called when the author deletes this post, so the list can drop it. */
   onRemoved?: (item: FeedItem) => void;
-  /**
-   * The post on its own page, with its comments under it: `onComment` is the
-   * comment button, and `pending` holds the actions still while the page is
-   * still finding out who has liked, reposted or saved it.
-   */
+  /** On the post's own page: `onComment` is the comment button, and `pending` holds the actions while counts load. */
   onPage?: { onComment: () => void; pending?: boolean };
 }): React.JSX.Element {
   const { client, status } = useAuth();
@@ -62,11 +46,11 @@ export function FeedCard({
   const { locale } = useI18n();
   const waiting = onPage?.pending ?? false;
   const engage = useEngagement(item, onChanged, waiting);
-  // the big heart over a picture, once per double click
+  // The big heart over a picture, once per double click.
   const [pop, setPop] = useState(0);
   const signedIn = status === 'signedIn';
 
-  /** A double click on a picture likes the post — and only likes it: a second one never takes the like back. */
+  /** A double click on a picture likes the post; another never takes the like back. */
   function likeFromPicture(): void {
     if (waiting) return;
     setPop((n) => n + 1);
@@ -76,7 +60,7 @@ export function FeedCard({
   const badge = cardKind(item);
   const pictures = cardImages(item);
   const words = Boolean(item.title || item.excerpt);
-  // on a wall the post is carried to its own page when its words or its comments are opened; on that page it is what arrives, and what goes back
+  // On a wall the card carries over to the post's own page when opened; on that page it is the arriving end.
   const fromWall = useGrowsFrom(onPage ? null : `post:${item.key}`, { shape: 'card' });
   const intoPage = useGrowsInto(onPage ? `post:${item.key}` : null, { shape: 'card' });
 
@@ -86,8 +70,7 @@ export function FeedCard({
     if (res.ok && onRemoved) onRemoved(item);
   }
 
-  // dir=auto: a post is in the language it was written in, not the
-  // interface's — Kurmancî under a Soranî menu must still read left to right
+  // dir=auto: a post is in the language it was written in, not the interface's.
   const body = (
     <>
       {item.title && (
@@ -105,7 +88,7 @@ export function FeedCard({
 
   return (
     <article ref={onPage ? intoPage : fromWall} className={`fcard fcard-${item.kind}${pictures.length > 0 ? ' has-pics' : ''}${onPage ? ' is-page' : ''}`}>
-      {/* one line: who (a way to their profile), what kind of post and when, and the ⋯ at the end */}
+      {/* One line: the author (linking to their profile), the kind and age, and the ⋯ menu. */}
       <header className="fcard-head">
         <button
           type="button"
@@ -116,7 +99,7 @@ export function FeedCard({
           <span className="fcard-name">{item.author.username}</span>
         </button>
         <span className="fcard-meta">
-          {/* what kind of post this is, since the wall mixes them — quiet, beside the name, not a badge */}
+          {/* The post's kind, quietly beside the name, since the wall mixes kinds. */}
           <span className="fcard-kind">{CARD_LABEL_KEY[badge] ? t(CARD_LABEL_KEY[badge]!) : badge}</span>
           <span aria-hidden="true"> · </span>
           <time className="fcard-when" dateTime={item.at} title={fullDate(item.at, locale)}>
@@ -126,7 +109,7 @@ export function FeedCard({
         <PostMenu item={item} onDelete={remove} />
       </header>
 
-      {/* the words come first on every post, a picture's too: what it is, then what it shows */}
+      {/* The words come first on every post, pictures included. */}
       {words &&
         (onPage ? (
           <div className="fcard-body">{body}</div>
@@ -138,7 +121,7 @@ export function FeedCard({
 
       {pictures.length > 0 && (
         <div className="fcard-media">
-          {/* one at a time, swiped; each opens full size, so they sit outside any link (web/src/composer/PostPictures) */}
+          {/* Swiped one at a time; each opens full size, so they sit outside any link (composer/PostPictures). */}
           <PostPictures className="fcard-pics" images={pictures} strip onDoubleActivate={signedIn ? likeFromPicture : undefined} />
           {pop > 0 && (
             <span key={pop} className="fcard-heart-pop" aria-hidden="true">
@@ -154,16 +137,16 @@ export function FeedCard({
 }
 
 interface Engage {
-  /** the post's likes, reposts and saves as the reader sees them now: what they just pressed counted in at once */
+  /** The post's likes, reposts and saves as the reader sees them, including unanswered presses. */
   engagement: FeedItem['engagement'];
-  /** turned on here, by a press: only then does its icon land with a pop (and a like with its sparks) */
+  /** Turned on by a press here; only then does its icon pop, and a like sparkle. */
   justOn: { kind: Kind; n: number } | null;
-  /** why the last press was taken back, said under the row for a few seconds; null otherwise */
+  /** Why the last press was undone, shown under the row for a few seconds; null otherwise. */
   refused: string | null;
   toggle: (kind: Kind) => Promise<void>;
 }
 
-/** How long "that did not go through" stays under the row. */
+/** How long the refusal message stays under the row. */
 const REFUSED_MS = 4000;
 
 const STATE: Record<Kind, 'liked' | 'reposted' | 'bookmarked'> = { like: 'liked', repost: 'reposted', bookmark: 'bookmarked' };
@@ -182,27 +165,19 @@ function withPresses(e: FeedItem['engagement'], pressed: Partial<Record<Kind, bo
 }
 
 /**
- * Liking, reposting and saving a post: each a toggle that answers the press
- * itself. The heart fills and its count moves the moment it is pressed — the
- * sparks go with a heart that is filling, never ahead of one — and the server
- * is told behind that. Its answer has the last word: its totals replace the
- * guess (somebody else may have liked the post meanwhile), and a press it
- * refuses, or never hears of, is put back as it was with a line saying so.
- *
- * The three do not wait on one another: saving a post while its like is still
- * on its way is an ordinary thing to do. A second press on the same one while
- * the first is unanswered is let go, so the server is never sent two toggles
- * that would cancel out.
+ * Liking, reposting and saving a post as optimistic toggles. The server's answer has the last word: its totals replace
+ * the guess, and a refused or lost press is undone with a message. The three are independent, and a second press on
+ * one still unanswered is ignored, so the server never gets two toggles that cancel out.
  */
 export function useEngagement(item: FeedItem, onChanged: ((next: FeedItem) => void) | undefined, waiting = false): Engage {
   const { client, status } = useAuth();
   const t = useT();
   const [pressed, setPressed] = useState<Partial<Record<Kind, boolean>>>({});
   const sending = useRef<Partial<Record<Kind, boolean>>>({});
-  // never for a post that was already liked when the page drew it
+  // Never for a post that was already liked when the page drew it.
   const [justOn, setJustOn] = useState<{ kind: Kind; n: number } | null>(null);
   const [refused, setRefused] = useState<string | null>(null);
-  // the post as it is now, for an answer that arrives after another has changed it
+  // The post as it is now, for an answer that arrives after another has changed it.
   const latest = useRef(item);
   latest.current = item;
   const engagement = withPresses(item.engagement, pressed);
@@ -224,19 +199,18 @@ export function useEngagement(item: FeedItem, onChanged: ((next: FeedItem) => vo
       `/posts/${item.targetType}/${item.id}/${kind}`,
     );
     sending.current[kind] = false;
-    // answered either way: what is shown from here is the server's, or what it was before the press
+    // Answered either way: from here the server's state shows, or what it was before the press.
     setPressed((p) => {
       const rest = { ...p };
       delete rest[kind];
       return rest;
     });
     if (res.ok) {
-      // the server returns the fresh totals; taking them keeps the count right
-      // even when someone else liked it while this page was open
+      // The server's fresh totals keep the count right even if someone else liked it meanwhile.
       onChanged?.({ ...latest.current, engagement: res.data.engagement });
       return;
     }
-    // taken back: nothing is left looking done that was not, and the reader is told why
+    // Undone, with the reason shown, so nothing looks done that was not.
     setJustOn((j) => (j?.kind === kind ? null : j));
     setRefused(describeError(res.error, t));
   }
@@ -245,14 +219,8 @@ export function useEngagement(item: FeedItem, onChanged: ((next: FeedItem) => vo
 }
 
 /**
- * The row under a post: the heart, comments and repost as soft pills at the
- * start, each with its count beside its icon, and share and save as round
- * buttons at the end — what is counted on one side, what is only done on the
- * other.
- *
- * All of it in ink until it is yours: the heart turns red and fills once you
- * have liked the post, a repost you made turns green, and a saved post's
- * bookmark fills in.
+ * The row under a post: like, comment and repost as pills with counts at the start, share and save as round buttons
+ * at the end. The heart turns red once liked, a repost turns green and a saved bookmark fills.
  */
 export function PostActions({
   item,
@@ -262,9 +230,9 @@ export function PostActions({
 }: {
   item: FeedItem;
   engage: Engage;
-  /** the counts are still on their way: the row is there, but holds still */
+  /** The counts are still loading, so the row is shown but inactive. */
   waiting?: boolean;
-  /** on the post's own page, where the comments are below: the comment button goes to them */
+  /** On the post's own page, the comment button goes to the comments below. */
   onComment?: () => void;
 }): React.JSX.Element {
   const { status } = useAuth();
@@ -273,20 +241,12 @@ export function PostActions({
   const signedIn = status === 'signedIn';
   const { engagement: e, justOn, refused, toggle } = engage;
   const count = (n: number): string => shortCount(n, locale);
-  // only what cannot act is held: a press already on its way to the server does not hold the other two
+  // Only a row that cannot act is held; a press in flight does not hold the other two.
   const held = !signedIn || waiting;
 
-  /**
-   * Say what the button does, not what it counts.
-   *
-   * These buttons show a number, and a number is what a screen reader would
-   * announce as the name unless the label says otherwise — "4" tells you
-   * nothing about what pressing it would do.
-   */
+  /** Labels a button by what it does, not the number it shows, which a screen reader would otherwise announce. */
   const actionLabel = (verb: string, undo: string, n?: number): string => {
-    // a signed-out reader is invited to do the thing, never to undo it — they
-    // cannot have done it, and "sign in to unlike" is nonsense whatever the
-    // server happened to say about who liked what
+    // A signed-out reader is invited to do the thing, never to undo it.
     if (!signedIn) return t('feed.signInTo', { verb: verb.toLowerCase() });
     return n ? `${undo} (${n})` : undo;
   };
@@ -310,7 +270,7 @@ export function PostActions({
         onClick={() => void toggle('like')}
       >
         <HeartIcon size={20} weight={e.liked ? 'fill' : 'regular'} />
-        {/* a fresh element for each like, so its sparks play once per press, and only round a heart that is filled (styles/motion.css) */}
+        {/* A fresh element per like, so the sparks play once per press, only around a filled heart (styles/motion.css). */}
         {justOn?.kind === 'like' && e.liked && <span key={justOn.n} className="fcard-burst" aria-hidden="true" />}
         {e.likes > 0 && <span className="fcard-count">{count(e.likes)}</span>}
       </button>
@@ -325,15 +285,7 @@ export function PostActions({
         </Link>
       )}
 
-      {/*
-        Putting it on your own profile.
-
-        A toggle like the heart, and for the same reason: a second press is
-        how somebody takes it back, and the server decides what the state
-        actually was. Your own post is repostable too — it is the one way to
-        bring something old back up, and forbidding it would only be a rule
-        to explain.
-      */}
+      {/* Repost to your profile: a toggle like the heart. Your own posts can be reposted, to bring old ones back up. */}
       <button
         type="button"
         className={`fcard-act fcard-repost${e.reposted ? ' is-on' : ''}${justOn?.kind === 'repost' ? ' just-on' : ''}`}
@@ -366,7 +318,7 @@ export function PostActions({
   return (
     <>
       {row}
-      {/* a press that was taken back, and why: said where it was pressed, and gone again by itself */}
+      {/* An undone press and why, shown beside it and cleared by itself. */}
       {refused && (
         <p className="fcard-refused" role="status">
           {refused}
@@ -377,20 +329,15 @@ export function PostActions({
 }
 
 /**
- * A card's pictures: every one the API sent, or — from an API older than
- * pictures on written posts — the single picture it had. Never the caption as
- * a picture's description: that read the words out twice and the picture not
- * at all.
+ * A card's pictures: every one the API sent, or the single `image` of an older answer. The caption is never used as
+ * alt text, since it would read the words twice and the picture not at all.
  */
 function cardImages(item: FeedItem): FeedImage[] {
   if (item.images && item.images.length > 0) return item.images;
   return item.imageUrl ? [{ url: item.imageUrl, alt: item.imageAlt ?? null, width: null, height: null }] : [];
 }
 
-/**
- * A count short enough for a pill: in full up to 9,999, then "12K", "1.2M" —
- * five pills have to fit across a phone, whatever a post has gathered.
- */
+/** A count short enough for a pill: in full up to 9,999, then "12K" or "1.2M", so five pills fit across a phone. */
 export function shortCount(n: number, locale: string): string {
   if (n < 10_000) return n.toLocaleString(locale);
   try {
@@ -400,11 +347,7 @@ export function shortCount(n: number, locale: string): string {
   }
 }
 
-/**
- * How long ago, short enough to sit beside a name on one line: "5m ago",
- * "3h ago", "2d ago" for the first week; after that, the date. The full date
- * and time are the element's title, for whoever points at it.
- */
+/** How long ago, briefly: "5m ago", "3h ago" or "2d ago" within a week, then the date; the full time is the title. */
 function postAge(iso: string, t: Translate, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';

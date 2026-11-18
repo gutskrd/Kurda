@@ -8,17 +8,8 @@ import { keepInView } from '../reports/keepInView';
 import { ReportSheet } from '../reports/ReportSheet';
 
 /**
- * The ⋯ at the end of a post's header, and what is in it: Report for
- * somebody else's post, Delete for your own.
- *
- * Neither sits in the row of actions under the post any more. That row is for
- * what people do to a post every day — like it, answer it, pass it on — and a
- * flag or a bin beside the heart made every post look like it was waiting to
- * be reported or thrown away.
- *
- * Delete asks twice, in the menu itself (components/ConfirmButton): one press
- * turns it into "Delete?", a second deletes. A guest has nothing to report
- * with and nothing to delete, so they get no ⋯ at all.
+ * The ⋯ menu in a post's header: Report for somebody else's post, Delete for your own, kept out of the everyday
+ * action row. Delete confirms in place (components/ConfirmButton). Guests get no menu.
  */
 export function PostMenu({ item, onDelete }: { item: FeedItem; onDelete: () => Promise<void> }): React.JSX.Element | null {
   const t = useT();
@@ -29,7 +20,7 @@ export function PostMenu({ item, onDelete }: { item: FeedItem; onDelete: () => P
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLSpanElement>(null);
 
-  // the ⋯ sits at the far edge of a phone screen: the open menu is nudged back inside rather than drawn half off it
+  // The ⋯ sits at the edge of a phone screen, so the open menu is nudged back inside the window.
   useLayoutEffect(() => {
     if (open && listRef.current) keepInView(listRef.current);
   }, [open]);
@@ -55,7 +46,7 @@ export function PostMenu({ item, onDelete }: { item: FeedItem; onDelete: () => P
   }, [open]);
 
   if (status !== 'signedIn') return null;
-  // only the person who wrote it may delete it; the server checks again, this only decides what to offer
+  // Only the author may delete it; the server checks again, this only decides what to offer.
   const mine = user?.id === item.author.id;
 
   return (
@@ -94,9 +85,7 @@ export function PostMenu({ item, onDelete }: { item: FeedItem; onDelete: () => P
               role="menuitem"
               className="user-menu-item"
               onClick={() => {
-                // the ⋯ is where the keyboard goes back to when the report
-                // sheet closes: the sheet remembers what had focus as it opens,
-                // and by then this item is gone
+                // Focus the ⋯ first, so the report sheet returns focus there; this menu item will be gone.
                 buttonRef.current?.focus();
                 setOpen(false);
                 setReporting(true);

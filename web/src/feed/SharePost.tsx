@@ -9,25 +9,13 @@ import type { ApiError, FeedItem, UserSummary } from '../lib/types';
 import { SendError } from '../reports/SendError';
 
 /**
- * Passing a post on — inside Hevalo, or out of it.
- *
- * Two different acts behind one button, because to a reader they are one
- * thought. Sending it to a friend here keeps them in the app and arrives as a
- * message they can reply to. Sharing it out hands the link to whatever they
- * already use, which on a phone is the system sheet and every app in it.
- *
- * `navigator.share` is offered only when the device actually has it — on a
- * desktop it either does not exist or opens something nobody wanted, so there
- * the honest primary action is copying the link. Both are always present; the
- * order changes.
- *
- * What the link looks like once it lands somewhere else is not this component's
- * doing: `web/src/worker.ts` writes the post's title, author and picture into
- * the page's head at the edge, because nothing that unfurls a link runs the app.
+ * Passing a post on, behind one button: sending it to a friend as a message, or sharing the link out. The device's
+ * share sheet leads only where it works; otherwise copying the link does. The link preview is written by
+ * `web/src/worker.ts`, since link unfurlers do not run the app.
  */
 
-/** The absolute URL of a post — a share target is somewhere else, so it needs the origin. */
-export function postUrl(item: Pick<FeedItem, 'href'>): string {
+/** The absolute URL of a post, since a share target needs the origin. */
+function postUrl(item: Pick<FeedItem, 'href'>): string {
   return new URL(item.href, window.location.origin).toString();
 }
 
@@ -42,8 +30,7 @@ export function SharePost({ item }: { item: FeedItem }): React.JSX.Element {
   const [copied, setCopied] = useState(false);
   const url = postUrl(item);
 
-  // `share` is on the navigator of some desktop browsers but refuses non-file
-  // data, so this is read once on mount rather than trusted blindly at click
+  // Some desktop browsers have `share` but refuse non-file data, so support is checked once on mount.
   const [canShareOut, setCanShareOut] = useState(false);
   useEffect(() => {
     setCanShareOut(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
@@ -55,8 +42,7 @@ export function SharePost({ item }: { item: FeedItem }): React.JSX.Element {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      // a refused clipboard is not an error worth a dialog — the link is on
-      // screen in the field beside the button, ready to be selected by hand
+      // A refused clipboard is not worth a dialog; the link is in the field beside the button.
       setCopied(false);
     }
   }
@@ -66,7 +52,7 @@ export function SharePost({ item }: { item: FeedItem }): React.JSX.Element {
       await navigator.share({ title: shareText(item) || 'Hevalo', text: shareText(item), url });
       setOpen(false);
     } catch {
-      // the sheet was dismissed, which is a choice rather than a failure
+      // The sheet was dismissed, which is a choice rather than a failure.
     }
   }
 
@@ -116,13 +102,7 @@ export function SharePost({ item }: { item: FeedItem }): React.JSX.Element {
   );
 }
 
-/**
- * Send it to somebody here.
- *
- * Friends only, which is the same rule the chat itself enforces — the server
- * refuses a message to anyone else, so offering a wider list would only produce
- * a failure at the end of it.
- */
+/** Sends the post to a friend; friends only, since the server refuses messages to anyone else. */
 function SendToFriend({
   item,
   url,
@@ -164,7 +144,7 @@ function SendToFriend({
       return;
     }
     setSentTo(friend.username);
-    // long enough to read who it went to, short enough not to sit there
+    // Long enough to read who it went to.
     window.setTimeout(onSent, 1200);
   }
 

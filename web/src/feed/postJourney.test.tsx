@@ -11,13 +11,9 @@ import { ProfileModalProvider } from '../profile/ProfileModal';
 import { jsonResponse } from '../test/utils';
 import { FeedCard } from './FeedCard';
 
-/**
- * A post on a wall and the post's own page are the two ends of one journey
- * (lib/viewTransition.tsx): the card takes the travelling name as the wall is
- * left, and whatever draws the post on its page takes it over — the same card
- * again for a picture, the written post's own article for a saying. Each end
- * names the journey by itself, from the post, so this is where it is checked
- * that they name it the same.
+/*
+ * A post on the wall and its own page are the two ends of one view transition (lib/viewTransition.tsx). Each end
+ * names the transition from the post independently, so this checks that they name it the same.
  */
 
 const AUTHOR = { id: 'a1', username: 'dilan', avatarUrl: null };
@@ -89,21 +85,21 @@ const WRITTEN_POST = {
   publishedAt: '2026-10-01T10:00:00Z',
 };
 
-/** What wears a travelling name right now: each element by its classes. */
+/** The elements wearing a transition name right now, by their classes. */
 function wearing(): string[] {
   return [...document.querySelectorAll<HTMLElement>('article')]
     .filter((el) => el.style.viewTransitionName)
     .map((el) => `${el.className.split(' ').slice(0, 2).join('.')}=${el.style.viewTransitionName}`);
 }
 
-/** The browser's side of a view transition: it calls back for the next page, and tells when that page was handed over. */
+/** The browser's side of a view transition: it calls back for the next page and reports when it was handed over. */
 function withTransitions(): Array<{ before: string[]; updated: Promise<void> }> {
   const asked: Array<{ before: string[]; updated: Promise<void> }> = [];
   const start = (update: () => Promise<void>): ViewTransition => {
     const one = { before: wearing(), updated: Promise.resolve() };
     one.updated = Promise.resolve().then(() => update());
     asked.push(one);
-    // the movement itself is never over here: these tests look at the page as it is handed to the browser
+    // The animation never finishes here; these tests look at the page as it is handed to the browser.
     const finished = new Promise<void>(() => undefined);
     const stood = { finished, ready: one.updated, updateCallbackDone: one.updated, skipTransition: () => undefined, types: new Set<string>() };
     return stood as unknown as ViewTransition;
@@ -139,7 +135,7 @@ function show(): void {
   );
 }
 
-/** The page is drawn, its post arrives, and the browser is handed the result. */
+/** Waits for the page to draw, its post to arrive, and the result to be handed to the browser. */
 async function pictured(one: { updated: Promise<void> }): Promise<void> {
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 60));
@@ -150,7 +146,7 @@ async function pictured(one: { updated: Promise<void> }): Promise<void> {
 beforeEach(() => {
   window.history.replaceState(null, '', '/app');
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => undefined, removeEventListener: () => undefined }));
-  // a browser without layout draws everything at nowhere: here everything is on the screen
+  // jsdom has no layout, so everything is placed on screen here.
   const onScreen = { left: 10, top: 10, right: 310, bottom: 210, width: 300, height: 200, x: 10, y: 10, toJSON: () => ({}) };
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(onScreen as DOMRect);
   window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
@@ -180,7 +176,7 @@ describe('a post opened from a wall', () => {
     const asked = withTransitions();
     show();
     fireEvent.click(screen.getByText('Çiyayên welêt'));
-    // only the post that was pressed is named, not the one beside it
+    // Only the pressed post is named, not the one beside it.
     expect(asked[0]!.before).toEqual(['fcard.fcard-image=carried-card']);
     await pictured(asked[0]!);
     expect(window.location.pathname).toBe('/app/dimen/i1');
