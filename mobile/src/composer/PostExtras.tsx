@@ -4,13 +4,12 @@ import { StyleSheet, Text, View, type AccessibilityActionEvent, type PressablePr
 import { Pressable } from '../theme/Pressable';
 import type { FeedImage, PostMediaView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import type { ApiError } from '../api/types';
+import { useIntents, useSayNotSaved } from '../api/optimistic';
 import { deletePost } from '../feed/api';
 import type { FeedItem } from '../feed/types';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { HeaderButton } from '../navigation/HeaderButton';
-import { SendErrorNotice } from '../reports/SendError';
 import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
@@ -18,7 +17,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
-import { postDeleted } from './postDeleted';
+import { hideDeleting, postDeleted, unhideDeleting } from './postDeleted';
 import { pressedDim } from '../theme/motion';
 
 /**
@@ -112,42 +111,49 @@ function PostMenuSheet({ post, onClose, onDeleted }: { post: MenuPost; onClose: 
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const say = useSayNotSaved();
   const [confirming, setConfirming] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<ApiError | null>(null);
 
   const edit = () => {
     onClose();
     navigation.navigate('Compose', { postId: post.id });
   };
 
-  const remove = async () => {
-    setBusy(true);
-    setError(null);
-    const res = await deletePost(client, post);
-    setBusy(false);
-    if (!res.ok) {
-      haptic('error');
-      setError(res.error);
-      return;
-    }
+  /*
+   * Confirmed, it goes at once: the sheet closes, every list leaves the post out and its page closes. The server is
+   * told after; a refusal brings the post back in its place and says why, wherever the reader is by then.
+   */
+  const deleting = useIntents<string, boolean>(
+    async () => {
+      const res = await deletePost(client, post);
+      if (res.ok) postDeleted({ targetType: post.targetType, id: post.id });
+      unhideDeleting(post);
+      return res;
+    },
+    {
+      failed: (error) => {
+        haptic('error');
+        say(error);
+      },
+    },
+  );
+  const remove = () => {
     onClose();
-    postDeleted({ targetType: post.targetType, id: post.id });
+    hideDeleting(post);
+    deleting.want(post.id, true, false);
     onDeleted?.();
   };
 
   return (
-    // Not closed while the delete is on its way, which would hide whether it worked.
-    <BottomSheet visible onClose={onClose} dismissible={!busy}>
+    <BottomSheet visible onClose={onClose}>
       {confirming ? (
         <View style={styles.confirm}>
           <Text accessibilityRole="header" style={[styles.confirmTitle, { color: colors.textPrimary }]}>
             {t('post.deleteTitle')}
           </Text>
           <Text style={[styles.confirmBody, { color: colors.textSecondary }]}>{t('common.cantUndo')}</Text>
-          <SendErrorNotice error={error} onNavigate={onClose} style={styles.notice} />
-          <ClayButton label={t('common.delete')} tone="danger" size="large" busy={busy} onPress={() => void remove()} />
-          <ClayButton label={t('common.cancel')} size="large" disabled={busy} onPress={onClose} />
+          <ClayButton label={t('common.delete')} tone="danger" size="large" onPress={remove} />
+          <ClayButton label={t('common.cancel')} size="large" onPress={onClose} />
         </View>
       ) : (
         <View>
@@ -181,5 +187,4 @@ const styles = StyleSheet.create({
   confirm: { gap: spacing.md, paddingBottom: spacing.sm },
   confirmTitle: { ...display(typography.sizes.lg) },
   confirmBody: { fontSize: typography.sizes.md },
-  notice: { marginHorizontal: 0, marginBottom: 0 },
 });

@@ -24,7 +24,7 @@ import { listPosts } from './api';
 import { type Category, type ImagePost } from './types';
 import { Icon } from '../theme/Icon';
 import { noticeTime } from '../notifications/inbox';
-import { onPostDeleted } from '../composer/postDeleted';
+import { onPostDeleted, useDeleting } from '../composer/postDeleted';
 import { useQuietRefocus } from '../feed/keep';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
@@ -109,6 +109,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
       }),
     [],
   );
+  const deleting = useDeleting();
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -197,7 +198,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
         <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void load()} skeleton={<MemesSkeleton />}>
           <FlatList
-            data={posts}
+            data={posts && posts.filter((p) => !deleting({ targetType: 'image', id: p.id }))}
             keyExtractor={(p) => p.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}

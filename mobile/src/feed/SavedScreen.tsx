@@ -20,7 +20,7 @@ import { getSaved } from './api';
 import { useQuietRefocus } from './keep';
 import { FeedCard, FeedSkeleton } from './FeedCard';
 import type { FeedItem } from './types';
-import { onPostDeleted, samePost } from '../composer/postDeleted';
+import { onPostDeleted, samePost, useDeleting } from '../composer/postDeleted';
 import { Loading } from '../theme/Loading';
 
 const PAGE = 20;
@@ -118,6 +118,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 
   // A post you deleted is not kept here either.
   useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
+  const deleting = useDeleting();
 
   const entering = useListEntrance(!!items && items.length > 0);
   const renderItem = useCallback(
@@ -142,7 +143,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
           skeleton={<FeedSkeleton />}
         >
           <FlatList
-            data={items}
+            data={items && items.filter((i) => !deleting(i))}
             keyExtractor={(i) => i.key}
             renderItem={renderItem}
             contentContainerStyle={{ paddingBottom: bottom }}

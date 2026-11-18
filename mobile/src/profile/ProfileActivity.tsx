@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { FeedCard, FeedCardSkeleton } from '../feed/FeedCard';
 import { SkeletonText } from '../theme/Skeleton';
 import type { FeedItem } from '../feed/types';
-import { onPostDeleted, samePost } from '../composer/postDeleted';
+import { onPostDeleted, samePost, useDeleting } from '../composer/postDeleted';
 import { radii, spacing, typography, wash } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
@@ -108,6 +108,7 @@ export function ProfileActivity({
     () => onPostDeleted((gone) => setPage((prev) => prev && { ...prev, items: prev.items.filter((i) => !samePost(i, gone)) })),
     [],
   );
+  const deleting = useDeleting();
 
   if (active === null) return null;
 
@@ -171,7 +172,7 @@ export function ProfileActivity({
         <EmptyState title={t('profile.nothingHere')} body={t('profile.nothingHere.body')} />
       ) : (
         <View style={styles.list}>
-          {items.map((item) => (
+          {items.filter((item) => !deleting(item)).map((item) => (
             <FeedCard key={item.key} item={item} />
           ))}
           {entries.map((e) => (

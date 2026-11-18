@@ -17,7 +17,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { UnreadProvider } from '../messages/unread';
-import { onPostDeleted, postDeleted, type DeletedPost } from '../composer/postDeleted';
+import { hideDeleting, onPostDeleted, postDeleted, unhideDeleting, type DeletedPost } from '../composer/postDeleted';
 import { DOUBLE_TAP_MS, FeedCard, pillCount } from './FeedCard';
 import { CivakScreen } from './CivakScreen';
 import type { FeedItem } from './types';
@@ -308,5 +308,27 @@ describe('the wall', () => {
     act(() => postDeleted({ targetType: 'library', id: 'p1' }));
     expect(screen.queryByRole('button', { name: 'Poem: Şev' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Poem: Roj' })).toBeTruthy();
+  });
+
+  it('leaves a post out while its delete is on its way, and brings it back in its place if refused', async () => {
+    testAuth.client = fakeClient({
+      'GET /feed?section=all&limit=20&offset=0': ok({ items: [item(), item({ key: 'library:p2', id: 'p2', title: 'Roj' })] }),
+      'GET /chat/conversations': ok({ conversations: [] }),
+      'GET /me/groups/unread': ok({ unread: [] }),
+      'GET /friends/requests': ok({ requests: [] }),
+      'GET /me/notifications/unread-count': ok({ count: 0 }),
+      'GET /me/gifts/unseen': ok({ unseen: 0 }),
+    });
+    renderWithProviders(
+      <UnreadProvider>
+        <CivakScreen />
+      </UnreadProvider>,
+    );
+    expect(await screen.findByRole('button', { name: 'Poem: Şev' })).toBeTruthy();
+    act(() => hideDeleting({ targetType: 'library', id: 'p1' }));
+    expect(screen.queryByRole('button', { name: 'Poem: Şev' })).toBeNull();
+    act(() => unhideDeleting({ targetType: 'library', id: 'p1' }));
+    const cards = screen.getAllByRole('button', { name: /^Poem: / }).map((b) => b.getAttribute('aria-label'));
+    expect(cards).toEqual(['Poem: Şev', 'Poem: Roj']);
   });
 });

@@ -16,7 +16,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { listPosts } from './api';
 import { bodyPreview, postName, type LibraryPost, type PostType } from './types';
-import { onPostDeleted } from '../composer/postDeleted';
+import { onPostDeleted, useDeleting } from '../composer/postDeleted';
 import { useQuietRefocus } from '../feed/keep';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -93,6 +93,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
       }),
     [],
   );
+  const deleting = useDeleting();
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -177,7 +178,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
 
         <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void refresh()} skeleton={<LibrarySkeleton />}>
           <FlatList
-            data={posts}
+            data={posts && posts.filter((p) => !deleting({ targetType: 'library', id: p.id }))}
             keyExtractor={(p) => p.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}

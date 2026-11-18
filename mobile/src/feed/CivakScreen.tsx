@@ -35,7 +35,7 @@ import {
   sortLabel,
   type FeedFilterValue,
 } from './FeedFilter';
-import { onPostDeleted, samePost } from '../composer/postDeleted';
+import { onPostDeleted, samePost, useDeleting } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
 import { FilterChip, FilterChips } from '../theme/FilterSheet';
 import { Loading } from '../theme/Loading';
@@ -184,6 +184,7 @@ export function CivakScreen(): React.JSX.Element {
 
   // A post you deleted leaves the wall at once, reposts of it included.
   useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
+  const deleting = useDeleting();
 
   // The first screenful rises in once, as the wall arrives.
   const entering = useListEntrance(!!items && items.length > 0);
@@ -208,7 +209,7 @@ export function CivakScreen(): React.JSX.Element {
 
         <FlatList
           ref={listRef}
-          data={items ?? []}
+          data={(items ?? []).filter((i) => !deleting(i))}
           keyExtractor={(i) => i.key}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: tabBarInset }}

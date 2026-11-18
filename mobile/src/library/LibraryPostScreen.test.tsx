@@ -331,13 +331,23 @@ describe('deleting your own post', () => {
     stop();
   });
 
-  it('stays, and says why, when the server refuses', async () => {
-    const { onExit } = open({ 'DELETE /library/posts/p1': fail({ status: 500, kind: 'server', message: 'boom' }) });
+  it('goes at once, once confirmed, and says why when the server refused, the lists keeping it', async () => {
+    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const heard: DeletedPost[] = [];
+    const stop = onPostDeleted((p) => heard.push(p));
+    let answer: (r: unknown) => void = () => undefined;
+    const { onExit } = open({ 'DELETE /library/posts/p1': () => new Promise((resolve) => (answer = resolve)) } as never);
     fireEvent.click(await screen.findByRole('button', { name: 'Post options' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete post' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(await screen.findByRole('alert')).toBeTruthy();
-    expect(onExit).not.toHaveBeenCalled();
+    // Gone before the server has answered.
+    expect(onExit).toHaveBeenCalledTimes(1);
+    await act(async () => answer(fail({ status: 500, kind: 'server', message: 'boom' })));
+    expect(said).toHaveBeenCalledWith('Something went wrong on our end. Please try again shortly.');
+    // The lists were never told it was gone.
+    expect(heard).toEqual([]);
+    stop();
+    said.mockRestore();
   });
 
   it('offers no menu on somebody else’s post', async () => {
