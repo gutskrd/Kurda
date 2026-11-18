@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// every drawing the character asks react-native-svg for, in order
+// Every drawing the character asks react-native-svg for, in order.
 const drawn = vi.hoisted(() => ({ markups: [] as string[] }));
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -38,7 +38,7 @@ import { characterLayers, irisesMoved } from './layers';
 import { SpeakingCharacter, type PlaybackClock } from './SpeakingCharacter';
 import { fakeFrames, type Frames } from './testing/audio';
 
-// a word said over a second: the lips pressed, then wide open, then rounded
+// A word said over a second: the lips pressed, then wide open, then rounded.
 const SAID: RecordingVoice = {
   speaker: 'hamo',
   lipsync: encodeLipsync({
@@ -60,25 +60,25 @@ function clock(at = 0, duration = 1, playing = true): PlaybackClock & { currentT
   return { currentTime: at, duration, playing };
 }
 
-/** the mouth on screen now */
+/** The mouth on screen now. */
 function mouthShown(): string | undefined {
   const layers = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
   return (Object.entries(HAMO.mouths) as Array<[string, string]>).find(([, xml]) => layers.includes(xml))?.[0];
 }
 
-/** the layers on screen now */
+/** The layers on screen now. */
 function shown(): string[] {
   return [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup') ?? '');
 }
 
-/** how far the head group is turned, and about which point */
+/** How far the head group is turned, and about which point. */
 function headTurn(): { angle: number; origin: string } {
   const head = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === HAMO.bare)!;
   const group = head.parentElement as HTMLElement;
   return { angle: Number(/rotate\((-?[\d.]+)deg\)/.exec(group.style.transform)?.[1] ?? 0), origin: group.style.transformOrigin };
 }
 
-/** how far the view a layer of the drawing is in moves it, in points */
+/** How far the view a layer of the drawing is in moves it, in points. */
 function moved(markup: string): { x: number; y: number } {
   const layer = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === markup)!;
   const transform = (layer.parentElement as HTMLElement).style.transform;
@@ -117,7 +117,7 @@ describe('SpeakingCharacter', () => {
       new Set([HAMO.body, HAMO.bare, HAMO.eyes.open, HAMO.brows.neutral, HAMO.mouths.rest, HAMO.moustache!.body, HAMO.moustache!.end]),
     );
     expect(mouthShown()).toBe('rest');
-    // the whole head, with its brows drawn in, is never drawn on top of them
+    // The whole head, with its brows drawn in, is never drawn on top of them.
     expect(drawn.markups).not.toContain(HAMO.head);
     expect(drawn.markups).not.toContain(HAMO.overlay);
   });
@@ -131,16 +131,16 @@ describe('SpeakingCharacter', () => {
     expect(drawn.markups).not.toContain(XEZO.head);
     const hair = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === XEZO.hair!.art)!;
     expect((hair.parentElement as HTMLElement).style.transformOrigin).toBe(`${XEZO.hair!.pivot.x * 100}% ${XEZO.hair!.pivot.y * 100}%`);
-    // nothing blushes until something pleases her
+    // Nothing blushes until something pleases her.
     expect(drawn.markups).not.toContain(XEZO.cheeks);
   });
 
   it('keeps the shape of its frame from the first render, and leaves room in its tile around the head', async () => {
     renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} />);
-    // the tile, in the bust's own proportions
+    // The tile, in the bust's own proportions.
     const tall = (104 * HAMO.frame.h) / HAMO.frame.w;
     expect(document.querySelector(`[style*="width: 104px"][style*="height: ${tall}px"]`)).not.toBeNull();
-    // the drawing a little smaller, standing on its foot: no antler, ear or hair is cut off
+    // The drawing a little smaller, standing on its foot: no antler, ear or hair is cut off.
     const svg = document.querySelector('svg[data-markup]')!;
     expect(Number(svg.getAttribute('width'))).toBeCloseTo(104 * 0.88);
     expect(Number(svg.getAttribute('height'))).toBeCloseTo(tall * 0.88);
@@ -156,7 +156,7 @@ describe('SpeakingCharacter', () => {
     expect(mouthShown()).toBe('mbp');
     expect(drawn.markups).toEqual([HAMO.mouths.mbp]);
 
-    // the same shape a frame later: nothing is drawn again
+    // The same shape a frame later: nothing is drawn again.
     step(player, 0.2);
     step(player, 0.24);
     expect(drawn.markups).toEqual([HAMO.mouths.mbp]);
@@ -173,7 +173,7 @@ describe('SpeakingCharacter', () => {
     await settle();
     step(player, 0.3);
     expect(mouthShown()).toBe('a');
-    // still on the open vowel however many frames pass, until the recording itself moves on
+    // Still on the open vowel however many frames pass, until the recording itself moves on.
     for (let i = 0; i < 5; i++) step(player, 0.3);
     expect(mouthShown()).toBe('a');
   });
@@ -196,7 +196,7 @@ describe('SpeakingCharacter', () => {
     renderWithProviders(<SpeakingCharacter speaker="hamo" voice={voice} text="Ez baş im" player={player} playing size={104} source="b.wav" />);
     await settle();
 
-    // no length yet, so no timeline: the mouth waits at rest
+    // No length yet, so no timeline: the mouth waits at rest.
     step(player, 0.4);
     expect(mouthShown()).toBe('rest');
 
@@ -228,7 +228,7 @@ describe('SpeakingCharacter', () => {
     player.duration = Number.NaN;
     view.rerender(<SpeakingCharacter speaker="hamo" voice={voice} text="av" player={player} playing size={104} source="two.wav" />);
     await settle();
-    // the second recording's length is not known yet, so the first one's timeline must not be used for it
+    // The second recording's length is not known yet, so the first one's timeline must not be used for it.
     step(player, 0.1);
     expect(mouthShown()).toBe('rest');
   });
@@ -284,9 +284,9 @@ describe('SpeakingCharacter', () => {
     const moving = await speak(false);
     expect(moving.mouth).toBe('a');
     expect(moving.turns.some((deg) => deg !== 0)).toBe(true);
-    // a nod, and at most the head's own slow drift on top of it
+    // A nod, and at most the head's own slow drift on top of it.
     expect(moving.turns.every((deg) => Math.abs(deg) <= NOD_DEGREES + SWAY.degrees + 1e-6)).toBe(true);
-    // the head's own pivot, where the neck meets it
+    // The head's own pivot, where the neck meets it.
     expect(moving.origin).toBe(`${HAMO.pivot.x * 100}% ${HAMO.pivot.y * 100}%`);
 
     const still = await speak(true);
@@ -302,9 +302,9 @@ describe('SpeakingCharacter', () => {
     for (const part of [rig.crown, rig.earLeft, rig.earRight, rig.face, rig.whites, rig.pupilLeft, rig.pupilRight, deer.body, deer.overlay]) {
       expect(drawn.markups).toContain(part);
     }
-    // drawn in its parts, not as the one head the people have
+    // Drawn in its parts, not as the one head the people have.
     expect(drawn.markups).not.toContain(deer.head);
-    // as tall as asked, as wide as the figure is for that height
+    // As tall as asked, as wide as the figure is for that height.
     const svg = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === deer.body)!;
     expect(Number(svg.getAttribute('height'))).toBeCloseTo(300);
     expect(Number(svg.getAttribute('width'))).toBeCloseTo((300 * deer.frame.w) / deer.frame.h);
@@ -325,7 +325,7 @@ describe('SpeakingCharacter', () => {
     await act(() => new Promise((r) => setTimeout(r, 400)));
     expect(drawn.markups).toContain(HAMO.eyes.happy);
     expect(mouthShown()).toBe('a');
-    // Hamo cheers with his brows up
+    // Hamo cheers with his brows up.
     expect(shown()).toContain(HAMO.brows.raised);
   });
 
@@ -352,7 +352,7 @@ describe('SpeakingCharacter', () => {
     await act(() => new Promise((r) => setTimeout(r, 700)));
     expect(shown()).toContain(XEZO.brows.knit);
     expect([...document.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === XEZO.mouths.u)).toBe(true);
-    // and it passes: the brows come back to rest
+    // And it passes: the brows come back to rest.
     await act(() => new Promise((r) => setTimeout(r, ACTS.hmm.ms)));
     expect(shown()).toContain(XEZO.brows.neutral);
     expect(shown()).not.toContain(XEZO.brows.knit);
@@ -361,7 +361,7 @@ describe('SpeakingCharacter', () => {
   it('plays a chuckle only as Hamo, and a start with wide eyes, raised brows and a round mouth for anyone', async () => {
     const view = renderWithProviders(<SpeakingCharacter speaker="xezo" player={null} playing={false} size={104} reaction="chuckle" />);
     await act(() => new Promise((r) => setTimeout(r, 400)));
-    // Xezo giggles instead: smiling eyes, a grin, a blush
+    // Xezo giggles instead: smiling eyes, a grin, a blush.
     expect(shown()).toContain(XEZO.eyes.happy);
     expect(shown()).toContain(XEZO.cheeks);
     view.unmount();
@@ -386,22 +386,22 @@ describe('SpeakingCharacter', () => {
     expect(mouthShown()).toBe('a');
     fireEvent.click(figure);
     await act(() => new Promise((r) => setTimeout(r, 300)));
-    // a giggle: smiling eyes and a grin
+    // A giggle: smiling eyes and a grin.
     expect(shown()).toContain(HAMO.eyes.happy);
     expect(mouthShown()).toBe('grin');
     fireEvent.click(figure);
     await act(() => new Promise((r) => setTimeout(r, 300)));
-    // a start, with a light buzz
+    // A start, with a light buzz.
     expect(shown()).toContain(HAMO.eyes.wide);
     expect(mouthShown()).toBe('o');
     expect(felt).toEqual(['tap', 'select']);
-    // and then his chuckle
+    // And then his chuckle.
     await act(() => new Promise((r) => setTimeout(r, ACTS.surprised.ms + 100)));
     expect(shown()).toContain(HAMO.eyes.happy);
     expect(shown()).toContain(HAMO.brows.raised);
-    // every tap still said it again
+    // Every tap still said it again.
     expect(again).toHaveBeenCalledTimes(3);
-    // a tap after the run is over greets again
+    // A tap after the run is over greets again.
     await act(() => new Promise((r) => setTimeout(r, TAP_RUN_MS)));
     fireEvent.click(figure);
     await act(() => new Promise((r) => setTimeout(r, 300)));
@@ -442,20 +442,20 @@ describe('SpeakingCharacter', () => {
     expect(headTurn().angle).toBe(leanToward({ x: -1, y: 0 }));
     expect(headTurn().angle).toBeLessThan(0);
 
-    // the same look given again draws nothing again, and turned round it is the same look in the drawing's own terms
+    // The same look given again draws nothing new, and when flipped it is the same look in the drawing's terms.
     drawn.markups = [];
     view.rerender(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} gaze={{ x: -1, y: 0 }} flip />);
     await settle();
     expect(drawn.markups).toEqual([]);
     expect(headTurn().angle).toBe(leanToward({ x: -1, y: 0 }));
 
-    // the other way, and only the eyes are drawn again
+    // The other way, and only the eyes are drawn again.
     view.rerender(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} gaze={{ x: 1, y: 0 }} flip />);
     await settle();
     expect(drawn.markups).toEqual([irisesMoved(HAMO.eyes.open, eyeShift(art, { x: 1, y: 0 }))]);
     expect(headTurn().angle).toBeGreaterThan(0);
 
-    // told nothing, it looks ahead again
+    // Told nothing, it looks ahead again.
     view.rerender(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} flip />);
     await settle();
     expect(drawn.markups).toContain(HAMO.eyes.open);
