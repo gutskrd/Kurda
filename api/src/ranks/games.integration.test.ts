@@ -1,7 +1,6 @@
 /**
- * Game Ranks in Pêşbaziya Serwayan and Stories, against real Postgres: each decides
- * Rated or Friendly when it starts (Stories: when its questions start), rates
- * the finish by its own result, and counts a leave during the game.
+ * Game Ranks in Pêşbaziya Serwayan and Stories against real Postgres: Rated or Friendly is decided at the start
+ * (Stories: when questions start), the finish is rated by the game's own result, and a leave during the game counts.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
