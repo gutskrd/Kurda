@@ -610,7 +610,10 @@ function ToolTile({
       ) : icon ? (
         <Icon name={icon} size={24} color={colors.textPrimary} />
       ) : null}
-      {/* Half a row on a narrow phone fits "Letters and words" on one line in few languages, so the title may take a second line and the text under it a third before truncating. */}
+      {/*
+        Half a row on a narrow phone fits "Letters and words" on one line in few languages, so the title may take
+        a second line and the text under it a third before truncating.
+      */}
       <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
         {title}
       </Text>

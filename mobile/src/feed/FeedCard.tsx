@@ -195,7 +195,10 @@ export const FeedCard = memo(function FeedCard({
 
   return (
     <View style={[styles.post, !standalone && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}>
-      {/* One line: author, kind and age, with the "⋯" at the end. The picture, name and "⋯" each reach a fingertip up and down and split the gaps between them. */}
+      {/*
+        One line: author, kind and age, with the "⋯" at the end. The picture, name and "⋯" each reach a fingertip
+        up and down and split the gaps between them.
+      */}
       <View style={[styles.head, { flexDirection: dir.row }]}>
         <ReachGroup gap={spacing.sm}>
           <Pressable

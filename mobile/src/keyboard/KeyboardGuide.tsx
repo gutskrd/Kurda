@@ -115,7 +115,10 @@ export function KeyboardGuide({
               {t(sorani ? 'keyboard.guide.leadSorani' : 'keyboard.guide.lead')}
             </Text>
 
-            {/* The other platform's steps only when the platform is unknown (a browser): on an iPhone, Android steps do not help and App Review reads them as instructions for another platform. */}
+            {/*
+              The other platform's steps only when the platform is unknown (a browser): on an iPhone, Android
+              steps do not help and App Review reads them as instructions for another platform.
+            */}
             {ON_A_PHONE ? null : (
               <View style={styles.platformRow} accessibilityRole="radiogroup">
                 {PHONES.map((p) => {

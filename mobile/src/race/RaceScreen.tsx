@@ -367,7 +367,10 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                   onCaretLine={onCaretLine}
                 />
 
-                {/* The invisible field the keyboard types into. It takes no touches (the area does, and focuses it), and its cursor is pinned to the end for gestures that move it without a tap. */}
+                {/*
+                  The invisible field the keyboard types into. It takes no touches (the area does, and focuses
+                  it), and its cursor is pinned to the end for gestures that move it without a tap.
+                */}
                 <TextInput
                   ref={inputRef}
                   value={typed}
