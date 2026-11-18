@@ -27,7 +27,7 @@ export interface RailGroup {
   name: string;
   memberCount: number;
   unread: number;
-  /** the group's picture, when the server sends it; else its initials stand in */
+  /** The group's picture when the server sends one; otherwise its initials stand in. */
   photoUrl?: string | null;
 }
 
@@ -38,29 +38,29 @@ export interface RailNotification {
   body: string | null;
   createdAt: string;
   readAt: string | null;
-  /** what it is about (`kind` and its fields): the words and the link are made from it */
+  /** What it is about (`kind` and its fields), from which the words and link are made. */
   data?: Record<string, unknown> | null;
 }
 
-/** You, as the rail shows you: a face, a level ring, and what you can spend. */
-export interface RailSelf {
+/** The reader as the rail shows them: a face, a level ring and their balances. */
+interface RailSelf {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
-  /** derived server-side from XP; `progress` is 0..1 toward the next level */
+  /** Derived server-side from XP; `progress` runs from 0 to 1 toward the next level. */
   level: { level: number; progress: number; xp: number; currentLevelXp: number; nextLevelXp: number };
   balances: { zer: number; gems: number };
 }
 
 export interface SocialRailData {
-  /** null until the first read lands, and for a response from before this field */
+  /** Null until the first read lands, or when the response lacks it. */
   you: RailSelf | null;
   friends: RailFriend[];
   requests: RailFriend[];
   challenges: RailFriend[];
   groups: RailGroup[];
   notifications: RailNotification[];
-  /** `gifts`: unopened gifts — the Shop badge (folded in here so nothing polls for it alone) */
+  /** `gifts` counts unopened gifts for the Shop badge, so nothing polls for it separately. */
   unread: { notifications: number; groups: number; requests: number; challenges: number; gifts?: number };
 }
 
@@ -71,15 +71,11 @@ export interface Arrival {
   title: string;
   body: string;
   who: RailFriend | null;
-  /** a letter's notification: the correspondence it came in, or null when it names none */
+  /** For a letter's notification, its correspondence, or null when it names none. */
   letter?: { threadId: string | null };
 }
 
-/**
- * The arrivals worth a toast on the page at `pathname`. A letter is not
- * announced on the letters page, whose window lands its bird itself, nor in
- * the correspondence it came in, which shows it; anywhere else it is.
- */
+/** The arrivals worth a toast at `pathname`; a letter is not announced on the letters page or in its own correspondence. */
 export function toastsHere(arrivals: readonly Arrival[], pathname: string): Arrival[] {
   const path = pathname.replace(/\/+$/, '');
   return arrivals.filter((a) => !a.letter || (path !== '/app/letters' && (a.letter.threadId === null || path !== `/app/letters/${a.letter.threadId}`)));
@@ -95,30 +91,17 @@ const EMPTY: SocialRailData = {
   unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 },
 };
 
-/**
- * How often the rail asks what changed.
- *
- * A game invite expires in two minutes, so a slower poll would show invites that
- * are already dead. Realtime would be better and the gateway exists, but the web
- * client's socket is not merged yet — this is the honest interim, and the poll
- * stops entirely while the tab is hidden rather than billing a free-tier API for
- * a window nobody is looking at.
- */
+/** How often the rail polls `/me/social`. A game invite expires in two minutes, so slower would show dead invites. */
 const POLL_MS = 20_000;
 
 /**
- * The rail's data, and what just arrived.
- *
- * Arrivals are computed by diffing against the previous answer rather than
- * trusting a flag from the server, because "new to this browser tab" is a client
- * question — the same invite is not new twice just because the poll ran again.
- * The first load never announces anything: everything is new on arrival, and a
- * burst of toasts for a backlog you already knew about is noise.
+ * The rail's data, polled while the tab is visible, and what just arrived. Arrivals come from diffing against the
+ * previous answer, since "new to this tab" is a client question; the first load announces nothing.
  */
 export function useSocialRail(): {
   data: SocialRailData;
   loading: boolean;
-  /** nothing has arrived yet and the last ask failed: there is no list to show, only a way to ask again */
+  /** Nothing has arrived yet and the last request failed, so there is only a retry. */
   failed: boolean;
   arrivals: Arrival[];
   dismiss: (key: string) => void;
@@ -132,13 +115,13 @@ export function useSocialRail(): {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [arrivals, setArrivals] = useState<Arrival[]>([]);
-  /** ids already seen, so a toast fires once per thing rather than once per poll */
+  /** Ids already seen, so a toast fires once per thing rather than once per poll. */
   const seen = useRef<Set<string> | null>(null);
 
   const refresh = useCallback(() => {
     if (!signedIn) return;
     void (async () => {
-      // asking again after a first answer that never came is loading again, not still failing
+      // Retrying after a first answer that never came is loading, not failing.
       if (seen.current === null) {
         setFailed(false);
         setLoading(true);
@@ -146,8 +129,7 @@ export function useSocialRail(): {
       const res = await client.get<SocialRailData>('/me/social');
       if (!res.ok) {
         setLoading(false);
-        // a failed poll after a good answer keeps the list it had; only a list
-        // that never arrived is a failure worth saying
+        // A failed poll after a good answer keeps the list; only a list that never arrived is a failure.
         setFailed(seen.current === null);
         return;
       }
@@ -158,7 +140,7 @@ export function useSocialRail(): {
 
       const keys = arrivalKeys(next, t, locale);
       if (seen.current === null) {
-        // first answer: adopt it silently
+        // The first answer is adopted silently.
         seen.current = new Set(keys.map((a) => a.key));
         return;
       }
@@ -178,7 +160,7 @@ export function useSocialRail(): {
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') refresh();
     }, POLL_MS);
-    // coming back to the tab should show the truth immediately, not in 20s
+    // Returning to the tab refetches at once rather than waiting for the next poll.
     const onVisible = (): void => {
       if (document.visibilityState === 'visible') refresh();
     };
@@ -208,11 +190,10 @@ function arrivalKeys(data: SocialRailData, t: Translate, locale: string): Arriva
       who: r,
     })),
     ...data.notifications
-      // a gift arrives with its own banner, which opens it (gifts/GiftArrivals),
-      // and so does a game invite, which can be answered there (play/InviteBanner)
+      // Gifts and game invites have their own banners (gifts/GiftArrivals, play/InviteBanner).
       .filter((n) => n.readAt === null && n.data?.kind !== 'gift' && n.data?.kind !== 'play_invite')
       .map((n) => {
-        // in the reader's words where the notification's data says what it is
+        // In the reader's words where the notification's data says what it is.
         const view = socialNotification(n, t, locale);
         const letter = letterNoticeOf(n.data);
         return {

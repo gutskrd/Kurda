@@ -5,30 +5,23 @@ import { readRenamed } from '../lib/renamedKey';
 interface RailContext {
   data: SocialRailData;
   loading: boolean;
-  /** the first answer never came: the bell offers to ask again */
+  /** The first answer never came, so the bell offers a retry. */
   failed: boolean;
   arrivals: Arrival[];
   dismiss: (key: string) => void;
   refresh: () => void;
   open: boolean;
   setOpen: (open: boolean) => void;
-  /** wide screens only: the rail is a strip of icons rather than a full column */
+  /** Wide screens only: the rail is a strip of icons rather than a full column. */
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
-  /**
-   * Everything in the social column waiting on you: invites, requests and
-   * group messages. Notifications are not counted here — they have the bell.
-   */
+  /** Everything in the social column waiting on you: invites, requests and group messages; notifications have the bell. */
   total: number;
 }
 
 /**
- * Outside a provider the rail simply is not there.
- *
- * The top nav is shared with signed-out pages, so its toggle asks for this on
- * every render; a frozen empty value lets it render nothing without every
- * caller having to null-check, and being a module constant means it does not
- * churn identity and re-render the nav on each pass.
+ * The value outside a provider, as on signed-out pages. A frozen module constant, so callers need no null check and
+ * the nav does not re-render on each pass.
  */
 const ABSENT: RailContext = {
   data: {
@@ -53,7 +46,7 @@ const ABSENT: RailContext = {
 };
 
 const COLLAPSED_KEY = 'hevalo_rail_collapsed';
-/* what it was called while the app was MyKurda; see `readRenamed`. */
+/* The key's name from before the app was renamed; see `readRenamed`. */
 const LEGACY_COLLAPSED_KEY = 'mykurda_rail_collapsed';
 
 function readCollapsed(): boolean {
@@ -76,19 +69,9 @@ export function useRail(): RailContext {
 }
 
 /**
- * Holds the rail's data and its open state.
- *
- * The toggle lives in the top nav and the panel lives after the page, so they
- * cannot share state by nesting — and polling in both would mean two requests
- * and two answers that could disagree.
- *
- * There is one for the whole app, above the routes (App.tsx). Each shell used
- * to make its own, so leaving a lesson — which swaps the lesson's shell for
- * the app's — started the rail from nothing: the purse went back to its grey
- * bars, the face to an outline and the unread counts away, and all of it came
- * back a moment later, after every lesson. A shell still wraps itself in one
- * (it must work drawn alone, as in a test), and that one stands aside when
- * there is already a provider above it.
+ * Holds the rail's data and open state for the nav toggle and the panel, which cannot share state by nesting. One
+ * provider sits above the routes (App.tsx), so switching shells keeps the data; a shell still wraps itself in one so
+ * it works alone, and that inner one stands aside when a provider is already above it.
  */
 export function RailProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const above = useContext(Ctx);
@@ -101,18 +84,16 @@ function OwnRail({ children }: { children: React.ReactNode }): React.JSX.Element
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
-  // whether you want the column or the strip is a per-browser preference, and
-  // having to re-collapse it on every page load would be worse than not having
-  // the choice at all
+  // Column or strip is a per-browser preference, kept across page loads.
   useEffect(() => {
     try {
       localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
     } catch {
-      // a browser with site data blocked still gets a working rail
+      // A browser with site data blocked still gets a working rail.
     }
   }, [collapsed]);
 
-  // Escape closes it, the way every drawer should
+  // Escape closes the drawer.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent): void => {
@@ -122,8 +103,7 @@ function OwnRail({ children }: { children: React.ReactNode }): React.JSX.Element
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
-  // notifications have their own bell; counting them here as well would put
-  // one new like on two badges at once
+  // Notifications have their own bell, so they are not counted here too.
   const total = data.unread.challenges + data.unread.requests + data.unread.groups;
 
   const value = useMemo(

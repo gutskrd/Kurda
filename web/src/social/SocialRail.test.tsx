@@ -45,7 +45,7 @@ const rail = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-/** Serve /me/social, optionally a different answer per call, and log writes. */
+/** Serves /me/social, optionally a different answer per call, and logs writes. */
 function railFetch(answers: Array<Record<string, unknown>>) {
   const posts: string[] = [];
   let call = 0;
@@ -55,7 +55,7 @@ function railFetch(answers: Array<Record<string, unknown>>) {
       call += 1;
       return jsonResponse(200, body);
     }
-    // a docked conversation asks for its own history
+    // A docked conversation asks for its own history.
     if (url.includes('/messages')) return jsonResponse(200, { messages: [] });
     if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
     if ((init?.method ?? 'GET') !== 'GET') posts.push(`${init!.method} ${url.slice(url.indexOf('/', 8))}`);
@@ -96,13 +96,12 @@ describe('SocialRail', () => {
     show();
 
     expect(await screen.findByText('zana')).toBeInTheDocument();
-    // someone in a game is not just "online" — that is the whole point of the rail
+    // Someone in a game shows the game, not just "online".
     expect(screen.getByText(/Peyvok/)).toBeInTheDocument();
-    // the section heading says Online too, so scope to the row's own label
+    // The section heading says Online too, so scope to the row's own label.
     expect(screen.getByText('hevi').closest('.rail-row')!.textContent).toContain('Online');
 
-    // offline friends start collapsed — a long dead list should not push the
-    // people you can actually reach off the screen
+    // Offline friends start collapsed, so they do not push reachable people off screen.
     expect(screen.queryByText('berfin')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Offline/i }));
     expect(screen.getByText('berfin').closest('.rail-row')!.textContent).toContain('3h ago');
@@ -125,11 +124,7 @@ describe('SocialRail', () => {
     await waitFor(() => expect(posts).toContain('POST /friends/requests/8/decline'));
   });
 
-  /**
-   * Deliberately changed: quiz challenges are gone with the quiz (the API
-   * always sends an empty list), and game invites have their own banner — so
-   * the rail no longer draws a challenge, even if an old answer carries one.
-   */
+  /** Game invites have their own banner, so the rail draws no challenge even if an answer carries one. */
   it('draws no quiz challenge any more', async () => {
     signIn();
     railFetch([rail({ challenges: [person('9', 'zana')], requests: [person('8', 'berfin')] })]);
@@ -144,20 +139,19 @@ describe('SocialRail', () => {
     railFetch([rail({ unread: { notifications: 40, groups: 140, requests: 1, challenges: 1 } })]);
     show();
 
-    // the label carries the real number for a screen reader; the badge is the
-    // capped glance version
+    // The label carries the real number; the badge is capped.
     const toggle = await screen.findByRole('button', { name: 'Social — 142 waiting' });
     await waitFor(() => expect(toggle.textContent).toContain('99+'));
   });
 
   it('says nothing about a backlog you already had', async () => {
     signIn();
-    // the first answer already contains a request — it is not news to this tab
+    // The first answer already has a request, which is not news to this tab.
     railFetch([rail({ requests: [person('8', 'berfin')] })]);
     show();
 
     await screen.findByText('Wants to be friends');
-    // a burst of toasts for things that were already there is noise
+    // No toasts for what was already there.
     expect(screen.queryByText('Friend request')).not.toBeInTheDocument();
   });
 
@@ -177,7 +171,7 @@ describe('SocialRail', () => {
     show();
 
     await screen.findByText('Online');
-    // the tab comes back: the rail reads again, and two notifications are new
+    // The tab comes back: the rail refetches, and two notifications are new.
     document.dispatchEvent(new Event('visibilitychange'));
     expect(await screen.findByText('Keep your streak going')).toBeInTheDocument();
     expect(screen.queryByText('Game invite')).not.toBeInTheDocument();
@@ -189,8 +183,7 @@ describe('SocialRail', () => {
     const { container } = show();
 
     await screen.findByText('Online');
-    // your avatar, level and Saved live in the nav and your profile; this panel
-    // is who else is around
+    // The reader's own avatar and level live in the nav; this panel is about other people.
     expect(container.querySelector('.rail-self')).toBeNull();
     expect(screen.queryByRole('link', { name: /saved/i })).not.toBeInTheDocument();
   });
@@ -201,12 +194,12 @@ describe('SocialRail', () => {
     const { container } = show();
 
     await screen.findByText('zana');
-    // the name still opens the profile; the icon is what starts a conversation
+    // The name opens the profile; the icon starts a conversation.
     expect(screen.getByRole('link', { name: /zana/ })).toHaveAttribute('href', '/app/users/u2');
 
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
 
-    // it appears in place rather than navigating — the page you were on stays
+    // It docks in place rather than navigating.
     const chat = container.querySelector('.rail-chat');
     expect(chat).not.toBeNull();
     expect(within(chat as HTMLElement).getByRole('button', { name: 'Close the chat with zana' })).toBeInTheDocument();
@@ -218,7 +211,7 @@ describe('SocialRail', () => {
     const { container } = show();
 
     await screen.findByText('Amedspor');
-    // the name still opens the full page, where the roster and members panel are
+    // The name opens the full page with the roster and members panel.
     expect(screen.getByRole('link', { name: /Amedspor/ })).toHaveAttribute('href', '/app/messages?group=g7');
 
     await userEvent.click(screen.getByRole('button', { name: 'Message Amedspor' }));
@@ -229,14 +222,8 @@ describe('SocialRail', () => {
   });
 
   /**
-   * The rule that reveals a chat button on hover is scoped to `.rail-row`, so a
-   * row that is not one hides its own button — which is exactly what happened:
-   * the rule said `.rail-friend` and a group's row is `.rail-group`, leaving
-   * every group's button in the page, tabbable, and invisible.
-   *
-   * jsdom loads no stylesheets and cannot see that. What it can see is the
-   * invariant underneath it: whatever kind of row a conversation is opened
-   * from, the button lives inside the class the reveal is written against.
+   * The hover rule that reveals a chat button is scoped to `.rail-row`, so a button outside one stays invisible yet
+   * tabbable. jsdom loads no stylesheets, so this checks every chat button sits inside a `.rail-row`.
    */
   it('puts every chat button inside a row the reveal rule can reach', async () => {
     signIn();
@@ -250,7 +237,7 @@ describe('SocialRail', () => {
 
     await screen.findByText('Amedspor');
     const buttons = screen.getAllByRole('button', { name: /^Message / });
-    expect(buttons.length).toBeGreaterThanOrEqual(2); // at least the person and the group
+    expect(buttons.length).toBeGreaterThanOrEqual(2); // At least the person and the group.
     for (const button of buttons) {
       expect(button.closest('.rail-row'), `${button.getAttribute('aria-label')} is not inside a .rail-row`).not.toBeNull();
     }
@@ -270,7 +257,7 @@ describe('SocialRail', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
     await userEvent.click(screen.getByRole('button', { name: 'Message Amedspor' }));
 
-    // both are anchored to the same edge, so two would sit on top of each other
+    // Both anchor to the same edge, so two would overlap.
     expect(container.querySelectorAll('.rail-chat')).toHaveLength(1);
   });
 
@@ -281,20 +268,19 @@ describe('SocialRail', () => {
 
     await screen.findByText('zana');
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
-    // anchored to the rail's full width to begin with
+    // Anchored to the rail's full width at first.
     expect(container.querySelector('.rail-chat')).not.toHaveClass('is-tight');
 
     await userEvent.click(screen.getByRole('button', { name: /Collapse the social panel/ }));
 
-    // folding left it stranded out at the old offset, with a gap behind it
+    // After folding, the dock follows the narrower rail.
     expect(container.querySelector('.rail-chat')).toHaveClass('is-tight');
   });
 
   it('opens an empty conversation rather than crashing on an odd response', async () => {
     signIn();
     const posts: string[] = [];
-    // a 200 with no `messages` array: `ok` is about the status code, not the
-    // shape, and spreading undefined used to throw and take the thread down
+    // A 200 with no `messages` array: `ok` reflects the status, not the shape, so the thread must cope.
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init?: RequestInit) => {
@@ -312,7 +298,7 @@ describe('SocialRail', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
 
     expect(container.querySelector('.rail-chat')).not.toBeNull();
-    // an empty thread opens on who it is with and a first hello to send
+    // An empty thread opens on who it is with and a first hello to send.
     expect(await screen.findByText('This is the start of your conversation with zana.')).toBeInTheDocument();
   });
 
@@ -338,7 +324,7 @@ describe('SocialRail', () => {
     ]);
     show();
     await screen.findByText('Online');
-    // they used to sit folded under "Recent" at the foot of this column
+    // Notifications are not in this column.
     expect(screen.queryByRole('button', { name: /Recent/ })).not.toBeInTheDocument();
     expect(screen.queryByText('Rojda liked your poem')).not.toBeInTheDocument();
   });
@@ -347,7 +333,7 @@ describe('SocialRail', () => {
     signIn();
     railFetch([rail()]);
     show();
-    // finding people is Search's job now
+    // Finding people is Search's job.
     expect(await screen.findByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/search');
   });
 
@@ -356,8 +342,7 @@ describe('SocialRail', () => {
     railFetch([rail({ groups: [{ id: 'g7', name: 'Amedspor', memberCount: 12, unread: 0 }] })]);
     show();
 
-    // it linked to /app/messages with no id, which lands on the list and leaves
-    // you to find the group you had just named
+    // The link names the group, so it opens that group rather than the list.
     const row = await screen.findByRole('link', { name: /Amedspor/ });
     expect(row).toHaveAttribute('href', '/app/messages?group=g7');
   });

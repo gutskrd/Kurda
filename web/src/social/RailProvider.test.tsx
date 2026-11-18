@@ -11,7 +11,7 @@ afterEach(() => {
 
 const signIn = () => localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
 
-/** Count how often the rail and the invites are asked for. */
+/** Counts how often the rail and the invites are fetched. */
 function serve() {
   const asked = { social: 0, invites: 0 };
   vi.stubGlobal(
@@ -42,7 +42,7 @@ describe('the rail and the invites, held once for the whole app', () => {
   it('lets a shell’s own providers stand aside for the ones above the routes', async () => {
     signIn();
     const asked = serve();
-    // as App.tsx has them above the routes, and a shell (AppLayout, FocusLayout) has them round itself
+    // As App.tsx has them above the routes, with a shell (AppLayout, FocusLayout) wrapping itself in them too.
     renderApp(
       <RailProvider>
         <PlayProvider>
@@ -55,7 +55,7 @@ describe('the rail and the invites, held once for the whole app', () => {
       </RailProvider>,
     );
     await waitFor(() => expect(screen.getByTestId('purse')).toHaveTextContent('120 / invites read'));
-    // one of each, not one per provider: the inner ones made no request and hold no state of their own
+    // One of each, not one per provider: the inner ones make no requests and hold no state.
     expect(asked.social).toBe(1);
     expect(asked.invites).toBe(1);
   });
@@ -76,7 +76,7 @@ describe('the rail and the invites, held once for the whole app', () => {
 describe('the logo’s entrance', () => {
   it('is made once in a tab: a bar drawn again later has a logo that is simply there', () => {
     const first = renderApp(<Brand />);
-    // whichever bar was first in this file's tab has had the entrance; from then on none does
+    // The first bar in this file's tab had the entrance; none does after.
     first.unmount();
     renderApp(<Brand />);
     expect(screen.getByRole('link', { name: /Hevalo/ })).not.toHaveClass('is-arriving');
