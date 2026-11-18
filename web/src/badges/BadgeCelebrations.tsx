@@ -13,7 +13,7 @@ import { badgeShare } from '../share/winText';
 import { Medal } from './parts';
 
 /** One unlock waiting to be celebrated. */
-export interface Unlock {
+interface Unlock {
   key: string;
   tier: number;
   tierKey: BadgeTierKey | null;
@@ -21,19 +21,9 @@ export interface Unlock {
 }
 
 /**
- * The badge celebration, anywhere in the app (contract 4 §B2, §U).
- *
- * An unlock arrives as `badge_unlocked` while the app is open; the ones that
- * arrived while it was closed are asked for once on opening
- * (`GET /me/badges/unseen`). They are shown one at a time, oldest first, and
- * each is marked seen when it is put away — so a celebration someone closed
- * the tab on comes back next time, and one they saw never does.
- *
- * Never on top of a game being played, and never over a game's own result:
- * both hold the queue until they are done.
- *
- * Under the way on there is a quiet Share (share/ShareWin.tsx): the badge by
- * its name, said plainly, and the site's address. Nothing about who earned it.
+ * The badge celebration, anywhere in the app. Unlocks arrive live as `badge_unlocked`, and those missed while away
+ * come from `GET /me/badges/unseen` on opening. They show one at a time, oldest first, each marked seen only when
+ * closed. A game in play or a game's result holds the queue. The Share button names the badge, never the earner.
  */
 export function BadgeCelebrations(): React.JSX.Element | null {
   const { client, status } = useAuth();
@@ -46,7 +36,7 @@ export function BadgeCelebrations(): React.JSX.Element | null {
     setQueue((q) => {
       const next = [...q];
       for (const u of more) {
-        // the same badge again (a second tier while the first is showing): the higher one stands
+        // The same badge again, such as a second tier while the first shows: the higher tier stands.
         const at = next.findIndex((x) => x.key === u.key);
         if (at === -1) next.push(u);
         else if (u.tier > next[at]!.tier) next[at] = u;
@@ -81,7 +71,7 @@ export function BadgeCelebrations(): React.JSX.Element | null {
   if (status !== 'signedIn' || !current || held || playing) return null;
 
   const named = badgeNamed(t, current.key);
-  // a single badge has no ladder: it is drawn in gold, but it is not "Zêr"
+  // A single-tier badge is drawn in gold but is not called "Zêr".
   const tiered = (badgeDef(current.key)?.tiers.length ?? 1) > 1;
   const tierName = tiered && current.tierKey ? badgeTierNamed(t, current.tierKey).name : null;
   const title = named.name;
@@ -122,12 +112,8 @@ export function BadgeCelebrations(): React.JSX.Element | null {
   );
 }
 
-/**
- * The tier after the one just won, so a new goal is in view the moment the
- * last is reached: effort tends to drop once a badge is won, and picks up
- * again with the next in sight. Null for the last tier, or a single one.
- */
-export function nextTierLine(t: Translate, key: string, tier: number): string | null {
+/** The tier after the one just won, so the next goal is in view; null for the last tier or a single-tier badge. */
+function nextTierLine(t: Translate, key: string, tier: number): string | null {
   const def = badgeDef(key);
   if (!def || tier >= def.tiers.length) return null;
   const need = def.tiers[tier]!;

@@ -51,7 +51,7 @@ describe('the page a shared win’s link opens', () => {
     page('/win/lesson');
     expect(await screen.findByRole('heading', { level: 1, name: 'One more lesson done' })).toBeInTheDocument();
     expect(screen.getByText('A postcard from Hevalo')).toBeInTheDocument();
-    // the postcard is one picture with one name, and is drawn
+    // The postcard is drawn as one picture with one name.
     const card = screen.getByRole('img', { name: 'A postcard: Hamo and Hevalo on a hillside, and a bird flying off with a letter.' });
     expect(card.querySelector('svg')?.getAttribute('viewBox')).toBe('0 0 1200 630');
     expect(card.querySelectorAll('[role="img"]')).toHaveLength(0);

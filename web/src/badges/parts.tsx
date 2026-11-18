@@ -3,13 +3,10 @@ import { useT } from '../i18n/I18nProvider';
 import { BadgeMedal } from '../ranks/art';
 import { badgeNamed, badgeTierNamed, unitWord, withMeaning, type Translate } from '../ranks/names';
 
-/**
- * The pieces of a badge every screen draws the same way: its medallion with
- * an accessible name, its tier in words, and its progress in "7 / 30 days".
- */
+/** The parts of a badge every screen draws the same way: the medallion with its accessible name, tier and progress. */
 
-/** "Agir · Zêr", "Agir · not earned yet", or "Secret badge" — the medal's own label. */
-export function medalTitle(t: Translate, view: MedalView): string {
+/** The medal's label: "Agir · Zêr", "Agir · not earned yet" or "Secret badge". */
+function medalTitle(t: Translate, view: MedalView): string {
   if (view.hidden) return t('badges.secret');
   const name = withMeaning(t, badgeNamed(t, view.key));
   if (view.tier <= 0) return t('badges.medalLocked', { name });
@@ -20,7 +17,7 @@ export function medalTitle(t: Translate, view: MedalView): string {
 }
 
 /** Enough of a badge to draw it: a full `BadgeView`, or a profile's `ShowcaseBadge`. */
-export interface MedalView {
+interface MedalView {
   key: string;
   tier: number;
   hidden?: boolean;
@@ -52,11 +49,8 @@ export function Medal({
 }
 
 /**
- * The badge's own colour as a style, for what is drawn round it: the light
- * under it on its tile, the wash behind it on its sheet (`--badge`). The
- * colour is the art's (shared `badgeColour`): grey until it is earned, the
- * same violet for every secret not yet found. A badge this build has no art
- * for (the server knows one newer than the page) gets none.
+ * The badge's colour as `--badge`, for the light under its tile and the wash behind its sheet (shared `badgeColour`):
+ * grey until earned, violet for an unfound secret, and none for a badge this build has no art for.
  */
 export function badgeWash(view: MedalView): React.CSSProperties | undefined {
   if (!hasBadgeArt(view.key)) return undefined;
@@ -64,9 +58,8 @@ export function badgeWash(view: MedalView): React.CSSProperties | undefined {
 }
 
 /**
- * "7 / 30 days" towards the next tier, and past halfway what is left ("3 days to
- * go"), the smaller part being the one that keeps people going; null once every
- * tier is earned (or for a hidden secret).
+ * Progress towards the next tier, such as "7 / 30 days", or past halfway what is left ("3 days to go"); null once
+ * every tier is earned or for a hidden secret.
  */
 export function progressText(t: Translate, view: BadgeView): string | null {
   if (view.hidden || view.next === null) return null;
@@ -88,7 +81,7 @@ export function tierClass(view: Pick<BadgeView, 'tierKey' | 'tier' | 'hidden'>):
   return view.tier > 0 && view.tierKey ? `metal-${view.tierKey}` : 'is-locked';
 }
 
-/** The tier pips under a tile: as many filled as earned, so the tier is never only a colour. */
+/** The tier pips under a tile, as many filled as earned, so the tier is never shown by colour alone. */
 export function TierPips({ tier, count }: { tier: number; count: number }): React.JSX.Element | null {
   if (count <= 1) return null;
   return (

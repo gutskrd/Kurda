@@ -14,11 +14,8 @@ import type { WordleGame, WordleGuessRow } from '../lib/types';
 import { badgeShare, leagueShare, lessonShare, siteUrl, streakShare, wordGameShare } from './winText';
 
 /*
- * What each win says when it is shared, word for word: the catalogue's line
- * ended on its mark, and the win's own address on the site, which is drawn
- * as its postcard wherever it is pasted. The buttons that send these are
- * tested where they stand (learn/Results, badges, leagues, the word game's
- * page).
+ * What each win says when shared: the catalogue's line ending on its mark, then the win's address. The buttons that
+ * send these are tested where they are used.
  */
 
 const t = translator(en);
@@ -132,7 +129,7 @@ describe('every share', () => {
       expect(links).toHaveLength(1);
       expect(text.endsWith(links[0]!)).toBe(true);
       expect(links[0]!.startsWith(`${SITE}/win/`)).toBe(true);
-      // the address is one the site reads as a win, and it says a kind and at most one detail
+      // The site reads the address as a win, with a kind and at most one detail.
       expect(parseWinLink(new URL(links[0]!).pathname)).not.toBeNull();
       expect(new URL(links[0]!).search).toBe('');
       expect(text).not.toMatch(/\/users\/|\/profile|@/);
@@ -151,7 +148,7 @@ describe('every share', () => {
       expect(up, locale).toContain('Çem');
       expect(place, locale).toContain('Kanî');
       expect(place, locale).toContain('3');
-      // each language has its own words for these: none is left in English
+      // Each language has its own words for these, with none left in English.
       if (locale === 'en') continue;
       for (const key of ['share.win.lesson', 'share.win.lessonPlain', 'share.win.streak', 'share.win.badge', 'share.win.leagueUp', 'share.win.leaguePlace'] as const) {
         expect(catalogue[key], `${locale} ${key}`).not.toBe(en[key]);

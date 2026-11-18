@@ -61,7 +61,7 @@ describe('BadgesPage', () => {
     expect(within(habit).getByText('12 / 30 days')).toBeInTheDocument();
     expect(within(learning).getByText('4 / 10 lessons')).toBeInTheDocument();
     expect(screen.getByText('3 of 8 learning days')).toBeInTheDocument();
-    // a medal not earned yet is said to be so, never hidden
+    // A medal not earned yet is labelled as such, never hidden.
     expect(within(learning).getByRole('img', { name: 'Wane (Lessons), not earned yet' })).toBeInTheDocument();
     expect(within(habit).getByRole('img', { name: 'Agir (Fire), Sifir' })).toBeInTheDocument();
   });
@@ -71,7 +71,7 @@ describe('BadgesPage', () => {
     renderApp(<BadgesPage />);
 
     const secrets = (await screen.findByRole('heading', { name: new RegExp(en['badges.family.secret']) })).closest('section')!;
-    // every secret in the catalogue but the one found
+    // Every secret in the catalogue but the one found.
     expect(within(secrets).getAllByText('???')).toHaveLength(BADGES.filter((b) => b.secret).length - 1);
     expect(within(secrets).getByText('Tîrê rast')).toBeInTheDocument();
 
@@ -100,7 +100,7 @@ describe('BadgesPage', () => {
     const names = within(nearest)
       .getAllByRole('button')
       .map((b) => b.querySelector('.badge-tile-name')?.textContent);
-    // nine of ten lessons first, then most of the way to Roj's silver, then Agir; nothing untouched
+    // Closest to the next tier first; badges with no progress are left out.
     expect(names).toEqual(['Wane', 'Roj', 'Agir']);
     expect(within(nearest).getByText('1 lesson to go')).toBeInTheDocument();
     expect(within(nearest).getByText('20 days to go')).toBeInTheDocument();
