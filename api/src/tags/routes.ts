@@ -27,14 +27,14 @@ export function registerTagRoutes(app: FastifyInstance, tags = new TagService(ap
 
   /**
    * A user's main tag and displayed claimable tags. Claimed tags are things a person says about themselves, so they
-   * follow the profile's privacy (via the profile call's block, visibility and minor rules): a profile whose detail you
+   * follow the profile's privacy (its block, visibility and minor rules): a profile whose detail you
    * cannot see shows only its main tag.
    */
   app.get('/users/:id/tags', { schema: { params: z.object({ id: z.uuid() }) } }, async (req) => {
     const id = (req.params as { id: string }).id;
-    const profile = await social.profile(req.user?.id ?? null, id);
+    const access = await social.access(req.user?.id ?? null, id);
     const shown = await tags.profileTags(id);
-    return profile.private ? { ...shown, claimable: [] } : shown;
+    return access.private ? { ...shown, claimable: [] } : shown;
   });
 
   /** My own tags. */

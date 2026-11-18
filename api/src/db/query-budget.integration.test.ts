@@ -160,6 +160,29 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(six.count, six.statements.join('\n')).toBeLessThanOrEqual(8);
     });
 
+    it('a friend’s profile tabs cost the same for one post as for five, and never read the whole profile again', async () => {
+      const post = (author: string, n: number) =>
+        pool.query(
+          `INSERT INTO library_posts (author_id, author_role, type, title, body, status, published_at)
+           SELECT $1, 'user', 'poem', 'Poem ' || i, 'Lines ' || i, 'published', now() - i * interval '1 minute' FROM generate_series(1, $2::int) i`,
+          [author, n],
+        );
+      await post(ids.f1!, 1);
+      await post(ids.f2!, 5);
+      const shown = (x: { statements: readonly string[] }) => x.statements.join('\n');
+      const one = await steady('GET', `/users/${ids.f1}/activity?kind=posts`, 'me');
+      const five = await steady('GET', `/users/${ids.f2}/activity?kind=posts`, 'me');
+      expect(five.body.items).toHaveLength(5);
+      expect(five.count, shown(five)).toBe(one.count);
+      // the session read, who may see it and where you stand, then the posts with their authors, engagement and pictures
+      expect(five.count, shown(five)).toBeLessThanOrEqual(7);
+      const friends = await steady('GET', `/users/${ids.f2}/friends`, 'me');
+      expect(friends.body.friends.length).toBeGreaterThan(0);
+      // the session read, who may see it and where you stand, and the list
+      expect(friends.count, shown(friends)).toBeLessThanOrEqual(4);
+      for (const tab of [five, friends]) expect(shown(tab)).not.toMatch(/FROM game_ratings|badge_showcase/);
+    });
+
     it('the heartbeat is the session read and one statement', async () => {
       const beat = await steady('POST', '/me/heartbeat', 'me');
       expect(beat.count, beat.statements.join('\n')).toBeLessThanOrEqual(2);

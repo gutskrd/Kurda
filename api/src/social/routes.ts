@@ -64,7 +64,7 @@ export function registerSocialRoutes(
   );
 
   /**
-   * Who this person is friends with. The profile call's privacy rules are reused (blocks and visibility), so a profile
+   * Who this person is friends with. The profile's privacy rules are reused (blocks and visibility), so a profile
    * whose detail you may not see has no friend list either, and the list never names a minor to a non-friend
    * (FriendService.list).
    */
@@ -82,8 +82,7 @@ export function registerSocialRoutes(
     async (req) => {
       const { id } = req.params as { id: string };
       const { limit, offset } = req.query as { limit?: number; offset?: number };
-      const profile = await social.profile(req.user?.id ?? null, id);
-      if (profile.private) return { friends: [], total: 0 };
+      if ((await social.access(req.user?.id ?? null, id)).private) return { friends: [], total: 0 };
       return friends.list(id, publicUrl, limit, offset, req.user?.id ?? null);
     },
   );
@@ -112,14 +111,13 @@ export function registerSocialRoutes(
        */
       const nothing = { entries: [] as ActivityEntry[], items: [] as FeedItem[] };
 
-      // The profile call enforces privacy and blocks, reused so the rules cannot drift.
+      // The profile's own rules for privacy and blocks, shared so they cannot drift.
       const viewerId = req.user?.id ?? null;
-      const profile = await social.profile(viewerId, id);
-      if (profile.private) return nothing;
+      const access = await social.access(viewerId, id);
+      if (access.private) return nothing;
 
       // Hiding a section hides it from others, not from the owner, whose profile marks it hidden.
-      const visible = await activity.sections(id);
-      if (!visible[kind] && viewerId !== id) return nothing;
+      if (!access.sections[kind] && viewerId !== id) return nothing;
 
       if (kind === 'games') return { ...nothing, entries: await activity.games(id, limit, offset) };
 
