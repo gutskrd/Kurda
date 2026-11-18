@@ -25,7 +25,8 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { backFromPage, navigation, refocus } from '../play/testing/navigation';
 import { TAB_REUSE_MS } from '../navigation/tabFocusLoad';
 import { LearnScreen } from './LearnScreen';
-import { DailyRewardCard } from '../rewards/DailyRewardCard';
+import { DailyCard } from '../daily/DailyCard';
+import { TODAY_PATH, fourDayView, todayView } from '../daily/testing/today';
 import { LEARN_VIEW_KEY } from './useLearnView';
 import { onHaptic } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
@@ -104,6 +105,7 @@ function client(
     'GET /courses/c1/map': ok(MAP),
     'GET /me/daily-goal': ok({ goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false }),
     'GET /me': ok({ user: { streak } }),
+    [TODAY_PATH]: ok(todayView({ streak })),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /practice/due': ok(due),
     // The library asks for one variety; with nothing chosen and an English interface that is Kurmancî.
@@ -196,10 +198,10 @@ describe('Learn', () => {
     fireEvent.click(screen.getByRole('button', { name: '1,240 Zêr. Open the shop' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Shop');
 
-    // The streak's whole story: the run, and the numbers that never go down.
+    // The daily view: the run with its fire, and the longest one, which never goes down.
     fireEvent.click(streak);
-    expect(await screen.findByText('Longest streak')).toBeTruthy();
-    expect(screen.getByText('31')).toBeTruthy();
+    expect(await screen.findByLabelText('6 day streak')).toBeTruthy();
+    expect(screen.getByLabelText('Longest streak: 9')).toBeTruthy();
     fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
 
     // The day's goal, where it can be changed.
@@ -421,20 +423,21 @@ describe('Learn', () => {
     let zer = 1240;
     client(STREAK, undefined, {
       'GET /me/wallet': () => ok({ balances: { zer, gems: 3 } }),
-      'GET /rewards/daily': ok({ canClaim: true, claimableDay: 3, reward: 15, schedule: [5, 10, 15, 20, 25, 30, 50], alreadyClaimedToday: false, cycleDay: 3, learnedToday: true }),
+      [TODAY_PATH]: ok(fourDayView({ daily: { canClaim: true, learnedToday: true, claimableDay: 3, reward: 15, cycleDay: 2 } })),
       'POST /rewards/daily/claim': () => {
         zer += 15;
-        return ok({ reward: 15 });
+        return ok({ reward: 15, cycleDay: 3 });
       },
     });
     renderWithProviders(
       <>
         <LearnScreen />
-        <DailyRewardCard />
+        <DailyCard />
       </>,
     );
     expect(await screen.findByRole('button', { name: '1,240 Zêr. Open the shop' })).toBeTruthy();
-    fireEvent.click(await screen.findByRole('button', { name: 'Claim 15 Zêr' }));
+    fireEvent.click(await screen.findByRole('button', { name: '4 days. +15 Zêr to claim today' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Claim' }));
     expect(await screen.findByRole('button', { name: '1,255 Zêr. Open the shop' })).toBeTruthy();
   });
 });

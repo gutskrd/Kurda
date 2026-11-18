@@ -18,6 +18,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { UnreadProvider } from '../messages/unread';
 import { ProfileScreen } from './ProfileScreen';
+import { TODAY_PATH, todayView } from '../daily/testing/today';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
@@ -48,6 +49,7 @@ function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmanc�
     // The badge count comes from the public profile; `/me` does not send one.
     'GET /users/u1': ok({ ranks: [], league, badges: [], frameSku: null, achievements: 4 }),
     'GET /users/u1/activity': ok({ items: [] }),
+    [TODAY_PATH]: ok(todayView({ streak: { current: 6, longest: 14, freezes: 1, daysLearned: 31 } })),
   });
   renderWithProviders(
     <UnreadProvider>
@@ -96,15 +98,16 @@ describe('your profile', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Shop');
   });
 
-  it('opens the friends from their count, the badges from theirs, and the streak’s whole story from the streak', async () => {
+  it('opens the friends from their count, the badges from theirs, and the daily view from the streak', async () => {
     open();
     fireEvent.click(await screen.findByRole('button', { name: '23 Friends' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Friends');
     fireEvent.click(await screen.findByRole('button', { name: '4 Badges' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Badges');
     fireEvent.click(await screen.findByRole('button', { name: 'Streak, 6 days' }));
-    // The streak's sheet, with its own fire and numbers.
-    expect((await screen.findAllByText('Longest streak')).length).toBeGreaterThan(1);
+    // The daily view, with the streak by its fire and the longest one.
+    expect(await screen.findByLabelText('6 day streak')).toBeTruthy();
+    expect(screen.getByLabelText('Longest streak: 14')).toBeTruthy();
   });
 
   it('keeps editing and sharing side by side under your words, ahead of the numbers, with the way to more friends beside them', async () => {
