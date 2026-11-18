@@ -23,8 +23,6 @@ import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
 import { leaveThisWeek, returnThisWeek } from '../leagues/service.js';
 
 export { USERNAME_CHANGE_COOLDOWN_DAYS };
-/** Profile photos are small; cap tighter than the global media limit (KUR-177). */
-export const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
 /** Timezone can be changed at most once per week (KUR-031 anti time-travel). */
 export const TIMEZONE_CHANGE_COOLDOWN_DAYS = 7;
 

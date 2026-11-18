@@ -1,9 +1,6 @@
 import type pg from 'pg';
 import {
   MAX_OPEN_DRAFTS,
-  POST_BODY_MAX,
-  POST_TITLE_MAX,
-  WRITTEN_POST_TYPES,
   cleanPostText,
   derivePostType,
   limitDetails,
@@ -35,17 +32,12 @@ export { loadAuthors, unknownAuthor, type Author };
  */
 export type PostType = WrittenPostType;
 
-export const POST_TYPES: readonly PostType[] = WRITTEN_POST_TYPES;
-
 /** Only a gotin may go without a name; the database enforces this too. */
 export function titleRequired(type: PostType): boolean {
   return titleRequiredFor(type);
 }
 export type AuthorRole = 'user' | 'admin';
 export type PostStatus = 'draft' | 'published' | 'removed';
-
-export const MAX_TITLE_LEN = POST_TITLE_MAX;
-export const MAX_BODY_LEN = POST_BODY_MAX;
 
 /**
  * Unfinished server drafts one person may keep at once (@kurda/shared, where

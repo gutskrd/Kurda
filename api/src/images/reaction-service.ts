@@ -12,10 +12,6 @@ import { notBlockedSql } from '../friends/blocked.js';
 export const REACTIONS = ['love', 'peace', 'like', 'laugh', 'wow', 'sad', 'angry'] as const;
 export type Reaction = (typeof REACTIONS)[number];
 
-export function isReaction(v: string): v is Reaction {
-  return (REACTIONS as readonly string[]).includes(v);
-}
-
 export interface ReactionSummary {
   /** Count per emoji (only non-zero entries). */
   counts: Partial<Record<Reaction, number>>;

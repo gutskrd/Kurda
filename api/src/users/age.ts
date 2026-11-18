@@ -114,15 +114,6 @@ export function writtenForSql(authorIdExpr: string, viewer: string): string {
        AND NOT ${areFriendsSql('wa.id', viewer)})`;
 }
 
-/** Known to be 13–17 right now, looked up by id. False for an unknown id. */
-export async function isMinorUser(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<boolean> {
-  const r = await executor.query<{ minor: boolean }>(
-    `SELECT ${minorSql('u')} AS minor FROM users u WHERE u.id = $1`,
-    [userId],
-  );
-  return r.rows[0]?.minor ?? false;
-}
-
 /**
  * Not known to be an adult right now (a minor, or no birth month on record),
  * looked up by id. True for an unknown id too: the safe direction to fail in.

@@ -1,4 +1,4 @@
-import { USERNAME_MAX, USERNAME_MIN, checkUsername, refusedChars, type UsernameCheck, type UsernameReason, type UsernameRefusal } from '@kurda/shared';
+import { USERNAME_MAX, USERNAME_MIN, checkUsername, refusedChars, type UsernameReason, type UsernameRefusal } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 
 /**
@@ -19,7 +19,6 @@ import { AppError } from '../plugins/errors.js';
 export { USERNAME_MAX, USERNAME_MIN };
 
 export type UsernameError = UsernameReason;
-export type UsernameResult = UsernameCheck;
 
 /** The full rule, and the canonical name: NFC, trimmed, lowercase. */
 export const validateUsername = checkUsername;

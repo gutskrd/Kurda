@@ -24,8 +24,6 @@ export const EVENT_SCHEMAS = {
 
 export type EventType = keyof typeof EVENT_SCHEMAS;
 
-export const EVENT_TYPES = Object.keys(EVENT_SCHEMAS) as EventType[];
-
 export function isKnownEvent(type: string): type is EventType {
   return Object.prototype.hasOwnProperty.call(EVENT_SCHEMAS, type);
 }
