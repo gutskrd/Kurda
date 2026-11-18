@@ -24,7 +24,7 @@ import { Meaning } from './Meaning';
 import { Sound } from './Sound';
 
 /** A question's prompt, with the character who asks it out loud on a stage beside it, reacting to the answer. */
-function Asked({ clips, reaction, children }: { clips: SpokenClip[]; reaction: CharacterReaction | null; children: React.ReactNode }): React.JSX.Element {
+export function Asked({ clips, reaction, children }: { clips: SpokenClip[]; reaction: CharacterReaction | null; children: React.ReactNode }): React.JSX.Element {
   if (clips.length === 0) return <>{children}</>;
   return (
     <CharacterStage clips={clips} height={STAGE.card} reaction={reaction} className="ab-q-stage">
@@ -46,7 +46,7 @@ const POSITION: Record<'start' | 'middle' | 'end', MessageKey> = {
 };
 
 /** How many questions later a missed one comes back, so it is recalled rather than still in mind. */
-const COMEBACK = 3;
+export const COMEBACK = 3;
 
 function Like({ like }: { like: SoundLikeness }): React.JSX.Element {
   return (
