@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Pressable, ReachGroup } from './Pressable';
 import { PressableScale } from './MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -13,6 +13,15 @@ type EmptyArt = 'empty' | 'offline';
 
 /** How tall the picture is drawn, in points. */
 const ART_HEIGHT = 132;
+
+/** The picture alone, decorative and hidden from screen readers: for a screen that lays out its own words (the crash screen). */
+export function EmptyPicture({ art = 'empty', style, testID }: { art?: EmptyArt; style?: StyleProp<ViewStyle>; testID?: string }): React.JSX.Element {
+  return (
+    <View style={style} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={testID}>
+      <HevaloPeek size={ART_HEIGHT} pop={false} still brows={art === 'offline' ? 'one' : undefined} />
+    </View>
+  );
+}
 
 /**
  * What a screen says when it has nothing to show: a drawing, the message as a heading, an optional line saying what
@@ -41,9 +50,7 @@ export function EmptyState({
   const { colors } = useTheme();
   return (
     <View style={styles.wrap}>
-      <View style={styles.art} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <HevaloPeek size={ART_HEIGHT} pop={false} still brows={art === 'offline' ? 'one' : undefined} />
-      </View>
+      <EmptyPicture art={art} style={styles.art} />
 
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       {body ? <Text style={[styles.body, { color: colors.textSecondary }]}>{body}</Text> : null}
