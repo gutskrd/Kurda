@@ -26,7 +26,7 @@ import type { DmMessage } from '../chat/service.js';
 import { groupRoom, type GroupChatService, type GroupMessage } from '../groups/chat-service.js';
 import type { Notification } from '../push/service.js';
 import { notKnownAdultSql } from '../users/age.js';
-import { batchChat, giftCards, type BatchChat, type CardViewer } from './cards.js';
+import { batchChat, giftCards, giftCardsForEach, type BatchChat, type CardViewer } from './cards.js';
 
 export type SkipReason = SendGiftResult['skipped'][number]['reason'];
 
@@ -62,7 +62,7 @@ export interface GiftDeps {
   friends: FriendService;
   groupChat: GroupChatService;
   realtime: GiftRealtime;
-  inbox?: { record(userId: string, notification: Notification): Promise<void> };
+  inbox?: { recordAll(items: ReadonlyArray<{ userId: string; notification: Notification }>): Promise<void> };
   /** The escalation mute, which applies to a gift as to a message. */
   moderation?: { isChatMuted(userId: string): Promise<boolean> };
   /** The badges, told a gift was given (Diyarî). */
@@ -95,6 +95,12 @@ interface Settled {
   given: Array<{ toId: string; giftId: string }>;
   skipped: SendGiftResult['skipped'];
   posted: Posted | null;
+}
+
+/** Who sent a batch, and its card as each person told of it sees it: the sender, the group room (null), each recipient. */
+interface GiftViews {
+  sender: Sender;
+  cards: Map<string | null, GiftCard | null>;
 }
 
 /**
@@ -158,17 +164,19 @@ export class GiftService {
     const settled = await this.settle(input, toIds, outsideGroup, now);
 
     // Notify straight after the commit, before anything else can fail: a retry replays the gift without notifying, so a
-    // failure first would leave friends never told of a present that is theirs.
+    // failure first would leave friends never told of a present that is theirs. What they are told is read once and
+    // serves the sender's own message too.
+    let views: GiftViews | null = null;
     if (settled.given.length > 0) {
-      await this.deliver(settled, input).catch((err) =>
-        this.deps.log?.warn({ err, batchId: settled.batchId }, 'a gift was given but telling people failed'),
-      );
+      await this.views(settled, input)
+        .then((read) => this.deliver(settled, input, (views = read)))
+        .catch((err) => this.deps.log?.warn({ err, batchId: settled.batchId }, 'a gift was given but telling people failed'));
       // the giving badge counts it from the gifts table; best-effort
       await this.deps.badges?.onGiftSent(fromId).catch(() => undefined);
     }
 
     const balance = await this.deps.wallet.balances(fromId);
-    const message = settled.posted ? await this.senderView(settled, input) : null;
+    const message = settled.posted ? this.senderView(settled, input, views ?? (await this.views(settled, input))) : null;
 
     return {
       batchId: settled.batchId,
@@ -437,12 +445,19 @@ export class GiftService {
     return chat === 'group' ? { ...base, deleted: false } : { ...base, deliveredAt: null, readAt: null };
   }
 
-  private async senderView(settled: Settled, input: SendGiftInput): Promise<DmMessage | GroupMessage> {
+  /**
+   * Who sent a batch and its card for each person told of it, in one read of the cards: in a direct message the two
+   * are the pair, and in a group the sender and every recipient are members, who see one another.
+   */
+  private async views(settled: Settled, input: SendGiftInput): Promise<GiftViews> {
+    const viewers = [input.fromId, null, ...settled.given.map((g) => g.toId)];
+    const [sender, cards] = await Promise.all([this.sender(input.fromId), giftCardsForEach(this.pool, settled.batchId, viewers, this.publicUrl)]);
+    return { sender, cards };
+  }
+
+  private senderView(settled: Settled, input: SendGiftInput, { sender, cards }: GiftViews): DmMessage | GroupMessage {
     const inGroup = input.chat?.kind === 'group';
-    const sender = await this.sender(input.fromId);
-    // the sender posted it, so in a group they are a member, and members see one another
-    const card = await this.card(settled.batchId, { id: input.fromId, seesEveryone: true });
-    return this.message(settled.posted!, input.fromId, sender, card, inGroup ? 'group' : 'dm');
+    return this.message(settled.posted!, input.fromId, sender, cards.get(input.fromId) ?? null, inGroup ? 'group' : 'dm');
   }
 
   /**
@@ -450,16 +465,14 @@ export class GiftService {
    * notification. The card published to a group room is nobody's in particular; names on it are safe for every
    * member, since recipients are members and members see one another.
    */
-  private async deliver(settled: Settled, input: SendGiftInput): Promise<void> {
+  private async deliver(settled: Settled, input: SendGiftInput, { sender, cards }: GiftViews): Promise<void> {
     const { fromId, chat } = input;
     const { realtime, inbox } = this.deps;
-    const sender = await this.sender(fromId);
     const warn = (what: string) => (err: unknown) => this.deps.log?.warn({ err, batchId: settled.batchId }, what);
     const inGroup = chat?.kind === 'group';
 
     if (settled.posted && chat?.kind === 'group') {
-      const roomCard = await this.card(settled.batchId, { id: null, seesEveryone: true });
-      const message = this.message(settled.posted, fromId, sender, roomCard, 'group');
+      const message = this.message(settled.posted, fromId, sender, cards.get(null) ?? null, 'group');
       // A channel message like any other, so it is kept from members with a block between them and the sender.
       await this.deps.groupChat
         .hiddenFrom(chat.groupId, fromId)
@@ -474,43 +487,52 @@ export class GiftService {
         .catch(warn('gift message not published to the group'));
     }
 
-    for (const { toId, giftId } of settled.given) {
-      // In a direct message the two are the pair; in a group every recipient is a member, and members see one another.
-      const card = await this.card(settled.batchId, { id: toId, seesEveryone: true });
-      if (!card) continue;
-      if (settled.posted && !inGroup) {
-        const message = this.message(settled.posted, fromId, sender, card, 'dm');
-        await realtime
-          .notifyUser(toId, { type: 'dm', from: fromId, fromUsername: sender.username, message })
-          .catch(warn('gift message not pushed'));
-      }
-      const where: GiftChatRef = chat?.kind === 'group' ? chat : { kind: 'dm', userId: fromId };
-      const event: GiftUserEvent = {
-        type: 'gift_received',
-        giftId,
-        batchId: settled.batchId,
-        from: { name: sender.username, avatarUrl: sender.avatarUrl },
-        card,
-        chat: where,
-      };
-      await realtime.notifyUser(toId, event).catch(warn('gift_received not pushed'));
-      // English for the notification list; the apps write their own words from `data`
-      await inbox
-        ?.record(toId, {
-          category: 'friends',
-          title: 'You have a gift',
-          body: `${sender.username || 'Someone'} sent you ${settled.item.name}.`,
-          data: {
-            kind: 'gift',
-            giftId,
-            batchId: settled.batchId,
-            chat: where.kind === 'group' ? `group:${where.groupId}` : `dm:${fromId}`,
-            sku: settled.item.sku,
-            fromUserId: fromId,
+    const where: GiftChatRef = chat?.kind === 'group' ? chat : { kind: 'dm', userId: fromId };
+    const told = settled.given.flatMap(({ toId, giftId }) => {
+      const card = cards.get(toId) ?? null;
+      return card ? [{ toId, giftId, card }] : [];
+    });
+    // Each recipient's events in order, the recipients side by side.
+    await Promise.all(
+      told.map(async ({ toId, giftId, card }) => {
+        if (settled.posted && !inGroup) {
+          const message = this.message(settled.posted, fromId, sender, card, 'dm');
+          await realtime
+            .notifyUser(toId, { type: 'dm', from: fromId, fromUsername: sender.username, message })
+            .catch(warn('gift message not pushed'));
+        }
+        const event: GiftUserEvent = {
+          type: 'gift_received',
+          giftId,
+          batchId: settled.batchId,
+          from: { name: sender.username, avatarUrl: sender.avatarUrl },
+          card,
+          chat: where,
+        };
+        await realtime.notifyUser(toId, event).catch(warn('gift_received not pushed'));
+      }),
+    );
+    // English for the notification list; the apps write their own words from `data`
+    await inbox
+      ?.recordAll(
+        told.map(({ toId, giftId }) => ({
+          userId: toId,
+          notification: {
+            category: 'friends' as const,
+            title: 'You have a gift',
+            body: `${sender.username || 'Someone'} sent you ${settled.item.name}.`,
+            data: {
+              kind: 'gift',
+              giftId,
+              batchId: settled.batchId,
+              chat: where.kind === 'group' ? `group:${where.groupId}` : `dm:${fromId}`,
+              sku: settled.item.sku,
+              fromUserId: fromId,
+            },
           },
-        })
-        .catch(warn('gift notification not recorded'));
-    }
+        })),
+      )
+      .catch(warn('gift notification not recorded'));
   }
 
   /**

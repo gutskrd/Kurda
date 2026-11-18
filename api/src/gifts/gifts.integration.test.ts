@@ -15,6 +15,7 @@ import { canonicalPair } from '../friends/pair.js';
 import { SanctionsService } from '../moderation/sanctions-service.js';
 import { inTransaction } from '../moderation/tx.js';
 import { OFFENSE_PERM } from '../moderation/service.js';
+import { queriesDuring } from '../test/query-count.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -948,8 +949,15 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
 
     it('posts one message for every friend it reaches, and tells each of them', async () => {
       const before = await zer(gus);
-      const res = await giftGroup(gus, gid, [hal, ivy], POWER);
+      const run = await queriesDuring(app.db, () => giftGroup(gus, gid, [hal, ivy], POWER));
+      const res = run.result;
       expect(res.statusCode).toBe(200);
+      // The card is read once for the room, the sender and both recipients, and both are told in one statement, before
+      // the giving badge is counted.
+      const counting = run.statements.findIndex((sql) => sql.includes('badge_users'));
+      const telling = counting < 0 ? run.statements : run.statements.slice(0, counting);
+      expect(run.statements.filter((sql) => sql.includes('FROM gifts g JOIN shop_items i'))).toHaveLength(1);
+      expect(telling.filter((sql) => sql.startsWith('INSERT INTO notifications'))).toHaveLength(1);
       const { batchId, sent, message } = res.json();
       expect(sent).toEqual([hal.id, ivy.id]);
       expect(await zer(gus)).toBe(before - 40);

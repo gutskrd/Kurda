@@ -78,6 +78,11 @@ export class InboxService {
     await recordNotifications(this.pool, [{ userId, notification }]);
   }
 
+  /** `record` for several people at once, in one statement. */
+  async recordAll(items: ReadonlyArray<{ userId: string; notification: Notification }>): Promise<void> {
+    await recordNotifications(this.pool, items);
+  }
+
   /** The last 50 notifications, newest first. */
   async list(userId: string, limit = INBOX_LIMIT): Promise<InboxItem[]> {
     const res = await this.pool.query<InboxRow>(
