@@ -4289,7 +4289,7 @@ export const fr: Catalogue = {
   'events.claimed': 'Récupéré',
   'events.claimFailed': 'Cette récompense ne peut pas être récupérée pour le moment.',
   'events.quest.earnXp': 'Gagner de l’XP',
-  'events.quest.winGames': 'Gagner des parties',
+  'events.quest.storyQuizzes': 'Terminer des parties d’histoire',
   'events.quest.completeLessons': 'Terminer des leçons',
   'quests.chestReady': 'Son coffre est prêt à être ouvert',
   'quests.chestOpened': 'Son coffre est ouvert',

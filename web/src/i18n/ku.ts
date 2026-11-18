@@ -4297,7 +4297,7 @@ export const ku: Catalogue = {
   'events.claimed': 'Hat stendin',
   'events.claimFailed': 'Ev xelat niha nayê wergirtin.',
   'events.quest.earnXp': 'XP bi dest bixe',
-  'events.quest.winGames': 'Lîstikan bi ser bixe',
+  'events.quest.storyQuizzes': 'Lîstikên çîrokê biqedîne',
   'events.quest.completeLessons': 'Waneyan biqedîne',
   'quests.chestReady': 'Qutiya wê amade ye ku vebe',
   'quests.chestOpened': 'Qutiya wê vebûye',

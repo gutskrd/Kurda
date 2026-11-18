@@ -3,7 +3,8 @@
  * is, whether it can be claimed, the order to list them in, and what it pays.
  */
 
-export type EventQuestType = 'earn_xp' | 'win_games' | 'complete_lessons';
+/** The kinds the server counts (api/src/events/quest-logic.ts); it leaves out any other, so none arrives unwinnable. */
+export type EventQuestType = 'earn_xp' | 'story_quizzes' | 'complete_lessons';
 
 export interface EventQuestReward {
   zer?: number;

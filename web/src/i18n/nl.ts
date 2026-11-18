@@ -4289,7 +4289,7 @@ export const nl: Catalogue = {
   'events.claimed': 'Opgehaald',
   'events.claimFailed': 'Deze beloning kan nu niet worden opgehaald.',
   'events.quest.earnXp': 'XP verdienen',
-  'events.quest.winGames': 'Spellen winnen',
+  'events.quest.storyQuizzes': 'Verhaalspellen afronden',
   'events.quest.completeLessons': 'Lessen afronden',
   'quests.chestReady': 'De kist kan open',
   'quests.chestOpened': 'De kist is open',

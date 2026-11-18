@@ -4290,7 +4290,7 @@ export const de: Catalogue = {
   'events.claimed': 'Abgeholt',
   'events.claimFailed': 'Diese Belohnung kann gerade nicht abgeholt werden.',
   'events.quest.earnXp': 'XP verdienen',
-  'events.quest.winGames': 'Spiele gewinnen',
+  'events.quest.storyQuizzes': 'Geschichtenspiele abschließen',
   'events.quest.completeLessons': 'Lektionen abschließen',
   'quests.chestReady': 'Die Truhe dazu kann geöffnet werden',
   'quests.chestOpened': 'Die Truhe dazu ist offen',

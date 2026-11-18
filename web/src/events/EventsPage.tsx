@@ -28,7 +28,7 @@ import './events.css';
 /** The app's words for a kind of quest, where its author gave it no title in the reader's language. */
 const KIND_TITLE: Record<EventQuestType, MessageKey> = {
   earn_xp: 'events.quest.earnXp',
-  win_games: 'events.quest.winGames',
+  story_quizzes: 'events.quest.storyQuizzes',
   complete_lessons: 'events.quest.completeLessons',
 };
 

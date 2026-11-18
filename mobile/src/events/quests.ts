@@ -32,7 +32,7 @@ export const rewardParts = eventRewardParts;
 /** A key per quest type; the server may send its own title instead. */
 const DEFAULT_TITLE: Record<QuestType, TranslationKey> = {
   earn_xp: 'events.quest.earnXp',
-  win_games: 'events.quest.winGames',
+  story_quizzes: 'events.quest.storyQuizzes',
   complete_lessons: 'events.quest.completeLessons',
 };
 

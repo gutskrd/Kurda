@@ -4388,7 +4388,7 @@ export const en = {
   'events.claimed': 'Claimed',
   'events.claimFailed': 'This reward can’t be claimed right now.',
   'events.quest.earnXp': 'Earn XP',
-  'events.quest.winGames': 'Win games',
+  'events.quest.storyQuizzes': 'Finish story games',
   'events.quest.completeLessons': 'Complete lessons',
   'quests.chestReady': 'Its chest is ready to open',
   'quests.chestOpened': 'Its chest is open',

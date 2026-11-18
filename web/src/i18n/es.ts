@@ -4287,7 +4287,7 @@ export const es: Catalogue = {
   'events.claimed': 'Reclamado',
   'events.claimFailed': 'Esta recompensa no se puede reclamar ahora mismo.',
   'events.quest.earnXp': 'Gana XP',
-  'events.quest.winGames': 'Gana partidas',
+  'events.quest.storyQuizzes': 'Termina partidas de historia',
   'events.quest.completeLessons': 'Completa lecciones',
   'quests.chestReady': 'Su cofre está listo para abrir',
   'quests.chestOpened': 'Su cofre está abierto',

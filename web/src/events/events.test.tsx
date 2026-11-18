@@ -29,7 +29,7 @@ const newroz: EventQuests = {
   claimDeadline: '2099-03-31T00:00:00.000Z',
   quests: [
     quest({ id: 'done', type: 'complete_lessons', target: 3, current: 3, complete: true, claimed: true, reward: { zer: 50 } }),
-    quest({ id: 'going', type: 'win_games', target: 5, current: 2, reward: { gems: 10 } }),
+    quest({ id: 'going', type: 'story_quizzes', target: 5, current: 2, reward: { gems: 10 } }),
     quest({ id: 'ready', titleEn: 'Light the fire', target: 100, current: 100, complete: true, claimable: true, reward: { zer: 200, gems: 30 } }),
   ],
 };
@@ -65,11 +65,11 @@ describe('the events page', () => {
     const day = new Date(newroz.endsAt).toLocaleDateString('en', { day: 'numeric', month: 'long' });
     expect(within(event).getByText(`Ends ${day}`)).toBeInTheDocument();
     const rows = within(event).getAllByRole('listitem');
-    expect(rows.map((r) => r.querySelector('.event-quest-title')?.textContent)).toEqual(['Light the fire', 'Win games', 'Complete lessons']);
+    expect(rows.map((r) => r.querySelector('.event-quest-title')?.textContent)).toEqual(['Light the fire', 'Finish story games', 'Complete lessons']);
     expect(within(rows[0]!).getByRole('button', { name: 'Claim' })).toBeInTheDocument();
     // Each amount is read with its currency's name; the coin and the gem are pictures only.
     expect(rows[0]).toHaveTextContent(/Reward:.*200.*Zêr.*30.*Gems/);
-    expect(within(rows[1]!).getByRole('progressbar', { name: 'Win games' })).toHaveAttribute('aria-valuetext', '2 of 5');
+    expect(within(rows[1]!).getByRole('progressbar', { name: 'Finish story games' })).toHaveAttribute('aria-valuetext', '2 of 5');
     expect(within(rows[2]!).getByText('Claimed')).toBeInTheDocument();
   });
 

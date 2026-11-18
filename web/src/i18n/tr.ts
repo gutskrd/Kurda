@@ -4285,7 +4285,7 @@ export const tr: Catalogue = {
   'events.claimed': 'Alındı',
   'events.claimFailed': 'Bu ödül şu anda alınamıyor.',
   'events.quest.earnXp': 'XP kazan',
-  'events.quest.winGames': 'Oyun kazan',
+  'events.quest.storyQuizzes': 'Hikâye oyunlarını bitir',
   'events.quest.completeLessons': 'Dersleri tamamla',
   'quests.chestReady': 'Sandığı açılmaya hazır',
   'quests.chestOpened': 'Sandığı açıldı',

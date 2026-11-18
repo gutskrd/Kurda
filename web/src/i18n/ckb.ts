@@ -4289,7 +4289,7 @@ export const ckb: Catalogue = {
   'events.claimed': 'وەرگیرا',
   'events.claimFailed': 'ئەم خەڵاتە ئێستا ناتوانرێت وەربگیرێت.',
   'events.quest.earnXp': 'XP بەدەست بهێنە',
-  'events.quest.winGames': 'یارییەکان ببەرەوە',
+  'events.quest.storyQuizzes': 'یارییەکانی چیرۆک تەواو بکە',
   'events.quest.completeLessons': 'وانەکان تەواو بکە',
   'quests.chestReady': 'قوتووەکەی ئامادەیە بۆ کردنەوە',
   'quests.chestOpened': 'قوتووەکەی کراوەتەوە',

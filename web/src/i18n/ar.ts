@@ -4281,7 +4281,7 @@ export const ar: Catalogue = {
   'events.claimed': 'تم الاستلام',
   'events.claimFailed': 'لا يمكن استلام هذه المكافأة الآن.',
   'events.quest.earnXp': 'اكسب XP',
-  'events.quest.winGames': 'اربح مباريات',
+  'events.quest.storyQuizzes': 'أكمل ألعاب القصص',
   'events.quest.completeLessons': 'أكمل الدروس',
   'quests.chestReady': 'صندوقها جاهز للفتح',
   'quests.chestOpened': 'صندوقها مفتوح',
