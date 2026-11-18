@@ -16,11 +16,9 @@ import {
   streakReveal,
   streakWeek,
   weekStartsOn,
-  wordIn,
-  wordSet,
+  weekdayName,
   type StreakMood,
   type WeekDay,
-  type WeekDayState,
 } from '@kurda/shared';
 import { Fire } from '../components/Fire';
 import { DayMedalArt, StreakMedal } from '../ranks/art';
@@ -29,6 +27,7 @@ import { prefersReducedMotion, useCelebrationMoment } from '../lib/motion';
 import { playLessonSound } from '../lib/sounds';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { DAY_WORDS } from '../daily/WeekRow';
 import { FIRE_GREW, FIRE_NEXT, FIRE_STAGE_NAME } from './fireWords';
 import type { Streak } from './types';
 
@@ -179,14 +178,6 @@ const CHEERS: Record<StreakMood, MessageKey> = {
 /** The medal over the card's top edge, and a day's medal in the week. */
 const MEDAL = 132;
 const DAY_MEDAL = 38;
-
-const DAY_WORDS: Record<WeekDayState, MessageKey> = {
-  learned: 'lesson.streak.week.learned',
-  frozen: 'lesson.streak.week.frozen',
-  today: 'lesson.streak.week.today',
-  missed: 'lesson.streak.week.missed',
-  ahead: 'lesson.streak.week.ahead',
-};
 
 /** The easing between the medal's poses: in and out, as a weighted thing moves. */
 const POSE_EASING = 'cubic-bezier(0.37, 0, 0.63, 1)';
@@ -387,11 +378,9 @@ function WeekCell({ day, order }: { day: WeekDay; order: number }): React.JSX.El
   const t = useT();
   const locale = useLocale();
   const at = new Date(`${day.date}T00:00:00Z`);
-  // Browsers may lack Kurdish day names, so the course's own are used, as taught (Saturday first).
-  const kurdish = locale === 'ku' ? 'kmr' : locale === 'ckb' ? 'ckb' : null;
-  const full = kurdish ? wordIn(wordSet('days')[(day.weekday + 1) % 7]!, kurdish) : new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(at);
-  // Short, as a calendar heads its columns; the course's names have no short form, so their first letter.
-  const short = kurdish ? [...full][0]! : new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(at);
+  const full = weekdayName(day.weekday, locale);
+  // Short, as a calendar heads its columns; the course's Kurdish names have no short form, so their initial.
+  const short = locale === 'ku' || locale === 'ckb' ? weekdayName(day.weekday, locale, 'narrow') : new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(at);
   const words = day.isToday && day.state === 'learned' ? t('lesson.streak.week.learnedToday', { day: full }) : t(DAY_WORDS[day.state], { day: full });
   const medal = day.state === 'learned' || day.state === 'frozen' ? day.state : null;
   return (

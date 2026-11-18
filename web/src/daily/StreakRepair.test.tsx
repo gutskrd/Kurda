@@ -6,12 +6,14 @@ import userEvent from '@testing-library/user-event';
 import { preloadCatalogue } from '../i18n/catalogues';
 import { onLessonSound } from '../lib/sounds';
 import type { StreakSummary } from '../lib/types';
+import { todayView } from '../test/today';
 import { jsonResponse, renderApp } from '../test/utils';
-import { StreakSheet } from './StreakSheet';
+import { DailySheet } from './DailySheet';
+import { useToday } from './today';
 
 /*
- * Restoring an ended streak in the streak sheet, as on the phone: one sentence, one priced button, then the streak back
- * with the site's celebration. The server decides; the sheet sends an empty request and reads the answer.
+ * Restoring an ended streak in the daily view, as on the phone: one sentence, one priced button, then the streak back
+ * with the site's celebration. The server decides; the view sends an empty request and reads the answer.
  */
 
 /** The offer ends as the 12th begins: the last day is the 11th. */
@@ -36,8 +38,8 @@ interface Sent {
   body: string | null;
 }
 
-/** A fetch that answers the wallet and the restore, and keeps what was sent. */
-function api(routes: { gems?: () => number; repair?: () => Response }): Sent[] {
+/** A fetch that answers the daily view, the wallet and the restore, and keeps what was sent. */
+function api(routes: { gems?: () => number; repair?: () => Response; streak?: StreakSummary }): Sent[] {
   const sent: Sent[] = [];
   vi.stubGlobal(
     'fetch',
@@ -45,6 +47,7 @@ function api(routes: { gems?: () => number; repair?: () => Response }): Sent[] {
       const path = new URL(url, 'http://api.test').pathname;
       const method = init?.method ?? 'GET';
       sent.push({ method, path, body: typeof init?.body === 'string' ? init.body : null });
+      if (path.endsWith('/me/today')) return jsonResponse(200, todayView({ streak: routes.streak ?? ended(paid) }));
       if (path.endsWith('/me/wallet')) return jsonResponse(200, { balances: { zer: 0, gems: routes.gems?.() ?? 0 }, history: [] });
       if (path.endsWith('/me/streak/repair') && routes.repair) return routes.repair();
       return jsonResponse(200, {});
@@ -56,8 +59,15 @@ function api(routes: { gems?: () => number; repair?: () => Response }): Sent[] {
 const restoredAnswer = (): Response => jsonResponse(200, { restored: true, duplicate: false, days: 12, costGems: 50, free: false, gems: 30, streak: back });
 const posts = (sent: Sent[]): Sent[] => sent.filter((s) => s.method === 'POST');
 
-function open(streak: StreakSummary, onRestored?: (s: StreakSummary) => void): void {
-  renderApp(<StreakSheet streak={streak} onClose={() => undefined} onRestored={onRestored} />);
+function Opened({ onRestored }: { onRestored?: (s: StreakSummary) => void }): React.JSX.Element {
+  const today = useToday();
+  return <DailySheet open today={today} onClose={() => undefined} onStreak={onRestored} />;
+}
+
+/** The daily view opened on the streak the fetch was given, once it has arrived. */
+async function open(onRestored?: (s: StreakSummary) => void): Promise<void> {
+  renderApp(<Opened onRestored={onRestored} />);
+  await waitFor(() => expect(document.querySelector('.week-row')).not.toBeNull());
 }
 
 afterEach(() => {
@@ -70,7 +80,7 @@ afterEach(() => {
 describe('a streak that can be restored', () => {
   it('says which streak ended and through which day, with the price on one button', async () => {
     const sent = api({ gems: () => 80 });
-    open(ended(paid));
+    await open();
     const sheet = screen.getByRole('dialog', { name: 'Streak' });
     expect(within(sheet).getByText(`Your 12-day streak ended. You can bring it back until the end of ${LAST_DAY}.`)).toBeInTheDocument();
     const restore = within(sheet).getByRole('button', { name: 'Restore for 50 gems' });
@@ -85,9 +95,9 @@ describe('a streak that can be restored', () => {
     expect(within(sheet).getByRole('heading', { name: 'How your fire grows' })).toBeInTheDocument();
   });
 
-  it('offers nothing when there is nothing to restore', () => {
-    api({});
-    open(ended(null));
+  it('offers nothing when there is nothing to restore', async () => {
+    api({ streak: ended(null) });
+    await open();
     expect(screen.queryByRole('button', { name: /^Restore/ })).not.toBeInTheDocument();
     expect(document.querySelector('.streak-repair')).toBeNull();
   });
@@ -97,7 +107,7 @@ describe('a streak that can be restored', () => {
     const heard: string[] = [];
     const stop = onLessonSound((s) => heard.push(s));
     const handed: StreakSummary[] = [];
-    open(ended(paid), (s) => handed.push(s));
+    await open((s) => handed.push(s));
     await userEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
 
     const title = await screen.findByRole('heading', { name: 'Your 12-day streak is back' });
@@ -107,7 +117,7 @@ describe('a streak that can be restored', () => {
     // The offer is gone, the fire is the restored streak's, and the numbers and the ladder are its own.
     expect(screen.queryByRole('button', { name: /^Restore/ })).not.toBeInTheDocument();
     expect(screen.getAllByTestId('fire')[0]).toHaveAttribute('data-stage', 'campfire');
-    expect(document.querySelector('.fire-rung.is-now')).toHaveTextContent('Campfire');
+    expect(document.querySelector('.fire-step.is-now')).toHaveTextContent('Campfire');
     // The celebration the site already has: its ring and its flecks, and the reward chime, once.
     const moment = document.querySelector('.streak-restored')!;
     expect(moment).toHaveClass('celebrate', 'is-playing');
@@ -123,7 +133,7 @@ describe('a streak that can be restored', () => {
   it('brings the streak back with no ring and nothing thrown for a reader who asked for less motion', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), addEventListener: () => undefined, removeEventListener: () => undefined }));
     api({ gems: () => 80, repair: restoredAnswer });
-    open(ended(paid));
+    await open();
     await userEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
     expect(await screen.findByRole('heading', { name: 'Your 12-day streak is back' })).toBeInTheDocument();
     const moment = document.querySelector('.streak-restored')!;
@@ -133,7 +143,7 @@ describe('a streak that can be restored', () => {
 
   it('shows the balance and where gems come from when they are short, and a button that cannot be pressed', async () => {
     const sent = api({ gems: () => 20 });
-    open(ended(paid));
+    await open();
     expect(await screen.findByText('Your gems: 20')).toBeInTheDocument();
     expect(screen.getByText('Gems come from moving up a league, season rewards and events.')).toBeInTheDocument();
     const restore = screen.getByRole('button', { name: 'Restore for 50 gems' });
@@ -145,8 +155,11 @@ describe('a streak that can be restored', () => {
   });
 
   it('says a Hevalo+ member’s restore is free, and asks for no balance', async () => {
-    const sent = api({ repair: () => jsonResponse(200, { restored: true, duplicate: false, days: 12, costGems: 0, free: true, gems: 0, streak: back }) });
-    open(ended({ days: 12, costGems: 0, free: true, until: UNTIL }));
+    const sent = api({
+      repair: () => jsonResponse(200, { restored: true, duplicate: false, days: 12, costGems: 0, free: true, gems: 0, streak: back }),
+      streak: ended({ days: 12, costGems: 0, free: true, until: UNTIL }),
+    });
+    await open();
     await userEvent.click(screen.getByRole('button', { name: 'Restore, free with Hevalo+' }));
     expect(await screen.findByRole('heading', { name: 'Your 12-day streak is back' })).toBeInTheDocument();
     expect(sent.some((s) => s.path.endsWith('/me/wallet'))).toBe(false);
@@ -161,7 +174,7 @@ describe('a streak that can be restored', () => {
         return jsonResponse(402, { code: 'INSUFFICIENT_FUNDS', message: 'not enough Gems' });
       },
     });
-    open(ended(paid));
+    await open();
     await userEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
     expect(await screen.findByText('Your gems: 10')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore for 50 gems' })).toBeDisabled();
@@ -170,7 +183,7 @@ describe('a streak that can be restored', () => {
 
   it('says plainly when the streak can no longer be restored', async () => {
     api({ gems: () => 80, repair: () => jsonResponse(409, { code: 'RESTORE_EXPIRED', message: 'the days in which that streak could be restored have passed' }) });
-    open(ended(paid));
+    await open();
     await userEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('This streak can no longer be brought back.');
     // Nothing left to press that could only fail again.
@@ -182,7 +195,7 @@ describe('a streak that can be restored', () => {
     localStorage.setItem('hevalo_locale', 'ckb');
     await preloadCatalogue();
     api({ gems: () => 80 });
-    open(ended(paid));
+    await open();
     expect(document.documentElement.dir).toBe('rtl');
     expect(await screen.findByRole('button', { name: /^بە .+ گەوهەر بیگەڕێنەوە$/ })).toBeInTheDocument();
     expect(screen.getByText(/^زنجیرەی .+ ڕۆژەکەت کۆتایی هات\./)).toBeInTheDocument();

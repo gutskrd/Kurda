@@ -19,7 +19,8 @@ import type { PracticeDue } from '../learn/types';
 import type { MeProfile, StreakSummary } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
 import { LearnHeader } from '../learn/LearnHeader';
-import { StreakSheet } from '../learn/StreakSheet';
+import { DailySheet } from '../daily/DailySheet';
+import { useToday } from '../daily/today';
 import { GoalRing, GoalSheet } from '../learn/GoalSheet';
 import { WordOfDayTool } from '../learn/WordOfDayTool';
 import { QuestsCard } from '../quests/QuestsCard';
@@ -32,7 +33,7 @@ import { publishedDictionary } from '../layouts/navLinks';
 const ALPHABET_TEASER = 'Aa Çç Êê';
 
 /**
- * Today in one row above the path: the streak (opening `StreakSheet`), today's goal as a ring with its XP (opening
+ * Today in one row above the path: the streak (opening the daily view), today's goal as a ring with its XP (opening
  * `GoalSheet` to change it), and review's count as a chip. Nothing counts down or warns. It holds its shape until the
  * answers arrive, and a failed part is left out, since the path is the page.
  */
@@ -42,8 +43,9 @@ function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element 
   const goal = useApiGet<DailyGoalStatus>('/me/daily-goal');
   const me = useApiGet<{ user: MeProfile }>('/me');
   const [streakOpen, setStreakOpen] = useState(false);
+  const today = useToday(streakOpen);
   const [goalOpen, setGoalOpen] = useState(false);
-  // A streak restored in the sheet becomes the strip's streak from then on.
+  // A streak restored in the daily view becomes the strip's streak from then on.
   const [restored, setRestored] = useState<StreakSummary | null>(null);
   // Likewise a goal changed in its sheet, as the server answered the change.
   const [changed, setChanged] = useState<DailyGoalStatus | null>(null);
@@ -102,7 +104,7 @@ function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element 
           )}
         </>
       )}
-      <StreakSheet streak={streakOpen && summary ? summary : null} onClose={() => setStreakOpen(false)} onRestored={setRestored} />
+      <DailySheet open={streakOpen} onClose={() => setStreakOpen(false)} today={today} onStreak={setRestored} />
       {goalShown && <GoalSheet status={goalShown} open={goalOpen} onClose={() => setGoalOpen(false)} onSaved={setChanged} />}
     </section>
   );

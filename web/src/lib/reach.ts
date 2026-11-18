@@ -118,6 +118,12 @@ export const LARGE_ENOUGH = [
   '.learn-tool-link',
   // The event card on Learn, 64px tall across the column (events/events.css).
   '.event-card',
+  // The daily view's card on Home, its rows, its way back from the insights, and the profile figures that open a page
+  // or the daily view (daily/daily.css, styles/pages.css): each at least 48px tall and wider still.
+  '.daily-home',
+  '.daily-row',
+  '.daily-back',
+  '.mkp-fact--link',
 ] as const;
 
 /** Sideways-scrolling rows of controls, padded above and below for their reach. */

@@ -87,6 +87,7 @@ import { Checks } from '@phosphor-icons/react/dist/icons/Checks';
 import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
 // A lesson's results: XP earned, and how many were right first time.
 import { Lightning } from '@phosphor-icons/react/dist/icons/Lightning';
+import { Snowflake } from '@phosphor-icons/react/dist/icons/Snowflake';
 import { Target } from '@phosphor-icons/react/dist/icons/Target';
 // Shop items by kind: a tag, a frame, and the search over all of them.
 import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
@@ -182,6 +183,8 @@ export const UserIcon = named(User, 22);
 export const UsersIcon = named(Users, 22);
 /** A streak, drawn as a flame as on the phone. */
 export const FlameIcon = named(Flame, 22);
+/** A streak freeze, which keeps a missed day, as on the phone. */
+export const IceIcon = named(Snowflake, 22);
 /** Zêr: a gold coin with Hevalo's deer carved into it. */
 export const CoinIcon = currency(coinSvg, 22);
 export const TilesIcon = named(SquaresFour, 22);

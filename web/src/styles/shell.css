@@ -2260,9 +2260,6 @@
   .post-plus:active:not(:disabled) {
     background: var(--primary-hover);
   }
-  .post-plus.is-secondary:active:not(:disabled) {
-    background: var(--surface-3);
-  }
 }
 
 /* A handle ("@" and a username) takes its direction from its own letters, so "@" stays first on right-to-left pages. */

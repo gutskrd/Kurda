@@ -1950,6 +1950,14 @@ button.chat-run-avatar:hover {
   text-align: center;
   text-decoration: none;
 }
+/* the streak on your own profile opens the daily view in place */
+button.mkp-fact {
+  width: calc(100% - 8px);
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
 .mkp-fact-value {
   font-size: 1.3rem;
   font-weight: 700;

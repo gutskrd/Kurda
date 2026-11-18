@@ -1210,7 +1210,7 @@ a.invite-card:hover {
   }
 }
 
-/* ---- the daily reward ------------------------------------------------------ */
+/* ---- the daily reward, as the landing page pictures it --------------------- */
 .zer-card {
   display: flex;
   flex-wrap: wrap;
@@ -1223,12 +1223,6 @@ a.invite-card:hover {
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
-.zer-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
 .zer-coin {
   flex: none;
   width: 42px;
@@ -1236,37 +1230,10 @@ a.invite-card:hover {
   display: grid;
   place-items: center;
 }
-.zer-balance {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 600;
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-}
-.zer-unit {
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  font-weight: 650;
-  color: var(--gold-ink);
-}
 .zer-sub {
   font-size: 0.86rem;
   font-weight: 600;
   color: var(--ink-2);
-}
-.zer-action {
-  margin-inline-start: auto;
-}
-.zer-msg {
-  flex-basis: 100%;
-  font-size: 0.86rem;
-  color: var(--ink-2);
-}
-/* a member's gems with the day's Zêr: the same quiet line, with the gem before it */
-.zer-plus {
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 /* ---- learn: the courses (the rest is in learn.css) ------------------------- */

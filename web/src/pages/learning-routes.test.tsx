@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import type { InitialEntry } from 'react-router-dom';
 import { renderApp, jsonResponse } from '../test/utils';
+import { todayView } from '../test/today';
 import type { CourseMap as Map, SkillNode } from '../learn/types';
 import { Learn } from './Learn';
 import { CourseMap } from './CourseMap';
@@ -256,13 +257,14 @@ describe('Learn', () => {
     expect(today.querySelector('.learn-strip-done')).not.toBeNull();
   });
 
-  it('opens the whole story of the streak from it, in a sheet that Escape closes', async () => {
+  it('opens the daily view from it, in a sheet that Escape closes', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
         const path = new URL(url).pathname;
         const streak = { current: 12, longest: 30, freezes: 1, lastActiveOn: null, daysLearned: 41, sessionsPerFreeze: 5 };
         if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true, streak } });
+        if (path === '/me/today') return jsonResponse(200, todayView({ streak }));
         if (path === '/courses') return jsonResponse(200, { courses: [] });
         return jsonResponse(200, { due: 0, available: 0 });
       }),
@@ -273,10 +275,10 @@ describe('Learn', () => {
     expect(button).toHaveAttribute('aria-haspopup', 'dialog');
     await userEvent.click(button);
     const sheet = screen.getByRole('dialog', { name: 'Streak' });
-    expect(within(sheet).getByRole('heading', { name: '12-day streak' })).toBeInTheDocument();
+    expect(await within(sheet).findByRole('heading', { name: '12-day streak' })).toBeInTheDocument();
+    expect(within(within(sheet).getByRole('list', { name: 'This week' })).getAllByRole('listitem')).toHaveLength(7);
     expect(within(sheet).getByText('Longest streak')).toBeInTheDocument();
     expect(within(sheet).getByRole('heading', { name: 'How your fire grows' })).toBeInTheDocument();
-    expect(within(sheet).getAllByRole('listitem')).toHaveLength(7);
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(button).toHaveFocus();

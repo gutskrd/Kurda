@@ -48,6 +48,8 @@ export interface ProfileFact {
   /** how a screen reader says it, where the number alone would not be enough ("12 days") */
   spoken?: string;
   to?: string;
+  /** opens something in place, such as your streak's daily view */
+  onOpen?: () => void;
 }
 
 /**
@@ -77,6 +79,10 @@ export function ProfileFacts({ facts }: { facts: readonly ProfileFact[] }): Reac
               <Link to={fact.to} className="mkp-fact mkp-fact--link">
                 {inside}
               </Link>
+            ) : fact.onOpen ? (
+              <button type="button" className="mkp-fact mkp-fact--link" aria-haspopup="dialog" onClick={fact.onOpen}>
+                {inside}
+              </button>
             ) : (
               <span className="mkp-fact">{inside}</span>
             )}
@@ -118,6 +124,7 @@ export function FullProfile({
   people,
   yours,
   activity,
+  onStreak,
 }: {
   view: FullProfileView;
   /** your own profile: the numbers lead to your pages, and an empty bio offers to be written */
@@ -134,6 +141,8 @@ export function FullProfile({
   yours?: React.ReactNode;
   /** what they have posted and played */
   activity?: React.ReactNode;
+  /** your own profile: the streak opens the daily view */
+  onStreak?: () => void;
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -146,6 +155,7 @@ export function FullProfile({
       // the flame is lit only while there is a streak to speak of
       icon: <FlameIcon size={15} className={view.streakDays > 0 ? 'mkp-fact-lit' : undefined} />,
       spoken: t(view.streakDays === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: number(view.streakDays) }),
+      onOpen: own ? onStreak : undefined,
     },
     { key: 'xp', label: t('profile.stat.xp'), value: number(view.xp), icon: <XpIcon size={15} /> },
     ...(view.friends != null ? [{ key: 'friends', label: t('nav.friends'), value: number(view.friends), icon: <UsersIcon size={15} />, to: own ? '/app/friends' : undefined }] : []),
