@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { isRankedGame, seasonById, type MyRanks, type RankTier, type SeasonEmblem, type SeasonOverview } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { useOptimistic } from '../lib/optimistic';
 import { ArrowIcon, GemIcon } from '../components/icons';
 import { Button } from '../components/Button';
 import { ErrorState, Loading } from '../components/states';
@@ -206,18 +207,11 @@ function LastReward({
 }): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
-  const [busy, setBusy] = useState(false);
-  const wearing = reward.frameSku !== null && worn === reward.frameSku;
+  // On or off at once (lib/optimistic.ts); a refusal puts back what the server has, with a notice.
+  const [shown, want] = useOptimistic(worn, (sku) => client.put('/me/cosmetics/frame', { sku }), { onSaved: (_, sku) => onWorn(sku) });
+  const wearing = reward.frameSku !== null && shown === reward.frameSku;
   const tier = frameTier(reward.frameSku) ?? reward.tier;
   const face = useAvatarSrc(user?.avatarUrl);
-
-  async function wear(on: boolean): Promise<void> {
-    setBusy(true);
-    const sku = on ? reward.frameSku : null;
-    const res = await client.put('/me/cosmetics/frame', { sku });
-    setBusy(false);
-    if (res.ok) onWorn(sku);
-  }
 
   return (
     <div className={`season-last tier-${tier}`}>
@@ -233,7 +227,7 @@ function LastReward({
         </p>
       </div>
       {reward.frameSku && (
-        <Button variant={wearing ? 'ghost' : 'secondary'} size="sm" disabled={busy} onClick={() => void wear(!wearing)}>
+        <Button variant={wearing ? 'ghost' : 'secondary'} size="sm" onClick={() => want(wearing ? null : reward.frameSku)}>
           {wearing ? t('seasons.removeFrame') : t('seasons.wearFrame')}
         </Button>
       )}

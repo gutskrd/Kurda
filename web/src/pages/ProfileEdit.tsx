@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
+import { failureText, useOptimistic } from '../lib/optimistic';
 import type { ApiError, AvatarOption, MeProfile } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { useArtOverrides } from '../art/overrides';
@@ -165,9 +166,30 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
 function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
-  const [selected, setSelected] = useState<string | null>(me.selectedAvatarKey ?? null);
-  const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  // The uploaded photo is removed once, by the first choice that goes through.
+  const photoGone = useRef(false);
+  // Chosen at once; quick choices end in the last one, and a refusal puts back the one the server has (lib/optimistic.ts).
+  const [selected, want] = useOptimistic<string | null>(
+    me.selectedAvatarKey ?? null,
+    async (key) => {
+      // An uploaded photo always wins over a default avatar, so remove it first (database and storage) or choosing would
+      // appear to do nothing.
+      if (me.profilePhotoUrl && !photoGone.current) {
+        const del = await client.delete('/me/profile-picture');
+        if (!del.ok) return del;
+        photoGone.current = true;
+      }
+      return client.put<{ avatarKey: string | null }>('/me/cosmetics/avatar', { key });
+    },
+    {
+      onSaved: (_, key) => {
+        setMsg({ kind: 'ok', text: key ? t('edit.photoUpdated') : t('edit.avatarCleared') });
+        onChanged();
+      },
+      onFailed: (error) => setMsg({ kind: 'err', text: failureText(error, t) }),
+    },
+  );
 
   const registry = useApiGet<{ avatars: AvatarOption[] }>('/cosmetics/avatars');
   // A default an admin has replaced is offered as its new picture.
@@ -179,32 +201,9 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
       : DEFAULT_AVATAR_KEYS.map((key) => ({ key, requiresPremium: false }));
   const isPremium = me.premium ?? false;
 
-  async function pick(key: string | null): Promise<void> {
-    if (busy) return;
-    const prev = selected;
-    setBusy(key ?? '__none__');
+  function pick(key: string | null): void {
     setMsg(null);
-    setSelected(key);
-    // An uploaded photo always wins over a default avatar, so remove it first (database and storage) or choosing would
-    // appear to do nothing.
-    if (me.profilePhotoUrl) {
-      const del = await client.delete('/me/profile-picture');
-      if (!del.ok) {
-        setBusy(null);
-        setSelected(prev);
-        setMsg({ kind: 'err', text: describeError(del.error, t) });
-        return;
-      }
-    }
-    const res = await client.put<{ avatarKey: string | null }>('/me/cosmetics/avatar', { key });
-    setBusy(null);
-    if (res.ok) {
-      setMsg({ kind: 'ok', text: key ? t('edit.photoUpdated') : t('edit.avatarCleared') });
-      onChanged();
-    } else {
-      setSelected(prev);
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
-    }
+    want(key);
   }
 
   function onTile(a: AvatarOption, locked: boolean): void {
@@ -212,7 +211,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
       setMsg({ kind: 'err', text: t('edit.premiumAvatar') });
       return;
     }
-    void pick(a.key);
+    pick(a.key);
   }
 
   return (
@@ -232,8 +231,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
           role="radio"
           aria-checked={selected === null}
           aria-label={t('edit.noAvatar')}
-          disabled={busy !== null}
-          onClick={() => void pick(null)}
+          onClick={() => pick(null)}
         >
           <PersonGlyph size={30} />
         </button>
@@ -248,7 +246,6 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
               aria-checked={selected === a.key}
               aria-disabled={locked}
               aria-label={t('edit.avatarNamed', { name: a.key }) + (locked ? t('edit.premiumLocked') : '')}
-              disabled={busy !== null}
               onClick={() => onTile(a, locked)}
             >
               <img src={avatarAssetUrl(a.key, overrides)} alt="" loading="lazy" decoding="async" />
