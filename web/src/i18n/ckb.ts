@@ -2073,7 +2073,6 @@ export const ckb: Catalogue = {
   'comments.deleteThis': 'ئەم لێدوانە بسڕەوە',
   'comments.showOneReply': '1 وەڵام پیشان بدە',
   'comments.showReplies': '{count} وەڵام پیشان بدە',
-  'comments.posting': 'بڵاو دەکرێتەوە…',
   'comments.submit': 'لێدوان بنووسە',
   'daily.claimed': '+{amount} Zêr وەرگیرا!',
   'daily.plusGems': '+{count} گەوهەر لەگەڵ Hevalo+',

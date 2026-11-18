@@ -2061,7 +2061,6 @@ export const ar: Catalogue = {
   'comments.deleteThis': 'حذف هذا التعليق',
   'comments.showOneReply': 'عرض رد واحد',
   'comments.showReplies': 'عرض {count} ردود',
-  'comments.posting': 'جارٍ النشر…',
   'comments.submit': 'علّق',
   'daily.claimed': 'تم استلام +{amount} Zêr!',
   'daily.plusGems': '+{count} جوهرة مع Hevalo+',

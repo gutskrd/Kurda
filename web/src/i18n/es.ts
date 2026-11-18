@@ -2065,7 +2065,6 @@ export const es: Catalogue = {
   'comments.deleteThis': 'Eliminar este comentario',
   'comments.showOneReply': 'Ver 1 respuesta',
   'comments.showReplies': 'Ver {count} respuestas',
-  'comments.posting': 'Publicando…',
   'comments.submit': 'Comentar',
   'daily.claimed': '¡+{amount} Zêr reclamados!',
   'daily.plusGems': '+{count} gemas con Hevalo+',

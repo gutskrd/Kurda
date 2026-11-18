@@ -2164,7 +2164,6 @@ export const en = {
   'comments.deleteThis': 'Delete this comment',
   'comments.showOneReply': 'Show 1 reply',
   'comments.showReplies': 'Show {count} replies',
-  'comments.posting': 'Posting…',
   'comments.submit': 'Comment',
   'daily.claimed': '+{amount} Zêr claimed!',
   'daily.plusGems': '+{count} gems with Hevalo+',

@@ -2067,7 +2067,6 @@ export const nl: Catalogue = {
   'comments.deleteThis': 'Deze reactie verwijderen',
   'comments.showOneReply': 'Toon 1 reactie',
   'comments.showReplies': 'Toon {count} reacties',
-  'comments.posting': 'Plaatsen…',
   'comments.submit': 'Reageren',
   'daily.claimed': '+{amount} Zêr opgehaald!',
   'daily.plusGems': '+{count} edelstenen met Hevalo+',

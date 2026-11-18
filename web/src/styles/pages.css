@@ -3414,6 +3414,18 @@ a.mkp-activity-row:hover {
   padding-left: 38px;
   margin-top: 6px;
 }
+/* a comment still on its way is faint until the server has it; one that did not go says so in the danger colour */
+.comment.is-pending > .comment-body {
+  opacity: 0.6;
+}
+.comment-pending {
+  margin-bottom: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.comment-pending.is-failed {
+  color: var(--danger);
+}
 .link-button {
   padding: 0;
   border: 0;

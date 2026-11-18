@@ -2069,7 +2069,6 @@ export const ku: Catalogue = {
   'comments.deleteThis': 'Vê şîroveyê jê bibe',
   'comments.showOneReply': '1 bersivê nîşan bide',
   'comments.showReplies': '{count} bersivan nîşan bide',
-  'comments.posting': 'Tê weşandin…',
   'comments.submit': 'Şîrove bike',
   'daily.claimed': '+{amount} Zêr hat wergirtin!',
   'daily.plusGems': '+{count} gewher bi Hevalo+',

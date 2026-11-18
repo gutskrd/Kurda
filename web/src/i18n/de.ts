@@ -2067,7 +2067,6 @@ export const de: Catalogue = {
   'comments.deleteThis': 'Diesen Kommentar löschen',
   'comments.showOneReply': '1 Antwort anzeigen',
   'comments.showReplies': '{count} Antworten anzeigen',
-  'comments.posting': 'Wird gesendet…',
   'comments.submit': 'Kommentieren',
   'daily.claimed': '+{amount} Zêr abgeholt!',
   'daily.plusGems': '+{count} Edelsteine mit Hevalo+',

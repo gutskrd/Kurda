@@ -2062,7 +2062,6 @@ export const tr: Catalogue = {
   'comments.deleteThis': 'Bu yorumu sil',
   'comments.showOneReply': '1 yanıtı göster',
   'comments.showReplies': '{count} yanıtı göster',
-  'comments.posting': 'Gönderiliyor…',
   'comments.submit': 'Yorum yap',
   'daily.claimed': '+{amount} Zêr alındı!',
   'daily.plusGems': 'Hevalo+ ile +{count} mücevher',

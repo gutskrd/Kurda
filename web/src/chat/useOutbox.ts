@@ -27,7 +27,8 @@ export function useOutbox<T>({
   onRefused,
 }: {
   post: (body: string) => Promise<ApiResult<T>>;
-  onDelivered: (message: T) => void;
+  /** The server's message, and the id it was shown under while on its way. */
+  onDelivered: (message: T, id: string) => void;
   onRefused: (error: ApiError, body: string) => void;
 }): {
   unsent: Unsent[];
@@ -59,7 +60,7 @@ export function useOutbox<T>({
       if (!live.current) return;
       if (res.ok) {
         setUnsent((list) => list.filter((m) => m.id !== id));
-        hands.current.onDelivered(res.data);
+        hands.current.onDelivered(res.data, id);
       } else if (notReached(res.error)) {
         setUnsent((list) => list.map((m) => (m.id === id ? { ...m, pending: 'failed' } : m)));
       } else {

@@ -2066,7 +2066,6 @@ export const fr: Catalogue = {
   'comments.deleteThis': 'Supprimer ce commentaire',
   'comments.showOneReply': 'Afficher 1 réponse',
   'comments.showReplies': 'Afficher {count} réponses',
-  'comments.posting': 'Publication…',
   'comments.submit': 'Commenter',
   'daily.claimed': '+{amount} Zêr récupérés !',
   'daily.plusGems': '+{count} gemmes avec Hevalo+',
