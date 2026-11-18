@@ -6,16 +6,9 @@ import type { ApiError } from '../lib/types';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/**
- * What went wrong with a post or a picture, in the reader's language.
- *
- * The API's messages are English and written for developers ("title and body
- * are required"); the codes are precise, so the composer says them in its own
- * words. Kept here rather than in the app-wide table so the composer's codes
- * travel with the composer.
- */
+/** The composer's error codes in the reader's language, since the API's messages are English and for developers. */
 const CODE_KEY: Record<string, MessageKey> = {
-  // the post
+  // The post.
   EMPTY_POST: 'composer.error.empty',
   TITLE_REQUIRED: 'composer.error.titleRequired',
   TOO_LONG: 'composer.error.tooLong',
@@ -26,7 +19,7 @@ const CODE_KEY: Record<string, MessageKey> = {
   TRUST_VELOCITY: 'composer.error.slowDown',
   AUTO_MODERATED: 'composer.error.restricted',
   MUTED: 'composer.error.restricted',
-  // a picture's upload
+  // A picture's upload.
   UPLOAD_TOO_LARGE: 'composer.upload.tooLarge',
   IMAGE_TOO_LARGE: 'composer.upload.tooLarge',
   HEIC_UNSUPPORTED: 'composer.upload.heic',
@@ -41,9 +34,8 @@ const CODE_KEY: Record<string, MessageKey> = {
 };
 
 /**
- * A limit on the account behind a refused post or picture (reports/restriction.ts).
- * A bare MUTED is a group's own mute there, which a post or a picture never
- * meets; it keeps the composer's own words.
+ * An account limit behind a refused post or picture (reports/restriction.ts). A bare MUTED is a group mute, which
+ * posts never meet, so it keeps the composer's own words.
  */
 export function accountLimitOf(error: ApiError): Restriction | null {
   const restriction = restrictionOf(error);
@@ -51,10 +43,10 @@ export function accountLimitOf(error: ApiError): Restriction | null {
 }
 
 export function composerErrorText(error: ApiError, t: Translate): string {
-  // a limit on the account says what it stops and until when
+  // An account limit says what it stops and until when.
   if (accountLimitOf(error)) return describeError(error, t);
   const key = error.code ? CODE_KEY[error.code] : undefined;
-  // a rate limit with a countdown says the countdown, which describeError does
+  // A rate limit with a countdown goes to describeError, which shows it.
   if (key && !(error.kind === 'rate_limited' && error.retryAfterSec)) return t(key);
   return describeError(error, t);
 }

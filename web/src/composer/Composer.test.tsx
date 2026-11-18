@@ -84,7 +84,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
-/** Open the composer the way the wall does. */
+/** Opens the composer as the wall does. */
 async function open(onPosted = vi.fn()): Promise<{ onPosted: typeof onPosted }> {
   renderApp(<PostButton onPosted={onPosted} />);
   await userEvent.click(await screen.findByRole('button', { name: 'Post something' }));
@@ -105,7 +105,7 @@ describe('the composer', () => {
     const { onPosted } = await open();
 
     expect(box()).toHaveFocus();
-    // no "words or a picture?" anywhere
+    // No question about the kind of post first.
     expect(screen.queryByText(/what are you posting/i)).not.toBeInTheDocument();
     expect(postButton()).toBeDisabled();
 
@@ -114,7 +114,7 @@ describe('the composer', () => {
     await userEvent.click(postButton());
 
     await waitFor(() => expect(onPosted).toHaveBeenCalled());
-    // a gotin: no title, the text trimmed as the server counts it
+    // A gotin: no title, and the text trimmed as the server counts it.
     expect(sent('POST', '/library/posts')[0]!.body).toEqual({ type: 'gotin', body: 'Silav li we!' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(localStorage.getItem(postDraftStorageKey(ME.id))).toBeNull();
@@ -184,7 +184,7 @@ describe('the composer', () => {
     expect(screen.getByText('A post can have up to 4 pictures.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add a picture (4 of 4)' })).toBeDisabled();
 
-    // and any can be taken off at any time
+    // Any picture can be removed at any time.
     await userEvent.click(screen.getByRole('button', { name: 'Remove picture 2' }));
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
     expect(screen.getByRole('button', { name: 'Add a picture (3 of 4)' })).toBeEnabled();
@@ -207,7 +207,7 @@ describe('the composer', () => {
 
   it('counts the way the server does, only near the end, and stops at the limit', async () => {
     await open();
-    // 45,000 is not near the 50,000 limit; 49,990 is
+    // 45,000 is not near the 50,000 limit; 49,990 is.
     const long = 'a'.repeat(49_990);
     await act(async () => {
       await userEvent.click(box());
@@ -240,9 +240,9 @@ describe('the composer', () => {
     await userEvent.type(box(), 'Quickly');
     await userEvent.keyboard('{Control>}{Enter}{/Control}');
     expect(await screen.findByRole('alert')).toHaveTextContent('You’re posting quickly for a new account.');
-    // said once: the polite status line does not repeat it
+    // Shown once; the polite status line does not repeat it.
     expect(screen.getAllByText(/You’re posting quickly for a new account\./)).toHaveLength(1);
-    // still open, with the words still there
+    // Still open, with the words still there.
     expect(box()).toHaveValue('Quickly');
   });
 
@@ -288,7 +288,7 @@ describe('the composer', () => {
     await open();
     await userEvent.type(box(), 'Hevalo');
     await waitFor(() => expect(localStorage.getItem(postDraftStorageKey(ME.id))).toContain('Hevalo'));
-    // typed and closed straight away: the timer has not written this yet
+    // Typed and closed at once, before the save timer has written it.
     await userEvent.type(box(), ' bijî');
     await userEvent.keyboard('{Escape}');
     await userEvent.click(screen.getByRole('button', { name: 'Keep draft' }));
@@ -297,7 +297,7 @@ describe('the composer', () => {
 
   it('writes in the words’ own direction, and in the interface’s while the box is empty', async () => {
     await open();
-    // empty: no dir of its own, so the placeholder follows the page (right to left in Soranî)
+    // Empty, so no dir of its own and the placeholder follows the page's direction.
     expect(box()).not.toHaveAttribute('dir');
     await userEvent.type(box(), 'Silav');
     expect(box()).toHaveAttribute('dir', 'auto');
@@ -349,8 +349,7 @@ describe('editing a post', () => {
     await userEvent.type(box(), 'After');
     await userEvent.click(screen.getByRole('button', { name: 'Remove picture 1' }));
     await userEvent.click(screen.getByRole('button', { name: 'Edit the description of picture 1' }));
-    // a picture already on the post keeps its signature as it was; the page does not
-    // know which way that went, so no switch claims either, only how to change it
+    // A picture already on the post keeps its signature, which the page does not know, so no switch claims either way.
     expect(screen.queryByRole('switch', { name: 'I made this' })).toBeNull();
     expect(screen.getByText(/Whether this picture has your Hevalo mark was decided when it was posted/)).toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText('Describe this picture'));
@@ -366,7 +365,7 @@ describe('editing a post', () => {
       meme: false,
       sourceCredit: null,
     });
-    // no picture was uploaded for an edit that only took one off
+    // No picture was uploaded for an edit that only removed one.
     expect(uploads).toHaveLength(0);
   });
 

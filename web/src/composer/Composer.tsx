@@ -39,29 +39,18 @@ let seq = 0;
 const localId = (): string => `p${Date.now().toString(36)}${(seq++).toString(36)}`;
 
 /**
- * Write a post: one box for words and up to four pictures, X-style.
+ * Writing a post: one box for words and up to four pictures. A title is optional and makes the post a çîrok (or a
+ * helbest when chosen); without one it is a gotin. The posting rules are the API's own (`@kurda/shared`
+ * post-composer), so the Post button and the server agree.
  *
- * There used to be a question before anything else — words or a picture? —
- * and two composers behind it, and a picture post could have no words worth
- * the name and a written one no picture at all. Now there is one box. Pictures
- * can be added or taken off at any time; a title is optional and makes the
- * post a çîrok (or a helbest, when you say so); without one it is a gotin.
- * The rules for what can be posted are the API's own (`@kurda/shared`
- * post-composer), so the Post button and the server never disagree.
+ * - Pictures upload as soon as they are added, each with its own progress and error. "I made this" (on by default)
+ *   adds the Hevalo signature at upload, so switching it uploads the picture again.
+ * - The draft is kept on this device as you write (draftStore.ts); closing with something written asks to keep it.
+ * - The counter counts as the server does and shows only near the limit.
+ * - Ctrl/Cmd+Enter posts. Fields are at least 16px so iOS does not zoom on focus.
  *
- * - Pictures go up as soon as they are added, each with its own progress and
- *   its own error, so pressing Post only sends the words. "I made this" (on
- *   unless switched off) is what puts the Hevalo signature on a picture, so
- *   switching it puts that picture up again without it.
- * - Everything is kept on this device as you write (draftStore.ts) and comes
- *   back when the composer is opened again; closing with something written
- *   asks whether to keep it.
- * - The counter counts the way the server does, and only shows near the end.
- * - Ctrl/Cmd+Enter posts. Fields are 16px or larger, so iPhones do not zoom.
- *
- * Given `editing`, the same box edits that post — words, title, the alt text
- * of each picture, and which pictures it has — and saves with PATCH; a draft
- * saved by the old phone app is finished the same way and then published.
+ * With `editing`, the box edits that post (words, title, alt text and pictures) and saves with PATCH; a draft saved by
+ * the old phone app is finished the same way and then published.
  */
 export function Composer({
   onClose,
@@ -69,9 +58,9 @@ export function Composer({
   editing = null,
 }: {
   onClose: () => void;
-  /** the post as the server now has it */
+  /** Called with the post as the server now has it. */
   onPosted: (post: ComposedPost) => void;
-  /** a post to edit, or a server draft to finish; none to write a new one */
+  /** A post to edit or a server draft to finish; omitted to write a new one. */
   editing?: ComposedPost | null;
 }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -83,7 +72,7 @@ export function Composer({
   const fileRef = useRef<HTMLInputElement>(null);
   const userId = user?.id ?? null;
 
-  // what is being written, and to what
+  // The post being edited, if any.
   const [target, setTarget] = useState<ComposedPost | null>(editing);
   const mode: 'create' | 'edit' | 'finish' = !target ? 'create' : target.status === 'draft' ? 'finish' : 'edit';
 
@@ -104,20 +93,20 @@ export function Composer({
   const [view, setView] = useState<'write' | 'drafts'>('write');
   const [confirmClose, setConfirmClose] = useState(false);
   const [busy, setBusy] = useState(false);
-  /** a refused post: an account limit is said by SendError, with the way to Account standing */
+  /** A refused post; SendError shows an account limit with a link to Account standing. */
   const [error, setError] = useState<ApiError | null>(null);
   const [note, setNote] = useState<string | null>(() =>
     restored ? (restored.droppedPictures > 0 ? t('composer.restoredWithoutPictures') : t('composer.restored')) : null,
   );
   const [oldDrafts, setOldDrafts] = useState<ComposedPost[]>([]);
 
-  // ---- the pictures --------------------------------------------------------
+  // ---- The pictures --------------------------------------------------------
 
   const patchPicture = useCallback((id: string, patch: Partial<ComposerPicture>) => {
     setPictures((list) => list.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   }, []);
 
-  /** Object URLs made here are let go of when their picture is, and when the composer closes. */
+  /** Object URLs made here, revoked with their picture and when the composer closes. */
   const urls = useRef(new Set<string>());
   useEffect(() => {
     const made = urls.current;
@@ -141,7 +130,7 @@ export function Composer({
       const res = await client.uploadWithProgress<UploadedPicture>(pictureUploadPath(ownWork), file, (progress) =>
         patchPicture(id, { progress }),
       );
-      // the picture may have been taken off, or replaced, while it went up
+      // The picture may have been removed or replaced while it uploaded.
       setPictures((list) =>
         list.map((p) => {
           if (p.id !== id || p.file !== file || p.ownWork !== ownWork) return p;
@@ -188,12 +177,12 @@ export function Composer({
         urls.current.delete(gone.previewUrl);
       }
       const next = list.filter((p) => p.id !== id);
-      // a meme is a post with pictures; without any it is not one
+      // A meme needs pictures.
       if (next.length === 0) setMeme(false);
       return next;
     });
     if (openPicture === id) setOpenPicture(null);
-    // back to where the hands were, not to the top of the page
+    // Return focus to the text box, not the top of the page.
     requestAnimationFrame(() => bodyRef.current?.focus());
   }
 
@@ -201,7 +190,7 @@ export function Composer({
     const p = pictures.find((x) => x.id === id);
     if (!p || !p.file || p.existing) return;
     patchPicture(id, { ownWork: own });
-    // the signature is put on at upload, so the picture goes up again
+    // The signature is added at upload, so the picture uploads again.
     void upload(id, p.file, own);
   }
 
@@ -213,7 +202,7 @@ export function Composer({
     void upload(id, edited, p.ownWork);
   }
 
-  // ---- what it is, and whether it can go ----------------------------------
+  // ---- What it is, and whether it can be posted ---------------------------
 
   const postType = derivePostType({ title, type });
   const content = {
@@ -230,7 +219,7 @@ export function Composer({
   const empty = !postTextLength(body) && !postTextLength(title) && !postTextLength(source) && pictures.length === 0;
   const blocker = !verdict.ok
     ? empty
-      ? null // an empty box needs no explaining
+      ? null // An empty box needs no explanation.
       : problemText(verdict.problem, t)
     : uploading
       ? t('composer.waitUploads')
@@ -244,7 +233,7 @@ export function Composer({
   const titleLeft = POST_TITLE_MAX - postTextLength(title);
   const sourceLeft = POST_SOURCE_MAX - postTextLength(source);
 
-  // ---- the draft on this device --------------------------------------------
+  // ---- The draft on this device --------------------------------------------
 
   const draft = useMemo<PostDraft>(
     () => ({
@@ -252,7 +241,7 @@ export function Composer({
       type,
       title: showTitle ? title : '',
       body,
-      // only a picture the server has can be shown again after a reload
+      // Only a picture the server has can be shown again after a reload.
       pictures: pictures
         .filter((p) => p.status === 'ready' && p.mediaKey && p.serverUrl)
         .map((p) => ({ mediaKey: p.mediaKey, localUri: p.serverUrl, altText: p.altText, ownWork: p.ownWork })),
@@ -269,7 +258,7 @@ export function Composer({
     return () => clearTimeout(timer);
   }, [mode, userId, draft]);
 
-  // ---- drafts the old phone app saved --------------------------------------
+  // ---- Drafts the old phone app saved --------------------------------------
 
   useEffect(() => {
     if (editing || !userId) return;
@@ -298,7 +287,7 @@ export function Composer({
     requestAnimationFrame(() => bodyRef.current?.focus());
   }
 
-  // ---- posting -------------------------------------------------------------
+  // ---- Posting -------------------------------------------------------------
 
   async function submit(): Promise<void> {
     if (!ready) return;
@@ -311,7 +300,7 @@ export function Composer({
 
     let res;
     if (!target) {
-      // every uploaded picture, whether or not the server gave it an address to show
+      // Every uploaded picture, whether or not the server gave it a display address.
       const request = toCreatePostRequest({
         ...draft,
         pictures: pictures.map((p) => ({ mediaKey: p.mediaKey, localUri: p.serverUrl, altText: p.altText, ownWork: p.ownWork })),
@@ -331,7 +320,7 @@ export function Composer({
         sourceCredit: showSource && cleanPostText(source) ? cleanPostText(source) : null,
       };
       res = await client.patch<ComposedPost>(`/library/posts/${target.id}`, patch);
-      // a draft from the old app is finished, then put up
+      // A draft from the old app is saved, then published.
       if (res.ok && target.status === 'draft') res = await client.post<ComposedPost>(`/library/posts/${target.id}/publish`);
     }
     setBusy(false);
@@ -343,7 +332,7 @@ export function Composer({
     onPosted(res.data);
   }
 
-  // ---- leaving -------------------------------------------------------------
+  // ---- Leaving -------------------------------------------------------------
 
   const changed = target
     ? cleanPostText(title) !== cleanPostText(target.title) ||
@@ -376,7 +365,7 @@ export function Composer({
     onClose();
   }
 
-  // ---- the box -------------------------------------------------------------
+  // ---- The box -------------------------------------------------------------
 
   function onBodyKeyDown(e: React.KeyboardEvent<HTMLElement>): void {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -392,7 +381,7 @@ export function Composer({
     addFiles(files);
   }
 
-  // the box grows with what is in it, up to the panel's own scroll
+  // The box grows with its text, up to the panel's own scroll.
   useEffect(() => {
     const el = bodyRef.current;
     if (!el) return;
@@ -442,7 +431,7 @@ export function Composer({
                 type="button"
                 className="cmp-chip cmp-chip-strong"
                 onClick={() => {
-                  // the last few keystrokes may still be waiting for the save timer
+                  // The last few keystrokes may still be waiting for the save timer.
                   if (userId) saveDraft(userId, draft);
                   onClose();
                 }}
@@ -648,7 +637,7 @@ export function Composer({
               onClick={() => {
                 const next = !showTitle;
                 setShowTitle(next);
-                // taking the title away makes it a saying again
+                // Removing the title makes it a saying again.
                 if (!next) {
                   setTitle('');
                   setType(null);
@@ -673,8 +662,7 @@ export function Composer({
             </button>
           </div>
 
-          {/* one live region each, so nothing is read twice: why Post is not ready
-              (polite, as it changes while typing), and a refused post (at once) */}
+          {/* One live region each, so nothing is read twice: why Post is not ready (polite) and a refusal (assertive). */}
           <div className="cmp-why-wrap">
             <p className="cmp-why" id={`${titleId}-why`} role="status">
               {blocker ?? ''}
@@ -714,7 +702,7 @@ export function Composer({
   );
 }
 
-/** A kind somebody chose and the title cannot imply: only a helbest. */
+/** The kind a title cannot imply, which is only a helbest. */
 function initialType(post: ComposedPost | null | undefined): WrittenPostType | null {
   return post?.type === 'poem' ? 'poem' : null;
 }
@@ -728,7 +716,7 @@ function initialPictures(post: ComposedPost | null | undefined, draft: PostDraft
       mediaKey: m.mediaKey,
       serverUrl: m.url,
       altText: m.altText ?? '',
-      // not known for a posted picture (PostMediaView does not say); never shown for one
+      // Unknown for a posted picture (PostMediaView does not say), and never shown for one.
       ownWork: true,
       status: 'ready',
       progress: 1,

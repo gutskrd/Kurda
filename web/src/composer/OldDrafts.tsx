@@ -2,12 +2,8 @@ import { useI18n, useT } from '../i18n/I18nProvider';
 import type { ComposedPost } from './types';
 
 /**
- * Drafts saved by the phone app before drafts moved onto the device.
- *
- * The old app's "Save draft" put a post on the server as a draft, and nothing
- * could ever open one again (`GET /me/library/drafts` is new). They are
- * offered here, where somebody goes to write, so a half-finished story is not
- * lost: choosing one opens it in the composer to finish and post.
+ * Server drafts saved by an older phone app (`GET /me/library/drafts`), offered in the composer so a half-finished
+ * story is not lost; choosing one opens it to finish and post.
  */
 export function OldDrafts({
   drafts,

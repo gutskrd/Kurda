@@ -1,9 +1,6 @@
 /*
- * A post's pictures on the wall and on its page, and the lightbox.
- *
- * The grid: one picture at its own shape, two side by side, three as
- * one tall and two stacked, four in a square — with a 2px seam and rounded
- * outer corners, so several pictures read as one block rather than a gallery.
+ * A post's pictures on the wall and its page, and the lightbox. The grid has a 2px seam and rounded outer corners, so
+ * several pictures read as one block.
  */
 .pp-grid {
   display: grid;
@@ -52,7 +49,7 @@
   outline: none;
   box-shadow: inset 0 0 0 3px var(--focus);
 }
-/* "this one is described" — a small badge, for sighted readers who want to read it */
+/* A small "described" badge for sighted readers. */
 .pp-alt {
   position: absolute;
   bottom: 8px;
@@ -70,7 +67,7 @@
   margin: 18px 0 6px;
 }
 
-/* ---- one at a time, on the wall (PostPictures `Strip`) --------------------- */
+/* ---- One at a time, on the wall (PostPictures `Strip`) --------------------- */
 .pp-strip {
   position: relative;
   width: 100%;
@@ -100,7 +97,7 @@
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
-/* where you are, small, on the picture whatever its colours and the theme: white on a dimmed pill */
+/* The position counter: white on a dimmed pill, legible over any picture. */
 .pp-counter {
   position: absolute;
   top: 12px;
@@ -137,7 +134,7 @@
 .pp-dot.is-on {
   opacity: 1;
 }
-/* with a mouse there is nothing to swipe: a round button at each side, shown on hover or focus */
+/* For a mouse, a round button at each side, shown on hover or focus. */
 .pp-step {
   position: absolute;
   top: 50%;
@@ -166,7 +163,7 @@
 .pp-step-next {
   inset-inline-end: 10px;
 }
-/* the chevron points the way it goes: back is the reading direction's start */
+/* The chevron points the way it goes; back is toward the reading direction's start. */
 .pp-step-prev svg {
   transform: scaleX(-1);
 }
@@ -176,14 +173,14 @@
 [dir='rtl'] .pp-step-next svg {
   transform: scaleX(-1);
 }
-/* a finger swipes; the buttons are for a pointer that cannot */
+/* Touch screens swipe, so the buttons are hidden. */
 @media (hover: none) {
   .pp-step {
     display: none;
   }
 }
 
-/* ---- the lightbox --------------------------------------------------------- */
+/* ---- The lightbox --------------------------------------------------------- */
 .pp-lightbox {
   position: fixed;
   inset: 0;
@@ -264,7 +261,7 @@
 .pp-next {
   inset-inline-end: 10px;
 }
-/* the chevron points the way it goes: back is the reading direction's start */
+/* The chevron points the way it goes; back is toward the reading direction's start. */
 .pp-prev svg {
   transform: scaleX(-1);
 }
@@ -287,8 +284,8 @@
     max-height: calc(100dvh - 200px);
   }
 }
-/* ---- the post page around them ------------------------------------------ */
-/* a saying has no title: its words are the headline */
+/* ---- The post page around them ------------------------------------------ */
+/* A saying has no title, so its words are the headline. */
 .post-body-saying {
   font-size: 1.22rem;
   line-height: 1.6;
