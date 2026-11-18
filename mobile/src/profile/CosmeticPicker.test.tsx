@@ -92,6 +92,26 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     expect(client.calls.filter((c) => c.method === 'PUT')[1]).toMatchObject({ path: '/me/cosmetics/icon', body: { sku: null } });
   });
 
+  it('wears it before the server answers, ends quick taps on the last one, and puts a refused one back', async () => {
+    const answers: ((r: unknown) => void)[] = [];
+    const client = fakeClient({
+      'GET /me/inventory': ok({ items: BACKGROUNDS, refreshedItems: [] }),
+      'PUT /me/cosmetics/background': () => new Promise((resolve) => answers.push(resolve)),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<CosmeticPicker equippedBackground="bg-made-hevalo" equippedIcon={null} iconVisible onChanged={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Gola Şîn' }));
+    expect(screen.getByRole('button', { name: 'Gola Şîn, equipped' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Hevalo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Gola Şîn' }));
+    expect(screen.getByRole('button', { name: 'Gola Şîn, equipped' })).toBeTruthy();
+    const puts = () => client.calls.filter((c) => c.method === 'PUT').map((c) => c.body);
+    expect(puts()).toEqual([{ sku: 'bg-made-gola-sin' }]);
+    await act(async () => answers[0]!({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByRole('button', { name: 'Hevalo, equipped' })).toBeTruthy();
+    expect(screen.getByText('Can’t reach Hevalo right now. Check your connection and try again.')).toBeTruthy();
+  });
+
   it('wears and takes off season frames here, as the Season screen does', async () => {
     const { client } = open([...BACKGROUNDS, ...FRAMES], { frameSku: 'frame_rank_zozan' });
     fireEvent.click(await screen.findByRole('tab', { name: 'Frames, 2 items' }));

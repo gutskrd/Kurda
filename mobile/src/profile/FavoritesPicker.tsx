@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import { listPosts } from '../library/api';
 import { postName, type LibraryPost } from '../library/types';
 import { radii, spacing, typography, wash } from '../theme/tokens';
@@ -78,8 +79,24 @@ function Slot({
 
   const [open, setOpen] = useState(false);
   const [posts, setPosts] = useState<LibraryPost[] | null>(null);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The favourite as /me has it, or a fresher answer to a choice here, so it does not flicker back while /me is re-read.
+  const [told, setTold] = useState(current);
+  useEffect(() => setTold(current), [current]);
+
+  // Chosen or removed at once; the server is told after, and a refusal puts it back with the reason.
+  const pinning = useIntents<'favorite', FavoriteRef | null>(
+    async (_key, next) => {
+      const res = next ? await setFavorite(client, kind, next.id) : await clearFavorite(client, kind);
+      if (res.ok) {
+        setTold(next);
+        onChanged();
+      }
+      return res;
+    },
+    { failed: (failure) => setError(describeError(failure, t)), same: (a, b) => a?.id === b?.id },
+  );
+  const shown = pinning.shown('favorite', told);
 
   /*
    * The list is fetched the first time it is opened and kept, since published posts change far more slowly than this is
@@ -99,32 +116,16 @@ function Slot({
     });
   }, [client, kind, open, posts, t]);
 
-  const choose = useCallback(
-    (post: LibraryPost) => {
-      if (busy) return;
-      setBusy(true);
-      setError(null);
-      void setFavorite(client, kind, post.id).then((res) => {
-        setBusy(false);
-        if (res.ok) {
-          setOpen(false);
-          onChanged();
-        } else setError(describeError(res.error, t));
-      });
-    },
-    [busy, client, kind, onChanged, t],
-  );
-
-  const remove = useCallback(() => {
-    if (busy) return;
-    setBusy(true);
+  const choose = (post: LibraryPost): void => {
     setError(null);
-    void clearFavorite(client, kind).then((res) => {
-      setBusy(false);
-      if (res.ok) onChanged();
-      else setError(describeError(res.error, t));
-    });
-  }, [busy, client, kind, onChanged, t]);
+    setOpen(false);
+    pinning.want('favorite', { id: post.id, title: postName(post) }, told);
+  };
+
+  const remove = (): void => {
+    setError(null);
+    pinning.want('favorite', null, told);
+  };
 
   return (
     <View style={styles.slot}>
@@ -132,13 +133,12 @@ function Slot({
 
       <View style={[styles.row, { flexDirection: dir.row }]}>
         <Text
-          style={[styles.value, dir.free, { color: current ? colors.textPrimary : colors.textSecondary }]}
+          style={[styles.value, dir.free, { color: shown ? colors.textPrimary : colors.textSecondary }]}
           numberOfLines={1}
         >
-          {current ? current.title : t('favorites.none')}
+          {shown ? shown.title : t('favorites.none')}
         </Text>
-        {busy ? <Loading /> : null}
-        {current && !busy ? (
+        {shown ? (
           <Pressable
             onPress={remove}
             reachSize={WORD}
@@ -172,12 +172,11 @@ function Slot({
           /* A plain map, not a list: this sits inside the edit screen's ScrollView. */
           <View style={styles.options}>
             {posts.map((p) => {
-              const on = current?.id === p.id;
+              const on = shown?.id === p.id;
               return (
                 <PressableScale
                   key={p.id}
                   onPress={() => choose(p)}
-                  disabled={busy}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={postName(p)}

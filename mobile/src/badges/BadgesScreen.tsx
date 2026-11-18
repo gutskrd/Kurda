@@ -5,7 +5,7 @@ import { Pressable } from '../theme/Pressable';
 import { PressableScale } from '../theme/MotionParts';
 import { SHOWCASE_SIZE, badgeColour, hasBadgeArt, nearestBadges, type BadgeView, type BadgesResponse } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -79,6 +79,20 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   // Pulled down, the badges are read again.
   const pull = usePullRefresh(load);
 
+  // The three on show change at once, from the sheet or the picker; a refusal puts them back and says why.
+  const showcasing = useIntents<'showcase', string[], { showcase: string[] }>(
+    async (_key, keys) => {
+      const res = await setShowcase(client, keys);
+      if (res.ok) setData((d) => d && { ...d, showcase: res.data.showcase });
+      return res;
+    },
+    { answered: (answer) => answer.showcase, same: (a, b) => a.length === b.length && a.every((k, i) => k === b[i]) },
+  );
+  const shown = data && { ...data, showcase: showcasing.shown('showcase', data.showcase) };
+  const choose = (keys: string[]): void => {
+    if (data) showcasing.want('showcase', keys, data.showcase);
+  };
+
   const columns = width >= 600 ? 5 : width >= 360 ? 3 : 2;
   const tile = Math.floor((Math.min(width, 720) - spacing.lg * 2 - spacing.sm * (columns - 1)) / columns);
   const nearest = data ? nearestBadges(data.badges) : [];
@@ -90,7 +104,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
         {() =>
           data ? (
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={pull}>
-              <Showcase data={data} onPick={() => setPicking(true)} onOpen={setOpen} />
+              <Showcase data={shown ?? data} onPick={() => setPicking(true)} onOpen={setOpen} />
 
               {nearest.length > 0 ? (
                 <View style={styles.family}>
@@ -151,17 +165,8 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           ) : null
         }
       </AsyncBoundary>
-      {open && data ? (
-        <BadgeSheet
-          badge={open}
-          showcase={data.showcase}
-          onClose={() => setOpen(null)}
-          onShowcase={(keys) => setData({ ...data, showcase: keys })}
-        />
-      ) : null}
-      {picking && data ? (
-        <ShowcasePicker data={data} onClose={() => setPicking(false)} onSaved={(keys) => setData({ ...data, showcase: keys })} />
-      ) : null}
+      {open && shown ? <BadgeSheet badge={open} showcase={shown.showcase} onClose={() => setOpen(null)} onShowcase={choose} /> : null}
+      {picking && shown ? <ShowcasePicker data={shown} onClose={() => setPicking(false)} onSaved={choose} /> : null}
     </GradientBackground>
   );
 }
@@ -371,11 +376,8 @@ function BadgeSheet({
   onShowcase: (keys: string[]) => void;
 }): React.JSX.Element {
   const dir = useDirection();
-  const { client } = useAuth();
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const shown = showcase.includes(badge.key);
   const full = !shown && showcase.length >= SHOWCASE_SIZE;
   const name = badge.hidden ? t('badges.secretName') : badgeName(t, badge.key);
@@ -386,15 +388,7 @@ function BadgeSheet({
   const num = (v: number): string => formatNumber(v, locale);
   const kicker = badge.hidden ? null : earned ? t('badges.earnedOn', { date: earned }) : badge.tier > 0 ? null : progressText(t, badge, num);
 
-  const toggle = async (): Promise<void> => {
-    setBusy(true);
-    setError(null);
-    const keys = shown ? showcase.filter((k) => k !== badge.key) : [...showcase, badge.key];
-    const res = await setShowcase(client, keys);
-    setBusy(false);
-    if (res.ok) onShowcase(res.data.showcase);
-    else setError(describeError(res.error, t));
-  };
+  const toggle = (): void => onShowcase(shown ? showcase.filter((k) => k !== badge.key) : [...showcase, badge.key]);
 
   return (
     <Sheet onClose={onClose} footer={<ClayButton label={t('common.done')} tone="primary" size="large" onPress={onClose} />}>
@@ -481,12 +475,10 @@ function BadgeSheet({
             icon={shown ? 'check' : 'plus'}
             tone="neutral"
             variant="outline"
-            busy={busy}
             disabled={full}
-            onPress={() => void toggle()}
+            onPress={toggle}
           />
           {full ? <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('badges.showcaseFull')}</Text> : null}
-          {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
         </View>
       ) : null}
     </Sheet>
@@ -496,26 +488,18 @@ function BadgeSheet({
 /** Choosing the profile's three, in order: tap to add, tap again to take out. */
 function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onClose: () => void; onSaved: (keys: string[]) => void }): React.JSX.Element {
   const dir = useDirection();
-  const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const [keys, setKeys] = useState<string[]>(data.showcase);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const earned = data.badges.filter((b) => b.tier > 0 && !b.hidden);
 
   const toggle = (key: string): void =>
     setKeys((k) => (k.includes(key) ? k.filter((x) => x !== key) : k.length >= SHOWCASE_SIZE ? k : [...k, key]));
 
-  const save = async (): Promise<void> => {
-    setBusy(true);
-    setError(null);
-    const res = await setShowcase(client, keys);
-    setBusy(false);
-    if (res.ok) {
-      onSaved(res.data.showcase);
-      onClose();
-    } else setError(describeError(res.error, t));
+  // Shown on the page at once; the page puts it back and says why if the server refuses.
+  const save = (): void => {
+    onSaved(keys);
+    onClose();
   };
 
   return (
@@ -524,8 +508,7 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
       onClose={onClose}
       footer={
         <>
-          {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
-          <ClayButton label={t('badges.showcaseSave')} tone="primary" size="large" busy={busy} onPress={() => void save()} />
+          <ClayButton label={t('badges.showcaseSave')} tone="primary" size="large" onPress={save} />
         </>
       }
     >
