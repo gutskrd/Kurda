@@ -4,23 +4,17 @@ import type { CourseScript } from '../learn/courseDialect';
 import type { Dialect } from './matchApi';
 
 /**
- * Which varieties a rhyme round can be played in now, for training and for a
- * match alike (`GET /rhyme/availability`), and which one a screen opens on.
- *
- * A variety without enough curated prompts would open a round on a word of
- * the other variety, or on none at all (a match then failed with "no words"),
- * so it keeps its place in the choice, marked coming soon, and says so where
- * Start would be. Until the server answers, and whenever it cannot say, both
- * are offered, as they were before it could. The website does the same
+ * Which varieties a rhyme round can be played in now, for training and matches (`GET /rhyme/availability`), and
+ * which one a screen opens on. A variety without enough curated prompts is marked coming soon in place of Start.
+ * Until the server answers, or when it cannot, both are offered. The web app does the same
  * (web/src/pages/Rhyme.tsx).
  */
 
 export const RHYME_DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
 
 /**
- * A variety is called by its own name in every language, the way a language
- * is. Not a catalogue entry: translating "Kurmancî" into Kurmancî nine times
- * is how you end up with nine spellings of one word.
+ * A variety keeps its own name in every language, as a language does; not a catalogue entry, which would invite
+ * nine spellings of one word.
  */
 export const DIALECT_NAME: Record<Dialect, string> = { kurmanci: 'Kurmancî', sorani: 'Soranî' };
 
@@ -40,7 +34,7 @@ export function useRhymeOffered(): RhymeOffered {
         const available = dialects[d]?.available;
         if (typeof available === 'boolean') known[d] = available;
       }
-      // an answer that offers nothing says nothing either: better both offered than neither
+      // An answer that offers nothing says nothing either: better both offered than neither.
       if (RHYME_DIALECTS.some((d) => known[d] === true)) setOffered(known);
     });
     return () => {
@@ -56,9 +50,8 @@ export function isRhymeOffered(offered: RhymeOffered, dialect: Dialect): boolean
 }
 
 /**
- * The variety a rhyme screen opens on: the learner's own (the course on their
- * path, else Soranî when the interface is Soranî, else Kurmancî) when rounds
- * are offered in it, and otherwise the first one that has them.
+ * The variety a rhyme screen opens on: the learner's own (their course, else Soranî for a Soranî interface, else
+ * Kurmancî) when rounds are offered there, otherwise the first that has them.
  */
 export function openingRhymeDialect(offered: RhymeOffered, course: CourseScript, locale: string): Dialect {
   const own: Dialect = course === 'ckb' || locale === 'ckb' ? 'sorani' : 'kurmanci';
