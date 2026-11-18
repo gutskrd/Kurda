@@ -9,11 +9,12 @@ import {
   type ReactNode,
 } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import type { ChatUnread } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { CloseButton } from '../components/CloseButton';
 import { useRealtimeEvent, useRealtimeRooms } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
-import type { Conversation, DmMessage, GroupMessage, MyGroup } from '../lib/types';
+import type { DmMessage, GroupMessage, MyGroup } from '../lib/types';
 import { messagePreview, truncate, type Previewable } from './messagePreview';
 import { useT } from '../i18n/I18nProvider';
 import type { Translate } from '../i18n/I18nProvider';
@@ -101,18 +102,16 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
     if (res.ok) setGroups(res.data.groups ?? []);
   }, [client, signedIn]);
 
+  // The counts alone (GET /chat/unread), not the conversation list; a failed read leaves the badge as it was.
   const refreshUnread = useCallback(() => {
     if (!signedIn) return;
-    void (async () => {
-      const [dms, gs] = await Promise.all([
-        client.get<{ conversations: Conversation[] }>('/chat/conversations'),
-        client.get<{ unread: Array<{ groupId: string; unread: number }> }>('/me/groups/unread'),
-      ]);
+    void client.get<ChatUnread>('/chat/unread').then((res) => {
+      if (!res.ok) return;
       setUnread({
-        dm: dms.ok ? Object.fromEntries((dms.data.conversations ?? []).map((c) => [c.userId, c.unread ?? 0])) : {},
-        group: gs.ok ? Object.fromEntries((gs.data.unread ?? []).map((g) => [g.groupId, g.unread ?? 0])) : {},
+        dm: Object.fromEntries((res.data.direct ?? []).map((c) => [c.userId, c.unread ?? 0])),
+        group: Object.fromEntries((res.data.groups ?? []).map((g) => [g.groupId, g.unread ?? 0])),
       });
-    })();
+    });
   }, [client, signedIn]);
 
   useEffect(() => {

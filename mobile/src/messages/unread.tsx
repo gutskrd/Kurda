@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
+import type { ChatUnread } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useRealtimeListener, useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { onBackFromBackground } from '../net/backFromBackground';
@@ -45,6 +46,9 @@ const UnreadContext = createContext<UnreadValue>({
   report: () => undefined,
 });
 
+/** The unread messages in a list of conversations' counts. */
+const sum = (list: readonly { unread: number }[] | undefined): number => (list ?? []).reduce((n, c) => n + Math.max(0, c.unread), 0);
+
 /** How long a nudge waits before refetching, so a burst of events becomes one round of requests. */
 const SETTLE_MS = 600;
 /** A nudge within this long of the last answer is ignored: the counts are fresh. */
@@ -60,7 +64,7 @@ export const OPEN_WAIT_MS = 3_000;
  * polling timer.
  *
  * The gift count is the shop badge's own (useUnseenGifts), so the two agree. A guest's counts are zero without
- * asking, since all four routes refuse guests.
+ * asking, since all three routes refuse guests.
  */
 export function UnreadProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { client, user, isGuest } = useAuth();
@@ -76,15 +80,15 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
     awaitingOpen.current = false;
     if (!signedIn) return;
     void Promise.all([
-      client.get<{ conversations: { unread: number }[] }>('/chat/conversations'),
-      client.get<{ unread: { unread: number }[] }>('/me/groups/unread'),
+      // the counts alone, not the conversation list Messages reads for itself
+      client.get<ChatUnread>('/chat/unread'),
       client.get<{ requests: unknown[] }>('/friends/requests'),
       client.get<{ count: number }>('/me/notifications/unread-count'),
-    ]).then(([chats, groups, requests, notifications]) => {
+    ]).then(([chat, requests, notifications]) => {
       lastAnswer.current = Date.now();
       setCounts((prev) => ({
-        chats: chats.ok ? chats.data.conversations.reduce((n, c) => n + Math.max(0, c.unread), 0) : prev.chats,
-        groups: groups.ok ? groups.data.unread.reduce((n, g) => n + Math.max(0, g.unread), 0) : prev.groups,
+        chats: chat.ok ? sum(chat.data.direct) : prev.chats,
+        groups: chat.ok ? sum(chat.data.groups) : prev.groups,
         requests: requests.ok ? requests.data.requests.length : prev.requests,
         notifications: notifications.ok ? notifications.data.count : prev.notifications,
       }));
