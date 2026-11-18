@@ -1,8 +1,7 @@
 /**
- * Pure locale-aware formatting (KUR-093) — no React Native. Numbers and dates
- * go through Intl (Hermes ships it), so grouping separators and date order
- * follow the user's language. Event windows are stored UTC and rendered in the
- * device's local timezone here, with a live countdown for the diaspora.
+ * Pure locale-aware formatting, with no React Native. Numbers and dates go through Intl (Hermes ships it), so
+ * separators and date order follow the user's language. Event windows are stored in UTC and shown in the device's
+ * time zone.
  */
 import { RTL_LOCALES, type Locale } from './translations.js';
 
@@ -27,9 +26,8 @@ export function formatNumber(value: number, locale: Locale): string {
 }
 
 /**
- * Compact large numbers for tight spots (leaderboards, counters): 1234 → "1.2K",
- * 1_500_000 → "1.5M". Values under 1000 render normally. Falls back to the plain
- * number if the runtime lacks compact Intl support.
+ * Compact large numbers for tight spots: 1234 → "1.2K", 1_500_000 → "1.5M"; below 1000 unchanged. Falls back to
+ * the plain number without compact Intl support.
  */
 export function formatCompact(value: number, locale: Locale): string {
   try {
@@ -40,25 +38,23 @@ export function formatCompact(value: number, locale: Locale): string {
 }
 
 /**
- * A day named in full in the reader's language — "Thursday, 12 November" — in
- * the device's time zone (or an explicit one). For saying which day something
- * lasts through, where a clock time or a countdown would only hurry the reader.
+ * A day named in full in the reader's language ("Thursday, 12 November"), in the device's time zone or an
+ * explicit one, for saying which day something lasts through without a clock time or countdown.
  */
 export function formatDay(date: Date, locale: Locale, timeZone?: string): string {
   const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long', ...(timeZone ? { timeZone } : {}) };
   try {
     return new Intl.DateTimeFormat(locale, options).format(date);
   } catch {
-    // a locale the device has no data for falls back to its own
+    // A locale the device has no data for falls back to its own.
     return new Intl.DateTimeFormat(undefined, options).format(date);
   }
 }
 
 /**
- * When something is expected, in the reader's own language and time zone (or
- * an explicit one): the time alone when it is today, the weekday and the time
- * within the coming week, and the date as well when it is further off than
- * that, where a weekday alone would name the wrong one.
+ * When something is expected, in the reader's language and time zone (or an explicit one): the time alone today,
+ * the weekday and time within the coming week, and the date as well beyond that, where a weekday alone would be
+ * ambiguous.
  */
 export function formatExpectedAt(iso: string, locale: Locale, now: Date = new Date(), timeZone?: string): string {
   const at = new Date(iso);
@@ -75,7 +71,7 @@ export function formatExpectedAt(iso: string, locale: Locale, now: Date = new Da
   try {
     return new Intl.DateTimeFormat(locale, { ...options, ...zone }).format(at);
   } catch {
-    // a locale the device has no data for falls back to its own
+    // A locale the device has no data for falls back to its own.
     return new Intl.DateTimeFormat(undefined, { ...options, ...zone }).format(at);
   }
 }
@@ -102,13 +98,8 @@ export function countdownParts(remainingMs: number): CountdownParts {
 }
 
 /**
- * Compact countdown for a deadline, in the reader's words: the two largest
- * units that matter — "2d 3h", "5h 12m" — down to whole minutes, with the last
- * one shown as "1m" rather than seconds ticking away. Empty once the deadline
- * has passed.
- *
- * It was English abbreviations in every language, and counted seconds, which
- * says hurry more than when.
+ * A compact countdown to a deadline in the reader's words: the two largest relevant units ("2d 3h", "5h 12m"),
+ * down to whole minutes, ending at "1m" rather than ticking seconds. Empty once the deadline has passed.
  */
 export function formatCountdown(
   remainingMs: number,
@@ -121,7 +112,7 @@ export function formatCountdown(
   return t('time.minutes', { count: Math.max(1, minutes) });
 }
 
-/** Milliseconds until an ISO instant from `now` (default: real clock). */
+/** Milliseconds from `now` (default: the real clock) until an ISO instant. */
 export function remainingUntil(iso: string, now: number = Date.now()): number {
   const target = Date.parse(iso);
   return Number.isNaN(target) ? 0 : target - now;
