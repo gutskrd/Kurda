@@ -40,23 +40,13 @@ export function renderWithProviders(ui: ReactElement): RenderResult {
 }
 
 /*
- * A screen is drawn, and then its effects run, and React does the two as
- * separate pieces of work. On a quiet machine they follow each other at once;
- * on a busy one React hands the thread back in between, and a findBy… that
- * sees the new screen resolves in that gap. A press made then reaches a
- * screen that is drawn but not yet wired: react-native-web gives a Pressable
- * its current onPress and disabled, and joins it to the touch system, in
- * effects, so the press goes to the handler of the screen before (a Start
- * still disabled, a Check that still thinks nothing is picked) or to nobody
- * (a long press on a message just shown), and a screen's own effects (a new
- * item clearing the last one's choice, a result's buzz) land after the step
- * that should have followed them. So the tests failed only in a full run.
+ * React draws a screen and runs its effects as separate pieces of work, and on a busy machine a findBy can resolve in
+ * the gap. react-native-web wires a Pressable's onPress, disabled state and touch handling in effects, so a press made
+ * then reaches the previous screen's handler or nobody, and the tests failed only in full runs.
  *
- * No person can press inside that gap, so a test should not either: before
- * every event fired, and as every findBy… or waitFor… is satisfied, React is
- * made to finish the work it put off. Rendering anything at all does that,
- * since React runs the effects still waiting before it draws again; here it
- * is an empty root of its own, so no screen is touched.
+ * No person can press inside that gap, so before every fired event, and as every findBy or waitFor is satisfied, React
+ * is made to finish its pending work by rendering an empty root of its own (React flushes waiting effects before it
+ * draws again).
  */
 let quiet: Root | null = null;
 

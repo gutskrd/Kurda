@@ -33,14 +33,10 @@ import { heldDim } from '../theme/MotionParts';
 const SCOPES: readonly RestrictionScope[] = ['account', 'chat', 'post', 'media'];
 
 /**
- * Account standing: what is limited on your account, why, until when, and a
- * way to ask for a review.
- *
- * Each decision carries its statement of reasons — the rule, what the reviewer
- * wrote to you, from when and until when in your own time, whether it came
- * from a report or was automatic, and whether a person has looked at it — the
- * things the DSA's Art. 17 asks a service to say, and that a child deserves to
- * be told plainly. Asking for a review is open for six months, once a decision.
+ * Account standing: what is limited on your account, why, until when, and a way to ask for a review. Each decision
+ * carries its statement of reasons (the rule, the reviewer's note, from and until when in your own time, whether it
+ * came from a report or was automatic, and whether a person reviewed it), as Art. 17 of the DSA requires, said plainly
+ * enough for a child. A review can be asked for once per decision, within six months.
  */
 export function AccountStandingScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -82,7 +78,7 @@ export function AccountStandingScreen({ onExit }: { onExit: () => void }): React
 }
 
 /** How the account stands, in one line, and what is limited until when. */
-export function StandingSummary({ standing }: { standing: AccountStanding }): React.JSX.Element {
+function StandingSummary({ standing }: { standing: AccountStanding }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
@@ -104,7 +100,7 @@ export function StandingSummary({ standing }: { standing: AccountStanding }): Re
           {scopes.map((scope) => {
             const until = standing.restrictions[scope]?.until ?? null;
             return (
-              // what, then until when under it: side by side, a phone's width folds the name in two
+              // What, then until when under it: side by side, a phone's width would fold the name in two.
               <View key={scope} style={styles.limitRow}>
                 <Text style={[styles.limitName, dir.text, { color: colors.textPrimary }]}>{t(SCOPE_LABEL[scope])}</Text>
                 <Text style={[styles.limitUntil, dir.text, { color: colors.textSecondary }]}>
@@ -120,7 +116,7 @@ export function StandingSummary({ standing }: { standing: AccountStanding }): Re
 }
 
 /** The decisions in force, the earlier ones, and requests about reports. */
-export function StandingDecisions({
+function StandingDecisions({
   standing,
   client,
   onChanged,
@@ -167,7 +163,7 @@ export function StandingDecisions({
 }
 
 /** One decision with its statement of reasons, and the review it allows. */
-export function SanctionCard({
+function SanctionCard({
   sanction,
   client,
   onChanged,

@@ -5,28 +5,18 @@ import type { TranslationKey } from '../i18n/translations';
 import { mutedDetails } from './suspension';
 
 /**
- * Why the server would not take something you sent — a message, a gift, a
- * game card, a post, a comment, a picture, a voice note, a profile change —
- * when the reason is a limit on your account rather than the thing itself.
+ * Why the server would not take something you sent (a message, a gift, a game card, a post, a comment, a picture, a
+ * voice note, a profile change) when the reason is a limit on your account: what is limited and until when, in the
+ * reader's language and time zone, pointing to Account standing where Hevalo wrote the reasons down. The browser says
+ * the same (web/src/reports/restriction.ts).
  *
- * Each of these used to come back as the server's English or as "something
- * went wrong": a muted person kept pressing Send with no idea why nothing
- * happened, or for how long. Now each refusal says what is limited and until
- * when, in the reader's language and time zone, and — where Hevalo has written
- * the reasons down — points to Account standing. The browser says the same
- * sentences (web/src/reports/restriction.ts).
- *
- * - `muted` — a Hevalo sanction (403 MUTED with `MutedErrorDetails`): chat,
- *   posting, or pictures and voice (a feature limit), until a time or with no
- *   end set.
- * - `groupMuted` — 403 MUTED with no details: the group's own admins muted you
- *   in that group. Not a Hevalo decision, so it is not on the standing page.
- * - `chatMuted` — 403 CHAT_MUTED: the automatic pause after several messages
- *   were flagged. It has no statement of reasons and no end the server tells
- *   us, so it gets neither a date nor a link to a page that would show nothing.
- * - `suspended` — the account itself (ACCOUNT_SUSPENDED). Mid-session the
- *   client hands that to the suspension screen (`ApiClient.onSuspended`), so
- *   this is only the sentence for a screen that meets it first.
+ * - `muted`: a Hevalo sanction (403 MUTED with `MutedErrorDetails`) on chat, posting, or pictures and voice, until a
+ *   time or with no end set.
+ * - `groupMuted`: 403 MUTED with no details, a group's own admins muting you there; not a Hevalo decision.
+ * - `chatMuted`: 403 CHAT_MUTED, the automatic pause after several flagged messages, with no reasons or known end, so
+ *   no date and no link.
+ * - `suspended`: the account itself (ACCOUNT_SUSPENDED). Mid-session the client hands that to the suspension screen
+ *   (`ApiClient.onSuspended`), so this is only the sentence for a screen that meets it first.
  */
 export type Restriction =
   | { kind: 'muted'; scope: MutedErrorDetails['scope']; until: string | null }
@@ -54,9 +44,8 @@ export function restrictionOf(error: ApiError | null | undefined): Restriction |
 }
 
 /**
- * A moment as the reader would say it — "14 Oct, 18:00", with the year only
- * when it is not this one — in the phone's own time zone, because "until 16:00
- * UTC" asks a child to do arithmetic about their own punishment.
+ * A moment as the reader would say it ("14 Oct, 18:00", with the year only when it is not this one), in the phone's own
+ * time zone rather than UTC.
  */
 export function formatUntil(iso: string, locale: string | undefined, now: Date = new Date()): string {
   const when = new Date(iso);
@@ -71,7 +60,7 @@ export function formatUntil(iso: string, locale: string | undefined, now: Date =
   try {
     return when.toLocaleString(locale, options);
   } catch {
-    // a locale the device has no data for (Kurdish, on some) falls back to its own
+    // A locale the device has no data for (Kurdish, on some) falls back to its own.
     return when.toLocaleString(undefined, options);
   }
 }
@@ -116,15 +105,14 @@ export function restrictionText(r: Restriction, t: Translate, locale: string | u
   }
 }
 
-/** Whether Account standing has the reasons for this limit — only Hevalo's own sanctions do. */
+/** Whether Account standing has the reasons for this limit: only Hevalo's own sanctions do. */
 export function standingExplains(r: Restriction): boolean {
   return r.kind === 'muted' || r.kind === 'suspended';
 }
 
 /**
- * Any failed send, in one sentence: the limit when it is one, otherwise what
- * `describeError` says. `restriction` is set when the answer is a limit, so a
- * screen can offer the way to Account standing beside it.
+ * Any failed send in one sentence: the limit when it is one, otherwise what `describeError` says. `restriction` is set
+ * for a limit, so a screen can offer the way to Account standing.
  */
 export function sendErrorOf(
   error: ApiError,

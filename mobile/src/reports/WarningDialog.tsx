@@ -18,16 +18,10 @@ import { CATEGORY_LABEL } from './labels';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * A warning, shown once, the next time the app is opened.
- *
- * A warning limits nothing, so there is no refusal anywhere that would tell
- * the person about it — this is the only place they hear of it. It says which
- * rule, what the reviewer wrote, and that nothing is limited; "I understand"
- * marks it seen (`POST /me/standing/ack`) so it is not shown again, and
- * Account standing is one tap away for the rest.
- *
- * Mounted once, signed in, and asks again whenever the app comes back to the
- * front. Renders nothing until there is a warning to show.
+ * A warning, shown once, the next time the app is opened. A warning limits nothing, so nothing else would tell the
+ * person of it. It says which rule and what the reviewer wrote, and that nothing is limited; "I understand" marks it
+ * seen (`POST /me/standing/ack`), with Account standing one tap away. Mounted once while signed in; asks again whenever
+ * the app returns to the front.
  */
 export function WarningDialog(): React.JSX.Element | null {
   const { client } = useAuth();
@@ -37,14 +31,13 @@ export function WarningDialog(): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
   const [warnings, setWarnings] = useState<StandingSanction[]>([]);
 
-  // on sign-in, and each time the app comes back to the front: a phone is
-  // resumed far more often than it is started, so "the next time the app is
-  // opened" means that too, not only a cold start
+  // On sign-in and each time the app returns to the front: a phone is resumed far more often than started, so "the next
+  // time the app is opened" includes that.
   useEffect(() => {
     let alive = true;
     const check = (): void => {
       void accountStanding(client).then((res) => {
-        // one already on screen stays as it is until it is answered
+        // One already on screen stays as it is until it is answered.
         if (alive && res.ok) setWarnings((shown) => (shown.length > 0 ? shown : res.data.unacknowledgedWarnings));
       });
     };
@@ -61,7 +54,7 @@ export function WarningDialog(): React.JSX.Element | null {
   const first = warnings[0];
   if (!first) return null;
 
-  // all of them at once: one dialog per warning, back to back, is a scolding
+  // All of them at once: one dialog per warning, back to back, is a scolding.
   const done = (then?: () => void): void => {
     const ids = warnings.map((w) => w.id);
     setWarnings([]);

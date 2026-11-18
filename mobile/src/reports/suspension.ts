@@ -1,13 +1,9 @@
 import { isReportCategory, type MutedErrorDetails, type SuspendedErrorDetails } from '@kurda/shared';
 
 /**
- * The details of a 403 ACCOUNT_SUSPENDED, when they are really there.
- *
- * Sign-in, refresh and social sign-in answer a suspended or banned account with
- * the statement of reasons and an appeal token (shared `SuspendedErrorDetails`).
- * Read defensively: an older server, or a proxy's own 403, sends something
- * else, and a suspension screen with no token to ask for a review with would be
- * a dead end — then the plain message is the better answer.
+ * The details of a 403 ACCOUNT_SUSPENDED, when they are really there: the statement of reasons and an appeal token
+ * (shared `SuspendedErrorDetails`). Read defensively, since an older server or a proxy's own 403 sends something else,
+ * and a suspension screen with no token would be a dead end.
  */
 export function suspendedDetails(details: unknown): SuspendedErrorDetails | null {
   if (typeof details !== 'object' || details === null) return null;
@@ -16,7 +12,7 @@ export function suspendedDetails(details: unknown): SuspendedErrorDetails | null
   if (typeof d.statement !== 'string') return null;
   return {
     until: typeof d.until === 'string' ? d.until : null,
-    // a rule this build has no words for is left out, rather than shown as a key
+    // A rule this build has no words for is left out, rather than shown as a key.
     policy: isReportCategory(d.policy) ? d.policy : null,
     statement: d.statement,
     appealable: d.appealable === true,
