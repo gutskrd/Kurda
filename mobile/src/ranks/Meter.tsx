@@ -7,12 +7,9 @@ import { useDirection } from '../reports/direction';
 import { radii } from '../theme/tokens';
 
 /**
- * A progress bar that fills: to the next division, to a badge's next tier, to
- * the weekly goal. The fill is a gradient in the emblem's own metal and slides
- * in on the native driver (a transform, never a width), from `from` when it is
- * given — the bar after a game starts where the points were. Under Reduce
- * Motion it is simply at its value. In Soranî and Arabic it fills from the
- * right, the side the line is read from.
+ * A progress bar that fills (to the next division, a badge's next tier, the weekly goal): a gradient in the emblem's
+ * metal, sliding in on the native driver as a transform from `from` when given. Under Reduce Motion it is simply at its
+ * value. It fills from the right in right-to-left languages.
  */
 export function Meter({
   fraction,
@@ -24,16 +21,16 @@ export function Meter({
   label,
   style,
 }: {
-  /** 0…1 */
+  /** 0…1. */
   fraction: number;
-  /** where the fill starts before sliding to `fraction` (default: no slide) */
+  /** Where the fill starts before sliding to `fraction` (default: no slide). */
   from?: number;
-  /** the fill's two colours, light to strong */
+  /** The fill's two colours, light to strong. */
   tint: readonly [string, string];
   height?: number;
   durationMs?: number;
   delayMs?: number;
-  /** what the bar measures, for a screen reader ("88 to Gir I") */
+  /** What the bar measures, for a screen reader ("88 to Gir I"). */
   label?: string;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
@@ -63,7 +60,7 @@ export function Meter({
     return () => run.stop();
   }, [reduce, start, target, durationMs, delayMs, value]);
 
-  // the fill slides in from the side the line starts on: off to the left, or off to the right in a right-to-left language
+  // The fill slides in from the side the line starts on.
   const translateX = value.interpolate({ inputRange: [0, 1], outputRange: [dir.rtl ? width : -width, 0] });
   return (
     <View
@@ -76,7 +73,7 @@ export function Meter({
     >
       {width > 0 ? (
         <Animated.View style={[styles.fill, { width, transform: [{ translateX }] }]}>
-          {/* its strong end at the front of the fill, whichever way it grows */}
+          {/* Its strong end at the front of the fill, whichever way it grows. */}
           <LinearGradient colors={tint} start={{ x: dir.rtl ? 1 : 0, y: 0 }} end={{ x: dir.rtl ? 0 : 1, y: 0 }} style={StyleSheet.absoluteFill} />
         </Animated.View>
       ) : null}

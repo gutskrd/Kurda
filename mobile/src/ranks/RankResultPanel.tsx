@@ -40,9 +40,8 @@ const PENDING_GAP_MS = 1500;
 type Counted = Extract<RankResult, { counted: true }>;
 
 /**
- * The line under a result that moved less than a full game. The result names
- * which part of its weight applied — the same players' rated games today, or
- * someone new to Hevalo — so it says that one, never a guess between the two.
+ * The line under a result that moved less than a full game. The result names which weighting applied (the same players'
+ * rated games today, or someone new to Hevalo), so it says that one.
  */
 const PART_WEIGHT_NOTE = {
   'repeat-opponent': 'ranks.result.damped',
@@ -51,16 +50,12 @@ const PART_WEIGHT_NOTE = {
 } as const satisfies Record<PartWeightReason, string>;
 
 /**
- * What a finished game did to your rank (contract 4 §R2, §U): the points
- * counting from where they were to where they are, the bar filling, and the
- * one plain reason — "+24 · you beat a higher-ranked player". A new division
- * or tier, or a first placement, then has its moment on its own stage, and
- * any badge the game earned waits until that is over.
+ * What a finished game did to your rank: the points counting up, the bar filling, and the one plain reason ("+24 · you
+ * beat a higher-ranked player"). A new division, tier or first placement then gets its own stage, and any badge the
+ * game earned waits until that is over.
  *
- * A loss is never staged as a loss: the change is written in the page's
- * quiet grey, the bar does not drain in front of you, and the line under it
- * says where you still are. A game that played as friendly says so, once,
- * with its reason when it was not the host's choice.
+ * A loss is never staged as one: the change is in quiet grey, the bar does not drain, and the line says where you still
+ * are. A game that played as friendly says so once, with its reason when it was not the host's choice.
  */
 export function RankResultPanel({ game, gameRef }: { game: RankedGame; gameRef: string }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -93,7 +88,7 @@ export function RankResultPanel({ game, gameRef }: { game: RankedGame; gameRef: 
     };
   }, [client, game, gameRef]);
 
-  // the badges this game earned wait while its result is being worked out and shown
+  // The badges this game earned wait while its result is being worked out and shown.
   const [shown, setShown] = useState(false);
   useCelebrationHold(counting || (result?.counted === true && !shown));
 
@@ -155,19 +150,20 @@ function CountedResult({ result, onShown }: { result: Counted; onShown: () => vo
       run.stop();
       counter.removeListener(id);
     };
-    // plays once, for this result
+    // Plays once, for this result.
   }, [result]);
 
   const after = result.progress ?? progressToNext(result.pointsAfter);
   const before = progressToNext(result.pointsBefore);
-  // a win in the same division slides on from where it was; a new division fills from its start; a loss just shows where you are
+  // A win in the same division slides on from where it was; a new division fills from its start; a loss just shows
+  // where you are.
   const from = tone === 'up' ? (result.divisionUp || result.tierUp ? 0 : before.fraction) : undefined;
   const placing = emblem.kind === 'placing';
   const tint = placing ? PLACING_TINT[scheme] : rankTint(emblem.tier, scheme);
   const name = placing ? t('ranks.placing', { played: result.placement?.played ?? 0, of: result.placement?.of ?? 5 }) : rankName(t, emblem.tier, emblem.division);
   const reason = t(REASON_KEY[result.reason]);
   const deltaColour = tone === 'up' ? colors.textPrimary : colors.textSecondary;
-  // a loss says where you still are; a placement game that did not move you says what placement is for
+  // A loss says where you still are; a placement game that did not move you says what placement is for.
   const kind = placing
     ? tone === 'up'
       ? null
@@ -232,7 +228,7 @@ function RankMoment({
   onClose,
 }: {
   kind: Exclude<CelebrationKind, null>;
-  /** the game's own line: "+26 · you beat a higher-ranked player" */
+  /** The game's own line: "+26 · you beat a higher-ranked player" */
   line: string;
   tier: Extract<ReturnType<typeof resultEmblem>, { kind: 'ranked' }>['tier'];
   division: Extract<ReturnType<typeof resultEmblem>, { kind: 'ranked' }>['division'];

@@ -58,7 +58,7 @@ describe('RatedChoice', () => {
 describe('LobbyRated', () => {
   afterEach(cleanup);
 
-  it('shows the chess.com line per opponent, by name or seat', async () => {
+  it('shows the expected change per opponent, by name or seat', async () => {
     testAuth.client = fakeClient({ [`GET /ranks/expected/wordle-battle/${LOBBY}`]: ok(gains()) });
     renderWithProviders(<LobbyRated game="wordle-battle" lobbyId={LOBBY} rated={rated} isHost players={2} seatName={seatName} onChanged={() => undefined} />);
     expect(await screen.findByText('Win ≈ +24 · Lose ≈ −9')).toBeTruthy();
@@ -82,10 +82,10 @@ describe('LobbyRated', () => {
     testAuth.client = client;
     const onChanged = vi.fn();
     renderWithProviders(<LobbyRated game="wordle-battle" lobbyId={LOBBY} rated={rated} isHost players={2} seatName={seatName} onChanged={onChanged} />);
-    // the whole line is the switch, which a screen reader hears as one switch that is on
+    // The whole line is the switch, which a screen reader hears as one switch that is on.
     expect(screen.getAllByRole('switch')).toHaveLength(1);
     expect(screen.getByRole('switch', { name: 'Rated game' }).getAttribute('aria-checked')).toBe('true');
-    // a tap on its words turns it, as a tap on the switch does
+    // A tap on its words turns it, as a tap on the switch does.
     fireEvent.click(screen.getByText('Rated game'));
     await waitFor(() => expect(onChanged).toHaveBeenCalled());
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ rated: false });
