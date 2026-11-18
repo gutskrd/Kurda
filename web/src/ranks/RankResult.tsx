@@ -9,12 +9,12 @@ import { Celebration, useCelebrationHold } from './Celebration';
 import { friendlyReason, rankLabel, rankTierNamed, reasonLine, withMeaning } from './names';
 import { signed } from './rated';
 
-/** How long the numbers take to count, and how often a result not yet in is asked for again. */
-export const COUNT_MS = 1100;
+/** How long the numbers take to count, and how often a pending result is fetched again. */
+const COUNT_MS = 1100;
 const POLL_MS = 1500;
 const POLL_TRIES = 12;
 
-/** The line under a result that moved less than a full game: the reason that applied, never a guess between two. */
+/** The line under a result that moved less than a full game: the reason that applied. */
 const PART_WEIGHT_NOTE = {
   'repeat-opponent': 'rankResult.dampedRepeat',
   'new-account': 'rankResult.dampedNew',
@@ -24,18 +24,10 @@ const PART_WEIGHT_NOTE = {
 type Load = { state: 'loading' } | { state: 'none' } | { state: 'ready'; result: RankResultData };
 
 /**
- * What a finished game did to your rank (contract 4 §R2, §U): the change
- * counting up, the bar filling, and one plain reason — "+24 · you beat a
- * higher-ranked player", "−6 · close game against a stronger player". A new
- * division or tier is celebrated once the numbers have landed; the badges the
- * game also earned wait until then.
- *
- * A loss is said as plainly as a win and drawn the same way: the number in the
- * same calm ink, the bar easing back, no shake and no red. A friendly game
- * says it was friendly, and why when the host had chosen Rated.
- *
- * The result can arrive a moment after the game ends (the rating is applied as
- * the game closes), so a "pending" answer is asked again a few times.
+ * What a finished game did to the reader's rank: the change counting up, the bar filling, and one reason, such as
+ * "+24 · you beat a higher-ranked player". A new division or tier is celebrated once the numbers land, with badges
+ * waiting until then. A loss is drawn as calmly as a win, with no red or shake. A friendly game says so, and why if the
+ * host chose Rated. The result can lag the game's end, so a pending answer is fetched again a few times.
  */
 export function RankResult({ game, gameRef }: { game: PlayGame; gameRef: string }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -51,7 +43,7 @@ export function RankResult({ game, gameRef }: { game: PlayGame; gameRef: string 
     const ask = async (): Promise<void> => {
       const res = await client.get<RankResultData>(`/ranks/results/${ranked}/${gameRef}`);
       if (cancelled) return;
-      // not in it, or an answer without the shape (an API from before Game Ranks): nothing to show
+      // Not in it, or an answer without the expected shape: nothing to show.
       if (!res.ok || typeof res.data?.counted !== 'boolean') return setLoad({ state: 'none' });
       const r = res.data;
       if (!r.counted && r.pending && tries < POLL_TRIES) {
@@ -68,7 +60,7 @@ export function RankResult({ game, gameRef }: { game: PlayGame; gameRef: string 
     };
   }, [client, ranked, gameRef]);
 
-  // the badges this game earned wait while the result is still being shown
+  // Badges this game earned wait while the result is shown.
   const counted = load.state === 'ready' && load.result.counted;
   const [done, setDone] = useState(false);
   useCelebrationHold((load.state === 'loading' || counted) && !done);
@@ -110,7 +102,7 @@ function CountedResult({
   const tierAfter = result.tierAfter;
   const celebrate = !placing && (placed || result.tierUp || result.divisionUp);
 
-  // the bar starts where it was and eases to where it is; across a division it fills, then starts again
+  // The bar eases from where it was; across a division it fills, then starts again.
   const before = progressToNext(result.pointsBefore);
   const after = result.progress ?? progressToNext(result.pointsAfter);
   const crossed = result.divisionUp || result.tierUp;
@@ -126,7 +118,7 @@ function CountedResult({
     }
     timers.push(setTimeout(() => setPhase('landed'), COUNT_MS + 100));
     return () => timers.forEach(clearTimeout);
-  }, []); // once: a result does not change
+  }, []); // Once, since a result does not change.
 
   useEffect(() => {
     if (phase !== 'landed') return;
@@ -159,7 +151,7 @@ function CountedResult({
           </span>
           {reason && <span className="rank-result-reason">{reason}</span>}
         </p>
-        {/* the numbers move for the eye; a screen reader hears where they land, once */}
+        {/* The numbers animate visually; screen readers hear the final values once. */}
         <p className="sr-only" role="status">
           {phase === 'landed' ? t('rankResult.summary', { delta: signed(result.delta), reason: reason ?? '', points: result.pointsAfter }) : ''}
         </p>
@@ -200,7 +192,7 @@ function CountedResult({
           open={celebrating}
           label={label!}
           tone={tierAfter}
-          // a division is a nod, a new tier or a first rank a little more
+          // A division gets a small burst, a new tier or first rank a larger one.
           flecks={result.tierUp ? BURST.tier : placed ? BURST.placed : BURST.division}
           seed={tierAfter.length * 31 + (result.divisionAfter ?? 0)}
           art={<RankEmblem tier={tierAfter} division={result.divisionAfter} size={168} title={withMeaning(t, { ...rankTierNamed(t, tierAfter), name: label! })} />}
@@ -238,7 +230,7 @@ function welcomeLine(t: ReturnType<typeof useT>, tier: RankTier): string {
   return named.meaning ? t('rankResult.welcomeMeaning', { tier: named.name, meaning: named.meaning }) : t('rankResult.welcome', { tier: named.name });
 }
 
-/** A number easing from `from` to `to` over COUNT_MS (at once under reduced motion). */
+/** A number easing from `from` to `to` over COUNT_MS, or at once under Reduce Motion. */
 function useCountUp(from: number, to: number, reduced: boolean): number {
   const [value, setValue] = useState(reduced ? to : from);
   useEffect(() => {

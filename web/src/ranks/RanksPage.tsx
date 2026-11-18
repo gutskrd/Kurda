@@ -26,16 +26,10 @@ import { gameName, rankLabel, rankTierNamed, seasonDaysLeft, seasonNamed } from 
 const LADDER: readonly RankTier[] = ['sterk', ...[...RANK_TIERS].reverse().map((r) => r.key)];
 
 /**
- * One game's rank up close (contract 4 §R4, §R6, §U), the browser's half of the
- * phone's Ranks screen: the rank card, the climb from Deşt to Stêrk with where
- * you stand on it, and the game's two boards — your friends (always, at any
- * age) and the top players.
- *
- * The boards show what the API sends and nothing more: the Top board lists
- * known adults only, by name only when their profile is public ("Player"
- * otherwise), and stays closed while too few people play the game rated for a
- * top list to mean anything. Rows carry no account and link nowhere, so a
- * board is never a way to find someone.
+ * One game's rank up close, like the phone's Ranks screen: the rank card, the climb from Deşt to Stêrk with the
+ * reader's place, and two boards, friends (at any age) and top players. The Top board lists known adults only, named
+ * only when their profile is public, and stays closed while too few play rated. Rows link nowhere, so a board is never
+ * a way to find someone.
  */
 export function RanksPage(): React.JSX.Element {
   const { client } = useAuth();
@@ -98,7 +92,7 @@ export function RanksPage(): React.JSX.Element {
   );
 }
 
-/** The six tiers, top down, each with what it takes; yours is marked in words, not by colour alone. */
+/** The six tiers top down, each with its requirement; the reader's is marked in words, not by colour alone. */
 function Ladder({ here }: { here: RankTier | null }): React.JSX.Element {
   const t = useT();
   return (
@@ -136,7 +130,7 @@ function Ladder({ here }: { here: RankTier | null }): React.JSX.Element {
 
 const SCOPES: readonly RankBoardScope[] = ['friends', 'top'];
 
-/** A game's Friends board (always there) or its Top board (adults only, closed while few play rated). */
+/** A game's Friends board, or its Top board (adults only, closed while few play rated). */
 function Boards({ game }: { game: RankedGame }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();

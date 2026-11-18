@@ -12,13 +12,8 @@ import { gameName, rankTierNamed, seasonDaysLeft, seasonNamed, withMeaning } fro
 import { useAvatarSrc } from '../art/overrides';
 
 /**
- * The season (contract 4 §R5, §U): its name, the days left said calmly, what
- * each tier earns at the end, how this season is going in each game, and the
- * emblems of seasons past — kept for good.
- *
- * The rewards are cosmetic and a few Gems, and the page says what earns them
- * (enough rated games in a game this season) rather than counting down to
- * them. A frame earned before can be worn from here.
+ * The season: its name, the days left, each tier's reward (cosmetics and a few Gems, earned with enough rated games),
+ * this season's progress per game, and past seasons' emblems. A frame earned before can be worn from here.
  */
 export function SeasonPage(): React.JSX.Element {
   const { client, user } = useAuth();
@@ -27,7 +22,7 @@ export function SeasonPage(): React.JSX.Element {
   const [overview, setOverview] = useState<SeasonOverview | null>(null);
   const [mine, setMine] = useState<MyRanks | null>(null);
   const [emblems, setEmblems] = useState<SeasonEmblem[]>([]);
-  // the frame worn now, from your own public profile (where everyone else sees it)
+  // The frame worn now, from the reader's public profile.
   const [frameSku, setFrameSku] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +50,7 @@ export function SeasonPage(): React.JSX.Element {
 
   const season = overview.season;
   const named = seasonNamed(t, season);
-  // the season's last day: it ends as the next one begins, at midnight UTC
+  // The season's last day, since it ends as the next begins at midnight UTC.
   const ends = new Date(new Date(season.endsAt).getTime() - 1).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
   const past = groupBySeason(emblems.filter((e) => e.seasonId !== season.id));
 
@@ -90,7 +85,7 @@ export function SeasonPage(): React.JSX.Element {
             {t('seasons.thisSeason')}
           </h2>
           <ul className="season-progress">
-            {/* this season is played only in the games there are: a row left from one that is gone is not drawn */}
+            {/* Rows for retired games are not drawn. */}
             {mine.ranks.filter((r) => isRankedGame(r.game)).map((r) => {
               const enough = r.season.ratedGames >= overview.minGames;
               const peak = r.season.peakTier;
@@ -171,7 +166,7 @@ function groupBySeason(list: SeasonEmblem[]): Array<[string, SeasonEmblem[]]> {
   return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
 }
 
-/** One tier's reward: its emblem, the frame in its colour (round your own face), and the Gems. */
+/** One tier's reward: its emblem, the frame in its colour around the reader's face, and the Gems. */
 function RewardRow({ tier, gems, avatarUrl }: { tier: RankTier; gems: number; avatarUrl: string | null }): React.JSX.Element {
   const t = useT();
   const named = rankTierNamed(t, tier);
@@ -199,7 +194,7 @@ function RewardRow({ tier, gems, avatarUrl }: { tier: RankTier; gems: number; av
   );
 }
 
-/** What last season handed out, and its frame to wear (or take off). */
+/** Last season's reward, with its frame to wear or take off. */
 function LastReward({
   reward,
   worn,
