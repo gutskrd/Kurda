@@ -2,24 +2,10 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { COMPOSITION_EDITS, PASTE_EDITS, TYPING_EDITS, applyEdit, isBlockedKey } from './input';
 
 /**
- * The race's typing field, on the `beforeinput` model (contract §K3).
- *
- * - Typing and deleting back are taken; everything else a field can do —
- *   paste, drop, autocorrect's replacements, line breaks, deleting forward,
- *   undo — is refused before it happens.
- * - The caret is kept at the end: on focus, on every `selectionchange`, on a
- *   click or a tap, and on `select`. Arrow keys, Home, End, Page Up/Down and
- *   select-all are refused.
- * - Should an edit still find the caret elsewhere (between a click and the
- *   `selectionchange` that follows it), it is applied at the end anyway rather
- *   than where the caret was.
- * - An input method composing a letter (a phone keyboard, a dead key, an IME)
- *   is let be: the browser does not allow it to be cancelled, it happens at the
- *   end because that is where the caret is, and the race knows it is
- *   happening so it does not finish on half a letter.
- *
- * The field stays a controlled textarea, so what React holds is what it shows:
- * an edit applied here goes through `onChange` like any other.
+ * The race's typing field on the `beforeinput` model. Typing and deleting back are taken; paste, drop, autocorrect,
+ * line breaks, deleting forward and undo are refused. The caret is kept at the end, and an edit that still finds it
+ * elsewhere is applied at the end anyway. Input-method composition is allowed, and tracked so the race never finishes
+ * on half a letter. The field stays a controlled textarea, so applied edits go through `onChange`.
  */
 export function useRaceCapture({
   field,
@@ -30,17 +16,17 @@ export function useRaceCapture({
   backtick,
 }: {
   field: RefObject<HTMLTextAreaElement | null>;
-  /** the race being typed (its id): the field is a new element for each one */
+  /** The id of the race being typed; the field is a new element for each one. */
   round: string | null;
   value: string;
   onChange: (next: string) => void;
-  /** something was pasted or dropped, and refused */
+  /** Something was pasted or dropped, and refused. */
   onPaste: () => void;
   backtick: boolean;
 }): { composing: boolean } {
   const [composing, setComposing] = useState(false);
   const composingRef = useRef(false);
-  // the handlers are attached once; they read the latest of these
+  // The handlers are attached once and read the latest of these.
   const latest = useRef({ value, onChange, onPaste, backtick });
   latest.current = { value, onChange, onPaste, backtick };
 
@@ -70,8 +56,7 @@ export function useRaceCapture({
       const end = el.value.length;
       const atEnd = el.selectionStart === end && el.selectionEnd === end;
       const data = e.data ?? '';
-      // the browser's own edit is the same as ours only at the end, without
-      // the backtick shortcut, and without a line break in what was typed
+      // The browser's own edit matches ours only at the end, without the backtick shortcut, and without a line break.
       const shortcutApplies = shortcut && data.includes('`');
       if (atEnd && !shortcutApplies && !/[\r\n]/.test(data)) return;
       e.preventDefault();
@@ -115,13 +100,10 @@ export function useRaceCapture({
       el.removeEventListener('keyup', pin);
       document.removeEventListener('selectionchange', pin);
     };
-    // the listeners hang on the field, which is a new element for each race
+    // The listeners hang on the field, which is a new element for each race.
   }, [field, round]);
 
-  /*
-   * A value set by React (an edit applied above, the key bar, a new race)
-   * leaves the caret where the browser puts it, which is not always the end.
-   */
+  /* A value set by React leaves the caret wherever the browser puts it, which is not always the end. */
   useEffect(() => {
     const el = field.current;
     if (!el || composingRef.current || document.activeElement !== el) return;

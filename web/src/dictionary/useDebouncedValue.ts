@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-/** Debounce a rapidly-changing value (search-as-you-type, KUR-045). */
+/** Debounces a rapidly changing value, such as search-as-you-type input. */
 export function useDebouncedValue<T>(value: T, delayMs = 250): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
