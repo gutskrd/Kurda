@@ -10,12 +10,9 @@ import { leagueName, leagueNamed, withMeaning } from '../ranks/names';
 import { GoalRing } from './GoalRing';
 
 /**
- * Home's one line about the week (contract 4 §U): the league you are in and
- * your place, or that you are safe, beside the weekly goal ring — a door to
- * the league, not a second copy of it. Personal mode says "Your week" and the
- * same ring. Nothing for a visitor without an account, and nothing if it
- * fails: the wall below is the page. While it loads, its shape holds the line,
- * so the wall does not drop by a card's height the moment the week arrives.
+ * Home's line about the week: the reader's league and place, or that they are safe, beside the goal ring, linking to
+ * the league. Personal mode says "Your week". Nothing shows for visitors or on failure, and while loading it holds its
+ * height so the wall below does not jump.
  */
 export function HomeLeagueLine(): React.JSX.Element | null {
   const { client, status } = useAuth();
@@ -28,7 +25,7 @@ export function HomeLeagueLine(): React.JSX.Element | null {
     let cancelled = false;
     void client.get<LeagueView>('/me/league').then((res) => {
       if (cancelled) return;
-      // an answer without the week's numbers (an older API) shows nothing
+      // An answer without the week's numbers shows nothing.
       if (res.ok && typeof res.data?.weeklyXp === 'number') setLeague(res.data);
       setSettled(true);
     });
@@ -40,7 +37,7 @@ export function HomeLeagueLine(): React.JSX.Element | null {
   if (status !== 'signedIn') return null;
   if (!league) {
     if (settled) return null;
-    // the line's own box, its emblem and its ring, with the words to come
+    // The line's box, emblem and ring while the words load.
     return (
       <div className="home-league skeleton-late" aria-hidden="true">
         <Skeleton size={44} circle />

@@ -7,10 +7,8 @@ import { en } from '../i18n/en';
 import { LeagueMoment } from './LeagueMoment';
 
 /*
- * The quiet Share on a league week that went well: under the way on of the
- * moment that stages it, saying the league and the place and nothing of the
- * people in the group. A week that moved the learner down, or simply stayed,
- * has no moment here and so nothing to share from.
+ * The Share button on a good league week names the league and place and nothing of the people in the group. A week
+ * that moved the learner down or kept them in place has no moment, so nothing to share.
  */
 
 const SITE = window.location.origin;
@@ -31,7 +29,7 @@ const week = (over: Partial<LeagueWeekResult>): LeagueWeekResult => ({
   ...over,
 });
 
-/** A device with a share sheet: what it is handed is the test’s to read. */
+/** A device with a share sheet, recording what it is handed. */
 function sheet(): { share: ReturnType<typeof vi.fn>; said: () => string } {
   const share = vi.fn(async (_data: ShareData) => undefined);
   vi.stubGlobal('navigator', { ...navigator, share, clipboard: navigator.clipboard });
@@ -67,9 +65,9 @@ describe('sharing a league week', () => {
     await userEvent.click(within(moment).getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
     expect(said()).toBe(`I moved up to the Çem League on Hevalo. 🏆\n${SITE}/win/league/cem`);
-    // not the size of the group, not the XP, not the account
+    // Not the group size, the XP or the account.
     for (const theirs of ['16', '240', 'rojda', 'u-4471', '/users/', '@']) expect(said()).not.toContain(theirs);
-    // sharing is not the way on: the moment is still there, and the week not yet put away
+    // Sharing does not close the moment or mark the week seen.
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(localStorage.getItem('hevalo_league_celebrated')).toBeNull();
   });

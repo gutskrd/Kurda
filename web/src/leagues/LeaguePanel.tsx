@@ -26,28 +26,13 @@ import { GoalRing } from './GoalRing';
 import { LeagueMoment } from './LeagueMoment';
 
 /**
- * This week's Learning League (contract 4 §L, §U), rebuilt.
+ * This week's league, the League tab of Rankings: a group of up to twenty in one of six water tiers. The top quarter
+ * move up if they met the weekly goal; the bottom 15% move down only if they missed it, never from Dilop or Kanî.
  *
- * A group of up to twenty who earned learning XP this week, in one of six
- * tiers named for water — a drop to the ocean. The top quarter move up if they
- * also met the weekly goal; the bottom 15% move down only if they missed it,
- * and never from Dilop or Kanî.
- *
- * It reads from the top: the league's name and how many days the week has
- * left (whole days, never a clock running down), the six leagues in a row with
- * yours the biggest, those behind you in their colours and those ahead still
- * locked, and under a line, the week — the goal ring and "Safe this week ✓"
- * the moment it is met, then the table. Before the first lesson of the week
- * there is no table yet, and Hevalo is asleep beside the way in. At the end,
- * the way out of the leagues, asked once, plainly.
- *
- * It is the page itself, the League tab of Rankings: nothing round it but the
- * page, the line across under the ladder running from edge to edge.
- *
- * The zones are drawn with an arrow, a word and a line across the table —
- * never colour alone. Personal mode (someone not taking part, and teens by
- * default) keeps the same ring and compares this week with the last ones,
- * with no group and no table.
+ * From the top: the league name and whole days left, the six tiers in a row, the goal ring, then the table (or a
+ * sleeping Hevalo before the week's first lesson), and finally the way out of the leagues. Zones use an arrow, a word
+ * and a line, never colour alone. Personal mode (opted out, and teens by default) keeps the ring and compares this
+ * week with recent ones.
  */
 export function LeaguePanel(): React.JSX.Element | null {
   const { client, refreshUser } = useAuth();
@@ -62,7 +47,7 @@ export function LeaguePanel(): React.JSX.Element | null {
     setFailed(false);
     void client.get<LeagueView>('/me/league').then((res) => {
       if (cancelled) return;
-      // an answer without the week's numbers (an API from before the rebuilt leagues) is not shown
+      // An answer without the week's numbers is not shown.
       if (res.ok && typeof res.data?.weeklyXp === 'number' && Array.isArray(res.data.standings)) setLeague(res.data);
       else setFailed(true);
     });
@@ -71,7 +56,7 @@ export function LeaguePanel(): React.JSX.Element | null {
     };
   }, [client, reloadKey]);
 
-  /** In or out of the leagues, from here (Settings has the other switch): saved, then the week read again. */
+  /** Joins or leaves the leagues (Settings has the other switch), then reloads the week. */
   async function choose(leaguesEnabled: boolean): Promise<boolean> {
     setJoining(true);
     const res = await client.request('PATCH', '/me', { body: { leaguesEnabled } });
@@ -84,7 +69,7 @@ export function LeaguePanel(): React.JSX.Element | null {
   }
   const join = (): Promise<boolean> => choose(true);
 
-  // the tab's whole content: said when it cannot be read, with the way to try again
+  // The tab's whole content, so a failure shows a retry.
   if (failed) return <ErrorState message={t('error.generic')} onRetry={() => setReloadKey((n) => n + 1)} />;
   if (!league) return <LeagueCardSkeleton />;
 
@@ -106,18 +91,14 @@ export function LeaguePanel(): React.JSX.Element | null {
         <Resting />
       )}
       {league.lastWeek && <LastWeek result={league.lastWeek} />}
-      {/* moved up last week: celebrated once, the first time the league is opened after */}
+      {/* Moving up last week is celebrated once, the first time the league is opened after. */}
       <LeagueMoment week={league.lastWeek} />
       <LeaveLeagues busy={joining} onLeave={() => choose(false)} />
     </section>
   );
 }
 
-/**
- * How long the week has left, in whole days and said calmly — "3 days left",
- * "1 day left" — and on its last day the local day and time it closes. Never
- * hours and minutes running down: a week is something to plan, not to race.
- */
+/** How long the week has left in whole days ("3 days left"), and on its last day the local time it closes; never a countdown. */
 export function weekLeft(t: Translate, endsAt: string, locale: string, now: number = Date.now()): string {
   const at = new Date(endsAt).getTime();
   if (Number.isNaN(at)) return '';
@@ -127,7 +108,7 @@ export function weekLeft(t: Translate, endsAt: string, locale: string, now: numb
   return t('leagues.weekEnds', { when: weekEnds(endsAt, locale) });
 }
 
-/** "Monday 02:00": when the week closes, in the reader's own clock and words. */
+/** When the week closes on the reader's clock, such as "Monday 02:00". */
 export function weekEnds(endsAt: string, locale: string): string {
   const d = new Date(endsAt);
   if (Number.isNaN(d.getTime())) return '';
@@ -155,11 +136,8 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
 }
 
 /**
- * The six leagues in a row, a drop to the ocean: those you have come through
- * in their colours, yours bigger than the rest, and those still ahead as their
- * own shapes in grey with a keyhole. Each is named for a screen reader with
- * where it stands for you. Too wide for a phone, it scrolls sideways, and it
- * opens with yours in the middle of it.
+ * The six tiers in a row: those passed in colour, the reader's larger, those ahead grey with a keyhole, each named
+ * for screen readers. On a phone it scrolls sideways and opens centred on the reader's tier.
  */
 function Ladder({ tier }: { tier: LeagueTier }): React.JSX.Element {
   const t = useT();
@@ -170,7 +148,7 @@ function Ladder({ tier }: { tier: LeagueTier }): React.JSX.Element {
     const row = strip.current;
     const item = mine.current;
     if (!row || !item || typeof row.scrollBy !== 'function') return;
-    // only sideways: the page itself does not move
+    // Scroll only sideways, so the page itself does not move.
     const a = row.getBoundingClientRect();
     const b = item.getBoundingClientRect();
     row.scrollBy({ left: b.left + b.width / 2 - (a.left + a.width / 2) });
@@ -206,10 +184,7 @@ function GoalRow({ league }: { league: LeagueView }): React.JSX.Element {
   );
 }
 
-/**
- * Not in a group yet this week: there is no table to show, so none is — Hevalo
- * asleep, and the one thing that starts the week, said as an invitation.
- */
+/** Not in a group yet this week: a sleeping Hevalo and the invitation to start a lesson, instead of a table. */
 function Resting(): React.JSX.Element {
   const t = useT();
   return (
@@ -226,14 +201,8 @@ function Resting(): React.JSX.Element {
 }
 
 /**
- * The way out of the weekly leagues, at the very foot of the week: a quiet
- * line of words, not a button. It used to be a button, and before a learner
- * has joined a week it stood straight under the page's one action, "Start a
- * lesson" — the way out drawn at half the weight of the way in. Leaving is a
- * setting (Settings → Weekly leagues, where it is a switch); here it is only
- * findable when it is looked for. Asked once, in plain words that say what
- * stays — no "are you sure you want to give up", and Leave is not drawn as a
- * danger: nothing is lost, and the way back in is on the page that follows.
+ * Leaving the weekly leagues: a quiet text link at the foot of the page, since leaving is mainly a setting (Settings →
+ * Weekly leagues). It confirms once in plain words and is not styled as dangerous, since nothing is lost.
  */
 function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => Promise<boolean> }): React.JSX.Element {
   const t = useT();
@@ -268,7 +237,7 @@ function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => Promise
   );
 }
 
-/** The one line under the head that says where the week stands, kindly. */
+/** The line under the head that says where the week stands. */
 function GoalLine({ league }: { league: LeagueView }): React.JSX.Element | null {
   const t = useT();
   const tier = league.tier ?? 'dilop';
@@ -341,11 +310,7 @@ function Standings({ league }: { league: LeagueView }): React.JSX.Element {
   );
 }
 
-/**
- * A row's face: the learner's initials on their own colour, the same as on
- * the phone. Somebody the table may not name gets a quiet silhouette, not
- * letters made up from "A learner".
- */
+/** A row's face: the learner's initials on their colour, as on the phone, or a silhouette for someone not named. */
 function Face({ row }: { row: LeagueStandingRow }): React.JSX.Element {
   if (!row.username) return <PersonGlyph size={16} />;
   return (
@@ -360,10 +325,7 @@ function findLastIndex<T>(list: readonly T[], test: (v: T) => boolean): number {
   return -1;
 }
 
-/**
- * Where a row is heading, in a word and an arrow. In Okyanûs nobody moves up:
- * the top three who met the goal are on course for the Pêla trophy instead.
- */
+/** Where a row is heading, in a word and an arrow. In Okyanûs the top three who met the goal head for the Pêla trophy. */
 function ZoneTag({ row, top, goal, t }: { row: LeagueStandingRow; top: boolean; goal: number; t: Translate }): React.JSX.Element | null {
   if (top && row.rank <= TROPHY_PLACES && row.weeklyXp >= goal) {
     return (
@@ -392,7 +354,7 @@ function ZoneTag({ row, top, goal, t }: { row: LeagueStandingRow; top: boolean; 
   return null;
 }
 
-/** Last week, as a card of its own: where you finished and what it meant. */
+/** Last week's card: where the reader finished and what it meant. */
 function LastWeek({ result }: { result: LeagueWeekResult }): React.JSX.Element {
   const t = useT();
   const after = result.tierAfter ?? result.tier;
@@ -421,16 +383,12 @@ function outcomeLine(t: Translate, r: LeagueWeekResult): string {
   if (r.mode === 'personal' || !r.tier) return r.goalMet ? t('leagues.result.personalMet') : t('leagues.result.personal');
   const after = r.tierAfter ?? r.tier;
   if (r.outcome === 'promoted') return t('leagues.result.promoted', { tier: leagueName(t, after) });
-  // moving down is said as where you are now, never as a loss
+  // Moving down is phrased as where the reader is now, never as a loss.
   if (r.outcome === 'demoted') return t('leagues.result.demoted', { tier: leagueName(t, after) });
   return t('leagues.result.stayed', { tier: leagueName(t, r.tier) });
 }
 
-/**
- * Personal mode: "You vs last week". The same ring, this week against the
- * last few, and the way into the leagues for anyone who wants one — said once,
- * without anything that reads as missing out.
- */
+/** Personal mode, "You vs last week": the same ring, this week against recent ones, and one offer to join the leagues. */
 function PersonalWeek({ league, onJoin, joining }: { league: LeagueView; onJoin: () => void; joining: boolean }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
