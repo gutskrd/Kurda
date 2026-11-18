@@ -1,16 +1,12 @@
 /**
- * Usernames: what one may contain, how typed text becomes one, and how a name is read back out of text. This module is
- * the one rule: the server checks every name with it (api/src/users/username.ts) and both apps check as a name is typed,
- * so all three refuse the same names with the same reasons. The database holds the part a CHECK can express (migration
- * 1751000540000_lowercase-usernames).
+ * Usernames: what one may contain, how typed text becomes one, and how a name is read back out of text. The server
+ * (api/src/users/username.ts) and both apps check with this one rule, so all refuse the same names for the same reasons;
+ * the database CHECK holds what it can express.
  *
- * A username is 3 to 30 of: a–z and the Kurdish ç ê î ş û; digits; `_` and `.`, never first or last and never two side by
- * side (they read as one mistyped mark and make one name easy to pass off as another). It has at least one letter and is
- * not a reserved name (RESERVED_NAMES).
- *
- * Typed text is normalised only by NFC, trimming the ends, and lowercasing (Ê Î Û Ç Ş as much as A–Z, and a Turkish
- * keyboard's İ to a plain i rather than JavaScript's i plus a combining dot). Anything else outside the set is refused,
- * never dropped or swapped, and the refusal names the characters so a form can say which one.
+ * A username is 3 to 30 of a–z, ç ê î ş û, digits, `_` and `.` (never first, last or side by side, which would make one
+ * name easy to pass off as another), with at least one letter and not a reserved name (RESERVED_NAMES). Typed text is
+ * only NFC-normalised, trimmed and lowercased (a Turkish İ to a plain i); anything else outside the set is refused, never
+ * dropped, and the refusal names the characters.
  */
 
 export const USERNAME_MIN = 3;

@@ -1,26 +1,18 @@
 /**
- * The letters window for both apps: what it acts out, as a pure function of its current look and the last read of
- * `GET /letters`, so a test can hold it to the rule that matters most: no letter still to land waits while its bird has a
- * free spot on the sill.
+ * The letters window for both apps, as a pure function of its current look and the last read of `GET /letters`, so a test
+ * can hold it to the rule that matters most: no letter still to land waits while its bird has a free spot on the sill.
  *
- * The sill has two spots. `own` is your bird's: it stands there at home, flies out with a letter and lands there again
- * with an answer (a `home` landing), with its own letter when nobody called it (`returned`), or when you call it back.
- * `sill` is the visitor's: a bird you called, or a pen pal's bird with their next letter (a `window` landing). An answer
- * whose bird is out again is brought to `sill` by its writer's bird instead of waiting for yours.
+ * The sill has two spots: `own` for your bird (home, out with a letter, back with an answer as a `home` landing, or
+ * `returned`), and `sill` for a visitor (a bird you called, or a pen pal's bird with a `window` landing); an answer whose
+ * bird is out again comes to `sill` on its writer's bird. Every letter lands once, is reported (`lookAfterLanded` gives
+ * the ids for /letters/landed) and waits on the sill until read; one is acted out at a time and `waiting` says another is
+ * queued.
  *
- * Every letter lands once: its bird flies in, the window reports it (`lookAfterLanded` gives the ids to post to
- * /letters/landed), and the letter then waits on the sill until read. One letter is acted out at a time; `waiting` says
- * another is queued.
- *
- * The apps keep a `WindowLook` in state, start it with `firstLook` and pass each new read through `nextLook` with `held`
- * (a sheet open, a bird being chosen, a request in flight; writing holds by itself). While held or while a bird flies,
- * only the sky changes. Each action goes through its `lookAfter…` function and each finished flight through
- * `lookAfterOwnGone`, `lookAfterVisitorGone` or `lookAfterLanded`.
- *
- * Actions show before the server is read again, so the read in hand when acting is no longer news (`actedOn`): it still
- * places letters but never takes back a bird that just flew or came. Reads made before the latest action (`asOf`) and birds
- * that left this window (`left`) are passed over the same way. The apps also drop replies to reads requested before their
- * last action.
+ * The apps keep a `WindowLook`, start it with `firstLook`, pass each read through `nextLook` with `held` (a sheet open, a
+ * request in flight; while held or while a bird flies only the sky changes), and each action and finished flight through
+ * its `lookAfter…` function. A read in hand when acting is no longer news (`actedOn`), and reads older than the latest
+ * action (`asOf`) or birds that left (`left`) are passed over too, so a stale read never undoes an action; the apps also
+ * drop replies to reads requested before their last action.
  */
 import type { BirdOutResult, LetterFlight, LetterLanding, LetterPerson, LetterReturnReason, LetterVisitor, LettersHome, VisitorAnswer } from './letters.js';
 

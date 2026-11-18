@@ -1,17 +1,12 @@
 /**
- * The learning games in one list: what each is, how it is played, what it is made of and what it pays. The API counts
- * what each can be played with (GET /games/availability), the admin files content by it, and both apps build Learn's
- * games from it, so a game added here appears everywhere. Peyvok, Peyvok Battle, the rhyme games, the typing race and the
- * story games have their own pages and tables and are not here; these are the games on the shared kit (api/src/games).
+ * The learning games on the shared kit (api/src/games) in one list: what each is, how it is played, what it is made of
+ * and what it pays. The API counts what each can be played with, the admin files content by it, and both apps build
+ * Learn's games from it. Peyvok, Peyvok Battle, the rhyme games, the typing race and the story games have their own pages.
  *
- * A game opens only with enough approved content in the learner's variety (`minimum`) and only in an app with a screen
- * for it; one still short is listed after the open ones as coming soon (`listedLearnGames`). XP is paid only for games
- * played online with other people: alone, against Hevalo or on one passed-round phone pays nothing (`paysAlone`). Build a
- * Sentence and Hear It, Find It are lessons' practice exercises (`place: 'lessons'`) run by the same kit and paid as
- * lessons. Retired games (`RETIRED_GAME_IDS`) are kept only so old rows still read.
- *
- * The registry is data only and imports no game; each game's rules live in its own folder (`build-sentence/`,
- * `last-letter/`, `multi/` for the shared multiplayer engine) exported through `games/index.ts`.
+ * A game opens only with enough approved content in the learner's variety (`minimum`) and an app screen for it; one still
+ * short is listed as coming soon. XP is paid only for games played online with other people (`paysAlone`). Build a
+ * Sentence and Hear It, Find It are lesson practice (`place: 'lessons'`), paid as lessons. Retired games
+ * (`RETIRED_GAME_IDS`) are kept so old rows still read. Data only: each game's rules live in its own folder.
  */
 import type { UnitTone } from '../lesson-path.js';
 import type { GameContentKind } from './content.js';

@@ -1,18 +1,13 @@
 /**
- * The Last Letter: a word chain in one dialect. Each player in turn gives a word beginning with the letter the last word
- * ended with, before their time runs out. A word not in the dictionary, with the wrong first letter, already played or not
- * one word costs a strike, as does running out of time; the turn passes either way. Three strikes and you are out; the
- * last player standing wins.
+ * The Last Letter: a word chain in one dialect, each word beginning with the letter the last one ended with. An unknown
+ * word, a wrong first letter, a repeat, more than one word or running out of time costs a strike; three strikes and you
+ * are out, and the last player standing wins.
  *
- * Two rules keep a chain from sticking. In Kurmancî a word ending in a soft vowel (ê, î, û, i, u or o) passes on the
- * letter before it (`softEnding`: azadî → d, êvarê → r), since many words end in î and hardly any begin with it. And once
- * everyone still in has been struck in a row on one letter (`stuck`), the next word may begin with any letter.
- *
- * A word typed without a mark (kecik for keçik) that is exactly one known word is no strike: the server says so
- * (`verdict: 'spelling'`), the state, turn and clock stay, and only its typist is asked "Did you mean …?". Pure rules
- * (multi/rules.ts): dictionary checks, meanings and Hevalo's words are decided on the server before `apply`
- * (api/src/mp/games/last-letter.ts). Nothing is hidden, but refused text is never shown to others: they see only the
- * strike and its reason.
+ * In Kurmancî a word ending in a soft vowel passes on the letter before it (`softEnding`: azadî → d), since hardly any
+ * words begin with î; once everyone still in is struck in a row on one letter (`stuck`), any letter may start the next.
+ * A word missing only a mark (kecik for keçik) that is exactly one known word is no strike (`verdict: 'spelling'`): the
+ * turn and clock stay, and only its typist is asked "Did you mean …?". Dictionary checks are made on the server before
+ * `apply` (api/src/mp/games/last-letter.ts), and refused text is never shown to others, only the strike and its reason.
  */
 import { beginsWith, chainLetter, nextLetter, startSpellings, wordLetters, type LetterDialect } from '../letters.js';
 import type { ApplyResult, GameRules, Placed, RulesSeat, RulesStart } from '../multi/rules.js';

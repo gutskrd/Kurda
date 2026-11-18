@@ -1,16 +1,12 @@
 /**
- * What a typed clue or guess is in Impostor, where players write their own Kurdish: short enough, in the game's script,
- * and not saying a banned word. The free-text gate (api/src/mp/free-text.ts) decides whether a text may be shown at all;
- * these pure rules decide whether it is a move, so the server judges by them and an app can warn before sending.
+ * What a typed clue or guess is in Impostor: short enough, in the game's script, and not saying a banned word. The
+ * free-text gate (api/src/mp/free-text.ts) decides whether a text may be shown at all; these rules decide whether it is a
+ * move, so the server judges by them and an app can warn before sending.
  *
- * "Says a word" is judged as a listener hears it, folded leniently (`foldForDialect`) and with Kurdish endings: the banned
- * word with a short ending (pisîk → pisîka, pisîkên; پشیلە → پشیلەکە), a long banned word inside a longer one, or one
- * missing its last letter or two (a plural's base on the card) all say it. A card's own `forms` are banned as written. A
- * short word is matched more strictly, so two letters do not refuse every word starting with them.
- *
- * Disguise does not work: spaces or punctuation inside a word ("pi sîk", "pi.sîk") are heard through, as are lookalike
- * letters of other alphabets, fullwidth and compatibility forms and Arabic presentation forms. Letters in neither script
- * are also a slip of their own (`textSlip`).
+ * A word is said as a listener hears it: folded leniently (`foldForDialect`), with Kurdish endings (pisîk → pisîka), inside
+ * a longer word, or missing its last letter or two; a card's own `forms` are banned as written, and short words match more
+ * strictly. Spaces or punctuation inside a word, lookalike letters and compatibility forms do not disguise it, and letters
+ * in neither script are a slip of their own (`textSlip`).
  */
 import { fitsDialect, foldForDialect, gameWords, hasForeignLetter, type GameDialect } from './dialect.js';
 

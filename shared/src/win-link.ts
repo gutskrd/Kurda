@@ -1,15 +1,7 @@
 /**
- * A win as a link, the address Share puts under its line:
- *
- *   https://hevalo.app/win/lesson
- *   https://hevalo.app/win/streak/30
- *   https://hevalo.app/win/badge
- *   https://hevalo.app/win/league/cem
- *   https://hevalo.app/win/peyvok
- *
- * Each kind of win has its own address, which chats unfurl with that win's picture (web: worker.ts, drawn by the shared
- * `shareCardSvg`), and which opens a page saying what the friend did (web: share/WinPage.tsx). The address names a kind
- * from a fixed list and at most one detail of a fixed shape, and never who did it.
+ * A win as a link, the address Share puts under its line (`https://hevalo.app/win/lesson`, `…/win/streak/30`,
+ * `…/win/league/cem`). Chats unfurl it with that win's picture (`shareCardSvg`), and it opens a page saying what the
+ * friend did. The address names a kind from a fixed list and at most one detail of a fixed shape, never who did it.
  *
  * Nothing is imported: the website's edge script reads links with this file and must not carry the rest of the package.
  */

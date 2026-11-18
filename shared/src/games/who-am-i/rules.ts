@@ -1,27 +1,20 @@
 /**
- * Who Am I? at a table for two to six: everyone wears a card the others can read. On their turn a player asks one question
- * about their own card from an approved Kurdish list; the others answer yes, could be, no or not sure; then the card
- * itself says yes, no or "sometimes". The player may then guess from a few tiles or pass. Fewer questions score more, and
- * each right answer about another's card scores a point, up to WHO_AM_I_HELP_CAP, so helping never outweighs finding one's
- * own card. Pure rules (multi/rules.ts), run online by api/src/mp/games/who-am-i.ts, which deals every seat before
- * `init`, and on one passed-round phone by couch.ts, which is never paid or rated because the phone holds every card.
+ * Who Am I? at a table for two to six: everyone wears a card the others can read. On their turn a player asks one
+ * approved question about their own card, the others answer (yes, could be, no, not sure), the card gives its own verdict,
+ * and the player guesses from a few tiles or passes. Fewer questions score more; right answers about others' cards score
+ * up to WHO_AM_I_HELP_CAP, so helping never outweighs finding one's own. Pure rules (multi/rules.ts), run online by
+ * api/src/mp/games/who-am-i.ts, which deals every seat before `init`, and on one shared phone by couch.ts, never paid or
+ * rated since the phone holds every card.
  *
- * Fair play: a question's truth is the card's (`verdictFor`), never the table's, so a wrong answer changes nothing the
- * asker is told and only misses its giver's point (`markOf`; "not sure" is never wrong and scores nothing). A player's
- * own identity is in every view but theirs until they have it, are out or the game ends, and their tiles and questions
- * give nothing away (`dealWhoAmI`); the server deals every seat a different identity, none among the others' tiles.
- * While a question is answered, views show who answered, not what. Nothing is typed: every move is a pick checked here.
+ * A question's truth is the card's (`verdictFor`), so a wrong answer only costs its giver the point (`markOf`). A player's
+ * own identity is in every view but theirs until they find it, are out or the game ends; their tiles and questions give
+ * nothing away, and while a question is answered views show who answered, not what. Nothing is typed: every move is a
+ * pick checked here. An `open` table (one room, the phone only) may ask and guess aloud instead, with no tiles and one
+ * more miss allowed.
  *
- * An `open` table (one room, the phone's game only, never the server's) may instead ask the room a question aloud
- * (`aloud`) and say a guess aloud for the room to judge (`said`); a close answer, another word or region's word, spends no
- * guess. It has no tiles, allows one more miss, never forces a guess, and tells a beginner the card's kind. Views suggest
- * questions to ask next (`suggestWhoAmIQuestions`) from what the player can already see.
- *
- * A turn has three timed waits: `ask` (question, guess or pass), `answer` (the others answer) and `decide` (guess or pass).
- * A player who has asked every dealt question must guess, and letting that turn run out puts them out; two wrong guesses
- * put a player out. Finished and out players keep answering. The game ends when nobody is left guessing, its time is up,
- * or fewer than two remain. Older apps' two-answer tables (`answers: 2`, cards dealt without "sometimes") and saved
- * states still play (`clone`), and boards keep the yes-or-no fields those apps read.
+ * Each turn has three timed waits (`ask`, `answer`, `decide`). Two wrong guesses, or letting a turn run out with every
+ * question asked, put a player out; the game ends when nobody is left guessing, time is up or fewer than two remain.
+ * Older apps' two-answer tables (`answers: 2`) and saved states still play (`clone`).
  */
 import type { LetterDialect } from '../letters.js';
 import type { Meanings } from '../content.js';

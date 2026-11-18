@@ -5,22 +5,16 @@ import { ACTS, BLINK_STEPS, HABITS, between, eyesMiddle, glanceTarget, pupilShif
 import type { CharacterPoint, EyeState, MouthShape } from './types.js';
 
 /**
- * Hevalo as a companion beside a form, drawn from the chest up as the mascot is. The form's card is a windowsill: he is
- * outside it leaning in, the rest of him behind the card and his forelegs over the sill, each throwing a soft-edged shadow
- * shape rather than a blur so slow phones draw him easily. He pops up from behind the card with his hooves by his cheeks
- * and then lays them over the sill; kept low (the console's first step) he shows only his head and neck until let out.
- *
- * He turns his head in the round after the caret, leans in and says "oo" at each key, swings a hanging hoof, and grins
- * and nods at an address that looks whole. For a password he covers his eyes, and peeks over a hoof when it is shown.
- * Sending makes him think, a mistake gets a head shake, a stamp and a question (never a sad face), success a hop. Idle he
- * breathes, blinks, glances, twitches an ear, sniffs and paws the sill; on the website, left long enough, he dozes. A tap
- * gets a greeting.
+ * Hevalo as a companion beside a form, from the chest up: the form's card is a windowsill he leans in over, his forelegs
+ * on the sill, each throwing a soft-edged shadow shape rather than a blur so slow phones draw him easily; kept low, he
+ * shows only his head and neck until let out. He follows the caret, mouths each key, grins at an address that looks whole,
+ * covers his eyes for a password and peeks when it is shown, and reacts to sending, mistakes (never a sad face) and
+ * success; idle, he breathes, blinks and fidgets.
  *
  * Everything here is platform-independent: the drawing (`companionSvg`), his behaviour (`CompanionMotion`, fed what the
  * person does and stepped once per drawn frame) and a frame's transforms (`companionTransforms`). Each app keeps a thin
- * player that reads the pointer and caret, draws, and sleeps while he is still. `playful` (the website) bounces in, waves,
- * shows a heart, says a Kurdish word now and then and dozes; `calm` (the admin console) does the same at a smaller size
- * without words or dozing.
+ * player that reads the pointer and caret, draws, and sleeps while he is still. `playful` (the website) adds words, a
+ * heart and dozing; `calm` (the admin console) is smaller and has neither words nor dozing.
  */
 
 export type CompanionTone = 'playful' | 'calm';

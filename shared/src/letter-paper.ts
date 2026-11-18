@@ -1,18 +1,13 @@
 /**
- * The paper a letter is written on (letters.ts), what is drawn on it, the notes stuck to it, and the phone's home-screen
- * letter widget.
+ * The paper a letter is written on (letters.ts), what is drawn on it, the notes stuck to it, and the phone's letter widget.
+ * Everything is in page units (`PAPER_W` wide) so every app and the server's widget picture lay a letter out alike;
+ * art/letter-paper.ts draws the page but never its text, which each app sets so Kurdish shapes properly, and
+ * `paperColors` is the one source of the colours.
  *
- * Everything is measured in page units (`PAPER_W` wide), so the website, the phone, the admin and the server's widget
- * picture lay a letter out alike. art/letter-paper.ts (`letterPaperSvg`) draws the page and its drawing but never its
- * text, which each app sets in its own type so Kurmancî and Soranî shape properly; `paperColors` is the one source of the
- * colours.
- *
- * `checkLetterDecor` is the one check, run by the apps before sending and by the server before storing. Drawings travel
- * only between pen pals: a first letter to a stranger may choose its paper and carry notes but nothing drawn. Notes obey
- * the letter's own rules (`letterProblem`), and the server word-filters them like the body.
- *
- * The widget shows the newest letter a pen pal sent, or the pinned one, on its paper. It reads with its own token
- * (`Authorization: Widget <token>`) that can see nothing else of the account.
+ * `checkLetterDecor` is the one check, run by the apps before sending and the server before storing. Drawings travel only
+ * between pen pals: a first letter to a stranger may choose its paper and carry notes but nothing drawn. Notes follow the
+ * letter's rules (`letterProblem`) and are word-filtered like the body. The widget shows the newest or pinned letter from
+ * a pen pal and reads with its own token (`Authorization: Widget <token>`) that can see nothing else of the account.
  */
 import { letterProblem } from './letters.js';
 import { normalizeKurdish } from './kurdish-text.js';
