@@ -265,7 +265,7 @@ describe('the recording script', () => {
         },
       },
       { id: 'g-old', kind: 'case_file', dialect: 'kmr', status: 'archived', payload: { evidence: [{ id: 'e1', kind: 'note', ku: 'Kevn e.' }] } },
-      // rows written for games that are no longer part of Hevalo: nobody is asked to record them
+      // Rows for retired games: nobody is asked to record them.
       { id: 'g-b', kind: 'building_name', dialect: 'ckb', status: 'draft', payload: { building: 'mill', ku: 'ئاش', meanings: { en: 'the mill' } } },
       {
         id: 'g-scene',

@@ -32,24 +32,16 @@ export interface AwardedXp {
 export class XpService {
   constructor(
     private readonly pool: pg.Pool,
-    /** Fires after a real (non-duplicate) award — e.g. weekly-league join (KUR-062). */
+    /** Fires after a real, non-duplicate award, such as joining the weekly league. */
     private readonly afterAward?: (award: AwardedXp) => void,
   ) {}
 
   /**
-   * Appends an XP-ledger row and bumps users.xp in one step. Idempotent
-   * when refId is supplied: a duplicate (source, ref_id) is a no-op that
-   * awards 0. Pass `executor` to run inside an existing transaction so
-   * the award is atomic with its triggering event.
-   *
-   * The row records what counts for the league beside what was earned
-   * (rules.ts), worked out from what the learner earned earlier the same day.
-   * Their user row is locked first, so two awards at once are counted one
-   * after the other and cannot both find the day's cap untouched — the same
-   * row, at the same strength (FOR NO KEY UPDATE), that every award has always
-   * locked to bump the total, so no new lock order and no new waits: a
-   * stronger lock would also wait on every open transaction that merely
-   * inserted a row pointing at the user.
+   * Appends an XP ledger row and bumps users.xp in one step, idempotent per (source, ref_id) when refId is given (a
+   * duplicate awards 0). Pass `executor` to run in an existing transaction. The row also records the league-counted XP
+   * (rules.ts) from the learner's earlier XP that day; their user row is locked first, so concurrent awards are counted
+   * in turn and cannot both find the cap untouched. The lock is FOR NO KEY UPDATE, the strength every award already took,
+   * since a stronger one would wait on every transaction inserting a row that references the user.
    */
   async award(input: XpAward, executor: Executor = this.pool): Promise<number> {
     if (!Number.isInteger(input.amount) || input.amount <= 0) return 0;

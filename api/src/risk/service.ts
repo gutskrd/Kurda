@@ -13,7 +13,7 @@ export interface AssessInput {
   /** email is only used for the disposable-domain signal; may be omitted on login */
   email?: string;
   ip: string;
-  /** opaque client device fingerprint (#110); hashed before it touches storage */
+  /** Opaque client device fingerprint, hashed before storage. */
   deviceId?: string | null;
   now?: Date;
 }
@@ -26,23 +26,17 @@ export interface AssessResult {
 
 /** Recent window for per-device/network account-creation counting (24h). */
 export const RISK_WINDOW_MS = 24 * 60 * 60 * 1000;
-/** Retention bound for logged decisions (#109). */
+/** How long logged decisions are kept. */
 export const RISK_RETENTION_DAYS = 90;
 /** Retention bound for network sightings (net/sightings.ts), pruned with the decisions. */
 export const SIGHTING_RETENTION_DAYS = 90;
 
 /**
- * Orchestrates signup/login risk scoring (KUR-296). It gathers the signals the
- * pure engine (`score.ts`) needs — IP reputation (provider-agnostic, degrades
- * gracefully), per-device/network account velocity from `risk_decisions`,
- * request velocity from Redis, disposable-email (#025), known-good device —
- * assesses the risk, and logs the decision for tuning + audit (#104). Device
- * and network values are stored **hashed only**.
- *
- * "IP" here means the caller's network (net/network-key.ts): an IPv4 address,
- * or an IPv6 /64, so rotating through one's own /64 does not reset the counts.
- * It is stored as a keyed hash — a plain hash of an IPv4 address can be
- * reversed by trying all of them.
+ * Sign-up and sign-in risk scoring: gathers the pure engine's signals (IP reputation, degrading gracefully;
+ * per-device and per-network account velocity from `risk_decisions`; request velocity from Redis; disposable email; a
+ * known-good device), assesses the risk and logs the decision. Device and network values are stored only as hashes.
+ * "IP" means the caller's network (net/network-key.ts), so rotating within one's /64 resets nothing; it is stored as a
+ * keyed hash, since a plain hash of an IPv4 address can be reversed by trying them all.
  */
 export class RiskService {
   private readonly pool: pg.Pool;
@@ -68,11 +62,7 @@ export class RiskService {
     return this.assess('login', input);
   }
 
-  /**
-   * Attach the created/authenticated user to a logged decision (post-hoc), and
-   * note that the account was on the decision's network then (net/sightings.ts).
-   * One statement, so a sign-up or sign-in costs no extra round trip for it.
-   */
+  /** Attaches the created or signed-in user to a logged decision and records a sighting on its network, in one statement. */
   async attachUser(decisionId: string, userId: string): Promise<void> {
     await this.pool.query(
       `WITH d AS (
@@ -88,10 +78,7 @@ export class RiskService {
     );
   }
 
-  /**
-   * Retention prune (#109): drop decisions older than the bound, and the
-   * network sightings with them.
-   */
+  /** Retention prune: drops decisions older than the bound, and the network sightings with them. */
   async prune(
     olderThanDays: number = RISK_RETENTION_DAYS,
     sightingsOlderThanDays: number = SIGHTING_RETENTION_DAYS,
@@ -120,8 +107,7 @@ export class RiskService {
         : 0;
     const accountsFromIpRecently =
       event === 'signup' ? (netHash ? await this.countRecentSignups('net_hash', netHash, now) : 0) + 1 : 0;
-    // A network many established accounts use (a carrier's NAT, a campus) gets
-    // the shared cap even when no reputation provider says so.
+    // A network many established accounts use (a carrier NAT, a campus) gets the shared cap even without a reputation provider.
     const busy = event === 'signup' && netHash && !rep.sharedNetwork ? await networkIsBusy(this.pool, netHash, now) : false;
 
     const signals: RiskSignals = {
@@ -169,11 +155,7 @@ export class RiskService {
     return Number(res.rows[0]?.n ?? 0);
   }
 
-  /**
-   * A device is "known good" if a verified account was created from it. A guest
-   * (auth/guest.ts) is marked verified so its lessons save, but has proved
-   * nothing, so it does not count.
-   */
+  /** A device is known good if a verified account was created from it; guests are marked verified but prove nothing, so they do not count. */
   private async deviceHasGoodAccount(deviceHash: string): Promise<boolean> {
     const res = await this.pool.query<{ ok: boolean }>(
       `SELECT EXISTS (
@@ -198,10 +180,8 @@ export class RiskService {
 }
 
 /**
- * SHA-256 hex of a device id — minimization: the raw id is never stored. A
- * device id is an opaque value the client chooses, not something enumerable
- * like an address, and existing decisions are matched by this hash, so it
- * stays as it was.
+ * SHA-256 hex of a device id, so the raw id is never stored. Device ids are opaque client values, not enumerable like
+ * addresses, and existing decisions match on this hash, so it stays unkeyed.
  */
 function hash(value: string): string {
   return createHash('sha256').update(value).digest('hex');

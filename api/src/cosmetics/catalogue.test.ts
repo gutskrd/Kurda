@@ -1,12 +1,7 @@
 /**
- * The cosmetic catalogue against the files that ship.
- *
- * Every asset key in api/content/cosmetics.json must name a file the web app
- * serves, and every file in the shop's folders must belong to a catalogue row:
- * an item pointing at nothing renders as a blank square someone paid for, and
- * a file nothing names is art nobody can account for. The made pieces must be
- * the ones scripts/generate-cosmetic-art.mjs draws, under the names it gives
- * them, and the items withdrawn from sale must all point at one of them.
+ * The cosmetic catalogue against the shipped files. Every asset key in api/content/cosmetics.json must name a file
+ * the web app serves, every file in the shop's folders must belong to a row, the made pieces must be the ones
+ * scripts/generate-cosmetic-art.mjs draws, and every withdrawn item must point at one of them.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -115,7 +110,7 @@ describe('the cosmetic catalogue', () => {
 
   it('has a row for every background and icon on disk', () => {
     const named = new Set(rows().map((r) => r.assetKey));
-    // a legend's own cover (backgrounds/story-<key>.webp) is the library's, not for sale, so no shop row names it
+    // A legend's own cover (backgrounds/story-<key>.webp) belongs to the library, so no shop row names it.
     const orphans = [...files('backgrounds'), ...files('icons')].filter((f) => !named.has(f) && !f.startsWith('backgrounds/story-'));
     expect(orphans).toEqual([]);
   });

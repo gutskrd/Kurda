@@ -27,13 +27,9 @@ const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
 
 /*
- * What a post may be — words or pictures, a title for a çîrok or a helbest, the
- * lengths — is checked in the service, by the same rules the composer runs
- * (`@kurda/shared` post-composer), so one rule decides it and the answer is a
- * 422 with a code the apps can show. The caps here only bound the request: the
- * limits that count are measured trimmed, the way the composer's counter
- * measures them, so a long text with a blank line at the end is not refused
- * here for a length the counter never showed.
+ * What a post may be is checked in the service by the composer's rules (`@kurda/shared` post-composer), answering 422
+ * with a code the apps show. The caps here only bound the request; the real limits are measured trimmed, as the
+ * composer's counter measures them.
  */
 const mediaList = z
   .array(z.object({ mediaKey: z.string().min(1).max(512), altText: z.string().max(10_000).nullable().optional() }))
@@ -70,12 +66,9 @@ const page = z.object({
 const idParam = z.object({ id: z.uuid() });
 
 /**
- * Community library authoring + browsing (KUR-281). Reads are public (guests can
- * read/listen); authoring/editing require auth and an ownership/admin check.
- *
- * A post is words, up to four pictures (uploaded first through
- * `POST /images/upload`), or both. Every way words reach readers — a new post,
- * an edit, a draft published — goes through the same gate (trust/post-gate.ts).
+ * Library writing and browsing. Reads are public; writing needs an account and an ownership or staff check. A post is
+ * words, up to four pictures uploaded through `POST /images/upload`, or both; every way words reach readers (new post,
+ * edit, published draft) passes the same gate (trust/post-gate.ts).
  */
 export function registerLibraryRoutes(
   app: FastifyInstance,
@@ -86,9 +79,8 @@ export function registerLibraryRoutes(
   const gate = new PostGate(trust, aiMod, app.log);
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
   /**
-   * Whether this request may edit, publish or take down a post that is not its
-   * own: a staff role, from a session the console itself would let in
-   * (admin/admin-gate.ts `staffCleared`). A staff password alone is a member's.
+   * Whether this request may edit, publish or take down someone else's post: a staff role from a session the console
+   * would admit (admin/admin-gate.ts `staffCleared`). A staff password alone counts as a member.
    */
   const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => isAdmin(req) && (await staffCleared(app, req));
 
@@ -99,10 +91,10 @@ export function registerLibraryRoutes(
     media: post.media.map((m) => ({ ...m, url: publicUrl(m.mediaKey) })),
   });
 
-  /** An attached voice note must have cleared the upload pipeline (KUR-282) —
-   *  a client can't reference an arbitrary/unconfirmed key, a picture, or one
-   *  moderation took down — and its author must not be barred from media (403
-   *  MUTED). */
+  /**
+   * A voice note must have cleared the upload pipeline (no arbitrary, unconfirmed, picture or removed key), and its
+   * author must not be barred from media (403 MUTED).
+   */
   const audioOk = async (req: FastifyRequest, key: string | null | undefined): Promise<boolean> => {
     if (!key) return true; // audio is optional
     return voiceAttachable(app.db, req.user!.id, key);
@@ -123,15 +115,11 @@ export function registerLibraryRoutes(
     return post;
   };
 
-  /**
-   * A write's answer: the post as a reader gets it (audio and picture URLs
-   * resolved — these answered the bare row before), or why not.
-   */
+  /** A write's answer: the post as a reader gets it, with audio and picture URLs resolved, or the refusal. */
   const respond = (reply: FastifyReply, res: MutateResult): unknown => {
     if (res.ok) return withAudioUrl(res.post);
     if (res.reason === 'not-found') return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such post' });
-    // an edit that would leave something that could not be posted is invalid,
-    // not someone else's post (it used to answer 403 "not your post")
+    // An edit that would leave an unpostable post is invalid, not someone else's post.
     if (res.reason === 'invalid') return refuse(reply, res.problem);
     return reply.code(403).send({ code: 'FORBIDDEN', message: 'not your post' });
   };
@@ -146,20 +134,16 @@ export function registerLibraryRoutes(
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
-      // the shape first: a post that is refused for it neither counts toward
-      // the velocity cap nor lands in the spam check's memory
+      // Shape first, so a refused post neither counts toward velocity nor enters the spam check's memory.
       const problem = createProblem(body);
       if (problem) return refuse(reply, problem);
       const keys = (body.media ?? []).map((m) => m.mediaKey);
-      // a feature limit ("you can't upload pictures or voice") covers putting
-      // up a picture uploaded before it, as it does a voice note (403 MUTED)
+      // A media restriction also covers posting a picture uploaded before it (403 MUTED).
       if (keys.length > 0) await assertUnrestricted(app.db, req.user!.id, 'media');
       const pictures = await checkPostPictures(app.db, req.user!.id, keys);
       if (!pictures.ok) return refuse(reply, { code: pictures.code, mediaKey: pictures.mediaKey });
       if (!(await audioOk(req, body.audioMediaId))) return reply.code(422).send(audioRefused);
-      // a draft reaches nobody, so it is gated when it is published, not twice;
-      // how many a person keeps is bounded instead (429 DRAFT_LIMIT, from the
-      // service, which counts them in the transaction that adds one)
+      // A draft reaches nobody, so it is gated when published; the service bounds how many a person keeps (429 DRAFT_LIMIT).
       const publish = body.publish !== false;
       if (publish) {
         const refused = await gate.check(req.user!.id, postWords(body));
@@ -167,8 +151,7 @@ export function registerLibraryRoutes(
       }
       const res = await library.create(req.user!.id, isAdmin(req) ? 'admin' : 'user', body);
       if (!res.ok) return refuse(reply, res.problem);
-      // auto-screen the words (KUR-285/#293): a flag enters the #102 queue. Never
-      // blocks literature — reviewers decide; runs after the post exists.
+      // Screen the words after the post exists; a flag goes to the moderation queue and never blocks literature.
       if (publish) await gate.passed(req.user!.id, screened(res.post));
       return reply.code(201).send(withAudioUrl(res.post));
     },
@@ -211,30 +194,25 @@ export function registerLibraryRoutes(
   /** Edit (author or admin). */
   app.patch(
     '/library/posts/:id',
-    // an edit can put new words in front of readers, so it waits for a birth
-    // month like a new post does; unpublish and delete never do
+    // An edit can put new words before readers, so it needs a birth month like a new post; unpublish and delete never do.
     { schema: { params: idParam, body: updateBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const patch = req.body as z.infer<typeof updateBody>;
       const current = await editable(req, reply);
       if (!current) return reply;
-      // refused for what it is before it counts toward anything (the update
-      // checks again, under the post's lock, and decides)
+      // Refused for its shape before it counts; the update checks again under the post's lock and decides.
       const problem = editProblem(current, patch);
       if (problem) return refuse(reply, problem);
       const added = addedPictures(current, patch);
       if (added.length > 0) await assertUnrestricted(app.db, req.user!.id, 'media');
       const pictures = await checkPostPictures(app.db, current.authorId, added);
       if (!pictures.ok) return refuse(reply, { code: pictures.code, mediaKey: pictures.mediaKey });
-      // a new voice rendition is checked like one attached to a new post (the
-      // one it already has is not "attached" again by an edit that resends it)
+      // A new voice rendition is checked like one on a new post; resending the existing one is not a new attachment.
       if (patch.audioMediaId !== current.audioMediaId && !(await audioOk(req, patch.audioMediaId))) {
         return reply.code(422).send(audioRefused);
       }
-      // new words or new pictures on a published post put something new in
-      // front of readers, so the edit is gated like a post; a draft's are
-      // gated whole when it is published. Staff editing somebody's post are
-      // not posting, and their words are not the author's (trust/post-gate.ts)
+      // New words or pictures on a published post are gated like a post; a draft's are gated whole when published. Staff
+      // edits are not the staff member's posting, nor the author's words (trust/post-gate.ts).
       const words = changedWords(current, patch);
       const own = current.authorId === req.user!.id;
       const gated = own && current.status === 'published' && (words !== '' || added.length > 0);
@@ -262,14 +240,11 @@ export function registerLibraryRoutes(
     async (req, reply) => {
       const current = await editable(req, reply);
       if (!current) return reply;
-      // a draft going up is a post reaching readers for the first time. Staff
-      // putting up somebody's draft are not posting: nothing is counted
-      // against them, and the author's words are screened as the author's
+      // A draft going up reaches readers for the first time. Staff publishing someone's draft are not posting: nothing is
+      // counted against them, and the words are screened as the author's.
       const goingUp = current.status === 'draft';
       const own = current.authorId === req.user!.id;
-      // its pictures and voice note go up with it: a feature limit stops that
-      // as it stops attaching them, or a draft saved before the limit (or a
-      // post unpublished for the purpose) would be the way round it
+      // Its pictures and voice note go up with it, so a media restriction applies here too, or a draft would get round it.
       if (goingUp && (current.media.length > 0 || current.audioMediaId)) {
         await assertUnrestricted(app.db, req.user!.id, 'media');
       }
@@ -286,17 +261,14 @@ export function registerLibraryRoutes(
     },
   );
 
-  /** Soft-remove (author or admin); retained for moderation (#285). */
+  /** Soft removal by author or admin; kept for moderation. */
   app.delete(
     '/library/posts/:id',
     { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), 'removed')),
   );
 
-  /**
-   * Your server drafts, so one saved by an app installed before drafts moved
-   * onto the device can be found, finished and published.
-   */
+  /** Your server drafts, so one saved by an older app can be found, finished and published. */
   app.get('/me/library/drafts', { schema: { querystring: page }, preHandler: requireAccount }, async (req) => {
     const { limit, offset } = req.query as z.infer<typeof page>;
     const drafts = await library.drafts(req.user!.id, { limit, offset });
@@ -310,11 +282,7 @@ function screened(post: LibraryPost): { surface: 'library'; contentType: 'post';
   return { surface: 'library', contentType: 'post', contentRef: post.id, text: postWords(post) };
 }
 
-/**
- * A refused post: 422 with the code the composer knows (`@kurda/shared`
- * POST_ERROR_CODES), and what to point at — the field and its limit, or the
- * picture.
- */
+/** A refused post: 422 with a composer error code and what it concerns, a field and its limit or a picture. */
 function refuse(reply: FastifyReply, problem: PostRejection): FastifyReply {
   return reply.code(422).send({ ...problem, message: refusalMessage(problem) });
 }

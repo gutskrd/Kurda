@@ -5,9 +5,8 @@ export type RoomEvent = Record<string, unknown> & { type: string };
 export type RoomListener = (roomId: string, event: RoomEvent) => void;
 
 /**
- * Room fan-out seam (KUR-049). Publishes go through the bus so ANY node
- * can serve any room: each node subscribes and delivers to its local
- * members. LocalRoomBus (EventEmitter) covers single-node dev/test.
+ * Room fan-out seam. Publishes go through the bus so any node can serve any room: each node subscribes and delivers
+ * to its local members. LocalRoomBus covers a single node.
  */
 export interface RoomBus {
   publish(roomId: string, event: RoomEvent): Promise<void>;
@@ -51,10 +50,8 @@ export class RedisRoomBus implements RoomBus {
 }
 
 /**
- * Publishing only, for a process that delivers to no room itself — the job
- * worker telling the API instances that something changed. The same channel
- * as RedisRoomBus, without a subscriber connection: listeners are never
- * called. The caller owns the connection.
+ * Publish-only bus for a process that delivers to no room, such as the job worker telling the API instances of a
+ * change. Same channel as RedisRoomBus, without a subscriber; the caller owns the connection.
  */
 export class RedisRoomPublisher implements RoomBus {
   constructor(private readonly publisher: Redis) {}

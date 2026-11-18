@@ -1,4 +1,4 @@
-/** Spaced-repetition queue against real Postgres (CI integration job). KUR-033. */
+/** Spaced-repetition queue against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

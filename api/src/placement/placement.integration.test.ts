@@ -1,4 +1,4 @@
-/** Placement test + skill strength against real Postgres (CI job). KUR-039. */
+/** Placement test and skill strength against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -24,7 +24,7 @@ describe.skipIf(!DATABASE_URL)('placement (integration)', () => {
 
   const authed = (method: 'GET' | 'POST', url: string, payload?: unknown) =>
     app.inject({ method, url, payload: payload as never, headers: { authorization: `Bearer ${token}` }, remoteAddress: '10.80.0.1' });
-  /** Options are shuffled per session: answer by where an option was shown. */
+  /** Options are shuffled per session, so answer by where an option was shown. */
   const pick = (q: { options: string[] }, option: 'right' | 'wrong') => ({ choice: q.options.indexOf(option) });
 
   beforeAll(async () => {
@@ -82,10 +82,7 @@ describe.skipIf(!DATABASE_URL)('placement (integration)', () => {
     expect(b.json().question).toEqual(a.json().question);
   });
 
-  /**
-   * It used to ask the first exercise of each level every time — the same
-   * question for everybody, easy to learn by heart. Now each attempt draws.
-   */
+  /** Each attempt draws its questions, so not every attempt asks the same first question. */
   it('does not ask every attempt the same first question', async () => {
     const asked = new Set<string>();
     // 24 fresh attempts, two candidates: both come up all but ~1 in 8 million runs
@@ -115,15 +112,13 @@ describe.skipIf(!DATABASE_URL)('placement (integration)', () => {
   });
 
   /**
-   * Postgres finds a session by its id in capitals too, so the id in the URL
-   * must not be the shuffle seed: graded under it, a tap lands on whichever
-   * option that other order puts there.
+   * Postgres finds a session by its id in capitals too, so the URL's id must not seed the shuffle, or a tap is graded
+   * against another order.
    */
   it('grades by the order shown, whatever case the session id is sent in', async () => {
     const differs = (sid: string, exerciseId: string) =>
       optionOrder(2, `${sid}:${exerciseId}`).join() !== optionOrder(2, `${sid.toUpperCase()}:${exerciseId}`).join();
-    // an attempt where the capitalised id would shuffle the two options the
-    // other way, so the test can tell the two seeds apart
+    // An attempt where the capitalised id would shuffle the two options the other way, so the seeds can be told apart.
     let start = await authed('POST', `/courses/${courseId}/placement`, { restart: true });
     for (let i = 0; i < 20 && !differs(start.json().sessionId, start.json().question.exerciseId); i++) {
       start = await authed('POST', `/courses/${courseId}/placement`, { restart: true });

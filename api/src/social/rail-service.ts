@@ -6,21 +6,13 @@ import { unseenGiftsSql } from '../shop/service.js';
 import { multiTitleSql, playedGamesSql } from '../mp/titles.js';
 
 /**
- * What is happening with your people, in one read.
- *
- * The social rail shows friends, who is online, what they are playing, waiting
- * invites and requests, and unread counts — and it polls. Five endpoints polled
- * separately would be five round trips and five chances to render a rail whose
- * halves disagree with each other, so this assembles one answer.
+ * What is happening with your people, in one read: friends, who is online, what they play, waiting invites and
+ * requests, and unread counts. The rail polls, so separate endpoints would cost round trips and disagree.
  */
 
 /**
- * How long a game may have been running before it stops counting as "playing".
- *
- * A row that says `status = 'playing'` is only evidence that a game was started
- * and never finished — a closed tab leaves one behind forever. Without a cap the
- * rail would cheerfully report that someone has been in a Peyvok game since
- * Tuesday.
+ * How long a game may run before it stops counting as "playing": a `status = 'playing'` row only shows a game was
+ * started and not finished, and a closed tab leaves one forever.
  */
 export const LIVE_GAME_MAX_MINUTES = 120;
 
@@ -39,7 +31,7 @@ export interface RailFriend {
   online: boolean;
   /** null when they have never been seen, or are hiding it */
   lastSeenAt: string | null;
-  /** what they are playing right now, when they are playing something */
+  /** What they are playing now, if anything. */
   activity: LiveActivity | null;
 }
 
@@ -49,14 +41,7 @@ interface ActivityRow {
   started_at: Date;
 }
 
-/**
- * Every in-progress game, per player.
- *
- * One UNION rather than a query per mode: the rail needs at most one line per
- * friend, and picking the newest across five tables is a job for the database
- * rather than five round trips and a sort in JavaScript. Every multiplayer
- * learning game is one branch: they share the generic engine's tables.
- */
+/** Every in-progress game per player in one UNION, the newest picked by the database; multiplayer learning games share one branch. */
 const LIVE_GAMES_SQL = `
   SELECT DISTINCT ON (user_id) user_id, game, started_at FROM (
     SELECT w.user_id, '${GAME_NAMES.peyvok}' AS game, w.started_at
@@ -114,13 +99,7 @@ export interface RailSelfRead {
 export class SocialRailService {
   constructor(private readonly pool: pg.Pool) {}
 
-  /**
-   * What each of these people is playing right now.
-   *
-   * Someone who has turned the Games section off on their profile is left out:
-   * hiding your results while broadcasting the match you are in the middle of
-   * would make that switch a lie.
-   */
+  /** What each of these people is playing now, leaving out anyone who hides the Games section on their profile. */
   async liveActivity(userIds: readonly string[]): Promise<Map<string, LiveActivity>> {
     const ids = [...new Set(userIds)];
     if (ids.length === 0) return new Map();
@@ -140,14 +119,7 @@ export class SocialRailService {
     return out;
   }
 
-  /**
-   * You: face, level and purse, on the same read as everyone else.
-   *
-   * The rail shows your own avatar and level ring, and the header shows what you
-   * can spend. Those were three more requests on a component that already polls;
-   * folding them in here keeps it to one, and keeps your level and your balance
-   * from arriving at different moments and redrawing twice.
-   */
+  /** You: face, level and purse in the same read, so the rail polls once and level and balance never arrive separately. */
   async self(userId: string, publicUrl: PublicUrl): Promise<RailSelfRead> {
     const rows = await this.pool.query<{
       username: string;
@@ -177,8 +149,7 @@ export class SocialRailService {
         username: row.username,
         displayName: row.display_name,
         avatarUrl: resolveAvatarUrl(row.profile_photo_key, row.selected_avatar_key, publicUrl),
-        // never computed on the client: one formula, server-side, or two places
-        // disagree about what level someone is
+        // Computed on the server only, so level has one formula.
         level: levelInfo(row.xp),
         // a missing wallet row is a zero balance, not a missing balance
         balances: { zer: Number(row.zer ?? 0), gems: Number(row.gems ?? 0) },

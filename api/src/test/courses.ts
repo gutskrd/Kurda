@@ -1,10 +1,8 @@
 import type pg from 'pg';
 
 /**
- * Removes test courses, published lessons and all. A published lesson can
- * only be retired (the content schema's immutability trigger refuses to
- * delete or rewrite it), and a retired one removed, so the courses' lessons
- * are retired first and the courses then deleted with everything under them.
+ * Removes test courses with everything under them. A published lesson can only be retired (the immutability trigger
+ * refuses deletes and rewrites), and a retired one removed, so lessons are retired first.
  */
 export async function removeCourses(pool: Pick<pg.Pool, 'query'>, ids: readonly string[]): Promise<void> {
   if (ids.length === 0) return;

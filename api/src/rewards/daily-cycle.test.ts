@@ -31,7 +31,7 @@ describe('nextCycleDay', () => {
   it('wraps day 7 back to day 1', () => {
     expect(nextCycleDay(state(7, '2026-07-09'), '2026-07-10')).toBe(1);
   });
-  // deliberately changed: a missed day used to send the cycle back to day 1
+  // A missed day does not send the cycle back to day 1.
   it('continues where it left off after missed days', () => {
     expect(nextCycleDay(state(4, '2026-07-08'), '2026-07-10')).toBe(5);
     expect(nextCycleDay(state(4, '2026-06-01'), '2026-07-10')).toBe(5);

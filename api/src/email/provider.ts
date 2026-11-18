@@ -2,10 +2,8 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import type { AppConfig } from '../config/env.js';
 
 /**
- * Email delivery provider (KUR-098). A thin seam over the actual sender so the
- * templating / suppression / queued-retry pipeline stays provider-agnostic.
- * Selection is config-driven (see `createEmailProvider`); the stub keeps dev/test
- * fully exercisable without credentials.
+ * Email delivery providers: a thin seam so templating, suppression and queued retries stay provider-agnostic.
+ * `createEmailProvider` picks one from configuration; the stub needs no credentials.
  */
 
 export interface EmailPayload {
@@ -19,12 +17,11 @@ export interface EmailPayload {
   from?: string;
   /** where an answer goes, when not the provider's own reply-to */
   replyTo?: string;
-  /** extra headers — `In-Reply-To` and `References`, so an answer threads under the mail it answers */
+  /** Extra headers: `In-Reply-To` and `References`, so an answer threads under the mail it answers. */
   headers?: Record<string, string>;
   /**
-   * The same on every retry of one send, and on no other: a provider that
-   * honours it sends the message once however often it is asked (Resend keeps
-   * one for a day). Never an email header; SMTP has no such thing and ignores it.
+   * The same on every retry of one send and on no other, so a provider that honours it sends once however often it
+   * is asked. Never an email header; SMTP ignores it.
    */
   idempotencyKey?: string;
 }
@@ -33,7 +30,7 @@ export interface EmailProvider {
   send(payload: EmailPayload): Promise<{ messageId: string }>;
 }
 
-/** In-memory provider: records what it was asked to send (dev/test). */
+/** In-memory provider that records what it was asked to send. */
 export class StubEmailProvider implements EmailProvider {
   readonly sent: EmailPayload[] = [];
 
@@ -44,31 +41,22 @@ export class StubEmailProvider implements EmailProvider {
 }
 
 /**
- * How many sends a second this process starts at most. The account is allowed
- * ten requests a second, shared by everything that uses its keys; eight
- * leaves room for the support desk's answers and for the moments two
- * processes are sending at once.
+ * The most sends a second this process starts. The account allows ten requests a second across all its keys; eight
+ * leaves room for support answers and for two processes sending at once.
  */
 export const RESEND_SENDS_PER_SECOND = 8;
-/** How often one send waits and asks again inside the call when it is told "too fast", before the job's own retries take over. */
+/** How often one send retries inside the call when told "too fast", before the job's own retries take over. */
 const TOO_FAST_TRIES = 3;
-/** The longest one such wait is: a provider asking for longer is not having a busy second, and the job's retries wait better than a held worker does. */
+/** The longest such wait; longer waits are left to the job's retries rather than holding a worker. */
 const TOO_FAST_WAIT_MAX_MS = 10_000;
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Resend (https://resend.com) over its HTTP API — no SDK, just fetch. Needs an
- * API key and a verified sending domain for the From address. A non-2xx
- * response throws so the send-email job retries with backoff.
- *
- * Sends are paced. When many people sign up in the same minute the queue
- * hands over their codes as fast as its workers run, which is faster than
- * the account may ask; unpaced, the surplus is refused and each refusal
- * costs a retry. So sends take turns, a fixed step apart, and one that is
- * still told "too fast" waits as long as the answer says and asks again,
- * holding the others back for that long too. With the job's idempotency key
- * a send asked for twice is still one email.
+ * Resend over its HTTP API with plain fetch. Needs an API key and a verified sending domain; a non-2xx response
+ * throws so the send-email job retries with backoff. Sends take turns a fixed step apart, since the queue can hand
+ * them over faster than the account may call, and one still told "too fast" waits as long as the answer says and
+ * holds the others back too. The job's idempotency key keeps a repeated send to one email.
  */
 export class ResendEmailProvider implements EmailProvider {
   /** when the next send may start */
@@ -80,7 +68,7 @@ export class ResendEmailProvider implements EmailProvider {
     private readonly replyTo?: string,
   ) {}
 
-  /** Waits for this send's turn: one every 1000 / RESEND_SENDS_PER_SECOND ms, in the order they asked. */
+  /** Waits for this send's turn: one every 1000 / RESEND_SENDS_PER_SECOND ms, in order. */
   private async turn(): Promise<void> {
     const now = Date.now();
     const at = Math.max(now, this.nextTurn);
@@ -116,21 +104,20 @@ export class ResendEmailProvider implements EmailProvider {
         return { messageId: data.id ?? 'resend' };
       }
       const detail = await res.text().catch(() => '');
-      // "too fast" passes in a second; a used-up allowance (also a 429) does not, and waiting here would only hold a worker
+      // "Too fast" passes in a second; a used-up quota (also a 429) does not, and waiting would only hold a worker.
       const tooFast = res.status === 429 && !/quota/i.test(detail);
       if (!tooFast || attempt >= TOO_FAST_TRIES) throw new Error(`Resend send failed (${res.status}): ${detail}`.trim());
       const asked = Number(res.headers.get('retry-after'));
       const pause = Math.min(TOO_FAST_WAIT_MAX_MS, Number.isFinite(asked) && asked > 0 ? asked * 1000 : 1000);
-      // everything waiting behind this send waits too: asking again at once is what was just refused
+      // Everything queued behind this send waits too, since retrying at once is what was just refused.
       this.nextTurn = Math.max(this.nextTurn, Date.now() + pause);
     }
   }
 }
 
 /**
- * SMTP via nodemailer — works with any SMTP provider (Amazon SES, Postmark,
- * Mailgun, Gmail, …). Configure either a single `SMTP_URL` connection string or
- * discrete host/port/user/pass. A send failure throws so the job retries.
+ * SMTP via nodemailer, configured by a single `SMTP_URL` or by host, port, user and password. A failed send throws
+ * so the job retries.
  */
 export class SmtpEmailProvider implements EmailProvider {
   private readonly transport: Transporter;
@@ -167,10 +154,8 @@ export class SmtpEmailProvider implements EmailProvider {
 }
 
 /**
- * Picks the delivery provider from configuration, in precedence order:
- * Resend (if RESEND_API_KEY) → SMTP (if SMTP_URL or SMTP_HOST) → stub. The stub
- * means an unconfigured deploy still boots and queues sends (they're logged, not
- * delivered), so email is never a hard startup dependency.
+ * Picks the provider from configuration: Resend if RESEND_API_KEY is set, else SMTP if SMTP_URL or SMTP_HOST is,
+ * else the stub, so an unconfigured deploy still boots and email is never a hard startup dependency.
  */
 export function createEmailProvider(
   config: AppConfig,
@@ -182,10 +167,8 @@ export function createEmailProvider(
   if (config.SMTP_URL || config.SMTP_HOST) {
     return new SmtpEmailProvider(config, config.EMAIL_FROM, config.EMAIL_REPLY_TO);
   }
-  // Nothing configured: the stub records sends in memory and delivers nothing.
-  // That is fine in dev/test, but in production it silently strands everyone who
-  // needs a verification or password-reset mail — and signup now REQUIRES the
-  // emailed code — so make a misconfigured deploy loud rather than mysterious.
+  // The stub delivers nothing, which in production strands everyone waiting for a sign-up code or a reset link,
+  // so say so loudly.
   if (config.NODE_ENV === 'production') {
     const msg =
       'EMAIL IS NOT CONFIGURED: set RESEND_API_KEY (or SMTP_URL / SMTP_HOST). Verification and password-reset emails will NOT be delivered, so new accounts cannot finish signing up.';

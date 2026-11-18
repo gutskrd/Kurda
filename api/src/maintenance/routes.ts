@@ -6,10 +6,8 @@ import { isPrivileged } from '../admin/roles.js';
 import type { MaintenanceService } from './service.js';
 
 /**
- * What stays open while Hevalo is offline: the checks the host and the apps
- * make, the admin console (its own sign-in included), and keeping or ending a
- * session, so nobody is signed out by it and staff can sign in to check the
- * app before it opens again.
+ * What stays open while Hevalo is offline: host and app health checks, the admin console with its sign-in, and
+ * session upkeep, so nobody is signed out and staff can check the app before reopening.
  */
 const OPEN = new Set(['/health', '/metrics', '/version', '/status', '/auth/login', '/auth/refresh', '/auth/logout']);
 
@@ -18,10 +16,8 @@ function isOpen(path: string): boolean {
 }
 
 /**
- * While Hevalo is offline, every other request is answered 503 MAINTENANCE
- * with what people are to see (@kurda/shared maintenance.ts), which the apps
- * put up in place of the app. Staff are let through. Installed after the
- * session is read, and before any route, so it covers every route.
+ * While offline, every other request gets 503 MAINTENANCE with the notice the apps show (@kurda/shared
+ * maintenance.ts). Staff are let through. Installed after the session is read and before any route.
  */
 export function installMaintenanceGate(app: FastifyInstance, maintenance: MaintenanceService): void {
   app.addHook('onRequest', async (req, reply) => {
@@ -52,10 +48,8 @@ const settingsBody = z.object({
 });
 
 /**
- * `GET /status` is public and asked by the apps while their offline screen is
- * up, to know when to take it down. The setting itself is for superadmins
- * only: it takes the app away from everyone. Every change is in the admin
- * audit trail, and going offline or coming back is in the security log.
+ * `GET /status` is public, polled by the apps' offline screen. The setting is for superadmins only, since it takes
+ * the app away from everyone; changes are audited, and going offline or back is in the security log.
  */
 export function registerMaintenanceRoutes(app: FastifyInstance, maintenance: MaintenanceService): void {
   app.get('/status', { config: { skipValidation: true } }, async (_req, reply): Promise<StatusResponse> => {

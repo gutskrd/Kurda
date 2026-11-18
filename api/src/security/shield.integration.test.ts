@@ -1,7 +1,6 @@
 /**
- * The scanner shield against real Postgres and Redis: a probe for a PHP script
- * or a secrets file is "not found" at once and logged; a network that keeps
- * probing is shut out while signed out, and someone signed in on it is not.
+ * The scanner shield against real Postgres and Redis: a probe for a PHP script or secrets file is answered "not found"
+ * at once and logged, and a network that keeps probing is shut out while signed out, but not for signed-in users.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -21,7 +20,7 @@ describe.skipIf(!DATABASE_URL)('the scanner shield (integration)', { timeout: 30
   let pool: pg.Pool;
   let token = '';
   let refreshToken = '';
-  // a network of its own for each run, so an earlier run's block does not carry over
+  // A network of its own per run, so an earlier run's block does not carry over.
   const scanner = `10.209.${Number(BigInt(Date.now()) % 200n) + 1}.7`;
 
   beforeAll(async () => {

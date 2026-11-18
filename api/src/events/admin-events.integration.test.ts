@@ -1,7 +1,6 @@
 /**
- * The admin's event routes over HTTP: an edit keeps the quests and rewards it
- * did not send, rewards only change through Approvals, and a missing event is
- * answered in the usual error envelope.
+ * The admin's event routes over HTTP: an edit keeps the quests and rewards it did not send, rewards change only
+ * through Approvals, and a missing event gets the usual error envelope.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

@@ -4,23 +4,22 @@ import type { GameAccess, InviteSummary, LobbyCard, PlayGame } from '@kurda/shar
 export type LobbyPhase = 'lobby' | 'started' | 'finished' | 'cancelled';
 
 /**
- * What the play layer needs to know about any game's lobby: who hosts it, who
- * is in it, whether it can still be joined, and what comes after it. Each
- * adapter reads it from its own tables; nothing here leaves the server as is.
+ * What the play layer needs to know about any game's lobby: host, players, whether it can still be joined, and what
+ * follows it. Each adapter reads it from its own tables; none of it leaves the server as is.
  */
 export interface LobbyFacts {
   game: PlayGame;
   lobbyId: string;
   hostId: string | null;
   phase: LobbyPhase;
-  /** a new player may join right now (a lobby; Stories also while reading) */
+  /** A new player may join now: a lobby, and for Stories also while reading. */
   joinable: boolean;
   access: GameAccess;
   chatGroupId: string | null;
   maxPlayers: number;
   /** not removed by the host, still there or gone */
   memberIds: string[];
-  /** in it now: not removed, not gone */
+  /** In it now: not removed, not gone. */
   activeIds: string[];
   removedIds: string[];
   /** the rematch or next round, once there is one */
@@ -33,13 +32,11 @@ export interface LobbyFacts {
 
 /** What a game says about one of its changes, for `play_changed` (play/events.ts). */
 export interface LobbyChange {
-  /** someone no longer in the lobby who should hear about it this once (a player just removed) */
+  /** Someone no longer in the lobby who should hear about it this once (a player just removed). */
   also?: readonly string[];
   /**
-   * Whether a chat card could show the change — who is in the game, whether it
-   * can be joined, whether it started, ended or was called off. False for a
-   * move in a game under way (a guess, a scored word) that ended nothing; left
-   * out, it is taken as true.
+   * Whether a chat card could show the change (players, joinability, start, end, cancellation). False for a move in a
+   * game under way that ended nothing; true when omitted.
    */
   card?: boolean;
 }
@@ -54,15 +51,12 @@ export interface Series {
   draws: number;
 }
 
-/**
- * One game, as the play layer drives it: invites, chat cards and playing
- * again work the same for every game through this (contract §B3).
- */
+/** One game as the play layer drives it, so invites, chat cards and playing again work the same for every game. */
 export interface PlayAdapter {
   readonly game: PlayGame;
   /**
-   * checks `settings` (400 on anything that is not a preset) and makes a lobby with the host in it;
-   * `fromChat`: started from a direct or group chat (Friendly by default the first time, Game Ranks)
+   * Checks `settings` (400 for anything but a preset) and makes a lobby with the host in it; `fromChat` means started
+   * from a direct or group chat (Friendly by default the first time).
    */
   create(hostId: string, settings: unknown, opts: { chatGroupId: string | null; fromChat: boolean }): Promise<string>;
   /** the game's own join, so the join rule is checked in one place, under the game's lock */
@@ -70,9 +64,9 @@ export interface PlayAdapter {
   facts(lobbyId: string): Promise<LobbyFacts | null>;
   card(viewerId: string, lobbyId: string): Promise<LobbyCard>;
   summary(lobbyId: string): Promise<InviteSummary | null>;
-  /** a two-player rematch both asked for: a new game with both in it, started at once; asking twice gives the same one */
+  /** A two-player rematch both asked for: a new game with both in it, started at once; asking twice gives the same game. */
   startPairRematch(lobbyId: string): Promise<string>;
-  /** the host's "Play again" for three or more: a new lobby with the same settings and only the host in it */
+  /** The host's "Play again" for three or more: a new lobby with the same settings and only the host. */
   openNextRound(hostId: string, lobbyId: string): Promise<string>;
   /** wins between the two over this run of rematches, or null when the game cannot tell */
   series(lobbyId: string, me: string, other: string): Promise<Series | null>;

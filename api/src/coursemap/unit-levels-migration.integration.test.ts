@@ -1,11 +1,7 @@
 /**
- * Migration 1751000570000_unit-levels, against real Postgres.
- *
- * The migration is run on a fixture: a schema of its own holding a `units`
- * table shaped as the migration finds it (content-schema), with units in it
- * already, so it touches no row another test reads. It is run up twice (it is
- * written to be re-runnable), down, and up again. The last block checks the
- * migrated database itself: the column the course map reads, and its check.
+ * Migration 1751000570000_unit-levels against real Postgres. It runs on a fixture schema with a `units` table
+ * shaped as the migration finds it, so it touches no row another test reads: up twice (it is re-runnable), down,
+ * and up again. The last block checks the migrated database's own column and constraint.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dirname, join } from 'node:path';
@@ -25,7 +21,7 @@ describe.skipIf(!DATABASE_URL)('the unit levels migration (integration)', () => 
   const client = new pg.Client({ connectionString: DATABASE_URL });
   let migration: Migration;
 
-  /** One way of the migration, run as the CLI would run it: its statements in order, in one transaction. */
+  /** Runs one direction of the migration as the CLI would: its statements in order, in one transaction. */
   async function run(direction: 'up' | 'down'): Promise<void> {
     const statements: string[] = [];
     migration[direction]({ sql: (text) => void statements.push(text) });

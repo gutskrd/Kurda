@@ -1,12 +1,7 @@
 /**
- * Learning Leagues (contract 4 §L) against real Postgres: joining, grouping,
- * the Wednesday merge, the Monday settle (once, and before anyone's next
- * week), promotion and demotion with the weekly goal, Gems, the season reset,
- * personal mode and what the table shows.
- *
- * Most tests run in weeks long closed (2025), each in a week of its own, with
- * the clock passed in — the settle only touches weeks before the `now` it is
- * given, so nothing here reaches another suite's weeks.
+ * Learning Leagues against real Postgres: joining, grouping, the Wednesday merge, the Monday settle, promotion and
+ * demotion with the weekly goal, Gems, the season reset, personal mode and the table. Most tests run in closed 2025
+ * weeks of their own with the clock passed in, so nothing reaches another suite's weeks.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
@@ -74,11 +69,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
     return people;
   };
 
-  /**
-   * The groups and runs of this suite's closed weeks (all in 2025), which
-   * outlive its learners — a group has no key to them — so an earlier run's
-   * groups would otherwise be the open groups this run's learners join.
-   */
+  /** Clears this suite's 2025 groups and runs, which outlive its learners and would otherwise be joined by this run's. */
   const clearOldWeeks = async () => {
     await pool.query(`DELETE FROM league_cohorts WHERE week_key LIKE '2025-%' OR week_key LIKE '2024-%'`);
     await pool.query(`DELETE FROM league_runs WHERE week_key LIKE '2025-%' OR week_key LIKE '2024-%'`);
@@ -297,7 +288,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
       for (const i of [17, 18, 19]) expect(row(i)).toMatchObject({ outcome: 'demoted', tier_after: 'cem' });
       expect(await tierOf(people[19]!.id)).toBe('cem');
 
-      // the promoted were told, once each; nobody was told about going down
+      // The promoted were told once each, and nobody about going down.
       const told = sent.filter((s) => people.some((p) => p.id === s.userId));
       expect(told.map((s) => s.n.data?.kind)).toEqual(['league_promotion', 'league_promotion', 'league_promotion', 'league_promotion']);
       expect(told.every((s) => s.push && s.n.category === 'progress')).toBe(true);
@@ -362,7 +353,7 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
     });
 
     it('pays promotion Gems once per tier per season: up, down and up again pays nothing more', async () => {
-      // the third week far enough on that the first week's XP no longer sets the climber's band
+      // The third week far enough on that the first week's XP no longer sets the climber's band.
       const weeks = ['2025-05-05', '2025-05-12', '2025-06-16'];
       const climber = await learner();
       const others = async (week: string, tier: LeagueTier, xps: number[]) => group(week, tier, xps);

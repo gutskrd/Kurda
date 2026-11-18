@@ -1,14 +1,9 @@
 /**
- * The Stories' riddles and proverbs against real Postgres and Redis: a riddle
- * is written, translated, approved and published through the game content
- * workflow; the learner routes never carry a hint not taken, an answer, an
- * accepted form or an explanation; hints, guesses and reveals are kept for a
- * signed-in learner and a solve pays once, before a reveal only; a visitor
- * plays and nothing is kept; one language is corrected and reviewed on a
- * published row without the row leaving publication or losing its approval;
- * the proverbs are read and played in a round that pays no XP; erasing an
- * account takes its riddles with it; and the starters are seeded once, as
- * drafts with every translation unreviewed.
+ * The Stories' riddles and proverbs against real Postgres and Redis: riddles go through the game content workflow;
+ * learner routes never carry an untaken hint, answer, accepted form or explanation; a signed-in learner's hints,
+ * guesses and reveals are kept and a solve pays once, before any reveal; visitors play with nothing kept; one
+ * language is corrected on a published row without unpublishing it; proverb rounds pay no XP; erasure takes an
+ * account's riddles; and starters are seeded once with translations unreviewed.
  */
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -35,7 +30,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
   let app: FastifyInstance;
   let pool: pg.Pool;
   const s = Date.now().toString(36);
-  // letters only, unique to this run: every marker below is a Kurmancî-looking word nobody else writes
+  // Letters only and unique to this run, so every marker below is a Kurmancî-looking word nobody else writes.
   const tag = `zq${s.replace(/[^a-z]/g, '')}`;
   const userIds: string[] = [];
   let net = 0;
@@ -53,7 +48,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
         birthYear: 1990,
         birthMonth: 6,
       },
-      // an address of its own each time, so the sign-up caps per address never meet a suite run again the same day
+      // A fresh address each time, so per-address sign-up caps never meet another run of this suite the same day.
       remoteAddress: `10.97.${(net = (net + 1) % 250)}.${1 + Math.floor(Math.random() * 250)}`,
     });
     await activate(app, pool, res);
@@ -73,7 +68,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
       url,
       payload: payload as never,
       headers: token ? { authorization: `Bearer ${token}` } : {},
-      // a fresh address for each call a visitor makes, so the tries' cap per address never meets this suite
+      // A fresh address for each visitor call, so the per-address tries cap never trips.
       remoteAddress: token ? '10.97.251.3' : `10.97.252.${(address = (address % 250) + 1)}`,
     });
 
@@ -254,7 +249,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
       expect(reviewed.json().translations.de).toMatchObject({ reviewStatus: 'reviewed', reviewNote: 'read by a speaker' });
       expect(reviewed.json().translations.de.reviewedBy).not.toBeNull();
       expect(reviewed.json().translations.en.reviewStatus).toBe('unreviewed');
-      // saved as it was, it keeps its review; changed, it is read again, in that language alone
+      // Saved unchanged it keeps its review; changed, it is re-reviewed in that language alone.
       const same = await call('PUT', `/admin/game-content/${id}/translations/de`, editor, { payload: de });
       expect(same.json().translations.de.reviewStatus).toBe('reviewed');
       const changed = await call('PUT', `/admin/game-content/${id}/translations/de`, editor, { payload: { ...de, answer: 'Eine Antwort' } });
@@ -424,12 +419,12 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
         expect(shown.statusCode).toBe(200);
         expect(shown.body).not.toContain(String(notes));
 
-        // the next release corrects the English: it follows, and the version moves for an editor with it open
+        // The next release corrects the English: the row follows, and its version moves for an editor who has it open.
         await write({ ...riddleEn, answer: 'A corrected answer' });
         expect((await seedStarterLore(pool, log, files)).refreshed).toEqual([`riddle:kmr-${tag}-starter`]);
         expect((await translations()).find((t) => t.locale === 'en')).toMatchObject({ answer: 'A corrected answer' });
 
-        // once someone changes it in the admin, the file no longer speaks for it
+        // Once someone changes it in the admin, the file no longer speaks for it.
         await pool.query(`UPDATE game_content SET updated_by = (SELECT id FROM users ORDER BY created_at DESC LIMIT 1) WHERE id = $1`, [id]);
         await write({ ...riddleEn, answer: 'Another answer' });
         expect((await seedStarterLore(pool, log, files)).refreshed).toEqual([]);

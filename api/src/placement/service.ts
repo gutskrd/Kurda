@@ -52,10 +52,9 @@ interface ExerciseRow {
 }
 
 /**
- * Adaptive placement (KUR-039): walk skill levels (harder on correct, easier
- * on wrong) drawing one question per step from the level's exercises, then
- * unlock skills up to the highest level answered correctly. Sessions resume;
- * unlock is written only on completion so quitting never partially unlocks.
+ * Adaptive placement: walks skill levels, drawing one question per step from the level's exercises, then unlocks
+ * skills up to the highest level answered right. Sessions resume, and the unlock is written only on completion, so
+ * quitting never unlocks part of the course.
  */
 export class PlacementService {
   constructor(private readonly pool: pg.Pool) {}
@@ -73,11 +72,9 @@ export class PlacementService {
   }
 
   /**
-   * Draw the exercise to ask at a level (`pickCandidate`): any exercise of the
-   * learner-visible (highest published) version of the skill's lessons, except
-   * speaking — a self-rated recording would let anyone climb by tapping "good".
-   * `seed` is the session and the question number, so a resumed question is the
-   * same one.
+   * Draws the exercise for a level (`pickCandidate`) from the visible version of the skill's lessons, never speaking,
+   * where a self-rated recording would let anyone climb by tapping "good". `seed` is the session and question number,
+   * so a resumed question is the same.
    */
   private async pickExercise(
     skills: Array<{ skillId: string; level: number }>,
@@ -177,12 +174,9 @@ export class PlacementService {
   }
 
   /**
-   * Grade the current question and advance (or finish + unlock).
-   *
-   * Seeds and writes use the stored session's id, never the one in the URL:
-   * Postgres finds a session by its id in capitals too, but a seed is text, and
-   * an answer graded under a seed its options were not shown with is mapped
-   * back to the wrong option.
+   * Grades the current question and advances, or finishes and unlocks. Seeds and writes use the stored session id,
+   * never the URL's: Postgres matches the id in capitals too, but the seed is text, and grading under the wrong seed
+   * maps the answer to the wrong option.
    */
   async answer(
     sessionId: string,

@@ -15,10 +15,10 @@ const HAND = { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as cons
 
 /** The learner's tree: reading it, planting, watering and buying a kind (trees/service.ts). */
 export function registerTreeRoutes(app: FastifyInstance, trees: TreeService): void {
-  /** The tree that stands (null before the first), the kinds there are, and the learner's Zêr (MyTree). */
+  /** The standing tree (null before the first), the kinds available, and the learner's Zêr (MyTree). */
   app.get('/me/tree', { preHandler: requireAuth }, async (req) => trees.mine(req.user!.id));
 
-  /** Plant a kind, in place of the tree that stands if there is one. 404 TREE_NOT_FOUND, 403 TREE_NOT_OWNED. */
+  /** Plants a kind in place of any standing tree. 404 TREE_NOT_FOUND, 403 TREE_NOT_OWNED. */
   app.post('/me/tree/plant', { schema: { body: kindBody }, config: HAND, preHandler: requireAuth }, async (req) =>
     trees.plant(req.user!.id, (req.body as z.infer<typeof kindBody>).species),
   );
@@ -28,7 +28,7 @@ export function registerTreeRoutes(app: FastifyInstance, trees: TreeService): vo
     trees.water(req.user!.id, (req.body as z.infer<typeof pourBody>).count ?? 1),
   );
 
-  /** Buy a kind with Zêr, to plant whenever wanted. 404 TREE_NOT_FOUND, 409 TREE_OWNED, 402 INSUFFICIENT_FUNDS. */
+  /** Buys a kind with Zêr to plant whenever wanted. 404 TREE_NOT_FOUND, 409 TREE_OWNED, 402 INSUFFICIENT_FUNDS. */
   app.post('/me/tree/kinds/:species/buy', { schema: { params: kindParams }, config: { skipValidation: true, ...HAND }, preHandler: requireAuth }, async (req) =>
     trees.buy(req.user!.id, (req.params as z.infer<typeof kindParams>).species),
   );

@@ -8,12 +8,7 @@ export interface CheckResult {
 
 export type HealthCheck = () => Promise<CheckResult>;
 
-/**
- * Registry of dependency health checks. Infrastructure modules register
- * themselves here as they are added: the database in KUR-003 (#3), Redis
- * in KUR-006 (#6). A `not_configured` check reports in /health without
- * degrading overall status; only `error` does.
- */
+/** Dependency health checks. A `not_configured` check reports in /health without degrading overall status; only `error` does. */
 export class HealthRegistry {
   private readonly checks = new Map<string, HealthCheck>();
 

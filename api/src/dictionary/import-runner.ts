@@ -1,25 +1,9 @@
 /**
- * Running a dictionary import from the admin panel instead of a shell.
- *
- * The command-line driver (`scripts/import-ferheng.ts`) needs somebody holding a
- * terminal open for ninety minutes against a database that, correctly, accepts
- * no connections from outside its own network. This does the same work inside
- * the API, where the credentials already are, and reports progress through a
- * table so a page can watch it.
- *
- * The shape is deliberately dull: start returns immediately, the loop writes its
- * progress after every file, and nothing is held in memory between files. What
- * that buys is the three failure modes actually surviving —
- *
- *   - **the request ends** long before the work does, and the work does not care;
- *   - **the process restarts** mid-import, and the next start resumes from
- *     `files_done` rather than from the beginning;
- *   - **two people press the button**, and the second is refused by a unique
- *     index rather than by a check both requests can pass at once.
- *
- * Nothing imported is put in front of a player as a Peyvok answer or a rhyme
- * prompt: `in_games` defaults false (1751000112000). An import makes the games
- * accept more, not ask differently.
+ * Runs a dictionary import from the admin panel, inside the API where the database credentials already are, and
+ * reports progress through a table a page can watch. Start returns at once, the loop writes progress after every
+ * file, and nothing is held in memory between files, so the work outlives the request, a restart resumes from
+ * `files_done`, and a second run is refused by a unique index. Imported words stay out of the games (`in_games`
+ * defaults false).
  */
 import type pg from 'pg';
 import { DictionaryRepository } from './repository.js';
@@ -124,12 +108,8 @@ export class DictionaryImportRunner {
   }
 
   /**
-   * Begin an import, or resume the one that a restart interrupted.
-   *
-   * Returns as soon as the run is recorded. The work continues in the
-   * background and `latest()` is how to watch it; `await`ing this would mean
-   * holding a request open for the whole import, which is the thing being
-   * avoided.
+   * Begins an import, or resumes one a restart interrupted. Returns once the run is recorded; the work continues in
+   * the background and `latest()` reports it.
    */
   async start(opts: { lang: string; startedBy?: string }): Promise<ImportRun> {
     if (!FERHENG_LANGS[opts.lang]) throw new UnknownLanguage(opts.lang);
@@ -138,10 +118,8 @@ export class DictionaryImportRunner {
     if (inFlight) throw new ImportAlreadyRunning(inFlight);
 
     /*
-     * A restart leaves a row marked running that nothing is working on, and the
-     * unique index would refuse a fresh one. Taking the row over rather than
-     * starting beside it is what makes the button mean "keep going" after a
-     * deploy — `files_done` says where that is.
+     * A restart leaves a row marked running that nothing works on, and the unique index would refuse a new one, so
+     * the run is taken over and continues from `files_done`.
      */
     const resumable = await this.pool.query<RunRow>(
       `SELECT ${COLUMNS} FROM dict_import_runs
@@ -164,8 +142,7 @@ export class DictionaryImportRunner {
         );
 
     const run = toRun(row.rows[0]!);
-    // deliberately not awaited: the caller is an HTTP request and the work is
-    // an hour and a half. `void` marks that the floor is the error handler below.
+    // Not awaited: the caller is an HTTP request and the work takes over an hour; errors are handled in `work`.
     void this.work(run).catch(() => undefined);
     return run;
   }
@@ -180,13 +157,9 @@ export class DictionaryImportRunner {
   }
 
   /**
-   * The loop. One file at a time, progress written after each.
-   *
-   * Reading the whole 65 MB set at once and holding both the source and the
-   * converted form in memory is how a long import dies three quarters through
-   * with nothing written. A file is also the unit a resume restarts on, so the
-   * most any interruption costs is one file re-read — and re-reading is free,
-   * because the importer skips what it has already seen.
+   * The import loop: one file at a time, with progress written after each. Holding the whole 65 MB set in memory is
+   * how a long import dies with nothing written; a file is also the unit a resume restarts on, and re-reading one is
+   * cheap because the importer skips what it has seen.
    */
   private async work(run: ImportRun): Promise<void> {
     const repo = new DictionaryRepository(this.pool);
@@ -199,8 +172,7 @@ export class DictionaryImportRunner {
       ]);
 
       for (const chunk of manifest.files.slice(run.filesDone)) {
-        // a cancel, or another process taking over, ends this loop rather than
-        // racing it — checked between files, where stopping costs nothing
+        // A cancel, or another process taking over, ends this loop; checked between files, where stopping costs nothing.
         const still = await this.pool.query<{ status: ImportStatus }>(
           `SELECT status FROM dict_import_runs WHERE id = $1`,
           [run.id],
@@ -238,11 +210,7 @@ export class DictionaryImportRunner {
         [run.id],
       );
     } catch (err) {
-      /*
-       * Failed, not lost. Whatever was written stays written and `files_done`
-       * still says where it got to, so pressing the button again continues from
-       * there rather than starting over.
-       */
+      // What was written stays, and `files_done` says where it stopped, so the next start continues from there.
       await this.pool
         .query(
           `UPDATE dict_import_runs SET status = 'failed', error = $2, finished_at = now(), updated_at = now()

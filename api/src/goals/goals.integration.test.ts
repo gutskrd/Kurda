@@ -1,4 +1,4 @@
-/** Daily goals against real Postgres (CI integration job). KUR-032. */
+/** Daily goals against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

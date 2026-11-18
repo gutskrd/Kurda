@@ -1,9 +1,6 @@
 /**
- * Input sanitization (KUR-108): control/invisible characters are stripped from
- * user-visible text on the write paths that previously skipped it (display name,
- * group name/description), while Kurdish diacritics survive intact (the issue's
- * explicit edge case). The shared stripControlChars is unit-tested separately;
- * this pins that it is actually applied end-to-end.
+ * Control and invisible characters are stripped from user-visible text on the display name and group name and
+ * description write paths, while Kurdish diacritics survive; stripControlChars itself is unit-tested elsewhere.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

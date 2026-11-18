@@ -10,17 +10,9 @@ import { cosmeticAssetUrl, resolveAvatarUrl, type PublicUrl } from '../cosmetics
 import { shownToSql } from '../users/age.js';
 
 /**
- * Who is looking at a gift card.
- *
- * `id` is null for an event published to a whole group room, which is read by
- * no one in particular: then nobody is "me" and nobody's own gift is on it —
- * each recipient is sent their own card besides (`gift_received`).
- *
- * `seesEveryone` is the group roster's rule (groups/service.ts `get`): a member
- * of a group sees every other member, someone they chose put them there;
- * anywhere else a name is shown only to whom `shownToSql` allows (a sender or
- * a recipient who has since left the group, say). In a direct message both
- * people are the pair, so it is true there.
+ * Who is looking at a gift card. `id` is null for an event published to a whole group room, where nobody is "me";
+ * each recipient also gets their own card (`gift_received`). `seesEveryone` follows the group roster's rule, since
+ * members see one another; elsewhere names are shown only as `shownToSql` allows. In a direct message it is true.
  */
 export interface CardViewer {
   id: string | null;
@@ -52,17 +44,10 @@ function isEquippable(category: string): category is EquippableCategory {
 }
 
 /**
- * The gift cards for some batches, as one viewer sees them, keyed by batch.
- *
- * A batch is one send: one gift row per recipient, one chat message. The card
- * is built from the rows rather than stored on the message, so "opened" is
- * always the truth and never a copy to keep in step. The price is never on it
- * (shared `GiftCard`); the tier is worked out from what was paid, so a price
- * change later does not change how big a gift already given looks.
- *
- * Recipients whose accounts are gone are left out: a deleted account has no
- * name to show, and a child's closed account must not stay on as a
- * "deleted_…" entry in other people's chats.
+ * The gift cards for some batches as one viewer sees them, keyed by batch. A batch is one send: a gift row per
+ * recipient and one chat message. Cards are built from the rows, so "opened" is always current; the price is never
+ * on one, and the tier follows what was paid, so a later price change does not resize a given gift. Recipients
+ * whose accounts are gone are left out, so a child's closed account does not linger in other people's chats.
  */
 export async function giftCards(
   executor: Pick<pg.Pool, 'query'>,
@@ -118,15 +103,15 @@ export async function giftCards(
       recipients,
       myGiftId: mine?.id ?? null,
       myOpened: mine ? mine.opened_at !== null : false,
-      // something to put on straight from the unwrap: theirs, wearable, and
-      // still in the catalog (an equip of a withdrawn item is refused)
+      // Something to wear straight from the unwrap: theirs, wearable and still on sale, since equipping a withdrawn item
+      // is refused.
       equippable: mine && isEquippable(first.category) && first.asset_key && first.active ? first.category : null,
     });
   }
   return cards;
 }
 
-/** Where a gift batch was posted, found from its message. Null for a gift older than gift messages. */
+/** Where a gift batch was posted, from its message; null for a gift older than gift messages. */
 export type BatchChat =
   | { kind: 'dm'; messageId: string; userLo: string; userHi: string }
   | { kind: 'group'; messageId: string; groupId: string };

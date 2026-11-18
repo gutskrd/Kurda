@@ -94,8 +94,7 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
     expect(on.json()).toMatchObject({ on: true, engagement: { likes: 1, liked: true } });
 
     const off = await call('POST', `/posts/library/${storyId}/like`, tokens.me!);
-    // the same button, so the server decides which way it goes — a client that
-    // thinks it knows the state can be a tab behind
+    // One button, so the server decides the direction; the client may be a tab behind.
     expect(off.json()).toMatchObject({ on: false, engagement: { likes: 0, liked: false } });
   });
 
@@ -165,11 +164,10 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
 
     const likes = await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.mate!);
     expect(likes.statusCode).toBe(200);
-    // a liked picture and a liked story are both posts you liked; the row shows
-    // a thumbnail when there is one rather than living in a separate tab
+    // A liked picture and a liked story are both liked posts in one list.
     const titles = likes.json().items.map((i: { title: string }) => i.title);
     expect(titles).toHaveLength(2);
-    // whole posts now, so kind is the post's own kind
+    // Whole posts, so the kind is the post's own.
     expect(likes.json().items.every((i: { kind: string }) => ['story', 'poem', 'image', 'meme'].includes(i.kind))).toBe(true);
     // and each carries what a card needs
     expect(likes.json().items.every((i: { author?: unknown; engagement?: unknown }) => i.author && i.engagement)).toBe(true);
@@ -180,12 +178,8 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
 
   it('shows a stranger MY likes, with THEIR heart on them', async () => {
     /*
-     * The tab is "what this person liked"; the heart on each card is "did you".
-     *
-     * Now that these arrive as whole cards, each one carries engagement — and it
-     * has to be resolved for whoever is looking. Resolving it for the profile's
-     * owner would paint every card in the tab as already liked for a visitor who
-     * has liked none of them, and invite them to un-like something on a tap.
+     * The tab is "what this person liked"; each card's heart is "did you". Engagement is resolved for whoever is looking,
+     * or a visitor would see every card already liked and could un-like with a tap.
      */
     type Card = { targetType: 'library' | 'image'; id: string; engagement: { liked: boolean; likes: number } };
 
@@ -206,12 +200,7 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
   });
 
   it('counts a repost as a repost, not as a bookmark', async () => {
-    /*
-     * The count query used to assign by if/else — like, else bookmark. The day
-     * a third kind existed, every repost became a bookmark on every card that
-     * rendered, silently and everywhere. So this checks the three totals move
-     * independently rather than only that reposting works.
-     */
+    /* The three totals must move independently, so no kind is ever counted as another. */
     const before = (await engagement.forPosts(ids.me!, 'library', [storyId])).get(storyId)!;
 
     const on = await call('POST', `/posts/library/${storyId}/repost`, tokens.me!);

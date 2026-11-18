@@ -1,11 +1,4 @@
-/**
- * Leaderboards (KUR-063) against real Postgres (+ Redis when present).
- *
- * These ran on the all-time rating board until it was removed with the
- * frozen Elo (contract-4); the same cases now run on the weekly-XP board,
- * which is the only one left, and the board's new rule — nobody who left the
- * leagues or hid their profile is listed — has its own.
- */
+/** Leaderboards against real Postgres, and Redis when present, on the weekly-XP board, including who is not listed. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -126,8 +119,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
     const second = await boards.board('weekly_xp', ids.b!, { limit: 2, offset: 2 });
 
     expect(first.top.map((e) => e.rank)).toEqual([1, 2]);
-    // a second page continues from 3 — a client that restarted numbering would
-    // show two #1s once the pages are concatenated
+    // A second page continues from 3, so concatenated pages never show two #1s.
     expect(second.top[0]!.rank).toBe(3);
     expect(second.top[0]!.userId).toBe(ids.d);
     // total is the whole board, so a client knows whether to offer "show more"
@@ -145,8 +137,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
   });
 
   it('ranks you within the friends board, not against the world', async () => {
-    // D is 3rd globally but 2nd among friends — a global rank beside a friends
-    // list would be telling you about a different board than the one shown
+    // D is 3rd globally but 2nd among friends; the rank must belong to the board shown.
     const board = await boards.board('weekly_xp', ids.d!, { scope: 'friends' });
     expect(board.me).toMatchObject({ rank: 2, score: 199_999_996 });
     const global = await boards.board('weekly_xp', ids.d!, { scope: 'global' });
@@ -165,8 +156,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
   it('says the country is unset rather than pretending the board is empty', async () => {
     const noCountry = await register('nc', '10.63.5.1');
     const board = await boards.board('weekly_xp', noCountry, { scope: 'country' });
-    // null country is a different thing from an empty list, and the UI needs to
-    // tell the user to set one rather than "nobody here yet"
+    // A null country differs from an empty list: the UI asks the user to set one.
     expect(board.country).toBeNull();
     expect(board.top).toEqual([]);
     expect(board.total).toBe(0);

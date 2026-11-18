@@ -1,4 +1,4 @@
-/** User search + public profiles (KUR-082) against real Postgres. */
+/** User search and public profiles against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -158,19 +158,13 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     expect(await social.profile(id.hidden!, id.hidden!)).toMatchObject({ private: false, friendStatus: 'self' });
   });
 
-  /**
-   * A profile that shows a level and a country but not who someone knows is a
-   * profile of an account rather than of a person. The list carries the
-   * profile's own privacy rules rather than rules of its own, so a profile you
-   * cannot see the detail of has no friend list either.
-   */
+  /** The friend list follows the profile's own privacy rules, so a profile you cannot see in detail has no friend list either. */
   describe('who someone is friends with', () => {
     const friendsOf = (id: string) => app.inject({ method: 'GET', url: `/users/${id}/friends`, remoteAddress: '10.82.9.9' });
 
     it('lists them for a profile anyone may look at', async () => {
-      // 'friendly' accepted the viewer in the test above, so they are a pair.
-      // The viewer is the one asked about here, because 'friendly' is
-      // friends-only and this request carries no session at all.
+      // 'friendly' accepted the viewer above; the viewer is asked about because 'friendly' is friends-only and this request
+      // has no session.
       await pool.query(`UPDATE users SET profile_visibility = 'everyone' WHERE id = $1`, [id.viewer!]);
       const res = await friendsOf(id.viewer!);
       expect(res.statusCode).toBe(200);
@@ -180,18 +174,12 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     it('says nothing for a profile whose detail is hidden', async () => {
       const res = await friendsOf(id.hidden!);
       expect(res.statusCode).toBe(200);
-      // not an error and not a refusal: the same empty answer a stranger gets
-      // for anything else on that profile, which reveals nothing either way
+      // Not an error: the same empty answer a stranger gets for anything on that profile.
       expect(res.json().friends).toEqual([]);
     });
   });
 
-  /**
-   * Reporting a person, which is the half of "make this stop" that a block
-   * cannot do: a block ends it for you and tells nobody, so somebody doing the
-   * same thing to twenty people looked exactly like somebody nobody had
-   * blocked.
-   */
+  /** Reporting a person: what a block cannot do, since a block tells nobody. */
   describe('reporting a person', () => {
     const token = async (tag: string, ip: string): Promise<string> => {
       const res = await app.inject({
@@ -220,12 +208,7 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
         remoteAddress: '10.82.9.9',
       });
 
-    /*
-     * Two accounts, because the endpoint allows five reports an hour per user
-     * and these tests would otherwise spend them and start getting 429s. `a`
-     * files the real report and the duplicate of it; `b` takes every rejection
-     * case, none of which need to be the same person.
-     */
+    /* Two accounts, since the endpoint allows five reports an hour: `a` files the real report and its duplicate, `b` takes the rejections. */
     let a = '';
     let aId = '';
     let b = '';
@@ -261,7 +244,7 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
       });
       expect(res.statusCode).toBe(200);
 
-      // the old route writes through the one report service now (reports, not user_reports)
+      // The route writes through the shared report service (reports, not user_reports).
       const row = await pool.query<{ category: string; note: string; status: string }>(
         `SELECT category, note, status FROM reports WHERE reporter_id = $1 AND target_type = 'user' AND target_id = $2`,
         [aId, id.diacritic],
@@ -286,11 +269,7 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
       expect(res.json().code).toBe('SELF_REPORT');
     });
 
-    /**
-     * The same answer for a duplicate and for an id that does not exist. Any
-     * difference between them is an endpoint that tells you which user ids are
-     * real, and whether an account has been reported before.
-     */
+    /** A duplicate and an unknown id get the same answer, so the endpoint reveals neither real ids nor past reports. */
     it('says the same thing to a second report and to a stranger', async () => {
       const again = await send(a, id.diacritic!, { category: 'spam', reason: 'reporting them a second time' });
       expect(again.statusCode).toBe(200);
@@ -309,11 +288,7 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
       expect(rows.rows[0]!.note).toContain('asked to stop');
     });
 
-    /*
-     * Changed on purpose: the report is a case the moment it is filed (no sync),
-     * from the one 'report' source, and the reporter's words are on the report
-     * the case is made of rather than copied into the case.
-     */
+    /* The report is a case from the 'report' source as soon as it is filed, with the reporter's words on the report. */
     it('reaches the moderation queue as one case for the person', async () => {
       const queue = new ModerationQueueService(pool);
       const page = await queue.queue({ q: id.diacritic! });
@@ -327,7 +302,7 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
   });
 
   it('a blocked user is a 404, never revealed', async () => {
-    // viewer blocked "blocked" earlier
+    // The viewer blocked "blocked" earlier.
     await expect(social.profile(id.viewer!, id.blocked!)).rejects.toThrow(/no such user/i);
     await expect(social.profile(id.blocked!, id.viewer!)).rejects.toThrow(/no such user/i);
   });

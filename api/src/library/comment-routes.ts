@@ -25,21 +25,17 @@ const editBody = z.object({
 const postIdParam = z.object({ postId: z.uuid() });
 const idParam = z.object({ id: z.uuid() });
 
-/**
- * Threaded comments on library posts (KUR-283). Reads are public; creating,
- * editing, and deleting require auth (guests read-only) plus an ownership/admin
- * check. Comment creation is rate-limited (#010).
- */
+/** Threaded comments on library posts. Reads are public; writing needs an account and an ownership or staff check, and creation is rate limited. */
 export function registerLibraryCommentRoutes(
   app: FastifyInstance,
   comments = new LibraryCommentService(app.db),
   aiMod?: AiModerationService,
   trust?: TrustService,
 ): void {
-  /** Whether this request may edit or remove somebody else's comment (library/routes.ts `actsAsStaff`). */
+  /** Whether this request may edit or remove somebody else's comment (see `actsAsStaff` in library/routes.ts). */
   const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => isAdmin(req) && (await staffCleared(app, req));
 
-  /** Attach the public CDN URL for a comment's optional voice note (KUR-282). */
+  /** Attaches the public CDN URL of a comment's voice note. */
   const withAudioUrl = <T extends { audioMediaId: string | null }>(c: T): T & { audioUrl: string | null } => ({
     ...c,
     audioUrl: c.audioMediaId && app.storage ? app.storage.publicUrl(c.audioMediaId) : null,
@@ -56,13 +52,12 @@ export function registerLibraryCommentRoutes(
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
       const input = req.body as CreateCommentInput;
-      // an attached voice note must have cleared the upload pipeline (KUR-282),
-      // and its author must not be barred from media (403 MUTED)
+      // A voice note must have cleared the upload pipeline, and its author must not be barred from media (403 MUTED).
       if (input.audioMediaId && !(await voiceAttachable(app.db, req.user!.id, input.audioMediaId))) {
         return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
       }
       if (trust) {
-        // per-level velocity cap (KUR-295): new accounts comment fewer per hour
+        // Per-trust-level velocity cap: new accounts comment less per hour.
         const gate = await trust.checkAction(req.user!.id, 'comment');
         if (!gate.allowed) {
           return reply.code(429).send({ code: 'TRUST_VELOCITY', message: 'you are commenting too fast — slow down for new accounts' });
@@ -78,7 +73,7 @@ export function registerLibraryCommentRoutes(
       const res = await comments.create(postId, req.user!.id, isAdmin(req) ? 'admin' : 'user', input);
       if (res.ok) {
         if (trust) await trust.recordAction(req.user!.id, 'comment');
-        // auto-screen comment text (KUR-285/#293) — a flag enters the #102 queue
+        // Screen the comment text; a flag goes to the moderation queue.
         if (aiMod && res.comment.body) {
           await aiMod
             .moderate({ surface: 'library', text: res.comment.body, authorId: req.user!.id, contentType: 'comment', contentRef: res.comment.id })
@@ -135,8 +130,7 @@ export function registerLibraryCommentRoutes(
     { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const input = req.body as CreateCommentInput;
-      // a voice note added in an edit is checked like one on a new comment (the
-      // one it already has is not "attached" again by an edit that resends it)
+      // A voice note added in an edit is checked like a new one; resending the existing one is not a new attachment.
       const current = input.audioMediaId
         ? (await app.db.query<{ audio_media_id: string | null }>(`SELECT audio_media_id FROM library_comments WHERE id = $1`, [
             (req.params as { id: string }).id,

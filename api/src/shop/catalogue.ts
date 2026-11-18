@@ -1,22 +1,10 @@
 /**
- * The admin's edits to the shop's catalogue that are not a whole-row upsert:
- * changing some of an item's fields, and deleting one.
- *
- * Deleting is the delicate one. A `shop_items` row is pointed at by what
- * people own (`user_entitlements`), the gifts they were given (`gifts`), the
- * record of its owners when its art was replaced (`cosmetic_refreshes`, kept
- * as history), and what they are wearing (`users.equipped_*`). The first three cascade and the last is set
- * to null, so deleting an item somebody has would take it from them — and
- * with it, what they paid for and the gift a friend sent. So an item is
- * deleted only when nothing points at it; otherwise it is retired: off sale,
- * out of the admin's list, and kept for everyone who has it, who can still
- * wear it (cosmetics/access.ts `hasAccess` lets an owner wear an item that is
- * no longer sold).
- *
- * The art the shop ships with (api/content/cosmetics.json) is retired rather
- * than deleted even when nobody has it: the seed script fills in catalogue rows
- * that are missing, so a deleted one would come back the next time it runs,
- * and a retired row is what says "an admin took this out".
+ * The admin's catalogue edits beyond the whole-row upsert: changing some fields, and deleting. A `shop_items` row is
+ * referenced by owners' entitlements, gifts and refresh history (all cascading) and by what people wear (set to
+ * null), so deleting an item someone has would take it, and what they paid for, from them. An item is therefore
+ * deleted only when nothing references it; otherwise it is retired: off sale, out of the admin list, and kept and
+ * wearable for its owners (`hasAccess`). Shipped items (api/content/cosmetics.json) are always retired, since the seed
+ * script would recreate a deleted row.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -56,7 +44,7 @@ export interface ItemUsage {
   equipped: number;
   /** gifts of it, opened or not */
   gifts: number;
-  /** records kept for it from when its art was replaced (the field keeps its old name for the admin console) */
+  /** Records kept from when its art was replaced (the field keeps its old name for the admin console). */
   refunds: number;
   /** part of the art set the shop ships with */
   builtIn: boolean;
@@ -66,9 +54,9 @@ export interface ItemUsage {
 
 export interface RemoveResult extends Omit<ItemUsage, 'outcome'> {
   outcome: 'deleted' | 'retired';
-  /** people who were wearing it through Premium without owning it, and no longer are */
+  /** People who wore it through Premium without owning it, and no longer do. */
   unequipped: number;
-  /** its uploaded art was let go of, for the orphan sweep to delete a day from now */
+  /** Its uploaded art was released for the orphan sweep to delete a day later. */
   artReleased: boolean;
 }
 
@@ -115,12 +103,8 @@ export class CatalogueEditor {
   }
 
   /**
-   * Change some of an item's fields.
-   *
-   * The upsert (`POST /shop/items`) writes the whole row, so a client that
-   * sends only what it changed clears the rest; this changes only what it is
-   * sent. The price rule is the upsert's: a price of SENSITIVE_PRICE or more
-   * that is new (or in a new currency) goes through Approvals instead.
+   * Changes only the fields sent; the upsert (`POST /shop/items`) writes the whole row and would clear the rest. A new
+   * price (or currency) of SENSITIVE_PRICE or more goes through Approvals, as with the upsert.
    */
   async edit(adminId: string, requestId: string, sku: string, edit: ItemEdit): Promise<ShopItem & { retiredAt: Date | null }> {
     const out = await this.tx(async (client) => {
@@ -227,16 +211,12 @@ export class CatalogueEditor {
   }
 
   /**
-   * Delete an item nobody has, or retire one somebody does (see the top of
-   * this file). Retiring again is harmless and answers the same. An item with
-   * a change waiting in Approvals is left alone until that is settled: approving
-   * it would put a deleted item back, or a retired one on sale.
+   * Deletes an item nobody has, or retires one someone does; retiring again answers the same. An item with a pending
+   * Approval is left alone until it is settled, since approving would restore a deleted item or put a retired one on sale.
    */
   async remove(adminId: string, requestId: string, sku: string): Promise<RemoveResult> {
     const out = await this.tx(async (client) => {
-      // locked first, so a purchase or gift that is granting it right now
-      // either finishes before this counts its owners, or waits and then
-      // finds the item gone
+      // Locked first, so a purchase or gift granting it now finishes before owners are counted, or waits and finds it gone.
       const found = await client.query<ItemRow>(`SELECT * FROM shop_items WHERE sku = $1 FOR UPDATE`, [sku]);
       const row = found.rows[0];
       if (!row) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
@@ -270,9 +250,7 @@ export class CatalogueEditor {
           WHERE sku = $1 RETURNING retired_at`,
         [sku],
       );
-      // Premium lends an item that is on sale; one that is not is worn only by
-      // its owners, so whoever was borrowing it takes it off now rather than
-      // keep a selection that no longer shows
+      // Premium lends only items on sale, so anyone borrowing this one takes it off now.
       const unequipped = await client.query(
         `UPDATE users u
             SET equipped_background_sku = NULLIF(u.equipped_background_sku, $1),

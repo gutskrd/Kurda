@@ -1,4 +1,4 @@
-/** Daily Zêr rewards (KUR-067) against real Postgres. */
+/** Daily Zêr rewards against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -97,9 +97,9 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
     expect(d2.reward).toBe(rewardForDay(2));
   });
 
-  // deliberately changed: this used to reset to day 1
+  // A missed day continues the cycle.
   it('continues where it left off after a missed day', async () => {
-    // last claim was 2026-03-02 (day 2); skip 03-03 and claim 03-04
+    // The last claim was 2026-03-02 (day 2); skip 03-03 and claim 03-04.
     const next = await learnAndClaim('2026-03-04');
     expect(next.cycleDay).toBe(3);
     expect(next.reward).toBe(rewardForDay(3));
@@ -125,10 +125,7 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
     expect(ready).toMatchObject({ canClaim: true, learnedToday: true, claimableDay: 2 });
   });
 
-  /**
-   * A Hevalo+ member's daily gems: with the claim, once a day, and not a gem
-   * rule's grant, so the cap on earned gems neither counts them nor stops them.
-   */
+  /** A Hevalo+ member's daily gems come with the claim, once a day, outside the gem rules and their cap. */
   describe('a Hevalo+ member’s daily gems', () => {
     const member = async (tag: string, until: string | null): Promise<string> => {
       const who = await makeLearner(pool, `daily_${tag}_${suffix}`);

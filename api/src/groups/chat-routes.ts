@@ -7,7 +7,7 @@ import { MAX_GROUP_MESSAGE_LEN } from './chat-service.js';
 
 const idParam = z.object({ id: z.uuid() });
 
-/** Group chat channel + moderation (KUR-085). */
+/** Group chat channel and its moderation. */
 export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatService): void {
   /** Send to the group channel (member-only, blocked if muted). */
   app.post(
@@ -15,9 +15,8 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     {
       schema: { params: idParam, body: z.object({ body: z.string().min(1).max(MAX_GROUP_MESSAGE_LEN) }) },
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
-      // no requireUnrestricted('chat') here: `send` asks it first of all
-      // (`assertCanPost`), with the same 403 MUTED, and asking twice was a
-      // second query on every message
+      // No requireUnrestricted('chat') here: `send` checks it first (`assertCanPost`) with the same 403 MUTED, and a
+      // second check would cost a query per message.
       preHandler: [requireAccount, requireBirthMonth],
     },
     async (req) =>
@@ -26,7 +25,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
       ),
   );
 
-  /** Channel history and what the reader's view has had cleared — authorized on fetch, so removal revokes access at once. */
+  /** Channel history and what the reader has cleared; membership is checked on every fetch, so removal revokes access at once. */
   app.get(
     '/groups/:id/chat',
     { schema: { params: idParam, querystring: z.object({ before: z.string().datetime().optional() }) }, preHandler: requireAccount },
@@ -39,9 +38,8 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   );
 
   /**
-   * Clear the chat for oneself (any member) or for everyone (the owner or an
-   * admin). Rate limited: clearing for everyone tells every member's open
-   * view, so it must not become a way to flash the room.
+   * Clears the chat for oneself (any member) or for everyone (owner or admin). Rate limited, because clearing for
+   * everyone updates every member's open view.
    */
   app.post(
     '/groups/:id/chat/clear',
@@ -65,10 +63,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     },
   );
 
-  /**
-   * Typing indicator (ephemeral). Rate limited harder than sending: it fires
-   * while someone is composing, so it must never become a way to flood the room.
-   */
+  /** Typing indicator, rate limited harder than sending so it cannot flood the room. */
   app.post(
     '/groups/:id/chat/typing',
     {

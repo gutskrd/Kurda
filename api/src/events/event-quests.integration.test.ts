@@ -1,4 +1,4 @@
-/** Event quests + reward claims (KUR-091) against real Postgres. */
+/** Event quests and reward claims against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -22,7 +22,7 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
   let userId = '';
   const storyIds: string[] = [];
 
-  // fixed "now" inside the event window
+  // A fixed "now" inside the event window.
   const now = () => new Date('2026-06-04T00:00:00.000Z');
 
   beforeAll(async () => {
@@ -60,8 +60,8 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
       ],
     });
 
-    // progress inside the window: 100 XP earned + one story quiz that counted as
-    // learning — and, not counted, one that did not and one finished after the window
+    // In the window: 100 XP and one story quiz that counted as learning; not counted: one that did not, and one
+    // finished after the window.
     await pool.query(
       `INSERT INTO xp_ledger (user_id, source, amount, created_at) VALUES ($1, 'lesson', 100, '2026-06-02T00:00:00Z')`,
       [userId],
@@ -121,7 +121,7 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
     expect(again).toMatchObject({ ok: true, claimed: false });
     expect((await wallet.balances(userId)).zer).toBe(50);
 
-    // now claimed → no longer claimable in the progress view
+    // Once claimed it is no longer claimable in the progress view.
     const view = (await quests.progress(userId, eventKey))!;
     expect(view.quests.find((q) => q.id === 'xp')).toMatchObject({ claimed: true, claimable: false });
   });

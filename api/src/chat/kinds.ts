@@ -1,10 +1,6 @@
 import { isPlayGame, type ChatGameRef, type ChatMessageKind } from '@kurda/shared';
 
-/**
- * Message kinds, shared by direct messages and group chat: both tables carry
- * the same columns (migration 1751000148000), and a gift or a game card reads
- * the same in either.
- */
+/** Message kinds shared by direct messages and group chat, whose tables carry the same kind columns. */
 
 /** The kind columns a message row carries. */
 export interface KindColumns {
@@ -14,22 +10,15 @@ export interface KindColumns {
   game_lobby_id: string | null;
 }
 
-/**
- * A game card's reference, from its columns. Only a game the shared contract
- * knows is passed on: a client would have nothing to draw for any other.
- */
+/** A game card's reference from its columns; only games the shared contract knows, since clients draw no other. */
 export function gameRef(row: KindColumns): ChatGameRef | null {
   if (row.kind !== 'game' || !row.game_lobby_id || !isPlayGame(row.game)) return null;
   return { game: row.game, lobbyId: row.game_lobby_id };
 }
 
 /**
- * What a conversation list shows for a gift or a game card.
- *
- * They have no body, and the apps write their own localized line from the
- * kind; these are only for phone builds from before kinds existed, which print
- * the preview as it is — a string they can show, rather than a null they
- * cannot.
+ * Conversation-list previews for a gift or a game card. The apps write their own localized line from the kind;
+ * these are for older phone builds, which print the preview as it is and cannot show a null.
  */
 export const PREVIEW_FALLBACK: Readonly<Record<Exclude<ChatMessageKind, 'text'>, string>> = {
   gift: '🎁 Gift',

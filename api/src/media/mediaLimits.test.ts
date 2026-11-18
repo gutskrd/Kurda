@@ -13,8 +13,7 @@ describe('mediaLimits (from config)', () => {
     expect(l.classBLimit).toBe(9_000_000);
     expect(l.uploadRateMax).toBe(10);
     expect(l.uploadRateWindowMs).toBe(60 * 60_000);
-    // heic/avif/tiff are accepted as sources and re-encoded to WebP: they are the
-    // photo formats no browser will draw, a phone's camera roll being the first
+    // HEIC, AVIF and TIFF are accepted as sources and re-encoded to WebP, since browsers cannot draw them.
     expect([...l.allowedTypes].sort()).toEqual([
       'image/avif',
       'image/heic',

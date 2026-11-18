@@ -28,7 +28,7 @@ export function standaloneStoryGames(pool: pg.Pool, opts: { redis?: Redis | null
   const log: Log = opts.log ?? { warn: () => undefined };
   const redis = opts.redis ?? undefined;
   const gems = new GemService(pool, new WalletService(pool));
-  const activity = new ActivityService(pool, new FriendService(pool), redis);
+  const activity = new ActivityService(pool, new FriendService(pool));
   // badges reached here are counted without a celebration of their own: the
   // app shows them from `GET /me/badges/unseen` when it next opens
   const ranks = new RankService(pool, { log });

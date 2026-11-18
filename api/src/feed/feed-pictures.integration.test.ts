@@ -1,8 +1,6 @@
 /**
- * The wall with pictures on written posts, against real Postgres: which half a
- * post is in now that a written post can have pictures, the Photos and Memes
- * filters over new and old picture posts together, and the card fields — the
- * new `images` list beside the `imageUrl` the installed apps read.
+ * The wall with pictures on written posts, against real Postgres: which half a post is in, the Photos and Memes
+ * filters over new and old picture posts, and the card's `images` list beside the `imageUrl` older apps read.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -58,7 +56,7 @@ describe.skipIf(!DATABASE_URL)('the wall with pictures on written posts (integra
     return { id: res.json().user.id as string, token: res.json().tokens.accessToken as string };
   };
 
-  /** A written post, older the earlier it is made, with pictures as the composer leaves them. */
+  /** A written post, older the earlier it is made, with pictures as the composer stores them. */
   async function written(
     type: 'gotin' | 'story',
     body: string,

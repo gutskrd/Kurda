@@ -34,31 +34,15 @@ interface InviteRef {
 }
 
 /**
- * `play_changed` (contract §B3): the event that replaced the clients' polling
- * every 1.5–1.8 s. Whenever a lobby or a game in it changes — someone joins,
- * leaves or is removed, it starts, a guess or a rhyme moves the scoreboard, it
- * ends, it is called off — everyone who would see that change is told to
- * fetch it: its players (still there or gone), the friends with a pending
- * invite to it, and — when it was shared into a group chat — the group's room,
- * where its card is. The event carries nothing but the game and the lobby; what
- * each person may see is decided when they fetch it.
+ * `play_changed`: whenever a lobby or its game changes, everyone who would see it is told to refetch: its players
+ * (present or gone), friends with a pending invite, and the group room where its card was shared. The event carries
+ * only the game and lobby; what each person may see is decided on fetch. Changes are coalesced per lobby (the first at
+ * once, then one trailing send per PLAY_CHANGED_COALESCE_MS), since a Rhyme Match can score several words a second.
  *
- * A Rhyme Match can score several words a second, so changes to one lobby are
- * coalesced: the first goes out at once, the rest in one trailing send per
- * PLAY_CHANGED_COALESCE_MS — the clients only ever refetch.
- *
- * The group room hears only of changes a card could show (`card`). A card
- * says whether the game is open, full, started, finished or called off, and
- * how many are in it — none of which a guess or a scored word changes — and
- * every member online refetches it on the event: up to a hundred people, a
- * few queries each, every 300 ms of a match, for a card that looks the same.
- * The game says which of its changes those are, rather than this remembering
- * what each room was last sent, since another server may have sent the last
- * one.
- *
- * It is also where pending invites learn that their lobby started, filled or
- * was called off: they expire then, and the host and the invitee are told —
- * and that their friend came in another way, which counts as a yes.
+ * The group room hears only changes a card could show (`card`): moves in a game under way change nothing on a card,
+ * and up to a hundred members would refetch it every 300 ms. The game says which changes those are, since another
+ * server may have sent the room's last event. Pending invites also expire here when their lobby starts, fills or is
+ * called off (host and invitee are told), and count as accepted when the friend joined another way.
  */
 export class PlayEvents {
   private readonly sources = new Map<PlayGame, (lobbyId: string) => Promise<LobbyFacts | null>>();
@@ -83,21 +67,16 @@ export class PlayEvents {
   }
 
   /**
-   * Hear when a game has finished — for the badges, which count wins and games
-   * with friends from the tables once the result is committed. Told on each
-   * change that finds the game finished (usually once or twice), so a listener
-   * must not mind hearing it again; it is never awaited.
+   * Listens for finished games, for the badges, which count from committed tables. Told on each change that finds the
+   * game finished, usually once or twice, so a listener must tolerate repeats; never awaited.
    */
   onFinished(listener: (game: PlayGame, lobbyId: string) => void): void {
     this.finishedListeners.push(listener);
   }
 
   /**
-   * Something in this lobby changed. Never throws and never waits: telling
-   * people is not part of what they did. `also` names someone no longer in it
-   * who should hear about it this once (a player just removed, so their screen
-   * finds out now rather than at its next slow poll); `card: false` keeps it
-   * from the group room (see the class note).
+   * Reports a change in this lobby; never throws or waits. `also` names someone no longer in it who should hear this
+   * once (a player just removed); `card: false` keeps it from the group room.
    */
   changed(game: PlayGame, lobbyId: string, opts: LobbyChange = {}): void {
     if (this.closed) return;
@@ -164,8 +143,7 @@ export class PlayEvents {
       const to = new Set([...members, ...waiting, ...also]);
       const event: PlayUserEvent = { type: 'play_changed', game, lobbyId };
       await Promise.all([...to].map((uid) => this.tell(uid, event)));
-      // a move in a game under way changes nothing on a card, nor whether the
-      // lobby can be joined: the room and the invites have heard all of it
+      // A move in a game under way changes nothing on a card or whether the lobby can be joined.
       if (!card) return;
       if (facts?.chatGroupId) {
         await this.notifier
@@ -180,13 +158,7 @@ export class PlayEvents {
     }
   }
 
-  /**
-   * Invites whose friend is in the lobby already — they came in through the
-   * card in their DM or a link rather than the banner — have had their answer.
-   * The host's list says "joined" and the banner goes, as when the invite
-   * itself is accepted; before this, both stayed "pending" until the lobby
-   * started.
-   */
+  /** Invites whose friend is already in the lobby (via a card or link) are answered: the host sees "joined" and the banner goes. */
   private async acceptJoined(ids: readonly string[]): Promise<void> {
     const res = await this.pool.query<InviteRef>(
       `UPDATE play_invites SET status = 'accepted', responded_at = now()
@@ -202,10 +174,8 @@ export class PlayEvents {
   }
 
   /**
-   * A lobby that started (and cannot be joined late), filled up, or was called
-   * off takes its pending invites with it; both sides are told, so the
-   * invitee's banner goes and the host's list says "expired" (a held invite's
-   * invitee never had a banner, and is not told).
+   * A lobby that started (with no late joining), filled or was called off expires its pending invites, telling both
+   * sides; a held invite's invitee never had a banner and is not told.
    */
   async expireInvites(game: PlayGame, lobbyId: string): Promise<void> {
     const res = await this.pool.query<InviteRef>(

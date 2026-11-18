@@ -29,19 +29,13 @@ export interface Board {
   /** how many people are on this board altogether, so a client knows when to stop paging */
   total: number;
   /**
-   * The caller's own score and place, always worked out live. The place is
-   * null only on a Zêr or Gewher board that stops at `depth` before it reaches
-   * them: their balance is still theirs to see, and "not in the top 1,000" is
-   * the truth where a made-up 1,001st would not be.
+   * The caller's own score and place, always live. The place is null only on a balance board cut at `depth` above
+   * them: they still see their balance, without an invented place.
    */
   me: { rank: number | null; score: number } | null;
   /** Zêr and Gewher only: the board lists the top this many, highest first, and no further. */
   depth?: number;
-  /**
-   * Country scope only: the country the board covers, or null when the caller
-   * has not set one — the difference between "nobody here yet" and "we do not
-   * know where you are" matters to what the UI should say.
-   */
+  /** Country scope only: the board's country, or null when the caller has not set one, which the UI words differently. */
   country?: string | null;
 }
 
@@ -53,7 +47,7 @@ export interface BoardOptions {
 }
 
 export interface LeaderboardOptions {
-  /** where an uploaded profile photo is served from; without storage there are only the stock avatars */
+  /** Where uploaded profile photos are served from; without storage there are only stock avatars. */
   publicUrl?: PublicUrl;
   /** how deep a Zêr or Gewher board goes (BALANCE_BOARD_DEPTH); smaller only in tests */
   balanceDepth?: number;
@@ -65,43 +59,26 @@ export const PAGE_SIZE = 25;
 const MAX_PAGE = 100;
 
 /**
- * How many people a Zêr or Gewher board lists: forty pages of PAGE_SIZE.
- *
- * Nearly everybody holds some Zêr — the daily reward pays it from the first
- * day — so a balance board of everyone would be a board of every account
- * there has ever been, rebuilt every few minutes for the sake of its top
- * rows. A board of the top thousand is read in order off an index and stops
- * there (migration 1751000213000), and the sorted set stays the same small
- * size however many accounts there are. Whoever is below the cut still sees
- * their own balance, with no place beside it (`Board.me`).
+ * How many people a balance board lists: forty pages. Nearly everyone holds some Zêr, so a full board would list
+ * every account; the top thousand is read in order off an index (migration 1751000213000) and the sorted set stays
+ * small. Anyone below the cut still sees their own balance, without a place.
  */
 export const BALANCE_BOARD_DEPTH = 1000;
 
-/**
- * How long an unread Zêr or Gewher sorted set is kept. It has no week to run
- * out with, so it is given a day: a board nobody has opened since yesterday is
- * memory for nothing, and building it again is one short indexed read.
- */
+/** How long an unread balance sorted set is kept; it has no week to expire with, and rebuilding is one indexed read. */
 const BALANCE_BOARD_TTL_SECONDS = 24 * 60 * 60;
 
 /**
- * Weekly board keys carry the week so a new week starts fresh. A balance board
- * is all-time, so it has one key, and a different prefix from the friends and
- * country caches (`cachedScores`) so the two can never meet.
+ * Weekly board keys carry the week, so a new week starts fresh. A balance board has one all-time key, with a prefix
+ * distinct from the friends and country caches.
  */
 function keyFor(type: BoardType, now: Date): string {
   return isBalanceBoard(type) ? `lb:balance:${type}` : `lb:weekly:${weekStart(now)}`;
 }
 
 /**
- * How long a built global board is read before the next read builds it again.
- *
- * It was rebuilt every five minutes on a timer, on every instance, whether or
- * not anybody looked: an aggregate over the whole week of the XP ledger, nearly
- * three hundred times a day, and growing with the ledger. Now the first read
- * after this long builds it, once across every instance (whoever claims the
- * marker), and a quiet hour costs nothing. A reader sees a board no older than
- * the timer ever gave them.
+ * How long a built global board is read before the next read rebuilds it, once across all instances (whoever claims
+ * the marker), so a quiet hour costs nothing.
  */
 export const GLOBAL_BOARD_REBUILD_SECONDS = 5 * 60;
 
@@ -111,42 +88,26 @@ export function builtKeyFor(type: BoardType, now: Date): string {
 }
 
 /**
- * The lowest balance on a global Zêr or Gewher board that was cut at its depth,
- * kept beside the sorted set. Without it a caller below the cut would be given
- * the place after the last name on the board, which is nobody's place.
+ * The lowest balance on a global balance board cut at its depth, kept beside the sorted set, so a caller below the
+ * cut is not given the place after the last name.
  */
 function floorKeyFor(type: BoardType, now: Date): string {
   return `${keyFor(type, now)}:floor`;
 }
 
 /**
- * How long a friends or country board is kept in Redis. They are read on every
- * visit to the rankings and each is an aggregate over a week of the ledger —
- * the country one over everyone in a country — so a minute or two of
- * staleness buys a lot. The caller's own score and place are always live.
+ * How long a friends or country board is cached. Each is a week's ledger aggregate read on every rankings visit, so
+ * a minute of staleness is worth it; the caller's own score and place stay live.
  */
 export const FRIENDS_BOARD_TTL_SECONDS = 60;
 export const COUNTRY_BOARD_TTL_SECONDS = 120;
 
 /**
- * SQL: the user behind `alias` may be listed on a weekly board of this scope
- * (contract-4 §R6: the weekly boards keep their safety rules and stop listing
- * people who left the leagues or hid their profile).
- *
- * Somebody who has hidden their profile is on no board a stranger reads: the
- * public boards (global, country) list 'everyone' and 'members' profiles only,
- * so a friends-only profile is listed only on a friends board, and a friends
- * board leaves out a profile hidden even from friends ('nobody'). Somebody who
- * opted out of the leagues ("don't rank me") is on no weekly board at all. An
- * account whose leagues setting was never chosen (a teen in personal mode) is
- * not "out": a friends board still shows them to their friends, as before.
+ * SQL: the user behind `alias` may be listed on a board of this scope. Public boards (global, country) list only
+ * 'everyone' and 'members' profiles, and a friends board leaves out profiles hidden even from friends. Anyone who
+ * opted out of the leagues is on no board; an account that never chose (a teen in personal mode) still shows on a
+ * friends board. Guests are on no board, having no profile and no friends. Balance boards keep the same rules.
  * Whoever is left out still sees their own score and place.
- *
- * A guest (auth/guest.ts) is on no board of any scope: a guest has no
- * profile for the name to lead to, and no friends to be listed for.
- *
- * The Zêr and Gewher boards keep every one of these rules: "don't rank me" is
- * about being ranked, not about XP.
  */
 function listedSql(alias: string, scope: 'public' | 'friends'): string {
   const shown =
@@ -157,11 +118,8 @@ function listedSql(alias: string, scope: 'public' | 'friends'): string {
 }
 
 /**
- * SQL: the user behind `alias` holds no staff role (admin/roles.ts). Staff are
- * left off the public Zêr and Gewher boards: a staff wallet is where the shop
- * and the rewards are tried out and can be topped up by hand, so its balance
- * is not one anybody earned, and a board led by the team would tell everyone
- * else nothing. The weekly board is XP from lessons and games like anybody's.
+ * SQL: the user behind `alias` holds no staff role. Staff wallets test the shop and rewards and can be topped up by
+ * hand, so they are left off the public balance boards; the weekly board is earned XP like anyone's.
  */
 const STAFF_ROLES_SQL = `'{${PRIVILEGED_ROLES.join(',')}}'::text[]`;
 function notStaffSql(alias: string): string {
@@ -177,32 +135,15 @@ interface FaceRow {
 }
 
 /**
- * Leaderboards (KUR-063). Redis sorted sets give O(log n) rank lookups for the
- * global boards; Postgres is the source of truth and there's a rebuild path
- * (and a pure fallback when Redis is absent). Shadow-flagged cheaters (KUR-058)
- * are excluded from every board — silently, so they still see a plausible
- * own-rank and are never told.
+ * Leaderboards: this week's XP, and the Zêr and Gewher each person holds now. Redis sorted sets give fast rank
+ * lookups for the global boards; Postgres is the source of truth, with a rebuild path and a pure fallback without
+ * Redis. Shadow-flagged cheaters are excluded silently, still seeing a plausible own rank. Balance boards take the
+ * same paths, scored from `wallet_balances`, with no week, and cut at BALANCE_BOARD_DEPTH.
  *
- * Three boards: this week's XP, and the Zêr and Gewher each person holds now
- * (rank.ts). The balance boards go through the same paths as the weekly one,
- * with the same rules about who is listed, and differ in where a score comes
- * from (`wallet_balances` rather than a week of the XP ledger), in having no
- * week, and in stopping at the top BALANCE_BOARD_DEPTH.
- *
- * Friends and country boards come from Postgres: a sorted set cannot be
- * filtered by who you know or where you live without reading it all back, which
- * would cost more than the query it replaces. Each is kept in Redis for a
- * minute or two once worked out (`cachedScores`), since every visit to the
- * rankings asked for it again.
- *
- * Nobody is listed who hid their profile from the people reading the board, and
- * nobody is on a board who opted out of the leagues (`listedSql`).
- *
- * The global and country boards are readable by anyone, signed in or not, so
- * they name only people known to be adults: a minor, or an account whose age
- * is not on record yet, is never on them (users/age.ts). They still see their
- * own score and place, worked out against everyone else, as a shadow-flagged
- * player does. The friends board is about people you know, and shows them all.
+ * Friends and country boards come from Postgres, since a sorted set cannot be filtered by friendship or country
+ * cheaply, and are cached briefly (`cachedScores`). Who is listed follows `listedSql`. Global and country boards are
+ * public, so they name only known adults (users/age.ts); minors still see their own score and place. The friends
+ * board shows everyone you know.
  */
 export class LeaderboardService {
   private readonly publicUrl: PublicUrl;
@@ -218,11 +159,8 @@ export class LeaderboardService {
   }
 
   /**
-   * Source-of-truth scores (excluding shadow-flagged users), highest first.
-   *
-   * A filter narrows the board to a set of people (friends) or a country. The
-   * country is filtered in SQL rather than by collecting every id there first —
-   * that list is unbounded, and the query can do it.
+   * Source-of-truth scores, highest first, excluding shadow-flagged users. A filter narrows the board to friends or a
+   * country; the country is filtered in SQL rather than by collecting an unbounded list of ids.
    */
   private async scoresFromDb(
     type: BoardType,
@@ -230,19 +168,15 @@ export class LeaderboardService {
     filter?: { ids?: string[]; self?: string; country?: string },
   ): Promise<ScoreRow[]> {
     const balance = isBalanceBoard(type);
-    // the public boards (everything but a friends list) name adults only, and
-    // the balance boards among them leave the staff out. A balance board, in
-    // every scope, also leaves out everyone the economy does not pay — banned,
-    // a confirmed bot, held for payment fraud (economy/standing.ts): what they
-    // hold is under review, and a board would put it in front of everyone.
+    // Public boards name adults only and balance boards leave out staff; in every scope a balance board also leaves out
+    // anyone the economy does not pay (economy/standing.ts), whose holdings are under review.
     const notFlagged = `NOT EXISTS (SELECT 1 FROM cheat_reviews cr WHERE cr.user_id = u.id AND cr.shadow_flagged = true)${
       balance ? ` AND NOT ${economyBlockedSql('u')}` : ''
     }${filter?.ids ? '' : ` AND NOT ${notKnownAdultSql('u')}${balance ? ` AND ${notStaffSql('u')}` : ''}`}`;
     // an empty allow-list means "no such people", not "everyone"
     if (filter?.ids && filter.ids.length === 0) return [];
 
-    // what is ranked first — the week's start, or the currency — so the scope
-    // parameter is appended after it and numbered from whatever the array holds
+    // The week's start or the currency comes first, so the scope parameter is numbered after it.
     const params: unknown[] = [balance ? BALANCE_BOARDS[type] : weekStart(now)];
     let scoped = '';
     if (filter?.ids) {
@@ -258,10 +192,8 @@ export class LeaderboardService {
     }
 
     if (balance) {
-      // the top of the board only, read in order off the index of positive
-      // balances (migration 1751000213000), so a build stops once it has them;
-      // ties are broken by id the way a sorted set breaks them, so the cut and
-      // the pages fall in the same place whichever of the two is read
+      // Only the top of the board, read in order off the index of positive balances, with ties broken by id as the
+      // sorted set breaks them, so cuts and pages agree whichever is read.
       const rows = await this.pool.query<{ user_id: string; username: string; score: number }>(
         `SELECT b.user_id, u.username, b.balance AS score
            FROM wallet_balances b JOIN users u ON u.id = b.user_id
@@ -274,8 +206,7 @@ export class LeaderboardService {
       return rows.rows.map((r) => ({ userId: r.user_id, username: r.username, score: Number(r.score) }));
     }
 
-    // the XP that counts for the league (xp/rules.ts), so the weekly board and
-    // the league table agree on what a week's XP is
+    // League-counted XP (xp/rules.ts), so the weekly board and the league table agree.
     const rows = await this.pool.query<{ user_id: string; username: string; score: string }>(
       `SELECT l.user_id, u.username, SUM(${countedXpSql('l')}) AS score
          FROM xp_ledger l JOIN users u ON u.id = l.user_id
@@ -290,10 +221,8 @@ export class LeaderboardService {
   }
 
   /**
-   * A friends or country board, from Redis when it was worked out in the last
-   * minute or two (`FRIENDS_BOARD_TTL_SECONDS`), else from Postgres and kept.
-   * A weekly key carries the week, so a new week never reads the last one's
-   * board; a balance board has no week to carry.
+   * A friends or country board from Redis when built in the last minute or two, else from Postgres and cached. Weekly
+   * keys carry the week; balance boards have none.
    */
   private async cachedScores(
     type: BoardType,
@@ -317,7 +246,7 @@ export class LeaderboardService {
     return rows;
   }
 
-  /** The lowest score on a balance board that its depth cut short, or null when nobody was left out. */
+  /** The lowest score on a balance board its depth cut short, or null when nobody was left out. */
   private floorOf(type: BoardType, rows: ScoreRow[]): number | null {
     return isBalanceBoard(type) && rows.length >= this.depth ? rows[rows.length - 1]!.score : null;
   }
@@ -342,7 +271,7 @@ export class LeaderboardService {
       } else {
         pipeline.expire(key, 14 * 24 * 60 * 60); // fortnight TTL
       }
-      // fresh now, so the reads of the next few minutes use it as it is
+      // Fresh now, so the next few minutes of reads use it as is.
       pipeline.set(builtKeyFor(type, now), '1', 'EX', GLOBAL_BOARD_REBUILD_SECONDS);
       await pipeline.exec();
     }
@@ -350,9 +279,8 @@ export class LeaderboardService {
   }
 
   /**
-   * Build the global board if it has not been built in the last few minutes
-   * (GLOBAL_BOARD_REBUILD_SECONDS), or has nothing in it. One read claims the
-   * rebuild; a failed one gives the claim back, so the next read tries again.
+   * Builds the global board if not built within GLOBAL_BOARD_REBUILD_SECONDS or empty. One read claims the rebuild;
+   * a failed one releases the claim for the next read.
    */
   private async ensureFresh(type: BoardType, now: Date): Promise<void> {
     const redis = this.redis!;
@@ -376,11 +304,8 @@ export class LeaderboardService {
   }
 
   /**
-   * A leaderboard: one page of it, plus the caller's own rank within that same board.
-   *
-   * `userId` is null for a signed-out reader, who gets the global board with no
-   * `me` on it. The friends and country scopes are about a particular person, so
-   * they come back empty rather than inventing an answer.
+   * One page of a leaderboard plus the caller's rank within it. A signed-out reader (`userId` null) gets the global
+   * board without `me`; the friends and country scopes come back empty for them.
    */
   async board(type: BoardType, userId: string | null, opts: BoardOptions = {}): Promise<Board> {
     const now = opts.now ?? new Date();
@@ -395,8 +320,7 @@ export class LeaderboardService {
 
     if (scope === 'friends') {
       if (userId === null) return { type, scope, top: [], total: 0, me: null, ...this.depthOf(type) };
-      // you belong on your own friends board — a ranking you are absent from
-      // gives you nothing to measure against
+      // You are on your own friends board, so you have something to measure against.
       const rows = await this.cachedScores(type, now, `friends:${userId}`, FRIENDS_BOARD_TTL_SECONDS, async () =>
         this.scoresFromDb(type, now, { ids: [...(await this.friendIds(userId)), userId], self: userId }),
       );
@@ -449,11 +373,8 @@ export class LeaderboardService {
     const key = keyFor(type, now);
     await this.ensureFresh(type, now);
 
-    // The sorted set was built at some moment and is read for up to five
-    // minutes after. Somebody on it then may not be listable now — an account
-    // found since to be a minor's, gone, out of the leagues or hidden —
-    // so each page is checked as it is read, and anyone who may not be shown
-    // is taken off the set for good, which keeps the ranks without gaps.
+    // The sorted set is read for up to five minutes after it was built, so each page is rechecked and anyone no longer
+    // listable is removed from the set for good, keeping ranks without gaps.
     let ids: string[] = [];
     let scores: number[] = [];
     let names = new Map<string, { username: string; avatarUrl: string }>();
@@ -509,10 +430,7 @@ export class LeaderboardService {
     return rows.rows[0]?.country ?? null;
   }
 
-  /**
-   * The caller's raw score (independent of flag status, so they aren't tipped
-   * off): the week's XP, or what they hold now, read by its key.
-   */
+  /** The caller's raw score, read regardless of flags so they are not tipped off: the week's XP or current holdings. */
   private async myScore(type: BoardType, userId: string, now: Date): Promise<number | null> {
     if (isBalanceBoard(type)) {
       const held = await this.pool.query<{ balance: number }>(
@@ -532,9 +450,8 @@ export class LeaderboardService {
   }
 
   /**
-   * A face for a row. A photo is the person's own face, so a reader who is not
-   * signed in sees it only for a profile shown to everyone, as the profile page
-   * itself would show it; the chosen avatar is a drawing and is shown either way.
+   * A face for a row. A photo is shown to signed-out readers only for profiles shown to everyone, as the profile page
+   * would; a chosen avatar is a drawing and always shown.
    */
   private avatarOf(row: FaceRow, signedIn: boolean): string {
     const photo = signedIn || row.profile_visibility === 'everyone' ? row.profile_photo_key : null;
@@ -552,12 +469,9 @@ export class LeaderboardService {
   }
 
   /**
-   * Usernames and faces of those among `ids` who may be on a public board
-   * right now: a live account known to be an adult, still in the leagues, with
-   * a profile shown to everyone or to members (`listedSql`), and on a balance
-   * board no staff and nobody the economy does not pay (economy/standing.ts),
-   * so an account flagged since the board was built leaves it at the next
-   * read. Anyone missing from the map may not be.
+   * Usernames and faces of those among `ids` who may be on a public board now: live, known adults, in the leagues,
+   * with a public or members profile (`listedSql`), and on a balance board no staff and nobody the economy does not
+   * pay. Anyone missing from the map may not be listed.
    */
   private async listable(type: BoardType, ids: string[], signedIn: boolean): Promise<Map<string, { username: string; avatarUrl: string }>> {
     if (ids.length === 0) return new Map();

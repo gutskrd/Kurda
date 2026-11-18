@@ -1,4 +1,4 @@
-/** Signup & login risk scoring against real Postgres + Redis (CI job). KUR-296. */
+/** Sign-up and sign-in risk scoring against real Postgres and Redis. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { Redis } from 'ioredis';
@@ -79,8 +79,7 @@ describe.skipIf(!DATABASE_URL)('risk service (integration)', () => {
         shared.assessSignup({ email: `s${i}_${suffix}@example.com`, ip, deviceId: `shared${i}_${suffix}` }),
       );
     }
-    // 12 accounts from one shared IP: under the 50 shared cap, and IP volume is
-    // discounted, so it never hard-blocks on IP alone
+    // Twelve accounts from one shared address: under the shared cap of 50, and discounted, so never a block on address alone.
     expect(last!.signals.sharedNetwork).toBe(true);
     expect(last!.assessment.hardBlock).toBe(false);
   });

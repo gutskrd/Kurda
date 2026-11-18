@@ -24,10 +24,9 @@ const editBody = z.object({ body: z.string().min(1).max(2_000) });
 const idParam = z.object({ id: z.uuid() });
 
 /**
- * Reactions & threaded comments on image/meme posts (KUR-291). Reads are public
- * (a signed-in caller also sees their own reaction); reacting/commenting require
- * auth + trust/velocity gating (#295) and auto-screen comment text (#293). Comment
- * edit/delete enforce an ownership/admin check.
+ * Reactions and threaded comments on image posts. Reads are public (a signed-in caller also sees their own
+ * reaction); reacting and commenting need an account and pass the trust gate, comment text is screened, and editing
+ * or deleting a comment checks ownership or staff.
  */
 export function registerImageInteractionRoutes(
   app: FastifyInstance,
@@ -37,7 +36,7 @@ export function registerImageInteractionRoutes(
   trust?: TrustService,
 ): void {
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
-  /** Whether this request may edit or remove somebody else's comment (images/routes.ts `actsAsStaff`). */
+  /** Whether this request may edit or remove somebody else's comment (see `actsAsStaff` in images/routes.ts). */
   const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => authorRole(req) !== 'user' && (await staffCleared(app, req));
 
   // ---- reactions ----------------------------------------------------------

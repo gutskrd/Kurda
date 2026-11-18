@@ -2,14 +2,8 @@ import type pg from 'pg';
 import type { AwardedXp } from '../xp/service.js';
 
 /**
- * Accounts and XP for the league and badge suites, written straight to the
- * tables.
- *
- * Those suites need dozens of learners in a group, in different time zones and
- * at different ages, and XP dated into weeks that have already closed. Going
- * through sign-up for each would make them slow and tie them to rate limits
- * and password hashing that have nothing to do with what they test; sign-up and
- * the XP awards themselves are tested through their own routes.
+ * Accounts and XP for the league and badge suites, written straight to the tables, since those suites need dozens of
+ * learners across zones and ages with XP in closed weeks; sign-up and XP awards are tested through their own routes.
  */
 
 export interface TestLearner {

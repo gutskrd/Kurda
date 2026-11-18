@@ -1,22 +1,12 @@
 /**
- * Seed the cosmetic catalog (backgrounds + premium icons) into shop_items from
- * the committed manifest (api/content/cosmetics.json). Idempotent: re-running
- * adds only the rows that are missing. Default avatars are NOT catalog items
- * (free choices resolved from web static), so they are intentionally not
- * seeded here.
+ * Seeds the cosmetic catalogue (backgrounds and premium icons) into shop_items from api/content/cosmetics.json,
+ * adding only missing rows. Default avatars are free choices, not catalogue items, so they are not seeded.
  *
  *   npm run -w api seed:cosmetics      (or: npx tsx api/scripts/seed-cosmetics.ts)
  *
- * NOTE: once a row exists it is the admins' — this never touches it. It used
- * to refresh an existing row's name, description, art and order from the
- * manifest, which was harmless while those could only be changed here; now
- * that the admin's shop page edits them, a re-run would quietly undo those
- * edits. Changing what shipped is a migration's job (1751000179000 renamed
- * two icons that way). An item an admin deleted while people owned it, or one
- * from this manifest, is kept as a retired row (shop/catalogue.ts), so a re-run
- * does not put it back either. New rows get the manifest defaults, including
- * `active: false` on the items that were withdrawn when the shop's art was
- * replaced (see migration 1751000161000).
+ * An existing row belongs to the admins and is never touched, since the shop page edits it and a re-run would undo
+ * that; changing what shipped is a migration's job. A retired row (shop/catalogue.ts) is not put back either. New
+ * rows get the manifest defaults, including `active: false` on items withdrawn when the shop's art was replaced.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

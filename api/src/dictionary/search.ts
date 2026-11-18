@@ -1,7 +1,4 @@
-/**
- * Pure search helpers for the dictionary (KUR-044). Edit distance backs the
- * fuzzy fallback (accepts a single typo). Kept pure and unit-tested.
- */
+/** Pure dictionary search helpers. The capped edit distance backs the fuzzy fallback for a single typo. */
 
 /** Levenshtein distance, capped: returns >maxDistance as soon as it's exceeded. */
 export function boundedEditDistance(a: string, b: string, maxDistance: number): number {

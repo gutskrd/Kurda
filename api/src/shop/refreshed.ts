@@ -1,16 +1,10 @@
 import type pg from 'pg';
 
 /**
- * Replaced shop items, from their owners' side: the one-time notice that their
- * art was redrawn, and nothing more.
- *
- * The shop's old backgrounds and icons were given new art and taken out of the
- * shop (migration 1751000161000). Every owner of one has a row in
- * `cosmetic_refreshes`, written when the art changed. The owner keeps the item
- * with its new art: a purchase is final, so no item is ever handed back for
- * currency. The rows once also recorded what each owner paid, for a return
- * that no longer exists; those columns stay as history and nothing here reads
- * them. The shape the apps read is in shared/src/cosmetics.ts.
+ * Replaced shop items from their owners' side: the one-time notice that their art was redrawn. The old items were
+ * given new art and withdrawn (migration 1751000161000), and each owner has a `cosmetic_refreshes` row. Owners keep
+ * the item, as purchases are final; the paid-price columns remain as history and are not read. The apps' shape is in
+ * shared/src/cosmetics.ts.
  */
 export class RefreshedNotices {
   constructor(private readonly pool: pg.Pool) {}

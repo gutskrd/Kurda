@@ -21,21 +21,14 @@ const createBody = z.object({
 });
 const keyParam = z.object({ key: z.string().min(1).max(40) });
 
-/**
- * User tags & badges (KUR-286). Public read of a user's effective tags; the
- * owner claims/hides sensitive claimable tags; admins/founder curate the catalog.
- */
+/** User tags: public read of a user's effective tags, owners claiming or hiding claimable ones, and admins curating the catalogue. */
 export function registerTagRoutes(app: FastifyInstance, tags = new TagService(app.db)): void {
   const social = new SocialService(app.db, new FriendService(app.db));
 
   /**
-   * A user's effective main tag + displayed claimable tags (profiles #82).
-   *
-   * The claimed tags are things a person says about themselves, so they follow
-   * the profile's own privacy, as its friend list and its tabs do: a profile
-   * you may not see the detail of shows its main tag and nothing they chose to
-   * add. The profile call resolves blocks and visibility (and a minor's
-   * profile, never on the public web), rather than a second copy of the rules.
+   * A user's main tag and displayed claimable tags. Claimed tags are things a person says about themselves, so they
+   * follow the profile's privacy (via the profile call's block, visibility and minor rules): a profile whose detail you
+   * cannot see shows only its main tag.
    */
   app.get('/users/:id/tags', { schema: { params: z.object({ id: z.uuid() }) } }, async (req) => {
     const id = (req.params as { id: string }).id;
@@ -49,7 +42,7 @@ export function registerTagRoutes(app: FastifyInstance, tags = new TagService(ap
     tags.profileTags(req.user!.id),
   );
 
-  /** My own self-claimed tags incl. hidden ones (owner manage UI, #287). */
+  /** My own claimed tags, hidden ones included, for managing them. */
   app.get('/me/tags/claimed', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
     tags: await tags.claimedTags(req.user!.id),
   }));

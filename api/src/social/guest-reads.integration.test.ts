@@ -49,8 +49,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
     await register('memb', '10.95.0.3');
     await register('nosy', '10.95.0.4');
 
-    // 'everyone' now means the public web, and you have to ask for it: accounts
-    // are created 'members', which is signed-in readers only
+    // 'everyone' means the public web and must be chosen; accounts start as 'members', signed-in readers only.
     await asMember('PUT', '/me/privacy', tokens.open!, { visibility: 'everyone' });
 
     await pool.query(
@@ -84,8 +83,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
     const res = await guest(`/users/${ids.open}`);
     expect(res.statusCode).toBe(200);
     expect(res.json().username).toBe(`guest_open_${suffix}`.slice(0, 30));
-    // a stranger is nobody's friend, and the profile says so rather than
-    // claiming a relationship
+    // A stranger is nobody's friend, and the profile says so.
     expect(res.json().friendStatus).toBe('none');
   });
 
@@ -152,11 +150,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
   });
 
   it('still cannot do anything', async () => {
-    /*
-     * The bodies are well-formed on purpose. Fastify validates a request body
-     * before it runs `requireAuth` (a preHandler), so a malformed one comes back
-     * 400 and would prove nothing about whether the endpoint is guarded.
-     */
+    /* Well-formed bodies, since fastify validates the body before `requireAuth`, and a 400 would prove nothing about the guard. */
     const forbidden: Array<[string, string, unknown]> = [
       ['POST', '/library/posts', { type: 'gotin', body: 'hello' }],
       ['POST', '/images', { imageMediaId: 'media/x.webp' }],
@@ -174,8 +168,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
         payload: payload as object,
         remoteAddress: '10.95.1.1',
       });
-      // reading is open; everything that changes something, or is about a
-      // particular person, is not
+      // Reading is open; anything that changes something or concerns a particular person is not.
       expect(res.statusCode, `${method} ${url}`).toBe(401);
     }
   });

@@ -1,7 +1,4 @@
-/**
- * Worker entrypoint — runs as its own process, separate from the API:
- *   npm run worker --workspace api
- */
+/** The job worker entry point, run as its own process: `npm run worker --workspace api`. */
 import pino from 'pino';
 import { loadConfig } from '../config/env.js';
 import { LOG_REDACT } from '../observability/redact.js';
@@ -31,8 +28,8 @@ async function main(): Promise<void> {
 
   // recurring maintenance schedules (worker owns them, not the API)
   const storage = createStorage(config);
-  // a private bucket this process cannot write to is not used by its jobs
-  // either (media/storage.ts); the API moves the older private files, not this
+  // A private bucket this process cannot write to is not used by its jobs either (media/storage.ts); the API moves
+  // older private files, not this.
   const privateCheck = await storage?.checkPrivateBucket();
   if (privateCheck && !privateCheck.ok) log.error({ error: privateCheck.error }, 'private storage refused a write: data exports are refused until it takes one');
   if (config.DATABASE_URL) {

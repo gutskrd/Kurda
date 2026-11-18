@@ -1,27 +1,14 @@
 /**
- * An edition of the Hevalo book for reading on the web: the PDF, every page
- * as a picture in two sizes, the words of every page as text, and a
- * manifest of where everything is. zagrosian.com imports the folder and
- * shows the book page by page, with the download beside it.
+ * Exports an edition of the Hevalo book for reading on the web: the PDF, each page as a WebP picture 720 and 1440
+ * pixels wide (pages/), each page's words as Kurmanji or English blocks (text.json), and a manifest of the edition,
+ * its pages, sections and chapters (book.json).
  *
  *   npm run book:export --workspace api -- --out <dir>          every chapter written so far
  *   npm run book:export --workspace api -- --out <dir> 1 2 3    chapters 1 to 3
  *
- * The folder it writes:
- *
- *   Reya-Kurmanci-Pirtuka-Hevalo.pdf   the book, as hevalo.app serves it
- *   pages/p001-720.webp …              each page 720 and 1440 pixels wide
- *   book.json                          the edition, its pages, sections and chapters
- *   text.json                          each page's words, as blocks marked Kurmanji or English
- *
- * The same chapters make the same edition (book.json's `edition` changes with
- * the date and with what a reader sees or downloads, nothing else), so
- * exporting again after the book is unchanged changes nothing on the site.
- * The pictures are the same bytes only with the same poppler and WebP
- * encoder, so export each edition on one machine.
- *
- * Before it writes anything, the export checks that every word a PDF reader
- * finds on each page is among the words it read from the press.
+ * The same chapters make the same edition, so exporting an unchanged book changes nothing on the site; the pictures
+ * are byte-identical only with the same PDF renderer and WebP encoder, so export each edition on one machine. Nothing
+ * is written unless every word a PDF reader finds on a page is among the words read from the press.
  */
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';

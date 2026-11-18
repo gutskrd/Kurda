@@ -1,8 +1,6 @@
 /**
- * The league week on the job queue (contract 4 §L3): Monday's settle and
- * Wednesday's merge are calendar schedules, a starting process enqueues a
- * catch-up of whatever is due (once per week, however many processes start),
- * and the settle job runs the week's settle.
+ * The league week on the job queue: Monday's settle and Wednesday's merge are calendar schedules, a starting process
+ * enqueues one catch-up per week however many start, and the settle job settles the week.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

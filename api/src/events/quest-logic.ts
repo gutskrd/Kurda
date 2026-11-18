@@ -1,18 +1,10 @@
 /**
- * Pure event-quest logic (KUR-091). Quest definitions come from the event
- * config (KUR-089/090); progress is a measured metric compared to a target, and
- * claim eligibility depends on the event window plus a post-event grace period.
- * Progress is always evaluated over the event window, never the claim time, so a
- * point earned in the final second still counts.
+ * Pure event-quest logic. Quests come from the event config; progress is a metric measured over the event window
+ * against a target, so a point earned in the final second still counts, and claims are open through the window
+ * and a grace period after it.
  */
 
-/**
- * `story_quizzes` (story games that counted as learning) replaced `win_games`,
- * which counted ranked-quiz wins: the quiz is gone and nothing records a win
- * any more, so such a quest could never be completed. Migration
- * 1751000151000 rewrote the stored ones; a `win_games` entry anywhere else is
- * not a quest type any more and is left out, rather than shown unwinnable.
- */
+/** Supported quest types; anything else, such as the retired `win_games`, is left out rather than shown unwinnable. */
 export type QuestType = 'earn_xp' | 'story_quizzes' | 'complete_lessons';
 export const QUEST_TYPES: readonly QuestType[] = ['earn_xp', 'story_quizzes', 'complete_lessons'];
 
@@ -61,9 +53,8 @@ function toReward(raw: unknown): QuestReward {
 }
 
 /**
- * Normalize one raw quest config entry, or null if it isn't a valid quest of a
- * supported type — so an event's `quests` array can hold entries other tooling
- * cares about without breaking quest evaluation.
+ * Normalizes one raw quest entry, or returns null if it is not a valid quest of a supported type, so the `quests`
+ * array can hold other entries without breaking evaluation.
  */
 export function parseQuest(raw: unknown): QuestDef | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -110,11 +101,7 @@ export function claimDeadline(eventEndsAtMs: number): number {
 
 export type ClaimBlock = 'NOT_COMPLETE' | 'GRACE_EXPIRED';
 
-/**
- * Why a claim is refused, or null if it's allowed. A quest can be claimed as
- * soon as it's complete (even mid-event) and up to `grace` hours after the
- * event ends.
- */
+/** Why a claim is refused, or null: a quest can be claimed once complete, mid-event too, until `grace` hours after the end. */
 export function claimBlock(complete: boolean, eventEndsAtMs: number, nowMs: number): ClaimBlock | null {
   if (!complete) return 'NOT_COMPLETE';
   if (nowMs > claimDeadline(eventEndsAtMs)) return 'GRACE_EXPIRED';

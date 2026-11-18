@@ -52,8 +52,7 @@ describe('predictedRecall', () => {
 
 describe('evaluateAdaptation (offline gate)', () => {
   it('reports improvement when adapted schedules sit closer to the target recall', () => {
-    // stock uses a fixed 6-day interval regardless of the learner's stability;
-    // adapted aims each interval at the target recall for that stability.
+    // Stock SM-2 uses a fixed 6-day interval whatever the stability; adapted aims each interval at the target recall.
     const stabilities = [4, 10, 25, 40];
     const samples = stabilities.map((stabilityDays) => ({
       stabilityDays,

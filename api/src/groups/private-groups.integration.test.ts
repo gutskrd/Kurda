@@ -1,13 +1,8 @@
 /**
- * Every group is private, through the routes the apps call and against real
- * Postgres: a group is made with a name and nothing to choose; the only way in
- * is an owner or admin adding their friend; nothing lists, finds or lets
- * anyone join a group; and to a signed-in person who is not in it, a group
- * whose id they know answers exactly as an id that is no group's.
- *
- * Also what is kept for an app that has not updated yet: `privacy` sent with a
- * new or changed group is ignored, the old list of groups is empty, and the
- * old Join is refused.
+ * Every group is private, through the apps' routes against real Postgres: a group is made with just a name; the
+ * only way in is an owner or admin adding a friend; nothing lists, finds or joins groups; and to a non-member a known
+ * group id answers like an unknown one. Older apps are still handled: `privacy` is ignored, the old group list is
+ * empty, and the old Join is refused.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -100,7 +95,7 @@ describe.skipIf(!DATABASE_URL)('private groups (integration)', () => {
       const edited = made.json().id as string;
       const alone = await call('owner', 'PATCH', `/groups/${edited}`, { privacy: 'open' });
       expect([alone.statusCode, alone.json()]).toEqual([200, { name: `Edited ${suffix}`, description: 'berê' }]);
-      // nothing was written, so nobody is put down as having changed it
+      // Nothing was written, so nobody is recorded as having changed it.
       expect((await pool.query(`SELECT edited_by FROM groups WHERE id = $1`, [edited])).rows[0].edited_by).toBeNull();
       const beside = await call('owner', 'PATCH', `/groups/${edited}`, { name: `Edited twice ${suffix}`, privacy: 'open' });
       expect([beside.statusCode, beside.json().name]).toEqual([200, `Edited twice ${suffix}`]);
@@ -207,11 +202,7 @@ describe.skipIf(!DATABASE_URL)('private groups (integration)', () => {
     });
   });
 
-  /*
-   * A group that was open is the one kind whose members nobody chose: they
-   * walked in. The migration leaves it marked as such, and it goes on as the
-   * room for known adults it was.
-   */
+  /* A formerly open group is the one kind whose members nobody chose, so it stays a room for known adults. */
   describe('a group that was open before every group became private', () => {
     it('takes a friend known to be an adult, and nobody else, saying only that it takes nobody new', async () => {
       for (const tag of ['keeper', 'grown']) await person(tag);
@@ -228,7 +219,7 @@ describe.skipIf(!DATABASE_URL)('private groups (integration)', () => {
       expect(said(await call('young', 'GET', `/groups/${was}`))).toEqual([404, 'GROUP_NOT_FOUND', 'no such group']);
       expect((await call('young', 'POST', `/groups/${was}/join`)).statusCode).toBe(403);
 
-      // the same friend is added to a group that was always private, as anybody's friend is
+      // The same friend can be added to a group that was always private.
       const always = (await call('keeper', 'POST', '/groups', { name: `Always private ${suffix}` })).json().id as string;
       expect((await call('keeper', 'POST', `/groups/${always}/invite`, { userId: id.young })).statusCode).toBe(200);
       expect((await members(always)).sort()).toEqual([id.keeper, id.young].sort());

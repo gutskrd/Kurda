@@ -3,18 +3,10 @@ import { isAppLocale, type AppLocale } from '@kurda/shared';
 import type { Notification } from '../push/service.js';
 
 /**
- * What a letter's notification says, in the reader's own language, and
- * whether a push that waited for quiet hours to end is still worth sending.
- *
- * The push is what a phone shows on its lock screen, so it is written here,
- * in the language the reader chose in the app (users.locale), rather than in
- * English for everyone. The apps write their own words for the line in the
- * notification list from `data.kind` and `data.how`, as before.
- *
- * Two kinds of letter come: a pen pal's bird at your window with their next
- * letter (`window`), and your own bird home from somebody's window with their
- * answer (`home`). The titles say what happened at the window, the bodies who
- * it was. The window title is the one both apps already show for a letter.
+ * A letter's push text in the reader's own language (users.locale), since it shows on the lock screen, and whether a
+ * push held for quiet hours is still worth sending; the apps write the list line themselves from `data.kind` and
+ * `data.how`. `window` is a pen pal's bird at your window with their next letter; `home` is your own bird back with
+ * an answer.
  */
 
 export type LetterNoticeHow = 'window' | 'home';
@@ -92,12 +84,8 @@ export function letterNoticeText(how: LetterNoticeHow, fromName: string, locale?
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * For the push job (jobs/push-jobs.ts `stillNews`): whether a letter's push
- * that waited for quiet hours to end still tells of something waiting. Not
- * once the letter has been read, or has landed at the window, or is gone: a
- * morning push for a letter already seen would only send the reader looking
- * for nothing. Any other push, and a letter push from before letters named
- * their letter, is still news.
+ * For the push job's `stillNews`: whether a letter push held for quiet hours still tells of something waiting. Not
+ * once the letter is read, has landed or is gone; any other push, and letter pushes that name no letter, still go.
  */
 export function letterPushStillNews(pool: Pick<pg.Pool, 'query'>): (userId: string, notification: Notification) => Promise<boolean> {
   return async (userId, notification) => {

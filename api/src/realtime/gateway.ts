@@ -8,24 +8,16 @@ import type { RealtimeKV } from './kv.js';
 
 export const TICKET_TTL_SECONDS = 30;
 export const RESUME_TTL_SECONDS = 300;
-/**
- * Live connections one person may have at once: a phone, a tablet and a few
- * browser tabs. Enough that one never pushes another off; bounded so a
- * runaway client cannot pile up sockets.
- */
+/** Live connections one person may have at once (phone, tablet, a few tabs), bounded so a runaway client cannot pile up sockets. */
 export const MAX_CONNECTIONS_PER_USER = 5;
 /**
- * The largest message a client may send, in bytes. What clients send is a
- * join, a leave or a ping, a few dozen bytes; the WebSocket library's own
- * default is 100 MiB, which every connection could otherwise make the server
- * read and parse. A larger frame closes the connection (1009).
+ * The largest client message in bytes. Clients send joins, leaves and pings of a few dozen bytes; the library default
+ * of 100 MiB would let any connection make the server parse that much. A larger frame closes the connection (1009).
  */
 export const MAX_CLIENT_MESSAGE_BYTES = 16 * 1024;
 /**
- * Messages one connection may send: a burst of this many (rejoining every room
- * after a reconnect is the largest real one), refilled at the rate below.
- * Past it the connection is closed — each message can cost a Redis round trip,
- * so an unbounded stream from one socket is load on everyone's.
+ * Messages one connection may send in a burst (rejoining every room after a reconnect is the largest real one),
+ * refilled at the rate below. Past it the connection closes, since each message can cost a Redis round trip.
  */
 export const MESSAGE_BURST = 100;
 export const MESSAGES_PER_SECOND = 10;
@@ -33,13 +25,13 @@ export const MESSAGES_PER_SECOND = 10;
 export const CLOSE_CONNECTED_ELSEWHERE = 4001;
 export const CLOSE_BAD_TICKET = 4003;
 export const CLOSE_TOO_MANY_MESSAGES = 4008;
-/** How often the session behind every connection is asked whether it still stands (`checkSessions`). */
+/** How often the session behind every connection is checked (`checkSessions`). */
 export const SESSION_CHECK_MS = 60_000;
 /** Bus-only instruction for `revoke`: handled by each node, never delivered. */
 const REVOKE_EVENT = 'rt_revoke';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** The session a connection was opened in: the account, and the sign-in (refresh token family) it came from. */
+/** The session a connection was opened in: the account and its sign-in (refresh token family). */
 export interface SessionRef {
   userId: string;
   /** null for an access token from before sessions were named in it */
@@ -47,9 +39,8 @@ export interface SessionRef {
 }
 
 /**
- * Of these sessions, the ones that have ended since their connections opened:
- * signed out, revoked from the session list, ended by a new password, a ban or
- * a closed account. The app answers it from the database (realtime/sessions.ts).
+ * Of these sessions, those ended since their connections opened: signed out, revoked, or ended by a new password, a
+ * ban or a closed account. The app answers it from the database (realtime/sessions.ts).
  */
 export type SessionCheck = (sessions: readonly SessionRef[]) => Promise<readonly SessionRef[]>;
 
@@ -67,11 +58,11 @@ interface Connection {
   rooms: Set<string>;
   resumeToken: string;
   lastPongAt: number;
-  /** when the last heartbeat ping was sent (for RTT, KUR-057) */
+  /** When the last heartbeat ping was sent, for RTT. */
   pingSentAt?: number;
   /** last measured round-trip time in ms */
   rttMs?: number;
-  /** messages this connection may still send now (see MESSAGE_BURST) */
+  /** Messages this connection may still send now (see MESSAGE_BURST). */
   allowance: number;
   allowanceAt: number;
 }
@@ -89,23 +80,16 @@ export type ClientMessageHandler = (
 ) => void | Promise<void>;
 
 /**
- * Realtime gateway (KUR-049).
+ * Realtime gateway.
  *
- * - AUTH: clients POST /realtime/ticket (bearer-authed) for a 30s
- *   single-use ticket, then connect to GET /realtime?ticket=... — the
- *   JWT itself never rides a query string.
- * - HEARTBEAT: server pings; no pong within the timeout → terminated
- *   (defaults reap dead connections well inside 30s).
- * - RESUME: hello carries a resume token; reconnecting with it rejoins
- *   the same rooms (game reconnection, KUR-051/057).
- * - ROOMS: membership is invite-based (features call invite() before a
- *   user may join); events fan out via the RoomBus so any node can
- *   serve any room.
- * - Up to MAX_CONNECTIONS_PER_USER live connections per user, each joined to
- *   the user's own channel, so `notifyUser` reaches every device and tab. It
- *   used to be one: the newest won, and a web tab and a phone took turns
- *   pushing each other off (4001) — whichever lost missed its invites. A
- *   sixth connection now closes the OLDEST with 4001.
+ * - Auth: clients POST /realtime/ticket (bearer auth) for a 30-second single-use ticket, then connect to
+ *   GET /realtime?ticket=…, so the JWT never rides a query string.
+ * - Heartbeat: the server pings, and a connection with no pong within the timeout is terminated.
+ * - Resume: hello carries a resume token; reconnecting with it rejoins the same rooms.
+ * - Rooms: membership is invite-based (features call invite() first), and events fan out via the RoomBus so any node
+ *   can serve any room.
+ * - Up to MAX_CONNECTIONS_PER_USER connections per user, each on the user's own channel, so `notifyUser` reaches
+ *   every device; one more closes the oldest with 4001.
  */
 export class RealtimeGateway {
   /** each user's live connections on this node, oldest first */
@@ -139,10 +123,8 @@ export class RealtimeGateway {
   }
 
   /**
-   * Take back a user's place in a room: the invite goes, so they cannot join
-   * or resume into it, and a connection of theirs already in it leaves it on
-   * whichever node holds it (the bus carries the instruction, and no client
-   * ever sees it).
+   * Takes back a user's place in a room: the invite goes, so they cannot join or resume into it, and a connection of
+   * theirs in it leaves on whichever node holds it (instructed over the bus, never seen by clients).
    */
   async revoke(roomId: string, userId: string): Promise<void> {
     await this.kv.del(`rt:invite:${roomId}:${userId}`);
@@ -150,13 +132,9 @@ export class RealtimeGateway {
   }
 
   /**
-   * Server-side event fan-out to everyone in the room (all nodes).
-   *
-   * An event may name users it is not for in `hiddenFrom`: a group message
-   * goes to the whole group except the members with a block between them and
-   * whoever wrote it. Their connections stay in the room — they are still in
-   * the group — and are skipped for this one event. The list is the server's
-   * own and no client ever sees it.
+   * Fans an event out to everyone in the room on all nodes. `hiddenFrom` names users it is not for (members with a
+   * block against a group message's author); their connections stay in the room and skip this one event. The list is
+   * server-only.
    */
   async publish(roomId: string, event: RoomEvent): Promise<void> {
     await this.bus.publish(roomId, event);
@@ -167,14 +145,14 @@ export class RealtimeGateway {
     await this.bus.publish(`user:${userId}`, event);
   }
 
-  /** Last measured RTT (ms) for a user's newest live connection, or null (KUR-057). */
+  /** The last measured RTT (ms) of a user's newest live connection, or null. */
   rttFor(userId: string): number | null {
     const conns = this.connections.get(userId);
     if (!conns) return null;
     return [...conns].at(-1)?.rttMs ?? null;
   }
 
-  /** Fires when a user's last live connection on this node drops (game disconnect, KUR-057). */
+  /** Fires when a user's last live connection on this node drops. */
   onDisconnect(listener: (userId: string) => void): void {
     this.disconnectListeners.push(listener);
   }
@@ -270,11 +248,10 @@ export class RealtimeGateway {
     socket.on('pong', () => {
       const now = Date.now();
       conn.lastPongAt = now;
-      // RTT from the heartbeat round-trip (KUR-057), measured server-side
+      // RTT from the heartbeat round trip, measured on the server.
       if (conn.pingSentAt !== undefined) conn.rttMs = now - conn.pingSentAt;
     });
-    // a store that cannot answer (Redis gone for a moment) fails this message, not
-    // the process: a rejection nobody handled here would end it, for everyone
+    // A store that cannot answer fails this message, not the process: an unhandled rejection here would end it for everyone.
     socket.on('message', (raw) => {
       this.onMessage(conn, raw.toString()).catch(() => this.send(conn, { type: 'error', code: 'UNAVAILABLE' }));
     });
@@ -287,8 +264,7 @@ export class RealtimeGateway {
       if (state) {
         const parsed = JSON.parse(state) as { userId: string; rooms: string[] };
         if (parsed.userId === userId) {
-          // only rooms the user may still be in: an invite taken back while
-          // they were away (`revoke`) is not undone by reconnecting
+          // Only rooms the user may still be in: a revoked invite is not undone by reconnecting.
           for (const room of parsed.rooms) {
             if (await this.kv.get(`rt:invite:${room}:${userId}`)) resumedRooms.push(room);
           }
@@ -411,13 +387,11 @@ export class RealtimeGateway {
       members?.delete(conn);
       if (members && members.size === 0) this.roomMembers.delete(roomId);
     }
-    // notify features (game auto-wrong on mid-question disconnect, KUR-057) —
-    // only once the user has no connection left on this node
+    // Notify features only once the user has no connection left on this node.
     if (lastOne) {
       for (const listener of this.disconnectListeners) listener(conn.userId);
     }
-    // resume state stays in the KV for RESUME_TTL so a quick reconnect
-    // (app backgrounded, network blip) lands back in its rooms
+    // Resume state stays for RESUME_TTL, so a quick reconnect lands back in its rooms.
   }
 
   private async persistResumeState(conn: Connection): Promise<void> {
@@ -451,19 +425,11 @@ export class RealtimeGateway {
   }
 
   /**
-   * Close every connection whose session has ended since it opened.
-   *
-   * A ticket is checked once, when the socket opens, and a socket lives as long
-   * as it answers pings. So signing out, signing out everywhere, a new
-   * password, a ban or a closed account ended the session everywhere but here:
-   * whoever held the socket went on hearing that person's messages, and the
-   * group chats they were in, for as long as they kept it open. Every
-   * SESSION_CHECK_MS each session on this node is asked after, in one query,
-   * and the sockets of the ended ones are closed with CLOSE_BAD_TICKET, which
-   * the apps answer by asking for a new ticket, as after any ticket that no
-   * longer holds — which an ended session cannot get.
-   *
-   * A database that cannot answer closes nothing; the next check asks again.
+   * Closes every connection whose session has ended since it opened. A ticket is checked only when the socket opens, and
+   * a socket lives while it answers pings, so without this a signed-out, banned or re-passworded session would keep
+   * receiving messages. Every SESSION_CHECK_MS all sessions on this node are checked in one query, and ended ones are
+   * closed with CLOSE_BAD_TICKET; the apps then ask for a new ticket, which an ended session cannot get. A database that
+   * cannot answer closes nothing.
    */
   async checkSessions(): Promise<number> {
     if (!this.sessionsEnded || this.checkingSessions) return 0;
@@ -505,7 +471,7 @@ function sessionKey(s: SessionRef): string {
   return `${s.userId}:${s.familyId ?? ''}`;
 }
 
-/** The session a ticket was given to; one issued before tickets named it holds the account alone. */
+/** The session a ticket was issued to; an older ticket that did not name one holds only the account. */
 function ticketSession(held: string): SessionRef | null {
   if (!held.startsWith('{')) return { userId: held, familyId: null };
   try {

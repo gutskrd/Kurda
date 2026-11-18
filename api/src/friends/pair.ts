@@ -1,7 +1,6 @@
 /**
- * Friendship pair helpers (KUR-081). A friendship is symmetric, so it's stored
- * as a single row keyed on the canonically-ordered pair (lo < hi). Blocks are
- * directional and live in their own table. Pure so the ordering is testable.
+ * Friendship pair helpers. A friendship is symmetric, so it is one row keyed on the ordered pair (lo < hi); blocks
+ * are directional and live in their own table.
  */
 import { MAX_FRIENDS } from '@kurda/shared';
 

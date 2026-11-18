@@ -1,9 +1,6 @@
 /**
- * Weekly league math (KUR-062), now one copy in @kurda/shared (contract 4 §L):
- * the six water tiers, the UTC week, and the end-of-week result. This module
- * keeps the names the rest of the API has always imported, plus the one thing
- * only the server needs — the UTC offset a learner's clock had at a moment, to
- * group them with people awake at the same hours.
+ * Weekly league math, re-exported from @kurda/shared under the names the API uses, plus what only the server needs:
+ * a learner's UTC offset at a moment, to group people awake at the same hours.
  */
 import {
   LEAGUE_TIERS,
@@ -25,9 +22,8 @@ export const promote = tierAbove;
 export const demote = tierBelow;
 
 /**
- * Minutes a time zone is ahead of UTC at `at` (Erbil +180, New York -240 or
- * -300). An unknown zone reads as UTC: grouping is a nicety, never a reason to
- * fail a join.
+ * Minutes a time zone is ahead of UTC at `at` (Erbil +180, New York -240 or -300). An unknown zone reads as UTC,
+ * since grouping is never a reason to fail a join.
  */
 export function utcOffsetMinutes(timeZone: string, at: Date): number {
   try {

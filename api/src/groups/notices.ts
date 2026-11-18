@@ -2,10 +2,8 @@ import type { GroupBanDuration } from '@kurda/shared';
 import type { Notification } from '../push/service.js';
 
 /**
- * The lines a group sends to people's notifications (and as a push), in the
- * social category friend requests and gifts use. English here, for the list
- * and the push; the apps write their own words from `data`, whose `kind` says
- * what happened and `groupId` which group to open.
+ * The notifications and pushes a group sends, in the social category. English here for the list and push; the
+ * apps write their own words from `data`, whose `kind` says what happened and `groupId` which group to open.
  */
 export type GroupNoticeKind = 'group_removed' | 'group_banned' | 'group_request' | 'group_request_approved' | 'group_request_declined';
 
@@ -57,7 +55,7 @@ export function approvedNotice(group: NoticeGroup, rejoined: boolean): Notificat
   return notice('group_request_approved', group, 'Request accepted', body, { rejoined: String(rejoined) });
 }
 
-/** Their request was turned down: when they may ask again, or (`next` null) that the admins stopped their requests. */
+/** Their request was turned down: when they may ask again, or with `next` null that requests are stopped. */
 export function declinedNotice(group: NoticeGroup, next: Date | null): Notification {
   const first = `Your request to rejoin ${group.name} wasn't accepted.`;
   const body = next ? `${first} You can ask again on ${day(next)}.` : `${first} The admins aren't taking requests from you for this group.`;

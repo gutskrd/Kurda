@@ -35,7 +35,7 @@ export interface SecurityEventRow {
   category: string;
   /** the account it is about */
   user: Person | null;
-  /** who was signed in when it happened, when that is someone else (an admin acting on an account) or the same */
+  /** Who was signed in when it happened, if someone else (an admin acting on an account) or the same person. */
   actor: Person | null;
   network: string | null;
   country: string | null;
@@ -85,11 +85,7 @@ function counts(row: Record<string, number | string | null> | undefined, prefix:
   return { total: n('total'), info: n('info'), notice: n('notice'), warning: n('warning'), critical: n('critical') };
 }
 
-/**
- * Reading the security log for the admin console, and the two things a
- * superadmin does with it: mark what they have looked at as reviewed, and,
- * giving a reason that is itself recorded, see the address an event came from.
- */
+/** Reads the security log for the console, marks what a superadmin reviewed, and reveals an event's address given a recorded reason. */
 export class SecurityLogReader {
   constructor(
     private readonly pool: pg.Pool,
@@ -238,10 +234,7 @@ export class SecurityLogReader {
     };
   }
 
-  /**
-   * Mark alerts reviewed: the ones listed, every open one of a kind, or every
-   * open one. Returns how many were still open.
-   */
+  /** Marks alerts reviewed: the ones listed, every open one of a kind, or every open one. Returns how many were open. */
   async review(adminId: string, which: { eventIds?: string[]; kind?: string; all?: boolean }, note: string | null): Promise<number> {
     const clauses = ['reviewed_at IS NULL'];
     const params: unknown[] = [adminId, note];
@@ -262,10 +255,8 @@ export class SecurityLogReader {
   }
 
   /**
-   * The address an event came from, for a superadmin who says why; the reveal
-   * is itself an event in the log. Null once the address has been forgotten
-   * (SECURITY_ADDRESS_DAYS) or when the server secret it was sealed under has
-   * changed; undefined when there is no such event.
+   * The address an event came from, for a superadmin giving a reason; the reveal is itself logged. Null once the address
+   * is forgotten or the sealing secret changed; undefined when there is no such event.
    */
   async revealAddress(eventId: string, reason: string): Promise<string | null | undefined> {
     const found = await this.pool.query<{ ip_sealed: string | null; user_id: string | null }>(

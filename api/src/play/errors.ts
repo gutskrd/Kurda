@@ -1,11 +1,7 @@
 import type { z } from 'zod';
 import { AppError } from '../plugins/errors.js';
 
-/**
- * The one answer for a game someone may not see: missing, called off, not
- * theirs to join, removed — all the same, so none of them says anything about
- * anybody.
- */
+/** The one answer for any game someone may not see (missing, called off, not theirs, removed), so none reveals anything. */
 export function gameNotFound(): AppError {
   return new AppError('GAME_NOT_FOUND', 404, 'no such game');
 }

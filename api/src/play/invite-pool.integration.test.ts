@@ -1,8 +1,6 @@
 /**
- * An invite holds at most one pool connection at a time, against real
- * Postgres: a request that holds one connection and asks the pool for another
- * is how a burst of them takes every connection and waits on itself. Run here
- * on a pool of one, where any such request cannot finish at all.
+ * An invite holds at most one pool connection at a time, against real Postgres on a pool of one: holding a connection
+ * while asking for another is how a burst takes every connection and waits on itself.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

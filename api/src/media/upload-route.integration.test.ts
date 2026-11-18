@@ -1,12 +1,4 @@
-/**
- * POST /media/uploads — the speaking-practice recording endpoint.
- *
- * It used to hand out a signed URL, so the bytes went from the client straight
- * to the bucket and the server only ever saw three numbers the client made up:
- * a content type, a length, and a SHA-256 nothing checked. These tests are the
- * other half of that change — they check that what lands in storage is a file
- * the server has looked at.
- */
+/** POST /media/uploads, the speaking-practice recording endpoint: what lands in storage is a file the server has checked. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -16,11 +8,8 @@ import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 /**
- * Storage has to be real for these to mean anything.
- *
- * Without it the handler answers 503 before it ever looks at the body, so a
- * "rejects a script" assertion would pass without the sniff having run — green
- * for the wrong reason, which is worse than skipped. CI runs MinIO.
+ * Storage must be real here: without it the handler answers 503 before reading the body, so a "rejects a script"
+ * assertion would pass without the sniff running.
  */
 const ready = Boolean(DATABASE_URL && process.env.S3_ENDPOINT);
 
@@ -33,13 +22,11 @@ const WEBM = Buffer.concat([
   Buffer.from('webm'),
   Buffer.alloc(512, 0x22),
 ]);
-/** The thing the old endpoint would happily have stored. */
+/** Script bytes labelled as audio. */
 const SCRIPT = Buffer.from('<script>alert(document.domain)</script>');
 
 describe.skipIf(!ready)('POST /media/uploads (integration)', () => {
-  // loadConfig REPLACES the environment rather than merging into it, so the S3
-  // settings have to be carried across or the app boots with no storage and
-  // every upload answers 503 before it reads a byte
+  // loadConfig replaces the environment rather than merging, so the S3 settings are carried across or every upload is 503.
   const config = loadConfig({ ...process.env, DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;
@@ -94,9 +81,7 @@ describe.skipIf(!ready)('POST /media/uploads (integration)', () => {
   });
 
   it('refuses a file that is not audio, however it is labelled', async () => {
-    // The label is the part an attacker controls, so it is the part that must
-    // not decide anything. This is the upload the old endpoint could not refuse:
-    // it never saw these bytes at all.
+    // The declared label is attacker-controlled, so it must decide nothing.
     const res = await upload(SCRIPT, 'audio/mpeg');
     expect(res.statusCode).toBe(415);
     expect(res.json().code).toBe('INVALID_AUDIO');
@@ -113,9 +98,7 @@ describe.skipIf(!ready)('POST /media/uploads (integration)', () => {
   });
 
   it('takes what a browser actually records', async () => {
-    // MediaRecorder produces WebM on Chrome and Firefox. The client used to
-    // relabel it as m4a and the server believed the label; now the server reads
-    // the container and agrees with it.
+    // Browser recording produces WebM; the server reads the container and agrees with it.
     const res = await upload(WEBM, 'audio/webm');
     expect(res.statusCode).toBe(201);
     expect(res.json().contentType).toBe('audio/webm');
@@ -123,8 +106,7 @@ describe.skipIf(!ready)('POST /media/uploads (integration)', () => {
   });
 
   it('never lets the client choose where in the bucket its file lands', async () => {
-    // the old ticket took a `kind` straight from the request body, so any prefix
-    // was writable — including the one GDPR exports use
+    // The server fixes the prefix; nothing in the request chooses where the file goes.
     const res = await upload(MP3, 'audio/mpeg');
     expect(res.statusCode).toBe(201);
     expect(res.json().key.startsWith('speaking/')).toBe(true);

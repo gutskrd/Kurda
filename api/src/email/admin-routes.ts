@@ -31,14 +31,9 @@ const flagBody = z.object({ value: z.boolean() });
 const noBody = z.object({}).nullish();
 
 /**
- * Email in the admin panel: how it is set up and whether it is getting out,
- * a test send to yourself, and the support inbox.
- *
- * The status exists because sending broke without anyone seeing it: the
- * sending domain moved to hevalo.app while the API key could only send for
- * the old one, and every verification and reset email was refused for days,
- * visible only in the server's logs. Now the panel says what the From is,
- * which provider sends it, and how many sends failed this week and why.
+ * Email in the admin panel: the sending setup and whether mail is getting out (the From, the provider, and this
+ * week's failed sends and why), a test send to yourself, and the support inbox. The status exists because sending
+ * can fail for days with nothing but server logs to show it.
  */
 export function registerEmailAdminRoutes(
   app: FastifyInstance,
@@ -51,7 +46,7 @@ export function registerEmailAdminRoutes(
   app.get('/admin/email/status', { config: { skipValidation: true }, preHandler: admins }, async () => {
     let failures: { count: number; lastError: string | null; lastAt: string | null } | null = null;
     if (app.jobs) {
-      // the queue keeps a send that ran out of retries (its dead-letter set); a week of them, newest first
+      // The queue keeps sends that ran out of retries; a week of them, newest first.
       const failed = await app.jobs.raw.getFailed(0, 499);
       const since = Date.now() - FAILURE_WINDOW_MS;
       const sends = failed
@@ -79,9 +74,8 @@ export function registerEmailAdminRoutes(
   });
 
   /**
-   * Send a test email to yourself — the address on your own account, never
-   * one typed in, so this cannot be used to send mail to anybody. Sent at
-   * once rather than queued, so the answer is what the provider said.
+   * Sends a test email to the address on your own account, never a typed one, so it cannot mail anybody else. Sent
+   * at once rather than queued, so the answer is what the provider said.
    */
   app.post(
     '/admin/email/test',
@@ -129,7 +123,7 @@ export function registerEmailAdminRoutes(
     return inbox.list({ archived: q.archived === 'true', limit: q.limit, before: q.before });
   });
 
-  /** Opening a mail marks it read. A POST, because it changes something — and is audited as a read of support mail. */
+  /** Opening a mail marks it read: a POST because it changes state, audited as a read of support mail. */
   app.post('/admin/support/emails/:id/open', { schema: { params: idParams, body: noBody }, preHandler: readers }, async (req) =>
     inbox.open((req.params as z.infer<typeof idParams>).id),
   );

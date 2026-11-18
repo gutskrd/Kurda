@@ -1,9 +1,7 @@
 /**
- * Every way a written post's words or pictures reach the wall goes through the
- * same gate — velocity cap, spam check, screening — over HTTP with real
- * Postgres + Redis (KUR-295, #293). Only the create route used to be gated: an
- * edit and a published draft went up unscreened, and alt text was not read.
- * (Picture posts: images/picture-gate.integration.test.ts.)
+ * Every way a written post's words or pictures reach the wall passes the same gate (velocity cap, spam check,
+ * screening), over HTTP with real Postgres and Redis: create, edit, published draft and alt text. Picture posts are in
+ * images/picture-gate.integration.test.ts.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -28,10 +26,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the gate on written posts (integra
   const SPAM = 'buy cheap followers now';
   const SCAM = 'free money, click here';
 
-  /**
-   * A new account (two posts an hour), or an established one (fifty), so a
-   * test about the spam check is not stopped by the velocity cap first.
-   */
+  /** A new account (two posts an hour) or an established one (fifty), so spam tests are not stopped by velocity first. */
   async function person(tag: string, level: 'new' | 'established' = 'new'): Promise<{ id: string; token: string }> {
     const res = await app.inject({
       method: 'POST',
@@ -185,8 +180,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the gate on written posts (integra
     const posts: Array<{ id: string }> = [];
     for (let i = 0; i < 6; i++) posts.push((await call('POST', '/library/posts', author.token, { body: `Nivîsa ${i}` })).json());
 
-    // the same correction on each: as the staff member's own posting it would
-    // be over a new account's cap, and repeats for the spam check
+    // The same correction on each: as the staff member's own posting it would exceed a new account's cap and repeat.
     for (const post of posts) {
       expect((await call('PATCH', `/library/posts/${post.id}`, admin.token, { body: SCAM })).statusCode).toBe(200);
     }
@@ -194,8 +188,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the gate on written posts (integra
     const draft = (await call('POST', '/library/posts', author.token, { body: `${SCAM}!`, publish: false })).json();
     expect((await call('POST', `/library/posts/${draft.id}/publish`, admin.token)).statusCode).toBe(200);
 
-    // nothing is flagged under the staff member's name, nor a staff edit under
-    // the author's; the draft's words are the author's, and screened as theirs
+    // Nothing is flagged under the staff member's name or the author's for a staff edit; a published draft's words are
+    // screened as the author's.
     const flagged = await pool.query<{ author_id: string; content_ref: string }>(
       `SELECT author_id, content_ref FROM moderation_flags WHERE content_ref = ANY($1) OR author_id = $2`,
       [[...posts.map((p) => p.id), draft.id], admin.id],

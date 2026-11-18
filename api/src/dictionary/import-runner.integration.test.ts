@@ -11,11 +11,7 @@ import type { FerhengSource, SourceEntry } from '@kurda/shared';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
-/**
- * A source of three tiny files, so the loop is exercised without the network.
- * `asked` records what it was asked for, which is how resuming is checked: the
- * point of `files_done` is that the files before it are never read again.
- */
+/** A source of three tiny files; `asked` records each file read, which is how resuming is checked. */
 function stubSource(suffix: string): FerhengSource & { asked: string[]; fail?: string } {
   const files = ['a.json', 'b.json', 'c.json'];
   const words: Record<string, SourceEntry[]> = {
@@ -82,11 +78,7 @@ describe.skipIf(!DATABASE_URL)('dictionary import runner (integration)', () => {
     expect(stored.rows[0]!.n).toBe(3);
   });
 
-  /**
-   * Nothing imported becomes something a game asks. The pool is curated and an
-   * import is not curation (1751000112000) — this is the assertion that keeps
-   * "abdurrahman" from turning up as a five-letter Peyvok answer.
-   */
+  /** Imported words never become game answers: the game pool is curated, and an import is not curation. */
   it('leaves everything it imports out of the games', async () => {
     const runner = new DictionaryImportRunner(pool, stubSource(suffix));
     await runner.start({ lang: 'ku' });
@@ -99,11 +91,7 @@ describe.skipIf(!DATABASE_URL)('dictionary import runner (integration)', () => {
     expect(inGames.rows[0]!.n).toBe(0);
   });
 
-  /**
-   * Two people pressing the button. Refused by a unique index rather than by a
-   * check, because two requests can pass a check at the same moment and then
-   * race each other on every headword.
-   */
+  /** A second run is refused by a unique index, because two requests could pass a check at the same moment. */
   it('refuses a second run while one is in flight', async () => {
     const runner = new DictionaryImportRunner(pool, stubSource(suffix));
     await pool.query(`INSERT INTO dict_import_runs (source, lang, status) VALUES ('ferheng', 'ku', 'running')`);
@@ -116,11 +104,7 @@ describe.skipIf(!DATABASE_URL)('dictionary import runner (integration)', () => {
     await expect(runner.start({ lang: 'klingon' })).rejects.toBeInstanceOf(UnknownLanguage);
   });
 
-  /**
-   * A failure keeps what it wrote and says where it stopped, and pressing the
-   * button again carries on from there rather than re-reading the whole set.
-   * That is what makes a restart mid-import cost one file instead of an hour.
-   */
+  /** A failure keeps what it wrote, and the next run resumes from where it stopped instead of re-reading everything. */
   it('resumes after a failure without re-reading the files it finished', async () => {
     const failing = stubSource(suffix);
     failing.fail = 'b.json';
@@ -150,7 +134,7 @@ describe.skipIf(!DATABASE_URL)('dictionary import runner (integration)', () => {
 
     const cancelled = await runner.cancel();
     expect(cancelled?.status).toBe('cancelled');
-    // …and a new run may start now
+    // …and a new run may start now.
     const next = await runner.start({ lang: 'ku' });
     expect(next.status).toBe('running');
     await settle(runner);

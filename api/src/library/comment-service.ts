@@ -52,21 +52,11 @@ interface Row {
 }
 
 /**
- * Threaded comments on library posts (KUR-283). Text/audio/both (>=1); signed-in
- * users + admins author (guests read-only, enforced at the route). Replies nest
- * unbounded via `parent_comment_id`; the thread loads top-level-first with
- * per-branch load-more. Soft-delete tombstones the node so a removed parent
- * keeps its subtree. Post `comment_count` and parent `reply_count` are kept in
- * step inside each mutation's transaction.
- *
- * A minor's comments, like their posts, are read by them and their friends
- * only (users/age.ts `writtenForSql`); for anyone else they — and the replies
- * under them — are not in the thread, and cannot be replied to. Nobody can
- * comment on a post they cannot see.
- *
- * A block works the same way, in both directions (friends/blocked.ts): the
- * other person's comments, and the replies under them, are not in the thread
- * for you, and neither of you can comment on what the other wrote.
+ * Threaded comments on library posts: text, audio or both. Replies nest without limit via `parent_comment_id`, the
+ * thread loads top-level first with per-branch load-more, and soft deletes leave a tombstone that keeps the subtree.
+ * Post `comment_count` and parent `reply_count` change in each mutation's transaction. A minor's comments, and the
+ * replies under them, are read only by them and their friends (users/age.ts `writtenForSql`), and nobody comments on
+ * a post they cannot see. Blocks work the same way in both directions (friends/blocked.ts).
  */
 export class LibraryCommentService {
   constructor(private readonly pool: pg.Pool) {}
@@ -124,8 +114,7 @@ export class LibraryCommentService {
     return this.fetchChildren(postId, null, page, viewerId);
   }
 
-  /** Direct replies to a comment (paginated, oldest-first by default). */
-  /** Attach authors, using the same loader posts use so faces match. */
+  /** Attaches authors with the posts' loader, so faces match. */
   async withAuthors(comments: Comment[], publicUrl: PublicUrl = () => null): Promise<CommentWithAuthor[]> {
     const authors = await loadAuthors(this.pool, comments.map((c) => c.authorId), publicUrl);
     return comments.map((c) => ({ ...c, author: authors.get(c.authorId) ?? unknownAuthor(c.authorId) }));
@@ -181,10 +170,7 @@ export class LibraryCommentService {
     });
   }
 
-  /**
-   * Soft-delete: tombstone the node (content cleared, subtree preserved) and
-   * decrement the post's visible comment count. Author or admin only.
-   */
+  /** Soft delete: tombstones the comment, keeping its subtree, and decrements the visible count. Author or admin only. */
   async remove(commentId: string, actorId: string, actorIsAdmin: boolean): Promise<MutateResult> {
     return this.owned(commentId, actorId, actorIsAdmin, async (client, row) => {
       if (row.status === 'removed') return { ok: true as const, comment: toComment(row) };

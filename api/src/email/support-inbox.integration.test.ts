@@ -1,7 +1,6 @@
 /**
- * The support inbox and the panel's email status, against real Postgres:
- * Resend's signed webhook keeps a received mail once, bounces and complaints
- * suppress the address, and admins read, archive and answer from the panel.
+ * The support inbox and the panel's email status, against real Postgres: a signed webhook keeps a received mail
+ * once, bounces and complaints suppress the address, and admins read, archive and answer from the panel.
  */
 import { createHmac } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -219,10 +218,7 @@ describe.skipIf(!DATABASE_URL)('support inbox (integration)', () => {
     expect(answered.statusCode, answered.body).toBe(200);
   });
 
-  /*
-   * What goes out, looked at where it is handed to the provider: the answer
-   * as words and as the designed email, from the desk the mail was written to.
-   */
+  /* What goes out, as handed to the provider: the answer as text and as the designed email, from the right desk. */
   it('sends an answer as words and as a designed email, and answers for Zagrosian only where that is set up', async () => {
     const mail = (id: string, to: string) => ({ providerId: id, from: 'Rojda <rojda.z@example.com>', to: [to], cc: [], subject: 'Hello', messageId: null, attachments: [], receivedAt: new Date().toISOString() });
     const sent = new StubEmailProvider();
@@ -240,7 +236,7 @@ describe.skipIf(!DATABASE_URL)('support inbox (integration)', () => {
     expect(sent.sent[1]).toMatchObject({ from: 'Zagrosian <contact@zagrosian.com>', replyTo: 'Zagrosian <contact@zagrosian.com>' });
     expect(sent.sent[1]!.html).toMatch(/>Zagrosian<\/span>/);
 
-    // with no address set for the business, its post is answered as support, as it always was
+    // With no address set for the business, its mail is answered as support.
     const plain = new StubEmailProvider();
     const before = new SupportInbox(pool, { reader: null, provider: plain, from: 'Hevalo Support <support@hevalo.app>' });
     await before.reply(toZagrosian, support.id, 'Once more.');

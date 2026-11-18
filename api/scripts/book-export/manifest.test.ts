@@ -1,8 +1,6 @@
 /**
- * Where everything is in the book (manifest.ts), on a book of chapters 1 and
- * 2: the chapters follow each other without a gap, each opens on a page under
- * its own name, the front and back matter are all there, and the same book
- * makes the same edition.
+ * The manifest (manifest.ts) on a book of chapters 1 and 2: chapters follow without a gap, each opens under its own
+ * name, the front and back matter are there, and the same book makes the same edition.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadRoadBookSources } from '../../src/books/sources.js';

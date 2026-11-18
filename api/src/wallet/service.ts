@@ -33,10 +33,7 @@ export interface Balances {
   gems: number;
 }
 
-/**
- * The most one ledger row may move: the dearest price the shop accepts. The
- * database holds the same bound (migration 1751000214000).
- */
+/** The most one ledger row may move, the dearest shop price; the database holds the same bound (migration 1751000214000). */
 export const MAX_LEDGER_AMOUNT = 10_000_000;
 /** The most a balance may reach — far past anything earned by playing; the database holds it too. */
 export const MAX_BALANCE = 1_000_000_000;
@@ -54,10 +51,8 @@ function assertValidOperation(op: WalletOperation): void {
 }
 
 /**
- * The only writer of wallet state (KUR-066). Every change is one
- * transaction containing exactly one append-only ledger row plus the
- * balance materialization; debits take a row lock so concurrent spends
- * serialize and can never drive a balance negative.
+ * The only writer of wallet state. Every change is one transaction with exactly one append-only ledger row and the
+ * balance update; debits take a row lock, so concurrent spends serialize and never go negative.
  */
 export class WalletService {
   constructor(private readonly pool: pg.Pool) {}
@@ -92,38 +87,28 @@ export class WalletService {
   }
 
   /**
-   * Debit inside a transaction the caller owns (KUR-071 purchase flow), so the
-   * debit and whatever it pays for (e.g. an inventory grant) commit or roll
-   * back together. Throws InsufficientFundsError on overdraw; returns
-   * `duplicate: true` when the idempotency key was already processed.
+   * Debits inside the caller's transaction, so the debit and what it pays for commit or roll back together. Throws
+   * InsufficientFundsError on overdraw; `duplicate: true` when the idempotency key was already used.
    */
   async debitWithin(client: pg.PoolClient, op: WalletOperation): Promise<{ balance: number; duplicate: boolean }> {
     assertValidOperation(op);
     return this.step(client, op, -op.amount);
   }
 
-  /**
-   * Credit inside a transaction the caller owns (KUR-072 IAP grant), so the
-   * gem grant and the receipt record commit together. Returns `duplicate: true`
-   * when the idempotency key was already processed.
-   */
+  /** Credits inside the caller's transaction, so a grant and its receipt commit together; `duplicate: true` when the key was already used. */
   async creditWithin(client: pg.PoolClient, op: WalletOperation): Promise<{ balance: number; duplicate: boolean }> {
     assertValidOperation(op);
     return this.step(client, op, op.amount);
   }
 
-  /**
-   * The core lock → ledger → balance step, on a caller-provided client. Assumes
-   * a transaction is already open; never commits or rolls back itself.
-   */
+  /** The lock, ledger and balance step on the caller's client, inside an open transaction; it never commits or rolls back. */
   private async step(
     client: pg.PoolClient,
     op: WalletOperation,
     signedAmount: number,
   ): Promise<{ balance: number; duplicate: boolean }> {
-    // lazy balance row + lock — serializes concurrent ops per (user, currency).
-    // The row almost always exists, so it is locked first and made only when
-    // that finds none (then locked again): one statement where it was two.
+    // Lock the balance row, serializing operations per user and currency; it almost always exists, so it is created and
+    // locked again only when missing.
     const lock = () =>
       client.query<{ balance: number }>(
         `SELECT balance FROM wallet_balances
@@ -146,16 +131,15 @@ export class WalletService {
       throw new AppError('BALANCE_LIMIT', 409, `a balance may hold at most ${MAX_BALANCE.toLocaleString('en')}`);
     }
     if (next < 0) {
-      // refused — unless the key was used already, which answers as the
-      // duplicate it is: the ledger is asked before the balance, as it always was
+      // Refused, unless the key was already used, which answers as a duplicate: the ledger is checked before the balance.
       if (op.idempotencyKey) {
         const seen = await client.query(`SELECT 1 FROM wallet_ledger WHERE idempotency_key = $1`, [op.idempotencyKey]);
         if ((seen.rowCount ?? 0) > 0) return { balance: current, duplicate: true };
       }
       throw new InsufficientFundsError(op.currency);
     }
-    // the ledger row and the balance in one statement: the balance moves only
-    // when the row went in (a key used already inserts nothing; no key never conflicts)
+    // The ledger row and balance in one statement: the balance moves only when the row was inserted (a used key inserts
+    // nothing; no key never conflicts).
     const wrote = await client.query(
       `WITH ins AS (
          INSERT INTO wallet_ledger (user_id, currency, amount, reason, ref_id, idempotency_key)

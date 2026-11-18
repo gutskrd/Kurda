@@ -1,7 +1,4 @@
-/**
- * The practice hub and its kinds of session against real Postgres: what each
- * kind draws on, the hub read in one statement, and the refusals.
- */
+/** The practice hub and its session kinds against real Postgres: what each draws on, the one-statement hub read, and refusals. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

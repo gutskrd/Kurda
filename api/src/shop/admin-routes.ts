@@ -1,16 +1,14 @@
 /**
  * The admin's shop tools beyond the whole-row upsert (shop/routes.ts):
  *
- *   POST   /admin/shop/art/:kind           upload a background's or an icon's art (raw image body)
- *   POST   /admin/shop/items               add an item, refusing an SKU that is taken
+ *   POST   /admin/shop/art/:kind           upload a background's or icon's art (raw image body)
+ *   POST   /admin/shop/items               add an item, refusing a taken SKU
  *   PATCH  /shop/items/:sku                change only the fields sent
- *   GET    /admin/shop/items/:sku/usage    who owns, wears or was given it: what deleting it would do
+ *   GET    /admin/shop/items/:sku/usage    who owns, wears or was given it, i.e. what deleting it would do
  *   DELETE /shop/items/:sku                delete it, or retire it when people have it
  *
- * Admin-only, behind the admin's second factor like every staff route
- * (admin/admin-gate.ts), and every change is in the audit log twice over: the
- * request, by the log's own hook (admin/audit-routes.ts), and what it changed,
- * before and after, written here.
+ * Admin-only behind the second factor (admin/admin-gate.ts); every change is audited twice: the request by the log's
+ * hook (admin/audit-routes.ts), and the before and after here.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -81,10 +79,8 @@ export function registerShopAdminRoutes(app: FastifyInstance, shop: ShopService,
   });
 
   /**
-   * Upload a background's or an icon's art. The body is the picture's bytes
-   * (any of the image content types, or application/octet-stream — the type
-   * is read from the bytes, never from the label). Answers the key to save
-   * the item with, where it is served from, and the size it was stored at.
+   * Uploads a background's or icon's art. The body is the picture's bytes (any image type or application/octet-stream;
+   * the type is read from the bytes). Answers the key to save the item with, its URL and its stored size.
    */
   app.post(
     '/admin/shop/art/:kind',
@@ -123,9 +119,8 @@ export function registerShopAdminRoutes(app: FastifyInstance, shop: ShopService,
   );
 
   /**
-   * Add an item. The upsert would replace an item that already has the SKU —
-   * people's purchases and all — so this refuses one that is taken. A price of
-   * SENSITIVE_PRICE or more goes through Approvals, as everywhere.
+   * Adds an item, refusing a taken SKU, since the upsert would replace an existing item and people's purchases with it.
+   * A price of SENSITIVE_PRICE or more goes through Approvals.
    */
   app.post('/admin/shop/items', { schema: { body: addBody }, preHandler: admin }, async (req, reply) => {
     const body = req.body as z.infer<typeof addBody>;
@@ -172,11 +167,7 @@ export function registerShopAdminRoutes(app: FastifyInstance, shop: ShopService,
     async (req) => editor.usage((req.params as { sku: string }).sku),
   );
 
-  /**
-   * Delete an item nobody has; retire one somebody owns, was given or is
-   * wearing (shop/catalogue.ts). The answer says which happened and how many
-   * people have it.
-   */
+  /** Deletes an item nobody has, or retires one someone owns, was given or wears (shop/catalogue.ts); says which and how many have it. */
   app.delete(
     '/shop/items/:sku',
     { schema: { params: skuParams }, preHandler: admin },

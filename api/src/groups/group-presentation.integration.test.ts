@@ -1,7 +1,6 @@
 /**
- * How a group presents itself — its name, description and picture — and who
- * may change them, against real Postgres. The picture's storage is a stand-in
- * that keeps what was put and deleted; everything else is the real thing.
+ * A group's name, description and picture and who may change them, against real Postgres. Picture storage is a
+ * stand-in recording puts and deletes.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -163,7 +162,7 @@ describe.skipIf(!DATABASE_URL)('group name, description and picture (integration
     expect((await groups.get(gid, id.outsider!, (k) => `https://cdn.test/${k}`)).photoUrl).toBe(url);
     await groups.unban(id.owner!, gid, id.outsider!);
 
-    // a new picture replaces it: the old one leaves the storage total and the bucket
+    // A new picture replaces it, and the old one leaves the storage total and the bucket.
     await setGroupPhoto(deps(), gid, id.owner!, await png(250, 200, 30));
     expect(await photoKey(gid)).not.toBe(key);
     expect(await confirmed(key)).toBe(false);

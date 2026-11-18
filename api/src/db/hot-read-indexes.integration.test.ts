@@ -1,8 +1,6 @@
 /**
- * The busiest reads use the indexes made for them (migrations
- * `dm-messages-either-side` and `exercises-by-review-item`), on tables filled
- * enough to plan as a full database would; everything, statistics included, is
- * rolled back.
+ * The busiest reads use their indexes (migrations `dm-messages-either-side` and `exercises-by-review-item`) on tables
+ * filled enough to plan like a full database; everything, statistics included, is rolled back.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
@@ -21,7 +19,7 @@ describe.skipIf(!DATABASE_URL)('indexes for the busiest reads (integration)', ()
     await pool.end();
   });
 
-  /** Inside one transaction that is rolled back: `fill` the tables, bring their statistics up to date, and answer the plan of what `ask` returns. */
+  /** In a rolled-back transaction: `fill` the tables, analyze them, and return the plan of what `ask` returns. */
   async function planAfter(fill: (client: pg.PoolClient) => Promise<void>, tables: string[], ask: (client: pg.PoolClient) => Promise<{ sql: string; params: unknown[] }>): Promise<string> {
     const client = await pool.connect();
     try {
@@ -85,7 +83,7 @@ describe.skipIf(!DATABASE_URL)('indexes for the busiest reads (integration)', ()
   });
 
   it('finds the exercise behind each of a learner’s review items by its id', async () => {
-    // the join the practice count, the course maps, the practice hub and the placement strengths make, for a learner in their first week
+    // The join the practice count, course maps, practice hub and placement strengths make for a first-week learner.
     const plan = await planAfter(
       async (client) => {
         await client.query(

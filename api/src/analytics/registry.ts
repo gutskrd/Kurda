@@ -1,11 +1,8 @@
 import { z } from 'zod';
 
 /**
- * Event schema registry (KUR-105). Only events declared here are accepted; the
- * ingest endpoint validates each event's payload against its schema and drops
- * anything unknown or malformed (counted via a metric). Adding a new event type
- * = adding an entry here — a single, reviewable source of truth for the shape of
- * the behavioral data.
+ * The analytics events the ingest accepts. Each payload is validated against its schema here; unknown or
+ * malformed events are dropped and counted.
  */
 export const EVENT_SCHEMAS = {
   screen_view: z.object({ screen: z.string().min(1).max(80) }),
@@ -23,8 +20,6 @@ export const EVENT_SCHEMAS = {
 } as const;
 
 export type EventType = keyof typeof EVENT_SCHEMAS;
-
-export const EVENT_TYPES = Object.keys(EVENT_SCHEMAS) as EventType[];
 
 export function isKnownEvent(type: string): type is EventType {
   return Object.prototype.hasOwnProperty.call(EVENT_SCHEMAS, type);

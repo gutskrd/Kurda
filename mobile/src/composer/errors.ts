@@ -4,8 +4,8 @@ import type { ApiError } from '../api/types';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * What to say when a post or one of its pictures is refused: each code the composer can meet (`@kurda/shared`
- * POST_ERROR_CODES and the upload pipeline's) gets a sentence in the reader's language saying what to do next; anything
+ * What to say when a post or one of its pictures is refused: each code the composer can meet (the server's post codes
+ * and the upload pipeline's) gets a sentence in the reader's language saying what to do next; anything
  * else falls back to the app's general wording.
  */
 

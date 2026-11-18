@@ -3,13 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 
 /**
- * Default-avatar registry — the ONE source of truth for which built-in avatars
- * exist and which require Premium. Loaded once from the committed manifest
- * (api/content/cosmetics.json). Static/global: no per-request DB work.
- *
- * `default-01` is the universal, always-free fallback: any user with no avatar,
- * an invalid/removed selection, or a premium avatar they can no longer use
- * resolves here so a valid avatar is ALWAYS produced.
+ * The built-in avatars and which require Premium, loaded once from api/content/cosmetics.json. `default-01` is
+ * the always-free fallback for no avatar, an invalid selection, or a premium avatar no longer allowed.
  */
 export const DEFAULT_AVATAR_KEY = 'default-01';
 
@@ -59,11 +54,7 @@ export function avatarRegistry(): AvatarEntry[] {
   return [...REGISTRY.values()];
 }
 
-/**
- * The avatar key that should actually render: the user's selection when it is
- * valid AND allowed (free, or premium-gated while premium is active); otherwise
- * the universal default. The result is always a valid, renderable key.
- */
+/** The avatar key to render: the selection when valid and allowed, else the default. Always renderable. */
 export function effectiveAvatarKey(selectedKey: string | null, premiumActive: boolean): string {
   if (selectedKey && REGISTRY.has(selectedKey)) {
     if (!avatarRequiresPremium(selectedKey) || premiumActive) return selectedKey;

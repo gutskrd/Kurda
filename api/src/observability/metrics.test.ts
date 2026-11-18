@@ -1,11 +1,4 @@
-/**
- * Who may scrape /metrics.
- *
- * It was open to anyone. On the live API it answered 200 with the Node version,
- * the process's memory and uptime, and every route it serves with traffic and
- * error rates — free reconnaissance, and an unmetered request, since /metrics
- * is exempt from the rate limiter.
- */
+/** Who may scrape /metrics, which reveals the runtime, memory and every route's traffic and is exempt from rate limits. */
 import { describe, expect, it } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { loadConfig } from '../config/env.js';

@@ -7,8 +7,7 @@ async function main(): Promise<void> {
   try {
     config = loadConfig();
   } catch (err) {
-    // config is invalid — logger config itself may be unusable, so
-    // write directly to stderr and exit non-zero
+    // The config is invalid and the logger config may be too, so write to stderr and exit non-zero.
     console.error(err instanceof Error ? err.message : err);
     process.exit(1);
   }
@@ -22,9 +21,8 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Graceful shutdown (KUR-111): on SIGTERM/SIGINT from the orchestrator, stop
-  // accepting connections, drain in-flight requests, and run onClose hooks
-  // (DB pool, Redis, interval sweepers) before exiting — never a hard kill.
+  // Graceful shutdown on SIGTERM or SIGINT: stop accepting connections, drain in-flight requests and run onClose hooks
+  // (database pool, Redis, sweepers) before exiting.
   let closing = false;
   const shutdown = async (signal: string): Promise<void> => {
     if (closing) return;

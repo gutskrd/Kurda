@@ -44,15 +44,13 @@ describe('dueReminder', () => {
   });
 
   it('last-chance takes precedence when it coincides with the primary hour', () => {
-    // historical hour is 22 and streak long → last_chance wins over primary
+    // Usual hour 22 and a long streak, so last_chance wins over the primary reminder.
     expect(dueReminder(ctx({ currentStreak: 10, historicalHour: 22, localHour: 22 }))).toBe('last_chance');
   });
 });
 
 describe('reminderMessage', () => {
-  // deliberately changed: the copy used to be "Don't lose your streak!" and
-  // "Last chance!", and then "You have learned N days in a row", which a
-  // streak kept by Peyvok or a freeze made untrue
+  // The copy states the streak length; it never says "learned N days in a row", which Peyvok or a freeze can make untrue.
   it('varies copy by kind and includes the streak length', () => {
     expect(reminderMessage('primary', 5).body).toContain('Your streak is 5 days.');
     expect(reminderMessage('primary', 1).body).toContain('Your streak is 1 day.');

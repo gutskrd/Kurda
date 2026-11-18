@@ -9,14 +9,13 @@ const currencyQuery = z.object({
   days: z.coerce.number().int().min(1).max(365).optional(),
 });
 
-/** Economy monitoring dashboard (KUR-074), admin-only. */
+/** Economy monitoring dashboard, admin-only. */
 export function registerEconomyRoutes(app: FastifyInstance, economy: EconomyService): void {
   const reconciler = new WalletReconciler(app.db);
 
   /**
-   * Does every balance still equal the sum of its ledger? The daily job asks
-   * the same (jobs/wallet-jobs.ts); this answers now, for the console. It
-   * reads the whole ledger, so it is limited to a few asks a minute.
+   * Whether every balance still equals its ledger sum, now (the daily job asks the same). It reads the whole ledger,
+   * so it is limited to a few calls a minute.
    */
   app.get(
     '/admin/economy/reconcile',

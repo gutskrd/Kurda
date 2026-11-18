@@ -1,4 +1,4 @@
-/** A/B experiments (KUR-107) against real Postgres: assignment, exposure, kill switch. */
+/** A/B experiments against real Postgres: assignment, exposure, kill switch. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

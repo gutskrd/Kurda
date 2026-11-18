@@ -3,16 +3,9 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 /**
- * The mark a picture carries when its poster made it: the Hevalo logo and whose
- * picture it is.
- *
- * Burned in here rather than drawn by the browser, because a signature the
- * client applies is a signature the client can leave off — and the point of it
- * is that it is on every picture somebody posts as their own. A picture they
- * did not make ("I made this" switched off) goes up without it, since the mark
- * would claim it as theirs. The composer draws a matching one in its preview so
- * nothing about the result is a surprise, but this is the one that ends up in
- * the file.
+ * The mark on a picture its poster made: the Hevalo logo and whose picture it is. Burned in on the server, since a
+ * client-applied mark could be left off; a picture posted as not their own goes without it. The composer previews a
+ * matching mark, but this is the one in the file.
  */
 
 /** Signature height as a share of the picture's shorter edge. */
@@ -49,13 +42,7 @@ export interface SignatureOptions {
   height: number;
 }
 
-/**
- * A transparent PNG of the signature, sized for this picture.
- *
- * Text sits on a soft dark plate with a light stroke so it stays readable on a
- * bright sky and on a black background alike — a plain white handle disappears
- * into half the photos people post.
- */
+/** A transparent PNG of the signature sized for this picture, on a soft dark plate with a light stroke so it reads on any background. */
 export async function renderSignature(opts: SignatureOptions): Promise<Buffer> {
   const shortEdge = Math.min(opts.width, opts.height);
   const h = Math.round(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, shortEdge * SCALE)));
@@ -64,8 +51,8 @@ export async function renderSignature(opts: SignatureOptions): Promise<Buffer> {
   const font = Math.round(h * 0.46);
   const handle = `@${escapeXml(opts.username)}`;
 
-  // 0.62em per character is a deliberate over-estimate for a proportional face:
-  // a plate slightly too wide looks intentional, one too narrow clips the name
+  // 0.62em per character deliberately overestimates a proportional face: a plate slightly too wide looks intended,
+  // one too narrow clips the name.
   const textWidth = Math.ceil(handle.length * font * 0.62);
   const w = pad + glyph + Math.round(pad * 0.5) + textWidth + pad;
 
@@ -100,13 +87,7 @@ export function signaturePlacement(
   };
 }
 
-/**
- * Put the signature on a picture.
- *
- * Fails open: a picture that could not be signed is still a picture, and losing
- * an upload because a font is missing on the host would be a worse outcome than
- * a missing mark. The caller logs it.
- */
+/** Puts the signature on a picture. Fails open, since losing an upload to a missing font is worse than a missing mark; the caller logs it. */
 export async function signPicture(
   webp: Buffer,
   username: string,

@@ -25,26 +25,15 @@ function inKindOrder<T extends { kind: QuestKind }>(rows: T[]): T[] {
   return [...rows].sort((a, b) => QUEST_KINDS.indexOf(a.kind) - QUEST_KINDS.indexOf(b.kind));
 }
 
-/**
- * Where a quest's progress goes when a session moves it: up by what the session
- * added, or up to a total it reached, never past the target and never down.
- * `q` is the stored row, `want` the session's moves (see moveQuests).
- */
+/** A quest's progress after a session's move: up by what it added or to a total it reached, capped at the target, never down. */
 const MOVED = '(SELECT LEAST(q.target, GREATEST(q.progress + w.add, w.at_least)) FROM want w WHERE w.kind = q.kind)';
 
 /**
- * Move today's quests for one finished lesson or practice session that was
- * learning, inside the completion's transaction, and say which moved and how
- * far. The caller calls this once per completion, on its transition to
- * completed, so a session never moves them twice.
- *
- * One statement. Every kind is offered with what the session did for it; the
- * ones the day already holds are moved, and a day with none yet is given its
- * three (the same three the read makes), so a day already begun keeps the
- * quests it began with. Made by a read at the same moment, they are moved all
- * the same: the insert meets them and updates them. `before` is what they
- * stood at as the statement began, which a step reports it moved from; the
- * update itself always works on the stored row, so no move is ever lost.
+ * Moves today's quests for one finished learning session inside its completion transaction, and reports which moved
+ * and how far. Called once per completion, so a session never moves them twice. One statement: every kind is offered
+ * with the session's moves; existing quests move, and a day with none is given its three (the same the read makes),
+ * so a day keeps the quests it began with, including ones a concurrent read just made. `before` is the value at the
+ * statement's start, for reporting; the update works on the stored row, so no move is lost.
  */
 export async function moveQuests(
   db: Executor,
@@ -97,9 +86,8 @@ export async function moveQuests(
 }
 
 /**
- * Daily quests: today's three for the Learn screen, and opening a finished
- * one's chest. Days are the learner's own (their timezone), as the streak's
- * are; the quests themselves move in `moveQuests`, with the session that moved them.
+ * Daily quests: today's three for the Learn screen, and opening finished chests. Days are the learner's own time
+ * zone, as for the streak; progress moves in `moveQuests` with the session that caused it.
  */
 export class DailyQuestService {
   constructor(
@@ -113,10 +101,8 @@ export class DailyQuestService {
   }
 
   /**
-   * Today's three quests, made if this is the day's first look, how many the
-   * learner finished this calendar month, and the chests of earlier days still
-   * waiting to be opened. Read on every visit to Learn, so it is the learner's
-   * time zone and one statement.
+   * Today's three quests (made on the day's first look), this calendar month's finished count, and earlier chests
+   * still waiting. Read on every Learn visit, so one statement in the learner's time zone.
    */
   async today(userId: string, now: Date = new Date()): Promise<QuestDay> {
     return this.read(userId, localDate(now, await this.timeZone(userId)), true);
@@ -157,8 +143,7 @@ export class DailyQuestService {
       [userId, day, kinds, targets, chests, `${day.slice(0, 8)}01`, shiftDate(day, 1 - CLAIM_DAYS)],
     );
     const todays = res.rows.filter((row) => row.day === day);
-    // made at the same moment by another request: this statement's snapshot is
-    // older than those rows, the next one's is not
+    // Made at the same moment by another request: this statement's snapshot predates those rows, the next one's does not.
     if (todays.length === 0 && firstTry) return this.read(userId, day, false);
     const toQuest = (row: (typeof res.rows)[number]): Quest => ({
       id: questId(row.day, row.kind),
@@ -175,14 +160,9 @@ export class DailyQuestService {
   }
 
   /**
-   * Open a finished quest's chest: its Zêr, once, through the wallet and its
-   * ledger. Any quest of the learner's last CLAIM_DAYS days may be opened, so
-   * one finished just before their midnight is not lost after it.
-   *
-   * What the chest holds is decided by a hash of who and which quest
-   * (`chestAmount`), so a retry never draws again. The quest is marked opened
-   * by a conditional update in the same transaction as the credit: of two
-   * claims at once one opens it and the other finds it open.
+   * Opens a finished quest's chest: its Zêr once, through the wallet and ledger. Any quest of the last CLAIM_DAYS days
+   * may be opened. The amount is a hash of who and which quest (`chestAmount`), so a retry never redraws; the quest is
+   * marked opened by a conditional update in the credit's transaction, so of two concurrent claims only one opens it.
    */
   async claim(userId: string, id: string, now: Date = new Date()): Promise<ChestOpening> {
     const quest = parseQuestId(id);
@@ -205,7 +185,7 @@ export class DailyQuestService {
       );
       const row = opened.rows[0];
       if (!row) {
-        // nothing opened: say why — no such quest, opened already, or not done yet (the catch below rolls back)
+        // Nothing opened: say why (no such quest, already opened, or not done); the catch below rolls back.
         const found = await client.query<{ claimed: boolean }>(
           `SELECT claimed_at IS NOT NULL AS claimed FROM user_quests WHERE user_id = $1 AND day = $2::date AND kind = $3`,
           [userId, quest.day, quest.kind],

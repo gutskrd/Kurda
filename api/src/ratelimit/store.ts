@@ -11,10 +11,7 @@ export interface RateLimitStore {
   hit(key: string, windowMs: number, nowMs: number): Promise<HitResult>;
 }
 
-/**
- * Sliding-window counter on a Redis sorted set, atomic via Lua:
- * drop entries older than the window, add this hit, count, refresh TTL.
- */
+/** Sliding-window counter on a Redis sorted set, atomic in Lua: drop entries older than the window, add the hit, count, refresh the TTL. */
 const HIT_SCRIPT = `
 redis.call('ZREMRANGEBYSCORE', KEYS[1], 0, ARGV[1] - ARGV[2])
 redis.call('ZADD', KEYS[1], ARGV[1], ARGV[3])

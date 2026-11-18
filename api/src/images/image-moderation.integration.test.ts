@@ -1,4 +1,4 @@
-/** Image/meme moderation: report → #102 queue → resolve remove (CI job). KUR-292. */
+/** Image post moderation: a report becomes a queue case and is resolved by removal. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -66,8 +66,7 @@ describe.skipIf(!DATABASE_URL)('image moderation (integration)', () => {
     expect((await call('POST', `/images/${postId}/report`, reporterTok, { reason: 'again' })).json().deduped).toBe(true);
     await call('POST', `/images/${postId}/report`, otherTok, { reason: 'me too' });
 
-    // Changed on purpose: the old route writes through the one report service
-    // now, so the report is a case at once (no sync), from the 'report' source.
+    // The route writes through the shared report service, so the report is a case at once, from the 'report' source.
     const mine = (await queue.queue({ q: postId })).cases.filter((c) => c.source === 'report');
     expect(mine).toHaveLength(1); // mass-report deduped to a single case
     expect(mine[0]!.subject).toBeTruthy();

@@ -1,8 +1,6 @@
 /**
- * Server-side image type detection by magic bytes (KUR-177 hardening). The
- * client-declared Content-Type and filename are never trusted — we sniff the
- * actual file header. Returns the real type, or null for anything that isn't a
- * supported image (so non-images / malformed files are rejected).
+ * File type detection by magic bytes. The declared Content-Type and filename are never trusted; the header is read,
+ * and anything not a supported type returns null.
  */
 export type SniffedImageType =
   | 'image/jpeg'
@@ -24,24 +22,17 @@ const JPEG = [0xff, 0xd8, 0xff];
 const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const RIFF = [0x52, 0x49, 0x46, 0x46]; // "RIFF"
 const WEBP = [0x57, 0x45, 0x42, 0x50]; // "WEBP" at offset 8
-// "ftyp" at offset 4 — an ISO-BMFF container. Shared: the same box starts a HEIC
-// photo and an m4a voice note, and only the brand at offset 8 tells them apart.
+// "ftyp" at offset 4 starts an ISO-BMFF container, shared by HEIC photos and m4a audio; the brand at offset 8 tells them apart.
 const FTYP = [0x66, 0x74, 0x79, 0x70];
 
 /**
- * ISO-BMFF brands, read at offset 8.
- *
- * This is the container iPhones write photos in, which is why it matters: a
- * phone's camera roll is HEIC, no desktop browser decodes it, and refusing it
- * here means the most common source of photographs cannot be posted at all.
- * `sharp` reads both of these and the pipeline re-encodes everything to WebP,
- * so nothing downstream ever sees the original format.
+ * ISO-BMFF brands at offset 8 for HEIC, the format phone camera rolls use and no desktop browser decodes. sharp reads
+ * them and everything is re-encoded to WebP, so nothing downstream sees the original format.
  */
 const HEIC_BRANDS = ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'hevm', 'hevs', 'mif1', 'msf1'];
 const AVIF_BRANDS = ['avif', 'avis'];
 
-// TIFF, by byte order: "II*\0" little-endian, "MM\0*" big-endian. Same reasoning
-// as HEIC — a real photo format that no browser will draw.
+// TIFF by byte order ("II*\0" little-endian, "MM\0*" big-endian): a real photo format browsers will not draw.
 const TIFF_LE = [0x49, 0x49, 0x2a, 0x00];
 const TIFF_BE = [0x4d, 0x4d, 0x00, 0x2a];
 
@@ -64,7 +55,7 @@ export function sniffImageType(bytes: Uint8Array): SniffedImageType | null {
   return null;
 }
 
-/** Audio types accepted for voice notes (KUR-282). */
+/** Audio types accepted for voice notes. */
 export type SniffedAudioType = 'audio/mpeg' | 'audio/mp4' | 'audio/webm' | 'audio/wav';
 
 const WAVE = [0x57, 0x41, 0x56, 0x45]; // "WAVE" at offset 8 of a RIFF file
@@ -77,12 +68,8 @@ const EBML = [0x1a, 0x45, 0xdf, 0xa3];
 const WEBM_DOCTYPE = [0x77, 0x65, 0x62, 0x6d];
 
 /**
- * Is this EBML stream a WebM rather than a Matroska one?
- *
- * The DocType element (id 0x4282) carries the answer as a short string, and it
- * sits inside the EBML header at the very start of the file — so a small window
- * is enough to find it, and scanning a fixed window rather than parsing the
- * whole element tree keeps a malformed file from costing anything.
+ * Whether an EBML stream is WebM rather than Matroska: the DocType (id 0x4282) sits in the header at the start, so a
+ * fixed window is scanned instead of parsing the element tree, which keeps malformed files cheap.
  */
 function isWebm(bytes: Uint8Array): boolean {
   const window = Math.min(bytes.length, 64);
@@ -93,18 +80,9 @@ function isWebm(bytes: Uint8Array): boolean {
 }
 
 /**
- * Audio type by magic bytes (KUR-282). Recognises MP3 (ID3 tag or a raw MPEG
- * frame-sync 0xFFEx), the ISO base-media container used by m4a/aac (`ftyp` box
- * at offset 4), and WebM. The client's declared type is never trusted — we sniff
- * the header.
- *
- * WebM is here because it is what a browser's MediaRecorder actually produces on
- * Chrome and Firefox. The speaking exercise used to relabel those bytes as m4a
- * on the way out and the server believed the label, so what was stored was a
- * WebM file wearing an m4a content type. Recognising the container means the
- * server decides what a file is, which is the whole point of sniffing; a WebM
- * can carry video the way an mp4 can, and both are bounded by the same
- * upload-size cap.
+ * Audio type by magic bytes: MP3 (an ID3 tag or MPEG frame sync 0xFFEx), the ISO base-media container of m4a/aac
+ * (`ftyp` at offset 4), and WebM, which browser recording produces. A WebM can carry video as an mp4 can; both are
+ * bounded by the same upload cap.
  */
 export function sniffAudioType(bytes: Uint8Array): SniffedAudioType | null {
   if (startsWith(bytes, ID3)) return 'audio/mpeg';
@@ -113,9 +91,8 @@ export function sniffAudioType(bytes: Uint8Array): SniffedAudioType | null {
   // m4a / aac / mp4 audio: "ftyp" box at byte 4
   if (startsWith(bytes, FTYP, 4)) return 'audio/mp4';
   if (startsWith(bytes, EBML) && isWebm(bytes)) return 'audio/webm';
-  // WAV: the RIFF container with "WAVE" at byte 8. Only the audio studio's
-  // recordings allow it (alphabet/routes.ts, lessonaudio/routes.ts); voice
-  // notes keep their own allow-list.
+  // WAV (RIFF with "WAVE" at byte 8) is allowed only for the audio studio (alphabet/routes.ts, lessonaudio/routes.ts);
+  // voice notes keep their own allow-list.
   if (startsWith(bytes, RIFF) && startsWith(bytes, WAVE, 8)) return 'audio/wav';
   return null;
 }
@@ -127,9 +104,8 @@ const OGG = [0x4f, 0x67, 0x67, 0x53]; // "OggS"
 const FLAC = [0x66, 0x4c, 0x61, 0x43]; // "fLaC"
 
 /**
- * Audio type by magic bytes, for a recording that is only read back, never
- * stored: the upload types, and the Ogg and FLAC files pronunciations from
- * other sites come in. Uploads keep `sniffAudioType`, which accepts neither.
+ * Audio type for a recording only read back, never stored: the upload types plus the Ogg and FLAC files other sites'
+ * pronunciations come in. Uploads keep `sniffAudioType`, which accepts neither.
  */
 export function sniffPlayableAudioType(bytes: Uint8Array): SniffedPlayableAudioType | null {
   const uploaded = sniffAudioType(bytes);

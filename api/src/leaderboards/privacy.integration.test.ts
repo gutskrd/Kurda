@@ -1,8 +1,6 @@
 /**
- * Who the weekly board lists (contract 4 §R6, map.md §4.12), against real
- * Postgres and Redis: nobody who opted out of the leagues or hid their
- * profile, what counts for the league rather than every XP, and the friends
- * and country boards kept for a minute rather than worked out on every visit.
+ * Who the weekly board lists, against real Postgres and Redis: nobody who left the leagues or hid their profile,
+ * only league-counted XP, and friends and country boards cached for a minute.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

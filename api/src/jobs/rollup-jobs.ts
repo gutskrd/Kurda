@@ -4,16 +4,11 @@ import type { DashboardService } from '../analytics/dashboard-service.js';
 import type { EconomyService } from '../economy/service.js';
 
 /**
- * Daily rollups behind the Analytics and Economy dashboards.
- *
- * Both dashboards read pre-aggregated tables, and nothing ever populated them —
- * there was no scheduled job at all — so both pages were permanently empty. These
- * jobs are what fill them.
- *
- * Each run re-aggregates a short trailing window rather than only yesterday:
- * today's numbers keep moving as people use the app, and re-running a day is an
- * upsert, so a missed run heals itself on the next one instead of leaving a hole.
+ * Daily rollups behind the Analytics and Economy dashboards, which read pre-aggregated tables. Each run
+ * re-aggregates a short trailing window, since today keeps changing and a re-run day is an upsert, so a missed run
+ * heals on the next one.
  */
+/** Re-aggregate this many trailing days on each scheduled run. */
 
 /** Re-aggregate this many trailing days on each scheduled run. */
 export const ROLLUP_WINDOW_DAYS = 3;

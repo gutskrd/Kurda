@@ -1,4 +1,4 @@
-/** IAP redemption + refund (KUR-072) against real Postgres. */
+/** In-app purchase redemption and refund against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

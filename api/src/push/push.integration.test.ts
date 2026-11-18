@@ -1,4 +1,4 @@
-/** Device token lifecycle + delivery pruning (KUR-094) against real Postgres. */
+/** Device token lifecycle and delivery pruning against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -105,11 +105,7 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
     expect((await tokens.forUser(userA)).map((d) => d.token)).not.toContain(expo);
   });
 
-  /*
-   * A phone that is signed out, or whose session is ended from somewhere
-   * else, must stop being told what the account receives: the token follows
-   * the session it was registered under.
-   */
+  /* A phone signed out, or whose session is ended elsewhere, stops receiving: its token follows the session it was registered under. */
   it('a phone stops receiving once its session is signed out, while a session carrying on keeps its phone', async () => {
     const signIn = async (ip: string) => {
       const res = await app.inject({
@@ -129,7 +125,7 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
     expect((await add(phone.accessToken, mine)).statusCode).toBe(201);
     expect((await add(other.accessToken, theirs)).statusCode).toBe(201);
 
-    // the session carries on: its refresh token is exchanged for the next, and the phone is still listed
+    // The session carries on: its refresh token is exchanged for the next, and the phone stays listed.
     const turned = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: other.refreshToken }, remoteAddress: '10.94.0.12' });
     expect(turned.statusCode).toBe(200);
     expect((await tokens.forUser(userA)).map((d) => d.token)).toEqual(expect.arrayContaining([mine, theirs]));
@@ -164,11 +160,7 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
     expect(remaining).not.toContain(bad);
   });
 
-  /*
-   * A session can end without being revoked: its refresh token simply runs
-   * out on a phone left in a drawer. That phone is not signed in any more and
-   * must not be told what the account receives either.
-   */
+  /* A session can also simply run out, on a phone left in a drawer, and that phone must stop receiving too. */
   it('sends only to phones whose session is still live, not to one whose session ran out or one with none', async () => {
     const lapsedFamily = (await issueTokenPair(config, pool, { id: userB })).familyId;
     await pool.query(`UPDATE refresh_tokens SET expires_at = now() - interval '1 minute' WHERE family_id = $1`, [lapsedFamily]);

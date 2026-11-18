@@ -11,52 +11,40 @@ import { LetterWidgetService } from './widget.js';
 
 const threadParam = z.object({ threadId: z.uuid() });
 const birdBody = z.object({ bird: z.number().int().min(0).max(99) });
-// a little room over the letter's own limit: the service counts it after trimming and says which rule it broke;
-// its paper, drawing and notes are checked by the service as the apps check them (shared checkLetterDecor), which
-// says exactly what is wrong, so here they only have to be there or not
+// A little room over the letter's limit, since the service counts after trimming and names the rule broken; decor is
+// checked in the service as the apps check it (checkLetterDecor), so here it only has to be present or not.
 const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200), decor: z.unknown().optional() });
 type LetterBody = { body: string; decor?: unknown };
-// apps that read `landings` and post what they showed land ask with `landings=1`; a request without it is from a build before that
+// Apps that read `landings` and report what they landed send `landings=1`; without it the request is from an older build.
 const homeQuery = z.object({ landings: z.string().optional() });
 const landedBody = z.object({ letterIds: z.array(z.uuid()).min(1).max(LANDINGS_MAX) });
 
-/**
- * The key an app sent a letter under (the `Idempotency-Key` header both apps
- * put on every request that changes something), or none for a missing or
- * odd one: the same letter sent again under it is the letter already sent.
- */
+/** The key an app sent a letter under (`Idempotency-Key`), or none, so a resend finds the letter already sent. */
 function idempotencyKey(req: FastifyRequest): string | null {
   const raw = req.headers['idempotency-key'];
   return typeof raw === 'string' && /^[\x21-\x7e]{1,64}$/.test(raw) ? raw : null;
 }
 
 /**
- * Letters by bird (letters/service.ts).
+ * Letters by bird (letters/service.ts):
  *
- *   GET    /letters                      your bird and where it is, a bird at your window, the birds out there, the letters to land, your pen pals
+ *   GET    /letters                      your bird, a bird at your window, the birds out, letters to land, your pen pals
  *   POST   /letters/landed               the window showed these letters land (or your bird home by itself)
  *   POST   /letters/bird                 choose your bird: free the first time, Zêr after
- *   POST   /letters/out                  send your bird out to somebody new, to wait until somebody calls it
- *   DELETE /letters/out                  call your bird back (404 when it is not out: BIRD_ANSWERED with its correspondence, or NO_BIRD_OUT)
- *   POST   /letters/call                 call a bird out there to your window, with its letter
- *   POST   /letters/visitor              answer the bird at your window: it carries your letter home
+ *   POST   /letters/out                  send your bird out to somebody new
+ *   DELETE /letters/out                  call your bird back (404 BIRD_ANSWERED with its correspondence, or NO_BIRD_OUT)
+ *   POST   /letters/call                 call a waiting bird to your window, with its letter
+ *   POST   /letters/visitor              answer the bird at your window; it carries your letter home
  *   DELETE /letters/visitor              send the bird at your window on its way
- *   GET    /letters/threads/:threadId    a correspondence, the letters it shows marked read (they still land at the window once)
+ *   GET    /letters/threads/:threadId    a correspondence, its shown letters marked read (they still land once)
  *   POST   /letters/threads/:threadId    write back
  *   POST   /letters/threads/:threadId/end  say goodbye
  *
- * Each of the three that send a letter takes `{ body, decor? }`: the letter,
- * and its paper, drawing and notes (shared/src/letter-paper.ts). A first
- * letter to a stranger carries no drawing. Each also keeps the request's
- * `Idempotency-Key`, so the same letter sent again after its reply was lost
- * is the letter already sent. The widget's routes, under /letters/widget, are
- * in widget-routes.ts.
- *
- * A letter is reported through POST /reports (target type 'letter'), and its
- * writer is blocked or reported as anybody is, by the id the letters give.
- * Writing and calling need a birth month (the band comes from it) and no
- * chat mute; the page itself only needs an account, so it can say why
- * somebody cannot write. A bird at the window can always be sent on.
+ * The three sends take `{ body, decor? }` (shared/src/letter-paper.ts), with no drawing on a first letter to a
+ * stranger, and keep the `Idempotency-Key` so a resend after a lost reply is the letter already sent. Letters are
+ * reported through POST /reports (type 'letter'). Writing and calling need a birth month (it sets the band) and no
+ * chat mute; the page needs only an account so it can explain. A visiting bird can always be sent on. Widget routes
+ * are in widget-routes.ts.
  */
 export function registerLetterRoutes(app: FastifyInstance, letters: LetterService): void {
   app.get('/letters', { schema: { querystring: homeQuery }, preHandler: requireAccount }, async (req) =>

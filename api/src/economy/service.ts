@@ -19,13 +19,8 @@ export interface DriftReport {
   faucet: number;
   sink: number;
   /**
-   * faucet/sink, or null when nothing was spent (net of refunds) so the ratio
-   * is infinite.
-   *
-   * Nullable rather than Infinity because JSON has no infinity: JSON.stringify
-   * emits null for it regardless, which crashed the dashboard the moment a
-   * currency had faucets and no sinks — the normal state of a young economy.
-   * Making it explicit means clients handle the case on purpose.
+   * faucet/sink, or null when nothing was spent net of refunds. JSON has no Infinity (it would serialise as null
+   * anyway), so clients handle the case on purpose.
    */
   ratio: number | null;
   target: number;
@@ -33,18 +28,15 @@ export interface DriftReport {
 }
 
 /**
- * Economy monitoring (KUR-074). Rolls the append-only wallet ledger into a
- * per-day faucet/sink table, serves the net-supply time series for the
- * dashboard, and reports weekly faucet/sink drift for alerting. Admin/migration
- * reason codes are excluded so backfills don't distort inflation stats.
+ * Economy monitoring. Rolls the append-only wallet ledger into a daily faucet/sink table, serves the net-supply
+ * series for the dashboard and reports weekly drift for alerting, excluding admin and migration reason codes.
  */
 export class EconomyService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Aggregate one UTC day of ledger activity into economy_daily. Idempotent —
-   * a re-run overwrites that day. `day` is truncated to a date. Refunds come
-   * off the day's sink rather than adding to its faucet, as in `faucetSink`.
+   * Aggregates one UTC day of ledger activity into economy_daily, overwriting that day, so it is idempotent. Refunds
+   * come off the day's sink rather than adding to its faucet.
    */
   async aggregateDay(day: Date): Promise<void> {
     // summed and written in one statement, every currency at once
@@ -88,7 +80,7 @@ export class EconomyService {
     });
   }
 
-  /** Weekly faucet/sink drift vs a target ratio (KUR-074 alert). */
+  /** Weekly faucet/sink drift against a target ratio. */
   async drift(currency: string, target = 1, windowDays = 7): Promise<DriftReport> {
     const row = await this.pool.query<{ faucet: string; sink: string }>(
       `SELECT COALESCE(SUM(faucet), 0) AS faucet, COALESCE(SUM(sink), 0) AS sink
@@ -104,8 +96,7 @@ export class EconomyService {
       windowDays,
       faucet,
       sink,
-      // drifting is judged on the real (possibly infinite) ratio; only the wire
-      // value is narrowed, so a currency nobody can spend still raises the flag
+      // Drift is judged on the real, possibly infinite ratio; only the wire value is narrowed.
       ratio: Number.isFinite(ratio) ? ratio : null,
       target,
       drifting: isDrifting(ratio, target),

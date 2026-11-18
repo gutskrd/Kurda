@@ -11,10 +11,7 @@ export interface ClientIpInput {
   forwardedFor: unknown;
   /** the raw CF-Connecting-IP header */
   cfConnectingIp: unknown;
-  /**
-   * Whether the proxy at this hop may say who connected to it. Hop 0 is the
-   * socket, hop 1 the right-most X-Forwarded-For entry, and so on leftwards.
-   */
+  /** Whether the proxy at this hop may say who connected to it; hop 0 is the socket, hop 1 the right-most X-Forwarded-For entry. */
   trusted: (address: string, hop: number) => boolean;
   /** Read Cloudflare's headers when the edge is a Cloudflare address (on unless switched off). */
   cloudflare?: boolean;
@@ -31,11 +28,7 @@ export interface ResolvedClientIp {
   chain: string[];
 }
 
-/**
- * The most X-Forwarded-For entries looked at, counted from the right. A real
- * chain is two or three hops; this only keeps a padded header from costing
- * more than a short one.
- */
+/** The most X-Forwarded-For entries read from the right; real chains are two or three, and this caps a padded header's cost. */
 export const MAX_FORWARDED_HOPS = 32;
 
 /** X-Forwarded-For's entries, left to right, as Fastify splits them. */
@@ -49,31 +42,13 @@ export function forwardedEntries(header: unknown): string[] {
 }
 
 /**
- * Who is asking, worked out once from the connection and the proxy headers.
- *
- * In production the chain is: the client, then Cloudflare's edge (Render puts
- * Cloudflare in front of every service), then Render's own balancer, which
- * connects to the container from a private address. Each proxy appends the
- * peer it saw to X-Forwarded-For, so the header reads, left to right,
- * `[whatever the client wrote], <client, written by Cloudflare>, <edge, written
- * by Render>`, and the socket is Render's balancer.
- *
- * Walking from the socket and skipping the proxies `TRUST_PROXY` names stops at
- * the first address nothing trusted vouches for: the edge. That is where the
- * old behaviour stopped too, and why every caller looked like one of a few
- * dozen Cloudflare addresses. Cloudflare says who connected to it in two
- * places: `CF-Connecting-IP`, which it always overwrites, and the
- * X-Forwarded-For entry it appended immediately left of the edge. Either is
- * believed only when the edge hop is itself a Cloudflare address, and nothing
- * further left ever is, so a client cannot name itself:
- *
- * - text a client puts in X-Forwarded-For sits left of Cloudflare's own entry
- *   and is never read;
- * - a `CF-Connecting-IP` that did not come through Cloudflare arrives from an
- *   edge that is not Cloudflare's, and is ignored;
- * - a caller that is itself on Cloudflare's network (a Worker's subrequest
- *   arrives with an address in 2a06:98c0::/29) is just that one address, not
- *   another proxy to walk past.
+ * Who is asking, worked out once from the connection and proxy headers. In production the chain is the client,
+ * Cloudflare's edge, then the platform's balancer on a private address, each appending its peer to X-Forwarded-For.
+ * Walking from the socket past the `TRUST_PROXY` proxies stops at the edge. Cloudflare reports the real client in
+ * `CF-Connecting-IP` (which it always overwrites) and in the entry just left of the edge; either is believed only
+ * when the edge hop is a Cloudflare address, and nothing further left ever is. So client-written entries are never
+ * read, a `CF-Connecting-IP` not sent through Cloudflare is ignored, and a caller on Cloudflare's own network (a
+ * Worker, from 2a06:98c0::/29) is just that one address.
  */
 export function resolveClientIp(input: ClientIpInput): ResolvedClientIp {
   const socket = input.socket ?? '';
@@ -85,8 +60,7 @@ export function resolveClientIp(input: ClientIpInput): ResolvedClientIp {
   const edge = parseIp(edgeText);
 
   if (!edge) {
-    // A trusted proxy passed on something that is not an address. The nearest
-    // hop that is one is the most anyone can say about this caller.
+    // A trusted proxy passed on something that is not an address, so the nearest hop that is one is the best answer.
     for (let i = at - 1; i >= 0; i--) {
       const hop = parseIp(hops[i]);
       if (hop) return { ip: hop.text, rule: 'edge', edge: edgeText, chain: [...hops.slice(0, i), hop.text] };

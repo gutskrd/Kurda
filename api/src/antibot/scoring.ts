@@ -1,14 +1,8 @@
 /**
- * Behavioral bot scoring (KUR-110). Combines independent behavioral signals into
- * a single suspicion score that drives two graduated responses: an invisible
- * CAPTCHA challenge on the next session, and — at high confidence — reversal of
- * ill-gotten XP/currency through the ledger.
- *
- * Every signal is a 0..1 anomaly level except the device signal, which is
- * derived from an account-per-fingerprint count. Weights sum to 1, and the
- * device weight is deliberately BELOW the challenge threshold, so a shared
- * classroom device (many legitimate accounts) can never on its own flag anyone
- * — the edge case. The device signal only tips borderline cases.
+ * Behavioural bot scoring. Independent signals combine into one suspicion score that drives an invisible CAPTCHA
+ * on the next session and, at high confidence, a human review that can reverse XP and currency. Every signal is a
+ * 0..1 anomaly level and the weights sum to 1. The device weight is kept below the challenge threshold so a shared
+ * classroom device can never flag anyone on its own; it only tips borderline cases.
  */
 
 export interface BotSignals {
@@ -34,8 +28,7 @@ export const CHALLENGE_THRESHOLD = 0.4;
 /** score ≥ this ⇒ high-confidence bot; gains are reversal candidates. */
 export const FLAG_THRESHOLD = 0.6;
 
-// A few shared accounts on one device is normal (classroom); suspicion only
-// grows past a grace count and saturates, so it stays a weak, secondary signal.
+// A few accounts on one device is normal, so suspicion starts past a grace count and saturates.
 const DEVICE_GRACE = 3;
 const DEVICE_SATURATION = 12;
 

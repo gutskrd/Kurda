@@ -27,17 +27,15 @@ import type { MilestoneRecorder } from '../achievements/service.js';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * Whether the learner `$1` did something before this first count: XP from
- * more than an hour ago, or more than one day of learning on record. The hour
- * covers the lesson or game that set off the count itself.
+ * Whether learner `$1` did anything before this first count: XP older than an hour, or more than one learning day.
+ * The hour covers the lesson or game that triggered the count.
  */
 const HAS_PAST_SQL = `(EXISTS (SELECT 1 FROM xp_ledger WHERE user_id = $1 AND created_at < now() - interval '1 hour')
    OR EXISTS (SELECT 1 FROM user_streaks WHERE user_id = $1 AND (days_learned > 1 OR longest_streak > 1)))`;
 
 /**
- * What each kind of event can move. An event re-counts only these, from the
- * tables (measures.ts), so it costs a handful of queries rather than all of
- * them; a learner's first count ever does them all (`evaluate`).
+ * What each kind of event can move. An event re-counts only these, so it costs a handful of queries; a learner's
+ * first count does them all.
  */
 export const BADGE_TRIGGERS = {
   learning: [
@@ -60,10 +58,8 @@ export const BADGE_TRIGGERS = {
 } as const satisfies Record<string, readonly string[]>;
 
 /**
- * The badges the catalogue gained after its first version, by the version
- * that added them. A learner counted before a version is counted for its
- * badges quietly once, as on their own first day: what they did before a
- * badge existed is recorded, not celebrated (`badge_users.catalogue`).
+ * Badges added after the catalogue's first version, by version. A learner counted before a version gets its
+ * badges counted quietly once, as on their first day (`badge_users.catalogue`).
  */
 export const CATALOGUE_ADDITIONS: Readonly<Record<number, readonly string[]>> = {
   2: ['zengil', 'penus', 'cay', 'gula-hefte', 'mamik', 'bilbil', 'name', 'sersal', 'yelda', 'pisika-wane', 'perperok'],
@@ -77,8 +73,7 @@ export interface BadgeNotices {
   record(userId: string, notification: Notification): Promise<void>;
   realtime(userId: string, event: BadgeUnlockedEvent): Promise<void>;
   /**
-   * The day's single push, a while after the first unlock so it can bundle
-   * the rest (`BadgeService.dayPush` says what it says). Called at most once
+   * Schedules the day's single push, a while after the first unlock so it can bundle the rest. Called at most once
    * per learner per day.
    */
   pushLater(userId: string, day: string): Promise<void>;
@@ -110,10 +105,7 @@ interface BadgeRow {
   seen_tier: number;
 }
 
-/**
- * Games the play layer reports as finished, mapped to their tables (play/events.ts
- * names); every multiplayer learning game shares the generic engine's.
- */
+/** Games the play layer reports as finished, mapped to their tables; the multiplayer games share the engine's. */
 const PLAY_GAMES: Record<string, { players: string; key: string }> = {
   'wordle-battle': { players: 'wordle_battle_players', key: 'battle_id' },
   'rhyme-match': { players: 'rhyme_match_players', key: 'match_id' },
@@ -122,27 +114,14 @@ const PLAY_GAMES: Record<string, { players: string; key: string }> = {
 };
 
 /**
- * Badges (contract 4 §B2).
+ * Badges. Progress is always counted by the server from the tables (measures.ts) when something that could move
+ * it happens. Counting is idempotent and runs one at a time per learner, so a tier unlocks once however many
+ * events arrive together.
  *
- * Progress is always counted by the server from the tables where things
- * happened (measures.ts), when something that could move it happens: a lesson
- * or practice or story (the streak milestones every learning activity already
- * reports), a game finished, a gift sent, a league week settled, a rated game
- * or a season closed (rank-hooks.ts). Counting is idempotent — the same
- * history always gives the same tier — and per learner one count runs at a
- * time, so a tier is unlocked once however many events arrive together.
- *
- * Tiers only ever go up: a badge is never lost, except by an admin's revoke
- * (`cap_tier`), which a re-count respects. An unlock is told three ways: a line
- * in the notifications list (`data.kind = 'badge'`), a realtime
- * `badge_unlocked` for the celebration, and at most one push a day bundling
- * them (and only if the learner allows progress news).
- *
- * A learner's very first count finds what they did before badges existed and
- * records it quietly, as already seen: thirty celebrations on the first day
- * would be noise, not a moment. A newcomer has no such past: their first count
- * comes with their first lesson or game, and what it finds (a flawless first
- * lesson is a badge) is theirs to celebrate (`HAS_PAST_SQL`).
+ * Tiers only go up, except by an admin's revoke (`cap_tier`), which a re-count respects. An unlock is told by a
+ * notification row, a realtime `badge_unlocked`, and at most one push a day if the learner allows progress news.
+ * A learner's first count records what they did before badges existed quietly, as already seen; a newcomer with
+ * no such past celebrates what the first count finds (`HAS_PAST_SQL`).
  */
 export class BadgeService implements MilestoneRecorder, RankEventsListener {
   private readonly now: () => Date;
@@ -190,8 +169,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     for (const [k, t] of this.recentGames) if (at - t > 60_000) this.recentGames.delete(k);
     if (this.recentGames.has(key)) return;
     this.recentGames.set(key, at);
-    // table and column names come from the fixed map above, never from input
-    // people only: a computer seat (Hevalo) earns no badges
+    // Table and column names come from the fixed map above, never from input. Computer seats earn no badges.
     const players = await this.pool.query<{ user_id: string }>(
       `SELECT user_id FROM ${table.players} WHERE ${table.key} = $1 AND NOT removed AND user_id IS NOT NULL`,
       [lobbyId],
@@ -207,11 +185,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     await this.evaluate(fromUserId, BADGE_TRIGGERS.gift);
   }
 
-  /**
-   * A message written to a friend (Name). It counts once for each friend a
-   * day, so only the day's first to that friend can move the badge: the rest
-   * of a conversation is not counted again.
-   */
+  /** A message written to a friend (Name). Counts once per friend a day, so only the day's first one can move it. */
   async onLetterSent(fromUserId: string, toUserId: string): Promise<void> {
     const key = `${fromUserId}:${toUserId}:${this.now().toISOString().slice(0, 10)}`;
     if (this.recentLetters.has(key)) return;
@@ -233,16 +207,12 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   }
 
   /**
-   * A rated game finished (told by the ranks module once the game's rating
-   * changes are committed, through rank-hooks.ts). Each player's game is
-   * recorded once; their tier after it updates their season's peak; then the
-   * ranked badges are counted. How many tiers up the strongest player they
-   * beat was is the ranks engine's to say (`beatTierGap`); a player who walked
-   * out beats nobody.
+   * A rated game finished, reported once its rating changes commit. Each player's game is recorded once, their tier
+   * after it raises their season peak, then the ranked badges are counted. A player who walked out beats nobody.
    */
   async onRatedGameFinished(e: RatedGameFinished): Promise<void> {
     const finishedAt = e.finishedAt ?? this.now();
-    // every player's game, and every peak, in one statement each; a count reads only its own player's rows
+    // Every player's game and every peak in one statement each; a count reads only its own player's rows.
     await this.pool.query(
       `INSERT INTO badge_rated_games
          (user_id, game, game_ref, season_id, finished_at, place, players, left_game, placement_done, tier_after, beat_higher_by)
@@ -275,7 +245,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     }
   }
 
-  /** A season closed (told by the ranks module after its rewards): each player's final peak per game. */
+  /** A season closed, with each player's final peak per game. */
   async onSeasonClosed(e: SeasonClosed): Promise<void> {
     await this.notePeaks(
       e.seasonId,
@@ -288,10 +258,8 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   }
 
   /**
-   * Raise the season peaks the badges keep, all of them in one statement. A
-   * learner and game named twice is merged first, keeping the higher of each,
-   * as two upserts one after the other would: one statement can touch a row
-   * only once.
+   * Raises the season peaks in one statement. A learner and game named twice is merged first, keeping the higher of
+   * each, because one statement can touch a row only once.
    */
   private async notePeaks(seasonId: string, peaks: Array<{ userId: string; game: string; tier: number | null; ratedGames: number }>): Promise<void> {
     const merged = new Map<string, { userId: string; game: string; tier: number | null; ratedGames: number }>();
@@ -317,19 +285,15 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   // ---- counting ------------------------------------------------------------------
 
   /**
-   * Count `keys` (every badge when omitted) for one learner and record any tier
-   * reached. Returns the unlocks it recorded. The first count for a learner
-   * counts everything, and records it quietly when they learned before badges
-   * existed (see the class note).
+   * Counts `keys` (every badge when omitted) for one learner, records any tier reached and returns the unlocks. A
+   * learner's first count covers everything and is quiet when they learned before badges existed.
    */
   async evaluate(userId: string, keys?: readonly string[]): Promise<Unlock[]> {
     const { unlocks, quiet } = await this.tx(async (client) => {
       // one count at a time per learner: the same tier is never unlocked twice
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`badges:${userId}`]);
-      // in one statement: is the account live, is this its first count (recorded
-      // here when it is), did it learn before then, and which catalogue it was
-      // last counted against (read before this statement's own insert, so a
-      // first count reads none)
+      // One statement: is the account live, is this its first count (recorded here if so), did it learn before, and
+      // which catalogue it was last counted against (read before the insert, so a first count reads none).
       const state = await client.query<{ live: boolean; first: boolean; past: boolean | null; catalogue: number | null }>(
         `WITH live AS (SELECT 1 FROM users WHERE id = $1 AND deleted_at IS NULL),
               fresh AS (INSERT INTO badge_users (user_id, catalogue) SELECT $1::uuid, $2::int FROM live ON CONFLICT DO NOTHING RETURNING 1)
@@ -351,7 +315,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     return unlocks;
   }
 
-  /** Count, quietly, the badges added to the catalogue since this learner was last counted (against `catalogue`). */
+  /** Quietly counts the badges added to the catalogue since this learner was last counted. */
   private async catchUp(client: Executor, userId: string, catalogue: number | null): Promise<void> {
     const from = catalogue ?? CATALOGUE_VERSION;
     if (from >= CATALOGUE_VERSION) return;
@@ -363,11 +327,10 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   }
 
   private async count(client: Executor, userId: string, asked: readonly BadgeDef[], quietly: boolean): Promise<Unlock[]> {
-    // a badge two triggers share (a game finished moves Hemereng as a game and as a solo
-    // game) is counted, written and announced once
+    // A badge two triggers share is counted, written and announced once.
     const defs = [...new Map(asked.map((d) => [d.key, d])).values()];
     if (defs.length === 0) return [];
-    // every measure set going before any is awaited, so their counts share one statement (MeasureContext)
+    // Start every measure before awaiting any, so their counts share one statement.
     const ctx = new MeasureContext(client, userId);
     const measuring = new Map<string, Promise<Measured>>();
     for (const def of defs) {
@@ -458,10 +421,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     if ((claimed.rowCount ?? 0) > 0) await notices.pushLater(userId, day).catch(warn('badge push not scheduled'));
   }
 
-  /**
-   * The day's one push, bundling every badge earned that day (UTC), or null
-   * when there is none to tell (a revoke since, say).
-   */
+  /** The day's one push bundling every badge earned that UTC day, or null when there is nothing to tell. */
   async dayPush(userId: string, day: string): Promise<Notification | null> {
     const r = await this.pool.query<{ badge_key: string; tiers: number }>(
       `SELECT badge_key, count(*)::int AS tiers FROM user_badges b, unnest(b.tier_earned_at) AS t(at)
@@ -490,8 +450,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   async list(userId: string): Promise<BadgesResponse> {
     // make sure what they have done is counted (quietly, the first time)
     await this.evaluate(userId, []);
-    // the learner's own single values (learning days, the units in their
-    // course, the showcase, the old tournament win) ride one statement together
+    // The learner's own single values ride one statement together.
     const ctx = new MeasureContext(this.pool, userId);
     const [rows, rarity, days, units, showcase, legacyWin] = await Promise.all([
       this.pool.query<BadgeRow>(
@@ -599,9 +558,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     return unique;
   }
 
-  /**
-   * The three badges a profile shows (see `profileShowcase`).
-   */
+  /** The three badges a profile shows (see `profileShowcase`). */
   async showcaseFor(targetId: string, viewerId: string | null): Promise<ShowcaseBadge[]> {
     return profileShowcase(this.pool, targetId, viewerId);
   }
@@ -618,9 +575,8 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   // ---- rarity --------------------------------------------------------------------
 
   /**
-   * Nightly: the share of active learners (seen in the last thirty days) who
-   * hold each badge at each tier or above. Shown only once there are 500 of
-   * them; below that a percentage says more about the few than about the badge.
+   * Nightly: the share of learners active in the last thirty days holding each badge at each tier or above. Shown
+   * only from 500 learners; below that a percentage says more about the few than the badge.
    */
   async computeRarity(): Promise<{ activeUsers: number }> {
     const active = await this.pool.query<{ n: number }>(
@@ -755,10 +711,9 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   }
 
   /**
-   * An admin awards a badge up to a tier (a floor it never falls below) or
-   * revokes it down to one (a cap a re-count never rises above), with a reason
-   * kept beside it. An award is celebrated like any unlock; a revoke is quiet,
-   * and takes the badge off the showcase when nothing of it is left.
+   * An admin awards a badge up to a tier (a floor) or revokes it down to one (a cap a re-count never exceeds), with
+   * a reason. An award is celebrated like any unlock; a revoke is quiet and takes the badge off the showcase when
+   * nothing of it is left.
    */
   async adminSet(
     userId: string,
@@ -849,10 +804,9 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
 }
 
 /**
- * The three badges a profile shows. A minor's (or an account whose age is not
- * on record) only to themselves and their friends, as the rest of their
- * profile; a badge since revoked drops out. A function of its own so the
- * profile can read it without the badge service.
+ * The three badges a profile shows. A minor's, or one with no age on record, only to themselves and their
+ * friends, like the rest of their profile; a revoked badge drops out. Separate so the profile can read it
+ * without the badge service.
  */
 export async function profileShowcase(db: Executor, targetId: string, viewerId: string | null): Promise<ShowcaseBadge[]> {
   // the showcase, who may see it, and the tiers of what is on it, in one read

@@ -1,36 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { driftRatio, faucetSink, isDrifting, type LedgerEntry } from './metrics.js';
-
-describe('faucetSink', () => {
-  it('splits created vs destroyed and nets them', () => {
-    const rows: LedgerEntry[] = [
-      { amount: 100, reason: 'daily_reward' },
-      { amount: 50, reason: 'quest_reward' },
-      { amount: -30, reason: 'shop_purchase' },
-      { amount: -20, reason: 'shop_purchase' },
-    ];
-    expect(faucetSink(rows)).toEqual({ faucet: 150, sink: 50, net: 100 });
-  });
-
-  it('excludes admin/migration/backfill reasons from inflation stats', () => {
-    const rows: LedgerEntry[] = [
-      { amount: 100, reason: 'daily_reward' },
-      { amount: 10_000, reason: 'admin_adjustment' },
-      { amount: -5_000, reason: 'migration' },
-      { amount: 500, reason: 'backfill' },
-    ];
-    expect(faucetSink(rows)).toEqual({ faucet: 100, sink: 0, net: 100 });
-  });
-
-  it('counts a refund as spending undone, not as currency created', () => {
-    const bought: LedgerEntry = { amount: -500, reason: 'shop_purchase' };
-    const returned: LedgerEntry = { amount: 500, reason: 'shop_return' };
-    expect(faucetSink([bought, returned])).toEqual({ faucet: 0, sink: 0, net: 0 });
-    // a period that gave back more than it took in has a sink below zero, and
-    // the supply grows by exactly what was given back
-    expect(faucetSink([{ amount: 100, reason: 'daily_reward' }, returned])).toEqual({ faucet: 100, sink: -500, net: 600 });
-  });
-});
+import { driftRatio, isDrifting } from './metrics.js';
 
 describe('driftRatio', () => {
   it('is faucet over sink', () => {

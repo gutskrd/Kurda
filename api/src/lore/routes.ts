@@ -1,30 +1,26 @@
 /**
- * The Stories' riddles and proverbs, for learners. Reading and playing a
- * riddle are open to everyone, signed in or not: the auth hook sets
- * `req.user` when a bearer is sent, and only then is anything kept or paid.
+ * The Stories' riddles and proverbs for learners. Riddles are open to everyone; the auth hook sets `req.user` when a
+ * bearer is sent, and only then is anything kept or paid.
  *
- *   GET  /riddles?dialect=kmr|ckb          { riddles, daily, solved, total }: the variety's riddles, no hint, answer or explanation in it
- *   GET  /riddles/daily?dialect=           { slug }: the riddle of the viewer's day
- *   GET  /riddles/:slug                    { riddle }: its card, and the hints this learner has taken
- *   POST /riddles/:slug/hint               { index }: one hint (kept, in order, for a signed-in learner)
+ *   GET  /riddles?dialect=kmr|ckb          { riddles, daily, solved, total }, with no hints, answers or explanations
+ *   GET  /riddles/daily?dialect=           { slug } of the viewer's daily riddle
+ *   GET  /riddles/:slug                    { riddle }: its card and the hints this learner has taken
+ *   POST /riddles/:slug/hint               { index }: one hint (kept in order for a signed-in learner)
  *   POST /riddles/:slug/guess              { guess, locale? }: { correct: false, near? } or { correct: true, answer, xp }
- *   POST /riddles/:slug/reveal             { answer }: the answer, asked for (a signed-in learner's riddle is revealed from now on)
+ *   POST /riddles/:slug/reveal             { answer } (a signed-in learner's riddle is revealed from now on)
  *   GET  /proverbs?dialect=&theme=         { proverbs, themes, today }
  *   GET  /proverbs/:slug                   { proverb }
  *
- * The round on the proverbs is a solo round, so it needs an account (a
- * guest's counts), as every game played alone does:
- *   POST /proverbs/rounds                  { dialect, mode: 'meaning' | 'situation' | 'complete' }: a round of five, without its answers (20 a minute)
- *   GET  /proverbs/rounds/open?dialect=&mode=   { id }: the round of that mode left unfinished, to come back to, or null
+ * The proverb round is a solo round, so it needs an account (a guest's counts):
+ *   POST /proverbs/rounds                  { dialect, mode: 'meaning' | 'situation' | 'complete' }: five items, no answers (20 a minute)
+ *   GET  /proverbs/rounds/open?dialect=&mode=   { id } of the unfinished round of that mode, or null
  *   GET  /proverbs/rounds/:id              the round as it stands
- *   POST /proverbs/rounds/:id/answers      { index, answer: { choice }, attempt? }: one try, checked here
- *   POST /proverbs/rounds/:id/finish       close it, count it, say how it went (no XP)
- * The round's id is a solo round's, so the games' own session routes answer
- * for it too.
+ *   POST /proverbs/rounds/:id/answers      { index, answer: { choice }, attempt? }: one try
+ *   POST /proverbs/rounds/:id/finish       close and count it (no XP)
+ * Its id is a solo round's, so the games' session routes answer for it too.
  *
- * A hint, a guess and a reveal are capped at thirty a minute per learner (or
- * per address, signed out): riddles are thought about, and a client in a
- * loop must not be able to try the dictionary against one.
+ * Hints, guesses and reveals are capped at thirty a minute per learner (or address when signed out), so a looping
+ * client cannot try the dictionary against a riddle.
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -66,11 +62,7 @@ const answerBody = z.object({
 const TRIES = { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } };
 const ROUNDS = { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } };
 
-/**
- * The proverbs are not graded by difficulty — every round draws on all of a
- * variety's — and a solo round's table insists on one, so a proverb round is
- * filed under the middle one.
- */
+/** Proverbs have no difficulty, but the solo round table requires one, so rounds are filed under the middle one. */
 const PROVERB_ROUND_DIFFICULTY = 'intermediate';
 
 const viewer = (req: FastifyRequest): string | null => req.user?.id ?? null;

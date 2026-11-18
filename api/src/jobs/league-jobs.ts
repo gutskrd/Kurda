@@ -5,17 +5,10 @@ import type { JobQueue } from './queue.js';
 import { defineJob, type JobDefinition } from './registry.js';
 
 /**
- * The league week's two moments, on the job queue (contract 4 §L2–L3).
- *
- * They used to be an hourly `setInterval` on every replica, counted from
- * whenever the process booted and never run at startup: the week closed at
- * some hour on Monday, and anyone who earned XP before then joined the new week
- * at the old tier (the Monday race, which `ensureMembership` now also closes
- * from its side). Now the settle is scheduled for Monday 00:00 UTC and the
- * merge for Wednesday 00:00 UTC, and each process that starts enqueues a
- * catch-up of whatever is due — a deploy, or a host waking from idle, settles
- * the week at once. Both handlers are idempotent and record their run per week,
- * so the schedule, a catch-up and a retry together still settle a week once.
+ * The league week's two moments on the job queue: the settle at Monday 00:00 UTC and the merge at Wednesday 00:00
+ * UTC. Each starting process also enqueues a catch-up of whatever is due, so a deploy or a host waking from idle
+ * settles the week at once. Both handlers are idempotent and record their run per week, so schedule, catch-up and
+ * retries together still settle a week once.
  */
 
 export const LEAGUE_SETTLE_JOB = 'league-settle';
@@ -50,7 +43,7 @@ export function makeLeagueMergeJob(leagues: LeagueService): JobDefinition<League
   });
 }
 
-/** The two schedules, and a catch-up of whatever is due now (deduplicated per week). */
+/** The two schedules, and a catch-up of whatever is due now, deduplicated per week. */
 export async function scheduleLeagueJobs(queue: JobQueue, leagues: LeagueService, now: Date = new Date()): Promise<void> {
   const settle = makeLeagueSettleJob(leagues);
   const merge = makeLeagueMergeJob(leagues);

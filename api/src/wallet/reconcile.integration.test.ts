@@ -1,9 +1,7 @@
 /**
- * The wallet's guarantees against real Postgres: the reconciliation that
- * reports a balance differing from its ledger, the admin route that asks it,
- * and the limits the database holds on its own (migration 1751000214000) — an
- * amount past ten million, a row without a reason, a balance past a billion,
- * and TRUNCATE are all refused.
+ * The wallet's guarantees against real Postgres: reconciliation reporting a balance that differs from its ledger, the
+ * admin route asking it, and the database's own limits (migration 1751000214000) refusing an amount over ten million,
+ * a row without a reason, a balance over a billion, and TRUNCATE.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
