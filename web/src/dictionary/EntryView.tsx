@@ -3,6 +3,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { ClipSpeaker } from '../characters/ClipSpeaker';
 import type { SpokenClip } from '../characters/clips';
 import { describeError } from '../lib/api';
+import { useOptimistic } from '../lib/optimistic';
+import { saveWord, saveWordError, unsaveWord } from './save';
 import { play } from '../lib/sound';
 import { useT } from '../i18n/I18nProvider';
 import { ErrorState } from '../components/states';
@@ -28,7 +30,6 @@ export function EntryView({
   const t = useT();
   const [entry, setEntry] = useState<Entry | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   // The character of each pronunciation that has one, by URL; kept while only the bookmark changes.
   const audio = entry?.audio;
   const headword = entry?.headword;
@@ -50,22 +51,16 @@ export function EntryView({
 
   useEffect(load, [load]);
 
-  const toggleSave = async (): Promise<void> => {
-    if (!entry || saving) return;
-    const next = !entry.saved;
-    setSaving(true);
-    setEntry({ ...entry, saved: next });
-    // PUT, not POST: bookmarking is idempotent.
-    const res = next
-      ? await client.put(`/dictionary/entries/${entry.id}/save`)
-      : await client.delete(`/dictionary/entries/${entry.id}/save`);
-    setSaving(false);
-    if (res.ok) {
-      onSavedChange?.(entry.id, next);
-      return;
-    }
-    setEntry({ ...entry, saved: !next });
-    setError(describeError(res.error, t));
+  // Filled at once; quick presses end in the last, and a refusal reverts with the reason (a full vocabulary names its limit).
+  const [saved, wantSaved] = useOptimistic(entry?.saved === true, (on) => (on ? saveWord(client, entryId) : unsaveWord(client, entryId)), {
+    onSaved: (_, on) => onSavedChange?.(entryId, on),
+    onFailed: (refusal) => setError(saveWordError(refusal, t)),
+  });
+
+  const toggleSave = (): void => {
+    if (!entry) return;
+    setError(null);
+    wantSaved((on) => !on);
   };
 
   if (error && !entry) return <ErrorState message={error} onRetry={load} />;
@@ -96,14 +91,14 @@ export function EntryView({
           })}
           <button
             type="button"
-            className={`btn btn-ghost btn-sm dict-save${entry.saved ? ' is-on' : ''}`}
-            onClick={() => void toggleSave()}
-            aria-pressed={entry.saved === true}
-            aria-label={entry.saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
+            className={`btn btn-ghost btn-sm dict-save${saved ? ' is-on' : ''}`}
+            onClick={toggleSave}
+            aria-pressed={saved}
+            aria-label={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
           >
             {/* A saved word is filled, in the violet used for everything chosen. */}
-            <BookmarkIcon size={16} weight={entry.saved ? 'fill' : 'regular'} />
-            <span>{entry.saved ? t('dictionary.savedWord') : t('dictionary.saveWord')}</span>
+            <BookmarkIcon size={16} weight={saved ? 'fill' : 'regular'} />
+            <span>{saved ? t('dictionary.savedWord') : t('dictionary.saveWord')}</span>
           </button>
         </div>
       </header>

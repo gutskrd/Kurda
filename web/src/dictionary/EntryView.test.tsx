@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { jsonResponse, renderApp } from '../test/utils';
 import { EntryView } from './EntryView';
@@ -73,5 +73,38 @@ describe('a saved word', () => {
     expect(off).toHaveAttribute('aria-pressed', 'false');
     expect(off).not.toHaveClass('is-on');
     expect(asked).toContain('DELETE /dictionary/entries/d1/save');
+  });
+
+  it('ends quick presses in the last one, and puts a refused save back with the reason', async () => {
+    const writes: Array<{ method: string; answer: (res: Response) => void }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const path = new URL(url).pathname;
+        if (path === '/dictionary/entries/d1/save') return new Promise<Response>((answer) => writes.push({ method: init!.method!, answer }));
+        if (path === '/dictionary/entries/d1') return jsonResponse(200, { id: 'd1', headword: 'roj', dialect: 'kurmanji', senses: [], audio: [], xrefs: [], saved: false });
+        return jsonResponse(401, {});
+      }),
+    );
+    renderApp(<EntryView entryId="d1" onOpenEntry={vi.fn()} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Bookmark word' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Bookmark word' }));
+    // Saved on screen, with only the first press sent so far.
+    expect(screen.getByRole('button', { name: 'Remove bookmark' })).toHaveAttribute('aria-pressed', 'true');
+    expect(writes.map((w) => w.method)).toEqual(['PUT']);
+    writes[0]!.answer(jsonResponse(200, {}));
+    // The server already has what the last press asked for, so nothing more is sent.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Remove bookmark' })).toBeInTheDocument());
+    expect(writes).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Bookmark word' }));
+    await waitFor(() => expect(writes.map((w) => w.method)).toEqual(['PUT', 'DELETE']));
+    writes[1]!.answer(jsonResponse(200, {}));
+    await waitFor(() => expect(writes.map((w) => w.method)).toEqual(['PUT', 'DELETE', 'PUT']));
+    writes[2]!.answer(jsonResponse(409, { code: 'LIMIT_REACHED', message: 'full', details: { limit: 'saved_words', max: 2000 } }));
+    expect(await screen.findByRole('button', { name: 'Bookmark word' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText(/Your vocabulary is full/)).toBeInTheDocument();
   });
 });
