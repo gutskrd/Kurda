@@ -1,4 +1,4 @@
-/** Peyvok daily & practice backend against real Postgres (CI job). KUR-304. */
+/** Peyvok daily & practice backend against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { WordleService } from './wordle-service.js';
@@ -217,10 +217,8 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
   });
 
   /**
-   * A guess is found by the folded key (1751000115000), which is how an
-   * imported word is stored, and then compared with its marks: a player who
-   * typed the plain letters typed another word, and the tiles would score it as
-   * that one. sevci is not sêvçî.
+   * A guess is found by the folded key (1751000115000), as imported words are stored, then compared with marks: plain
+   * letters spell another word, which the tiles would score as that one. sevci is not sêvçî.
    */
   it('accepts an imported word as it is spelt, and not its letters without their marks', async () => {
     const imported = `sêvçî`;
@@ -267,9 +265,8 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
   });
 
   /**
-   * The schedule's whole point: the first player of the day fixes the word,
-   * and a word added to the pool afterwards — which reorders the permutation
-   * the pick walks — does not move it for anybody who comes later.
+   * The first player of the day fixes the day's word, and pool changes afterwards (which reorder the permutation) do
+   * not move it for later players.
    */
   it('keeps the day’s word for everyone once the first player has it, however the pool changes', async () => {
     const day = new Date('2026-08-13T08:00:00Z');
@@ -331,9 +328,8 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
   });
 
   /**
-   * The results card: exactly the answer's meaning, never a search's nearest
-   * hit (which is how the phone once showed another word's), and a save that
-   * counts once toward the words learned.
+   * The results card shows exactly the answer's meaning, never a search's nearest hit, and saving counts once toward
+   * words learned.
    */
   it('shows the finished game’s word with its meaning, and saves it to the player’s words once', async () => {
     // a made-up word, so no word list the migrations seed (the Peyvok pool holds zirav) has an entry of its own for it

@@ -1,19 +1,14 @@
 /**
- * The dictionary's side of a rhyme round, shared by training and matches:
- * whether a typed word is a word of the round's dialect, which rhymes a player
- * missed, and which dialects have enough prompts to be offered at all.
+ * The dictionary side of a rhyme round, shared by training and matches: whether a typed word belongs to the round's
+ * dialect, which rhymes a player missed, and which dialects have enough prompts to be offered.
  *
- * A word counts when it is the dictionary's own in that dialect, letter for
- * letter (`rhymeWordKey`: ê is not e), and is a word a rhyme is made of: a
- * lemma with a part of speech worth rhyming (as the Last Letter takes them),
- * or a curated game word, which an admin chose as a word. A Kurmancî headword
- * written with a capital is a name, and does not count. The words the course
- * teaches count too (published word cards): a learner may rhyme with what a
- * lesson gave them whether or not the dictionary has it yet.
+ * A word counts when it is the dictionary's own in that dialect, letter for letter (`rhymeWordKey`: ê is not e), and is
+ * a lemma with a rhymeable part of speech (as Last Letter takes them) or a curated game word. A capitalised Kurmancî
+ * headword is a name and does not count. Course words (published word cards) count too, whether or not the dictionary
+ * has them.
  *
- * Words somebody chose by hand — a curated word or a course word — are also
- * reported as `chosen`, which keeps the engine's inflection check off them:
- * baran is a word, not bar with an ending.
+ * Hand-chosen words (curated or course words) are also reported as `chosen`, which keeps the engine's inflection check
+ * off them: baran is a word, not bar with an ending.
  */
 import type pg from 'pg';
 import { dictionaryDialect, dictionaryKey, lookupSpellings, wordKey } from '@kurda/shared';
@@ -37,10 +32,8 @@ type Executor = Pick<pg.Pool, 'query'>;
 export const RHYME_PARTS_OF_SPEECH: ReadonlySet<string> = new Set(['noun', 'verb', 'adjective', 'adverb', 'pronoun', 'numeral']);
 
 /**
- * A dialect is offered once it has this many curated prompts (`is_rhyme_prompt`).
- * Fewer, and a player meets the same few words round after round; none, and a
- * round cannot start at all — which is how Soranî used to look offered while
- * every match failed to open.
+ * A dialect is offered once it has this many curated prompts (`is_rhyme_prompt`); fewer repeat the same words, and none
+ * means no round can start.
  */
 export const RHYME_MIN_PROMPTS = 40;
 
@@ -66,11 +59,9 @@ function isName(dialect: Dialect, headword: string): boolean {
 }
 
 /**
- * Which of `keys` (words in the dialect's letters, as `rhymeWordKey` gives
- * them) are words a rhyme round takes. One indexed lookup over the folded
- * spellings the dictionary may hold them under; every hit is then compared in
- * the dialect's own letters, so a spelling without its marks only ever finds
- * the word it actually is.
+ * Which of `keys` (in the dialect's letters, from `rhymeWordKey`) a rhyme round accepts. One indexed lookup over the
+ * folded spellings, then each hit is compared in the dialect's letters, so a markless spelling only finds the word it
+ * really is.
  */
 export async function lookupRhymeWords(db: Executor, dialect: Dialect, keys: readonly string[]): Promise<RhymeWordFacts> {
   const ld = letterDialectOf(dialect);
@@ -116,10 +107,9 @@ export async function lookupRhymeWords(db: Executor, dialect: Dialect, keys: rea
 }
 
 /**
- * The engine's view of the dictionary for one submission (already in the
- * dialect's letters): whether it is a word, which of the stems it could be an
- * inflection of are words too, and whether somebody chose it by hand. Training
- * and matches both ask this, so a word scores the same in either.
+ * The engine's view of the dictionary for one submission (already in the dialect's letters): whether it is a word,
+ * which candidate stems are words, and whether it was hand-chosen. Training and matches both use this, so a word scores
+ * the same in either.
  */
 export async function rhymeLexicon(db: Executor, dialect: Dialect, normalized: string): Promise<Pick<RhymeScorerDeps, 'lexicon' | 'isChosen'>> {
   if (!normalized) return { lexicon: new InMemoryLexicon(), isChosen: () => false };
@@ -138,10 +128,8 @@ export interface RhymeHint {
 }
 
 /**
- * Up to MISSED_RHYMES_SHOWN perfect rhymes of the prompt from the curated
- * words of its dialect that the player did not find, for the end of a round:
- * finding rhymes is half of it, and seeing the ones you missed, with what they
- * mean, is how the next round goes better. Words with a meaning come first.
+ * Up to MISSED_RHYMES_SHOWN perfect rhymes of the prompt among the dialect's curated words that the player did not
+ * find, shown at the end of a round with meanings first.
  */
 export async function missedRhymes(db: Executor, dialect: Dialect, prompt: string, found: readonly string[]): Promise<RhymeHint[]> {
   const promptKey = rhymeWordKey(prompt, dialect);
@@ -180,9 +168,8 @@ export interface RhymeDialectAvailability {
 }
 
 /**
- * Which dialects have enough curated prompts to be offered (RHYME_MIN_PROMPTS),
- * for both apps to show the rest as coming soon. One indexed count over the
- * game words.
+ * Which dialects have enough curated prompts to be offered (RHYME_MIN_PROMPTS), so both apps can show the rest as
+ * coming soon. One indexed count over the game words.
  */
 export async function rhymeAvailability(db: Executor): Promise<Record<Dialect, RhymeDialectAvailability>> {
   const res = await db.query<{ dialect: string; n: number }>(

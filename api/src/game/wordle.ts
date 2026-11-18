@@ -1,30 +1,13 @@
 /**
- * Kurdish Peyvok engine (KUR-303) — the pure core for the daily/practice
- * service (KUR-304), the mobile UI (KUR-305), and multiplayer battle (KUR-306).
- * Given a target word and a guess it produces per-letter green/yellow/gray
- * feedback using the usual two-pass duplicate-letter rule, validates
- * guesses (exact length + dictionary), and advances the 6-attempt game state.
- *
- * No storage, no network, no React — and crucially the game state never holds
- * the target, so it is safe to serialize to the client (the answer stays
- * server-side; guesses are scored server-authoritatively).
+ * Kurdish Peyvok engine, the pure core of the daily, practice and battle services: per-letter green/yellow/gray
+ * feedback with the two-pass duplicate-letter rule, guess validation (exact length and dictionary), and the 6-attempt
+ * game state. The game state never holds the target, so it is safe to send to clients.
  */
+import { normalizeWord } from './rhyme.js';
 
 export const MAX_ATTEMPTS = 6;
 
 export type LetterFeedback = 'green' | 'yellow' | 'gray';
-
-/**
- * Normalize a word for comparison: lowercase + NFC (keeps Kurdish letters
- * Ç Ê Î Ş Û as single letters, never decomposed) + strip anything that is not
- * a letter. Equivalent Unicode encodings therefore compare equal.
- *
- * NOTE: identical to the rhyme engine's normalizer (#298); to be lifted into a
- * shared Kurdish-text helper once both land on main.
- */
-export function normalizeWord(word: string): string {
-  return word.toLowerCase().normalize('NFC').replace(/[^\p{L}]/gu, '');
-}
 
 /** Split a word into its Kurdish letters (code-point aware, NFC-normalized). */
 export function toLetters(word: string): string[] {
@@ -32,13 +15,10 @@ export function toLetters(word: string): string[] {
 }
 
 /**
- * Score a guess against a target using the usual two-pass duplicate-letter rule:
- *  1. mark exact-position matches green and consume them from the target's
- *     per-letter counts;
- *  2. mark each remaining guess letter yellow only while that letter still has
- *     unconsumed count, else gray.
- * This gives correct repeated-letter behavior (AAAA vs MALA colors only the
- * two real As, the rest gray — never all four yellow).
+ * Score a guess with the two-pass duplicate-letter rule:
+ * 1. mark exact-position matches green and consume them from the target's letter counts;
+ * 2. mark each remaining guess letter yellow while that letter has unconsumed count, else gray.
+ * So AAAA against MALA colours only the two real As, never all four.
  */
 export function scoreGuess(target: string, guess: string): LetterFeedback[] {
   const targetLetters = toLetters(target);
@@ -72,7 +52,7 @@ export function scoreGuess(target: string, guess: string): LetterFeedback[] {
   return feedback;
 }
 
-/** Injected Kurdish dictionary — real one from #043/#044/#048, a small set in tests. */
+/** Injected Kurdish dictionary; tests use a small set. */
 export interface KurdishDictionary {
   has(normalizedWord: string): boolean;
 }
@@ -172,11 +152,9 @@ export type ApplyResult =
   | { ok: false; game: WordleGame; reason: GuessRejection | 'finished' };
 
 /**
- * Apply a guess to the game. Rejected guesses (wrong length / not a word) do
- * not consume an attempt and leave the game unchanged. A valid guess is scored
- * against the (server-held) target, appended, and the status advances to `won`
- * on an all-green guess or `lost` after MAX_ATTEMPTS. Applying to a finished
- * game changes nothing and says so: `finished`, not a reason about the guess.
+ * Apply a guess. A rejected guess (wrong length, not a word) uses no attempt and leaves the game unchanged. A valid
+ * guess is scored, appended, and moves the status to `won` on all green or `lost` after MAX_ATTEMPTS. A finished game
+ * is unchanged and reported as `finished`.
  */
 export function applyGuess(
   game: WordleGame,

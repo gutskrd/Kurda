@@ -1,14 +1,9 @@
 /**
- * Typing race scoring.
+ * Typing race scoring, pure and separate from the service so the rules are testable and never taken from the client:
+ * the racer reports what they typed, and the server decides speed and accuracy from a start time it recorded.
  *
- * Kept pure and separate from the service so the rules are testable on their
- * own — and because this is the part that must not be taken from the client.
- * A racer reports what they typed; the server decides how fast and how well,
- * from a start time it recorded itself.
- *
- * What counts as typed right is @kurda/shared `compareTyping`, the same
- * function the apps colour the text with as it is typed, so the result can
- * never disagree with what the racer saw.
+ * What counts as typed right is @kurda/shared `compareTyping`, the same function the apps colour the text with, so the
+ * result always matches what the racer saw.
  */
 import {
   compareTyping,
@@ -25,17 +20,9 @@ const CHARS_PER_WORD = 5;
 export const MIN_RACE_MS = 1000;
 
 /**
- * Above this, nobody typed anything.
- *
- * The sustained world record is around 216 wpm and the fastest recorded burst
- * is near 300, so 350 is well clear of any human and nowhere near a paste: a
- * 200-character text dropped in at once reads as roughly 1200. The clamp above
- * is not enough on its own — it only stops division by zero, and a pasted run
- * still lands at a speed that would own the leaderboard permanently.
- *
- * The browser refuses to paste into the race, but the browser is not where this
- * has to hold: anyone can post to the finish endpoint directly, so the rule
- * lives here.
+ * Above this speed nobody typed anything. The sustained record is around 216 wpm and bursts near 300, while a
+ * 200-character paste reads as roughly 1200, so 350 separates the two. Enforced here because anyone can post to the
+ * finish endpoint directly.
  */
 export const HUMAN_WPM_CEILING = 350;
 
@@ -61,27 +48,8 @@ export interface RaceScore {
 }
 
 /**
- * How many characters of the target were typed exactly (strict mode).
- *
- * Aligned, not positional. This used to compare the i-th character with the
- * i-th, which a racer cannot predict at all once they slip: one missed letter
- * early on made every later one wrong, and a run that only dropped its first
- * letter scored 0 of 26. An alignment counts the slip once. It does not reward
- * wandering text that merely contains the right letters, because only letters
- * in order count, and every character typed that the text does not have counts
- * against the accuracy (`scoreRace`).
- */
-export function countCorrect(target: string, typed: string): number {
-  return compareTyping(target, typed, 'strict', { final: true }).correct;
-}
-
-/**
- * Score one finished race.
- *
- * `elapsedMs` is measured server-side. Accuracy is against the TARGET, not
- * against what was typed: stopping after three words should not read as 100%;
- * and what was typed beyond it counts against it, so neither does typing the
- * text with rubbish in between.
+ * Score one finished race. `elapsedMs` is measured server-side. Accuracy is against the TARGET, so stopping early does
+ * not read as 100%, and extra typed text counts against it.
  */
 export function scoreRace({
   target,
@@ -113,10 +81,8 @@ export function scoreRace({
     accuracy,
     // one decimal is as precise as this measurement deserves
     wpm: Math.round(wpm * 10) / 10,
-    // speed alone rewards typing nonsense quickly; weighting by accuracy means
-    // the fastest CORRECT run wins, which is what a race is. A speed no person
-    // reaches ranks at nothing at all — the reading is still reported, so the
-    // result can say what happened rather than silently showing a zero.
+    // Weighting speed by accuracy makes the fastest CORRECT run win. An impossible speed scores nothing, but its reading
+    // is still reported so the result can say what happened.
     score: implausible ? 0 : Math.round(wpm * accuracy),
     perfect:
       !implausible &&

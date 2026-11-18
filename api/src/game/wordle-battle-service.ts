@@ -32,7 +32,6 @@ import {
   applyGuess,
   initGame,
   keyboardFromGuesses,
-  normalizeWord,
   toLetters,
   InMemoryDictionary,
   type GameStatus,
@@ -40,6 +39,7 @@ import {
   type GuessRow,
   type WordleGame,
 } from './wordle.js';
+import { normalizeWord } from './rhyme.js';
 import { filterByDifficulty, type Difficulty } from './wordle-daily.js';
 import { isWordleGuess, loadWordlePool, recentTargets } from './word-pool.js';
 import { placementXp, rankBattle, type BattlePlayerResult } from './wordle-battle.js';
@@ -48,19 +48,12 @@ import { meaningsOf, type WordMeanings } from './word-meanings.js';
 const MAX_ATTEMPTS = 6;
 const HARDER_TO_EASIER: readonly Difficulty[] = ['hard', 'medium', 'easy'];
 
-/**
- * A battle ends this long after it starts whatever anyone is doing, so one
- * player who closed the tab cannot hold it open for ever (six guesses take a
- * person a few minutes, not ten).
- */
+/** A battle ends this long after starting whatever anyone is doing, so a closed tab cannot hold it open. */
 export const BATTLE_MINUTES = 10;
 
 /**
- * A player the server has not heard from for this long is away, and a battle
- * does not wait for players who are away: once everyone still around has
- * finished, it ends, and the away player's game ends where they left it. Long
- * enough for a phone call or a look at the dictionary, short enough that
- * nobody sits on "waiting for the others" for long.
+ * A player unheard from for this long is away, and a battle does not wait for them: once everyone still around has
+ * finished it ends, and the away player's game ends where they left it.
  */
 export const AWAY_SECONDS = 120;
 
@@ -190,10 +183,9 @@ export interface WordleBattleDeps {
   xp?: XpService;
   now?: () => Date;
   /**
-   * Called after every change is committed (the play module's `play_changed`,
-   * which replaced the clients' fast polling). `also` names someone no longer
-   * in the battle who should hear about it once — a player just removed;
-   * `card: false` marks a guess that ended nothing, which no chat card shows.
+   * Called after every committed change (the play module's `play_changed`). `also` names someone no longer in the
+   * battle who should hear once (a player just removed); `card: false` marks a guess that ended nothing, which no chat
+   * card shows.
    */
   onChange?: (battleId: string, opts?: LobbyChange) => void;
   /** turns an uploaded profile photo's key into its URL, for the players' faces */
@@ -215,20 +207,14 @@ function greenProgress(guesses: GuessRow[]): number {
 const minutesAfter = (at: Date, minutes: number): Date => new Date(at.getTime() + minutes * 60_000);
 
 /**
- * Peyvok Battle mode (KUR-306) — server-authoritative match service. Every player
- * races the same server-held word; guesses are scored here (via the #303 engine)
- * and only a player's own feedback + opponents' progress are ever returned.
- * Placement (first-solve → fewest-guesses → fastest-time) and XP are computed by
- * the pure `wordle-battle.ts` ranker when the last player finishes. Poll-safe, so
- * the flow is fully integration-testable without the realtime gateway.
+ * Peyvok Battle, server-authoritative: every player races the same server-held word, guesses are scored here, and only
+ * a player's own feedback and opponents' progress are returned. Placement (first solve, fewest guesses, fastest time)
+ * and XP come from the pure `wordle-battle.ts` ranker when the last player finishes. Poll-safe, so testable without the
+ * realtime gateway.
  *
- * Who may join, and what players see of each other, follow the rules every
- * online game shares (play/access.ts): the host's friends (or any adult, in an
- * open battle), never across a block, and other players known by their seat —
- * by name only to their friends. Members only: everyone else is told the
- * battle does not exist. A battle ends at `ends_at` or once nobody still
- * racing is around, so a closed tab cannot hang it; a lobby nobody starts
- * closes after half an hour.
+ * Joining and visibility follow the shared online-game rules (play/access.ts): the host's friends (or any adult in an
+ * open battle), never across a block, other players by seat and named only to friends. Members only. A battle ends at
+ * `ends_at` or once nobody still racing is around; an unstarted lobby closes after half an hour.
  */
 export class WordleBattleService {
   private readonly xp: XpService;
@@ -246,10 +232,9 @@ export class WordleBattleService {
   }
 
   /**
-   * A new lobby with its host in it. Rated or Friendly is the host's choice
-   * (remembered for next time); left out, it is their last choice, or Friendly
-   * for a first game among friends or from a chat (ranks/service.ts). A host
-   * has at most MAX_HOSTED_GAMES battles at once (play/lobby.ts `makeRoomToHost`).
+   * A new lobby with its host in it. Rated or Friendly is the host's choice (remembered); omitted, it is their last
+   * choice, or Friendly for a first game among friends or from a chat (ranks/service.ts). At most MAX_HOSTED_GAMES
+   * battles per host (play/lobby.ts `makeRoomToHost`).
    */
   async create(
     userId: string,
@@ -289,10 +274,8 @@ export class WordleBattleService {
   }
 
   /**
-   * Join an open lobby. Every refusal the join rule makes — not allowed,
-   * removed, called off — is the same 'not-found' as a battle that does not
-   * exist, and comes before 'not-open' and 'full', so those two are only ever
-   * told to someone who could have joined.
+   * Join an open lobby. Every join-rule refusal (not allowed, removed, called off) is the same 'not-found' as a missing
+   * battle and comes before 'not-open' and 'full', so those are only told to someone who could have joined.
    */
   async join(battleId: string, userId: string): Promise<JoinResult> {
     const now = this.now();
@@ -416,11 +399,8 @@ export class WordleBattleService {
   }
 
   /**
-   * `GET /wordle/battles/:id`: a member's live view. Someone the join rule
-   * would let in sees an open lobby before joining it (installed phone builds
-   * open an invite link this way), and is told 'started' about one already
-   * under way — a latecomer's "this battle has already started". Everyone else
-   * is told it does not exist.
+   * `GET /wordle/battles/:id`: a member's live view. Someone the join rule admits sees an open lobby before joining
+   * (invite links open this way) and 'started' for one under way; everyone else is told it does not exist.
    */
   async read(battleId: string, userId: string): Promise<ReadResult> {
     const now = this.now();
@@ -440,10 +420,8 @@ export class WordleBattleService {
   }
 
   /**
-   * Leave. Out of a lobby: a player's row goes (they never played); the host
-   * leaving calls the lobby off, since who could join was decided against
-   * them. Out of a battle under way: marked gone and finished where they
-   * stand — the battle stops waiting for them — and they can still read it.
+   * Leave. From a lobby the player's row goes; a host leaving calls the lobby off, since joining was decided against
+   * them. From a battle under way the player is marked gone and finished where they stand, and can still read it.
    */
   async leave(battleId: string, userId: string): Promise<LeaveResult> {
     const now = this.now();
@@ -484,10 +462,9 @@ export class WordleBattleService {
   }
 
   /**
-   * The host takes a player out of the lobby, by seat — the only handle a
-   * host has on anyone. The row stays, marked, so they cannot simply join
-   * again; to them the battle no longer exists. Not once it has started:
-   * there, a player who is gone is waited for by nobody anyway.
+   * The host removes a player from the lobby by seat (the host's only handle). The row stays, marked, so they cannot
+   * rejoin; to them the battle no longer exists. Not after the start, when nobody waits for a player who is gone
+   * anyway.
    */
   async remove(battleId: string, hostId: string, seat: number): Promise<RemoveResult> {
     const now = this.now();
@@ -512,9 +489,8 @@ export class WordleBattleService {
   }
 
   /**
-   * A player's view, as `userId` may see it: their own guesses, everyone
-   * else's progress (never their letters) by seat. Callers decide who may
-   * have it (`read`); this only builds it.
+   * A player's view as `userId` may see it: their own guesses and everyone else's progress by seat (never their
+   * letters). `read` decides who may have it; this only builds it.
    */
   async state(battleId: string, userId: string): Promise<BattleState> {
     const b = await this.pool.query<BattleRow>(`SELECT * FROM wordle_battles WHERE id = $1`, [battleId]);
@@ -569,9 +545,8 @@ export class WordleBattleService {
   }
 
   /**
-   * Post-match results (finished only): all histories + word + placement + XP.
-   * Scoped to participants — a non-participant gets `null` (never another match's
-   * guess histories / answer word), same as an unknown id (BOLA protection).
+   * Post-match results (finished only): all histories, the word, placement and XP. Participants only: anyone else gets
+   * `null`, the same as an unknown id.
    */
   async results(battleId: string, userId: string): Promise<BattleResults | null> {
     const b = await this.pool.query<BattleRow>(`SELECT * FROM wordle_battles WHERE id = $1`, [battleId]);
@@ -624,10 +599,9 @@ export class WordleBattleService {
   // ---- playing again ----------------------------------------------------------
 
   /**
-   * A two-player rematch both asked for (the play module keeps the offers): a
-   * new battle with the same settings and both of them in it, started at once
-   * — they both chose it. Still the join rule's call: a block since, or a
-   * group one of them left, means no rematch. Asking twice gives the same one.
+   * A two-player rematch both asked for (the play module keeps the offers): a new battle with the same settings and
+   * both players, started at once. Still subject to the join rule (a block since, or a group one of them left, means no
+   * rematch). Asking twice gives the same one.
    */
   async startPairRematch(battleId: string): Promise<NextResult> {
     const old = (await this.pool.query<BattleRow>(`SELECT * FROM wordle_battles WHERE id = $1`, [battleId])).rows[0];
@@ -690,11 +664,9 @@ export class WordleBattleService {
   }
 
   /**
-   * A bigger battle's "Play again": the host opens the next round — a new
-   * lobby, same settings, only the host in it. Everyone else sees it on their
-   * results and joins with one tap, through the join rule like any lobby;
-   * nobody is put into a game they did not choose. Asking twice gives the
-   * same round.
+   * A bigger battle's "Play again": the host opens the next round, a new lobby with the same settings and only the host
+   * in it. Others see it on their results and join through the join rule, so nobody is put in a game they did not
+   * choose. Asking twice gives the same round.
    */
   async openNextRound(hostId: string, battleId: string): Promise<NextResult> {
     const old = (await this.pool.query<BattleRow>(`SELECT * FROM wordle_battles WHERE id = $1`, [battleId])).rows[0];
@@ -767,9 +739,8 @@ export class WordleBattleService {
   }
 
   /**
-   * The host changes Rated/Friendly — in the lobby only (R2). Everyone in it
-   * sees the new badge at once (`play_changed`) and may leave, which costs
-   * nothing before the start. The choice is remembered for the host's next game.
+   * The host changes Rated/Friendly, in the lobby only (R2). Everyone sees the new badge at once (`play_changed`) and
+   * may leave at no cost before the start. The choice is remembered for the host's next game.
    */
   async setRated(battleId: string, hostId: string, rated: boolean): Promise<SetRatedResult> {
     const now = this.now();
@@ -799,9 +770,8 @@ export class WordleBattleService {
   }
 
   /**
-   * Run on a timer: close lobbies nobody started, and end battles that are
-   * over — out of time, or with nobody still racing around — when nobody's
-   * poll got there first.
+   * On a timer: close unstarted lobbies and end battles that are over (out of time, or nobody still racing around) when
+   * no poll got there first.
    */
   async sweep(): Promise<void> {
     const now = this.now();
@@ -822,9 +792,8 @@ export class WordleBattleService {
   // ---- internals ------------------------------------------------------------
 
   /**
-   * What a member's read does besides reading: note they are here (at most
-   * every 15 s), end the battle if it is over, close the lobby if it idled
-   * out. A plain read first, so the common case takes no lock.
+   * What a member's read does besides reading: note they are here (at most every 15 s), end the battle if it is over,
+   * close the lobby if it idled out. A plain read first, so the common case takes no lock.
    */
   private async settle(battle: BattleRow, userId: string, now: Date): Promise<void> {
     if (battle.status === 'lobby' && lobbyIdle(battle, now)) {
@@ -873,9 +842,8 @@ export class WordleBattleService {
   }
 
   /**
-   * Rank the finished match, award placement XP idempotently, close the battle.
-   * Anyone still 'playing' — away, or out of time — finishes where they are,
-   * unsolved.
+   * Rank the finished match, award placement XP idempotently and close the battle. Anyone still 'playing' (away or out
+   * of time) finishes unsolved where they are.
    */
   private async finalize(client: pg.PoolClient, battleId: string, now: Date): Promise<void> {
     await client.query(
@@ -958,9 +926,8 @@ export class WordleBattleService {
   }
 
   /**
-   * The words a next round should not set: every word of the series so far
-   * (this battle and the rematches before it), and the latest Peyvok words of
-   * everyone who played in it (word-pool.ts `recentTargets`).
+   * Words the next round should not set: every word of the series so far (this battle and earlier rematches) and the
+   * latest Peyvok words of everyone in it (word-pool.ts `recentTargets`).
    */
   private async seenInSeries(battleId: string): Promise<Set<string>> {
     const chain = await rematchChain(this.pool, T, battleId);
@@ -975,10 +942,8 @@ export class WordleBattleService {
   }
 
   /**
-   * A random word of the difficulty, falling back to an easier tier when a
-   * band is empty, and none of `seen` while the band has others: a series of
-   * rounds used to draw with no memory, so the same word could come twice in
-   * one evening, or be the word a player had already solved that morning.
+   * A random word of the difficulty, falling back to an easier tier when a band is empty, avoiding `seen` while the
+   * band has others.
    */
   private async pickTarget(difficulty: Difficulty, seen: ReadonlySet<string> = new Set()): Promise<{ target: string; difficulty: Difficulty } | null> {
     const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];

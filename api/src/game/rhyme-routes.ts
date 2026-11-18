@@ -13,11 +13,7 @@ const guessBody = z.object({
   word: z.string().min(1).max(64),
 });
 
-/**
- * Rhyming Words — training (solo) routes (KUR-299). All authenticated. Scoring
- * is server-authoritative (#298 engine); the guess endpoint is rate-limited as
- * an anti-abuse guard.
- */
+/** Rhyme training (solo) routes. Authenticated, server-scored, and the guess endpoint is rate-limited against abuse. */
 export function registerRhymeRoutes(
   app: FastifyInstance,
   deps: { milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
@@ -25,9 +21,8 @@ export function registerRhymeRoutes(
   const rhyme = new RhymeService(app.db, deps);
 
   /**
-   * Which dialects a rhyme round is offered in: each with how many curated
-   * prompts it has, and whether that is enough (RHYME_MIN_PROMPTS). Both apps
-   * show a dialect that is not as coming soon, for training and for matches.
+   * Which dialects rhyme rounds are offered in, with their curated prompt count and whether it reaches
+   * RHYME_MIN_PROMPTS. Both apps show the others as coming soon, for training and matches.
    */
   app.get('/rhyme/availability', { config: { skipValidation: true }, preHandler: requireAuth }, async () => ({
     dialects: await rhyme.availability(),

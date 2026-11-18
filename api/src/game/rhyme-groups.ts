@@ -1,26 +1,14 @@
 /**
- * How many words the dictionary holds for each rhyme, counted in one pass.
+ * How many dictionary words share each rhyme, counted in one pass. A rhyme is decided by a word's ending (rhyme.ts), so
+ * rhyming words form a suffix group and one `GROUP BY` over the reversed headword sizes all of them:
+ * - **Kurmancî** rhymes by the rime (last vowel and what follows). The reversed headword up to its first vowel is the
+ *   reversed rime, counting perfect rhymes; the same key without the vowel is the coda, counting near ones.
+ * - **Soranî** rhymes by its last letters: two for a perfect rhyme, one for any rhyme.
  *
- * A rhyme is decided by how a word ends (rhyme.ts), so the words rhyming
- * with W are a suffix group and one `GROUP BY` over the reversed headword
- * sizes all of them at once:
+ * The work is the same for one prompt as for fifty: a single scan even over hundreds of thousands of rows.
  *
- * - **Kurmancî** rhymes by the rime, the last vowel and what follows it. The
- *   reversed headword up to and including its first vowel *is* the reversed
- *   rime, so grouping by that counts every word's perfect rhymes, and the
- *   same key without its vowel is the coda, which counts the near ones.
- * - **Soranî** rhymes by its last letters: the last two for a perfect rhyme,
- *   the last one for any rhyme at all.
- *
- * That is the difference between this and comparing a prompt against every
- * word: the work is the same for one prompt as for fifty, and it does not grow
- * when a page shows more. Over 447,000 dictionary rows it is a single scan.
- *
- * The counts are over the dictionary of the dialect rather than the game
- * pool, because that is what a player may answer with. The pool is what the
- * game *asks*, which is a different set and a different question. They count
- * every entry, inflected forms included, which a round does not take, so they
- * are an upper bound on what a round accepts.
+ * Counts are over the dialect's dictionary (what players may answer with), not the game pool, and include inflected
+ * forms a round does not take, so they are an upper bound.
  */
 import type { FastifyInstance } from 'fastify';
 import { classifyRhyme, KURMANCI_VOWELS, PERFECT_FROM, rhymeKey, rhymePrefix, rimeOf, type Dialect } from './rhyme.js';
@@ -31,16 +19,11 @@ export interface RhymeCounts {
 }
 
 /**
- * The counts again, with a curator's rulings applied.
+ * The counts with a curator's rulings applied. A ruling moves one word between buckets, so counts are adjusted by the
+ * few decisions per prompt rather than recomputed.
  *
- * A ruling moves one word between the buckets the endings put it in, so the
- * grouped counts are adjusted by the decisions rather than recomputed from
- * them — there are only ever a handful per prompt, against a group that may
- * hold forty thousand.
- *
- * `ruledOut` counts only the rulings that took something away: a word the
- * endings accepted and a curator did not. A ruling that agrees with the
- * endings changes nothing and is not a decision anybody needs to see.
+ * `ruledOut` counts only rulings that removed a word the endings accepted; a ruling agreeing with the endings changes
+ * nothing.
  */
 export function applyRulings(
   headword: string,
@@ -64,11 +47,8 @@ export function applyRulings(
 
 export interface RhymeGroupSizes {
   /**
-   * What rhymes with `headword`, discounting the word itself.
-   *
-   * `selves` is how many dictionary rows carry this same normalized headword —
-   * a word never rhymes with itself, and a grouped count cannot tell which row
-   * it is looking at.
+   * What rhymes with `headword`, excluding the word itself. `selves` is how many dictionary rows share this normalized
+   * headword, since a grouped count cannot tell which row it is.
    */
   countsFor(headword: string, selves: number): RhymeCounts;
   /** how many distinct endings there are — a scale check for the caller */
@@ -76,12 +56,8 @@ export interface RhymeGroupSizes {
 }
 
 /**
- * How long the sizes are reused for.
- *
- * The pass is one sequential scan — 364ms over 450,000 rows — and the admin
- * coverage page runs it on every search. A word added in the meantime moves a
- * count by one in a group of tens of thousands, so a curator cannot see the
- * staleness; the delay on every keystroke they could.
+ * How long the sizes are reused. The pass is one sequential scan (about 364 ms over 450,000 rows) and the admin
+ * coverage page runs it on every search; a minute's staleness moves a count by one in groups of tens of thousands.
  */
 const GROUPS_CACHE_TTL_SECONDS = 60;
 
@@ -95,9 +71,8 @@ const REVERSED_RIME_SQL = `substring(rhyme_key from '^[^${[...KURMANCI_VOWELS].j
 const less = (n: number | undefined, selves: number): number => Math.max(0, (n ?? 0) - selves);
 
 /**
- * One row per ending, with how many words share it. A dictionary has on the
- * order of a thousand such endings, so the result is small however large the
- * dictionary is.
+ * One row per ending with how many words share it. There are on the order of a thousand endings, so the result stays
+ * small.
  */
 export async function rhymeGroupSizes(app: FastifyInstance, dialect: Dialect = 'kurmanci'): Promise<RhymeGroupSizes> {
   return dialect === 'sorani' ? soraniGroups(app) : kurmanciGroups(app);
@@ -165,9 +140,8 @@ async function soraniGroups(app: FastifyInstance): Promise<RhymeGroupSizes> {
       if (one === null) return { perfect: 0, near: 0 };
       const anyRhyme = less(byOne.get(one), selves);
       /*
-       * A word too short to have two final letters has no perfect rhymes at
-       * all. Falling back to its one-letter group here would have counted every
-       * word ending in that letter as a perfect rhyme for it.
+       * A word too short for two final letters has no perfect rhymes; its one-letter group would wrongly count every
+       * word ending in that letter.
        */
       const perfect = two === null ? 0 : less(byTwo.get(two), selves);
       return { perfect, near: Math.max(0, anyRhyme - perfect) };
