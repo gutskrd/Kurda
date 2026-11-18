@@ -67,7 +67,7 @@ export function LeagueLine(): React.JSX.Element | null {
 
   return (
     <PressableScale
-      onPress={() => navigation.navigate('League')}
+      onPress={() => navigation.navigate('Rankings', { board: 'xp', span: 'week' })}
       accessibilityRole="button"
       accessibilityLabel={`${tier && !personal ? leagueLabel(t, tier) : title}. ${sub}. ${goal}`}
       style={[styles.row, { backgroundColor: colors.surface, flexDirection: dir.row }]}

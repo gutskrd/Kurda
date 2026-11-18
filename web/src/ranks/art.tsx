@@ -7,8 +7,6 @@ import {
   dayMedalSvg,
   hasBadgeArt,
   leagueEmblemSvg,
-  placementEmblemSvg,
-  rankEmblemSvg,
   seasonFrameShineSvg,
   seasonFrameSvg,
   streakMedalSvg,
@@ -16,10 +14,8 @@ import {
   SEASON_FRAME_SHINE,
   type ArtBadgeTier,
   type DayMedal,
-  type Division,
   type LeagueTier,
   type RankTier,
-  type SeasonName,
 } from '@kurda/shared';
 import { useArtOverride } from '../art/overrides';
 
@@ -70,39 +66,6 @@ function Shine({ svg, className }: { svg: string; className: string }): React.JS
   return <span className={className} aria-hidden="true" dangerouslySetInnerHTML={useMarkup(svg)} />;
 }
 
-export function RankEmblem({
-  tier,
-  division,
-  season,
-  size = 96,
-  title,
-  className,
-}: {
-  tier: RankTier;
-  division?: Division | null;
-  season?: { name: SeasonName; year: number };
-  size?: number;
-  title: string;
-  className?: string;
-}): React.JSX.Element {
-  const id = useArtId();
-  // One picture for the tier, whatever the division or season.
-  const picture = useArtOverride('rank', tier);
-  const svg = useMemo(
-    () => (picture ? null : rankEmblemSvg({ tier, division: division ?? undefined, season, size, title, idPrefix: id })),
-    [picture, tier, division, season, size, title, id],
-  );
-  const cls = `art art-rank is-${tier}${className ? ` ${className}` : ''}`;
-  if (picture) {
-    return (
-      <span className={cls}>
-        <Picture src={picture} size={size} title={title} />
-      </span>
-    );
-  }
-  return <Svg svg={svg ?? ''} className={cls} />;
-}
-
 /**
  * A kept streak's medal, the gold pentagon with its laurel (shared art/medals.ts). `unlit` is the grey version shown
  * before today's lesson, which the streak card opens on under the gold one.
@@ -118,13 +81,6 @@ export function DayMedalArt({ kind, size = 36, title }: { kind: DayMedal; size?:
   const id = useArtId();
   const svg = useMemo(() => dayMedalSvg({ kind, size, title, idPrefix: id }), [kind, size, title, id]);
   return <Svg svg={svg} className={`art art-medal is-${kind}`} />;
-}
-
-export function PlacementEmblem({ done, size = 96, title }: { done: number; size?: number; title: string }): React.JSX.Element {
-  const id = useArtId();
-  const clamped = Math.max(0, Math.min(5, Math.floor(done)));
-  const svg = useMemo(() => placementEmblemSvg({ done: clamped, size, title, idPrefix: id }), [clamped, size, title, id]);
-  return <Svg svg={svg} className="art art-rank is-placing" />;
 }
 
 /**

@@ -5,7 +5,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
-import { badgeDef, type BadgeUnlockedEvent } from '@kurda/shared';
+import { BADGES, badgeDef, type BadgeUnlockedEvent } from '@kurda/shared';
 import { BadgeService, CATALOGUE_VERSION, profileShowcase, type BadgeNotices } from './service.js';
 import { addXp, makeLearner, removeLearners, type LearnerOptions, type TestLearner } from '../test/progress.js';
 import { befriend } from '../test/social.js';
@@ -812,85 +812,39 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     });
   });
 
-  describe('ranked (from the ranks module’s events)', () => {
-    it('records a rated game once, its tier and peak, and Kewê çiyê for beating a player two tiers up', async () => {
-      const me = await counted();
-      const strong = await counted();
-      const event = {
-        game: 'wordle-battle' as const,
-        gameRef: await uuid(),
-        seasonId: '2026-Q4',
-        players: [
-          { userId: me.id, place: 1, left: false, tierBefore: 0, tierAfter: 1, placementDone: true, beatTierGap: 2 },
-          { userId: strong.id, place: 2, left: false, tierBefore: 2, tierAfter: 2, placementDone: true, beatTierGap: 0 },
-        ],
-      };
-      await badges.onRatedGameFinished(event);
-      await badges.onRatedGameFinished(event); // a retry
-      const rows = await pool.query(`SELECT 1 FROM badge_rated_games WHERE game_ref = $1`, [event.gameRef]);
-      expect(rows.rowCount).toBe(2);
-      expect(await tierOf(me.id, 'kewe-ciye')).toBe(1);
-      expect(await tierOf(me.id, 'cihgirti')).toBe(1);
-      expect(await tierOf(me.id, 'rank-dest')).toBe(1);
-      expect(await tierOf(me.id, 'rank-gir')).toBe(1);
-      expect(await tierOf(me.id, 'rank-zozan')).toBe(0);
-      expect(await tierOf(strong.id, 'kewe-ciye')).toBe(0);
-      expect(await tierOf(strong.id, 'rank-zozan')).toBe(1);
-    });
-
-    it('a player who walked out is no Kewê çiyê, whatever the gap', async () => {
-      // The ranks engine counts no gap over a player who walked out, and a leaver's own game never counts.
-      const me = await counted();
-      const strong = await counted();
-      await badges.onRatedGameFinished({
-        game: 'rhyme-match',
-        gameRef: await uuid(),
-        seasonId: '2026-Q4',
-        players: [
-          { userId: me.id, place: 1, left: false, tierBefore: 0, tierAfter: 0, placementDone: true, beatTierGap: 0 },
-          { userId: strong.id, place: 2, left: true, tierBefore: 2, tierAfter: 2, placementDone: true, beatTierGap: 3 },
-        ],
-      });
-      expect(await tierOf(me.id, 'kewe-ciye')).toBe(0);
-      expect(await tierOf(strong.id, 'kewe-ciye')).toBe(0);
-    });
-
-    it('Hilkişer for ten rated games in a season, Dilpak for fair games since the last upheld report, Stêrk at a season’s close', async () => {
+  describe('retired with game ranks', () => {
+    it('lists a retired badge only for those who earned it, its ladder ending at the tier they reached', async () => {
       const me = await counted();
       const other = await counted();
-      for (let i = 0; i < 50; i++) {
-        await badges.onRatedGameFinished({
-          game: 'stories',
-          gameRef: await uuid(),
-          seasonId: '2026-Q3',
-          finishedAt: new Date(Date.now() - (60 - i) * 60_000),
-          players: [
-            { userId: me.id, place: 1, left: false, tierBefore: null, tierAfter: null, placementDone: false, beatTierGap: 0 },
-            { userId: other.id, place: 2, left: i % 2 === 0, tierBefore: null, tierAfter: null, placementDone: false, beatTierGap: 0 },
-          ],
-        });
-      }
-      expect(await tierOf(me.id, 'hilkiser')).toBe(1);
-      expect(await tierOf(me.id, 'dilpak')).toBe(1);
-      expect(await progressOf(other.id, 'dilpak')).toBe(25);
-      expect(await tierOf(me.id, 'cihgirti')).toBe(0); // never finished placing
-
-      await badges.onSeasonClosed({
-        seasonId: '2026-Q3',
-        results: [{ userId: me.id, game: 'stories', peakTier: 5, ratedGames: 50 }],
-      });
-      expect(await tierOf(me.id, 'rank-sterk')).toBe(1);
-      expect(await tierOf(me.id, 'cihgirti')).toBe(1);
-
-      // a report upheld against the other starts their fair-play count again
       await pool.query(
-        `INSERT INTO sanctions (user_id, kind, policy, statement, origin) VALUES ($1, 'warning', 'harassment', 'x', 'moderator')`,
-        [other.id],
+        `INSERT INTO user_badges (user_id, badge_key, tier, progress, earned_at, tier_earned_at)
+         VALUES ($1, 'rank-gir', 1, 2, now(), ARRAY[now()]), ($1, 'dilpak', 2, 160, now(), ARRAY[now(), now()])`,
+        [me.id],
       );
-      const fair = await badges.evaluate(other.id, ['dilpak']);
-      expect(fair).toEqual([]);
-      // progress never falls, but nothing more is counted until new fair games
-      expect(await progressOf(other.id, 'dilpak')).toBe(25);
+      const mine = await badges.list(me.id);
+      const gir = mine.badges.find((b) => b.key === 'rank-gir')!;
+      expect(gir).toMatchObject({ tier: 1, tierCount: 1, thresholds: [1], next: null });
+      expect(mine.badges.find((b) => b.key === 'dilpak')).toMatchObject({ tier: 2, tierCount: 2, thresholds: [50, 150], next: null });
+      expect(mine.badges.find((b) => b.key === 'rank-dest')).toBeUndefined();
+      // the retired secret is no longer one to find
+      expect(mine.badges.find((b) => b.key === 'kewe-ciye')).toBeUndefined();
+      expect(mine.secretsTotal).toBe(BADGES.filter((b) => b.secret && !b.retired).length);
+
+      const theirs = await badges.list(other.id);
+      expect(theirs.badges.filter((b) => b.family === 'ranked')).toEqual([]);
+      expect(theirs.badges.find((b) => b.key === 'dilpak')).toBeUndefined();
+    });
+
+    it('still counts the ranked history kept from rated play for a learner counted for the first time', async () => {
+      const p = await learner();
+      await pool.query(
+        `INSERT INTO badge_rated_games (user_id, game, game_ref, season_id, finished_at, place, players, placement_done, tier_after, beat_higher_by)
+         VALUES ($1, 'wordle-battle', $2, '2026-Q3', now() - interval '40 days', 1, 2, true, 1, 2)`,
+        [p.id, await uuid()],
+      );
+      const list = await badges.list(p.id);
+      expect(list.badges.find((b) => b.key === 'cihgirti')?.tier).toBe(1);
+      expect(list.badges.find((b) => b.key === 'kewe-ciye')?.tier).toBe(1);
     });
   });
 
@@ -958,14 +912,16 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       const secret = page.badges.find((b) => b.key === 'tire-rast')!;
       expect(secret).toMatchObject({ hidden: true, hintKey: null, thresholds: [], progress: 0 });
       expect(page.secretsFound).toBe(0);
-      expect(page.secretsTotal).toBe(10);
+      // ten secrets, one of them retired with game ranks
+      expect(page.secretsTotal).toBe(9);
       await race(p.id, { wpm: 30, accuracy: 1, errors: 0 });
       await badges.recordSoloGame(p.id);
       page = await badges.list(p.id);
       expect(page.secretsFound).toBe(1);
       expect(page.badges.find((b) => b.key === 'deste-zerin')).toMatchObject({ hidden: false, tier: 1, tierKey: 'zer' });
       expect(page.badges.find((b) => b.key === 'tire-rast')).toMatchObject({ hidden: true, hintKey: 'badges.tire-rast.hint' });
-      expect(page.badges).toHaveLength(62);
+      // the catalogue less the ten retired with game ranks, none of them earned here
+      expect(page.badges).toHaveLength(52);
       expect(page.monthlyChallenge.goal).toBeGreaterThanOrEqual(8);
     });
 

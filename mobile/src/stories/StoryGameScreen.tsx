@@ -15,7 +15,6 @@ import { spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useGameStory } from './game/useGameStory';
 import { Lobby } from './game/Lobby';
-import { RatedPill } from '../ranks/Rated';
 import { Question } from './game/Question';
 import { Reading } from './game/Reading';
 import { Results } from './game/Results';
@@ -69,7 +68,7 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
       </>
     );
   } else if (view.status === 'lobby') {
-    body = <Lobby view={view} apply={game.apply} refresh={game.refresh} onLeft={onExit} />;
+    body = <Lobby view={view} apply={game.apply} onLeft={onExit} />;
   } else if (view.status === 'reading') {
     body = <Reading view={view} story={story} apply={game.apply} serverNow={game.serverNow} onGloss={setGloss} />;
   } else if (view.status === 'question') {
@@ -109,10 +108,6 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
         </Text>
       ) : null}
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        {/* A game with others says what it is played for, once past the lobby. */}
-        {view && view.mode !== 'solo' && view.rated && view.status !== 'lobby' && view.status !== 'finished' && view.status !== 'cancelled' ? (
-          <RatedPill rated={view.rated.counts ?? view.rated.rated} small />
-        ) : null}
         {body}
       </ScrollView>
       {region}

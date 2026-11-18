@@ -4,7 +4,6 @@ import {
   type AdminFeedbackSummary,
   type AlphabetClip,
   type ModerationSummary,
-  type SuspiciousPair,
 } from '@kurda/shared';
 import { api } from '../api';
 import { useAuth } from '../auth';
@@ -60,7 +59,7 @@ export function Dashboard(): React.JSX.Element {
         bots={can('antibot')}
         approvals={can('approvals')}
       />
-      {(can('leagues') || can('ranks')) && <RanksPanel leagues={can('leagues')} ranks={can('ranks')} />}
+      {can('leagues') && <LeaguesPanel />}
       {can('audit') && <RecentAudit />}
     </div>
   );
@@ -330,48 +329,32 @@ function Waiting({
   );
 }
 
-/** Whether the weekly league runs went through (a failed settle promotes nobody), and rating pairs worth a look. */
+/** Whether the weekly league runs went through: a failed settle promotes nobody. */
 const groupsThisWeek = (n: number): string => `${n.toLocaleString()} ${n === 1 ? 'group' : 'groups'} this week`;
 
-function RanksPanel({ leagues, ranks }: { leagues: boolean; ranks: boolean }): React.JSX.Element {
-  const week = useLoad(() => (leagues ? api<LeagueOverview>('/admin/leagues') : Promise.resolve(null)), [leagues]);
-  const pairs = useLoad(() => (ranks ? api<{ pairs: SuspiciousPair[] }>('/admin/ranks/suspicious-pairs') : Promise.resolve(null)), [ranks]);
+function LeaguesPanel(): React.JSX.Element {
+  const week = useLoad(() => api<LeagueOverview>('/admin/leagues'), []);
   const settle = week.data ? runState(week.data.settle) : null;
   const merge = week.data ? runState(week.data.merge) : null;
-  const strong = pairs.data ? pairs.data.pairs.filter((p) => p.score >= 5).length : 0;
   return (
-    <Section title="Ranks and leagues">
+    <Section title="Leagues">
       <div className="stats is-flat">
-        {leagues && (
-          <>
-            <Stat
-              icon="waves"
-              label="This week’s settle"
-              value={week.error ? '—' : settle ? settle.label : '…'}
-              tone={settle?.tone === 'bad' || settle?.tone === 'warn' ? settle.tone : 'neutral'}
-              hint={week.data?.settle?.finishedAt ? `Finished ${relativeTime(new Date(week.data.settle.finishedAt))}` : 'Runs Monday 00:00 UTC'}
-              href="#/leagues"
-            />
-            <Stat
-              icon="waves"
-              label="Wednesday merge"
-              value={week.error ? '—' : merge ? merge.label : '…'}
-              tone={merge?.tone === 'bad' || merge?.tone === 'warn' ? merge.tone : 'neutral'}
-              hint={week.data ? groupsThisWeek(week.data.groups.filter((g) => !g.mergedInto).length) : undefined}
-              href="#/leagues"
-            />
-          </>
-        )}
-        {ranks && (
-          <Stat
-            icon="mountain"
-            label="Rating pairs to check"
-            value={count(pairs, (d) => d!.pairs.length)}
-            tone={strong > 0 ? 'warn' : 'neutral'}
-            hint={pairs.data ? (strong > 0 ? `${strong} with strong signals` : 'Signals only: nothing acts by itself') : undefined}
-            href="#/ranks/pairs"
-          />
-        )}
+        <Stat
+          icon="waves"
+          label="This week’s settle"
+          value={week.error ? '—' : settle ? settle.label : '…'}
+          tone={settle?.tone === 'bad' || settle?.tone === 'warn' ? settle.tone : 'neutral'}
+          hint={week.data?.settle?.finishedAt ? `Finished ${relativeTime(new Date(week.data.settle.finishedAt))}` : 'Runs Monday 00:00 UTC'}
+          href="#/leagues"
+        />
+        <Stat
+          icon="waves"
+          label="Wednesday merge"
+          value={week.error ? '—' : merge ? merge.label : '…'}
+          tone={merge?.tone === 'bad' || merge?.tone === 'warn' ? merge.tone : 'neutral'}
+          hint={week.data ? groupsThisWeek(week.data.groups.filter((g) => !g.mergedInto).length) : undefined}
+          href="#/leagues"
+        />
       </div>
     </Section>
   );

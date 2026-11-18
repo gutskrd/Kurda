@@ -98,14 +98,6 @@ describe('what is behind the page on screen', () => {
     expect(stepsBack('/app/games/peyvok-battle?id=b1')).toBeNull();
   });
 
-  it('leaves the ranks in one step, however many games’ ranks were looked at', () => {
-    walk('/app/games', '/app/ranks/peyvok', '/app/ranks/rhyme', '/app/ranks/race');
-    expect(stepsBack('/app/ranks/race')).toBe(-3);
-    // the season opened from the ranks is another page: one step back is the ranks it was opened from
-    walk('/app/games', '/app/ranks/peyvok', '/app/ranks/rhyme', '/app/season');
-    expect(stepsBack('/app/season')).toBe(-1);
-  });
-
   it('still undoes a step a page added on purpose: a word opened in Search goes back to the results', () => {
     walk('/app', '/app/search?q=av', '/app/search?q=av&type=words&entry=e1');
     expect(stepsBack('/app/search?q=av&type=words&entry=e1')).toBe(-1);

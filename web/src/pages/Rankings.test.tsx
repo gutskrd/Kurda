@@ -7,6 +7,7 @@ import { en } from '../i18n/en';
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  localStorage.clear();
 });
 
 const BOARD = {
@@ -41,42 +42,93 @@ const RESTING = {
   recentWeeks: [],
 };
 
+/** Fourth of twenty in Çem, the goal not met yet. */
+const IN_GROUP = { ...RESTING, joined: true, tier: 'cem', weeklyXp: 180, rank: 4, groupSize: 20, promoteCount: 5, demoteCount: 3 };
+
+/** Signed in as `me`, the rest answered from `routes` (matched by a part of the address). */
+function signedIn(routes: Record<string, unknown>): ReturnType<typeof vi.fn> {
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  const fetch = vi.fn(
+    routedFetch({ ...routes, '/me': { user: { id: 'me', username: 'ada', emailVerified: true } } }),
+  );
+  vi.stubGlobal('fetch', fetch);
+  return fetch;
+}
+
+const asked = (fetch: ReturnType<typeof vi.fn>, part: string): boolean => fetch.mock.calls.some(([url]) => String(url).includes(part));
+
 describe('Rankings', () => {
-  it('opens on the league, as its own page, with the leaderboard one tab away', async () => {
-    const fetch = vi.fn(routedFetch({ '/me/league': RESTING, '/leaderboards/': BOARD }));
+  it('opens on XP this week, with your league first as a card that opens the whole league, then the board', async () => {
+    const fetch = signedIn({ '/me/league': IN_GROUP, '/leaderboards/': BOARD });
+    renderApp(<Rankings />, ['/app/rankings']);
+    const rankBy = screen.getByRole('group', { name: en['rankings.rankBy'] });
+    expect(within(rankBy).getByRole('radio', { name: en['rankings.board.xp'] })).toBeChecked();
+    expect(screen.getByRole('radio', { name: en['rankings.span.week'] })).toBeChecked();
+    const card = await screen.findByRole('link', { name: /Çem League/ });
+    expect(card).toHaveAttribute('href', '/app/rankings/league');
+    expect(card.textContent).toContain('Place 4 of 20 · 180 XP');
+    expect(card.textContent).toContain(en['leagues.card.up'].replace('{count}', '5'));
+    expect(card.textContent).toContain(en['leagues.card.down'].replace('{count}', '3'));
+    expect(await screen.findByText('rojda')).toBeInTheDocument();
+    expect(asked(fetch, '/leaderboards/weekly_xp?scope=global&limit=25&offset=0')).toBe(true);
+    expect(screen.getByText(en['rankings.board.weeklyXpBlurb'])).toBeInTheDocument();
+  });
+
+  it('says the week starts with a lesson before the first one, and leaves the league out for a visitor', async () => {
+    signedIn({ '/me/league': RESTING, '/leaderboards/': BOARD });
+    const { unmount } = renderApp(<Rankings />, ['/app/rankings']);
+    const card = await screen.findByRole('link', { name: /Kanî League/ });
+    expect(card.textContent).toContain(en['leagues.resting.title']);
+    unmount();
+    localStorage.clear();
+    const fetch = vi.fn(routedFetch({ '/leaderboards/': BOARD }));
     vi.stubGlobal('fetch', fetch);
     renderApp(<Rankings />, ['/app/rankings']);
-    const league = screen.getByRole('tab', { name: en['rankings.tab.league'] });
-    expect(league).toHaveAttribute('aria-selected', 'true');
-    expect(await screen.findByRole('heading', { name: en['leagues.resting.title'] })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: en['leagues.leave'] })).toBeInTheDocument();
-    // The leaderboard is not asked for until it is looked at.
-    expect(fetch.mock.calls.some(([url]) => String(url).includes('/leaderboards/'))).toBe(false);
-    expect(screen.queryByText('rojda')).toBeNull();
+    expect(await screen.findByText('rojda')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /League/ })).toBeNull();
+    expect(asked(fetch, '/me/league')).toBe(false);
   });
 
-  it('shows everyone on the Leaderboard tab', async () => {
-    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me/league': RESTING, '/leaderboards/': BOARD })));
+  it('switches to all-time XP, a board of its own without the league, and keeps the choice in the address', async () => {
+    const fetch = signedIn({ '/me/league': IN_GROUP, '/leaderboards/all_time_xp': { ...BOARD, type: 'all_time_xp', depth: 1000 }, '/leaderboards/': BOARD });
     renderApp(<Rankings />, ['/app/rankings']);
-    await userEvent.click(screen.getByRole('tab', { name: en['rankings.tab.board'] }));
-    expect(screen.getByRole('tab', { name: en['rankings.tab.board'] })).toHaveAttribute('aria-selected', 'true');
-    expect(await screen.findByText('rojda')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: en['rankings.scope.global'] })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: en['leagues.leave'] })).toBeNull();
+    await screen.findByRole('link', { name: /Çem League/ });
+    await userEvent.click(screen.getByRole('radio', { name: en['rankings.span.all'] }));
+    expect(screen.getByRole('radio', { name: en['rankings.span.all'] })).toBeChecked();
+    expect(await screen.findByText(en['rankings.board.allTimeXpBlurb'])).toBeInTheDocument();
+    expect(asked(fetch, '/leaderboards/all_time_xp?scope=global&limit=25&offset=0')).toBe(true);
+    expect(screen.queryByRole('link', { name: /Çem League/ })).toBeNull();
+    expect(await screen.findByRole('list', { name: en['rankings.board.allTimeXp'] })).toBeInTheDocument();
   });
 
-  it('opens on the leaderboard from a link to it, and moves between the tabs with the arrow keys', async () => {
-    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me/league': RESTING, '/leaderboards/': BOARD })));
+  it('opens on all time from a link to it, and an old link to the leaderboard tab lands on XP this week', async () => {
+    signedIn({ '/me/league': IN_GROUP, '/leaderboards/': BOARD });
+    const { unmount } = renderApp(<Rankings />, ['/app/rankings?span=all']);
+    expect(screen.getByRole('radio', { name: en['rankings.span.all'] })).toBeChecked();
+    unmount();
     renderApp(<Rankings />, ['/app/rankings?tab=board']);
-    const board = screen.getByRole('tab', { name: en['rankings.tab.board'] });
-    expect(board).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('radio', { name: en['rankings.board.xp'] })).toBeChecked();
+    expect(screen.getByRole('radio', { name: en['rankings.span.week'] })).toBeChecked();
+  });
+
+  it('keeps your own row in view at the foot of the board while the page has not reached it', async () => {
+    signedIn({ '/me/league': IN_GROUP, '/leaderboards/': { ...BOARD, total: 40, me: { rank: 31, score: 12 } } });
+    renderApp(<Rankings />, ['/app/rankings']);
     expect(await screen.findByText('rojda')).toBeInTheDocument();
-    board.focus();
-    await userEvent.keyboard('{ArrowLeft}');
-    const league = screen.getByRole('tab', { name: en['rankings.tab.league'] });
-    expect(league).toHaveAttribute('aria-selected', 'true');
-    expect(league).toHaveFocus();
-    expect(await screen.findByRole('heading', { name: en['leagues.resting.title'] })).toBeInTheDocument();
+    const standing = document.querySelector('.rank-standing')!;
+    expect(standing.querySelector('.rank-pos')!.textContent).toBe('31');
+    expect(standing.textContent).toContain(en['games.you']);
+    // after the board, so it sits where your row would come
+    expect(document.querySelector('.rank-more')!.compareDocumentPosition(standing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('picks your own row out in place once a page holds it, with nothing pinned', async () => {
+    const board = { ...BOARD, top: [...BOARD.top, { userId: 'me', rank: 3, username: 'ada', score: 100 }], total: 3, me: { rank: 3, score: 100 } };
+    signedIn({ '/me/league': IN_GROUP, '/leaderboards/': board });
+    renderApp(<Rankings />, ['/app/rankings']);
+    expect(await screen.findByText('ada')).toBeInTheDocument();
+    expect(document.querySelector('.rank-list .rank-me')).not.toBeNull();
+    expect(document.querySelector('.rank-standing')).toBeNull();
   });
 });
 
@@ -117,9 +169,9 @@ describe('Rankings, by Zêr and Gewher', () => {
   it('switches what the board ranks, asks for that board, and ranks a tie as one place', async () => {
     const fetch = vi.fn(routedFetch({ '/me/league': RESTING, '/leaderboards/zer': ZER, '/leaderboards/weekly_xp': BOARD }));
     vi.stubGlobal('fetch', fetch);
-    renderApp(<Rankings />, ['/app/rankings?tab=board']);
+    renderApp(<Rankings />, ['/app/rankings']);
     const rankBy = screen.getByRole('group', { name: en['rankings.rankBy'] });
-    expect(within(rankBy).getByRole('radio', { name: en['rankings.board.weeklyXp'] })).toBeChecked();
+    expect(within(rankBy).getByRole('radio', { name: en['rankings.board.xp'] })).toBeChecked();
     expect(await screen.findByText('rojda')).toBeInTheDocument();
 
     await userEvent.click(within(rankBy).getByRole('radio', { name: en['rankings.board.zer'] }));
@@ -127,6 +179,8 @@ describe('Rankings, by Zêr and Gewher', () => {
     expect(await screen.findByText('dilan')).toBeInTheDocument();
     expect(fetch.mock.calls.some(([url]) => String(url).includes('/leaderboards/zer?scope=global&limit=25&offset=0'))).toBe(true);
     expect(screen.getByText(en['rankings.board.zerBlurb'])).toBeInTheDocument();
+    // this week or all time is for XP alone
+    expect(screen.queryByRole('group', { name: en['rankings.span'] })).toBeNull();
     // Most to least, the tie sharing second, each amount with the coin beside it and its name for a screen reader.
     expect(rows(en['rankings.board.zer'])).toEqual(['1dilan900Zêr', '2azad500Zêr', '2rojin500Zêr', '4baran100Zêr']);
     const first = within(screen.getByRole('list', { name: en['rankings.board.zer'] })).getAllByRole('listitem')[0]!;
@@ -145,7 +199,7 @@ describe('Rankings, by Zêr and Gewher', () => {
       }),
     );
     vi.stubGlobal('fetch', fetch);
-    renderApp(<Rankings />, ['/app/rankings?tab=board&board=gewher']);
+    renderApp(<Rankings />, ['/app/rankings?board=gewher']);
     expect(screen.getByRole('radio', { name: en['rankings.board.gewher'] })).toBeChecked();
     expect(await screen.findByText('gem1')).toBeInTheDocument();
     expect(rows(en['rankings.board.gewher'])).toHaveLength(25);
@@ -158,10 +212,10 @@ describe('Rankings, by Zêr and Gewher', () => {
     expect(fetch.mock.calls.some(([url]) => String(url).includes('/leaderboards/weekly_xp'))).toBe(false);
   });
 
-  it('pins your own balance above a page that does not reach you, with no place when the board stops before you', async () => {
+  it('keeps your own balance in view below a page that does not reach you, with no place when the board stops before you', async () => {
     const below = { ...ZER, total: 4, depth: 1000, me: { rank: null, score: 35 } };
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/leaderboards/zer': below, '/me/league': RESTING })));
-    renderApp(<Rankings />, ['/app/rankings?tab=board&board=zer']);
+    renderApp(<Rankings />, ['/app/rankings?board=zer']);
     expect(await screen.findByText(en['rankings.notInTop'].replace('{count}', '1,000'))).toBeInTheDocument();
     const standing = document.querySelector('.rank-standing')!;
     expect(standing.textContent).toContain(en['games.you']);
@@ -179,7 +233,7 @@ describe('Rankings, by Zêr and Gewher', () => {
         return jsonResponse(200, { ...ZER, top: [], total: 0 });
       }),
     );
-    renderApp(<Rankings />, ['/app/rankings?tab=board&board=zer']);
+    renderApp(<Rankings />, ['/app/rankings?board=zer']);
     const retry = await screen.findByRole('button', { name: en['common.retry'] });
     up = true;
     await userEvent.click(retry);

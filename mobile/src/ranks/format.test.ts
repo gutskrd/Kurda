@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FRIENDLY_REASONS, RANK_REASONS, RANK_TIER_KEYS, type RankCard, type RankResult } from '@kurda/shared';
+import { FRIENDLY_REASONS, RANK_REASONS, RANK_TIER_KEYS, type RankResult } from '@kurda/shared';
 import { LOCALES, TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 import {
@@ -7,17 +7,13 @@ import {
   REASON_KEY,
   TIER_MEANING_KEY,
   TIER_NAME_KEY,
-  cardHeadline,
   celebrationOf,
   countUpValue,
-  daysLeftText,
   friendlyReasonKey,
-  nextStepText,
   rankLabel,
   rankName,
   resultEmblem,
   resultTone,
-  seasonTitle,
   signed,
   tierMeaning,
 } from './format';
@@ -100,47 +96,6 @@ describe('signed', () => {
     expect(signed(-6)).toBe('−6');
     expect(signed(0)).toBe('±0');
     expect(signed(7.6)).toBe('+8');
-  });
-});
-
-describe('the season, calmly', () => {
-  it('names the season in Kurdish and counts days, never hours', () => {
-    expect(seasonTitle(t, { name: 'payiz', year: 2026 })).toBe('Payîz 2026');
-    expect(daysLeftText(t, 78)).toBe('78 days left');
-    expect(daysLeftText(t, 1)).toBe('One day left');
-    expect(daysLeftText(t, 0)).toBe('Last day of the season');
-  });
-});
-
-describe('rank cards', () => {
-  const card = (over: Partial<RankCard> = {}): RankCard => ({
-    game: 'rhyme-match',
-    points: 412,
-    tier: 'gir',
-    division: 2,
-    placement: null,
-    provisional: false,
-    shieldGames: 0,
-    progress: { next: { tier: 'gir', division: 1 }, from: 400, to: 500, fraction: 0.12, pointsToGo: 88 },
-    ratedGames: 20,
-    wins: 11,
-    season: { id: '2026-Q4', ratedGames: 6, wins: 3, peakPoints: 430, peakTier: 'gir' },
-    bestPoints: 430,
-    resting: false,
-    lastRatedAt: null,
-    ...over,
-  });
-
-  it('shows placing until the fifth game, then the tier', () => {
-    expect(cardHeadline(card({ placement: { played: 3, of: 5 }, tier: null, division: null }))).toEqual({ kind: 'placing', played: 3, of: 5 });
-    expect(cardHeadline(card())).toEqual({ kind: 'ranked', tier: 'gir', division: 2 });
-    expect(cardHeadline(card({ tier: 'sterk', division: 1 }))).toEqual({ kind: 'ranked', tier: 'sterk', division: null });
-  });
-
-  it('says how far to the next division, and the top of the climb at Lûtke I', () => {
-    expect(nextStepText(t, card())).toBe('88 to Gir I');
-    expect(nextStepText(t, card({ tier: 'lutke', division: 1, progress: { next: null, from: 1400, to: null, fraction: 1, pointsToGo: null } }))).toBe('The top of the climb');
-    expect(nextStepText(t, card({ placement: { played: 1, of: 5 }, tier: null }))).toBeNull();
   });
 });
 

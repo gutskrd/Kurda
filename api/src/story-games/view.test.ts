@@ -39,8 +39,6 @@ function gameRow(over: Partial<GameRow> = {}): GameRow {
     text_during: 'visible',
     access: 'friends',
     chat_group_id: null,
-    rated: false,
-    rated_state: null,
     status: 'lobby',
     current_index: 0,
     phase_started_at: T,

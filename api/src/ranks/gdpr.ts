@@ -1,8 +1,10 @@
-import type { Executor } from './store.js';
+import type pg from 'pg';
+
+type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * Game Ranks in a data export (Art. 15): the player's ratings, every change with its reason, leaves and cooldowns,
- * Rated/Friendly choices, season results and rewards. Other players appear only as game ids.
+ * Game ranks in a data export (Art. 15), kept after they ended: the player's ratings, every change with its reason,
+ * leaves and cooldowns, Rated/Friendly choices, season results and rewards. Other players appear only as game ids.
  */
 export async function exportRanks(db: Executor, userId: string): Promise<Record<string, unknown>> {
   const q = async (sql: string) => (await db.query(sql, [userId])).rows;

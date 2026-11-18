@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { badgeDef, type AdminPlayerRanks, type RankCard } from '@kurda/shared';
+import { badgeDef } from '@kurda/shared';
 import { api } from '../api';
 import {
   ActionMenu,
@@ -22,113 +22,16 @@ import {
 import {
   REASON_MAX,
   badgeTierName,
-  rankLine,
   reasonProblem,
   thresholdText,
   type BadgeCatalogue,
   type UserBadges,
-  gameName,
 } from '../progress';
-import { BadgeArt, PlayerGamesTable, RankEmblem, useResetRating } from './RankParts';
+import { BadgeArt } from './RankParts';
 
 interface Person {
   id: string;
   username: string;
-}
-
-// ---- Ranks ------------------------------------------------------------------------------
-
-/**
- * The person's rank in each game, as they see it themselves (placing, the "?"
- * while still uncertain, the shield, resting), with a reset; and their latest
- * rated games, each voidable.
- */
-export function RanksTab({ user }: { user: Person }): React.JSX.Element {
-  const loaded = useLoad(() => api<AdminPlayerRanks>(`/admin/ranks/players/${encodeURIComponent(user.id)}`), [user.id]);
-  const reset = useResetRating();
-  if (loaded.error != null && !loaded.data) return <ErrorState error={loaded.error} onRetry={() => void loaded.reload()} what="game ranks" />;
-  if (!loaded.data) return <Loading rows={4} label="Loading their ranks…" />;
-  const { ranks, games } = loaded.data;
-  return (
-    <>
-      <ul className="rank-cards" aria-label="Rank per game">
-        {ranks.map((r) => (
-          <RankCardView key={r.game} card={r} onReset={() => void reset(user, r.game).then((done) => done && void loaded.reload())} />
-        ))}
-      </ul>
-      <Section title="Latest rated games" description="Their 30 latest, every game. Voiding one works out every later game of everyone it touched again." flush>
-        <PlayerGamesTable games={games} onVoided={() => void loaded.reload()} />
-      </Section>
-    </>
-  );
-}
-
-function RankCardView({ card: r, onReset }: { card: RankCard; onReset: () => void }): React.JSX.Element {
-  const played = r.ratedGames > 0 || (r.placement?.played ?? 0) > 0;
-  return (
-    <li className="card rank-card">
-      <div className="rank-card-head">
-        <RankEmblem tier={r.tier} division={r.division} placing={r.placement?.played} size={64} />
-        <div className="rank-card-title">
-          <span className="subtle">{gameName(r.game)}</span>
-          <strong>{rankLine(r.tier, r.division, r.placement)}</strong>
-          <span>
-            {r.points.toLocaleString()} points
-            {r.provisional && (
-              <span className="provisional" aria-hidden="true">
-                ?
-              </span>
-            )}
-          </span>
-        </div>
-      </div>
-      <span className="badges">
-        {/* Said in words, where it was a tooltip on the “?” that a finger never brings up. */}
-        {r.provisional && <Badge tone="neutral">Still uncertain after placement: the apps show a “?”</Badge>}
-        {r.resting && <Badge tone="neutral">Resting: shown as resting to others</Badge>}
-        {r.shieldGames > 0 && <Badge tone="info">Shield: {r.shieldGames} more {r.shieldGames === 1 ? 'game' : 'games'}</Badge>}
-      </span>
-      {r.progress && r.progress.next && (
-        <div className="meter">
-          <div className="meter-head">
-            <span>To {rankLine(r.progress.next.tier, r.progress.next.division)}</span>
-            <span className="subtle">{r.progress.pointsToGo} points to go</span>
-          </div>
-          <div className="progress" role="progressbar" aria-label={`Progress to ${rankLine(r.progress.next.tier, r.progress.next.division)}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(r.progress.fraction * 100)}>
-            <div className="progress-bar" style={{ width: `${r.progress.fraction * 100}%` }} />
-          </div>
-        </div>
-      )}
-      <dl className="facts is-compact">
-        <div>
-          <dt>Rated games</dt>
-          <dd>
-            {r.ratedGames.toLocaleString()}, {r.wins.toLocaleString()} won
-          </dd>
-        </div>
-        <div>
-          <dt>This season</dt>
-          <dd>
-            {r.season.ratedGames} games · peak {r.season.peakPoints.toLocaleString()}
-            {r.season.peakTier ? ` (${rankLine(r.season.peakTier, null)})` : ''}
-          </dd>
-        </div>
-        <div>
-          <dt>Best ever</dt>
-          <dd>{r.bestPoints.toLocaleString()} points</dd>
-        </div>
-        <div>
-          <dt>Last rated game</dt>
-          <dd>{r.lastRatedAt ? <Time value={r.lastRatedAt} /> : <span className="subtle">None</span>}</dd>
-        </div>
-      </dl>
-      <div className="rank-card-foot">
-        <Button variant="ghost" onClick={onReset} disabled={!played} title={played ? undefined : 'No rating in this game yet'}>
-          Reset rating…
-        </Button>
-      </div>
-    </li>
-  );
 }
 
 // ---- Badges -----------------------------------------------------------------------------

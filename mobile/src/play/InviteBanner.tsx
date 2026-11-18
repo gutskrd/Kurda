@@ -29,7 +29,6 @@ import { useAnnouncer } from '../stories/ui';
 import { acceptInvite, declineInvite, listInvites } from './api';
 import { applyInviteEvent, liveInvites, nextExpiry } from './invites';
 import { GAME_ICON, GAME_NAME_KEY, summaryParts } from './labels';
-import { RatedPill } from '../ranks/Rated';
 import { useInvitesQuieted } from './quietInvites';
 import { lobbyRoute } from './routes';
 import { TEAR_MS, Ticket, TicketBadge, ticketTone } from './Ticket';
@@ -397,8 +396,6 @@ function InviteCard({
                     {details}
                   </Text>
                 ) : null}
-                {/* Rated or Friendly, before you say yes. */}
-                {invite.summary.rated !== undefined ? <RatedPill rated={invite.summary.rated} small style={flow.row === 'row-reverse' ? styles.endSelf : undefined} /> : null}
               </View>
               {/* Folds it away without answering; the host hears nothing. */}
               <Pressable
@@ -497,7 +494,6 @@ const styles = StyleSheet.create({
   // The next invites' tickets: only their top edge and stub show above this one.
   behind: { position: 'absolute', height: 48, borderRadius: radii.lg, overflow: 'hidden' },
   behindStub: { position: 'absolute', top: 0, bottom: 0, width: 60 },
-  endSelf: { alignSelf: 'flex-end' },
   behindStubLeft: { left: 0 },
   behindStubRight: { right: 0 },
   pill: { borderRadius: radii.pill, maxWidth: '100%' },

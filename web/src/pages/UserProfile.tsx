@@ -153,7 +153,7 @@ export function UserProfile(): React.JSX.Element {
       progress={
         <>
           <ProfileTree tree={profile.tree} />
-          <ProfileProgress ranks={profile.ranks} badges={profile.badges} league={profile.league ?? (profile.tier ? { tier: profile.tier } : null)} />
+          <ProfileProgress badges={profile.badges} league={profile.league ?? (profile.tier ? { tier: profile.tier } : null)} />
         </>
       }
       people={<ProfileFriends userId={profile.userId} initial={friends} />}

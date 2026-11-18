@@ -76,9 +76,6 @@ import { scheduleLeagueJobs } from './jobs/league-jobs.js';
 import { progressNotices } from './notifications/progress-notices.js';
 import { LeaderboardService } from './leaderboards/service.js';
 import { registerLeaderboardRoutes } from './leaderboards/routes.js';
-import { RankService } from './ranks/service.js';
-import { RankSeasons } from './ranks/seasons.js';
-import { RankAdmin } from './ranks/admin.js';
 import { registerRankRoutes } from './ranks/routes.js';
 import { FriendService } from './friends/service.js';
 import { registerFriendRoutes } from './friends/routes.js';
@@ -424,17 +421,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const inbox = new InboxService(app.db);
     const notices = progressNotices({ inbox, push: pushService, jobs: app.jobs });
 
-    // Game Ranks: one rating per online game, Rated or Friendly. One service shared by every game's routes and the play
-    // layer, so its events (`app.ranks.events`: a rated game finished, a season closed) come from one place.
-    const ranks = new RankService(app.db, { log: app.log });
-    app.decorate('ranks', ranks);
-
     // Learning Leagues and badges. Learning XP joins the week's group; the week is settled on Monday and small groups
     // merged on Wednesday from the job queue (jobs/league-jobs.ts). Badges are counted from what happened and told
     // through the list, a realtime `badge_unlocked` (the gateway is looked up later, since it is set up further down) and
-    // one push a day; the ranked badges listen to `ranks.events` (badges/rank-hooks.ts).
+    // one push a day.
     const { xp: xpService, leagues, badges } = createProgression(app.db, {
-      ranks: ranks.events,
       gems: gemService,
       activity,
       notices,
@@ -475,15 +466,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       }
     }
 
-    // Game Ranks' seasons, routes and admin. Seasons close on the calendar quarter; the job runs every six hours and once
-    // after start, so a deploy at a quarter's turn catches up, and the close reaches the badges through `ranks.events`.
-    const rankSeasons = new RankSeasons(app.db, { wallet: new WalletService(app.db), events: ranks.events, log: app.log });
-    registerRankRoutes(app, { ranks, seasons: rankSeasons, admin: new RankAdmin(app.db) });
-    const closeSeasons = () =>
-      void rankSeasons.closeDue().catch((err) => app.log.warn({ err }, 'rank season close failed'));
-    const seasonSweep = setInterval(closeSeasons, 6 * 60 * 60 * 1000);
-    if (config.NODE_ENV !== 'test') app.addHook('onReady', async () => closeSeasons());
-    app.addHook('onClose', async () => clearInterval(seasonSweep));
+    // Game ranks and seasons have ended; their routes answer older phone builds with empty shapes.
+    registerRankRoutes(app);
 
     // Monthly partitions created ahead of time so inserts always have a home. Runs in the API process and is idempotent,
     // so several replicas are harmless. Retention is off by default; nothing is deleted automatically.
@@ -516,7 +500,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const moderationKit = registerModeration(app, config, options.moderation);
     // Copyright notices from the public /copyright page land in the same queue.
     registerCopyright(app, config, options.copyright);
-    registerSocialRoutes(app, new SocialService(app.db, friends, ranks), { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });
+    registerSocialRoutes(app, new SocialService(app.db, friends), { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });
     registerActivityRoutes(app, activity);
     // one wall for stories, poems and pictures — public, like the pages it replaces
     registerFeedRoutes(app);
@@ -625,12 +609,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       (game, lobbyId) => void badges.onGameFinished(game, lobbyId).catch((err) => app.log.warn({ err }, 'game badges failed')),
     );
     // Peyvok Battle: server-authoritative and safe to poll.
-    registerWordleBattleRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
+    registerWordleBattleRoutes(app, { xp: xpService, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
     registerRhymeRoutes(app, { milestones: badges });
     // typing race (solo time trial) over admin-curated texts
     registerRaceRoutes(app, { milestones: badges });
     // Rhyme 1v1 and free-for-all: server-authoritative and safe to poll.
-    registerRhymeMatchRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
+    registerRhymeMatchRoutes(app, { xp: xpService, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
 
     // Leaderboards: Redis sorted sets rebuilt from Postgres when read and a few minutes old, not on a timer.
     const leaderboards = new LeaderboardService(app.db, app.redis, {
@@ -833,13 +817,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerChatUnreadRoute(app, chat, groupChat);
 
     // Story games: Postgres holds the game, and long-polls are woken across instances over the room bus.
-    const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: badges, friends, ranks });
+    const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: badges, friends });
     // The multiplayer learning games: one engine and set of tables, long-polls woken over the bus, free text through the
     // chat pipeline, and `play_changed` on every change.
     const multiplayer = registerMultiplayerRoutes(app, {
       bus,
       xp: xpService,
-      ranks,
       freeText: { moderation, trust, aiMod },
       onChange: (game, id, o) => playEvents.changed(game, id, o),
       friends,
@@ -889,7 +872,6 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       chat: new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
       groupChat,
       stories: storyGames,
-      ranks,
       multiplayer,
     });
 
@@ -932,8 +914,6 @@ declare module 'fastify' {
     storage?: MediaStorage;
     /** Present when DATABASE_URL is configured. */
     realtime: RealtimeGateway;
-    /** Game Ranks, when a database is configured; `ranks.events` reports rated games finishing and seasons closing (ranks/events.ts). */
-    ranks: RankService;
   }
   interface FastifyRequest {
     /** Set by the auth middleware for valid, active sessions. */

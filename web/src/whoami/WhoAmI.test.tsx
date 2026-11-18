@@ -109,7 +109,7 @@ describe('Ez kî me?, the start', () => {
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/play/lobbies'))?.body).toEqual({
         game: 'who-am-i',
-        settings: { dialect: 'kmr', difficulty: 'beginner', minutes: 15, answers: 4, rated: false },
+        settings: { dialect: 'kmr', difficulty: 'beginner', minutes: 15, answers: 4 },
       }),
     );
     await waitFor(() => expect(where()).toBe('/app/games/who-am-i?id=r9'));

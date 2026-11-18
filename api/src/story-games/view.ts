@@ -17,7 +17,6 @@ import {
   type TextDuring,
   type TimerSeconds,
 } from '@kurda/shared';
-import { ratedStateOf } from '../ranks/games.js';
 import type { PlannedQuestion, StorySnapshot } from './plan.js';
 import { controllerOf, placesOf, questionDeadline, type PhaseGame, type PhasePlayer } from './logic.js';
 
@@ -36,9 +35,6 @@ export interface GameRow {
   text_during: TextDuring;
   access: GameAccess;
   chat_group_id: string | null;
-  /** Game Ranks: the host's Rated/Friendly choice, and what the start of the questions decided */
-  rated: boolean;
-  rated_state: string | null;
   status: StoryGameStatus;
   current_index: number;
   phase_started_at: Date | null;
@@ -327,6 +323,5 @@ export function renderView(input: ViewInput): StoryGameView {
     reveal,
     results,
     nextGameId: game.next_game_id,
-    rated: ratedStateOf(game),
   };
 }

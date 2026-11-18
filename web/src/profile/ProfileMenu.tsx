@@ -9,7 +9,7 @@ import { keepInView } from '../reports/keepInView';
 import { shareProfileLink } from './share';
 
 /**
- * The owner's menu in the profile banner's corner: shop, saved, friends, badges and ranks, and settings. Reports and
+ * The owner's menu in the profile banner's corner: shop, saved, friends, badges and rankings, and settings. Reports and
  * account standing stay in Settings. It is a disclosure of ordinary links rather than an ARIA menu, since every entry
  * is a page; Escape and an outside click close it.
  */

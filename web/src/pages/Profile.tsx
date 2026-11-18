@@ -50,8 +50,8 @@ export function Profile(): React.JSX.Element {
   const today = useToday(dailyOpen);
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
-  // Badges, ranks, league and frame come from your public profile, not /me.
-  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements' | 'tree'> | null>(null);
+  // Badges, league and frame come from your public profile, not /me.
+  const [shown, setShown] = useState<Pick<PublicProfile, 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements' | 'tree'> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +80,7 @@ export function Profile(): React.JSX.Element {
       if (cancelled) return;
       if (p?.ok) {
         setSections(p.data.sections ?? null);
-        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, achievements: p.data.achievements, tree: p.data.tree });
+        setShown({ badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, achievements: p.data.achievements, tree: p.data.tree });
       }
       setLoading(false);
     })();
@@ -141,7 +141,7 @@ export function Profile(): React.JSX.Element {
           shown ? (
             <>
               <ProfileTree tree={shown.tree} own />
-              <ProfileProgress ranks={shown.ranks} badges={shown.badges} league={shown.league} own />
+              <ProfileProgress badges={shown.badges} league={shown.league} own />
             </>
           ) : null
         }

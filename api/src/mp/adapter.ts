@@ -4,7 +4,7 @@ import type { MultiplayerService } from './service.js';
 
 /**
  * The play layer's adapter (play/types.ts) for every multiplayer learning game on the engine, so invites, join codes,
- * chat cards, rematches, Rated/Friendly and the join rule work for any game in `MULTI_GAMES` with nothing written here.
+ * chat cards, rematches and the join rule work for any game in `MULTI_GAMES` with nothing written here.
  */
 export class GenericLobbyAdapter implements PlayAdapter {
   constructor(
@@ -12,7 +12,7 @@ export class GenericLobbyAdapter implements PlayAdapter {
     private readonly mp: MultiplayerService,
   ) {}
 
-  create(hostId: string, settings: unknown, opts: { chatGroupId: string | null; fromChat: boolean }): Promise<string> {
+  create(hostId: string, settings: unknown, opts: { chatGroupId: string | null }): Promise<string> {
     return this.mp.create(hostId, this.game, settings, opts);
   }
 
@@ -44,10 +44,6 @@ export class GenericLobbyAdapter implements PlayAdapter {
 
   series(lobbyId: string, me: string, other: string): Promise<Series> {
     return this.mp.series(lobbyId, me, other);
-  }
-
-  setRated(hostId: string, lobbyId: string, rated: boolean): Promise<void> {
-    return this.mp.setRated(hostId, lobbyId, rated);
   }
 
   touch(lobbyId: string): Promise<void> {

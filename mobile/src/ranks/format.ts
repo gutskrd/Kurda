@@ -3,16 +3,7 @@
  * script in ckb) and its meaning, the one plain reason for a result, and why a Rated game plays as friendly. Numbers
  * are signed with a true minus.
  */
-import type {
-  Division,
-  FriendlyReason,
-  PointsTier,
-  RankCard,
-  RankReason,
-  RankResult,
-  RankTier,
-  SeasonName,
-} from '@kurda/shared';
+import type { Division, FriendlyReason, PointsTier, RankReason, RankResult, RankTier } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
@@ -106,52 +97,6 @@ const SELF_REASON_KEY: Partial<Record<FriendlyReason, TranslationKey>> = {
 
 export function friendlyReasonKey(reason: FriendlyReason, self = false): TranslationKey {
   return (self ? SELF_REASON_KEY[reason] : undefined) ?? FRIENDLY_REASON_KEY[reason];
-}
-
-const SEASON_NAME_KEY: Record<SeasonName, TranslationKey> = {
-  zivistan: 'season.name.zivistan',
-  bihar: 'season.name.bihar',
-  havin: 'season.name.havin',
-  payiz: 'season.name.payiz',
-};
-
-export const SEASON_MEANING_KEY: Record<SeasonName, TranslationKey> = {
-  zivistan: 'season.meaning.zivistan',
-  bihar: 'season.meaning.bihar',
-  havin: 'season.meaning.havin',
-  payiz: 'season.meaning.payiz',
-};
-
-/** "Payîz 2026". */
-export function seasonTitle(t: Translate, season: { name: SeasonName; year: number }): string {
-  return `${t(SEASON_NAME_KEY[season.name])} ${season.year}`;
-}
-
-/** Calm days-left wording: no countdown, no hours, nothing red. */
-export function daysLeftText(t: Translate, days: number): string {
-  if (days <= 0) return t('season.lastDay');
-  if (days === 1) return t('season.oneDayLeft');
-  return t('season.daysLeft', { count: days });
-}
-
-/** What a rank card shows in its headline: placing, or the tier and division. */
-export type CardHeadline =
-  | { kind: 'placing'; played: number; of: number }
-  | { kind: 'ranked'; tier: RankTier; division: Division | null };
-
-export function cardHeadline(card: Pick<RankCard, 'tier' | 'division' | 'placement'>): CardHeadline {
-  if (card.placement || !card.tier) {
-    return { kind: 'placing', played: card.placement?.played ?? 0, of: card.placement?.of ?? 5 };
-  }
-  return { kind: 'ranked', tier: card.tier, division: card.tier === 'sterk' ? null : card.division };
-}
-
-/** "88 to Gir I", "Top of the climb", or nothing while placing. */
-export function nextStepText(t: Translate, card: Pick<RankCard, 'progress' | 'placement' | 'tier'>): string | null {
-  if (card.placement || !card.tier || !card.progress) return null;
-  const { next, pointsToGo } = card.progress;
-  if (card.tier === 'sterk' || !next || pointsToGo === null) return t('ranks.topOfClimb');
-  return t('ranks.toNext', { count: pointsToGo, rank: rankName(t, next.tier, next.division) });
 }
 
 /** The moment after a game: a tier, a division or the first placement reached, or nothing to celebrate. */

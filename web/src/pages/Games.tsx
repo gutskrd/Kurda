@@ -6,7 +6,6 @@ import type { MessageKey } from '../i18n/en';
 import { LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthProvider';
-import { RanksSection } from '../ranks/RanksSection';
 import { LearnHeader } from '../learn/LearnHeader';
 import { ChevronIcon, TrophyIcon } from '../components/icons';
 import { JoinCodeEntry } from '../play/JoinCode';
@@ -334,7 +333,7 @@ export function Games(): React.JSX.Element {
       <div className="gp-quick">
         {/* A friend's code into their game: one way in for every online game. */}
         <JoinCodeEntry />
-        {/* The leagues and the season. */}
+        {/* XP, the weekly league, Zêr and Gewher. */}
         <Link to="/app/rankings" className="games-rankings">
           <TrophyIcon size={20} />
           <span className="games-rankings-text">
@@ -389,9 +388,6 @@ export function Games(): React.JSX.Element {
           </ul>
         </section>
       )}
-
-      {/* Your rank in each game played against people, and the season (signed in only). */}
-      <RanksSection />
 
       {!signedIn && (
         <div className="cta" style={{ marginTop: 40 }}>

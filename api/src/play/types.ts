@@ -54,11 +54,8 @@ export interface Series {
 /** One game as the play layer drives it, so invites, chat cards and playing again work the same for every game. */
 export interface PlayAdapter {
   readonly game: PlayGame;
-  /**
-   * Checks `settings` (400 for anything but a preset) and makes a lobby with the host in it; `fromChat` means started
-   * from a direct or group chat (Friendly by default the first time).
-   */
-  create(hostId: string, settings: unknown, opts: { chatGroupId: string | null; fromChat: boolean }): Promise<string>;
+  /** Checks `settings` (400 for anything but a preset) and makes a lobby with the host in it. */
+  create(hostId: string, settings: unknown, opts: { chatGroupId: string | null }): Promise<string>;
   /** the game's own join, so the join rule is checked in one place, under the game's lock */
   join(userId: string, lobbyId: string): Promise<JoinOutcome>;
   facts(lobbyId: string): Promise<LobbyFacts | null>;
@@ -70,8 +67,6 @@ export interface PlayAdapter {
   openNextRound(hostId: string, lobbyId: string): Promise<string>;
   /** wins between the two over this run of rematches, or null when the game cannot tell */
   series(lobbyId: string, me: string, other: string): Promise<Series | null>;
-  /** the host changes Rated/Friendly — in the lobby only; everyone in it is told (`play_changed`) */
-  setRated(hostId: string, lobbyId: string, rated: boolean): Promise<void>;
   /** an unstarted lobby the host is still inviting to is not idle */
   touch?(lobbyId: string): Promise<void>;
   /** calls off a lobby whose card could not be posted (the host is the only one in it) */

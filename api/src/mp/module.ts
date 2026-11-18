@@ -7,8 +7,8 @@ type Executor = Pick<pg.Pool, 'query'>;
 /**
  * One multiplayer learning game as the engine (service.ts) runs it: its pure rules plus the few server needs (reading
  * host settings, preparing a move that needs a lookup, Hevalo's move, whether content allows offering it). Lobbies,
- * invites, seats, the clock, presence, away players, the stand-in host, placement XP, Game Ranks and reports by seat
- * are the engine's, the same for every game.
+ * invites, seats, the clock, presence, away players, the stand-in host, placement XP and reports by seat are the
+ * engine's, the same for every game.
  */
 
 /** What every lobby is made with, besides the game's own settings. */
@@ -18,8 +18,6 @@ export interface LobbyChoices<Settings> {
   /** 2..max for a group game */
   maxPlayers: number;
   access: GameAccess;
-  /** left out: the host's last choice (Game Ranks) */
-  rated?: boolean;
 }
 
 /** A move the rules can judge, and what of it is kept with the move for a report. */

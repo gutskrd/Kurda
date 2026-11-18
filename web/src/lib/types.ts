@@ -1,5 +1,5 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
-import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
+import type { FeedImage, LeagueTier, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
@@ -180,8 +180,6 @@ export interface PublicProfile extends ProfileCosmetics {
   /** Their league tier, or null when they do not take part or never joined. A key: translate it (ranks/names). */
   tier?: LeagueTier | null;
   league?: ProfileLeague | null;
-  /** Game ranks per game this season; resting ones carry no tier for others. */
-  ranks?: ProfileRank[];
   /** The avatar frame's SKU (season or shop frame), or null. */
   frameSku?: string | null;
   /** A shop frame's picture; season frames have none and are drawn from their SKU. */

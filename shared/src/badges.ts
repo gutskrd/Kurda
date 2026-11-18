@@ -57,6 +57,8 @@ export interface BadgeDef {
   tiers: readonly BadgeThreshold[];
   /** hidden until earned ("???"), with a hint once the learner has found any secret */
   secret: boolean;
+  /** No longer awarded (game ranks and rated play ended): shown only to those who earned it, at the tier they reached. */
+  retired: boolean;
   /** the Kurmancî name [review] */
   nameKu: string;
   /** what it means, in English */
@@ -85,7 +87,7 @@ function badge(
   tiers: readonly BadgeThreshold[],
   measure: string,
   unit: BadgeUnit,
-  opts: { secret?: boolean } = {},
+  opts: { secret?: boolean; retired?: boolean } = {},
 ): BadgeDef {
   const secret = opts.secret ?? false;
   return {
@@ -93,6 +95,7 @@ function badge(
     family,
     tiers,
     secret,
+    retired: opts.retired ?? false,
     nameKu,
     meaningEn,
     ...keys(key),
@@ -102,8 +105,9 @@ function badge(
   };
 }
 
-/** Ranked emblems count seasons in which a tier was reached, in any game; there are four seasons a year. */
+/** Ranked emblems counted seasons in which a tier was reached, in any game; there were four seasons a year. */
 const SEASON_COUNTS = [1, 3, 5, 8] as const;
+const RETIRED = { retired: true } as const;
 /** Dated event badges: the distinct years taken part. */
 const YEAR_COUNTS = [1, 2, 3, 5] as const;
 
@@ -151,7 +155,7 @@ export const BADGES: readonly BadgeDef[] = [
   badge('guhdar', 'games', 'Guhdar', 'Listener', [3, 20, 75, 200], 'story_quiz_perfect', 'games'), // [review]
   // Peyvok, Rhyme, the Typing Race and Stories, each played at least once.
   badge('hemereng', 'games', 'Hemereng', 'All colours', [4], 'games_tried', 'games'), // [review]
-  badge('dilpak', 'games', 'Dilpak', 'Pure-hearted', [50, 150, 400, 1000], 'fair_rated_games', 'games'), // [review]
+  badge('dilpak', 'games', 'Dilpak', 'Pure-hearted', [50, 150, 400, 1000], 'fair_rated_games', 'games', RETIRED), // [review]
   // The day's Peyvok solved, one a day at most, so it counts days.
   badge('mamik', 'games', 'Mamik', 'Riddle', [5, 50, 150, 500], 'daily_peyvok_solved', 'days'), // [review]
   // Rhymes found alone in Rhyme training.
@@ -159,15 +163,15 @@ export const BADGES: readonly BadgeDef[] = [
   // A Peyvok, the day's or a practice one, won in three guesses or fewer.
   badge('elmas', 'games', 'Elmas', 'Diamond', [5, 40, 150, 400], 'peyvok_three_guesses', 'wins'), // [review]
 
-  // D. Ranked (shield), kept forever.
-  badge('rank-dest', 'ranked', 'Deşt', 'Plain', SEASON_COUNTS, 'seasons_reached_dest', 'seasons'), // [review]
-  badge('rank-gir', 'ranked', 'Gir', 'Hill', SEASON_COUNTS, 'seasons_reached_gir', 'seasons'), // [review]
-  badge('rank-zozan', 'ranked', 'Zozan', 'High pasture', SEASON_COUNTS, 'seasons_reached_zozan', 'seasons'), // [review]
-  badge('rank-ciya', 'ranked', 'Çiya', 'Mountain', SEASON_COUNTS, 'seasons_reached_ciya', 'seasons'), // [review]
-  badge('rank-lutke', 'ranked', 'Lûtke', 'Summit', SEASON_COUNTS, 'seasons_reached_lutke', 'seasons'), // [review]
-  badge('rank-sterk', 'ranked', 'Stêrk', 'Star', SEASON_COUNTS, 'seasons_reached_sterk', 'seasons'), // [review]
-  badge('hilkiser', 'ranked', 'Hilkişer', 'Climber', SEASON_COUNTS, 'seasons_with_ten_rated_games', 'seasons'), // [review]
-  badge('cihgirti', 'ranked', 'Cihgirtî', 'Placed', [1], 'placements_finished', 'games'), // [review]
+  // D. Ranked (shield): retired with game ranks, kept by those who earned them.
+  badge('rank-dest', 'ranked', 'Deşt', 'Plain', SEASON_COUNTS, 'seasons_reached_dest', 'seasons', RETIRED), // [review]
+  badge('rank-gir', 'ranked', 'Gir', 'Hill', SEASON_COUNTS, 'seasons_reached_gir', 'seasons', RETIRED), // [review]
+  badge('rank-zozan', 'ranked', 'Zozan', 'High pasture', SEASON_COUNTS, 'seasons_reached_zozan', 'seasons', RETIRED), // [review]
+  badge('rank-ciya', 'ranked', 'Çiya', 'Mountain', SEASON_COUNTS, 'seasons_reached_ciya', 'seasons', RETIRED), // [review]
+  badge('rank-lutke', 'ranked', 'Lûtke', 'Summit', SEASON_COUNTS, 'seasons_reached_lutke', 'seasons', RETIRED), // [review]
+  badge('rank-sterk', 'ranked', 'Stêrk', 'Star', SEASON_COUNTS, 'seasons_reached_sterk', 'seasons', RETIRED), // [review]
+  badge('hilkiser', 'ranked', 'Hilkişer', 'Climber', SEASON_COUNTS, 'seasons_with_ten_rated_games', 'seasons', RETIRED), // [review]
+  badge('cihgirti', 'ranked', 'Cihgirtî', 'Placed', [1], 'placements_finished', 'games', RETIRED), // [review]
 
   // E. Friends (leaf).
   // Stands in for friend quests: a finished game with a friend in it.
@@ -197,7 +201,7 @@ export const BADGES: readonly BadgeDef[] = [
   // G. Secret (diamond).
   badge('tire-rast', 'secret', 'Tîrê rast', 'Straight arrow', [1], 'battle_win_two_guesses', 'times', { secret: true }), // [review]
   badge('ji-nu-ve', 'secret', 'Ji nû ve', 'Anew', [1], 'group_comeback_win', 'times', { secret: true }), // [review]
-  badge('kewe-ciye', 'secret', 'Kewê çiyê', 'Mountain partridge', [1], 'beat_two_tiers_higher', 'times', { secret: true }), // [review]
+  badge('kewe-ciye', 'secret', 'Kewê çiyê', 'Mountain partridge', [1], 'beat_two_tiers_higher', 'times', { secret: true, retired: true }), // [review]
   badge('deste-zerin', 'secret', 'Destê zêrîn', 'Golden hand', [1], 'flawless_race', 'times', { secret: true }), // [review]
   badge('mevane-agir', 'secret', 'Mêvanê agir', 'Guest of the fire', [1], 'newroz_story_on_newroz', 'times', { secret: true }), // [review]
   badge('kaniya-zanine', 'secret', 'Kaniya zanînê', 'Spring of knowledge', [1], 'seven_review_days', 'times', { secret: true }), // [review]

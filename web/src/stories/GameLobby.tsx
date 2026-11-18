@@ -10,7 +10,6 @@ import { SetupSheet } from './SetupSheet';
 import { storyError } from './api';
 import { ExtraTimeToggle, FromMemoryNote, SettingsLine, playerName, type Act } from './GameParts';
 import { rememberedExtraTime } from './prefs';
-import { LobbyRated } from '../ranks/rated';
 import { CodeTicket } from '../play/CodeTicket';
 
 /**
@@ -61,22 +60,6 @@ export function GameLobby({
       <CodeTicket game="stories" code={view.code} access={view.settings.access} invite={invite} />
 
       <FromMemoryNote view={view} />
-
-      {/* Rated or Friendly: seen before joining, changed by the host here. */}
-      {view.mode !== 'solo' && view.rated && (
-        <LobbyRated
-          game="stories"
-          lobbyId={view.id}
-          state={view.rated}
-          isHost={view.isHost}
-          member={view.players.some((p) => p.isMe)}
-          playerCount={present.length}
-          seatName={(seat) => {
-            const p = view.players.find((x) => x.seat === seat);
-            return p ? playerName(p, t) : t('stories.game.playerN', { seat });
-          }}
-        />
-      )}
 
       <div className="sg-panel">
         <div className="sg-panel-head">

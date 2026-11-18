@@ -97,6 +97,13 @@ describe('old addresses', () => {
     }
   });
 
+  it('opens the rankings for the website’s old league, ranks and season pages, and a game’s rank', () => {
+    for (const path of ['app/leagues', 'app/ranks', 'app/season', 'app/ranks/wordle-battle', 'app/ranks/rhyme-match']) {
+      expect(legacyTabPath(path), path).toBe('app/rankings');
+    }
+    expect(legacyTabPath('/app/leagues')).toBe('/app/rankings');
+  });
+
   it('keeps a query the old address carried', () => {
     expect(legacyTabPath('play?from=push')).toBe('learn?view=games&from=push');
     expect(legacyTabPath('inbox?from=push')).toBe('messages?from=push');

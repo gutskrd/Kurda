@@ -13,7 +13,6 @@ import { WordleBattleAdapter } from './adapters/wordle-battle.js';
 import { RhymeMatchAdapter } from './adapters/rhyme-match.js';
 import { StoriesAdapter, type StoryGamesPort } from './adapters/stories.js';
 import type { PlayAdapter } from './types.js';
-import type { RankService } from '../ranks/service.js';
 
 /** How often the games close idle lobbies, end games that are over, and invites expire. */
 export const PLAY_SWEEP_MS = 30_000;
@@ -29,7 +28,6 @@ const cardsQuery = z.object({
     .transform((list) => list.split(',').map((ref) => ({ game: ref.slice(0, ref.lastIndexOf(':')), lobbyId: ref.slice(ref.lastIndexOf(':') + 1) })))
     .pipe(z.array(lobbyParams).min(1).max(PLAY_CARDS_PER_READ)),
 });
-const ratedBody = z.object({ rated: z.boolean() });
 
 const createBody = z.object({
   game,
@@ -54,8 +52,6 @@ export interface PlayRouteDeps {
   groups: PlayDeps['groups'];
   /** The story games service; without it Stories cannot be played through invites. */
   stories?: StoryGamesPort;
-  /** Game Ranks, shared with the games' own routes (one set of rank events) */
-  ranks?: RankService;
   /** the multiplayer learning games, one adapter each over the generic engine (mp/routes.ts) */
   multiplayer?: readonly PlayAdapter[];
 }
@@ -71,7 +67,6 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
       new WordleBattleService(app.db, {
         xp: deps.xp,
         publicUrl,
-        ranks: deps.ranks,
         onChange: (id, o) => deps.events.changed('wordle-battle', id, o),
       }),
     ),
@@ -79,7 +74,6 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
       new RhymeMatchService(app.db, {
         xp: deps.xp,
         publicUrl,
-        ranks: deps.ranks,
         onChange: (id, o) => deps.events.changed('rhyme-match', id, o),
       }),
     ),
@@ -163,16 +157,11 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
     return { ok: true };
   });
 
-  /** The host's Rated/Friendly toggle, in the lobby only (Game Ranks). */
+  /** Every game is friendly; older app builds still send the lobby's old Rated toggle, which changes nothing. */
   app.put(
     '/play/:game/:lobbyId/rated',
-    { schema: { params: lobbyParams, body: ratedBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAccount },
-    async (req) => {
-      const p = req.params as { game: PlayGame; lobbyId: string };
-      const { rated } = req.body as z.infer<typeof ratedBody>;
-      await play.setRated(req.user!.id, p.game, p.lobbyId, rated);
-      return { ok: true, rated };
-    },
+    { schema: { params: lobbyParams, body: z.object({}) }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAccount },
+    async () => ({ ok: true, rated: false }),
   );
 
   /** A game card's live state, as the viewer may see it ('unavailable' otherwise). */

@@ -8,6 +8,7 @@ import { countedXpSql } from '../xp/rules.js';
 import {
   BALANCE_BOARDS,
   isBalanceBoard,
+  isWeeklyBoard,
   rankForScore,
   withRanks,
   type BoardScope,
@@ -33,7 +34,7 @@ export interface Board {
    * them: they still see their balance, without an invented place.
    */
   me: { rank: number | null; score: number } | null;
-  /** Zêr and Gewher only: the board lists the top this many, highest first, and no further. */
+  /** Every board but the weekly one: it lists the top this many, highest first, and no further. */
   depth?: number;
   /** Country scope only: the board's country, or null when the caller has not set one, which the UI words differently. */
   country?: string | null;
@@ -49,8 +50,8 @@ export interface BoardOptions {
 export interface LeaderboardOptions {
   /** Where uploaded profile photos are served from; without storage there are only stock avatars. */
   publicUrl?: PublicUrl;
-  /** how deep a Zêr or Gewher board goes (BALANCE_BOARD_DEPTH); smaller only in tests */
-  balanceDepth?: number;
+  /** how deep a board with no week goes (BOARD_DEPTH); smaller only in tests */
+  depth?: number;
 }
 
 /** One page of a board. Small enough to read, large enough to be worth loading. */
@@ -59,21 +60,22 @@ export const PAGE_SIZE = 25;
 const MAX_PAGE = 100;
 
 /**
- * How many people a balance board lists: forty pages. Nearly everyone holds some Zêr, so a full board would list
- * every account; the top thousand is read in order off an index (migration 1751000213000) and the sorted set stays
- * small. Anyone below the cut still sees their own balance, without a place.
+ * How many people a board with no week lists: forty pages. Nearly everyone has some XP and holds some Zêr, so a full
+ * board would list every account; the top thousand is read in order off an index (migrations 1751000213000 and
+ * 1751000742000) and the sorted set stays small. Anyone below the cut still sees their own score, without a place.
  */
-export const BALANCE_BOARD_DEPTH = 1000;
+export const BOARD_DEPTH = 1000;
 
-/** How long an unread balance sorted set is kept; it has no week to expire with, and rebuilding is one indexed read. */
-const BALANCE_BOARD_TTL_SECONDS = 24 * 60 * 60;
+/** How long an unread sorted set of a board with no week is kept; rebuilding it is one indexed read. */
+const STANDING_BOARD_TTL_SECONDS = 24 * 60 * 60;
 
 /**
- * Weekly board keys carry the week, so a new week starts fresh. A balance board has one all-time key, with a prefix
+ * Weekly board keys carry the week, so a new week starts fresh. The other boards have one key each, with a prefix
  * distinct from the friends and country caches.
  */
 function keyFor(type: BoardType, now: Date): string {
-  return isBalanceBoard(type) ? `lb:balance:${type}` : `lb:weekly:${weekStart(now)}`;
+  if (isWeeklyBoard(type)) return `lb:weekly:${weekStart(now)}`;
+  return isBalanceBoard(type) ? `lb:balance:${type}` : `lb:total:${type}`;
 }
 
 /**
@@ -88,16 +90,16 @@ export function builtKeyFor(type: BoardType, now: Date): string {
 }
 
 /**
- * The lowest balance on a global balance board cut at its depth, kept beside the sorted set, so a caller below the
- * cut is not given the place after the last name.
+ * The lowest score on a global board cut at its depth, kept beside the sorted set, so a caller below the cut is not
+ * given the place after the last name.
  */
 function floorKeyFor(type: BoardType, now: Date): string {
   return `${keyFor(type, now)}:floor`;
 }
 
 /**
- * How long a friends or country board is cached. Each is a week's ledger aggregate read on every rankings visit, so
- * a minute of staleness is worth it; the caller's own score and place stay live.
+ * How long a friends or country board is cached. Each is an aggregate read on every rankings visit, so a minute of
+ * staleness is worth it; the caller's own score and place stay live.
  */
 export const FRIENDS_BOARD_TTL_SECONDS = 60;
 export const COUNTRY_BOARD_TTL_SECONDS = 120;
@@ -106,7 +108,7 @@ export const COUNTRY_BOARD_TTL_SECONDS = 120;
  * SQL: the user behind `alias` may be listed on a board of this scope. Public boards (global, country) list only
  * 'everyone' and 'members' profiles, and a friends board leaves out profiles hidden even from friends. Anyone who
  * opted out of the leagues is on no board; an account that never chose (a teen in personal mode) still shows on a
- * friends board. Guests are on no board, having no profile and no friends. Balance boards keep the same rules.
+ * friends board. Guests are on no board, having no profile and no friends. Every board keeps the same rules.
  * Whoever is left out still sees their own score and place.
  */
 function listedSql(alias: string, scope: 'public' | 'friends'): string {
@@ -119,7 +121,7 @@ function listedSql(alias: string, scope: 'public' | 'friends'): string {
 
 /**
  * SQL: the user behind `alias` holds no staff role. Staff wallets test the shop and rewards and can be topped up by
- * hand, so they are left off the public balance boards; the weekly board is earned XP like anyone's.
+ * hand, so they are left off the public balance boards; the XP boards are earned XP like anyone's.
  */
 const STAFF_ROLES_SQL = `'{${PRIVILEGED_ROLES.join(',')}}'::text[]`;
 function notStaffSql(alias: string): string {
@@ -135,10 +137,10 @@ interface FaceRow {
 }
 
 /**
- * Leaderboards: this week's XP, and the Zêr and Gewher each person holds now. Redis sorted sets give fast rank
- * lookups for the global boards; Postgres is the source of truth, with a rebuild path and a pure fallback without
- * Redis. Shadow-flagged cheaters are excluded silently, still seeing a plausible own rank. Balance boards take the
- * same paths, scored from `wallet_balances`, with no week, and cut at BALANCE_BOARD_DEPTH.
+ * Leaderboards: this week's XP, all the XP ever earned, and the Zêr and Gewher each person holds now. Redis sorted
+ * sets give fast rank lookups for the global boards; Postgres is the source of truth, with a rebuild path and a pure
+ * fallback without Redis. Shadow-flagged cheaters are excluded silently, still seeing a plausible own rank. The boards
+ * with no week take the same paths, scored from `users.xp` or `wallet_balances`, and are cut at BOARD_DEPTH.
  *
  * Friends and country boards come from Postgres, since a sorted set cannot be filtered by friendship or country
  * cheaply, and are cached briefly (`cachedScores`). Who is listed follows `listedSql`. Global and country boards are
@@ -155,7 +157,7 @@ export class LeaderboardService {
     options: LeaderboardOptions = {},
   ) {
     this.publicUrl = options.publicUrl ?? (() => null);
-    this.depth = options.balanceDepth ?? BALANCE_BOARD_DEPTH;
+    this.depth = options.depth ?? BOARD_DEPTH;
   }
 
   /**
@@ -176,8 +178,10 @@ export class LeaderboardService {
     // an empty allow-list means "no such people", not "everyone"
     if (filter?.ids && filter.ids.length === 0) return [];
 
-    // The week's start or the currency comes first, so the scope parameter is numbered after it.
-    const params: unknown[] = [balance ? BALANCE_BOARDS[type] : weekStart(now)];
+    // The currency or the week's start comes first where the board has one, so the scope parameters are numbered after it.
+    const params: unknown[] = [];
+    if (balance) params.push(BALANCE_BOARDS[type]);
+    else if (isWeeklyBoard(type)) params.push(weekStart(now));
     let scoped = '';
     if (filter?.ids) {
       params.push(filter.ids);
@@ -206,6 +210,18 @@ export class LeaderboardService {
       return rows.rows.map((r) => ({ userId: r.user_id, username: r.username, score: Number(r.score) }));
     }
 
+    if (!isWeeklyBoard(type)) {
+      // All the XP ever earned, the total the profile shows, read in order off the index of positive totals.
+      const rows = await this.pool.query<{ user_id: string; username: string; score: number }>(
+        `SELECT u.id AS user_id, u.username, u.xp AS score FROM users u
+          WHERE u.xp > 0 AND ${notFlagged} AND u.deleted_at IS NULL ${scoped}
+          ORDER BY u.xp DESC, u.id DESC
+          LIMIT ${this.depth}`,
+        params,
+      );
+      return rows.rows.map((r) => ({ userId: r.user_id, username: r.username, score: Number(r.score) }));
+    }
+
     // League-counted XP (xp/rules.ts), so the weekly board and the league table agree.
     const rows = await this.pool.query<{ user_id: string; username: string; score: string }>(
       `SELECT l.user_id, u.username, SUM(${countedXpSql('l')}) AS score
@@ -222,7 +238,7 @@ export class LeaderboardService {
 
   /**
    * A friends or country board from Redis when built in the last minute or two, else from Postgres and cached. Weekly
-   * keys carry the week; balance boards have none.
+   * keys carry the week; the other boards have none.
    */
   private async cachedScores(
     type: BoardType,
@@ -232,7 +248,7 @@ export class LeaderboardService {
     load: () => Promise<ScoreRow[]>,
   ): Promise<ScoreRow[]> {
     if (!this.redis) return load();
-    const full = isBalanceBoard(type) ? `lb:${type}:${key}` : `lb:${type}:${weekStart(now)}:${key}`;
+    const full = isWeeklyBoard(type) ? `lb:${type}:${weekStart(now)}:${key}` : `lb:${type}:${key}`;
     const hit = await this.redis.get(full).catch(() => null);
     if (hit) {
       try {
@@ -246,9 +262,9 @@ export class LeaderboardService {
     return rows;
   }
 
-  /** The lowest score on a balance board its depth cut short, or null when nobody was left out. */
+  /** The lowest score on a board its depth cut short, or null when nobody was left out. */
   private floorOf(type: BoardType, rows: ScoreRow[]): number | null {
-    return isBalanceBoard(type) && rows.length >= this.depth ? rows[rows.length - 1]!.score : null;
+    return !isWeeklyBoard(type) && rows.length >= this.depth ? rows[rows.length - 1]!.score : null;
   }
 
   /** Rebuild a board's sorted set from Postgres (Redis is a cache). */
@@ -263,13 +279,13 @@ export class LeaderboardService {
         for (const r of rows) args.push(r.score, r.userId);
         pipeline.zadd(key, ...(args as [number, string]));
       }
-      if (isBalanceBoard(type)) {
-        pipeline.expire(key, BALANCE_BOARD_TTL_SECONDS);
+      if (isWeeklyBoard(type)) {
+        pipeline.expire(key, 14 * 24 * 60 * 60); // fortnight TTL
+      } else {
+        pipeline.expire(key, STANDING_BOARD_TTL_SECONDS);
         const floor = this.floorOf(type, rows);
         if (floor === null) pipeline.del(floorKeyFor(type, now));
-        else pipeline.set(floorKeyFor(type, now), String(floor), 'EX', BALANCE_BOARD_TTL_SECONDS);
-      } else {
-        pipeline.expire(key, 14 * 24 * 60 * 60); // fortnight TTL
+        else pipeline.set(floorKeyFor(type, now), String(floor), 'EX', STANDING_BOARD_TTL_SECONDS);
       }
       // Fresh now, so the next few minutes of reads use it as is.
       pipeline.set(builtKeyFor(type, now), '1', 'EX', GLOBAL_BOARD_REBUILD_SECONDS);
@@ -300,7 +316,7 @@ export class LeaderboardService {
 
   /** How deep a board goes, for the boards that stop somewhere. */
   private depthOf(type: BoardType): { depth?: number } {
-    return isBalanceBoard(type) ? { depth: this.depth } : {};
+    return isWeeklyBoard(type) ? {} : { depth: this.depth };
   }
 
   /**
@@ -401,7 +417,7 @@ export class LeaderboardService {
       rows.length > 0 ? this.redis!.zcount(key, `(${rows[0]!.score}`, '+inf') : null,
       this.redis!.zcard(key),
       userId === null ? null : this.myScore(type, userId, now),
-      userId !== null && isBalanceBoard(type) ? this.redis!.get(floorKeyFor(type, now)) : null,
+      userId !== null && !isWeeklyBoard(type) ? this.redis!.get(floorKeyFor(type, now)) : null,
     ]);
     const firstRank = above === null ? offset + 1 : above + 1;
     const top = withRanks(rows, offset, firstRank).map((e) => ({ ...e, avatarUrl: names.get(e.userId)?.avatarUrl ?? null }));
@@ -434,7 +450,7 @@ export class LeaderboardService {
     return rows.rows[0]?.country ?? null;
   }
 
-  /** The caller's raw score, read regardless of flags so they are not tipped off: the week's XP or current holdings. */
+  /** The caller's raw score, read regardless of flags so they are not tipped off: current holdings, all XP or the week's. */
   private async myScore(type: BoardType, userId: string, now: Date): Promise<number | null> {
     if (isBalanceBoard(type)) {
       const held = await this.pool.query<{ balance: number }>(
@@ -443,6 +459,11 @@ export class LeaderboardService {
       );
       const balance = held.rows[0]?.balance ?? 0;
       return balance > 0 ? balance : null;
+    }
+    if (!isWeeklyBoard(type)) {
+      const total = await this.pool.query<{ xp: number }>(`SELECT xp FROM users WHERE id = $1`, [userId]);
+      const xp = total.rows[0]?.xp ?? 0;
+      return xp > 0 ? xp : null;
     }
     const row = await this.pool.query<{ sum: string | null }>(
       `SELECT COALESCE(SUM(${countedXpSql('l')}), 0)::text sum FROM xp_ledger l

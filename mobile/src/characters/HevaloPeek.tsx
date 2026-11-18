@@ -24,10 +24,10 @@ export interface PeekSpeech {
 /**
  * Hevalo's head poking through a torn page (shared `peekArt`). He rises through the tear on a spring when shown,
  * with his shadows following on one value, or appears in place under Reduce Motion. He blinks, glances, looks
- * where told (`gaze`), follows a finger, cheers as he comes through, and reacts to `reaction`. `speech` and
- * `text` make him say a line (auth/guide/speech.ts); `flip` mirrors the whole picture. The tear is decorative for
- * screen readers; he is named and answers taps as everywhere. `still` draws him once, with no life and no taps, for a
- * picture that only decorates.
+ * where told (`gaze`), follows a finger, cheers as he comes through, and reacts to `reaction`; `resting`, he dozes
+ * instead, with no cheer, blinks or glances. `speech` and `text` make him say a line (auth/guide/speech.ts); `flip`
+ * mirrors the whole picture. The tear is decorative for screen readers; he is named and answers taps as everywhere.
+ * `still` draws him once, with no life and no taps, for a picture that only decorates.
  */
 export function HevaloPeek({
   size,
@@ -69,13 +69,13 @@ export function HevaloPeek({
   const drawn = useMemo(() => (still ? characterSvg('hevalo', { crop: 'head', width: figureWidth, brows }) : null), [still, figureWidth, brows]);
   const drop = PEEK_PLACE.drop * size;
   const rise = useRef(new Animated.Value(pop && !reduce ? drop : 0)).current;
-  // Through the page, he cheers as the spring settles, unless the screen has a reaction of its own for him.
+  // Through the page, he cheers as the spring settles, unless the screen has a reaction of its own for him; asleep, never.
   const [glad, setGlad] = useState<CharacterReaction | null>(null);
   useEffect(() => {
-    if (!pop || reduce) return;
+    if (!pop || reduce || resting) return;
     const id = setTimeout(() => setGlad('cheer'), PEEK_POP.delayMs + PEEK_POP.ms * GLAD_AT);
     return () => clearTimeout(id);
-  }, [pop, reduce]);
+  }, [pop, reduce, resting]);
 
   useEffect(() => {
     // Under Reduce Motion (an answer that may arrive just after he appears) he is simply there.
@@ -127,7 +127,7 @@ export function HevaloPeek({
               size={figureWidth}
               flip={flip}
               gaze={gaze}
-              reaction={reaction ?? glad}
+              reaction={reaction ?? (resting ? null : glad)}
               resting={resting}
               onPress={onPress}
             />

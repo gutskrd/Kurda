@@ -1,7 +1,6 @@
 import { useLayoutEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { isFocusedPath } from './focus';
-import { under } from './roots';
 
 /**
  * The pages visited in this tab, keyed by the router's history index (`idx`), so the back button (BackButton.tsx) knows
@@ -38,11 +37,10 @@ export function forgetTrail(): void {
 
 /**
  * The page an address belongs to, usually the address itself. A game (its start, lobby and play differ only by query)
- * and the ranks pages (switched by address) each count as one page, so back leaves them in one press.
+ * counts as one page, so back leaves it in one press.
  */
 function pageOf(address: string): string {
   const pathname = address.split('?')[0]!.replace(/\/+$/, '');
-  if (under(pathname, '/app/ranks')) return '/app/ranks';
   if (pathname.startsWith('/app/games/')) return pathname;
   return address;
 }

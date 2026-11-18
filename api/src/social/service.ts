@@ -1,11 +1,10 @@
 import type pg from 'pg';
-import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
-import { RankService } from '../ranks/service.js';
 import { escapeLike } from '../db/like.js';
 import { inLeaguesSql } from '../leagues/service.js';
 import { profileShowcase } from '../badges/service.js';
@@ -63,8 +62,6 @@ export interface PublicProfile {
   /** Their league tier key (translated by the apps), or null when never in a league or not taking part. Same as `league?.tier`, for older apps. */
   tier?: LeagueTier | null;
   league?: ProfileLeague | null;
-  /** Their Game Ranks per game played: the current tier (or "Resting" to others after 28 days without a rated game), and the season's and all-time best. */
-  ranks?: ProfileRank[];
   /** The frame they wear around their avatar (an owned season or shop frame), or null. */
   frameSku?: string | null;
   /** That frame's picture when it is a shop frame; season frames are drawn by the apps. */
@@ -103,15 +100,10 @@ const FOLDED_NAME = `translate(lower(u.display_name), 'êîûçş', 'eiucs')`;
  * earlier.
  */
 export class SocialService {
-  private readonly ranks: Pick<RankService, 'profileRanks'>;
-
   constructor(
     private readonly pool: pg.Pool,
     private readonly friends: FriendService,
-    ranks?: Pick<RankService, 'profileRanks'>,
-  ) {
-    this.ranks = ranks ?? new RankService(pool);
-  }
+  ) {}
 
   /**
    * People by username or display name, excluding self, blocks and unsearchable users. Matches anywhere in a name
@@ -217,9 +209,9 @@ export class SocialService {
   /**
    * Someone's public profile, gated by privacy and blocks. `viewerId` is null for a signed-out reader, the least
    * privileged case: no blocks, no friends, so friends-only and nobody profiles show what any stranger sees. Without
-   * `ranksAndBadges` the ranks and showcase are left unread, for callers that show neither.
+   * `badges` the showcase is left unread, for callers that do not show it.
    */
-  async profile(viewerId: string | null, targetId: string, opts: { ranksAndBadges?: boolean } = {}): Promise<PublicProfile> {
+  async profile(viewerId: string | null, targetId: string, opts: { badges?: boolean } = {}): Promise<PublicProfile> {
     const row = await this.pool.query<{
       username: string;
       display_name: string | null;
@@ -375,14 +367,8 @@ export class SocialService {
       u.favorite_story_id && u.fs_title != null
         ? { id: u.favorite_story_id, title: u.fs_title, type: u.fs_type ?? '', status: u.fs_status ?? '' }
         : null;
-    const [ranks, badges] =
-      opts.ranksAndBadges === false
-        ? [undefined, undefined]
-        : await Promise.all([
-            this.ranks.profileRanks(targetId, isSelf),
-            // a minor's showcase only to themselves and their friends
-            profileShowcase(this.pool, targetId, viewerId),
-          ]);
+    // a minor's showcase only to themselves and their friends
+    const badges = opts.badges === false ? undefined : await profileShowcase(this.pool, targetId, viewerId);
     return {
       ...base,
       bio: u.bio,
@@ -399,7 +385,6 @@ export class SocialService {
       streak: u.streak,
       tier: toLeagueTier(u.tier),
       league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
-      ranks,
       frameSku: u.frame_sku,
       frameAssetKey: u.frame_asset,
       achievements: u.achievements,

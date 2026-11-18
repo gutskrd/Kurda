@@ -11,7 +11,6 @@ import { useOptimisticSend } from '../lib/optimistic';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { Ticket, TicketBody, TicketGlyph, TicketStub, ticketClass } from '../ui/Ticket';
 import { GAME_NAME_KEY, lobbyPath, playError, summaryParts } from './playApi';
-import { RatedBadge } from '../ranks/rated';
 import { usePlayInvites } from './PlayProvider';
 import { useInvitesQuiet } from './quietInvites';
 
@@ -234,7 +233,6 @@ function Banner({
           <p className="invite-banner-text">
             <span className="invite-banner-title">{title}</span>
           </p>
-          {typeof invite.summary.rated === 'boolean' && <RatedBadge rated={invite.summary.rated} size="sm" iconOnly className="invite-rated" />}
           {more ? <span className="invite-banner-more">{t('play.banner.more', { count: more })}</span> : null}
           <span className="invite-banner-actions">
             {joinButton}
@@ -261,8 +259,6 @@ function Banner({
         <Avatar url={invite.from.avatarUrl} glyphSize={18} />
         <p className="invite-banner-text">
           <span className="invite-banner-title">{title}</span>
-          {/* Rated or Friendly, before anyone joins. */}
-          {typeof invite.summary.rated === 'boolean' && <RatedBadge rated={invite.summary.rated} size="sm" className="invite-rated" />}
           {parts.length > 0 && (
             <span className="invite-banner-summary">
               {parts.map((p, i) => (

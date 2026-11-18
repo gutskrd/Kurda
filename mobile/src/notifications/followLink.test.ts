@@ -97,13 +97,13 @@ describe('progress notifications', () => {
   const t = (key: string, vars?: Record<string, string | number>) =>
     vars ? `${key}(${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join(',')})` : key;
 
-  it('goes to the badges page and to the league', async () => {
+  it('goes to the badges page and to the league, on Rankings by XP this week', async () => {
     const f = fakes();
     await followDeepLink({ screen: 'Badges' }, f.navigation, f.client);
-    await followDeepLink({ screen: 'League' }, f.navigation, f.client);
+    await followDeepLink({ screen: 'Rankings' }, f.navigation, f.client);
     expect(f.went).toEqual([
       ['Badges', undefined],
-      ['League', undefined],
+      ['Rankings', { board: 'xp', span: 'week' }],
     ]);
   });
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import { ACTS, encodeLipsync, visemeAt, voiceTimeline, type LipsyncTimeline, type RecordingVoice } from '@kurda/shared';
+import { ACTS, characterArt, cropBox, encodeLipsync, visemeAt, voiceTimeline, type LipsyncTimeline, type RecordingVoice } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { SpeakingCharacter, type SpeakingCharacterProps } from './SpeakingCharacter';
 
@@ -354,6 +354,26 @@ describe('SpeakingCharacter', () => {
     const awake = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' } }).root;
     expect(awake.querySelectorAll('.sc-z')).toHaveLength(0);
     expect(awake.querySelector('[data-eyes="open"]')).not.toHaveAttribute('visibility');
+  });
+
+  it('starts the z’s beside the top of the head, past the antler, the same for the head alone, and on the other side mirrored', () => {
+    const art = characterArt('hevalo');
+    const at = (root: HTMLElement) => {
+      const z = root.querySelector('.sc-z')!;
+      return { x: Number(z.getAttribute('x')), y: Number(z.getAttribute('y')) };
+    };
+    const whole = at(face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' }, crop: 'full', resting: true }).root);
+    const head = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' }, crop: 'head', resting: true }).root;
+    expect(at(head)).toEqual(whole);
+    expect(whole.x).toBeGreaterThan(art.bust.x + art.bust.w * 0.85);
+    expect(whole.y).toBeLessThan(art.bust.y + art.bust.h * 0.3);
+    // Mirrored, they start as far out on the other side and drift that way, as upright letters.
+    const frame = cropBox(art, 'head');
+    const mirrored = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' }, crop: 'head', resting: true, mirrored: true }).root;
+    expect(at(mirrored).x).toBeCloseTo(2 * frame.x + frame.w - whole.x);
+    expect(mirrored.querySelector('.sc-snooze')!.closest('[transform^="matrix(-1"]')).toBeNull();
+    expect(parseFloat(mirrored.style.getPropertyValue('--sc-z-drift'))).toBeLessThan(0);
+    expect(parseFloat(head.style.getPropertyValue('--sc-z-drift'))).toBeGreaterThan(0);
   });
 
   it('greets a click, and then does what the page asked', async () => {

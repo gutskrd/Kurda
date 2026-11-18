@@ -112,7 +112,7 @@ export function OnlyYou({ title, children }: { title: string; children: React.Re
 
 /**
  * A full profile in one column: the card (banner, face, menu, name, origin, bio, actions, level and four figures),
- * then the showcase (badges, ranks, league), favourites, friends, owner-only sections, and activity last as the
+ * then the showcase (badges, league), favourites, friends, owner-only sections, and activity last as the
  * longest part.
  */
 export function FullProfile({

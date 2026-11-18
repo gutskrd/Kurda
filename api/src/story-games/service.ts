@@ -54,13 +54,10 @@ import {
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import { areFriendsSql } from '../users/age.js';
 import { XpService } from '../xp/service.js';
-import { RankService } from '../ranks/service.js';
-import { dropAfterCommit, runAfterCommit } from '../db/after-commit.js';
 import { StreakService } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import { buildPlan, type StorySnapshot } from './plan.js';
-import { placesOf } from './logic.js';
 import {
   controllerOf,
   dueTransition,
@@ -114,8 +111,6 @@ export interface StoryGamesDeps {
   milestones?: Pick<MilestoneRecorder, 'recordStreak'>;
   log?: Log;
   publicUrl?: (key: string) => string | null;
-  /** Game Ranks: duo and group games may be Rated, decided when the questions start */
-  ranks?: RankService;
   /**
    * Arm deadline timers (default true). Off for one-off use outside the API process (account deletion in the worker),
    * where nothing would run them.
@@ -140,10 +135,6 @@ export interface CreateGameInput {
   extraTime?: boolean;
   /** the host shared the game into this group chat (the play module sets it) */
   chatGroupId?: string | null;
-  /** duo and group: Rated or Friendly (Game Ranks); left out, the host's last choice */
-  rated?: boolean;
-  /** started from a direct or group chat (Friendly by default the first time) */
-  fromChat?: boolean;
 }
 
 export interface SettingsPatch {
@@ -152,8 +143,6 @@ export interface SettingsPatch {
   timerSeconds?: TimerSeconds;
   textDuring?: TextDuring;
   access?: GameAccess;
-  /** Rated or Friendly, in the lobby only (duo and group) */
-  rated?: boolean;
 }
 
 export type JoinTarget = { code: string } | { id: string };
@@ -208,7 +197,6 @@ export class StoryGamesService {
   private readonly lastState = new Map<string, { game: GameRow; players: PlayerRow[]; answered: Set<string> }>();
   private closing = false;
   private readonly useTimers: boolean;
-  private readonly ranks: RankService;
 
   constructor(
     private readonly pool: pg.Pool,
@@ -226,7 +214,6 @@ export class StoryGamesService {
     this.log = deps.log ?? { warn: () => undefined };
     this.publicUrl = deps.publicUrl ?? (() => null);
     this.useTimers = deps.timers ?? true;
-    this.ranks = deps.ranks ?? new RankService(pool);
   }
 
   // -------------------------------------------------------------------------
@@ -279,15 +266,6 @@ export class StoryGamesService {
     if (access === 'open' && !(await isKnownAdult(this.pool, userId))) {
       throw new AppError('OPEN_NOT_ALLOWED', 403, 'only an adult can open a game to people who are not friends');
     }
-    // a solo quiz has nobody to rank against: always friendly
-    const rated =
-      !solo &&
-      (input.rated ??
-        (await this.ranks.defaultRated(this.pool, userId, 'stories', {
-          fromChat: input.fromChat ?? !!input.chatGroupId,
-          access,
-        })));
-
     if (solo) {
       // a quiz alone on a story you are being asked about in a group right now
       // would show you the group's answers
@@ -327,9 +305,7 @@ export class StoryGamesService {
         ...input,
         access,
         chatGroupId: solo ? null : (input.chatGroupId ?? null),
-        rated,
       });
-      if (!solo && input.rated !== undefined) await this.ranks.rememberChoice(client, userId, 'stories', input.rated);
       if (solo) await this.beginGame(t, story, input.skipReading === true);
       await client.query('COMMIT');
       this.afterCommit(touched);
@@ -352,7 +328,7 @@ export class StoryGamesService {
     touched: Tx[],
     hostId: string,
     story: GameStory,
-    input: CreateGameInput & { access: GameAccess; chatGroupId: string | null; rated: boolean },
+    input: CreateGameInput & { access: GameAccess; chatGroupId: string | null },
   ): Promise<Tx> {
     const solo = input.mode === 'solo';
     if (!solo) {
@@ -384,8 +360,8 @@ export class StoryGamesService {
         // the code comes from new_game_code(), which no game of any kind is using (migration game-join-codes)
         const res = await client.query<GameRow>(
           `INSERT INTO story_games (code, mode, host_id, story_id, dialect, level, length, question_count,
-                                    timer_seconds, text_during, access, chat_group_id, rated)
-           VALUES (CASE WHEN $1::boolean THEN new_game_code() END, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+                                    timer_seconds, text_during, access, chat_group_id)
+           VALUES (CASE WHEN $1::boolean THEN new_game_code() END, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
           [
             !solo,
             input.mode,
@@ -399,7 +375,6 @@ export class StoryGamesService {
             input.textDuring,
             input.access,
             input.chatGroupId,
-            !solo && input.rated,
           ],
         );
         await client.query('RELEASE SAVEPOINT story_code');
@@ -814,17 +789,10 @@ export class StoryGamesService {
           throw new AppError('OPEN_NOT_ALLOWED', 403, 'only an adult can open a game to people who are not friends');
         }
       }
-      // Rated or Friendly: the host's, in the lobby (here), remembered for next
-      // time; everyone in the lobby sees the new badge with this change
-      let rated = t.game.rated;
-      if (patch.rated !== undefined && t.game.mode !== 'solo') {
-        rated = patch.rated;
-        await this.ranks.rememberChoice(t.client, userId, 'stories', rated);
-      }
       await this.bump(
         t,
         `story_id = $3, dialect = $4, level = $5, length = $6, question_count = $7, timer_seconds = $8,
-         text_during = $9, access = $10, rated = $11`,
+         text_during = $9, access = $10`,
         [
           story?.id ?? t.game.story_id,
           story?.dialect ?? t.game.dialect,
@@ -834,16 +802,10 @@ export class StoryGamesService {
           patch.timerSeconds ?? t.game.timer_seconds,
           patch.textDuring ?? t.game.text_during,
           access,
-          rated,
         ],
       );
     });
     return this.view(gameId, userId);
-  }
-
-  /** The host changes Rated/Friendly in the lobby (the play layer's badge toggle; `updateSettings`). */
-  async setRated(hostId: string, gameId: string, rated: boolean): Promise<void> {
-    await this.updateSettings(gameId, hostId, { rated });
   }
 
   /** `POST /:id/start`: the host (or the stand-in) starts the reading. */
@@ -1022,10 +984,6 @@ export class StoryGamesService {
           userId,
           t.now,
         ]);
-        // once the questions are under way in a game that counts, a leave is
-        // last place and a step on the cooldown ladder (nothing before then:
-        // the game is decided when the questions start)
-        if (!t.game.finished_at) await this.ranks.recordLeave(t.client, 'stories', gameId, userId);
       }
       await this.bump(t, `status = status`);
       await this.reloadPlayers(t);
@@ -1082,9 +1040,8 @@ export class StoryGamesService {
       length: StoryLength;
       question_count: number;
       title: string | null;
-      rated: boolean;
     }>(
-      `SELECT g.mode, g.dialect, g.length, g.question_count, COALESCE(g.story_snapshot->>'title', s.title) AS title, g.rated
+      `SELECT g.mode, g.dialect, g.length, g.question_count, COALESCE(g.story_snapshot->>'title', s.title) AS title
          FROM story_games g LEFT JOIN stories s ON s.id = g.story_id WHERE g.id = $1`,
       [gameId],
     );
@@ -1096,7 +1053,6 @@ export class StoryGamesService {
       length: r.length,
       questionCount: r.question_count,
       storyTitle: r.title ?? undefined,
-      rated: r.rated,
     };
   }
 
@@ -1203,7 +1159,6 @@ export class StoryGamesService {
         access,
         chatGroupId: t.game.chat_group_id,
         extraTime: me.extra_time,
-        rated: t.game.rated,
       });
       next = round.game.id;
       await this.bump(t, `next_game_id = $3`, [next]);
@@ -1247,7 +1202,6 @@ export class StoryGamesService {
         access,
         chatGroupId: t.game.chat_group_id,
         extraTime: host.extra_time,
-        rated: t.game.rated,
       });
       await t.client.query(
         `INSERT INTO story_game_players (game_id, user_id, seat, extra_time, last_seen_at) VALUES ($1, $2, 2, $3, now())`,
@@ -1549,7 +1503,6 @@ export class StoryGamesService {
       let skipped = false;
       try {
         await client.query('BEGIN');
-        dropAfterCommit(client);
         await client.query(`SET LOCAL lock_timeout = '${opts.skipLocked ? 2 : 5}s'`);
         const t = await this.lockWith(client, gameId, opts.skipLocked);
         if (!t) {
@@ -1560,14 +1513,11 @@ export class StoryGamesService {
           const value = await fn(t);
           if (!t.changed) await this.presenceChanged(t);
           await client.query('COMMIT');
-          // Game Ranks' news first (it waited for the commit), then the game's own
-          runAfterCommit(client);
           this.afterCommit([t, ...t.others]);
           return { value };
         }
       } catch (err) {
         await client.query('ROLLBACK').catch(() => undefined);
-        dropAfterCommit(client);
         const code = (err as { code?: string }).code;
         if (attempt === 0 && (code === '40P01' || code === '40001')) continue;
         throw busyOr(err);
@@ -1798,13 +1748,6 @@ export class StoryGamesService {
   }
 
   private async openQuestion(t: Tx, index: number): Promise<void> {
-    // A duo or group game is decided Rated or Friendly when its questions
-    // start — the moment nobody can join any more — on who is in it then.
-    if (index === 0 && t.game.mode !== 'solo' && t.game.rated_state === null) {
-      const seats = t.players.filter((p) => !p.removed && !p.left_at).map((p) => ({ userId: p.user_id, seat: p.seat }));
-      const decision = await this.ranks.decideAtStart(t.client, 'stories', t.game.id, seats, t.game.rated);
-      await this.bump(t, `rated_state = $3`, [decision]);
-    }
     const endsAt = questionEndsAt(t.game.mode, t.game.timer_seconds, t.now.getTime());
     // the code goes with the reading: nobody joins once the questions start
     await this.bump(t, `status = 'question', current_index = $3, phase_started_at = $4, phase_ends_at = $5, code = NULL`, [
@@ -1886,19 +1829,6 @@ export class StoryGamesService {
       t.now,
     );
     await this.reloadPlayers(t);
-    // a game that counted moves the ratings: places as the results show them
-    // (score, then time), anyone who left during the questions last, and
-    // anyone the host removed not rated at all
-    if (t.game.mode !== 'solo') {
-      const stayed = t.players.filter((p) => !p.removed && !p.left_at);
-      const places = placesOf(stayed.map((p) => ({ key: p.user_id, score: p.score, correctMs: Number(p.correct_ms) })));
-      await this.ranks.finish(
-        t.client,
-        'stories',
-        t.game.id,
-        stayed.map((p) => ({ userId: p.user_id, place: places.get(p.user_id)! })),
-      );
-    }
   }
 
   // -------------------------------------------------------------------------

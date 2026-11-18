@@ -320,6 +320,27 @@ describe('SpeakingCharacter', () => {
     expect(screen.queryByRole('img', { name: /z/ })).toBeNull();
   });
 
+  it('starts the z’s beside the top of the head, past the antler, the same for the head alone, and on the other side flipped', async () => {
+    const start = (el: HTMLElement) => ({ left: parseFloat(el.style.left), top: parseFloat(el.style.top) });
+    const snooze = (): HTMLElement => screen.getAllByText('z')[0]!.parentElement!;
+    const view = renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" size={140} resting />);
+    await settle();
+    const whole = start(snooze());
+    view.unmount();
+    const head = renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="head" size={140} resting />);
+    await settle();
+    const alone = start(snooze());
+    // Drawn as wide, the head is drawn the same size, so the z’s start in the same place beside it.
+    expect(alone.left).toBeCloseTo(whole.left, 0);
+    expect(alone.left).toBeGreaterThan(140 * 0.85);
+    expect(alone.top).toBeLessThan((140 * characterLayers('hevalo', 'head').frame.h) / characterLayers('hevalo', 'head').frame.w / 5);
+    head.unmount();
+    renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="head" size={140} resting flip />);
+    await settle();
+    expect(start(snooze()).left).toBeCloseTo(140 - alone.left);
+    expect(start(snooze()).top).toBeCloseTo(alone.top);
+  });
+
   it('beams at a right answer: eyes smiling and mouth open, even with motion turned down', async () => {
     renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} reaction="cheer" />);
     await act(() => new Promise((r) => setTimeout(r, 400)));

@@ -2,7 +2,6 @@ import type pg from 'pg';
 import { areFriendsSql } from '../users/age.js';
 import { LEARNING_XP_SOURCES } from '../xp/rules.js';
 import { PRACTICE_TARGET } from '../practice/practice-select.js';
-import { rankTierIndexSql } from './rank-hooks.js';
 
 /**
  * What each badge counts, read from the tables where it happened and never from anything a client sends. Every
@@ -262,16 +261,19 @@ const answersOf = (types: readonly string[]): Measure =>
     [types],
   );
 
+/** A stored rank tier key as its place in the climb (0 Deşt … 5 Stêrk). */
+const PEAK_TIER_INDEX = `CASE peak_tier WHEN 'dest' THEN 0 WHEN 'gir' THEN 1 WHEN 'zozan' THEN 2 WHEN 'ciya' THEN 3 WHEN 'lutke' THEN 4 WHEN 'sterk' THEN 5 END`;
+
 /**
- * Seasons in which a rank tier (0 Deşt … 5 Stêrk) was reached at the peak, from the peaks the badges were told
- * and from the ranks module's own season results, so a close whose event was lost is still counted next time.
+ * Seasons in which a rank tier (0 Deşt … 5 Stêrk) was reached at the peak. Game ranks have ended, so these and the
+ * other retired badges read only the history kept from them, for a learner counted for the first time.
  */
 const seasonsReached = (tierIndex: number): Measure =>
   count(
     `SELECT count(DISTINCT season_id) AS n FROM (
        SELECT season_id FROM badge_rank_seasons WHERE user_id = $1 AND peak_tier >= ${tierIndex}
        UNION
-       SELECT season_id FROM rank_season_results WHERE user_id = $1 AND ${rankTierIndexSql('peak_tier')} >= ${tierIndex}
+       SELECT season_id FROM rank_season_results WHERE user_id = $1 AND ${PEAK_TIER_INDEX} >= ${tierIndex}
      ) s`,
   );
 

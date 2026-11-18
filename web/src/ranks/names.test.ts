@@ -1,24 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { BADGES, FRIENDLY_REASONS, RANK_REASONS, RANK_TIER_KEYS, LEAGUE_TIERS, BADGE_TIERS, SEASON_NAMES } from '@kurda/shared';
+import { BADGES, RANK_TIER_KEYS, LEAGUE_TIERS, BADGE_TIERS } from '@kurda/shared';
 import { translator } from '../i18n/I18nProvider';
 import { en } from '../i18n/en';
 import { ku } from '../i18n/ku';
 import { ckb } from '../i18n/ckb';
 import { de } from '../i18n/de';
-import {
-  BADGE_TEXT,
-  badgeHint,
-  badgeNamed,
-  badgeTierNamed,
-  friendlyReason,
-  leagueName,
-  leagueNamed,
-  rankLabel,
-  rankTierNamed,
-  reasonLine,
-  seasonNamed,
-  withMeaning,
-} from './names';
+import { BADGE_TEXT, badgeHint, badgeNamed, badgeTierNamed, leagueName, leagueNamed, rankTierNamed, withMeaning } from './names';
 
 const t = translator(en);
 
@@ -52,31 +39,7 @@ describe('names', () => {
     expect(rankTierNamed(tckb, 'ciya')).toEqual({ name: 'چیا', meaning: null });
   });
 
-  it('writes divisions as Roman numerals, and none for Stêrk', () => {
-    expect(rankLabel(t, 'gir', 2)).toBe('Gir II');
-    expect(rankLabel(t, 'dest', 3)).toBe('Deşt III');
-    expect(rankLabel(t, 'sterk', 1)).toBe('Stêrk');
-    expect(rankLabel(t, 'lutke', null)).toBe('Lûtke');
-  });
-
-  it('has a plain reason for every reason code, and says nothing for one it does not know', () => {
-    for (const r of RANK_REASONS) expect(reasonLine(t, r), r).toBeTruthy();
-    expect(reasonLine(t, 'beat-stronger')).toBe('you beat a higher-ranked player');
-    expect(reasonLine(t, 'lost-to-stronger')).toBe('close game against a stronger player');
-    expect(reasonLine(t, 'something-new')).toBeNull();
-  });
-
-  it('explains every friendly reason, and speaks to the viewer when the reason is theirs', () => {
-    for (const r of FRIENDLY_REASONS) expect(friendlyReason(t, r), r).toBeTruthy();
-    expect(friendlyReason(t, 'unverified')).toBe('not everyone has confirmed their email yet.');
-    expect(friendlyReason(t, 'unverified', true)).toBe('confirm your email to play rated games.');
-    // No personal version, so the shared sentence.
-    expect(friendlyReason(t, 'need-two', true)).toBe('it needs at least two players.');
-    expect(friendlyReason(t, null)).toBeNull();
-  });
-
-  it('names the season with its year, and the league in the reader’s word order', () => {
-    expect(seasonNamed(t, { name: 'payiz', year: 2026 })).toEqual({ name: 'Payîz 2026', meaning: 'Autumn' });
+  it('names the league in the reader’s word order', () => {
     expect(leagueName(t, 'cem')).toBe('Çem League');
     expect(leagueName(translator({ ...en, ...ku }), 'cem')).toBe('Lîga Çem');
   });
@@ -88,7 +51,7 @@ describe('names', () => {
   });
 
   it('every key the names need is in English', () => {
-    const keys = [...RANK_TIER_KEYS, ...LEAGUE_TIERS, ...BADGE_TIERS, ...SEASON_NAMES];
+    const keys = [...RANK_TIER_KEYS, ...LEAGUE_TIERS, ...BADGE_TIERS];
     expect(keys.length).toBeGreaterThan(0);
     for (const k of RANK_TIER_KEYS) expect(en[`ranks.tier.${k}` as keyof typeof en]).toBeTruthy();
     for (const k of LEAGUE_TIERS) expect(en[`leagues.meaning.${k}` as keyof typeof en]).toBeTruthy();

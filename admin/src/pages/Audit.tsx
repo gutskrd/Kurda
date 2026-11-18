@@ -42,9 +42,7 @@ const SUGGESTIONS = [
   'POST /admin/events',
   'POST /admin/experiments',
   'POST /admin/fraud/reviews',
-  'POST /admin/ranks',
   'POST /admin/leagues',
-  'POST /admin/seasons',
 ];
 
 /** "POST /admin/users/:id/ban" → "Ban · users" — the verb a person would use, then where. */

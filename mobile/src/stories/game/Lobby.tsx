@@ -30,8 +30,6 @@ import { initialSetup, type SetupState } from '../setup';
 import { storyTextProps, storyTextStyle } from '../storyText';
 import { Card, Note, SectionLabel, Sheet } from '../ui';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
-import { LobbyRated } from '../../ranks/Rated';
-import { seatNamer } from '../../play/lobby';
 import { heldDim } from '../../theme/MotionParts';
 
 /** A player's name as this viewer may see it: their own, a friend's, or "Player 3". */
@@ -48,13 +46,10 @@ export function playerName(p: Pick<StoryGamePlayer, 'name' | 'seat' | 'isMe'>, t
 export function Lobby({
   view,
   apply,
-  refresh,
   onLeft,
 }: {
   view: StoryGameView;
   apply: (res: ApiResult<StoryGameView>) => ApiError | null;
-  /** Refetches the game, after the host changes Rated/Friendly. */
-  refresh?: () => void;
   onLeft: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -123,17 +118,6 @@ export function Lobby({
           <ClayButton label={t('stories.lobby.changeSettings')} icon="gear" variant="outline" onPress={() => setEditing(true)} />
         ) : null}
       </Card>
-
-      {/* Rated or Friendly, shown before anyone joins; only the host, and only here, may change it. */}
-      <LobbyRated
-        game="stories"
-        lobbyId={view.id}
-        rated={view.rated}
-        isHost={view.isHost}
-        players={active}
-        seatName={seatNamer(view.players, t)}
-        onChanged={() => refresh?.()}
-      />
 
       {/* Only the host may invite friends (the server refuses anyone else); everyone may share the code. */}
       <LobbyShare

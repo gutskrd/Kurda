@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { applyItemFilter, countByCategory, DEFAULT_ITEM_FILTER, isFiltered, itemCategory, shopItemDescription, type ItemFilter } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError, requestId } from '../lib/api';
@@ -55,7 +54,8 @@ const EMPTY: Readonly<Record<Wearable, MessageKey>> = {
 
 /**
  * Owned items (`/me/inventory`) then items for sale (`/shop`), since an owned unique item is not in the shop. Season
- * frames appear only once owned, and tags only as owned, since the tag on sale is bought in the Shop.
+ * frames, given while game ranks ran, appear only once owned, and tags only as owned, since the tag on sale is bought in
+ * the Shop.
  */
 function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>, locale: string): Tile[] {
   const map = new Map<string, Tile>();
@@ -308,21 +308,13 @@ export function CosmeticCustomizer({
   );
 }
 
-/** A kind with nothing in it yet: what it is for, and for frames, where one comes from. */
+/** A kind with nothing in it yet. */
 function EmptyKind({ kind }: { kind: Kind }): React.JSX.Element | null {
   const t = useT();
   if (kind === 'tag') return null;
   return (
     <p className="muted" style={{ margin: 0 }}>
       {t(EMPTY[kind])}
-      {kind === 'frame' && (
-        <>
-          {' '}
-          <Link to="/app/season" className="link">
-            {t('edit.seeSeason')}
-          </Link>
-        </>
-      )}
     </p>
   );
 }

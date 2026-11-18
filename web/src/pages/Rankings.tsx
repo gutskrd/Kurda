@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
@@ -7,9 +7,9 @@ import { ErrorState, EmptyState } from '../components/states';
 import { RankingsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT, type Translate } from '../i18n/I18nProvider';
-import { LeaguePanel } from '../leagues/LeaguePanel';
+import { LeagueCard } from '../leagues/LeagueCard';
 import { RankList, RankRow } from '../ui/RankRow';
-import { BOARD_KINDS, BoardAmount, BoardSwitch, isBoardType, type BoardType } from '../ui/BoardSwitch';
+import { BOARD_BLURB, BOARD_NAME, BoardAmount, BoardSwitch, SpanSwitch, boardFor, isRankKind, type BoardType, type RankKind, type XpSpan } from '../ui/BoardSwitch';
 import type { MessageKey } from '../i18n/en';
 
 interface Entry {
@@ -29,7 +29,7 @@ interface Board {
   total: number;
   /** Your own place; its rank is null only below the cut of a board that stops at `depth`. */
   me: { rank: number | null; score: number } | null;
-  /** Zêr and Gewher boards list only this many. */
+  /** Every board but this week's lists only this many. */
   depth?: number;
   /** Country scope only; null when the profile has no country. */
   country?: string | null;
@@ -45,100 +45,71 @@ const SCOPES: { key: Scope; labelKey: MessageKey }[] = [
   { key: 'country', labelKey: 'rankings.scope.country' },
 ];
 
-type Tab = 'league' | 'board';
-const TABS: { key: Tab; labelKey: MessageKey }[] = [
-  { key: 'league', labelKey: 'rankings.tab.league' },
-  { key: 'board', labelKey: 'rankings.tab.board' },
-];
-
 /**
- * Where you stand, as two tabs as on the phone: your league this week, then the leaderboard of everyone. The tab
- * (`?tab=board`) and what the board ranks (`&board=zer`) are in the address, so either can be linked to.
+ * Where you stand: by XP, Zêr or Gewher. XP is this week's by default, with your league first as a card that opens the
+ * whole league, or all time's. What is ranked (`?board=zer`) and the span (`?span=all`) are in the address, so either
+ * can be linked to; who you are compared with is a choice of the moment, starting at everyone.
  */
 export function Rankings(): React.JSX.Element {
   const t = useT();
+  const { status } = useAuth();
   const [params, setParams] = useSearchParams();
-  const tab: Tab = params.get('tab') === 'board' ? 'board' : 'league';
-  const buttons = useRef<Array<HTMLButtonElement | null>>([]);
-  const choose = (next: Tab, focus = false): void => {
+  const asked = params.get('board');
+  // `weekly_xp` was this week's board in older links.
+  const kind: RankKind = isRankKind(asked) ? asked : 'xp';
+  const span: XpSpan = params.get('span') === 'all' ? 'all' : 'week';
+  const [scope, setScope] = useState<Scope>('global');
+  const set = (key: string, value: string | null): void => {
     setParams(
       (prev) => {
         const out = new URLSearchParams(prev);
-        if (next === 'league') out.delete('tab');
-        else out.set('tab', next);
+        out.delete('tab');
+        if (value === null) out.delete(key);
+        else out.set(key, value);
         return out;
       },
       { replace: true },
     );
-    if (focus) buttons.current[TABS.findIndex((x) => x.key === next)]?.focus();
   };
-  // Arrow keys move between the tabs, in reading order.
-  const onKey = (e: React.KeyboardEvent): void => {
-    const rtl = document.documentElement.dir === 'rtl';
-    const step = e.key === 'ArrowRight' ? (rtl ? -1 : 1) : e.key === 'ArrowLeft' ? (rtl ? 1 : -1) : 0;
-    if (e.key === 'Home' || e.key === 'End') {
-      e.preventDefault();
-      choose(e.key === 'Home' ? TABS[0]!.key : TABS[TABS.length - 1]!.key, true);
-    } else if (step) {
-      e.preventDefault();
-      const at = TABS.findIndex((x) => x.key === tab);
-      choose(TABS[(at + step + TABS.length) % TABS.length]!.key, true);
-    }
-  };
+  const type = boardFor(kind, span);
 
   return (
     <div className="container container-narrow rankings-page">
       <h1 className="sr-only">{t('rankings.title')}</h1>
-      <div className="rankings-tabs" role="tablist" aria-label={t('rankings.title')} onKeyDown={onKey}>
-        {TABS.map((x, i) => (
+      <BoardSwitch value={kind} onChange={(next) => set('board', next === 'xp' ? null : next)} />
+      {kind === 'xp' && <SpanSwitch value={span} onChange={(next) => set('span', next === 'all' ? 'all' : null)} />}
+      {/* This week's XP is the league's: the reader's own group comes first. */}
+      {type === 'weekly_xp' && status === 'signedIn' && <LeagueCard />}
+      <p className="page-sub rankings-blurb">{t(BOARD_BLURB[type])}</p>
+      <div className="toolbar" role="tablist" aria-label={t('rankings.compareWith')}>
+        {SCOPES.map((s) => (
           <button
-            key={x.key}
-            ref={(el) => {
-              buttons.current[i] = el;
-            }}
-            type="button"
+            key={s.key}
             role="tab"
-            id={`rankings-tab-${x.key}`}
-            aria-selected={tab === x.key}
-            aria-controls={`rankings-panel-${x.key}`}
-            tabIndex={tab === x.key ? 0 : -1}
-            className={`rankings-tab${tab === x.key ? ' is-active' : ''}`}
-            onClick={() => choose(x.key)}
+            aria-selected={scope === s.key}
+            className={`chip${scope === s.key ? ' active' : ''}`}
+            onClick={() => setScope(s.key)}
           >
-            {t(x.labelKey)}
+            {t(s.labelKey)}
           </button>
         ))}
       </div>
-      <div role="tabpanel" id={`rankings-panel-${tab}`} aria-labelledby={`rankings-tab-${tab}`}>
-        {tab === 'league' ? <LeaguePanel /> : <Leaderboard />}
-      </div>
+      <Leaderboard type={type} scope={scope} />
     </div>
   );
 }
 
+/** Where the reader's own row is against the window: on screen, scrolled past, still below, or not on the page yet. */
+type MeAt = 'shown' | 'above' | 'below' | 'absent';
+
 /**
- * The leaderboard a page at a time: this week's XP, or Zêr or Gewher held now (BoardSwitch), worldwide, among friends or
- * in your country. What it ranks is in the address; the scope is a choice of the moment, starting at everyone.
+ * One board a page at a time. Your own row is picked out in place, and kept in view at the foot of the window while the
+ * page has not reached it or it is still further down.
  */
-function Leaderboard(): React.JSX.Element {
+function Leaderboard({ type, scope }: { type: BoardType; scope: Scope }): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
   const locale = useLocale();
-  const [params, setParams] = useSearchParams();
-  const asked = params.get('board');
-  const type: BoardType = isBoardType(asked) ? asked : 'weekly_xp';
-  const chooseType = (next: BoardType): void => {
-    setParams(
-      (prev) => {
-        const out = new URLSearchParams(prev);
-        if (next === 'weekly_xp') out.delete('board');
-        else out.set('board', next);
-        return out;
-      },
-      { replace: true },
-    );
-  };
-  const [scope, setScope] = useState<Scope>('global');
   const [board, setBoard] = useState<Board | null>(null);
   /** Every page loaded so far, so "Show more" appends. */
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -147,8 +118,8 @@ function Leaderboard(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   /** The board the last request was for; an answer for one switched away from is dropped. */
   const asking = useRef('');
-
-  const meta = BOARD_KINDS.find((b) => b.key === type)!;
+  const list = useRef<HTMLDivElement>(null);
+  const [meAt, setMeAt] = useState<MeAt>('absent');
 
   const load = useCallback(
     async (offset: number) => {
@@ -182,63 +153,44 @@ function Leaderboard(): React.JSX.Element {
     void load(0);
   }, [load]);
 
+  const meInList = board?.me != null && entries.some((e) => e.userId === user?.id);
+  // Watch your own row once a page holds it, before the page is painted so the pinned copy never flashes; without a way
+  // to watch, it counts as on screen.
+  useLayoutEffect(() => {
+    if (!meInList) return setMeAt('absent');
+    const row = list.current?.querySelector('.rank-me');
+    if (!row || typeof IntersectionObserver === 'undefined') return setMeAt('shown');
+    const watch = new IntersectionObserver(([seen]) => {
+      if (!seen) return;
+      if (seen.isIntersecting) setMeAt('shown');
+      else setMeAt(seen.boundingClientRect.top < 0 ? 'above' : 'below');
+    });
+    watch.observe(row);
+    return () => watch.disconnect();
+  }, [meInList, entries]);
+
   const shown = entries.length;
   const hasMore = board !== null && shown < board.total;
-  // Your own row is highlighted in place rather than repeated above the list.
-  const meInList = board?.me != null && entries.some((e) => e.userId === user?.id);
+  const pinned = board?.me != null && (meAt === 'absent' || meAt === 'below');
 
+  if (loading) return <RankingsSkeleton />;
+  if (error) return <ErrorState message={error} onRetry={() => void load(0)} />;
+  if (scope === 'country' && board?.country == null) {
+    return (
+      <EmptyState
+        title={t('rankings.noCountry')}
+        message={t('rankings.noCountryBody')}
+        action={
+          <Link className="btn btn-primary btn-sm state-action" to="/app/profile/edit">
+            {t('profile.edit')}
+          </Link>
+        }
+      />
+    );
+  }
   return (
-    <>
-      <BoardSwitch value={type} onChange={chooseType} />
-      <p className="page-sub rankings-blurb">{t(meta.blurbKey)}</p>
-
-      <div className="toolbar" role="tablist" aria-label={t('rankings.compareWith')}>
-        {SCOPES.map((s) => (
-          <button
-            key={s.key}
-            role="tab"
-            aria-selected={scope === s.key}
-            className={`chip${scope === s.key ? ' active' : ''}`}
-            onClick={() => setScope(s.key)}
-          >
-            {t(s.labelKey)}
-          </button>
-        ))}
-      </div>
-
-      {/* Your standing on this board, pinned above it while the page does not reach you. */}
-      {board?.me && !meInList && (
-        <div className="rank-standing">
-          <RankList>
-            <RankRow
-              rank={board.me.rank}
-              name={t('games.you')}
-              avatarUrl={user?.avatarUrl ?? null}
-              score={<BoardAmount type={board.type} amount={board.me.score} />}
-              me
-            />
-          </RankList>
-          {board.me.rank === null && board.depth ? (
-            <p className="muted rank-standing-note">{t('rankings.notInTop', { count: board.depth.toLocaleString(locale) })}</p>
-          ) : null}
-        </div>
-      )}
-
-      {loading ? (
-        <RankingsSkeleton />
-      ) : error ? (
-        <ErrorState message={error} onRetry={() => void load(0)} />
-      ) : scope === 'country' && board?.country == null ? (
-        <EmptyState
-          title={t('rankings.noCountry')}
-          message={t('rankings.noCountryBody')}
-          action={
-            <Link className="btn btn-primary btn-sm state-action" to="/app/profile/edit">
-              {t('profile.edit')}
-            </Link>
-          }
-        />
-      ) : entries.length === 0 ? (
+    <div ref={list} className="rankings-board">
+      {entries.length === 0 ? (
         <EmptyState title={t(emptyTitleKey(scope))} message={t(emptyMessageKey(scope, type))} />
       ) : (
         <>
@@ -248,7 +200,7 @@ function Leaderboard(): React.JSX.Element {
             </p>
           )}
 
-          <RankList label={t(meta.labelKey)}>
+          <RankList label={t(BOARD_NAME[type])}>
             {entries.map((e) => (
               <RankRow
                 key={e.userId}
@@ -268,13 +220,9 @@ function Leaderboard(): React.JSX.Element {
             {hasMore ? (
               <>
                 <Button variant="ghost" onClick={() => void load(shown)} disabled={loadingMore}>
-                  {loadingMore
-                    ? t('common.loading')
-                    : t('rankings.showMore', { count: Math.min(PAGE, board!.total - shown) })}
+                  {loadingMore ? t('common.loading') : t('rankings.showMore', { count: Math.min(PAGE, board!.total - shown) })}
                 </Button>
-                <span className="muted">
-                  {t('rankings.shownOf', { shown, total: board!.total })}
-                </span>
+                <span className="muted">{t('rankings.shownOf', { shown, total: board!.total })}</span>
               </>
             ) : (
               <span className="muted">{endOfBoard(t, board!, shown, locale)}</span>
@@ -282,7 +230,25 @@ function Leaderboard(): React.JSX.Element {
           </div>
         </>
       )}
-    </>
+
+      {/* Your standing, kept at the foot of the window while the board above has not reached you. */}
+      {pinned && board?.me && (
+        <div className="rank-standing" aria-hidden={meInList || undefined}>
+          <RankList>
+            <RankRow
+              rank={board.me.rank}
+              name={t('games.you')}
+              avatarUrl={user?.avatarUrl ?? null}
+              score={<BoardAmount type={board.type} amount={board.me.score} />}
+              me
+            />
+          </RankList>
+          {board.me.rank === null && board.depth ? (
+            <p className="muted rank-standing-note">{t('rankings.notInTop', { count: board.depth.toLocaleString(locale) })}</p>
+          ) : null}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -299,9 +265,9 @@ function emptyTitleKey(scope: Scope): MessageKey {
   return 'rankings.empty.global';
 }
 
-/** The weekly board's empty states talk about this week; a balance has no week. */
+/** This week's empty states talk about this week, the balances' about holding some; all time has neither. */
 function emptyMessageKey(scope: Scope, type: BoardType): MessageKey {
   if (scope === 'friends') return 'rankings.empty.friendsBody';
   if (scope === 'country') return type === 'weekly_xp' ? 'rankings.empty.countryBody' : 'rankings.empty.balanceCountryBody';
-  return type === 'weekly_xp' ? 'rankings.empty.globalBody' : 'rankings.empty.balanceGlobalBody';
+  return type === 'zer' || type === 'gewher' ? 'rankings.empty.balanceGlobalBody' : 'rankings.empty.globalBody';
 }

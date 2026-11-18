@@ -145,7 +145,7 @@ describe('a streak that can be restored', () => {
     const sent = api({ gems: () => 20 });
     await open();
     expect(await screen.findByText('Your gems: 20')).toBeInTheDocument();
-    expect(screen.getByText('Gems come from moving up a league, season rewards and events.')).toBeInTheDocument();
+    expect(screen.getByText('Gems come from moving up a league and from events.')).toBeInTheDocument();
     const restore = screen.getByRole('button', { name: 'Restore for 50 gems' });
     expect(restore).toBeDisabled();
     // Why it cannot be pressed is tied to it, for a screen reader.

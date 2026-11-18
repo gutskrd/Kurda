@@ -314,7 +314,6 @@ describe('memoryTokens', () => {
 
 describe('the games list', () => {
   const base = {
-    'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
     'GET /play/invites': ok({ incoming: [], outgoing: [] }),
   };
 

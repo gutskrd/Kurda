@@ -69,8 +69,7 @@ import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
 import { ActionSheetHost } from './src/theme/ActionSheetHost';
 import { RefreshedNotice } from './src/shop/RefreshedItems';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
-import { RanksScreen } from './src/ranks/RanksScreen';
-import { SeasonScreen } from './src/ranks/SeasonScreen';
+import { RankingsScreen } from './src/leagues/RankingsScreen';
 import { BadgesScreen } from './src/badges/BadgesScreen';
 import { TreeScreen } from './src/tree/TreeScreen';
 import { BadgeCelebrationHost } from './src/badges/BadgeCelebrationHost';
@@ -182,6 +181,9 @@ const linking: LinkingOptions<RootStackParamList> = {
       ...WEB_PATH_LINKS,
       // A shared profile (Profile → Share) opens in the app for anyone who has it.
       UserProfile: 'app/users/:userId',
+      // The website's rankings and its league; its old league, ranks and season addresses are rewritten to these.
+      Rankings: 'app/rankings',
+      LeagueTable: 'app/rankings/league',
       // The website's "your next lesson", where a new account lands.
       NextLesson: 'app/learn/next',
       // Practice opens on its hub, where every kind is one tap away.
@@ -272,8 +274,7 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
         { key: 'writing', labelKey: 'civak.section.writing', icon: 'book', onPress: () => navigation.navigate('Tabs', { screen: 'Home', params: { section: 'gotin' } }) },
         { key: 'pictures', labelKey: 'civak.section.pictures', icon: 'image', onPress: () => navigation.navigate('Tabs', { screen: 'Home', params: { section: 'dimen' } }) },
         ...(eventLive ? [{ key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') } as const] : []),
-        { key: 'league', labelKey: 'leagues.screenTitle', icon: 'trophy', onPress: () => require('league') && navigation.navigate('League') },
-        { key: 'ranks', labelKey: 'ranks.title', icon: 'mountains', onPress: () => require('league') && navigation.navigate('Ranks') },
+        { key: 'rankings', labelKey: 'rankings.title', icon: 'trophy', onPress: () => require('league') && navigation.navigate('Rankings') },
       ],
     },
     {
@@ -461,24 +462,17 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
+      <RootStack.Screen name="Rankings" options={{ presentation: 'fullScreenModal' }}>
+        {({ route, navigation }) => (
+          <GuestWall reason="league" onBack={backFrom(navigation)}>
+            <RankingsScreen board={route.params?.board} span={route.params?.span} onExit={backFrom(navigation)} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="LeagueTable" options={card}>
         {({ navigation }) => (
           <GuestWall reason="league" onBack={backFrom(navigation)}>
             <LeagueScreen onExit={backFrom(navigation)} />
-          </GuestWall>
-        )}
-      </RootStack.Screen>
-      <RootStack.Screen name="Ranks" options={card}>
-        {({ route, navigation }) => (
-          <GuestWall reason="league" onBack={backFrom(navigation)}>
-            <RanksScreen game={route.params?.game} onExit={backFrom(navigation)} />
-          </GuestWall>
-        )}
-      </RootStack.Screen>
-      <RootStack.Screen name="Season" options={card}>
-        {({ navigation }) => (
-          <GuestWall reason="league" onBack={backFrom(navigation)}>
-            <SeasonScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>

@@ -51,9 +51,9 @@ const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /
 const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit, /admin/security, /admin/maintenance
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
 const SUPPORT_READERS = { roles: ['superadmin', 'admin', 'support'] } as const; // email/admin-routes.ts SUPPORT_READERS (the settings half: EMAIL_ADMINS)
-/** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts. */
-export const RANK_TOOL_ROLES = ['admin', 'superadmin'] as const;
-const RANK_TOOLS = { roles: RANK_TOOL_ROLES } as const;
+/** PROGRESS_TOOL_ROLES in api/src/admin/roles.ts: leagues/routes.ts, badges/routes.ts. */
+export const PROGRESS_TOOL_ROLES = ['admin', 'superadmin'] as const;
+const PROGRESS_TOOLS = { roles: PROGRESS_TOOL_ROLES } as const;
 
 export const NAV_GROUPS = [
   { key: 'overview', label: 'Overview' },
@@ -62,7 +62,7 @@ export const NAV_GROUPS = [
   { key: 'moderation', label: 'Moderation' },
   { key: 'content', label: 'Content' },
   { key: 'games', label: 'Games' },
-  { key: 'ranks', label: 'Ranks & rewards' },
+  { key: 'progress', label: 'Leagues & badges' },
   { key: 'economy', label: 'Economy' },
   { key: 'settings', label: 'Settings' },
 ] as const;
@@ -122,10 +122,8 @@ export const NAV: readonly NavEntry[] = [
   // The learning games' own content, behind the capability its API routes ask for (api/src/games/routes.ts).
   { id: 'game-content', label: 'Learning game content', title: 'Game content', group: 'games', icon: 'list', page: 'game-content', access: { capability: 'content.edit' }, keywords: 'learning games sentences passages cards review readiness import build a sentence' },
 
-  { id: 'ranks', label: 'Game ranks', group: 'ranks', icon: 'mountain', page: 'ranks', access: RANK_TOOLS, keywords: 'rating tiers top players suspicious pairs void reset' },
-  { id: 'seasons', label: 'Seasons', group: 'ranks', icon: 'trophy', page: 'seasons', access: RANK_TOOLS, keywords: 'season rewards frames gems end close' },
-  { id: 'leagues', label: 'Leagues', group: 'ranks', icon: 'waves', page: 'leagues', access: RANK_TOOLS, keywords: 'weekly groups settle merge promotion xp' },
-  { id: 'badges', label: 'Badges', group: 'ranks', icon: 'award', page: 'badges', access: RANK_TOOLS, keywords: 'achievements rarity catalogue award revoke' },
+  { id: 'leagues', label: 'Leagues', group: 'progress', icon: 'waves', page: 'leagues', access: PROGRESS_TOOLS, keywords: 'weekly groups settle merge promotion xp rankings' },
+  { id: 'badges', label: 'Badges', group: 'progress', icon: 'award', page: 'badges', access: PROGRESS_TOOLS, keywords: 'achievements rarity catalogue award revoke' },
 
   { id: 'economy', label: 'Overview', title: 'Economy', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer gems' },
   { id: 'shop', label: 'Shop', group: 'economy', icon: 'store', page: 'shop', access: SHOP_EDITORS, keywords: 'items prices catalogue' },

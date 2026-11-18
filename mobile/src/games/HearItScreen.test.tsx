@@ -196,7 +196,6 @@ describe('HearItScreen', () => {
 describe('Hear It, Find It, as an exercise of the lessons', () => {
   it('is not among the games, even while it can be done', async () => {
     const client = fakeClient({
-      'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
       'GET /play/invites': ok({ incoming: [], outgoing: [] }),
       'GET /games/availability?dialect=kmr': availability('kmr'),
     });

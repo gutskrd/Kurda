@@ -120,14 +120,17 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
       ? `<defs><radialGradient id="${prefix}-ground"><stop offset="0" stop-color="#2a1408" stop-opacity="0.3"/><stop offset="1" stop-color="#2a1408" stop-opacity="0"/></radialGradient></defs>` +
         `<ellipse data-sc="shadow" cx="${feet.x}" cy="${feet.y - frame.h * 0.012}" rx="${frame.w * 0.4}" ry="${frame.h * 0.022}" fill="url(#${prefix}-ground)"${about(feet)}/>`
       : '';
-  // Just above the eyes and to the side, outside the figure's groups so they neither breathe nor dip with it.
+  // Above and beside the head, measured on the head (the bust), on the side it faces away from. Outside the figure's
+  // groups, so they neither breathe nor dip with it, nor turn into mirrored letters.
   const eyesAt = eyesMiddle(art);
+  const zFrom = eyesAt.x + art.bust.w * RESTING.zAt.x;
+  const zX = mirrored ? 2 * frame.x + frame.w - zFrom : zFrom;
   const snooze = resting
     ? '<g class="sc-snooze">' +
       [0, 1, 2]
         .map(
           () =>
-            `<text class="sc-z" x="${eyesAt.x + frame.w * 0.16}" y="${eyesAt.y - frame.h * 0.05}" font-size="${frame.h * 0.075}" text-anchor="middle">z</text>`,
+            `<text class="sc-z" x="${zX}" y="${eyesAt.y - art.bust.h * RESTING.zAt.y}" font-size="${art.bust.h * RESTING.zRise * 0.5}" text-anchor="middle">z</text>`,
         )
         .join('') +
       '</g>'
@@ -703,8 +706,8 @@ export function SpeakingCharacter({
     '--sc-blink-ms': `${BLINK_STEPS.shut}ms`,
     // The "z"s: how often, and how far up and aside each goes, in the drawing's units.
     '--sc-z-ms': `${RESTING.zMs}ms`,
-    '--sc-z-rise': `${-frame.h * RESTING.zRise}px`,
-    '--sc-z-drift': `${frame.h * RESTING.zRise * 0.45}px`,
+    '--sc-z-rise': `${-art.bust.h * RESTING.zRise}px`,
+    '--sc-z-drift': `${(mirrored ? -1 : 1) * art.bust.h * RESTING.zRise * 0.45}px`,
   } as React.CSSProperties;
   if (size) {
     style.height = size;

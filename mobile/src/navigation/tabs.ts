@@ -64,6 +64,8 @@ export function legacyTabPath(path: string): string {
   // A game's invite link (shared join-link.ts) opens Join with a code on Games, the code filled in.
   const invite = /^join\/[a-z-]+\/([A-Za-z0-9]+)$/.exec(bare);
   if (invite) return `${lead}learn?view=games&code=${invite[1]!.toUpperCase()}`;
+  // A game's rank page on the website, gone with game ranks.
+  if (/^app\/ranks\/[a-z-]+$/.test(bare)) return `${lead}app/rankings`;
   switch (bare) {
     // The website's wall and its filter, and the walls it replaced.
     case 'app':
@@ -99,6 +101,11 @@ export function legacyTabPath(path: string): string {
     // The word game's lobby under its old name.
     case 'app/games/wordle-battle':
       return `${lead}app/games/peyvok-battle${query ? `?${query}` : ''}`;
+    // The website's league, ranks and season pages, gone into its rankings.
+    case 'app/leagues':
+    case 'app/season':
+    case 'app/ranks':
+      return `${lead}app/rankings`;
     case 'inbox':
     case 'app/inbox':
     case 'chats':

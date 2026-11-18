@@ -1,7 +1,7 @@
 import type { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { AlphabetScript, GameDialect, PracticeMode, ProverbRoundMode, RankedGame } from '@kurda/shared';
+import type { AlphabetScript, GameDialect, PracticeMode, ProverbRoundMode } from '@kurda/shared';
 import type { LearnView } from './tabs';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 
@@ -42,10 +42,13 @@ export type RootStackParamList = {
   /** The short test that jumps ahead on the path to `unitId` (coursemap/JumpTestScreen). */
   JumpTest: { courseId: string; unitId: string };
   Shop: undefined;
+  /** By XP (this week or all time), Zêr or Gewher; XP this week opens with your league (leagues/RankingsScreen). */
+  Rankings: { board?: 'xp' | 'zer' | 'gewher'; span?: 'week' | 'all' } | undefined;
+  /** The whole league this week: the ladder, the goal ring and the group's table (leagues/LeagueScreen). */
+  LeagueTable: undefined;
+  /** Older names, opened as Rankings (navigation/returnTo.ts `RENAMED`): the league on XP this week, ranks and season as is. */
   League: undefined;
-  /** Game Ranks up close: a game's rank, the climb and its boards. */
-  Ranks: { game?: RankedGame } | undefined;
-  /** The season: days left, its rewards, last season, the frames you own. */
+  Ranks: { game?: string } | undefined;
   Season: undefined;
   /** Every badge by family, and the three for the profile. */
   Badges: undefined;

@@ -3,8 +3,6 @@ import { LeagueService, type ActivityPublisher, type GemGranter } from '../leagu
 import { XpService } from '../xp/service.js';
 import { BadgeService, type BadgeNotices } from './service.js';
 import type { ProgressNotices } from '../notifications/progress-notices.js';
-import type { RankEvents } from '../ranks/events.js';
-import { listenToRanks } from './rank-hooks.js';
 
 interface Log {
   warn: (obj: unknown, msg: string) => void;
@@ -18,14 +16,11 @@ export interface Progression {
 
 /**
  * XP, the leagues and the badges, wired together the same way in every process that pays XP or settles a week:
- * an award can join the week's league, and a settled week moves the league badges. Pass the events of the
- * RankService that rates this process's games, so the ranked badges count rated games finished here.
+ * an award can join the week's league, and a settled week moves the league badges.
  */
 export function createProgression(
   pool: pg.Pool,
   deps: {
-    /** Game Ranks' events (rated game finished, season closed) for the ranked badges */
-    ranks?: RankEvents;
     gems?: GemGranter;
     activity?: ActivityPublisher;
     notices?: ProgressNotices;
@@ -38,7 +33,6 @@ export function createProgression(
   const made: { badges?: BadgeService } = {};
   const badges = new BadgeService(pool, { notices: deps.badgeNotices?.(() => made.badges!), log: deps.log });
   made.badges = badges;
-  if (deps.ranks) listenToRanks(deps.ranks, badges, pool);
   const leagues = new LeagueService(pool, {
     gems: deps.gems,
     activity: deps.activity,

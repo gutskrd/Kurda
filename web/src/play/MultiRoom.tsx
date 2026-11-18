@@ -8,8 +8,6 @@ import { ErrorState, Loading } from '../components/states';
 import { useT, type Translate } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
 import { PlayerReport } from '../reports/PlayerReport';
-import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
-import { RankResult } from '../ranks/RankResult';
 import { RankList, RankRow } from '../ui/RankRow';
 import { useGameFinished } from '../feedback/gameFinished';
 import { CodeTicket } from './CodeTicket';
@@ -55,8 +53,8 @@ export interface GameRoomProps<Board> {
 
 /**
  * The room around any multiplayer learning game: lobby, game and results, built from the play layer's parts so every
- * game reads alike (join code and Invite friends, the roster by seat with Remove and report, Rated or Friendly, Start
- * and Join, then places, rank change and Play again). A game against Hevalo pays no XP and says so once. The game
+ * game reads alike (join code and Invite friends, the roster by seat with Remove and report, Start and Join, then
+ * places and Play again). A game against Hevalo pays no XP and says so once. The game
  * supplies only `playing` and how a score reads; everything else works from `MultiView`, kept current by `useGameView`.
  */
 export function GameRoom<Board>({
@@ -129,15 +127,6 @@ export function GameRoom<Board>({
         ) : (
           <LobbyRoster players={view.players} max={view.maxPlayers} canRemove={view.isHost} onRemove={(seat) => control('remove', { seat })} game={game} gameId={id} />
         )}
-        <LobbyRated
-          game={game}
-          lobbyId={id}
-          state={view.rated}
-          isHost={view.isHost}
-          member={view.me !== null}
-          playerCount={present.length}
-          seatName={name}
-        />
         {view.isHost && <InvitedList game={game} lobbyId={id} room={room_} headingLevel={2} />}
         {notice && (
           <div className="wordle-notice" role="status">
@@ -163,7 +152,6 @@ export function GameRoom<Board>({
   if (view.status === 'active') {
     return (
       <div className="match-play mp-room">
-        {view.mode === 'group' && <RatedBadge rated={shownRated(view.rated)} size="sm" className="match-rated" />}
         {view.canControl && !view.isHost && view.mode === 'group' && (
           <p className="mp-standin" role="status">
             {t('play.room.standIn')}
@@ -191,8 +179,6 @@ export function GameRoom<Board>({
   return (
     <div className="match-results mp-room">
       <Verdict won={mine?.place === 1} label={mine?.place === 1 ? t('games.youWon') : t('play.room.over')} />
-      {view.mode === 'group' && <RatedBadge rated={shownRated(view.rated)} size="sm" className="match-rated" />}
-      {view.me !== null && view.mode === 'group' && <RankResult game={game} gameRef={id} />}
       {ending?.(view)}
       <RankList label={t('play.room.results')}>
         {(view.results ?? []).map((r) => {

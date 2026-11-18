@@ -69,7 +69,6 @@ const lobbySchema = z
     category: z.string().regex(GAME_SLUG_PATTERN).nullish(),
     maxPlayers: z.number().int().min(IMPOSTOR_MIN_PLAYERS).max(IMPOSTOR_MAX_PLAYERS).default(IMPOSTOR_MAX_PLAYERS),
     access: z.enum(['friends', 'open']).default('friends'),
-    rated: z.boolean().optional(),
   })
   .transform(
     (s): LobbyChoices<ImpostorSettings> => ({
@@ -77,7 +76,6 @@ const lobbySchema = z
       dialect: s.dialect,
       maxPlayers: s.maxPlayers,
       access: s.access,
-      rated: s.rated,
     }),
   );
 

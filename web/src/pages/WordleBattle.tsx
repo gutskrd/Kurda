@@ -16,9 +16,7 @@ import { RankList, RankRow } from '../ui/RankRow';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
-import type { GameAccess, RatedState } from '@kurda/shared';
-import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
-import { RankResult } from '../ranks/RankResult';
+import type { GameAccess } from '@kurda/shared';
 import { InviteForm } from '../play/InviteSheet';
 import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
 import { CodeTicket } from '../play/CodeTicket';
@@ -59,8 +57,6 @@ interface BattleState {
   access?: GameAccess;
   /** The code a friend types while the lobby can be joined; null after. */
   code?: string | null;
-  /** Rated or Friendly, shown before anyone joins and decided at the start. */
-  rated?: RatedState;
   /** Everyone in it by seat, as this viewer may see them. */
   players: SeatPlayer[];
   me: {
@@ -283,19 +279,6 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
           invite={battle.isHost ? <InviteFriendsButton game="wordle-battle" lobbyId={id} room={room} /> : undefined}
         />
         <LobbyRoster players={battle.players} max={battle.maxPlayers} canRemove={battle.isHost} onRemove={remove} game="wordle-battle" gameId={battle.id} />
-        {/* Rated or Friendly: seen before joining, changed by the host here. */}
-        <LobbyRated
-          game="wordle-battle"
-          lobbyId={id}
-          state={battle.rated}
-          isHost={battle.isHost}
-          member={battle.me != null}
-          playerCount={playerCount}
-          seatName={(seat) => {
-            const p = battle.players.find((x) => x.seat === seat);
-            return p ? seatName(p, t) : t('stories.game.playerN', { seat });
-          }}
-        />
         {battle.isHost && <InvitedList game="wordle-battle" lobbyId={id} room={room} headingLevel={2} />}
         {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {battle.me == null ? (
@@ -324,9 +307,6 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
           {mine?.rank === 1 && <TrophyIcon size={26} className="verdict-icon" />}
           {mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}
         </h2>
-        {battle.rated && <RatedBadge rated={shownRated(battle.rated)} size="sm" className="match-rated" />}
-        {/* What the game did to your rank, then the badges it earned. */}
-        {battle.me != null && <RankResult game="wordle-battle" gameRef={battle.id} />}
         {results && (
           <>
             <p className="muted">{t('games.wordle.theWordWas', { word: results.target })}</p>
@@ -377,7 +357,6 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const me = battle.me;
   return (
     <div className="wordle-battle-play">
-      {battle.rated && <RatedBadge rated={shownRated(battle.rated)} size="sm" className="match-rated" />}
       {/* The same chips the front page draws above its battle: you, and how close everyone else is. */}
       {battle.opponents.length > 0 && (
         <div className="players battle-players">

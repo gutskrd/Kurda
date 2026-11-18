@@ -9,7 +9,6 @@ import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { TicketBody, TicketGlyph, TicketStamp, TicketStub, ticketClass, useFreshStamp } from '../ui/Ticket';
 import { GAME_NAME_KEY, joinLobby, lobbyPath, playError, readCard, summaryParts } from './playApi';
-import { RatedBadge } from '../ranks/rated';
 import { RetiredGameNote } from '../components/GameInviteCard';
 
 const STATUS_KEY: Record<Exclude<LobbyCard['status'], 'open'>, MessageKey> = {
@@ -109,8 +108,6 @@ export function ChatGameCard({
         )}
         <span className="invite-eyebrow">{t('games.invite.eyebrow')}</span>
         <span className="invite-title">{name}</span>
-        {/* Rated or Friendly, before anyone joins. */}
-        {card && typeof card.summary.rated === 'boolean' && <RatedBadge rated={card.summary.rated} size="sm" className="invite-rated" />}
         {parts.length > 0 && (
           <span className="invite-blurb">
             {parts.map((p, i) => (

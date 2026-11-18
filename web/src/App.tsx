@@ -66,12 +66,10 @@ const Alphabet = lazy(() => import('./pages/Alphabet').then((m) => ({ default: m
 const Words = lazy(() => import('./pages/Words').then((m) => ({ default: m.Words })));
 const WordSet = lazy(() => import('./pages/WordSet').then((m) => ({ default: m.WordSet })));
 const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m.Rankings })));
-// Game ranks, leagues and badges: the badge collection and the season.
+const LeaguePage = lazy(() => import('./leagues/LeaguePage').then((m) => ({ default: m.LeaguePage })));
 const BadgesPage = lazy(() => import('./badges/BadgesPage').then((m) => ({ default: m.BadgesPage })));
 // The learner's tree: planted once, watered with what lessons earn.
 const TreePage = lazy(() => import('./tree/TreePage').then((m) => ({ default: m.TreePage })));
-const SeasonPage = lazy(() => import('./ranks/SeasonPage').then((m) => ({ default: m.SeasonPage })));
-const RanksPage = lazy(() => import('./ranks/RanksPage').then((m) => ({ default: m.RanksPage })));
 // The events running now, with their quests and rewards.
 const EventsPage = lazy(() => import('./events/EventsPage').then((m) => ({ default: m.EventsPage })));
 const Friends = lazy(() => import('./pages/Friends').then((m) => ({ default: m.Friends })));
@@ -332,14 +330,15 @@ export function AppRoutes(): React.JSX.Element {
         {/* Who Am I?: a solo round, or a race with friends. */}
         <Route path="games/who-am-i" element={<RequireAccount what="gate.what.play"><WhoAmI /></RequireAccount>} />
         <Route path="rankings" element={<Rankings />} />
-        <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />
+        <Route path="rankings/league" element={<RequireAccount what="gate.what.play"><LeaguePage /></RequireAccount>} />
+        {/* Game ranks and seasons have ended: their old addresses, like the league's, land on the rankings. */}
+        {['leagues', 'season', 'ranks', 'ranks/:game'].map((path) => (
+          <Route key={path} path={path} element={<Navigate to="/app/rankings" replace />} />
+        ))}
         <Route path="badges" element={<RequireAccount what="gate.what.profile"><BadgesPage /></RequireAccount>} />
         <Route path="tree" element={<RequireAccount what="gate.what.profile"><TreePage /></RequireAccount>} />
         {/* The events running now and their quests, reached from Learn while one runs (events/EventsPage.tsx). */}
         <Route path="events" element={<RequireAccount what="gate.what.play"><EventsPage /></RequireAccount>} />
-        <Route path="season" element={<RequireAccount what="gate.what.play"><SeasonPage /></RequireAccount>} />
-        <Route path="ranks" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />
-        <Route path="ranks/:game" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />
         {/* People and words from one field, open to everyone; a visitor sees what each half needs (pages/Search.tsx). */}
         <Route path="search" element={<Search />} />
         <Route path="friends" element={<RequireAccount what="gate.what.addFriends"><Friends /></RequireAccount>} />

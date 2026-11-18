@@ -1,18 +1,10 @@
 /*
- * Game ranks, learning leagues, badges and seasons. The shared art brings its own light; each tier tints its card's
- * glow and progress bar. A loss uses the same calm ink as a win, and nothing blinks, shakes or counts down. Motion is
- * only for arriving, and stops under Reduce Motion.
+ * Learning leagues, badges, season frames and the rankings. The shared art brings its own light; each tier tints its
+ * glow. Nothing blinks, shakes or counts down. Motion is only for arriving, and stops under Reduce Motion.
  */
 
 /* ---- tier colours -------------------------------------------------------------- */
-/* the light, mid and deep steps of each tier's metal in shared/src/art/palette.ts (RANK_METAL) */
-.tier-dest { --t-hi: #f6ad86; --t-mid: #dc7a52; --t-deep: #55220f; }
-.tier-gir { --t-hi: #a6e58c; --t-mid: #4fba5c; --t-deep: #0f4424; }
-.tier-zozan { --t-hi: #86ebdd; --t-mid: #22c2b2; --t-deep: #06474a; }
-.tier-ciya { --t-hi: #97b8ff; --t-mid: #3f71e6; --t-deep: #0e1f5c; }
-.tier-lutke { --t-hi: #d2acf7; --t-mid: #9d66e0; --t-deep: #311660; }
-.tier-sterk { --t-hi: #ffe58e; --t-mid: #f7c235; --t-deep: #6a4204; }
-.is-placing { --t-hi: #e3c4ff; --t-mid: #b874f0; --t-deep: #2a1250; }
+/* the light and mid steps of each league's water and each badge's metal in shared/src/art/palette.ts */
 .league-dilop { --t-hi: #d4f1ff; --t-mid: #8fd2f7; }
 .league-kani { --t-hi: #94f5e3; --t-mid: #2fd6c0; }
 .league-cem { --t-hi: #86d3ff; --t-mid: #2a9df5; }
@@ -148,576 +140,6 @@
   to { rotate: 360deg; }
 }
 
-/* ---- Rated / Friendly ------------------------------------------------------------ */
-.rated-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px 3px 8px;
-  border-radius: var(--r-pill);
-  font-size: 0.78rem;
-  font-weight: 650;
-  line-height: 1.4;
-  white-space: nowrap;
-  border: 1px solid;
-}
-.rated-badge.is-sm {
-  padding: 2px 8px 2px 6px;
-  font-size: 0.72rem;
-}
-/* the scheme's own gold and green, so the word stays readable on a light page and on a tinted ticket alike */
-.rated-badge.is-rated {
-  color: var(--gold-ink);
-  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
-  background: var(--gold-soft);
-}
-.rated-badge.is-friendly {
-  color: var(--success);
-  border-color: color-mix(in srgb, var(--success) 35%, transparent);
-  background: var(--success-soft);
-}
-.match-rated,
-.invite-rated {
-  justify-self: center;
-  align-self: center;
-}
-.match-play > .match-rated,
-.wordle-battle-play > .match-rated {
-  display: flex;
-  width: max-content;
-  margin: 0 auto 10px;
-}
-.invite-rated {
-  margin: 4px 0;
-  width: max-content;
-}
-.invite-banner-text .invite-rated {
-  align-self: flex-start;
-  margin: 2px 0;
-}
-.rated-badge.is-icon {
-  flex: none;
-  padding: 4px;
-}
-.sg-rated {
-  margin-inline-start: 10px;
-  vertical-align: middle;
-}
-
-.rated-choice {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-width: 0;
-}
-.rated-choice-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-.rated-option {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 10px;
-  padding: 12px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
-}
-.rated-option:hover {
-  border-color: var(--border-strong);
-}
-.rated-option input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-.rated-option:has(input:focus-visible) {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-.rated-option-icon {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--surface-2);
-  color: var(--ink-3);
-}
-.rated-option-text {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-.rated-option-label {
-  font-weight: 650;
-  font-size: 0.95rem;
-}
-.rated-option-hint {
-  color: var(--ink-3);
-  font-size: 0.8rem;
-  line-height: 1.4;
-}
-.rated-option.is-rated.is-on {
-  border-color: rgba(240, 194, 74, 0.6);
-  background: linear-gradient(135deg, rgba(240, 194, 74, 0.14), rgba(197, 82, 255, 0.08));
-}
-.rated-option.is-rated.is-on .rated-option-icon {
-  background: rgba(240, 194, 74, 0.2);
-  color: var(--gold-ink);
-}
-.rated-option.is-friendly.is-on {
-  border-color: rgba(134, 226, 190, 0.55);
-  background: rgba(87, 205, 160, 0.1);
-}
-.rated-option.is-friendly.is-on .rated-option-icon {
-  background: rgba(87, 205, 160, 0.2);
-  color: var(--success);
-}
-.rated-option.is-on .rated-option-hint {
-  color: var(--ink-2);
-}
-.rated-choice:disabled .rated-option {
-  cursor: progress;
-  opacity: 0.7;
-}
-@media (max-width: 440px) {
-  .rated-choice-options {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-  .rated-option {
-    align-items: center;
-    padding: 10px 12px;
-  }
-}
-
-.rated-panel {
-  display: grid;
-  gap: 10px;
-}
-.rated-panel .sg-panel-head {
-  margin-bottom: 0;
-}
-.rated-panel-hint {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: 0.88rem;
-}
-.rated-panel-note {
-  margin: 0;
-  padding: 8px 12px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-size: 0.86rem;
-  line-height: 1.45;
-}
-.rated-gains {
-  display: grid;
-  gap: 6px;
-}
-.rated-gains-line {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-.rated-gains-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 4px;
-}
-.rated-gains-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 12px;
-  padding: 8px 10px;
-  border-radius: var(--r-sm);
-  background: var(--surface);
-}
-.rated-gains-who {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-.rated-gains-rank {
-  color: var(--ink-3);
-  font-weight: 500;
-  font-size: 0.8rem;
-}
-.rated-gains-nums {
-  color: var(--ink-2);
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
-  unicode-bidi: plaintext;
-}
-
-/* ---- the Games page: your ranks ----------------------------------------------------- */
-/* below the games, with the same room above it as between Learn's own sections */
-.ranks-section {
-  margin-top: var(--space-8);
-  margin-bottom: var(--space-8);
-}
-.ranks-section-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px 20px;
-  margin-bottom: 14px;
-}
-/* the Games view's section title, set like the Lessons view's (Today, Practice, Courses) */
-.ranks-section-title {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--text-section);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-.ranks-section-sub {
-  margin: 4px 0 0;
-  color: var(--ink-3);
-  font-size: var(--text-secondary);
-}
-.ranks-section-links {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.ranks-season-link {
-  display: grid;
-  padding: 6px 14px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  text-decoration: none;
-  color: inherit;
-  line-height: 1.25;
-  transition: border-color var(--dur-fast) var(--ease-out);
-}
-.ranks-season-link:hover {
-  border-color: var(--border-strong);
-}
-.ranks-season-name {
-  font-weight: 650;
-  font-size: 0.9rem;
-}
-.ranks-season-days {
-  color: var(--ink-3);
-  font-size: 0.78rem;
-}
-.ranks-note {
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-size: 0.88rem;
-}
-.ranks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: 12px;
-}
-/* the games not begun: one quiet line of their names, each a way to its boards, and what places a rank */
-.ranks-untouched {
-  display: grid;
-  gap: 4px;
-  padding: 14px 16px;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--r-lg);
-}
-.ranks-grid + .ranks-untouched {
-  margin-top: 12px;
-}
-.ranks-untouched-names {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 14px;
-  margin: 0;
-  font-size: var(--text-secondary);
-  /* the names wrap onto lines of their own, so each reaches only half way to the next, side to side and line to line (reach.css) */
-  --reach-room-x: 14px;
-  --reach-room-y: 4px;
-}
-/* where a finger is about the lines stand a fingertip apart, so a name a line tall still answers over 48px without reaching into the next */
-@media (any-pointer: coarse) {
-  .ranks-untouched-names {
-    row-gap: 24px;
-    --reach-room-y: 24px;
-  }
-}
-.ranks-untouched-label {
-  color: var(--ink-2);
-  font-weight: 700;
-}
-.ranks-untouched-game {
-  color: var(--ink);
-  font-weight: 600;
-  text-decoration: underline;
-  text-decoration-color: var(--border-strong);
-  text-underline-offset: 3px;
-}
-.ranks-untouched-game:hover {
-  text-decoration-color: currentColor;
-}
-.ranks-untouched-hint {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: var(--text-caption);
-}
-
-.rank-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
-  padding: 16px 18px 16px 14px;
-  border-radius: var(--r-xl);
-  border: 1px solid var(--border);
-  background:
-    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--t-mid, #fff) 16%, transparent), transparent 60%),
-    rgba(255, 255, 255, 0.035);
-  box-shadow: var(--glass-rim);
-  overflow: hidden;
-  isolation: isolate;
-}
-[dir='rtl'] .rank-card {
-  padding: 16px 14px 16px 18px;
-  background:
-    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--t-mid, #fff) 16%, transparent), transparent 60%),
-    rgba(255, 255, 255, 0.035);
-}
-.rank-card-art {
-  display: grid;
-  place-items: center;
-  filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--t-mid, #000) 40%, transparent));
-}
-.rank-card-body {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-.rank-card-game {
-  color: var(--ink-3);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-.rank-card-tier {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 10px;
-  margin: 0;
-  font-size: 1.45rem;
-  line-height: 1.1;
-  color: var(--t-text, var(--t-hi, var(--ink)));
-}
-.rank-card-meaning {
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--ink-3);
-}
-.rank-card-points {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-}
-.rank-card-num {
-  font-size: 1.25rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-}
-.rank-card-unit {
-  color: var(--ink-3);
-  font-size: 0.82rem;
-}
-.rank-card-q {
-  display: inline-grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  color: var(--ink-2);
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: help;
-}
-.rank-card-tag {
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-size: 0.74rem;
-  font-weight: 600;
-}
-.rank-card-hint {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-.rank-progress {
-  display: grid;
-  gap: 5px;
-}
-.rank-progress-bar {
-  position: relative;
-  height: 8px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  overflow: hidden;
-}
-.rank-progress-fill {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--t-mid, #fff), var(--t-hi, #fff));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--t-mid, #fff) 55%, transparent);
-}
-[dir='rtl'] .rank-progress-fill {
-  background: linear-gradient(270deg, var(--t-mid, #fff), var(--t-hi, #fff));
-}
-/* where it stands, and how it gets there when a result moves it, are the lesson bar's: styles/motion.css, "progress" */
-.rank-progress-label {
-  color: var(--ink-3);
-  font-size: 0.8rem;
-}
-.rank-shield {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--ink-2);
-  font-size: 0.8rem;
-}
-.rank-shield-pips {
-  display: inline-flex;
-  gap: 2px;
-}
-.rank-shield-pip {
-  display: inline-grid;
-  color: var(--ink-4);
-}
-.rank-shield-pip.is-on {
-  color: var(--t-text, var(--t-hi, var(--gold)));
-}
-
-/* ---- after a game -------------------------------------------------------------------- */
-.rank-result {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  max-width: 520px;
-  margin: 4px auto;
-  padding: 16px 18px;
-  border-radius: var(--r-xl);
-  border: 1px solid var(--border);
-  background:
-    radial-gradient(110% 150% at 0% 50%, color-mix(in srgb, var(--t-mid, #fff) 18%, transparent), transparent 62%),
-    rgba(255, 255, 255, 0.04);
-  box-shadow: var(--glass-rim);
-  text-align: start;
-  animation: rank-arrive 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.rank-result.is-loading {
-  display: block;
-  text-align: center;
-}
-.rank-result-pending {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: 0.9rem;
-}
-.rank-result-art {
-  filter: drop-shadow(0 8px 20px color-mix(in srgb, var(--t-mid, #000) 45%, transparent));
-}
-.rank-result-body {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-.rank-result-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-  margin: 0;
-}
-.rank-result-delta {
-  font-family: var(--font-display);
-  font-size: 2.2rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  /* "+24" stays "+24" in a right-to-left page */
-  direction: ltr;
-  unicode-bidi: isolate;
-  color: var(--ink);
-}
-.rank-result.is-up .rank-result-delta {
-  color: var(--t-text, var(--t-hi, var(--ink)));
-  text-shadow: 0 0 22px color-mix(in srgb, var(--t-mid, #fff) 50%, transparent);
-}
-.rank-result-reason {
-  color: var(--ink-2);
-  font-size: 0.95rem;
-}
-.rank-result-standing {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-  margin: 0;
-  color: var(--ink-3);
-  font-size: 0.86rem;
-}
-.rank-result-tier {
-  color: var(--t-text, var(--t-hi, var(--ink)));
-  font-weight: 650;
-  font-size: 0.95rem;
-}
-.rank-result-points {
-  font-variant-numeric: tabular-nums;
-}
-.rank-result-note {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: 0.86rem;
-  text-align: center;
-}
-.rank-result .rank-result-note {
-  text-align: start;
-}
-@keyframes rank-arrive {
-  from { opacity: 0; transform: translateY(8px); }
-}
-
 /* ---- the celebration ----------------------------------------------------------------- */
 .celebrate {
   position: relative;
@@ -728,12 +150,6 @@
   text-align: center;
   isolation: isolate;
 }
-.celebrate.tone-dest { --t-hi: #f6ad86; --t-mid: #dc7a52; }
-.celebrate.tone-gir { --t-hi: #a6e58c; --t-mid: #4fba5c; }
-.celebrate.tone-zozan { --t-hi: #86ebdd; --t-mid: #22c2b2; }
-.celebrate.tone-ciya { --t-hi: #97b8ff; --t-mid: #3f71e6; }
-.celebrate.tone-lutke { --t-hi: #d2acf7; --t-mid: #9d66e0; }
-.celebrate.tone-sterk { --t-hi: #ffe58e; --t-mid: #f7c235; }
 .celebrate.tone-sifir { --t-hi: #ffb48e; --t-mid: #ee7b52; }
 .celebrate.tone-ziv { --t-hi: #e4edf8; --t-mid: #b3c4dc; }
 .celebrate.tone-zer { --t-hi: #ffe16a; --t-mid: #ffbd1f; }
@@ -1479,56 +895,21 @@
   max-width: 420px;
 }
 
-/* Rankings as on the phone: two tabs, then the league as the page itself with no card, or the everyone leaderboard. */
+/*
+ * Rankings: what it ranks by, then for XP this week or all time, your league as one card, and the board. The two
+ * switches are real radios stretched over their segments (ui/BoardSwitch), so the arrow keys work and the whole
+ * segment is the target. Nothing moves.
+ */
 .rankings-page {
   padding-top: 4px;
 }
-.rankings-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  margin-bottom: 24px;
-  padding: 4px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-}
-.rankings-tab {
-  min-width: 0;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-3);
-  font: inherit;
-  font-weight: 650;
-  line-height: 1.15;
-  cursor: pointer;
-  /* a name too long for half a phone takes a second line rather than losing its end */
-  overflow-wrap: break-word;
-}
-/* the tab you are on is drawn as every chosen one is: the shared rule in shell.css */
-@media (hover: hover) {
-  .rankings-tab:not(.is-active):hover {
-    color: var(--ink);
-  }
-}
-@media (pointer: coarse) {
-  .rankings-tab {
-    min-height: 44px;
-  }
-}
-/*
- * What the leaderboard ranks (Weekly XP, Zêr, Gewher), drawn like the tabs a size down. Real radios stretched over the
- * segments (ui/BoardSwitch) make the arrow keys work and the whole segment the target. Nothing moves.
- */
 .rank-by {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
   margin: 0 0 12px;
-  padding: 3px;
+  padding: 4px;
   border: 0;
   border-radius: var(--r-pill);
   background: var(--surface-2);
@@ -1540,12 +921,11 @@
   justify-content: center;
   gap: 6px;
   min-width: 0;
-  min-height: 34px;
-  padding: 0 10px;
+  min-height: 40px;
+  padding: 0 12px;
   border-radius: var(--r-pill);
   color: var(--ink-3);
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
   user-select: none;
 }
@@ -1574,7 +954,7 @@
     line-height: 1.15;
   }
 }
-/* the chosen board, as the chosen tab above it: the shared rule in shell.css */
+/* the chosen kind, as every chosen one is: the shared rule in shell.css */
 @media (hover: hover) {
   .rank-by-btn:not(.is-active):hover {
     color: var(--ink);
@@ -1599,8 +979,132 @@
 }
 @media (pointer: coarse) {
   .rank-by-btn {
+    min-height: 44px;
+  }
+}
+/* This week or all time: the same radios a size down, the chosen one raised on the track rather than filled. */
+.rank-span {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, auto);
+  gap: 2px;
+  margin: 0 0 16px;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.rank-span-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.rank-span-btn.is-on {
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-control);
+  color: var(--ink);
+}
+@media (hover: hover) {
+  .rank-span-btn:not(.is-on):hover {
+    color: var(--ink);
+  }
+}
+.rank-span-btn input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.rank-span-btn:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .rank-span-btn {
     min-height: 40px;
   }
+}
+/* Your league this week, one card above the board (leagues/LeagueCard): the emblem, the tier and where you stand. */
+.league-card-mini {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(120% 140% at 0% 50%, color-mix(in srgb, var(--t-mid, transparent) 14%, transparent), transparent 70%),
+    var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+.league-card-mini.is-loading {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.league-card-mini.is-failed {
+  display: block;
+}
+.league-card-mini-skel {
+  width: 52px;
+  height: 52px;
+}
+@media (hover: hover) {
+  a.league-card-mini:hover {
+    border-color: var(--border-strong);
+  }
+}
+a.league-card-mini:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.league-card-mini-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.league-card-mini-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.league-card-mini-meta,
+.league-card-mini-zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.league-card-mini-left,
+.league-card-mini-zone {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.league-card-mini-zones {
+  color: var(--ink-3);
+}
+.league-card-mini-zone.is-safe {
+  color: var(--success);
+}
+.league-card-mini-go {
+  color: var(--ink-3);
 }
 /* a Zêr or Gewher amount on a board: the currency's picture, then the number */
 .rank-amount {
@@ -2014,21 +1518,11 @@
     radial-gradient(100% 120% at 0% 50%, color-mix(in srgb, var(--t-mid, #fff) 12%, transparent), transparent 70%),
     rgba(255, 255, 255, 0.03);
 }
-.profile-rank.is-resting {
-  opacity: 0.75;
-}
 .profile-rank-text {
   display: grid;
   gap: 1px;
   min-width: 0;
   line-height: 1.3;
-}
-.profile-rank-game {
-  color: var(--ink-3);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 .profile-rank-tier {
   color: var(--t-text, var(--t-hi, var(--ink)));
@@ -2043,274 +1537,6 @@
   margin-top: 18px;
 }
 
-/* ---- the season ------------------------------------------------------------------- */
-.season-page {
-  padding-bottom: 48px;
-}
-.season-hero {
-  position: relative;
-  margin: 18px 0 26px;
-  padding: 24px 22px;
-  border-radius: var(--r-xl);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
-  box-shadow: var(--glass-rim);
-}
-.season-hero::before {
-  content: '';
-  position: absolute;
-  inset: -40% -10% auto auto;
-  width: 360px;
-  height: 360px;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, var(--s-glow, rgba(240, 194, 74, 0.28)), transparent);
-  pointer-events: none;
-}
-.season-zivistan { --s-glow: rgba(156, 202, 255, 0.32); }
-.season-bihar { --s-glow: rgba(159, 245, 143, 0.3); }
-.season-havin { --s-glow: rgba(255, 207, 58, 0.3); }
-.season-payiz { --s-glow: rgba(244, 140, 70, 0.32); }
-.season-hero-text {
-  position: relative;
-  display: grid;
-  gap: 6px;
-  max-width: 560px;
-}
-.season-hero-meaning {
-  margin: 0;
-  color: var(--ink-2);
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-}
-.season-hero-days {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 650;
-}
-.season-hero-ends {
-  color: var(--ink-3);
-  font-size: 0.86rem;
-  font-weight: 500;
-}
-.season-hero-sub {
-  margin: 4px 0 0;
-  color: var(--ink-3);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-.season-block {
-  margin-bottom: 30px;
-}
-.season-block-help {
-  margin: -4px 0 14px;
-  color: var(--ink-3);
-  font-size: 0.88rem;
-  line-height: 1.5;
-  max-width: 640px;
-}
-.season-progress,
-.season-rewards {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.season-game {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-@media (max-width: 480px) {
-  .season-game {
-    grid-template-columns: 52px minmax(0, 1fr);
-  }
-  .season-game-count {
-    grid-column: 2;
-    justify-self: start;
-  }
-}
-.season-game-blank {
-  width: 40px;
-  height: 40px;
-  margin: 6px;
-  border-radius: 12px;
-  border: 1px dashed var(--border-strong);
-}
-.season-game-text {
-  display: grid;
-  min-width: 0;
-}
-.season-game-name {
-  font-weight: 650;
-}
-.season-game-meta {
-  color: var(--ink-3);
-  font-size: 0.84rem;
-}
-.season-game-count {
-  padding: 3px 10px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.season-game-count.is-enough {
-  background: var(--gold-soft);
-  color: var(--gold-ink);
-}
-.season-reward {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) auto auto;
-  grid-template-areas: 'art name frame gems' 'art extra frame gems';
-  align-items: center;
-  gap: 2px 14px;
-  padding: 10px 14px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background:
-    radial-gradient(80% 140% at 0% 50%, color-mix(in srgb, var(--t-mid, #fff) 12%, transparent), transparent 70%),
-    rgba(255, 255, 255, 0.03);
-}
-.season-reward > .art {
-  grid-area: art;
-}
-.season-reward-name {
-  grid-area: name;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 8px;
-}
-.season-reward-tier {
-  color: var(--t-text, var(--t-hi, var(--ink)));
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-.season-reward-meaning {
-  color: var(--ink-3);
-  font-size: 0.82rem;
-}
-.season-reward-extra {
-  grid-area: extra;
-  color: var(--ink-3);
-  font-size: 0.78rem;
-}
-.season-reward-frame {
-  grid-area: frame;
-  line-height: 0;
-}
-.season-reward-gems {
-  grid-area: gems;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 82px;
-  justify-content: flex-end;
-  color: var(--ink-2);
-  font-size: 0.86rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-@media (max-width: 480px) {
-  .season-reward {
-    grid-template-columns: 48px minmax(0, 1fr) auto;
-    grid-template-areas: 'art name frame' 'art gems frame' 'art extra frame';
-  }
-  .season-reward-gems {
-    justify-content: flex-start;
-    min-width: 0;
-  }
-}
-.season-last {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-@media (max-width: 480px) {
-  .season-last {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-  .season-last > .btn {
-    grid-column: 1 / -1;
-  }
-}
-.season-last-title {
-  margin: 0;
-  font-weight: 650;
-}
-.season-last-meta {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 2px 0 0;
-  color: var(--ink-3);
-  font-size: 0.86rem;
-}
-.season-last-chip {
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  background: var(--gold-soft);
-  color: var(--gold-ink);
-  font-size: 0.76rem;
-}
-.season-past {
-  margin-bottom: 18px;
-}
-.season-past-title {
-  margin: 0 0 10px;
-  font-size: 1.05rem;
-}
-.season-past-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
-}
-.season-past-item {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  padding: 12px 8px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background: radial-gradient(80% 60% at 50% 30%, color-mix(in srgb, var(--t-mid, #fff) 14%, transparent), transparent 70%);
-  text-align: center;
-}
-.season-past-game {
-  color: var(--ink-3);
-  font-size: 0.74rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.season-past-tier {
-  color: var(--t-text, var(--t-hi, var(--ink)));
-  font-weight: 650;
-}
-
 /* ---- still, for anyone who asked for less motion ------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
   .art-frame-shine,
@@ -2321,11 +1547,6 @@
   .art-badge.is-playing .art-badge-shine g[clip-path] > g {
     animation: none;
   }
-  .rank-result {
-    /* a fade only (the keyframes are in motion.css, with the rest of the celebration) */
-    animation: celebrate-fade var(--dur-slow) var(--ease-out) both;
-  }
-  .rank-progress-fill.is-animated,
   .goal-ring-fill,
   .badge-tile {
     transition: none;
@@ -2333,98 +1554,4 @@
   .badge-tile:hover {
     transform: none;
   }
-}
-
-/* ---- a game's Ranks page: the card, the boards and the climb -------------------- */
-.rank-card-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  justify-self: start;
-  min-height: 32px;
-  color: var(--ink-2);
-  font-size: 0.84rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.rank-card-more:hover,
-.rank-card-more:focus-visible {
-  color: var(--ink);
-  text-decoration: underline;
-}
-[dir='rtl'] .rank-card-more svg {
-  transform: scaleX(-1);
-}
-.ranks-page {
-  max-width: 760px;
-}
-.ranks-page-games {
-  margin-top: 16px;
-}
-.ranks-page-season {
-  margin: 12px 0 28px;
-}
-.ranks-page-block {
-  margin-bottom: 30px;
-}
-.ranks-page-me {
-  margin: 10px 0 0;
-  color: var(--ink-3);
-  font-size: 0.88rem;
-}
-.rank-board-score {
-  display: grid;
-  justify-items: end;
-  line-height: 1.25;
-}
-.rank-board-tier {
-  color: var(--ink-3);
-  font-size: 0.78rem;
-}
-.rank-ladder {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.rank-rung {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 6px 12px;
-  border-radius: var(--r-md);
-}
-.rank-rung.is-here {
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--t-mid, #fff) 45%, transparent);
-}
-.rank-rung-text {
-  display: grid;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-.rank-rung-name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
-  font-weight: 650;
-  color: var(--t-text, var(--t-hi, var(--ink)));
-}
-.rank-rung-meaning,
-.rank-rung-fact {
-  color: var(--ink-3);
-  font-size: 0.82rem;
-  font-weight: 500;
-}
-.rank-rung-here {
-  flex: none;
-  padding: 2px 10px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--ink);
-  font-size: 0.76rem;
-  font-weight: 650;
 }
