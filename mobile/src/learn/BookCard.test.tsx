@@ -22,9 +22,8 @@ afterEach(() => {
 });
 
 /**
- * The book on the phone's Learn: the card says how many chapters it holds
- * and opens the PDF for the phone to keep; before any chapter is online, or
- * on a server without the book, there is no card at all.
+ * The book card on Learn says how many chapters it holds and opens the PDF; with no chapter online, or no book on
+ * the server, there is no card.
  */
 describe('Hevalo’s book on Learn', () => {
   it('opens the PDF of the chapters that are online', async () => {

@@ -43,10 +43,7 @@ const MODE_LABEL: Record<Mode, TranslationKey> = {
   both: 'games.mode.both',
 };
 
-/**
- * The game the screen puts forward today: one of those that can be played,
- * the same one the website puts forward (pure, for the tests).
- */
+/** Today's featured game: one of the playable ones, the same as the web features. Pure, for the tests. */
 export function featuredCard(cards: readonly GameCard[], now: number): GameCard | null {
   const open = cards.filter((c) => !c.soon);
   const today = gameOfTheDay(open.length, now);
@@ -56,23 +53,15 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
 /**
  * Learn's third group: the games.
  *
- * At the top, small, the way into the rankings and the league — there for the
- * people who look for them, out of the way of the people who only came to
- * play. Then any game a friend has asked you into, because an invite runs out
- * and the games will still be here. Then the game put forward today, and the
- * way into a game a friend told you the code of.
+ * At the top, small, the way to the rankings and league, out of the way of people who only came to play. Then any
+ * game a friend invited you to (invites expire), then today's featured game and joining by code.
  *
- * Every game is a stamp (games/GameStamp.tsx): its drawn cover on paper of
- * its own hue, its Kurdish name, and what the name means. The one put forward
- * today is a large stamp on its own, with a line about it and its ways in
- * under it, one tap from here. The rest stand two to a row, like a page of a
- * collection. A stamp with one way in opens the game when it is pressed; a
- * game with two — alone or with a friend, on this phone or with friends —
- * opens a small sheet that says what the game is and offers each way, since
- * two buttons do not fit on a stamp and half a row of them made the page a
- * list of buttons. There is no filter: a handful of games is read faster
- * than a control that sorts them. A game still short of approved content is
- * only named, under the stamps.
+ * Every game is a stamp (games/GameStamp.tsx): its drawn cover on paper of its own hue, its Kurdish name and its
+ * meaning. The featured game is a large stamp with a line about it and its ways in below. The rest stand two to a
+ * row like a collection page. A stamp with one way opens the game; one with two (alone or with friends) opens a
+ * small sheet describing the game and offering each way, since two buttons do not fit on a stamp. No filter: a
+ * handful of games reads faster than a sort control. Games still short of approved content are only named, under
+ * the stamps.
  */
 export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -82,23 +71,23 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
   const { width: windowWidth } = useWindowDimensions();
-  // two stamps to a row, three where there is room; the page is never wider than a column of reading,
-  // and never narrower than the narrowest phone, which is what a window says before it has been measured
+  // Two stamps to a row, three where there is room; never wider than a reading column, nor narrower than the
+  // narrowest phone, which a window reports before it is measured.
   const column = Math.max(NARROWEST, Math.min(windowWidth, layout.column)) - layout.gutter * 2;
   const columns = column >= 560 ? 3 : 2;
   const stampWidth = Math.floor((column - STAMP_GAP * (columns - 1)) / columns);
   const heroWidth = Math.min(HERO_STAMP, column - spacing.xl * 2);
-  // the game whose ways in are being offered, while its sheet is up
+  // The game whose ways in are being offered, while its sheet is up.
   const [choosing, setChoosing] = useState<GameCard | null>(null);
-  // the stamps are laid down one after another as the page arrives, and simply stand there on a later visit
+  // The stamps are laid down one after another on arrival, and stand still on later visits.
   const enter = useListEntrance(true);
   const [ranks, setRanks] = useState<MyRanks | null>(null);
-  // the season's line under Ranks is held in grey until its answer, so the word above it does not jump
+  // The season line under Ranks is grey until loaded, so the word above it does not jump.
   const [ranksSettled, setRanksSettled] = useState(false);
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
-  // the learning games (games/learnGames.ts): all of them, those without enough approved content yet as coming soon
+  // The learning games (games/learnGames.ts): all of them, those without enough approved content as coming soon.
   const learnGames = useListedLearnGames();
-  // the emblems act while this screen is the one being looked at, and rest while another is
+  // The emblems act while this screen is the one being looked at, and rest while another is.
   const watching = useIsFocused();
   const cards: GameCard[] = [
     ...GAME_CARDS,
@@ -108,22 +97,21 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       return phone ? [learnGameCard({ id: g.id, ...phone, mode, ready })] : [];
     }),
   ];
-  // the game put forward stands above the cards, and is not said twice among them
+  // The game put forward stands above the cards, and is not said twice among them.
   const featured = featuredCard(cards, Date.now());
-  // what the featured game's name means, unless the interface is Kurdish and the two are the same words
+  // The featured game's meaning, unless the interface is Kurdish and the two are the same.
   const featuredMeaningKey = featured ? GAME_MEANING[featured.emblem] : undefined;
   const featuredMeaning = featured && featuredMeaningKey && t(featuredMeaningKey) !== t(featured.name) ? t(featuredMeaningKey) : null;
   const shelf = cards.filter((c) => !c.soon && c !== featured);
   const upcoming = cards.filter((c) => c.soon);
 
   /**
-   * Reads the rank and the invites, for the screen coming into view and for a
-   * pull. `live` says whether the answer is still wanted: a screen left while
-   * it travelled takes none of it.
+   * Load the rank and invites, on focus and on pull. `live` says whether the answer is still wanted; a screen
+   * left meanwhile ignores it.
    */
   const read = useCallback(
     async (live: () => boolean): Promise<void> => {
-      // a guest holds no rank and is sent no invites, and the server refuses both questions
+      // A guest holds no rank and is sent no invites, and the server refuses both questions.
       if (isGuest) {
         setRanksSettled(true);
         return;
@@ -152,10 +140,10 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
     }, [read]),
   );
 
-  // pulled down, it reads again, as Lessons and Stories beside it do — an invite or a rank that changed elsewhere need not wait for a tab change
+  // Pull to refresh reloads, as Lessons and Stories do, so invites and rank changes need not wait for a tab change.
   const pull = usePullRefresh(() => read(() => true));
 
-  // an invite that arrives, or is answered somewhere else, while this is open
+  // An invite that arrives, or is answered somewhere else, while this is open.
   useUserEvents(
     useCallback((ev) => {
       if (ev.type === 'play_invite' || ev.type === 'play_invite_update') setInvites((list) => applyInviteEvent(list, ev));
@@ -166,10 +154,8 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
     (invite: IncomingInvite) => {
       setInvites((list) => list.filter((i) => i.id !== invite.id));
       /*
-       * The lobby opens at once, and the invite is accepted behind it: its
-       * first read waits for that (play/joining.ts). The row used to go, and
-       * then nothing happened for the length of a request. One that can no
-       * longer be accepted still opens the game, which says why.
+       * The lobby opens at once and the invite is accepted behind it; its first read waits for that
+       * (play/joining.ts). An invite that can no longer be accepted still opens the game, which explains why.
        */
       joining(invite.lobbyId, acceptInvite(client, invite.id));
       const route = lobbyRoute(invite.game, invite.lobbyId);
@@ -181,7 +167,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const open = useCallback(
     (way: Way) => {
       setChoosing(null);
-      // only Who Am I?'s screen takes a way to open on; every other game has a screen for each of its ways
+      // Only Who Am I?'s screen takes a way to open on; every other game has a screen per way.
       if (way.route === 'WhoAmI' && way.params) navigation.navigate('WhoAmI', way.params);
       else navigation.navigate(way.route);
     },
@@ -189,7 +175,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   );
 
   const shown = liveInvites(invites, Date.now());
-  // the season's name on the chip; how long it has left is said to a screen reader and on the Ranks screen
+  // The season's name on the chip; its time left is announced and shown on the Ranks screen.
   const season = ranks ? seasonTitle(t, ranks.season) : null;
   const seasonSpoken = ranks ? `${seasonTitle(t, ranks.season)}, ${daysLeftText(t, ranks.season.daysLeft)}` : null;
   const cooldown = ranks?.cooldownUntil ? new Date(ranks.cooldownUntil) : null;
@@ -202,7 +188,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       showsVerticalScrollIndicator={false}
       refreshControl={pull}
     >
-      {/* rankings and the league: small, at the top, for whoever looks for them */}
+      {/* Rankings and the league: small, at the top, for whoever looks for them. */}
       <View style={[styles.entries, { flexDirection: dir.row }]}>
         <PressableScale
           onPress={() => navigation.navigate('Ranks')}
@@ -293,7 +279,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           <Text style={[styles.heroLine, { color: colors.textSecondary }]}>{t(featured.line)}</Text>
           <View style={styles.heroWays}>
             {featured.ways.map((way, i) => (
-              // said with the game's name, as the other way beside it is: "Play" alone tells a screen reader nothing
+              // Labelled with the game's name, like the other way beside it: "Play" alone tells a screen reader nothing.
               <ClayButton
                 key={way.key}
                 label={t(way.label)}
@@ -309,7 +295,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         </View>
       ) : null}
 
-      {/* a code a friend read out or sent opens their game, whichever of the games it is */}
+      {/* A code a friend read out or sent opens their game, whichever of the games it is. */}
       <JoinCodeCard />
 
       <View style={styles.section}>
@@ -320,7 +306,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           {shelf.map((card, place) => {
             const name = t(card.name);
             const meaningKey = GAME_MEANING[card.emblem];
-            // what the name means, unless the interface is Kurdish and the two are the same words
+            // What the name means, unless the interface is Kurdish and the two are the same words.
             const meaning = meaningKey && t(meaningKey) !== name ? t(meaningKey) : null;
             const single = card.ways.length === 1 ? card.ways[0]! : null;
             return (
@@ -329,10 +315,10 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   onPress={() => (single ? open(single) : setChoosing(card))}
                   accessibilityRole="button"
                   accessibilityLabel={`${name}, ${t(MODE_LABEL[card.mode])}. ${t(card.line)}`}
-                  // one way in: the stamp is the game. Two: the stamp is the card that offers them.
+                  // One way in: the stamp is the game. Two: the stamp is the card that offers them.
                   testID={single ? `game-${card.key}` : `card-${card.key}`}
                 >
-                  {/* each cover a little after the one before, so the page never moves as one */}
+                  {/* Each cover a little after the one before, so the page never moves as one. */}
                   <GameStamp game={card.emblem} name={name} meaning={meaning} width={stampWidth} moving={watching} after={900 + place * 1300} />
                 </PressableScale>
               </Rise>
@@ -372,18 +358,16 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   return (
     <>
       {page}
-      {/* beside the page, not in it: a sheet among the page's rows would be given a row's gap of its own */}
+      {/* Beside the page, not in it: a sheet among the page's rows would get a row gap of its own. */}
       <WaysSheet card={choosing} onClose={() => setChoosing(null)} onOpen={open} />
     </>
   );
 }
 
 /**
- * The ways into a game that has more than one: what the game is, in a line,
- * and a button for each way, the first of them the app's own. It opens from
- * the stamp that was pressed and goes when a way is chosen or it is put away.
- * It keeps the last game it showed while it leaves, so its words do not
- * vanish before it has.
+ * The ways into a game with more than one: a line about the game and a button per way, the app's own first. It
+ * opens from the pressed stamp and closes when a way is chosen or it is dismissed, keeping the last game while it
+ * leaves so its text does not vanish early.
  */
 function WaysSheet({ card, onClose, onOpen }: { card: GameCard | null; onClose: () => void; onOpen: (way: Way) => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -419,12 +403,11 @@ function WaysSheet({ card, onClose, onOpen }: { card: GameCard | null; onClose: 
 }
 
 /**
- * Join is drawn as tall as the avatar it shares a row with, and caught as a
- * full fingertip: the Pressable reaches above and below it to make up the
- * difference, inside the invite card's own padding.
+ * Join is drawn as tall as the avatar beside it, and its Pressable reaches above and below to a full fingertip,
+ * inside the invite card's padding.
  */
 const JOIN_HEIGHT = 36;
-/** Between two stamps, across and down: room for each one's light to fade before the next begins. */
+/** The gap between stamps, across and down: room for each one's glow to fade before the next. */
 const STAMP_GAP = 20;
 /** The stamp put forward today, at its widest. */
 const HERO_STAMP = 228;
@@ -456,23 +439,23 @@ const styles = StyleSheet.create({
   joinButton: { minHeight: JOIN_HEIGHT, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   joinText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 
-  // the game put forward: its stamp in the middle of the page, its line and its ways in under it
+  // The game put forward: its stamp in the middle of the page, its line and its ways in under it.
   hero: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xs },
   heroStamp: { marginVertical: spacing.sm },
   heroLine: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.md },
   heroWays: { alignSelf: 'stretch', gap: spacing.sm },
 
-  // a page of a collection: the stamps stand in rows, each row level, with air between for their light
+  // A collection page: stamps in level rows, with air between for their glow.
   stamps: { flexWrap: 'wrap', columnGap: STAMP_GAP, rowGap: STAMP_GAP + 4, paddingTop: spacing.sm },
 
   ways: { gap: spacing.sm, paddingBottom: spacing.sm },
   waysTop: { alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },
   waysLine: { flex: 1, fontSize: typography.sizes.md, lineHeight: 23 },
 
-  // a game not open yet is only named: quieter than a card, and nothing to press
+  // A game not open yet is only named: quieter than a card, and nothing to press.
   soonRow: { flexWrap: 'wrap', gap: spacing.sm },
   soon: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.pill, paddingVertical: 6, paddingStart: 6, paddingEnd: spacing.md },
-  // mirrored by hand: the picture's side is the right, and keeps the narrow edge
+  // Mirrored by hand: the picture's side is the right, and keeps the narrow edge.
   soonMirrored: { paddingStart: spacing.md, paddingEnd: 6 },
   soonArt: { opacity: 0.7 },
   soonName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },

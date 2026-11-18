@@ -50,39 +50,23 @@ import { pressedDim } from '../theme/motion';
 import { PressableScale } from '../theme/MotionParts';
 
 /**
- * Learn's first half: the next lesson, the tools, the course, and the rest of
- * today.
+ * Learn's first half: the next lesson, the tools, the course and the rest of today.
  *
- * Top to bottom in the order of what somebody opening it wants: the one next
- * step (a card with one button), the practice tools two by two with today's
- * quests slim under them (a chest waiting shows there), and then the
- * course as a lesson path — on the first screen, not under a stack of cards —
- * for anyone who wants to choose for themselves. The week's league and the
- * day's extras come after the path, under "More for today". A review left
- * part-way through is offered under the card, to be picked up where it
- * stopped (`ContinueReview`). Continuing a
- * lesson is one tap from here — from the card, or from the "Continue" over
- * the current skill on the path. How today is going sits in the bar above
- * (LearnBar), where it stays in sight while the path scrolls.
+ * Top to bottom by priority: the next step (a card with one button), the practice tools two by two with today's
+ * quests below (a waiting chest shows there), then the course as a lesson path on the first screen. The week's
+ * league and the day's extras follow under "More for today". A review left part-way is offered under the card
+ * (`ContinueReview`). Continuing is one tap, from the card or the path's "Continue" bubble. Today's status stays
+ * in the bar above (LearnBar) while the path scrolls.
  *
- * The path is one course at a time, with a switch between courses when there
- * are several, and one section of the course at a time (the rest folded into
- * cards round it). It is told which of its units are near the screen, which
- * can be seen and which is in the middle of it, so it draws and moves only
- * those; and a unit heading's map button opens the rail of every unit in its
- * section, a tap on one opening its section and scrolling there. When it first
- * appears it scrolls to the current skill, and a button brings that back once
- * it has been scrolled away. A course whose map could not be loaded stays in
- * the switch, saying so, with a way to try again.
+ * The path shows one course at a time, with a switch when there are several, and one section at a time (the rest
+ * folded into cards). It is told which units are near, visible and centred, so it draws and animates only those;
+ * a unit heading's map button opens the rail of every unit in its section. On first show it scrolls to the
+ * current skill, and a button returns there after scrolling away. A course whose map failed stays in the switch
+ * with a retry.
  *
- * Learn's moments show here, one at a time: a freeze that kept the streak is
- * said once (`useKeptStreak`, from the `streak` the bar read), and once
- * reminders have been turned down on a phone that will not ask again, a slim
- * banner says where they are turned on (ReminderNudge) — on a visit that has
- * no other moment.
- *
- * Pulled down, it reads the course again, and `onRefresh` has the bar read
- * the streak again with it.
+ * Learn's moments show here one at a time: a freeze that kept the streak (`useKeptStreak`, from the bar's
+ * `streak`), and on a visit with no other moment, a slim banner on turning reminders on once the phone will not
+ * ask again (ReminderNudge). Pull to refresh reloads the course, and `onRefresh` has the bar reload the streak.
  */
 export function LessonsView({
   scrollRef,
@@ -101,9 +85,9 @@ export function LessonsView({
   const reduceMotion = useReducedMotion();
   const tabBarInset = useTabBarInset();
   const [due, setDue] = useState<number | null>(null);
-  // a review left part-way through, to pick up where it stopped rather than start another beside it
+  // A review left part-way through, to pick up where it stopped rather than start another beside it.
   const [openReview, setOpenReview] = useState<string | null>(null);
-  // the review count places review on the path, so the path waits for it (or for its failure) once
+  // The review count places review on the path, so the path waits for it (or for its failure) once.
   const [dueSettled, setDueSettled] = useState(false);
   const [courses, setCourses] = useState<CourseEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,8 +117,7 @@ export function LessonsView({
           setRefreshing(false);
           return;
         }
-        // every course, in the order the server lists them — not only the
-        // first; one whose map did not load stays listed, saying so
+        // Every course, in the server's order; one whose map failed to load stays listed, saying so.
         const loaded = await Promise.all(list.data.courses.map((c) => client.get<CourseMap>(`/courses/${c.id}/map`)));
         if (!active) return;
         setCourses(
@@ -152,23 +135,21 @@ export function LessonsView({
     }, [client, reloadKey]),
   );
 
-  // the course on the path: the one chosen, else the one the learner is furthest into
+  // The course on the path: the one chosen, else the one the learner is furthest into.
   const courseId = chosen && courses?.some((c) => c.course.id === chosen) ? chosen : courses ? firstCourse(courses) : null;
   const entry = courses?.find((c) => c.course.id === courseId) ?? null;
-  // the learner's Kurdish, for whatever else speaks to them in it (learn/courseDialect.ts)
+  // The learner's Kurdish, for whatever else speaks to them in it (learn/courseDialect.ts).
   const dialect = entry?.course.dialect;
   useEffect(() => rememberCourseDialect(dialect), [dialect]);
-  // the exercises are asked about once the course is known, in its Kurdish; with no course, in the Kurdish last learnt here
+  // Exercise availability is asked once the course is known, in its Kurdish; with no course, in the Kurdish last learnt here.
   const remembered = useCourseDialect();
   const exercises = useLessonExercises(courses === null ? null : dialect ? (isSoraniDialect(dialect) ? 'ckb' : 'kmr') : remembered);
 
   /*
-   * Scrolling to the current skill. The path says where its focus stop sits
-   * within it; where the path sits on the page is measured here; the screen's
-   * height and the scroll are tracked as they change. Together they place the
-   * stop in the middle of what can be seen — once per course and current
-   * skill, so coming back from a lesson that moved the learner on finds the
-   * next one, and coming back to the same place leaves the scroll alone.
+   * Scrolling to the current skill: the path reports its focus stop's position, the path's place on the page is
+   * measured here, and the screen height and scroll are tracked. Together they centre the stop, once per course
+   * and current skill, so returning from a lesson finds the next one and returning to the same place leaves the
+   * scroll.
    */
   const scroller = useRef<ScrollView | null>(null);
   const setScroller = useCallback(
@@ -179,7 +160,7 @@ export function LessonsView({
     },
     [scrollRef],
   );
-  // where the course section sits in the scroll, and where the path sits in it
+  // Where the course section sits in the scroll, and where the path sits in it.
   const [courseTop, setCourseTop] = useState<number | null>(null);
   const [pathInCourse, setPathInCourse] = useState<number | null>(null);
   const [focus, setFocus] = useState<PathFocus | null>(null);
@@ -188,27 +169,21 @@ export function LessonsView({
   const [scrollY, setScrollY] = useState(0);
   const scrolledFor = useRef<string | null>(null);
   /*
-   * What sits above the path — the next-step card, the review count on its
-   * tile — arrives when its own answer does, and something that arrives after
-   * the path has been scrolled to pushes it down the screen.
-   * For the few seconds those answers take, and until the person moves the
-   * page themselves, the scroll follows the stop it was put on. After that
-   * the page is theirs: a card changing later (the day's Zêr just claimed)
-   * never pulls it away from what they are looking at.
+   * Content above the path (the next-step card, a tile's review count) arrives with its own answer and would push
+   * the path down after scrolling. For the few seconds those take, and until the person scrolls, the scroll
+   * follows the stop. After that the page is theirs: a later card change never pulls it away.
    */
   const touched = useRef(false);
   const centredAt = useRef<{ target: number; since: number } | null>(null);
   const onFocus = useCallback((next: PathFocus | null) => {
     setFocus((was) => (was?.key === next?.key && was?.y === next?.y && was?.current === next?.current ? was : next));
   }, []);
-  // a course whose map did not load has no path, and so nothing to scroll to
+  // A course whose map did not load has no path, and so nothing to scroll to.
   const focusY = entry?.map && focus && courseTop !== null && pathInCourse !== null ? courseTop + pathInCourse + focus.y : null;
 
   /*
-   * The offset that puts the stop in the middle — unless that would leave its
-   * unit's banner half on the screen, cut through the middle. Then a little
-   * further, until the banner has gone up under the pinned one, which takes
-   * its place whole.
+   * The offset that centres the stop, unless that would leave its unit's banner half on screen; then a little
+   * further, until the banner is under the pinned one.
    */
   const pathTopOnPage = courseTop !== null && pathInCourse !== null ? courseTop + pathInCourse : null;
   const settle = useCallback(
@@ -231,8 +206,7 @@ export function LessonsView({
       const was = centredAt.current;
       const target = settle(focusY);
       if (touched.current || !was || was.target === target || Date.now() - was.since > FOLLOW_MS) return;
-      // the same stop, moved by something arriving above it (or the banners just measured): put it
-      // back at once, without a glide — this only undoes a shift nobody asked for
+      // The same stop, moved by content arriving above it (or banners just measured): restore it at once, without a glide.
       centredAt.current = { target, since: was.since };
       scroller.current?.scrollTo({ y: target, animated: false });
       return;
@@ -244,31 +218,28 @@ export function LessonsView({
     scroller.current?.scrollTo({ y: target, animated: !reduceMotion });
   }, [focusY, focus, viewport, courseId, settle, reduceMotion]);
 
-  // only once the path is on the screen: above it, the card at the top already offers the next lesson
+  // Only once the path is on the screen: above it, the card at the top already offers the next lesson.
   const onPath = courseTop !== null && scrollY + viewport - tabBarInset > courseTop;
   const away = focusY === null || viewport === 0 || !onPath ? null : awayFrom(focusY, scrollY, viewport, tabBarInset);
-  // back to the skill to do now — or, with none left open, to the furthest point reached
+  // Back to the skill to do now, or with none left open, to the furthest point reached.
   const jumpWord = focus?.current ? t('coursemap.path.jump') : t('coursemap.path.jumpEnd');
   const jump = () => {
     if (focusY !== null) scroller.current?.scrollTo({ y: settle(focusY), animated: !reduceMotion });
   };
 
   const step = courses ? nextStep(courses) : null;
-  // the sheet's one button opens the lesson the card's does, so it waits for the card to know it
+  // The sheet's one button opens the lesson the card's does, so it waits for the card to know it.
   const kept = useKeptStreak(streak, step !== null);
 
   /*
-   * The unit being scrolled through, once its banner has gone up out of
-   * sight: pinned at the top, so it is always clear whose stops these are.
-   * It stays from one unit to the next — over the top of the next banner as
-   * that comes up under it — and turns into the next unit as that banner goes
-   * under (PinnedUnit), until the path ends.
+   * The unit being scrolled through, once its banner has scrolled out of sight: pinned at the top so it is clear
+   * whose stops these are. It stays from unit to unit, over the next banner as that comes up, and turns into the
+   * next unit as that banner goes under (PinnedUnit), until the path ends.
    */
   /*
-   * Which units are near the screen (drawn in full: one screen either way),
-   * which can be seen (their stops rise the first time), and which is in the
-   * middle (the one that moves). Each is a set that changes only when a unit
-   * comes or goes, so the path is drawn again then and not on every scroll.
+   * Which units are near the screen (drawn in full: one screen either way), visible (their stops rise the first
+   * time) and centred (the one that moves). Each set changes only when a unit enters or leaves, so the path
+   * redraws then and not on every scroll.
    */
   const placed = pathTopOnPage !== null && units.length > 0 && viewport > 0;
   const top = placed ? scrollY - pathTopOnPage : 0;
@@ -285,9 +256,9 @@ export function LessonsView({
   const seenUnits = useMemo(() => (seenKey === null ? null : new Set(seenKey.split(','))), [seenKey]);
   const [rail, setRail] = useState(false);
   const openRail = useCallback(() => setRail(true), []);
-  // every unit of the course in its section, as the path tells it, for the rail
+  // Every unit of the course in its section, as the path tells it, for the rail.
   const [railSections, setRailSections] = useState<RailSection[]>([]);
-  // a unit picked on the rail: the path opens its section, then says where it is
+  // A unit picked on the rail: the path opens its section, then says where it is.
   const [reveal, setReveal] = useState<{ unitId: string; at: number } | null>(null);
   const toUnit = (unitId: string): void => {
     setRail(false);
@@ -341,7 +312,7 @@ export function LessonsView({
           {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
           {openReview ? <ContinueReview onPress={() => navigation.navigate('Practice', { sessionId: openReview })} /> : null}
           <View style={styles.tools} testID="learn-tools">
-            {/* practice's hub, with what review has due on its face */}
+            {/* Practice's hub, with what review has due on its face. */}
             <ToolTile
               icon="review"
               title={t('practice.title')}
@@ -358,23 +329,23 @@ export function LessonsView({
               onPress={() => navigation.navigate('PracticeHub')}
             />
             <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
-            {/* the letters and the first words after them, one way in (WordsScreen): the letters shown rather than drawn as an icon */}
+            {/* The letters and first words, one way in (WordsScreen): the letters are shown rather than drawn as an icon. */}
             <ToolTile
               letters={locale === 'ckb' ? SORANI_TEASER : LATIN_TEASER}
               title={t('words.title')}
               detail={t('words.toolHint')}
               onPress={() => navigation.navigate('Words')}
             />
-            {/* the lessons' exercises with a screen of their own, while they can be done (practice/exercises.ts); the hub lists them too */}
+            {/* The lesson exercises with their own screens, while available (practice/exercises.ts); the hub lists them too. */}
             {exercises.map((e) => (
               <ToolTile key={e.key} icon={e.icon} title={t(e.title)} detail={t(e.detail)} onPress={() => navigation.navigate(e.route)} />
             ))}
           </View>
-          {/* today's three quests, slim, under the tools: a chest waiting shows here */}
+          {/* Today's three quests, slim, under the tools: a chest waiting shows here. */}
           <QuestsCard />
-          {/* the learner's tree, under the quests: water to pour shows here */}
+          {/* The learner's tree, under the quests: water to pour shows here. */}
           <TreeCard />
-          {/* and the road on paper, once a chapter is online */}
+          {/* And the road on paper, once a chapter is online. */}
           <BookCard />
         </View>
 
@@ -393,7 +364,7 @@ export function LessonsView({
                       onPress={() => setChosen(c.course.id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
-                      // the course you are on is a wash of the app's violet with its name in the violet, as the tab you are on is
+                      // The current course is washed in violet with its name in violet, like the current tab.
                       style={({ pressed }) => [styles.chip, { backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
                       <Text style={[styles.chipText, dir.free, { color: on ? colors.primary : colors.textSecondary }]} numberOfLines={1}>
@@ -427,7 +398,7 @@ export function LessonsView({
                 />
               </View>
             ) : entry?.map ? (
-              // the path waits for the review count, which places review on it
+              // The path waits for the review count, which places review on it.
               <LessonPathSkeleton />
             ) : entry && !entry.map ? (
               <View style={[styles.failed, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
@@ -442,7 +413,7 @@ export function LessonsView({
           <EmptyState title={t('learn.noCourses')} />
         )}
 
-        {/* after the path: the week's league and your place in it (or your own week), and the day's extras */}
+        {/* After the path: the week's league and your place in it (or your own week), and the day's extras. */}
         <View style={styles.more}>
           <Text style={[styles.mapLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
             {t('learn.more.title')}
@@ -455,7 +426,7 @@ export function LessonsView({
       </ScrollView>
 
       {pinned ? (
-        // on the page's own colour, so nothing scrolling under it shows round its edges
+        // On the page's own colour, so nothing scrolling under it shows round its edges.
         <View style={[styles.pinned, { backgroundColor: colors.background }]} pointerEvents="box-none">
           <PinnedUnit unit={pinned} onRail={openRail} />
         </View>
@@ -489,28 +460,24 @@ export function LessonsView({
   );
 }
 
-/** What the one next step opens: its lesson, or, with every open lesson done, practice, chosen on its hub. */
+/** What the next step opens: its lesson, or with every open lesson done, practice, chosen on its hub. */
 function openStep(navigation: RootNavigation, step: NextStep): void {
   if (step.kind === 'review') navigation.navigate('PracticeHub');
   else navigation.navigate('Lesson', { lessonId: step.lessonId, courseId: step.courseId });
 }
 
-/** The pinned unit gives way this far before the path ends, so it is gone before what comes after the path. */
+/** The pinned unit gives way this far before the path ends, so it is gone before what follows the path. */
 const PIN_CLEAR = 72;
 /**
- * The pinned unit's height: it takes over as soon as no more of the banner
- * than that is left on the screen, so it covers the rest rather than sitting
- * on top of half a banner.
+ * The pinned unit's height: it takes over once no more of the banner than this is on screen, covering the rest
+ * rather than half a banner.
  */
 const PIN_HEIGHT = 68;
 
 /** How long after the path is first centred a card arriving above it may still move the scroll to follow. */
 const FOLLOW_MS = 4000;
 
-/**
- * The one next step: which course and unit, the lesson's name, how far the
- * course has come, and one button.
- */
+/** The next step: course and unit, the lesson's name, the course's progress, and one button. */
 function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
@@ -526,7 +493,7 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
 
   return (
     <View style={[styles.hero, { backgroundColor: colors.surface }]} testID="learn-continue">
-      {/* the course's own words, in whatever language it was written in: lined up with the page, read in their own direction */}
+      {/* The course's own words in whatever language it was written in, aligned with the page and read in their own direction. */}
       <Text style={[styles.heroWhere, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
         {where}
       </Text>
@@ -540,7 +507,7 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
         accessibilityLabel={progress}
         accessibilityValue={{ min: 0, max: step.total, now: step.done }}
       >
-        {/* how far the course has come is a place on the road, not something won: the app's violet, as every other bar of progress */}
+        {/* Course progress is a place on the road, not a reward: violet, like every progress bar. */}
         <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }, dir.rtl && styles.barFillEnd]} />
       </View>
       <Text style={[styles.heroProgress, dir.text, { color: colors.textSecondary }]}>{progress}</Text>
@@ -550,11 +517,9 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
 }
 
 /**
- * A review left part-way through (GET /practice/due's `open`), offered as the
- * website's Learn page offers it: Continue opens that session where it
- * stopped, with the answers given so far, instead of a new review that would
- * leave the first unfinished. Its button is the quieter outline: the card
- * above already has the screen's one solid button.
+ * A review left part-way (GET /practice/due's `open`), offered as on the web: Continue resumes that session with
+ * its answers so far, rather than a new review that would leave it unfinished. Its button is the quieter outline,
+ * since the card above has the screen's one solid button.
  */
 function ContinueReview({ onPress }: { onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -571,11 +536,7 @@ function ContinueReview({ onPress }: { onPress: () => void }): React.JSX.Element
   );
 }
 
-/**
- * The card while the course loads, line for line: where, the lesson's name,
- * the bar, how far, the button — each at the card's own sizes, so the card
- * that arrives is the one that was already there.
- */
+/** The card while the course loads, line for line at the card's own sizes, so the arriving card matches the placeholder. */
 function ContinueSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const start = useStartEdge();
@@ -607,11 +568,11 @@ function useStartEdge(): { alignItems: 'flex-start' | 'flex-end' } {
   return { alignItems: useDirection().row === 'row-reverse' ? 'flex-end' : 'flex-start' };
 }
 
-/** display(22) sets 1.12 */
+/** display(22) sets 1.12. */
 const HERO_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
-/** ClayButton's large size */
+/** ClayButton's large size. */
 const LARGE_BUTTON = 50;
-/** How much of the violet the chosen course's chip is, as the last two digits of its colour: the tab bar's own wash. */
+/** Hex alpha suffix for the chosen course chip's violet wash, as the tab bar uses. */
 const CHOSEN_WASH = '1F';
 
 /** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
@@ -627,11 +588,11 @@ function ToolTile({
   onPress,
 }: {
   icon?: IconName;
-  /** letters to show where the icon would be */
+  /** Letters to show where the icon would be. */
   letters?: { text: string; rtl: boolean };
   title: string;
   detail: string;
-  /** something is waiting in it (words due), said in the app's violet as well as in words */
+  /** Something is waiting in it (words due), said in the app's violet as well as in words. */
   highlight?: boolean;
   onPress: () => void;
 }): React.JSX.Element {
@@ -642,10 +603,10 @@ function ToolTile({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={detail ? `${title}, ${detail}` : title}
-      // a card: it gives under the finger, as the cards on every other screen do
+      // A card: it gives under the finger, as the cards on every other screen do.
       style={[
         styles.tile,
-        // a column starts on the reading side too
+        // A column starts on the reading side too.
         { backgroundColor: colors.surface, alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' },
       ]}
     >
@@ -661,11 +622,7 @@ function ToolTile({
       ) : icon ? (
         <Icon name={icon} size={24} color={colors.textPrimary} />
       ) : null}
-      {/*
-        Half a row of a narrow phone holds "Letters and words" in few of the
-        nine languages on one line, and a name cut short is no name: a title
-        takes a second line and what is under it a third before either is cut.
-      */}
+      {/* Half a row on a narrow phone fits "Letters and words" on one line in few languages, so the title may take a second line and the text under it a third before truncating. */}
       <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
         {title}
       </Text>
@@ -696,7 +653,7 @@ const styles = StyleSheet.create({
   reviewOpenRow: { alignItems: 'center', gap: spacing.sm + 4 },
   reviewOpenText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
 
-  // two to a row: the path is what this screen is for, and the tools sit above it, small
+  // Two to a row: the path is what this screen is for, and the tools sit above it, small.
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: { flexGrow: 1, flexBasis: '40%', minHeight: 76, borderRadius: radii.lg, paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.sm + 4, gap: 2 },
   tileLetters: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, lineHeight: 22 },

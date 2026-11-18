@@ -6,23 +6,15 @@ import { isLearnView, type LearnView } from '../navigation/tabs';
 export const LEARN_VIEW_KEY = 'hevalo_learn_view_v1';
 
 /**
- * Which half of Learn is showing: Lessons or Games.
- *
- * Lessons the first time. After that, whichever the reader last chose, on this
- * device — somebody who opens Learn to play should not have to switch every
- * time. A link that asks for a view (`hevalo://play`) opens that view without
- * becoming the remembered choice: being sent somewhere is not choosing it.
- *
- * `requested` is the view a link asked for; `onRequestShown` lets the caller
- * clear it once it has been shown, so the same link followed a second time
- * still works.
+ * Which half of Learn is showing: Lessons the first time, then whichever the reader last chose, on this device. A
+ * link asking for a view (`hevalo://play`) opens it without becoming the remembered choice. `requested` is the
+ * view a link asked for; `onRequestShown` lets the caller clear it once shown, so the same link works again.
  */
 export function useLearnView(requested: LearnView | undefined, onRequestShown?: () => void): [LearnView, (next: LearnView) => void] {
   const [view, setView] = useState<LearnView>(requested ?? 'lessons');
-  // set once the reader has tapped or a link has decided, so a slow read of
-  // the saved choice cannot undo either
+  // Set once the reader has tapped or a link has decided, so a slow read of the saved choice cannot undo either.
   const chosen = useRef(false);
-  // read once, on arrival: what a link asked for wins over what was remembered
+  // Read once on arrival: what a link asked for wins over what was remembered.
   const askedOnArrival = useRef(requested !== undefined);
 
   useEffect(() => {
@@ -36,7 +28,7 @@ export function useLearnView(requested: LearnView | undefined, onRequestShown?: 
     };
   }, []);
 
-  // a link followed while the tab is already open
+  // A link followed while the tab is already open.
   useEffect(() => {
     if (!requested) return;
     chosen.current = true;

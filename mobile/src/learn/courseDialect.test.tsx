@@ -23,7 +23,7 @@ describe('the learner’s Kurdish', () => {
     rememberCourseDialect('kurmanji', store);
     expect(store.data.get('hevalo.course-dialect.v1')).toBe('kmr');
 
-    // a fresh start reads what was kept
+    // A fresh start reads what was kept.
     resetCourseDialect();
     const kept = memoryStore({ 'hevalo.course-dialect.v1': 'ckb' });
     const { result } = renderHook(() => useCourseDialect(kept));
