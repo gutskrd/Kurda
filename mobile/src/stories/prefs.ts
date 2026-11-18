@@ -15,25 +15,19 @@ import {
 } from '@kurda/shared';
 
 /**
- * What Stories remembers on this phone: the reader's text size, the variety
- * chosen with the Kurmancî | Soranî switch (the library, the reader and a
- * game's setup all follow it), the length last chosen, how "Quiz yourself" is
- * set up, whether English is shown under the questions, extra time, and the
- * narration speed.
- *
- * One small JSON value, stored the way the app's other preferences are
- * (keystore on a phone, localStorage on the web). Every read and write is
- * best-effort: a store that fails reads as the defaults, and a preference is
- * never a reason for a screen not to open.
+ * What Stories remembers on this phone: text size, the chosen Kurmancî/Soranî variety (followed by the library, the
+ * reader and game setup), the last length, "Quiz yourself" settings, English under questions, extra time, and
+ * narration speed. One small JSON value in the app's preference store; reads and writes are best-effort, and a
+ * failing store reads as the defaults.
  */
 
 const KEY = 'hevalo_stories_prefs_v1';
 
-/** The reader's text sizes, as a multiple of the body size (on top of the system's Dynamic Type). */
+/** Reader text sizes, as multiples of the body size, on top of the system's Dynamic Type. */
 export const TEXT_SCALES = [1, 1.15, 1.3, 1.5] as const;
 export type TextScale = (typeof TEXT_SCALES)[number];
 
-/** The player's speeds, in the order its chip cycles through them: slower, as spoken, a little faster. */
+/** Narration speeds, in the order the chip cycles through them. */
 export const NARRATION_RATES = [0.75, 1, 1.25] as const;
 export type NarrationRate = (typeof NARRATION_RATES)[number];
 
@@ -44,24 +38,24 @@ export function nextRate(rate: NarrationRate): NarrationRate {
 }
 
 export interface SoloQuizPrefs {
-  /** per length, since the counts on offer differ */
+  /** Per length, since the counts on offer differ. */
   questionCount: Partial<Record<StoryLength, QuestionCount>>;
   timerSeconds: TimerSeconds;
   textDuring: TextDuring;
 }
 
-export interface StoryPrefs {
+interface StoryPrefs {
   textScale: TextScale;
   dialect: StoryDialect | null;
   length: StoryLength | null;
   quiz: SoloQuizPrefs;
-  /** null: the default — English under the question at level 1 only */
+  /** Null for the default: English under the question at level 1 only. */
   englishUnder: boolean | null;
   extraTime: boolean;
   rate: NarrationRate;
 }
 
-export const DEFAULT_PREFS: StoryPrefs = {
+const DEFAULT_PREFS: StoryPrefs = {
   textScale: 1,
   dialect: null,
   length: null,
@@ -72,18 +66,16 @@ export const DEFAULT_PREFS: StoryPrefs = {
 };
 
 /**
- * The variety Stories shows — on the library, in the reader's switch, in a
- * game's setup: the one chosen last time on this phone; with none chosen yet,
- * Soranî when the interface is Soranî, otherwise Kurmancî. A choice is kept
- * (`dialect`) only when the reader makes one with the switch; opening a story
- * of the other variety from a link is not a choice.
+ * The variety Stories shows (library, reader switch, game setup): the last choice on this phone, else Soranî under
+ * a Soranî interface and Kurmancî otherwise. Only the switch records a choice (`dialect`); opening a story of the
+ * other variety from a link does not.
  */
 export function shownDialect(locale: string, chosen: StoryDialect | null): StoryDialect {
   return chosen ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
 }
 
-/** Whatever was stored, checked field by field: anything unknown falls back to the default. */
-export function parsePrefs(raw: string | null | undefined): StoryPrefs {
+/** Parses what was stored field by field; anything unknown falls back to the default. */
+function parsePrefs(raw: string | null | undefined): StoryPrefs {
   if (!raw) return DEFAULT_PREFS;
   let v: Record<string, unknown>;
   try {
@@ -128,16 +120,16 @@ async function write(value: string): Promise<void> {
     if (Platform.OS === 'web') globalThis.localStorage?.setItem(KEY, value);
     else await SecureStore.setItemAsync(KEY, value);
   } catch {
-    // a preference is a nicety; the screen goes on with what it has
+    // A preference is a nicety; the screen continues with what it has.
   }
 }
 
-// shared by every screen that reads them, so the reader and the setup sheet agree
+// Shared by every screen that reads them, so the reader and the setup sheet agree.
 let cache: StoryPrefs | null = null;
 let loading: Promise<StoryPrefs> | null = null;
 const listeners = new Set<(p: StoryPrefs) => void>();
 
-export function loadPrefs(): Promise<StoryPrefs> {
+function loadPrefs(): Promise<StoryPrefs> {
   if (cache) return Promise.resolve(cache);
   loading ??= read().then((raw) => {
     cache = parsePrefs(raw);
@@ -146,7 +138,7 @@ export function loadPrefs(): Promise<StoryPrefs> {
   return loading;
 }
 
-export function savePrefs(patch: Partial<StoryPrefs>): StoryPrefs {
+function savePrefs(patch: Partial<StoryPrefs>): StoryPrefs {
   const next = { ...(cache ?? DEFAULT_PREFS), ...patch };
   cache = next;
   for (const l of [...listeners]) l(next);
@@ -154,7 +146,7 @@ export function savePrefs(patch: Partial<StoryPrefs>): StoryPrefs {
   return next;
 }
 
-/** For tests: forget what was loaded. */
+/** For tests: forgets what was loaded. */
 export function resetPrefsCache(): void {
   cache = null;
   loading = null;

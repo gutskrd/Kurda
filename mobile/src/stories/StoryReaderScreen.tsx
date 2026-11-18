@@ -56,17 +56,15 @@ import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharact
 import { pressedDim } from '../theme/motion';
 import { useDirection } from '../reports/direction';
 
-/** A reading position is sent to the server at most this often; also on leaving the text. */
-export const PROGRESS_EVERY_MS = 10_000;
+/** The most often a reading position is sent to the server; it is also sent on leaving the text. */
+const PROGRESS_EVERY_MS = 10_000;
 
-/** How far down the screen a paragraph's top must be for it to count as the one being read. */
+/** How far down the screen a paragraph's top must be to count as the one being read. */
 const READING_LINE = 0.6;
 
 /**
- * Where the reader is in the text, from where the text is scrolled to: the
- * last paragraph whose top has passed the reading line, how far through the
- * paragraphs that is, and whether the end has been reached — the last
- * paragraph passing the line, or the list scrolled to its foot.
+ * The reader's place, from the scroll position: the last paragraph whose top has passed the reading line, the
+ * share of paragraphs that is, and whether the end was reached (the last paragraph passing the line, or the foot).
  */
 export function readingPosition(
   scrollY: number,
@@ -89,7 +87,7 @@ export function readingPosition(
   return { paragraph, share: finished ? 1 : Math.min(1, (paragraph + 1) / paragraphs), finished };
 }
 
-/** How many minutes of a story are left at `share` of it: never less than one while there is any. */
+/** Minutes left at `share` of a story; never less than one while any remain. */
 export function minutesLeft(readingMinutes: number, share: number): number {
   return Math.max(1, Math.ceil(readingMinutes * (1 - Math.max(0, Math.min(1, share)))));
 }
@@ -106,51 +104,23 @@ export function translationFor(story: Pick<StoryDetail, 'translations'>, locale:
 type Mode = 'overview' | 'reading';
 
 /**
- * A story (design notes §1–§3): its overview first, then the text.
+ * A story (design notes §1–§3): its overview, then the text. The overview is the cover page: picture, title, level,
+ * category, minutes and words, narration, author and tradition, synopsis, Read (or Continue with minutes left) and
+ * Listen, the key vocabulary with play and Save, and the check, locked until the story is finished.
  *
- * The overview is the story's cover page: its picture, title, level by its
- * plain name, category, minutes and words, whether it is read aloud, who
- * wrote or told it and from what tradition, its synopsis, then Read (or
- * Continue, with the minutes left) and Listen, the key vocabulary with a play
- * button where the dictionary has a clip and Save where the word is a
- * headword, and the check at the end — locked with a line until the story has
- * been finished.
+ * A story told in both varieties shows the library's Kurmancî/Soranî switch; the other side opens that telling at
+ * the top of its cover page (the tellings are not split alike) and becomes the reader's choice. A link to a story
+ * of the other variety shows it without changing the choice.
  *
- * A story told in both varieties is one story: under its cover the same
- * Kurmancî | Soranî switch the library has, set to the telling on show. The
- * other side opens that telling here, in place of this one and at the top of
- * its own cover page — not at "the same paragraph", since the two tellings
- * are not cut alike — and is kept as the reader's choice, so the library
- * opens on it too. A story with one telling has no switch, and says which
- * Kurdish it is among its facts instead. Opening a story of the other variety
- * from a link shows what the link names and changes no choice.
+ * The text uses StoryText, in the story's own direction and language (`storyTextStyle`) at the reader's remembered
+ * size. The reading position comes from scrolling and is saved at most every ten seconds and on leaving, so the
+ * overview can offer "Continue · 3 min left". Touching text never starts audio; Listen buttons and the player bar
+ * do.
  *
- * The text is set in the display serif, generously leaded, with glossary
- * words marked in dotted violet; a tap on one opens its meaning, part of speech
- * and the same play and save; a Translation toggle under each paragraph shows
- * it in the reader's language. Every string from the story carries the
- * story's own direction and language (`storyTextStyle`), so a Soranî story
- * reads right to left in any interface language; the text size is the
- * reader's own, remembered on this phone, on top of the system's Dynamic
- * Type. Where the reader is comes from where the text is scrolled to and is
- * remembered on the server at most every ten seconds and on leaving — so the
- * overview can say "Continue · 3 min left" and offer the paragraph to go on
- * from. Audio is never started by touching the text: each paragraph with
- * recordings has a Listen button, and a story with recordings has the player
- * bar.
- *
- * A legend (a story told in sections, the saga length) reads as a book of
- * chapters: its headings are chapter titles (StoryText), the overview lists
- * the chapters with the ones read ticked, and while reading, a line under the
- * title says which chapter this is of how many — a tap on it opens the list,
- * to go to another. Where the story is not in the reader's own language, its
- * title and summary are given in theirs too, under the Kurdish ones. After
- * the text and its check come the questions to think about (nothing scored),
- * what is known about the story, and its sources.
- *
- * The check is the solo game with the assessment's settings (five untimed
- * questions, the text at hand), opened in the game screen; the two ways to
- * play with other people open the setup sheet with this story.
+ * A legend reads as a book of chapters: the overview lists them with read ones ticked, and a sticky line shows the
+ * current chapter and opens the list. After the text and its check come reflections, notes and sources. The check
+ * is a solo game with the assessment's settings (five untimed questions, text at hand); playing with others opens
+ * the setup sheet with this story.
  */
 export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -172,16 +142,16 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [translated, setTranslated] = useState<ReadonlySet<number>>(new Set());
-  // the end of the text reached in this sitting, before the server has said so
+  // The end of the text reached in this sitting, before the server has said so.
   const [reachedEnd, setReachedEnd] = useState(false);
   const [continueFrom, setContinueFrom] = useState<number | null>(null);
-  // the paragraph being read now, for the chapter line; and whether the list of chapters is open
+  // The paragraph being read, for the chapter line, and whether the chapter list is open.
   const [at, setAt] = useState(0);
   const [chaptersOpen, setChaptersOpen] = useState(false);
-  // the glossary's dictionary words already in the reader's vocabulary, and a save that did not take
+  // Glossary words already in the reader's vocabulary, and a save that failed.
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set());
   const [saveError, setSaveError] = useState<{ entryId: string; text: string } | null>(null);
-  // the other telling being fetched, while the switch already says it; and why the last one did not come
+  // The other telling being fetched while the switch already shows it, and why the last fetch failed.
   const [switching, setSwitching] = useState<StoryDialect | null>(null);
   const [switchError, setSwitchError] = useState<string | null>(null);
   const { narrator, state: narration } = useNarration(prefs.rate);
@@ -192,7 +162,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const textTop = useRef(0);
   const paragraphTops = useRef(new Map<number, number>());
   const scrollTarget = useRef<number | null>(null);
-  // the telling on show, for answers that arrive after the page has moved on to the other one
+  // The telling on show, for answers that arrive after the page has switched.
   const shown = useRef<{ id: string; slug: string } | null>(null);
   const alive = useRef(true);
   useEffect(() => {
@@ -203,10 +173,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   }, []);
 
   /**
-   * A story takes the page, from the first load or from the switch: whatever
-   * the page knew of the telling before goes with it — where the reader was,
-   * the translations opened, a sheet left open — and the page is its cover
-   * page, at the top.
+   * Shows a story, from the first load or the switch: everything known of the previous telling (place, open
+   * translations, an open sheet) is dropped, and the page opens on the cover at the top.
    */
   const show = useCallback((next: StoryDetail): void => {
     shown.current = { id: next.id, slug: next.slug };
@@ -215,7 +183,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     scrollTarget.current = null;
     setStory(next);
     setMe(next.me ?? null);
-    // a place to go on from, when there is one: not the first paragraph, and not a story read to its end
+    // A place to continue from, unless it is the first paragraph or the story was read to its end.
     setContinueFrom(next.me && next.me.paragraph > 0 && !next.me.finishedAt ? next.me.paragraph : null);
     setMode('overview');
     setAt(0);
@@ -238,15 +206,12 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     });
   }, [client, slug, show]);
   useEffect(() => {
-    // the address follows the switch (below): the telling it then names is the one already here
+    // The address follows the switch (below), so the telling it now names is already here.
     if (shown.current?.slug === slug) return;
     load();
   }, [load, slug]);
-  /*
-   * Coming back to the story — from its check, above all — the reader's own
-   * record is asked again: the best score, and how many checks today, have
-   * changed while the game was on top. The first focus is the load itself.
-   */
+  // Returning to the story, above all from its check, re-reads the reader's record (best score, checks today). The
+  // first focus is the load itself.
   const refreshMe = useCallback(() => {
     const asked = shown.current;
     if (!asked) return;
@@ -261,7 +226,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       focusedBefore.current = true;
     }, [refreshMe]),
   );
-  // which of the story's dictionary words are saved already: asked only when it has any
+  // Which of the story's dictionary words are already saved; only asked when it has any.
   const headwords = !!story?.glossary.some((g) => !!g.entryId);
   useEffect(() => {
     if (!headwords) return;
@@ -274,7 +239,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     };
   }, [client, headwords]);
 
-  /** Save word / Saved: at once on the screen, then on the server; a refusal takes it back and says why (a full vocabulary, limits/limitCopy.ts). */
+  /** Save word / Saved: on screen at once, then on the server; a refusal reverts and says why (a full vocabulary, limits/limitCopy.ts). */
   const toggleSave = (entryId: string): void => {
     const on = !saved.has(entryId);
     haptic('tap');
@@ -294,7 +259,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     });
   };
 
-  // the category's name, for the slug the story carries; the list is small and cached on the server
+  // The category's name for the story's slug; the list is small and cached on the server.
   useEffect(() => {
     let live = true;
     void getCategories(client).then((res) => {
@@ -305,11 +270,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     };
   }, [client]);
 
-  /*
-   * The reading position, sent at most every ten seconds while it changes and
-   * once more on leaving the text, with `finished` the first time the end is
-   * reached (the server keeps that for good).
-   */
+  // The reading position, sent at most every ten seconds while it changes and once on leaving, with `finished` the
+  // first time the end is reached (the server keeps that for good).
   const pending = useRef<ProgressInput | null>(null);
   const lastSent = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -324,7 +286,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     pending.current = null;
     lastSent.current = Date.now();
     void saveProgress(client, storyId, next).then((res) => {
-      // the reader's record on the telling it was written for: not put on the other one, if the switch has moved since
+      // The record belongs to the telling it was written for; ignore it if the switch has moved since.
       if (res.ok && shown.current?.id === storyId) setMe(res.data.me);
     });
   }, [client, storyId]);
@@ -338,7 +300,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     timer.current = setTimeout(flush, wait);
   };
   useEffect(() => () => flush(), [flush]);
-  // the sound stops and the position is kept when this screen is left, for a game or for anything else
+  // Leaving this screen stops the sound and saves the position.
   useFocusEffect(
     useCallback(
       () => () => {
@@ -349,20 +311,20 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     ),
   );
 
-  // each paragraph's own recordings, for its Listen; and the whole story as the server's stitched track, for the bar
+  // Each paragraph's recordings for its Listen, and the server's stitched track for the bar.
   const items = useMemo(() => (story ? narrationItems(story.paragraphs, story.audio) : []), [story]);
   const track = useMemo(() => (story?.narration ? narrationTrack(story.narration) : items), [story, items]);
   const listenable = useMemo(() => new Set(items.map((i) => i.paragraph)), [items]);
-  // the paragraphs with a sentence a character says keep room for the character, so nothing moves when it appears
+  // Paragraphs with a character's sentence keep room for the character, so nothing moves when it appears.
   const voiced = useMemo(
     () => new Set(items.filter((i) => narrationLine(story?.paragraphs ?? [], story?.voices, i).voice).map((i) => i.paragraph)),
     [items, story],
   );
-  // how many of the story's sentences could be recorded, for "n of m recorded" when not all are
+  // How many sentences could be recorded, for "n of m recorded" when not all are.
   const recordable = useMemo(() => (story ? story.paragraphs.reduce((n, p) => n + storyAudioSentences(p).length, 0) : 0), [story]);
   const translation = useMemo(() => (story ? translationFor(story, locale) : null), [story, locale]);
 
-  // the sentence being read stays in view; reduced motion jumps rather than glides
+  // The sentence being read stays in view; under Reduce Motion it jumps rather than glides.
   const followed = narration.scope === 'story' ? narration.current?.paragraph : undefined;
   useEffect(() => {
     if (followed === undefined || mode !== 'reading') return;
@@ -419,11 +381,9 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   };
 
   /**
-   * The switch: the same story in the other variety, opened here in place of
-   * this one. The switch moves at once and the telling follows when it has
-   * arrived, on its own cover page; only then is the choice kept (the library
-   * opens on it too) and the address moved to the telling on show. One that
-   * does not arrive leaves the reader where they were, and says so.
+   * The switch: opens the same story in the other variety here. The switch moves at once and the telling replaces
+   * this one when it arrives, on its own cover page; only then is the choice kept and the address updated. A failed
+   * fetch leaves the reader where they were and says so.
    */
   const switchTo = (dialect: StoryDialect): void => {
     const version = story?.versions.find((v) => v.dialect === dialect);
@@ -500,7 +460,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     navigation.navigate('StoryGame', { id: res.data.id });
   };
 
-  /** An unfinished solo game on this story, to go back to rather than throw away. */
+  /** An unfinished solo game on this story, to resume rather than discard. */
   const findUnfinishedSolo = async (s: StoryDetail): Promise<string | null> => {
     const res = await activeGames(client);
     if (!res.ok) return null;
@@ -522,7 +482,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const headerRight =
     mode === 'reading' ? (
       <View style={styles.sizeControls}>
-        {/* three buttons with no gap between them: each reaches up and down, and none into the next */}
+        {/* Three buttons with no gap: each reaches up and down, none into the next. */}
         <ReachGroup gap={0}>
           <Pressable
             onPress={() => resize(-1)}
@@ -579,15 +539,15 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const category = categoryLabel(story.category, categories, locale, t);
   const reading = narration.current;
   const meta = metaFor(story, locale);
-  // the same story in the other variety, when it has been told in both
+  // The same story in the other variety, when it has both.
   const otherTelling = story.versions.find((v) => v.dialect !== story.dialect) ?? null;
   const sections = story.sections ?? [];
-  // how far the reader has got, for the chapters ticked as read: this sitting's place, else the one the server kept
+  // How far the reader has got, for ticking read chapters: this sitting's place, else the server's.
   const readTo = finished ? story.paragraphs.length : Math.max(at, me?.paragraph ?? 0);
   const chapterNow = chapterAt(sections, at);
-  // what the sentence being read says and who says it, whichever queue it came from
+  // The current sentence's text and speaker, from whichever queue it came.
   const line = reading ? narrationLine(story.paragraphs, story.voices, reading) : undefined;
-  // the character faces back toward the Listen it stands after
+  // The character faces back toward the Listen it stands after.
   const speaker =
     reading && line?.voice
       ? {
@@ -635,20 +595,20 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             />
           ))}
         </Card>
-        {/* a save refused from the list is said under it; one refused in the word's sheet is said there */}
+        {/* A save refused from the list shows under it; one refused in the word's sheet shows there. */}
         {saveError && !gloss ? <Note tone="danger" icon="alert">{saveError.text}</Note> : null}
       </View>
     ) : null;
 
   return (
     <GradientBackground>
-      {/* the bar names the place in the app's words; the story's own title is in the body, in its own script */}
+      {/* The bar names the place in the app's words; the story's title is in the body in its own script. */}
       <ScreenHeader title={t('stories.title')} onBack={mode === 'reading' ? toOverview : onExit} right={headerRight} />
       {mode === 'overview' ? (
         <ScrollView ref={overview} contentContainerStyle={[styles.content, { paddingBottom: bottomInset + spacing.lg }]} showsVerticalScrollIndicator={false}>
           <StoryCover slug={story.slug} cover={story.cover} style={styles.cover} radius={radii.lg} />
           {otherTelling ? (
-            // one story, two tellings: the library's own switch, set to the one on show
+            // One story, two tellings: the library's switch, set to the one on show.
             <View style={styles.variety}>
               <Segmented<StoryDialect>
                 options={STORY_DIALECTS}
@@ -672,7 +632,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             <View style={[styles.pills, storyRowStyle(story.dialect)]}>
               <Pill label={levelName(story.level, t)} />
               {category ? <Pill icon="tag" label={category} /> : null}
-              {/* which Kurdish it is: said by the switch when there is one */}
+              {/* Which Kurdish it is, unless the switch already says it. */}
               {otherTelling ? null : <Pill label={DIALECT_NAME[story.dialect]} />}
               <Pill label={t('stories.aboutMinutes', { count: story.readingMinutes })} />
               <Pill label={t('stories.overview.words', { count: formatNumber(story.wordCount, locale) })} />
@@ -734,7 +694,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             ref={scroll}
             testID="story-text"
             contentContainerStyle={[styles.content, { paddingBottom: bottomInset + spacing.lg }]}
-            // the chapter line is the second child, after the title, when the story has chapters
+            // The chapter line is the second child, after the title, when the story has chapters.
             stickyHeaderIndices={sections.length > 0 ? [1] : undefined}
             showsVerticalScrollIndicator={false}
             onScroll={onScroll}
@@ -749,7 +709,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
               </Text>
             </View>
             {sections.length > 0 ? (
-              // stays at the top while the text scrolls under it, so where the reader is is always one glance away
+              // Stays at the top while the text scrolls under it, so the current place is a glance away.
               <View style={[styles.chapterSticky, { backgroundColor: colors.background }]}>
                 <ChapterLine story={story} chapter={chapterNow} readTo={readTo} onOpen={() => setChaptersOpen(true)} />
               </View>
@@ -895,15 +855,10 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   );
 }
 
-/** The one player a screen shares for its word clips (alphabet/useClipPlayer). */
+/** The one player a screen shares for word clips (alphabet/useClipPlayer). */
 type Clips = ReturnType<typeof useClipPlayer>;
 
-/**
- * The check (design notes §1, §6): its name, what it is (five questions, no
- * timer), the best score so far, a note on the XP a repeat earns today, and
- * the button — disabled, with "Finish the story first", until the story has
- * been read to its end.
- */
+/** The check (design notes §1, §6): what it is, the best score, a note on today's repeat XP, and its button, disabled until the story is finished. */
 function CheckCard({
   me,
   unlocked,
@@ -920,13 +875,13 @@ function CheckCard({
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const attempts = me?.attemptsToday ?? 0;
-  // from the third check of a day on, the game pays nothing; the second pays a quarter
+  // From the day's third check on the game pays nothing; the second pays a quarter.
   const unpaid = attempts >= PAID_STORY_REPEATS_PER_DAY;
   const checked = me?.bestCorrect !== null && me?.bestCorrect !== undefined && me.total !== null;
   return (
     <Card style={styles.check}>
       <View style={styles.checkHead}>
-        {/* open or not yet: a state, not a right answer, so violet rather than green */}
+        {/* Open or locked is a state, not a right answer, so violet rather than green. */}
         <Icon name={unlocked ? 'check' : 'lock'} size={20} color={unlocked ? colors.primary : colors.textSecondary} />
         <Text style={[styles.checkTitle, { color: colors.textPrimary }]} accessibilityRole="header">
           {t('stories.check.title')}
@@ -958,11 +913,7 @@ function CheckCard({
   );
 }
 
-/**
- * A glossary word in the key vocabulary: the word and its meaning (a tap
- * opens its sheet), a play button where the dictionary has a clip, and a
- * save button where the word is a dictionary headword.
- */
+/** A key vocabulary row: word and meaning (tap for its sheet), play where the dictionary has a clip, Save where it is a headword. */
 function VocabularyRow({
   entry,
   story,
@@ -977,9 +928,9 @@ function VocabularyRow({
   onOpen: () => void;
   clips: Clips;
   saved: boolean;
-  /** only for a word the dictionary has */
+  /** Only for a word the dictionary has. */
   onSave?: () => void;
-  /** some word in the list can be saved: a row without Save keeps its place, so the play buttons stand in one column */
+  /** Some word in the list can be saved, so a row without Save keeps its place and play buttons stay in one column. */
   saveColumn: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -996,7 +947,7 @@ function VocabularyRow({
       <Pressable
         onPress={onOpen}
         accessibilityRole="button"
-        // the word in the story's language; its meaning, in the app's (or English), as the value
+        // The word in the story's language; its meaning in the app's (or English) as the value.
         accessibilityLabel={entry.term}
         {...props}
         accessibilityValue={{ text: meaning.text }}
@@ -1023,7 +974,7 @@ function VocabularyRow({
         <Pressable
           onPress={onSave}
           accessibilityRole="button"
-          // after the word itself, as the play button is: "Save word" needs no name repeated
+          // Read after the word, as the play button is, so "Save word" needs no name repeated.
           accessibilityLabel={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
           accessibilityState={{ selected: saved }}
           style={({ pressed }) => [styles.wordPlay, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
@@ -1038,11 +989,9 @@ function VocabularyRow({
 }
 
 /**
- * A word's sheet (design notes §3): the word, its part of speech when the
- * dictionary knows it, its meaning in the interface language (English when
- * there is none, marked as English), a play button where there is a clip, and
- * Save word / Saved where the word is a dictionary headword — with the
- * vocabulary's limit said when the shelf is full.
+ * A word's sheet (design notes §3): the word, part of speech when known, its meaning in the interface language
+ * (English, marked so, when there is none), play where there is a clip, and Save where it is a headword, with the
+ * vocabulary limit shown when full.
  */
 function GlossSheet({
   entry,
@@ -1057,9 +1006,9 @@ function GlossSheet({
   story: Pick<StoryDetail, 'dialect'>;
   clips: Clips;
   saved: boolean;
-  /** only for a word the dictionary has */
+  /** Only for a word the dictionary has. */
   onSave?: () => void;
-  /** why the last save of this word did not take */
+  /** Why the last save of this word failed. */
   error: string | null;
   onClose: () => void;
 }): React.JSX.Element {
@@ -1100,11 +1049,7 @@ function GlossSheet({
   );
 }
 
-/**
- * Where the reader is in a legend, under its title while reading: the
- * chapter's number of how many and its title, and a stone for each chapter
- * filled once it is read. A tap opens the list of chapters.
- */
+/** A legend's place while reading: chapter number of total and title, and a stone per chapter filled once read. A tap opens the list. */
 function ChapterLine({
   story,
   chapter,
@@ -1151,11 +1096,7 @@ function ChapterLine({
   );
 }
 
-/**
- * A legend's chapters, to go to one: the introduction when there is one,
- * then each chapter by number and title, its title's translation under it,
- * a tick on the ones read and "You are here" on the one being read.
- */
+/** A legend's chapter list: the introduction if any, then each chapter with its translated title, read ones ticked and "You are here". */
 function ChapterList({
   story,
   readTo,
@@ -1164,7 +1105,7 @@ function ChapterList({
 }: {
   story: Pick<StoryDetail, 'dialect' | 'sections' | 'paragraphs' | 'translations'>;
   readTo: number;
-  /** the chapter being read, or null on the overview */
+  /** The chapter being read, or null on the overview. */
   here: number | null;
   onOpen: (paragraph: number) => void;
 }): React.JSX.Element {
@@ -1172,7 +1113,7 @@ function ChapterList({
   const { t, locale } = useI18n();
   const dir = storyTextStyle(story.dialect);
   const props = storyTextProps(story.dialect);
-  // a chapter's title in the reader's language under it; none where the reader's language is the story's own (legend.ts)
+  // A chapter title's translation under it, except where the reader's language is the story's own (legend.ts).
   const translation = locale === storyOwnLocale(story) ? null : translationFor(story, locale);
   const underSet = translation && isAppLocale(translation.lang) ? textIn(translation.lang) : null;
   const rows: Array<{ key: string; paragraph: number; number: string; title: string; under: string | null; read: boolean; current: boolean }> = [];
@@ -1215,11 +1156,7 @@ function ChapterList({
   );
 }
 
-/**
- * The overview while it loads, in its own column: the cover's shape, the
- * title, the facts as pills, two lines of summary, and the first button —
- * so the words arrive on the lines that were waiting for them.
- */
+/** The overview while loading, in the shape of the cover, title, facts, summary and first button. */
 function OverviewSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   return (
@@ -1242,14 +1179,12 @@ function OverviewSkeleton(): React.JSX.Element {
   );
 }
 
-/** display(28) sets 1.12 */
+/** The display face at size xl, with its 1.12 line height. */
 const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 const COVER_HEIGHT = 180;
 /**
- * A word's play and save buttons are drawn at 40 so the row stays a row. The
- * Pressable makes each answer over 48, 4 past every edge: the two meet in the
- * middle of the 8 between them, and the rows are 8 apart as well, so none
- * takes another's tap.
+ * Word play and save buttons are drawn at 40 so the row stays compact, and answer over 48 (4 past every edge): the
+ * two meet in the middle of the 8 between them, and rows are 8 apart, so none takes another's tap.
  */
 const WORD_BUTTON = 40;
 const styles = StyleSheet.create({

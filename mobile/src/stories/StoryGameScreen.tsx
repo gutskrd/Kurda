@@ -26,18 +26,10 @@ import { useStoryGame } from './useStoryGame';
 import { Loading } from '../theme/Loading';
 
 /**
- * A story game, whatever mode and wherever it is (contract §A1): the lobby,
- * the reading, each question and its answer, and the results. One screen
- * whose content follows the game's status, kept current by the long-poll in
- * `useStoryGame`; opening it for a game you are not in joins it if you may.
- *
- * One live region for the whole game (Android and the web; iOS is told
- * directly), so what is announced — a locked answer, ten seconds left, a
- * verdict — is said once and never moves the reader's place.
- *
- * iOS is kept from swiping a game away (App.tsx); Android's back, the button
- * or the edge swipe, asks "Leave this game?" while the story is being read
- * and answered, and goes back as the header does once it is answered.
+ * A story game in any mode (contract §A1): lobby, reading, questions and reveals, and results, following the game's
+ * status via the long-poll in `useStoryGame`. Opening a game you are not in joins it if allowed. One live region
+ * serves the whole game (iOS is told directly), so announcements are said once without moving the reader's place.
+ * iOS swiping is disabled (App.tsx); Android's back asks "Leave this game?" while the story is being played.
  */
 export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -46,7 +38,7 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
   const game = useStoryGame(id);
   const view = game.view;
   const story = useGameStory(id, !!view && view.status !== 'lobby');
-  // an invite waits while the story is being read and answered (the banner would sit over the timer)
+  // Invites wait while the story is being read and answered, since the banner would cover the timer.
   const playing = !!view && !game.gone && (view.status === 'reading' || view.status === 'question' || view.status === 'reveal');
   useQuietInvites(playing);
   useHardwareBack(playing ? () => askLeaveGame(t, onExit) : null);
@@ -99,7 +91,7 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
         view={view}
         story={story}
         onOpenGame={(next) => navigation.replace('StoryGame', { id: next })}
-        // back to the reader this game was opened from when it is still under it, else a reader for the story
+        // Back to the reader this game was opened from if it is still underneath, else a new reader for the story.
         onRead={(slug) => navigation.popTo('StoryReader', { slug })}
         onBack={toStories}
       />
@@ -108,7 +100,7 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
 
   return (
     <GradientBackground>
-      {/* the story's own title is in the body, in the story's voice and script; the bar says only where you are, as the reader's does */}
+      {/* The story's title is in the body in its own script; the bar only says where you are, as the reader's does. */}
       <ScreenHeader title={t('stories.title')} onBack={onExit} />
       {game.trouble ? (
         <Text style={[styles.trouble, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
@@ -116,7 +108,7 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
         </Text>
       ) : null}
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        {/* a game with others says what it is playing for, once the lobby is behind it */}
+        {/* A game with others says what it is played for, once past the lobby. */}
         {view && view.mode !== 'solo' && view.rated && view.status !== 'lobby' && view.status !== 'finished' && view.status !== 'cancelled' ? (
           <RatedPill rated={view.rated.counts ?? view.rated.rated} small />
         ) : null}
@@ -129,11 +121,9 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
 }
 
 /**
- * The rating box hears of a game that ended while it was played on this
- * screen (feedback/gameFinished): not of one opened already finished, and as
- * given up when this player left it. A win is a group game's first place —
- * a duo names no winner. Leaving the results, back or on to the next game,
- * closes a box that came with them.
+ * Tells the rating box (feedback/gameFinished) about a game that ended while played on this screen, not one opened
+ * already finished, and as given up when this player left. A win is first place in a group; a duo has no winner.
+ * Leaving the results closes a box that came with them.
  */
 function useStoryFinish(id: string, view: StoryGameView | null): void {
   const seen = useRef({ id, playing: false, reported: false });

@@ -12,11 +12,8 @@ import { setExtraTime } from '../api';
 import { useStoryPrefs } from '../prefs';
 
 /**
- * "Extra time" (contract §A1): this player's own deadline on a timed question
- * doubles. Nobody else is told who uses it. It is remembered on this phone and
- * carried into the next game, so somebody who needs it asks once.
- *
- * Shown only in a game with a timer — there is nothing to double otherwise.
+ * "Extra time" (contract §A1): doubles this player's own deadline on timed questions, without telling anyone else.
+ * Remembered on this phone for the next game. Shown only in timed games.
  */
 export function ExtraTimeSwitch({
   view,
@@ -32,7 +29,7 @@ export function ExtraTimeSwitch({
   const [busy, setBusy] = useState(false);
   const synced = useRef(false);
 
-  // a game joined before the preference was read: bring it into line once
+  // A game joined before the preference was read is brought into line once.
   useEffect(() => {
     if (!ready || synced.current || view.settings.timerSeconds === 0) return;
     synced.current = true;
@@ -50,7 +47,7 @@ export function ExtraTimeSwitch({
     setBusy(false);
   };
 
-  // the whole row turns it, the words as well as the switch, and is one switch to a screen reader
+  // The whole row toggles it and reads as one switch.
   return (
     <ToggleRow
       label={t('stories.extraTime')}
@@ -70,7 +67,7 @@ export function ExtraTimeSwitch({
 }
 
 const styles = StyleSheet.create({
-  // the icon sits close to its words; ToggleRow keeps the row a fingertip's reach tall
+  // The icon sits close to its words; ToggleRow keeps the row a fingertip tall.
   row: { gap: spacing.sm },
   text: { flex: 1 },
   label: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

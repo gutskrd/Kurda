@@ -53,12 +53,12 @@ describe('Reveal', () => {
     const view = renderWithProviders(<Reveal view={revealView()} story={NANE_GERM} apply={() => null} announce={announce} />);
     expect(announce).toHaveBeenCalledTimes(1);
     expect(announce).toHaveBeenCalledWith('Not quite. The answer is: Germ');
-    // the options in the story's language, their tags in the app's, each read by its own voice
+    // Options in the story's language and tags in the app's, each read in its own voice.
     expect(screen.getByText('Germ').getAttribute('lang')).toBe('ku');
     expect(screen.getByText('Right answer')).toBeTruthy();
     expect(screen.getByText('Sar').getAttribute('lang')).toBe('ku');
     expect(screen.getByText('Your answer')).toBeTruthy();
-    // a new view of the same reveal (somebody continued) says nothing again
+    // A new view of the same reveal (someone continued) announces nothing again.
     view.rerender(<Reveal view={revealView({ continuedCount: 2, version: 9 })} story={NANE_GERM} apply={() => null} announce={announce} />);
     expect(announce).toHaveBeenCalledTimes(1);
   });

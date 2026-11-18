@@ -14,7 +14,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-/** the game the screen is showing, as the test moves it along */
+/** The game the screen shows, as the test moves it along. */
 const current = vi.hoisted(() => ({ view: null as StoryGameView | null }));
 vi.mock('./useStoryGame', () => ({
   useStoryGame: () => ({
@@ -27,7 +27,7 @@ vi.mock('./useStoryGame', () => ({
   }),
 }));
 vi.mock('./game/useGameStory', () => ({ useGameStory: () => null }));
-// the screens inside are under test elsewhere; this is about the rating box
+// The inner screens are tested elsewhere; this is about the rating box.
 vi.mock('./game/Reveal', () => ({ Reveal: () => null }));
 vi.mock('./game/Results', () => ({ Results: () => null }));
 
@@ -65,7 +65,7 @@ describe('StoryGameScreen and the rating box', () => {
       screen.rerender(<StoryGameScreen id="g1" onExit={() => undefined} />);
     });
     expect(w.heard).toEqual([{ moment: 'won', gaveUp: false }]);
-    // leaving the results closes a box that came with them
+    // Leaving the results closes a box that came with them.
     expect(w.left()).toBe(0);
     screen.unmount();
     expect(w.left()).toBe(1);

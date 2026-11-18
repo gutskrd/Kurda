@@ -12,18 +12,12 @@ import {
 } from '@kurda/shared';
 
 /**
- * What the reader needs to read a legend — a story told in sections — on
- * the phone, kept apart from the screens so it is tested on its own: which
- * chapter a paragraph is in, the title and summary in the reader's language,
- * and each of a legend's texts (a reflection, a note, a question) in the
- * reader's language, else in English.
- *
- * A story's own language is never translated into itself: a Kurmancî story
- * read in the Kurmancî interface shows no translated title, and a Soranî one
- * in the Soranî interface likewise.
+ * What the reader needs for a legend (a story in sections), kept apart from the screens for testing: which chapter
+ * a paragraph is in, and the title, summary and texts in the reader's language, else English. A story is never
+ * shown translated into its own language.
  */
 
-/** The interface language a story is written in (Kurmancî stories `ku`, Soranî ones `ckb`). */
+/** The interface language a story is written in: `ku` for Kurmancî, `ckb` for Soranî. */
 export function storyOwnLocale(story: Pick<StoryListItem, 'dialect'>): AppLocale {
   return storyTextDirection(story.dialect).lang;
 }
@@ -36,11 +30,7 @@ function pick<T>(translations: Partial<Record<AppLocale, T>>, locale: string, ow
   return translations.en !== undefined ? { value: translations.en, lang: 'en' } : null;
 }
 
-/**
- * The title and summary in the reader's language, beside the Kurdish ones
- * (which stay the main ones). Either can be missing; a title that only
- * repeats the Kurdish is left out.
- */
+/** The title and summary in the reader's language beside the Kurdish ones; either may be missing, and a title that only repeats the Kurdish is dropped. */
 export function metaFor(story: Pick<StoryListItem, 'dialect' | 'title' | 'metaTranslations'>, locale: string): { title: string | null; summary: string | null; lang: AppLocale } | null {
   const found = pick(story.metaTranslations ?? {}, locale, storyOwnLocale(story));
   if (!found) return null;
@@ -62,10 +52,8 @@ export function noteIn(note: StoryNote, story: Pick<StoryDetail, 'dialect'>, loc
 }
 
 /**
- * A question in the reader's language: the prompt and options from its
- * translations, else the English prompt and explanation the older stories
- * carry on their own. The options are in the game's order in every
- * language, so the same index is the same option.
+ * A question in the reader's language: prompt and options from its translations, else the English prompt and
+ * explanation older stories carry. Options keep the game's order in every language, so an index is the same option.
  */
 export function questionIn(
   q: { translations?: Partial<Record<AppLocale, StoryQuestionTranslation>>; promptEn?: string | null; explanationEn?: string | null },
@@ -86,11 +74,7 @@ export function questionIn(
   return null;
 }
 
-/**
- * Which chapter a paragraph is in: the index of the last section that starts
- * at or before it, or -1 for the introduction (the paragraphs before the
- * first heading) and for a story without sections.
- */
+/** The chapter a paragraph is in: the last section starting at or before it, or -1 for the introduction and unsectioned stories. */
 export function chapterAt(sections: readonly StorySection[], paragraph: number): number {
   let at = -1;
   sections.forEach((s, i) => {
@@ -104,7 +88,7 @@ export function hasIntroduction(sections: readonly StorySection[]): boolean {
   return sections.length > 0 && sections[0]!.paragraph > 0;
 }
 
-/** A heading's title in a translation, which keeps the heading as a paragraph of its own ("## Title"). */
+/** A heading's title in a translation, which keeps the heading as its own paragraph ("## Title"). */
 export function translatedHeading(translated: string | undefined): string | null {
   if (!translated) return null;
   return storyHeadingTitle(translated) ?? (translated.trim() || null);

@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { createAudioPlayer } from 'expo-audio';
 import { IDLE, Narrator, type NarrationState, type PlayerLike, type PlayerStatus } from './narration';
 
-/** How often the seek line is moved while the story plays: four times a second is smooth enough for a line, and cheap. */
+/** How often the seek line updates while playing: four times a second is smooth and cheap. */
 const POSITION_EVERY_MS = 250;
 
-/** expo-audio, behind the small surface the narrator uses. */
+/** expo-audio behind the small interface the narrator uses. */
 function expoPlayer(): PlayerLike {
   const player = createAudioPlayer(null);
   const ended = new Set<() => void>();
@@ -37,11 +37,7 @@ function expoPlayer(): PlayerLike {
   };
 }
 
-/**
- * One narrator for a screen, released with it. The audio stops when the
- * screen goes (or when the caller says — the questions starting), and nothing
- * is loaded until somebody presses Listen.
- */
+/** One narrator per screen, released with it. Audio stops when the screen goes or the caller says so, and nothing loads until Listen. */
 export function useNarration(rate: number): { narrator: Narrator; state: NarrationState } {
   const [state, setState] = useState<NarrationState>(IDLE);
   const narrator = useMemo(() => new Narrator(expoPlayer, setState), []);
@@ -52,11 +48,7 @@ export function useNarration(rate: number): { narrator: Narrator; state: Narrati
   return { narrator, state };
 }
 
-/**
- * Where the sound is on the stitched track, in milliseconds, read a few
- * times a second while it plays and once more whenever the sentence changes —
- * a paused player stands still, and so does its line.
- */
+/** The playback position on the stitched track in ms, read a few times a second while playing and on each sentence change. */
 export function useNarrationPosition(narrator: Narrator, state: NarrationState): number {
   const [position, setPosition] = useState(0);
   const { playing, scope, index, buffering } = state;

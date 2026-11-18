@@ -24,27 +24,16 @@ import { storyTextProps, storyTextStyle } from './storyText';
 import { pressedDim } from '../theme/motion';
 
 /**
- * Small pieces the Stories and play screens share: a bottom sheet, a section
- * label, a pill, and the two accessibility helpers every game screen needs —
- * saying something to a screen reader without moving it, and moving it on
- * purpose to a new question.
+ * Small pieces the Stories and play screens share: a bottom sheet, a section label, a pill, and the two
+ * accessibility helpers every game screen needs, announcing without moving focus and moving it to a new question.
  */
 
-/**
- * How wide a story screen's content may grow. On a phone that is the screen;
- * on a tablet held sideways, or the app in a browser, a story set across the
- * whole width runs to lines of 150 letters, which nobody reads comfortably —
- * so the column stops at about 65 of them and sits in the middle.
- */
+/** A story screen's maximum content width: about 65 characters a line on a tablet or the web, centred. */
 export const COLUMN: ViewStyle = { width: '100%', maxWidth: 680, alignSelf: 'center' };
 
 /**
- * A sheet over the screen, from the bottom: the app's BottomSheet, with a
- * body that scrolls when it is taller than the phone and a footer that does
- * not.
- *
- * A Modal, not a positioned View: anything else inside the navigator renders
- * under the tab bar and lets taps through (ReportUserSheet says the same).
+ * A sheet from the bottom: the app's BottomSheet, with a body that scrolls when taller than the phone and a fixed
+ * footer. A Modal rather than a positioned View, which would render under the tab bar and let taps through.
  */
 export function Sheet({
   title,
@@ -53,13 +42,13 @@ export function Sheet({
   footer,
   dialect,
 }: {
-  /** none for a sheet whose content carries its own heading (a badge's, under its picture) */
+  /** Omitted when the content has its own heading (a badge's, under its picture). */
   title?: string;
-  /** the title is a story's (read and set in the story's language) */
+  /** The title is a story's, read and set in the story's language. */
   dialect?: StoryDialect;
   onClose: () => void;
   children: ReactNode;
-  /** stays at the bottom while the content scrolls (the sheet's main action) */
+  /** Stays at the bottom while the content scrolls: the sheet's main action. */
   footer?: ReactNode;
 }): React.JSX.Element {
   return (
@@ -79,9 +68,8 @@ export function Sheet({
 }
 
 /**
- * A GlassCard whose children are laid out by `style` (a gap, an alignment).
- * GlassCard puts its own style on the outer frame, around the padding, so a
- * gap given to it never reaches the children; this adds the inner box.
+ * A GlassCard whose children are laid out by `style` (a gap, an alignment). GlassCard puts its style on the outer
+ * frame, so a gap given to it never reaches the children; this adds the inner box.
  */
 export function Card({
   children,
@@ -109,10 +97,8 @@ export function SectionLabel({ children }: { children: string }): React.JSX.Elem
 }
 
 /**
- * A short fact in a pill: "Short", "~3 min", "Done · 4/5". Its icon stands
- * before its label the way the language reads: on the right in Soranî and
- * Arabic, where a fixed row left it trailing the word it marks. It has no
- * gold: a fact is not a prize, and gold is for what is earned.
+ * A short fact in a pill ("Short", "~3 min", "Done · 4/5"), its icon before the label in reading order. No gold: a
+ * fact is not a prize.
  */
 export function Pill({
   label,
@@ -140,11 +126,9 @@ export function Pill({
 }
 
 /**
- * One of a few choices that wrap onto more lines than a segmented control
- * fits: the length filter, with minutes on each. A radio group under its
- * label, each chip a fingertip tall. The chosen one wears the violet's wash
- * with violet words, as the segmented control's chosen side does: the solid
- * violet is the button the sheet is about, under the choices.
+ * Choices that wrap onto more lines than a segmented control fits (the length filter): a labelled radio group of
+ * fingertip-tall chips. The chosen one has the violet wash with violet text, like the segmented control, since solid
+ * violet is for the sheet's main button.
  */
 export function ChoiceChips<T extends string>({
   label,
@@ -163,7 +147,7 @@ export function ChoiceChips<T extends string>({
   const violet = hueSteps(scheme, 'violet');
   return (
     <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={label}>
-      {/* the chips wrap onto rows as far apart as they are side by side: each reaches half that gap every way */}
+      {/* Chips wrap with the same gap between rows as between chips; each reaches half the gap every way. */}
       <ReachGroup gap={CHOICE_GAP} rowGap={CHOICE_GAP}>
         {options.map((opt) => {
           const on = opt === value;
@@ -177,7 +161,7 @@ export function ChoiceChips<T extends string>({
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={labelOf(opt)}
-              // as wide as its words, which are not known before it is drawn: `open` reaches past every edge, and the group caps it to the gap
+              // Its width is unknown before layout, so `open` reaches past every edge and the group caps it to the gap.
               reach="open"
               style={({ pressed }) => [
                 styles.chip,
@@ -218,10 +202,9 @@ export function Note({
 }
 
 /**
- * Say something to a screen reader without moving it (contract §A1: the
- * verdict, "Answer locked", a new question). iOS has an announcement call;
- * Android and the web read a live region when its text changes, so both are
- * done — the region is one pixel and transparent, a screen reader's alone.
+ * Announces to screen readers without moving focus (contract §A1: the verdict, "Answer locked", a new question).
+ * iOS has an announcement call; Android and the web read a live region on change, so both are used. The region is
+ * one transparent pixel.
  */
 export function useAnnouncer(): { announce: (message: string) => void; region: React.JSX.Element } {
   const [message, setMessage] = useState('');
@@ -231,7 +214,7 @@ export function useAnnouncer(): { announce: (message: string) => void; region: R
       AccessibilityInfo.announceForAccessibility(next);
       return;
     }
-    // the same sentence twice in a row still has to be read twice
+    // The same sentence twice in a row must still be read twice.
     setMessage((prev) => (prev === next ? `${next} ` : next));
   }, []);
   const region = (
@@ -243,9 +226,8 @@ export function useAnnouncer(): { announce: (message: string) => void; region: R
 }
 
 /**
- * Move the screen reader to `ref` whenever `key` changes — the new question's
- * title, so a blind player is not left on the last question's options. Only
- * on purpose and only then: nothing else in a game moves focus.
+ * Moves screen-reader focus to `ref` whenever `key` changes (the new question's title), so a blind player is not
+ * left on the last question's options. Nothing else in a game moves focus.
  */
 export function useFocusOn(ref: RefObject<View | Text | null>, key: string | number | null): void {
   const last = useRef<string | number | null>(null);
@@ -266,12 +248,12 @@ export function useFocusOn(ref: RefObject<View | Text | null>, key: string | num
   }, [ref, key]);
 }
 
-/** The space between choice chips, side by side and from row to row. */
+/** The gap between choice chips, across and between rows. */
 const CHOICE_GAP = spacing.sm;
 
 const styles = StyleSheet.create({
   cardBody: { gap: spacing.sm },
-  // the body and the footer keep their own gutters, so the body scrolls edge to edge
+  // The body and footer keep their own gutters, so the body scrolls edge to edge.
   sheetContent: { paddingHorizontal: 0, gap: 0 },
   sheetBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.md, gap: spacing.md },
   sheetFooter: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.sm },
