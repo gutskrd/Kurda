@@ -12,16 +12,18 @@ import { MessageContent, hasControls, isCardMessage } from './MessageContent';
 import { messageA11y, openMessageOptions } from './messageOptions';
 import { DayPill } from './ThreadParts';
 import { isEmojiOnly, timeLabel, type Place } from './thread';
+import { UnsentNote } from './UnsentNote';
 
-/** A message as a thread shows it: the server's, or one sent from here still awaiting its answer. */
-export type RowMessage = ChatMessage & { pending?: boolean };
+/** A message as a thread shows it: the server's, or one sent from here that is on its way or was not sent. */
+export type RowMessage = ChatMessage & { pending?: 'sending' | 'failed' };
 
 /**
  * One message of a thread, drawn where it sits in the conversation (`thread.ts`), shared by DMs and group chats.
  *
  * Consecutive messages from one person read as one turn: their face appears once at the run's foot, their name
  * once over the first and only when there could be several people (`named`: a group), and the time once per
- * pause, under the run before it, with "Read" beside your own.
+ * pause, under the run before it, with whether your own was sent, delivered or read beside it. One of yours the server
+ * was not reached for says "Not sent" under it, with Try again and Cancel.
  *
  * A message of only a few emoji is shown large without a bubble, and a card (gift, game) is its own surface. A
  * deleted message keeps its place, so removing it does not reshuffle the conversation around whoever was
@@ -37,6 +39,8 @@ export function MessageRow({
   receipt,
   onOpenGift,
   onReport,
+  onRetry,
+  onDiscard,
 }: {
   message: RowMessage;
   mine: boolean;
@@ -45,11 +49,14 @@ export function MessageRow({
   named?: boolean;
   /** Who sent it, for a card that says so and for the face. */
   senderName: string;
-  /** What to say beside the time of your own message once it has been read. */
+  /** What to say beside the time of your own message: sent, delivered or read. */
   receipt?: string | null;
   onOpenGift: (giftId: string) => void;
   /** Report this message; undefined for your own. */
   onReport?: () => void;
+  /** For one of yours that was not sent: send it again, or take it back out. */
+  onRetry?: () => void;
+  onDiscard?: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -80,13 +87,13 @@ export function MessageRow({
         accessible={whole}
         {...(whole ? messageA11y(t, options) : null)}
         // On its way: said to a screen reader as busy, and drawn fainter until the server has it.
-        accessibilityState={message.pending ? { busy: true } : undefined}
-        testID={message.pending ? 'message-sending' : undefined}
+        accessibilityState={message.pending === 'sending' ? { busy: true } : undefined}
+        testID={message.pending ? `message-${message.pending}` : undefined}
         style={({ pressed }) => [
           styles.row,
           { flexDirection: dir.row },
           side === 'right' ? styles.rowRight : styles.rowLeft,
-          message.pending && styles.sending,
+          message.pending === 'sending' && styles.sending,
           pressed && styles.held,
         ]}
       >
@@ -118,6 +125,9 @@ export function MessageRow({
           )}
         </View>
       </Pressable>
+      {message.pending === 'failed' && onRetry && onDiscard ? (
+        <UnsentNote onRetry={onRetry} onDiscard={onDiscard} style={[styles.unsent, side === 'right' ? styles.metaRight : styles.metaLeft]} />
+      ) : null}
       {time ? (
         <Text style={[styles.meta, side === 'right' ? styles.metaRight : styles.metaLeft, mine ? null : styles.metaPastFace, { color: colors.textSecondary }]}>
           {receipt ? `${time} · ${receipt}` : time}
@@ -151,6 +161,7 @@ const styles = StyleSheet.create({
   meta: { fontSize: 12, marginTop: 3, marginHorizontal: spacing.xs },
   metaRight: { alignSelf: 'flex-end' },
   metaLeft: { alignSelf: 'flex-start' },
+  unsent: { marginHorizontal: spacing.xs },
   // Under the bubbles, not under the face beside them.
   metaPastFace: { marginHorizontal: RUN_FACE + spacing.sm + spacing.xs },
 });

@@ -190,6 +190,11 @@ export function isOffline(error: ApiError): boolean {
   return error.kind === 'network';
 }
 
+/** The server was not reached, or failed before it could take the request: what was sent is kept for a retry. */
+export function notReached(error: ApiError): boolean {
+  return error.kind === 'network' || error.kind === 'server';
+}
+
 /** Can the same action be meaningfully retried? */
 export function isRetryable(error: ApiError): boolean {
   return error.kind === 'network' || error.kind === 'server' || error.kind === 'rate_limited';

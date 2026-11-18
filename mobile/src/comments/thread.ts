@@ -32,6 +32,8 @@ export interface ThreadComment {
   createdAt: string;
   /** Written on this phone and not yet taken by the server. */
   pending?: boolean;
+  /** Pending, and the server was not reached: it waits for Try again or Cancel. */
+  failed?: boolean;
   /** The id it had while pending, kept once the server's copy replaces it so its row keeps its key and place. */
   localId?: string;
 }

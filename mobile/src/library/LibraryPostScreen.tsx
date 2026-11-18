@@ -27,7 +27,7 @@ import { PostMenuButton, SourceCredit, postImages } from '../composer/PostExtras
 import { PostPictures } from '../composer/PostPictures';
 import { onPostSaved } from '../composer/postSaved';
 import { CommentComposer, CommentList, CommentsSkeleton } from '../comments/CommentList';
-import { useCommentThread } from '../comments/useCommentThread';
+import { useCommentThread, type CommentDraft } from '../comments/useCommentThread';
 import { heldDim } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -70,7 +70,12 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     (delta: number) => setPost((prev) => (prev ? { ...prev, commentCount: Math.max(0, prev.commentCount + delta) } : prev)),
     [],
   );
-  const thread = useCommentThread('library', postId, countBy);
+  // A comment cancelled, or refused on a retry: its words and voice note come back unless something new is there.
+  const wordsBack = useCallback((back: CommentDraft) => {
+    setDraft((now) => now || back.body || '');
+    if (back.audioUrl) setVoiceUri((now) => now ?? back.audioUrl ?? null);
+  }, []);
+  const thread = useCommentThread('library', postId, countBy, wordsBack);
   const loadComments = thread.load;
 
   const loadAll = useCallback(async () => {

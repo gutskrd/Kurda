@@ -19,6 +19,8 @@ export interface ChatMessage extends ChatMessageExtras {
   /** Null for a gift or a game card. */
   body: string | null;
   createdAt: string;
+  /** A DM's receipts: when it reached their phone, and when they read it. */
+  deliveredAt?: string | null;
   readAt?: string | null;
   /** A group message deleted by its author or a group moderator. */
   deleted?: boolean;

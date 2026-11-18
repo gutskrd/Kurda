@@ -239,7 +239,7 @@ describe('posting a comment', () => {
   });
 
   it('takes it back off and says why when the server refuses it, keeping what was written', async () => {
-    open({ 'POST /library/posts/p1/comments': fail({ status: 500, kind: 'server', message: 'boom' }) }, [comment('c1')]);
+    open({ 'POST /library/posts/p1/comments': fail({ status: 422, message: 'refused' }) }, [comment('c1')]);
     await screen.findByText('comment c1');
     type('Ev dê neçe');
     send();
@@ -314,7 +314,7 @@ describe('replies', () => {
   });
 
   it('goes back to replying to the same person when the reply is refused', async () => {
-    open({ 'POST /library/posts/p1/comments': fail({ status: 500, kind: 'server' }) }, [comment('c1')]);
+    open({ 'POST /library/posts/p1/comments': fail({ status: 422, message: 'refused' }) }, [comment('c1')]);
     await screen.findByText('comment c1');
     fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
     type('Erê');
@@ -323,6 +323,45 @@ describe('replies', () => {
     expect(screen.getByText('Replying to @azad')).toBeTruthy();
     expect(screen.queryByText('Erê', { ignore: 'textarea' })).toBeNull();
     expect((screen.getByPlaceholderText('Add a comment…') as HTMLTextAreaElement).value).toBe('Erê');
+  });
+});
+
+/* As on the website: a comment the server was not reached for stays where it was written, for Try again or Cancel. */
+describe('a comment that did not go', () => {
+  it('stays in the thread as not sent, counted, and goes on Try again', async () => {
+    let tries = 0;
+    const { client } = open(
+      {
+        'POST /library/posts/p1/comments': () =>
+          tries++ === 0
+            ? fail({ kind: 'network', status: 0, message: 'offline' })
+            : ok(comment('c9', { authorId: 'me', author: me, body: 'Pir xweş e', createdAt: new Date().toISOString() })),
+      },
+      [comment('c1')],
+    );
+    await screen.findByText('comment c1');
+    type('Pir xweş e');
+    send();
+    expect(await screen.findByText('Not sent')).toBeTruthy();
+    expect(screen.getByText('Pir xweş e', { ignore: 'textarea' })).toBeTruthy();
+    expect(screen.getByText('4 comments')).toBeTruthy();
+    expect(alert).not.toHaveBeenCalled();
+    expect((screen.getByPlaceholderText('Add a comment…') as HTMLTextAreaElement).value).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(screen.queryByText('Not sent')).toBeNull());
+    expect(client.calls.filter((c) => c.method === 'POST')).toHaveLength(2);
+    expect(screen.getByText('4 comments')).toBeTruthy();
+  });
+
+  it('leaves on Cancel, uncounted, its words back in the composer', async () => {
+    open({ 'POST /library/posts/p1/comments': fail({ kind: 'network', status: 0, message: 'offline' }) }, [comment('c1')]);
+    await screen.findByText('comment c1');
+    type('Pir xweş e');
+    send();
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByText('Not sent')).toBeNull();
+    expect(screen.getByText('3 comments')).toBeTruthy();
+    expect((screen.getByPlaceholderText('Add a comment…') as HTMLTextAreaElement).value).toBe('Pir xweş e');
   });
 });
 

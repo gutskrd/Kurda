@@ -69,6 +69,17 @@ describe('a conversation as it is read', () => {
     expect(screen.getByText(/· Read$/)).toBeTruthy();
   });
 
+  /* As on the website: sent, then delivered when it reaches their phone, then read. */
+  it('says whether your message was sent, delivered or read, and moves on as they get it', async () => {
+    open({ 'GET /chat/u2/messages': ok({ messages: [from('m1', 'me', 'Silav', 1)] }) });
+    await screen.findByText('Silav');
+    expect(screen.getByText(/· Sent$/)).toBeTruthy();
+    act(() => live.send({ type: 'dm_delivered', by: 'u2' }));
+    expect(screen.getByText(/· Delivered$/)).toBeTruthy();
+    act(() => live.send({ type: 'dm_read', by: 'u2' }));
+    expect(screen.getByText(/· Read$/)).toBeTruthy();
+  });
+
   it('shows a message of nothing but emoji large, with no bubble or tail', async () => {
     open({ 'GET /chat/u2/messages': ok({ messages: [from('m1', 'me', '❤️', 1)] }) });
     await screen.findByText('❤️');
@@ -107,6 +118,58 @@ describe('a conversation nobody has written in yet', () => {
     // The greeting is the conversation now: the welcome has made way for it.
     expect(await screen.findByText('Rojbaş!')).toBeTruthy();
     expect(screen.queryByText('This is the start of your conversation with rojda.')).toBeNull();
+  });
+});
+
+/* As on the website: a message the server was not reached for stays where it was written, for Try again or Cancel. */
+describe('a message that did not go', () => {
+  const field = () => screen.getByPlaceholderText(/Message/) as HTMLTextAreaElement;
+  const write = (words: string) => {
+    fireEvent.change(field(), { target: { value: words } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+  };
+
+  it('stays in the thread as not sent, and goes on Try again', async () => {
+    let tries = 0;
+    const client = open({
+      'GET /chat/u2/messages': ok({ messages: [from('m1', 'u2', 'Silav', 2)] }),
+      'POST /chat/u2/messages': (body: unknown) =>
+        tries++ === 0 ? fail({ kind: 'network', status: 0, message: 'offline' }) : ok(from('m2', 'me', (body as { body: string }).body, 0)),
+    });
+    await screen.findByText('Silav');
+    write('Tu li ku yî?');
+    expect(await screen.findByText('Not sent')).toBeTruthy();
+    expect(screen.getByText('Tu li ku yî?')).toBeTruthy();
+    // The words are in the thread, not back in the field.
+    expect(field().value).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(screen.queryByText('Not sent')).toBeNull());
+    expect(client.calls.filter((c) => c.method === 'POST' && c.path === '/chat/u2/messages')).toHaveLength(2);
+    expect(screen.getByText('Tu li ku yî?')).toBeTruthy();
+  });
+
+  it('leaves the thread on Cancel, its words back in the field', async () => {
+    open({
+      'GET /chat/u2/messages': ok({ messages: [from('m1', 'u2', 'Silav', 2)] }),
+      'POST /chat/u2/messages': fail({ kind: 'network', status: 0, message: 'offline' }),
+    });
+    await screen.findByText('Silav');
+    write('Tu li ku yî?');
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByText('Not sent')).toBeNull();
+    expect(field().value).toBe('Tu li ku yî?');
+  });
+
+  it('leaves the thread at once when the server refuses it, saying why and keeping the words', async () => {
+    open({
+      'GET /chat/u2/messages': ok({ messages: [from('m1', 'u2', 'Silav', 2)] }),
+      'POST /chat/u2/messages': fail({ status: 403, code: 'NOT_FRIENDS', message: 'Not friends' }),
+    });
+    await screen.findByText('Silav');
+    write('Tu li ku yî?');
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(screen.queryByText('Not sent')).toBeNull();
+    expect(field().value).toBe('Tu li ku yî?');
   });
 });
 
