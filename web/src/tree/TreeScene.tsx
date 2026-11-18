@@ -16,14 +16,11 @@ import { useTreeSeason } from './season';
 import './tree.css';
 
 /**
- * Where the tree stands, as in the owner's reference: a soft scene in the
- * colour of the season — blush in spring, sky blue in summer, cream in
- * autumn, deep blue in winter — with the tree on its round of grass on the
- * floor, and the season blowing past it to the left. All of it is
- * decoration: a screen reader is told about the tree, not about its weather.
+ * The tree's scene in the season's colour (blush, sky blue, cream or deep blue), with the season blowing past to the
+ * left. All decoration: screen readers hear about the tree, not its weather.
  */
 
-/** The sky over the learner now, by their own clock; looked at again every few minutes, so a page left open sees the evening come. */
+/** The sky over the learner by their own clock, rechecked every few minutes so an open page sees evening come. */
 export function useTreeSky(): TreeSky {
   const [sky, setSky] = useState<TreeSky>(() => treeSkyAt(new Date().getHours()));
   useEffect(() => {
@@ -33,19 +30,15 @@ export function useTreeSky(): TreeSky {
   return sky;
 }
 
-/** How far a tree's own scene has gone to dust, by how it fares. */
+/** How dusty the scene looks for each health. */
 const DRY: Record<TreeHealth, number> = { fresh: 0, thirsty: 0.2, wilting: 0.55, withered: 1 };
 
-/** The colour behind the scene while its picture comes in, and above it where a wide page shows more than the square. */
+/** The colour behind the scene while it loads, and above it where a wide page shows more than the square. */
 export function studioColour(season: TreeSeason): string {
   return TREE_STUDIO[season].wall[0];
 }
 
-/**
- * Where the tree's own square stands in a scene of any shape: as tall as the
- * shared share of the scene's height, with the drawing's foot on the floor
- * where the phone puts it too.
- */
+/** Where the tree's square sits in a scene of any shape: the shared share of its height, its foot on the floor as on the phone. */
 export const TREE_PLACE: React.CSSProperties = {
   height: `${TREE_STUDIO_PLACE.share * 100}%`,
   bottom: `${(1 - TREE_STUDIO_PLACE.foot - TREE_STUDIO_PLACE.share * (1 - TREE_FOOT.y)) * 100}%`,
@@ -63,9 +56,8 @@ export function TreeStudioScene({ season, health }: { season: TreeSeason; health
 }
 
 /**
- * A tree in its season as a still picture: what a profile, a card and the
- * nursery show, where nothing needs to move. It is today's season unless one
- * is given. `title` names the tree; the scene behind it is never read out.
+ * A tree in its season as a still picture, for a profile, a card or the nursery; today's season unless one is given.
+ * `title` names the tree; the scene is never read out.
  */
 export function TreePicture({
   species,
@@ -96,11 +88,7 @@ export function TreePicture({
   );
 }
 
-/**
- * What blows past the tree, each on a course of its own: where it leaves the
- * crown, how long it takes to cross, and how far it falls on the way. The
- * wind is the reference's, always toward the left.
- */
+/** What blows past the tree, each with its own start in the crown, crossing time and fall; the wind always blows left. */
 const BLOWN = Array.from({ length: 14 }, (_, i) => ({
   x: 40 + ((i * 29) % 40),
   y: 16 + ((i * 17) % 42),
@@ -110,7 +98,7 @@ const BLOWN = Array.from({ length: 14 }, (_, i) => ({
   scale: 0.75 + (i % 3) * 0.2,
 }));
 
-/** Snow, across the whole scene: where each flake starts, how slowly it falls, and how far the wind takes it. */
+/** Snow across the whole scene: each flake's start, fall speed and drift. */
 const FLAKES = Array.from({ length: 24 }, (_, i) => ({
   x: 2 + ((i * 41) % 104),
   seconds: 9 + (i % 5) * 1.7,
@@ -119,7 +107,7 @@ const FLAKES = Array.from({ length: 24 }, (_, i) => ({
   scale: 0.6 + (i % 4) * 0.22,
 }));
 
-/** The season in the air round the tree, moving: petals or leaves blown off to the left, or snow coming down. */
+/** The season in the air around the tree: petals or leaves blown left, or falling snow. */
 export function TreeSeasonAmbient({ air }: { air: TreeSeasonAir | null }): React.JSX.Element | null {
   if (!air) return null;
   const snow = air.air === 'snow';

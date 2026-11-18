@@ -35,20 +35,20 @@ import { healthName, stageName, treeAbout, treeNamed, treeTitle } from './names'
 import { useTree, type MyTree, type TreeKindOffer, type Watered } from './useTree';
 import './tree.css';
 
-/** How long the can pours for before the page shows what the water did, and how long a tree is watched growing before the app says that it grew. */
+/** How long the can pours before the result shows, and how long the tree grows before the celebration. */
 const POUR_MS = 1500;
 const GROW_MS = 1150;
 
-/** What the page is in the middle of: nothing, the can pouring, or the tree growing under it. */
+/** What the page is doing: nothing, pouring, or growing the tree. */
 type Phase = 'idle' | 'pour' | 'grow';
 
-/** The tree as it stood before the water: kept a moment over the new one, which grows out of it or is revived from under it. */
+/** The tree before the water, kept briefly over the new one, which grows out of it or revives under it. */
 interface Was {
   tree: TreeView;
   kind: 'grow' | 'revive';
 }
 
-/** What a pour did that is worth stopping for: it grew, or a full-grown tree bore. */
+/** A pour result worth celebrating: the tree grew, or a full-grown tree bore fruit. */
 interface Moment {
   kind: 'grew' | 'harvest';
   tree: TreeView;
@@ -56,31 +56,14 @@ interface Moment {
 }
 
 /**
- * The learner's own tree.
+ * The learner's own tree. Before planting, it offers the free starter seeds with the grown tree each will become.
+ * After, it shows the tree in its seasonal scene, the progress to its next stage, the water earned from lessons with
+ * the can to pour it, and the nursery, where another kind can be bought and planted instead.
  *
- * Before one is planted, the page is the choice of a first seed: the kinds
- * that are free to start from, each as its own seed, and over them the great
- * tree the chosen one will be. After, it is the tree itself, standing in the
- * scene of the season with the season blowing past it, as big as the page allows;
- * then how far it is to its next stage, with that stage shown as what is
- * being grown toward; the water held, which a lesson earns, and the can to
- * pour it with; and a way to the nursery, where another kind can be bought
- * and planted in its place.
- *
- * Pouring is the page's one moment, and it is played in the scene, not in a
- * box over it: the can comes in and tips, the water falls and lands, the
- * tree drinks and starts. When that grows it, the tree is seen to grow where
- * it stands — the new one coming up out of a burst of light — and only then
- * does the app's celebration say so. A full-grown tree that bears gets the
- * celebration at once. A tree that has gone dry has a thought of water
- * floating by it, is said plainly to be thirsty, wilting or withered, with
- * no blame in it, and the first water brings it back.
- *
- * For a reader who has asked for less motion none of this moves: the page
- * goes straight to how things stand after the water.
- *
- * On a server that has no trees yet there is nothing here but a line saying
- * so; nowhere else in the app mentions them then.
+ * Pouring plays in the scene: the can tips, the water lands and the tree drinks; if it grows, the new tree rises from
+ * a burst of light before the celebration. A full-grown tree that bears fruit is celebrated at once. A dry tree shows
+ * a thought of water and says plainly whether it is thirsty, wilting or withered; the first water revives it. Under
+ * Reduce Motion the page goes straight to the result. On a server without trees there is only a line saying so.
  */
 export function TreePage(): React.JSX.Element {
   const t = useT();
@@ -91,7 +74,7 @@ export function TreePage(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
-  // each counts the times it has happened, so the same moment can be played again
+  // Each counts its occurrences, so the same moment can play again.
   const [grown, setGrown] = useState(0);
   const [planted, setPlanted] = useState(0);
   const [cheer, setCheer] = useState(0);
@@ -159,7 +142,7 @@ export function TreePage(): React.JSX.Element {
       const watered = res.data;
       const still = prefersReducedMotion();
       playLessonSound('correct');
-      // the can pours over the tree as it was; what the water did is shown once it has landed
+      // The can pours over the old tree; the result shows once the water lands.
       const landed = (): void => {
         set({ ...data, tree: watered.tree, zer: data.zer + watered.zer });
         if (watered.grew !== null) {
@@ -169,7 +152,7 @@ export function TreePage(): React.JSX.Element {
             setMoment({ kind: 'grew', tree: watered.tree, zer: watered.zer });
           };
           if (still) return say();
-          // it grows where it stands, out of the tree it was, and is looked at, before anything is said about it
+          // It grows in place out of the old tree, and is seen before anything is said.
           setWas({ tree: data.tree!, kind: 'grow' });
           setGrown((n) => n + 1);
           setPhase('grow');
@@ -179,7 +162,7 @@ export function TreePage(): React.JSX.Element {
         }
         setPhase('idle');
         if (!still && data.tree!.health !== watered.tree.health) {
-          // brought back: the tree as it drooped fades off the one the water revived
+          // Revived: the drooping tree fades off the revived one.
           setWas({ tree: data.tree!, kind: 'revive' });
           window.clearTimeout(fade.current);
           fade.current = window.setTimeout(() => setWas(null), TREE_REVIVE.ms);
@@ -261,7 +244,7 @@ export function TreePage(): React.JSX.Element {
             <circle className="tree-goal-track" cx="42" cy="42" r="38" />
             <circle className="tree-goal-fill" cx="42" cy="42" r="38" style={{ strokeDasharray: GOAL_ROUND, strokeDashoffset: GOAL_ROUND * (1 - share) }} />
           </svg>
-          {/* what is being grown toward: the next stage, or what a full-grown tree bears */}
+          {/* The goal: the next stage, or what a full-grown tree bears. */}
           <span className="tree-goal-art" aria-hidden="true">
             {full ? <CoinIcon size={30} /> : <TreeArt species={tree.species} stage={(tree.stage + 1) as TreeStage} size={62} />}
           </span>
@@ -355,12 +338,12 @@ export function TreePage(): React.JSX.Element {
   );
 }
 
-/** The ring round what is being grown toward: its length, which is what a share of it is measured on. */
+/** The circumference of the goal ring, which its share is measured against. */
 const GOAL_ROUND = 2 * Math.PI * 38;
 
-/** The water that falls from the can: each drop a little after the last, and a little to one side of it. */
+/** The drops falling from the can, each a little after and to one side of the last. */
 const DROPS = Array.from({ length: 13 }, (_, i) => ({ wait: 330 + i * 54, aside: ((i * 5) % 9) - 4, size: 4 + (i % 3) * 0.9 }));
-/** What flies out of a tree as it grows, and the sparks that stand round one that has drunk: each at its own angle. */
+/** The angles of the rays from a growing tree and the sparks around one that has drunk. */
 const RAYS = Array.from({ length: 12 }, (_, i) => i * 30 + (i % 2 === 0 ? 0 : 9));
 const SPARKS = [
   [22, 30, 0],
@@ -372,13 +355,7 @@ const SPARKS = [
   [50, 3, 130],
 ] as const;
 
-/**
- * Where the tree stands, and everything that happens to it there. The
- * season's scene is behind it; the season blows past it to the left; and the
- * tree itself stands on its round of grass, rising a little as if it
- * breathed. Touching it shakes it, which is of no use at all
- * and is there because a tree asks to be touched.
- */
+/** The tree's stage: the seasonal scene behind it, the season blowing past, and the tree gently bobbing. Tapping shakes it. */
 function Stage({
   tree,
   was,
@@ -402,18 +379,18 @@ function Stage({
   const shake = (): void => {
     const plantOf = plot.current?.querySelector<HTMLElement>('.tree-stage-art:not(.is-leaving) .tree-art-start');
     if (!plantOf || typeof plantOf.animate !== 'function' || prefersReducedMotion() || phase !== 'idle') return;
-    // laid over the breeze, which carries on under it: a great tree only stirs where a sprout bends right over
+    // Laid over the breeze; a great tree only stirs where a sprout bends right over.
     const heft = treeHeft(tree.stage);
     plantOf.animate(
       TREE_SHAKE.turns.map((turn) => ({ transform: `rotate(${Math.round(turn * heft * 100) / 100}deg)` })),
       { duration: TREE_SHAKE.ms, easing: 'ease-out' },
     );
   };
-  // how the picture comes in: grown into, dropped in as a seed just planted, or simply arriving with the page
+  // How the picture enters: grown into, dropped in as a new seed, or arriving with the page.
   const came = grown > 0 ? 'is-grown' : planted > 0 && tree.stage === 0 ? 'is-planted' : 'is-shown';
-  // where the water lands on the picture, and where a thirsty tree's thought floats: beside its top, wherever that is at its stage
+  // Where the water lands, and where a thirsty tree's thought floats beside its top at this stage.
   const places = { '--land': `${TREE_WATER_LANDS[tree.stage] * 100}%`, '--thought': `${Math.max(2, TREE_TOP[tree.stage] * 100 - 12)}%`, '--heft': treeHeft(tree.stage) } as React.CSSProperties;
-  // grown, the new tree comes up from the old one's size and the old one swells toward the new one's as it goes
+  // When grown, the new tree rises from the old one's size while the old one swells toward the new.
   const from = was?.kind === 'grow' ? treeGrowFrom(was.tree.stage, tree.stage) : 1;
   return (
     <section
@@ -473,12 +450,7 @@ function Stage({
   );
 }
 
-/**
- * The choice of a first tree. Each kind that is free to start from is its
- * own seed to pick up; over them stands the great tree the one picked will
- * be, in the season it will grow in, so the choice is of something seen.
- * Nothing is planted until the button is pressed.
- */
+/** The choice of a first tree: a seed for each free kind, with the grown tree of the picked one above. The button plants it. */
 function Chooser({ data, season, busy, failed, onPlant }: { data: MyTree; season: TreeSeason; busy: boolean; failed: string | null; onPlant: (species: TreeSpecies) => void }): React.JSX.Element {
   const t = useT();
   const starters = data.kinds.filter((k) => k.starter);
@@ -532,7 +504,7 @@ function Chooser({ data, season, busy, failed, onPlant }: { data: MyTree; season
   );
 }
 
-/** One kind of tree as a card: the tree it will be, its name and what it means, a line about it, and what can be done with it. */
+/** One kind of tree as a card: the grown tree, its name and meaning, a line about it, and its action. */
 function KindCard({
   kind,
   busy,
@@ -542,10 +514,10 @@ function KindCard({
 }: {
   kind: TreeKindOffer;
   busy: boolean;
-  /** the button's words; none for the kind that stands */
+  /** The button's label; none for the kind already planted. */
   action: string | null;
   onAct: () => void;
-  /** in place of a price: "Free", "Yours", "Growing now" */
+  /** Shown instead of a price, such as "Free", "Yours" or "Growing now". */
   note?: string;
 }): React.JSX.Element {
   const t = useT();
@@ -554,7 +526,7 @@ function KindCard({
   return (
     <article className="tree-kind" style={{ '--tree': treeColour(kind.species) } as React.CSSProperties}>
       <span className="tree-kind-art">
-        {/* each kind in summer, in its own leaves: in spring every one that flowers is pink, and a choice between them has to be seen */}
+        {/* Each kind in summer leaves, since in spring every flowering kind is pink. */}
         <TreePicture species={kind.species} stage={TREE_FULL} season="summer" size={112} />
       </span>
       <span className="tree-kind-text">
@@ -582,12 +554,9 @@ function KindCard({
 }
 
 /**
- * The nursery: every kind there is. One that is free or already bought can
- * be planted, which is asked about first, because the tree that stands is
- * gone when another is planted; one that is not can be bought with Zêr, which
- * plants nothing by itself. The question is the sheet's second step, in the
- * sheet itself, so nothing opens over anything. What cannot be afforded says
- * how much is missing rather than only refusing.
+ * The nursery: every kind. A free or bought kind can be planted after a confirmation, since it replaces the current
+ * tree; others can be bought with Zêr without planting. The confirmation is the sheet's second step, and an
+ * unaffordable kind says how much is missing.
  */
 function Nursery({
   open,
@@ -619,11 +588,11 @@ function Nursery({
     const done = asking.what === 'buy' ? await onBuy(asking.kind.species) : await onPlant(asking.kind.species);
     if (!done) return;
     setAsking(null);
-    // planted: back to the tree, which is a seed now; bought: back to the kinds, where it is now theirs to plant
+    // Planted: back to the tree, now a seed. Bought: back to the kinds, where it can now be planted.
     if (asking.what === 'plant') onClose();
   };
 
-  // one sheet, two steps: the kinds there are, and — once one is picked — the question that picking it asks
+  // One sheet in two steps: the kinds, then the confirmation for the picked one.
   const close = (): void => {
     setAsking(null);
     onClose();
