@@ -3451,13 +3451,39 @@ a.mkp-activity-row:hover {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.55;
-  padding-left: 38px;
+  padding-inline-start: 38px;
 }
 .comment-actions {
   display: flex;
   gap: 14px;
-  padding-left: 38px;
+  padding-inline-start: 38px;
   margin-top: 6px;
+}
+/*
+ * A voice note under a comment (components/VoicePlayer.tsx): the story player's button, seek line and clock (stories.css)
+ * on a row of their own, lined up with the comment's words.
+ */
+.voice {
+  --player-ink: var(--ink);
+  --player-ink-2: var(--ink-3);
+  --player-line: var(--border-strong);
+  --player-heard: var(--primary);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  max-width: 420px;
+  margin-top: 4px;
+  padding-inline-start: 38px;
+}
+.voice .story-player-seek {
+  flex: 1 1 120px;
+}
+.voice-failed {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-caption);
 }
 /* a comment still on its way is faint until the server has it; one that did not go says so in the danger colour */
 .comment.is-pending > .comment-body {

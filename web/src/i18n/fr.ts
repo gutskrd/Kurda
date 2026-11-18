@@ -2066,6 +2066,7 @@ export const fr: Catalogue = {
   'comments.signInToJoin': 'Connecte-toi pour rejoindre la conversation.',
   'comments.empty': 'Pas encore de commentaires. Sois le premier à dire quelque chose.',
   'comments.removed': 'Ce commentaire a été supprimé.',
+  'comments.voice': 'Commentaire vocal',
   'comments.reply': 'Répondre',
   'comments.replyTo': 'Répondre à {name}…',
   'comments.delete': 'Supprimer',
@@ -2155,6 +2156,11 @@ export const fr: Catalogue = {
   'saved.emptyTail': 'pour la garder ici.',
   'auth.register.terms': 'En créant un compte, tu acceptes les Conditions et la Politique de confidentialité de Hevalo.',
   'post.audioUnsupported': 'Ton navigateur ne peut pas lire cet enregistrement.',
+  'voice.play': 'Lecture',
+  'voice.pause': 'Pause',
+  'voice.seek': 'Où tu en es dans l’enregistrement',
+  'voice.position': '{elapsed} sur {total}',
+  'voice.failed': 'Cet enregistrement n’a pas pu être lu. Réessaie dans un instant.',
   'picture.decodeFailed': 'Cette image {format} aurait dû s’ouvrir ici, mais elle ne s’est pas ouverte. Réessaie — ou publie-la telle quelle, ça marche aussi.',
 
   // ---- Stories, and playing with friends --------------------------------

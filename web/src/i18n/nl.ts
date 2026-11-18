@@ -2067,6 +2067,7 @@ export const nl: Catalogue = {
   'comments.signInToJoin': 'Log in om mee te praten.',
   'comments.empty': 'Nog geen reacties. Wees de eerste die iets zegt.',
   'comments.removed': 'Deze reactie is verwijderd.',
+  'comments.voice': 'Spraakreactie',
   'comments.reply': 'Reageren',
   'comments.replyTo': 'Reageren op {name}…',
   'comments.delete': 'Verwijderen',
@@ -2156,6 +2157,11 @@ export const nl: Catalogue = {
   'saved.emptyTail': 'om het hier te bewaren.',
   'auth.register.terms': 'Door een account aan te maken ga je akkoord met de Voorwaarden en het Privacybeleid van Hevalo.',
   'post.audioUnsupported': 'Je browser kan deze opname niet afspelen.',
+  'voice.play': 'Afspelen',
+  'voice.pause': 'Pauze',
+  'voice.seek': 'Waar je bent in de opname',
+  'voice.position': '{elapsed} van {total}',
+  'voice.failed': 'Deze opname kon niet worden afgespeeld. Probeer het zo nog eens.',
   'picture.decodeFailed': 'Deze {format} had hier moeten openen, maar deed dat niet. Probeer het opnieuw — of plaats hem zoals hij is, dat werkt ook.',
 
   // ---- Stories, and playing with friends --------------------------------

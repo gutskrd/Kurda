@@ -2069,6 +2069,7 @@ export const ku: Catalogue = {
   'comments.signInToJoin': 'Ji bo beşdarî axaftinê bibî têkeve.',
   'comments.empty': 'Hê şîrove tune. Bibe yekem kes ku tiştekî bibêje.',
   'comments.removed': 'Ev şîrove hat rakirin.',
+  'comments.voice': 'Şîroveya dengî',
   'comments.reply': 'Bersivê bide',
   'comments.replyTo': 'Bersiva {name} bide…',
   'comments.delete': 'Jê bibe',
@@ -2158,6 +2159,11 @@ export const ku: Catalogue = {
   'saved.emptyTail': 'li ser her şandiyekê bişkoka tomarkirinê bitikîne da ku li vir bimîne.',
   'auth.register.terms': 'Bi çêkirina hesabekî tu Mercên Hevalo û Politîkaya Nihêniyê dipejirînî.',
   'post.audioUnsupported': 'Geroka te nikare vî dengî lê bide.',
+  'voice.play': 'Lê bide',
+  'voice.pause': 'Rawestîne',
+  'voice.seek': 'Tu li ku derê tomarê yî',
+  'voice.position': '{elapsed} ji {total}',
+  'voice.failed': 'Ev tomar lê neket. Piştî kêliyekê dîsa biceribîne.',
   'picture.decodeFailed': 'Divê ev {format} li vir vebûya lê venebû. Dîsa biceribîne — an wê wek xwe biweşîne, ku hîn jî dixebite.',
 
   // ---- Stories, and playing with friends --------------------------------

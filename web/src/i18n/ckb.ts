@@ -2073,6 +2073,7 @@ export const ckb: Catalogue = {
   'comments.signInToJoin': 'بۆ بەشداری لە گفتوگۆکە بچۆ ژوورەوە.',
   'comments.empty': 'هێشتا لێدوان نییە. یەکەم کەس بە کە شتێک دەڵێت.',
   'comments.removed': 'ئەم لێدوانە لابرا.',
+  'comments.voice': 'لێدوانی دەنگی',
   'comments.reply': 'وەڵام',
   'comments.replyTo': 'وەڵامی {name} بدەرەوە…',
   'comments.delete': 'بیسڕەوە',
@@ -2162,6 +2163,11 @@ export const ckb: Catalogue = {
   'saved.emptyTail': 'لەسەر هەر پۆستێک دەست بە نیشانەی پاشەکەوت بدە تا لێرە بمێنێتەوە.',
   'auth.register.terms': 'بە دروستکردنی هەژمارێک ڕازی دەبیت بە مەرجەکان و سیاسەتی تایبەتێتی Hevalo.',
   'post.audioUnsupported': 'وێبگەڕەکەت ناتوانێت ئەم تۆمارە لێبدات.',
+  'voice.play': 'لێدان',
+  'voice.pause': 'وەستان',
+  'voice.seek': 'لە کوێی تۆمارەکەدایت',
+  'voice.position': '{elapsed} لە {total}',
+  'voice.failed': 'ئەم تۆمارە لێنەدرا. دوای ساتێک دووبارە هەوڵ بدەرەوە.',
   'picture.decodeFailed': 'دەبووایە ئەم {format}ـە لێرە بکرێتەوە بەڵام نەکرایەوە. دووبارە هەوڵ بدەرەوە — یان وەک خۆی بڵاوی بکەرەوە، کە هێشتا کار دەکات.',
 
   // ---- Stories, and playing with friends --------------------------------

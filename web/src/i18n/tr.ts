@@ -2062,6 +2062,7 @@ export const tr: Catalogue = {
   'comments.signInToJoin': 'Sohbete katılmak için giriş yap.',
   'comments.empty': 'Henüz yorum yok. İlk sözü sen söyle.',
   'comments.removed': 'Bu yorum kaldırıldı.',
+  'comments.voice': 'Sesli yorum',
   'comments.reply': 'Yanıtla',
   'comments.replyTo': '{name} kişisine yanıt ver…',
   'comments.delete': 'Sil',
@@ -2151,6 +2152,11 @@ export const tr: Catalogue = {
   'saved.emptyTail': 'içindeki herhangi bir gönderide yer imine dokunarak buraya kaydet.',
   'auth.register.terms': 'Hesap oluşturarak Hevalo Koşulları’nı ve Gizlilik Politikası’nı kabul etmiş olursun.',
   'post.audioUnsupported': 'Tarayıcın bu kaydı oynatamıyor.',
+  'voice.play': 'Oynat',
+  'voice.pause': 'Duraklat',
+  'voice.seek': 'Kayıtta neredesin',
+  'voice.position': '{elapsed}, toplam {total}',
+  'voice.failed': 'Bu kayıt çalınamadı. Biraz sonra yeniden dene.',
   'picture.decodeFailed': 'Bu {format} burada açılmalıydı ama açılmadı. Tekrar dene — ya da olduğu gibi paylaş, o da çalışır.',
 
   // ---- Stories, and playing with friends --------------------------------

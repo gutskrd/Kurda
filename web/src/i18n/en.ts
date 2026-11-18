@@ -2164,6 +2164,7 @@ export const en = {
   'comments.signInToJoin': 'Sign in to join the conversation.',
   'comments.empty': 'No comments yet. Be the first to say something.',
   'comments.removed': 'This comment was removed.',
+  'comments.voice': 'Voice comment',
   'comments.reply': 'Reply',
   'comments.replyTo': 'Reply to {name}…',
   'comments.delete': 'Delete',
@@ -2256,6 +2257,11 @@ export const en = {
   'saved.emptyTail': 'to keep it here.',
   'auth.register.terms': 'By creating an account you agree to the Hevalo Terms and Privacy Policy.',
   'post.audioUnsupported': 'Your browser cannot play this recording.',
+  'voice.play': 'Play',
+  'voice.pause': 'Pause',
+  'voice.seek': 'Where you are in the recording',
+  'voice.position': '{elapsed} of {total}',
+  'voice.failed': 'This recording didn’t play. Try again in a moment.',
   'picture.decodeFailed': 'This {format} should have opened here and didn’t. Try again — or post it as it is, which still works.',
 
   // ---- Stories, and playing with friends --------------------------------
