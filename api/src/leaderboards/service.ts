@@ -395,16 +395,20 @@ export class LeaderboardService {
       const who = names.get(id);
       return who === undefined ? [] : [{ userId: id, username: who.username, score: scores[i]! }];
     });
-    // a page that opens in the middle of a tie gives its first row the tie's place
-    const firstRank = rows.length > 0 ? (await this.redis!.zcount(key, `(${rows[0]!.score}`, '+inf')) + 1 : offset + 1;
+    // Read side by side: the place of the page's first row (a page that opens in the middle of a tie gives it the tie's
+    // place), the board's size, the caller's score, and for a board cut at its depth, where it stops.
+    const [above, total, myScore, floor] = await Promise.all([
+      rows.length > 0 ? this.redis!.zcount(key, `(${rows[0]!.score}`, '+inf') : null,
+      this.redis!.zcard(key),
+      userId === null ? null : this.myScore(type, userId, now),
+      userId !== null && isBalanceBoard(type) ? this.redis!.get(floorKeyFor(type, now)) : null,
+    ]);
+    const firstRank = above === null ? offset + 1 : above + 1;
     const top = withRanks(rows, offset, firstRank).map((e) => ({ ...e, avatarUrl: names.get(e.userId)?.avatarUrl ?? null }));
 
-    const total = await this.redis!.zcard(key);
-    const myScore = userId === null ? null : await this.myScore(type, userId, now);
     let me: Board['me'] = null;
     if (myScore !== null) {
       // below the cut of a board that stops at its depth there is no place to give
-      const floor = isBalanceBoard(type) ? await this.redis!.get(floorKeyFor(type, now)) : null;
       const below = floor !== null && myScore < Number(floor);
       me = { score: myScore, rank: below ? null : (await this.redis!.zcount(key, `(${myScore}`, '+inf')) + 1 };
     }
