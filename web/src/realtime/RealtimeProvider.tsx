@@ -132,7 +132,10 @@ export function RealtimeProvider({
           peerRooms.current.set(d.tabId, new Set(d.rooms));
           reconcile();
         } else if (d?.k === 'hello') {
-          announce(); // A new tab appeared, so re-announce our rooms for it to reconcile.
+          // A new tab appeared: re-announce our rooms for it to reconcile, and as leader tell it how the socket is,
+          // since it otherwise hears the state only when it next changes.
+          announce();
+          if (isLeaderRef.current) bc.postMessage({ k: 'state', s: rc.state } satisfies BcMessage);
         }
       };
       bc.postMessage({ k: 'hello' } satisfies BcMessage); // Ask peers to re-announce.
