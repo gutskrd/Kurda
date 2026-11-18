@@ -39,7 +39,7 @@ describe('the saved posts, come back to from one of them', () => {
   it('keeps the list on the screen, and lets go of the post that was unsaved on its own page', async () => {
     let reads = 0;
     const client = fakeClient({
-      // the whole list both times (shorter than a page): three, then the two still saved
+      // The whole list both times (shorter than a page): three, then the two still saved.
       'GET /me/saved?limit=20&offset=0': () => ok({ items: reads++ === 0 ? [saved('a'), saved('b'), saved('c')] : [saved('a'), saved('c')] }),
     });
     testAuth.client = client;
@@ -47,7 +47,7 @@ describe('the saved posts, come back to from one of them', () => {
     expect(await screen.findByText('Helbest b')).toBeTruthy();
 
     act(() => refocus());
-    // still there while the list is asked for again: no grey, no empty list
+    // Still there while the list is asked for again: no grey, no empty list.
     expect(screen.getByText('Helbest a')).toBeTruthy();
     expect(screen.queryByTestId('skeleton')).toBeNull();
     await waitFor(() => expect(screen.queryByText('Helbest b')).toBeNull());
@@ -63,7 +63,7 @@ describe('the saved posts, before anything is saved', () => {
     renderWithProviders(<SavedScreen onExit={() => undefined} />);
     expect(await screen.findByText('Nothing saved yet')).toBeTruthy();
     expect(screen.getByText('Tap the bookmark on any post to keep it here.')).toBeTruthy();
-    // the old words named a place the app no longer has
+    // The old wording named a place the app no longer has.
     expect(screen.queryByText(/Community/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Browse posts' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Home' });

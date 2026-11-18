@@ -43,28 +43,19 @@ import { Loading } from '../theme/Loading';
 const PAGE = 20;
 
 /**
- * Home — everything the community has written and posted, on one wall.
+ * Home: everything the community has written and posted, on one wall, reading the same `/feed` as the web app,
+ * with a filter for one kind.
  *
- * The same wall the web app opens on, reading the same `/feed`. Before this the
- * phone had Library and Memes as two separate screens behind two links in the
- * Social tab, which meant a poem posted this morning was invisible to anyone
- * looking at pictures. One wall, one card, and a filter for when you do want
- * just one kind.
+ * The header follows the familiar social-home shape: the name at the start, and at the end a "+" to post and the
+ * notifications bell with a dot while any are unread. Below are the row of friends' faces, the filters, then the
+ * posts at full screen width, so a picture is the size of the phone.
  *
- * Its header is the shape every social app's home has, so nobody has to learn
- * it: the name at the start, and at the end a "+" to post and the bell —
- * notifications live here, a tap from the screen people open first, with a
- * dot while any are unread. Under it, the row of friends' faces, then the
- * filters, then the posts, which run the full width of the screen: a picture
- * is the size of the phone, not of a card on it.
- *
- * The wall is read from its skeleton twice only: as it first opens, and when
- * the way of reading it changes. Coming back to it keeps the posts and the
- * place, and brings it up to date without a sign of doing so.
+ * The wall loads from its skeleton only on first open and when the way of reading it changes. Returning to it
+ * keeps the posts and position and refreshes silently.
  */
 export function CivakScreen(): React.JSX.Element {
   const { client } = useAuth();
-  // a guest reads the wall; writing on it is the account's (auth/AccountGate)
+  // A guest reads the wall; writing on it is the account's (auth/AccountGate).
   const { require } = useAccountGate();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -76,10 +67,10 @@ export function CivakScreen(): React.JSX.Element {
     if (require('post')) navigation.navigate('Compose');
   }, [require, navigation]);
   const listRef = useRef<FlatList<FeedItem>>(null);
-  // tapping Home while on Home goes back to the newest post
+  // Tapping Home while on Home goes back to the newest post.
   useScrollToTop(listRef);
   const tabBarInset = useTabBarInset();
-  // in what order the wall is read, from how far back, and which posts
+  // In what order the wall is read, from how far back, and which posts.
   const [filter, setFilter] = useState<FeedFilterValue>(DEFAULT_FILTER);
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -101,12 +92,8 @@ export function CivakScreen(): React.JSX.Element {
   );
 
   /*
-   * Coming back to the wall — from a post, a profile, the composer, another
-   * tab — finds it as it was left: the same posts, at the same place, brought
-   * up to date without a sign of it (feed/keep.ts). It used to be emptied and
-   * asked for again on every return, so a reader twenty posts down opened
-   * one, came back, and was at the top of a grey page. A first load that
-   * failed is asked for again in full.
+   * Returning to the wall (from a post, profile, composer or another tab) keeps the same posts at the same place
+   * and refreshes silently (feed/keep.ts). A failed first load is retried in full.
    */
   const { onScroll, forget } = useQuietRefocus<FeedItem>({
     loaded: items !== null,
@@ -121,7 +108,7 @@ export function CivakScreen(): React.JSX.Element {
     retry: error ? () => void refresh() : undefined,
   });
 
-  // the bell's dot is worth getting right on the screen it sits on
+  // The bell's dot is worth getting right on the screen it sits on.
   useFocusEffect(
     useCallback(() => {
       refreshBadges({ soon: true });
@@ -129,9 +116,8 @@ export function CivakScreen(): React.JSX.Element {
   );
 
   /*
-   * The wall as it first arrives, and from its skeleton again when the way
-   * of reading it changes (another order, another kind of post): those are
-   * the two times nothing that is on the screen is worth keeping.
+   * The wall's first load, and a fresh load from the skeleton when the order or kind changes, the two times
+   * nothing on screen is worth keeping.
    */
   useEffect(() => {
     let active = true;
@@ -151,7 +137,7 @@ export function CivakScreen(): React.JSX.Element {
     return () => {
       active = false;
     };
-    // `forget` is the same function for as long as the screen is there
+    // `forget` is the same function for as long as the screen is there.
   }, [fetchPage]);
 
   const refresh = useCallback(async () => {
@@ -164,10 +150,10 @@ export function CivakScreen(): React.JSX.Element {
       setError(null);
     }
     setRefreshing(false);
-    // `forget` is the same function for as long as the screen is there
+    // `forget` is the same function for as long as the screen is there.
   }, [fetchPage]);
 
-  // a pull asks the friends row again too: who is online moves faster than the wall
+  // A pull asks the friends row again too: who is online moves faster than the wall.
   const [pulls, setPulls] = useState(0);
   const onPull = useCallback(async () => {
     setPulls((n) => n + 1);
@@ -180,7 +166,7 @@ export function CivakScreen(): React.JSX.Element {
     const res = await fetchPage(items.length);
     if (res.ok) {
       const batch = res.data.items ?? [];
-      // a ranked wall can shift between two pages: a post already shown is not shown twice
+      // A ranked wall can shift between two pages: a post already shown is not shown twice.
       setItems((prev) => {
         if (!prev) return batch;
         const seen = new Set(prev.map((i) => i.key));
@@ -196,10 +182,10 @@ export function CivakScreen(): React.JSX.Element {
     setItems((prev) => (prev ?? []).map((i) => (i.key === next.key ? next : i)));
   }, []);
 
-  // a post you deleted leaves the wall at once, reposts of it included
+  // A post you deleted leaves the wall at once, reposts of it included.
   useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
 
-  // the first screenful rises in once, as the wall arrives
+  // The first screenful rises in once, as the wall arrives.
   const entering = useListEntrance(!!items && items.length > 0);
   const renderItem = useCallback(
     ({ item, index }: { item: FeedItem; index: number }) => (
@@ -217,7 +203,7 @@ export function CivakScreen(): React.JSX.Element {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        {/* the app's own name where a tab's is, and the one thing only this tab does: write on the wall */}
+        {/* The app's own name where a tab's is, and the one thing only this tab does: write on the wall. */}
         <TabHeader title="Hevalo" action={<HeaderButton icon="plus" label={t('post.open')} onPress={compose} testID="home-post" />} />
 
         <FlatList
@@ -236,13 +222,7 @@ export function CivakScreen(): React.JSX.Element {
             <>
               <FriendsRow refreshKey={pulls} />
               {plain ? (
-                /*
-                  Sorting and narrowing the wall, where the wall begins: one
-                  quiet chip over the first post, which says what it is in
-                  words. It was a bare funnel among the icons at the top,
-                  the third of three, and is only worth offering once there
-                  are posts to sort.
-                */
+                /* Sorting and filtering: one quiet chip over the first post saying the current choice, offered only once there are posts to sort. */
                 (items?.length ?? 0) > 0 ? (
                   <View style={[styles.filterChips, { flexDirection: dir.row }]}>
                     <Pressable
@@ -250,7 +230,7 @@ export function CivakScreen(): React.JSX.Element {
                       accessibilityRole="button"
                       accessibilityLabel={t('feed.sortFilter.button')}
                       testID="home-filter"
-                      // alone on its line, so it reaches a fingertip past every edge
+                      // Alone on its line, so it reaches a fingertip past every edge.
                       reach="open"
                       style={({ pressed }) => [styles.sortChip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, pressed && heldDim]}
                     >
@@ -287,7 +267,7 @@ export function CivakScreen(): React.JSX.Element {
           }
           ListEmptyComponent={
             items === null ? (
-              // the faces and the filters stay put while the posts load, or fail to
+              // The faces and the filters stay put while the posts load, or fail to.
               <View style={styles.waiting}>
                 <AsyncBoundary loading={!error} error={error} onRetry={() => void refresh()} skeleton={<FeedSkeleton />}>
                   {null}
@@ -295,10 +275,8 @@ export function CivakScreen(): React.JSX.Element {
               </View>
             ) : plain ? (
               /*
-               * A new reader's wall is empty because they follow nobody and
-               * have written nothing, so it offers both, and nothing else:
-               * finding people first, since a wall of other people's posts
-               * is what makes the second one worth doing.
+               * A new reader's wall is empty because they follow nobody and have written nothing, so it offers
+               * both, finding people first, since a wall of others' posts is what makes writing worth it.
                */
               <EmptyState
                 title={t('civak.empty.welcome')}
@@ -307,7 +285,7 @@ export function CivakScreen(): React.JSX.Element {
                 secondary={{ label: t('civak.empty.write'), onPress: compose }}
               />
             ) : (
-              // nothing in what was asked for: the way back to the whole wall first
+              // Nothing matches the filter: the way back to the whole wall comes first.
               <EmptyState
                 title={t('civak.empty')}
                 body={t('civak.empty.body')}
@@ -334,10 +312,10 @@ const feedKey = (item: FeedItem): string => item.key;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // the way into sorting and narrowing: a fingertip tall, as wide as its words
+  // The way into sorting and narrowing: a fingertip tall, as wide as its words.
   sortChip: { alignItems: 'center', gap: spacing.xs + 2, minHeight: CHIP, paddingHorizontal: spacing.md - 4, borderRadius: radii.pill },
   sortChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   waiting: { paddingHorizontal: layout.gutter },
-  // the chips under the faces, inside the page's gutter
+  // The chips under the faces, inside the page's gutter.
   filterChips: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
 });
