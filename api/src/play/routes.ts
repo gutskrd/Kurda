@@ -32,9 +32,9 @@ const createBody = z.object({
   chat: z.union([z.object({ userId: z.uuid() }), z.object({ groupId: z.uuid() })]).optional(),
 });
 const inviteBody = z.object({ game, lobbyId: z.uuid(), userIds });
-// the reason is optional, and so is the body: a bare POST is a plain "not now"
+// The reason and the body are optional: a bare POST is a plain "not now".
 const declineBody = z.object({ reason: z.enum(DECLINE_REASONS).optional() }).nullish();
-/** a code as typed or pasted: spaces, dashes and Arabic-script digits are read by `normalizeJoinCode` */
+/** A code as typed or pasted; `normalizeJoinCode` handles spaces, dashes and Arabic-script digits. */
 const joinBody = z.object({ code: z.string().min(1).max(32) });
 
 export interface PlayRouteDeps {
@@ -45,10 +45,7 @@ export interface PlayRouteDeps {
   chat: PlayDeps['chat'];
   groupChat: PlayDeps['groupChat'];
   groups: PlayDeps['groups'];
-  /**
-   * The story games service (API-games' StoryGamesService), once it is wired
-   * in; until then Stories cannot be played through invites.
-   */
+  /** The story games service; without it Stories cannot be played through invites. */
   stories?: StoryGamesPort;
   /** Game Ranks, shared with the games' own routes (one set of rank events) */
   ranks?: RankService;
@@ -57,9 +54,8 @@ export interface PlayRouteDeps {
 }
 
 /**
- * Inviting friends to any online game, game cards in chats, and playing
- * again (contract §B3; @kurda/shared `play`). Every route that starts or joins
- * a game, or reaches someone else, needs a birth month on record.
+ * Inviting friends to any online game, chat game cards, and playing again (@kurda/shared `play`). Every route that
+ * starts or joins a game or reaches someone else needs a birth month on record.
  */
 export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): PlayService {
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
@@ -83,14 +79,11 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   ];
   if (deps.stories) {
     adapters.push(new StoriesAdapter(app.db, deps.stories));
-    // The story games tell us only that a game changed, not whether a chat
-    // card could show it, so every answer and "continue" reaches the room of a
-    // group the game was shared into (play/events.ts). Once the service says
-    // which changes are moves in a game under way, pass `{ card: false }` for
-    // those, as Peyvok Battle and Rhyme Match do.
+    // The story games report only that a game changed, not whether a card could show it, so every change reaches the
+    // group room; pass `{ card: false }` for moves once the service can tell them apart.
     deps.stories.onChange((id) => deps.events.changed('stories', id));
   }
-  // every multiplayer learning game: its engine tells the play layer of its own changes (mp/service.ts)
+  // Every multiplayer learning game reports its own changes to the play layer (mp/service.ts).
   adapters.push(...(deps.multiplayer ?? []));
   const play = new PlayService(app.db, {
     adapters,
@@ -104,7 +97,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
     publicUrl,
   });
 
-  /** Make a lobby with the host in it, post its card where it was started, and ask friends. */
+  /** Makes a lobby with the host in it, posts its card where it was started, and asks friends. */
   app.post(
     '/play/lobbies',
     { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
@@ -127,9 +120,8 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   );
 
   /**
-   * Join any game by the code a friend read out or sent: the game and lobby
-   * joined, for the client to open. Ten tries a minute, as for story games'
-   * own join, so codes cannot be walked through.
+   * Joins any game by a code a friend shared, returning the game and lobby to open. Ten tries a minute, as for story
+   * games' own join, so codes cannot be walked through.
    */
   app.post(
     '/play/join',
@@ -147,7 +139,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
     async (req) => play.accept(req.user!.id, (req.params as { id: string }).id),
   );
 
-  /** Not now — a preset reason, never free text. */
+  /** "Not now", with a preset reason, never free text. */
   app.post(
     '/play/invites/:id/decline',
     { schema: { params: inviteParam, body: declineBody }, preHandler: requireAccount },
@@ -204,8 +196,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
     return play.declineRematch(req.user!.id, p.game, p.lobbyId);
   });
 
-  // idle lobbies, games that are over and invites past their time are closed on
-  // a timer too, not only when somebody happens to look
+  // Idle lobbies, finished games and expired invites are also closed on a timer, not only when someone looks.
   const sweep = setInterval(
     () => void play.sweep().catch((err) => app.log.warn({ err }, 'play sweep failed')),
     PLAY_SWEEP_MS,

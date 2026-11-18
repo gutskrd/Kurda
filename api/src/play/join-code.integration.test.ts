@@ -1,7 +1,6 @@
 /**
- * Joining a game by its code, for every game: every lobby has a code, one
- * route takes the code of any game, the join rule decides as for an invite,
- * and a code is gone once its game starts.
+ * Joining by code for every game: every lobby has a code, one route takes any game's code, the join rule decides as
+ * for an invite, and the code is gone once the game starts.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
