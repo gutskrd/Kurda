@@ -109,7 +109,7 @@ describe('the lesson list', () => {
     await waitFor(() => expect(titles()).toHaveLength(3));
     await user.type(screen.getByRole('searchbox', { name: 'Search lessons' }), 'family');
     await waitFor(() => expect(titles()).toEqual(['Family 1']));
-    // one request for the whole word, not one per letter
+    // One request for the whole word, not one per letter.
     expect(api.calls.filter((c) => c.path.includes('q=')).map((c) => c.path)).toEqual(['/admin/content/lessons?status=all&q=family']);
   });
 
@@ -135,7 +135,7 @@ describe('the lesson list', () => {
       await user.selectOptions(course, 'The Kurmanji Road');
       await waitFor(() => expect(titles()).toEqual(['Arriving']));
       expect(api.calls.map((c) => c.path)).toContain('/admin/content/lessons?status=all&course=kurmanji-road');
-      // the status tabs count that course's lessons
+      // The status tabs count that course's lessons.
       expect(within(screen.getByRole('tablist', { name: 'Status' })).getByRole('tab', { name: /^All/ })).toHaveTextContent('1');
     });
 
@@ -146,7 +146,7 @@ describe('the lesson list', () => {
       await waitFor(() => expect(titles()).toEqual(['Arriving']));
       expect(screen.getByLabelText('Course')).toHaveValue('kurmanji-road');
       expect(api.calls.map((c) => c.path)).toEqual(['/admin/content/lessons?status=all&course=kurmanji-road']);
-      // who records what in that course, in the audio studio
+      // Who records what in that course, in the audio studio.
       expect(screen.getByRole('link', { name: 'Recording plan for The Kurmanji Road' })).toHaveAttribute('href', '#/audio/lessons?course=kurmanji-road');
     });
 
@@ -195,7 +195,7 @@ describe('the lesson editor', () => {
     await user.click(within(first).getByRole('button', { name: 'Add another' }));
     await user.type(within(first).getByLabelText('Accepted answers: 2'), 'Silav heval');
 
-    // the right answer of the second is chosen with a radio
+    // The right answer of the second is chosen with a radio.
     const second = screen.getByRole('article', { name: /2\s*Multiple choice/ });
     await user.click(within(second).getByLabelText('Answer 2 is the right one'));
 
@@ -255,7 +255,7 @@ describe('the lesson editor', () => {
     const first = await screen.findByRole('article', { name: /1\s*Translate/ });
     await user.clear(within(first).getByLabelText(/sentence to translate/i));
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
-    // nothing is sent while a required field is empty, and the field says so
+    // Nothing is sent while a required field is empty, and the field says so.
     expect(within(first).getByLabelText(/sentence to translate/i)).toHaveAccessibleDescription(/is needed/);
     expect(api.calls.some((c) => c.method === 'PUT')).toBe(false);
 
@@ -369,7 +369,7 @@ describe('making a complete lesson quickly', () => {
     const drawer = await screen.findByRole('dialog', { name: 'Build exercises from words' });
     await user.type(within(drawer).getByLabelText('Words and phrases'), 'Silav = Hello{Enter}Spas = Thanks{Enter}Roj baş = Good day');
     expect(within(drawer).getByText('3 words: Silav · Spas · Roj baş')).toBeInTheDocument();
-    // a kind left out is not made
+    // A kind left out is not made.
     await user.click(within(drawer).getByLabelText(/Say it aloud/));
     await user.click(within(drawer).getByRole('button', { name: 'Add 10 exercises' }));
     expect(screen.getAllByRole('article')).toHaveLength(10);
@@ -401,11 +401,11 @@ describe('making a complete lesson quickly', () => {
     renderUi(<Lessons />);
     await user.click(await screen.findByRole('button', { name: 'Add a conversation' }));
     const card = screen.getByRole('article', { name: /1\s*Conversation/ });
-    // Xezo and Hamo to start; a character already in it is not offered for another part
+    // Xezo and Hamo to start; a character already in it is not offered for another part.
     expect(within(card).getByLabelText('Who plays part 1')).toHaveValue('xezo');
     expect(within(card).getByLabelText('Who plays part 2')).toHaveValue('hamo');
     expect(within(within(card).getByLabelText('Who plays part 2')).queryByRole('option', { name: 'Xezo' })).toBeNull();
-    // the deer is the one left to add, and then nobody is
+    // The deer is the one left to add, and then nobody is.
     await user.click(within(card).getByRole('button', { name: 'Add Hevalo' }));
     expect(within(card).getByLabelText('Who plays part 3')).toHaveValue('hevalo');
     expect(within(card).queryByRole('button', { name: /^Add (Xezo|Hamo|Hevalo)$/ })).toBeNull();
@@ -416,7 +416,7 @@ describe('making a complete lesson quickly', () => {
     await user.type(within(card).getByLabelText(/Question about it/), 'Hamo çawa ye?');
     await user.type(within(card).getByLabelText('Answer 1'), 'Baş e');
     await user.type(within(card).getByLabelText('Answer 2'), 'Nexweş e');
-    // it cannot be recorded until it is saved
+    // It cannot be recorded until it is saved.
     expect(within(card).getByText('Save the draft, then record it: each person records their own part.')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
@@ -437,7 +437,7 @@ describe('making a complete lesson quickly', () => {
       options: ['Baş e', 'Nexweş e'],
       correctIndex: 0,
     });
-    // saved, it is recorded on its own page
+    // Saved, it is recorded on its own page.
     expect(await within(card).findByRole('link', { name: 'Record this conversation' })).toHaveAttribute(
       'href',
       `#/audio/conversations/${String(conversation!.payload.id)}?lesson=l-1`,

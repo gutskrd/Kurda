@@ -110,7 +110,7 @@ describe('the shop', () => {
     renderUi(<Shop />);
     await openOthers(user);
     await user.click(await screen.findByRole('button', { name: 'New item' }));
-    // backgrounds and icons are added with a picture, in their own views
+    // Backgrounds and icons are added with a picture, in their own views.
     expect(within(screen.getByLabelText(/^category/i)).queryByRole('option', { name: 'Background' })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText(/^name/i), 'Kurdish tag');
     await user.type(screen.getByLabelText(/^sku/i), 'tag-newroz');
@@ -126,7 +126,7 @@ describe('the shop', () => {
     await waitFor(() => expect(posts(calls, '/shop/items')).toHaveLength(1));
     const body = posts(calls, '/shop/items')[0]!.body as Record<string, unknown>;
     expect(body).toMatchObject({ sku: 'tag-kurdish', category: 'tag', price: 0 });
-    // left empty: not sent, so the catalogue route stores nothing for them
+    // Left empty: not sent, so the catalogue route stores nothing for them.
     expect(body).not.toHaveProperty('availableFrom');
     expect(body).not.toHaveProperty('assetKey');
   });
@@ -143,7 +143,7 @@ describe('the shop', () => {
     await user.click(await screen.findByRole('button', { name: 'Edit “Newroz”' }));
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText(/This price needs a second admin\. Send it for approval/)).toHaveAttribute('role', 'alert');
-    // the next save goes where the server pointed
+    // The next save goes where the server pointed.
     await user.click(screen.getByRole('button', { name: 'Send for approval' }));
     await waitFor(() => expect(posts(calls, '/admin/config/changes')).toHaveLength(1));
   });
@@ -196,7 +196,7 @@ describe('the shop', () => {
     expect(screen.queryByText('Gone hills')).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Filter by status'), 'hidden');
     expect(screen.getByText('Old hills')).toBeInTheDocument();
-    // a hidden item has nothing to take off sale, only Edit
+    // A hidden item has nothing to take off sale, only Edit.
     expect(screen.queryByRole('button', { name: 'Put on sale' })).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Filter by status'), 'retired');
     expect(screen.getByText('Gone hills')).toBeInTheDocument();

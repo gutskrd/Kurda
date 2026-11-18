@@ -1,8 +1,4 @@
-/**
- * Render for the admin's Testing Library tests: mount into the document with
- * the admin's own React, inside the providers every page has (toasts and
- * dialogs), and unmount after each test (setup.ts).
- */
+/** Render for the Testing Library tests: mount with the console's own React inside the kit's providers; setup.ts unmounts. */
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { DialogProvider } from '../ui/Dialog';
@@ -27,7 +23,7 @@ export function withKit(ui: ReactNode): React.JSX.Element {
 /** Mount `ui` as the app would: inside #root, with the kit's providers. */
 export function renderUi(ui: ReactNode, { kit = true }: { kit?: boolean } = {}): Rendered {
   const container = document.createElement('div');
-  // the app's root: an open layer makes it inert behind itself
+  // The app's root: an open layer makes it inert behind itself.
   if (!document.getElementById('root')) container.id = 'root';
   document.body.appendChild(container);
   const root = createRoot(container);

@@ -14,9 +14,9 @@ export interface SentenceRecording {
   durationMs: number | null;
   updatedAt: string | null;
   speaker: SpeakerId | null;
-  /** the stored timeline; null for none, left out while it is not known here */
+  /** The stored timeline; null for none, left out while it is not known here. */
   lipsync?: LipsyncData | null;
-  /** whether a timeline is stored, when the timeline itself has not been read */
+  /** Whether a timeline is stored, when the timeline itself has not been read. */
   hasLipsync?: boolean;
 }
 
@@ -26,19 +26,9 @@ export function sentenceRecordPath(text: string): string {
 }
 
 /**
- * The studio for one Kurdish sentence, wherever it is recorded from: who says
- * it (the picker, and the character saying the saved take), then the recorder
- * (record, upload a file, hear it back, save, replace, remove). The lesson
- * studio opens one under each row; the story editor opens one under each of
- * a story's sentences. Both save to the same store the same way — the WAV
- * goes up with the speaker and a mouth timeline made from it (voice.ts) — so
- * a sentence recorded in either place is the one recording the apps play.
- *
- * Removing asks first in the words `removePrompt` gives. A lesson's listening
- * item may play this very recording as its clip: when the server says so
- * (LISTENING_AUDIO_IN_USE) the editor is asked again with what the server
- * knows, and `listeningNeedsIt` skips that second question when the first
- * already said it.
+ * The studio for one Kurdish sentence, in the lesson studio and the story editor alike: who says it, then the recorder.
+ * Both save the same way (voice.ts), so either place makes the one recording the apps play. When the server says a
+ * listening item plays this recording (LISTENING_AUDIO_IN_USE), a removal asks again, unless `listeningNeedsIt` said so.
  */
 export function SentenceStudio({
   text,
@@ -59,12 +49,12 @@ export function SentenceStudio({
   children,
 }: {
   text: string;
-  /** the recording's key in the store, for a removal */
+  /** The recording's key in the store, for a removal. */
   recordKey: string;
-  /** where a new take is sent; the lesson store under the text unless the caller files it elsewhere */
+  /** Where a new take is sent; the lesson store under the text unless the caller files it elsewhere. */
   path?: string;
   recording: SentenceRecording | null;
-  /** who says it: the saved take's character, or the pick for a new one */
+  /** Who says it: the saved take's character, or the pick for a new one. */
   speaker: Speaker;
   speakerHint?: ReactNode;
   onSpeaker: (speaker: Speaker) => void;
@@ -76,7 +66,7 @@ export function SentenceStudio({
   shortcuts?: boolean;
   onPrev?: () => void;
   onNext?: () => void;
-  /** something to say above the picker: a conversation line's note */
+  /** Something to say above the picker: a conversation line's note. */
   children?: ReactNode;
 }): React.JSX.Element {
   return (
@@ -90,7 +80,7 @@ export function SentenceStudio({
             speaker={recording.speaker}
             url={recording.url}
             text={text}
-            // the stored timeline; none when the list said there is none; not known when it said nothing
+            // The stored timeline; none when the list said there is none; not known when it said nothing.
             lipsync={recording.lipsync ?? (recording.hasLipsync === false ? null : undefined)}
             durationMs={recording.durationMs}
           />
@@ -112,10 +102,10 @@ export function SentenceStudio({
         onRemove={async () => {
           const remove = (force: boolean) => api(`/admin/lesson-audio?key=${encodeURIComponent(recordKey)}${force ? '&force=1' : ''}`, { method: 'DELETE' });
           try {
-            // the prompt the editor just confirmed already said what a listening item loses
+            // The prompt the editor just confirmed already said what a listening item loses.
             await remove(listeningNeedsIt);
           } catch (err) {
-            // a lesson published since the list was loaded: ask again, with what the server knows
+            // A lesson published since the list was loaded: ask again, with what the server knows.
             if (!(err instanceof ApiError && err.code === 'LISTENING_AUDIO_IN_USE')) throw err;
             const yes = await confirm({ title: 'A listening item plays this', body: err.message, confirmLabel: 'Remove anyway', tone: 'danger' });
             if (!yes) return;

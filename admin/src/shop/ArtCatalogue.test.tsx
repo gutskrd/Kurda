@@ -1,9 +1,5 @@
 // @vitest-environment jsdom
-/**
- * The shop's backgrounds and icons in the admin: cards with their art, adding
- * one with an uploaded picture, editing it, and deleting it — which the
- * dialog says, before anything happens, will delete it or retire it.
- */
+/** The shop's backgrounds and icons: the cards, adding one with an uploaded picture, editing, and deleting or retiring. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor, within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
@@ -12,7 +8,7 @@ import { renderUi } from '../test/render';
 import { Shop } from '../pages/Shop';
 import type { ShopItem } from './model';
 
-// a test browser decodes no pictures: the size each picked file "has"
+// A test browser decodes no pictures: the size each picked file "has".
 const picked = vi.hoisted(() => ({ size: { width: 1920, height: 1080 } as { width: number; height: number } | null }));
 vi.mock('./measure', () => ({
   measureImage: vi.fn(async () => picked.size),
@@ -81,10 +77,10 @@ describe('the backgrounds and icons', () => {
     expect(within(newroz).getByText('500 Zêr')).toBeInTheDocument();
     expect(within(newroz).getByText('3 owners')).toBeInTheDocument();
     expect(within(sor).getByText('Off sale')).toBeInTheDocument();
-    // the art that ships is on the site; uploaded art is on the CDN already
+    // The art that ships is on the site; uploaded art is on the CDN already.
     const srcs = [...container.querySelectorAll('.art-thumb img')].map((img) => img.getAttribute('src'));
     expect(srcs).toEqual(['https://hevalo.app/cosmetics/backgrounds/made-20-newroz.webp', `https://media.test/${UPLOADED}`]);
-    // the retired one, on request, with nothing left to delete
+    // The retired one, on request, with nothing left to delete.
     expect(screen.queryByText('Old hills')).not.toBeInTheDocument();
     await userEvent.setup().selectOptions(screen.getByLabelText('Show'), 'retired');
     expect(screen.getByText('Old hills')).toBeInTheDocument();
@@ -134,7 +130,7 @@ describe('the backgrounds and icons', () => {
       inStock: true,
       assetKey: UPLOADED,
       premiumOnly: true,
-      // after the last background
+      // After the last background.
       displayOrder: 21,
     });
     expect(await screen.findByText('Added “Şeva Sor” to the backgrounds.')).toBeInTheDocument();
@@ -173,7 +169,7 @@ describe('the backgrounds and icons', () => {
     await waitFor(() => expect(within(sheet).getByRole('alert')).toHaveTextContent('That file is 6 MB; the limit is 5 MB.'));
 
     expect(sent(calls, 'POST', '/admin/shop/art/background')).toHaveLength(0);
-    // and the form will not add a background without one; what was wrong stays said
+    // And the form will not add a background without one; what was wrong stays said.
     await user.type(within(sheet).getByLabelText(/^name/i), 'Hills');
     await user.click(within(sheet).getByRole('button', { name: 'Add background' }));
     expect(within(sheet).getByRole('alert')).toHaveTextContent('That file is 6 MB');
@@ -200,7 +196,7 @@ describe('the backgrounds and icons', () => {
     );
     renderUi(<Shop />);
     await user.click(await screen.findByRole('tab', { name: /icons/i }));
-    // the page's own button (the empty list offers one too)
+    // The page's own button (the empty list offers one too).
     await user.click(screen.getAllByRole('button', { name: 'New icon' })[0]!);
     const sheet = screen.getByRole('dialog', { name: 'New icon' });
     picked.size = { width: 512, height: 512 };
@@ -333,7 +329,7 @@ describe('deleting a background', () => {
     await user.click(await screen.findByRole('button', { name: 'Delete “Newroz”' }));
     const dialog = await screen.findByRole('alertdialog', { name: 'Retire “Newroz”?' });
     expect(within(dialog).getByText(/part of the art that ships with the app/)).toBeInTheDocument();
-    // and nothing is gone until it is confirmed
+    // And nothing is gone until it is confirmed.
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });

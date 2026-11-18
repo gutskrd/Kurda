@@ -11,10 +11,8 @@ export function AgeTag({ age }: { age: AgeBadge }): React.JSX.Element {
 }
 
 /**
- * How a linked account is linked: "same device", or "same network · 3 days",
- * with what that evidence means on hover. A network only counts when both were
- * seen on it within two days of each other and few other accounts used it,
- * so it reads as a household rather than a phone carrier.
+ * How a linked account is linked ("same device", "same network · 3 days"), explained on hover. A network counts only
+ * when both were seen on it within two days and few others used it: a household, not a carrier.
  */
 export function LinkedVia({ link }: { link: CaseSubjectView['linkedAccounts'][number] }): React.JSX.Element {
   const last = absoluteTime(new Date(link.lastSeenTogether));
@@ -51,7 +49,7 @@ export function SanctionLine({
   s: CaseSanctionView;
   who?: React.ReactNode;
   actions?: React.ReactNode;
-  /** after the dates: where it came from ("Open the case") */
+  /** After the dates: where it came from ("Open the case"). */
   link?: React.ReactNode;
 }): React.JSX.Element {
   return (
@@ -67,7 +65,7 @@ export function SanctionLine({
         {s.active && !s.pendingApproval && <Badge tone="bad">In force</Badge>}
       </div>
       <div className="cell-sub">
-        {/* a warning or a removal happens once: its day is the whole story */}
+        {/* A warning or a removal happens once: its day is the whole story. */}
         {(s.kind === 'warning' || s.kind === 'content_removal') && !s.revokedAt ? (
           <>
             Given <Time value={s.createdAt} />
@@ -90,11 +88,7 @@ export function SanctionLine({
   );
 }
 
-/**
- * The reported person: age, how old the account is, what they have had
- * before, earlier cases, and accounts that share a device or network with
- * them (ban evasion shows up here first).
- */
+/** The reported person: age, account age, earlier sanctions and cases, and accounts sharing a device or network. */
 export function SubjectPanel({
   subject,
   onSanction,
@@ -104,7 +98,7 @@ export function SubjectPanel({
   subject: NonNullable<CaseDetail['subject']>;
   onSanction: () => void;
   canAct: boolean;
-  /** someone who may hurt themselves gets a caring message, never a sanction */
+  /** Someone who may hurt themselves gets a caring message, never a sanction. */
   selfHarm?: boolean;
 }): React.JSX.Element {
   return (
@@ -183,11 +177,7 @@ export function SubjectPanel({
   );
 }
 
-/**
- * Who reported it, and how far to trust them: how many of their decided
- * reports led to action, how many they filed this month, how new the account
- * is. "Sanction this reporter" is for reports made in bad faith.
- */
+/** Who reported it and how far to trust them; "Sanction this reporter" is for reports made in bad faith. */
 export function ReportersPanel({
   reports,
   media,
@@ -200,12 +190,12 @@ export function ReportersPanel({
   media: CaseDetail['media'];
   onSanction: (reporterId: string) => void;
   canAct: boolean;
-  /** reporters who already have an action in the decision */
+  /** Reporters who already have an action in the decision. */
   inDraft: ReadonlySet<string>;
-  /** pictures may be child abuse material: ask before showing one */
+  /** Pictures may be child abuse material: ask before showing one. */
   sensitive: boolean;
 }): React.JSX.Element {
-  // a later report that captured something different (an edit in between, another message) shows its own capture
+  // A later report that captured something different (an edit in between, another message) shows its own capture.
   const first = reports.map((r) => r.evidence).find(isSnapshot) ?? null;
   const differs = (e: unknown): boolean =>
     isSnapshot(e) && !!first && (e.targetId !== first.targetId || e.text !== first.text || e.caption !== first.caption || e.title !== first.title);

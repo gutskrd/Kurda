@@ -15,7 +15,7 @@ import { GameContent } from './GameContent';
 const ID = '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde0002';
 const en = (t: string) => ({ en: t });
 
-// stand-in Kurdish for the fixtures, never shown to a learner
+// stand-in Kurdish for the fixtures, never shown to a learner.
 function row(over: Partial<AdminGameContent>): AdminGameContent {
   return {
     id: ID,
@@ -93,7 +93,7 @@ describe('case files', () => {
     const api = fakeApi(on('GET', `/admin/game-content/${ID}`, json(row({}))), on('GET', /^\/admin\/game-content\/lines\?/, json({ lines })));
     const page = await open(`#/game-content/${ID}`);
     expect(text(page)).toContain('Tu çend salî yî?');
-    // no Kurdish is ever typed: there is no input holding it, only its meaning
+    // No Kurdish is ever typed: there is no input holding it, only its meaning.
     for (const input of page.querySelectorAll('input')) expect(input.value).not.toContain('Tu çend salî yî?');
     expect(page.querySelector('span[lang="ku"]')?.textContent).toBe('Tu çend salî yî?');
     expect([...page.querySelectorAll<HTMLInputElement>('input')].some((i) => i.value === 'How old are you?')).toBe(true);
@@ -106,7 +106,7 @@ describe('case files', () => {
     await click(page.querySelectorAll<HTMLButtonElement>('.gc-line-picker-list button')[0]!);
     expect(text(page)).toContain('Otobûs diçe, zû were!');
     expect(page.querySelector('.gc-line-picker')).toBeNull();
-    // the new card is allowed (a red herring), and said to be one no step uses yet
+    // The new card is allowed (a red herring), and said to be one no step uses yet.
     expect(text(page)).toContain('No step uses it');
   });
 
@@ -126,7 +126,7 @@ describe('case files', () => {
     await click(page.querySelectorAll<HTMLButtonElement>('.gc-line-picker-list button')[1]!);
     expect(text(page)).toContain('Baran îro ne li malê ye.');
     expect(api.calls.filter((c) => c.method === 'POST')).toHaveLength(0);
-    // the new card carries the line's English to start from
+    // The new card carries the line's English to start from.
     const meaning = [...page.querySelectorAll<HTMLInputElement>('input')].find((i) => i.value === 'Baran is not at home today.');
     expect(meaning).toBeTruthy();
     expect(saved).toBeNull();

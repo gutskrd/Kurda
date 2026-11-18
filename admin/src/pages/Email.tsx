@@ -27,7 +27,7 @@ export interface EmailStatus {
   replyTo: string | null;
   supportFrom: string;
   inbox: { webhook: boolean; canReadBodies: boolean; unread: number };
-  /** null when the API runs without a job queue (no Redis) */
+  /** Null when the API runs without a job queue (no Redis). */
   failures: { count: number; lastError: string | null; lastAt: string | null } | null;
 }
 
@@ -58,10 +58,8 @@ const PROVIDER_NAME: Readonly<Record<EmailStatus['provider'], string>> = { resen
 type Box = 'inbox' | 'archived';
 
 /**
- * A received HTML body, shown without letting it do anything: a sandbox with
- * no permissions (no scripts, no forms, its own origin) and a policy that
- * loads nothing from outside — a remote image in a mail is how a sender learns
- * it was opened. Plain text is shown first whenever the mail has it.
+ * A received HTML body shown inert: a sandbox with no permissions and a policy that loads nothing from outside, since
+ * a remote image tells the sender it was opened. Plain text is shown first when the mail has it.
  */
 export function htmlFrameDoc(html: string): string {
   const policy = "default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:";
@@ -69,12 +67,8 @@ export function htmlFrameDoc(html: string): string {
 }
 
 /**
- * Email (#/email): how the app's email is set up and whether it is getting
- * out — with a test send to yourself — and the support inbox, where mail to
- * the support address is read and answered.
- *
- * The settings half is for admins; support sees the inbox only (the API
- * refuses them the settings, and the page simply leaves that half out).
+ * Email (#/email): the app's email setup with a test send, for admins, and the support inbox, which support staff see
+ * alone (the API refuses them the settings).
  */
 export function Email(): React.JSX.Element {
   const [box, setBox] = useState<Box>('inbox');
@@ -138,7 +132,7 @@ export function Email(): React.JSX.Element {
                 <button type="button" className={`mail-row${m.readAt ? '' : ' is-unread'}`} onClick={() => setOpenId(m.id)}>
                   <span className="mail-row-top">
                     <span className="mail-from">
-                      {/* the dot and the bold are for the eye; a screen reader is told in words (a label on a plain span is not read) */}
+                      {/* The dot and the bold are for the eye; a screen reader is told in words (a label on a plain span is not read). */}
                       {!m.readAt && (
                         <>
                           <span className="mail-dot" aria-hidden="true" />
@@ -262,16 +256,16 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
   const toast = useToast();
   const mail = useLoad(async () => (id ? api<SupportEmail>(`/admin/support/emails/${id}/open`, { method: 'POST', body: {} }) : null), [id]);
   const [answer, setAnswer] = useState('');
-  // said when "Send answer" is pressed with nothing written, and gone once something is
+  // Said when "Send answer" is pressed with nothing written, and gone once something is.
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [busy, setBusy] = useState<'send' | 'archive' | 'unread' | null>(null);
   const m = mail.data;
 
-  // the list's unread dot goes once the mail is opened
+  // The list's unread dot goes once the mail is opened.
   const openedId = m?.id;
   useEffect(() => {
     if (openedId) onChanged();
-    // once per mail opened, not on every change of the parent's callback
+    // Once per mail opened, not on every change of the parent's callback.
   }, [openedId]);
 
   async function act(kind: 'archive' | 'unread', run: () => Promise<unknown>, done: string): Promise<void> {
@@ -378,7 +372,7 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
                 {m.attachmentList.map((a, i) => (
                   <li key={a.id ?? i}>
                     <Icon name="list" size={16} />
-                    {/* one run of text, so a long name wraps with its type after it rather than beside it */}
+                    {/* One run of text, so a long name wraps with its type after it rather than beside it. */}
                     <span>
                       {a.filename ?? 'A file'}
                       {a.contentType && <span className="subtle"> · {a.contentType}</span>}
@@ -408,7 +402,7 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
             className="mail-reply"
             onSubmit={(e) => {
               e.preventDefault();
-              // nothing written: back to the box, whose error now says so
+              // Nothing written: back to the box, whose error now says so.
               if (!answer.trim()) e.currentTarget.querySelector('textarea')?.focus();
               void send();
             }}

@@ -1,24 +1,9 @@
 /**
- * A recording played with its character beside it, the mouth moving with the
- * sound: what a learner will see, for the editor to check.
- *
- * The drawing is one inline SVG holding every layer at once — the body, and a
- * head group with every pair of eyes and every mouth, all but one of each
- * hidden. A frame loop reads where the recording is (`currentTime`, so the
- * mouth follows the sound however it buffers), asks `speakingFrame` what the
- * character looks like there, and shows that mouth and those eyes and turns
- * the head for the nod: a few attributes on what is already drawn, so nothing
- * re-renders while it plays. When the recording ends the character beams for
- * a moment, eyes smiling and a grin, as it does for a learner who got it
- * right. With reduced motion asked for, the head stays still; the mouth still
- * moves, since it goes with the sound.
- *
- * The timeline is the one stored with the recording, as the apps play it,
- * or the words spread over the recording's length (`voiceTimeline`) when
- * there is none — which it says, since that is what the apps do too.
- *
- * A character's drawing carries its own ids, so a page shows one preview of
- * each character at a time.
+ * A recording played with its character beside it, the mouth moving with the sound, as a learner will see it. One
+ * inline SVG holds every mouth and pair of eyes, all but one hidden; a frame loop reads `currentTime`, asks
+ * `speakingFrame` for that moment and flips a few attributes, so nothing re-renders while it plays. Under reduced
+ * motion the head stays still but the mouth moves. Without a stored timeline the words are spread over the length
+ * (`voiceTimeline`), as in the apps, and it says so. A drawing carries its own ids, so show one per character at a time.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -72,12 +57,12 @@ export function SpeakingPreview({
 }: {
   speaker: SpeakerId;
   url: string;
-  /** the words said: the mouth follows them when no timeline is stored */
+  /** The words said: the mouth follows them when no timeline is stored. */
   text: string;
-  /** the stored timeline; null when there is none, left out when it is not known here */
+  /** The stored timeline; null when there is none, left out when it is not known here. */
   lipsync?: LipsyncData | null;
   durationMs?: number | null;
-  /** the drawing's width and height, in pixels */
+  /** The drawing's width and height, in pixels. */
   size?: number;
 }): React.JSX.Element {
   const name = CHARACTER_NAMES[speaker];
@@ -92,9 +77,8 @@ export function SpeakingPreview({
     () => voiceTimeline(lipsync ? { speaker, lipsync } : { speaker }, text, durationMs),
     [speaker, lipsync, text, durationMs],
   );
-  // what the frame loop reads, kept current without restarting it; `measured` is
-  // the words timed to the recording's length once the file says what it is, and
-  // `beamUntil` when the smile a finished recording put on comes off
+  // What the frame loop reads, kept current without restarting it: `measured` is the words timed to the file's length,
+  // `beamUntil` when the smile after a finished recording ends.
   const live = useRef<{ playing: boolean; reduced: boolean; timeline: LipsyncTimeline | null; measured: LipsyncTimeline | null; beamUntil: number }>({
     playing: false,
     reduced,
@@ -129,7 +113,7 @@ export function SpeakingPreview({
         sinceMs: now - since,
         reducedMotion: live.current.reduced,
       });
-      // a recording just finished: the smile it earns, over the blinks and the resting mouth
+      // A recording just finished: the smile it earns, over the blinks and the resting mouth.
       const beaming = !live.current.playing && now < live.current.beamUntil;
       const next: { mouth: MouthShape; eyes: EyeState; nod: number } = beaming ? { ...frameNow, mouth: 'grin', eyes: 'happy' } : frameNow;
       if (next.mouth !== shown.mouth) {
@@ -151,7 +135,7 @@ export function SpeakingPreview({
     return () => cancelAnimationFrame(frame);
   }, [speaker]);
 
-  // the recording's own events say when it plays; when its length is known, the words can be timed to it
+  // The recording's own events say when it plays; when its length is known, the words can be timed to it.
   useEffect(() => {
     const el = audio.current;
     if (!el) return;
@@ -186,7 +170,7 @@ export function SpeakingPreview({
     };
   }, [speaker, text]);
 
-  // a detached audio element goes on playing: stop it when the preview goes
+  // A detached audio element goes on playing: stop it when the preview goes.
   useEffect(() => {
     const el = audio.current;
     return () => {
@@ -202,7 +186,7 @@ export function SpeakingPreview({
       try {
         el.currentTime = 0;
       } catch {
-        // not seekable yet: it starts from where it stopped
+        // Not seekable yet: it starts from where it stopped.
       }
       return;
     }

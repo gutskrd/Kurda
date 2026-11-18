@@ -108,7 +108,7 @@ describe('the list', () => {
     expect(within(first!).getByText('Suspended')).toBeInTheDocument();
     expect(within(second!).getByText('Muted')).toBeInTheDocument();
     expect(within(second!).getByText('Moderator')).toBeInTheDocument();
-    // a posting mute is not "Active"
+    // A posting mute is not "Active".
     expect(within(third!).getByText('Limited')).toBeInTheDocument();
     expect(within(third!).queryByText('Active')).not.toBeInTheDocument();
     expect(within(first!).getByRole('link', { name: 'Open @rojin' })).toHaveAttribute('href', '#/users/u-1');
@@ -160,14 +160,14 @@ describe('a person', () => {
     expect(screen.getByText('18 or over')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '@baran2' })).toBeInTheDocument();
     expect(screen.getByText('same device')).toHaveAttribute('title', expect.stringMatching(/same device/));
-    // a network says on how many days, and on hover what that means
+    // A network says on how many days, and on hover what that means.
     const flat = screen.getByText('same network · 3 days');
     expect(flat).toHaveAttribute('title', expect.stringMatching(/within 48 hours of each other on 3 days.*Busy networks/));
     expect(screen.getByText('same network · 1 day')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: /Standing/ })).toHaveAttribute('href', `${at}/standing`);
     expect(screen.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '#/users');
-    // a posting mute in force: the header does not call the account "Active"
+    // A posting mute in force: the header does not call the account "Active".
     expect(screen.getByText('Limited')).toBeInTheDocument();
     expect(screen.queryByText('Active')).not.toBeInTheDocument();
   });
@@ -203,7 +203,7 @@ describe('a person', () => {
     await user.selectOptions(within(drawer).getByLabelText('Action'), 'chat_mute');
     await user.click(within(drawer).getByRole('radio', { name: '3 d' }));
     await user.selectOptions(within(drawer).getByLabelText(/^Rule broken/), 'harassment');
-    // the rule's standard words, until someone types their own
+    // The rule's standard words, until someone types their own.
     expect(within(drawer).getByLabelText(/What @baran is told/)).toHaveValue('Your messages broke Hevalo’s rule on bullying and harassment.');
     expect(within(drawer).getByLabelText(/^Rule broken/).querySelector('option[value="self_harm"]')).toBeNull();
     await user.type(within(drawer).getByLabelText('Note for moderators'), 'Third time this week.');
@@ -316,7 +316,7 @@ describe('a person', () => {
     expect(screen.getByText('Changed by an admin')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(screen.getByText('Enter an amount.')).toBeInTheDocument();
-    // more than the API takes at once: refused before anything is asked
+    // More than the API takes at once: refused before anything is asked.
     await user.type(screen.getByLabelText(/^Amount/), '2000000');
     await user.type(screen.getByLabelText(/^Reason/), 'Refunded twice by mistake');
     await user.click(screen.getByRole('button', { name: 'Apply' }));
@@ -324,7 +324,7 @@ describe('a person', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     await user.clear(screen.getByLabelText(/^Amount/));
     await user.type(screen.getByLabelText(/^Amount/), '-500');
-    // said back, with the balance it leaves, before anything moves; Cancel sends nothing
+    // Said back, with the balance it leaves, before anything moves; Cancel sends nothing.
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     const ask = await screen.findByRole('alertdialog', { name: 'Take 500 Zêr from @baran?' });
     expect(ask).toHaveTextContent('Their balance goes from 1,200 to 700 Zêr.');
@@ -373,7 +373,7 @@ describe('a person', () => {
     expect(await screen.findByText('Not a member.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Give Hevalo+' }));
     expect(screen.getByText('Enter a number of days.')).toBeInTheDocument();
-    // more than the API takes at once: refused before anything is asked
+    // More than the API takes at once: refused before anything is asked.
     await user.type(screen.getByLabelText(/^Days of Hevalo\+/), '400');
     await user.type(screen.getByLabelText(/^Why/), 'Reviewer for the store listing');
     await user.click(screen.getByRole('button', { name: 'Give Hevalo+' }));
@@ -454,7 +454,7 @@ describe('a person', () => {
     expect(screen.getByText('Choose the item to give.')).toBeInTheDocument();
     expect(screen.getByText('Say why, for the audit log.')).toBeInTheDocument();
     expect(posts(calls, `/admin/users/${SUBJECT_ID}/items`)).toHaveLength(0);
-    // each goes as soon as it is put right
+    // Each goes as soon as it is put right.
     await user.selectOptions(await screen.findByRole('combobox', { name: /^Item/ }), 'icon-deer');
     expect(screen.queryByText('Choose the item to give.')).not.toBeInTheDocument();
     await user.type(screen.getByLabelText(/^Reason/), 'Lost in the outage');
@@ -468,12 +468,12 @@ describe('a person', () => {
     show(`${at}/audit`, MODERATOR, detailRoute(person()));
     expect(await screen.findByText('Chat mute')).toBeInTheDocument();
     expect(screen.getByText('insults in the beginners group')).toBeInTheDocument();
-    // the admin by name, not by eight characters of an id
+    // The admin by name, not by eight characters of an id.
     expect(screen.getByRole('link', { name: '@rojda' })).toHaveAttribute('href', '#/users/a-1');
   });
 
   it('gives support the page without what moderation knows', async () => {
-    // the API leaves the moderation fields out for support
+    // The API leaves the moderation fields out for support.
     const plain: Partial<UserDetail> = { ...person() };
     for (const key of ['reportsAgainst', 'reportsFiled', 'sanctions', 'appeals', 'cases', 'linkedAccounts', 'chatOffenses', 'mutedPermanently'] as const) delete plain[key];
     show(at, SUPPORT, detailRoute(plain as UserDetail));

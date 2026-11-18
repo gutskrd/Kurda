@@ -3,25 +3,17 @@ import { ASKS_BY_TYPE, CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS, c
 
 /** The value the part picker gives the learner's own part. */
 const LEARNER = 'learner';
-import { ASK_NAME, EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
+import { ASK_NAME, EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, str, strings, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
 import { toPreview } from '../preview';
 import { Checkbox, Field, Icon } from '../ui';
 import { VOICE_ORDER, voiceName } from '../voicePlan';
-
-const str = (v: unknown): string => (typeof v === 'string' ? v : '');
-const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
 
 /** The problem at one path, for a field's error line. */
 function problem(issues: readonly Issue[], path: string): string | undefined {
   return issues.find((i) => i.path === path)?.message;
 }
 
-/**
- * One exercise as a form: the fields its type has, each labelled and checked
- * as the server would check it, in place of the raw JSON the page used to ask
- * for. A list (answers, options, pairs) grows and shrinks within the limits
- * the server accepts.
- */
+/** One exercise as a form, each field checked as the server would; lists grow and shrink within the server's limits. */
 export function ExerciseCard({
   index,
   count,
@@ -36,9 +28,9 @@ export function ExerciseCard({
   index: number;
   count: number;
   exercise: Exercise;
-  /** a conversation's recording page: null while it is not saved yet, so there is nothing there to record */
+  /** A conversation's recording page: null while it is not saved yet, so there is nothing there to record. */
   recordHref?: string | null;
-  /** problems in this exercise, paths inside its payload ('prompt', 'options.1') */
+  /** Problems in this exercise, paths inside its payload ('prompt', 'options.1'). */
   issues: readonly Issue[];
   readOnly: boolean;
   onChange: (next: Exercise) => void;
@@ -48,7 +40,7 @@ export function ExerciseCard({
   const id = useId();
   const p = exercise.payload;
   const set = (patch: Payload): void => onChange({ ...exercise, payload: { ...p, ...patch } });
-  // the asks its kind can make; a pairs game or a conversation asks the one way it always does
+  // The asks its kind can make; a pairs game or a conversation asks the one way it always does.
   const asks = ASKS_BY_TYPE[exercise.type];
   const at = (path: string): string => `ex-${index}-${path.replace(/\./g, '-')}`;
   const field = (name: string, label: string, opts: { hint?: string; multiline?: boolean; required?: boolean; max?: number; placeholder?: string } = {}) => (
@@ -381,11 +373,8 @@ function Answers({
 }
 
 /**
- * A conversation as a form: which of the characters take part (each plays one
- * part, called by its own name, and is who learners see saying its lines),
- * what each says in turn with what it means, and the question about it. Each
- * part is recorded by its own person on the conversation's recording page,
- * which the link at the end opens once the draft is saved.
+ * A conversation as a form: the characters taking part, one part each, their lines with meanings, and the question.
+ * Each part is recorded on the conversation's page, linked once the draft is saved.
  */
 function ConversationFields({
   p,
@@ -410,17 +399,17 @@ function ConversationFields({
     const who = characterOf(i);
     return who ? CHARACTER_NAMES[who] : learnerAt(i) ? 'the learner' : `Person ${i + 1}`;
   };
-  // the learner's own part, when a character talks with them: one at most
+  // The learner's own part, when a character talks with them: one at most.
   const learnerFree = !speakers.some((_, j) => learnerAt(j));
   const cast = (i: number, who: SpeakerId | typeof LEARNER): void =>
     set({ speakers: speakers.map((s, j) => (j === i ? (who === LEARNER ? learnerPart() : conversationSpeaker(who)) : s)) });
-  // the characters nobody plays yet: a new part is the first of them
+  // The characters nobody plays yet: a new part is the first of them.
   const free = SPEAKERS.filter((who) => !speakers.some((_, j) => characterOf(j) === who));
   const setLine = (i: number, patch: Record<string, unknown>): void => set({ lines: lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) });
   const removeSpeaker = (i: number): void =>
     set({
       speakers: speakers.filter((_, j) => j !== i),
-      // their lines go with them; the people after them keep their own lines
+      // Their lines go with them; the people after them keep their own lines.
       lines: lines.filter((l) => l.speaker !== i).map((l) => (typeof l.speaker === 'number' && l.speaker > i ? { ...l, speaker: l.speaker - 1 } : l)),
     });
   const moveLine = (i: number, by: -1 | 1): void => {
@@ -429,7 +418,7 @@ function ConversationFields({
     next.splice(i + by, 0, it!);
     set({ lines: next });
   };
-  // a new line is the next person's turn
+  // A new line is the next person's turn.
   const addLine = (): void => {
     const last = lines[lines.length - 1]?.speaker;
     set({ lines: [...lines, { speaker: typeof last === 'number' ? (last + 1) % Math.max(speakers.length, 1) : 0, text: '', en: '' }] });
@@ -457,7 +446,7 @@ function ConversationFields({
               onChange={(e) => (e.target.value === LEARNER ? cast(i, LEARNER) : isSpeakerId(e.target.value) ? cast(i, e.target.value) : undefined)}
             >
               {characterOf(i) === null && !learnerAt(i) && <option value="">Choose a character</option>}
-              {/* a character already playing another part is not offered again */}
+              {/* A character already playing another part is not offered again. */}
               {SPEAKERS.filter((who) => who === characterOf(i) || free.includes(who)).map((who) => (
                 <option key={who} value={who}>
                   {CHARACTER_NAMES[who]}
@@ -620,7 +609,7 @@ function TextList({
 }: {
   label: string;
   hint: string;
-  /** the add button's words, where two lists sit side by side */
+  /** The add button's words, where two lists sit side by side. */
   addLabel?: string;
   values: string[];
   max: number;

@@ -31,17 +31,17 @@ interface Word {
   normalized: string;
   dialect: string;
   length: number;
-  /** used as a rhyme-round prompt */
+  /** Used as a rhyme-round prompt. */
   isRhymePrompt: boolean;
-  /** in the pool a game chooses from, rather than only in the dictionary */
+  /** In the pool a game chooses from, rather than only in the dictionary. */
   inGames: boolean;
 }
 interface Stats {
-  /** words a game can choose from */
+  /** Words a game can choose from. */
   total: number;
-  /** every headword, imports included — what a guess is checked against */
+  /** Every headword, imports included — what a guess is checked against. */
   dictionary: number;
-  /** how many words are curated as rhyme prompts */
+  /** How many words are curated as rhyme prompts. */
   rhymePrompts: number;
   byLength: { length: number; words: number }[];
   difficulties: { difficulty: string; lengths: number[]; words: number }[];
@@ -62,15 +62,10 @@ const TITLES: Record<GamesSection, { title: string; subtitle: string }> = {
 };
 
 /**
- * Game content, a page per game (#/words, #/wordle, #/rhyme, #/race) where it
- * used to be one page with tabs that had no addresses of their own.
- *
- * Two sets of words, not one. The **pool** is what a game chooses from —
- * Peyvok's targets, Rhyme's prompts — and it is small and hand-picked, because
- * a bad target is an unplayable round. The **dictionary** behind it is what a
- * guess is checked against, and should be as large as it can be, because a
- * missing word is a right answer refused. Promoting a word from the dictionary
- * into the pool is the one edit the dictionary view offers.
+ * Word game content, a page per game (#/words, #/wordle, #/rhyme, #/race). The **pool** is what a game chooses from
+ * (Peyvok's targets, Rhyme's prompts), small and hand-picked since a bad target is an unplayable round. The
+ * **dictionary** is what a guess is checked against, as large as possible since a missing word refuses a right answer.
+ * Promoting a dictionary word into the pool is the dictionary view's one edit.
  */
 export function Games({ section }: { section: GamesSection }): React.JSX.Element {
   const t = TITLES[section];
@@ -96,7 +91,7 @@ function WordsPage(): React.JSX.Element {
   const [page, setPage] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
 
-  // a newer search wins: an answer to "hev" arriving after "heval" is dropped
+  // A newer search wins: an answer to "hev" arriving after "heval" is dropped.
   const words = useLoad(() => {
     const params = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE), inGames: String(inPool) });
     if (query) params.set('q', query);
@@ -184,14 +179,14 @@ function WordsPage(): React.JSX.Element {
           <input
             type="checkbox"
             checked={w.isRhymePrompt}
-            // a word outside the pool cannot be a prompt, so the control says
-            // so rather than accepting a click the server would undo
+            // A word outside the pool cannot be a prompt, so the control says
+            // so rather than accepting a click the server would undo.
             disabled={busy === w.id || !w.inGames}
             onChange={(e) => void patch(w, { isRhymePrompt: e.target.checked }, e.target.checked ? `Rounds can open with “${w.headword}”.` : `Rounds no longer open with “${w.headword}”.`)}
           />
           <span>
             {w.isRhymePrompt ? 'Yes' : 'No'}
-            {/* why it cannot be ticked, in words a finger can read too (the title is a mouse's tooltip) */}
+            {/* Why it cannot be ticked, in words a finger can read too (the title is a mouse's tooltip). */}
             {!w.inGames && <span className="cell-sub">Only a word in the games can open a round.</span>}
           </span>
         </label>
@@ -311,12 +306,7 @@ function Coverage(): React.JSX.Element {
   ];
   return (
     <>
-      {/*
-        Both numbers, because they answer different questions and only one of
-        them is about whether the game is playable. Counting the dictionary here
-        is how you end up believing there are hundreds of thousands of words to
-        play with when the pool is a few dozen.
-      */}
+      {/* Both numbers: only the pool says how much there is to play with; the dictionary only checks guesses. */}
       <div className="stats">
         <Stat label="Words Peyvok can ask" value={s.total.toLocaleString()} href="#/words" />
         <Stat label="Words a guess is checked against" value={s.dictionary.toLocaleString()} />

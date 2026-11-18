@@ -38,12 +38,7 @@ export function shares(variants: readonly Variant[]): string {
   return variants.map((v) => `${v.key} ${total > 0 ? Math.round((v.weight / total) * 100) : 0}%`).join(' · ');
 }
 
-/**
- * Feature flags and A/B tests (KUR-107). A flag is on or off for everyone;
- * a test splits people between variants by weight. Changing a flag needs no
- * deploy. Variants used to be typed as "control:1, treatment:2" and an
- * experiment could only be changed by retyping its key; now each has an Edit.
- */
+/** Feature flags, on or off for everyone, and A/B tests, which split people between variants by weight; no deploy needed. */
 export function Experiments(): React.JSX.Element {
   const toast = useToast();
   const dialogs = useDialogs();

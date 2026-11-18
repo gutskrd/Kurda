@@ -73,7 +73,7 @@ describe('the admin API client', () => {
     expect(limited.retryAfterSec).toBe(90);
     const plain = (await api('/admin/audit').catch((e: unknown) => e)) as ApiError;
     expect(plain.retryAfterSec).toBeNull();
-    // a lockout is not an ended session
+    // A lockout is not an ended session.
     expect(reload).not.toHaveBeenCalled();
   });
 
@@ -114,7 +114,7 @@ describe('keeping the session alive', () => {
 
   it('takes the token another tab already renewed, rather than renewing with a refresh token it replaced', async () => {
     setToken('old', true, 'ref-1');
-    // the other tab renewed: storage holds its pair, this tab still the old token
+    // The other tab renewed: storage holds its pair, this tab still the old token.
     localStorage.setItem('kurda_admin_token', 'new');
     localStorage.setItem('kurda_admin_refresh', 'ref-2');
     const fake = expiring('new', null);
@@ -154,7 +154,7 @@ describe('keeping the session alive', () => {
   it('renews holding the lock the console’s tabs share, and takes what a tab that held it before got', async () => {
     setToken('old', true, 'ref-1');
     const request = vi.fn(async (_name: string, run: () => Promise<boolean>) => {
-      // the other tab held the lock first and renewed
+      // The other tab held the lock first and renewed.
       localStorage.setItem('kurda_admin_token', 'new');
       localStorage.setItem('kurda_admin_refresh', 'ref-2');
       return run();
@@ -163,11 +163,11 @@ describe('keeping the session alive', () => {
     const fake = expiring('new', null);
     await expect(api('/admin/audit')).resolves.toEqual({ entries: [] });
     expect(request).toHaveBeenCalledWith('kurda-admin-renew', expect.any(Function));
-    // the refresh token it would have presented was already replaced: it is not sent
+    // The refresh token it would have presented was already replaced: it is not sent.
     expect(fake.calls.some((c) => c.path === '/auth/refresh')).toBe(false);
   });
 
-  it("sends this browser's device id with every call, the same one each time", async () => {
+  it('sends this browser’s device id with every call, the same one each time', async () => {
     const fake = fakeApi(on('GET', '/admin/audit', json({})));
     await api('/admin/audit');
     await api('/admin/audit');

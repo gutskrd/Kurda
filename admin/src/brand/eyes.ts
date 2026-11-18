@@ -1,15 +1,10 @@
 /**
- * Hevalo's eyes follow the pointer: the mouse, or on a touch screen the
- * finger while it touches and a moment after. With nothing to follow, the
- * pupils go back to where the icon has them, turned in towards each other.
- * Each pupil moves within the white of its eye and eases towards where it
- * looks. Nothing runs while the eyes are still, and they stay as drawn for
- * whoever asks the system for less motion.
- *
- * The measures are the icon's own, in pixels of the square it is cut to (360):
- * each eye's white is 58 by 68, and a pupil's middle may move this far from
- * the middle of its white.
+ * Hevalo's pupils follow the mouse, or a finger while it touches and a moment after, easing within each eye's white
+ * and going back to rest with nothing to follow. Nothing runs while they are still, and nothing moves under reduced
+ * motion. Measures are in pixels of the icon's 360 square: each white is 58 by 68, and REACH is how far a pupil moves.
  */
+import { reducedMotion } from '../ui/hooks';
+
 const EYE = { width: 58, height: 68 } as const;
 const REACH = { x: 13, y: 10 } as const;
 /** Where each pupil's middle is drawn in the icon, in its eye's white: the left eye's, then the right's. */
@@ -58,7 +53,7 @@ function frame(): void {
       pupil.x = to.x;
       pupil.y = to.y;
     }
-    // in the eye's own pixels on the screen, from where the icon draws the pupil
+    // In the eye's own pixels on the screen, from where the icon draws the pupil.
     const scale = box.width / EYE.width;
     const x = (pupil.x - pupil.rest.x) * scale;
     const y = (pupil.y - pupil.rest.y) * scale;
@@ -75,7 +70,7 @@ function wake(): void {
 }
 
 function look(event: PointerEvent): void {
-  // a finger is followed only while it touches the screen
+  // A finger is followed only while it touches the screen.
   if (event.pointerType === 'touch' && event.type === 'pointermove' && event.buttons === 0) return;
   window.clearTimeout(release);
   pointer = { x: event.clientX, y: event.clientY };
@@ -96,14 +91,10 @@ function leave(): void {
   wake();
 }
 
-const stillWanted = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/**
- * Lets one icon's pupils (`left`, `right`) follow the pointer; returns what
- * stops them. The page listens for the pointer only while an icon is there.
- */
+/** Lets one icon's pupils follow the pointer and returns what stops them; the page listens only while an icon is there. */
 export function followPointer(left: HTMLElement, right: HTMLElement): () => void {
-  if (typeof window === 'undefined' || stillWanted()) return () => undefined;
+  if (typeof window === 'undefined' || reducedMotion()) return () => undefined;
   const mine = [left, right].map((element, i) => {
     const rest = REST[i]!;
     return { element, eye: element.parentElement ?? element, rest, x: rest.x, y: rest.y };

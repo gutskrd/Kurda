@@ -4,7 +4,7 @@
  * drawn by @kurda/shared; colour here is the tiers' own and nothing else.
  */
 
-/* ---- the art ---------------------------------------------------------------- */
+/* ---- The art ---------------------------------------------------------------- */
 .art { display: inline-flex; flex: none; line-height: 0; }
 .art svg { display: block; width: auto; height: auto; max-width: 100%; }
 .art-missing {
@@ -20,7 +20,7 @@
 .pair-cell a, .rank-cell, .top-place + .user-link a { white-space: nowrap; }
 @media (pointer: coarse) { .pair-cell { row-gap: 28px; } }
 
-/* ---- the spread ------------------------------------------------------------- */
+/* ---- The spread ------------------------------------------------------------- */
 .spread-grid { display: grid; gap: 0 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
 .spread-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .spread-row { display: grid; grid-template-columns: 32px 64px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
@@ -37,10 +37,10 @@
 .tier-lutke { background: #c552ff; }
 .tier-sterk { background: #ffcf3a; }
 
-/* a row of tabs in a section's head (the top list's game) */
+/* A row of tabs in a section's head (the top list's game). */
 .section-actions .tabs { margin: 0; border-bottom: none; }
 
-/* ---- leagues ---------------------------------------------------------------- */
+/* ---- Leagues ---------------------------------------------------------------- */
 .week-nav {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px;
   margin: 0 0 16px;
@@ -66,7 +66,7 @@
   .week-nav-word { display: none; }
 }
 
-/* ---- badges ----------------------------------------------------------------- */
+/* ---- Badges ----------------------------------------------------------------- */
 .badge-tools { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 16px; margin: 0 0 14px; }
 .badge-tools .tabs { margin: 0; flex: 1 1 420px; min-width: 0; }
 .badge-tools .field { margin: 0; }
@@ -87,7 +87,7 @@
 .tier-dot-3 { background: #d6a21a; }
 .tier-dot-4 { background: #1aa79c; }
 
-/* ---- a person's ranks and badges -------------------------------------------- */
+/* ---- A person's ranks and badges -------------------------------------------- */
 .rank-cards { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
 .rank-card { display: grid; gap: 12px; align-content: start; padding: 16px; }
 .rank-card-head { display: flex; gap: 14px; align-items: center; }

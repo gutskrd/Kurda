@@ -3,14 +3,9 @@ import { api } from '../api';
 import { Badge, Button, Section, Table, UserLink, errorLine, useToast, type Column } from '../ui';
 
 /**
- * The check that every balance still equals the sum of its ledger, asked from
- * the Economy page (`GET /admin/economy/reconcile`).
- *
- * The server runs the same check every day and logs what it finds; this is for
- * the moment someone wants to know now. It reads the whole ledger, so it runs
- * when asked rather than whenever the page opens. It only reports: which of
- * the two numbers is wrong is a question for a person, and a balance is never
- * edited by hand — a correction goes through the ledger like any change.
+ * The check that every balance still equals its ledger (`GET /admin/economy/reconcile`), which the server also runs
+ * daily. It reads the whole ledger, so it runs only when asked, and it only reports: a correction goes through the
+ * ledger like any change.
  */
 
 interface Mismatch {

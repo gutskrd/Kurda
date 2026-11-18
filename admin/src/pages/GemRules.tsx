@@ -18,9 +18,8 @@ function cooldown(s: number): string {
 }
 
 /**
- * Gem rules (KUR-068): how many Gems each action earns, at most how many a
- * day, and how long before it pays again. A change applies to the next Gem
- * earned, for everyone, so it is asked first — it used to save on a click.
+ * Gem rules: what each action earns, the daily cap, and the wait before it pays again. A change applies to everyone's
+ * next Gem, so it is asked first.
  */
 export function GemRules(): React.JSX.Element {
   const toast = useToast();

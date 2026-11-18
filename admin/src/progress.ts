@@ -1,11 +1,7 @@
 /**
- * What the admin's Ranks, Seasons, Leagues and Badges pages read (contract 4,
- * §U Admin): the API's shapes that @kurda/shared does not carry, and the plain
- * words for its keys. Names are the Kurmancî ones with their English meaning
- * beside them ("Çiya (Mountain)"), as the apps show them; the admin is in
- * English, so nothing here is translated.
- *
- * Pure data and functions, tested without a browser.
+ * What the Ranks, Seasons, Leagues and Badges pages read: the API shapes @kurda/shared does not carry, and plain words
+ * for their keys. Names are the Kurmancî ones with the English meaning beside them ("Çiya (Mountain)"), as the apps
+ * show them; the console is in English, so nothing here is translated.
  */
 import {
   GAME_NAMES,
@@ -31,7 +27,7 @@ import {
 import { RANK_TOOL_ROLES } from './navigation';
 import type { Tone } from './ui';
 
-// ---- names -----------------------------------------------------------------------
+// ---- Names -----------------------------------------------------------------------
 
 /** Each ranked game by its own name, which is Kurmancî in every language the apps speak. */
 export const GAME_NAME: Readonly<Record<RankedGame, string>> = {
@@ -43,14 +39,7 @@ export const GAME_NAME: Readonly<Record<RankedGame, string>> = {
   'who-am-i': GAME_NAMES['who-am-i'],
 };
 
-/**
- * What a game is called on a row read back from the server. A row written
- * while Don't Say the Word! or Kurdish Bluff was still played (a season's
- * standings, an old rating) names a game that is not ranked any more: it is
- * named as it was and marked, rather than shown as a blank. What Would You
- * Say? was played alone and never ranked, so no rating names it; it is here
- * so that any row that does carry its name reads the same way.
- */
+/** Games no longer ranked, which old rows (a season's standings, an old rating) still name: shown by name and marked. */
 const RETIRED_GAME_NAME: Readonly<Record<string, string>> = {
   'dont-say': 'Don’t Say the Word! (no longer played)',
   bluff: 'Kurdish Bluff (no longer played)',
@@ -60,39 +49,39 @@ export function gameName(game: string): string {
   return (GAME_NAME as Readonly<Record<string, string>>)[game] ?? RETIRED_GAME_NAME[game] ?? game;
 }
 
-/** "Çiya (Mountain)" */
+/** "Çiya (Mountain)". */
 export function rankTierName(tier: RankTier): string {
   const t = tier === 'sterk' ? APEX_TIER : RANK_TIERS.find((r) => r.key === tier)!;
   return `${t.name} (${t.meaning})`;
 }
 
-/** The Kurmancî name alone, for a tight cell: "Çiya" */
+/** The Kurmancî name alone, for a tight cell: "Çiya". */
 export function rankTierShort(tier: RankTier): string {
   return tier === 'sterk' ? APEX_TIER.name : RANK_TIERS.find((r) => r.key === tier)!.name;
 }
 
 const ROMAN: Readonly<Record<Division, string>> = { 1: 'I', 2: 'II', 3: 'III' };
 
-/** "Çiya II", "Stêrk", or "Placing 2/5" while there is no tier yet */
+/** "Çiya II", "Stêrk", or "Placing 2/5" while there is no tier yet. */
 export function rankLine(tier: RankTier | null, division: Division | null, placement?: { played: number; of: number } | null): string {
   if (tier === null) return placement ? `Placing ${placement.played}/${placement.of}` : 'Placing';
   return division && tier !== 'sterk' ? `${rankTierShort(tier)} ${ROMAN[division]}` : rankTierShort(tier);
 }
 
-/** "Çem (River)" */
+/** "Çem (River)". */
 export function leagueTierName(tier: LeagueTier): string {
   const m = LEAGUE_TIER_META[tier];
   return `${m.nameKu} (${m.meaningEn})`;
 }
 
-/** "Payîz 2026 (Autumn)", or the id itself when it is not one */
+/** "Payîz 2026 (Autumn)", or the id itself when it is not one. */
 export function seasonName(id: string): string {
   if (!isSeasonId(id)) return id;
   const s = seasonById(id);
   return `${SEASON_LABELS[s.name].ku} ${s.year} (${SEASON_LABELS[s.name].en})`;
 }
 
-/** "Zêr (Gold)" for tier 3; tier 0 is "none" */
+/** "Zêr (Gold)" for tier 3; tier 0 is "none". */
 export function badgeTierName(tier: number): string {
   const key = BADGE_TIERS[tier - 1];
   if (!key) return 'None';
@@ -109,7 +98,7 @@ export const FAMILY_NAME: Readonly<Record<BadgeFamily, string>> = {
   secret: 'Secret',
 };
 
-/** "30 days", "all units" — what a tier asks for */
+/** "30 days", "all units" — what a tier asks for. */
 export function thresholdText(def: Pick<BadgeDef, 'unit'>, threshold: number | 'all'): string {
   if (threshold === 'all') return `all ${def.unit}`;
   return `${threshold.toLocaleString()} ${threshold === 1 ? singular(def.unit) : def.unit}`;
@@ -140,7 +129,7 @@ export function reasonText(reason: string | null): string {
   return (RANK_REASONS as readonly string[]).includes(reason) ? REASON_TEXT[reason as RankReason] : reason.replace(/-/g, ' ');
 }
 
-/** "+18", "−6", "±0" — the true minus sign, as the apps write a change */
+/** "+18", "−6", "±0" — the true minus sign, as the apps write a change. */
 export function signed(n: number): string {
   if (n === 0) return '±0';
   return n > 0 ? `+${n.toLocaleString()}` : `−${Math.abs(n).toLocaleString()}`;
@@ -152,9 +141,9 @@ export function percent(share: number): string {
   return `${p < 1 ? p.toFixed(1) : Math.round(p)}%`;
 }
 
-// ---- what the API sends -----------------------------------------------------------
+// ---- What the API sends -----------------------------------------------------------
 
-/** `GET /admin/ranks/top/:game` */
+/** `GET /admin/ranks/top/:game`. */
 export interface TopPlayer {
   userId: string;
   username: string;
@@ -164,7 +153,7 @@ export interface TopPlayer {
   lastRatedAt: string | null;
 }
 
-/** `GET /admin/seasons` */
+/** `GET /admin/seasons`. */
 export interface SeasonList {
   current: string;
   seasons: Array<{ id: string; closedAt: string | null; rewardedAt: string | null; rewards: number; gems: number }>;
@@ -192,20 +181,20 @@ export interface LeagueGroupRow {
   mergedInto: string | null;
 }
 
-/** `GET /admin/leagues?week=` */
+/** `GET /admin/leagues?week=`. */
 export interface LeagueOverview {
   weekKey: string;
   goalXp: number;
-  /** the settle that ran as this week began (it closed the week before) */
+  /** The settle that ran as this week began (it closed the week before). */
   settle: LeagueRunStatus | null;
-  /** the settle that closed this week; null until it has run */
+  /** The settle that closed this week; null until it has run. */
   closedBy: LeagueRunStatus | null;
   merge: LeagueRunStatus | null;
   groups: LeagueGroupRow[];
   tiers: Record<LeagueTier, number>;
 }
 
-/** `GET /admin/leagues/groups/:id` */
+/** `GET /admin/leagues/groups/:id`. */
 export interface LeagueGroupDetail {
   id: string;
   weekKey: string;
@@ -214,7 +203,7 @@ export interface LeagueGroupDetail {
   standings: Array<LeagueStanding & { username: string }>;
 }
 
-/** `GET /admin/badges` */
+/** `GET /admin/badges`. */
 export interface BadgeCatalogue {
   families: readonly BadgeFamily[];
   badges: Array<BadgeDef & { holders: number[]; rarity: number[] | null }>;
@@ -222,27 +211,25 @@ export interface BadgeCatalogue {
   activeUsers: number | null;
 }
 
-/** `GET /admin/users/:id/badges` */
+/** `GET /admin/users/:id/badges`. */
 export interface UserBadges {
   badges: Array<{ key: string; tier: number; progress: number; floorTier: number; capTier: number | null; earnedAt: string | null }>;
   actions: Array<{ key: string; action: 'award' | 'revoke'; tier: number; reason: string; adminId: string | null; at: string }>;
 }
 
-// ---- reading a run ----------------------------------------------------------------
+// ---- Reading a run ----------------------------------------------------------------
 
 export interface RunState {
-  /** a word for the badge */
+  /** A word for the badge. */
   label: string;
   tone: Tone;
-  /** what it did, or what went wrong */
+  /** What it did, or what went wrong. */
   detail: string | null;
 }
 
 /**
- * Where a settle or a merge stands. A run that started and has neither
- * finished nor failed is running — or stopped half way (a crash, a deploy),
- * which looks the same from here; after an hour it says so, because then a
- * re-run with "force" is what finishes it.
+ * Where a settle or a merge stands. A started run that has neither finished nor failed may have stopped half way (a
+ * crash, a deploy); after an hour it says so, since a re-run with "force" is then what finishes it.
  */
 export function runState(run: LeagueRunStatus | null, now: Date = new Date()): RunState {
   if (!run) return { label: 'Not run yet', tone: 'neutral', detail: null };
@@ -256,7 +243,7 @@ export function runState(run: LeagueRunStatus | null, now: Date = new Date()): R
 const n = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 const plural = (count: number, one: string, many: string): string => `${count.toLocaleString()} ${count === 1 ? one : many}`;
 
-/** "Settled 12 groups · 40 personal weeks · 3 told of a promotion" */
+/** "Settled 12 groups · 40 personal weeks · 3 told of a promotion". */
 export function runResult(run: LeagueRunStatus): string {
   const r = run.result ?? {};
   if (run.kind === 'merge') return `Merged ${plural(n(r.merged), 'small group', 'small groups')}`;
@@ -266,9 +253,9 @@ export function runResult(run: LeagueRunStatus): string {
   return parts.join(' · ');
 }
 
-// ---- weeks ------------------------------------------------------------------------
+// ---- Weeks ------------------------------------------------------------------------
 
-/** "13 Oct – 19 Oct 2026" for the week that starts on Monday `weekKey` (UTC dates) */
+/** "13 Oct – 19 Oct 2026" for the week that starts on Monday `weekKey` (UTC dates). */
 export function weekLabel(weekKey: string): string {
   const start = new Date(`${weekKey}T00:00:00Z`);
   const end = new Date(start.getTime() + 6 * 86_400_000);
@@ -277,10 +264,7 @@ export function weekLabel(weekKey: string): string {
   return `${day(start, false)} – ${day(end, true)}`;
 }
 
-/**
- * A group's XP band (`xpBand` in @kurda/shared: an index into XP_BANDS) as
- * the last four weeks' XP it stands for: "under 150", "150–599", "3,000+".
- */
+/** A group's XP band (an index into XP_BANDS) as the four weeks' XP it stands for: "under 150", "150–599", "3,000+". */
 export function xpBandText(band: number): string {
   const lo = band === 0 ? 0 : XP_BANDS[band - 1];
   const hi = XP_BANDS[band];
@@ -289,7 +273,7 @@ export function xpBandText(band: number): string {
   return hi === undefined ? `${lo.toLocaleString()}+` : `${lo.toLocaleString()}–${(hi - 1).toLocaleString()}`;
 }
 
-/** "UTC+3", "UTC−5:30" for a group's clock */
+/** "UTC+3", "UTC−5:30" for a group's clock. */
 export function utcOffset(minutes: number): string {
   if (minutes === 0) return 'UTC';
   const sign = minutes > 0 ? '+' : '−';
@@ -308,11 +292,7 @@ export function reasonProblem(value: string): string | null {
   return null;
 }
 
-/**
- * Whether these staff roles may use the rank, league, season and badge tools:
- * the legacy `admin` role or `superadmin`, as every one of their routes is
- * guarded (RANK_TOOL_ROLES).
- */
+/** Whether these staff roles may use the rank, league, season and badge tools, as their routes check (RANK_TOOL_ROLES). */
 export function holdsRankTools(staffRoles: readonly string[]): boolean {
   return RANK_TOOL_ROLES.some((r) => staffRoles.includes(r));
 }

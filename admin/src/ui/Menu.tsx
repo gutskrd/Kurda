@@ -1,7 +1,6 @@
 /**
- * A "More" menu: the actions a row has beyond its main one, so a table row on
- * a phone is not a pile of six buttons. A real menu for the keyboard — arrow
- * keys move, Escape closes and returns to the button, a click outside closes.
+ * A "More" menu for a row's actions beyond its main one. A real menu for the keyboard: arrows move, Escape closes and
+ * returns to the button, a click outside closes.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from './icons';
@@ -19,9 +18,9 @@ export function ActionMenu({
   buttonText,
 }: {
   items: ReadonlyArray<MenuItem>;
-  /** the button's accessible name: "More actions for heval" */
+  /** The button's accessible name: "More actions for heval". */
   label?: string;
-  /** visible text on the button; an icon alone when left out */
+  /** Visible text on the button; an icon alone when left out. */
   buttonText?: string;
 }): React.JSX.Element | null {
   const [open, setOpen] = useState(false);

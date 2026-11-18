@@ -8,13 +8,9 @@ import { Drawer, Icon } from '../ui';
 import { HevaloMark } from '../brand/HevaloMark';
 
 /**
- * The admin's frame: the nav and the page (KUR-099).
- *
- * On a wide screen the nav is a sidebar; on a phone or a tablet it is a menu
- * button in a slim top bar that opens the same nav as a drawer. Either way the
- * nav is grouped (Overview · Record audio · People · Moderation · Content ·
- * Games · Ranks & rewards · Economy · Settings), shows only what this login can open, and has a
- * box to find a page by name — there are two dozen of them.
+ * The console's frame: the nav and the page. The nav is a sidebar on a wide screen and a drawer behind a top bar's
+ * menu button on a phone or tablet; either way it is grouped, shows only what this login can open, and has a box to
+ * find a page by name.
  */
 export function Shell({ route, children, onSignOut }: { route: Route; children: ReactNode; onSignOut: () => void }): React.JSX.Element {
   const session = useSession();
@@ -25,8 +21,8 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
   const counts = useNavCounts(session.capabilities.includes('moderation.act'));
   const routeKey = `${route.page}/${route.rest.join('/')}`;
 
-  // a new page: the menu closes, the tab says where you are, and a screen
-  // reader starts at the new page's heading rather than where the click was
+  // A new page: the menu closes, the tab says where you are, and a screen
+  // reader starts at the new page's heading rather than where the click was.
   const first = useRef(true);
   useEffect(() => {
     setMenuOpen(false);
@@ -51,7 +47,7 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
         className="skip-link"
         href="#main"
         onClick={(e) => {
-          // the address is the router's: move focus without touching it
+          // The address is the router's: move focus without touching it.
           e.preventDefault();
           document.getElementById('main')?.focus();
         }}
@@ -107,7 +103,7 @@ function Brand(): React.JSX.Element {
 }
 
 interface NavCounts {
-  /** open moderation cases, and whether any is urgent or overdue */
+  /** Open moderation cases, and whether any is urgent or overdue. */
   moderation?: { open: number; urgent: boolean };
 }
 
@@ -148,7 +144,7 @@ function NavPanel({
   active: NavEntry | undefined;
   counts: NavCounts;
   onPick?: () => void;
-  /** "/" jumps to the search box — only for the sidebar, which is always on screen */
+  /** "/" jumps to the search box — only for the sidebar, which is always on screen. */
   shortcut?: boolean;
 }): React.JSX.Element {
   const [query, setQuery] = useState('');

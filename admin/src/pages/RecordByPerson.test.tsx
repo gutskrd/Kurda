@@ -14,7 +14,7 @@ import { failure, fakeApi, json, on, type Route } from '../test/fetch';
 import { renderUi } from '../test/render';
 import { RecordByPerson } from './RecordByPerson';
 
-// the microphone and the trimming are the browser's: here a take is three bytes, ready at once
+// The microphone and the trimming are the browser's: here a take is three bytes, ready at once.
 vi.mock('../micCapture', async (original) => ({
   ...(await original<typeof import('../micCapture')>()),
   micPermission: async () => 'granted',
@@ -130,7 +130,7 @@ beforeEach(() => {
   try {
     localStorage.clear();
   } catch {
-    // nothing to clear
+    // Nothing to clear.
   }
 });
 
@@ -198,7 +198,7 @@ describe('the people', () => {
     const user = userEvent.setup();
     const saved: Blob[] = [];
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: (b: Blob) => (saved.push(b), 'blob:script'), revokeObjectURL: () => {} }));
-    // the browser saves the file; here the link is only clicked
+    // The browser saves the file; here the link is only clicked.
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     show(null, on('GET', '/admin/recording/people', json({ people: [XEZAL], mine: ['xezo'], ownVoicesOnly: true })), xezalLines);
     await user.click(await screen.findByRole('button', { name: 'Download script' }));
@@ -226,11 +226,11 @@ describe('recording one person’s lines', () => {
     expect(within(here).getByText('Hamo says')).toBeInTheDocument();
     expect(within(here).getByText('Xezo, binêre!')).toBeInTheDocument();
     expect(within(here).getByText('This map is old!')).toBeInTheDocument();
-    // where it comes from, then every place it is said
+    // Where it comes from, then every place it is said.
     expect(within(here).getAllByText('Unit 3 · Lesson 2 · conversation ‘Nexşeya kevn’, line 4')).toHaveLength(2);
     expect(within(here).getByText('Detektîf · case ‘In the attic’ · overheard 1 — draft')).toBeInTheDocument();
     expect(within(here).getByText('Said in 2 places: one take serves them all')).toBeInTheDocument();
-    // every page was read: the list has the line from the second one
+    // Every page was read: the list has the line from the second one.
     expect(screen.getByRole('navigation', { name: 'Lines' })).toHaveTextContent('Ez li malê me.');
   });
 
@@ -266,13 +266,13 @@ describe('recording one person’s lines', () => {
     expect(await within(stage()).findByText('Listen back · 1.2 s')).toBeInTheDocument();
     await user.click(within(stage()).getByRole('button', { name: 'Keep' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
-    // a conversation's line under its conversation and part, said by its character; this take cannot be timed, so no timeline
+    // A conversation's line under its conversation and part, said by its character; this take cannot be timed, so no timeline.
     expect(api.calls.find((c) => c.method === 'PUT')!.path).toBe(
       `/admin/lesson-audio?text=${encodeURIComponent('Ev nexşe kevn e!')}&line=${encodeURIComponent(`${CONV}:1`)}&speaker=xezo`,
     );
     expect(await screen.findByRole('article', { name: 'Ez li malê me.' })).toBeInTheDocument();
     expect(within(stage()).getByText('Draft')).toBeInTheDocument();
-    // what is left counts the take kept
+    // What is left counts the take kept.
     expect(screen.getByText('1 line left of 3')).toBeInTheDocument();
   });
 
@@ -307,7 +307,7 @@ describe('recording one person’s lines', () => {
     await user.click(within(list).getByRole('button', { name: /Ez li malê me\./ }));
     expect(await screen.findByRole('article', { name: 'Ez li malê me.' })).toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: /^Done/ }));
-    // the line on screen stays listed; the done one joins it
+    // The line on screen stays listed; the done one joins it.
     expect(within(list).getAllByRole('button').map((b) => b.textContent)).toEqual([expect.stringContaining('Silav, xalo!'), expect.stringContaining('Ez li malê me.')]);
     await user.click(screen.getByRole('tab', { name: /^All/ }));
     await user.selectOptions(screen.getByLabelText('Where'), 'kurmanji-road:3');
@@ -319,7 +319,7 @@ describe('recording one person’s lines', () => {
       expect.stringContaining('Ev nexşe kevn e!'),
       expect.stringContaining('Ez li malê me.'),
     ]);
-    // a recorded line plays back what was kept, and says by whom
+    // A recorded line plays back what was kept, and says by whom.
     await user.click(within(list).getByRole('button', { name: /Silav, xalo!/ }));
     expect(await within(stage()).findByText(/Recorded @rojda · 0\.9 s/)).toBeInTheDocument();
     expect(within(stage()).getByRole('button', { name: 'Record it again' })).toBeInTheDocument();

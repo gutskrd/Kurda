@@ -53,7 +53,7 @@ describe('one person’s lines', () => {
     expect(LINES.filter((l) => matchesFilters(l, { status: 'all', section: 'kurmanji-road:2', source: 'all' })).map((l) => l.id)).toEqual(['d']);
     expect(LINES.filter((l) => matchesFilters(l, { status: 'all', section: null, source: 'published' })).map((l) => l.id)).toEqual(['a', 'c']);
     expect(LINES.filter((l) => matchesFilters(l, { status: 'all', section: null, source: 'draft' })).map((l) => l.id)).toEqual(['b', 'd']);
-    // the counts beside the status tabs follow the other filters
+    // The counts beside the status tabs follow the other filters.
     expect(counts(LINES, { ...DEFAULT_FILTERS, source: 'published' })).toEqual({ all: 2, done: 1, todo: 1 });
     expect(tallyOf(LINES)).toEqual({ total: 4, done: 2, todo: 2 });
     expect(sectionsOf(LINES).map((s) => [s.id, s.todo])).toEqual([
@@ -72,7 +72,7 @@ describe('one person’s lines', () => {
 
   it('picks up where the person left off, or at the next line still to record', () => {
     expect(resumeAt(LINES, 'c')?.id).toBe('c');
-    // that one was recorded since (by them, or someone else): the next still to record after it
+    // That one was recorded since (by them, or someone else): the next still to record after it.
     expect(resumeAt(LINES, 'a')?.id).toBe('b');
     expect(resumeAt(LINES, 'gone')?.id).toBe('b');
     expect(resumeAt(LINES, null)?.id).toBe('b');
@@ -87,7 +87,7 @@ describe('one person’s lines', () => {
     const letter = line({ id: 'z', store: 'alphabet', key: 'ckb:sound:ḧe', text: 'حا', dialect: 'ckb', voice: 'narrator-ckb', speaker: null });
     expect(uploadPath(letter)).toBe(`/admin/alphabet/audio?key=${encodeURIComponent('ckb:sound:ḧe')}`);
     expect(uploadVoice(said, { kind: 'character' })).toEqual({ speaker: 'hamo', text: 'Sêv…' });
-    // a narrator's take leaves whoever is drawn for it as it was
+    // A narrator's take leaves whoever is drawn for it as it was.
     expect(uploadVoice(letter, { kind: 'narrator' })).toEqual({ speaker: undefined, text: 'حا', script: 'arabic' });
     expect(uploadVoice(line({ id: 'w', text: 'Were!', speaker: null }), { kind: 'cast' })).toEqual({ speaker: null, text: 'Were!' });
   });

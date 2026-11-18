@@ -1,9 +1,4 @@
-/**
- * A moment, the way a person scans a list for it ("3 h ago", "yesterday"),
- * with the exact date and time on hover and in the markup. Pages used to print
- * `toLocaleString()` in full, so every row's date was a wall of digits and the
- * recent ones did not stand out.
- */
+/** A moment as a person scans a list for it ("3 h ago", "yesterday"), with the exact time on hover and in the markup. */
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
@@ -45,10 +40,7 @@ export function duration(seconds: number): string {
   return `${Math.round(hours / 24)} days`;
 }
 
-/**
- * A wait in words, rounded up so it is never shorter than it says: "less than
- * a minute", "5 minutes", "2 hours" — how long a lockout has left.
- */
+/** A wait in words, rounded up so it is never shorter than said: "less than a minute", "5 minutes", "2 hours". */
 export function waitText(seconds: number): string {
   if (seconds < 60) return 'less than a minute';
   const minutes = Math.ceil(seconds / 60);
@@ -66,11 +58,7 @@ export function clockTime(seconds: number): string {
   return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
 }
 
-/**
- * A moment as an <input type="datetime-local"> wants it: local time, to the
- * minute ("2026-10-13T18:30"). The input has no time zone, so an ISO string
- * put in as it is would show the UTC hour as if it were local.
- */
+/** A moment for a datetime-local input, in local time to the minute; the input has no zone, so ISO would show UTC. */
 export function toLocalInput(value: string | Date): string {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return '';
@@ -89,7 +77,7 @@ export function Time({
   mode = 'relative',
 }: {
   value: string | Date | null | undefined;
-  /** relative: "3 h ago"; date: "12 Oct"; absolute: date and time in full */
+  /** Relative: "3 h ago"; date: "12 Oct"; absolute: date and time in full. */
   mode?: 'relative' | 'date' | 'absolute';
 }): React.JSX.Element {
   if (!value) return <span className="subtle">—</span>;

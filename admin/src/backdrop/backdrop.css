@@ -1,12 +1,6 @@
 /*
- * The violet ribbons behind every page (backdrop/Backdrop.tsx), fixed on black
- * under the scrim. Until they are drawn, and wherever they cannot be, a dark
- * violet glow across the middle stands in for them.
- *
- * As tall as the screen is at its largest (lvh), not as tall as what is left
- * of it: a phone's keyboard, or its browser bar sliding away, changes the
- * second and not the first, so the ribbons stay exactly where they are while
- * someone types and scrolls.
+ * The ribbons behind every page (backdrop/Backdrop.tsx), with a violet glow standing in until or where they cannot be
+ * drawn. As tall as the screen at its largest (lvh), so a phone's keyboard or browser bar does not move them.
  */
 .ribbons {
   position: fixed;

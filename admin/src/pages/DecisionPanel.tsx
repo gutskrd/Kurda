@@ -38,16 +38,9 @@ import { DurationChips } from './SanctionParts';
 export type SetDraft = (change: (d: DecisionDraft) => DecisionDraft) => void;
 
 /**
- * The decision: was a rule broken, which one, what happens to whom — the
- * reported person, and any reporter who reported in bad faith — and what
- * each of them will read.
- *
- * What they will read is the server's own preview of the exact messages
- * (`preview: true`), asked again a moment after every change, so the
- * moderator sees the real notice — with its end date, its "a person reviewed
- * this" and its "ask for a review" — before anything is sent. The preview
- * also runs every rule the decision would, so a decision the server would
- * refuse says why here, not after the click.
+ * The decision: whether a rule was broken, which, what happens to the reported person and any bad-faith reporter, and
+ * what each will read. That is the server's own preview (`preview: true`), asked again after every change, which also
+ * runs every rule, so a refusal shows here before the click.
  */
 export function DecisionPanel({
   detail,
@@ -61,12 +54,12 @@ export function DecisionPanel({
   detail: CaseDetail;
   draft: DecisionDraft;
   setDraft: SetDraft;
-  /** why this moderator cannot decide right now (another holds the claim) */
+  /** Why this moderator cannot decide right now (another holds the claim). */
   locked: string | null;
   onDecided: () => void;
-  /** a person's name in the decision: "@heval" */
+  /** A person's name in the decision: "@heval". */
   names: (target: DecisionTarget) => string;
-  /** off inside the phone's sheet, whose own title says "Decision" */
+  /** Off inside the phone's sheet, whose own title says "Decision". */
   heading?: boolean;
 }): React.JSX.Element {
   const c = detail.case;
@@ -78,7 +71,7 @@ export function DecisionPanel({
   const decidable = open && c.status !== 'needs_second_approval';
   const actioned = draft.outcome === 'actioned';
   const canRemove = contentTarget(c.targetType, c.source);
-  // a copyright notice about a post still up is upheld only by taking it down (CONTENT_REMOVAL_REQUIRED)
+  // A copyright notice about a post still up is upheld only by taking it down (CONTENT_REMOVAL_REQUIRED).
   const problems = draftProblems(draft, names, { takedown: needsTakedown(c, canRemove) });
   const preview = usePreview(c.id, draft, decidable && !locked && problems.length === 0);
   const reporters = useMemo(() => {
@@ -100,12 +93,12 @@ export function DecisionPanel({
 
   async function decide(): Promise<void> {
     await act('decide', async () => {
-      // the preview again, now, so the confirmation describes exactly this decision
+      // The preview again, now, so the confirmation describes exactly this decision.
       const check = await api<DecideResult>(`/admin/moderation/cases/${c.id}/decide`, {
         method: 'POST',
         body: decisionRequest(draft, { preview: true }),
       });
-      // every name typed: a decision may ban two people for good (the reported person and a bad-faith reporter)
+      // Every name typed: a decision may ban two people for good (the reported person and a bad-faith reporter).
       const confirmUsernames: string[] = [];
       for (const ban of check.permanentBans) {
         const yes = await dialogs.confirm({
@@ -411,7 +404,7 @@ function ActionRow({
           hours={a.durationHours}
           onPick={(h) =>
             onChange((x) => {
-              // "Permanent" on a suspension makes it a ban: its words follow, unless typed
+              // "Permanent" on a suspension makes it a ban: its words follow, unless typed.
               const next = withDuration(x.kind, h);
               const reword = !x.statementEdited && next.kind !== x.kind;
               return { ...x, ...next, statement: reword ? defaultStatement(next.kind, policy, !forSubject) : x.statement };
@@ -565,10 +558,8 @@ function PreviewBox({ state, names }: { state: PreviewState; names: (t: Decision
 }
 
 /**
- * Child sexual abuse material: the playbook, then the one button that hides
- * it everywhere, keeps it as evidence off the public storage, closes the
- * account for good and opens the filing task. Nothing leaves Hevalo by
- * itself — a moderator files the report with the hotline.
+ * Child sexual abuse material: the playbook, then one button that hides it, keeps it as evidence off public storage,
+ * closes the account and opens the filing task. A moderator files the report with the hotline; nothing is sent by itself.
  */
 function CsamDialog({
   open,

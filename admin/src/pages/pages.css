@@ -1,10 +1,6 @@
-/**
- * Styles for the pages themselves: the parts a page has that the kit
- * (ui/kit.css) does not — the dashboard's lists, the 2FA screens, the lesson
- * editor's exercise cards. Built on the tokens in styles.css.
- */
+/** Styles for what pages have beyond the kit (ui/kit.css): the dashboard's lists, the 2FA screens, the exercise cards. */
 
-/* a link that looks like a button: "Open the queue", "Record what's missing" */
+/* A link that looks like a button: "Open the queue", "Record what's missing". */
 .button-link {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-height: var(--control-h); padding: 7px 14px; border-radius: var(--radius-sm);
@@ -15,7 +11,7 @@
 .button-link.primary { background: var(--primary); color: var(--primary-ink); border-color: transparent; }
 .button-link.primary:hover { background: var(--primary-hover); color: var(--primary-ink); }
 
-/* ---- the dashboard ------------------------------------------------------------ */
+/* ---- The dashboard ------------------------------------------------------------ */
 .stats.is-flat { margin-bottom: 0; }
 .stats.is-flat .stat { box-shadow: none; background: var(--surface-strong); border-color: var(--hairline); }
 .section .stats { margin-bottom: 0; }
@@ -38,7 +34,7 @@
 }
 
 .dash-facts { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: var(--text-2); }
-/* a finger's target is taller than a line (kit.css): lines with links in them are spaced to fit one each */
+/* A finger's target is taller than a line (kit.css): lines with links in them are spaced to fit one each. */
 @media (pointer: coarse) { .dash-facts { row-gap: 28px; margin-top: 22px; } }
 .dash-facts .is-bad strong { color: var(--bad); }
 .dash-facts .is-warn strong { color: var(--warn); }
@@ -56,24 +52,22 @@
   .dash-audit-action { grid-column: 1 / -1; white-space: normal; }
 }
 
-/* ---- the sign-in wheel (pages/SignIn) -------------------------------------------- */
-/* The steps of signing in on one card, turning past like the faces of a wheel: each face
-   turns about an axis behind the card, so it rises and tips away as the next comes up from
-   below (and back again). Above Hevalo, the line of steps shows where you are. */
+/* ---- The sign-in wheel (pages/SignIn) -------------------------------------------- */
+/* The sign-in steps on one card: each face turns about an axis behind the card, tipping away as the next rises. */
 .login-column { width: 452px; max-width: 100%; }
 .login-column > .login-stage { width: 100%; scroll-margin-top: 8px; }
-/* the console's top bar keeps scrolled-to things below it; the sign-in has no top bar */
+/* The console's top bar keeps scrolled-to things below it; the sign-in has no top bar. */
 :root:has(.login-column) { scroll-padding-top: 0; }
 @media (max-width: 520px) {
   .login-column { width: 100%; }
-  /* a title on one line keeps the box being typed in close under Hevalo, so both fit above a phone's keyboard */
+  /* A title on one line keeps the box being typed in close under Hevalo, so both fit above a phone's keyboard. */
   .login-column .login-title { font-size: 30px; }
 }
 .wheel-head { margin: 0 0 18px; }
 .wheel-head .login-top.is-centred { margin-bottom: 16px; }
 
-/* one line of light from the first step to the one on show: it flows as it goes, a glint
-   runs along it, its end glows, and each step lights as the light reaches it */
+/* One line of light from the first step to the one on show: it flows as it goes, a glint
+   runs along it, its end glows, and each step lights as the light reaches it. */
 .wheel-rail { --at: 0; position: relative; max-width: 380px; margin: 0 auto; }
 .wheel-rail ol { position: relative; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; }
 .wheel-track { position: absolute; top: 8px; left: 12.5%; right: 12.5%; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.14); }
@@ -93,7 +87,7 @@
   background: radial-gradient(circle, #fff 0 22%, rgba(201, 178, 255, 0.75) 40%, rgba(201, 178, 255, 0) 72%);
   animation: rail-glow 1.8s ease-in-out infinite;
 }
-/* while the session is checked, a glint runs on from the light's end towards the next step */
+/* While the session is checked, a glint runs on from the light's end towards the next step. */
 .wheel-rail.is-busy .wheel-track::after {
   content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--at) * 100%); width: calc(100% / 3); border-radius: inherit;
   background: linear-gradient(90deg, transparent, rgba(225, 212, 255, 0.95), transparent) no-repeat;
@@ -117,7 +111,7 @@
 @keyframes rail-tick { from { transform: scale(0) rotate(-30deg); } }
 .wheel-rail li.is-done .wheel-dot { background: #fff; border-color: #fff; box-shadow: 0 0 10px rgba(201, 178, 255, 0.55); }
 .wheel-rail li.is-now .wheel-dot { background: #fff; border-color: #fff; transform: scale(1.2); box-shadow: 0 0 0 4px rgba(201, 178, 255, 0.2), 0 0 18px rgba(201, 178, 255, 0.85); }
-/* the step on show breathes */
+/* The step on show breathes. */
 .wheel-rail li.is-now .wheel-dot::before {
   content: ''; position: absolute; inset: -8px; border-radius: 50%;
   background: radial-gradient(circle, rgba(201, 178, 255, 0.5), rgba(201, 178, 255, 0) 70%);
@@ -130,7 +124,7 @@
 
 .wheel { position: relative; perspective: 1100px; transition: height 380ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 .wheel-face { transform-origin: 50% 50% -170px; backface-visibility: hidden; }
-/* the face leaving is gone from sight before the next is half up, so the two are never read over each other */
+/* The face leaving is gone from sight before the next is half up, so the two are never read over each other. */
 .wheel-face.is-leaving { position: absolute; top: 0; left: 0; right: 0; pointer-events: none; animation: wheel-away 380ms cubic-bezier(0.55, 0, 0.75, 0.35) both; }
 .wheel-face.is-entering { animation: wheel-up 560ms cubic-bezier(0.16, 1, 0.3, 1) 110ms both; }
 .wheel-face.is-leaving.is-back { animation-name: wheel-away-back; }
@@ -147,7 +141,7 @@
   .wheel-face.is-entering, .wheel-face.is-entering.is-back { animation: wheel-fade 160ms ease both; }
 }
 
-/* the email the password goes with: a tap goes back to change it */
+/* The email the password goes with: a tap goes back to change it. */
 .wheel-who { display: flex; justify-content: center; margin: -4px 0 22px; }
 .wheel-chip {
   display: inline-flex; align-items: center; gap: 10px; max-width: 100%; min-height: 40px; padding: 5px 6px 5px 16px;
@@ -169,7 +163,7 @@
 .gate-text { margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 .gate-qr { display: flex; justify-content: center; margin: 0 0 20px; }
 .qr { background: #fff; border-radius: 14px; padding: 8px; }
-/* the key typed by hand, in the inputs' glass */
+/* The key typed by hand, in the inputs' glass. */
 .gate-card .secret {
   margin: -10px 0 20px; color: #fff;
   border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.24);
@@ -182,9 +176,8 @@
 .gate-form .login-msg { margin: 0; text-align: left; }
 .gate-form .login-field-error { margin: 0; }
 .gate-form .login-submit { margin-top: 10px; }
-/* six digits, spaced and centred; the spacing also trails the last digit, so it is taken off the right.
-   Larger than the 16 px a phone holds every field to (styles.css): that floor is only there because a
-   field smaller than 16 px makes iOS zoom in, and one larger never does. */
+/* Six digits, spaced and centred, the trailing spacing taken off the right. Above the 16 px touch floor
+   (styles.css), which exists only because iOS zooms on smaller fields. */
 :root .gate-form .login-input input.code-input {
   padding: 0 12px 0 calc(12px + 0.35em);
   font-size: 24px; letter-spacing: 0.35em; text-align: center; font-variant-numeric: tabular-nums;
@@ -199,7 +192,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .gate-busy { animation: none; } }
 
-/* ---- a search box in a section's head, and links in tables ------------------- */
+/* ---- A search box in a section's head, and links in tables ------------------- */
 .search-box { position: relative; min-width: 220px; }
 .search-box .icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
 .search-box input { padding-left: 34px; }
@@ -208,7 +201,7 @@
 .icon-button.is-danger:hover { background: var(--bad-bg); }
 @media (max-width: 560px) { .search-box { min-width: 0; width: 100%; } }
 
-/* ---- the lesson editor ----------------------------------------------------------- */
+/* ---- The lesson editor ----------------------------------------------------------- */
 .lesson-editor { padding-bottom: 72px; }
 .ex-list-cards { display: grid; gap: 14px; }
 .ex-card { padding: 0; box-shadow: none; background: var(--surface-strong); border-color: var(--hairline); }
@@ -228,7 +221,7 @@
 .ex-list-row { display: flex; align-items: center; gap: 8px; }
 .ex-list-row > input:not([type='radio']) { flex: 1 1 auto; min-width: 0; }
 .ex-list-row > input[type='radio'], .ex-pick > input[type='radio'] { width: 20px; height: 20px; }
-/* the right answer's radio: the whole square around it takes the tap, without moving the row */
+/* The right answer's radio: the whole square around it takes the tap, without moving the row. */
 .ex-pick { display: inline-grid; place-items: center; flex: none; cursor: pointer; }
 @media (pointer: coarse) { .ex-pick { width: var(--target); height: var(--target); margin: -12px; } }
 .ex-list-n { min-width: 20px; text-align: center; color: var(--text-dim); font-size: 12.5px; font-variant-numeric: tabular-nums; }
@@ -250,7 +243,7 @@
   .ex-pair > input { flex: 1 1 calc(50% - 30px); }
 }
 
-/* the buttons that move a draft on: always in reach, at the foot of the screen */
+/* The buttons that move a draft on: always in reach, at the foot of the screen. */
 .editor-bar {
   position: sticky; bottom: 0; z-index: 30;
   display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px;
@@ -265,7 +258,7 @@
   .editor-bar button { flex: 1 1 auto; }
 }
 
-/* ---- the audio studio ---------------------------------------------------------- */
+/* ---- The audio studio ---------------------------------------------------------- */
 .aa-summary { display: grid; gap: 12px; margin-bottom: 16px; }
 .aa-summary-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px 16px; }
 .aa-summary-head > div { flex: 1 1 260px; display: grid; gap: 2px; }
@@ -277,7 +270,7 @@
 .la-add-form { display: flex; gap: 8px; align-items: stretch; }
 .la-add-form input { flex: 1 1 auto; min-width: 0; font-size: 16px; }
 .aa-actions button { min-height: var(--target); }
-/* the plan: who records what, filtered by course and voice, each character's progress and script */
+/* The plan: who records what, filtered by course and voice, each character's progress and script. */
 .la-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin: 2px 0 12px; }
 .la-course-pick { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
 .la-course-pick label { font-size: 13px; font-weight: 600; color: var(--text-2); }
@@ -307,7 +300,7 @@
 .la-script-title { margin: 0; font-size: 19px; }
 .la-script-links { display: flex; flex-wrap: wrap; gap: 6px 12px; }
 @media (max-width: 899px) {
-  /* on a phone the recorder comes first; a tap on a sound brings it back into view */
+  /* On a phone the recorder comes first; a tap on a sound brings it back into view. */
   .aa-layout { display: flex; flex-direction: column; }
   .aa-studio { order: -1; scroll-margin-top: calc(var(--topbar-bottom) + 8px); }
 }
@@ -320,7 +313,7 @@
   .la-course-pick select { flex: 1 1 auto; }
 }
 
-/* ---- shared bits of the converted pages ----------------------------------------- */
+/* ---- Shared bits of the converted pages ----------------------------------------- */
 .badges { display: inline-flex; flex-wrap: wrap; gap: 6px; }
 .section-text { margin: 0; max-width: 72ch; line-height: 1.6; color: var(--text-2); }
 .plain-list { margin: 6px 0 0; padding-inline-start: 18px; display: grid; gap: 4px; line-height: 1.5; }
@@ -330,13 +323,13 @@
 .is-negative { color: var(--bad); }
 .load-more { display: flex; justify-content: center; padding: 14px; border-top: 1px solid var(--separator); }
 
-/* a detail's facts: a term and its value, a row each, stacking on a narrow phone */
+/* A detail's facts: a term and its value, a row each, stacking on a narrow phone. */
 .facts { margin: 0; display: grid; }
 .facts > div, .facts-row { display: grid; grid-template-columns: minmax(110px, 34%) minmax(0, 1fr); gap: 4px 12px; padding: 9px 0; border-bottom: 1px solid var(--separator); }
 .facts dt { color: var(--text-dim); font-size: 13px; }
 .facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 420px) { .facts > div, .facts-row { grid-template-columns: 1fr; } }
-/* a copyright notice on a case: its reference and where it stands, then every field (CaseEvidence.tsx) */
+/* A copyright notice on a case: its reference and where it stands, then every field (CaseEvidence.tsx). */
 .copyright-notice > .drawer-sub:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
 .copyright-notice + .copyright-notice { margin-top: 20px; padding-top: 4px; border-top: 1px solid var(--separator); }
 .code-block {
@@ -344,7 +337,7 @@
   font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow-y: auto;
 }
 
-/* a checkbox and its label inside a table cell or a toolbar */
+/* A checkbox and its label inside a table cell or a toolbar. */
 .inline-check { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; cursor: pointer; font-weight: 500; }
 .inline-check input { margin: 0; }
 @media (pointer: coarse), (max-width: 760px) {
@@ -352,19 +345,19 @@
   .inline-check input { width: 22px; height: 22px; }
 }
 
-/* what sits above a table: a search and a filter or two */
+/* What sits above a table: a search and a filter or two. */
 .table-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border-bottom: 1px solid var(--separator); }
 .table-tools .search-box { flex: 1 1 240px; }
 .table-tools select { width: auto; }
 @media (max-width: 560px) { .table-tools select { flex: 1 1 100%; } }
 
-/* one field and its button on a line, stacking on a narrow phone */
+/* One field and its button on a line, stacking on a narrow phone. */
 .inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
 .inline-form input { flex: 1 1 200px; min-width: 0; font-size: 16px; }
 .inline-form select { width: auto; flex: 0 0 auto; }
 @media (max-width: 420px) { .inline-form > * { flex: 1 1 100%; } }
 
-/* ---- analytics -------------------------------------------------------------------- */
+/* ---- Analytics -------------------------------------------------------------------- */
 .range { display: flex; flex-wrap: wrap; gap: 8px; }
 .range label { display: grid; gap: 4px; font-size: 12.5px; color: var(--text-2); }
 .range input { width: auto; min-width: 150px; }
@@ -377,7 +370,7 @@
 .chart-plot { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
 .chart-axis { display: flex; flex-direction: column; justify-content: space-between; padding-top: 8px; font-size: 11.5px; color: var(--text-dim); text-align: end; font-variant-numeric: tabular-nums; }
 .chart .bars { height: 140px; touch-action: pan-y; }
-/* the day being read (Analytics.tsx Bars): a sideways slide reads along the days, an up-and-down one still scrolls */
+/* The day being read (Analytics.tsx Bars): a sideways slide reads along the days, an up-and-down one still scrolls. */
 .chart .bars .b.is-on { opacity: 1; background: var(--text); }
 .chart-at { color: var(--text-2); font-variant-numeric: tabular-nums; }
 .chart-x { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--text-dim); }
@@ -386,11 +379,11 @@
 .funnel { list-style: none; margin: 0; padding: 0; }
 .funnel-label > span:first-child { text-transform: capitalize; }
 
-/* ---- feature flags ---------------------------------------------------------------- */
+/* ---- Feature flags ---------------------------------------------------------------- */
 .weight-input { width: 88px; flex: 0 0 88px; }
 .weight-share { min-width: 44px; text-align: end; font-variant-numeric: tabular-nums; font-size: 12.5px; }
 
-/* ---- system ------------------------------------------------------------------------- */
+/* ---- System ------------------------------------------------------------------------- */
 .job-list { list-style: none; margin: 0; padding: 0; }
 .job { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid var(--separator); }
 .job:last-child { border-bottom: none; }
@@ -402,10 +395,10 @@
 .meter-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 13.5px; }
 .progress-bar.is-high { background: var(--warn); }
 
-/* ---- dictionary import ------------------------------------------------------------ */
+/* ---- Dictionary import ------------------------------------------------------------ */
 .import-run { display: grid; gap: 10px; }
 
-/* ---- rhymes ------------------------------------------------------------------------- */
+/* ---- Rhymes ------------------------------------------------------------------------- */
 .drawer.drawer-wide { width: min(94vw, 640px); }
 @media (max-width: 560px) { .drawer.drawer-wide { width: 100%; } }
 .rhyme-panel { display: grid; gap: 12px; }
@@ -416,10 +409,10 @@
 @media (max-width: 420px) { .rhyme-list select { flex: 1 1 100%; } }
 .nowrap { white-space: nowrap; }
 .crash-message { width: 100%; max-width: 60ch; text-align: start; }
-/* a name and the badge beside it, apart, wrapping under it when there is no room */
+/* A name and the badge beside it, apart, wrapping under it when there is no room. */
 .with-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 
-/* ---------- conversations: each part its own tint, here and in the editor ---------- */
+/* ---------- Conversations: each part its own tint, here and in the editor ---------- */
 
 .part-0 { --part: #c4b5fd; }
 .part-1 { --part: #7dd3fc; }
@@ -431,7 +424,7 @@
 }
 .cv-initial.small { width: 28px; height: 28px; font-size: 13px; }
 
-/* the list: one card a conversation, a meter a part */
+/* The list: one card a conversation, a meter a part. */
 .cv-list { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
 .cv-card { display: grid; gap: 12px; }
 .cv-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -451,7 +444,7 @@
 .cv-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .cv-done { color: var(--ok); font-weight: 600; }
 
-/* whose part: a card a person, the chosen one lit in its tint */
+/* Whose part: a card a person, the chosen one lit in its tint. */
 .cv-parts { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
 .cv-part {
   display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 14px; text-align: start;
@@ -465,7 +458,7 @@
 .cv-share p { margin: 0 0 8px; }
 .cv-share-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* the script: each line in its speaker's tint, yours raised, the one playing lit */
+/* The script: each line in its speaker's tint, yours raised, the one playing lit. */
 .cv-script { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .cv-line {
   display: grid; gap: 6px; padding: 12px 14px; border-radius: var(--radius-sm);
@@ -493,7 +486,7 @@ button.cv-line-main {
 .cv-help p { margin: 0 0 6px; }
 @media (prefers-reduced-motion: no-preference) { .cv-line { transition: box-shadow 160ms ease, background-color 160ms ease; } }
 
-/* in the editor: who takes part, and the lines in order */
+/* In the editor: who takes part, and the lines in order. */
 .cv-person select { width: auto; flex: 0 0 auto; min-width: 128px; }
 .cv-swatch { flex: none; width: 10px; height: 28px; border-radius: 999px; background: var(--part); }
 .cv-lines { gap: 10px; }
@@ -510,11 +503,11 @@ button.cv-line-main {
   .cv-text { font-size: 18px; }
 }
 
-/* the quick start under a lesson's exercises */
+/* The quick start under a lesson's exercises. */
 .ex-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .state-empty .ex-quick { justify-content: center; margin-top: 0; }
 
-/* is it ready: one line a check */
+/* Is it ready: one line a check. */
 .readiness { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .readiness li { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-height: 28px; }
 .readiness svg { flex: none; }
@@ -525,11 +518,11 @@ button.cv-line-main {
 .readiness-link { margin-inline-start: auto; font-weight: 600; }
 @media (max-width: 560px) { .readiness-link { margin-inline-start: 26px; } }
 
-/* the studio's sentence list: a conversation's line says whose it is */
+/* The studio's sentence list: a conversation's line says whose it is. */
 .la-who { color: var(--text-2); font-weight: 600; }
 .la-conversation { margin: 0 0 10px; font-size: 13.5px; color: var(--text-2); }
 
-/* ---- security log ------------------------------------------------------ */
+/* ---- Security log ------------------------------------------------------ */
 .sec-updated { font-size: 12.5px; }
 .sec-chart .sec-bars { gap: 2px; }
 .sec-bar { flex: 1 1 0; max-width: 48px; min-height: 2px; display: flex; flex-direction: column; gap: 2px; border-radius: 4px 4px 0 0; overflow: hidden; }
@@ -556,7 +549,7 @@ button.cv-line-main {
 .sec-meaning { margin: 0 0 12px; color: var(--text-2); line-height: 1.5; }
 .sec-drawer-actions { justify-content: flex-start; padding-top: 14px; }
 .sec-from { display: grid; }
-/* a row still waiting on someone: a bar down its start edge (the card's own edge on a phone) */
+/* A row still waiting on someone: a bar down its start edge (the card's own edge on a phone). */
 .table-wrap:not(.is-cards) tr.is-flagged > td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
 .table-wrap.is-cards tr.is-flagged { border-inline-start: 3px solid var(--warn); }
 @media (max-width: 640px) {
@@ -567,7 +560,7 @@ button.cv-line-main {
   .sec-filters .chips > .chip { flex: 0 0 auto; }
 }
 
-/* ---- analytics: the range, dense charts, the retention grid ------------- */
+/* ---- Analytics: the range, dense charts, the retention grid ------------- */
 .range-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 16px; }
 .range-says { font-size: 13px; font-variant-numeric: tabular-nums; }
 .chart .bars.is-dense { gap: 1px; }
@@ -579,7 +572,7 @@ button.cv-line-main {
 .cohort-row.is-head > span:not(:first-child) { text-align: center; }
 .cohort-day { display: grid; font-size: 13px; padding: 4px 0; }
 .cohort-day .subtle { font-size: 11.5px; }
-/* one hue, lighter to darker with the share who came back; the number stays in text ink */
+/* One hue, lighter to darker with the share who came back; the number stays in text ink. */
 .cohort-cell { display: grid; place-items: center; min-height: 40px; border-radius: 8px; font-size: 13px; font-weight: 600;
   background: rgba(147, 197, 253, calc(0.05 + var(--share, 0) * 0.45)); }
 .cohort-cell.is-empty { background: var(--control); color: var(--text-dim); font-weight: 400; }
@@ -594,7 +587,7 @@ button.cv-line-main {
   .retention-totals .stat { padding: 12px; }
 }
 
-/* ---- pictures: every built-in picture and what replaces it ------------- */
+/* ---- Pictures: every built-in picture and what replaces it ------------- */
 .pic-tools { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; margin-bottom: 14px; }
 .pic-tools > .field { flex: 0 1 280px; margin: 0; }
 .pic-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
@@ -620,7 +613,7 @@ button.cv-line-main {
 .pic-history-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .pic-history-text { display: grid; flex: 1 1 180px; font-size: 13px; }
 
-/* Offline mode: the form, and beside it (under it on a phone) the screen people get instead of the app */
+/* Offline mode: the form, and beside it (under it on a phone) the screen people get instead of the app. */
 .off-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; margin-top: 16px; }
 .off-form { display: grid; gap: 16px; min-width: 0; }
 .off-when { border: 0; margin: 0 0 8px; padding: 0; display: grid; gap: 2px; }
@@ -660,13 +653,13 @@ button.cv-line-main {
 @media (max-width: 720px) {
   .gc-ready { display: block; overflow-x: auto; }
 }
-/* the card editors' vocabulary picker (GameCardFields.tsx) */
+/* The card editors' vocabulary picker (GameCardFields.tsx). */
 .gc-picker { display: grid; gap: 6px; }
 .gc-picks { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .gc-pick { min-height: 36px; padding: 4px 10px; border: 1px solid var(--separator); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
 .gc-pick:hover { background: var(--hover, rgba(127, 127, 127, 0.12)); }
 .gc-picked { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-/* Detective's case editor (CaseFileFields.tsx): Kurdish shown, never typed, and the line picker */
+/* Detective's case editor (CaseFileFields.tsx): Kurdish shown, never typed, and the line picker. */
 .gc-line { display: grid; gap: 2px; }
 .gc-line-ku { font-size: 15px; font-weight: 600; }
 .gc-card { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--separator); border-radius: 10px; }
@@ -677,11 +670,11 @@ button.cv-line-main {
 .gc-line-picker-list { display: grid; gap: 6px; max-height: 360px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
 .gc-line-picker-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--separator); }
 
-/* ---- a person's voices (UserPage VoiceRole): the people they record, ticked ---- */
+/* ---- A person's voices (UserPage VoiceRole): the people they record, ticked ---- */
 .voice-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 2px 14px; border: 0; margin: 0 0 8px; padding: 0; min-width: 0; }
 .voice-links legend { font-size: 13px; font-weight: 600; color: var(--text-2); padding: 0; margin-bottom: 6px; }
 
-/* ---- the Stories' riddles and proverbs (LoreFields.tsx): their fields, the answer kept apart, and a translation per language ---- */
+/* ---- The Stories' riddles and proverbs (LoreFields.tsx): their fields, the answer kept apart, and a translation per language ---- */
 .gc-fieldset { display: grid; gap: 10px; margin: 0 0 14px; padding: 12px; border: 1px solid var(--separator); border-radius: 10px; min-width: 0; }
 .gc-fieldset > legend { padding: 0 4px; font-weight: 600; }
 .gc-answer { border-style: dashed; border-color: var(--text-dim); }

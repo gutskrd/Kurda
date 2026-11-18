@@ -1,8 +1,6 @@
 /**
- * The admin's icons: a small set of line drawings on a 24-unit grid, drawn in
- * the text colour. Inline SVG, so nothing is fetched and the CSP needs no new
- * source. Every icon is decorative (aria-hidden): the text beside it, or the
- * button's own label, is what assistive technology reads.
+ * The console's icons: line drawings on a 24-unit grid in the text colour, inline so the CSP needs no new source.
+ * Every icon is decorative (aria-hidden); the text beside it is what assistive technology reads.
  */
 const PATHS = {
   home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',

@@ -1,8 +1,4 @@
-/**
- * Sound for the admin's tests: a few syllables of something like speech, and
- * a Web Audio that decodes every file into it (or refuses to), since jsdom
- * has none.
- */
+/** Sound for the tests, which jsdom lacks: a few speech-like syllables, and a Web Audio that decodes every file into them. */
 import { vi } from 'vitest';
 
 /** Voiced syllables, four a second, with a breath of silence either side. */
@@ -16,11 +12,7 @@ export function speechPcm(seconds: number, rate = 22050): Float32Array {
   return out;
 }
 
-/**
- * Install an AudioContext whose decodeAudioData answers with `seconds` of
- * speechPcm in `channels` channels, or fails when `fail` is set. Returns what
- * it was asked to decode.
- */
+/** Install an AudioContext that decodes to `seconds` of speechPcm, or fails with `fail`; returns what it was asked to decode. */
 export function fakeDecoder({ seconds = 1.2, rate = 22050, channels = 1, fail = false }: { seconds?: number; rate?: number; channels?: number; fail?: boolean } = {}): {
   decoded: ArrayBuffer[];
 } {

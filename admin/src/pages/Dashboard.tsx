@@ -1,11 +1,9 @@
 import {
   LETTER_CLIPS,
-  PRIORITY_SLA_HOURS,
   WORD_SET_CLIPS,
   type AdminFeedbackSummary,
   type AlphabetClip,
   type ModerationSummary,
-  type ReportPriority,
   type SuspiciousPair,
 } from '@kurda/shared';
 import { api } from '../api';
@@ -14,6 +12,7 @@ import { canOpen, NAV, type SessionAccess } from '../navigation';
 import { useSession } from '../session';
 import { describeAction } from './Audit';
 import { isStoryUsage, type Listing } from '../lessonAudio';
+import { PRIORITY_NAME, slaTarget } from '../moderation';
 import type { AdminStorySummary } from '../stories';
 import { Badge, Button, ErrorState, Icon, Loading, PageHeader, Section, Stat, Time, UserLink, duration, relativeTime, useLoad } from '../ui';
 import { runState, type LeagueOverview } from '../progress';
@@ -25,23 +24,10 @@ function allowed(page: string, session: SessionAccess): boolean {
   return entry ? canOpen(entry.access, session) : false;
 }
 
-const PRIORITY_NAME: Record<ReportPriority, string> = { 0: 'Urgent', 1: 'High', 2: 'Normal', 3: 'Low' };
-
-/** "within 1 h", "within 3 days" — how soon each priority should be decided. */
-function slaLabel(p: ReportPriority): string {
-  const h = PRIORITY_SLA_HOURS[p];
-  return h < 48 ? `within ${h} h` : `within ${Math.round(h / 24)} days`;
-}
 
 /**
- * The start page: what is waiting for a person, for this person's role.
- *
- * Every number links to the page that acts on it. A moderator sees the queue
- * by priority with its oldest case and overdue ones, appeals and second
- * approvals; a content editor what still needs a recording and what is waiting
- * for review; an admin the fraud holds, bot flags and config approvals; a
- * superadmin also the latest admin actions. Each part loads by itself, so one
- * slow or refused request never blanks the rest.
+ * The start page: what is waiting for this person's role, each number linking to the page that acts on it. Each part
+ * loads by itself, so one slow or refused request never blanks the rest.
  */
 export function Dashboard(): React.JSX.Element {
   const session = useSession();
@@ -63,7 +49,7 @@ export function Dashboard(): React.JSX.Element {
 
       {can('security-log') && <SecurityStatus />}
       {can('audio') && <Recordings />}
-      {/* someone who only records: their own voices, since the studio's counts are not theirs to open */}
+      {/* Someone who only records: their own voices, since the studio's counts are not theirs to open. */}
       {can('record') && !can('audio') && <YourRecording />}
       {moderator && <ModerationPanel />}
       <Waiting
@@ -81,10 +67,8 @@ export function Dashboard(): React.JSX.Element {
 }
 
 /**
- * The security log at a glance, first on the page for a superadmin: whether
- * anything needs looking at, and the last day's failed sign-ins beside the day
- * before. Says nothing at all while it loads or when it cannot, rather than a
- * reassuring zero.
+ * The security log at a glance for a superadmin: anything to look at, and failed sign-ins against the day before.
+ * Shows nothing while loading or on failure, never a reassuring zero.
  */
 function SecurityStatus(): React.JSX.Element | null {
   const status = useLoad(
@@ -111,11 +95,7 @@ function SecurityStatus(): React.JSX.Element | null {
   );
 }
 
-/**
- * What still needs a recording: the owner could not find where to record, so
- * the count is on the first page, and each line goes straight into the studio
- * on the things still missing.
- */
+/** What still needs a recording, each line opening the studio on what is missing. */
 function Recordings(): React.JSX.Element {
   const lessons = useLoad(() => api<Listing>('/admin/lesson-audio'), []);
   const letters = useLoad(() => api<{ recordings: Array<{ key: string }> }>('/admin/alphabet/audio'), []);
@@ -128,7 +108,7 @@ function Recordings(): React.JSX.Element {
   const lessonNeeded = items ? items.filter((i) => i.usedIn.some((u) => !isStoryUsage(u))).length : null;
   const storyNeeded = items ? items.filter((i) => i.usedIn.some(isStoryUsage)).length : null;
 
-  // the words to know are recorded on the alphabet's side of the studio, and counted on a line of their own
+  // The words to know are recorded on the alphabet's side of the studio, and counted on a line of their own.
   const rows = [
     { key: 'letters', side: 'letters', label: 'Alphabet: letters and example words', missing: missingOf(LETTER_CLIPS), total: LETTER_CLIPS.length, error: letters.error },
     { key: 'words', side: 'letters', label: 'Words to know: colours, numbers, days, months', missing: missingOf(WORD_SET_CLIPS), total: WORD_SET_CLIPS.length, error: letters.error },
@@ -198,7 +178,7 @@ function Recordings(): React.JSX.Element {
 
 function ModerationPanel(): React.JSX.Element {
   const summary = useLoad(() => api<ModerationSummary>('/admin/moderation/summary'), []);
-  // how long a case takes to decide, typically; a quiet extra, left out when it can't be read
+  // How long a case takes to decide, typically; a quiet extra, left out when it can't be read.
   const sla = useLoad(() => api<{ medianSeconds: number | null; resolved: number }>('/admin/moderation/sla'), []);
   const s = summary.data;
   return (
@@ -225,7 +205,7 @@ function ModerationPanel(): React.JSX.Element {
                 label={PRIORITY_NAME[p]}
                 value={s.byPriority[p]}
                 tone={p === 0 && s.byPriority[0] > 0 ? 'bad' : 'neutral'}
-                hint={`Decide ${slaLabel(p)} · ${s.slaBreachesByPriority[p] > 0 ? `${s.slaBreachesByPriority[p]} overdue` : 'none overdue'}`}
+                hint={`Decide ${slaTarget(p)} · ${s.slaBreachesByPriority[p] > 0 ? `${s.slaBreachesByPriority[p]} overdue` : 'none overdue'}`}
                 href={`#/moderation?priority=${p}`}
               />
             ))}
@@ -350,11 +330,7 @@ function Waiting({
   );
 }
 
-/**
- * Whether the weekly league runs went through, and how many rating pairs are
- * worth a look: a settle that failed means nobody was promoted, which nobody
- * else would notice until learners asked.
- */
+/** Whether the weekly league runs went through (a failed settle promotes nobody), and rating pairs worth a look. */
 const groupsThisWeek = (n: number): string => `${n.toLocaleString()} ${n === 1 ? 'group' : 'groups'} this week`;
 
 function RanksPanel({ leagues, ranks }: { leagues: boolean; ranks: boolean }): React.JSX.Element {

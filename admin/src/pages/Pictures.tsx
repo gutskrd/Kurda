@@ -105,13 +105,9 @@ function Shown({ entry, override, size }: { entry: ArtSlotEntry; override: Overr
 }
 
 /**
- * Every picture the apps draw from their own art, and the uploaded picture
- * that replaces it where one does: badges (one for every level, or one per
- * level), rank and league emblems, season frames, the default profile
- * pictures, and event banners. A picture is uploaded and checked as shop art
- * is, shown in the apps within minutes, and taken back to the original with
- * one tap; each slot keeps its history. Shop backgrounds and icons are items
- * in Shop.
+ * Every picture the apps draw from their own art, and any uploaded replacement: badges, emblems, season frames,
+ * default profile pictures and event banners. Uploads are checked as shop art is, reach the apps within minutes and
+ * revert in one tap; each slot keeps its history. Shop backgrounds and icons are in Shop.
  */
 export function Pictures(): React.JSX.Element {
   const [family, setFamily] = useState<ArtSlotFamily>('badge');
@@ -121,7 +117,7 @@ export function Pictures(): React.JSX.Element {
   const data = useLoad(() => api<{ overrides: Override[] }>('/admin/art'), []);
   const bySlot = useMemo(() => new Map((data.data?.overrides ?? []).map((o) => [o.slot, o])), [data.data]);
 
-  // a badge is one card, its levels inside it
+  // A badge is one card, its levels inside it.
   const cards = useMemo(() => artSlotsOf(family).filter((e) => e.level === null), [family]);
   const replacedIn = (f: ArtSlotFamily): number => artSlotsOf(f).filter((e) => bySlot.has(e.slot)).length;
   const anyReplaced = (e: ArtSlotEntry): boolean => artSlotsOf(e.family).some((x) => x.key === e.key && bySlot.has(x.slot));
@@ -212,7 +208,7 @@ function SlotDrawer({
           key={s.slot}
           entry={s}
           override={overrides.get(s.slot)}
-          // a level with no picture of its own shows the one for every level, as the apps do
+          // A level with no picture of its own shows the one for every level, as the apps do.
           inherited={s.level ? overrides.get(slots[0]!.slot) : undefined}
           levelled={slots.length > 1}
           onChanged={onChanged}

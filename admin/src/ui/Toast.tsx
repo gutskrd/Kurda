@@ -1,12 +1,6 @@
 /**
- * Toasts: "Saved", "Couldn't save — …", said once and then gone.
- *
- * They replace the ✅/❌ strings pages printed under their forms (which stayed
- * on screen long after they were true, and were read by nothing) and the
- * browser alerts after a failed click. Two live regions: a polite one for news,
- * an assertive one for failures, so a screen reader is interrupted only when
- * something did not happen. A failure stays twice as long, and every toast can
- * be closed.
+ * Toasts: "Saved", "Couldn't save — …", said once and then gone. A polite live region for news and an assertive one
+ * for failures, so a screen reader is interrupted only when something did not happen; a failure stays twice as long.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from './icons';
@@ -47,7 +41,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
   const show = useCallback(
     (message: string, tone: ToastTone = 'info') => {
       const id = next.current++;
-      // at most three on screen: the oldest makes way
+      // At most three on screen: the oldest makes way.
       setItems((all) => [...all.slice(-2), { id, tone, message }]);
       timers.current.set(id, window.setTimeout(() => dismiss(id), TOAST_MS[tone]));
     },
@@ -94,7 +88,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
   return (
     <ToastContext.Provider value={api}>
       {children}
-      {/* outside the app root, which goes inert while a dialog is open */}
+      {/* Outside the app root, which goes inert while a dialog is open. */}
       <Layer>
         <div className="toasts">
           {render('polite')}

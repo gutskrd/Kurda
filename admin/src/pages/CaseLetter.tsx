@@ -4,16 +4,9 @@ import { decorLength, letterDecorOf, notePlacement, paperName } from '../moderat
 import { Badge, Icon, useDialogs } from '../ui';
 
 /**
- * A reported letter as its reader saw it: the paper it was written on, what
- * was drawn on it, and the notes stuck to it where its writer put them, with
- * the notes listed again as plain text to read and quote. The paper and the
- * drawing are the shared art (`letterPaperSvg`), the same picture the apps
- * draw; the notes are set over it in the console's own type.
- *
- * A drawing is a picture somebody made, so it is hidden until the moderator
- * chooses to look, as the case's photos are, and anything that may be child
- * abuse material asks first. The paper itself and the notes' words are shown
- * at once: they are what a letter's words are.
+ * A reported letter as its reader saw it: the paper and drawing from the shared art (`letterPaperSvg`) with the notes
+ * placed over it, and the notes again as plain text. The drawing is hidden until the moderator chooses to look, as
+ * photos are; the paper and the notes' words show at once.
  */
 export function LetterPaperEvidence({ raw, sensitive }: { raw: unknown; sensitive: boolean }): React.JSX.Element {
   const { decor, unreadable } = letterDecorOf(raw);
@@ -34,7 +27,7 @@ function LetterSheet({ decor, sensitive }: { decor: LetterDecor; sensitive: bool
   const dialogs = useDialogs();
   const drawn = decor.strokes.length > 0;
   const length = decorLength(decor);
-  // drawn by the shared builder from a decor that has just passed the letter's own checks, and shown as an image, where nothing in it could run
+  // Drawn by the shared builder from a decor that has just passed the letter's own checks, and shown as an image, where nothing in it could run.
   const svg = letterPaperSvg({ paper: decor.paper, strokes: drawn && shown ? decor.strokes : [], length, title: 'The letter’s paper' });
   const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 

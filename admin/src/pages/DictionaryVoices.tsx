@@ -35,18 +35,9 @@ function recount(counts: Counts, item: DictionaryAudioAdminItem, to: Speaker): C
 }
 
 /**
- * The dictionary's pronunciations: the Dictionary side of the audio studio.
- *
- * They are not recorded here — they come with the dictionary's words, from
- * an import — so this is only who says each one: open a word, choose a
- * character, and hear it say the word. A choice is sent at once (PATCH
- * /admin/audio/dictionary), as for any recording already saved. The
- * Characters side gives many of them a character, and makes their timelines,
- * in one go.
- *
- * Read a page at a time in headword order (GET /admin/dictionary/audio), since
- * an import can bring thousands; a search finds a word by its start, as typed
- * or without its accents.
+ * The studio's Dictionary side: who says each imported pronunciation, sent at once (PATCH /admin/audio/dictionary).
+ * Read a page at a time in headword order (GET /admin/dictionary/audio), as there can be thousands; a search matches
+ * a word's start, with or without accents.
  */
 export function DictionaryVoices(): React.JSX.Element {
   const [query, setQuery] = useState('');
@@ -59,7 +50,7 @@ export function DictionaryVoices(): React.JSX.Element {
   const [error, setError] = useState<unknown>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const player = usePlayer();
-  // an older search that answers after a newer one is dropped
+  // An older search that answers after a newer one is dropped.
   const ticket = useRef(0);
   const latest = useRef(items);
   latest.current = items;

@@ -4,24 +4,14 @@ import type { CompanionStatus } from '@kurda/shared';
 import { api, ApiError } from '../api';
 import { hasSession, useAuth } from '../auth';
 import { SessionProvider, sessionFrom, type AdminSession } from '../session';
-import { Banner, Button, Icon, clockTime, describeError, errorLine, useCountdown } from '../ui';
-import { Companion, HAPPY_MS, stillWanted } from '../brand/Companion';
+import { Banner, Button, Icon, clockTime, describeError, errorLine, reducedMotion, useCountdown } from '../ui';
+import { Companion, HAPPY_MS } from '../brand/Companion';
 
 /**
- * Signing in to the console, one step at a time on one card, the steps
- * turning past like the faces of a wheel: the email, then the password, then
- * the two-step code (or setting it up), then the console opening. Nothing in
- * the admin renders before the last step: the API refuses every /admin route
- * without 2FA, so the workspace would only be a screen of failed requests.
- *
- * Things load while the person is busy. The console's own code is fetched in
- * the background as soon as the sign-in is on screen, and what the session
- * still needs is asked while the wheel turns to the next step, so the console
- * is there the moment the last step is done. A session restored on reload
- * goes straight to what it still needs, or straight in.
- *
- * The email is not checked with the server on its own: whether an account
- * exists is never said, so the email and the password are sent together.
+ * Signing in, one step at a time on one card turning like a wheel: email, password, the 2FA code or its setup, then
+ * the console, which renders only after 2FA since the API refuses every /admin route without it. The console's code
+ * and the session's next need load while the person types. The email is never checked alone, so whether an account
+ * exists is never said.
  */
 
 // Whether this browser has signed in to the admin before — drives the greeting
@@ -35,11 +25,7 @@ export function emailProblem(value: string): string | null {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : 'Enter the whole email address, like name@hevalo.app.';
 }
 
-/**
- * Why a sign-in did not go through, in words that say what to do next. The
- * server's own ("invalid email or password", "too many failed attempts — try
- * again later") were shown as they came, in lower case and without the wait.
- */
+/** Why a sign-in did not go through, in words that say what to do next and how long to wait. */
 export function signInProblem(err: unknown): string {
   if (err instanceof ApiError && err.code === 'INVALID_CREDENTIALS') return 'That email and password don’t match. Check both and try again.';
   if (err instanceof ApiError && err.code === 'LOGIN_VERIFICATION_REQUIRED') {
@@ -68,9 +54,9 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
   const [session, setSession] = useState<AdminSession | null>(null);
   const [problem, setProblem] = useState<unknown>(null);
   const [email, setEmail] = useState('');
-  // how the face on show is going, for Hevalo: each face says it
+  // How the face on show is going, for Hevalo: each face says it.
   const [face, setFace] = useState<CompanionStatus>('idle');
-  // came through the steps on this visit: the console opens with a moment for Hevalo to be pleased
+  // Came through the steps on this visit: the console opens with a moment for Hevalo to be pleased.
   const fresh = useRef(false);
   const card = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -84,7 +70,7 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
     setStep(next);
   }, []);
 
-  // the console's own code, fetched in the background while the steps are being filled in
+  // The console's own code, fetched in the background while the steps are being filled in.
   useEffect(() => {
     const timer = window.setTimeout(() => void warm().catch(() => undefined), 300);
     return () => window.clearTimeout(timer);
@@ -107,16 +93,16 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
       if (next.needsEnrollment) go('enroll');
       else if (next.needsVerification) go('code');
       else {
-        // the console's code is nearly always here already; a moment to be pleased about it, if this was a sign-in
+        // The console's code is nearly always here already; a moment to be pleased about it, if this was a sign-in.
         if (fresh.current) {
           go('opening');
-          await Promise.all([warm().catch(() => undefined), stillWanted() ? null : wait(HAPPY_MS)]);
+          await Promise.all([warm().catch(() => undefined), reducedMotion() ? null : wait(HAPPY_MS)]);
         } else await warm().catch(() => undefined);
         setStep('in');
       }
     } catch (err) {
-      // an account the console is not for is answered as if it were not there
-      // (404), or refused (403): back to the start, with nothing said about why
+      // An account the console is not for is answered as if it were not there
+      // (404), or refused (403): back to the start, with nothing said about why.
       if (err instanceof ApiError && (err.status === 403 || err.status === 404)) {
         out.current();
         restart();
@@ -127,10 +113,10 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
     }
   }, [go, restart, warm]);
 
-  // a session kept from before: straight to what it still needs
+  // A session kept from before: straight to what it still needs.
   useEffect(() => {
     if (step === 'checking') void check();
-    // once, as the page opens; later checks come from the steps themselves
+    // Once, as the page opens; later checks come from the steps themselves.
   }, []);
 
   const signOut = (): void => {
@@ -227,7 +213,7 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
           <Rail at={at} busy={step === 'checking'} />
         </header>
         <div ref={stage} className="login-stage">
-          {/* the email first: only his head and neck over the card; then he climbs out over it */}
+          {/* The email first: only his head and neck over the card; then he climbs out over it. */}
           <Companion status={companion} watch={card} low={step === 'email'} className="login-companion" />
           <div ref={card} className="login-card gate-card has-companion" aria-busy={step === 'checking' || step === 'opening' || undefined}>
             <Wheel face={step === 'in' ? 'checking' : step} back={back}>
@@ -240,11 +226,7 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
   );
 }
 
-/**
- * The steps in a line above Hevalo: one line of light from the first step to
- * the one on show, flowing as it goes, each step lighting up as the light
- * reaches it. While the session is being checked a glint runs on ahead.
- */
+/** The steps in a line above Hevalo, lit up to the current one, with a glint running ahead while the session is checked. */
 function Rail({ at, busy }: { at: number; busy: boolean }): React.JSX.Element {
   return (
     <div className={`wheel-rail${busy ? ' is-busy' : ''}`} style={{ '--at': at / (RAIL.length - 1) } as CSSProperties}>
@@ -269,11 +251,8 @@ function Rail({ at, busy }: { at: number; busy: boolean }): React.JSX.Element {
 let inSightAt = 0;
 
 /**
- * On a phone the keyboard takes the lower half of the screen and the browser
- * scrolls the box being typed in up into what is left, which can leave
- * Hevalo above it, out of sight. Once the keyboard is up, while a box under
- * him is in use, the page is scrolled to bring his head to the top of what
- * can be seen, if the box still shows below him; if both cannot, the box wins.
+ * With a phone's keyboard up, scrolls Hevalo's head to the top of what can be seen while a box under him is in use,
+ * as long as the box still shows; if both cannot fit, the box wins.
  */
 function useInSight(stage: RefObject<HTMLDivElement | null>): void {
   useEffect(() => {
@@ -282,19 +261,19 @@ function useInSight(stage: RefObject<HTMLDivElement | null>): void {
     let timer = 0;
     const place = (): void => {
       window.clearTimeout(timer);
-      // the keyboard comes up over a moment, telling of each step of it: wait for the last
+      // The keyboard comes up over a moment, telling of each step of it: wait for the last.
       timer = window.setTimeout(() => {
         const box = document.activeElement;
         const at = stage.current;
         if (!at || !(box instanceof HTMLInputElement) || !at.contains(box)) return;
-        // the keyboard is up when what can be seen is well short of the page's window
+        // The keyboard is up when what can be seen is well short of the page's window.
         if (seen.height > document.documentElement.clientHeight * 0.8) return;
         const head = at.getBoundingClientRect().top;
         if (box.getBoundingClientRect().bottom + 16 - head > seen.height) return;
-        // already there: his head just under the top of what is seen
+        // Already there: his head just under the top of what is seen.
         if (Math.abs(head - seen.offsetTop - 8) <= 4 || performance.now() - inSightAt < 400) return;
         inSightAt = performance.now();
-        at.scrollIntoView({ block: 'start', behavior: stillWanted() ? 'auto' : 'smooth' });
+        at.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' });
       }, 150);
     };
     seen.addEventListener('resize', place);
@@ -308,20 +287,17 @@ function useInSight(stage: RefObject<HTMLDivElement | null>): void {
 }
 
 /**
- * The steps' faces on a wheel: a new face turns in from below as the last one
- * turns away over the top (the other way when going back), and the card's
- * height follows the face on show. The face leaving stays as it was, inert,
- * until it has turned away. For whoever asks for less motion, the new face
- * simply fades in.
+ * The steps' faces on a wheel: a new face turns in from below as the last turns away (reversed going back), the card's
+ * height follows it, and the leaving face stays inert until gone. Under reduced motion the new face fades in.
  */
 function Wheel({ face, back, children }: { face: string; back: boolean; children: ReactNode }): React.JSX.Element {
   const latest = useRef<{ key: string; node: ReactNode }>({ key: face, node: children });
   const [shown, setShown] = useState(face);
   const [gone, setGone] = useState<{ key: string; node: ReactNode; back: boolean } | null>(null);
   if (shown !== face) {
-    // the face that was on show turns away, as it last was
+    // The face that was on show turns away, as it last was.
     setShown(face);
-    setGone(stillWanted() ? null : { key: latest.current.key, node: latest.current.node, back });
+    setGone(reducedMotion() ? null : { key: latest.current.key, node: latest.current.node, back });
   }
   latest.current = { key: face, node: children };
 
@@ -331,7 +307,7 @@ function Wheel({ face, back, children }: { face: string; back: boolean; children
     return () => window.clearTimeout(timer);
   }, [gone]);
 
-  // the card's height follows the face on show, so the card grows and shrinks rather than jumps
+  // The card's height follows the face on show, so the card grows and shrinks rather than jumps.
   const wheel = useRef<HTMLDivElement>(null);
   const current = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -401,7 +377,7 @@ function EmailStep({ email, onEmail, onNext }: { email: string; onEmail: (v: str
               onEmail(e.target.value);
               if (error) setError(emailProblem(e.target.value));
             }}
-            // an empty box is not wrong yet: it is said on "Continue", not on the way past
+            // An empty box is not wrong yet: it is said on "Continue", not on the way past.
             onBlur={() => setError(email.trim() ? emailProblem(email) : null)}
             autoFocus
           />
@@ -435,11 +411,7 @@ function EyeIcon({ off }: { off: boolean }): React.JSX.Element {
   );
 }
 
-/**
- * The second step: the password, under the email it goes with (a tap on that
- * goes back to change it). The email is also in a hidden box, so a password
- * manager files the password under it.
- */
+/** The password step, under its email (a tap goes back); the email is also in a hidden box for password managers. */
 function PasswordStep({
   email,
   onStatus,
@@ -464,10 +436,10 @@ function PasswordStep({
   const left = useCountdown(pausedUntil);
   const paused = left > 0;
 
-  // paused, he naps until it is time to try again
+  // Paused, he naps until it is time to try again.
   useEffect(() => onStatus(busy ? 'busy' : paused ? 'waiting' : error ? 'error' : 'idle'), [busy, paused, error, onStatus]);
 
-  // the pause is over: the message that said to wait would now be wrong
+  // The pause is over: the message that said to wait would now be wrong.
   useEffect(() => {
     if (pausedUntil === null || paused) return;
     setPausedUntil(null);
@@ -517,7 +489,7 @@ function PasswordStep({
           </span>
         </button>
       </div>
-      {/* for a password manager: the account this password belongs to */}
+      {/* For a password manager: the account this password belongs to. */}
       <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
       <div className="login-field">
         <label className="login-label" htmlFor={`${id}-password`}>
@@ -539,7 +511,7 @@ function PasswordStep({
             }}
             autoFocus
           />
-          {/* one name, and pressed or not: a name that also flipped said "Hide password, pressed" */}
+          {/* One name, and pressed or not: a name that also flipped said "Hide password, pressed". */}
           <button
             type="button"
             className="login-eye"
@@ -623,8 +595,8 @@ function SignOutFoot({ onSignOut }: { onSignOut: () => void }): React.JSX.Elemen
 
 /** Render an otpauth:// URI as an inline SVG QR, no network involved. */
 function QrSvg({ text, size = 190 }: { text: string; size?: number }): React.JSX.Element {
-  // type 0 = pick the smallest version that fits; 'M' is the usual level for
-  // otpauth URIs, tolerant enough for a phone camera on a screen
+  // Type 0 = pick the smallest version that fits; 'M' is the usual level for
+  // otpauth URIs, tolerant enough for a phone camera on a screen.
   const qr = qrcode(0, 'M');
   qr.addData(text);
   qr.make();
@@ -647,7 +619,7 @@ function EnrollStep({ onStatus, onDone, onSignOut }: { onStatus: (s: CompanionSt
   const [secret, setSecret] = useState<{ secret: string; otpauthUri: string } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   // React's development mode runs an effect twice; two enrollments made two
-  // secrets, and the QR on screen could be the one the server had replaced
+  // secrets, and the QR on screen could be the one the server had replaced.
   const asked = useRef(false);
 
   useEffect(() => {
@@ -695,13 +667,8 @@ function EnrollStep({ onStatus, onDone, onSignOut }: { onStatus: (s: CompanionSt
 }
 
 /**
- * The code, sent to one of the two code routes as soon as the sixth digit is
- * in (or on "Continue"). A wrong code is said and the box emptied for the next
- * one. After five wrong codes the server pauses code entry (429 TOTP_LOCKED,
- * with how long) — the per-person rate limit answers 429 too — and that is
- * said calmly with the time left, the button counting it down and coming back
- * by itself when it is over: the server's "too many wrong codes — try again
- * later" said neither how long nor that it was not the admin's fault.
+ * The code, sent as soon as the sixth digit is in. A wrong code empties the box. After five wrong codes, or at the rate
+ * limit, the server answers 429 with how long, and the button counts it down and comes back by itself.
  */
 function CodeForm({
   path,
@@ -715,7 +682,7 @@ function CodeForm({
   path: string;
   label: string;
   busyLabel: string;
-  /** whether there is anything to confirm yet (the setup's secret has arrived) */
+  /** Whether there is anything to confirm yet (the setup's secret has arrived). */
   ready: boolean;
   onStatus: (s: CompanionStatus) => void;
   onDone: () => Promise<void>;
@@ -735,7 +702,7 @@ function CodeForm({
 
   useEffect(() => onStatus(passed ? 'success' : busy ? 'busy' : paused ? 'waiting' : problem ? 'error' : 'idle'), [passed, busy, paused, problem, onStatus]);
 
-  // the pause is over: say so, and put the cursor back in the box
+  // The pause is over: say so, and put the cursor back in the box.
   useEffect(() => {
     if (!pause || paused) return;
     setPause(null);
@@ -796,10 +763,10 @@ function CodeForm({
           onChange={(e) => {
             const next = e.target.value.replace(/\D/g, '').slice(0, 6);
             setCode(next);
-            // a problem with the last code is gone once a new one is being typed
+            // A problem with the last code is gone once a new one is being typed.
             if (problem) setProblem(null);
             if (note) setNote(null);
-            // the sixth digit sends it: nothing more to press
+            // The sixth digit sends it: nothing more to press.
             if (next.length === 6 && next !== code) void send(next);
           }}
           inputMode="numeric"

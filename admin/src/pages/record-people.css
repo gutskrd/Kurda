@@ -32,13 +32,13 @@
 .rp-ring-fill.is-full { stroke: var(--ok); }
 .rp-ring-text { position: relative; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; }
 
-/* the filters: what to show, where, from which source */
+/* The filters: what to show, where, from which source. */
 .rp-filters { display: grid; gap: 10px; margin-bottom: 14px; }
 .rp-selects { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
 .rp-selects .field { margin: 0; }
 .rp-view { margin-bottom: 12px; }
 
-/* one person: the list beside the recorder on a laptop, a tab apart on a phone */
+/* One person: the list beside the recorder on a laptop, a tab apart on a phone. */
 .rp-flow { display: grid; gap: 14px; }
 .rp-flow.is-wide { grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); align-items: start; }
 .rp-flow.is-wide .rp-list-pane { position: sticky; top: calc(var(--topbar-bottom) + 12px); }
@@ -62,7 +62,7 @@
 .rp-row-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rp-row-draft { font-size: 11px; color: var(--warn); }
 
-/* the line being recorded: big and clear, what it means, the line before it */
+/* The line being recorded: big and clear, what it means, the line before it. */
 .rp-stage { --rp-pad: 20px; display: grid; gap: 12px; padding: var(--rp-pad); }
 .rp-stage-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .rp-count { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-inline-end: auto; }
@@ -84,7 +84,7 @@
 .rp-saved audio { width: 100%; height: 40px; }
 .rp-live { padding: 6px 0; }
 
-/* the buttons: one big one at a time, thumb-sized on a phone */
+/* The buttons: one big one at a time, thumb-sized on a phone. */
 .rp-controls { display: grid; gap: 8px; }
 .rp-big { min-height: 56px; padding: 12px 18px; font-size: 17px; font-weight: 650; justify-content: center; }
 .rp-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -97,7 +97,7 @@
 .rp-file { margin: 0; font-size: 13px; }
 .rp-file .link { display: inline-flex; align-items: center; gap: 6px; }
 
-/* on a phone the button that matters stays under the thumb while the line scrolls */
+/* On a phone the button that matters stays under the thumb while the line scrolls. */
 @media (max-width: 999px) {
   .rp-controls {
     position: sticky; bottom: 0; z-index: 2;

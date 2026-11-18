@@ -103,7 +103,7 @@ describe('the security log page', () => {
     expect(screen.getByText('+200% on the day before')).toBeTruthy();
     const attention = screen.getByRole('region', { name: 'Needs attention' });
     expect(within(attention).getByText('Admin console sign-in from a new device or network')).toBeTruthy();
-    // the chart says what is in it, for a screen reader too
+    // The chart says what is in it, for a screen reader too.
     expect(screen.getByRole('img', { name: /events in the last 24 hours/ })).toBeTruthy();
   });
 
