@@ -62,15 +62,10 @@ const TITLES: Record<GamesSection, { title: string; subtitle: string }> = {
 };
 
 /**
- * Game content, a page per game (#/words, #/wordle, #/rhyme, #/race) where it
- * used to be one page with tabs that had no addresses of their own.
- *
- * Two sets of words, not one. The **pool** is what a game chooses from —
- * Peyvok's targets, Rhyme's prompts — and it is small and hand-picked, because
- * a bad target is an unplayable round. The **dictionary** behind it is what a
- * guess is checked against, and should be as large as it can be, because a
- * missing word is a right answer refused. Promoting a word from the dictionary
- * into the pool is the one edit the dictionary view offers.
+ * Word game content, a page per game (#/words, #/wordle, #/rhyme, #/race). The **pool** is what a game chooses from
+ * (Peyvok's targets, Rhyme's prompts), small and hand-picked since a bad target is an unplayable round. The
+ * **dictionary** is what a guess is checked against, as large as possible since a missing word refuses a right answer.
+ * Promoting a dictionary word into the pool is the dictionary view's one edit.
  */
 export function Games({ section }: { section: GamesSection }): React.JSX.Element {
   const t = TITLES[section];
@@ -311,12 +306,7 @@ function Coverage(): React.JSX.Element {
   ];
   return (
     <>
-      {/*
-        Both numbers, because they answer different questions and only one of
-        them is about whether the game is playable. Counting the dictionary here
-        is how you end up believing there are hundreds of thousands of words to
-        play with when the pool is a few dozen.
-      */}
+      {/* Both numbers: only the pool says how much there is to play with; the dictionary only checks guesses. */}
       <div className="stats">
         <Stat label="Words Peyvok can ask" value={s.total.toLocaleString()} href="#/words" />
         <Stat label="Words a guess is checked against" value={s.dictionary.toLocaleString()} />

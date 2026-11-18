@@ -29,11 +29,9 @@ import { STATUS_TONE } from './Lessons';
 const REFRESH_MS = 8000;
 
 /**
- * Record conversations: #/audio/conversations lists every conversation in the
- * lessons, with how far each part has got; #/audio/conversations/<id> is the
- * page one is recorded on, by several people in several places. Each opens it
- * on their own part (the link "Send" gives them), hears the line before each
- * of theirs, and says it; the others' takes appear as they are made.
+ * Record conversations: #/audio/conversations lists them with each part's progress, and #/audio/conversations/<id> is
+ * where several people record one, each on their own part (the link "Send" gives), hearing the line before each of
+ * theirs while the others' takes appear as they are made.
  */
 export function ConversationAudio({ id, lessonId, part }: { id: string | null; lessonId: string | null; part: string | null }): React.JSX.Element {
   return id ? <ConversationStudio key={id} id={id} lessonId={lessonId} partParam={part} /> : <ConversationList />;

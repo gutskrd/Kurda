@@ -67,17 +67,9 @@ export function untypeableList(chars: Untypeable[]): string {
 }
 
 /**
- * The texts a typing race draws from.
- *
- * A race picks one at random from the active texts of the chosen length and
- * variety, so an edit here changes the next race. Retiring a text (Active off)
- * takes it out of play and keeps it, which is better than deleting one you may
- * want back.
- *
- * The API saves a text the way a keyboard types it and answers with the
- * characters nobody could type even so (é in a Kurmancî text, a Persian letter
- * in a Soranî one). The screen used to drop that answer; now it says so after
- * a save and marks the text in the list until it is fixed.
+ * The texts a typing race draws from at random, by length and variety; retiring one (Active off) keeps it out of play.
+ * The API saves a text as a keyboard types it and names characters nobody could type even so (é in a Kurmancî text),
+ * which the page says after a save and marks in the list.
  */
 export function RaceTexts(): React.JSX.Element {
   const toast = useToast();

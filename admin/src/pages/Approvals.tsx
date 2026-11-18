@@ -46,12 +46,8 @@ function Change({ c }: { c: PendingChange }): React.JSX.Element {
 }
 
 /**
- * Approvals: the shop and event changes that wait for a second admin (KUR-103)
- * — an item priced at 1,000 or more, an event that grants anything. The page
- * used to propose changes too, through a form that sent every shop item as a
- * tag and wiped the rest of the item; the Shop and Live events pages make
- * changes, and this is where they wait. Approving your own is refused by the
- * server, so the button says so instead of failing.
+ * Approvals: shop and event changes waiting for a second admin (an item at 1,000 or more, an event that grants
+ * anything), made on the Shop and Live events pages. The server refuses approving your own, so the button says so.
  */
 export function Approvals(): React.JSX.Element {
   const { me } = useAuth();

@@ -94,22 +94,10 @@ const COLUMNS: ReadonlyArray<Column<KindCounts>> = [
 ];
 
 /**
- * The Characters side of the audio studio: who is shown saying the
- * recordings, and the mouth timelines they move with.
- *
- * A recording made before the characters has no speaker, so a learner sees
- * no one say it; one given a character since, without being recorded again,
- * has no timeline, so the mouth is timed from the words alone. Two jobs put
- * both right in bulk: give every recording without a character one, and make
- * the missing timelines — each file read through the API and decoded in this
- * browser, as the studio does for a new take, and the timeline saved with it.
- *
- * Both work through two recordings at a time, can be paused and cancelled,
- * and set a failure aside to retry rather than stop. The dictionary's
- * pronunciations are read a page at a time as a job reaches them. When the
- * server asks for a pause, the job waits as long as it said and goes on.
- * Jobs touch only the recordings the filter picks; a timeline already made is
- * replaced only when the editor asks for it.
+ * The studio's Characters side: who is shown saying recordings and their mouth timelines. Two bulk jobs give a
+ * character to recordings without one and make missing timelines, decoding each file in the browser as for a new take.
+ * They run two at a time over the recordings the filter picks, can pause and cancel, set failures aside, and wait when
+ * the server asks; an existing timeline is replaced only on request.
  */
 export function Characters(): React.JSX.Element {
   const list = useLoad(loadRecordings, []);

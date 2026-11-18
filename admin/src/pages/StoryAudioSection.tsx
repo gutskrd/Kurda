@@ -38,12 +38,8 @@ export function withSentenceSpeaker(audio: StoryAudio, key: string, speaker: Spe
 }
 
 /**
- * The story's sentences in reading order, each with its recording, and a
- * studio under the one that is open: record, upload a file, hear it back,
- * save (replacing an old take), remove. The same store and the same studio as
- * the audio studio's "Record story sentences" side, which stays a link away
- * for recording several stories in a row. The sentences are the saved text's:
- * what the reader cuts, which an unsaved edit has not reached yet.
+ * The story's sentences in reading order with their recordings, and the studio under the open one, as on the audio
+ * studio's story side. The sentences are the saved text's, as the reader cuts it.
  */
 export function AudioSection({
   story,

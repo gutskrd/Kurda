@@ -38,16 +38,9 @@ import { DurationChips } from './SanctionParts';
 export type SetDraft = (change: (d: DecisionDraft) => DecisionDraft) => void;
 
 /**
- * The decision: was a rule broken, which one, what happens to whom — the
- * reported person, and any reporter who reported in bad faith — and what
- * each of them will read.
- *
- * What they will read is the server's own preview of the exact messages
- * (`preview: true`), asked again a moment after every change, so the
- * moderator sees the real notice — with its end date, its "a person reviewed
- * this" and its "ask for a review" — before anything is sent. The preview
- * also runs every rule the decision would, so a decision the server would
- * refuse says why here, not after the click.
+ * The decision: whether a rule was broken, which, what happens to the reported person and any bad-faith reporter, and
+ * what each will read. That is the server's own preview (`preview: true`), asked again after every change, which also
+ * runs every rule, so a refusal shows here before the click.
  */
 export function DecisionPanel({
   detail,
@@ -565,10 +558,8 @@ function PreviewBox({ state, names }: { state: PreviewState; names: (t: Decision
 }
 
 /**
- * Child sexual abuse material: the playbook, then the one button that hides
- * it everywhere, keeps it as evidence off the public storage, closes the
- * account for good and opens the filing task. Nothing leaves Hevalo by
- * itself — a moderator files the report with the hotline.
+ * Child sexual abuse material: the playbook, then one button that hides it, keeps it as evidence off public storage,
+ * closes the account and opens the filing task. A moderator files the report with the hotline; nothing is sent by itself.
  */
 function CsamDialog({
   open,

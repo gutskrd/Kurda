@@ -37,18 +37,9 @@ const LANG_LABEL: Record<string, string> = {
 };
 
 /**
- * Importing Wîkîferheng, from here rather than from a shell on the host.
- *
- * It takes about an hour and a half, which is longer than any request and longer
- * than a browser tab is reliably open, so the button starts the work and this
- * watches it. Closing the page does not stop it; coming back shows where it got
- * to. A deploy in the middle does stop it, and pressing the button again carries
- * on from the file it reached.
- *
- * Nothing it imports becomes a Peyvok answer or a rhyme prompt — those come from
- * the curated pool, and this only makes the games accept more of what players
- * type. The note under the button says so, because that is the thing most likely
- * to be misread as "it did not work".
+ * Importing Wîkîferheng. It takes about ninety minutes, so the button starts a server job and this page watches it;
+ * closing the page does not stop it, and after a deploy stops it the button resumes from the file it reached. It only
+ * widens what the games accept: Peyvok answers and rhyme prompts come from the curated pool, as the note says.
  */
 export function DictionaryImport(): React.JSX.Element | null {
   const session = useSession();
@@ -60,11 +51,7 @@ export function DictionaryImport(): React.JSX.Element | null {
   const [busy, setBusy] = useState(false);
   const timer = useRef<number | null>(null);
 
-  /*
-   * The API refuses this to a content editor whatever the page shows. Hidden
-   * rather than disabled because a button somebody can never press is worse
-   * than no button: it invites them to keep trying.
-   */
+  // The API refuses this to a content editor, so the button is hidden rather than disabled.
   const mayImport = session.staffRoles.some((r) => r === 'admin' || r === 'superadmin');
 
   const load = useCallback(async () => {

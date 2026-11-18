@@ -3,12 +3,9 @@ import type { StoryProblem } from '@kurda/shared';
 import { fieldId } from '../stories';
 
 /**
- * The pieces every section of the story editor is built from: a field with
- * its label, hint, counter and problems; the problems themselves, filed by
- * tone; the props that tie a control to its path for assistive technology;
- * and the read-only switch a published story puts every section under. Kept
- * apart from the editor so its sections (About, Attribution, Translations,
- * Audio, Review…) can live in files of their own and still look like one form.
+ * The pieces every section of the story editor is built from: a field with its label, hint, counter and problems, the
+ * problems by tone, the props tying a control to its path, and the read-only switch, so the sections can live in files
+ * of their own and still read as one form.
  */
 
 export type ProblemTone = 'error' | 'publish' | 'warning';
@@ -26,9 +23,8 @@ export type ProblemsAt = (path: string, exact?: boolean) => FieldProblems;
 export const TAG: Record<ProblemTone, string> = { error: 'Must fix', publish: 'Before publishing', warning: 'Check' };
 
 /**
- * Whether the story's fields can be changed: not while it is published or
- * archived, nor while a request is out. Text fields go read-only rather than
- * disabled, so a published story's text can still be selected and copied.
+ * Whether the story's fields are locked: while published or archived, or while a request is out. Text fields go
+ * read-only, not disabled, so their text can still be copied.
  */
 export const ReadOnly = createContext(false);
 

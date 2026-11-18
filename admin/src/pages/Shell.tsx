@@ -8,13 +8,9 @@ import { Drawer, Icon } from '../ui';
 import { HevaloMark } from '../brand/HevaloMark';
 
 /**
- * The admin's frame: the nav and the page (KUR-099).
- *
- * On a wide screen the nav is a sidebar; on a phone or a tablet it is a menu
- * button in a slim top bar that opens the same nav as a drawer. Either way the
- * nav is grouped (Overview · Record audio · People · Moderation · Content ·
- * Games · Ranks & rewards · Economy · Settings), shows only what this login can open, and has a
- * box to find a page by name — there are two dozen of them.
+ * The console's frame: the nav and the page. The nav is a sidebar on a wide screen and a drawer behind a top bar's
+ * menu button on a phone or tablet; either way it is grouped, shows only what this login can open, and has a box to
+ * find a page by name.
  */
 export function Shell({ route, children, onSignOut }: { route: Route; children: ReactNode; onSignOut: () => void }): React.JSX.Element {
   const session = useSession();

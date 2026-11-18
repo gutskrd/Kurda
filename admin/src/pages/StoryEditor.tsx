@@ -134,14 +134,9 @@ function dedupe(list: readonly StoryProblem[]): StoryProblem[] {
 }
 
 /**
- * One story: its text, glossary and questions, checked as they are typed,
- * and the steps from draft to published.
- *
- * What it checks is what the API checks (`liveChecks` runs the shared
- * `validateStory`), so the buttons say ahead of time what the server would
- * refuse; when the server refuses anyway, its list is shown too. Every change
- * carries the version of the story the editor loaded, and if someone else
- * changed it since, nothing is overwritten: the editor is asked to reload.
+ * One story: its text, glossary and questions, checked while typed, and the steps from draft to published. The checks
+ * are the API's own (`liveChecks`), so the buttons say ahead what the server would refuse; every change carries the
+ * loaded version, so a story changed by someone else since is reloaded, never overwritten.
  */
 export function StoryEditor({
   id,
@@ -237,9 +232,8 @@ export function StoryEditor({
     warning: problemsAt(warnings, path, exact),
   });
 
-  // Leaving with unsaved work asks first: closing or reloading the tab, and
-  // any change of address — the back button, the nav, "All stories", a typed
-  // #/… address — in the admin's own dialog (nav.ts waits for its answer).
+  // Leaving with unsaved work asks first: a closed or reloaded tab, and any change of address in the console's own
+  // dialog (nav.ts waits for its answer).
   useEffect(() => {
     if (!dirty) return;
     const onUnload = (e: BeforeUnloadEvent): void => {
@@ -348,11 +342,7 @@ export function StoryEditor({
     }
   }
 
-  /**
-   * The story as the server now has it after a change that is not a save — a
-   * review, a feature — which touches its standing and its version, not its
-   * words: the form, and any unsaved edits in it, stay as they are.
-   */
+  /** The story after a change that is not a save (a review, a feature): the form and its unsaved edits stay. */
   const refresh = (next: AdminStory): void => setStory(next);
 
   /** A refusal of a review or a feature change: a stale copy is a conflict, anything else a notice. */
@@ -365,11 +355,7 @@ export function StoryEditor({
     }
   };
 
-  /**
-   * One language as the server saved it: the story's new version, and that
-   * language taken into the form and into what counts as saved, while every
-   * other unsaved edit stays where it is.
-   */
+  /** One language as the server saved it, taken into the form and the saved copy; other unsaved edits stay. */
   const savedLocale = (next: AdminStory, locales: readonly string[]): void => {
     const from = formFromStory(next, { previous: form });
     setStory(next);
@@ -378,8 +364,7 @@ export function StoryEditor({
   };
 
   /**
-   * Save each language in `locales` on its own, in turn, from the version
-   * `start`: the approval of the Kurdish stays, and a published story stays
+   * Save each language in `locales` in turn from version `start`, keeping the Kurdish approval and a published story
    * online. Stops at the first refusal, keeping what was saved before it.
    */
   async function saveLocales(start: AdminStory, locales: readonly string[]): Promise<{ story: AdminStory; failure: StoryFailure | null }> {

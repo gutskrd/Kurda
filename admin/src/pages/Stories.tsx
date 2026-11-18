@@ -7,11 +7,8 @@ import { StoryEditor } from './StoryEditor';
 import { StoryList } from './StoryList';
 
 /**
- * Stories: the texts the app's library offers to read, each with the
- * questions a quiz asks about it. The list is #/stories, a story
- * #/stories/<id>, a new one #/stories/new, the library's categories
- * #/stories/categories — addresses of their own, so the back button leaves a
- * story for the list and a story can be bookmarked or sent to a reviewer.
+ * Stories: the library's texts, each with its quiz questions, at #/stories, #/stories/<id>, #/stories/new and
+ * #/stories/categories, so a story can be bookmarked or sent to a reviewer.
  */
 export function Stories(): React.JSX.Element {
   const route = useRoute();

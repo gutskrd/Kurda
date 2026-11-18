@@ -38,12 +38,8 @@ import { rankTierName, seasonName, type SeasonList, gameName } from '../progress
 import { RankEmblem, SeasonFrame } from './RankParts';
 
 /**
- * Seasons for staff (contract 4, §R5): the season now and what it would hand
- * out if it closed today, the seasons before it and what each handed out, and
- * closing the ones that have ended — which the server does by itself every
- * six hours, so the button is for a close that has not happened yet.
- *
- * #/seasons, #/seasons/<id> (e.g. 2026-Q3).
+ * Seasons for staff: the current season and what it would hand out today, past seasons and their rewards, and closing
+ * an ended one, which the server also does every six hours. #/seasons, #/seasons/<id> (e.g. 2026-Q3).
  */
 export function Seasons(): React.JSX.Element {
   const route = useRoute();

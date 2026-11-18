@@ -26,19 +26,9 @@ export function sentenceRecordPath(text: string): string {
 }
 
 /**
- * The studio for one Kurdish sentence, wherever it is recorded from: who says
- * it (the picker, and the character saying the saved take), then the recorder
- * (record, upload a file, hear it back, save, replace, remove). The lesson
- * studio opens one under each row; the story editor opens one under each of
- * a story's sentences. Both save to the same store the same way — the WAV
- * goes up with the speaker and a mouth timeline made from it (voice.ts) — so
- * a sentence recorded in either place is the one recording the apps play.
- *
- * Removing asks first in the words `removePrompt` gives. A lesson's listening
- * item may play this very recording as its clip: when the server says so
- * (LISTENING_AUDIO_IN_USE) the editor is asked again with what the server
- * knows, and `listeningNeedsIt` skips that second question when the first
- * already said it.
+ * The studio for one Kurdish sentence, in the lesson studio and the story editor alike: who says it, then the recorder.
+ * Both save the same way (voice.ts), so either place makes the one recording the apps play. When the server says a
+ * listening item plays this recording (LISTENING_AUDIO_IN_USE), a removal asks again, unless `listeningNeedsIt` said so.
  */
 export function SentenceStudio({
   text,

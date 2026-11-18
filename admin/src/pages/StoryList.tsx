@@ -61,14 +61,8 @@ function remember(filter: ListFilter, page: number): void {
 }
 
 /**
- * Every story, whatever its status, with what stands between each and
- * publishing, and a Record link into the audio studio for its sentences.
- *
- * The server filters and pages the list (the library can grow past what one
- * request should carry), so each change to the filters is a new request, the
- * search once it has stopped being typed. The counts on the status tabs come
- * from the server too, for the filters without the status: a tab's count is
- * what choosing it would show.
+ * Every story with what stands between it and publishing, and a Record link into the audio studio. The server filters
+ * and pages the list, so each filter change is a new request; a status tab's count is what choosing it would show.
  */
 export function StoryList({ onNew }: { onNew: () => void }): React.JSX.Element {
   const [start] = useState(saved);
@@ -224,11 +218,7 @@ function Filters({
   );
 }
 
-/**
- * What learners can play today: published stories per variety and length. A
- * game's setup offers only the lengths that have one, so a zero is a length
- * nobody can choose.
- */
+/** Published stories per variety and length; a game offers only lengths that have one, so a zero cannot be chosen. */
 function Coverage({ page }: { page: { stories: readonly AdminStorySummary[]; total: number } }): React.JSX.Element {
   const coverage = publishedCoverage(page.stories);
   return (

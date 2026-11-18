@@ -32,25 +32,10 @@ interface Recording {
 export type Filter = 'missing' | 'recorded' | 'all';
 
 /**
- * Recording the alphabet page's sounds: the Letters side of the audio studio.
- *
- * Every letter and example word ships with a synthesised clip, which is a guide
- * and no more. This is where a person replaces them: pick a sound, press Record,
- * say exactly what is written, and stop. The page trims the silence, levels the
- * volume and plays it back; Save puts it live, and the next sound still missing
- * comes up. A file from a phone works the same way, through Upload.
- *
- * Removing a recording brings the synthesised clip back, so nothing here can
- * leave a letter silent.
- *
- * The word sets' words (colours, numbers, days, months) are recorded here
- * too, in groups of their own after the letters. A few of them have no
- * synthesised clip, where no voice could say them accurately: until they are
- * recorded, they have no sound at all.
- *
- * The studio also says who is shown saying the sound, as the sentences' does:
- * a new take goes up with that character and a timeline read in the sound's
- * own script (voice.ts).
+ * The audio studio's Letters side: native recordings replacing the synthesised clip each letter and example word
+ * ships with. Save puts a take live and moves to the next missing sound; removing one brings the synthesised clip
+ * back. The word sets' words follow the letters, and a few have no synthesised clip, so they are silent until
+ * recorded. A take goes up with its character and a timeline in the sound's script (voice.ts).
  */
 export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}): React.JSX.Element {
   const [recordings, setRecordings] = useState<Record<string, Recording>>({});

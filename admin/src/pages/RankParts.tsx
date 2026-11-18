@@ -1,9 +1,6 @@
 /**
- * Parts the Ranks, Seasons, Leagues and Badges pages share, and the person
- * page's Ranks tab: the art (drawn by @kurda/shared, the same strings the web
- * and the phone draw), where a weekly run stands, and the two actions that
- * change a rating — voiding a game's effect and resetting a player — asked
- * the same way wherever they are offered.
+ * Parts the Ranks, Seasons, Leagues and Badges pages and a person's Ranks tab share: the art from @kurda/shared, where
+ * a weekly run stands, and the two rating actions (void a game, reset a player), asked the same way everywhere.
  */
 import { useId, useMemo } from 'react';
 import {
@@ -61,10 +58,8 @@ function useArtId(): string {
 }
 
 /**
- * One drawing, inline. The SVG comes from our own deterministic builders, not
- * from anything a person typed, so it is safe to set as markup. With a label
- * it is an image of that name; without one it is decoration beside text that
- * already says it.
+ * One drawing, inline. The SVG comes from the shared builders, never from user input, so it is safe as markup. With a
+ * label it is an image of that name; without one it is decoration.
  */
 function Art({ svg, label, className }: { svg: string; label?: string; className?: string }): React.JSX.Element {
   return (
@@ -117,11 +112,7 @@ export function SeasonFrame({ tier, size = 40 }: { tier: RankTier; size?: number
   return <Art svg={svg} className="art-emblem" />;
 }
 
-/**
- * A badge medallion at a tier (1–4), or locked at 0. A key the art has no
- * drawing for — a retired achievement kept on an old account — shows a plain
- * placeholder rather than failing the page.
- */
+/** A badge medallion at a tier (1–4), or locked at 0; a key with no drawing (a retired badge) shows a placeholder. */
 export function BadgeArt({ badgeKey, tier, tiers, size = 56, label }: { badgeKey: string; tier: number; tiers: number; size?: number; label?: string }): React.JSX.Element {
   const id = useArtId();
   const svg = useMemo(() => {

@@ -68,21 +68,9 @@ type StateFilter = 'listed' | 'all' | SaleState;
 type View = ArtKind | 'other';
 
 /**
- * The shop's catalogue: what is on sale, at what price, and when.
- *
- * Backgrounds and icons are pictures, so each has a view of its own, as cards
- * with their art, where they are added with an uploaded picture, edited and
- * deleted (admin/src/shop). Everything else — tags, power-ups, streak freezes
- * — is in the table, as before.
- *
- * Prices are the server's: a purchase sends only the SKU and is refused if
- * the price moved since the player saw it, so a change here is safe the moment
- * it lands. A new price of 1,000 or more waits for a second admin (Approvals);
- * the server refuses it anywhere else, and the forms say so before saving.
- *
- * The form used to drop an item's sale window on every edit, had no `tag`
- * category (so the Kurdish tag could not be saved), and reported problems with
- * the browser's alert.
+ * The shop's catalogue: what is on sale, at what price, and when. Backgrounds and icons have views of their own with
+ * their art (admin/src/shop); everything else is in the table. A purchase sends only the SKU and is refused if the
+ * price moved, so a change is safe at once; a new price of 1,000 or more waits for a second admin (Approvals).
  */
 export function Shop(): React.JSX.Element {
   const toast = useToast();
@@ -374,11 +362,7 @@ function OtherItems({
   );
 }
 
-/**
- * Create or edit an item. Every field the item has is on the form and is sent
- * back, because the catalogue route writes the whole row: an edit used to
- * clear the sale window it did not show.
- */
+/** Create or edit an item. Every field is on the form and sent back, as the catalogue route writes the whole row. */
 function ItemForm({
   item,
   taken,

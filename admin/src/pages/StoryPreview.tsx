@@ -7,14 +7,9 @@ import { Badge, Icon } from '../ui';
 import { EditorSection } from './StoryEditorFields';
 
 /**
- * The story as the reader will show it, from the form as it is now: the
- * cover (the picture chosen, else the kilim the apps give this story, the
- * same one every time), the title, "A2 · Elementary", the category, the
- * minutes, the narrated badge, the author and tradition line, the synopsis,
- * then the paragraphs with the glossary's words marked and a paragraph's
- * translation under it. Not a copy of the reader's code — the admin has its
- * own look — but the same order and the same decisions, so an editor sees
- * what a learner will meet before it is published.
+ * The story as the reader will show it, from the form as it is now: the cover, title, level, category, minutes,
+ * attribution and synopsis, then the paragraphs with glossary words marked and translations under them. The console's
+ * own look, but the reader's order and decisions.
  */
 export function StoryPreview({
   form,

@@ -3,10 +3,8 @@ import { PRIORITY_NAME, slaTarget } from '../moderation';
 import { Icon, PageHeader, Section } from '../ui';
 
 /**
- * The moderation playbook (#/playbook): what to do in the cases that must
- * not be improvised — child abuse material, someone at risk of hurting
- * themselves, a threat to someone's life — and how the everyday rules work.
- * Static, short, and only about what the panel actually does.
+ * The moderation playbook (#/playbook): what to do in the cases that must not be improvised, and how the everyday
+ * rules work. Static, and only about what the console actually does.
  */
 export function Playbook(): React.JSX.Element {
   return (

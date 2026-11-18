@@ -7,12 +7,9 @@ import { withKit } from '../test/render';
 import { GameContent } from './GameContent';
 
 /**
- * The Game content page: the list and its filters, the importers, the
- * readiness view, and one row's editor — the checks it runs as the content is
- * typed (Kurdish in the other variety's script is refused before a save is
- * tried), its review panel, and publishing only what was approved. And what
- * it no longer does: a scene of What Would You Say?, which is no longer part
- * of Hevalo, can be neither imported nor written here.
+ * The Game content page: the list and its filters, the importers, the readiness view, and one row's editor with its
+ * live checks (Kurdish in the other variety's script refused before a save), review panel and publishing only what was
+ * approved. A retired game's kind (What Would You Say?) can be neither imported nor written.
  */
 
 const ID = '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde0001';

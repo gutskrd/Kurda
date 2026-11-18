@@ -8,20 +8,10 @@ import { Banner, Button, Icon, clockTime, describeError, errorLine, reducedMotio
 import { Companion, HAPPY_MS } from '../brand/Companion';
 
 /**
- * Signing in to the console, one step at a time on one card, the steps
- * turning past like the faces of a wheel: the email, then the password, then
- * the two-step code (or setting it up), then the console opening. Nothing in
- * the admin renders before the last step: the API refuses every /admin route
- * without 2FA, so the workspace would only be a screen of failed requests.
- *
- * Things load while the person is busy. The console's own code is fetched in
- * the background as soon as the sign-in is on screen, and what the session
- * still needs is asked while the wheel turns to the next step, so the console
- * is there the moment the last step is done. A session restored on reload
- * goes straight to what it still needs, or straight in.
- *
- * The email is not checked with the server on its own: whether an account
- * exists is never said, so the email and the password are sent together.
+ * Signing in, one step at a time on one card turning like a wheel: email, password, the 2FA code or its setup, then
+ * the console, which renders only after 2FA since the API refuses every /admin route without it. The console's code
+ * and the session's next need load while the person types. The email is never checked alone, so whether an account
+ * exists is never said.
  */
 
 // Whether this browser has signed in to the admin before — drives the greeting
@@ -35,11 +25,7 @@ export function emailProblem(value: string): string | null {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : 'Enter the whole email address, like name@hevalo.app.';
 }
 
-/**
- * Why a sign-in did not go through, in words that say what to do next. The
- * server's own ("invalid email or password", "too many failed attempts — try
- * again later") were shown as they came, in lower case and without the wait.
- */
+/** Why a sign-in did not go through, in words that say what to do next and how long to wait. */
 export function signInProblem(err: unknown): string {
   if (err instanceof ApiError && err.code === 'INVALID_CREDENTIALS') return 'That email and password don’t match. Check both and try again.';
   if (err instanceof ApiError && err.code === 'LOGIN_VERIFICATION_REQUIRED') {
@@ -240,11 +226,7 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
   );
 }
 
-/**
- * The steps in a line above Hevalo: one line of light from the first step to
- * the one on show, flowing as it goes, each step lighting up as the light
- * reaches it. While the session is being checked a glint runs on ahead.
- */
+/** The steps in a line above Hevalo, lit up to the current one, with a glint running ahead while the session is checked. */
 function Rail({ at, busy }: { at: number; busy: boolean }): React.JSX.Element {
   return (
     <div className={`wheel-rail${busy ? ' is-busy' : ''}`} style={{ '--at': at / (RAIL.length - 1) } as CSSProperties}>
@@ -269,11 +251,8 @@ function Rail({ at, busy }: { at: number; busy: boolean }): React.JSX.Element {
 let inSightAt = 0;
 
 /**
- * On a phone the keyboard takes the lower half of the screen and the browser
- * scrolls the box being typed in up into what is left, which can leave
- * Hevalo above it, out of sight. Once the keyboard is up, while a box under
- * him is in use, the page is scrolled to bring his head to the top of what
- * can be seen, if the box still shows below him; if both cannot, the box wins.
+ * With a phone's keyboard up, scrolls Hevalo's head to the top of what can be seen while a box under him is in use,
+ * as long as the box still shows; if both cannot fit, the box wins.
  */
 function useInSight(stage: RefObject<HTMLDivElement | null>): void {
   useEffect(() => {
@@ -308,11 +287,8 @@ function useInSight(stage: RefObject<HTMLDivElement | null>): void {
 }
 
 /**
- * The steps' faces on a wheel: a new face turns in from below as the last one
- * turns away over the top (the other way when going back), and the card's
- * height follows the face on show. The face leaving stays as it was, inert,
- * until it has turned away. For whoever asks for less motion, the new face
- * simply fades in.
+ * The steps' faces on a wheel: a new face turns in from below as the last turns away (reversed going back), the card's
+ * height follows it, and the leaving face stays inert until gone. Under reduced motion the new face fades in.
  */
 function Wheel({ face, back, children }: { face: string; back: boolean; children: ReactNode }): React.JSX.Element {
   const latest = useRef<{ key: string; node: ReactNode }>({ key: face, node: children });
@@ -435,11 +411,7 @@ function EyeIcon({ off }: { off: boolean }): React.JSX.Element {
   );
 }
 
-/**
- * The second step: the password, under the email it goes with (a tap on that
- * goes back to change it). The email is also in a hidden box, so a password
- * manager files the password under it.
- */
+/** The password step, under its email (a tap goes back); the email is also in a hidden box for password managers. */
 function PasswordStep({
   email,
   onStatus,
@@ -695,13 +667,8 @@ function EnrollStep({ onStatus, onDone, onSignOut }: { onStatus: (s: CompanionSt
 }
 
 /**
- * The code, sent to one of the two code routes as soon as the sixth digit is
- * in (or on "Continue"). A wrong code is said and the box emptied for the next
- * one. After five wrong codes the server pauses code entry (429 TOTP_LOCKED,
- * with how long) — the per-person rate limit answers 429 too — and that is
- * said calmly with the time left, the button counting it down and coming back
- * by itself when it is over: the server's "too many wrong codes — try again
- * later" said neither how long nor that it was not the admin's fault.
+ * The code, sent as soon as the sixth digit is in. A wrong code empties the box. After five wrong codes, or at the rate
+ * limit, the server answers 429 with how long, and the button counts it down and comes back by itself.
  */
 function CodeForm({
   path,

@@ -59,38 +59,12 @@ function studioHref(course: string | null): string {
 }
 
 /**
- * Recording the Kurdish the lessons and the stories use: two sides of the
- * audio studio ("Record lesson sentences", "Record story sentences") over the
- * one list the API reads off every lesson and story — published or still a
- * draft — so an editor can record before anything goes live.
- *
- * For a lesson: each item's `say`, the first accepted answer of a writing or
- * listening item and of a translation without `say` (one with it goes from
- * Kurdish to English, and its answers are English), a speaking item's model
- * sentence, and every match-pairs card. For a story: every sentence, as the story reader cuts it.
- * A sentence recorded once is sent with everything that uses it — with the
- * exercise, or once it is answered where hearing it first would give the
- * answer away (api/src/lessonaudio/delivery.ts).
- *
- * "Record next missing" walks the missing items in course order: save one and
- * the next comes up. A "Record" link from the lesson or story list opens this
- * on that one lesson or story (`focus`). Anything else can be recorded too,
- * through "Add a phrase".
- *
- * Each row's studio (SentenceStudio, which the story editor shares) also says
- * who is shown saying it: a new take goes up with that character and a mouth
- * timeline made from it (voice.ts), and a change to a saved one is sent at once.
- *
- * The lessons say who records what (`voice` on an exercise, a conversation
- * line's character), and the studio follows that plan: a row still to record
- * says who it is for, with their bust, and its picker opens on them; the Voice
- * filter shows one character's lines, counting what is left for each; the
- * Recording plan card gives each character's progress, course by course. A
- * character's script (`voice`, #/audio/lessons?voice=hamo&course=…) lists
- * their lines alone, recorded or not, numbered in course order under each
- * lesson's heading, so the person who voices them can sit down and say them
- * in a row with the same recorder and keys. The course filter narrows any of
- * this to one course — the road, say, apart from the older lessons.
+ * The studio's lesson and story sentence sides, over the one list the API reads off every lesson and story, drafts
+ * included, so recording can happen before anything goes live. A recording is sent with everything that uses it
+ * (api/src/lessonaudio/delivery.ts). "Record next missing" walks the gaps in course order, `focus` opens one lesson
+ * or story, and "Add a phrase" records anything else. The studio follows the lessons' plan of who records what: a row
+ * says who it is for, the Voice filter and Recording plan count each character's lines, and a character's script
+ * (`?voice=hamo&course=…`) lists their lines in course order to record in a row.
  */
 export function LessonAudio({
   scope = 'lessons',
@@ -202,9 +176,8 @@ export function LessonAudio({
     setNote(null);
   };
 
-  // The stored timelines, for the preview of a recording saved before: the
-  // list is read without them, since every sentence's would make it much
-  // heavier, and read once more with them only when an opened row needs one.
+  // Stored timelines for an older recording's preview: the list is read without them, as they make it much heavier,
+  // and again with them only when an opened row needs one.
   useEffect(() => {
     const open = items.find((i) => i.key === selected);
     if (!open?.recorded || !open.speaker || !open.hasLipsync || open.lipsync !== undefined || timelines.current !== 'unasked') return;
@@ -566,10 +539,7 @@ function CoursePick({
   );
 }
 
-/**
- * The recording plan, course by course: for each character, how much of what
- * the lessons give them is recorded, and the way to their script.
- */
+/** The recording plan per course: how much of each character's lines is recorded, with a link to their script. */
 function RecordingPlan({ plan }: { plan: readonly CoursePlan[] }): React.JSX.Element {
   return (
     <section className="card la-plan" aria-labelledby="la-plan-title">

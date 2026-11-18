@@ -57,14 +57,9 @@ function goList(q: string, filter: string, page: number): void {
 }
 
 /**
- * People: the list (#/users), and one person (#/users/<id>, with a tab
- * after it: #/users/<id>/standing).
- *
- * The list loads itself, newest first — the account you need is usually the
- * one that just signed up — with the real total, a search (a username, an
- * email, or an id) and a filter for who is suspended, muted or staff right
- * now. Search, filter and page live in the address, so Back from a person
- * returns to the same page of the same search.
+ * People: the list (#/users) and one person (#/users/<id>/<tab>). The list is newest first, as the account wanted is
+ * usually a new one, with a search by username, email or id and a status filter. Search, filter and page live in the
+ * address, so Back from a person returns to the same page.
  */
 export function Users(): React.JSX.Element {
   const route = useRoute();
@@ -160,11 +155,7 @@ function UserList(): React.JSX.Element {
   );
 }
 
-/**
- * "Banned", "Suspended", "Muted", "Limited" (a posting mute or a feature
- * limit) and staff roles: what someone opening the row should know first.
- * "Active" only when nothing at all limits the account.
- */
+/** "Banned", "Suspended", "Muted", "Limited" and staff roles, first on the row; "Active" only when nothing limits it. */
 export function StatusBadges({
   ban,
   muted,

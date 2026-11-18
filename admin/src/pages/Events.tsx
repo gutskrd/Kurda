@@ -64,13 +64,8 @@ function rewardsText(r: Record<string, unknown>): string {
 }
 
 /**
- * Live events (KUR-089): seasonal and holiday events with their window, theme,
- * quests and rewards — data, so launching one needs no deploy.
- *
- * Saving an event used to delete its quests and rewards (the form never sent
- * them), and a reward could be set here without the second admin the
- * Approvals page exists for. Now an edit keeps both; quests are edited as
- * JSON; a change of rewards goes to Approvals.
+ * Live events: seasonal and holiday events with their window, theme, quests and rewards, as data so launching one needs
+ * no deploy. An edit keeps the quests (edited as JSON) and rewards; a change of rewards goes to Approvals.
  */
 export function Events(): React.JSX.Element {
   const toast = useToast();

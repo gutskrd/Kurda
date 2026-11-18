@@ -130,11 +130,8 @@ function detailLines(details: Record<string, unknown>): Array<[string, string]> 
 }
 
 /**
- * The security log: who is signing in and from where, who is being kept out,
- * what happened on this console, and who was given staff access. For
- * superadmins. Critical events are emailed as they happen; this page is where
- * they are looked into and marked reviewed. It keeps itself up to date while
- * it is open.
+ * The security log, for superadmins: sign-ins and where from, who is kept out, what happened on this console, and staff
+ * grants. Critical events are emailed as they happen and reviewed here; the page keeps itself up to date.
  */
 export function SecurityLog({ route }: { route?: Route }): React.JSX.Element {
   const toast = useToast();
@@ -608,11 +605,7 @@ const SERIES = [
   { key: 'critical', label: 'Critical', className: 'is-critical' },
 ] as const;
 
-/**
- * Events per hour as stacked bars, routine (info and notice) at the bottom,
- * then warnings, then critical, so a bad hour stands out at a glance. The
- * hour pointed at, or touched and slid along, is spelled out under the chart.
- */
+/** Events per hour as stacked bars, routine at the bottom and critical on top; the hour pointed at is spelled out below. */
 export function ActivityChart({ hours }: { hours: SecuritySummary['hourly'] }): React.JSX.Element {
   const [at, setAt] = useState<number | null>(null);
   const rows = hours.map((h) => ({ hour: h.hour, routine: h.info + h.notice, warning: h.warning, critical: h.critical }));

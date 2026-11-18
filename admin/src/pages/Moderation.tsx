@@ -30,13 +30,8 @@ import { Badge, Button, Icon, PageHeader, Section, Table, Time, UserLink, errorL
 import { CaseView } from './CaseView';
 
 /**
- * Moderation: the queue (#/moderation), and one case (#/moderation/<caseId>).
- *
- * Every report, every automatic flag (text, pictures), every bot score and
- * every anti-cheat review is a case in one queue — the old panel had three
- * pages for them, and a report on one never showed on the others. The queue
- * is ordered the way it should be worked: most urgent first, then whoever
- * has waited longest, with how long each still has before it is overdue.
+ * Moderation: the queue (#/moderation) and one case (#/moderation/<caseId>). Reports, automatic flags, bot scores and
+ * anti-cheat reviews are all cases in one queue, ordered most urgent first, then longest waiting.
  */
 export function Moderation(): React.JSX.Element {
   const route = useRoute();
@@ -346,11 +341,7 @@ function PriorityBar({ summary, filters }: { summary: ModerationSummary | undefi
   );
 }
 
-/**
- * Triage from the keyboard, as moderation tools do: j and k move down and up
- * the queue, Enter opens the case (it is a link), c claims it. Never while
- * typing in a field, and never with a modifier held (that is the browser's).
- */
+/** Triage keys: j and k move down and up, Enter opens (it is a link), c claims; never while typing or with a modifier. */
 function useTriageKeys(container: React.RefObject<HTMLDivElement | null>, cases: CaseQueueItem[] | null, claimed: () => void): void {
   const toast = useToast();
   useEffect(() => {

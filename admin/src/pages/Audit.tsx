@@ -68,10 +68,8 @@ export function describeAction(action: string): { verb: string; where: string } 
 }
 
 /**
- * The audit log (KUR-104): every change an admin made, append-only, for a
- * superadmin. It searched on every keystroke (a half-typed id answered 400)
- * and showed eight characters of each id; now it searches when asked, names
- * people, pages back, and can hide sign-ins and dry runs.
+ * The audit log, for a superadmin: every change an admin made, append-only. It searches when asked, not per keystroke,
+ * names people, pages back, and can hide sign-ins and dry runs.
  */
 export function Audit(): React.JSX.Element {
   const toast = useToast();

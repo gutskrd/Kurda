@@ -164,19 +164,10 @@ function ScriptMenu({ person, lines }: { person: Pick<Person, 'id' | 'name'>; li
 }
 
 /**
- * Record by person (#/record, #/record/<voice>): everyone who lends the
- * course a voice — the voice plan's characters, any conversation part no
- * character plays, a narrator for each variety — each with what is left for
- * them, and, on choosing one, their lines one after another in course order:
- * the line big, what it means, the line before it to act from, and a
- * recorder that keeps a take and moves on to the next line still to record.
- *
- * A take goes to the upload route the studio's own side for that line uses,
- * under the same key and with the same lip-sync timeline, so it is the
- * recording every lesson, story and game that says the line plays
- * (recordingPeople.ts). Someone linked to a voice lands here on their own
- * lines (navigation.ts); a voice actor sees only theirs, which the server
- * decides, not this page.
+ * Record by person (#/record, #/record/<voice>): every voice of the course with what is left for it, and one voice's
+ * lines in course order, each with its meaning and the line before, and a recorder that moves to the next. A take is
+ * saved exactly as the studio saves that line (recordingPeople.ts). Someone linked to a voice lands on their lines;
+ * a voice actor sees only theirs, as the server decides.
  */
 export function RecordByPerson({ voice }: { voice: string | null }): React.JSX.Element {
   return voice ? <PersonScript key={voice} voice={voice} /> : <People />;
@@ -224,10 +215,7 @@ function People(): React.JSX.Element {
   );
 }
 
-/**
- * The road's chapters, each with how much of it is recorded: a chapter goes
- * online by itself, all its lessons at once, the moment its last line is in.
- */
+/** The road's chapters and how much of each is recorded; a chapter goes online by itself once its last line is in. */
 function Chapters({ chapters }: { chapters: readonly RoadChapter[] }): React.JSX.Element {
   return (
     <section className="rp-group" aria-label="Chapters">
@@ -625,11 +613,8 @@ function takeLine(take: NonNullable<Line['take']>): string {
 }
 
 /**
- * The line being recorded, and its recorder: Record (Space), Stop (Space),
- * hear it back at once, then Keep (Enter) or Redo (Space); L plays it again,
- * and the arrows move to the line before or after. None of the keys while
- * someone is typing, choosing in a list, or has a button of their own in
- * focus (Tab there, and Space presses that button, as it should).
+ * The line being recorded and its recorder: Space records, stops and redoes, Enter keeps, L plays again and the arrows
+ * move. The keys stay off while typing, choosing in a list, or with a button in focus.
  */
 function TakeStage({
   line,

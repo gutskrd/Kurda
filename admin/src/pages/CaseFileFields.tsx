@@ -14,16 +14,9 @@ import { publishedLines } from '../gameContent';
 import { Badge, Banner, Button, Field, Icon, Note, errorLine, useDebounced, useLoad } from '../ui';
 
 /**
- * The editor of Detective's case files, on the Game content page
- * (GameContent.tsx).
- *
- * It never has Kurdish typed into it. Every Kurdish line is copied from a
- * published lesson, conversation or story with the line picker (GET
- * /admin/game-content/lines), which brings its English and the key its
- * recording is filed under; a line already in a row is shown, never edited,
- * and can only be removed. What the editor writes is in the interface
- * languages: a case's story, its suspects, questions, solution and hints. A
- * case is put together here card by card.
+ * Detective's case file editor on the Game content page. No Kurdish is typed: each line is copied from published
+ * content with the line picker (GET /admin/game-content/lines), with its English and recording key, and can only be
+ * removed. The editor writes the case's story, suspects, questions, solution and hints in the interface languages.
  */
 
 type Payload = Record<string, unknown>;

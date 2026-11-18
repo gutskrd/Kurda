@@ -72,17 +72,10 @@ export interface UserDetail extends Partial<AdminUserModeration> {
 type TabKey = 'profile' | 'standing' | 'reports' | 'wallet' | 'items' | 'ranks' | 'badges' | 'sessions' | 'audit';
 
 /**
- * One person (#/users/<id>/<tab>): who they are, where they stand — the
- * sanctions in force and before, their appeals, the cases about them, with
- * a sanction to give and each one liftable — the reports about them and the
- * ones they made, their wallet and ledger, what they own, where they are
- * signed in, and what admins have done to the account.
- *
- * Support staff open the page too, without what moderation knows (the API
- * leaves it out for them), so the Standing and Reports tabs are for
- * moderators only; balances and items change only for a superadmin. Their
- * game ranks and badges are for the legacy admin role and superadmin, the
- * roles every rank and badge route is guarded by.
+ * One person (#/users/<id>/<tab>): who they are, their standing with sanctions to give and lift, reports about and
+ * by them, wallet and items, sessions, and the account's admin history. Support staff see the page without what
+ * moderation knows (the API leaves it out), so Standing and Reports are for moderators; balances change only for a
+ * superadmin, and ranks and badges follow the rank tools' roles.
  */
 export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.Element {
   const loaded = useLoad(() => api<UserDetail>(`/admin/users/${encodeURIComponent(id)}`), [id]);
@@ -175,11 +168,8 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
 }
 
 /**
- * The one badge that says where the account stands, beside the name. "Active"
- * only when nothing limits it: a posting mute or a feature limit is "Limited",
- * so a moderator scanning the header is never told an account is free when it
- * is not. (Support staff get no sanctions with the page; for them a limit
- * cannot show, and the header says only what the account record says.)
+ * The badge beside the name saying where the account stands; "Active" only when nothing limits it. Support staff get
+ * no sanctions with the page, so for them it says only what the account record says.
  */
 function standingBadge(u: UserDetail): React.JSX.Element {
   if (u.ban === 'perm_banned') return <Badge tone="bad">Banned</Badge>;
@@ -250,11 +240,8 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
 }
 
 /**
- * Lessons and recording: a superadmin gives someone the content editor role,
- * or takes it away (PUT /admin/users/:id/content-editor) — how a person joins
- * the team that writes lessons and records them, a part of a conversation
- * from wherever they are, without seeing anything about people or money.
- * Asked with a reason, which goes into the account's history.
+ * A superadmin gives or takes the content editor role (PUT /admin/users/:id/content-editor), which writes lessons and
+ * records without seeing people or money. Asked with a reason for the account's history.
  */
 function TeamRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => void }): React.JSX.Element {
   const dialogs = useDialogs();
@@ -313,12 +300,8 @@ function TeamRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => v
 }
 
 /**
- * The voices a person lends the course, set by a superadmin: which of the
- * people on the "Record by person" page this account records (PUT
- * /admin/users/:id/voices), so the console opens on their own lines; and the
- * voice actor role (PUT /admin/users/:id/voice-actor), for someone who only
- * records — it opens that page and the lines of the voices ticked here, and
- * nothing else in the console. Each change asks why, for the record.
+ * The voices this account records (PUT /admin/users/:id/voices), so the console opens on their lines, and the voice
+ * actor role (PUT /admin/users/:id/voice-actor), which opens only those lines. Set by a superadmin, each with a reason.
  */
 function VoiceRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => void }): React.JSX.Element {
   const dialogs = useDialogs();
@@ -651,12 +634,8 @@ function CaseLink({ id }: { id: string | null }): React.JSX.Element | null {
 }
 
 /**
- * A sanction straight from the person's page, under the same rules as a
- * case decision: a permanent ban waits for a second moderator when there is
- * one (the account is suspended meanwhile), applies at once for child
- * safety, and is confirmed by typing the username — which the only
- * moderator must do, and everyone does here, because a ban for life is not
- * a click.
+ * A sanction from the person's page under a case decision's rules: a permanent ban waits for a second moderator when
+ * there is one, applies at once for child safety, and is always confirmed by typing the username.
  */
 function SanctionDrawer({ user: u, onClose, onDone }: { user: UserDetail; onClose: () => void; onDone: () => void }): React.JSX.Element {
   const [draft, setDraft] = useState<SanctionDraft>(() => newSanctionDraft('warning'));

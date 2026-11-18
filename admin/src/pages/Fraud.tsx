@@ -28,11 +28,7 @@ function words(key: string): string {
   return w.charAt(0).toUpperCase() + w.slice(1);
 }
 
-/**
- * Fraud (KUR-073): purchases held for a check before their Gems are given.
- * Clearing one gives the Gems, which cannot be taken back from here, so both
- * decisions are asked first — Clear used to grant on a click.
- */
+/** Purchases held for a fraud check before their Gems are given; both decisions are asked first, as Gems cannot be taken back here. */
 export function Fraud(): React.JSX.Element {
   const toast = useToast();
   const dialogs = useDialogs();

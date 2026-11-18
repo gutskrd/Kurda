@@ -94,10 +94,8 @@ export const FEEDBACK_PAGE = 50;
 export const FEEDBACK_Q_MAX = 80;
 
 /**
- * The API path for a page of answers ("all" is no status filter). A next page
- * starts after the last answer shown (`beforeId`), not at an offset: marking
- * answers read or archived takes them out of the filter while they stay on
- * screen, and an offset would then skip as many answers as were marked.
+ * The API path for a page of answers ("all" is no status filter). Pages follow the last answer shown (`beforeId`), as
+ * marking answers moves them out of the filter and an offset would skip that many.
  */
 export function feedbackPath(f: FeedbackFilters, beforeId?: string): string {
   const p = new URLSearchParams();
@@ -123,11 +121,8 @@ function setFilters(f: FeedbackFilters): void {
 }
 
 /**
- * The feedback inbox (#/feedback): every answer from the rating box after a
- * player's first game, and from Settings → Send feedback. New answers are the
- * inbox; reading one marks it read, archiving puts it away, and a private
- * note keeps what was done about it. Above the list, how people rate Hevalo
- * over the last 30 days.
+ * The feedback inbox (#/feedback): answers from the rating box after a first game and from Settings → Send feedback,
+ * with a private note for what was done, under the last 30 days' ratings.
  */
 export function Feedback(): React.JSX.Element {
   const route = useRoute();
@@ -135,12 +130,7 @@ export function Feedback(): React.JSX.Element {
   const key = feedbackQuery(filters);
   const summary = useLoad(() => api<AdminFeedbackSummary>('/admin/feedback/summary'), []);
   const first = useLoad(() => api<AdminFeedbackList>(feedbackPath(filters)), [key]);
-  /*
-   * What is on screen: the first page and every page shown after it, with the
-   * answers marked since, and how many answers match the filter now (the
-   * latest page's count, moved by each answer marked out of or back into the
-   * tab). It belongs to one load of the first page; a reload starts it again.
-   */
+  // What is on screen since the first page loaded: every page shown, answers marked since, and the matching total.
   const [shown, setShown] = useState<{ from: AdminFeedbackList; items: AdminFeedbackItem[]; total: number } | null>(null);
   const fresh = (d: AdminFeedbackList) => ({ from: d, items: d.items, total: d.total });
   const list = first.data ? (shown?.from === first.data ? shown : fresh(first.data)) : null;

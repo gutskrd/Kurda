@@ -136,9 +136,8 @@ function RankCardView({ card: r, onReset }: { card: RankCard; onReset: () => voi
 type Draft = { key: string; action: 'award' | 'revoke'; tier: number; reason: string };
 
 /**
- * The person's badges: what they have earned, where an admin has held a badge
- * up (a floor a re-count never drops below) or down (a cap it never rises
- * above), every award and revoke with its reason, and a form for another.
+ * The person's badges: what they earned, any floor or cap an admin set (which a re-count respects), every award and
+ * revoke with its reason, and a form for another.
  */
 export function BadgesTab({ user }: { user: Person }): React.JSX.Element {
   const mine = useLoad(() => api<UserBadges>(`/admin/users/${encodeURIComponent(user.id)}/badges`), [user.id]);

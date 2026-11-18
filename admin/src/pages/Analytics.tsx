@@ -81,10 +81,8 @@ export function retentionAt(points: readonly RetentionPoint[], dayN: number): { 
 }
 
 /**
- * Core analytics (KUR-106): active people, sign-ups, the onboarding and lesson
- * funnels, and retention, for a range picked in one tap, each figure beside
- * the same figure for the period just before. A failure used to draw zeros
- * everywhere — "nobody used Hevalo today" — so it is now said as a failure.
+ * Core analytics: active people, sign-ups, the onboarding and lesson funnels and retention for a chosen range, each
+ * beside the period before. A failure is said as one, never drawn as zeros.
  */
 export function Analytics(): React.JSX.Element {
   const toast = useToast();
@@ -224,13 +222,8 @@ export function Analytics(): React.JSX.Element {
 }
 
 /**
- * A bar per day, with the highest value and the first and last day written
- * beside it, and the total under it unless it is a level rather than a count
- * (`total={false}`: what is in circulation is not summed over days).
- *
- * A day's own number is read by pointing at its bar, or by touching it and
- * sliding along: it takes the total's place under the chart. It used to be a
- * tooltip, which a finger never brings up.
+ * A bar per day with the highest value and the first and last day beside it, and the total under it unless it is a
+ * level (`total={false}`). Pointing at a bar, or touching and sliding, puts that day's number in the total's place.
  */
 export function Bars({ points, unit, total: showTotal = true }: { points: Array<{ day: string; value: number }>; unit: string; total?: boolean }): React.JSX.Element {
   const [at, setAt] = useState<number | null>(null);
@@ -328,10 +321,8 @@ function Funnel({ title, description, steps }: { title: string; description: str
 }
 
 /**
- * Retention as a grid that fits a phone: a row for each day people joined,
- * newest first, and a column for each day after (1, 7, 30), the share who came
- * back in each cell, shaded by how many. The totals across the range are on
- * top. Fourteen rows at first; the rest on request.
+ * Retention as a grid that fits a phone: a row per join day, newest first, a column per day after (1, 7, 30), each
+ * cell the shaded share who came back, totals on top. Fourteen rows at first.
  */
 export function Retention({ points }: { points: readonly RetentionPoint[] }): React.JSX.Element {
   const [all, setAll] = useState(false);

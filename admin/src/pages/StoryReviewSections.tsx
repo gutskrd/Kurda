@@ -6,18 +6,9 @@ import { Badge, Banner, Button, Icon, Time, UserLink, useDebounced, useLoad } fr
 import { EditorSection, ReadOnly } from './StoryEditorFields';
 import { STATUS_TONE } from './StoryList';
 
-/**
- * The editor's sections about a story's standing rather than its words: the
- * other tellings it is one story with (Versions), and whether a reviewer has
- * read it (Review). Publishing waits on the review; the versions are what the
- * reader is offered under "Read it in Soranî".
- */
+/** The editor's sections on a story's standing: its other tellings (Versions) and whether a reviewer has read it (Review). */
 
-/**
- * Which story this is another telling of. Linking and unlinking are saved
- * with the story (the API joins or leaves the group in the save), so a change
- * here shows as pending until the next save, and can be taken back before it.
- */
+/** Which story this is another telling of; a change is saved with the story, so it shows as pending until then. */
 export function VersionsSection({ story, form, dispatch }: { story: AdminStory | null; form: StoryForm; dispatch: (a: EditorAction) => void }): React.JSX.Element {
   const ro = useContext(ReadOnly);
   const [q, setQ] = useState('');
@@ -135,10 +126,8 @@ export function VersionsSection({ story, form, dispatch }: { story: AdminStory |
 }
 
 /**
- * Whether a reviewer has read the story: approval is what publishing waits
- * for, and a change to the text, glossary, questions or translations after it
- * takes it away again. Withdrawing approval from a published story is refused
- * by the API (unpublish first), so the button is not offered then.
+ * Whether a reviewer has read the story: publishing waits for approval, and a content change takes it away. The API
+ * refuses withdrawing a published story's approval, so the button is not offered then.
  */
 export function ReviewSection({
   story,

@@ -53,14 +53,9 @@ import { CATEGORIES_HREF } from './StoryList';
 import { EditorSection, Field, ProblemList, ReadOnly, described, type ProblemsAt } from './StoryEditorFields';
 
 /**
- * How a story is filed and shown in the library (its category, where it comes
- * from, its cover, its reading time, whether it is featured), who it is
- * attributed to and its sources, what is offered after reading (questions to
- * think about, notes), and its translations: the editor's library sections.
- * The text itself, the glossary and the questions stay in StoryEditor.tsx.
- *
- * The translations are per language: each language can be saved on its own,
- * on a published story too, and marked reviewed by a native speaker of it.
+ * The editor's library sections: filing and display (category, origin, cover, reading time, featured), attribution and
+ * sources, what comes after reading, and the translations, each language saved and reviewed on its own. The text,
+ * glossary and questions stay in StoryEditor.tsx.
  */
 
 /** The library's fields of the About section: category, tradition, cover, reading time, featured. */
@@ -181,7 +176,7 @@ export function LibraryFields({
   );
 }
 
-/** The cover: one of the shared backgrounds, or none (the apps then lay the story on one of the seven kilims, always the same one: shared `storyCoverFor`). */
+/** The cover: a shared background, or none, when the apps give the story one of the seven kilims (`storyCoverFor`). */
 function CoverPicker({ value, onChange, problems }: { value: string | null; onChange: (cover: string | null) => void; problems: ProblemsAt }): React.JSX.Element {
   const ro = useContext(ReadOnly);
   const current = storyCover(value);
@@ -379,10 +374,8 @@ function SourcesList({ form, dispatch, at }: { form: StoryForm; dispatch: (a: Ed
 }
 
 /**
- * What the reader is offered once the story is read: open questions to think
- * about (nothing is scored), and notes on what is history and what is
- * legend, how the tellings differ, or what a custom in it means. Written in
- * the story's variety; their translations are under Translations.
+ * What the reader is offered after the story: unscored questions to think about, and notes on history and legend,
+ * tellings or customs, in the story's variety (their translations are under Translations).
  */
 export function AfterReadingSection({ form, dispatch, at }: { form: StoryForm; dispatch: (a: EditorAction) => void; at: ProblemsAt }): React.JSX.Element {
   const ro = useContext(ReadOnly);
@@ -514,14 +507,10 @@ export interface LocaleActions {
 }
 
 /**
- * Everything of the story per interface language: the whole text, paragraph
- * for paragraph with the Kurdish beside it so the editor can align them (the
- * reader shows a paragraph's translation under it, so the counts have to
- * match, headings included), the title and summary, each question with its
- * options in the same order, and the reflections and notes. Each language is
- * saved on its own ("Save this language") — on a published story too, which
- * stays online and approved — and marked reviewed once a native speaker of it
- * has read it.
+ * Everything of the story per interface language: the text paragraph by paragraph beside the Kurdish (the reader shows
+ * each translation under its paragraph, so the counts must match), the title and summary, questions, reflections and
+ * notes. Each language is saved on its own, keeping a published story online and approved, and reviewed by a native
+ * speaker.
  */
 export function TranslationsSection({
   form,

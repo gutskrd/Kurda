@@ -26,14 +26,8 @@ function allowed(page: string, session: SessionAccess): boolean {
 
 
 /**
- * The start page: what is waiting for a person, for this person's role.
- *
- * Every number links to the page that acts on it. A moderator sees the queue
- * by priority with its oldest case and overdue ones, appeals and second
- * approvals; a content editor what still needs a recording and what is waiting
- * for review; an admin the fraud holds, bot flags and config approvals; a
- * superadmin also the latest admin actions. Each part loads by itself, so one
- * slow or refused request never blanks the rest.
+ * The start page: what is waiting for this person's role, each number linking to the page that acts on it. Each part
+ * loads by itself, so one slow or refused request never blanks the rest.
  */
 export function Dashboard(): React.JSX.Element {
   const session = useSession();
@@ -73,10 +67,8 @@ export function Dashboard(): React.JSX.Element {
 }
 
 /**
- * The security log at a glance, first on the page for a superadmin: whether
- * anything needs looking at, and the last day's failed sign-ins beside the day
- * before. Says nothing at all while it loads or when it cannot, rather than a
- * reassuring zero.
+ * The security log at a glance for a superadmin: anything to look at, and failed sign-ins against the day before.
+ * Shows nothing while loading or on failure, never a reassuring zero.
  */
 function SecurityStatus(): React.JSX.Element | null {
   const status = useLoad(
@@ -103,11 +95,7 @@ function SecurityStatus(): React.JSX.Element | null {
   );
 }
 
-/**
- * What still needs a recording: the owner could not find where to record, so
- * the count is on the first page, and each line goes straight into the studio
- * on the things still missing.
- */
+/** What still needs a recording, each line opening the studio on what is missing. */
 function Recordings(): React.JSX.Element {
   const lessons = useLoad(() => api<Listing>('/admin/lesson-audio'), []);
   const letters = useLoad(() => api<{ recordings: Array<{ key: string }> }>('/admin/alphabet/audio'), []);
@@ -342,11 +330,7 @@ function Waiting({
   );
 }
 
-/**
- * Whether the weekly league runs went through, and how many rating pairs are
- * worth a look: a settle that failed means nobody was promoted, which nobody
- * else would notice until learners asked.
- */
+/** Whether the weekly league runs went through (a failed settle promotes nobody), and rating pairs worth a look. */
 const groupsThisWeek = (n: number): string => `${n.toLocaleString()} ${n === 1 ? 'group' : 'groups'} this week`;
 
 function RanksPanel({ leagues, ranks }: { leagues: boolean; ranks: boolean }): React.JSX.Element {

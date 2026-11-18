@@ -38,12 +38,8 @@ const FILTERS: ReadonlyArray<{ key: StatusFilter; label: string }> = [
 ];
 
 /**
- * Lessons: every lesson of every course by its title, and the steps from
- * draft to published (KUR-100). #/lessons is the list, #/lessons/<id> one
- * lesson. The page used to open a lesson by its pasted UUID and create one
- * from a pasted skill UUID; nothing listed either. `?course=<slug>` opens the
- * list on one course's lessons — the road's, say, which are a course of their
- * own beside the older lessons.
+ * Lessons: every lesson of every course and the steps from draft to published, at #/lessons and #/lessons/<id>;
+ * `?course=<slug>` opens the list on one course.
  */
 export function Lessons(): React.JSX.Element {
   const route = useRoute();

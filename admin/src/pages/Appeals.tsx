@@ -47,12 +47,8 @@ const STATUS: Readonly<Record<AppealStatus, { name: string; tone: Tone }>> = {
 const MODIFY_KINDS: readonly SanctionKind[] = ['warning', 'chat_mute', 'post_mute', 'feature_limit', 'suspension'];
 
 /**
- * Appeals (#/appeals): people asking for a second look at a sanction they
- * got, or at a report of theirs that was closed as not breaking the rules.
- * Oldest first, because each has waited longest. The answer is the
- * person's to read, so it is written for them; someone other than the
- * moderator who decided answers it whenever there is someone else (the API
- * insists).
+ * Appeals (#/appeals): people asking for a second look at a sanction, or at a report of theirs closed as no violation.
+ * Oldest first. The answer is written for the person, and the API has someone other than the deciding moderator give it.
  */
 export function Appeals(): React.JSX.Element {
   const route = useRoute();

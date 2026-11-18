@@ -1,8 +1,4 @@
-/**
- * Styles for the pages themselves: the parts a page has that the kit
- * (ui/kit.css) does not — the dashboard's lists, the 2FA screens, the lesson
- * editor's exercise cards. Built on the tokens in styles.css.
- */
+/** Styles for what pages have beyond the kit (ui/kit.css): the dashboard's lists, the 2FA screens, the exercise cards. */
 
 /* A link that looks like a button: "Open the queue", "Record what's missing". */
 .button-link {
@@ -57,9 +53,7 @@
 }
 
 /* ---- The sign-in wheel (pages/SignIn) -------------------------------------------- */
-/* The steps of signing in on one card, turning past like the faces of a wheel: each face
-   turns about an axis behind the card, so it rises and tips away as the next comes up from
-   below (and back again). Above Hevalo, the line of steps shows where you are. */
+/* The sign-in steps on one card: each face turns about an axis behind the card, tipping away as the next rises. */
 .login-column { width: 452px; max-width: 100%; }
 .login-column > .login-stage { width: 100%; scroll-margin-top: 8px; }
 /* The console's top bar keeps scrolled-to things below it; the sign-in has no top bar. */
@@ -182,9 +176,8 @@
 .gate-form .login-msg { margin: 0; text-align: left; }
 .gate-form .login-field-error { margin: 0; }
 .gate-form .login-submit { margin-top: 10px; }
-/* Six digits, spaced and centred; the spacing also trails the last digit, so it is taken off the right.
-   Larger than the 16 px a phone holds every field to (styles.css): that floor is only there because a
-   field smaller than 16 px makes iOS zoom in, and one larger never does. */
+/* Six digits, spaced and centred, the trailing spacing taken off the right. Above the 16 px touch floor
+   (styles.css), which exists only because iOS zooms on smaller fields. */
 :root .gate-form .login-input input.code-input {
   padding: 0 12px 0 calc(12px + 0.35em);
   font-size: 24px; letter-spacing: 0.35em; text-align: center; font-variant-numeric: tabular-nums;

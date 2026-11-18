@@ -5,17 +5,9 @@ import { Badge, Banner, Icon, Section, Time, UserLink, useDialogs } from '../ui'
 import { LetterPaperEvidence } from './CaseLetter';
 
 /**
- * What was reported, as the server froze it when the report came in: the post
- * or message with its pictures, the chat around it with the reported line
- * marked, the game and who sat where. An author who edits or deletes the
- * content afterwards changes nothing here.
- *
- * Pictures stay hidden until a moderator chooses to look (research: a reveal
- * the moderator controls lowers the harm of looking without lowering
- * accuracy). Hidden means not fetched: the file is requested only on the
- * reveal, so nothing reaches the moderator's device before they agree to see
- * it. Anything that may be child abuse material asks first, and says not to
- * download or forward it.
+ * What was reported, as the server froze it at the report: the post or message with its pictures, the chat around it,
+ * the game and its seats. Pictures are not fetched until the moderator chooses to look, since a controlled reveal
+ * lowers the harm of looking; anything that may be child abuse material asks first and warns not to share it.
  */
 export function Evidence({ detail, sensitive }: { detail: CaseDetail; sensitive: boolean }): React.JSX.Element {
   const snapshots = detail.reports.map((r) => r.evidence).filter(isSnapshot);
@@ -215,11 +207,7 @@ function ChatContext({ messages }: { messages: EvidenceMessage[] }): React.JSX.E
   );
 }
 
-/**
- * A picture hidden (and not downloaded) until revealed, a voice clip with its player, or a file
- * that is gone. The link is signed for five minutes; a page left open longer
- * needs Refresh to show it again.
- */
+/** A picture hidden and not downloaded until revealed, a voice clip, or a gone file; links are signed for five minutes. */
 export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: string | null; sensitive: boolean }): React.JSX.Element {
   const [shown, setShown] = useState(false);
   const dialogs = useDialogs();
@@ -302,11 +290,8 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
 }
 
 /**
- * The copyright notices behind the case (`CaseDetail.copyright`, shared
- * copyright.ts), every field the notifier sent and any counter-notice from
- * the uploader, with the reported person's confirmed strikes. Three in a
- * year and the repeat-infringer policy suggests closing the account; the
- * admin decides.
+ * The copyright notices behind the case with every field and any counter-notice, and the person's confirmed strikes:
+ * three in a year and the repeat-infringer policy suggests closing the account, which the admin decides.
  */
 export function CopyrightPanel({ info }: { info: CopyrightCaseInfo }): React.JSX.Element {
   const strikes = info.strikes;

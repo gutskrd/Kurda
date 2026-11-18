@@ -1,11 +1,8 @@
 // @vitest-environment jsdom
 /**
- * Signing in to the console step by step, against a fake API: the email,
- * then the password under it, then the two-step code (or setting it up),
- * then the console. What is missing is said on leaving a field or moving on,
- * the server's refusals in plain words, the pauses after too many tries with
- * how long, a way out to sign in as someone else, and the console's code
- * fetched in the background while the steps are being filled in.
+ * Signing in step by step against a fake API: email, password, the 2FA code or its setup, then the console. Missing
+ * fields, refusals in plain words, lockouts with their wait, signing in as someone else, and the console's code
+ * fetched in the background.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/dom';
@@ -330,7 +327,7 @@ describe('loading while the person is busy', () => {
   });
 });
 
-/** Hevalo leaning in over the card (brand/Companion.tsx): which way each foreleg's hoof points from the knee (about 180 over an eye) and how low it is, an eye's lid, and the sign over his head. */
+/** Hevalo over the card (brand/Companion.tsx), read for each hoof's angle and height, an eye's lid and the sign over his head. */
 const companion = (): HTMLElement => document.querySelector<HTMLElement>('.login-stage > .login-companion')!;
 const hoof = (side: 'left' | 'right'): string => companion().querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '';
 const legTurn = (side: 'left' | 'right'): number => Math.abs(Number(/rotate\((\S+)\)/.exec(hoof(side))?.[1] ?? Number.NaN));

@@ -52,11 +52,9 @@ const draftOf = (l: LessonDetail): Draft => ({
 });
 
 /**
- * One lesson: its titles and exercises, edited as forms (with the JSON behind
- * them one tab away, for what the forms do not cover), checked as the server
- * checks them, and moved draft → in review → published. A published lesson
- * cannot change; "Start a new version" makes an editable draft of it, and
- * learners keep the published one until that is approved.
+ * One lesson: its titles and exercises as forms (the JSON a tab away), checked as the server checks them, and moved
+ * from draft to published. A published lesson cannot change; "Start a new version" makes a draft, and learners keep
+ * the published one until it is approved.
  */
 export function LessonEditor({ id }: { id: string }): React.JSX.Element {
   const toast = useToast();

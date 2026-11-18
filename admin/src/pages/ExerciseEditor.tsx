@@ -13,12 +13,7 @@ function problem(issues: readonly Issue[], path: string): string | undefined {
   return issues.find((i) => i.path === path)?.message;
 }
 
-/**
- * One exercise as a form: the fields its type has, each labelled and checked
- * as the server would check it, in place of the raw JSON the page used to ask
- * for. A list (answers, options, pairs) grows and shrinks within the limits
- * the server accepts.
- */
+/** One exercise as a form, each field checked as the server would; lists grow and shrink within the server's limits. */
 export function ExerciseCard({
   index,
   count,
@@ -378,11 +373,8 @@ function Answers({
 }
 
 /**
- * A conversation as a form: which of the characters take part (each plays one
- * part, called by its own name, and is who learners see saying its lines),
- * what each says in turn with what it means, and the question about it. Each
- * part is recorded by its own person on the conversation's recording page,
- * which the link at the end opens once the draft is saved.
+ * A conversation as a form: the characters taking part, one part each, their lines with meanings, and the question.
+ * Each part is recorded on the conversation's page, linked once the draft is saved.
  */
 function ConversationFields({
   p,

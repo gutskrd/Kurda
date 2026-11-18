@@ -58,10 +58,8 @@ const PROVIDER_NAME: Readonly<Record<EmailStatus['provider'], string>> = { resen
 type Box = 'inbox' | 'archived';
 
 /**
- * A received HTML body, shown without letting it do anything: a sandbox with
- * no permissions (no scripts, no forms, its own origin) and a policy that
- * loads nothing from outside — a remote image in a mail is how a sender learns
- * it was opened. Plain text is shown first whenever the mail has it.
+ * A received HTML body shown inert: a sandbox with no permissions and a policy that loads nothing from outside, since
+ * a remote image tells the sender it was opened. Plain text is shown first when the mail has it.
  */
 export function htmlFrameDoc(html: string): string {
   const policy = "default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:";
@@ -69,12 +67,8 @@ export function htmlFrameDoc(html: string): string {
 }
 
 /**
- * Email (#/email): how the app's email is set up and whether it is getting
- * out — with a test send to yourself — and the support inbox, where mail to
- * the support address is read and answered.
- *
- * The settings half is for admins; support sees the inbox only (the API
- * refuses them the settings, and the page simply leaves that half out).
+ * Email (#/email): the app's email setup with a test send, for admins, and the support inbox, which support staff see
+ * alone (the API refuses them the settings).
  */
 export function Email(): React.JSX.Element {
   const [box, setBox] = useState<Box>('inbox');

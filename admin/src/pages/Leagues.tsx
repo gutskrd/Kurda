@@ -37,12 +37,8 @@ import { LeagueEmblem, RunLine } from './RankParts';
 const WEEK = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * Learning Leagues for staff (contract 4, §L): a week's groups and the runs
- * that shape it — the Monday settle that closes the week before (promotions,
- * the Pêla trophy, personal weeks, the season's drop) and the Wednesday merge
- * of groups still under eight — with a way to run either again. Both run by
- * themselves; running one now is for a week whose run failed or never came.
- *
+ * Learning Leagues for staff: a week's groups, the Monday settle that closes the week before and the Wednesday merge of
+ * groups under eight, and a way to rerun either when a run failed or never came.
  * #/leagues (this week), #/leagues?week=2026-10-05, #/leagues/group/<id>.
  */
 export function Leagues(): React.JSX.Element {
@@ -222,10 +218,8 @@ const GROUP_COLUMNS: ReadonlyArray<Column<LeagueGroupRow>> = [
 ];
 
 /**
- * Run the settle or the merge now, for the current week. Without "force" a
- * run that has finished this week does nothing; with it every step runs
- * again — each is idempotent, so nobody is moved or paid twice — which is
- * what finishes a run that failed or stopped half way.
+ * Run the settle or merge now for the current week. Without "force" a finished run does nothing; with it every
+ * idempotent step runs again, which finishes a run that failed or stopped half way.
  */
 function RunDialog({ kind, onClose, onDone }: { kind: 'settle' | 'merge'; onClose: () => void; onDone: () => void }): React.JSX.Element {
   const toast = useToast();

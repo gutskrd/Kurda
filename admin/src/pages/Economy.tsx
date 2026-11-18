@@ -28,9 +28,8 @@ interface DriftReport {
 const CURRENCY_LABEL: Record<Currency, string> = { zer: 'Zêr', gems: 'Gems' };
 
 /**
- * The economy (KUR-074): how much of each currency is out there, how much
- * came in (faucets) and went out (sinks) each day, whether the balance is
- * drifting from its target, and whether every balance still equals its ledger.
+ * The economy: each currency in circulation, daily faucets and sinks, drift from the target, and whether every balance
+ * still equals its ledger.
  */
 export function Economy(): React.JSX.Element {
   const toast = useToast();

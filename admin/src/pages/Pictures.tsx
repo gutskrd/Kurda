@@ -105,13 +105,9 @@ function Shown({ entry, override, size }: { entry: ArtSlotEntry; override: Overr
 }
 
 /**
- * Every picture the apps draw from their own art, and the uploaded picture
- * that replaces it where one does: badges (one for every level, or one per
- * level), rank and league emblems, season frames, the default profile
- * pictures, and event banners. A picture is uploaded and checked as shop art
- * is, shown in the apps within minutes, and taken back to the original with
- * one tap; each slot keeps its history. Shop backgrounds and icons are items
- * in Shop.
+ * Every picture the apps draw from their own art, and any uploaded replacement: badges, emblems, season frames,
+ * default profile pictures and event banners. Uploads are checked as shop art is, reach the apps within minutes and
+ * revert in one tap; each slot keeps its history. Shop backgrounds and icons are in Shop.
  */
 export function Pictures(): React.JSX.Element {
   const [family, setFamily] = useState<ArtSlotFamily>('badge');
