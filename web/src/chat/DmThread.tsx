@@ -29,27 +29,14 @@ import { SendError } from '../reports/SendError';
 import { ReportSheet } from '../reports/ReportSheet';
 import { useChatGifts } from '../gifts/useChatGifts';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
-import { THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
-
-/**
- * Oldest→newest by server timestamp, so the thread always reads top to bottom.
- *
- * Takes anything, because `ok` is about the status code and not the shape: a 200
- * whose body has no `messages` array used to spread `undefined` and throw here,
- * taking the whole conversation down rather than showing an empty one.
- */
-function byTime<T extends { createdAt: string }>(msgs: readonly T[] | undefined | null): T[] {
-  if (!Array.isArray(msgs)) return [];
-  return [...msgs].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
-}
+import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
 
 /** A message as the thread draws it: the server's, or one of the reader's own that is not sent yet. */
 type Shown = DmMessage & { pending?: Unsent['pending'] };
 
 /**
- * Map moderation/anti-bot server codes to human copy (server stays authoritative).
- * A limit on the account (a mute, the automatic chat pause) is not here: it is
- * said the same way on every send path, by reports/SendError.
+ * Plain words for the server's moderation and anti-bot refusals. Account limits such as a mute are shown by
+ * reports/SendError on every send path instead.
  */
 export function sendError(err: ApiError, t: Translate): string {
   switch (err.code) {
@@ -67,15 +54,8 @@ export function sendError(err: ApiError, t: Translate): string {
 }
 
 /**
- * One direct conversation, wherever it is being shown.
- *
- * Lifted out of the Messages page so the social rail can dock the same
- * conversation beside itself. Two implementations would have meant two sets of
- * read receipts, typing signals and realtime subscriptions — and a message read
- * in one place still counting as unread in the other.
- *
- * `onClose` is what makes it a dock rather than a page: given one, the header
- * offers a close button instead of a link back to the conversation list.
+ * One direct conversation, used by the Messages page and the social rail's dock so both share read receipts, typing
+ * and realtime subscriptions. With `onClose` it is a dock, and the header offers a close button instead of a link back.
  */
 export function DmThread({
   otherId,
@@ -107,12 +87,8 @@ export function DmThread({
   const navigate = useNavigate();
 
   /*
-   * A message is in the thread the moment it is sent, and the box is empty
-   * for the next one (chat/useOutbox.ts): the server is told behind that. One
-   * it refuses — moderation, a block, a limit — leaves the thread, the reason
-   * is said where it always was, and its words go back in the box if nothing
-   * has been typed there since; one it could not be reached for stays, marked
-   * as not sent, with a way to try again.
+   * Sent messages show at once (chat/useOutbox.ts). One the server refuses leaves the thread with the reason shown and
+   * its words back in the box if it is still empty; one that could not reach the server stays, marked with a retry.
    */
   const outbox = useOutbox<DmMessage>({
     post: (body) => client.post<DmMessage>(`/chat/${otherId}/messages`, { body }),
@@ -153,11 +129,8 @@ export function DmThread({
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(following);
   const unseen = useUnseenBelow(shown, atBottom, user?.id);
   /*
-   * Who this is, for the head of the thread: their face, and whether they are
-   * here now. The conversation list knows both; a thread opened from a link
-   * knew only an id, and was headed "Conversation". Their face is also on
-   * every message they have sent, which is where it comes from before the
-   * list answers, and for somebody the list does not have yet.
+   * The other person's name, picture and presence for the header, from the conversation list, or from their messages
+   * until the list answers or when it does not include them.
    */
   const [other, setOther] = useState<Pick<Conversation, 'username' | 'avatarUrl' | 'online'> | null>(null);
   useEffect(() => {
@@ -213,12 +186,7 @@ export function DmThread({
     }
   }, [client, otherId]);
 
-  /**
-   * Clear this conversation's unread badge and send the read receipt.
-   *
-   * Called on open AND on each arrival while open, otherwise the badge would pop
-   * back up for a message already on screen.
-   */
+  /** Clears the unread badge and sends the read receipt, on open and on each arrival so the badge never returns. */
   const markRead = useCallback(async () => {
     await client.post(`/chat/${otherId}/read`).catch(() => undefined);
     refreshUnread();

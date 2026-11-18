@@ -6,24 +6,10 @@ import type { MessageKey } from '../i18n/en';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * A message reduced to one line, for a conversation row or a notification.
- *
- * A game invite is sent as a link, so a conversation whose last message was an
- * invite showed a raw URL — `https://hevalo.app/app/games/peyvok-battle?id=8f3c…`
- * — which is unreadable and tells you nothing. The link is replaced by what it
- * actually is, keeping any words the sender wrote alongside it.
- *
- * Used by both the conversation list and the arrival banner, so the two cannot
- * describe the same message differently.
- *
- * A message is more than text now (shared `ChatMessageKind`): a gift or a
- * game card has no body at all, and is named for what it is — "Gift", or
- * "Sunset scarf" once the reader has unwrapped theirs (before that the item
- * is a surprise); a game card by its game. Pass the message, or just its
- * text. The words carry no picture of their own: where there is room for
- * one, the row draws the app's own gift or game icon beside them
- * (`PreviewIcon`, chat/PreviewIcon.tsx), and an emoji typed into the string
- * would have been a second, different drawing of the same thing.
+ * A message in one line, for the conversation list and arrival banners alike. Game invite links become the game's
+ * name, keeping the sender's words. Gifts read "Gift", or the item once unwrapped, and game cards read the game's
+ * name (shared `ChatMessageKind`). Pass the message or its text. The text has no emoji, since rows draw the icon
+ * (chat/PreviewIcon.tsx).
  */
 export interface Previewable {
   body: string | null;

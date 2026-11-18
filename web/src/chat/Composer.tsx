@@ -4,26 +4,10 @@ import { useT } from '../i18n/I18nProvider';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
 /**
- * The message box, shared by the direct and group threads.
- *
- * It was a single-line input, so a message could not contain a line break at all
- * — pressing Enter submitted and there was no other way to get one. It is now a
- * textarea that grows with its content.
- *
- * What Enter does follows what is under the hand. At a keyboard, Enter sends
- * (what everyone expects in a chat) and Shift+Enter starts a new line. On a
- * touch screen there is no Shift to hold, so Enter is the new line, as it is
- * in every chat on a phone, and Send is the button beside the box; the key
- * itself says which (`enterKeyHint`).
- *
- * The box does not wait on the server: the thread shows a message the moment
- * it is sent (chat/useOutbox.ts), so Send is ready again at once.
- *
- * The field and its Send are one rounded shape: the words on the left, a
- * round button at the end of them that lights up in the colour of the
- * reader's own bubbles once there is something to send. It was a boxed input
- * beside a wide button reading "Send", which on a phone left the words less
- * than half the row.
+ * The message box shared by the direct and group threads: a textarea that grows with its content, joined with a round
+ * Send button that lights up once there is something to send. With a keyboard Enter sends and Shift+Enter adds a line;
+ * on a touch screen Enter adds a line and the button sends (`enterKeyHint` says which). The thread shows a message as
+ * soon as it is sent (chat/useOutbox.ts), so Send never waits on the server.
  */
 
 /** Grow to this many lines, then scroll — past that it eats the thread. */
@@ -45,22 +29,15 @@ export function Composer({
   onSubmit: () => void;
   placeholder: string;
   maxLength?: number;
-  /**
-   * Buttons before the box — the gift button (gifts/useChatGifts), the game
-   * button (play/PlayButtons), and whatever else a thread offers. Kept
-   * outside the form's own controls so pressing one never submits the message.
-   */
+  /** Buttons before the box, such as gifts and games, kept outside the form so pressing one never submits it. */
   tools?: ReactNode;
 }): React.JSX.Element {
   const t = useT();
   const ref = useRef<HTMLTextAreaElement>(null);
   const touch = useMediaQuery(TOUCH);
 
-  // Re-measure on every change: reset to auto first, or the height only ever
-  // grows because scrollHeight can never report less than the current height.
-  // The field is border-box, so its height is the text and padding that
-  // scrollHeight measures plus the border round them; without the border every
-  // line past the first was 2px short, and a scrollbar showed up for nothing.
+  // Reset to auto before measuring, or scrollHeight never reports less than the current height. The field is
+  // border-box, so the border is added to scrollHeight or each extra line is 2px short and shows a scrollbar.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;

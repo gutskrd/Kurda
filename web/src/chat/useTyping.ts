@@ -4,16 +4,8 @@ import type { MessageKey } from '../i18n/en';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * The two halves of a typing indicator.
- *
- * Sending is throttled rather than debounced: a ping goes out on the first
- * keystroke so the other side sees it immediately, then at most one more per
- * interval however fast you type. Debouncing would only tell them once you
- * PAUSED, which is the opposite of what the indicator is for.
- *
- * Receiving expires on its own. There is no "stopped typing" event — the sender
- * may close the tab, lose the connection, or simply stop — so an indicator that
- * relied on being switched off would stay on screen forever.
+ * Both halves of the typing indicator. Sending is throttled, not debounced, so the first keystroke pings at once.
+ * Receiving expires by itself, since there is no stopped-typing event.
  */
 
 /** At most one ping per this long, regardless of typing speed. */
@@ -35,12 +27,7 @@ export function useTypingSignal(send: () => void): () => void {
   }, []);
 }
 
-/**
- * Names currently typing, each dropped automatically once its ping goes stale.
- *
- * `note(name)` records a ping. A single timer sweeps the whole map rather than
- * one timeout per person, so a busy group does not accumulate timers.
- */
+/** Names currently typing, dropped when their ping goes stale; `note(name)` records a ping, and one timer sweeps all. */
 export function useTypingWatch(): { typing: string[]; note: (name: string) => void } {
   const seen = useRef<Map<string, number>>(new Map());
   const [typing, setTyping] = useState<string[]>([]);
@@ -68,14 +55,7 @@ export function useTypingWatch(): { typing: string[]; note: (name: string) => vo
   return { typing, note };
 }
 
-/**
- * "zana is typing…", "zana and rojîn are typing…", "3 people are typing…"
- *
- * Three whole sentences rather than one built from parts: "and" sits between
- * the two names in English and after both of them in some languages, and the
- * verb agrees with the count. A sentence assembled from fragments here could
- * not survive translation, so each shape is its own key.
- */
+/** The typing line for one, two or more people, each a whole catalogue sentence so it translates naturally. */
 export function typingLabel(names: readonly string[], t: Translate): string {
   if (names.length === 0) return '';
   if (names.length === 1) return t('chat.typing.one', { name: names[0]! });

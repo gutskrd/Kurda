@@ -78,12 +78,7 @@ function setup(route: string, fetchImpl?: (url: string) => Promise<Response>) {
 }
 
 /**
- * Wait until the provider is live before emitting.
- *
- * AuthProvider settles asynchronously and RealtimeProvider only subscribes once
- * the user is signed in, so an event emitted straight after render() lands
- * before anything is listening. The membership fetch signals that the signed-in
- * path has run.
+ * Waits for the provider to subscribe, which happens only after sign-in settles; the membership fetch marks that point.
  */
 async function ready(): Promise<void> {
   await waitFor(() =>

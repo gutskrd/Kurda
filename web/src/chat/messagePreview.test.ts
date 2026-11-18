@@ -42,12 +42,7 @@ describe('messagePreview', () => {
     expect(messagePreview('/app/games/rhyme-match?id=2ab41c9d-4b2e-4c77', t)).toBe('Pêşbaziya Serwayan invite');
   });
 
-  /**
-   * The conversation list is the one place a game's name is written by a module
-   * with no React in it, so it reads the name from the catalogue through a `t`
-   * the caller supplies. If that ever regressed to a hardcoded string, a Kurdish
-   * reader's conversation row would be the only English thing on the screen.
-   */
+  /** The preview has no React, so the game name comes from the catalogue through the caller’s `t`. */
   it('names the game in the reader’s language', () => {
     expect(messagePreview(wordle, translator(de))).toBe('Einladung zu Pêşbaziya Peyvan');
     expect(messagePreview(rhyme, translator(ku))).toBe('Vexwendina Pêşbaziya Serwayan');
@@ -89,10 +84,7 @@ describe('truncate', () => {
   });
 });
 
-/**
- * A gift or a game card has no body: a list that printed the body showed an
- * empty line, and the server's English stand-in in every language.
- */
+/** A gift or game card has no body, so the preview names it rather than printing an empty line. */
 describe('messagePreview for every kind of message', () => {
   it('names a gift — by its item only once the reader has unwrapped it, so a banner never spoils it', () => {
     const gift = { batchId: 'b', sku: 's', name: 'Newroz fire', category: 'background', assetUrl: null, tier: 'legendary' as const, recipients: [], myGiftId: 'g1', myOpened: false, equippable: null };

@@ -6,13 +6,8 @@ import { courseDialect } from '../stories/prefs';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * A conversation nobody has written in yet: who it is with, and a first thing
- * to say — in Kurdish, one tap away, the way a group's own start offers it
- * (groups/GroupWelcome.tsx).
- *
- * It was one grey line, "No messages yet. Say hello!", which left the saying
- * to the reader. A learner's first message to a friend is the hardest one to
- * write; here it is already written, three ways.
+ * An empty conversation: who it is with and three Kurdish openers one tap away, as groups/GroupWelcome.tsx offers,
+ * since a learner's first message is the hardest to write.
  */
 export function DmWelcome({
   name,

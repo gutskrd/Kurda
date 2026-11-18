@@ -43,24 +43,12 @@ import { isGroupMissing, isOutOfGroup, shownClear, sinceCleared, standingOf } fr
 type Shown = GroupMessage & { pending?: Unsent['pending'] };
 
 /**
- * A group conversation, as a page or as a dock beside the social rail.
+ * A group conversation, as a page or (with `onClose`) a dock beside the social rail. An empty chat shows
+ * groups/GroupWelcome. The header's ⋯ clears the chat for the reader, or for everyone for owners and admins, after a
+ * confirmation; clears and removed messages reach every open thread at once.
  *
- * Lifted out of the Messages page so the rail can open one in place, the same
- * way it opens a direct message. `onClose` is what makes it a dock: given one,
- * the header closes rather than linking back to the list, because a dock has
- * nowhere to go back to.
- *
- * An empty chat is never blank: it welcomes (groups/GroupWelcome). The
- * header's ⋯ clears the chat for you, and for the owner and admins for
- * everyone, each after a yes that says exactly what happens; a clear for
- * everyone, or a banned member's messages taken away, reaches every open
- * thread at once.
- *
- * A group is private, so its address shows a group only to its members.
- * Someone banned sees where the ban stands and may ask to come back; a reader
- * taken out while the chat is open sees that calmly in place of the chat at
- * their next read or send; anyone else is told there is no such group here,
- * which is all the server tells them.
+ * Groups are private: a banned reader sees the ban and may appeal, a reader removed while it is open sees that at the
+ * next read or send, and anyone else is told there is no such group.
  */
 export function GroupThread({
   groupId,
@@ -113,12 +101,9 @@ export function GroupThread({
   const { refreshUnread } = useMessages();
   const { openProfile } = useProfileModal();
   /*
-   * A message is in the thread the moment it is sent (chat/useOutbox.ts), and
-   * the server is told behind that. One it refuses leaves the thread and the
-   * reason is said where it always was, its words back in the box if nothing
-   * has been typed since — and a refusal for being taken out of the group
-   * shows that instead; one it could not be reached for stays, marked as not
-   * sent, with a way to try again.
+   * Sent messages show at once (chat/useOutbox.ts). A refusal removes the message with the reason shown and its words
+   * back in an empty box, or shows the removal when the reader was taken out of the group; one that could not reach
+   * the server stays, marked with a retry.
    */
   const refuseOut = useRef<() => void>(() => undefined);
   const outbox = useOutbox<GroupMessage>({
@@ -168,10 +153,8 @@ export function GroupThread({
   useRealtimeRoom(`group:${groupId}`);
 
   /**
-   * Group detail carries the roster + my role, which drives the members panel,
-   * and where the reader stands. A "not found" is an answer too: the reader is
-   * not in the group (any more), and what was read of it before is all that is
-   * kept, for the name and picture of a group they were just taken out of.
+   * Loads the roster, the reader's role and standing. Not found means the reader is no longer a member; the last
+   * detail is kept for the name and picture of a group they were just removed from.
    */
   const loadDetail = useCallback(async () => {
     const r = await client.get<GroupDetail>(`/groups/${groupId}`);

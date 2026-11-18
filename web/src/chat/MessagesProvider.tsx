@@ -22,22 +22,13 @@ import { pollWhileVisible } from '../lib/pollWhileVisible';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * App-wide message awareness: unread counts and arrival notifications.
- *
- * Two things made this necessary. Direct messages already reached every page
- * (they are published to the recipient's own `user:<id>` room, which is joined
- * automatically), but nothing listened outside the Messages page. Group messages
- * did not arrive at all, because they go to a `group:<id>` room that was joined
- * only while that group's channel was open — so you could only be told about a
- * group message you were already looking at. This joins every group you belong
- * to for as long as you are signed in.
- *
- * A notification is deliberately NOT raised for a conversation you are currently
- * reading, nor for your own messages coming back from a room you are joined to.
+ * App-wide unread counts and arrival banners. Direct messages arrive on the reader's `user:<id>` room; this also
+ * joins every `group:<id>` room the reader belongs to while signed in. No banner is raised for the conversation being
+ * read or for the reader's own messages.
  */
 
 /** One arrival banner. */
-export interface MessageToast {
+interface MessageToast {
   id: string;
   title: string;
   body: string;
@@ -56,11 +47,7 @@ interface MessagesContextValue {
 
 const MessagesCtx = createContext<MessagesContextValue | null>(null);
 
-/**
- * What consumers get with no provider mounted. Built at module scope on purpose:
- * created per call it would be a new object every render, so any effect
- * depending on refreshUnread would re-run forever.
- */
+/** The value without a provider, at module scope so effects depending on refreshUnread do not re-run every render. */
 const NO_PROVIDER: MessagesContextValue = {
   unreadTotal: 0,
   refreshUnread: () => undefined,
@@ -213,10 +200,7 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
   );
 }
 
-/**
- * Unread count and a way to refresh it. Degrades to zero when no provider is
- * mounted, so components stay renderable in isolation (unit tests especially).
- */
+/** Unread counts and banners; zero without a provider, so components render in isolation. */
 export function useMessages(): MessagesContextValue {
   return useContext(MessagesCtx) ?? NO_PROVIDER;
 }
