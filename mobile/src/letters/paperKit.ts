@@ -23,18 +23,13 @@ import {
 } from '@kurda/shared';
 
 /**
- * The phone's own arithmetic for a sheet of letter paper (shared
- * letter-paper.ts is the sheet itself and its limits): how a drawing is kept,
- * undone and done again, how a finger's path becomes a stroke, where the
- * writing sits on the rules, how long the sheet has to be, and where a note
- * goes. Pure, so the tests can ask it directly; the composer
- * (LetterComposer.tsx) only wires it to fingers.
- *
- * Everything here is in the page's own units (shared PAPER_W wide): the sheet
- * is the same page on every phone and is only drawn at a different size.
+ * The phone's arithmetic for a sheet of letter paper (shared letter-paper.ts defines the sheet and its limits):
+ * drawing history, turning a finger's path into a stroke, writing position, sheet length, and note placement. Pure,
+ * so tests call it directly; LetterComposer.tsx wires it to touches. Everything is in page units (shared PAPER_W
+ * wide), so the sheet is the same page on every phone.
  */
 
-/** The three widths each drawing tool comes in, inside what the server allows for it (shared STROKE_WIDTHS). */
+/** The three widths each drawing tool comes in, within what the server allows (shared STROKE_WIDTHS). */
 export type PenSize = 's' | 'm' | 'l';
 export const PEN_SIZES: readonly PenSize[] = ['s', 'm', 'l'];
 export const PEN_WIDTHS: Readonly<Record<DrawTool, Readonly<Record<PenSize, number>>>> = {
@@ -43,34 +38,30 @@ export const PEN_WIDTHS: Readonly<Record<DrawTool, Readonly<Record<PenSize, numb
   marker: { s: 10, m: 16, l: 26 },
 };
 
-/** A width the server takes for the tool, whatever was asked. */
+/** A width the server accepts for the tool. */
 export function widthFor(tool: DrawTool, size: PenSize): number {
   const [min, max] = STROKE_WIDTHS[tool];
   return Math.max(min, Math.min(max, PEN_WIDTHS[tool][size]));
 }
 
 /**
- * The fewest page units between two points a finger leaves. A phone reports
- * a moving finger about every hundredth of a second, far more often than a
- * smooth line needs, and every point is counted against what a letter can
- * carry; a wide brush needs fewer than a fine pen.
+ * The minimum page-unit distance between kept points. Phones report a moving finger about every 10 ms, far more
+ * than a smooth line needs, and every point counts against a letter's limit; wider tools need fewer.
  */
 const STEP: Readonly<Record<DrawTool, number>> = { pen: 5, brush: 9, marker: 7 };
 
 /**
- * About what one point costs of a letter's room as it is sent (shared
- * DECOR_BYTES_MAX counts the decor as JSON): two numbers of up to four digits
- * and their commas. Kept a little generous, so a drawing is said to be full
- * before the server would say it is too big.
+ * Approximate bytes per point in the sent JSON (shared DECOR_BYTES_MAX): two numbers of up to four digits and their
+ * commas. Slightly generous, so the drawing reads as full before the server would refuse it.
  */
 const BYTES_A_POINT = 10;
-/** The room kept free of drawing for the paper and the notes, in bytes. */
+/** Bytes kept free of drawing for the paper and the notes. */
 const BYTES_KEPT = 2048;
 
-/** One thing done to a drawing, kept so it can be undone: a stroke added, or every stroke cleared away. */
+/** One undoable action: a stroke added, or every stroke cleared. */
 type Step = { kind: 'add'; stroke: PaperStroke } | { kind: 'clear'; strokes: readonly PaperStroke[] };
 
-/** A drawing as it is being made: its strokes, what was done to make them (newest last), and what was undone (most recent last). */
+/** A drawing in progress: its strokes, the actions that made them (newest last), and what was undone (latest last). */
 export interface Drawing {
   strokes: readonly PaperStroke[];
   done: readonly Step[];
@@ -79,15 +70,14 @@ export interface Drawing {
 
 export const EMPTY_DRAWING: Drawing = { strokes: [], done: [], undone: [] };
 
-/** How many points the strokes hold in all (a point is two numbers). */
-export function pointsIn(strokes: readonly PaperStroke[]): number {
+/** The total points in the strokes (a point is two numbers). */
+function pointsIn(strokes: readonly PaperStroke[]): number {
   return strokes.reduce((n, s) => n + s.points.length / 2, 0);
 }
 
 /**
- * How many more points this letter can carry: what the server counts
- * (DECOR_POINTS_MAX), and what its size allows (DECOR_BYTES_MAX), whichever
- * comes first, and none once there are as many strokes as a letter may have.
+ * How many more points this letter can take: the lower of the point limit (DECOR_POINTS_MAX) and the size limit
+ * (DECOR_BYTES_MAX), and none once the stroke limit is reached.
  */
 export function pointsLeft(decor: LetterDecor): number {
   if (decor.strokes.length >= DECOR_STROKES_MAX) return 0;
@@ -105,7 +95,7 @@ export function addStroke(drawing: Drawing, stroke: PaperStroke): Drawing {
   return { strokes: [...drawing.strokes, stroke], done: [...drawing.done, { kind: 'add', stroke }], undone: [] };
 }
 
-/** Every stroke taken away at once; undoing it brings them all back. Nothing to clear is no step. */
+/** Clears every stroke as one undoable step; nothing to clear adds no step. */
 export function clearDrawing(drawing: Drawing): Drawing {
   if (drawing.strokes.length === 0) return drawing;
   return { strokes: [], done: [...drawing.done, { kind: 'clear', strokes: drawing.strokes }], undone: [] };
@@ -125,19 +115,17 @@ export function redo(drawing: Drawing): Drawing {
   return { strokes, done: [...drawing.done, step], undone: drawing.undone.slice(0, -1) };
 }
 
-/** How far down a drawing or a note may go: a long letter has a second page, and no more. */
+/** How far down a drawing or note may go: a long letter has a second page, and no more. */
 export const DRAWING_DEEPEST = PAPER_H * PAPER_PAGES;
 
-/** A point on the sheet, kept inside it (and inside the pages a drawing may cover) and made whole page units, as the server keeps them. */
-export function onSheet(x: number, y: number, length: number): [number, number] {
+/** A point clamped to the sheet (and the drawable pages) and rounded to whole page units, as the server keeps them. */
+function onSheet(x: number, y: number, length: number): [number, number] {
   return [Math.round(Math.max(0, Math.min(PAPER_W, x))), Math.round(Math.max(0, Math.min(length, DRAWING_DEEPEST, y)))];
 }
 
 /**
- * The pen on the paper: the points a finger has left so far, in page units,
- * x, y, x, y… It takes a new point only once the finger has gone far enough
- * from the last one, and none past what the letter can still carry, so a
- * stroke simply ends there rather than being refused after it was drawn.
+ * A stroke in progress, as flat page-unit points x, y, x, y… It takes a point only once the finger has moved far
+ * enough, and none beyond the letter's remaining room, so a stroke simply ends there instead of being refused later.
  */
 export class PenLine {
   readonly points: number[];
@@ -151,7 +139,7 @@ export class PenLine {
     x: number,
     y: number,
     private readonly length: number,
-    /** points the letter can still carry */
+    /** Points the letter can still take. */
     room: number,
   ) {
     this.points = [...onSheet(x, y, length)];
@@ -159,7 +147,7 @@ export class PenLine {
     this.most = Math.max(1, room);
   }
 
-  /** Follow the finger to (x, y); whether the line took a new point. */
+  /** Follows the finger to (x, y); returns whether a point was taken. */
   to(x: number, y: number): boolean {
     if (this.points.length / 2 >= this.most) return false;
     const [px, py] = onSheet(x, y, this.length);
@@ -170,12 +158,12 @@ export class PenLine {
     return true;
   }
 
-  /** Whether the line has gone anywhere from where the finger touched down. */
+  /** Whether the line has moved from where the finger touched down. */
   get moved(): boolean {
     return this.points.length > 2;
   }
 
-  /** The stroke as it is kept: near-duplicate points dropped, and a touch that never moved is a dot. */
+  /** The finished stroke: near-duplicate points dropped, and a touch that never moved becomes a dot. */
   done(): PaperStroke {
     const kept = this.points.length > 4 ? simplifyStroke(this.points) : this.points;
     const points = kept.length >= 4 ? kept : [kept[0] ?? 0, kept[1] ?? 0, kept[0] ?? 0, kept[1] ?? 0];
@@ -184,26 +172,21 @@ export class PenLine {
 }
 
 /**
- * Where the writing's first line begins, in page units from the top of the
- * sheet. Its baseline sits on the first rule (shared PAPER_TOP), and a line
- * of text is set in the middle of its line's height on both phones, the
- * letters' tops about a third of their size above the middle; so the line
- * starts half a rule and that third above the rule it sits on.
+ * The first line's top, in page units. The baseline sits on the first rule (shared PAPER_TOP), and text is centred
+ * in its line with cap tops about a third of the size above the middle, hence half a rule plus that third.
  */
 export const WRITING_TOP = Math.round(PAPER_TOP - PAPER_RULE / 2 - PAPER_TEXT * 0.35);
-/** The room kept under the last line of writing, and so how far the sheet runs on past it. */
+/** The room under the last line of writing, and so how far the sheet runs past it. */
 export const WRITING_FOOT = PAPER_RULE * 2;
 
-/** Where the writing is, across the page: inset from both edges, and on 'margin' paper beginning a little after its red line. */
+/** The writing's horizontal insets; on 'margin' paper it starts a little after the red line. */
 export function writingInsets(style: PaperStyle): { left: number; right: number } {
   return { left: style === 'margin' ? PAPER_MARGIN_X + 30 : PAPER_SIDE, right: PAPER_SIDE };
 }
 
 /**
- * How many pages the sheet is: one, or two when the writing (`writing`, how
- * far down the page it reaches, in page units) or something drawn or placed
- * reaches past the first. Writing longer still makes the sheet longer still,
- * a page at a time, though only the first two may be drawn on.
+ * The sheet's page count: two once the writing (`writing`, its depth in page units), a drawing or a note reaches
+ * past the first. Longer writing adds pages one at a time, though only the first two may be drawn on.
  */
 export function pagesFor(writing: number, strokes: readonly PaperStroke[], notes: readonly PaperNote[]): number {
   const byWriting = Math.ceil((writing + WRITING_FOOT) / PAPER_H);
@@ -213,28 +196,24 @@ export function pagesFor(writing: number, strokes: readonly PaperStroke[], notes
   return Math.max(1, byWriting, Math.min(PAPER_PAGES, Math.ceil(deepest / PAPER_H)));
 }
 
-/** How wide a note may be before it goes on to another line, in page units. */
+/** A note's maximum width before it wraps, in page units. */
 export const NOTE_WIDTH = 640;
-/** How much one press turns a note, in degrees. */
-export const NOTE_TURN_STEP = 5;
+/** How far one press turns a note, in degrees. */
+const NOTE_TURN_STEP = 5;
 
-/**
- * Where a new note goes, unless a finger put it somewhere: under the writing,
- * toward the end of the line, each next one a little lower than the last,
- * and never off the sheet.
- */
+/** Where a new note goes unless placed by hand: under the writing, toward the line's end, each a little lower, never off the sheet. */
 export function placeForNote(notes: readonly PaperNote[], writing: number, length: number): { x: number; y: number } {
   const under = Math.max(PAPER_TOP + PAPER_RULE, writing + PAPER_RULE * 1.5) + notes.length * PAPER_RULE * 1.5;
   return { x: Math.round(PAPER_W * 0.6), y: Math.round(Math.max(PAPER_RULE, Math.min(length - PAPER_RULE * 2, under))) };
 }
 
-/** A note moved to (x, y), its middle kept on the sheet. */
+/** A note moved to (x, y), its centre kept on the sheet. */
 export function moveNote(note: PaperNote, x: number, y: number, length: number): PaperNote {
   const [nx, ny] = onSheet(x, y, length);
   return { ...note, x: nx, y: ny };
 }
 
-/** A note turned a step one way (1) or the other (-1), no further than it may go. */
+/** A note turned a step one way (1) or the other (-1), within its limit. */
 export function turnNote(note: PaperNote, way: 1 | -1): PaperNote {
   return { ...note, turn: Math.max(-NOTE_TURN_MAX, Math.min(NOTE_TURN_MAX, note.turn + way * NOTE_TURN_STEP)) };
 }

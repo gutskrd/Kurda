@@ -35,10 +35,7 @@ describe('the row of friends on Home', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Compose');
   });
 
-  /*
-   * The rings only say who is about: playing first, then online, then the
-   * rest, and a screen reader hears the same thing the ring shows.
-   */
+  /* The rings show only who is around: playing first, then online, then the rest; screen readers hear the same. */
   it('puts friends who are playing first, then those online, each opening their profile', async () => {
     open([
       { userId: 'a', username: 'away', online: false, lastSeenAt: '2026-10-20T10:00:00Z' },
@@ -55,12 +52,12 @@ describe('the row of friends on Home', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('UserProfile', { userId: 'o' });
   });
 
-  // gold is for what is earned, and being in a game is not
+  // Gold is for what is earned, and being in a game is not.
   it('rings a friend in a game in two of the shared hues, never in gold', async () => {
     open([{ userId: 'p', username: 'azad', online: true, activity: { kind: 'race', since: '2026-10-21T10:00:00Z' } }]);
     const face = await screen.findByRole('button', { name: 'azad, playing now' });
     const stops = [...face.querySelectorAll('stop')].map((s) => s.getAttribute('stop-color'));
-    // whichever theme the harness draws in
+    // Whichever theme the harness draws in.
     const pairs = (['light', 'dark'] as const).map((scheme) => [HUES[scheme].orange.base, HUES[scheme].pink.base]);
     expect(pairs).toContainEqual(stops);
     expect(stops).not.toContain(HUES.light.gold.base);

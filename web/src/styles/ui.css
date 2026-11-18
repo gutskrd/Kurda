@@ -1,14 +1,8 @@
 /* ---- buttons ----------------------------------------------------------- */
 /*
- * One button, three weights, all pills.
- *
- * Primary is the one next step on a screen — near-white on the dark page,
- * near-black on the light one. Secondary is a surface-tone pill, the weight of
- * "Edit profile" or "Follow". Ghost is a word that only lights up under the
- * pointer. Destructive is red, as words or as a fill once it has been
- * confirmed. Forty-four pixels tall by default, which is the size a finger
- * needs; `btn-sm` is for rows and toolbars on a pointer, and grows back to 44
- * on a touch screen (below).
+ * One button in three weights, all pills: primary for a screen's next step, secondary in a surface tone, and ghost as a
+ * word that lights up on hover; destructive is red. 44px tall by default; `btn-sm` suits rows on a pointer and grows
+ * back to 44px on touch.
  */
 .btn {
   display: inline-flex;
@@ -97,13 +91,7 @@
   color: var(--danger);
 }
 
-/*
- * On a touch screen nothing pressable is under 44px.
- *
- * The small button exists so a row of actions fits beside a name on a desk;
- * a thumb does not get smaller with the screen, so where the primary pointer
- * is coarse every button is a full target again.
- */
+/* On touch screens every button is a full 44px target, small ones included. */
 @media (pointer: coarse) {
   .btn-sm {
     height: 44px;
@@ -112,13 +100,8 @@
 }
 
 /*
- * A button on a line of its own — the action at the end of a card, the link
- * at the foot of a section — can carry a whole phrase, and in French or German
- * that phrase is wider than a 320px phone ("Demander un export de mes
- * données"), or a two-to-a-row shop tile ("L’obtenir gratuitement"). There
- * it wraps inside its pill rather than running off the page; on one line it
- * is exactly the height it always was. Buttons in a row beside a name are left
- * alone: they keep their words together beside what they act on.
+ * A button on its own line, such as a card's last action, may carry a phrase wider than a phone in some languages, so
+ * it wraps inside its pill; on one line its height is unchanged. Buttons beside a name keep their words together.
  */
 .card > .btn,
 .lp-section-foot .btn,
@@ -148,12 +131,7 @@
 }
 
 /* ---- the close button (components/CloseButton.tsx) ---------------------- */
-/*
- * One for every dialog, sheet, panel and toast: a round button a finger's
- * width across with the drawn ✕ in it. Its ground is the opaque surface, so
- * it reads on a photograph (a profile's artwork fills its dialog) as it does
- * on a panel, in either scheme. Whoever uses it only says where it goes.
- */
+/* The close button for every dialog, sheet, panel and toast: a round ✕ on the opaque surface, legible over artwork. */
 .close-btn {
   flex: none;
   display: inline-grid;
@@ -474,12 +452,7 @@ input[type='password']::-ms-clear {
   display: grid;
   place-items: center;
   min-height: 40vh;
-  /*
-   * Nothing for the first moment. Most waits are over inside a tenth of a
-   * second, and a spinner that flashes on and straight off reads as a flicker
-   * rather than as progress, so it fades in only once the wait is noticeable.
-   * The space is held from the start, so nothing moves when it appears.
-   */
+  /* The spinner fades in after a short wait, so quick loads do not flicker; its space is held from the start. */
   animation: spinner-wait var(--dur) var(--ease-out) 120ms both;
 }
 @keyframes spinner-wait {
@@ -495,16 +468,8 @@ input[type='password']::-ms-clear {
 
 /* ---- skeletons --------------------------------------------------------- */
 /*
- * A placeholder block, and the light that travels across it.
- *
- * The sweep is a narrow bright band on a pseudo-element rather than an animated
- * `background-position` on a wide gradient. A moving background-position paints
- * on every frame; a transformed overlay is composited, so the ray runs on the
- * GPU and costs nothing even with forty of these on a feed.
- *
- * It is skewed a little, which is what makes it read as a ray of light passing
- * over the page rather than a grey bar sliding sideways. Every skeleton on a
- * screen shares one duration and no delay, so the light crosses them together.
+ * A placeholder block with a skewed ray of light crossing it on a composited pseudo-element rather than an animated
+ * background position. Every skeleton shares one duration and no delay, so the light crosses them together.
  */
 .skeleton {
   display: block;
@@ -535,28 +500,9 @@ input[type='password']::-ms-clear {
 }
 
 /*
- * A bar that takes exactly one line of whatever it is standing in for.
- *
- * This is what keeps a skeleton honest. Picking heights by hand means picking
- * them wrong: measured against a real feed card, a hand-numbered skeleton came
- * out 72px short, so every card jumped up the moment it arrived — which is the
- * one thing a skeleton exists to prevent.
- *
- * `lh` is one line box of the element's own inherited line-height. Put one of
- * these inside the real `.fcard-name`, `.fcard-text` or `.rank-name` and the
- * row is exactly as tall as it will be with words in it, because the height is
- * coming from the same rule that will lay those words out. The bar itself is
- * 0.6 of that with the rest split above and below, which is roughly where the
- * ink of a line sits.
- */
-/*
- * The box is a whole line; the bar drawn inside it is not.
- *
- * The obvious way to do this is a 0.6lh box with 0.2lh margins above and below.
- * It works inside a flex row and fails everywhere else: in normal flow those
- * margins collapse straight out through the parent, so an `<h2>` holding one
- * came out 13px tall instead of a line's 22px. Making the element itself a full
- * line and insetting the paint has no margins to collapse.
+ * One line of whatever it stands for: the box is `1lh` of the inherited line-height, so a skeleton inside the real
+ * `.fcard-name`, `.fcard-text` or `.rank-name` is exactly the final height. The bar is painted inset at 0.6 of it,
+ * since margins would collapse through the parent in normal flow.
  */
 .skeleton-line {
   height: 1lh;
@@ -579,38 +525,22 @@ input[type='password']::-ms-clear {
   display: block;
   width: 100%;
 }
-/*
- * A skeleton never inherits `white-space`.
- *
- * A post keeps the line breaks its author typed, so `.fcard-text` is
- * `pre-wrap` — and a placeholder dropped inside one had every newline between
- * its boxes turn into a real line of empty text. Two bars came out eight lines
- * tall and the card measured 177px more than the card that replaced it. There
- * is never anything to preserve inside one of these.
- */
+/* Skeletons never inherit `white-space`, since inside `pre-wrap` text their whitespace would add empty lines. */
 .skeleton,
 .skeleton-lines {
   white-space: normal;
 }
 
 /*
- * A placeholder is drawn a moment late, as the spinner is (`spinner-wait`
- * above): nothing for the first 120ms, then a short fade. Most answers land
- * inside that, and then there is no grey flash at all. Only its opacity
- * waits — the space is held from the first frame, so nothing moves when it
- * appears — and with reduced motion it appears at once when the wait is over.
+ * Placeholders appear after 120ms like the spinner (`spinner-wait`), so quick answers never flash grey. Only opacity
+ * waits, with the space held, and under Reduce Motion they appear at once.
  */
 .skeleton-region,
 .skeleton-late {
   animation: spinner-wait var(--dur) var(--ease-out) 120ms both;
 }
 
-/*
- * A button's place, at the height that size of button has on this screen:
- * 44 by default, 36 for a small one on a desk and 44 again under a thumb,
- * 52 for a large one — the same numbers as `.btn` above, so a row of
- * placeholder buttons is the height of the row that replaces it.
- */
+/* A button placeholder at that button's height: 44px, 36px small on a pointer (44px on touch), 52px large, as `.btn`. */
 .skeleton-btn {
   height: 44px;
   border-radius: var(--r-pill);
@@ -641,13 +571,7 @@ input[type='password']::-ms-clear {
   }
 }
 
-/*
- * Reduced motion takes the ray away, not the skeleton.
- *
- * The boxes are the useful half — they say what is coming and hold the layout
- * still. The travelling light is decoration, and a repeating sweep is exactly
- * the kind of motion this setting exists to stop.
- */
+/* Reduce Motion removes the ray but keeps the skeleton, which holds the layout. */
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after {
     animation: none;
@@ -687,14 +611,8 @@ input[type='password']::-ms-clear {
 }
 
 /*
- * Dropdown options.
- *
- * A native <select> popup is drawn by the OS, not on the page, so the control's
- * translucent background composites against the system surface (white on
- * Windows) instead of the dark app behind it. The options inherit the control's
- * white text, and the list came out white on white — unreadable. They need an
- * OPAQUE background of their own; color-scheme alone does not cover it, because
- * an author-set background is what the browser uses when one is present.
+ * Native select options are drawn by the system over its own surface, so they need an opaque background of their own
+ * or the inherited white text is white on white.
  */
 select.input option,
 select.input optgroup,

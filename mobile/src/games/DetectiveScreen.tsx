@@ -32,25 +32,13 @@ import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability } from './learnGames';
 
 /**
- * Detective on the phone.
+ * Detective on the phone: the question in hand first, then the case board (the story, the suspects' portraits, and the
+ * evidence cards, each in Kurdish only until its meaning is found), then the hints and the notebook of deductions.
  *
- * The case board, top to bottom: the case file's title and story, the
- * suspects' portraits in a row (the app's own characters where one plays a
- * suspect, a plain silhouette for anyone else), and the evidence pinned up
- * one card under another — messages, statements, notes and talk overheard
- * with its recording — each in its Kurdish only until its meaning is found.
- * The question in hand comes before the board, so the player knows what to
- * look for; the hints and the notebook, which fills with each deduction
- * made, come after it.
- *
- * A card's meaning is found by the deduction it proves, or had for a hint,
- * as is the case's next written hint. A hint costs nothing but itself: a case
- * has only a few, the screen says how many are left before one is spent, and
- * that they run out is the whole price. A wrong first try marks the cards to
- * read again, and the verdict comes right under the question
- * (`feedbackInRound`). Last, the accusation: the suspects become
- * the buttons, and the solution walks back through every deduction. Nothing
- * on the board moves. The website's games/Detective.tsx stages the same case.
+ * A card's meaning is found by the deduction it proves, or bought with a hint; hints cost nothing but are few, and the
+ * screen says how many are left. A wrong first try marks the cards to read again, and the verdict sits under the
+ * question (`feedbackInRound`). Last, the suspects become the buttons for the accusation. Nothing on the board moves.
+ * The website's games/Detective.tsx stages the same case.
  */
 
 type Round = SoloRound<DetectiveItemView, DetectiveHint, DetectiveCorrection, DetectiveBoardView>;
@@ -90,7 +78,7 @@ export function Portrait({ suspect, size = 60 }: { suspect: Pick<Suspect, 'id' |
   );
 }
 
-/** The board as it stands: the round's, with what hints showed and deductions found since. */
+/** The board as it stands: the round's, plus what hints showed and deductions found since. */
 function useBoard(round: Round): { board: Board | null; spend: (evidence?: string) => Promise<void>; spending: boolean; error: string | null } {
   const { client } = useAuth();
   const { t } = useI18n();
@@ -331,9 +319,8 @@ const NOTE_KEY: Record<SuspectNote, TranslationKey> = {
 };
 
 /**
- * The player's own marks on one suspect: a notebook, not an answer, so they
- * are never sent anywhere and last only while the case is open. Tapping the
- * chosen mark again takes it off, for a player who changes their mind.
+ * The player's own marks on one suspect: a notebook, not an answer, so they are never sent and last only while the case
+ * is open. Tapping the chosen mark again clears it.
  */
 function SuspectNotes({ name, note, onNote }: { name: string; note: SuspectNote | undefined; onNote: (note: SuspectNote | undefined) => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -386,7 +373,7 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
         <Text style={muted}>{meaningIn(board.intro, locale) ?? board.intro.en}</Text>
       </View>
 
-      {/* the question first, so the player knows what to look for on the board under it */}
+      {/* The question first, so the player knows what to look for on the board under it. */}
       <Question round={round} board={board} />
 
       <View style={[styles.boardField, { backgroundColor: colors.controlTrack }]} accessibilityLabel={t('games.detective.board')}>
@@ -419,7 +406,7 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
             {meaningIn(h, locale) ?? h.en}
           </Text>
         ))}
-        {/* a quieter button than the question's Check: green is for an answer that was right, and a hint is no answer */}
+        {/* A quieter button than Check: green is for a right answer, and a hint is no answer. */}
         <ClayButton label={t('games.detective.hint')} icon="lightbulb" tone="neutral" size="large" onPress={() => void spend()} busy={spending} disabled={!canSpend || !board.moreHints} />
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
       </View>

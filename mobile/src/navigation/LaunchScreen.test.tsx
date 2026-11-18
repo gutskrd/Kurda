@@ -6,9 +6,8 @@ vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 /*
- * The springs and timings things arrive on, held where they start: under
- * test every animation otherwise ends the moment it begins, and the first
- * frame — the whole point of the launch — would never be seen.
+ * The springs and timings things arrive on, held where they start: under test every animation otherwise ends the moment
+ * it begins, and the first frame would never be seen.
  */
 const asked = vi.hoisted(() => ({
   springs: [] as { to: number; kind: string; delay: number }[],
@@ -26,7 +25,8 @@ vi.mock('../theme/animate', async (original) => ({
   },
 }));
 
-import { act, cleanup, screen } from '@testing-library/react';
+import { act, cleanup, screen, within } from '@testing-library/react';
+import { PEEK_VIEW } from '@kurda/shared';
 import { Animated, Text } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -38,12 +38,8 @@ import { Entrance, LaunchScreen } from './LaunchScreen';
 import { LAUNCH, SPLASH_BACKGROUND, SPLASH_DEER, SPLASH_IMAGE_WIDTH, heroPlace } from './launch/splash';
 
 /*
- * The first thing anybody sees of the app: it opens on what the native splash
- * showed — the flat colour, the picture's deer in its box in the middle —
- * and comes alive from there, Hevalo arriving on a spring where the picture
- * was and the words rising under him, with a light drifting across the page;
- * all of it still for somebody who has asked for less motion. And the native
- * splash in app.json is set to the same colours, light and dark.
+ * The launch opens on what the native splash showed and comes alive from there, all of it still under Reduce Motion;
+ * the native splash in app.json uses the same colours.
  */
 
 beforeEach(() => {
@@ -60,7 +56,7 @@ async function settle(): Promise<void> {
   await act(async () => undefined);
 }
 
-/** a device that has said whether it wants motion, known from the launch's first frame */
+/** A device that has said whether it wants motion, known from the launch's first frame. */
 async function device({ reduceMotion }: { reduceMotion: boolean }): Promise<void> {
   patchReactNativeWeb({ reduceMotion });
   renderWithProviders(<LaunchScreen />).unmount();
@@ -86,26 +82,26 @@ function loops(): { started: number } {
   return seen;
 }
 
-/** a colour as the browser says it back */
+/** A colour as the browser reports it. */
 const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
-/** how much of an element shows; one when nothing says otherwise */
+/** How much of an element shows; one when nothing says otherwise. */
 const shown = (el: Element): number => Number(getComputedStyle(el).opacity || 1);
 
 describe('LaunchScreen', () => {
   it('opens on the splash: its colour under everything, the picture’s deer whole in its box, the gradient not yet come in', async () => {
     renderWithProviders(<LaunchScreen />);
     await settle();
-    // the screen is dark unless asked otherwise, so the splash's dark colour
+    // The screen is dark unless asked otherwise, so the splash's dark colour.
     expect(getComputedStyle(screen.getByTestId('launch-first-frame')).backgroundColor).toBe(rgb(SPLASH_BACKGROUND.dark));
     const picture = screen.getByTestId('launch-picture');
     expect(shown(picture)).toBe(1);
-    // the picture is as wide as the splash drew it, not as wide as the file is
+    // The picture is as wide as the splash drew it, not as wide as the file.
     expect(getComputedStyle(picture).width).toBe(`${SPLASH_IMAGE_WIDTH}px`);
     expect(getComputedStyle(picture.parentElement as HTMLElement).width).toBe(`${SPLASH_IMAGE_WIDTH}px`);
     expect(shown(screen.getByTestId('launch-ground'))).toBe(0);
     expect(screen.getByText('Hevalo')).toBeTruthy();
     expect(screen.getByText('Jiyan bi kurdî xweştire')).toBeTruthy();
-    // then the gradient comes in over the colour and the picture gives way, each in its own time
+    // Then the gradient comes in and the picture gives way, each in its own time.
     expect(asked.timings).toContainEqual({ to: 1, ms: duration.slow + 180, delay: LAUNCH.groundMs });
     expect(asked.timings).toContainEqual({ to: 0, ms: LAUNCH.pictureMs, delay: LAUNCH.heroMs });
   });
@@ -118,16 +114,21 @@ describe('LaunchScreen', () => {
       { to: 1, kind: 'bouncy', delay: LAUNCH.heroMs },
       { to: 1, kind: 'standard', delay: LAUNCH.wordsMs },
     ]);
-    // waiting to arrive: not there yet, and small
+    // Waiting to arrive: not there yet, and small.
     const hero = screen.getByTestId('launch-hero');
     expect(shown(hero)).toBe(0);
     expect(hero.style.transform).toContain('scale(0.6)');
-    // drawn as the picture's deer: as wide, with his eyes on its eyes
+    // Drawn as the picture's deer: as big, with his eyes on its eyes.
     const layers = characterLayers('hevalo', 'half');
     const place = heroPlace(SPLASH_IMAGE_WIDTH, layers.frame, layers.eyesAt);
-    expect(hero.style.width).toBe(`${place.width}px`);
-    expect(hero.style.left).toBe(`${place.left}px`);
-    expect(hero.style.top).toBe(`${place.top}px`);
+    const scale = place.width / layers.frame.w;
+    const px = (v: string): number => Number.parseFloat(v);
+    expect(px(hero.style.width)).toBeCloseTo(PEEK_VIEW.w * scale);
+    expect(px(hero.style.height)).toBeCloseTo(PEEK_VIEW.h * scale);
+    // His frame sits where the picture's deer did, so his eyes do too.
+    expect(px(hero.style.left) + (layers.frame.x - PEEK_VIEW.x) * scale).toBeCloseTo(place.left);
+    expect(px(hero.style.top) + (layers.frame.y - PEEK_VIEW.y) * scale).toBeCloseTo(place.top);
+    expect(within(hero).getByTestId('hevalo-peek')).toBeTruthy();
   });
 
   it('has a light drifting across the page, which is the one thing that loops', async () => {
@@ -155,7 +156,7 @@ describe('LaunchScreen', () => {
 
 describe('where Hevalo is drawn in the picture’s box', () => {
   it('puts his eyes on the picture’s eyes, as wide as the picture’s deer', () => {
-    // a drawing twice as tall as wide, its eyes a quarter of the way down, in a box 100 wide
+    // A drawing twice as tall as wide, its eyes a quarter of the way down, in a box 100 wide.
     const place = heroPlace(100, { w: 1, h: 2 }, { x: 0.5, y: 0.25 });
     expect(place.width).toBeCloseTo(100 * SPLASH_DEER.width);
     expect(place.height).toBeCloseTo(place.width * 2);
@@ -174,7 +175,7 @@ describe('Entrance', () => {
     );
     await settle();
     expect(asked.springs).toEqual([{ to: 1, kind: 'standard', delay: 0 }]);
-    // nothing of the window underneath shows through while the screen is still faint
+    // Nothing of the window shows through while the screen is still faint.
     expect(getComputedStyle(screen.getByTestId('entrance-ground')).backgroundColor).toBe(rgb(SPLASH_BACKGROUND.dark));
   });
 

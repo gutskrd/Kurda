@@ -37,14 +37,14 @@ describe('rungs', () => {
     const d = data({
       friends: [person('1', { online: true }), person('2', { online: true }), person('3')],
     });
-    // the whole point of the folded rail: two friends online, a small 2
+    // Two friends online show as a small 2.
     expect(countFor(d, 'online')).toBe(2);
   });
 
   it('counts someone in a game under the game icon, not under online', () => {
     const d = data({ friends: [playing('1'), person('2', { online: true })] });
     expect(countFor(d, 'playing')).toBe(1);
-    // otherwise they would be counted twice and the numbers would not add up
+    // Otherwise they would be counted twice.
     expect(countFor(d, 'online')).toBe(1);
   });
 
@@ -61,7 +61,7 @@ describe('rungs', () => {
       ],
       unread: { notifications: 0, groups: 3, requests: 0, challenges: 0 },
     });
-    // being in two groups is not news; three unread messages is
+    // The count is unread messages, not groups.
     expect(countFor(d, 'groups')).toBe(3);
   });
 
@@ -78,7 +78,7 @@ describe('RailStrip', () => {
     render(<RailStrip data={data({ friends: [person('1', { online: true })] })} onExpand={() => undefined} />);
 
     expect(screen.getByRole('button', { name: /Friends online: 1/ })).toBeInTheDocument();
-    // a zero is not information; four zeroes down the side is noise
+    // A zero shows no number.
     expect(screen.getByRole('button', { name: /Waiting on you: 0/ }).textContent).toBe('');
   });
 
@@ -88,11 +88,7 @@ describe('RailStrip', () => {
     expect(screen.getByRole('button', { name: /Friends online: 120/ }).textContent).toBe('99+');
   });
 
-  /**
-   * The folded rail is nothing but icons and numbers, so the tooltip and the
-   * accessible name are the only words on it — and the only way a screen-reader
-   * user knows which number is which.
-   */
+  /** The folded rail is only icons and numbers, so the tooltip and accessible name are its only words. */
   it('names its rungs in the reader’s language', async () => {
     localStorage.setItem('hevalo_locale', 'de');
     await preloadCatalogue();
@@ -109,7 +105,7 @@ describe('RailStrip', () => {
   it('opens the rail when a rung is clicked', async () => {
     const onExpand = vi.fn();
     render(<RailStrip data={data()} onExpand={onExpand} />);
-    // a number you cannot act on is only half useful
+    // Each rung opens the rail.
     await userEvent.click(screen.getByRole('button', { name: /Groups/ }));
     expect(onExpand).toHaveBeenCalled();
   });

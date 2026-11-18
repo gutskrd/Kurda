@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { allowedTransition, canTransition, isEditable } from './workflow.js';
+import { allowedTransition, isEditable } from './workflow.js';
+
+const canTransition = (from: Parameters<typeof allowedTransition>[0], to: Parameters<typeof allowedTransition>[1]) => allowedTransition(from, to) !== null;
 
 describe('content workflow transitions', () => {
   it('allows the draft → in_review → published path', () => {

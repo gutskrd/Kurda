@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { groupByTime, noteKind, splitAtName } from './rows';
 
 describe('groupByTime', () => {
-  // a fixed afternoon, so the day's start is well inside the window
+  // A fixed afternoon, so the day's start is well inside the window.
   const now = new Date(2026, 9, 21, 15, 0, 0).getTime();
   const at = (h: number) => ({ createdAt: new Date(now - h * 3_600_000).toISOString() });
 

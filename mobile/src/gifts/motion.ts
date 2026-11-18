@@ -1,34 +1,31 @@
 import { GIFT_REDUCED_MOTION_MS, GIFT_UNWRAP_MS, type GiftTier } from '@kurda/shared';
 
 /**
- * The unwrap's choreography, as numbers — pure, so it can be tested without a
- * screen, and the same every time a tier plays.
- *
- * One progress value runs 0 → 1 over the tier's `GIFT_UNWRAP_MS`; everything
- * on screen is an interpolation of it, so the whole moment runs on the native
- * driver (transform and opacity only) and a skip is one `setValue(1)`.
+ * The unwrap's choreography as numbers, pure so it is testable and the same every time a tier plays. One progress value
+ * runs 0 → 1 over the tier's `GIFT_UNWRAP_MS` and everything is an interpolation of it, so the whole moment runs on the
+ * native driver and a skip is one `setValue(1)`.
  */
 
 export interface UnwrapPlan {
   durationMs: number;
-  /** where in the progress the lid comes off (the haptic tick is here) */
+  /** Where in the progress the lid comes off (the haptic is here). */
   popAt: number;
   particles: Particle[];
-  /** the legendary's flame behind the box */
+  /** The legendary's flame behind the box. */
   flame: boolean;
-  /** how the gift is shown: in a card at the bubble's scale, a sheet, or the whole screen */
+  /** How the gift is shown: in a card at the bubble's scale, a sheet, or the whole screen. */
   stage: 'card' | 'sheet' | 'full';
 }
 
 export interface Particle {
   kind: 'seed' | 'spark';
-  /** where it ends, from the centre, in points */
+  /** Where it ends, from the centre, in points. */
   dx: number;
   dy: number;
-  /** turns while it flies (degrees) */
+  /** Turns while it flies (degrees). */
   spin: number;
   size: number;
-  /** when it sets off, as a share of the progress */
+  /** When it sets off, as a share of the progress. */
   delay: number;
 }
 
@@ -56,7 +53,7 @@ export function unwrapPlan(tier: GiftTier, reduceMotion: boolean): UnwrapPlan {
     return {
       kind: i % 3 === 0 ? 'spark' : 'seed',
       dx: Math.cos(angle) * reach,
-      // a little more upward than down: the seeds are thrown, then they fall
+      // A little more upward than down: the seeds are thrown, then fall.
       dy: Math.sin(angle) * reach * 0.8 - reach * 0.15,
       spin: (rand() - 0.5) * 540,
       size: i % 3 === 0 ? 10 + rand() * 6 : 8 + rand() * 4,

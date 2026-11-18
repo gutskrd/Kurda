@@ -2,12 +2,8 @@ import type { ReportCategory, ReportTargetType, RestrictionScope, SanctionKind }
 import type { MessageKey } from '../i18n/en';
 
 /**
- * The words for moderation's names, in one place.
- *
- * Shared `REPORT_CATEGORIES` carries each category's `labelKey`; the keys are
- * written out here as well so the catalogue check can see they are read, and
- * so a category the API adds without a label fails the type check rather than
- * reaching someone as a raw key.
+ * Moderation's labels in one place. The keys are written out (though shared `REPORT_CATEGORIES` has them) so the
+ * catalogue check sees them read and a new category without a label fails the type check.
  */
 export const CATEGORY_LABEL: Readonly<Record<ReportCategory, MessageKey>> = {
   child_safety: 'report.category.childSafety',
@@ -23,7 +19,7 @@ export const CATEGORY_LABEL: Readonly<Record<ReportCategory, MessageKey>> = {
   other: 'report.category.other',
 };
 
-/** One line under each category, in words a child would use, so nobody has to guess which fits. */
+/** One line under each category, in words a child would use. */
 export const CATEGORY_HINT: Readonly<Record<ReportCategory, MessageKey>> = {
   child_safety: 'report.hint.childSafety',
   self_harm: 'report.hint.selfHarm',
@@ -38,7 +34,7 @@ export const CATEGORY_HINT: Readonly<Record<ReportCategory, MessageKey>> = {
   other: 'report.hint.other',
 };
 
-/** What was reported, as "My reports" names it ("a message", "a post"). */
+/** What was reported, as "My reports" names it, such as "a message". */
 export const TARGET_LABEL: Readonly<Record<ReportTargetType, MessageKey>> = {
   user: 'reports.target.user',
   dm_message: 'reports.target.dmMessage',
@@ -52,7 +48,7 @@ export const TARGET_LABEL: Readonly<Record<ReportTargetType, MessageKey>> = {
   letter: 'reports.target.letter',
 };
 
-/** A sanction as its person reads it: what happened, not the admin's term for it. */
+/** A sanction as its subject reads it, not the admin's term. */
 export const SANCTION_LABEL: Readonly<Record<SanctionKind, MessageKey>> = {
   warning: 'standing.kind.warning',
   content_removal: 'standing.kind.contentRemoval',

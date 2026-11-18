@@ -72,8 +72,7 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
     expect(res.statusCode).toBe(200);
     const user = res.json().user;
     expect(user.id).toBe(userId);
-    // the suite confirms its account, the way a person does before using
-    // anything; what matters here is that the DTO carries the real state
+    // The suite confirms its account as a person would; what matters is that the DTO carries the real state.
     expect(user.emailVerified).toBe(true);
     expect(user.roles).toEqual([]);
     expect((await me('GET', undefined, '')).statusCode).toBe(401);
@@ -118,15 +117,28 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
     );
     expect(row.rows[0]!.xp).toBe(0);
     expect(row.rows[0]!.roles).toEqual([]);
-    // unchanged rather than null: what an attacker must not be able to do
-    // is *move* this column, and "it was null and still is" stops proving
-    // that the moment the account is a confirmed one
+    // Unchanged rather than null: an attacker must not be able to move this column, which a null check stops proving
+    // once the account is confirmed.
     expect(row.rows[0]!.email_verified_at).toEqual(before.rows[0]!.email_verified_at);
   });
 
   it('rejects invalid timezones and empty patches', async () => {
     expect((await me('PATCH', { timezone: 'Mars/OlympusMons' })).statusCode).toBe(400);
     expect((await me('PATCH', {})).statusCode).toBe(400);
+  });
+
+  /* Intl takes some zone names Postgres does not know, and one stored would fail every query of the account's day, so they are refused. */
+  it('refuses a zone the app’s date code takes but the database does not know', async () => {
+    const before = (await pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [userId])).rows[0]!.timezone;
+    for (const timezone of ['BET', 'AET', 'SystemV/EST5', 'US/Pacific-New']) {
+      // the premise: the date code would take it
+      expect(() => new Intl.DateTimeFormat('en', { timeZone: timezone }), timezone).not.toThrow();
+      const res = await me('PATCH', { timezone });
+      expect(res.statusCode, timezone).toBe(400);
+      expect(res.json()).toMatchObject({ code: 'VALIDATION_ERROR', details: [{ path: 'timezone' }] });
+    }
+    const after = (await pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [userId])).rows[0]!.timezone;
+    expect(after).toBe(before);
   });
 
   it('timezone change hits the 1/week cooldown (anti streak time-travel)', async () => {

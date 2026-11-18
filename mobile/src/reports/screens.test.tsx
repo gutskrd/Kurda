@@ -9,7 +9,7 @@ vi.mock('@react-native-community/netinfo', () => import('./testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('./testing/auth'));
 const navigate = vi.fn();
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }) }));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { AppState } from 'react-native';
@@ -95,7 +95,7 @@ describe('MyReportsScreen', () => {
     renderWithProviders(<MyReportsScreen onExit={() => undefined} />);
     await waitFor(() => expect(screen.getByText('We took action. Thanks for keeping Hevalo safe.')).toBeTruthy());
     expect(screen.getByText('Waiting for review')).toBeTruthy();
-    // a player is never named in your reports
+    // A player is never named in your reports.
     expect(screen.getByText('A player in a game')).toBeTruthy();
     expect(screen.queryByText('Ask for a second look')).toBeNull();
   });
@@ -117,7 +117,7 @@ describe('MyReportsScreen', () => {
   it('says so when there is nothing yet', async () => {
     testAuth.client = fakeClient({ 'GET /me/reports': ok({ reports: [] }) });
     renderWithProviders(<MyReportsScreen onExit={() => undefined} />);
-    expect(await screen.findByText('Nothing reported yet. When you report something, you can follow it here.')).toBeTruthy();
+    expect(await screen.findByText('Nothing reported yet.')).toBeTruthy();
   });
 });
 
@@ -140,7 +140,7 @@ describe('AccountStandingScreen', () => {
     expect(screen.getAllByText('Rule: Bullying or harassment')).toHaveLength(2);
     expect(screen.getAllByText('You sent repeated insults to another learner.').length).toBeGreaterThan(0);
     expect(screen.getAllByText('After a report · Reviewed by a person').length).toBeGreaterThan(0);
-    // an earlier decision with its review answered
+    // An earlier decision with its review answered.
     expect(screen.getByText('Reviewed: the decision stays')).toBeTruthy();
     expect(screen.getByText('We looked again.')).toBeTruthy();
   });
@@ -316,7 +316,7 @@ describe('accountSanction', () => {
   });
 });
 
-// a failed load says so, and offers to try again
+// A failed load says so, and offers to try again.
 describe('load failures', () => {
   it('My reports offers a retry', async () => {
     testAuth.client = fakeClient({ 'GET /me/reports': fail({ kind: 'server', status: 500 }) });

@@ -1,32 +1,17 @@
 /**
- * The Kurdish on the landing page.
- *
- * Every word and sentence the pictures of the product show is here, in one
- * place, so the Kurdish can be checked by reading one file rather than by
- * hunting through markup. None of it is decoration: each one is something the
- * product itself teaches or plays, and most come straight out of the first
- * course (`api/content/kurmanji-seed.json`) — the greetings, the days, the
- * drinks a lesson asks about.
- *
- * The Kurdish is not translated, because it is the thing being learned. What it
- * *means* is, and lives in the catalogues under `landing.gloss.*`, so a German
- * reader sees "heval — Freund" and a Soranî reader sees it glossed in Soranî.
- *
- * Nothing here is invented to sound Kurdish. If a phrase is not certain, it does
- * not go on the page.
+ * All the Kurdish the landing page's pictures show, in one file so it can be checked in one place. Each item is
+ * something the product teaches or plays, mostly from the first course (`api/content/kurmanji-seed.json`). The Kurdish
+ * is not translated; its meanings are in the catalogues under `landing.gloss.*`. Nothing uncertain goes on the page.
  */
 import type { StoryLevel } from '@kurda/shared';
 import { avatarAssetUrl } from '../lib/cosmetics';
 
-/** The word the whole page turns on: the one the product is named after. */
+/** The word the product is named after. */
 export const HEVAL = 'heval';
 
 /**
- * A Peyvok Battle that ends on `heval`, guess by guess.
- *
- * Scored by the real rules: a letter in the right place is green, a letter in
- * the word but elsewhere is yellow. `dayik` (mother) and `silav` (hello) are
- * both words from the first course.
+ * A Peyvok Battle ending on `heval`, scored by the real rules. `dayik` (mother) and `silav` (hello) are from the
+ * first course.
  */
 export const BATTLE_GUESSES: ReadonlyArray<{ word: string; marks: ReadonlyArray<'green' | 'yellow' | 'gray'> }> = [
   { word: 'dayik', marks: ['gray', 'yellow', 'gray', 'gray', 'gray'] },
@@ -38,51 +23,43 @@ export const BATTLE_GUESSES: ReadonlyArray<{ word: string; marks: ReadonlyArray<
 export const LESSON = {
   skill: 'Dem',
   sentence: ['Îro', 'çi', 'roj', 'e?'],
-  /** index into `sentence` of the word whose meaning is shown as a hint */
+  /** Index into `sentence` of the word whose meaning is shown as a hint. */
   hint: 2,
 } as const;
 
 /** A rhyme round: the prompt, and three real words that rhyme with it. */
 export const RHYME = { prompt: 'dar', found: ['kar', 'bar', 'yar'] } as const;
 
-/** What the typing race asks you to type — "I'm fine, thanks", from the course. */
+/** The typing race's text, "I'm fine, thanks", from the course. */
 export const RACE_TEXT = 'Ez baş im, spas.';
-/** how much of it has been typed in the picture */
+/** How much of it has been typed in the picture. */
 export const RACE_TYPED = 9;
 
 /** The five letters Kurmancî adds to the Latin alphabet. */
 export const KURDISH_LETTERS = ['ç', 'ê', 'î', 'ş', 'û'] as const;
 
-/** The question a heritage learner has heard a thousand times. */
+/** "How are you?", familiar to every heritage learner. */
 export const HOW_ARE_YOU = 'Tu çawa yî?';
 
 /** A poem on the community wall: its title, "rain", and its first line, "it is raining". */
 export const POEM = { title: 'Baran', line: 'Baran dibare.' } as const;
 
-/**
- * The people in the pictures.
- *
- * Avatars are the app's own default deer (`public/cosmetics/avatars/`), so the
- * faces are the ones a new account actually chooses from. The names are
- * ordinary Kurdish given names, used the way any app shows example users.
- */
+/** The people in the pictures: the app's default deer avatars (`public/cosmetics/avatars/`) and common Kurdish names. */
 export const PEOPLE = {
   you: { avatar: avatarAssetUrl('default-03') },
   rojin: { name: 'Rojîn', avatar: avatarAssetUrl('default-09') },
   dilan: { name: 'Dilan', avatar: avatarAssetUrl('default-07') },
 } as const;
 
-/** A profile background from the shop — night on the high pastures. */
+/** A profile background from the shop: night on the high pastures. */
 export const PROFILE_BACKGROUND = '/cosmetics/backgrounds/made-02-seva-zozanan.webp';
 
 /** The first unit of the Kurmanji Road, by the name its band on the path shows. */
 export const PATH_UNIT = 'Silav';
 
 /**
- * Three of the starter stories (`api/content/stories/kurmanci.json`), with
- * their levels (shown by their plain names, as the app shows them), for the
- * library on the phone; the covers are from the shared
- * list an editor picks a story's cover from, and the first is the one being read.
+ * Three starter stories (`api/content/stories/kurmanci.json`) with their levels for the library on the phone; the
+ * covers come from the shared cover list, and the first is the one being read.
  */
 export const STORIES: ReadonlyArray<{ title: string; level: StoryLevel; minutes: number; cover: string; read: number }> = [
   { title: 'Rêya Gund', level: 2, minutes: 4, cover: 'bihar', read: 0.45 },

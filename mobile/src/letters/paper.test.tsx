@@ -74,11 +74,11 @@ describe('the paper’s arithmetic', () => {
     expect(d.strokes).toEqual([]);
     d = undo(d);
     expect(d.strokes).toEqual([a, b]);
-    // something new drawn after an undo is a new branch: what was undone cannot be done again
+    // Drawing after an undo starts a new branch, so the undone stroke cannot be redone.
     d = addStroke(undo(d), line([1, 1, 2, 2]));
     expect(d.undone).toEqual([]);
     expect(redo(d)).toBe(d);
-    // nothing to clear is not a step to undo
+    // Nothing to clear adds no undo step.
     expect(clearDrawing(EMPTY_DRAWING)).toBe(EMPTY_DRAWING);
   });
 
@@ -89,9 +89,9 @@ describe('the paper’s arithmetic', () => {
     expect(pen.to(120, 201)).toBe(true);
     expect(pen.to(-40, 99999)).toBe(true);
     expect(pen.points.slice(-2)).toEqual([0, PAPER_H]);
-    // the third point was the last this letter had room for
+    // The third point used the letter's last room.
     expect(pen.to(300, 300)).toBe(false);
-    // a touch that never moved is a dot
+    // A touch that never moved is a dot.
     expect(new PenLine('brush', 'sun', 28, 50, 50, PAPER_H, 100).done().points).toEqual([50, 50, 50, 50]);
   });
 
@@ -99,7 +99,7 @@ describe('the paper’s arithmetic', () => {
     const decor: LetterDecor = { paper: DEFAULT_PAPER, strokes: [], notes: [] };
     expect(pointsLeft(decor)).toBeGreaterThan(5000);
     expect(pointsLeft(decor)).toBeLessThanOrEqual(DECOR_POINTS_MAX);
-    // three thousand points drawn: what is left is bounded by the letter's size before its count of points
+    // Three thousand points: the size limit binds before the point limit.
     const heavy = { ...decor, strokes: [line(Array.from({ length: 2 * 3000 }, (_, i) => 100 + (i % 800)))] };
     expect(pointsLeft(heavy)).toBeGreaterThan(0);
     expect(pointsLeft(heavy)).toBeLessThan(DECOR_POINTS_MAX - 3000);
@@ -126,21 +126,21 @@ describe('the paper’s arithmetic', () => {
   });
 });
 
-/** The composer on its own, as a screen holds it, with what it sends kept. */
+/** The composer on its own, as a screen holds it, recording what it sends. */
 function compose({ canDraw = true, paper = DEFAULT_PAPER, host }: { canDraw?: boolean; paper?: LetterDecor['paper']; host?: PaperHost } = {}) {
   const sent: ComposedLetter[] = [];
   renderWithProviders(<LetterComposer label="Your letter" busy={false} onSend={(l) => sent.push(l)} canDraw={canDraw} paper={paper} host={host} testID="c" />);
   return sent;
 }
 
-/** The page under the sheet, as a screen gives it, with what the sheet asks of it kept. */
+/** The page under the sheet, recording what the sheet asks of it. */
 const pageHost = () => ({
   lock: vi.fn<PaperHost['lock']>(),
   by: vi.fn<PaperHost['by']>(),
   reveal: vi.fn<PaperHost['reveal']>(),
 });
 
-/** Fingers on the glass: each touch by its name and where it is, the ones that changed this moment, and all that are down. */
+/** Fingers on the glass: each touch by id and position, those that changed now, and all that are down. */
 async function touch(target: HTMLElement, type: 'touchstart' | 'touchmove' | 'touchend', changed: number[], down: Record<number, [number, number]>): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 3));
   const of = (id: number) => {
@@ -160,11 +160,8 @@ async function touch(target: HTMLElement, type: 'touchstart' | 'touchmove' | 'to
 }
 
 /**
- * A finger drawn across the sheet, from point to point, in points on the
- * screen. A phone reports each movement at its own moment, and the gesture
- * system passes over a movement stamped with the same moment as the last; the
- * page here stamps to the millisecond, so the finger takes a little time
- * between points as a real one does.
+ * A finger dragged across the sheet, in screen points. The gesture system skips a move stamped with the same time
+ * as the last, and this page stamps to the millisecond, so the finger pauses briefly between points.
  */
 async function drag(target: HTMLElement, path: [number, number][]): Promise<void> {
   const [first, ...rest] = path;
@@ -190,7 +187,7 @@ describe('the composer', () => {
     const sent = compose();
     for (const name of ['Write', 'Draw', 'Text', 'Paper']) expect(screen.getByRole('tab', { name })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Write' }).getAttribute('aria-selected')).toBe('true');
-    // the sheet is the paper itself, drawn under the writing
+    // The sheet is the paper itself, drawn under the writing.
     expect(screen.getByTestId('c-sheet').querySelector('[data-markup]')?.getAttribute('data-markup')).toContain(paperColors(DEFAULT_PAPER).sheet);
     await writeAndSend();
     expect(sent).toEqual([{ body: 'Silav Baran!', decor: { paper: DEFAULT_PAPER, strokes: [], notes: [] } }]);
@@ -198,14 +195,14 @@ describe('the composer', () => {
 
   it('keeps Draw in its place but locked on a first letter to a stranger, says why in one line, and sends no drawing', async () => {
     const sent = compose({ canDraw: false });
-    // Draw is in its place, and nothing is said of it until it is touched
+    // Draw is in its place, and says nothing until touched.
     expect(screen.queryByTestId('c-draw-locked')).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Draw' }));
     expect(screen.getByTestId('c-draw-locked').textContent).toBe('Drawings only travel between pen pals: you can draw once someone writes back.');
-    // there is nothing to draw on, and no pen to draw with
+    // No canvas to draw on and no pen.
     expect(screen.queryByTestId('c-canvas')).toBeNull();
     expect(screen.queryByRole('radio', { name: 'Brush' })).toBeNull();
-    // notes still travel on a first letter
+    // Notes still travel on a first letter.
     fireEvent.click(screen.getByRole('tab', { name: 'Text' }));
     fireEvent.click(screen.getByTestId('c-add-note'));
     fireEvent.change(screen.getByTestId('c-note-input'), { target: { value: 'Rojbaş' } });
@@ -226,14 +223,14 @@ describe('the composer', () => {
       [102, 102],
       [136, 102],
     ]);
-    // the brush lays its paint with a soft edge: two paths for the one line
+    // The brush has a soft edge: two paths for one line.
     await waitFor(() => expect(linesDrawn()).toBe(2));
-    // the sheet says it has a drawing on it
+    // The sheet says it has a drawing on it.
     expect(screen.getByTestId('c-canvas').getAttribute('aria-label')).toBe('Your letter. Paper: Cream, Lined. There’s a drawing on it.');
     await writeAndSend();
     const [stroke] = sent[0]!.decor.strokes;
     expect(stroke).toMatchObject({ tool: 'brush', color: 'sun', width: 44 });
-    // the sheet is 340 points across here, so a point on the screen is 1000 / 340 of the page
+    // The sheet is 340 points across here, so a screen point is 1000 / 340 page units.
     expect(stroke!.points.slice(0, 2)).toEqual([100, 200]);
     expect(stroke!.points.slice(-2)).toEqual([400, 300]);
   });
@@ -260,7 +257,7 @@ describe('the composer', () => {
     Object.assign(down, { 1: [100, 200], 2: [180, 200] });
     await touch(canvas, 'touchmove', [1, 2], down);
     await touch(canvas, 'touchend', [1, 2], down);
-    // the fingers went up the glass, so the page goes on down under them
+    // The fingers moved up the glass, so the page scrolls down.
     expect(host.by).toHaveBeenCalledWith(60);
     expect(linesDrawn()).toBe(0);
   });
@@ -269,7 +266,7 @@ describe('the composer', () => {
     const sent = compose();
     fireEvent.click(screen.getByRole('tab', { name: 'Draw' }));
     const canvas = screen.getByTestId('c-canvas');
-    // the side of a hand lands first and stays where it is
+    // The side of a hand lands first and stays still.
     const down: Record<number, [number, number]> = { 1: [300, 450] };
     await touch(canvas, 'touchstart', [1], down);
     down[2] = [34, 68];
@@ -285,7 +282,7 @@ describe('the composer', () => {
     await touch(canvas, 'touchend', [1, 2], down);
     await waitFor(() => expect(linesDrawn()).toBe(1));
     await writeAndSend();
-    // the line is the finger's alone: nothing of it is where the hand rested
+    // The line is the finger's alone, with nothing where the hand rested.
     const points = sent[0]!.decor.strokes[0]!.points;
     expect(points.slice(-2)).toEqual([400, 300]);
     expect(points.some((v, i) => i % 2 === 0 && v > 800)).toBe(false);
@@ -315,7 +312,7 @@ describe('the composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     fireEvent.click(screen.getByTestId('c-clear-yes'));
     expect(linesDrawn()).toBe(0);
-    // a clear is undone like anything else
+    // A clear can be undone like anything else.
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(linesDrawn()).toBe(2);
   });
@@ -354,7 +351,7 @@ describe('the composer', () => {
     await writeAndSend();
     const [stuck] = sent[0]!.decor.notes;
     expect(stuck).toMatchObject({ text: 'Ji te hez dikim', size: 'l', color: 'sea', turn: 10 });
-    // it went where the finger took it: 34 points across and 51 down is 100 and 150 page units
+    // It went where the finger took it: 34 points across and 51 down is 100 and 150 page units.
     expect(stuck!.x).toBe(600 + 100);
     expect(stuck!.y).toBeGreaterThan(150);
   });
@@ -377,7 +374,7 @@ describe('the composer', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Text' }));
     fireEvent.click(screen.getByTestId('c-add-note'));
     fireEvent.change(screen.getByTestId('c-note-input'), { target: { value: '45 67' } });
-    // the note alone is no way to be reached
+    // The note alone is not yet a phone number.
     expect(screen.queryByTestId('c-note-problem')).toBeNull();
     fireEvent.click(screen.getByTestId('c-note-done'));
     await writeAndSend('Hejmara min 0750 123');
@@ -420,7 +417,7 @@ describe('a letter as it is read', () => {
     const sheet = screen.getByTestId('letter-l2');
     const markup = sheet.querySelector('[data-markup]')?.getAttribute('data-markup') ?? '';
     expect(markup).toContain(paperColors(decor.paper).sheet);
-    // the drawing is on the paper, under the writing
+    // The drawing is on the paper, under the writing.
     expect(markup).toContain('M100 300');
     expect(screen.getByText('Silav Rojda! Ez Baran im, ji Hewlêrê.')).toBeTruthy();
     expect(screen.getByText('Bihar xweş e')).toBeTruthy();
@@ -462,7 +459,7 @@ describe('a letter on your widget', () => {
     } as never);
     testAuth.client = client;
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
-    // only a letter you were sent can go on your widget
+    // Only a received letter can go on your widget.
     fireEvent.click(await screen.findByRole('button', { name: 'Show on my widget, Letter from Baran' }));
     expect(screen.queryByTestId('letter-widget-l1')).toBeNull();
     await waitFor(() => expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ pinnedLetterId: 'l2', showWords: false }));
@@ -495,7 +492,7 @@ describe('a letter on your widget', () => {
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('letter-widget-l2'));
     expect((await screen.findByTestId('letters-widget-error')).textContent).toBe('Hevalo took this letter down.');
-    // read again, it is a letter taken down, with nothing left to pin
+    // Re-read, it is a removed letter with nothing left to pin.
     await waitFor(() => expect(screen.queryByTestId('letter-widget-l2')).toBeNull());
     expect(reloadLetterWidget).not.toHaveBeenCalled();
   });
@@ -524,7 +521,7 @@ describe('a letter on your widget', () => {
     fireEvent.change(screen.getByTestId('letters-reply-input'), { target: { value: 'Spas!' } });
     fireEvent.click(screen.getByTestId('letters-reply-send'));
     await waitFor(() => expect((client.calls.find((c) => c.method === 'POST')?.body as ComposedLetter | undefined)?.decor.strokes).toHaveLength(1));
-    // the letter sent is on the table on its paper, with its drawing
+    // The sent letter is in the correspondence on its paper, with its drawing.
     expect(await screen.findByTestId('letter-l3')).toBeTruthy();
     await act(async () => undefined);
   });

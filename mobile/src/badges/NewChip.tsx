@@ -7,11 +7,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, typography } from '../theme/tokens';
 
 /**
- * "New", on a badge earned since the app was last opened (the keys
- * `useFreshBadges` in BadgeCelebrationHost gives): a small gold pill at the
- * corner of the badge's tile, on the Badges page and in a profile's showcase.
- * It pops in on the bouncy spring a beat after its tile, and is simply there
- * under Reduce Motion. A screen reader reads the word; the pop is decoration.
+ * "New" on a badge earned since the app last opened (keys from `useFreshBadges`): a small gold pill at the tile's
+ * corner on the Badges page and profile showcase. It pops in on the bouncy spring a beat after its tile, and is
+ * static under Reduce Motion. Screen readers read the word.
  */
 export function NewChip({ delayMs = 0, style }: { delayMs?: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const { t } = useI18n();

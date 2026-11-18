@@ -1,4 +1,4 @@
-/** Admin content CMS (KUR-100) against real Postgres: workflow + optimistic lock. */
+/** Admin content CMS against real Postgres: workflow + optimistic lock. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { ContentAdminService, type ExerciseInput } from './admin-service.js';
@@ -107,9 +107,8 @@ describe.skipIf(!DATABASE_URL)('content admin CMS (integration)', () => {
   });
 
   /**
-   * A listening item with no clip of its own plays the audio studio's
-   * recording of its transcription; with neither it would reach learners
-   * with nothing to play.
+   * A listening item without its own clip plays the studio recording of its transcription; with neither it must not
+   * reach learners.
    */
   describe('a listening item with nothing to play', () => {
     const silentText = `Ez baş im ${suffix}.`;

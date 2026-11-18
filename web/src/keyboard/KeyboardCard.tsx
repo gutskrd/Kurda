@@ -5,16 +5,13 @@ import { KeyboardGuide } from './KeyboardGuide';
 import { KeyboardSettings } from './KeyboardSettings';
 import { useKeyboardPrefs } from './prefs';
 
-/**
- * Settings → Keyboard and accents: the race's keyboard settings, Peyvok's
- * layout, and the keyboard guide, for this device.
- */
+/** Settings → Keyboard and accents: this device's race keyboard settings, Peyvok's layout and the keyboard guide. */
 export function KeyboardCard(): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
   const [prefs] = useKeyboardPrefs();
   const [guideOpen, setGuideOpen] = useState(false);
-  // the guide for the variety this device last raced in, else the interface's
+  // The guide for the variety this device last raced in, else the interface's.
   const dialect = prefs.raceDialect ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
 
   return (
@@ -28,7 +25,7 @@ export function KeyboardCard(): React.JSX.Element {
         </p>
         <KeyboardSettings context="settings" onHelp={() => setGuideOpen(true)} />
       </section>
-      {/* beside the frosted card, not in it: its backdrop filter would hold the fixed dialog inside itself */}
+      {/* Beside the frosted card, not in it, since its backdrop filter would trap the fixed dialog. */}
       <Modal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}

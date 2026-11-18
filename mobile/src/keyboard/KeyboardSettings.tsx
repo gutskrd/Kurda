@@ -9,16 +9,13 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GlassRow } from '../theme/glass';
 import { SettingsChoice, SettingsRow, SettingsSection, SettingsSwitch } from '../settings/list';
 import { Icon } from '../theme/Icon';
-import { layout, radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 import { KeyboardGuide } from './KeyboardGuide';
 import { useKeyboardPrefs, type WordleLayout } from './prefs';
-
-/** The violet wash an option that is on wears, as the tab bar and the segmented control mark where you are. */
-const CHOSEN_WASH = '1F';
 
 export const ACCENT_LABEL: Record<AccentMode, TranslationKey> = {
   strict: 'keyboard.accent.strict',
@@ -39,9 +36,8 @@ const LAYOUT_LABEL: Record<WordleLayout, TranslationKey> = {
 };
 
 /**
- * The race's accents, the key bar and the backtick shortcut, as a choice of
- * three and two switches — one block, used in the race's own settings sheet
- * and in Settings, so the two can never offer different things.
+ * The race's accents, key bar and backtick shortcut: a three-way choice and two switches, shared by the race
+ * settings sheet and Settings so they always match.
  */
 function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -53,7 +49,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
       <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
         {t('keyboard.accent.title')}
       </Text>
-      {/* the mode that is on is a wash of violet, edged and ticked in it, as every choice that is on is marked */}
+      {/* The active mode is washed, edged and ticked in violet, as every active choice is. */}
       <View accessibilityRole="radiogroup" accessibilityLabel={t('keyboard.accent.title')} style={styles.modes}>
         {ACCENT_MODES.map((mode) => {
           const on = prefs.accentMode === mode;
@@ -69,7 +65,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
               accessibilityLabel={`${t(ACCENT_LABEL[mode])}. ${t(ACCENT_HINT[mode])}`}
               style={[
                 styles.mode,
-                { backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack, borderColor: on ? colors.primary : 'transparent' },
+                { backgroundColor: on ? wash(colors.primary) : colors.controlTrack, borderColor: on ? colors.primary : 'transparent' },
               ]}
             >
               <View style={[styles.modeHead, { flexDirection: dir.row }]}>
@@ -81,9 +77,9 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
           );
         })}
       </View>
-      {/* a race keeps the mode it started in: what counts cannot change half way */}
+      {/* A race keeps the mode it started in: what counts cannot change half way. */}
       {midRace ? <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('keyboard.accent.nextRace')}</Text> : null}
-      {/* each switch is its whole row, words and all, held as a list row is */}
+      {/* Each switch is its whole row, words and all, held as a list row is. */}
       <ToggleRow
         label={t('keyboard.keyBar.title')}
         hint={t('keyboard.keyBar.hint')}
@@ -126,22 +122,18 @@ export function KeyboardSettingsSheet({
         <TypingOptions midRace={midRace} />
         <GlassRow icon="lightbulb" title={t('keyboard.help')} onPress={() => setGuide(true)} />
       </SheetScrollView>
-      {/* in the sheet's own Modal, so the guide is presented over the sheet */}
+      {/* In the sheet's own Modal, so the guide is presented over the sheet. */}
       <KeyboardGuide visible={guide} dialect={dialect} onClose={() => setGuide(false)} />
     </BottomSheet>
   );
 }
 
-/**
- * The same settings as a page of Settings, with Peyvok's layout and the
- * keyboard guide: each choice a row with what it means under it, each switch
- * a row, as the rest of Settings is.
- */
+/** The same settings as a Settings page, with Peyvok's layout and the keyboard guide, laid out as rows like the rest of Settings. */
 export function KeyboardSettingsList(): React.JSX.Element {
   const { t, locale } = useI18n();
   const [prefs, setPrefs] = useKeyboardPrefs();
   const [guide, setGuide] = useState(false);
-  // the guide for the variety last raced in, else the one the app is read in
+  // The guide for the variety last raced in, else the one the app is read in.
   const dialect: TypingDialect = prefs.raceDialect ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
   return (
     <>
@@ -196,7 +188,7 @@ const styles = StyleSheet.create({
   modeName: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   modeHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
   hint: { fontSize: typography.sizes.sm, lineHeight: 19, marginBottom: spacing.sm },
-  // the gutter is the ScrollView's own, so the options scroll edge to edge
+  // The gutter is the ScrollView's own, so the options scroll edge to edge.
   scroller: { paddingHorizontal: 0 },
   sheetBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.xs },
 });

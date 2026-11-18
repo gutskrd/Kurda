@@ -4,47 +4,30 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing } from './animate';
 import { ENTRANCE, duration } from './motion';
 
-/** Which way a set of slides is turning: on to a later one, or back to an earlier. */
+/** Which way slides are turning: on to a later one, or back. */
 export type SlideDirection = 'forward' | 'back';
 
-/** How far a slide that is leaving travels before it is gone, in points. */
+/** How far a leaving slide travels before it is gone, in points. */
 const LEAVE = 40;
 
 const Leaving = createContext(false);
 
 /**
- * Whether what asks is drawn in a slide on its way out.
- *
- * A slide that is leaving is still on screen for a moment, and whatever is
- * in it still has its callbacks in hand. Something that should not act for
- * a slide that is going (an exercise answering for the one after it) asks
- * here and lets go of them.
+ * Whether the caller is inside a leaving slide, so something that must not act for a departing slide (an exercise
+ * answering for the next one) can drop its callbacks.
  */
 export function useSlideLeaving(): boolean {
   return useContext(Leaving);
 }
 
 /**
- * One slide giving way to the next, with a direction.
+ * One slide giving way to the next, with a direction. The outgoing slide moves out toward the reading direction (the
+ * start side going forward, the end side going back, mirrored for right-to-left) and fades, while the incoming one
+ * rises into place on the interface spring. Under Reduce Motion they cross-fade.
  *
- * The intro's slides used to swap between two frames: the language list
- * gone, the welcome there, nothing to say which way anybody went. Now the
- * slide that was showing moves out the way the reader is going — to the
- * start side going on, to the end side going back, the other way round in a
- * language read from the right — and fades as it goes, while the one
- * arriving rises into its place on the interface's own spring (no bounce,
- * there within 300 ms: a lesson turns a step every few seconds), the way a
- * row rises into a list. Under Reduce Motion the two cross-fade and nothing
- * travels.
- *
- * `id` names the slide showing; when it changes, the children drawn last
- * are kept as they were and sent off, and the new children come in. The
- * slide showing is always the live children, so it goes on updating — a
- * language chosen on the first slide is shown chosen — and only the one
- * leaving is a still of itself.
- *
- * A slide that showed nothing has nothing to send off: whatever was already
- * leaving goes on leaving, and the next slide arrives over it.
+ * When `id` changes, the last-drawn children are kept as they were and sent off while the new children come in. The
+ * showing slide is always the live children, so it keeps updating; only the leaving one is a still. If nothing was
+ * showing, whatever was already leaving continues and the next slide arrives over it.
  */
 export function SlideSwap({
   id,
@@ -56,19 +39,13 @@ export function SlideSwap({
 }: {
   id: string;
   direction: SlideDirection;
-  /** read from the right: forward is to the left */
+  /** Right-to-left: forward is to the left. */
   mirrored?: boolean;
   /**
-   * The slide that leaves is the one that was showing, kept mounted until it
-   * has gone, rather than a still mounted afresh from what it last drew.
-   *
-   * A still is right for a slide that is a picture of its props: the intro,
-   * a step of signing in. It is wrong for one that keeps something of its
-   * own or does something as it mounts, like a lesson's exercise: mounted
-   * again, the tiles laid on its line would be back in the bank, its clip
-   * would load a second time, and what it does on mounting would be done
-   * for the exercise after it. Held, it leaves exactly as it stood, and
-   * `useSlideLeaving` tells what is in it that it is going.
+   * The leaving slide is the one that was showing, kept mounted until gone, rather than a still remounted from its last
+   * render. A still suits slides that just picture their props (the intro, a sign-in step); slides with their own state
+   * or mount effects, like a lesson's exercise, would otherwise reset and re-run them for the next exercise. Held, it
+   * leaves exactly as it stood, and `useSlideLeaving` tells its contents.
    */
   held?: boolean;
   children: ReactNode;
@@ -77,20 +54,18 @@ export function SlideSwap({
   const [turn, setTurn] = useState<{ id: string; leaving: { id: string; node: ReactNode; shift: number } | null }>({ id, leaving: null });
   const last = useRef<ReactNode>(children);
   if (turn.id !== id) {
-    // the slide shown until now leaves, as it was last drawn, the way the reader is going
+    // The previously shown slide leaves as last drawn, toward the reading direction.
     const shift = (direction === 'forward' ? -1 : 1) * (mirrored ? -1 : 1) * LEAVE;
     const empty = last.current === null || last.current === undefined || last.current === false;
-    // nothing to send off: what was leaving goes on leaving, unless it is the very slide now coming back
+    // Nothing new to send off: whatever was leaving continues, unless it is the very slide now coming back.
     const before = turn.leaving?.id === id ? null : turn.leaving;
     setTurn({ id, leaving: empty ? before : { id: turn.id, node: last.current, shift } });
   }
   last.current = children;
   const leaving = turn.leaving;
   /*
-   * Keyed by role as well as by slide, so the slide that was arriving is not
-   * turned into the one leaving: it is let go and a still of it mounts in its
-   * place. A held slide is keyed by the slide alone, which is what keeps it:
-   * the same pane is told it is now the one going out.
+   * Keyed by role and slide, so an arriving slide is not turned into the leaving one: it is released and a still of
+   * it mounts instead. A held slide is keyed by the slide alone, so the same pane is told it is now leaving.
    */
   const paneKey = (role: 'in' | 'out', slide: string): string => (held ? `slide-${slide}` : `${role}-${slide}`);
 
@@ -101,7 +76,7 @@ export function SlideSwap({
           {leaving.node}
         </Pane>
       ) : null}
-      {/* the first slide is simply there: the screen it is on has an arrival of its own */}
+      {/* The first slide simply appears, since its screen has its own arrival. */}
       <Pane key={paneKey('in', id)} role="in" animate={leaving !== null}>
         {children}
       </Pane>
@@ -110,10 +85,8 @@ export function SlideSwap({
 }
 
 /**
- * One slide, arriving or leaving. It plays as it mounts, and a still never
- * changes its mind. A held slide does: turned from arriving to leaving it
- * goes out from wherever its arrival had got to, and gone back to while it
- * is still leaving it comes back in from wherever that had got to.
+ * One slide, arriving or leaving, animating on mount; a still never changes direction. A held slide does: turned
+ * from arriving to leaving it goes out from wherever its arrival had reached, and back again likewise.
  */
 function Pane({
   role,
@@ -130,7 +103,7 @@ function Pane({
 }): React.JSX.Element {
   const reduce = useReducedMotion();
   const p = useRef(new Animated.Value(role === 'in' && animate ? 0 : 1)).current;
-  // whether the slide is fully there: the first slide is from the start, and one that has begun to leave is not until it has come all the way back
+  // Whether the slide is fully in: the first slide from the start; one that began leaving not until it has fully returned.
   const there = useRef(!(role === 'in' && animate));
 
   useEffect(() => {
@@ -148,7 +121,7 @@ function Pane({
       if (finished) onDone?.();
     });
     return () => run.stop();
-    // as it mounts, and again each time a held slide is turned: from arriving to leaving, or back
+    // On mount, and again each time a held slide changes direction.
   }, [role]);
 
   const motion = reduce
@@ -156,9 +129,9 @@ function Pane({
     : role === 'in'
       ? { opacity: p, transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [ENTRANCE.distance * 2, 0] }) }] }
       : { opacity: p, transform: [{ translateX: p.interpolate({ inputRange: [0, 1], outputRange: [shift, 0] }) }] };
-  // a leaving slide says which side it leaves by, for the tests: nothing on screen reads it
+  // A leaving slide names its exit side for tests; nothing on screen reads it.
   const id = role === 'in' ? 'slide-in' : shift < 0 ? 'slide-out-start' : 'slide-out-end';
-  // a slide on its way out is not there to be touched, or read out by a screen reader beside the one arriving
+  // A leaving slide cannot be touched or read by screen readers beside the arriving one.
   const out = role === 'out';
   return (
     <Animated.View

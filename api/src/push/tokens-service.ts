@@ -8,10 +8,8 @@ export interface DeviceToken {
 }
 
 /**
- * The shape of an Expo push token, the only kind the phone registers:
- * `ExponentPushToken[…]`, or `ExpoPushToken[…]` as newer SDKs may write it,
- * around a short run of letters, digits and the few marks base64 uses. Anything
- * else is refused at the door rather than stored and sent to Expo to reject.
+ * The shape of an Expo push token: `ExponentPushToken[…]`, or `ExpoPushToken[…]` from newer SDKs, around a short run
+ * of base64 characters. Anything else is refused at the door rather than stored for Expo to reject.
  */
 const EXPO_PUSH_TOKEN = /^Expo(?:nent)?PushToken\[[A-Za-z0-9_+/=-]{1,200}\]$/;
 
@@ -20,30 +18,18 @@ export function isExpoPushToken(token: string): boolean {
 }
 
 /**
- * Device token lifecycle (KUR-094). A token is globally unique; registering one
- * that already exists reassigns it to the current user (OS restore / account
- * switch) rather than duplicating. Invalid tokens are pruned wholesale by the
- * delivery pipeline on provider rejection.
+ * Device token lifecycle. Tokens are globally unique, so registering an existing one reassigns it to the current user
+ * (OS restore, account switch). Invalid tokens are pruned by the delivery pipeline when the provider rejects them.
  */
 export class DeviceTokenService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Register or re-point a device token; refreshes last_seen + platform.
-   *
-   * An account gets notifications on its MAX_PUSH_DEVICES phones seen most
-   * recently: registering one more drops the one seen longest ago rather than
-   * refusing the new phone, which is the one in the person's hand. Every
-   * notification goes to each token an account has, so without this a script
-   * could make one notification into thousands. One statement after the
-   * insert, which keeps the newest tokens whatever runs beside it, locking
-   * the ones it drops in id order so two registrations never wait on each
-   * other (as auth/tokens.ts `endOldestSessions`).
-   *
-   * `familyId` is the session the phone is signed in under. The token follows
-   * it: when that session is signed out, revoked or expires, the database
-   * drops the token with it (migration `push-ends-with-its-session`), so a
-   * phone that is no longer signed in stops being told what the account gets.
+   * Registers or re-points a device token, refreshing last_seen and platform. An account gets notifications on its
+   * MAX_PUSH_DEVICES most recently seen phones: one more drops the oldest rather than refusing the phone in hand, so a
+   * script cannot turn one notification into thousands. One statement after the insert keeps the newest, locking dropped
+   * rows in id order so registrations never deadlock (as auth/tokens.ts `endOldestSessions`). `familyId` is the
+   * phone's session; the database drops the token with it (migration `push-ends-with-its-session`).
    */
   async register(userId: string, platform: PushPlatform, token: string, familyId: string | null = null): Promise<void> {
     await this.pool.query(
@@ -82,10 +68,18 @@ export class DeviceTokenService {
     return (res.rowCount ?? 0) > 0;
   }
 
-  /** Every registered device for a user. */
+  /**
+   * The devices a notification for this user goes to: phones whose session is still live. Revoked sessions drop their
+   * tokens in the database, but a session can also simply expire, so the session is checked on every send. Tokens with
+   * no session are never sent to.
+   */
   async forUser(userId: string): Promise<DeviceToken[]> {
     const res = await this.pool.query<{ token: string; platform: PushPlatform }>(
-      `SELECT token, platform FROM device_tokens WHERE user_id = $1 ORDER BY last_seen_at DESC`,
+      `SELECT d.token, d.platform FROM device_tokens d
+        WHERE d.user_id = $1
+          AND EXISTS (SELECT 1 FROM refresh_tokens rt
+                       WHERE rt.family_id = d.family_id AND rt.user_id = d.user_id AND rt.revoked_at IS NULL AND rt.expires_at > now())
+        ORDER BY d.last_seen_at DESC`,
       [userId],
     );
     return res.rows;

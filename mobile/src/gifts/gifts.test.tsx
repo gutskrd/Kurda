@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 const navigate = vi.fn();
-// a screen's focus, as a stack tells it: 'focus' and 'blur' listeners, and whether it is in front now
+// A screen's focus as a stack tells it: 'focus' and 'blur' listeners, and whether it is in front now.
 const focus = vi.hoisted(() => ({ listeners: new Map<string, Set<() => void>>(), focused: true }));
 const nav = { navigate, goBack: vi.fn(), isFocused: () => focus.focused, addListener: (type: string, cb: () => void) => {
   const set = focus.listeners.get(type) ?? new Set();
@@ -17,7 +17,7 @@ const nav = { navigate, goBack: vi.fn(), isFocused: () => focus.focused, addList
   return () => set.delete(cb);
 } };
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => nav }));
-// the gift banner listens on the user's channel; here the test is the channel
+// The gift banner listens on the user's channel; here the test is the channel.
 const userEvents: { handler: ((e: unknown) => void) | null } = { handler: null };
 vi.mock('../realtime/useUserEvents', () => ({
   useUserEvents: (h: (e: unknown) => void) => {
@@ -80,7 +80,7 @@ describe('GiftBubble', () => {
     );
     expect(screen.getByText('A gift for you')).toBeTruthy();
     expect(screen.getByText('Tap to open')).toBeTruthy();
-    // what is inside stays a surprise until it is opened
+    // What is inside stays a surprise until it is opened.
     expect(screen.queryByText('Newroz fire')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'A gift from Azad. Tap to open.' }));
     expect(onOpen).toHaveBeenCalledWith('g1');
@@ -169,7 +169,7 @@ describe('GiftPickerSheet', () => {
 
     fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr' }));
-    // nobody could be given it: the sheet says why, by name, and nothing flies
+    // Nobody could be given it: the sheet says why, by name, and nothing flies.
     expect(await screen.findByText(/That’s today’s limit for Azad\.\s+A gift to Rojda isn’t possible yet\./)).toBeTruthy();
     expect(onSent).not.toHaveBeenCalled();
   });
@@ -192,7 +192,7 @@ describe('GiftPickerSheet', () => {
     fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
-    // Account standing would open under the sheet: the sheet goes first
+    // Account standing would open under the sheet: the sheet goes first.
     fireEvent.click(screen.getByRole('link', { name: 'See your account standing' }));
     expect(onClose).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith('AccountStanding');
@@ -206,7 +206,7 @@ describe('GiftPickerSheet', () => {
     );
     const { rerender } = renderWithProviders(sheet());
     await screen.findByRole('radio', { name: /^Mountain dawn/ });
-    // a friend typing redraws the chat, with a fresh friends array each time
+    // A friend typing redraws the chat, with a fresh friends array each time.
     rerender(sheet());
     rerender(sheet());
     await waitFor(() => expect(screen.getByRole('radio', { name: /^Mountain dawn/ })).toBeTruthy());
@@ -224,7 +224,7 @@ describe('GiftPickerSheet', () => {
     expect(screen.queryByText('you can only send gifts to friends')).toBeNull();
     first.unmount();
 
-    // a Newroz item that ended while the sheet was open: said so, and the catalog asked for again
+    // A Newroz item that ended while the sheet was open: said so, and the catalogue asked for again.
     let catalogs = 0;
     let sends = 0;
     const client = fakeClient({
@@ -257,7 +257,7 @@ describe('GiftPickerSheet', () => {
 });
 
 describe('GiftPickerSheet, finding the gift', () => {
-  // the catalogue as GET /gifts/catalog sends it: every kind with a price, and who owns what already
+  // The catalogue as GET /gifts/catalog sends it: every kind with a price, and who owns what already.
   const CATALOG = [
     item({ sku: 'bg_mountain', name: 'Mountain dawn', price: 300 }),
     item({ sku: 'bg-made-gola-sin', name: 'Gola Şîn', price: 400, alreadyOwnedBy: ['u2'] }),
@@ -301,7 +301,7 @@ describe('GiftPickerSheet, finding the gift', () => {
       'Tags, 1 item',
     ]);
 
-    // one kind: only its gifts, and no heading to say what the chip already says
+    // One kind: only its gifts, and no heading to say what the chip already says.
     fireEvent.click(within(kinds).getByRole('radio', { name: 'Icons, 2 items' }));
     expect(gifts()).toEqual(['Îstîkan', 'Star']);
     expect(screen.queryByRole('heading', { name: /^Icons/ })).toBeNull();
@@ -317,7 +317,7 @@ describe('GiftPickerSheet, finding the gift', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort: Featured' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Price: high to low' }));
-    // within each kind, the dearest first — and gems, the dearer currency, before Zêr
+    // Within each kind the dearest first, and gems, the dearer currency, before Zêr.
     expect(gifts()).toEqual(['Gold', 'Gola Şîn', 'Mountain dawn', 'Star', 'Îstîkan', 'Kurdish Tag']);
   });
 
@@ -329,7 +329,7 @@ describe('GiftPickerSheet, finding the gift', () => {
     expect(screen.getByRole('radio', { name: 'Icons, 1 item' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Within my balance' }));
-    // Gold is 5000 Zêr against 1000
+    // Gold is 5000 Zêr against 1000.
     expect(gifts()).toEqual(['Mountain dawn', 'Îstîkan', 'Kurdish Tag']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
@@ -361,9 +361,8 @@ describe('GiftPickerSheet, finding the gift', () => {
 
 describe('GiftUnwrap', () => {
   /*
-   * react-native-web has no native driver: a native-driven animation ends the
-   * moment it starts. Hold the unwrap's timings open instead, so the test can
-   * see the moment playing, skip it, or let it finish.
+   * React-native-web has no native driver, so a native-driven animation ends as it starts; the unwrap's timings are
+   * held open instead, so the test can see it playing, skip it, or let it finish.
    */
   const finish: Array<(r: { finished: boolean }) => void> = [];
   beforeEach(() => {
@@ -392,7 +391,7 @@ describe('GiftUnwrap', () => {
       <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={onOpened} onThanks={onThanks} />,
     );
     await waitFor(() => expect(onOpened).toHaveBeenCalledWith(opened));
-    // skip the moment
+    // Skip the moment.
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByText('From Azad')).toBeTruthy();
     expect(screen.getByText('Newroz fire')).toBeTruthy();
@@ -423,7 +422,7 @@ describe('GiftUnwrap', () => {
     act(() => {
       vi.advanceTimersByTime(3000);
     });
-    // once for the gift, not again as it finishes
+    // Once for the gift, not again as it finishes.
     expect(felt).toEqual(['celebrate']);
     first.unmount();
 
@@ -472,7 +471,7 @@ describe('GiftUnwrap', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Say thanks' }));
-    // the chat's own notice is behind this sheet, so the reason is said here
+    // The chat's own notice is behind this sheet, so the reason is said here.
     expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Say thanks' })).toBeTruthy();
     fireEvent.click(screen.getByRole('link', { name: 'See your account standing' }));
@@ -485,11 +484,11 @@ describe('GiftUnwrap', () => {
     renderWithProviders(
       <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
-    // while it plays, only Skip is there to reach
+    // While it plays, only Skip is there to reach.
     expect(screen.queryByRole('button', { name: 'Say thanks' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByRole('button', { name: 'Say thanks' })).toBeTruthy();
-    // afterwards no button without a name is left
+    // Afterwards no button without a name is left.
     for (const button of screen.getAllByRole('button')) {
       expect(button.getAttribute('aria-label') ?? button.textContent).toBeTruthy();
     }
@@ -517,7 +516,7 @@ describe('GiftArrivals', () => {
   });
 
   it('shows a banner for a gift that arrives elsewhere, and opens it in its chat', () => {
-    testAuth.client = fakeClient({ 'GET /me/social': ok({ unread: { gifts: 1 } }) });
+    testAuth.client = fakeClient({ 'GET /me/gifts/unseen': ok({ unseen: 1 }) });
     renderWithProviders(<GiftArrivals />);
     act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
     expect(screen.getByText('Rojda sent you a gift')).toBeTruthy();
@@ -543,7 +542,7 @@ describe('GiftArrivals', () => {
   });
 
   it('shows the banner for a chat that is open but behind another screen', () => {
-    testAuth.client = fakeClient({ 'GET /me/social': ok({ unread: { gifts: 1 } }) });
+    testAuth.client = fakeClient({ 'GET /me/gifts/unseen': ok({ unseen: 1 }) });
     function OpenChat() {
       useOpenChat({ kind: 'dm', userId: 'u2' });
       return null;
@@ -554,13 +553,13 @@ describe('GiftArrivals', () => {
         <GiftArrivals />
       </>,
     );
-    // their profile is pushed over the chat: the chat is still mounted, but not in front
+    // Their profile is pushed over the chat: the chat is still mounted, but not in front.
     act(() => focus.listeners.get('blur')?.forEach((cb) => cb()));
     act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
     expect(screen.getByText('Rojda sent you a gift')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Later' }));
 
-    // back in the chat: the gift appearing in the thread is the announcement
+    // Back in the chat: the gift appearing in the thread is the announcement.
     act(() => focus.listeners.get('focus')?.forEach((cb) => cb()));
     act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
     expect(screen.queryByText('Rojda sent you a gift')).toBeNull();
@@ -568,7 +567,7 @@ describe('GiftArrivals', () => {
 
   it('tells VoiceOver in words, where a live region says nothing', () => {
     const announce = vi.spyOn(AccessibilityInfo, 'announceForAccessibility');
-    testAuth.client = fakeClient({ 'GET /me/social': ok({ unread: { gifts: 1 } }) });
+    testAuth.client = fakeClient({ 'GET /me/gifts/unseen': ok({ unseen: 1 }) });
     renderWithProviders(<GiftArrivals />);
     act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
     expect(announce).toHaveBeenCalledWith('Rojda sent you a gift');

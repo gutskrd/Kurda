@@ -1,3 +1,4 @@
+import { StackActions } from '@react-navigation/core';
 import { letterNoticeOf } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -5,19 +6,17 @@ import { followDeepLink } from '../notifications/followLink';
 import { isGroupNotice, resolveDeepLink, type DeepLink } from '../notifications/inbox';
 
 /**
- * Where a tapped push opens (KUR-094). The push carries the same `data` the
- * in-app list stores — a `kind` with its ids — plus the category it was sent
- * under (api push/service.ts), so it goes through the list's own resolver and
- * lands where tapping the same line in the list would:
+ * Where a tapped push opens. The push carries the same `data` the in-app list stores (a `kind` with its ids) plus
+ * its send category (api push/service.ts), so it goes through the list's resolver and lands where tapping the
+ * same list row would:
  *
- * - a badge → Badges; moving up a league, a Pêla week → the league;
- *   an invite → its game; a gift → the chat it is in; a letter → the letters
- *   window, with its bird named; a report outcome, a decision on the account
- *   → where those are (notifications/inbox.ts);
- * - a streak reminder names no screen → the lessons, which is what it asks for;
- * - anything else (a test send, a kind this version does not know, a caring
- *   message, which is read in full in the list) → the notification list,
- *   where it is waiting too.
+ * - a badge → Badges; a league promotion or Pêla week → the league; an invite → its game; a gift → its chat; a
+ *   letter
+ *   → the letters window, with its bird named; a report outcome or account decision → where those live
+ *   (notifications/inbox.ts);
+ * - a streak reminder names no screen → the lessons;
+ * - anything else (a test send, an unknown kind, a caring message read in full in the list) → the notification
+ *   list.
  */
 export type PushTarget = { kind: 'link'; link: DeepLink } | { kind: 'learn' } | { kind: 'inbox' };
 
@@ -35,7 +34,8 @@ export function openPushTarget(target: PushTarget, navigation: RootNavigation, c
       void followDeepLink(target.link, navigation, client);
       return;
     case 'learn':
-      navigation.navigate('Tabs', { screen: 'Learn' });
+      // Back down to the tabs from whatever is open, rather than a second set of tabs over it.
+      navigation.dispatch(StackActions.popTo('Tabs', { screen: 'Learn' }));
       return;
     case 'inbox':
       navigation.navigate('NotificationCenter');
@@ -50,14 +50,10 @@ export interface RouteLike {
 }
 
 /**
- * Whether a push is about the conversation already open on screen — a
- * message, or a gift, in the chat being read. Its words are arriving there
- * anyway, so it is not shown again as a banner over them. News about one's
- * own place in a group (removed, banned) is not in the chat, and is shown.
- *
- * A letter is not shown over the letters window, which hears it and lands
- * its bird itself, nor over the correspondence it came in, which reads
- * itself again and shows it. Over any other correspondence it is shown.
+ * Whether a push is about the conversation on screen: a message or gift in the open chat, whose content is
+ * arriving there anyway. News about one's own place in a group (removed, banned) is not in the chat, so it is
+ * shown. A letter is not shown over the letters window, which lands its bird itself, nor over its own
+ * correspondence, which reloads; over any other correspondence it is shown.
  */
 export function isConversationOnScreen(data: Record<string, unknown> | null | undefined, route: RouteLike | undefined): boolean {
   if (!route || isGroupNotice(data ?? {})) return false;

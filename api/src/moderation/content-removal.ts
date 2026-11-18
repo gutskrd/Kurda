@@ -4,15 +4,10 @@ import { parseTargetRef, type CaseSourceRow } from './sources.js';
 import type { Executor } from './tx.js';
 
 /**
- * Removing reported content, and putting it back.
- *
- * "Remove" used to be refused by the route (the old resolve schema forgot it)
- * and, where it ran, emptied a comment's body for good. Now a removal hides the
- * content everywhere the same way an author's delete does — a post or picture
- * becomes `removed`, a comment a tombstone, a chat message "Removed by Hevalo"
- * for both people — and records exactly what it changed on the case, so an
- * appeal that overturns the decision can restore it. The report's snapshot
- * keeps what it said either way.
+ * Removing reported content, and putting it back. A removal hides content everywhere the way an author's delete does (a
+ * post or picture becomes `removed`, a comment a tombstone, a chat message "Removed by Hevalo" for both people) and
+ * records exactly what it changed on the case, so an overturning appeal can restore it. The report's snapshot keeps the
+ * original either way.
  */
 
 /** What a removal changed: enough to undo it. Stored on the case as `removed_content`. */
@@ -31,9 +26,8 @@ export type RemovalRecord =
   | { type: 'letter'; id: string; previousStatus: string }
   | MediaRemoval
   /**
-   * The CSAM action: the reported content and every copy of its media, all at
-   * once. Never put back by an appeal — undoing it is a deliberate act by hand,
-   * since the originals have left the public bucket by then.
+   * The CSAM action: the reported content and every copy of its media at once. Never restored by an appeal, since the
+   * originals have left the public bucket; undoing it is a deliberate manual act.
    */
   | { type: 'csam'; parts: RemovalRecord[] };
 
@@ -45,15 +39,14 @@ export interface MediaRemoval {
   /** the picture posts (`image_posts`) it was the picture of */
   posts: Array<{ id: string; previousStatus: string }>;
   /**
-   * the written posts it was one of the pictures on (`library_post_media`);
-   * absent from removals recorded before written posts had pictures
+   * The written posts it was a picture on (`library_post_media`); absent from removals recorded before written posts
+   * had pictures.
    */
   libraryPosts?: Array<{ id: string; previousStatus: string }>;
   profilePhotoOf: string[];
   /**
-   * The same bytes stored under other keys (`media_uploads.content_sha256`),
-   * blocked with it; their posts are among `posts` and `libraryPosts`.
-   * Absent from removals recorded before keys could differ for one picture.
+   * The same bytes stored under other keys (`media_uploads.content_sha256`), blocked with it; their posts are among
+   * `posts` and `libraryPosts`. Absent from older removals.
    */
   copies?: Array<{ key: string; previousScanStatus: string }>;
 }
@@ -182,16 +175,10 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
 }
 
 /**
- * Hide one file everywhere it is used. The same picture can sit under several
- * accounts' posts and profiles at once — a key is a hash of the bytes, and
- * where it is not (a picture uploaded for a post has its owner in its key, and
- * a new key each time it is posted again), the copies share the bytes' hash
- * (`content_sha256`) and go with it. Every picture post carrying any of them
- * is removed, and so is every written post one of them is on (a post is what
- * it shows, so it goes whole, as a picture post does); the file comes off
- * every profile it is the photo of (old chat messages, comments and
- * leaderboards draw the avatar from there), and every copy is blocked so it is
- * never served or accepted again.
+ * Hide one file everywhere it is used. A key is usually a hash of the bytes, but post uploads include the owner and get
+ * a new key on each repost, so copies are matched by `content_sha256` too. Every picture post and written post using
+ * any copy is removed whole, the file comes off every profile it is the photo of (chat, comments and leaderboards draw
+ * avatars from there), and every copy is blocked from being served or accepted again.
  */
 export async function removeMedia(db: Executor, key: string): Promise<MediaRemoval> {
   const media = await db.query<{ scan_status: string }>(`SELECT scan_status FROM media_uploads WHERE key = $1 FOR UPDATE`, [key]);
@@ -237,8 +224,8 @@ export async function removeMedia(db: Executor, key: string): Promise<MediaRemov
 }
 
 /**
- * The files a removal took down with the content: a picture post's image, a
- * written post's pictures and voice, a comment's voice.
+ * The files a removal took down with the content: a picture post's image, a written post's pictures and voice, a
+ * comment's voice.
  */
 export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<string[]> {
   switch (rec.type) {
@@ -266,9 +253,8 @@ export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<
 }
 
 /**
- * Undo a removal (an appeal overturned the decision). Only what the removal
- * itself changed is put back, and only where nobody has changed it since — an
- * author who deleted their own post meanwhile keeps it deleted.
+ * Undo a removal after an overturned decision. Only what the removal changed is restored, and only where nobody changed
+ * it since (an author who deleted their post meanwhile keeps it deleted).
  */
 export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<void> {
   switch (rec.type) {

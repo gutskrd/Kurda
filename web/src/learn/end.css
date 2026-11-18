@@ -1,18 +1,9 @@
 /*
- * The end of a lesson (Results.tsx, StreakMoment.tsx): Hevalo standing tall
- * over the title and three framed cards, then the streak's flame and week,
- * then today's quests (quests/quests.css). The rows under the cards — today's
- * goal, the league, the mistakes — are in styles/learn.css, and the results'
- * arrival in styles/motion.css.
- *
- * It is on the lesson's paper (styles/learn.css, the painted valley), in its
- * colours: the valley's gold, green and the blue of Hamo's gate.
- *
- * Phone first: everything here is drawn for a 375–430 point wide screen and
- * simply centred in the lesson's column on a wider one. Only transform and
- * opacity move, and base.css lands each movement at its end at once under
- * prefers-reduced-motion; what would still show a frame of travel is
- * switched off outright at the foot of this file.
+ * The end of a lesson (Results.tsx, StreakMoment.tsx): Hevalo over the title and three framed cards, then the streak's
+ * flame and week, then today's quests (quests/quests.css). The rows under the cards are in styles/learn.css and the
+ * results' arrival in styles/motion.css. Drawn on the lesson's paper in the valley's colours, phone first and centred on
+ * wider screens. Only transform and opacity move; base.css ends movement at once under reduced motion, and anything
+ * that would still show a frame of travel is switched off at the foot of this file.
  */
 
 /* ---- the results ------------------------------------------------------------- */
@@ -47,13 +38,9 @@
 }
 
 /*
- * Three cards side by side, each framed in its colour and standing on a
- * deeper edge of it, as the lesson's cards do: a band holding the label, over
- * a cream body with the icon and the number. Gold for the XP, the valley's
- * green for right first time, the gate's blue for the time. The band's words
- * are dark on gold and on the light colours of dusk, cream on the deep ones
- * of the light scheme; the number takes the colour itself, at a size that
- * reads.
+ * Three cards side by side, each framed in its colour on a deeper edge: a band with the label over a cream body with
+ * the icon and number. Gold for XP, green for right first time, blue for time. Band words are dark on gold and the
+ * light dusk colours, cream on the deep light-scheme ones.
  */
 .end-stats {
   display: grid;
@@ -102,7 +89,7 @@
   text-transform: uppercase;
   hyphens: auto;
 }
-/* spaced letters would come apart in a script that joins them */
+/* Letter spacing breaks joined scripts apart. */
 [dir='rtl'] .end-stat-label {
   letter-spacing: 0;
 }
@@ -129,9 +116,8 @@
 }
 
 /*
- * ---- the streak's flame: the whole screen, dim and cool on yesterday until
- * the fire lights (shared FLAME_IGNITE, its numbers set on the section) and
- * floods it warm ----------------------------------------------------------------
+ * ---- the streak's flame: the whole screen, dim and cool on yesterday until the fire lights (shared FLAME_IGNITE, its
+ * numbers set on the section) and floods it warm -------------------------------------------------------------------
  */
 .end-flame {
   position: fixed;
@@ -155,10 +141,7 @@
   position: relative;
   padding-top: 0;
 }
-/*
- * the warm light flooding out from the fire as it lights, and staying: the
- * screen's warmth, centred on the fire, its soft edge always past the screen's
- */
+/* The warm light flooding out from the fire and staying, its soft edge always past the screen's. */
 .end-flame-flood {
   position: absolute;
   z-index: -1;
@@ -182,7 +165,7 @@
     opacity: 1;
   }
 }
-/* the fire, faint, lighting: it squashes down and pops up past its size about its foot (FLAME_IGNITE.pop at 0, 0.2, 0.55, 0.8 and 1) */
+/* The fire, faint, lighting: it squashes and pops past its size about its foot (FLAME_IGNITE.pop at 0, 0.2, 0.55, 0.8, 1). */
 .end-flame .celebrate-art-inner {
   transform-origin: 50% 100%;
   animation: flame-ignite var(--ignite-ms) cubic-bezier(0.37, 0, 0.63, 1) var(--ignite-at) both;
@@ -207,7 +190,7 @@
     transform: var(--pop-4);
   }
 }
-/* faint until it lights, as the day's number is */
+/* Faint until it lights, like the day's number. */
 @keyframes flame-lit {
   from {
     opacity: var(--ignite-dim);
@@ -238,7 +221,7 @@
 .end-flame-day:focus {
   outline: none;
 }
-/* a counter's digits: each that changes slides up and out as the next slides in */
+/* A counter's digits: each one that changes slides up and out as the next slides in. */
 .roll {
   display: inline-flex;
   font-variant-numeric: tabular-nums;
@@ -262,7 +245,7 @@
     transform: translateY(-50%);
   }
 }
-/* or, under reduced motion, cross-fades where it is */
+/* Or, under reduced motion, cross-fades in place. */
 .roll.is-fading .roll-column {
   display: grid;
   animation: none;
@@ -279,7 +262,7 @@
     opacity: 0;
   }
 }
-/* on the day the fire grew, what it grew into: two lines' room kept from the start, so nothing moves when it arrives */
+/* What the fire grew into, with two lines' room kept from the start so nothing moves when it arrives. */
 .end-flame-grew {
   max-width: 22em;
   min-height: 2.7em;
@@ -311,11 +294,7 @@
   padding-top: 8px;
   text-align: center;
 }
-/*
- * A quiet panel with its name at the top, and on it the card: the page's
- * raised surface, with the medal standing half over its top edge. The panel
- * leaves the medal its room above the card.
- */
+/* A quiet panel with its name on top, holding the card, with room above for the medal standing half over its edge. */
 .streak-panel {
   display: grid;
   width: min(440px, 100%);
@@ -340,10 +319,8 @@
   background: var(--surface-solid);
 }
 /*
- * Half over the card's top edge. It opens unlit, in grey, and takes its turn
- * (learn/StreakMoment.tsx plays the shared poses on `.streak-medal-turn`):
- * the gold one over it fades in at the top of its hop, as the app's one
- * celebration bursts out from behind it.
+ * Half over the card's top edge. It opens grey and takes its turn (StreakMoment.tsx plays the shared poses on
+ * `.streak-medal-turn`); the gold one fades in at the top of its hop as the celebration bursts behind it.
  */
 .streak-card-medal {
   position: absolute;
@@ -355,12 +332,12 @@
 [dir='rtl'] .streak-card-medal {
   translate: 50% 0;
 }
-/* the medal was there from the start: it does not arrive, and casts no second shadow */
+/* The medal was there from the start: it does not arrive, and casts no second shadow. */
 .streak-card-medal .celebrate-art-inner {
   filter: none;
   animation: none;
 }
-/* the light of the burst: there as the medal turns to gold, and gone again, so the card under it stays clean */
+/* The burst's light, there as the medal turns gold and then gone, so the card stays clean. */
 .streak-card-medal .celebrate-glow {
   width: 240px;
   height: 240px;
@@ -385,7 +362,7 @@
   height: 150px;
   margin: -75px 0 0 -75px;
 }
-/* about its foot: it squashes onto the card, and hops off it */
+/* About its foot: it squashes onto the card and hops off it. */
 .streak-medal-turn {
   position: relative;
   display: block;
@@ -401,7 +378,7 @@
     opacity: 0;
   }
 }
-/* lit, it is never quite still: it rides up and down a little, the way a thing does that is not pinned to the page */
+/* Lit, it rides gently up and down. */
 .streak-medal-float {
   display: block;
   animation: medal-float 3.4s ease-in-out calc(var(--after-at) + 400ms) infinite;
@@ -411,7 +388,7 @@
     transform: translateY(-3px);
   }
 }
-/* and now and then a spark rises off it */
+/* Now and then a spark rises off it. */
 .streak-medal-sparks {
   position: absolute;
   inset: 0;
@@ -460,7 +437,7 @@
     transform: translate(var(--sx), -46px) scale(1);
   }
 }
-/* the streak in words: quiet while it is yesterday's, in full ink as the number rolls on */
+/* The streak in words: quiet while yesterday's, full ink as the number rolls on. */
 .streak-card-title {
   margin: 0;
   font-family: var(--font-sans);
@@ -478,7 +455,7 @@
 .streak-card-title:focus {
   outline: none;
 }
-/* the rolling digits sit on the line the words are written on */
+/* The rolling digits sit on the text's baseline. */
 .streak-card-title .roll {
   vertical-align: bottom;
 }
@@ -494,25 +471,25 @@
   line-height: 1.4;
   animation: streak-arrive var(--dur-slow) var(--ease-out) var(--words-at) both;
 }
-/* each thing after the medal arrives the same way: up a few pixels, into place */
+/* Everything after the medal arrives the same way: up a few pixels into place. */
 @keyframes streak-arrive {
   from {
     opacity: 0;
     transform: translateY(8px);
   }
 }
-/* the way on: the last thing to arrive, once everything on the card has (learn/Results.tsx) */
+/* The way on arrives last, once everything on the card has (learn/Results.tsx). */
 .end-bar-late {
   display: contents;
 }
 .end-bar-late > * {
   animation: streak-arrive var(--dur-slow) var(--ease-out) var(--onward-at, 0ms) both;
 }
-/* the card was finished with a click: the way on is there with the rest */
+/* Finished with a click: the way on is there with the rest. */
 .end-bar-late.is-settled > * {
   animation: none;
 }
-/* the fire's stage and the next one, under the card: a near goal, said quietly */
+/* The fire's stage and the next, under the card: a near goal, said quietly. */
 .end-week-stage {
   margin: 0;
   color: var(--ink-3);
@@ -525,7 +502,7 @@
   font-weight: 800;
 }
 
-/* the week: each day's name over its medal, or over its date while it is still to come */
+/* The week: each day's name over its medal, or over its date while still to come. */
 .end-days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -563,15 +540,15 @@
   line-height: 1;
   animation: day-in var(--dur-slow) var(--ease-spring) calc(var(--week-at) + var(--order, 0) * var(--day-step)) both;
 }
-/* a day that went by without a lesson: its date, more quietly, and nothing said against it */
+/* A missed day: its date, more quietly, with nothing said against it. */
 .end-day.is-missed .end-day-mark {
   color: var(--ink-4);
 }
-/* today, still to learn: ringed */
+/* Today, still to learn: ringed. */
 .end-day.is-today:not(.is-learned):not(.is-frozen) .end-day-mark {
   box-shadow: inset 0 0 0 2px var(--gold);
 }
-/* today's medal is the last to arrive, with a pop */
+/* Today's medal arrives last, with a pop. */
 .end-day.is-today .end-day-mark {
   animation-name: day-pop;
   animation-duration: 520ms;
@@ -592,16 +569,13 @@
     transform: scale(1.18);
   }
 }
-/*
- * Finished with a click, or over: everything where it ends, and nothing more
- * to come but the medal's slow ride.
- */
+/* Finished with a click, or over: everything at its end, with only the medal's slow ride left. */
 .end-week.is-settled :is(.streak-medal-lit, .streak-card-title, .streak-card-cheer, .end-day-name, .end-day-mark, .end-week-stage, .end-freeze),
 .end-week.is-settled .end-freeze-bar > span,
 .end-week .celebrate.is-done .celebrate-glow {
   animation: none;
 }
-/* the way on was taken: its words go, as the medal gathers itself and is gone (StreakMoment.tsx) */
+/* The way on was taken: the words go as the medal gathers itself (StreakMoment.tsx). */
 .end-week.is-leaving :is(.streak-card-title, .streak-card-cheer, .end-days, .end-week-stage, .end-freeze, .streak-panel-name) {
   opacity: 0;
   transition: opacity 180ms var(--ease-out);
@@ -609,7 +583,7 @@
 .end-week.is-leaving .streak-medal-sparks {
   display: none;
 }
-/* for a reader who asked for less motion: the grey medal cross-fades to the gold one, and the rest is simply there */
+/* Reduced motion: the grey medal cross-fades to gold and the rest is simply there. */
 .end-week.is-still :is(.streak-card-cheer, .end-day-name, .end-day-mark, .end-week-stage, .end-freeze, .streak-medal-float) {
   animation: none;
 }
@@ -625,7 +599,7 @@
   }
 }
 
-/* the freezes: how far the sessions since the last have got towards the next */
+/* The freezes: how far the sessions since the last have got towards the next. */
 .end-freeze {
   display: grid;
   gap: 8px;
@@ -680,7 +654,7 @@
   outline: none;
 }
 
-/* today's goal, the league, a new level: rows of cream card on the paper, the goal met in the green */
+/* Today's goal, the league, a new level: cream rows on the paper, a met goal in green. */
 .lesson .lesson-moment {
   border: 1.5px solid var(--vale-line);
   border-radius: var(--r-lg);
@@ -691,18 +665,18 @@
   background: var(--vale-green-soft);
 }
 
-/* "Not now", beside Open chest: a whole fingertip, though it reads as a link */
+/* "Not now" beside Open chest: a full fingertip target, though it reads as a link. */
 .lesson-bar .end-later {
   min-height: 44px;
   padding: 0 4px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* the flame's sparks and ring would show a frozen frame of their travel */
+  /* The flame's sparks and ring would show a frozen frame of their travel. */
   .end-flame :is(.celebrate-ring, .celebrate-burst) {
     display: none;
   }
-  /* it lights where it is: the warm light cross-fading in over the dim, the fire and the day brightening (a fade, so kept from base.css's instant) */
+  /* It lights in place: the warm light cross-fades over the dim (a fade, so exempt from base.css's instant end). */
   .end-flame-flood {
     animation: fade var(--flood-ms) linear var(--ignite-at) both !important;
   }
@@ -712,7 +686,7 @@
   .roll.is-fading .roll-column > span {
     animation-duration: var(--flood-ms) !important;
   }
-  /* what the fire grew into fades in where it is */
+  /* What the fire grew into fades in where it is. */
   .end-flame-grew.is-landed {
     animation-name: fade;
   }

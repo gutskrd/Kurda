@@ -1,14 +1,12 @@
 import { NOTE_MAX, NOTES_MAX, decorErrorCode, type DecorProblem } from '@kurda/shared';
 import type { ApiError } from '../lib/types';
 import type { MessageKey } from '../i18n/en';
-import type { useT } from '../i18n/I18nProvider';
+import type { Translate } from '../i18n/I18nProvider';
 import { DECOR_PROBLEM } from './paper';
 
 /**
- * The letters' own refusals in plain words (api/src/letters/service.ts). The
- * page checks a letter before it is sent, so most of these only come from a
- * second tab or a pen pal who acted first; anything else is said as every
- * screen says it.
+ * The letters' own refusals in plain words (api/src/letters/service.ts). The page checks letters before sending, so
+ * most come from a second tab or a pen pal acting first; anything else is described as usual.
  */
 const TEXT: Readonly<Record<string, MessageKey>> = {
   BIRD_OUT: 'letters.error.birdOut',
@@ -33,7 +31,7 @@ const DECOR_TEXT: Readonly<Record<string, MessageKey>> = Object.fromEntries(
   (Object.keys(DECOR_PROBLEM) as DecorProblem[]).map((problem) => [decorErrorCode(problem), DECOR_PROBLEM[problem]]),
 );
 
-export function letterErrorText(error: ApiError, t: ReturnType<typeof useT>): string | null {
+export function letterErrorText(error: ApiError, t: Translate): string | null {
   const key = error.code ? (TEXT[error.code] ?? DECOR_TEXT[error.code]) : undefined;
   return key ? t(key, { max: error.code === 'DECOR_TOO_MANY_NOTES' ? NOTES_MAX : NOTE_MAX }) : null;
 }

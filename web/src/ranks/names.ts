@@ -1,15 +1,7 @@
 /**
- * What every tier, season, badge and reason is called, as catalogue keys.
- *
- * Contract 4 names things in Kurdish with their meaning beside them: "Çiya ·
- * Mountain", "Kanî · Spring", "Agir · Fire". The Kurdish name is the name — it
- * reads the same in every language, and Soranî readers get it in their own
- * script — and the meaning is what gets translated. Both are catalogue
- * entries, so a native speaker can correct either in one place [review].
- *
- * Records of literal keys rather than `ranks.tier.${tier}`: the i18n check
- * finds a key by reading it in quotes, and the compiler can only check a key it
- * can see whole. A template would silently print the key on a typo.
+ * The names of every tier, season, badge and reason, as catalogue keys: a Kurdish name (in Soranî script for Soranî
+ * readers) with its translated meaning, such as "Çiya · Mountain". Keys are written out literally rather than built
+ * from templates, so the i18n check and the compiler can see each one.
  */
 import type {
   BadgeFamily,
@@ -24,9 +16,8 @@ import type {
   SeasonName,
 } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { GAME_NAME_KEY } from '../play/playApi';
-
-export type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** A name and what it means; the meaning is null where it would only repeat the name (Kurdish readers). */
 export interface Named {
@@ -40,12 +31,12 @@ function named(t: Translate, nameKey: MessageKey, meaningKey: MessageKey): Named
   return { name, meaning: meaning && meaning !== name ? meaning : null };
 }
 
-/** "Çiya (Mountain)": the one-line form, for labels and screen readers. */
+/** The one-line form, "Çiya (Mountain)", for labels and screen readers. */
 export function withMeaning(t: Translate, n: Named): string {
   return n.meaning ? t('ranks.nameMeaning', { name: n.name, meaning: n.meaning }) : n.name;
 }
 
-// ---- game ranks -----------------------------------------------------------------
+// ---- Game ranks -----------------------------------------------------------------
 
 const RANK_TIER_NAME: Record<RankTier, MessageKey> = {
   dest: 'ranks.tier.dest',
@@ -69,22 +60,17 @@ export function rankTierNamed(t: Translate, tier: RankTier): Named {
   return named(t, RANK_TIER_NAME[tier], RANK_TIER_MEANING[tier]);
 }
 
-/** Divisions are Roman numerals in every language, the way the art draws them as chevrons. */
-export const ROMAN: Record<Division, string> = { 3: 'III', 2: 'II', 1: 'I' };
+/** Divisions are Roman numerals in every language. */
+const ROMAN: Record<Division, string> = { 3: 'III', 2: 'II', 1: 'I' };
 
-/** "Gir II", or "Stêrk" (the apex has no divisions), or the tier alone without one. */
+/** "Gir II", or the tier alone for Stêrk (which has no divisions) or without a division. */
 export function rankLabel(t: Translate, tier: RankTier, division: Division | null | undefined): string {
   const name = t(RANK_TIER_NAME[tier]);
   if (tier === 'sterk' || !division) return name;
   return t('ranks.tierDivision', { tier: name, division: ROMAN[division] });
 }
 
-/**
- * The game's own name ("Peyvok Battle"), from the play layer's map. A row
- * kept from a game that is no longer part of Hevalo (an emblem won in a past
- * season) names a game this app has no word for, whatever its type says: it
- * is called what it is, a game no longer played.
- */
+/** The game's name, such as "Peyvok Battle", from the play layer's map; a retired game is named as no longer played. */
 export function gameName(t: Translate, game: RankedGame): string {
   const key = GAME_NAME_KEY[game] as MessageKey | undefined;
   return t(key ?? 'games.retired');
@@ -103,7 +89,7 @@ const REASON_KEY: Record<RankReason, MessageKey> = {
   shield: 'rankResult.reason.shield',
 };
 
-/** The one plain reason a result is explained with; an unknown code says nothing rather than something wrong. */
+/** The one reason a result is explained with; an unknown code gives null. */
 export function reasonLine(t: Translate, reason: string): string | null {
   const key = REASON_KEY[reason as RankReason];
   return key ? t(key) : null;
@@ -120,7 +106,7 @@ const FRIENDLY_KEY: Record<FriendlyReason, MessageKey> = {
   'repeat-opponent': 'rated.reason.repeatOpponent',
 };
 
-/** When the reason is the viewer's own, it is said to them, with what they can do about it. */
+/** Reasons that concern the viewer, addressed to them with what they can do. */
 const FRIENDLY_SELF_KEY: Partial<Record<FriendlyReason, MessageKey>> = {
   unverified: 'rated.reasonSelf.unverified',
   'no-birth-month': 'rated.reasonSelf.noBirthMonth',
@@ -135,7 +121,7 @@ export function friendlyReason(t: Translate, reason: FriendlyReason | null, self
   return key ? t(key) : null;
 }
 
-// ---- seasons ----------------------------------------------------------------------
+// ---- Seasons ----------------------------------------------------------------------
 
 const SEASON_NAME: Record<SeasonName, MessageKey> = {
   zivistan: 'seasons.name.zivistan',
@@ -150,13 +136,13 @@ const SEASON_MEANING: Record<SeasonName, MessageKey> = {
   payiz: 'seasons.meaning.payiz',
 };
 
-/** "Payîz 2026", with "Autumn" as its meaning. */
+/** A season such as "Payîz 2026", with "Autumn" as its meaning. */
 export function seasonNamed(t: Translate, season: { name: SeasonName; year: number }): Named {
   const n = named(t, SEASON_NAME[season.name], SEASON_MEANING[season.name]);
   return { name: t('seasons.label', { season: n.name, year: season.year }), meaning: n.meaning };
 }
 
-// ---- leagues ----------------------------------------------------------------------
+// ---- Leagues ----------------------------------------------------------------------
 
 const LEAGUE_NAME: Record<LeagueTier, MessageKey> = {
   dilop: 'leagues.tier.dilop',
@@ -179,12 +165,12 @@ export function leagueNamed(t: Translate, tier: LeagueTier): Named {
   return named(t, LEAGUE_NAME[tier], LEAGUE_MEANING[tier]);
 }
 
-/** "Çem League", in the reader's word order (the template keeps an `{emoji}` hole from before; it stays empty). */
+/** "Çem League" in the reader's word order; the template's `{emoji}` placeholder is left empty. */
 export function leagueName(t: Translate, tier: LeagueTier): string {
   return t('leagues.tierName', { emoji: '', tier: t(LEAGUE_NAME[tier]) }).trim();
 }
 
-// ---- badges -------------------------------------------------------------------------
+// ---- Badges -------------------------------------------------------------------------
 
 const BADGE_TIER_NAME: Record<BadgeTierKey, MessageKey> = {
   sifir: 'badges.tier.sifir',
@@ -213,7 +199,7 @@ export const FAMILY_KEY: Record<BadgeFamily, MessageKey> = {
   secret: 'badges.family.secret',
 };
 
-export const UNIT_KEY: Record<BadgeUnit, MessageKey> = {
+const UNIT_KEY: Record<BadgeUnit, MessageKey> = {
   lessons: 'badges.unit.lessons',
   words: 'badges.unit.words',
   reviews: 'badges.unit.reviews',
@@ -234,14 +220,14 @@ export const UNIT_KEY: Record<BadgeUnit, MessageKey> = {
   letters: 'badges.unit.letters',
 };
 
-/** "12 days left", "One day left", or the season's last day: calm, no countdown. */
+/** "12 days left", "One day left", or the season's last day. */
 export function seasonDaysLeft(t: Translate, days: number): string {
   if (days <= 0) return t('seasons.lastDay');
   return days === 1 ? t('seasons.oneDayLeft') : t('seasons.daysLeft', { days });
 }
 
-/** The same units for a count of exactly one: "1 season", never "1 seasons". */
-export const UNIT_ONE_KEY: Record<BadgeUnit, MessageKey> = {
+/** The same units for a count of one: "1 season", never "1 seasons". */
+const UNIT_ONE_KEY: Record<BadgeUnit, MessageKey> = {
   lessons: 'badges.unitOne.lessons',
   words: 'badges.unitOne.words',
   reviews: 'badges.unitOne.reviews',
@@ -274,7 +260,7 @@ interface BadgeKeys {
   hint?: MessageKey;
 }
 
-/** Every badge in the shared catalogue (a test keeps the two lists equal). */
+/** Every badge in the shared catalogue; a test keeps the two lists equal. */
 export const BADGE_TEXT: Record<string, BadgeKeys> = {
   ders: { name: 'badges.ders.name', meaning: 'badges.ders.meaning', desc: 'badges.ders.desc' },
   'peyven-min': { name: 'badges.peyven-min.name', meaning: 'badges.peyven-min.meaning', desc: 'badges.peyven-min.desc' },
@@ -340,13 +326,13 @@ export const BADGE_TEXT: Record<string, BadgeKeys> = {
   mirari: { name: 'badges.mirari.name', meaning: 'badges.mirari.meaning', desc: 'badges.mirari.desc', hint: 'badges.mirari.hint' },
 };
 
-/** A badge's name and meaning; a key this app does not know yet keeps the key as its name. */
+/** A badge's name and meaning; an unknown key is its own name. */
 export function badgeNamed(t: Translate, key: string): Named {
   const k = BADGE_TEXT[key];
   return k ? named(t, k.name, k.meaning) : { name: key, meaning: null };
 }
 
-/** What a badge is for, in a sentence; null for one this app does not know. */
+/** What a badge is for, in a sentence; null for an unknown badge. */
 export function badgeDesc(t: Translate, key: string): string | null {
   const k = BADGE_TEXT[key];
   return k ? t(k.desc) : null;

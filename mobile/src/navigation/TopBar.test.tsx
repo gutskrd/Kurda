@@ -35,7 +35,7 @@ function show(ui: React.JSX.Element, { unread = 0 } = {}) {
     'GET /me/groups/unread': ok({ unread: [] }),
     'GET /friends/requests': ok({ requests: [] }),
     'GET /me/notifications/unread-count': ok({ count: unread }),
-    'GET /me/social': ok({ unread: {} }),
+    'GET /me/gifts/unseen': ok({ unseen: 0 }),
   });
   const shown = renderWithProviders(<UnreadProvider>{ui}</UnreadProvider>);
   return { again: (next: React.JSX.Element) => shown.rerender(<UnreadProvider>{next}</UnreadProvider>) };
@@ -56,10 +56,7 @@ describe('the top of a tab', () => {
     expect(screen.getAllByRole('heading', { name: 'Messages' })).toHaveLength(1);
   });
 
-  /*
-   * Search and the bell are in the same corner of every tab: search opens
-   * over wherever you are, and the bell opens what is new.
-   */
+  /* Search and the bell are in the same corner of every tab, and each opens its page. */
   it('has search and the bell at its far end, and each opens its page', () => {
     show(<TabHeader title="Messages" />);
     fireEvent.click(screen.getByRole('button', { name: 'Search' }));
@@ -82,10 +79,7 @@ describe('the top of a tab', () => {
     expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
   });
 
-  /*
-   * Learn shows the streak, the goal and the purse where a name would be.
-   * What stands there is drawn as given, and search and the bell stay.
-   */
+  /* Learn shows the streak, the goal and the purse where a name would be, and search and the bell stay. */
   it('draws what a tab puts at the reading edge instead of a name', () => {
     show(<TabHeader lead={<HeaderButton icon="coin" label="3 day streak" onPress={() => undefined} />} />);
     expect(screen.getByRole('button', { name: '3 day streak' })).toBeTruthy();
@@ -94,22 +88,21 @@ describe('the top of a tab', () => {
   });
 
   /*
-   * A thumb reaching for the corner of the screen lands a little short or a
-   * little wide. The pill’s two halves answer a fingertip above and below
-   * and meet exactly at its middle; its ends are theirs, not padding.
+   * The pill's halves answer a fingertip above and below and meet exactly at its middle; its ends are theirs, not
+   * padding.
    */
   it('lets search and the bell answer a finger a little off them, and meet in the middle of the pill', () => {
     show(<TabHeader title="Messages" />);
     expect(reachOf('top-search')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
     expect(reachOf('top-bell')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
-    // two halves as wide as the pill was with its padding, so the pill is the size it was
+    // Two halves as wide as the pill with padding would be.
     expect(drawnWidth('top-search')).toBe(46);
     expect(drawnWidth('top-bell')).toBe(46);
   });
 
   it('lets the tab’s own action answer a fingertip past every edge, up to the pill beside it', () => {
     show(<TabHeader title="Messages" action={<HeaderButton icon="compose" label="New message" onPress={() => undefined} />} />);
-    // the pill reaches nothing sideways, so the action’s reach across the gap between them is the whole of it
+    // The pill reaches nothing sideways, so the action's reach across the gap is all of it.
     expect(reachOf('New message')).toEqual(OPEN);
     expect(drawnWidth('New message')).toBe(44);
   });
@@ -131,13 +124,10 @@ describe('the bar over a pushed page', () => {
 
   it('closes, in words, a page that was presented over what you were doing', () => {
     show(<ScreenHeader title="Shop" onBack={() => undefined} leading="close" />);
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
   });
 
-  /*
-   * A page where something is being done keeps its far corner empty: the
-   * page is the task. A page to browse keeps search and the bell there.
-   */
+  /* A page that is a task keeps its far corner empty; a page to browse keeps search and the bell there. */
   it('keeps the far corner empty on a page that is a task', () => {
     show(<ScreenHeader title="Change password" onBack={() => undefined} />);
     expect(screen.queryByRole('button', { name: 'Search' })).toBeNull();
@@ -185,23 +175,14 @@ describe('the bar over a pushed page', () => {
     expect(more).toHaveBeenCalledTimes(1);
   });
 
-  /*
-   * Leaving a page should never take a second try: with nothing pressable
-   * beside it, the way back answers a fingertip past every edge, and so
-   * does the action opposite it.
-   */
+  /* With nothing pressable beside it, the way back answers a fingertip past every edge, as does the action opposite. */
   it('lets the way back and the page’s action answer a fingertip past every edge', () => {
     show(<ScreenHeader title="Proverbs" onBack={() => undefined} right={<HeaderButton icon="share" label="Share" onPress={() => undefined} />} />);
     expect(reachOf('header-back')).toEqual(OPEN);
     expect(reachOf('Share')).toEqual(OPEN);
   });
 
-  /*
-   * A conversation’s face and name open whoever it is with, one gap from the
-   * way back and one from the menu. The three share those gaps, each up to
-   * the middle, so a tap a little wide of the name opens the profile and one
-   * a little wide of the chevron still goes back.
-   */
+  /* A pressable title shares the gaps with the way back and the menu, each answering up to the middle. */
   it('shares the gaps beside a title that can be pressed, half to each side', () => {
     show(
       <ScreenHeader
@@ -237,9 +218,8 @@ describe('the bar over a pushed page', () => {
   });
 
   /*
-   * A group’s name becomes a way in only once its people have loaded. What
-   * it and the way back answer over is the same before and after, because a
-   * reach that grew later would be cut off at the bar’s edge on a phone.
+   * A group's name becomes pressable once its people load, and its reach is the same before and after, since a reach
+   * that grew later would be cut off at the bar's edge.
    */
   it('gives a title the same reach before it can be pressed as after', () => {
     const header = (onTitlePress?: () => void) => <ScreenHeader title="Club" titleAvatar={<></>} onTitlePress={onTitlePress} onBack={() => undefined} />;

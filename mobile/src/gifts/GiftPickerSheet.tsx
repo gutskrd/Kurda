@@ -49,15 +49,11 @@ export interface GiftFriend {
 }
 
 /**
- * Choosing a gift — the sheet behind the gift button in a chat.
- *
- * In a direct message the friend is already chosen. In a group it starts with
- * who: only your friends among the members can be given anything (the server's
- * rule too), with "All my friends here" to choose them at once. Then what:
- * everything on sale with a price, by kind as the shop sorts it, with a search,
- * an order, "Within my balance" and "Hide ones they already have"; its price,
- * your balance, which recipients already own something there is only one of,
- * and what you cannot afford. Send, and the sheet closes on the send animation.
+ * Choosing a gift, the sheet behind a chat's gift button. In a direct message the friend is already chosen; in a group
+ * it starts with who (only your friends among the members, the server's rule too, with "All my friends here"). Then
+ * what: everything on sale, by kind as the shop sorts it, with search, order, "Within my balance" and "Hide ones they
+ * already have"; each with its price, your balance, which recipients already own a unique item, and what you cannot
+ * afford. Send closes the sheet on the send animation.
  */
 export function GiftPickerSheet({
   visible,
@@ -185,7 +181,7 @@ function CheckRow({
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="checkbox"
-      // aria-* as well as the state object: react-native-web reads only these
+      // Aria-* as well as the state object: react-native-web reads only these.
       accessibilityState={{ checked, disabled }}
       aria-checked={checked}
       aria-disabled={disabled}
@@ -222,16 +218,15 @@ function WhatStep({
   chat: GiftChatRef;
   recipients: GiftFriend[];
   onSent: (result: SentGift, item: GiftCatalogItem, to: GiftFriend[]) => void;
-  /** the sheet closes before Account standing opens, or it would open underneath */
+  /** The sheet closes before Account standing opens, or it would open underneath. */
   onClose: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  // keyed on who, not on the array: the parent draws a fresh one on every
-  // render (a friend typing is a render a second), and each new array was a
-  // new catalog request and a list reshuffling under the finger
+  // Keyed on who, not the array: the parent passes a fresh array every render, and each one would be a new catalogue
+  // request and a reshuffled list.
   const idKey = recipients.map((r) => r.userId).join(',');
   const ids = useMemo(() => (idKey ? idKey.split(',') : []), [idKey]);
   const [catalog, setCatalog] = useState<GiftCatalog | null>(null);
@@ -240,12 +235,12 @@ function WhatStep({
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [note, setNote] = useState<string | null>(null);
-  // finding one's way through the catalogue: the shop's kinds, search and orders
+  // Finding one's way through the catalogue: the shop's kinds, search and orders.
   const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
   const [affordableOnly, setAffordableOnly] = useState(false);
   const [hideOwned, setHideOwned] = useState(false);
-  // one key per choice: a retry of the same gift replays it, never pays twice
-  // (a fresh one only if the server says this key already named another request)
+  // One key per choice, so a retry of the same gift replays it and never pays twice (a fresh key only if the server
+  // says this one already named another request).
   const [keyRound, setKeyRound] = useState(0);
   const key = useMemo(() => newGiftKey(), [picked?.sku, idKey, keyRound]);
 
@@ -270,7 +265,7 @@ function WhatStep({
   const all = useMemo(() => catalog?.items ?? [], [catalog]);
   const kinds = useMemo(() => categoriesIn(all), [all]);
   const category: ItemCategory | 'all' = filter.category === 'all' || kinds.includes(filter.category) ? filter.category : 'all';
-  // "hide ones they already have": what every friend it is for owns already
+  // "Hide ones they already have": what every recipient already owns.
   const keep = useCallback(
     (item: GiftCatalogItem) =>
       (!affordableOnly || affordable(item)) && (!hideOwned || owners(item).length < recipients.length),
@@ -285,9 +280,9 @@ function WhatStep({
     setAffordableOnly(false);
     setHideOwned(false);
   };
-  // a choice the filters have hidden stays chosen, and is named by the Send button
+  // A choice the filters have hidden stays chosen, and is named by the Send button.
   const pickedHidden = picked !== null && !shown.some((i) => i.sku === picked.sku);
-  // a new filter shows its results from the top, not from where the longer list was scrolled to
+  // A new filter shows its results from the top, not from the longer list's scroll position.
   const scroller = useRef<ScrollView>(null);
   const filterKey = JSON.stringify([filter, affordableOnly, hideOwned]);
   const lastFilterKey = useRef(filterKey);
@@ -302,7 +297,7 @@ function WhatStep({
     setBusy(true);
     setSendError(null);
     setNote(null);
-    // given: felt as it goes; and felt as an error if it did not go
+    // Given: felt as it goes, and felt as an error if it did not go.
     haptic('tap');
     void sendGift(client, {
       sku: picked.sku,
@@ -314,7 +309,7 @@ function WhatStep({
       setBusy(false);
       if (res.ok) {
         if (res.data.sent.length === 0) {
-          // nobody could be given it: say why here rather than animate a gift that went nowhere
+          // Nobody could be given it: say why here rather than animate a gift that went nowhere.
           setNote(skippedText(res.data.skipped, recipients, t));
           return;
         }
@@ -322,8 +317,8 @@ function WhatStep({
         return;
       }
       haptic('error');
-      // what is on offer changed while the sheet was open (a new price, a
-      // Newroz item that has gone): say so, and show the catalog as it is now
+      // What is on offer changed while the sheet was open (a new price, a Newroz item gone): say so and show the
+      // catalogue as it is now.
       const code = res.error.code;
       if (code === 'PRICE_CHANGED' || (code && GONE.has(code))) {
         setPicked(null);
@@ -347,7 +342,7 @@ function WhatStep({
   }
   if (!catalog) return <Loading style={styles.spinner} />;
 
-  // every amount here is grouped and in the reader's own digits, as the shop's are
+  // Every amount is grouped and in the reader's own digits, as in the shop.
   const amount = (n: number): string => formatNumber(n, locale);
   const priceWords = (item: GiftCatalogItem): string => `${amount(item.price)} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
 
@@ -386,7 +381,7 @@ function WhatStep({
           },
         ]}
       >
-        {/* a background as the 16:9 picture it is; an icon, and the art-less tag, on a square */}
+        {/* A background as its 16:9 picture; an icon, and the art-less tag, on a square. */}
         <View style={[styles.itemArt, wide ? null : styles.itemArtSquare]}>
           <ItemArt category={item.category} path={item.assetUrl} width={wide ? undefined : 64} />
           {item.tier !== 'common' ? (
@@ -395,7 +390,7 @@ function WhatStep({
             </View>
           ) : null}
         </View>
-        {/* a Kurmancî name, read in its own direction whatever the app is in */}
+        {/* A Kurmancî name, read in its own direction whatever the app language. */}
         <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
           {item.name}
         </Text>
@@ -425,7 +420,7 @@ function WhatStep({
         </View>
       </View>
 
-      {/* the search and the kinds stay put while the gifts scroll under them */}
+      {/* The search and the kinds stay put while the gifts scroll under them. */}
       {all.length > 0 ? (
         <View style={styles.filters}>
           <SearchField
@@ -455,7 +450,7 @@ function WhatStep({
               <ToggleChip label={t('shop.filter.withinBalance')} value={affordableOnly} onChange={setAffordableOnly} />
               <ToggleChip label={t('gift.picker.hideOwned')} value={hideOwned} onChange={setHideOwned} />
             </OptionRow>
-            {/* the All chip says how many there are; narrowed, the count and the way back are worth a line of the sheet */}
+            {/* The All chip says how many there are; narrowed, the count and the way back are worth a line. */}
             {filtered && shown.length > 0 ? (
               <View style={styles.gutter}>
                 <ResultsLine count={shown.length} onClear={clear} />
@@ -466,7 +461,7 @@ function WhatStep({
             ) : (
               groups.map((group) => (
                 <View key={group.category} style={styles.group}>
-                  {/* under All, each kind under its own heading; one kind needs none, its chip says it */}
+                  {/* Under All, each kind under its own heading; one kind needs none, since its chip says it. */}
                   {category === 'all' ? <KindHeading kind={group.category} count={group.items.length} style={styles.gutter} /> : null}
                   <View style={[styles.grid, { flexDirection: dir.row }]}>{group.items.map(tile)}</View>
                 </View>
@@ -542,9 +537,8 @@ export function skippedText(
 const GONE = new Set(['ITEM_UNAVAILABLE', 'NOT_GIFTABLE', 'ITEM_NOT_FOUND']);
 
 /**
- * A refusal from the gift routes in the reader's language. The routes answer
- * in English for developers; a child reading Soranî gets a sentence of their
- * own, and anything unforeseen the server says is "the gift didn't go".
+ * A refusal from the gift routes in the reader's language: the routes answer in English for developers, and anything
+ * unforeseen is "the gift didn't go".
  */
 export function giftErrorText(error: ApiError, t: (key: TranslationKey) => string): string {
   switch (error.code) {
@@ -557,13 +551,13 @@ export function giftErrorText(error: ApiError, t: (key: TranslationKey) => strin
     case 'ITEM_NOT_FOUND':
       return t('gift.picker.unavailable');
     default:
-      // offline, the server down, too many tries: said as everywhere else
+      // Offline, the server down, too many tries: said as everywhere else.
       return error.kind === 'client' ? t('gift.picker.failed') : describeError(error, t);
   }
 }
 
 const styles = StyleSheet.create({
-  // the steps lay out their own gutters: the chips and the gifts scroll edge to edge, under the sheet's header
+  // The steps lay out their own gutters: the chips and the gifts scroll edge to edge, under the sheet's header.
   edge: { paddingHorizontal: 0, gap: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.md, gap: spacing.sm },
   lead: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
@@ -582,7 +576,7 @@ const styles = StyleSheet.create({
   filters: { gap: spacing.sm, paddingBottom: spacing.sm },
   scroll: { paddingBottom: spacing.sm, gap: spacing.xs },
   group: { gap: spacing.sm, marginTop: spacing.sm },
-  // two columns edge to edge: the gap between them is what is left over, so both line up with the header
+  // Two columns edge to edge with the leftover width as the gap, so both line up with the header.
   grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm, paddingHorizontal: layout.gutter },
   item: { width: '48.5%', borderRadius: radii.md, borderWidth: 2, padding: spacing.sm, gap: 4, minHeight: 150 },
   itemArt: { alignItems: 'center', justifyContent: 'center' },

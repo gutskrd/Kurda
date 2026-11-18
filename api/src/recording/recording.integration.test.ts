@@ -1,12 +1,7 @@
 /**
- * Recording by person against real Postgres: each voice's lines read off the
- * lessons, the stories and the alphabet, the takes the studio already made
- * shown as done, a superadmin linking an account to a voice and giving it
- * the voice actor role, and that role recording its own lines and nothing
- * else in the console.
- *
- * Runs on DATABASE_URL alone, with the storage PUT stubbed unless S3_ENDPOINT
- * is set, as the lesson audio tests do.
+ * Recording by person against real Postgres: each voice's lines from lessons, stories and the alphabet, existing takes
+ * shown as done, a superadmin linking an account to a voice with the voice actor role, and that role recording only
+ * its own lines. Runs on DATABASE_URL alone, with the storage PUT stubbed unless S3_ENDPOINT is set.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -165,7 +160,7 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
     const voice = await register('rpVoice', '10.97.0.3', '{}');
     actorId = voice.userId;
     learner = (await register('rpLearner', '10.97.0.4', '{}')).token;
-    // the voice actor gets the role and Xezal's voice from the owner, then signs in to the console with a code
+    // The owner gives the voice actor the role and Xezal's voice; the actor then signs in to the console with a code.
     expect((await put(owner, `/admin/users/${actorId}/voice-actor`, { on: true, reason: 'Records Xezal' })).statusCode).toBe(200);
     expect((await put(owner, `/admin/users/${actorId}/voices`, { voices: ['xezo'], reason: 'Records Xezal' })).statusCode).toBe(200);
     actor = voice.token;

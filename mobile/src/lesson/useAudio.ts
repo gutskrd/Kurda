@@ -3,19 +3,11 @@ import { Platform } from 'react-native';
 import type { PlaybackClock } from '../characters/voice';
 
 /**
- * Minimal audio playback for listening exercises (KUR-035), the model
- * recordings and the dictionary's pronunciations.
- *
- * Uses the platform's `Audio` element when present (Expo web / any DOM
- * host), which supports `playbackRate` for the 0.75× slow button. On a phone
- * it is expo-audio's player, loaded only there (as google.ts loads its SDK):
- * the module cannot be evaluated outside a native build. On a host with
- * neither, `supported` is false so the caller can fall back to the "can't
- * listen now" path. A load/playback failure surfaces via `error`, which the
- * exercise turns into an auto-skip (not a wrong answer).
- *
- * `clock` is the player itself, for a speaking character to follow while
- * `playing` says the recording plays; `source` is the URL it has loaded.
+ * Minimal audio playback for listening exercises, model recordings and dictionary pronunciations. Uses the DOM
+ * `Audio` element where present (Expo web), which supports `playbackRate` for the 0.75× button; on a phone,
+ * expo-audio's player, loaded only there since the module cannot load outside a native build. Without either,
+ * `supported` is false and the caller falls back to "can't listen now". A failure surfaces via `error`, which the
+ * exercise turns into a skip rather than a wrong answer. `clock` is the player, for a speaking character to follow.
  */
 interface WebAudioEl {
   playbackRate: number;
@@ -35,7 +27,7 @@ function audioCtor(): AudioCtor | null {
   return typeof g.Audio === 'function' ? g.Audio : null;
 }
 
-/** Whether this host can play a recording at all, before there is one to play. */
+/** Whether this host can play recordings at all, before one is loaded. */
 export function canPlayAudio(): boolean {
   return audioCtor() !== null || Platform.OS !== 'web';
 }
@@ -43,11 +35,11 @@ export function canPlayAudio(): boolean {
 export interface AudioControls {
   supported: boolean;
   error: boolean;
-  /** the recording is playing now */
+  /** The recording is playing now. */
   playing: boolean;
-  /** the loaded recording's player; null until one is loaded */
+  /** The loaded recording's player; null until one is loaded. */
   clock: PlaybackClock | null;
-  /** the URL `clock` has loaded; null until one is */
+  /** The URL `clock` has loaded; null until one is. */
   source: string | null;
   play: (rate?: number) => void;
 }

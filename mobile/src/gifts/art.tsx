@@ -2,20 +2,13 @@ import Svg, { Circle, Defs, G, LinearGradient, Path, Polygon, Polyline, Rect, St
 import type { GiftTier } from '@kurda/shared';
 
 /**
- * The gift's own art, drawn here so it needs no files and no package.
- *
- * A present wrapped in kilim — the woven diamonds and zigzags of a Kurdish
- * rug, in the app's gold — with a ribbon and a bow; pomegranate seeds and
- * gold sparks for the confetti; and for the legendary, limited gifts (the
- * Newroz ones), the Newroz flame. The paper changes with the tier so a rare
- * gift looks rarer before it is opened: cream for common, pomegranate red for
- * rare, a night indigo for legendary.
- *
- * Art colours are not the interface's: they are the colours of the things
- * drawn (a seed is red in the dark too), so they are constants here, and only
- * the gold comes from the palette, as the brand's.
+ * The gift's own art, drawn in code: a present wrapped in kilim (the woven diamonds and zigzags of a Kurdish rug, in
+ * the app's gold) with a ribbon and bow; pomegranate seeds and gold sparks for confetti; and the Newroz flame for the
+ * legendary, limited gifts. The paper changes with the tier (cream, pomegranate red, night indigo), so a rare gift
+ * looks rarer unopened. These are the colours of the things drawn, so they are constants here; only the gold comes from
+ * the palette.
  */
-export const POMEGRANATE = '#B3243B';
+const POMEGRANATE = '#B3243B';
 const SEED_LIGHT = '#F07A8C';
 const CREAM = '#F3E3C3';
 const INDIGO = '#24356A';
@@ -46,9 +39,8 @@ function Kilim({ y, gold, motif }: { y: number; gold: string; motif: string }): 
 }
 
 /**
- * A wrapped present, whole or in its two parts. The parts share one viewBox,
- * so a lid and a body stacked in the same box line up exactly — which is what
- * lets the unwrap lift the lid off.
+ * A wrapped present, whole or in its two parts. The parts share one viewBox, so a lid and body stacked in one box line
+ * up exactly, which lets the unwrap lift the lid off.
  */
 export function GiftBox({
   size,
@@ -79,7 +71,7 @@ export function GiftBox({
           <Polyline points="12,39 18,36 24,39 30,36 36,39 42,36" fill="none" stroke={gold} strokeWidth={1.4} />
           <Polyline points="58,36 64,39 70,36 76,39 82,36 88,39" fill="none" stroke={gold} strokeWidth={1.4} />
           <Rect x={45} y={32} width={10} height={14} fill={gold} />
-          {/* the bow: two loops and a knot */}
+          {/* The bow: two loops and a knot. */}
           <Path d="M50 31 C38 14 24 20 30 30 C33 34 42 33 50 31Z" fill={gold} />
           <Path d="M50 31 C62 14 76 20 70 30 C67 34 58 33 50 31Z" fill={gold} />
           <Circle cx={50} cy={31} r={4.5} fill={motif} stroke={gold} strokeWidth={2} />
@@ -89,7 +81,7 @@ export function GiftBox({
   );
 }
 
-/** A pomegranate seed — the confetti. */
+/** A pomegranate seed, the confetti. */
 export function Seed({ size }: { size: number }): React.JSX.Element {
   return (
     <Svg width={size} height={size * 1.3} viewBox="0 0 12 16">
@@ -109,8 +101,8 @@ export function Spark({ size, gold }: { size: number; gold: string }): React.JSX
 }
 
 /**
- * The Newroz flame, for the legendary gifts: one fire with a lick to each side
- * of its tip, gold at the top into pomegranate at its root, and a pale core.
+ * The Newroz flame for the legendary gifts: one fire with a lick to each side of its tip, gold at the top into
+ * pomegranate at the root, with a pale core.
  */
 export function NewrozFlame({ size, gold }: { size: number; gold: string }): React.JSX.Element {
   return (

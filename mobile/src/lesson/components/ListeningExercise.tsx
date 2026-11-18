@@ -24,29 +24,21 @@ interface Props {
   exercise: Exercise;
   text: string;
   onChangeText: (text: string) => void;
-  /** put the exercise off when its clip cannot be played: not counted wrong ("can't listen now" is the footer's) */
+  /** Puts the exercise off when its clip cannot play, without counting it wrong ("can't listen now" is the footer's). */
   onSkip: () => void;
   disabled: boolean;
-  /** the course's variety of Kurdish, for the key bar */
+  /** The course's variety of Kurdish, for the key bar. */
   dialect?: string | null;
-  /** how the answer was graded, once it has been */
+  /** How the answer was graded, once it has been. */
   verdict?: 'right' | 'wrong' | null;
 }
 
 /**
- * Listen, and give back what you heard (KUR-035). Whoever says the clip
- * stands beside a speech bubble holding the lesson's round play mark and a
- * waveform that lights up along the clip as it plays; a tap on the bubble
- * plays it again, and "Slow" under it plays it at 0.75×, as often as wanted —
- * on an item that says what it asks, as the chip a question's line has too
- * (`SlowButton`), lit while it plays slowly. The clip is the
- * question, so it plays by itself a beat after the exercise appears (once it
- * has loaded), as it does on the website. "Can't listen now" sits in the
- * footer, beside Check.
- *
- * When the item comes with word tiles the answer is built from them (unless
- * this device would rather type: the switch under them says which); otherwise
- * it is typed, with the Kurdish key bar.
+ * Listen and give back what you heard. The speaker stands beside a bubble with the play mark and a waveform that
+ * lights up as the clip plays; tapping the bubble replays it, and "Slow" (`SlowButton`) plays it at 0.75×. The clip
+ * is the question, so it plays by itself a beat after the exercise appears, as on the website. "Can't listen now"
+ * sits in the footer beside Check. With word tiles the answer is built from them, unless this device prefers
+ * typing; otherwise it is typed with the Kurdish key bar.
  */
 export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabled, dialect, verdict = null }: Props) {
   const { colors } = useTheme();
@@ -59,12 +51,11 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   const [mode, setMode] = useAnswerMode();
   const tiles = !!bank && mode === 'tiles';
   const [placed, setPlaced] = useState<number[]>([]);
-  // playing slowly, for "Slow" to be lit while it does
+  // Playing slowly, so "Slow" is lit meanwhile.
   const [slow, setSlow] = useState(false);
 
-  // played once by itself: AUTOPLAY_MS after the exercise appears, or as soon after as the clip has loaded.
-  // A clip the learner has already set playing counts as that once, so the timer never restarts it
-  // behind them (a short clip could have ended by then).
+  // Played once by itself, AUTOPLAY_MS after appearing or as soon after as it loads. If the learner already started
+  // it, that counts as the once, so the timer never restarts a clip behind them.
   const shownAt = useRef(Date.now());
   const autoplayed = useRef(false);
   const loaded = audio.clock !== null;
@@ -82,7 +73,7 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
     return () => clearTimeout(id);
   }, [loaded, disabled, play, playing]);
 
-  // audio download/playback failure → auto-skip once (KUR-035 edge case)
+  // A download or playback failure skips the exercise once.
   const cannotPlay = !audio.supported || audio.error;
   useEffect(() => {
     if (audio.error && !skippedRef.current) {
@@ -91,10 +82,10 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
     }
   }, [audio.error, onSkip]);
 
-  // back on the tiles, the answer is what they say again
+  // Back on the tiles, the answer is what they say again.
   useEffect(() => {
     if (tiles && bank) onChangeText(tileAnswer(bank, placed));
-    // only as the way of answering changes; laying a tile says it itself
+    // Only when the answer mode changes; laying a tile updates it by itself.
   }, [tiles]);
 
   const lay = (next: number[]): void => {
@@ -139,7 +130,7 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
         }
       >
         <View style={[styles.clip, { flexDirection: dir.row }]}>
-          {/* the round play mark at the bubble's start, the clip's waveform running on from it */}
+          {/* The play mark at the bubble's start, with the clip's waveform after it. */}
           <PlayDisc size={36} playing={audio.playing && !slow} />
           <Waveform clock={audio.clock} playing={audio.playing} />
         </View>
@@ -167,17 +158,15 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   );
 }
 
-/** How long after the exercise appears its clip plays by itself: long enough to see what is being asked. */
+/** The delay before a clip plays by itself: long enough to see what is asked. */
 const AUTOPLAY_MS = 250;
 
-/** The waveform's bars, as shares of its height: a made-up shape, the same for every clip. */
+/** The waveform's bars as fractions of its height: a fixed shape, the same for every clip. */
 const BARS = [0.25, 0.4, 0.6, 0.35, 0.8, 1, 0.55, 0.75, 0.4, 0.9, 0.65, 0.3, 0.7, 0.95, 0.5, 0.35, 0.6, 0.25];
 
 /**
- * The clip's waveform: its bars light up in gold along the clip while it
- * plays, read from the player itself on every frame, and stand in the brand's
- * ink when it is still. Colour, not motion, so it is the same under Reduce
- * Motion.
+ * The clip's waveform: bars light gold along the clip as it plays, read from the player each frame, and rest in ink.
+ * Colour only, so it is the same under Reduce Motion.
  */
 function Waveform({ clock, playing }: { clock: PlaybackClock | null; playing: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -225,7 +214,7 @@ const styles = StyleSheet.create({
   slowText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.4 },
   pressed: { opacity: pressedDim },
   prompt: { fontSize: typography.sizes.md },
-  // the field's card, edge and face are the answer box's own (KurdishAnswerInput)
+  // The field's card, edge and face match the answer box (KurdishAnswerInput).
   input: { minHeight: MIN_TOUCH_TARGET, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   dim: { opacity: 0.4 },
 });

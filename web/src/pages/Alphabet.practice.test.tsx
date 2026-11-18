@@ -5,11 +5,7 @@ import { ALPHABET_CLIPS } from '@kurda/shared';
 import { Alphabet } from './Alphabet';
 import { jsonResponse, renderApp } from '../test/utils';
 
-/*
- * Practice once an editor has recorded every sound and chosen who says each:
- * a file of its own, since the page asks for its recordings once and keeps
- * them (Alphabet.voices.test.tsx has a letter's card).
- */
+/* Practice once every sound is recorded with a speaker; its own file, since the page fetches its recordings once and keeps them. */
 const keys = ALPHABET_CLIPS.map((clip) => clip.key);
 const RECORDED = {
   clips: Object.fromEntries(keys.map((key, i) => [key, `https://media.test/alphabet/${i}.wav`])),
@@ -38,7 +34,7 @@ describe('Alphabet practice: who asks', () => {
     });
     show();
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
-    // an English reader starts by listening, and the sound plays by itself
+    // An English reader starts by listening, and the sound plays by itself.
     expect(screen.getByText('Listen. Which letter is it?')).toBeInTheDocument();
     const stage = await vi.waitFor(() => {
       const found = document.querySelector<HTMLElement>('.ab-q-stage');
@@ -48,7 +44,7 @@ describe('Alphabet practice: who asks', () => {
     expect(within(stage).getByRole('button', { name: 'Play again' })).toBeInTheDocument();
     expect(stage.querySelectorAll('.speaking-character')).toHaveLength(1);
 
-    // the letter whose recording played is the answer
+    // The letter whose recording played is the answer.
     const key = keys[Number(/(\d+)\.wav$/.exec(heard.at(-1)!)![1])]!;
     const letter = key.split(':')[2];
     const options = screen.getAllByRole('button').filter((b) => b.classList.contains('ab-option'));

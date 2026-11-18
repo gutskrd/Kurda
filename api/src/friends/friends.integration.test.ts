@@ -1,9 +1,10 @@
-/** Friend system (KUR-081) against real Postgres. */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+/** Friend system against real Postgres. */
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 import { FriendService } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -16,8 +17,8 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
   const suffix = Date.now().toString(36);
   const id: Record<string, string> = {};
 
-  const register = async (tag: string, ip: string): Promise<string> => {
-    const res = await app.inject({
+  const signUp = (tag: string, ip: string) =>
+    app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: {
@@ -30,8 +31,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
       },
       remoteAddress: ip,
     });
-    return res.json().user.id as string;
-  };
+  const register = async (tag: string, ip: string): Promise<string> => (await signUp(tag, ip)).json().user.id as string;
   const has = (list: Array<{ userId: string }>, userId: string): boolean => list.some((x) => x.userId === userId);
 
   beforeAll(async () => {
@@ -89,8 +89,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
   it('will not let the recipient cancel a request as if they had sent it', async () => {
     await friends.request(id.d!, id.e!);
 
-    // e is the recipient; cancelling is for the sender, and declining is a
-    // separate act that e is entitled to make instead
+    // e is the recipient: cancelling is the sender's act, declining is e's.
     await friends.cancelRequest(id.e!, id.d!);
     expect(has(await friends.incomingRequests(id.e!), id.d!)).toBe(true);
 
@@ -98,7 +97,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
   });
 
   it('cancelling something that is not there is not an error', async () => {
-    await expect(friends.cancelRequest(id.d!, id.e!)).resolves.toBeUndefined();
+    await expect(friends.cancelRequest(id.d!, id.e!)).resolves.toBe(false);
   });
 
   it('a mutual request auto-accepts', async () => {
@@ -147,10 +146,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     await friends.unblock(id.c!, id.d!);
   });
 
-  /**
-   * The blocklist. Its own users throughout: the a–e graph is mutated by the
-   * tests above and a list that has to be exhaustive cannot share it.
-   */
+  /** The blocklist, with its own users, since the tests above change the a–e graph and this list must be exhaustive. */
   describe('the list of who you have blocked', () => {
     let me = '';
     let token = '';
@@ -188,12 +184,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
       expect(Date.parse(page.blocked[0]!.blockedAt)).toBeGreaterThan(0);
     });
 
-    /**
-     * The one property that matters most here. A block is silent by design —
-     * `request` returns 'silent' rather than admitting it, and a blocked user's
-     * profile answers 404 — and all of that is undone if the list ever answers
-     * "who blocked me" as well as "who did I block".
-     */
+    /** A block is silent (a 'silent' request result, a 404 profile), which the list must not undo by revealing who blocked you. */
     it('never tells you who has blocked you', async () => {
       expect((await friends.blocked(one)).blocked).toEqual([]);
       expect((await friends.blocked(one)).total).toBe(0);
@@ -263,6 +254,42 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     });
   });
 
+  it('tells the other person’s apps when a request reaches them, is accepted or is withdrawn, and never for a block', async () => {
+    // Over HTTP, so with confirmed accounts (plugins/activation.ts).
+    const account = async (tag: string, ip: string): Promise<{ id: string; token: string }> => {
+      const res = await signUp(tag, ip);
+      await activate(app, pool, res);
+      return { id: res.json().user.id as string, token: res.json().tokens.accessToken as string };
+    };
+    const asker = await account('ping_a', '10.81.40.1');
+    const asked = await account('ping_b', '10.81.40.2');
+    const told = vi.spyOn(app.realtime, 'notifyUser');
+    const pings = (): unknown[] => told.mock.calls.filter(([, event]) => event.type === 'friends_changed');
+    const ping = (userId: string): unknown => [userId, { type: 'friends_changed' }];
+    const as = (who: { token: string }, method: 'POST' | 'DELETE', url: string, payload?: Record<string, string>) =>
+      app.inject({ method, url, payload, headers: { authorization: `Bearer ${who.token}` }, remoteAddress: '10.81.40.9' });
+
+    expect((await as(asker, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('requested');
+    expect(pings()).toEqual([ping(asked.id)]);
+
+    // Withdrawn, the request leaves their list; withdrawing nothing tells nobody.
+    await as(asker, 'DELETE', `/friends/requests/${asked.id}`);
+    await as(asker, 'DELETE', `/friends/requests/${asked.id}`);
+    expect(pings()).toEqual([ping(asked.id), ping(asked.id)]);
+
+    // Accepted, the one who asked has a new friend.
+    await as(asker, 'POST', '/friends/requests', { userId: asked.id });
+    expect((await as(asked, 'POST', `/friends/requests/${asker.id}/accept`)).json().result).toBe('accepted');
+    expect(pings().slice(2)).toEqual([ping(asked.id), ping(asker.id)]);
+
+    // A block is silent, and so is the request it swallows.
+    told.mockClear();
+    await as(asked, 'POST', `/friends/${asker.id}/block`);
+    expect((await as(asker, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('silent');
+    expect(pings()).toEqual([]);
+    told.mockRestore();
+  });
+
   it('rejects friending or blocking yourself', async () => {
     await expect(friends.request(id.a!, id.a!)).rejects.toThrow(/yourself/i);
     await expect(friends.block(id.a!, id.a!)).rejects.toThrow(/yourself/i);
@@ -286,13 +313,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     expect(has(forX, x)).toBe(false); // never yourself
   });
 
-  /**
-   * The list is paged so that a profile drawing eight avatars can ask for
-   * eight instead of five hundred. What has to hold is that the count keeps
-   * telling the truth while the page gets shorter — a heading that says "8
-   * friends" over a list of eight, when there are forty, is worse than the
-   * over-fetch it replaced.
-   */
+  /** The list is paged so a profile can ask for eight avatars, but the count must still tell the whole length. */
   it('pages the list without lying about how long it is', async () => {
     const hub = await register('hub', '10.81.30.1');
     const others: string[] = [];
@@ -318,8 +339,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
       all.friends.map((f) => f.userId),
     );
 
-    // past the end there is no row to carry count(*) OVER (), and answering 0
-    // would read as "no friends" rather than "no more friends"
+    // Past the end no row carries count(*) OVER (), and 0 would read as "no friends" rather than "no more".
     const past = await friends.list(hub, undefined, 2, 10);
     expect(past.friends).toEqual([]);
     expect(past.total).toBe(4);

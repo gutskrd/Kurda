@@ -14,12 +14,6 @@ import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { LoginScreen } from './LoginScreen';
 
-/*
- * Signing in in two questions, Hevalo asking: the address, then the password
- * with the reset under it. A wrong password is said under the field with his
- * doubt; a sign-in held back after several attempts gets the calm notice.
- */
-
 patchReactNativeWeb({ reduceMotion: true });
 const en = TRANSLATIONS.en;
 
@@ -70,6 +64,14 @@ describe('signing in', () => {
     expect(await screen.findByText(en['guide.password.question'])).toBeTruthy();
   });
 
+  it('takes the address it is gone back to with, from the sign-up or the reset', async () => {
+    const navigation = { navigate: vi.fn(), goBack: vi.fn(), canGoBack: () => false };
+    const props = (email: string) => ({ navigation, route: { key: 'l', name: 'Login', params: { email } } }) as unknown as Parameters<typeof LoginScreen>[0];
+    const view = renderWithProviders(<LoginScreen {...props('rojda@example.com')} />);
+    view.rerender(<LoginScreen {...props('azad@example.com')} />);
+    await waitFor(() => expect((screen.getByTestId('email') as HTMLInputElement).value).toBe('azad@example.com'));
+  });
+
   it('does not go on from an address that is not one', async () => {
     renderLogin();
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'rojda' } });
@@ -79,11 +81,7 @@ describe('signing in', () => {
     expect(auth.login).not.toHaveBeenCalled();
   });
 
-  /*
-   * After several failed attempts the server wants the challenge, which is
-   * not configured yet: there is nothing to solve, so the screen says to wait
-   * a little and offers the reset that does not wait.
-   */
+  // The server asks for a challenge that is not configured yet, so the screen says to wait and offers a reset.
   it('offers Reset password, carrying the address, when sign-in is held back after failed attempts', async () => {
     const message = 'There have been several failed sign-in attempts. For your safety, wait a few minutes and try again, or reset your password.';
     auth.login.mockResolvedValue({ message, code: 'CAPTCHA_REQUIRED' });

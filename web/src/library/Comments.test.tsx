@@ -22,10 +22,7 @@ const comment = (id: string, body: string, extra: Record<string, unknown> = {}) 
   ...extra,
 });
 
-/**
- * Answer the comment endpoints and remember every URL asked for, so a test can
- * assert which surface's paths were used.
- */
+/** Answers the comment endpoints and records every URL asked for, so a test can check which surface was used. */
 function commentFetch(thread: unknown[] = []) {
   const urls: string[] = [];
   return {
@@ -61,7 +58,7 @@ describe('Comments', () => {
     renderApp(<Comments postId="p1" commentCount={1} surface="images" />);
 
     expect(await screen.findByText('nice picture')).toBeInTheDocument();
-    // the same tree, a different set of paths — not a second component
+    // The same component with a different set of paths.
     expect(urls[0]).toContain('/images/p1/comments');
   });
 
@@ -77,7 +74,7 @@ describe('Comments', () => {
     await userEvent.type(box, 'Xweş e');
     await userEvent.click(screen.getByRole('button', { name: /post|comment|send/i }));
 
-    // "0 comments" above the comment you just wrote reads as a bug
+    // The count includes the comment just written.
     await waitFor(() => expect(screen.getByText('1 comment')).toBeInTheDocument());
   });
 
@@ -97,10 +94,10 @@ describe('Comments', () => {
     await userEvent.type(box, 'spam');
     await userEvent.click(screen.getByRole('button', { name: /post|comment|send/i }));
 
-    // the count follows what the server accepted, not what was typed
+    // The count follows what the server accepted, not what was typed.
     await waitFor(() => expect(document.querySelector('.msg-error')).not.toBeNull());
     expect(screen.getByText('4 comments')).toBeInTheDocument();
-    // and the text stays in the box, so it is not lost to a rejection
+    // The text stays in the box after a rejection.
     expect(box).toHaveValue('spam');
   });
 
@@ -113,11 +110,11 @@ describe('Comments', () => {
     renderApp(<Comments postId="p1" commentCount={2} />);
 
     await screen.findByText('my words');
-    // one Delete on the page: the author's own comment, not the other one
+    // Only the author's own comment offers Delete.
     const del = screen.getByRole('button', { name: 'Delete this comment' });
 
     await userEvent.click(del);
-    expect(urls.some((u) => u.startsWith('DELETE'))).toBe(false); // armed, not fired
+    expect(urls.some((u) => u.startsWith('DELETE'))).toBe(false); // Armed, not fired.
 
     await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
     await waitFor(() => expect(urls.some((u) => u === 'DELETE /library/comments/c1')).toBe(true));

@@ -1,8 +1,4 @@
-/*
- * The page a shared win's link opens (share/WinPage.tsx): the postcard that
- * was sent, what was done, and the one thing to press. A page for one look
- * and one tap, so it is narrow, centred and short on a phone.
- */
+/* The page a shared win's link opens (share/WinPage.tsx): narrow, centred and short on a phone. */
 .win-page {
   display: grid;
   justify-items: center;
@@ -12,11 +8,7 @@
   padding-bottom: var(--space-8);
   text-align: center;
 }
-/*
- * The postcard. Its shape is held before it is drawn, so nothing under it
- * moves when it is; it has a card's corners, and is laid down a little askew,
- * as a card somebody put on a table is.
- */
+/* The postcard keeps its shape before it is drawn so nothing below moves, and sits slightly askew. */
 .win-card {
   width: 100%;
   aspect-ratio: 1200 / 630;
@@ -52,7 +44,7 @@
   line-height: 1.5;
   text-wrap: pretty;
 }
-/* the buttons come once the page knows whether somebody is signed in: their room is kept, so the page does not jump when they do */
+/* The buttons wait for the sign-in check; their space is reserved so the page does not jump. */
 .win-actions {
   display: grid;
   gap: var(--space-3);

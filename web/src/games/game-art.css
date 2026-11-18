@@ -1,11 +1,6 @@
 /*
- * A game's cover (games/GameArt.tsx): still, one picture; moving, its parts
- * laid over one another, each played by the browser on its own. The motion
- * itself is the art's (shared/src/art/games.ts); nothing here moves anything.
- *
- * A cover fills its square, and its corners are rounded here, by a share of
- * its own size so that a small one and a large one are the same shape. The
- * rounding clips: a part that moves past the cover's edge stops at it.
+ * A game's cover (games/GameArt.tsx): one picture when still, layered parts when moving; the motion is the art's
+ * (shared/src/art/games.ts). Corners round in proportion to size and clip parts moving past the edge.
  */
 .gp-art {
   display: inline-grid;

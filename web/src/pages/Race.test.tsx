@@ -32,7 +32,7 @@ function result(over: Record<string, unknown> = {}) {
     accented: 1,
     errors: 0,
     elapsedMs: 30_000,
-    // what the server sends for a race run alone
+    // What the server sends for a race run alone.
     xpAwarded: 0,
     personalBest: false,
     ...over,
@@ -41,10 +41,7 @@ function result(over: Record<string, unknown> = {}) {
 
 type Answer = { status: number; body: unknown } | (() => Promise<Response>);
 
-/**
- * Answers POST /race and /race/r1/finish from queues (the last answer repeats),
- * and records what was posted.
- */
+/** Answers POST /race and /race/r1/finish from queues (the last answer repeats) and records what was posted. */
 function stub({ start = [], finish = [] }: { start?: Answer[]; finish?: Answer[] } = {}) {
   const starts = start.length ? start : [{ status: 200, body: game() }];
   const finishes = finish.length ? finish : [{ status: 200, body: result() }];
@@ -96,11 +93,7 @@ afterEach(() => {
 });
 
 describe('Pêşbaziya Nivîsandinê', () => {
-  /**
-   * The text and the box are one surface. Two boxes meant the text sat on the
-   * page as ordinary prose beside an input — select it, copy it, paste it, and
-   * the race is over in two keystrokes.
-   */
+  // The text and the box are one surface; separate prose beside an input could be copied and pasted in two keystrokes.
   it('has one place to type, and it is the text itself', async () => {
     stub();
     seenGuide();
@@ -138,10 +131,7 @@ describe('Pêşbaziya Nivîsandinê', () => {
     expect(await screen.findByText(/no pasting/i)).toBeInTheDocument();
   });
 
-  /**
-   * A phone keyboard that finishes words for you is a paste with extra steps —
-   * and on Kurdish text it also rewrites what you did type.
-   */
+  // Phone keyboards that finish words amount to pasting, and rewrite Kurdish too.
   it('turns off the keyboard features that type for you', async () => {
     stub();
     seenGuide();
@@ -165,12 +155,12 @@ describe('Pêşbaziya Nivîsandinê', () => {
     expect(chars[0]).toHaveClass('race-ok'); // e
     expect(chars[1]).toHaveClass('race-ok'); // z
     expect(chars[2]).toHaveClass('race-ok'); // space
-    expect(chars[3]).toHaveClass('race-bad'); // 'j' typed as 'x'
-    // and the caret sits on the next one along
+    expect(chars[3]).toHaveClass('race-bad'); // 'j' typed as 'x'.
+    // And the caret sits on the next one along.
     expect(chars[4]).toHaveClass('race-cursor');
   });
 
-  /** The old scoring compared position by position: one missed letter turned the rest red. */
+  /** Scoring is word by word: one missed letter spoils only its word. */
   it('spoils only the word with a missed letter, not everything after it', async () => {
     stub();
     seenGuide();
@@ -180,18 +170,13 @@ describe('Pêşbaziya Nivîsandinê', () => {
     await user.keyboard('ez i welat');
 
     const chars = [...document.querySelectorAll('.race-char')];
-    expect(chars[3]).toHaveClass('race-bad'); // the j left out
-    // "welat" after it is still right
+    expect(chars[3]).toHaveClass('race-bad'); // The j left out.
+    // "welat" after it is still right.
     for (const c of chars.slice(6, 11)) expect(c).toHaveClass('race-ok');
   });
 
   describe('“when someone clicks up the whole game becomes wrong”', () => {
-    /**
-     * The field has its own caret, and anything that moved it — a click on an
-     * earlier line, an arrow key, Home, select-all — put the next letter in the
-     * middle of what was typed. Whatever happens to that caret, typing goes on
-     * at the end.
-     */
+    // Whatever moves the field's own caret (a click, an arrow, Home, select-all), typing goes on at the end.
     it('types at the end even when the caret was put in the middle', async () => {
       stub();
       seenGuide();
@@ -357,7 +342,7 @@ describe('Pêşbaziya Nivîsandinê', () => {
     await user.keyboard(TARGET);
 
     expect(await screen.findByText('Not scored')).toBeInTheDocument();
-    // why it does not count, with no word on XP: a race alone earns none either way
+    // Why it does not count, with no word on XP: a race alone earns none either way.
     expect(screen.getByText('That is faster than anyone types, so this run does not count for the rankings.')).toBeInTheDocument();
     expect(screen.queryByText(/\d+ XP/)).toBeNull();
   });
@@ -393,10 +378,7 @@ describe('Pêşbaziya Nivîsandinê', () => {
     expect(screen.queryByText(/faster than anyone types/i)).not.toBeInTheDocument();
   });
 
-  /**
-   * A dead key leaves its accent in the field while it waits for the vowel; a
-   * race whose last letter was accented used to end on the accent.
-   */
+  // A dead key leaves its accent in the field while it waits for the vowel, so the race must not end on it.
   it('does not finish while a letter is still being composed', async () => {
     const fetchMock = stub();
     seenGuide();
@@ -429,7 +411,7 @@ describe('Pêşbaziya Nivîsandinê', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(/went wrong/i);
-    // it does not try again on its own, on every key
+    // It does not try again on its own, on every key.
     expect(finishCalls(fetchMock)).toBe(1);
 
     await user.click(within(alert).getByRole('button', { name: 'Try again' }));
@@ -478,7 +460,7 @@ describe('Pêşbaziya Nivîsandinê', () => {
     expect(await screen.findByText('Race finished')).toBeInTheDocument();
   });
 
-  /** "Race again" kept the old text, enabled and focused, until the new one arrived. */
+  /** "Race again" clears the old text before the new one arrives. */
   it('starts again from nothing: the old text is gone before the new one arrives', async () => {
     let release: (r: Response) => void = () => undefined;
     stub({
@@ -532,7 +514,7 @@ describe('Pêşbaziya Nivîsandinê', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(posted(fetchMock, '/race')).toHaveLength(0);
 
-    // offered once on this device: the next Start goes straight in
+    // Offered once on this device: the next Start goes straight in.
     await user.click(screen.getByRole('button', { name: /start race/i }));
     expect(await screen.findByLabelText('Type the text')).toBeInTheDocument();
     expect(posted(fetchMock, '/race')).toHaveLength(1);

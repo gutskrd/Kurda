@@ -86,8 +86,8 @@ describe('support mail helpers', () => {
   });
 
   it('takes time in proportion to the mail, whatever the mail is made of', () => {
-    // anyone can mail support, and every listed mail is previewed: bodies built
-    // to make a pattern rescan to the end from each tag must not hold the server
+    // Anyone can mail support and every listed mail is previewed, so bodies built to make a pattern rescan from each
+    // tag must not hold the server.
     const size = 200_000;
     for (const unit of ['<style>', '<script ', '<head', '<', '<style><', '</style']) {
       const body = unit.repeat(Math.ceil(size / unit.length));

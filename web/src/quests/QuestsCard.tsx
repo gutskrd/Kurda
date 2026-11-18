@@ -12,17 +12,10 @@ import { useQuestDay } from './useQuestDay';
 import './quests.css';
 
 /**
- * Today's quests on Learn, in one slim card under today's row: a chest, how
- * many of the three are done, and a small bar for each. A gold dot on the
- * chest — and words for a screen reader — says a chest is waiting.
- *
- * It opens a sheet with the three in full, how many quests this month has
- * seen done, the quests of the last week whose chests are still shut
- * ("Earlier", so a chest is never lost at midnight), and "Open chest" while
- * one waits; the chests open over the whole screen (ChestScreen.tsx), today's
- * first, and it comes back to the sheet. While the day is read
- * the card keeps its shape, so the path under it does not jump when it lands;
- * a day that could not be read says so, with a way to try again.
+ * Today's quests on Learn as one slim card: a chest, how many are done and a small bar for each, with a gold dot (and
+ * words for screen readers) when a chest waits. It opens a sheet with the quests in full, this month's count, the past
+ * week's unopened chests ("Earlier", so none is lost at midnight) and "Open chest". The card keeps its shape while
+ * loading, and a failure offers a retry.
  */
 export function QuestsCard(): React.JSX.Element {
   const t = useT();
@@ -71,7 +64,7 @@ export function QuestsCard(): React.JSX.Element {
     );
   }
 
-  // today's chests first, then those still waiting from earlier days, newest first
+  // Today's chests first, then those still waiting from earlier days, newest first.
   const chests = [...rows, ...earlier].filter((r) => r.claimable);
   const done = rows.filter((r) => r.to >= r.target).length;
   const allOpen = rows.length > 0 && rows.every((r) => r.claimed);

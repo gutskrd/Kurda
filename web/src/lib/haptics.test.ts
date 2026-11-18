@@ -17,7 +17,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
-  // jsdom has no vibrate of its own: take ours away again
+  // jsdom has no vibrate of its own: take ours away again.
   delete (navigator as { vibrate?: unknown }).vibrate;
 });
 
@@ -30,7 +30,7 @@ describe('haptic() on the web', () => {
     vi.setSystemTime(50_200);
     haptic('celebrate');
     expect(vibrate.mock.calls).toEqual([[PATTERNS.correct], [PATTERNS.wrong], [PATTERNS.celebrate]]);
-    // a "wrong" is never a long buzz
+    // A "wrong" is never a long buzz.
     expect((PATTERNS.wrong as number[]).every((ms) => ms <= 80)).toBe(true);
   });
 

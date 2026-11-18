@@ -1,7 +1,6 @@
 /**
- * The admin's event routes over HTTP: an edit keeps the quests and rewards it
- * did not send, rewards only change through Approvals, and a missing event is
- * answered in the usual error envelope.
+ * The event routes over HTTP: the active list says when it next changes, an admin edit keeps the quests and rewards
+ * it did not send, rewards change only through Approvals, and a missing event gets the usual error envelope.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -59,6 +58,22 @@ describe.skipIf(!DATABASE_URL)('admin events (integration)', () => {
     await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
     await pool.end();
     await app.close();
+  });
+
+  it('says beside the live events when that set next changes', async () => {
+    const now = Date.now();
+    const live = { key: key('live'), name: 'Live', type: 'holiday', startsAt: new Date(now - 3_600_000).toISOString(), endsAt: new Date(now + 7_200_000).toISOString() };
+    // Through the app's own cache, so the write clears what it holds.
+    await new EventService(pool, app.cache).upsert(live);
+    const res = await app.inject({ method: 'GET', url: '/events/active', headers: { authorization: `Bearer ${token}` }, remoteAddress: '10.82.0.9' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { events: Array<{ key: string; endsAt: string }>; nextChangeAt: string | null };
+    expect(body.events.find((e) => e.key === live.key)?.endsAt).toBe(live.endsAt);
+    // The soonest boundary ahead: this event's end, or another event's start or end before it.
+    expect(body.nextChangeAt).not.toBeNull();
+    const next = Date.parse(body.nextChangeAt!);
+    expect(next).toBeGreaterThan(now);
+    expect(next).toBeLessThanOrEqual(Date.parse(live.endsAt));
   });
 
   it('keeps the quests and rewards an edit did not send', async () => {

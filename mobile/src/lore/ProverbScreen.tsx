@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COLUMN, Note, Pill } from '../stories/ui';
@@ -16,26 +17,19 @@ import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { getProverb, proverbUrl } from './api';
-import { THEME_KEY, centred, kurdishIn, proverbTranslation, traditionLine, traditionMark, varietyName } from './labels';
+import { THEME_KEY, centred, kurdishIn, proverbTranslation, traditionLine, traditionMark } from './labels';
 import { EnglishNote, InLanguage, Section, SourcesList } from './parts';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
- * One proverb (its own address, `app/learn/proverbs/<slug>`), set like a
- * line of poetry: centred in the display face, in its own Kurdish and
- * direction, between two short gold rules, with its translation under it.
- *
- * Then, each where the proverb has it: the sense word for word, what it
- * means and when it is said, a little scene in Kurdish with the reader's
- * translation of it, the background, the other ways it is said (another
- * region's, the other variety's), a saying of the reader's own language with
- * the same sense, where it comes from, and the sources it was found in.
- *
- * What the reader's language does not have yet is shown in English, and
- * said so once; a part the proverb has nothing for is left out, never an
- * empty heading. Sharing it sends the saying, its translation and its
- * address.
+ * One proverb (`app/learn/proverbs/<slug>`), set like a line of poetry between two short gold rules, in its own Kurdish
+ * and direction with its translation under it. Then whatever the proverb has: the literal sense, the meaning and when
+ * it is said, a scene with its translation, the background, other ways it is said, an equivalent saying in the reader's
+ * language, its origin and its sources. Missing translations show in English, said once; a part with nothing is left
+ * out. Sharing sends the saying, its translation and its address.
  */
 export function ProverbScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
+  useHardwareBack(onExit);
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -89,7 +83,7 @@ export function ProverbScreen({ slug, onExit }: { slug: string; onExit: () => vo
       <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} right={<HeaderButton icon="share" label={t('lore.proverb.share')} onPress={share} />} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom + spacing.lg }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.facts, { flexDirection: dir.row }]}>
-          {/* where a proverb comes from is information, not a prize: the quiet pill, as its themes are */}
+          {/* Where a proverb comes from is information, not a prize: the quiet pill, as its themes are. */}
           <Pill label={traditionMark(proverb.tradition, proverb.region, t)} />
           {proverb.themes.map((th) => (
             <Pill key={th} label={t(THEME_KEY[th])} />
@@ -143,7 +137,7 @@ export function ProverbScreen({ slug, onExit }: { slug: string; onExit: () => vo
                     <Text {...vku.props} style={[styles.variantText, { color: colors.textPrimary }, vku.style]}>
                       {variant.text}
                     </Text>
-                    <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>{[varietyName(variant.dialect), variant.region].filter(Boolean).join(' · ')}</Text>
+                    <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>{[t(dialectNameKey(variant.dialect)), variant.region].filter(Boolean).join(' · ')}</Text>
                     {variant.note ? <Text style={[styles.meta, dir.free, { color: colors.textSecondary }]}>{variant.note}</Text> : null}
                   </View>
                 );
@@ -174,7 +168,7 @@ const styles = StyleSheet.create({
   skeleton: { alignItems: 'center', paddingTop: spacing.xxl },
   facts: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
   verse: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
-  // a quiet line above and below the verse: the page's secondary ink, softened, as the story's chapter rule is
+  // A quiet rule above and below the verse, in the page's secondary ink softened, as a story's chapter rule is.
   rule: { width: 32, height: 2, borderRadius: radii.pill, opacity: 0.4 },
   proverb: { ...display(typography.sizes.xl), lineHeight: Math.round(typography.sizes.xl * 1.4) },
   translation: { fontSize: typography.sizes.lg, lineHeight: 30 },

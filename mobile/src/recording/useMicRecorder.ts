@@ -11,19 +11,12 @@ import {
 } from 'expo-audio';
 
 /**
- * The phone's microphone, for whatever records a take: a voice note
- * (library/VoiceRecorder) and a speaking exercise (lesson/useRecorder.native).
+ * The microphone, for voice notes (library/VoiceRecorder) and speaking exercises (lesson/useRecorder.native).
  *
- * It asks for the microphone only when record is pressed, and only then turns
- * the audio session over to recording. A take ends with `stop()`, at `maxMs`,
- * or when the app leaves the front (a call, the app switcher, the home
- * screen), so nothing goes on listening where nobody can see it. However it
- * ends, the session is back on playback before the take is handed over, and a
- * take with nobody left to receive it (the screen closed while it ran) is
- * deleted rather than left in the cache.
- *
- * HIGH_QUALITY records .m4a (audio/mp4), which is what the voice-note upload
- * declares.
+ * Permission is asked and the audio session switched to recording only when record is pressed. A take ends on
+ * `stop()`, at `maxMs`, or when the app leaves the foreground. The session is always back on playback before the
+ * take is handed over, and a take nobody is left to receive is deleted. HIGH_QUALITY records .m4a (audio/mp4),
+ * which the voice-note upload declares.
  */
 
 export type MicPermission = 'unknown' | 'granted' | 'denied';
@@ -34,16 +27,16 @@ export interface MicTake {
   durationMs: number;
 }
 
-/** How a press of record went: recording now, the microphone refused, or something else in the way. */
+/** The result of pressing record: recording, permission refused, or another failure. */
 export type StartOutcome = 'recording' | 'denied' | 'failed';
 
 export interface MicRecorder {
-  /** the microphone permission as last found; 'unknown' until record is first pressed */
+  /** The microphone permission as last found; 'unknown' until record is first pressed. */
   permission: MicPermission;
-  /** asking for the microphone, readying it, or finishing a take */
+  /** Asking for the microphone, readying it, or finishing a take. */
   busy: boolean;
   recording: boolean;
-  /** how long the take under way has run */
+  /** How long the take under way has run. */
   durationMs: number;
   start: () => Promise<StartOutcome>;
   stop: () => Promise<void>;
@@ -53,32 +46,26 @@ export interface MicRecorder {
 const RECORDING_MODE = { allowsRecording: true, playsInSilentMode: true } as const;
 
 /**
- * After it, for whatever plays next: the take itself, the model, the next
- * exercise's clip. Not a bare `allowsRecording: false`: on iOS a field left out
- * goes back to its default, and `playsInSilentMode` defaults to off, so after
- * one take a lesson's sounds would go quiet behind the ring switch.
+ * The playback mode restored after a take. It is set in full rather than as `allowsRecording: false`, because on
+ * iOS an omitted field reverts to its default and `playsInSilentMode` defaults to off, which would mute lessons.
  */
 export const PLAYBACK_MODE = { allowsRecording: false, playsInSilentMode: true } as const;
 
 /**
- * The playback mode from the moment the app starts, not only after a first
- * take: a learning app's sounds are its lessons, and somebody whose phone is
- * on silent opened a lesson to hear the words. Failing to set it is no reason
- * to stop the app; the default plays everywhere but behind the ring switch.
+ * Set the playback mode at startup so lessons play with the silent switch on. A failure is ignored; the default
+ * still plays except behind the silent switch.
  */
 export async function prepareAudioSession(): Promise<void> {
   try {
     await setAudioModeAsync(PLAYBACK_MODE);
   } catch {
-    // the platform's default mode stays
+    // The platform's default mode stays.
   }
 }
 
 /**
- * Whether the microphone has been refused for good: asking again would not
- * bring up the system's question, and only Settings can allow it now. Read
- * without asking, so nothing is shown to find out; not known reads as not
- * refused, and the question is asked when record is pressed.
+ * Whether microphone permission is denied for good, so only Settings can grant it. Read without prompting;
+ * unknown counts as not denied, and the prompt comes when record is pressed.
  */
 export async function micRefused(): Promise<boolean> {
   try {
@@ -95,7 +82,7 @@ export async function discardRecording(uri: string | null | undefined): Promise<
   try {
     await FileSystem.deleteAsync(uri, { idempotent: true });
   } catch {
-    // never written, or already cleared with the cache
+    // Never written, or already cleared with the cache.
   }
 }
 
@@ -103,27 +90,27 @@ export function useMicRecorder({
   maxMs,
   onStop,
 }: {
-  /** the longest a take may run; it stops there by itself */
+  /** The longest a take may run; it stops there by itself. */
   maxMs: number;
-  /** a take has ended, however it ended; null when it could not be saved */
+  /** A take has ended, however it ended; null when it could not be saved. */
   onStop: (take: MicTake | null) => void;
 }): MicRecorder {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  // read ten times a second, so a running clock moves smoothly
+  // Read ten times a second, so a running clock moves smoothly.
   const status = useAudioRecorderState(recorder, 100);
   const [permission, setPermission] = useState<MicPermission>('unknown');
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
 
   const live = useRef(true);
-  // a take under way, from record() until stop() has it
+  // A take under way, from record() until stop() has it.
   const taking = useRef(false);
   const starting = useRef<Promise<StartOutcome> | null>(null);
-  // the file the take under way is written to
+  // The file the take under way is written to.
   const file = useRef<string | null>(null);
-  // the session was switched to recording and has not been switched back
+  // The session was switched to recording and not yet switched back.
   const switched = useRef(false);
-  // refused, so coming back to the app is worth asking about again
+  // Refused, so coming back to the app is worth asking about again.
   const denied = useRef(false);
   const handOver = useRef(onStop);
   useEffect(() => {
@@ -136,7 +123,7 @@ export function useMicRecorder({
     try {
       await setAudioModeAsync(PLAYBACK_MODE);
     } catch {
-      // nothing else to put back
+      // Nothing else to put back.
     }
   }, []);
 
@@ -155,7 +142,7 @@ export function useMicRecorder({
     setBusy(true);
     let take: MicTake | null = null;
     try {
-      // read before stopping: iOS puts the clock back to nought when a take ends
+      // Read before stopping: iOS puts the clock back to nought when a take ends.
       const durationMs = recorder.getStatus().durationMillis;
       await recorder.stop();
       const uri = recorder.uri ?? written;
@@ -176,7 +163,7 @@ export function useMicRecorder({
 
   const start = useCallback((): Promise<StartOutcome> => {
     if (taking.current) return Promise.resolve('recording');
-    // a second press while the first is still asking is the same press
+    // A second press while the first is still asking is the same press.
     if (starting.current) return starting.current;
     const run = async (): Promise<StartOutcome> => {
       setBusy(true);
@@ -187,11 +174,10 @@ export function useMicRecorder({
         if (!answer.granted) return 'denied';
         await setAudioModeAsync(RECORDING_MODE);
         switched.current = true;
-        // the preset named again, so each take gets a file of its own: without
-        // it iOS writes every take over the last one's
+        // Pass the preset again so each take gets its own file; without it iOS overwrites the previous take.
         await recorder.prepareToRecordAsync(RecordingPresets.HIGH_QUALITY);
         file.current = recorder.uri;
-        // the screen closed while the microphone was being readied
+        // The screen closed while the microphone was being prepared.
         if (!live.current) {
           await abandon();
           return 'failed';
@@ -212,14 +198,12 @@ export function useMicRecorder({
     return starting.current;
   }, [recorder, abandon]);
 
-  // the cap: the take stops there by itself
+  // The cap: the take stops there by itself.
   useEffect(() => {
     if (recording && status.isRecording && status.durationMillis >= maxMs) void stop();
   }, [recording, status.isRecording, status.durationMillis, maxMs, stop]);
 
-  // leaving the front ends the take; coming back finds out whether the
-  // microphone has been allowed in Settings in the meantime, so record is
-  // offered again without leaving the screen
+  // Leaving the foreground ends the take; returning rechecks the permission, in case it was granted in Settings.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
       if (next !== 'active') {
@@ -239,7 +223,7 @@ export function useMicRecorder({
     return () => sub?.remove();
   }, [stop]);
 
-  // the screen closing mid-take ends it the same way, and lets its file go
+  // The screen closing mid-take ends it the same way, and lets its file go.
   useEffect(() => {
     live.current = true;
     return () => {

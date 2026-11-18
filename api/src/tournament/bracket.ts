@@ -1,9 +1,6 @@
 /**
- * Single-elimination bracket math (KUR-060). Pure and deterministic: given
- * rating-seeded participants it produces the standard seeded first round
- * (top seeds get the byes when the field isn't a power of two) and the rules
- * for propagating a winner up the tree. All persistence + orchestration lives
- * in the TournamentService — this module is just the shape of the bracket.
+ * Pure single-elimination bracket math: the seeded first round from rating-seeded players (top seeds get byes when the
+ * field is not a power of two) and how winners move up the tree. Persistence lives in TournamentService.
  */
 
 export interface Seed {
@@ -31,11 +28,7 @@ export function roundsForSize(size: number): number {
   return Math.log2(size);
 }
 
-/**
- * Standard tournament seed order for a bracket of `size`: the seed number
- * occupying each position, arranged so seeds 1 and 2 can only meet in the
- * final. e.g. size 8 → [1,8,4,5,2,7,3,6].
- */
+/** Standard seed order for a bracket of `size`, placing seeds so 1 and 2 can meet only in the final; size 8 gives [1,8,4,5,2,7,3,6]. */
 export function seedOrder(size: number): number[] {
   let positions = [1, 2];
   while (positions.length < size) {
@@ -50,11 +43,7 @@ export function seedOrder(size: number): number[] {
   return positions;
 }
 
-/**
- * Build the first-round pairings for the given seeds. Missing seeds (when the
- * field isn't a power of two) appear as `null`, which the service resolves as
- * a bye for the present player.
- */
+/** First-round pairings for the seeds; missing seeds (a field below a power of two) are null, which the service treats as a bye. */
 export function firstRoundMatches(seeds: Seed[]): FirstRoundMatch[] {
   const size = nextPowerOfTwo(seeds.length);
   const order = seedOrder(size);
@@ -73,18 +62,12 @@ export function firstRoundMatches(seeds: Seed[]): FirstRoundMatch[] {
   return matches;
 }
 
-/**
- * Where a completed match's winner goes: the parent match one round up sits at
- * `slot >> 1`, entering side `a` from even slots and side `b` from odd ones.
- */
+/** Where a match winner goes: the parent one round up at `slot >> 1`, on side `a` from even slots and `b` from odd ones. */
 export function parentSlot(slot: number): { slot: number; side: 'a' | 'b' } {
   return { slot: slot >> 1, side: slot % 2 === 0 ? 'a' : 'b' };
 }
 
-/**
- * Assign seeds by rating (highest rating = seed 1). Ties break by userId so
- * seeding is deterministic across runs.
- */
+/** Seeds by rating, highest first, with ties broken by user id so seeding is deterministic. */
 export function seedByRating(players: Array<{ userId: string; rating: number }>): Seed[] {
   return [...players]
     .sort((x, y) => y.rating - x.rating || x.userId.localeCompare(y.userId))

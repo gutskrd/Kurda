@@ -45,7 +45,7 @@ describe('counterFor', () => {
   it('stays quiet until a tenth of the limit is left, counting as the server does', () => {
     expect(counterFor('a'.repeat(179), 200)).toMatchObject({ show: false });
     expect(counterFor('a'.repeat(180), 200)).toEqual({ show: true, left: 20, over: false });
-    // spaces and blank lines at either end are not counted, as on the server
+    // Spaces and blank lines at either end are not counted, as on the server.
     expect(counterFor(`  ${'a'.repeat(180)}\n\n`, 200).left).toBe(20);
     expect(counterFor('a'.repeat(203), 200)).toEqual({ show: true, left: -3, over: true });
   });

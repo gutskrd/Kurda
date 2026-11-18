@@ -36,7 +36,7 @@ describe('sharing a post', () => {
   it('offers a share button that says what it does', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { friends: [] })));
     renderApp(<SharePost item={item} />);
-    // a share glyph alone announces as nothing; the label carries the meaning
+    // A share glyph alone announces nothing; the label carries the meaning.
     expect(screen.getByRole('button', { name: 'Share this post' })).toBeInTheDocument();
   });
 
@@ -46,7 +46,7 @@ describe('sharing a post', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Share this post' }));
     const field = await screen.findByLabelText('Link to this post');
-    // a relative href is useless the moment it leaves the page
+    // A relative href is useless once it leaves the page.
     expect((field as HTMLInputElement).value).toBe(`${window.location.origin}/app/library/p1`);
     expect(field).toHaveAttribute('readonly');
   });
@@ -66,7 +66,7 @@ describe('sharing a post', () => {
   });
 
   it('does not offer a system sheet that is not there', async () => {
-    // most desktops: the honest primary action is copying the link
+    // Most desktops: the primary action is copying the link.
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { friends: [] })));
     renderApp(<SharePost item={item} />);
 
@@ -90,8 +90,7 @@ describe('sharing a post', () => {
   });
 
   it('leaves the link there to select by hand when the clipboard refuses', async () => {
-    // a browser may refuse the clipboard outright; that is not worth a dialog,
-    // and the field beside the button is still the link
+    // A browser may refuse the clipboard; that is not worth a dialog, and the field beside it still holds the link.
     const writeText = vi.fn(async () => {
       throw new Error('NotAllowedError');
     });
@@ -108,8 +107,7 @@ describe('sharing a post', () => {
 
   it('sends it to a friend as a message they can reply to', async () => {
     signedIn();
-    // the second arg is unused here but gives the mock a 2-tuple, so the
-    // assertion below can read the request body off fetch.mock.calls
+    // The unused second argument gives the mock a 2-tuple, so the request body can be read off fetch.mock.calls.
     const fetch = vi.fn(async (url: string, _init?: RequestInit) => {
       if (url.includes('/friends')) {
         return jsonResponse(200, { friends: [{ userId: 'f1', username: 'zana', avatarUrl: null }] });
@@ -126,7 +124,7 @@ describe('sharing a post', () => {
     await waitFor(() => {
       const sent = fetch.mock.calls.find(([u]) => String(u).includes('/chat/f1/messages'));
       expect(sent, 'the message should go to that friend').toBeTruthy();
-      // the title gives the message something to read; the link is what it is for
+      // The title gives the message something to read; the link is its point.
       const body = JSON.parse(String(sent![1]?.body)).body as string;
       expect(body).toContain('Helbesta çiya');
       expect(body).toContain('/app/library/p1');
@@ -140,7 +138,7 @@ describe('sharing a post', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Share this post' }));
     expect(await screen.findByText(/Sign in to send this to a friend/)).toBeInTheDocument();
-    // …but the link itself is still theirs to copy
+    // The link itself can still be copied.
     expect(screen.getByLabelText('Link to this post')).toBeInTheDocument();
   });
 });

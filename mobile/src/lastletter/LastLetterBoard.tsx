@@ -56,24 +56,17 @@ function scriptStyle(dialect: LetterDialect): { writingDirection: 'rtl' | 'ltr';
   return letterDirection(dialect) === 'rtl' ? { writingDirection: 'rtl', textAlign: 'right' } : { writingDirection: 'ltr', textAlign: 'left' };
 }
 
-/**
- * The Last Letter's own staging on the phone, inside the room (play/GameRoom):
- * the ring around the next letter emptying with the turn (the server's
- * clock), the chain of word cards with each link drawn between them and read
- * in the dialect's own direction, each player's three strike marks, and on
- * your turn the word box, which says a slip it can see before it costs a
- * strike. A strike shakes the seat that took it and buzzes the phone of the
- * one who did; with Reduce Motion nothing moves, the colour says it.
- */
-/**
- * What a chain word means in the reader's language: the lesson or the
- * dictionary may give it in several, and English stands in for the rest. A
- * board from before meanings were kept in every language has only `meaning`.
- */
+/** A chain word's meaning in the reader's language, falling back to English, then to the single `meaning` older boards have. */
 export function meaningIn(word: Pick<LastLetterChainWord, 'meaning' | 'meanings'>, locale: string): string | null {
   return word.meanings?.[locale] ?? word.meanings?.en ?? word.meaning ?? null;
 }
 
+/**
+ * The Last Letter's board inside the room (play/GameRoom): the ring around the next letter emptying by the server's
+ * clock, the chain of word cards read in the dialect's direction, each player's three strikes, and on your turn the
+ * word box, which flags a visible slip before it costs a strike. A strike shakes the seat and buzzes the striker's
+ * phone; under Reduce Motion only the colour changes.
+ */
 export function LastLetterBoardView({
   view,
   skew,
@@ -88,7 +81,7 @@ export function LastLetterBoardView({
   const reduce = useReducedMotion();
   const board = view.board;
   const now = useServerNow(skew, view.status === 'active');
-  // the shake every wrong answer in the app has, which is still under Reduce Motion by itself
+  // The shake every wrong answer in the app has, which is still under Reduce Motion by itself.
   const { translateX: shake, run: runShake } = useShake();
   const [struck, setStruck] = useState<number | null>(null);
   const chain = useRef<ScrollView>(null);
@@ -147,7 +140,7 @@ export function LastLetterBoardView({
                 ? t('games.lastLetter.openLetter', { letter: board.openLetter })
                 : t('games.lastLetter.firstWord')}
           </Text>
-          {/* a soft ending passes on the letter before it: said once under the letter, so the ring never looks wrong */}
+          {/* A soft ending passes on the letter before it; said once under the letter so the ring never looks wrong. */}
           {board.required && board.requiredFrom ? (
             <Text style={[styles.starts, { color: colors.textSecondary }]}>
               {t('games.lastLetter.softEnding', { word: board.requiredFrom.word, vowel: board.requiredFrom.vowel, letter: board.required })}
@@ -161,8 +154,7 @@ export function LastLetterBoardView({
           ref={chain}
           horizontal
           showsHorizontalScrollIndicator={false}
-          // beside the word field, which is up the whole game: as every list beside a field does,
-          // it lets a tap reach what it holds rather than spend it closing the keyboard
+          // The word field stays up all game, so a tap on the list reaches its items instead of only closing the keyboard.
           keyboardShouldPersistTaps="handled"
           accessibilityLabel={t('games.lastLetter.chain')}
           contentContainerStyle={styles.chain}
@@ -237,11 +229,7 @@ export function LastLetterBoardView({
   );
 }
 
-/**
- * Every word of a finished game, in the order it was played, with who played
- * it and what it means: the game was a list of words, and its end is the
- * moment to read them again.
- */
+/** Every word of a finished game in play order, with who played it and what it means. */
 export function ChainReview({ board, name }: { board: LastLetterBoard; name: (seat: number) => string }): React.JSX.Element | null {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
@@ -305,7 +293,7 @@ function WordBox({
   const [word, setWord] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // a word the server took for a slip of a mark: no strike, and the word it most likely was offered in its place
+  // The server took the word for a mistyped mark: no strike, and the likely intended word is offered instead.
   const [didYouMean, setDidYouMean] = useState<string | null>(null);
   const slip = lastLetterSlip(board, word);
   const hint = !slip
@@ -357,7 +345,7 @@ function WordBox({
         style={[styles.input, scriptStyle(board.dialect), { color: colors.textPrimary, borderColor: slip ? colors.danger : colors.clayBorder }]}
       />
       <ClayButton label={busy ? '…' : t('games.lastLetter.send')} tone="primary" busy={busy} disabled={!word.trim() || slip !== null} onPress={() => void send()} />
-      {/* the letters a keyboard may not have, typed at the end of the word */}
+      {/* The letters a keyboard may not have, typed at the end of the word. */}
       <KeyBar dialect={board.dialect === 'ckb' ? 'sorani' : 'kurmanci'} onKey={(letter) => setWord((w) => w + letter)} disabled={busy} />
       {(error ?? hint) ? (
         <Text accessibilityLiveRegion="polite" style={[styles.hint, { color: colors.danger }]}>

@@ -45,7 +45,6 @@ describe('the words of a prompt', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  // Soranî reads from the right: its words, and the lines they wrap onto, start there
   it('runs right to left for a prompt in Soranî', () => {
     renderWithProviders(<PromptWords prompt="ببورە، خوات لەگەڵ" tokens={[{ text: 'ببورە', meanings: ['sorry'] }, { text: '، ' }, { text: 'خوات لەگەڵ', meanings: ['goodbye'] }]} />);
     const word = screen.getByRole('button', { name: 'ببورە' });

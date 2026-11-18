@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { Pressable, ReachReset } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useModalSlide } from '../a11y/useReducedMotion';
 import { SettingsRow } from '../settings/list';
 import { Icon } from '../theme/Icon';
 import { spacing } from '../theme/tokens';
@@ -14,28 +15,25 @@ import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 
 /**
- * "Send feedback" and "Rate Hevalo", in Settings → About.
- *
- * Send feedback opens the rating box's own form whenever wanted (source
- * `settings`, no once-only rule). Rate Hevalo opens the store page at its
- * reviews — a link somebody chose to follow, which both stores allow, unlike a
- * prompt the app puts up itself — and is only there once the store addresses
- * are in app.json.
+ * "Send feedback" and "Rate Hevalo" in Settings → About. Send feedback opens the rating box's form (source
+ * `settings`, no once-only rule). Rate Hevalo opens the store's review page, a link the user chose to follow,
+ * which both stores allow, and only appears once the store addresses are in app.json.
  */
 export function FeedbackSettingsRows({
   os = Platform.OS,
   storeUrls,
 }: {
   os?: string;
-  /** the store addresses; app.json's when left out */
+  /** The store addresses; app.json's when left out. */
   storeUrls?: { ios?: string; android?: string };
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  // the close at the end of the line the language reads along, where a sheet's own close is
+  // The close at the end of the line the language reads along, where a sheet's own close is.
   const dir = useDirection();
   const topInset = useScreenTopInset();
   const [open, setOpen] = useState(false);
+  const slide = useModalSlide();
   const store = storeUrls ? rateUrl(os, storeUrls) : rateUrl(os);
 
   return (
@@ -44,8 +42,8 @@ export function FeedbackSettingsRows({
       {store ? (
         <SettingsRow icon="star" title={t('appFeedback.rateRow')} opens={false} onPress={() => void Linking.openURL(store).catch(() => undefined)} />
       ) : null}
-      <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
-        {/* a sheet of its own, not beside the settings' controls: their groups' caps stop here */}
+      <Modal visible={open} animationType={slide} presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
+        {/* A sheet of its own, not beside the settings' controls: their groups' caps stop here. */}
         <ReachReset>
           <KeyboardAvoidingView
             style={[styles.sheet, { backgroundColor: colors.background }]}
@@ -56,7 +54,7 @@ export function FeedbackSettingsRows({
                 onPress={() => setOpen(false)}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close')}
-                // alone on its line, as a sheet's own close is: it reaches past every edge
+                // Alone on its line, as a sheet's own close is: it reaches past every edge.
                 reach="open"
                 style={({ pressed }) => [styles.close, pressed && heldDim]}
               >
@@ -64,7 +62,7 @@ export function FeedbackSettingsRows({
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              {/* a fresh form every time it opens */}
+              {/* A fresh form every time it opens. */}
               {open ? <RatingBox source="settings" onClose={() => setOpen(false)} /> : null}
             </ScrollView>
           </KeyboardAvoidingView>

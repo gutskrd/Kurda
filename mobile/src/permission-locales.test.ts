@@ -1,10 +1,7 @@
 /**
- * Guards the permission prompts iOS shows in each of the app's languages.
- *
- * iOS asks for the photo library and the microphone in the phone's language,
- * using the text the app ships for that language (app.json `locales`, one file
- * each under mobile/locales). Without a file the prompt is English whatever the
- * phone is set to, and the store does not list the language either.
+ * Guards the permission prompts iOS shows in each app language. iOS asks for the photo library and microphone in
+ * the phone's language using the text the app ships for it (app.json `locales`, one file per language under
+ * mobile/locales); without a file the prompt is English and the store does not list the language.
  */
 import { APP_LOCALES } from '@kurda/shared';
 import { describe, expect, it } from 'vitest';
@@ -51,7 +48,7 @@ describe('the permission prompts in every language', () => {
       for (const key of PROMPTS) {
         expect(ios[key]!.length, `${code} ${key}`).toBeGreaterThan(20);
         expect(ios[key], `${code} ${key}`).toContain('Hevalo');
-        // written into InfoPlist.strings as "…" without escaping, so a quote or a backslash would break the file
+        // Written into InfoPlist.strings as "…" without escaping, so a quote or backslash would break the file.
         expect(ios[key], `${code} ${key}`).not.toMatch(/["\\]/);
       }
     }
@@ -72,23 +69,18 @@ describe('the permission prompts in every language', () => {
   });
 
   /*
-   * Two plugins write the microphone prompt: the audio recorder, and the image
-   * picker, which would otherwise put its own generic "Allow Hevalo to access
-   * your microphone" there. Giving both the same text means whichever runs
-   * last, the prompt is the app's own.
+   * Two plugins write the microphone prompt, the audio recorder and the image picker (which would otherwise write
+   * a generic string); giving both the same text keeps the app's own whichever runs last.
    */
   it('gives both plugins that write the microphone prompt the same text', () => {
     expect(pluginConfig('expo-image-picker')?.microphonePermission).toBe(pluginConfig('expo-audio')?.microphonePermission);
   });
 
   /*
-   * The sentence inside the system's own prompt is read at review as closely
-   * as the screens are. What is asked of it: one brief, complete sentence, in
-   * the active voice and ending in a full stop, that says what the app does
-   * with what it is given. Not a request ("Turn on microphone access."), and
-   * not a need with no reason behind it ("Microphone access is needed for a
-   * better experience."). So each says what Hevalo does: it uploads the
-   * photos chosen, it records when record is tapped, and what for.
+   * App review reads the system prompt's sentence closely: one brief, complete, active sentence ending in a full
+   * stop that says what the app does with what it is given. Not a request ("Turn on microphone access.") nor an
+   * unexplained need ("Microphone access is needed for a better experience."): each says what Hevalo does,
+   * uploading the chosen photos or recording when record is tapped, and why.
    */
   it('says what Hevalo does, in one complete sentence, and asks for nothing', () => {
     for (const { code } of APP_LOCALES) {

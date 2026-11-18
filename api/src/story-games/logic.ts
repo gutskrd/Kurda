@@ -8,10 +8,8 @@ import {
 } from '@kurda/shared';
 
 /**
- * The rules of a story game that need no database: when each phase is due to
- * end, who is waited for, who holds the host controls, and who placed where.
- * The service applies them to a row it has locked; they are here so they can
- * be tested one by one.
+ * A story game's database-free rules: when each phase ends, who is waited for, who holds the host controls, and who
+ * placed where. The service applies them to a locked row.
  */
 
 /** What the phase rules need of a game. Times are epoch milliseconds. */
@@ -58,10 +56,9 @@ export function isActive(p: PhasePlayer): boolean {
 }
 
 /**
- * When this player's time for the open question runs out (before the grace),
- * or null when it never does. A timed question gives a player with extra time
- * twice the timer; an untimed duo or group question closes at its cap; an
- * untimed solo question waits for its reader.
+ * When this player's time for the open question runs out (before the grace), or null if never. A timed question gives
+ * extra-time players twice the timer; an untimed duo or group question closes at its cap; an untimed solo question
+ * waits for its reader.
  */
 export function questionDeadline(game: PhaseGame, extraTime: boolean): number | null {
   if (game.status !== 'question' || game.phaseStartedAt === null) return null;
@@ -70,10 +67,9 @@ export function questionDeadline(game: PhaseGame, extraTime: boolean): number | 
 }
 
 /**
- * When the open question closes on its own: the latest deadline among the
- * players it waits for, plus the answer grace — never earlier, or an answer
- * sent in the last second would arrive to a closed question. Away players are
- * not waited for; with nobody active, the game's own deadline stands.
+ * When the open question closes on its own: the latest deadline among the players it waits for, plus the answer grace,
+ * so a last-second answer still lands. Away players are not waited for; with nobody active the game's own deadline
+ * stands.
  */
 export function questionCloseAt(game: PhaseGame, players: readonly PhasePlayer[]): number | null {
   if (game.status !== 'question') return null;
@@ -113,9 +109,8 @@ export function dueTransition(game: PhaseGame, players: readonly PhasePlayer[], 
 }
 
 /**
- * The next instant something may become due: a deadline, or a player turning
- * away (which can make "everyone has answered" true, or move the host
- * controls). Null when nothing ever will.
+ * The next instant something may become due: a deadline, or a player turning away (which can complete "everyone
+ * answered" or move the host controls). Null when nothing ever will.
  */
 export function nextDueAt(game: PhaseGame, players: readonly PhasePlayer[]): number | null {
   const times: number[] = [];
@@ -153,11 +148,9 @@ export function questionEndsAt(mode: StoryGameMode, timerSeconds: number, now: n
 }
 
 /**
- * Who holds the host controls right now: the host while they are in the game
- * and present; otherwise the earliest-joined active player, until the host is
- * back. Host controls only ever make a game move sooner — deadlines keep it
- * moving without anyone — so handing them on costs nothing and saves a group
- * from waiting on a phone that died.
+ * Who holds the host controls now: the host while in the game and present, else the earliest-joined active player until
+ * the host returns. Host controls only make a game move sooner (deadlines keep it going anyway), so handing them on is
+ * harmless.
  */
 export function controllerOf(hostId: string | null, players: readonly PhasePlayer[]): string | null {
   const host = hostId ? players.find((p) => p.userId === hostId) : undefined;

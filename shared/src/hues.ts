@@ -1,26 +1,16 @@
 /**
- * Hevalo's colours: nine hues, each in the same four steps, for the light
- * theme and the dark.
+ * Hevalo's colours: nine hues, each in the same four steps, for light and dark. The app is one ink on a quiet page with
+ * its icon's violet; everything else needing a colour of its own (a game's stamp, a practice kind, a chapter of the book)
+ * takes one of these, never a colour mixed on the spot. The steps sit at the same lightness in a perceptual space, so a
+ * row reads as one family:
  *
- * The app is written in one ink on a quiet page, and its own colour is the
- * violet of its icon. Everything else that needs a colour of its own — a
- * game's stamp, a way to practise, a chapter of the book — takes one of
- * these hues, never a colour mixed on the spot: nine tiles of nine unrelated
- * colours are what made a screen look thrown together.
- *
- * Every hue has the same steps at the same lightness, worked out in a
- * perceptual space so that a row of them reads as one family:
- *
- *   tint  the palest: the paper of a stamp, the ground of a card
- *   wash  a step deeper: the ground of an icon, a pressed tint
+ *   tint  the palest: a stamp's paper, a card's ground
+ *   wash  a step deeper: an icon's ground, a pressed tint
  *   base  the hue itself, saturated: a picture's ground, a mark, a glow
- *   deep  its darkest shade (its palest, in the dark theme): words and
- *         glyphs on the tint or the wash
+ *   deep  its darkest (palest in the dark theme): words and glyphs on the tint or the wash
  *
- * `deep` on `tint` and on `wash` clears 7:1 in both themes (hues.test.ts), so
- * a label in a hue's own colour is as readable as one in ink. `base` is for
- * shapes, not for words: gold and orange are too light to write in on a pale
- * ground, which is the nature of yellow.
+ * `deep` on `tint` and `wash` clears 7:1 in both themes (hues.test.ts). `base` is for shapes, not words: gold and orange
+ * are too light to write in on a pale ground.
  */
 export const HUE_NAMES = ['violet', 'indigo', 'blue', 'teal', 'green', 'gold', 'orange', 'red', 'pink'] as const;
 export type HueName = (typeof HUE_NAMES)[number];
@@ -46,7 +36,7 @@ export const HUES: Readonly<Record<HueScheme, Readonly<Record<HueName, HueSteps>
     red: { tint: '#ffeceb', wash: '#fed9d5', base: '#de3b40', deep: '#721118' },
     pink: { tint: '#ffebf3', wash: '#fed6e8', base: '#d13d91', deep: '#6b1346' },
   },
-  // by night the grounds are deep and the hue is lifted and softened: a saturated colour on a dark page glares
+  // By night the grounds are deep and the hue lifted and softened, since a saturated colour on a dark page glares.
   dark: {
     violet: { tint: '#2b203a', wash: '#3d2c53', base: '#c39afa', deep: '#e3d1fe' },
     indigo: { tint: '#1f243f', wash: '#2b3259', base: '#9baafe', deep: '#d0d9fe' },

@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -29,7 +29,7 @@ const unread = {
   'GET /chat/conversations': ok({ conversations: [] }),
   'GET /me/groups/unread': ok({ unread: [] }),
   'GET /me/notifications/unread-count': ok({ count: 0 }),
-  'GET /me/social': ok({ unread: {} }),
+  'GET /me/gifts/unseen': ok({ unseen: 0 }),
 };
 
 function open(routes: Record<string, unknown>) {
@@ -42,7 +42,7 @@ function open(routes: Record<string, unknown>) {
 }
 
 describe('friend requests', () => {
-  // a list that could not be loaded is not the same as nobody asking
+  // A list that could not be loaded is not the same as nobody asking.
   it('says it could not load, rather than that nobody has asked, and tries again', async () => {
     let calls = 0;
     open({
@@ -60,16 +60,16 @@ describe('friend requests', () => {
       'POST /friends/requests/u3/accept': () => new Promise<ApiResult<never>>((resolve) => (answer = resolve)),
     });
     fireEvent.click(await screen.findByRole('button', { name: 'Accept friend request from rojin' }));
-    // gone at once, as an answered request is …
+    // Gone at once, as an answered request is …
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Accept friend request from rojin' })).toBeNull());
-    // … and back when the server could not take the answer
+    // … and back when the server could not take the answer.
     answer(serverDown);
     expect(await screen.findByRole('button', { name: 'Accept friend request from rojin' })).toBeTruthy();
   });
 });
 
 describe('friend requests, as friendship tickets', () => {
-  // somebody with no name of their own is named once, by their handle, and shown with their own picture
+  // Somebody without a display name is named once, by handle, with their own picture.
   it('says who is asking once, with the face they have everywhere else', async () => {
     open({ 'GET /friends/requests': ok({ requests: [{ userId: 'u3', username: 'rojin', avatarUrl: 'https://hevalo.app/cosmetics/avatars/default-01.png' }] }) });
     expect(await screen.findByText('Wants to be friends')).toBeTruthy();
@@ -89,10 +89,10 @@ describe('friend requests, as friendship tickets', () => {
     });
     expect(await screen.findByText('Rojîn wants to be friends')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Accept friend request from rojin' }));
-    // the same answer, through the same route as ever
+    // The same answer, through the same route as ever.
     expect(screen.getByText('Friends')).toBeTruthy();
     await waitFor(() => expect(posted).toBe('accept'));
-    // a screen reader hears it
+    // A screen reader hears it.
     expect(await screen.findByText('You and Rojîn are friends now')).toBeTruthy();
     await waitFor(() => expect(screen.queryByText('Rojîn wants to be friends')).toBeNull());
   });

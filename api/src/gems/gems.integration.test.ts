@@ -1,8 +1,6 @@
 /**
- * Config-driven Gem grants (KUR-068) against real Postgres: the amount, the
- * caps, the cooldown and the once-per-event key, on rules made for this suite
- * — and which of the seeded rules still pay, now that the two anybody could
- * farm are switched off.
+ * Config-driven Gem grants against real Postgres: amount, caps, cooldown and the once-per-event key on rules made
+ * for this suite, and which seeded rules still pay.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -47,7 +45,7 @@ describe.skipIf(!DATABASE_URL)('gem earning (integration)', () => {
     wallet = new WalletService(pool);
     gems = new GemService(pool, wallet);
     ids.push(await register('a'), await register('b'), await register('c'));
-    // test-scoped rules so we don't depend on the seeded amounts, or on which seeded rules are switched on
+    // Rules of this suite's own, independent of seeded amounts and switches.
     await gems.upsertRule({ key: `earn_${suffix}`, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
     await gems.upsertRule({ key: `off_${suffix}`, amount: 15, dailyCap: null, cooldownSeconds: 0, active: false });
     await gems.upsertRule({ key: `capped_${suffix}`, amount: 40, dailyCap: 50, cooldownSeconds: 0, active: true });
@@ -87,17 +85,13 @@ describe.skipIf(!DATABASE_URL)('gem earning (integration)', () => {
     const rule = `off_${suffix}`;
     expect(await gems.grant(ids[0]!, rule, `off-1:${suffix}`)).toEqual({ granted: 0, cappedBy: 'no_rule' });
     expect((await wallet.balances(ids[0]!)).gems).toBe(15);
-    // nothing was written for the refused grant, so the same event is paid when the rule is on
+    // Nothing was written for the refused grant, so the same event pays once the rule is on.
     await gems.upsertRule({ key: rule, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
     expect(await gems.grant(ids[0]!, rule, `off-1:${suffix}`)).toEqual({ granted: 15, cappedBy: 'none' });
     expect((await wallet.balances(ids[0]!)).gems).toBe(30);
   });
 
-  /**
-   * Free gems are rare (migration 1751000312000): a perfect lesson and an
-   * achievement, which anybody could repeat for more, pay nothing. Both rules
-   * are still in the table for an admin to switch back on.
-   */
+  /** A perfect lesson and an achievement pay nothing; both rules stay in the table for an admin to switch on. */
   it('pays nothing for a perfect lesson or an achievement, the two rules now switched off', async () => {
     const u = ids[0]!;
     const before = (await wallet.balances(u)).gems;

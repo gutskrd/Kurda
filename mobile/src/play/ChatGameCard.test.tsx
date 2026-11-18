@@ -31,7 +31,7 @@ describe('cardAction', () => {
     expect(cardAction(card({}))).toEqual({ kind: 'join', prominent: true });
     expect(cardAction(card({ isMember: true, canJoin: false }))).toEqual({ kind: 'enter', prominent: true });
     expect(cardAction(card({ status: 'full', isMember: true, canJoin: false }))).toEqual({ kind: 'enter', prominent: true });
-    // a game under way or over keeps a quiet way in, so past games do not shout
+    // A game under way or over keeps a quiet way in, so past games do not stand out.
     expect(cardAction(card({ status: 'started', isMember: true, canJoin: false }))).toEqual({ kind: 'enter', prominent: false });
     expect(cardAction(card({ status: 'finished', isMember: true, canJoin: false }))).toEqual({ kind: 'enter', prominent: false });
     expect(cardAction(card({ status: 'cancelled', isMember: true, canJoin: false }))).toBeNull();
@@ -48,7 +48,7 @@ describe('cardStamp and cardSpent', () => {
     expect(cardStamp(card({ status: 'started', isMember: true, canJoin: false }))).toEqual({ key: 'play.card.joined', tone: 'success' });
     expect(cardStamp(card({ status: 'finished', isMember: true, canJoin: false }))).toEqual({ key: 'play.card.finished', tone: 'muted' });
     expect(cardStamp(card({ status: 'cancelled', canJoin: false }))).toEqual({ key: 'play.card.cancelled', tone: 'muted' });
-    // a card this viewer may not see says so in words, and gives nothing away with a stamp
+    // A card this viewer may not see says so in words, with no stamp.
     expect(cardStamp(card({ status: 'unavailable', isMember: true, canJoin: false }))).toBeNull();
     expect(cardStamp(null)).toBeNull();
   });
@@ -73,12 +73,7 @@ describe('gameCardOf', () => {
     expect(gameCardOf({ kind: 'gift', body: null })).toBeNull();
   });
 
-  /*
-   * A chat keeps what was sent in it. An invitation to Don't Say the Word! or
-   * Kurdish Bluff, sent while those were games, names a game that has no
-   * screen any more: it is not a card, and nothing in the thread tries to
-   * open it.
-   */
+  // Old chats keep invitations to retired games (Don't Say the Word!, Kurdish Bluff); they are not cards.
   it('makes no card of an invitation to a game that has been retired', () => {
     expect(gameCardOf({ kind: 'game', game: { game: 'dont-say' as never, lobbyId: 'x' }, body: null })).toBeNull();
     expect(gameCardOf({ kind: 'game', game: { game: 'bluff' as never, lobbyId: 'x' }, body: null })).toBeNull();
@@ -99,7 +94,7 @@ describe('retiredGameOf', () => {
     expect(retiredGameOf({ kind: 'text', body: `https://hevalo.app/app/games/impostor?id=${LOBBY}` })).toBeNull();
     expect(retiredGameOf({ kind: 'text', body: 'Do you remember the bluff we played?' })).toBeNull();
     expect(retiredGameOf({ kind: 'gift', body: null })).toBeNull();
-    // a link to a game that is still played wins over one that is not
+    // A link to a game still played wins over one that is not.
     expect(retiredGameOf({ kind: 'text', body: `/app/games/bluff?id=${LOBBY} /app/games/impostor?id=${LOBBY}` })).toBeNull();
   });
 });
@@ -138,7 +133,7 @@ describe('ChatGameCard', () => {
     navigation.navigate.mockClear();
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} onReport={onReport} />);
     fireEvent.mouseDown(await screen.findByRole('button', { name: 'Join: Stories' }), { button: 0, buttons: 1 });
-    // a hold is a real long press, so wait longer than findBy's default second
+    // A hold is a real long press, so wait longer than findBy's default second.
     await waitFor(() => expect(onReport).toHaveBeenCalledTimes(1), { timeout: 3000 });
     expect(navigation.navigate).not.toHaveBeenCalled();
   });
@@ -190,7 +185,7 @@ describe('ChatGameCard, as a ticket', () => {
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} from="rojin" />);
     expect(await screen.findByText('Under way')).toBeTruthy();
     expect(screen.getByText('From rojin')).toBeTruthy();
-    // with nothing to press, the card is read as one element
+    // With nothing to press, the card is read as one element.
     expect(screen.getByLabelText('From rojin. Game card: Stories. Under way')).toBeTruthy();
   });
 });

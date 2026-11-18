@@ -1,9 +1,7 @@
 /**
- * What the Hevalo book is made of, read from the files the course is seeded
- * from: the road's plan, its unit files, and the stories told at the end of
- * its chapters; and, beside the plan, the book's own telling of each
- * lesson's beat (book-beats.json), which the seeder does not read. Read
- * once and kept: the files change only with a deploy.
+ * The book's sources, read from the course seed files: the road plan, its unit files, and the chapter-end stories; plus
+ * the book's own beat tellings (book-beats.json), which the seeder ignores. Read once and cached, since the files
+ * change only with a deploy.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { ROAD_DIR } from '../content/road-seed.js';

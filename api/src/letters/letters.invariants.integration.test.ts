@@ -1,17 +1,9 @@
 /**
- * The promise the letters make, checked after every step of a long walk
- * against real Postgres: every letter delivered in an open correspondence is
- * either read and done with at the window, or still listed for the window of
- * the person it was written to. Nothing anybody does, in any order, and two
- * of them at the same moment, may leave a letter that nobody will ever see
- * land.
- *
- * Four adults send birds out, call them, answer them or send them on, write
- * back, open their letters, see them land, call their birds home, say goodbye
- * and block each other, chosen by a seeded random walk so a failure can be
- * replayed exactly. Every refusal must be one the app can explain (a 4xx), and
- * after every step the bird out, the bird at the window and the letters to
- * land must agree between the two people they concern.
+ * The letters' promise, checked after every step of a seeded random walk against real Postgres: every letter
+ * delivered in an open correspondence is either read at the window or still listed for its recipient's window, so
+ * nothing anyone does, in any order or at once, leaves a letter nobody will see land. Four adults send, call, answer,
+ * pass on, reply, read, land, recall, say goodbye and block; every refusal must be a 4xx, and after every step both
+ * sides of every bird must agree.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -134,7 +126,7 @@ describe.skipIf(!DATABASE_URL)('letters invariants (integration)', () => {
 
     /** The promise, and the agreement between the two sides of every bird. */
     const check = async (label: string): Promise<void> => {
-      // a bird is never left at a window once its letter is no longer out
+      // A bird is never left at a window once its letter is no longer out.
       const stray = await pool.query(
         `SELECT v.id FROM letter_visits v JOIN letters l ON l.id = v.letter_id WHERE v.ended_at IS NULL AND l.status <> 'flying' AND l.sender_id = ANY($1::uuid[])`,
         [ids],
@@ -157,7 +149,7 @@ describe.skipIf(!DATABASE_URL)('letters invariants (integration)', () => {
         expect(listed, `${label}: letter ${row.id} is neither done with nor listed to land`).toBe(true);
       }
 
-      // the two sides of every bird agree: out and visiting for its writer, and on the sill of the one reading it
+      // Both sides of every bird agree: out and visiting for its writer, on the sill of its reader.
       for (const [id, page] of pages) {
         if (page.visitor) {
           const writer = pages.get(page.visitor.person.id);
@@ -177,7 +169,7 @@ describe.skipIf(!DATABASE_URL)('letters invariants (integration)', () => {
     };
 
     for (let i = 0; i < STEPS; i++) {
-      // the day's letters and calls are a limit per day: let a day pass now and then, for what is over and done
+      // The daily limits are per day, so let a day pass now and then.
       if (i > 0 && i % 25 === 0) {
         await pool.query(`UPDATE letters SET created_at = created_at - interval '25 hours' WHERE sender_id = ANY($1::uuid[]) AND status <> 'flying'`, [ids]);
         await pool.query(`UPDATE letter_visits SET called_at = called_at - interval '25 hours' WHERE visitor_id = ANY($1::uuid[]) AND ended_at IS NOT NULL`, [ids]);

@@ -1,11 +1,11 @@
 export type AppEnv = 'development' | 'staging' | 'production';
 
 const BASE_URLS: Record<AppEnv, string> = {
-  // Android emulator reaches the host machine via 10.0.2.2; devs on iOS
-  // simulator or a real device override via EXPO_PUBLIC_API_URL
+  // The Android emulator reaches the host machine via 10.0.2.2; iOS simulators and real devices override with
+  // EXPO_PUBLIC_API_URL.
   development: 'http://localhost:3000',
   staging: 'https://staging-api.kurda.app',
-  // The live API (KUR-008). Update to a custom domain once one points at it.
+  // The live API.
   production: 'https://kurda-api.onrender.com',
 };
 
@@ -14,39 +14,25 @@ export function apiBaseUrl(env: AppEnv, override?: string): string {
 }
 
 /**
- * The API base URL to use when no explicit override (EXPO_PUBLIC_API_URL) is
- * baked into the build or set in the shell that starts the dev server.
- *
- * The live API, in every kind of build. A development build used to fall back
- * to localhost, on the theory that a developer runs the API beside the app,
- * and the one place that theory held was a simulator on the same machine. On
- * a phone, localhost is the phone, so the first development build anybody
- * installed opened on "API unreachable" and could not sign in. Somebody who
- * does run the API locally says so once with EXPO_PUBLIC_API_URL; everybody
- * else gets the app that works.
+ * The API base URL when no EXPO_PUBLIC_API_URL override is set: the live API in every kind of build. On a phone,
+ * localhost is the phone itself, so a development build defaulting to it could not sign in. Anyone running the
+ * API locally sets EXPO_PUBLIC_API_URL.
  */
 export function defaultApiBaseUrl(): string {
   return apiBaseUrl('production');
 }
 
 /**
- * Where the site's static art lives.
- *
- * Cosmetic assets — default avatars, profile backgrounds, icons — are files
- * shipped with the website, not things the API serves. The API therefore hands
- * out site-relative paths like `/cosmetics/avatars/default-01.png`, which a
- * browser resolves against its own origin and a phone cannot resolve at all.
+ * Where the site's static art lives. Cosmetic assets (default avatars, profile backgrounds, icons) ship with the
+ * website, so the API returns site-relative paths like `/cosmetics/avatars/default-01.png` that a phone cannot
+ * resolve on its own.
  */
 const SITE_URL = 'https://hevalo.app';
 
 /**
- * Make a URL the phone can actually load.
- *
- * Absolute URLs (an uploaded photo in object storage) are handed back
- * untouched; a site-relative path is resolved against the website, which is the
- * origin that serves it. The production site is used even in development
- * because these are public, immutable files — a local web server would only
- * make dev differ from release for no gain.
+ * Make a URL the phone can load. Absolute URLs (an uploaded photo) are returned as they are; a site-relative path
+ * is resolved against the website. Production is used in development too, since these are public, immutable
+ * files.
  */
 export function assetUrl(url: string | null | undefined): string | null {
   if (!url) return null;

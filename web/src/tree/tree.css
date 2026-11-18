@@ -1,10 +1,6 @@
-/*
- * The learner's tree: the page it has to itself, its card on Learn and its
- * place on a profile. `--tree` is the kind's own colour (shared
- * `treeColour`), which washes what the tree stands in front of.
- */
+/* The learner's tree: its page, its card on Learn and its profile section. `--tree` is the kind's colour (`treeColour`). */
 
-/* ───────────────────────────────────────────────────────────── the drawing */
+/* ───────────────────────────────────────────────────────────── The drawing */
 .tree-art {
   position: relative;
   display: inline-block;
@@ -22,14 +18,9 @@
   height: 100%;
 }
 /*
- * The plant moves in the air about its foot; the ground under it and the
- * front over its foot do not. The breeze (shared `TREE_SWAY`: how far, how
- * long, and where in it the tree starts) is set on the element, so every
- * tree sways in step and one drawn again carries on where it was. It turns
- * by the `rotate` property, so the page's own movements of the plant (its
- * `transform`: dropped in, watered, shaken, grown) are laid over it rather
- * than replacing it. The swing hangs from it and leans a little after it,
- * as a parallelogram does, its seat level.
+ * The plant sways about its foot; the ground and the front stay still. The breeze (shared `TREE_SWAY`) is set on the
+ * element, so every tree sways in step. It uses `rotate`, so the page's own `transform` animations layer over it. The
+ * swing hangs from it and lags slightly, skewing like a parallelogram with its seat level.
  */
 .tree-art-sway.is-swaying {
   animation: tree-sway 6400ms cubic-bezier(0.37, 0, 0.63, 1) infinite;
@@ -61,7 +52,7 @@
   flex: none;
   line-height: 0;
 }
-/* drawn at one size and shown at whatever holds it */
+/* Drawn at one size and scaled to its holder. */
 .tree-art.is-fluid,
 .water-drop.is-fluid,
 .watering-can.is-fluid {
@@ -76,7 +67,7 @@
   height: 100%;
 }
 
-/* ──────────────────────────────────────────────────────────────── the page */
+/* ──────────────────────────────────────────────────────────────── The page */
 .tree-page {
   display: grid;
   gap: var(--space-4);
@@ -89,10 +80,8 @@
 }
 
 /*
- * Where the tree stands: the scene of the season, as in the owner's
- * reference. The scene's picture is square and laid at the foot of the stage,
- * so on a wide page it is the top of the wall that is cut off; above it the
- * stage is the wall's own colour, given with the season.
+ * The seasonal scene: a square picture at the foot of the stage, so a wide page crops the top of the wall; above it
+ * the stage takes the wall's colour.
  */
 .tree-stage {
   position: relative;
@@ -130,7 +119,7 @@
   height: 100%;
 }
 
-/* a tree in its season as a still picture, wherever a small one is shown */
+/* A small still picture of a tree in its season. */
 .tree-picture {
   position: relative;
   display: block;
@@ -155,13 +144,9 @@
 }
 
 /*
- * The season in the air. Petals and leaves leave the crown and are blown
- * away to the left, falling as they go and turning over and over, which is
- * what the squeeze in their scale is; snow comes down over the whole scene,
- * the wind taking it a little to the left too. The wind blows the same way
- * whichever way the page reads: it is the picture's wind.
+ * The season in the air: petals and leaves blow left from the crown, tumbling (the squeeze in their scale), and snow
+ * falls with a little leftward drift. The wind blows left whichever way the page reads. It sits in front of the tree.
  */
-/* in front of the tree, as the reference's leaves are: they leave its crown and cross before it */
 .tree-ambient {
   z-index: 1;
   overflow: hidden;
@@ -237,7 +222,7 @@
   }
 }
 
-/* the tree's own square of the stage, standing with its foot on the floor (its height and how high it stands come with it, from where the phone puts it too) */
+/* The tree's square of the stage, its foot on the floor (size and position from `TREE_PLACE`, as on the phone). */
 .tree-stage-plot {
   position: absolute;
   left: 50%;
@@ -245,7 +230,7 @@
   translate: -50% 0;
   touch-action: manipulation;
 }
-/* it rises and sinks a little on its round, as if it breathed */
+/* A gentle bob on its round of grass. */
 .tree-stage-bob {
   display: block;
   width: 100%;
@@ -267,7 +252,7 @@
   height: 100%;
   transform-origin: 50% 83.3%;
 }
-/* arriving with the page */
+/* Arriving with the page. */
 .tree-stage-art.is-shown {
   animation: tree-arrive 760ms var(--ease-spring) both;
 }
@@ -282,13 +267,9 @@
   }
 }
 /*
- * Grown into (shared `TREE_GROW`): the tree that was stays a moment over the
- * new one (`.is-leaving`), swelling toward the new one's size, while the new
- * one comes up under it from the old one's size (`--grow-from`, shared
- * `treeGrowFrom`), a little past its own, and back. The new one is in before
- * the old one fades off it, so what the two share is never half there; the
- * ground and the front only fade from the old to the new, since they do not
- * grow.
+ * Growing (shared `TREE_GROW`): the old tree (`.is-leaving`) stays briefly over the new one, swelling toward its size,
+ * while the new one rises from the old size (`--grow-from`, shared `treeGrowFrom`), overshoots and settles. The new one
+ * is in before the old fades, so shared parts never look half there; the ground and front only crossfade.
  */
 .tree-stage-art.is-leaving {
   position: absolute;
@@ -347,7 +328,7 @@
     opacity: 0;
   }
 }
-/* brought back from thirst (shared `TREE_REVIVE`): the drooping picture fades off the revived one, which was under it all along */
+/* Revived from thirst (shared `TREE_REVIVE`): the drooping picture fades off the revived one beneath it. */
 .tree-stage-art.is-leaving.is-revive {
   animation: tree-fade-out 720ms ease-in-out both;
 }
@@ -359,7 +340,7 @@
     opacity: 0;
   }
 }
-/* a seed just planted: dropped into its hollow, behind the earth in front of it, where it settles */
+/* A seed just planted drops into its hollow behind the front earth and settles. */
 .tree-stage-art.is-planted .tree-art-plant {
   animation: tree-plant 950ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
 }
@@ -385,10 +366,8 @@
   }
 }
 /*
- * Watered (shared `TREE_DRINK`): the plant starts, the way anything does that
- * is given a drink — a sprout a long way, a great tree only a shiver, by its
- * heft (`--heft`, shared `treeHeft`) — and is still again before the pour is
- * over. It is laid over the sway, which carries on through it.
+ * Watered (shared `TREE_DRINK`): the plant starts, a sprout a long way and a great tree only a shiver (`--heft`, shared
+ * `treeHeft`), and settles before the pour ends. It layers over the sway.
  */
 .tree-stage.is-pouring .tree-stage-art:not(.is-leaving) .tree-art-start {
   animation: tree-drink 940ms var(--ease-spring) 520ms both;
@@ -410,7 +389,7 @@
     transform: scale(1, 1);
   }
 }
-/* while it grows, the scene lightens round it */
+/* While it grows, the scene lightens around it. */
 .tree-stage.is-growing .tree-scene-wall {
   animation: tree-hush 1150ms ease-out both;
 }
@@ -424,7 +403,7 @@
   }
 }
 
-/* the thought of a tree that wants water: it floats by its top, and nods */
+/* A thirsty tree's thought of water floats by its top and nods. */
 .tree-thought {
   position: absolute;
   top: var(--thought, 6%);
@@ -475,7 +454,7 @@
   }
 }
 
-/* the can: it comes in over the tree's shoulder, tips, pours, and goes */
+/* The can comes in over the tree, tips, pours and leaves. */
 .tree-pour-can {
   position: absolute;
   top: 0;
@@ -505,7 +484,7 @@
     transform: translate(30%, -30%) rotate(6deg);
   }
 }
-/* the water: from the can's rose down to where it lands on the tree */
+/* The water falls from the can's rose to where it lands on the tree. */
 .tree-pour-drop {
   position: absolute;
   top: 22%;
@@ -535,7 +514,7 @@
     transform: scale(1.3, 0.5);
   }
 }
-/* and where it reaches the ground, a ring goes out from the foot of the tree */
+/* Where it reaches the ground, a ring spreads from the tree's foot. */
 .tree-pour-ring {
   position: absolute;
   top: 83.3%;
@@ -562,7 +541,7 @@
   }
 }
 
-/* growing: a light goes off behind it, and its leaves fly out */
+/* Growing: a light flashes behind it and its leaves fly out. */
 .tree-burst-light {
   position: absolute;
   top: 56%;
@@ -618,7 +597,7 @@
   }
 }
 
-/* drunk: sparks stand round it for a moment */
+/* After drinking, sparks surround it for a moment. */
 .tree-cheer i {
   position: absolute;
   width: 5%;
@@ -643,7 +622,7 @@
   }
 }
 
-/* how it fares, said plainly and once */
+/* Its health, stated once. */
 .tree-health,
 .tree-note {
   display: flex;
@@ -671,7 +650,7 @@
   font-weight: 600;
 }
 
-/* how far to what comes next: what is being grown toward, in a ring that closes as it is watered */
+/* Progress to the next goal, in a ring that closes as it is watered. */
 .tree-growth {
   display: flex;
   gap: 16px;
@@ -731,7 +710,7 @@
   font-size: var(--text-secondary);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  /* a new count comes in with a start: something was added */
+  /* A new count pops in to show something was added. */
   animation: tree-count 420ms var(--ease-spring) both;
 }
 [dir='rtl'] .tree-growth-count {
@@ -745,7 +724,7 @@
     transform: scale(1);
   }
 }
-/* its seven stages as a row of beads: the ones behind it filled, the one it is at ringed */
+/* The seven stages as beads: past ones filled, the current one ringed. */
 .tree-steps {
   display: flex;
   gap: 6px;
@@ -772,7 +751,7 @@
   font-size: var(--text-secondary);
 }
 
-/* the water held, and the pouring of it */
+/* The water held, and pouring it. */
 .tree-water {
   display: grid;
   gap: 10px;
@@ -823,8 +802,8 @@
   font-weight: 800;
 }
 
-/* ─────────────────────────────────────────── choosing a tree, and the nursery */
-/* the seeds to choose from: one to a kind, the picked one held up in its own colour */
+/* ─────────────────────────────────────────── Choosing a tree, and the nursery */
+/* The seeds to choose from, one per kind; the picked one is raised in its colour. */
 .tree-seeds {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -857,7 +836,7 @@
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
-/* the seed's picture closes in on the seed itself */
+/* The seed's picture is cropped to the seed. */
 .tree-seed-art {
   position: relative;
   width: 76px;
@@ -887,7 +866,7 @@
   color: var(--ink);
   font-weight: 800;
 }
-/* what the name means: small enough to stay on a line in a quarter of a phone's width, and hyphenated where it cannot */
+/* The name's meaning: small enough for one line in a quarter of a phone's width, hyphenated otherwise. */
 .tree-seed-meaning {
   max-width: 100%;
   color: var(--ink-3);
@@ -957,7 +936,7 @@
   font-size: var(--text-secondary);
   font-weight: 700;
 }
-/* on a narrow screen a kind's button goes under it, so its words keep the room beside its picture */
+/* On a narrow screen a kind's button goes below, so its text keeps the space beside its picture. */
 @media (max-width: 520px) {
   .tree-kind {
     grid-template-columns: auto 1fr;
@@ -1014,8 +993,8 @@
   margin-top: 6px;
 }
 
-/* ───────────────────────────────────────────────────────── its card on Learn */
-/* the quests' card's sibling: the same width, edge and ground, right under it */
+/* ───────────────────────────────────────────────────────── Its card on Learn */
+/* A sibling of the quests card: the same width, border and background, right below it. */
 .tree-card {
   display: flex;
   gap: 12px;
@@ -1087,7 +1066,7 @@
   transform: scaleX(-1);
 }
 
-/* ─────────────────────────────────────────────────────────── on a profile */
+/* ─────────────────────────────────────────────────────────── On a profile */
 .profile-tree-body {
   display: flex;
   gap: 14px;
@@ -1136,12 +1115,12 @@
   text-decoration: none;
 }
 
-/* the water a lesson earned, in its results */
+/* The water a lesson earned, in its results. */
 .lesson-moment.is-water {
   gap: 8px;
 }
 
-/* for a reader who has asked for less motion, the scene is a still picture: nothing drifts, falls, floats or starts */
+/* Under Reduce Motion the scene is a still picture. */
 @media (prefers-reduced-motion: reduce) {
   .tree-art-sway.is-swaying,
   .tree-art-sway.is-swaying > .tree-art-swing,

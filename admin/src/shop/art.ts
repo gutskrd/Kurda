@@ -1,9 +1,6 @@
 /**
- * The rules an uploaded background or icon has to meet, said before the file
- * is sent, and the server's refusals said in words an admin can act on. The
- * server checks all of it again (api/src/shop/art.ts); checking here first
- * means a wrong picture is caught the moment it is dropped, not after a
- * five-megabyte upload.
+ * The rules an uploaded background or icon must meet, checked as soon as it is dropped instead of after the upload,
+ * and the server's refusals in words an admin can act on. The server checks it all again (api/src/shop/art.ts).
  */
 import { foldForSearch } from '@kurda/shared';
 import { ApiError } from '../api';
@@ -11,17 +8,17 @@ import { errorLine } from '../ui';
 import type { ArtKind } from './model';
 
 export interface ArtRule {
-  /** width ÷ height */
+  /** Width ÷ height. */
   ratio: number;
-  /** the shape in words, for "a background must be …" */
+  /** The shape in words, for "a background must be …" */
   shape: string;
   minWidth: number;
   minHeight: number;
-  /** what the server stores it as, for the hint */
+  /** What the server stores it as, for the hint. */
   stored: string;
-  /** the most the stored file may weigh */
+  /** The most the stored file may weigh. */
   weight: string;
-  /** an example size, for the hint */
+  /** An example size, for the hint. */
   example: string;
 }
 
@@ -44,7 +41,7 @@ export const KIND_NAME: Record<ArtKind, { one: string; a: string; plural: string
   icon: { one: 'icon', a: 'an icon', plural: 'Icons' },
 };
 
-/** "16:9, at least 1280×720 · PNG, WebP or JPEG up to 5 MB" */
+/** "16:9, at least 1280×720 · PNG, WebP or JPEG up to 5 MB". */
 export function ruleText(kind: ArtKind): string {
   const r = ART_RULES[kind];
   return `${r.shape === 'square' ? 'Square' : r.shape}, at least ${r.minWidth}×${r.minHeight} (${r.example} is ideal). PNG, WebP or JPEG up to 5 MB.`;
@@ -119,11 +116,7 @@ export function uploadProblem(kind: ArtKind, err: unknown): string {
 /** Where art is drawn from: uploaded art has a whole URL; the art that ships is a path on the site. */
 const SITE_URL = ((import.meta.env.VITE_SITE_URL as string | undefined)?.trim() || 'https://hevalo.app').replace(/\/$/, '');
 
-/**
- * Make an item's art URL one the admin can load. The admin is served from its
- * own origin, and the art that ships lives on the website's, so a site path
- * is resolved against the site — as the phone app does (mobile `assetUrl`).
- */
+/** An item's art URL the console can load: shipped art is a path on the website, resolved as the app's `assetUrl` does. */
 export function artSrc(url: string | null | undefined): string | null {
   if (!url) return null;
   if (/^[a-z][a-z\d+.-]*:/i.test(url) || url.startsWith('//')) return url;

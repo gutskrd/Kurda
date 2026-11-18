@@ -33,11 +33,9 @@ export interface PendingChange {
 }
 
 /**
- * Shop + event configuration with dual-admin approval (KUR-103). An admin
- * proposes an upsert; a **non-sensitive** change applies immediately, a
- * **sensitive** one (large price / currency-granting event) is queued for a
- * different admin to approve. Applying delegates to the existing Shop/Event
- * services (which validate + bust their caches). Past-dated events are rejected.
+ * Shop and event configuration with dual-admin approval. A non-sensitive upsert applies immediately; a sensitive one
+ * (large price, currency-granting event) waits for a different admin. Applying delegates to the Shop/Event services
+ * (which validate and bust their caches). Past-dated events are rejected.
  */
 export class ConfigService {
   private readonly pool: pg.Pool;
@@ -71,10 +69,9 @@ export class ConfigService {
   }
 
   /**
-   * Keep the art a waiting shop change names (shop/art.ts). Art uploaded in
-   * the admin is held only once an item uses it, and a change can wait in
-   * Approvals for longer than the day an unused upload survives — the
-   * approval would then put an item on sale with a picture that is gone.
+   * Hold the art a pending shop change names (shop/art.ts). Uploaded art is kept only once an item uses it, and a
+   * change can wait in Approvals longer than an unused upload survives, which would put an item on sale without its
+   * picture.
    */
   private async holdArt(target: ConfigTarget, p: Record<string, unknown>): Promise<'art-missing' | 'art-wrong-kind' | null> {
     if (target !== 'shop_item' || typeof p.assetKey !== 'string') return null;
@@ -166,11 +163,9 @@ export class ConfigService {
   }
 
   /**
-   * Apply a change. A shop proposal names what it changes — a price, say — and
-   * the shop's upsert writes the whole row, so whatever the proposal leaves out
-   * is taken from the item as it stands. Applying a price change used to wipe
-   * the item's picture, its premium flag, its place in the catalogue and its
-   * sale window, and turn a `tag` item into `misc`.
+   * Apply a change. A shop proposal names only what it changes, but the shop's upsert writes the whole row, so every
+   * field the proposal omits is taken from the current item (otherwise a price change would wipe the picture, premium
+   * flag, position, sale window and kind).
    */
   private async apply(target: ConfigTarget, p: Record<string, unknown>): Promise<void> {
     if (target === 'shop_item') {

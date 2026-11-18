@@ -31,25 +31,16 @@ const catalogQuery = z.object({
 const idParam = z.object({ id: z.uuid() });
 
 /**
- * Gifts in the chat: send one from a direct message or a group, open one,
- * see what can be given, and fetch a card that changed.
- *
- * Realtime, for the apps: a gift posted in a direct message reaches the
- * recipient as an ordinary `dm` event (its message has `kind: 'gift'`), one
- * posted in a group as `group_msg` to the room; each recipient also gets
- * `gift_received` with their own card and the chat it is in. Opening one sends
- * the sender `gift_opened`, and in a group publishes `group_msg_gift_opened
- * {groupId, messageId, batchId}` to the room, on which members fetch the card
- * again (`GET /gifts/batches/:batchId`): a card is drawn per viewer, so the
- * room is told that it changed rather than what it now says.
+ * Gifts in the chat: send one from a direct message or a group, open one, list what can be given, and fetch a card
+ * that changed. A gift arrives as an ordinary `dm` or `group_msg` event (`kind: 'gift'`), and each recipient also
+ * gets `gift_received` with their own card. Opening sends the sender `gift_opened` and, in a group, publishes
+ * `group_msg_gift_opened {groupId, messageId, batchId}`; cards are drawn per viewer, so members refetch theirs
+ * (`GET /gifts/batches/:batchId`).
  */
 export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): void {
   /**
-   * Send an item to friends in a chat — the one in a direct message, or some
-   * of the members of a group. The answer is shared `SendGiftResult` (who got
-   * it, who was skipped and why, the balance after), plus the gift message as
-   * the sender sees it when this request posted one, so the thread can show it
-   * without a refetch.
+   * Sends an item to friends in a chat. Answers with the shared `SendGiftResult` (who got it, who was skipped and why,
+   * the balance after) plus the gift message as the sender sees it, so the thread can show it without a refetch.
    */
   app.post(
     '/gifts',

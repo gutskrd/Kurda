@@ -25,17 +25,17 @@ export interface ReplyTarget {
   name: string;
 }
 
-/** What a page's own send comes back with: the comment the server took, or what to say about why not. */
+/** The result of a page's own send: the accepted comment, or why it was refused. */
 export type SendOutcome =
   | { ok: true; comment: ThreadComment }
   | { ok: false; title: string; error: ApiError | { message: string; limited?: boolean } };
 
 export interface CommentThread {
   state: ThreadState;
-  /** the branches whose replies are on their way */
+  /** The branches whose replies are on their way. */
   loadingReplies: readonly string[];
   replyingTo: ReplyTarget | null;
-  /** the composer's field, so "Reply" can put the cursor in it */
+  /** The composer's field, so "Reply" can put the cursor in it. */
   inputRef: React.RefObject<TextInput | null>;
   load: () => Promise<void>;
   showReplies: (commentId: string) => Promise<void>;
@@ -43,10 +43,9 @@ export interface CommentThread {
   cancelReply: () => void;
   confirmDelete: (c: ThreadComment) => void;
   /**
-   * Put a comment on the thread at once and send it. `request` does the
-   * sending (the page knows whether there is a voice note to upload first)
-   * and is told the comment it answers, if any. False when it was refused,
-   * by which time it is off the thread again and the reason has been said.
+   * Add a comment to the thread at once and send it. `request` sends it (the page knows whether a voice note
+   * uploads first) and is given the parent comment, if any. Returns false when refused, by which time the comment
+   * is removed and the reason shown.
    */
   send: (
     draft: { body: string | null; audioUrl?: string | null },
@@ -55,14 +54,9 @@ export interface CommentThread {
 }
 
 /**
- * A post's comment thread, as the post's page uses it: loading it, opening
- * a branch of replies, replying, and deleting your own.
- *
- * Both writes are drawn before the server answers. A comment appears the
- * moment it is sent and a deleted one goes the moment it is confirmed —
- * waiting on the network for either made the thread feel broken on a slow
- * connection — and either is put back the way it was, with the reason, when
- * the server says no. `onCountChange` keeps the page's "N comments" in step.
+ * A post's comment thread: loading, opening reply branches, replying and deleting your own. Both writes are
+ * optimistic and rolled back with the reason when the server refuses. `onCountChange` keeps the page's "N
+ * comments" in step.
  */
 export function useCommentThread(
   surface: CommentSurface,
@@ -78,8 +72,7 @@ export function useCommentThread(
   const [loadingReplies, setLoadingReplies] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<ReplyTarget | null>(null);
   const inputRef = useRef<TextInput | null>(null);
-  // read inside the writes, which must see the thread as it is now rather
-  // than as it was when they were created
+  // Read inside the writes, which must see the current thread rather than the one at creation.
   const stateRef = useRef(state);
   stateRef.current = state;
   const countRef = useRef(onCountChange);
@@ -89,7 +82,7 @@ export function useCommentThread(
   const load = useCallback(async () => {
     const res = await calls.list(client, postId);
     if (!res.ok) return;
-    // anything still on its way stays on top of what the server knows so far
+    // Anything still on its way stays on top of what the server knows so far.
     setState((prev) => ({ top: [...(prev.top ?? []).filter((c) => c.pending), ...res.data.comments], replies: {} }));
   }, [calls, client, postId]);
 
@@ -98,7 +91,7 @@ export function useCommentThread(
       setLoadingReplies((ids) => [...ids, commentId]);
       const res = await calls.replies(client, commentId);
       setLoadingReplies((ids) => ids.filter((id) => id !== commentId));
-      // a failed load leaves "View N replies" where it was, to be tried again
+      // A failed load leaves "View N replies" in place to try again.
       if (!res.ok) return;
       setState((prev) => ({ ...prev, replies: { ...prev.replies, [commentId]: mergeBranch(res.data.comments, prev.replies[commentId]) } }));
     },
@@ -139,8 +132,7 @@ export function useCommentThread(
       setReplyingTo(null);
       setState((prev) => addToThread(prev, pending));
       countRef.current(1);
-      // a reply to a branch nobody has opened yet opens it, so the reply
-      // lands among the others instead of standing there alone
+      // A reply into an unopened branch opens it, so the reply lands among the others.
       if (parent && parentRow && parentRow.replyCount > 0 && !(parent.id in stateRef.current.replies)) {
         void showReplies(parent.id);
       }
@@ -149,13 +141,13 @@ export function useCommentThread(
       if (!res.ok) {
         setState((prev) => withdrawFromThread(prev, pending));
         countRef.current(-1);
-        // back to replying to the same person, unless another reply was started meanwhile
+        // Back to replying to the same person, unless another reply was started meanwhile.
         if (parent) setReplyingTo((current) => current ?? parent);
         haptic('error');
         showSendError(res.title, res.error);
         return false;
       }
-      // the library's answer has no author on it; it is you
+      // The library's answer has no author on it; it is you.
       const taken = { ...res.comment, author: res.comment.author ?? pending.author };
       setState((prev) => updateComment(prev, pending.id, () => taken));
       return true;

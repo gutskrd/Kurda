@@ -1,8 +1,6 @@
 /**
- * Online presence, derived at read time from `users.last_seen_at`. A user counts
- * as online if they were active within ONLINE_WINDOW_MS. Keeping this a pure
- * function (no DB, no clock capture) makes it trivially testable and lets every
- * list DTO compute presence consistently.
+ * Online presence derived at read time from `users.last_seen_at`: online means active within ONLINE_WINDOW_MS. Pure,
+ * so every list computes presence the same way.
  */
 export const ONLINE_WINDOW_MS = 5 * 60_000; // 5 minutes
 

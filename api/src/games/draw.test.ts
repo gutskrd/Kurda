@@ -1,8 +1,6 @@
 /**
- * The random draws a solo round is made with: the same for the same seed and
- * different for another, every item handed out once, a draw that stops early
- * costing only what it handed out, and one keyed digest per draw however long
- * the list it draws from.
+ * The random draws a solo round uses: same seed same draws, different seed different, every item handed out once, an
+ * early stop costing only what was drawn, and one keyed digest per draw whatever the list length.
  */
 import { describe, expect, it, vi } from 'vitest';
 import * as exercises from '../content/exercises.js';

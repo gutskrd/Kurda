@@ -1,14 +1,9 @@
 /**
- * The admin console is its owner's alone (integration).
- *
- * With ADMIN_ACCESS_EMAILS set, only an address on it signs in to the
- * console (without it, every staff account does), and to everyone else it
- * gives nothing away: another staff account, an ordinary
- * member and an address with no account at all, each with the right password
- * or the wrong one, get one and the same answer, and no session. Signed in some
- * other way, every staff route answers them as a route that is not there.
- * Fields are strings and nothing else: an object where an address or a
- * password belongs is refused before anything reads it.
+ * The admin console is its owner's alone (integration). With ADMIN_ACCESS_EMAILS set only those addresses sign in to
+ * the console (without it, every staff account does). Another staff account, an ordinary member and an unknown address,
+ * with right or wrong password, all get the same answer and no session; signed in another way, every staff route
+ * answers them like a missing route. Fields must be strings: an object in their place is refused before anything reads
+ * it.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

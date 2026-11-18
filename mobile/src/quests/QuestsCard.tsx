@@ -15,25 +15,18 @@ import { CHEST_RATIO, ChestArt } from './ChestArt';
 import { ChestWobble } from './ChestWobble';
 import type { QuestDay } from '@kurda/shared';
 
-/** The card's height, in grey while the quests are on their way: the chest, and the padding round it. */
+/** The card's height while loading in grey: the chest and its padding. */
 const CHEST = 36;
 const CARD_HEIGHT = CHEST * CHEST_RATIO + 2 * (spacing.sm + 6) + 16;
 
 /**
- * Today's quests on Learn, slim: a chest, "Daily quests" with how many are
- * done (or that a chest is ready, today's or an earlier day's, with a dot on
- * the chest as well — and the chest shaking now and then, ChestWobble), and a
- * short bar for each of the three. A tap opens them in full (QuestsScreen),
- * where a chest waiting is opened.
+ * Today's quests on Learn, compact: a chest, "Daily quests" with the count done (or that a chest is ready,
+ * today's or an earlier day's, with a dot and an occasional shake, ChestWobble), and a short bar for each of the
+ * three. A tap opens the full list (QuestsScreen), where chests are opened. A ready chest's dot and text are
+ * violet like the tab bar's dots; gold stays with the earned bars.
  *
- * A chest waiting is something to look at, so its dot and its words are in
- * the violet the tab bar's dots are in; the gold stays with what the quests
- * have earned, their bars. Both were gold, which on a card of gold bars said
- * nothing more than the bars did.
- *
- * Read each time Learn comes into view. Held in grey while it loads; when it
- * did not load it says so, and a tap asks again; with no quests today it is
- * not shown at all.
+ * Reloaded whenever Learn comes into view. Grey while loading; a failed load says so and a tap retries; with no
+ * quests today the card is hidden.
  */
 export function QuestsCard(): React.JSX.Element | null {
   const { client } = useAuth();
@@ -49,7 +42,7 @@ export function QuestsCard(): React.JSX.Element | null {
     void client.get<QuestDay>('/me/quests').then((res) => {
       if (!live) return;
       if (res.ok) setDay(res.data);
-      // a failed read after a good one keeps what was shown
+      // A failed reload keeps what was shown.
       setStatus((was) => (res.ok ? 'ready' : was === 'ready' ? 'ready' : 'failed'));
     });
     return () => {
@@ -81,13 +74,13 @@ export function QuestsCard(): React.JSX.Element | null {
       </PressableScale>
     );
   }
-  // an earlier day's chest still unopened counts as one waiting, as today's do
+  // An earlier day's unopened chest counts as waiting, as today's do.
   const earlier = (day.waiting ?? []).filter((q) => q.claimable);
   if (day.quests.length === 0 && earlier.length === 0) return null;
 
   const done = day.quests.filter((q) => q.progress >= q.target).length;
   const ready = day.quests.find((q) => q.claimable) ?? earlier[0] ?? null;
-  // the chest drawn is the next one to open, or the last quest's while none waits
+  // The chest drawn is the next one to open, or the last quest's while none waits.
   const chest = ready ?? day.quests[day.quests.length - 1]!;
   const summary = t('quests.card.summary', { done: formatNumber(done, locale), total: formatNumber(day.quests.length, locale) });
   const label = [t('quests.title'), summary, ready ? t('quests.ready') : null].filter(Boolean).join(', ');
@@ -107,10 +100,7 @@ export function QuestsCard(): React.JSX.Element | null {
         {ready ? <View style={[styles.dot, dir.rtl ? styles.dotRtl : null, { backgroundColor: colors.primary, borderColor: colors.surface }]} testID="quests-card-dot" /> : null}
       </View>
       <View style={styles.main}>
-        {/*
-          Side by side where both fit; where they do not (a narrow phone, "Tagesaufgaben" beside "Truhe bereit zum
-          Öffnen") the second goes under the first whole, where each was cut to "Daily q…" and "Chest ready t…".
-        */}
+        {/* Side by side where both fit; on a narrow phone or with long labels the second wraps under the first rather than both truncating. */}
         <View style={[styles.head, { flexDirection: dir.row }]}>
           <Text style={[styles.title, dir.text, { color: colors.textPrimary }]}>{t('quests.title')}</Text>
           <Text style={[styles.detail, dir.text, { color: ready ? colors.primary : colors.textSecondary }]}>{ready ? t('quests.ready') : summary}</Text>
@@ -139,7 +129,7 @@ const styles = StyleSheet.create({
   bars: { gap: spacing.xs + 2 },
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radii.pill },
-  // the dot on the chest's top corner: a chest waiting, said in words beside it too
+  // The dot on the chest's top corner: a chest waiting, said in words beside it too.
   dot: { position: 'absolute', top: -3, right: -3, width: 12, height: 12, borderRadius: radii.pill, borderWidth: 2 },
   dotRtl: { right: undefined, left: -3 },
 });

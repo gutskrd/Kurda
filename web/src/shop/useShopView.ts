@@ -2,17 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { DEFAULT_ITEM_FILTER, isFiltered, itemFilterParams, readItemFilter, type ItemFilter } from '@kurda/shared';
 
-/** What the Shop shows: the shared filter, and the Shop's own two narrowings. */
-export interface ShopView extends ItemFilter {
-  /** only what my balance reaches — each item against its own currency */
+/** What the Shop shows: the shared filter plus the Shop's own two narrowings. */
+interface ShopView extends ItemFilter {
+  /** Only what the balance reaches, each item against its own currency. */
   afford: boolean;
-  /** only what costs nothing */
+  /** Only what costs nothing. */
   free: boolean;
 }
 
 export const DEFAULT_SHOP_VIEW: ShopView = { ...DEFAULT_ITEM_FILTER, afford: false, free: false };
 
-/** A view read back from the address bar (`?kind=&q=&sort=&afford=1&free=1`); anything unknown stays at its default. */
+/** A view read from the address (`?kind=&q=&sort=&afford=1&free=1`); anything unknown stays at its default. */
 export function readShopView(params: URLSearchParams): ShopView {
   return {
     ...readItemFilter((key) => params.get(key)),
@@ -21,9 +21,9 @@ export function readShopView(params: URLSearchParams): ShopView {
   };
 }
 
-/** A view as the address bar keeps it: only what differs from the default, so a plain Shop has a plain address. */
+/** A view as the address keeps it: only what differs from the default, so a plain Shop has a plain address. */
 export function shopViewSearch(view: ShopView): string {
-  // the shared helper leaves out what is at its default, so every entry has a value
+  // The shared helper leaves out defaults, so every entry has a value.
   const params = new URLSearchParams(Object.entries(itemFilterParams(view)) as Array<[string, string]>);
   if (view.afford) params.set('afford', '1');
   if (view.free) params.set('free', '1');
@@ -36,24 +36,18 @@ export const shopViewFiltered = (view: ShopView): boolean => isFiltered(view) ||
 const canonical = (search: string): string => new URLSearchParams(search).toString();
 
 /**
- * The Shop's view, kept in the address bar — so a narrowed Shop survives a
- * reload, can be linked to, and Back and Forward step through what was chosen.
- *
- * The page reads its own state, not the address: the router moves to a new
- * address inside a transition, and a search box bound to the address would
- * lose letters typed while one was still landing. So the state changes at
- * once and the address follows — pushed for a choice (a tab, an order, a
- * toggle), replaced while typing, so that Back does not spell the word out
- * backwards. An address this page did not write (Back, Forward, a link) is
- * read back into the state.
+ * The Shop's view, kept in the address so it survives a reload, can be linked, and works with Back and Forward. The
+ * page reads its own state rather than the address, since the router navigates inside a transition and a bound
+ * search box would lose letters. The address follows: pushed for a choice, replaced while typing. An address this page
+ * did not write (Back, Forward, a link) is read back into the state.
  */
 export function useShopView(): [ShopView, (next: ShopView, how?: { replace?: boolean }) => void] {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const [view, setView] = useState<ShopView>(() => readShopView(params));
-  /** the address last seen, so arriving at it twice is not news */
+  /** The address last seen, so arriving at it twice is not news. */
   const seen = useRef(canonical(location.search));
-  /** addresses written here that the router has not landed on yet, oldest first */
+  /** Addresses written here that the router has not reached yet, oldest first. */
   const pending = useRef<string[]>([]);
 
   useEffect(() => {
@@ -62,11 +56,11 @@ export function useShopView(): [ShopView, (next: ShopView, how?: { replace?: boo
     seen.current = now;
     const mine = pending.current.indexOf(now);
     if (mine >= 0) {
-      // one of ours: it and anything older have landed (or been overtaken)
+      // One of ours: it and anything older have landed or been overtaken.
       pending.current.splice(0, mine + 1);
       return;
     }
-    // somebody else's — Back, Forward, a link — so the page follows the address
+    // Not ours (Back, Forward or a link), so the page follows the address.
     pending.current = [];
     setView(readShopView(new URLSearchParams(location.search)));
   }, [location.search]);

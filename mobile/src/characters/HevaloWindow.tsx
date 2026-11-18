@@ -8,10 +8,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import type { PlaybackClock } from './voice';
 
-/** How far past the window's top and sides a hop or a twitch of an ear may carry him into the room before anything cuts him off, as a share of its height. */
+/** How far past the window's top and sides a hop or ear twitch may carry him before he is clipped, as a share of its height. */
 const ROOM = 0.3;
 
-/** What he is saying at the window, read as a speaking character reads a player: the clock, whether it runs, and a name for the line. */
+/** What he is saying at the window, read like a player: the clock, whether it runs, and a name for the line. */
 export interface WindowSpeech {
   player: PlaybackClock | null;
   playing: boolean;
@@ -19,22 +19,14 @@ export interface WindowSpeech {
 }
 
 /**
- * Hevalo putting his head in at the window (shared `windowArt`): we are in a
- * village room, and he is outside and pokes his head and neck in over the
- * sill, the sky and the mountains behind him. As the window appears he comes
- * in from outside, rising over the sill and growing a little as he comes
- * closer, on a spring, his shadow coming onto the sill with him, all on one
- * value; under Reduce Motion he is simply there. Alive as ever: he blinks,
- * glances about, follows a finger, and cheers or tilts his head at a
- * `reaction`.
+ * Hevalo putting his head in at a village-room window (shared `windowArt`), with sky and mountains behind him. As
+ * the window appears he rises in over the sill on a spring, growing slightly as he nears and his shadow arriving
+ * with him, all on one value; under Reduce Motion he is just there. He blinks, glances, follows a finger, and
+ * cheers or tilts his head at a `reaction`.
  *
- * Given `speech` and the `text` of a line, he says it: his mouth moves with
- * the words by the clock the speech keeps (auth/guide/speech.ts), with no
- * recording behind it.
- *
- * Decorative: the words beside him say whatever he does, so a screen reader
- * passes him by. Turned round (`flip`), he faces the other way and the
- * window is mirrored with him, its pot and its view changing sides.
+ * Given `speech` and a line's `text`, he lip-syncs to the speech's clock (auth/guide/speech.ts), with no
+ * recording. Decorative: screen readers skip him. `flip` mirrors him and the window, swapping the pot and view
+ * sides.
  */
 export function HevaloWindow({
   size,
@@ -45,13 +37,13 @@ export function HevaloWindow({
   text = null,
   style,
 }: {
-  /** how tall the window is drawn, in points; its width follows */
+  /** How tall the window is drawn, in points; its width follows. */
   size: number;
   reaction?: CharacterReaction | null;
   flip?: boolean;
-  /** he comes in at the window as it appears; false, he is there already */
+  /** He comes in at the window as it appears; false, he is there already. */
   pop?: boolean;
-  /** the line he is saying, and its clock; null, he is quiet */
+  /** The line he is saying, and its clock; null, he is quiet. */
   speech?: WindowSpeech | null;
   text?: string | null;
   style?: StyleProp<ViewStyle>;
@@ -64,7 +56,7 @@ export function HevaloWindow({
   const rise = useRef(new Animated.Value(pop && !reduce ? drop : 0)).current;
 
   useEffect(() => {
-    // asked for less motion — an answer that may arrive a moment after he appears — he is simply there
+    // Asked for less motion — an answer that may arrive a moment after he appears — he is simply there.
     if (!pop || reduce) {
       rise.stopAnimation();
       rise.setValue(0);
@@ -73,10 +65,10 @@ export function HevaloWindow({
     const up = springTo(rise, 0, 'bouncy', WINDOW_POP.delayMs);
     up.start();
     return () => up.stop();
-    // once, as he appears; a new size moves nothing
+    // Once, as he appears; a new size moves nothing.
   }, [pop, reduce, rise]);
 
-  // farther off as he waits under the sill, and his shadow not on it yet
+  // Farther off as he waits under the sill, and his shadow not on it yet.
   const { grow, shade } = useMemo(
     () => ({
       grow: rise.interpolate({ inputRange: [0, drop], outputRange: [1, WINDOW_PLACE.far] }),
@@ -98,7 +90,7 @@ export function HevaloWindow({
       <View style={[StyleSheet.absoluteFill, mirrored]}>
         <SvgXml xml={art.back} width={width} height={size} />
       </View>
-      {/* he is cut off at the sill and nowhere else: an ear or an antler may reach past the window's top and sides, into the room */}
+      {/* He is clipped at the sill only: an ear or antler may reach past the window's top and sides into the room. */}
       <View style={[styles.cut, { top: -room, left: -room, right: -room, height: WINDOW_PLACE.sill * size + room }]}>
         <Animated.View
           style={[

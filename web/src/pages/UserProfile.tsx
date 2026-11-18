@@ -19,7 +19,7 @@ import { FullProfileSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
-/** Another user's full Hevalo profile (/app/users/:id), privacy-gated. */
+/** Another user's full profile (/app/users/:id), privacy-gated. */
 export function UserProfile(): React.JSX.Element {
   const { id = '' } = useParams();
   const { client } = useAuth();
@@ -30,7 +30,7 @@ export function UserProfile(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
-  // what the two of you are to each other: the buttons under their words change it, and the menu in the corner reads it
+  // What you are to each other: the buttons change it and the corner menu reads it.
   const [status, setStatus] = useState<FriendStatus>('none');
   const navigate = useNavigate();
 
@@ -39,7 +39,7 @@ export function UserProfile(): React.JSX.Element {
     setLoading(true);
     setError(null);
     void (async () => {
-      // their friends with their profile, so the page is drawn once, whole
+      // Their friends with their profile, so the page is drawn once, whole.
       const [r, f] = await Promise.all([
         client.get<PublicProfile>(`/users/${id}`),
         client.get<{ friends: UserSummary[]; total?: number }>(`/users/${id}/friends?limit=${FRIENDS_SHOWN}`),
@@ -63,11 +63,8 @@ export function UserProfile(): React.JSX.Element {
 
   const name = profile.displayName || profile.username;
   /*
-   * The menu about them, in the banner's far corner: send their profile to
-   * somebody, stop being friends where you are, report them, block them. It is
-   * the same component as on the profile popup and in the friends list, so
-   * blocking and reporting have one set of words and one set of rules about
-   * what happens next.
+   * The menu about them in the banner's corner (share, unfriend, report, block): the same component as on the profile
+   * popup and in the friends list, so blocking and reporting have one set of words and rules.
    */
   const corner =
     status === 'self' ? null : (
@@ -87,13 +84,13 @@ export function UserProfile(): React.JSX.Element {
               }
             : undefined
         }
-        // their profile answers 404 to you from here on, so staying on it would show an error where a person used to be
+        // Their profile answers you 404 from now on, so staying would show an error where a person was.
         onBlocked={() => navigate('/app')}
       />
     );
   const actions = <FriendActions key={status} userId={profile.userId} username={profile.username} name={name} status={status} onStatus={setStatus} />;
 
-  // privacy-hidden: who it is is still shown, in the same card as anybody's, so that you can ask to be friends
+  // Privacy-hidden: who it is still shows, in the same card as anyone's, so you can ask to be friends.
   if (profile.private) {
     return (
       <div className="mkp-page">
@@ -129,8 +126,8 @@ export function UserProfile(): React.JSX.Element {
     levelInfo: profile.level,
     xp: profile.level?.xp ?? profile.xp ?? 0,
     streakDays: profile.streak ?? 0,
-    // how many they know is theirs to show or not: where the list did not come, neither does the number; and
-    // "0 friends" on somebody's profile is a worse thing to publish than silence (profile/ProfileFriends)
+    // Their friend count is theirs to show: where the list did not come neither does the number, and "0 friends" is worse
+    // than silence (profile/ProfileFriends).
     friends: friends && friends.total > 0 ? friends.total : null,
     badges: profile.achievements ?? null,
     bio: profile.bio,
@@ -160,15 +157,9 @@ export function UserProfile(): React.JSX.Element {
 }
 
 /**
- * What you can do with another person, under their words: write to them and
- * play with them once you are friends, ask to be friends before that, answer
- * them when they asked first. The one thing most people came to do is the
- * filled button; the rest stand beside it, quieter.
- *
- * Asking them is handing over a ticket (social/FriendTickets.tsx), and the
- * same button takes the request back. What ends something — a friendship, or
- * their place in your Hevalo altogether — is not here: it is in the menu in
- * the banner's corner.
+ * What you can do with another person: message and play once friends, ask before that, answer if they asked first. The
+ * likeliest action is the filled button. Asking hands over a ticket (social/FriendTickets.tsx) that the same button takes
+ * back; ending a friendship or blocking is in the corner menu.
  */
 function FriendActions({
   userId,
@@ -187,7 +178,7 @@ function FriendActions({
   const t = useT();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
-  // why a request or an answer did not go through — a full friend list says so (lib/limits.ts)
+  // Why a request or answer failed; a full friend list says so (lib/limits.ts).
   const [err, setErr] = useState<string | null>(null);
 
   async function accept(): Promise<void> {
@@ -214,7 +205,7 @@ function FriendActions({
         </Link>
       )}
       {status === 'friends' && message(true)}
-      {/* a game with this friend: the invite sheet, with them already chosen */}
+      {/* A game with this friend: the invite sheet with them chosen. */}
       {status === 'friends' && <PlayWithButton userId={userId} name={name} />}
       {(status === 'none' || status === 'pending_out') && <AddFriendButton userId={userId} name={name} status={status} onError={setErr} />}
       {status === 'pending_in' && (

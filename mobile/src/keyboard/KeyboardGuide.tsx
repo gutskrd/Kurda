@@ -14,6 +14,7 @@ import { Pressable, ReachReset } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import type { KeyboardPlatform, TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useModalSlide } from '../a11y/useReducedMotion';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -40,14 +41,10 @@ const PHONE_LABEL: Record<string, TranslationKey> = {
 };
 
 /**
- * "Get the Kurmancî keyboard": Hevalo the deer, holding up the five letters,
- * shows how to add a Kurdish keyboard to this phone in three or four steps
- * (`@kurda/shared` KEYBOARD_GUIDES) — and then lets you try it.
- *
- * It opens by itself once, before a first Kurmancî race (the clock has not
- * started), and from "Keyboard help" in the race's settings and in Settings
- * whenever wanted. Nobody has to set anything up to race: two ways out are
- * always on the card — the on-screen keys, and forgiving accents.
+ * "Get the Kurmancî keyboard": Hevalo shows how to add a Kurdish keyboard in a few steps (`@kurda/shared`
+ * KEYBOARD_GUIDES), then lets you try it. It opens by itself once before a first Kurmancî race (before the clock
+ * starts), and from "Keyboard help" in the race settings and in Settings. Racing never requires it: the on-screen
+ * keys and forgiving accents are always offered.
  */
 export function KeyboardGuide({
   visible,
@@ -59,10 +56,11 @@ export function KeyboardGuide({
   onClose: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  // each step's number on the side the reader's language starts from, its words lined up after it
+  // Each step's number on the side the reader's language starts from, its words lined up after it.
   const dir = useDirection();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
+  const slide = useModalSlide();
   const [prefs, setPrefs] = useKeyboardPrefs();
   const detected = useMemo(
     () => guidePlatform(Platform.OS, (globalThis as { navigator?: { userAgent?: string } }).navigator?.userAgent ?? ''),
@@ -77,7 +75,7 @@ export function KeyboardGuide({
   const allIn = typed.size === letters.length;
   const sorani = dialect === 'sorani';
 
-  // a fresh try every time the card opens
+  // A fresh try every time the card opens.
   useEffect(() => {
     if (visible) setTried('');
   }, [visible]);
@@ -89,8 +87,8 @@ export function KeyboardGuide({
   const steps = guideSteps(platform, dialect);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      {/* a card of its own over the settings it was opened from: their groups do not cap what is on it */}
+    <Modal visible={visible} animationType={slide} presentationStyle="pageSheet" onRequestClose={onClose}>
+      {/* A card of its own over the settings it opened from, so their reach groups do not cap it. */}
       <ReachReset>
         <KeyboardAvoidingView
           style={[styles.sheet, { backgroundColor: colors.background }]}
@@ -101,7 +99,7 @@ export function KeyboardGuide({
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t('common.close')}
-              // alone at the top of the card: it answers 8 past every edge
+              // Alone at the top of the card: it answers 8 past every edge.
               reach="open"
               style={({ pressed }) => [styles.close, pressed && heldDim]}
             >
@@ -120,10 +118,8 @@ export function KeyboardGuide({
             </Text>
 
             {/*
-              The other phone's steps only where the phone is not known (the
-              app run in a browser). On an iPhone, steps for Android and a
-              word about the Play Store are no help, and App Review reads
-              them as instructions for somebody else's platform.
+              The other platform's steps only when the platform is unknown (a browser): on an iPhone, Android
+              steps do not help and App Review reads them as instructions for another platform.
             */}
             {ON_A_PHONE ? null : (
               <View style={styles.platformRow} accessibilityRole="radiogroup">

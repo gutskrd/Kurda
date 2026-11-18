@@ -8,11 +8,8 @@ import { BadgeArt } from './RankParts';
 type Def = BadgeCatalogue['badges'][number];
 
 /**
- * The badge catalogue for staff (contract 4, §B): every badge with its art,
- * what each tier asks for, how many hold it and how rare it is among active
- * learners — rarity is computed nightly, and the apps show it only once there
- * are enough active learners for a share to mean something. Awarding or
- * revoking one person's badge is on their page (#/users/<id>/badges).
+ * The badge catalogue for staff: every badge with its art, tier requirements, holders and nightly rarity, which the
+ * apps show only once there are enough active learners. One person's badges are on their page (#/users/<id>/badges).
  */
 export function Badges(): React.JSX.Element {
   const loaded = useLoad(() => api<BadgeCatalogue>('/admin/badges'), []);

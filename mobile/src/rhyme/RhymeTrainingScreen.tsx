@@ -20,8 +20,9 @@ import { TABLE } from '../impostor/table';
 import { useDirection } from '../reports/direction';
 import { useCourseDialect } from '../learn/courseDialect';
 import { MissedRhymes, wordDirection, type RhymeHint } from '../wordle/WordAnswer';
-import { DIALECT_NAME, RHYME_DIALECTS, isRhymeOffered, openingRhymeDialect, useRhymeOffered } from './availability';
+import { isRhymeOffered, offeredRhymeDialects, openingRhymeDialect, useRhymeOffered } from './availability';
 import type { Dialect } from './matchApi';
+import { dialectNameKey } from '../i18n/dialectName';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane' | 'inflected';
@@ -36,7 +37,7 @@ interface RhymeResult {
 
 interface RhymeGameView {
   id: string;
-  /** the round's variety; a server from before it was always Kurmancî */
+  /** The round's variety; older servers omit it, meaning Kurmancî. */
   dialect?: Dialect;
   prompt: string;
   windowMs: number;
@@ -44,7 +45,7 @@ interface RhymeGameView {
   score: number;
   accepted: number;
   status: 'active' | 'ended';
-  /** once the round has ended: the rhymes it left unfound, with their meanings; absent from a server from before it */
+  /** Once the round has ended: the rhymes left unfound, with their meanings; older servers omit it. */
   missed?: RhymeHint[] | null;
 }
 
@@ -60,7 +61,7 @@ const REJECT_KEY: Record<Reject, TranslationKey> = {
   'already-used': 'games.rhyme.reject.alreadyUsed',
   'no-rhyme': 'games.rhyme.reject.noRhyme',
   profane: 'games.rhyme.reject.profane',
-  // an ending doing all the rhyming (malan for baran) has no sentence of its own yet: the general one says it fairly
+  // An ending doing all the rhyming (malan for baran) has no sentence of its own yet; the general one is fair.
   inflected: 'games.rhyme.reject.other',
 };
 
@@ -70,22 +71,13 @@ function clock(ms: number): string {
 }
 
 /**
- * Rhyming Words — training (solo) screen (KUR-299). Shows a prompt word and a
- * countdown; the player types real Kurdish words that rhyme, scored server-side
- * (#298 engine). Every accepted rhyme adds to the score; when the timer runs
- * out the round ends. Mirrors the Peyvok screen's flow.
+ * Rhyming Words training: a prompt word and a countdown; the player types real Kurdish words that rhyme, scored
+ * by the server, until time runs out. Played alone, so it earns no XP (the result says so in one line), and the
+ * results list the rhymes left unfound with their meanings.
  *
- * Training is played alone, so a round is scored and earns no XP: XP is for
- * lessons, stories and games played online with other people (Rhyme Match is
- * the one with a friend). The result says so in one quiet line, and under the
- * rhymes found are the ones the round left unfound, with what they mean.
- *
- * A round is in Kurmancî or Soranî, chosen at the start. The screen opens on
- * the learner's own variety when rounds are offered in it (availability.ts);
- * a variety without rounds yet keeps its place in the choice, marked coming
- * soon, and says so where Start would be. The prompt and the rhymes are
- * written in the round's own direction, so a Soranî word reads right to left
- * on any screen.
+ * A round is in Kurmancî or Soranî, chosen at the start; the screen opens on the learner's own variety when
+ * rounds are offered there (availability.ts). A variety without rounds is left out of the choice, and a choice of
+ * one is not shown. The prompt and rhymes are written in the round's direction, so Soranî reads right to left.
  */
 export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -94,10 +86,12 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const dir = useDirection();
   const offered = useRhymeOffered();
   const course = useCourseDialect();
-  // the variety the start opens on until one is pressed: the learner's own, where rounds are offered in it
+  // The variety the start screen opens on until one is pressed: the learner's own, where rounds are offered.
   const [picked, setPicked] = useState<Dialect | null>(null);
-  const dialect = picked ?? openingRhymeDialect(offered, course, locale);
+  // A variety picked before the server answered that turns out not to be offered falls back to the opening one.
+  const dialect = picked && isRhymeOffered(offered, picked) ? picked : openingRhymeDialect(offered, course, locale);
   const canStart = isRhymeOffered(offered, dialect);
+  const choices = offeredRhymeDialects(offered);
 
   const [game, setGame] = useState<RhymeGameView | null>(null);
   const [found, setFound] = useState<Found[]>([]);
@@ -106,7 +100,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const [starting, setStarting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [remaining, setRemaining] = useState(0);
-  // a rhyme that was not accepted shakes the field (theme/animate.ts; still under Reduce Motion)
+  // A refused rhyme shakes the field (theme/animate.ts; still under Reduce Motion).
   const shake = useShake();
 
   const finished = game != null && (game.status === 'ended' || remaining <= 0);
@@ -120,15 +114,15 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
       const res = await client.post<{ game: RhymeGameView }>(`/rhyme/training/${game.id}/end`);
       if (res.ok) {
         setGame(res.data.game);
-        // the round ended on the server, with this call: a game finished — and
-        // one cut short is never a moment for the rating box
+        // The round ended on the server with this call: a finished game, though one cut short is never a moment
+        // for the rating box.
         if (res.data.game.status === 'ended') reportGameFinished({ moment: 'other', gaveUp: early });
       }
     },
     [client, game],
   );
 
-  // countdown; when it hits zero, end the round
+  // Countdown; when it hits zero, end the round.
   useEffect(() => {
     if (!game || game.status === 'ended') return;
     if (remaining <= 0) {
@@ -140,9 +134,9 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   }, [game, remaining, end]);
 
   const start = async () => {
-    // the round is in this variety now, whatever is heard about the others while it runs
+    // The round is in this variety now, whatever availability updates arrive while it runs.
     setPicked(dialect);
-    // the rating box, if it came, belonged to the round this replaces
+    // The rating box, if it came, belonged to the round this replaces.
     leftResults();
     haptic('tap');
     setStarting(true);
@@ -154,7 +148,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
       setGame(res.data);
       setRemaining(res.data.remainingMs);
     } else {
-      // a variety the server had no prompt for after all says so in the game's words, as a match's start does
+      // A variety the server had no prompt for after all says so in the game's words, as a match's start does.
       setNote(res.error.code === 'EMPTY_LEXICON' ? t('games.emptyPool') : describeError(res.error, t));
     }
   };
@@ -199,18 +193,20 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
               <Text style={styles.stageName}>{t('games.rhyme.name')}</Text>
               <Text style={styles.stageLine}>{t('games.rhyme.rules')}</Text>
             </Cloth>
-            <Segmented<Dialect>
-              options={RHYME_DIALECTS}
-              value={dialect}
-              onChange={(d) => {
-                setPicked(d);
-                setNote(null);
-              }}
-              labelOf={(d) => (isRhymeOffered(offered, d) ? DIALECT_NAME[d] : `${DIALECT_NAME[d]} · ${t('games.comingSoon')}`)}
-              groupLabel={t('games.dialect')}
-              wrap
-            />
-            {/* a variety with no rounds yet says so where its Start would be: nothing to press that cannot work */}
+            {choices.length > 1 ? (
+              <Segmented<Dialect>
+                options={choices}
+                value={dialect}
+                onChange={(d) => {
+                  setPicked(d);
+                  setNote(null);
+                }}
+                labelOf={(d) => t(dialectNameKey(d))}
+                groupLabel={t('games.dialect')}
+                wrap
+              />
+            ) : null}
+            {/* A variety with no rounds yet says so where its Start would be. */}
             {!canStart ? (
               <Text style={[styles.unoffered, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
                 {t('games.rhyme.notOffered')}
@@ -226,7 +222,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
           <>
             <Cloth style={styles.stage}>
               <GameArt game="rhyme" size={96} />
-              {/* the round is over whether the clock ran out or it was ended: "time's up" was said of both */}
+              {/* The round is over whether the clock ran out or it was ended early. */}
               <Text style={styles.stageKicker} accessibilityRole="header">
                 {t('games.solo.results.title')}
               </Text>
@@ -235,15 +231,15 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
             </Cloth>
             <GoldButton label={t('games.playAgain')} icon="bolt" onPress={start} />
             <ClayButton label={t('common.done')} tone="neutral" onPress={onExit} style={{ alignSelf: 'stretch' }} />
-            {/* what was found stays to be read once the clock has stopped */}
+            {/* What was found stays readable once the clock has stopped. */}
             {found.length > 0 ? <FoundList found={found} title={t('games.rhyme.foundList')} dialect={game.dialect} /> : null}
-            {/* and what the round could also have found, each word with what it means */}
+            {/* And what the round could also have found, each word with what it means. */}
             <MissedRhymes hints={game.missed} dialect={game.dialect ?? 'kurmanci'} />
           </>
         ) : (
           <>
             <Cloth style={[styles.promptRow, { flexDirection: dir.row }]}>
-              {/* the word keeps its own direction, and stands on the reading side under the words that ask for it */}
+              {/* The word keeps its own direction, on the reading side under its prompt. */}
               <View style={[styles.promptCol, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
                 <Text style={[styles.promptLabel, dir.text]}>{t('games.rhyme.rhymeWith')}</Text>
                 <Text style={[styles.prompt, wordDirection(game.dialect)]}>{game.prompt}</Text>
@@ -260,8 +256,8 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
               <View style={[styles.inputRow, { flexDirection: dir.row }]}>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-                  // what the field is for, to a screen reader as well: a placeholder alone is not read by every one. The word to rhyme
-                  // with is on the cloth just above; said again in the placeholder, it was cut off at the field's edge.
+                  // The field's purpose for screen readers too, since not all read placeholders. The prompt word
+                  // is on the cloth just above; repeated in the placeholder it was cut off.
                   accessibilityLabel={t('games.rhyme.yourRhyme')}
                   placeholder={t('games.rhyme.yourRhyme')}
                   placeholderTextColor={colors.textSecondary}
@@ -283,7 +279,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
 
             {found.length > 0 ? <FoundList found={found} title={t('games.rhyme.foundList')} dialect={game.dialect} /> : null}
 
-            {/* the round ended early is a button as the race's Give up is, a fingertip tall: it was a line of underlined grey text */}
+            {/* Ending early is a full-height button, like the race's Give up. */}
             <ClayButton label={t('games.rhyme.endRound')} tone="neutral" onPress={() => void end(remaining > 0)} style={styles.finish} />
           </>
         )}
@@ -292,7 +288,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   );
 }
 
-/** The rhymes found this round, newest first: each with how good a rhyme it is and what it scored. */
+/** This round's rhymes, newest first, each with its rhyme quality and score. */
 function FoundList({ found, title, dialect }: { found: readonly Found[]; title: string; dialect?: Dialect }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -303,7 +299,7 @@ function FoundList({ found, title, dialect }: { found: readonly Found[]; title: 
         <View key={`${f.word}-${i}`} style={[styles.foundRow, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
           <Text style={[styles.foundWord, wordDirection(dialect), { color: colors.textPrimary }]}>{f.word}</Text>
           <View style={[styles.foundMeta, { flexDirection: dir.row }]}>
-            {/* a perfect rhyme is right; a near one is right too, only less so: both in the ink, the word saying which */}
+            {/* Perfect and near rhymes are both right, both in the ink; the word says which. */}
             <Text style={[styles.foundQuality, { color: f.quality === 'perfect' ? colors.success : colors.textSecondary }]}>
               {t(f.quality === 'perfect' ? 'games.rhyme.quality.perfect' : 'games.rhyme.quality.near')}
             </Text>
@@ -317,16 +313,13 @@ function FoundList({ found, title, dialect }: { found: readonly Found[]; title: 
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  // flex + centre so a long translated name shares the row with the back
-  // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
-  // Battle" in some languages is three
-  // the night the game is played on: its start, the word to rhyme with, and how the round ended
+  // The table the game is played on: its start, the prompt word, and how the round ended.
   stage: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
   stageName: { ...display(typography.sizes.xxl), color: TABLE.ink, textAlign: 'center', marginTop: spacing.sm },
   stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   stageKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
   stageScore: { ...display(typography.sizes.xl), color: TABLE.ink, textAlign: 'center' },
-  // where the round's XP used to be: quiet, the colour of the cloth's smaller writing
+  // A quiet note in the cloth's smaller writing colour.
   stageNote: { marginTop: spacing.xs, color: TABLE.inkSoft, fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: spacing.xs },
   unoffered: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center', marginTop: spacing.sm },
@@ -336,13 +329,13 @@ const styles = StyleSheet.create({
   prompt: { ...display(typography.sizes.xxl), color: TABLE.ink },
   metaCol: { gap: spacing.xs },
   timerChip: { borderRadius: radii.md, backgroundColor: TABLE.veil, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
-  // the last ten seconds: the clock turns to a warm card, told by its ground as well as its colour
+  // The last ten seconds: the clock turns to a warm card, told by its ground as well as its colour.
   timerLow: { backgroundColor: TABLE.goldSoft },
   timer: { color: TABLE.ink, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   timerLowText: { color: TABLE.goldInk },
   score: { color: TABLE.inkSoft, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   inputRow: { gap: spacing.sm, alignItems: 'center' },
-  // minWidth: a text field will not shrink below its own idea of a width, and pushed Add off the screen's edge
+  // minWidth: a text field will not shrink below its own idea of a width, and pushed Add off the screen.
   input: { minHeight: MIN_TOUCH_TARGET, flex: 1, minWidth: 0, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
   found: { gap: spacing.xs, marginTop: spacing.sm },
   foundRow: { alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },

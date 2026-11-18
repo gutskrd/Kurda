@@ -8,16 +8,10 @@ import { ceremonyFor } from './format';
 const KEY = 'hevalo_league_celebrated';
 
 /**
- * The week that closed, staged once.
- *
- * The week closes while nobody is watching (Monday 00:00 UTC), so the moment
- * is the first time the league is opened afterwards: the ladder moves so the
- * league the learner is in now lands in the middle, then what last week was
- * and what this week asks (LeagueCeremony). Every week that was raced gets
- * its ceremony — up, down, the same, the trophy — and each once on this
- * phone: the week's key is kept on the device when the ceremony is closed. A
- * week not taken part in, or a personal one, has no stage; last week's line
- * on the page says it plainly on its own.
+ * The closed week, staged once. Weeks close at Monday 00:00 UTC while nobody is watching, so the moment comes the
+ * first time the league opens afterwards (LeagueCeremony). Every raced week gets its ceremony (up, down, same,
+ * trophy), once per device: the week's key is stored when the ceremony closes. A week not taken part in, or a
+ * personal one, has no stage; last week's line on the page says it plainly.
  */
 export function LeagueMoment({ league, store = deviceStore }: { league: LeagueView | null | undefined; store?: DeviceStore }): React.JSX.Element | null {
   const [show, setShow] = useState(false);

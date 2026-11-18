@@ -40,7 +40,7 @@ function sidebarLinks(): string[] {
     .map((a) => a.querySelector('.navlink-label')?.textContent ?? '');
 }
 
-// the console's code, fetched in the background while the sign-in is on screen in the app (pages/SignIn): here, before the tests
+// The console's code, fetched in the background while the sign-in is on screen in the app (pages/SignIn): here, before the tests.
 beforeAll(async () => {
   await import('./Console');
 }, 60_000);
@@ -72,17 +72,17 @@ describe('the admin’s navigation', () => {
     expect(within(nav).queryByRole('heading', { name: 'Economy' })).not.toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: /dashboard/i })).toHaveAttribute('aria-current', 'page');
 
-    // the queue's size is beside its link, and said to be urgent
+    // The queue's size is beside its link, and said to be urgent.
     await waitFor(() => expect(within(nav).getByRole('link', { name: /queue/i })).toHaveTextContent('7'));
     expect(within(nav).getByRole('link', { name: /queue/i })).toHaveTextContent('7 open, urgent');
 
-    // and the dashboard has the queue by priority, with links into it
+    // And the dashboard has the queue by priority, with links into it.
     const urgent = await screen.findByRole('link', { name: /^urgent/i });
     expect(urgent).toHaveAttribute('href', '#/moderation?priority=0');
     expect(urgent).toHaveTextContent('Decide within 1 h · 1 overdue');
     expect(screen.getByRole('link', { name: /^Appeals waiting:/ })).toHaveAttribute('href', '#/appeals');
     expect(screen.getByRole('link', { name: /^Bans waiting for a second admin:/ })).toHaveAttribute('href', '#/ban-approvals');
-    // how long a decision typically takes
+    // How long a decision typically takes.
     expect(await screen.findByText(/Median time to a decision:/)).toHaveTextContent('Median time to a decision: 1 h 30 min (of 12 decided)');
   });
 
@@ -164,7 +164,7 @@ describe('the admin’s navigation', () => {
     await user.click(open);
     const drawer = screen.getByRole('dialog', { name: /hevalo admin/i });
     expect(open).toHaveAttribute('aria-controls', drawer.id);
-    // round the drawer and past its ends: focus never reaches the page behind it
+    // Round the drawer and past its ends: focus never reaches the page behind it.
     for (let i = 0; i < 14; i++) {
       await user.tab();
       expect(drawer).toContainElement(document.activeElement as HTMLElement);
@@ -180,7 +180,7 @@ describe('the admin’s navigation', () => {
   it('names the page in the phone’s top bar and the tab, where the nav’s label alone would not', async () => {
     fakeApi(session(['admin'], []), me('ferhad'));
     await openAt('#/economy');
-    // the Economy group's "Overview" is the economy's, not the dashboard
+    // The Economy group's "Overview" is the economy's, not the dashboard.
     expect(document.querySelector('.topbar-title')).toHaveTextContent(/^Economy$/);
     await waitFor(() => expect(document.title).toBe('Economy · Hevalo Admin'));
   });

@@ -8,34 +8,26 @@ import { APP_LINK, LETTERS_LINK, letterThreadLink } from '../contract';
 import { widgetDate, widgetText } from '../strings';
 
 /**
- * The Android letter widget, drawn.
+ * The Android letter widget's drawing. Not React Native views: the widget library turns this tree into native
+ * widget views rendered by the system's text engine, so Kurmancî and Soranî shape correctly. It runs in the
+ * background with no app screen, so it is plain functions of what to show, with no hooks or state and nothing to
+ * memoise (hence the directive above).
  *
- * These are not React Native views: the widget library turns this tree into
- * the native views of an Android home-screen widget, drawn by the system's
- * own text engine, so Kurmancî and Soranî shape as they do anywhere else on
- * the phone. It runs in the background with no screen of the app open, so it
- * is plain functions of what to show — no hooks, no state, and nothing for
- * the compiler to memoise (hence the directive above).
- *
- * What it shows is decided in load.ts. A letter is its own paper, drawn by the
- * server with the writer's pigeon standing in the lower corner away from
- * where the writing starts (bottom right for a letter written left to right,
- * bottom left for one written right to left). Over the top of the paper go
- * who it is from and the start of it, in the writer's ink, on a wash of the
- * same paper so a drawing under the words never makes them hard to read; the
- * date sits in the other lower corner. Sealed (the words turned off in
- * settings) is the paper and who it is from. The three sizes are the iPhone
- * widget's three: small, medium and large.
+ * load.ts decides what it shows. A letter is its own paper, drawn by the server with the writer's pigeon in the
+ * lower corner away from where the writing starts. Across the top go the sender and the opening, in the writer's
+ * ink on a wash of the paper so a drawing never hurts legibility; the date sits in the other lower corner. Sealed
+ * (words turned off in settings) shows the paper and sender only. The three sizes match the iPhone widget's
+ * small, medium and large.
  */
 
 /** What the widget shows: worked out by load.ts, drawn here. */
 export type WidgetShows =
   | { kind: 'letter'; letter: WidgetLetter; pinned: boolean; showWords: boolean; image: string | null }
-  /** no pen pal has written yet: the windowsill with your own bird waiting */
+  /** No pen pal has written yet: the windowsill with your own bird waiting. */
   | { kind: 'empty'; image: string | null }
-  /** no token on this phone, or the server refused it */
+  /** No token on this phone, or the server refused it. */
   | { kind: 'signedOut' }
-  /** signed in, but nothing could be fetched yet and there is nothing kept from before */
+  /** Signed in, but nothing could be fetched yet and there is nothing kept from before. */
   | { kind: 'waiting' };
 
 export type WidgetFamily = 'small' | 'medium' | 'large';
@@ -66,10 +58,10 @@ interface Props {
   width: number;
   height: number;
   locale: string;
-  /** the app's language is written right to left: the widget's own words line up on the right */
+  /** The app's language is written right to left: the widget's own words line up on the right. */
   rtlLocale: boolean;
   now?: Date;
-  /** the phone is in dark mode: only the plain states follow it, a letter is its paper in both */
+  /** The phone is in dark mode: only the plain states follow it, a letter is its paper in both. */
   dark?: boolean;
 }
 
@@ -119,7 +111,7 @@ function LetterOnPaper({
   const date = widgetDate(letter.sentAt, locale, now);
   const heading = sealed ? widgetText(locale, 'sealed', { name }) : name;
   const label = [heading, sealed ? '' : letter.excerpt, date, pinned ? widgetText(locale, 'pinned') : ''].filter(Boolean).join('. ');
-  // a wide widget's words stop short of the corner the pigeon stands in
+  // A wide widget's words stop short of the corner the pigeon stands in.
   const clear = family === 'medium' ? Math.round(width * 0.24) : 0;
   return (
     <OverlapWidget

@@ -1,47 +1,31 @@
 /**
- * The learning games' own content in the admin panel: rows written, imported,
- * reviewed and published the way stories are.
+ * The learning games' own content in the admin panel, written, imported, reviewed and published like stories.
  *
  *   draft ──submit──▶ in_review ──publish──▶ published ──unpublish──▶ draft
  *     └──────────────publish──────────────────▲      any ──archive──▶ archived
  *
- * A draft or a row in review can be edited; a published one is unpublished
- * first, so what learners meet is always exactly what was published. Every
- * change names the `lockVersion` the editor loaded, and a stale one is refused
- * (409 STALE). A reviewer approves a row and only an approved row is published
- * (409 NOT_REVIEWED; the table checks it too); a change to its content — the
- * payload or its level — sends an approved row back to unreviewed.
+ * Only drafts and rows in review can be edited; a published row is unpublished first. Every change names the editor's
+ * `lockVersion` (stale is 409 STALE). Only an approved row is published (409 NOT_REVIEWED; the table checks too), and a
+ * content change (payload or level) resets approval.
  *
- * What may be stored is `checkGameContent` (@kurda/shared): the kind's schema,
- * and every Kurdish text in the row's own variety's script. A row that fails
- * is refused with 422 INVALID and its issues, each with a path.
+ * What may be stored is `checkGameContent` (@kurda/shared): the kind's schema, and every Kurdish text in the row's
+ * variety's script. Failures are 422 INVALID with located issues.
  *
- * The importers make drafts from what is already approved, so no Kurdish is
- * typed again: published lessons' sentences become `sentence` rows and
- * published stories' paragraphs `passage` rows (their glossary terms the
- * words to hide). The starter word cards for Impostor are published
- * vocabulary sorted into a short list of categories by each word's English
- * meaning (word-categories.ts): the word and its meaning are copied, and the
- * category's name — the one new Kurdish, the impostor's hint — makes them
- * starter drafts for native review. An import run twice adds nothing: each
- * row remembers where it came from (`origin`, unique per kind and variety).
+ * Importers make drafts from approved content so no Kurdish is retyped: published lesson sentences become `sentence`
+ * rows, story paragraphs `passage` rows (glossary terms as the hidden words). Impostor's starter word cards are
+ * published vocabulary sorted into categories by English meaning (word-categories.ts); the category name is the one new
+ * Kurdish, so they are starter drafts for native review. Re-running an import adds nothing (`origin` is unique per kind
+ * and variety).
  *
- * The word and forbidden-word cards' editors pick their Kurdish from the same
- * published vocabulary (`vocabulary`), so a card is made by choosing words,
- * not by typing them. The line picker lists published lines for an editor to
- * put in a case the same way, by copying.
+ * Card editors pick Kurdish from published vocabulary (`vocabulary`), and the line picker lists published lines to copy
+ * into a case.
  *
- * Reviewing, publishing, unpublishing, archiving, deleting and importing are
- * audited, the row before and after, beside the automatic audit of every
- * admin call.
+ * Reviewing, publishing, unpublishing, archiving, deleting and importing are audited before and after, beside the audit
+ * of every admin call.
  *
- * Riddles and proverbs (shared/src/lore.ts) are rows here too, for this
- * workflow, though they belong to no game. Their translations are reviewed
- * one language at a time beside the row (content-translations.ts), and come
- * with the row when it is opened. A riddle's level is never chosen: it is
- * its difficulty's (`RIDDLE_LEVELS`), set here whatever the editor sent. Two
- * live riddles, or two live proverbs, never share a slug, which names them in
- * the learner routes (409 SLUG_TAKEN).
+ * Riddles and proverbs (shared/src/lore.ts) live here for the workflow though they belong to no game. Their
+ * translations are reviewed per language (content-translations.ts). A riddle's level always follows its difficulty
+ * (`RIDDLE_LEVELS`), whatever the editor sent. Live riddles, and live proverbs, never share a slug (409 SLUG_TAKEN).
  */
 import type pg from 'pg';
 import {
@@ -138,13 +122,9 @@ const COLUMNS = `c.id, c.kind, c.dialect, c.level, c.payload, c.status, c.review
   c.reviewed_at, c.review_note, c.source, c.origin, c.lock_version, c.published_at, c.created_at, c.updated_at`;
 const FROM = `FROM game_content c LEFT JOIN users ru ON ru.id = c.reviewed_by`;
 /**
- * `c.kind IN (…)`: the kinds a game is made of today, for every read of a
- * stored row. The table also holds rows written for games that are no longer
- * part of Hevalo (cards for Don't Say the Word! and Kurdish Bluff, the
- * village's building names, What Would You Say?'s scenes). They stay where
- * they are; with this in its WHERE no list shows one and no id opens, changes
- * or publishes one, so a kind without a schema is never handed to the checks.
- * Literals from the shared list, never built from input.
+ * `c.kind IN (…)`: the kinds current games are made of, for every read of stored rows. The table still holds rows for
+ * retired games; with this in the WHERE no list shows them and no id opens, changes or publishes them, so a kind
+ * without a schema never reaches the checks. Literals from the shared list, never built from input.
  */
 const KNOWN_KIND = `c.kind IN (${GAME_CONTENT_KINDS.map((k) => `'${k}'`).join(', ')})`;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -208,10 +188,8 @@ function slugTaken(err: unknown): AppError | null {
 }
 
 /**
- * A card made of a picked word (word-cards.ts) keeps the Kurdish it was
- * copied with: its word is never typed over. What is not Kurdish — meanings
- * in the interface languages, a fact, the level — stays the editor's to
- * change.
+ * A card made from a picked word (word-cards.ts) keeps the Kurdish it was copied with; non-Kurdish fields
+ * (interface-language meanings, a fact, the level) stay editable.
  */
 function retypedKurdish(row: Pick<Row, 'kind' | 'origin' | 'payload'>, next: GameContentPayload): GameContentIssue[] {
   if (!row.origin || row.kind !== 'identity') return [];
@@ -461,9 +439,8 @@ export class GameContentAdminService {
   }
 
   /**
-   * Drafts made of approved Kurdish, written in one statement each; a row that
-   * came from the same place before is skipped. A row that carries new Kurdish
-   * beside the approved (a starter category's name) is a 'starter' draft.
+   * Drafts made of approved Kurdish, one statement per kind; rows from a previously imported origin are skipped. A row
+   * carrying new Kurdish beside the approved (a starter category's name) is a 'starter' draft.
    */
   private async insertDrafts(
     kind: GameContentKind,
@@ -508,10 +485,8 @@ export class GameContentAdminService {
   }
 
   /**
-   * Published vocabulary of a variety (lessons' word pairs and stories'
-   * glossary words), for a card editor to pick its Kurdish from: by its
-   * Kurdish (folded as the games fold it) or by what it means, in the
-   * dictionary's order.
+   * Published vocabulary of a variety (lesson word pairs and story glossary words) for a card editor to pick from,
+   * searched by Kurdish (folded as the games fold) or meaning, in dictionary order.
    */
   async vocabulary(dialect: GameDialect, q?: string, limit = 30): Promise<{ words: VocabularyWord[]; total: number }> {
     const all = await this.sources.vocabulary(dialect);
@@ -530,10 +505,8 @@ export class GameContentAdminService {
   }
 
   /**
-   * Impostor's starter cards from published vocabulary, and the
-   * categories they are sorted into (content-drafts.ts `wordCardDrafts`). All
-   * of them are 'starter' drafts: the category names are new Kurdish, for a
-   * native speaker to read before a game shows them.
+   * Impostor's starter cards from published vocabulary, with the categories they are sorted into (content-drafts.ts
+   * `wordCardDrafts`). All are 'starter' drafts, since category names are new Kurdish needing native review.
    */
   async importStarterWordCards(dialect: GameDialect, ctx: ActionContext, limit = 500): Promise<ImportResult> {
     const { categories, cards } = await wordCardDrafts(this.sources, dialect, limit);
@@ -543,10 +516,8 @@ export class GameContentAdminService {
   }
 
   /**
-   * Published lines an editor may copy into a case's evidence: the lines of
-   * published conversations, published lessons' sentences and
-   * published stories' sentences, in this variety only, those matching `q`
-   * (in the Kurdish or its English, folded) first by where they come from.
+   * Published lines an editor may copy into a case's evidence: published conversation lines, lesson sentences and story
+   * sentences in this variety, those matching `q` (Kurdish or English, folded) first by source.
    */
   async publishedLines(dialect: GameDialect, q = '', limit = PICKED_LINES_MAX): Promise<PublishedLine[]> {
     const [conversation, sentences, passages] = await Promise.all([

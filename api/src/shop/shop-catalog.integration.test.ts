@@ -1,4 +1,4 @@
-/** Shop catalog visibility + availability + cache (KUR-069) against real Postgres. */
+/** Shop catalogue visibility, availability and cache against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -124,7 +124,7 @@ describe.skipIf(!DATABASE_URL)('shop catalog (integration)', () => {
   it('rejects a purchase whose displayed price no longer matches (KUR-070)', async () => {
     const sku = `priced_${suffix}`;
     await shop.createItem({ sku, name: 'Priced', category: 'powerup', currency: 'zer', price: 30, isUnique: false });
-    // the client thinks it costs 20, but it's 30 now → PRICE_CHANGED, no debit
+    // The client thinks it costs 20 but it is 30 now: PRICE_CHANGED, no debit.
     await expect(shop.purchase(userId, sku, `pc-${suffix}`, new Date(), 20)).rejects.toThrow(/price changed/i);
     // the correct price goes through
     const ok = await shop.purchase(userId, sku, `pc2-${suffix}`, new Date(), 30);

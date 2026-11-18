@@ -27,30 +27,14 @@ import { codePath, codeTone, shareMessage, spelledCode } from './joinCode';
 import { TicketTear } from './Ticket';
 
 /**
- * A lobby's join code, as a ticket: the way in for anyone the host tells — in
- * person, on the phone, in another app — where "Invite friends" beside it is
- * the way in for friends on Hevalo.
+ * A lobby's join code as a ticket, the way in for anyone the host tells in person or elsewhere ("Invite friends"
+ * beside it is for friends on Hevalo). Six tiles in the game's colour, split as read aloud ("ABC 234") and large
+ * enough to read across a table. Tapping the code or Copy copies it; Share sends a message saying where to type it.
  *
- * The code is the ticket's face, six tiles in the game's own colour split as
- * it is read out ("ABC 234"), in the display serif and large enough to read
- * across a table. Tapping it copies it, and so does Copy, whose label turns
- * into "Copied" with a check that pops in a small burst; Share hands the
- * system sheet a message that says where to type the code. There is no link:
- * a code reaches a friend whichever app they open, and wherever a link cannot
- * go. Under it, one line on where a friend types it.
- *
- * As it first appears the tiles drop in one after another, flipping up onto
- * their lips with a little overshoot; after that a light crosses them every
- * few seconds — only while the screen is in front and the person has not
- * asked for less motion (useMotionAlive). Under Reduce Motion the ticket is
- * simply there, and a copy changes colour without the burst.
- *
- * A code always reads left to right, on a Soranî or an Arabic screen too; the
- * words round it follow the language.
- *
- * Its tear line, notches and rule are the ones every invitation's ticket is
- * cut with (Ticket.tsx), so an invite in a chat, on the banner or in the
- * lobby's list reads as the same kind of ticket as this one.
+ * The tiles flip in one after another on first show, then a shine crosses them every few seconds while the screen
+ * is in front (useMotionAlive). Under Reduce Motion the ticket simply appears, and a copy only changes colour. The
+ * code always reads left to right; the words round it follow the language. Its tear line and notches match every
+ * invitation ticket (Ticket.tsx).
  */
 export function CodeTicket({
   game,
@@ -61,11 +45,11 @@ export function CodeTicket({
 }: {
   game: PlayGame;
   code: string;
-  /** who may use this code, where that depends on the game's settings (a story game's access) */
+  /** Who may use this code, where the game's settings decide it (a story game's access). */
   note?: string;
-  /** a story game is shared by its story's title rather than by the game's name */
+  /** A story game is shared by its story's title rather than the game's name. */
   storyTitle?: string;
-  /** what sits on the ticket under the code's own actions: Invite friends */
+  /** Content under the code's own actions: Invite friends. */
   children?: ReactNode;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -91,10 +75,10 @@ export function CodeTicket({
   };
 
   const share = (): void => {
-    // the code as a link too, saying who is asking, so a friend who is not one yet can ask to be
+    // The code as a link too, naming the sender, so someone not yet a friend can ask to be one.
     const link = buildJoinLink(game, code, { from: user?.id });
     const message = shareMessage({ game: t(GAME_NAME_KEY[game]), code, storyTitle, link }, t, rtl, formatJoinCode);
-    // the sheet's own dismissal is not a failure, and has nothing to report
+    // Dismissing the sheet is not a failure.
     void Share.share({ message }).catch(() => undefined);
   };
 
@@ -125,34 +109,34 @@ export function CodeTicket({
   );
 }
 
-/** How long Copy says "Copied" before it is Copy again. */
+/** How long Copy reads "Copied" before reverting. */
 const COPIED_MS = 1800;
 
-/** Between two tiles, and the wider space where the code is split as it is read out. */
+/** The gap between tiles, and the wider gap where the code splits when read aloud. */
 const GAP = 6;
 const SPLIT = 14;
 const MAX_TILE = 54;
 const MIN_TILE = 34;
-/** A tile is a little taller than it is wide, like a letter on a board. */
+/** Tiles are a little taller than wide, like letters on a board. */
 const TALL = 1.2;
 
-/** How the tiles arrive: one after another, each this long after the one before. */
+/** The delay between one tile's arrival and the next. */
 const ARRIVE_STAGGER_MS = 55;
-/** The light that crosses the tiles: how often, and how long it takes to cross. */
+/** How often the shine crosses the tiles, and how long it takes. */
 const GLINT_EVERY_MS = 4200;
 const GLINT_MS = 900;
 
-/** As wide as the ticket lets them be, within what still reads as a tile. */
-export function tileSizeFor(width: number): number {
+/** As wide as the ticket allows, within what still reads as a tile. */
+function tileSizeFor(width: number): number {
   return Math.max(MIN_TILE, Math.min(MAX_TILE, Math.floor((width - GAP * 4 - SPLIT) / 6)));
 }
 
-/** Where tile `i` starts, from the row's own left edge. */
+/** Tile `i`'s left edge within the row. */
 function tileX(i: number, size: number): number {
   return i < 3 ? i * (size + GAP) : 3 * size + 2 * GAP + SPLIT + (i - 3) * (size + GAP);
 }
 
-/** The six tiles, tappable as one: the code spelled out to a screen reader, copied on a tap. */
+/** The six tiles, tappable as one: spelled out to screen readers, copied on a tap. */
 function CodeTiles({ game, code, onPress }: { game: PlayGame; code: string; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -164,7 +148,7 @@ function CodeTiles({ game, code, onPress }: { game: PlayGame; code: string; onPr
   const tone = codeTone(colors, game);
   const chars = code.split('');
 
-  // one value per tile, 0 → 1 as it arrives; played once, as the ticket first shows
+  // One value per tile, 0 to 1 as it arrives; played once, on first show.
   const arrive = useRef(chars.map(() => new Animated.Value(reduce ? 1 : 0))).current;
   const [arrived, setArrived] = useState(reduce);
   useEffect(() => {
@@ -185,10 +169,10 @@ function CodeTiles({ game, code, onPress }: { game: PlayGame; code: string; onPr
       if (finished) setArrived(true);
     });
     return () => run.stop();
-    // once: a later render is the same ticket, already there
+    // Only once: a later render is the same ticket, already shown.
   }, [reduce]);
 
-  // the light, every few seconds once the tiles are in, and only while anybody can see it
+  // The shine, every few seconds once the tiles are in, and only while the screen is in front.
   const glint = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!alive || !arrived || width === 0) return;
@@ -212,7 +196,7 @@ function CodeTiles({ game, code, onPress }: { game: PlayGame; code: string; onPr
       testID="code-tiles"
       style={({ pressed }) => [styles.tilesPress, pressed && styles.pressed]}
     >
-      {/* a code reads left to right on every screen */}
+      {/* A code reads left to right on every screen. */}
       <View
         style={[styles.tiles, { width: rowWidth, height: faceHeight + LIP }]}
         accessibilityElementsHidden
@@ -265,7 +249,7 @@ function CodeTiles({ game, code, onPress }: { game: PlayGame; code: string; onPr
   );
 }
 
-/** A tile's face on its lip, as the lesson's tiles are drawn (theme/Tile). */
+/** A tile's face on its lip, drawn like the lesson's tiles (theme/Tile). */
 export function Face({ tone, height, children }: { tone: TileTone; height: number; children: ReactNode }): React.JSX.Element {
   return (
     <>
@@ -276,10 +260,8 @@ export function Face({ tone, height, children }: { tone: TileTone; height: numbe
 }
 
 /**
- * Copy, which answers: its glyph becomes a check that pops with a small burst
- * and its word becomes "Copied", on the green of something done, for a moment.
- * The burst is the like's (MotionParts HeartBurst), so it is still under
- * Reduce Motion and the colour says it alone.
+ * Copy, which answers: its glyph pops into a check with a small burst and its word turns to "Copied" in the success
+ * green, for a moment. The burst is MotionParts' HeartBurst, which stays still under Reduce Motion.
  */
 function CopyButton({ copied, fired, onPress }: { copied: boolean; fired: number; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -294,7 +276,7 @@ function CopyButton({ copied, fired, onPress }: { copied: boolean; fired: number
       onPressOut={press.onPressOut}
       accessibilityRole="button"
       accessibilityLabel={label}
-      // it gives under the finger (the scale below); where nothing may move, it fades instead
+      // It shrinks under the finger; under Reduce Motion it fades instead.
       style={({ pressed }) => [styles.action, { opacity: pressed && press.scale === 1 ? pressedDim : 1 }]}
     >
       <Animated.View style={[styles.copy, { backgroundColor: copied ? colors.successFill : colors.controlTrack, transform: [{ scale: press.scale }] }]}>
@@ -310,12 +292,9 @@ function CopyButton({ copied, fired, onPress }: { copied: boolean; fired: number
 }
 
 /**
- * Everything a lobby offers for bringing people in: the ticket while the game
- * has a code, with Invite friends on it for the host (the server takes invites
- * from no one else), and the friend picker that button opens.
- *
- * Nothing at all once the code is gone: the server clears it the moment the
- * game can no longer be joined, so there is nobody left to invite either.
+ * Everything a lobby offers for bringing people in: the code ticket, with Invite friends for the host (the server
+ * takes invites from no one else), and the friend picker it opens. Nothing once the code is gone, which the server
+ * clears as soon as the game can no longer be joined.
  */
 export function LobbyShare({
   game,
@@ -329,7 +308,7 @@ export function LobbyShare({
   game: PlayGame;
   lobbyId: string;
   code: string | null | undefined;
-  /** the host, with a seat still free */
+  /** The viewer hosts and a seat is still free. */
   canInvite: boolean;
   mode: 'duo' | 'group';
   note?: string;
@@ -372,7 +351,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
   },
-  // a long word for "Copy code" wraps inside the button rather than being cut short
+  // A long "Copy code" wraps inside the button rather than being cut.
   copyText: { flexShrink: 1, textAlign: 'center', fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   hint: { fontSize: typography.sizes.sm, lineHeight: 20 },

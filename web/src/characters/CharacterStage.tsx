@@ -6,18 +6,12 @@ import type { SpokenClip } from './clips';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 
 /**
- * How tall a stage is in a window this tall: the character head to waist, as
- * large as the window can spare once `reserve` pixels are left for the rest of
- * the exercise, and never shorter than `min`, so every phone shows the same
- * stage (a small one scrolls a little); nor so large on a big screen that it
- * is all there is. The phone app's `stageHeight`.
- *
- * A stage in a card with more on it than an exercise — a letter, a practice
- * question — is `card` tall in every window: smaller.
+ * Stage heights, as the phone app's `stageHeight`: the window height less `reserve` for the rest of the exercise,
+ * clamped between `min` and `max`. A stage in a busier card (a letter, a practice question) is always `card` tall.
  */
 export const STAGE = { reserve: 500, min: 300, max: 380, card: 260 } as const;
 
-export function stageHeight(windowHeight: number): number {
+function stageHeight(windowHeight: number): number {
   return Math.round(Math.min(STAGE.max, Math.max(STAGE.min, windowHeight - STAGE.reserve)));
 }
 
@@ -35,29 +29,20 @@ function useStageHeight(fixed: number | undefined): number {
 /** Room left above the head on the stage, so it never touches the top edge. */
 const HEADROOM = 16;
 
-/** How far over the stage's top edge a hop may carry the head, as a share of the stage's height, before anything cuts it off. */
+/** How far above the stage's top edge a hop may carry the head, as a share of the stage's height. */
 const HOP_ROOM = 0.3;
 
-/** The least share of the stage's width the character's side of it takes, from the start: the buttons or the words have the rest. */
+/** The minimum share of the stage's width for the character's side; the buttons or words take the rest. */
 const STAND_AT = 0.26;
 
 /**
- * Where an exercise's character stands to say what it says, as on the phone:
- * head to waist, as large as the window can spare, in nothing but its own
- * light (shared `stageBackdrop`, drawn once for a light page and once for a
- * dark one), and `children` — the play buttons, or the words being asked
- * about — standing beside it.
+ * Where an exercise's character stands as it speaks, as on the phone: head to waist on its own backdrop (shared
+ * `stageBackdrop`, drawn for light and dark), with `children` (the play buttons or the words) beside it. The whole
+ * figure is drawn with the stage's bottom edge cutting it at the waist, so a hop lifts the legs into view and the head
+ * may rise over the top edge.
  *
- * The whole figure is drawn, its head just below the stage's top edge, and
- * the stage's bottom edge cuts off the rest: at the waist, or a little below
- * it for a character too wide to be shown so tall. A hop lifts the legs into
- * view rather than a cut edge, and the head may hop out over the top edge.
- *
- * Whoever says the recording playing now stands there (`useSpokenClip`). A
- * click on them greets you and says it again; `reaction` gets a cheer for a
- * right answer and a curious tilt of the head for one that was not yet.
- *
- * Decorative: the buttons say what is heard, and the character adds who.
+ * The speaker of the recording playing now stands there (`useSpokenClip`). A click greets and replays; `reaction`
+ * cheers a right answer or tilts the head at a wrong one. Decorative, since the buttons say what is heard.
  */
 export function CharacterStage({
   clips,
@@ -69,9 +54,9 @@ export function CharacterStage({
 }: {
   clips: readonly SpokenClip[];
   reaction?: CharacterReaction | null;
-  /** a stage this tall whatever the window (`STAGE.card`) */
+  /** A fixed stage height whatever the window, such as `STAGE.card`. */
   height?: number;
-  /** the least share of the stage's width the character's side takes: less beside a speech bubble, which needs the room */
+  /** The minimum share of the stage's width for the character's side; less beside a speech bubble. */
   share?: number;
   className?: string;
   children?: ReactNode;
@@ -84,7 +69,7 @@ export function CharacterStage({
     const el = stage.current;
     if (!el || typeof ResizeObserver !== 'function') return;
     const watch = new ResizeObserver(([entry]) => {
-      // the stage's whole width, its padding too: the backdrop and the character's side are shares of it
+      // The stage's full width including padding, which the backdrop and the character's side are shares of.
       const w = Math.round(entry?.borderBoxSize?.[0]?.inlineSize ?? entry?.contentRect.width ?? 0);
       if (w > 0) setWidth(w);
     });
@@ -108,7 +93,7 @@ export function CharacterStage({
   );
   if (!clip || !backdrops) return null;
   const replay = (): void => play(clip.src);
-  // the whole figure in pixels, and how far its top and its start lie beyond the head-to-waist box shown
+  // The whole figure in pixels, and how far its top and start lie beyond the head-to-waist box shown.
   const art = characterArt(clip.voice.speaker);
   const unit = shown.height / art.half.h;
   const hop = Math.round(height * HOP_ROOM);

@@ -1,30 +1,15 @@
 /*
- * Who Am I?'s staging (whoami/WhoAmIStage.tsx, WhoAmI.tsx, Couch.tsx).
+ * Who Am I?'s staging (whoami/WhoAmIStage.tsx, WhoAmI.tsx, Couch.tsx), on the games' stage (games/game-stage.css):
  *
- * The same house as the other games (games/game-stage.css): the start and
- * the moments a room looks at one screen together are on the night; choices
- * are cards that stand off the page; gold is for the one thing to press.
+ *   the card     paper on Hevalo's forehead, a question mark until readable
+ *   the table    every player's forehead, the one on turn in gold
+ *   a question   a deck card wearing its answer as a stamp; suggested ones first
+ *   an answer    large keys in green, amber and clay with a check, wave or cross, and a neutral not sure below
+ *   a guess      online tiles, shown only after "I know who I am"
+ *   the verdict  a card in the answer's colour
  *
- *   the card     paper, in both themes, on Hevalo's forehead: a question mark
- *                until its word may be read, then the word and its meaning
- *   the table    every player as a small forehead, the one on turn in gold
- *   a question   a card of the deck; asked, it wears the answer as a stamp;
- *                the few worth asking next stand first, under their label
- *   an answer    keys a thumb wide: the dialect's yes, could be and no in a
- *                row, green, amber and clay, each with its mark (a check, a
- *                wave, a cross) as well as its colour, and not sure as a
- *                quieter, neutral key under them; the same three colours for
- *                what a room says to a guess said out loud
- *   a guess      online, tiles to pick from, there only once the player
- *                says they know who they are; in one room none at all
- *   the verdict  a card of the answer's own colour, green for yes, amber for
- *                could be and clay for no, so what the card said is never
- *                one more opinion
- *
- * Everything is laid out with logical properties, so a right-to-left page
- * mirrors by itself; the silhouette is the same either way round. Only
- * transform, opacity and colour move, and base.css stills every animation
- * under prefers-reduced-motion: the card and the stamp simply appear.
+ * Logical properties throughout, so right-to-left mirrors. Only transform, opacity and colour animate, stilled by
+ * base.css under Reduce Motion.
  */
 .wa-page {
   --wa-ink: var(--u-text);
@@ -37,9 +22,8 @@
   --wa-maybe: #ffcf5c;
   --wa-no: #ff9c90;
   /*
-   * and as the keys and the card that carries the verdict, the same in both themes: a fresh green, the app's gold and a
-   * warm red, clear apart at a glance, each on the darker edge it stands on. Green and red carry white (5.0:1 and
-   * 5.1:1); gold is too light for white and carries the deep brown the app writes on gold (8.6:1), as a yellow sign does.
+   * The answer colours for keys and verdict, the same in both themes, each on a darker edge. Green and red carry white
+   * (5.0:1 and 5.1:1); gold carries the app's deep brown (8.6:1).
    */
   --wa-yes-fill: #1a7f45;
   --wa-yes-lip: #11592f;
@@ -253,10 +237,7 @@
   grid-column: 1 / -1;
   font-size: var(--text-caption);
 }
-/*
- * On one phone the holder's own hidden card is a reminder, not the picture: small beside the headline, so the tiles
- * and the questions are on the first screen.
- */
+/* On one phone the holder's hidden card is small beside the headline, so the questions fit on the first screen. */
 .wa-turn.is-couch {
   grid-template-columns: auto minmax(0, 1fr);
 }
@@ -525,10 +506,7 @@ p.wa-q-text {
   cursor: auto;
 }
 
-/*
- * The answers: yes, could be and no as a row of keys, each a thumb wide, and not sure under them across the row's
- * width, quieter and neutral, since it says only that the friend cannot tell. A table of two answers has the row of two.
- */
+/* The answer keys in a row, with a quieter, neutral not sure across the full width below; two keys at a two-answer table. */
 .wa-answer-keys {
   display: grid;
   gap: var(--space-2);
@@ -1259,10 +1237,7 @@ p.wa-q-text {
     0 0 0 8px rgba(242, 182, 50, 0.18),
     0 0 0 18px rgba(242, 182, 50, 0.08);
 }
-/*
- * The friends read the card from across a room: its word is as large as the card allows. The screen is kept short,
- * so the answers under it are in reach without a scroll.
- */
+/* The friends read the card from across a room, so its word is as large as possible, with the answers in reach. */
 .wa-friends .wa-night {
   gap: var(--space-3);
   padding-block: var(--space-5);
@@ -1278,10 +1253,7 @@ p.wa-q-text {
 .wa-friends .wa-card-meaning {
   font-size: var(--text-body);
 }
-/*
- * A card found comes off inside the app's own celebration (styles/motion.css), which is laid out for a picture:
- * here the stage keeps its width and the card's words their line.
- */
+/* A found card inside the app's celebration (styles/motion.css), keeping the stage's width and the words' line. */
 .wa-cheer,
 .wa-cheer .celebrate-art,
 .wa-cheer .celebrate-art-inner {

@@ -5,10 +5,8 @@ import { deviceStore } from '../keyboard/deviceStore';
 import { startArtOverrides } from './overrides';
 
 /**
- * Keeps the list of uploaded pictures (overrides.ts) for as long as the app
- * runs: mounted once where the app boots, inside the session's provider for
- * its client. Draws nothing. The list is public, so it is loaded the same
- * whether or not anyone is signed in.
+ * Keeps the uploaded-art list (overrides.ts) current for the app's lifetime. Mounted once at boot; draws nothing.
+ * The list is public, so it loads signed in or not.
  */
 export function ArtOverridesLoader(): null {
   const { client } = useAuth();

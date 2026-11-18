@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
@@ -18,10 +18,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { SocialScreen } from './SocialScreen';
 
-/*
- * Friends: the requests coming in are friendship tickets, and asking somebody
- * you may know hands them one — through the same routes as before.
- */
+/* Friends: incoming requests are friendship tickets, and asking somebody you may know hands them one. */
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -49,17 +46,17 @@ describe('Friends', () => {
   it('shows a request coming in as who wants to be friends, and accepts it through the same route', async () => {
     const client = open();
     expect(await screen.findByText('Rojîn wants to be friends')).toBeTruthy();
-    // the screen's title and the list's heading say "Friends" already
+    // The screen's title and the list's heading say "Friends" already.
     const before = screen.getAllByText('Friends').length;
     fireEvent.click(screen.getByRole('button', { name: 'Accept friend request from rojin' }));
-    // stamped, and said
+    // Stamped, and said.
     expect(screen.getAllByText('Friends')).toHaveLength(before + 1);
     expect(screen.queryByRole('button', { name: 'Accept friend request from rojin' })).toBeNull();
     expect(screen.getByText('You and Rojîn are friends now')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/friends/requests/u3/accept')).toBe(true));
   });
 
-  // a line of words and a button under a fingertip's height, each reached to one up and down, inside the row it sits in
+  // A line of words and a button under a fingertip's height, each reached to one up and down, inside its row.
   it('answers a finger a little above or below the Messages link and a suggestion’s Add', async () => {
     open();
     await screen.findByText('zana');

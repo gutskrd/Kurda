@@ -1,23 +1,10 @@
 /**
- * The ten mouth shapes of a person's face, seen from the front, all drawn as
- * variations of one smile.
- *
- * The smile is the face at rest: the lips parted a little over the upper
- * teeth, exactly as the character smiles. Every other shape moves the same
- * few things — how far the jaw drops, how wide the mouth pulls, how round the
- * opening is, how much of the teeth and tongue shows — from that smile, keeping
- * its lip colour and its teeth. So whichever two shapes follow each other, the
- * mouth changes and the face does not.
- *
- * Each shape is one mouth: the lips, in one colour, as a single shape that
- * hugs the opening a little way all round, and the opening laid over them with
- * the teeth and tongue kept inside it by a clip. Nothing else is drawn, so no
- * second edge can show beside the first, and one shape laid over another
- * leaves no hairline of skin between them at any size.
- *
- * Two more shapes are expressions rather than sounds: a wide grin, the smile
- * pulled wider with its corners up, and the tongue poked out between the
- * lips, which is the one shape that reaches past them.
+ * The ten mouth shapes of a person's face from the front, all drawn as variations of one smile. The smile is the face at
+ * rest, lips parted a little over the upper teeth; every other shape moves the same few things from it (jaw drop, width,
+ * roundness, how much teeth and tongue show) and keeps its lip colour and teeth, so between any two shapes only the mouth
+ * changes. Each shape is the lips as a single shape hugging the opening, with the teeth and tongue clipped inside the
+ * opening, so no second edge or hairline of skin ever shows. Two more shapes are expressions: a wide grin, and the tongue
+ * poked out, the one shape reaching past the lips.
  */
 import type { Viseme } from '../lipsync/visemes.js';
 import type { Pt } from '../art/svg.js';
@@ -27,13 +14,13 @@ import type { Knot } from './pen.js';
 import { alpha, clipDef, clipped, curve, fill, oval, part, taper } from './pen.js';
 
 export interface Smile {
-  /** the opening at rest — the upper teeth framed by the lips: its two ends, and its top and bottom at the middle */
+  /** the opening at rest, the upper teeth framed by the lips: its two ends, and its top and bottom at the middle */
   open: { left: Pt; right: Pt; top: number; bottom: number };
-  /** how far the lips reach beyond the opening: above it and below it at the middle, and past each end */
+  /** how far the lips reach beyond the opening, above and below it at the middle and past each end */
   upperLip: number;
   lowerLip: number;
   sideLip: number;
-  /** how much the face is turned: the middle of the mouth sits this far toward the right end (0.5 is facing forward) */
+  /** how much the face is turned: the mouth's middle sits this far toward the right end (0.5 faces forward) */
   middle?: number;
   colours: { lip: string; line: string; inside: string; teeth: string; tongue: string };
 }
@@ -50,25 +37,22 @@ interface Shape {
   /** 0 keeps the smile's shallow corners; 1 makes a round mouth */
   round: number;
   /**
-   * How much of each row of teeth shows. The upper row hangs from the top of
-   * the mouth; the lower row rides on the lower lip and goes down with the jaw,
-   * so an open mouth parts between the two rows rather than leaving the lower
-   * teeth up behind a dropped lip. 1 is the whole row, as in the smile.
+   * How much of each row of teeth shows (1 is the whole row, as in the smile). The upper row hangs from the mouth's top; the
+   * lower rides on the lower lip and drops with the jaw, so an open mouth parts between the rows.
    */
   teeth: number;
   lower: number;
   /** how high the tongue comes (0: not seen); `tip` lifts its tip to the teeth */
   tongue: number;
   tip?: boolean;
-  /** how much fuller the lips are, pushed forward round a round mouth, in the drawing's units */
+  /** how much fuller the lips are, pushed forward round a round mouth, in drawing units */
   pout: number;
 }
 
 /**
- * Measured against one another so each reads at a glance even when the face
- * is a few dozen pixels tall: `a` the widest and deepest, `o` round, `u`
- * small and pushed forward, `i` spread with both rows of teeth, `etc` the
- * teeth nearly together, `l` with the tongue lifted to the teeth.
+ * Sized against one another so each reads at a glance when the face is a few dozen pixels tall: `a` widest and deepest,
+ * `o` round, `u` small and pushed forward, `i` spread with both rows of teeth, `etc` teeth nearly together, `l` the tongue
+ * lifted to the teeth.
  */
 const SHAPES: Record<Exclude<Viseme, 'mbp' | 'fv'> | 'grin', Shape> = {
   rest: { width: 1, corner: 0, top: 0, drop: 0, round: 0, teeth: 1, lower: 1, tongue: 0, pout: 0 },
@@ -79,7 +63,7 @@ const SHAPES: Record<Exclude<Viseme, 'mbp' | 'fv'> | 'grin', Shape> = {
   a: { width: 1, corner: 0.12, top: 0, drop: 0.95, round: 0.45, teeth: 1, lower: 0.8, tongue: 0.34, pout: 0 },
   o: { width: 0.6, corner: 0.16, top: -0.08, drop: 0.7, round: 1, teeth: 0.5, lower: 0.5, tongue: 0.22, pout: 0.3 },
   u: { width: 0.38, corner: 0.12, top: 0.04, drop: 0.3, round: 1, teeth: 0, lower: 0, tongue: 0, pout: 0.6 },
-  // the smile pulled wide, its corners up above its ends at rest, both rows of teeth showing
+  // The smile pulled wide, its corners above their rest, both rows of teeth showing.
   grin: { width: 1.3, corner: -0.2, top: -0.03, drop: 0.32, round: 0, teeth: 1, lower: 0.9, tongue: 0, pout: 0 },
 };
 
@@ -107,7 +91,7 @@ function opening(s: Smile, k: Shape): Knot[] {
   const top = m.top + k.top * m.hw;
   const bottom = m.bottom + (k.drop + k.top) * m.hw;
   const r = 0.35 + 0.65 * k.round;
-  // a smile's top edge is nearly flat to its ends; a round mouth's top arches like its bottom
+  // A smile's top edge is nearly flat to its ends; a round mouth's top arches like its bottom.
   const shoulder = (y: number): number => top + (y - top) * (0.12 + 0.06 * k.round);
   return [
     [lx, ly, r],
@@ -122,10 +106,8 @@ function opening(s: Smile, k: Shape): Knot[] {
 }
 
 /**
- * The lips round an opening: the opening's own outline carried out a little —
- * a thin upper lip over it, a fuller lower lip under it, and to a point just
- * past each end. The lips thin as the jaw drops and the mouth rounds, and
- * fill out where they push forward.
+ * The lips round an opening: its outline carried out a little, a thin upper lip, a fuller lower lip and a point past each
+ * end. They thin as the jaw drops and the mouth rounds, and fill out where pushed forward.
  */
 function lips(s: Smile, k: Shape, open: readonly Knot[]): Knot[] {
   const stretch = Math.max(0.55, 1 - 0.25 * k.drop - 0.2 * k.round);
@@ -177,11 +159,10 @@ function shaped(s: Smile, k: Shape, clipId: string): string {
       ),
     );
   }
-  // the smile's band of teeth is two rows meeting: the upper a little the taller
+  // The smile's band of teeth is two rows meeting, the upper a little taller.
   const rows = m.bottom - m.top;
-  // the edge where each row parts from the other: nearly straight across, bowing only a little at
-  // the middle, as front teeth do. The opening's own curve trims the ends, so neither row comes to
-  // a point in the middle or runs up the sides. `bow` is how far the middle sits past the ends.
+  // Where the rows part: nearly straight, bowing a little at the middle as front teeth do. The opening's curve trims the
+  // ends, so neither row points in the middle or runs up the sides; `bow` is how far the middle sits past the ends.
   const rowLeft = (open[0] as Knot)[0] - 3;
   const rowRight = (open[4] as Knot)[0] + 3;
   const across = (y: number, bow: number): Knot[] => [
@@ -192,23 +173,23 @@ function shaped(s: Smile, k: Shape, clipId: string): string {
     [rowLeft, y - bow, 0],
   ];
   if (k.teeth > 0 && k.drop === 0) {
-    // at rest the two rows meet in one band, filling the smile, as the character smiles
+    // At rest the two rows meet in one band filling the smile.
     const smile = opening(s, SHAPES.rest);
     const dy = top - m.top;
     const depth = rows * (1 - k.teeth);
     const teeth = smile.map(([x, y, r], i) => [m.cx + (x - m.cx) * Math.max(1, k.width) * 1.04, y + dy - (i >= 5 && i <= 7 ? depth : 0) + (i === 2 ? -3 : 0), r] as Knot);
-    // the top of the teeth reaches up under the lip
+    // The top of the teeth reaches up under the lip.
     teeth[1] = [(teeth[1] as Knot)[0], top - 3];
     teeth[3] = [(teeth[3] as Knot)[0], top - 3];
     inner.push(fill(curve(teeth), c.teeth));
   } else if (k.teeth > 0) {
-    // the upper row hangs from the top of the mouth (reaching up under the lip) to a straight edge
+    // The upper row hangs from the mouth's top, reaching under the lip, to a straight edge.
     const hu = rows * UPPER_ROW * k.teeth;
     inner.push(fill(curve([[rowLeft, top - 4, 0], [rowRight, top - 4, 0], ...across(top + hu, hu * 0.08)]), c.teeth));
   }
   if (k.lower > 0 && k.drop > 0) {
-    // the lower row rides on the lower lip and goes down with the jaw, to a straight top edge like
-    // the upper row's; below, it reaches past the opening for the clip to trim
+    // The lower row rides on the lower lip and drops with the jaw to a straight top edge; below, it reaches past the opening
+    // for the clip to trim.
     const lh = rows * (1 - UPPER_ROW) * k.lower;
     const base = (open[6] as Knot)[1];
     inner.push(fill(curve([...across(base - lh, -lh * 0.08).reverse(), [rowRight, base + 6, 0], [rowLeft, base + 6, 0]]), c.teeth));
@@ -219,18 +200,14 @@ function shaped(s: Smile, k: Shape, clipId: string): string {
   );
 }
 
-/**
- * b, m, p: the lips pressed together, no teeth showing — one shape the width
- * of the smile, a little fuller than at rest, closed along its middle by a
- * single line.
- */
+/** b, m, p: the lips pressed together with no teeth showing, one shape the smile's width and a little fuller, closed along a single line. */
 function pressed(s: Smile): string {
   const m = measures(s);
   const c = s.colours;
   const meet = (m.top + m.bottom) / 2 - (m.bottom - m.top) * 0.15;
   const l: Pt = [m.left[0] - s.sideLip, m.left[1] + 0.2];
   const r: Pt = [m.right[0] + s.sideLip, m.right[1] + 0.2];
-  // the meeting line bows like the smile: the middle a little lower than at the ends
+  // The meeting line bows like the smile, the middle a little lower than the ends.
   const along = (t: number, dy: number): Pt => {
     const x = t < 0 ? m.cx + (m.cx - l[0]) * t : m.cx + (r[0] - m.cx) * t;
     const end = t < 0 ? l[1] : r[1];
@@ -254,9 +231,8 @@ function pressed(s: Smile): string {
 }
 
 /**
- * f, v: the upper teeth resting on the lower lip, which is drawn up over
- * them so only their edge shows. The lower lip is the same lips' own lower
- * half, lifted, so the mouth keeps one outline.
+ * f, v: the upper teeth resting on the lower lip, which is drawn up over them so only their edge shows; it is the same
+ * lips' lower half, lifted, so the mouth keeps one outline.
  */
 function teethOnLip(s: Smile, clipId: string): string {
   const m = measures(s);
@@ -283,11 +259,9 @@ function teethOnLip(s: Smile, clipId: string): string {
 }
 
 /**
- * The tongue poked out: the mouth a little open and narrowed, as lips are
- * round a tongue, the upper teeth showing over it, and the tongue itself
- * coming out from under them, over the lower lip and down, round at its tip,
- * with the furrow along its middle. The one shape drawn past the lips, so it
- * is the one shape not kept inside the clip.
+ * The tongue poked out: the mouth a little open and narrowed round it, upper teeth showing, the tongue coming from under
+ * them over the lower lip, round at the tip with a furrow down its middle. The one shape drawn past the lips, so it is not
+ * kept inside the clip.
  */
 function tongueOut(s: Smile, clipId: string): string {
   const m = measures(s);
@@ -303,7 +277,7 @@ function tongueOut(s: Smile, clipId: string): string {
   const rowLeft = (open[0] as Knot)[0] - 3;
   const rowRight = (open[4] as Knot)[0] + 3;
   const inner = [fill(box(rowLeft, top - 2, rowRight - rowLeft, bottom - top + 4), c.inside), fill(box(rowLeft, top - 4, rowRight - rowLeft, hu + 4), c.teeth)];
-  // from just under the upper teeth to a tip well past the lower lip
+  // From just under the upper teeth to a tip well past the lower lip.
   const root = top + hu;
   const tip = bottom + m.hw * 0.78;
   const tw = span * 0.33;
@@ -330,7 +304,7 @@ function tongueOut(s: Smile, clipId: string): string {
   );
 }
 
-/** All twelve shapes for one face, the ten visemes and the two expressions; `p` prefixes the clip ids so faces on one page never share one. */
+/** All twelve shapes for one face, the ten visemes and two expressions; `p` prefixes the clip ids so faces on one page never share one. */
 export function humanMouths(s: Smile, p: string): Record<MouthShape, string> {
   const id = (v: MouthShape): string => `${p}m${v}`;
   return {

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { fireLevel } from '@kurda/shared';
@@ -10,6 +10,7 @@ import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { GoalRing } from '../leagues/GoalRing';
 import type { RootNavigation } from '../navigation/rootStack';
+import { useTabFocusLoad } from '../navigation/tabFocusLoad';
 import { useDirection } from '../reports/direction';
 import { streakLabelKey, type Streak } from '../streak/format';
 import { StreakSheet } from '../streak/StreakSheet';
@@ -25,18 +26,12 @@ import { pressedDim } from '../theme/motion';
 const RING = 24;
 
 /**
- * Where today stands, in the top corner of Learn: the streak, the day's goal
- * as a ring filling up, and the Zêr in your pocket. Three glances' worth,
- * always in the same place, the way a learning app's corner is read — and
- * each one opens onto more: the streak's whole story, the goal (where it can
- * be changed), the shop.
+ * Today's status in Learn's top corner: the streak, the daily goal as a filling ring, and the Zêr balance, each
+ * opening more (the streak sheet, the goal picker, the shop). The numbers are plain: nothing counts down or warns
+ * of loss, and a zero streak shows a cold fire saying a lesson today starts one. Some readers are children.
  *
- * The numbers are plain. Nothing counts down and nothing warns about what
- * could be lost: a streak at zero shows a cold fire and says a lesson today
- * starts one. Some of the people reading it are children.
- *
- * The streak it reads is handed on (`onStreak`), for Learn's own moments; a
- * new `reloadKey` reads all three again (Learn pulled to refresh).
+ * The streak it reads is passed on (`onStreak`) for Learn's own moments; a new `reloadKey` reloads all three
+ * (pull to refresh).
  */
 export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onStreak?: (streak: Streak) => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -50,29 +45,28 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
   const [settled, setSettled] = useState(false);
   const [open, setOpen] = useState<'streak' | 'goal' | null>(null);
 
-  // fresh each time Learn comes back into view: a lesson just finished moved all three
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      void Promise.all([
+  // Fresh each time Learn comes back from a lesson or any other page, since a lesson moves all three; a quick tab
+  // switch keeps them (navigation/tabFocusLoad). The streak is only on GET /me.
+  const load = useCallback(
+    async (live: () => boolean) => {
+      const [g, me, wallet] = await Promise.all([
         client.get<DailyGoalStatus>('/me/daily-goal'),
         client.get<{ user: { streak?: Streak } }>('/me'),
         client.get<{ balances: { zer: number } }>('/me/wallet'),
-      ]).then(([g, me, wallet]) => {
-        if (!active) return;
-        if (g.ok) setGoal(g.data);
-        if (me.ok && me.data.user.streak) {
-          setStreak(me.data.user.streak);
-          onStreak?.(me.data.user.streak);
-        }
-        if (wallet.ok) setZer(wallet.data.balances.zer);
-        setSettled(true);
-      });
-      return () => {
-        active = false;
-      };
-    }, [client, reloadKey, onStreak]),
+      ]);
+      if (!live()) return false;
+      if (g.ok) setGoal(g.data);
+      if (me.ok && me.data.user.streak) {
+        setStreak(me.data.user.streak);
+        onStreak?.(me.data.user.streak);
+      }
+      if (wallet.ok) setZer(wallet.data.balances.zer);
+      setSettled(true);
+      return g.ok && me.ok && wallet.ok;
+    },
+    [client, reloadKey, onStreak],
   );
+  useTabFocusLoad(load);
 
   const changeGoal = useCallback(
     async (next: GoalOption) => {
@@ -91,7 +85,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
       ? t('learn.today.goalMet')
       : t('learn.today.goal', { xp: formatNumber(goal.earnedXp, locale), goal: formatNumber(goal.effectiveGoal, locale) })
     : '';
-  // a button that opens a sheet: the sheet arriving is the answer, not a buzz
+  // A button that opens a sheet: the sheet arriving is the answer, not a buzz.
   const show = (which: 'streak' | 'goal') => setOpen(which);
 
   if (!settled) {
@@ -128,6 +122,10 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
         >
           <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
             <GoalRing xp={goal.earnedXp} goal={goal.effectiveGoal} size={RING} tint={[colors.gold, colors.goldText]} showNumbers={false} />
+            {/* The XP bolt in the middle: an empty ring alone, before the day's first lesson, looked like a picture that failed to load. */}
+            <View style={styles.ringMark} pointerEvents="none">
+              <Icon name="bolt" size={11} color={goal.earnedXp > 0 ? colors.goldText : colors.textSecondary} />
+            </View>
           </View>
         </Pressable>
       ) : null}
@@ -147,7 +145,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
       <StreakSheet
         streak={open === 'streak' ? streak : null}
         onClose={() => setOpen(null)}
-        // a streak restored in the sheet is the streak everywhere: the fire in the bar, and Learn's own moments
+        // A streak restored in the sheet is the streak everywhere: the bar's fire and Learn's own moments.
         onRestored={(next) => {
           setStreak(next);
           onStreak?.(next);
@@ -171,9 +169,10 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
 
 const styles = StyleSheet.create({
   bar: { alignItems: 'center', gap: spacing.xs },
-  // each stat is a 44pt target however small its number
+  // Each stat is a 44pt target however small its number.
   stat: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
   number: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  ringMark: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   sheetBody: { gap: spacing.md, paddingBottom: spacing.sm },
   goalHead: { alignItems: 'center', gap: spacing.md },
   goalWords: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

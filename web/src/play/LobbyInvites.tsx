@@ -12,16 +12,13 @@ import { InviteSheet } from './InviteSheet';
 import { playError } from './playApi';
 import { usePlayInvites } from './PlayProvider';
 
-/** The friends the host asked into this lobby, newest first, as the host's list says. */
+/** The friends the host asked into this lobby, newest first. */
 function useInvited(game: PlayGame, lobbyId: string): OutgoingInviteState[] {
   const { lists } = usePlayInvites();
   return lists?.outgoing.find((o) => o.game === game && o.lobbyId === lobbyId)?.invitees ?? [];
 }
 
-/**
- * "Invite friends", for the host of a lobby: the invite sheet, with the
- * friends already asked (and not yet answered no) left out of the picker.
- */
+/** "Invite friends" for a lobby's host: the invite sheet, leaving out friends already asked and not declined. */
 export function InviteFriendsButton({
   game,
   lobbyId,
@@ -29,7 +26,7 @@ export function InviteFriendsButton({
 }: {
   game: PlayGame;
   lobbyId: string;
-  /** seats still free */
+  /** Seats still free. */
   room: number;
 }): React.JSX.Element {
   const t = useT();
@@ -64,17 +61,9 @@ function stateKey(i: OutgoingInviteState): MessageKey {
 }
 
 /**
- * The lobby's "Invited" list (contract §B1): each friend the host asked and
- * where they are — asked (with Cancel), in, "can't play right now", "would
- * rather play something else", or out of time (with Invite again). It follows
- * the friends' answers as they come, and says each change politely.
- *
- * Each friend is a small ticket (ui/Ticket.tsx), their face on its stub. One
- * still waiting is drawn in outline, with a faint light crossing it now and
- * then while the list is in front; one who came in is filled in, in the
- * game's colour, and stamped "Joined" — the stamp landing as it happens; an
- * answer of no, or an invite that ran out or was taken back, is grey, with the
- * reason in words.
+ * The lobby's "Invited" list: each friend asked and where they stand (asked, with Cancel; in; declined; or expired,
+ * with Invite again), following answers as they come. Each is a small ticket with their face on the stub: outlined
+ * while waiting, filled and stamped "Joined" once in, grey with the reason in words otherwise.
  */
 export function InvitedList({
   game,
@@ -85,7 +74,7 @@ export function InvitedList({
   game: PlayGame;
   lobbyId: string;
   room: number;
-  /** beside the page's other panels: a story lobby's are h3, a battle's or a match's h2 */
+  /** Matches the page's other panels: h3 in a story lobby, h2 in a battle or match. */
   headingLevel?: 2 | 3;
 }): React.JSX.Element | null {
   const t = useT();
@@ -158,7 +147,7 @@ function InvitedRow({
 }: {
   invitee: OutgoingInviteState;
   game: PlayGame;
-  /** the list is in front of the reader, so a waiting ticket may have its light */
+  /** The list is in front of the reader, so a waiting ticket may show its light. */
   awake: boolean;
   busy: boolean;
   room: number;
@@ -178,7 +167,7 @@ function InvitedRow({
       <TicketBody className="lobby-invited-main" shine={waiting}>
         <span className="lobby-invited-text">
           <span className="lobby-invited-name">{i.name}</span>
-          {/* in: the stamp is the word */}
+          {/* In: the stamp is the word. */}
           {!joined && <span className="lobby-invited-state">{t(stateKey(i))}</span>}
         </span>
         {joined && (

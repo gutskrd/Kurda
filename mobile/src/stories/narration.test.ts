@@ -3,7 +3,7 @@ import { lessonAudioKey, type StoryNarration } from '@kurda/shared';
 import { Narrator, clockText, narrationItems, narrationLine, narrationTrack, trackAt, trackLength, type NarrationState, type PlayerLike, type PlayerStatus } from './narration';
 import { NARRATION_RATES, nextRate } from './prefs';
 
-// the speeds live beside the stored preferences, which read the platform and its keystore; neither is wanted here
+// The speeds live beside the stored preferences, which read the platform and keystore; neither is wanted here.
 vi.mock('react-native', () => ({ Platform: { OS: 'web' } }));
 vi.mock('expo-secure-store', () => ({ getItemAsync: async () => null, setItemAsync: async () => undefined }));
 
@@ -152,12 +152,12 @@ describe('Narrator', () => {
     expect(n.state.playing).toBe(false);
     n.toggle();
     expect(n.state.playing).toBe(true);
-    // carrying on is play, never a reload: the sound goes on from inside the sentence
+    // Resuming is play, never a reload: the sound continues inside the sentence.
     expect(f.log.slice(-2)).toEqual(['pause', 'play']);
     n.next();
     n.next();
     expect(n.state.current?.url).toBe('c.m4a');
-    n.next(); // already on the last
+    n.next(); // Already on the last.
     expect(n.state.current?.url).toBe('c.m4a');
     n.previous();
     expect(n.state.current?.url).toBe('b.m4a');
@@ -172,24 +172,24 @@ describe('Narrator', () => {
     const track = narrationTrack(narration);
     n.play(track, 'story');
     expect(n.totalMs).toBe(9000);
-    // within the first sentence: no reload, just the move
+    // Within the first sentence: no reload, just the seek.
     f.log.length = 0;
     n.seek(1500);
     expect(f.log).toEqual(['seek 1.5', 'play']);
     expect(n.positionMs()).toBe(1500);
-    // into the third: loaded, moved, and playing on
+    // Into the third: loaded, seeked and playing on.
     f.log.length = 0;
     n.seek(6500);
     expect(n.state.index).toBe(2);
     expect(f.log).toEqual(['load c.m4a', 'rate 1', 'seek 1.5', 'play']);
     expect(n.positionMs()).toBe(6500);
-    // paused: the line moves, the voice waits
+    // Paused: the line moves, the voice waits.
     n.toggle();
     f.log.length = 0;
     n.seek(2500);
     expect(n.state).toMatchObject({ index: 1, playing: false });
     expect(f.log).toEqual(['load b.m4a', 'rate 1', 'seek 0.5']);
-    // past the end: the last sentence at its end
+    // Past the end: the last sentence at its end.
     n.seek(20_000);
     expect(n.positionMs()).toBe(9000);
   });
@@ -204,7 +204,7 @@ describe('Narrator', () => {
     n.replay();
     expect(f.log).toEqual(['load b.m4a', 'rate 1', 'play']);
     expect(n.positionMs()).toBe(2000);
-    // a position never runs past the sentence it is in
+    // A position never runs past its sentence.
     f.clock.currentTime = 9;
     expect(n.positionMs()).toBe(5000);
   });
@@ -224,11 +224,11 @@ describe('Narrator', () => {
     n.toggle();
     expect(f.log).toEqual(['load a.m4a', 'rate 1', 'play']);
     expect(n.state).toMatchObject({ error: false, playing: true });
-    // the same status twice is said once
+    // The same status twice is reported once.
     const before = states.length;
     f.report({ buffering: false, error: false });
     expect(states.length).toBe(before);
-    // a failure stays said while the player goes on reporting quietly; only a new try clears it
+    // A failure stays reported while the player keeps reporting quietly; only a new try clears it.
     f.report({ buffering: true, error: true });
     expect(n.state).toMatchObject({ error: true, buffering: false, playing: false });
     const after = states.length;
@@ -244,12 +244,12 @@ describe('Narrator', () => {
     expect(n.resumeMs).toBeNull();
     n.play(track, 'story', 1);
     f.clock.currentTime = 1.5;
-    // a paragraph’s Listen takes over: the story’s place is where it was
+    // A paragraph's Listen takes over, leaving the story's place where it was.
     n.play(narrationItems(paragraphs, audio).filter((i) => i.paragraph === 1), 'paragraph');
     expect(n.resumeMs).toBe(3500);
     n.stop();
     expect(n.resumeMs).toBe(3500);
-    // the story again from a point, then to its end
+    // The story again from a point, then to its end.
     n.play(track, 'story', 2);
     expect(n.resumeMs).toBeNull();
     f.clock.currentTime = 2;
@@ -259,7 +259,7 @@ describe('Narrator', () => {
     f.end();
     expect(n.state.scope).toBeNull();
     expect(n.resumeMs).toBeNull();
-    // a paragraph’s own queue has no place on the track to keep
+    // A paragraph's own queue has no track place to keep.
     n.play(narrationItems(paragraphs, audio), 'paragraph');
     n.stop();
     expect(n.resumeMs).toBeNull();

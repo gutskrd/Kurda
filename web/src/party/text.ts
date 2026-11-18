@@ -2,16 +2,11 @@ import type { TextSlip } from '@kurda/shared';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
- * Why a clue or a guess typed in a party game was not taken, in the reader's
- * words: the chat pipeline's refusals (the same as a message's — too fast, a
- * word that cannot be said here, blocked by moderation, a mute), then the
- * game's own (not in this Kurdish's letters, too long, says the word). A mute
- * and a restriction are said by `describeError`, with their time, as on every
- * other send path.
+ * Why a party game's clue or guess was not taken: the chat pipeline's refusals, then the game's own. Mutes and
+ * restrictions go through `describeError` with their time, as on every other send path.
  */
 export const SLIP_KEY: Record<TextSlip | 'repeat', MessageKey | null> = {
   empty: null,

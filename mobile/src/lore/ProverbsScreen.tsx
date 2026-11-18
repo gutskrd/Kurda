@@ -26,21 +26,16 @@ import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { getProverbs } from './api';
-import { PROVERBS_NAME, THEME_KEY, defaultLoreDialect, kurdishIn, proverbTranslation, textIn, traditionMark, varietyName } from './labels';
+import { PROVERBS_NAME, THEME_KEY, defaultLoreDialect, kurdishIn, proverbTranslation, textIn, traditionMark } from './labels';
 import { CollectionTitle, VarietySwitch } from './parts';
+import { dialectNameKey } from '../i18n/dialectName';
 
 type Filter = 'all' | ProverbTheme;
 
 /**
- * Gotinên pêşiyan: the proverbs (Learn → Stories, and their own address
- * `app/learn/proverbs`).
- *
- * The proverb of the day first, set large, then the way into a short round
- * on them, the themes to keep to one of, and every proverb of the variety:
- * each in its own Kurdish and direction, its translation in the reader's
- * language (English where theirs has none yet), and where it comes from —
- * traditional, a region's, or newly written. A proverb opens on its own page.
- * Reading one pays nothing, and nothing here says it does.
+ * The proverbs (Learn → Stories, and `app/learn/proverbs`): the proverb of the day set large, the way into a short
+ * round, the themes, and every proverb of the variety in its own Kurdish with its translation (English where the
+ * reader's language has none) and where it comes from. Reading one pays nothing, and nothing says it does.
  */
 export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: GameDialect; theme?: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -96,9 +91,9 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
       </View>
     );
   } else if (list.proverbs.length === 0) {
-    body = <Note icon="quotes">{t('lore.proverbs.empty', { variety: varietyName(dialect) })}</Note>;
+    body = <Note icon="quotes">{t('lore.proverbs.empty', { variety: t(dialectNameKey(dialect)) })}</Note>;
   } else {
-    // a round is offered only when the server can build one: five proverbs, as the website asks
+    // A round is offered only when the server can build one: five proverbs, as the website asks.
     const roundable = list.proverbs.length >= PROVERB_ROUND_ITEMS;
     body = (
       <>

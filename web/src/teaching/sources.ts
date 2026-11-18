@@ -1,21 +1,7 @@
 /**
- * The studies "How Hevalo teaches" cites, as they were published.
- *
- * Every entry here was checked before it was written down: the paper exists,
- * the authors, year, journal and pages are as below, and the link is one that
- * leads to the paper or its record. The page says no more about any of them
- * than the paper's own summary supports — see the research roadmap in
- * docs/research, whose fact-checks downgraded more than one headline figure,
- * for why that line is held so firmly.
- *
- * Not translated, on purpose. A reference names a paper the way it was
- * printed; a German title for an English paper would cite something nobody
- * wrote. The words around the references are in the catalogues like every
- * other word on the page.
- *
- * Read by the page and by the Worker, which writes the same list into the
- * page's head as schema.org `citation`s — one list, so the two cannot drift.
- * No React, no DOM: the Worker bundles this file too.
+ * The studies "How Hevalo teaches" cites, as published; each entry was checked against the paper. References are not
+ * translated, since they name papers as printed. The Worker also bundles this file to write the same list as
+ * schema.org `citation`s, so it must not import React or the DOM.
  */
 
 export type SourceId =
@@ -35,15 +21,15 @@ export type SourceId =
   | 'settlesMeeder2016';
 
 export interface Source {
-  /** family name and initials, in the order the paper lists them */
+  /** Family name and initials, in the order the paper lists them. */
   authors: ReadonlyArray<readonly [family: string, initials: string]>;
-  /** more authors than are listed here: the reference ends "et al." */
+  /** More authors than are listed, so the reference ends "et al.". */
   etAl?: boolean;
   year: number;
   title: string;
-  /** the journal, or the proceedings for a conference paper */
+  /** The journal, or the proceedings for a conference paper. */
   venue: string;
-  /** a journal is a Periodical in schema.org; a proceedings volume is not */
+  /** A journal is a Periodical in schema.org; a proceedings volume is not. */
   kind: 'journal' | 'proceedings';
   volume?: string;
   issue?: string;
@@ -236,15 +222,12 @@ export const SOURCES: Readonly<Record<SourceId, Source>> = {
   },
 };
 
-/** In the order the Sources list prints them: by first author, as a reference list is. */
+/** The order the Sources list prints them in: by first author. */
 export const SOURCE_ORDER: ReadonlyArray<SourceId> = (Object.keys(SOURCES) as SourceId[]).sort((a, b) =>
   SOURCES[a].authors[0]![0].localeCompare(SOURCES[b].authors[0]![0], 'en'),
 );
 
-/**
- * How the page refers to a study in passing: "Roediger & Karpicke, 2006",
- * "Cepeda et al., 2006". Names and a year read the same in every language.
- */
+/** A study cited in passing, as in "Roediger & Karpicke, 2006" or "Cepeda et al., 2006". */
 export function shortCite(s: Source): string {
   const families = s.authors.map(([family]) => family);
   const names =

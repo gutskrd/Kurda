@@ -5,18 +5,9 @@ import { ItemPicture } from '../shop/ItemPicture';
 import { scatter } from './motion';
 
 /**
- * The pictures of the gift moments, drawn by hand in SVG — no animation
- * library, no image files, nothing licensed from anyone.
- *
- * The wrapping paper is a kilim: the diamond with its hooked corners that
- * Kurdish weavers put in rugs and saddlebags, repeated as a pattern. Each
- * tier has its own colourway — pomegranate red for an everyday gift, indigo
- * for a rare one, Newroz gold for a legendary (limited) one — and the ribbon
- * is the app's gold, the colour of the Zêr it was bought with.
- *
- * Every part has a class so CSS can move it: the lid lifts, the ribbon falls
- * away, the bow pops. The pictures are decoration (aria-hidden); the words
- * around them say what is happening.
+ * The gift moments' pictures, drawn in SVG. The wrapping is a kilim pattern of hooked diamonds, in pomegranate red,
+ * indigo or Newroz gold by tier, with a gold ribbon. Every part has a class for CSS to animate. Decorative
+ * (aria-hidden); the surrounding words say what happens.
  */
 
 interface Palette {
@@ -27,25 +18,23 @@ interface Palette {
   lid: string;
 }
 
-export const KILIM: Readonly<Record<GiftTier, Palette>> = {
-  // pomegranate red, gold and indigo: the colours of an Amed kilim
+const KILIM: Readonly<Record<GiftTier, Palette>> = {
+  // Pomegranate red, gold and indigo, the colours of an Amed kilim.
   common: { base: '#9b2335', motif: '#f0c24a', inner: '#24325f', cream: '#f6e7c8', lid: '#7d1b2b' },
-  // indigo ground, gold and red: dearer, darker, a little rarer
+  // Indigo ground with gold and red, darker for a rarer gift.
   rare: { base: '#22305e', motif: '#f0c24a', inner: '#b8324a', cream: '#f6e7c8', lid: '#1a2549' },
-  // Newroz: fire-gold ground, deep red and night
+  // Newroz: fire-gold ground, deep red and night.
   legendary: { base: '#d39a1c', motif: '#8f1d2c', inner: '#2a1a10', cream: '#fff3c4', lid: '#b07f12' },
 };
 
-/** An id usable inside url(#…): React's ids carry characters a fragment would need escaped. */
+/** An id usable inside url(#…), since React's ids contain characters a fragment would need escaped. */
 function useSvgId(prefix: string): string {
   return `${prefix}${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 }
 
 /**
- * One kilim tile, 20 units square: a stepped diamond with hooks at its
- * corners, a smaller one inside, a seed at the heart — and the quarter
- * diamonds at the tile's corners, which meet their neighbours' to make the
- * second row of the rug.
+ * One 20-unit kilim tile: a hooked stepped diamond with a smaller one and a seed inside, and quarter diamonds at the
+ * corners that meet the neighbours' to form the second row.
  */
 function KilimPattern({ id, p, scale = 1 }: { id: string; p: Palette; scale?: number }): React.JSX.Element {
   return (
@@ -55,10 +44,10 @@ function KilimPattern({ id, p, scale = 1 }: { id: string; p: Palette; scale?: nu
         <path d="M10 2.5 L17.5 10 L10 17.5 L2.5 10 Z" fill={p.motif} />
         <path d="M10 5.5 L14.5 10 L10 14.5 L5.5 10 Z" fill={p.inner} />
         <path d="M10 8 L12 10 L10 12 L8 10 Z" fill={p.cream} />
-        {/* the hooks: little ram's horns on the diamond's points */}
+        {/* The hooks: small ram's horns on the diamond's points. */}
         <path d="M10 2.5 l-1.6 -1.6 M10 2.5 l1.6 -1.6 M10 17.5 l-1.6 1.6 M10 17.5 l1.6 1.6" stroke={p.motif} strokeWidth="0.9" strokeLinecap="round" />
         <path d="M2.5 10 l-1.6 -1.6 M2.5 10 l-1.6 1.6 M17.5 10 l1.6 -1.6 M17.5 10 l1.6 1.6" stroke={p.motif} strokeWidth="0.9" strokeLinecap="round" />
-        {/* the corners: quarters of the next row's diamonds */}
+        {/* The corners: quarters of the next row's diamonds. */}
         <path d="M0 0 L3 0 L0 3 Z M20 0 L17 0 L20 3 Z M0 20 L3 20 L0 17 Z M20 20 L17 20 L20 17 Z" fill={p.cream} opacity="0.85" />
       </g>
     </pattern>
@@ -76,10 +65,7 @@ function RibbonGradient({ id }: { id: string }): React.JSX.Element {
   );
 }
 
-/**
- * The wrapped present. 120×120; the box sits low so the lid has room to fly.
- * `limited` (a legendary, Newroz item) puts a small flame on the lid.
- */
+/** The wrapped present, 120×120, sitting low so the lid has room to fly; `limited` puts a small flame on the lid. */
 export function GiftBox({
   tier,
   size = 120,
@@ -107,11 +93,11 @@ export function GiftBox({
         <KilimPattern id={pat} p={p} />
         <RibbonGradient id={rib} />
       </defs>
-      {/* a soft shadow under the box */}
+      {/* A soft shadow under the box. */}
       <ellipse className="gift-shadow" cx="60" cy="110" rx="40" ry="5" fill="rgba(0,0,0,0.35)" />
       <g className="gift-body">
         <rect x="20" y="54" width="80" height="54" rx="6" fill={`url(#${pat})`} />
-        {/* a shade on the body's lower half, so it reads as a box and not a flat card */}
+        {/* A shade on the lower half, so it reads as a box rather than a flat card. */}
         <rect x="20" y="54" width="80" height="54" rx="6" fill="none" stroke="rgba(0,0,0,0.25)" strokeWidth="1" />
         <rect x="20" y="82" width="80" height="26" rx="0" fill="rgba(0,0,0,0.12)" />
         <rect className="gift-ribbon" x="54" y="54" width="12" height="54" fill={`url(#${rib})`} />
@@ -128,7 +114,7 @@ export function GiftBox({
           <circle cx="60" cy="40" r="5" fill="#f6d27a" stroke="#9c7208" strokeWidth="1.2" />
         </g>
         {limited && (
-          // a Newroz flame stamped on the lid of a limited gift
+          // A Newroz flame stamped on the lid of a limited gift.
           <path
             className="gift-lid-flame"
             d="M26 54 C22 50 24 46 27 43 C27 46 29 46 29 44 C31 47 32 50 29 54 Z"
@@ -142,10 +128,7 @@ export function GiftBox({
   );
 }
 
-/**
- * The Newroz fire for a legendary gift: three tongues of flame, red, orange
- * and yellow, that flicker as they rise (CSS), with embers drifting up.
- */
+/** The Newroz fire for a legendary gift: three flickering flames (CSS) with embers drifting up. */
 export function NewrozFlame({ className }: { className?: string }): React.JSX.Element {
   const glow = useSvgId('flameglow');
   return (
@@ -165,10 +148,8 @@ export function NewrozFlame({ className }: { className?: string }): React.JSX.El
 }
 
 /**
- * What flies when a gift opens: pomegranate seeds (the fruit of Kurdish
- * autumn tables, deep red with a bright highlight) and sparks of gold. Placed
- * by a seeded scatter, so a burst is the same every time; CSS reads the
- * custom properties for where each piece goes.
+ * Pomegranate seeds and gold sparks that fly when a gift opens, placed by a seeded scatter so each burst is the same;
+ * CSS reads each piece's custom properties.
  */
 export function Confetti({ count = 18, spread = 1, className }: { count?: number; spread?: number; className?: string }): React.JSX.Element {
   return (
@@ -188,7 +169,7 @@ export function Confetti({ count = 18, spread = 1, className }: { count?: number
   );
 }
 
-/** The item itself: its picture when it has one, of any kind, its kind's glyph when not (a tag is drawn as a tag). */
+/** The item: its picture when it has one, otherwise its kind's glyph. */
 export function GiftItemArt({
   assetUrl,
   category,

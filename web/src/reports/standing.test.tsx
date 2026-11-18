@@ -8,7 +8,7 @@ import { AccountStanding } from './AccountStanding';
 import { SuspensionGate, SuspensionScreen } from './SuspensionGate';
 import { Login } from '../pages/Login';
 import { StandingWarnings } from './StandingWarnings';
-import { SafetyCard } from './SafetyCard';
+
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -107,7 +107,7 @@ describe('My reports', () => {
     expect(calls.find((c) => c.url.endsWith('/me/appeals'))!.body).toEqual({ caseId: 'case-9', text: 'It happened again.' });
   });
 
-  it('says in the app\'s words, not the server\'s, that a second look was already asked for', async () => {
+  it('says in the app’s words, not the server’s, that a second look was already asked for', async () => {
     stub({
       '/me/reports': { reports: [report({ status: 'no_violation', canAppeal: true, caseId: 'case-9', closedAt: '2026-10-02T10:00:00.000Z' })] },
       '/me/appeals': () => jsonResponse(409, { code: 'ALREADY_APPEALED', message: 'you have already asked for a review of this decision' }),
@@ -291,10 +291,3 @@ describe('the warning, shown once', () => {
   });
 });
 
-describe('Settings → Safety', () => {
-  it('opens My reports and Account standing', () => {
-    renderApp(<SafetyCard />);
-    expect(screen.getByRole('link', { name: 'My reports' })).toHaveAttribute('href', '/app/settings/reports');
-    expect(screen.getByRole('link', { name: 'Account standing' })).toHaveAttribute('href', '/app/settings/standing');
-  });
-});

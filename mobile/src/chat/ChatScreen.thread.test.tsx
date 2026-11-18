@@ -7,7 +7,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn() }), useFocusEffect: () => undefined }));
-// the thread's live events, handed to the test to send
+// The thread's live events, handed to the test to send.
 const live: { send: (event: unknown) => void } = { send: () => undefined };
 vi.mock('./useChatSocket', () => ({
   useChatSocket: (onEvent: (event: unknown) => void) => {
@@ -55,11 +55,11 @@ describe('a conversation as it is read', () => {
       'GET /chat/u2/messages': ok({ messages: [from('m1', 'u2', 'Silav', 3), from('m2', 'u2', 'Çawa yî?', 2), from('m3', 'me', 'Baş im', 1)] }),
     });
     await screen.findByText('Silav');
-    // the day is named once, over its first message
+    // The day is named once, over its first message.
     expect(screen.getAllByRole('heading', { name: 'Today' })).toHaveLength(1);
-    // two messages of theirs in a row: one face, at the foot of the run, not one beside each
+    // Two messages of theirs in a row: one face, at the foot of the run, not one beside each.
     expect(screen.getAllByTestId('run-face')).toHaveLength(1);
-    // a tail on the last bubble of each run: theirs and yours
+    // A tail on the last bubble of each run: theirs and yours.
     expect(screen.getAllByTestId('bubble-tail')).toHaveLength(2);
   });
 
@@ -104,7 +104,7 @@ describe('a conversation nobody has written in yet', () => {
     expect(screen.getByRole('heading', { name: 'rojda' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Rojbaş!' }));
     await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/chat/u2/messages' && (c.body as { body: string }).body === 'Rojbaş!')).toBe(true));
-    // the greeting is the conversation now: the welcome has made way for it
+    // The greeting is the conversation now: the welcome has made way for it.
     expect(await screen.findByText('Rojbaş!')).toBeTruthy();
     expect(screen.queryByText('This is the start of your conversation with rojda.')).toBeNull();
   });
@@ -114,7 +114,7 @@ describe('a conversation that could not be read', () => {
   it('says so, with the way to ask again, rather than offering a first hello', async () => {
     let reads = 0;
     open({
-      // the first read fails, the second finds what was said
+      // The first read fails, the second finds the messages.
       'GET /chat/u2/messages': () => (reads++ === 0 ? fail({ kind: 'server', status: 500, message: 'down' }) : ok({ messages: [from('m1', 'u2', 'Silav', 1)] })),
     });
     expect(await screen.findByRole('button', { name: 'Try again' })).toBeTruthy();

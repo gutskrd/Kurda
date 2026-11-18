@@ -3,24 +3,8 @@ import { en, type Catalogue } from './en';
 import { readRenamed } from '../lib/renamedKey';
 
 /**
- * Nine languages, fetched one at a time.
- *
- * They used to be nine static imports, on the reasoning that they were "a few
- * kilobytes each" and a round trip would leave the first paint wordless. The
- * first half stopped being true: the catalogues are 50–65 KB of source apiece,
- * 136 KB gzipped for the set, which was half of everything the browser
- * downloaded to open hevalo.app. Somebody reading in Kurmancî was paying for
- * Arabic, Dutch, German, Spanish, French and Turkish to sit unread in memory.
- *
- * The second half is answered by `preloadCatalogue`, which `main.tsx` awaits
- * before it renders anything: the one language that is wanted arrives before
- * the first paint, and the other seven never arrive at all. So the words are
- * there from the first frame, as before — the difference is which words were
- * downloaded to get them there.
- *
- * English stays bundled. It is the fallback every missing key resolves through
- * and what `useT` answers with outside a provider, so it has to be readable
- * without waiting for anything.
+ * The locale catalogues, each loaded on demand since together they are large; `main.tsx` awaits `preloadCatalogue`
+ * so the chosen one is there for the first paint. English stays bundled as the fallback for every key.
  */
 const LOADERS: Record<Exclude<AppLocale, 'en'>, () => Promise<Record<string, unknown>>> = {
   ku: () => import('./ku'),
@@ -43,13 +27,7 @@ export function readyCatalogue(locale: AppLocale): Catalogue | undefined {
   return cache.get(locale);
 }
 
-/**
- * Fetch a catalogue, or hand back the one already fetched.
- *
- * A failed load falls back to English rather than throwing. A language pack
- * that will not download is a bad afternoon; a white screen because of it is a
- * broken site, and every key in `en` is a defined answer.
- */
+/** Fetches a catalogue, or returns the cached one; a failed load falls back to English rather than throwing. */
 export async function loadCatalogue(locale: AppLocale): Promise<Catalogue> {
   const have = cache.get(locale);
   if (have) return have;
@@ -72,36 +50,24 @@ export async function loadCatalogue(locale: AppLocale): Promise<Catalogue> {
 }
 
 /**
- * Which language this visitor gets, before anything has rendered.
- *
- * Lives here rather than inside the provider because two places need the same
- * answer and they must not be able to disagree: `main.tsx` uses it to know what
- * to fetch, and the provider uses it to know what to start with. An explicit
- * choice beats a guess, and a choice made on this device beats one inferred
- * from the browser. The account is layered on top later by `AccountLocale`,
- * once there is an account to read.
+ * The visitor's language before rendering: this device's choice, else the browser's, else the default. Shared by
+ * `main.tsx` and the provider so they agree; the account's choice comes later via `AccountLocale`.
  */
 export function resolveLocale(): AppLocale {
   return readStoredLocale() ?? localeFromTag(typeof navigator === 'undefined' ? null : navigator.language) ?? DEFAULT_LOCALE;
 }
 
-/**
- * Where a signed-out visitor's choice lives.
- *
- * A signed-in account keeps the choice on the server, so it follows them to
- * another device. Somebody reading without an account has nowhere else to put
- * it, and it would be rude to ask them to choose again on every visit.
- */
+/** Where this device keeps the language choice; signed-in accounts also keep theirs on the server. */
 export const LOCALE_STORAGE_KEY = 'hevalo_locale';
-/* what it was called while the app was MyKurda; see `readRenamed`. */
+/* The key under the app's former name, still read once (`readRenamed`). */
 const LEGACY_LOCALE_KEY = 'mykurda_locale';
 
-export function readStoredLocale(): AppLocale | null {
+function readStoredLocale(): AppLocale | null {
   try {
     const raw = readRenamed(localStorage, LOCALE_STORAGE_KEY, LEGACY_LOCALE_KEY);
     return isAppLocale(raw) ? raw : null;
   } catch {
-    // a private window, or site data blocked: not knowing is fine
+    // Storage can be blocked, as in a private window, and then there is simply no stored choice.
     return null;
   }
 }

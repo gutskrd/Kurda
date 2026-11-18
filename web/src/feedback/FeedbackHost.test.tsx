@@ -40,7 +40,7 @@ const dismissals = (): number => posted.filter((p) => p.url.endsWith('/me/app-fe
 const answers = (): unknown[] => posted.filter((p) => p.url.endsWith('/me/app-feedback')).map((p) => p.body);
 
 async function mount(): Promise<void> {
-  // a stored session, so the provider loads /me and is signed in
+  // A stored session, so the provider loads /me and is signed in.
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   render(
     <AuthProvider>
@@ -52,7 +52,7 @@ async function mount(): Promise<void> {
       </I18nProvider>
     </AuthProvider>,
   );
-  // let /me land
+  // Let /me land.
   await act(async () => {
     await vi.advanceTimersByTimeAsync(10);
   });
@@ -98,7 +98,7 @@ describe('the rating box after a first finished game', () => {
     await wait(APP_FEEDBACK_DELAY_MS);
     const box = screen.getByRole('dialog', { name: 'How are you enjoying Hevalo?' });
     expect(box).toHaveAttribute('aria-modal', 'false');
-    // it does not take the focus from the results
+    // It does not take the focus from the results.
     expect(box.contains(document.activeElement)).toBe(false);
   });
 
@@ -169,7 +169,7 @@ describe('the rating box after a first finished game', () => {
     await wait(APP_FEEDBACK_DELAY_MS);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(dismissals()).toBe(1);
-    // “Not now” has nothing more to tell the server
+    // “Not now” has nothing more to tell the server.
     fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
     await wait(0);
     expect(dismissals()).toBe(1);
@@ -183,7 +183,7 @@ describe('the rating box after a first finished game', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(stateCalls).toBe(0);
 
-    // the next finished game asks instead
+    // The next finished game asks instead.
     await finishGame();
     await wait(APP_FEEDBACK_DELAY_MS);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -200,7 +200,7 @@ describe('the rating box after a first finished game', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(dismissals()).toBe(0);
 
-    // the round after it may still ask
+    // The round after it may still ask.
     await finishGame();
     await wait(APP_FEEDBACK_DELAY_MS);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -243,9 +243,8 @@ describe('the rating box after a first finished game', () => {
   });
 
   /**
-   * jsdom does no layout, so this checks the mechanism the screenshots rely
-   * on: the page's bottom padding grows by the box's height (plus its gap)
-   * while it is up, so the last control of the results scrolls clear of it.
+   * jsdom has no layout, so this checks the mechanism: the page's bottom padding grows by the box's height plus its
+   * gap while it is up, so the results' last control scrolls clear of it.
    */
   it('makes room under the page for itself while it is up', async () => {
     let resized: (() => void) | null = null;
@@ -269,7 +268,7 @@ describe('the rating box after a first finished game', () => {
 
     const root = document.documentElement;
     expect(root.style.getPropertyValue('--rb-space')).toBe('242px');
-    // it grows when stars are picked and the form opens
+    // It grows when stars are picked and the form opens.
     height = 422;
     act(() => resized?.());
     expect(root.style.getPropertyValue('--rb-space')).toBe('434px');

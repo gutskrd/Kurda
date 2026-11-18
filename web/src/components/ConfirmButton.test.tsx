@@ -12,7 +12,7 @@ describe('ConfirmButton', () => {
 
     await userEvent.click(screen.getByRole('button'));
     expect(onConfirm).not.toHaveBeenCalled();
-    // and says so, rather than looking like nothing happened
+    // It says so, rather than looking like nothing happened.
     expect(screen.getByRole('button').textContent).toBe('Sure?');
   });
 
@@ -30,7 +30,7 @@ describe('ConfirmButton', () => {
 
     const button = screen.getByRole('button', { name: 'Delete this post' });
     await userEvent.click(button);
-    // the icon-only version has no text to read, so the label carries it
+    // The icon-only version has no text, so the label carries it.
     expect(screen.getByRole('button', { name: /press again to confirm/ })).toBeInTheDocument();
   });
 
@@ -49,8 +49,7 @@ describe('ConfirmButton', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Delete this post' }).textContent).toBe('Delete'));
   });
 
-  // fireEvent rather than userEvent below: userEvent drives its own timers, which
-  // deadlocks against a fake clock and against a promise held open on purpose.
+  // fireEvent rather than userEvent: userEvent drives its own timers, which deadlock against a fake clock and a held promise.
   it('disarms on its own after a few seconds', async () => {
     vi.useFakeTimers();
     try {
@@ -60,7 +59,6 @@ describe('ConfirmButton', () => {
       fireEvent.click(button);
       expect(button.textContent).toBe('Sure?');
 
-      // a half-pressed Delete should not sit there indefinitely
       await act(async () => {
         vi.advanceTimersByTime(5_000);
       });

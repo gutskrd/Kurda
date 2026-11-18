@@ -13,7 +13,7 @@ export default defineConfig({
   plugins: [react()],
   server: { port: 5173, proxy },
   test: {
-    // each test file picks its environment (`// @vitest-environment jsdom` for the DOM)
+    // Each test file picks its environment (`// @vitest-environment jsdom` for the DOM).
     setupFiles: ['./src/test/setup.ts'],
   },
 });

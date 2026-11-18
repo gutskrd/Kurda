@@ -1,21 +1,9 @@
 /**
- * Writing stories, as data: what the admin API sends and takes, the form the
- * editor edits, what the text is (words, length, paragraphs, sentences) and
- * what is wrong with it while it is being typed. Kept apart from the page so
- * all of it can be tested without a browser.
- *
- * The checks are not a second copy of the server's. The editor runs the same
- * `validateStory` (@kurda/shared) the admin API runs on every save, submit and
- * publish, on the story exactly as it would be sent — trimmed the way the API
- * trims it — so it never shows a problem the server does not have, or misses
- * one it does. The API stays the judge: what it refuses comes back with its own
- * list of problems, and the editor shows that list too.
- *
- * Translations are kept per language: everything of a story in one language
- * (its text, title and summary, questions, reflections and notes) can be
- * compared, sent and saved on its own (PUT /admin/stories/:id/translations/:locale),
- * which is how a published story's translation is corrected without taking
- * it offline.
+ * Story authoring as data: the admin API's shapes, the editor's form, facts about the text and the live checks, kept
+ * apart from the page so they test without a browser. The checks run the same `validateStory` (@kurda/shared) as the
+ * API, on the story trimmed as the API trims it, so the editor shows exactly the server's problems; the API stays the
+ * judge, and what it refuses comes back with its own list. Each language's translation is compared and saved on its own
+ * (PUT /admin/stories/:id/translations/:locale), so a published story's translation can be fixed without unpublishing it.
  */
 import {
   APP_LOCALES,
@@ -80,13 +68,14 @@ import {
   type StoryTranslationReviewStatus,
   type StoryValidation,
 } from '@kurda/shared';
+import { localeName } from './format';
 
 // ---------------------------------------------------------------------------
 // What the admin API speaks (GET/POST/PUT /admin/stories…)
 // ---------------------------------------------------------------------------
 
 export type StoryStatus = 'draft' | 'in_review' | 'published' | 'archived';
-/** 'starter': one of the stories the app shipped with, waiting for a native speaker to read and publish it */
+/** 'starter': one of the stories the app shipped with, waiting for a native speaker to read and publish it. */
 export type StoryOrigin = 'admin' | 'starter';
 export type StoryReviewStatus = 'unreviewed' | 'approved';
 export type StoryAudioCoverage = 'none' | 'partial' | 'full';
@@ -134,21 +123,21 @@ export interface AdminStory {
   category: string | null;
   tradition: StoryTradition;
   author: string | null;
-  /** the collection, teller, region or publication it comes from */
+  /** The collection, teller, region or publication it comes from. */
   source: string | null;
   sourceUrl: string | null;
   attributionNote: string | null;
   translations: Record<string, string>;
-  /** by interface language, the title and summary */
+  /** By interface language, the title and summary. */
   metaTranslations: Record<string, StoryMetaTranslation>;
-  /** open questions to think about after reading, each with its translations */
+  /** Open questions to think about after reading, each with its translations. */
   reflections: StoryReflectionInput[];
   notes: StoryNoteInput[];
   sources: StorySourceInput[];
-  /** by interface language, whether a native speaker has read its translation; a language with none is unreviewed */
+  /** By interface language, whether a native speaker has read its translation; a language with none is unreviewed. */
   translationReview: Record<string, StoryTranslationReviewEntry>;
   cover: string | null;
-  /** the editor's reading time, null for the estimate (`readingMinutes` is whichever applies) */
+  /** The editor's reading time, null for the estimate (`readingMinutes` is whichever applies). */
   readingMinutesOverride: number | null;
   status: StoryStatus;
   origin: StoryOrigin;
@@ -167,10 +156,10 @@ export interface AdminStory {
   reviewNote: string | null;
   translationGroup: string | null;
   versions: AdminStoryVersion[];
-  /** the glossary terms that are dictionary headwords, with the entry each was linked to */
+  /** The glossary terms that are dictionary headwords, with the entry each was linked to. */
   glossaryMatches: Array<{ term: string; entryId: string; headword: string }>;
   audio: { sentences: StorySentenceAudio[]; recorded: number; total: number };
-  /** what would stop it being published (errors) and what is worth a look (warnings) */
+  /** What would stop it being published (errors) and what is worth a look (warnings). */
   problems: StoryValidation;
 }
 
@@ -197,7 +186,7 @@ export interface AdminStorySummary {
   featured: boolean;
   audio: StoryAudioCoverage;
   translationGroup: string | null;
-  /** how many problems `validateStory(…, 'publish')` finds */
+  /** How many problems `validateStory(…, 'publish')` finds. */
   problems: { errors: number; warnings: number };
 }
 
@@ -305,11 +294,8 @@ export const KIND_HINT: Record<QuestionKind, string> = {
 };
 
 /**
- * A story taken from the app's starter set that nobody has published yet. The
- * starters were written for the app, not by a native speaker, and the owner's
- * rule is that nothing unreviewed reaches learners — so they are marked until
- * someone publishes them, which is the review. One unpublished later (to fix a
- * typo, say) has been read once already and is not marked again.
+ * A starter story nobody has published yet. Starters were not written by a native speaker and nothing unreviewed
+ * reaches learners, so publishing one is its review; one unpublished later is not marked again.
  */
 export function needsNativeReview(story: { origin: StoryOrigin; publishedAt: string | null }): boolean {
   return story.origin === 'starter' && story.publishedAt === null;
@@ -320,11 +306,11 @@ export function needsNativeReview(story: { origin: StoryOrigin; publishedAt: str
 // ---------------------------------------------------------------------------
 
 export interface GlossRow {
-  /** stable across reorders, for React; never sent */
+  /** Stable across reorders, for React; never sent. */
   key: string;
   term: string;
   en: string;
-  /** meanings in other interface languages, in the order the editor added them */
+  /** Meanings in other interface languages, in the order the editor added them. */
   extra: Array<{ locale: string; text: string }>;
 }
 
@@ -334,20 +320,15 @@ export interface QuestionForm {
   prompt: string;
   promptEn: string;
   options: string[];
-  /** -1 until the editor marks one: removing the right option never quietly makes another one right */
+  /** -1 until the editor marks one: removing the right option never quietly makes another one right. */
   correctIndex: number;
   explanation: string;
   explanationEn: string;
   evidenceParagraph: number | null;
   evidenceSentence: number | null;
-  /**
-   * The words the evidence pointed at when the story was loaded, or when the
-   * editor last chose it (never sent). The evidence follows its words when the
-   * text around it changes; when the words themselves change, this is how the
-   * editor knows to ask for a look.
-   */
+  /** The words the evidence pointed at when loaded or last chosen (never sent), so a change to them can be flagged. */
   evidenceQuote: string | null;
-  /** the question in interface languages, as typed: options in the order of `options` (the Translations section edits them) */
+  /** The question in interface languages, as typed: options in the order of `options` (the Translations section edits them). */
   translations: Record<string, StoryQuestionTranslation>;
 }
 
@@ -356,33 +337,20 @@ export interface StoryForm {
   level: number;
   title: string;
   slug: string;
-  /**
-   * Until the editor types in the slug field, the slug follows the title
-   * (a new story only: an existing one keeps its address, links point at it).
-   */
+  /** The slug follows the title until the editor types in it; an existing story keeps its address, as links point at it. */
   slugEdited: boolean;
-  /**
-   * Six fixed numbers in [0, 1) for the random part of a fallback slug
-   * ("sorani-k3m9xq"), so it does not change on every keystroke of the title.
-   */
+  /** Six fixed numbers in [0, 1) for a fallback slug's random part ("sorani-k3m9xq"), so it holds still while typing. */
   slugSeed: number[];
   summary: string;
   body: string;
   glossary: GlossRow[];
   questions: QuestionForm[];
   /**
-   * How the story is filed and attributed (category, tradition, source,
-   * translations, cover, reading time): loaded with the story and sent back
-   * with it, so a save never drops what another editor set. Text fields hold
-   * what was typed, blanks and all; the draft trims them as the API does.
+   * How the story is filed and attributed (category, tradition, source, translations, cover, reading time), sent back
+   * whole so a save never drops what another editor set. Text fields hold what was typed; the draft trims them.
    */
   library: StoryLibraryInput;
-  /**
-   * Which story this is another telling of, when the editor changed it here:
-   * another story's id to join its group, null to leave the group it is in,
-   * and left out when nothing changed. Sent with the next save (the API joins
-   * or leaves the group in the same transaction), then cleared.
-   */
+  /** A changed version group: another story's id to join, null to leave, absent for no change. Cleared after a save. */
   sameStoryAs?: string | null;
 }
 
@@ -398,23 +366,19 @@ function seeded(seed: readonly number[]): () => number {
 }
 
 /**
- * The address a new story gets from its title, as the API would make it: a
- * Kurmancî title spells its own (Qelema Şîn → qelema-sin); a Soranî one, in a
- * script a slug cannot hold, gets `sorani-` and six random characters for the
- * editor to replace with something readable.
+ * The address a new story gets from its title, as the API makes it: Qelema Şîn → qelema-sin, while a Soranî title,
+ * whose script a slug cannot hold, gets `sorani-` and six random characters to replace.
  */
 export function autoSlug(form: Pick<StoryForm, 'title' | 'dialect' | 'slugSeed'>): string {
   return storySlugFor(form.title, form.dialect, seeded(form.slugSeed));
 }
 
-// what storySlugFor falls back to: the variety, then six characters from its alphabet (no l, o, 0 or 1)
+// What storySlugFor falls back to: the variety, then six characters from its alphabet (no l, o, 0 or 1).
 const RANDOM_SLUG = new RegExp(`^(?:${STORY_DIALECTS.join('|')})-[a-km-np-z2-9]{6}$`);
 
 /**
- * Whether an address is the random one a story starts with ("sorani-k3m9xq").
- * Told by its shape, not by where it came from, so it is still noticed after
- * the story is saved and opened again. (A real six-letter word after the
- * variety looks the same; it is only ever a reason to take a look.)
+ * Whether an address has the shape of a random fallback ("sorani-k3m9xq"), so it is still noticed after a save. A real
+ * six-letter word looks the same, which is fine for a warning.
  */
 export function looksRandomSlug(slug: string): boolean {
   return RANDOM_SLUG.test(slug);
@@ -477,7 +441,7 @@ export function formFromStory(
     level: story.level,
     title: story.title,
     slug: story.slug,
-    // the story has an address already, and links may point at it
+    // The story has an address already, and links may point at it.
     slugEdited: true,
     slugSeed: Array.from({ length: 6 }, () => random()),
     summary: story.summary ?? '',
@@ -550,20 +514,16 @@ function glossEntry(row: GlossRow): StoryGlossEntry {
 }
 
 /**
- * The story as it would be sent, tidied exactly as the API tidies it before it
- * validates and stores it (titles, options and translations trimmed, an empty
- * optional field as null, one kind of line ending). Validation runs on this, so
- * what the editor checks is what the server will check.
- *
- * Nothing is dropped — an empty glossary row or option stays, to be reported —
- * so a problem's path (`questions[3].options[1]`) is the same row on screen.
+ * The story as it would be sent, tidied exactly as the API tidies it (trimmed, empty optional fields as null, one kind
+ * of line ending), so the editor validates what the server will. Nothing is dropped, so a problem's path
+ * (`questions[3].options[1]`) is the same row on screen.
  */
 export function draftFromForm(form: StoryForm): StoryDraft {
   const lib = form.library;
   const translations: Record<string, string> = {};
   for (const [locale, text] of Object.entries(lib.translations)) {
     const tidy = tidyBody(text);
-    // a translation left empty is no translation, not an empty one the reader would be shown
+    // A translation left empty is no translation, not an empty one the reader would be shown.
     if (tidy) translations[locale] = tidy;
   }
   return {
@@ -606,14 +566,8 @@ export function isDirty(form: StoryForm, loaded: StoryForm): boolean {
   return JSON.stringify(draftFromForm(form)) !== JSON.stringify(draftFromForm(loaded));
 }
 
-/**
- * The content a reviewer read, in the order the API compares it: a change to
- * any of it takes an approved story's approval away when it is saved, while a
- * change to how the story is filed or attributed does not. Kept in step with
- * the API's own comparison, so the editor can say ahead of a save that the
- * story will need approving again.
- */
-function contentOf(draft: StoryDraft, withTranslations = true): string {
+/** The Kurdish a reviewer read, in the order the API compares it (`canonicalContent`, translations left out). */
+function kurdishOf(draft: StoryDraft): string {
   return JSON.stringify([
     draft.dialect,
     draft.level,
@@ -624,22 +578,15 @@ function contentOf(draft: StoryDraft, withTranslations = true): string {
     draft.questions.map((q) => [q.kind, q.prompt, q.promptEn, q.options, q.correctIndex, q.explanation, q.explanationEn, q.evidenceParagraph, q.evidenceSentence]),
     (draft.reflections ?? []).map((r) => r.text),
     (draft.notes ?? []).map((n) => [n.kind, n.title, n.body]),
-    withTranslations ? translatedLocales(draft).map((locale) => [locale, localeOf(draft, locale)]) : null,
   ]);
 }
 
-/** Whether the unsaved edits touch what a reviewer read (text, glossary, questions, reflections, notes, translations), not only the filing. */
-export function contentChanged(form: StoryForm, loaded: StoryForm): boolean {
-  return contentOf(draftFromForm(form)) !== contentOf(draftFromForm(loaded));
-}
-
 /**
- * Whether the unsaved edits touch what a reviewer read in Kurdish. A change to
- * translations alone is saved language by language, which keeps the approval,
- * so only this says a story will need approving again.
+ * Whether the unsaved edits touch the Kurdish a reviewer read, so that saving takes an approved story's approval away.
+ * Filing, attribution and translations do not count: translations are saved language by language, keeping the approval.
  */
 export function kurdishChanged(form: StoryForm, loaded: StoryForm): boolean {
-  return contentOf(draftFromForm(form), false) !== contentOf(draftFromForm(loaded), false);
+  return kurdishOf(draftFromForm(form)) !== kurdishOf(draftFromForm(loaded));
 }
 
 // ---------------------------------------------------------------------------
@@ -755,13 +702,13 @@ export function withLocaleFrom(form: StoryForm, from: StoryForm, locale: string)
 /** How much of the story one language covers, as the Translations section summarises it. */
 export interface LocaleCoverage {
   locale: string;
-  /** the text: none yet, lined up with the Kurdish paragraph for paragraph, or not */
+  /** The text: none yet, lined up with the Kurdish paragraph for paragraph, or not. */
   text: 'empty' | 'ok' | 'mismatch';
   title: boolean;
   questions: { done: number; total: number };
   reflections: { done: number; total: number };
   notes: { done: number; total: number };
-  /** whether any of it is written */
+  /** Whether any of it is written. */
   any: boolean;
 }
 
@@ -799,9 +746,9 @@ export function localeReview(story: Pick<AdminStory, 'translationReview'> | null
 export interface TranslationCheck {
   locale: string;
   text: string;
-  /** blank-line-separated paragraphs in the translation */
+  /** blank-line-separated paragraphs in the translation. */
   paragraphs: number;
-  /** paragraphs in the body, which the translation's must match one for one */
+  /** Paragraphs in the body, which the translation's must match one for one. */
   expected: number;
   state: 'empty' | 'ok' | 'mismatch';
 }
@@ -837,13 +784,13 @@ export type EditorAction =
   | { type: 'lib/cover'; value: string | null }
   | { type: 'lib/minutes'; value: number | null }
   | { type: 'translation'; locale: string; value: string }
-  /** one language of the title or summary, a question, a reflection or a note (the Translations section) */
+  /** One language of the title or summary, a question, a reflection or a note (the Translations section). */
   | { type: 'tr/meta'; locale: string; field: 'title' | 'summary'; value: string }
   | { type: 'tr/question'; locale: string; index: number; field: 'prompt' | 'explanation'; value: string }
   | { type: 'tr/option'; locale: string; index: number; option: number; value: string }
   | { type: 'tr/reflection'; locale: string; index: number; value: string }
   | { type: 'tr/note'; locale: string; index: number; field: 'title' | 'body'; value: string }
-  /** one language as the server saved it, the rest of the form left as it is */
+  /** One language as the server saved it, the rest of the form left as it is. */
   | { type: 'tr/merge'; locale: string; from: StoryForm }
   | { type: 'reflection/add' }
   | { type: 'reflection/set'; index: number; value: string }
@@ -854,7 +801,7 @@ export type EditorAction =
   | { type: 'source/add' }
   | { type: 'source/set'; index: number; field: 'title' | 'author' | 'url' | 'type' | 'note'; value: string }
   | { type: 'source/remove'; index: number }
-  /** join another story's group (its id), leave the group (null), or take the change back (undefined) */
+  /** Join another story's group (its id), leave the group (null), or take the change back (undefined). */
   | { type: 'link'; sameStoryAs: string | null | undefined }
   | { type: 'gloss/add'; row?: GlossRow }
   | { type: 'gloss/remove'; index: number }
@@ -909,7 +856,7 @@ export function editorReducer(form: StoryForm, action: EditorAction): StoryForm 
       return next;
     }
     case 'slug':
-      // emptied, it goes back to following the title — the way to undo an edit
+      // Emptied, it goes back to following the title — the way to undo an edit.
       return action.value === ''
         ? followTitle({ ...form, slugEdited: false })
         : { ...form, slug: action.value.toLowerCase().replace(/\s+/g, '-'), slugEdited: true };
@@ -1044,7 +991,7 @@ export function editorReducer(form: StoryForm, action: EditorAction): StoryForm 
     case 'q/correct':
       return withQuestion(form, action.index, (q) => ({ ...q, correctIndex: action.option }));
     case 'q/evidence':
-      // a sentence index means nothing in another paragraph
+      // A sentence index means nothing in another paragraph.
       return withQuestion(form, action.index, (q) =>
         q.evidenceParagraph === action.paragraph
           ? q
@@ -1076,15 +1023,10 @@ function nearest<T extends Place>(places: readonly T[], from: Place): T | null {
 }
 
 /**
- * Evidence is stored as places in the text (paragraph 3, sentence 2), so a
- * change above it — a paragraph split, joined, added or taken out, a sentence
- * cut in two — would leave the question quoting another sentence, still in
- * range, with nothing to say so. After each change of the text, each
- * question's evidence follows its words to where they are now: the paragraph
- * whole, if it only moved; else the sentence, as it read a keystroke ago or
- * else as it read when it was chosen (a new sentence typed in front of it
- * runs into it for a keystroke or two). Where the words themselves were
- * changed it stays put, and `liveChecks` asks for a look.
+ * Moves each question's evidence with its words after a text change. Evidence is stored as places (paragraph 3,
+ * sentence 2), so a split, join or insertion above it would silently point at another sentence. It follows the whole
+ * paragraph if that only moved, else the sentence as it read a keystroke ago or when chosen; where the words
+ * themselves changed it stays put, and `liveChecks` asks for a look.
  */
 function followEvidence(questions: QuestionForm[], before: string, after: string): QuestionForm[] {
   const was = storyParagraphs(before);
@@ -1101,7 +1043,7 @@ function followEvidence(questions: QuestionForm[], before: string, after: string
     if (p === null || paragraph === undefined || now[p] === paragraph) return q;
     const from = { p, s: s ?? 0 };
 
-    // the paragraph, unchanged, somewhere else: others came or went before it
+    // The paragraph, unchanged, somewhere else: others came or went before it.
     const words = s === null ? [paragraph, q.evidenceQuote] : [paragraph];
     for (const w of words) {
       const moved = w ? nearest(now.flatMap((text, i) => (text === w ? [{ p: i, s: 0 }] : [])), from) : null;
@@ -1109,9 +1051,9 @@ function followEvidence(questions: QuestionForm[], before: string, after: string
     }
     if (s === null) return q;
 
-    // the paragraph itself changed: find the sentence — in another paragraph
+    // The paragraph itself changed: find the sentence — in another paragraph
     // only when paragraphs were split, joined, added or taken out, so editing
-    // a sentence said twice does not send its question to the other one
+    // a sentence said twice does not send its question to the other one.
     const sentence = storySentences(paragraph)[s];
     if (sentence === undefined) return q;
     if (sentences().some((c) => c.p === p && c.s === s && c.text === sentence)) return q;
@@ -1130,13 +1072,13 @@ function followEvidence(questions: QuestionForm[], before: string, after: string
 
 export interface SentenceFacts {
   text: string;
-  /** counted the way the audio studio counts a text it will record */
+  /** Counted the way the audio studio counts a text it will record. */
   chars: number;
-  /** said aloud in the reader and listed in the audio studio (not a lone "* * *") */
+  /** Said aloud in the reader and listed in the audio studio (not a lone "* * *"). */
   recordable: boolean;
-  /** past STORY_SENTENCE_SOFT_MAX: may not fit one 15-second recording */
+  /** Past STORY_SENTENCE_SOFT_MAX: may not fit one 15-second recording. */
   long: boolean;
-  /** past LESSON_AUDIO_TEXT_MAX: no recording can hold it */
+  /** Past LESSON_AUDIO_TEXT_MAX: no recording can hold it. */
   tooLong: boolean;
 }
 
@@ -1144,18 +1086,18 @@ export interface ParagraphFacts {
   text: string;
   words: number;
   sentences: SentenceFacts[];
-  /** the title, when the paragraph is a section heading ("## …"); null for text */
+  /** The title, when the paragraph is a section heading ("## …"); null for text. */
   heading: string | null;
 }
 
 export interface TextFacts {
   words: number;
-  /** null when the count is in no band (or there is no text) */
+  /** Null when the count is in no band (or there is no text). */
   length: StoryLength | null;
-  /** estimated, as learners are shown it ("~2 min") */
+  /** Estimated, as learners are shown it ("~2 min"). */
   minutes: number;
   paragraphs: ParagraphFacts[];
-  /** one per heading; the paragraphs before the first are the introduction */
+  /** One per heading; the paragraphs before the first are the introduction. */
   sections: StorySection[];
 }
 
@@ -1224,9 +1166,6 @@ export function glossLocalesLeft(row: GlossRow): Array<{ code: string; name: str
   }));
 }
 
-export function localeName(code: string): string {
-  return APP_LOCALES.find((l) => l.code === code)?.englishName ?? code;
-}
 
 /** "gist 1 · detail 7 · vocabulary 2", in the order kinds are listed. */
 export function kindTally(questions: ReadonlyArray<{ kind: string }>): Array<{ kind: string; count: number }> {
@@ -1245,23 +1184,20 @@ export function bankNeeds(length: StoryLength | null): { min: number; counts: re
 // ---------------------------------------------------------------------------
 
 export interface LiveChecks {
-  /** the API would refuse to save the draft: these must go first */
+  /** The API would refuse to save the draft: these must go first. */
   blocking: StoryProblem[];
-  /** fine in a draft, but stop it being submitted or published */
+  /** Fine in a draft, but stop it being submitted or published. */
   beforePublish: StoryProblem[];
-  /** worth a second look; never stop anything */
+  /** Worth a second look; never stop anything. */
   warnings: StoryProblem[];
 }
 
 const problemKey = (p: StoryProblem): string => `${p.code}|${p.path}|${p.message}`;
 
 /**
- * The checks the editor shows as it is typed: `validateStory` at the draft
- * stage (what a save would be refused for) and at the publish stage (what
- * submit and publish would be refused for), plus the slug, which the API
- * checks with its request schema rather than in `validateStory`. Two more
- * warnings are the editor's own: an address in random letters, or changed
- * after publishing, and evidence whose words were edited since it was chosen.
+ * The checks shown while typing: `validateStory` at the draft stage (what a save refuses) and the publish stage, plus
+ * the slug, which the API checks in its request schema. The editor adds two warnings of its own: a random or changed
+ * published address, and evidence whose words were edited since it was chosen.
  */
 export function liveChecks(form: StoryForm, opts: { publishedBefore?: boolean; savedSlug?: string } = {}): LiveChecks {
   const draft = draftFromForm(form);
@@ -1288,7 +1224,7 @@ export function liveChecks(form: StoryForm, opts: { publishedBefore?: boolean; s
       message: `links to the old address (${opts.savedSlug}) will stop working`,
     });
   }
-  // evidence that kept its place while the words there changed may no longer hold the answer
+  // Evidence that kept its place while the words there changed may no longer hold the answer.
   const paragraphs = storyParagraphs(draft.body);
   form.questions.forEach((q, i) => {
     const now = evidenceText(paragraphs, q.evidenceParagraph, q.evidenceSentence);
@@ -1384,12 +1320,12 @@ export function describePath(path: string): string {
                       : `${m[1]} ${n}`,
       );
     } else if (parts.length > 0 && BY_LANGUAGE.has(parts[parts.length - 1]!)) {
-      // 'translations.de' reads as "Translation (German)", 'glossary[0].meanings.de' as "meaning (German)"
+      // 'translations.de' reads as "Translation (German)", 'glossary[0].meanings.de' as "meaning (German)".
       parts[parts.length - 1] = `${parts[parts.length - 1]} (${localeName(segment)})`;
     } else if (segment === 'body' && /^notes\[\d+\](\.translations\.[a-z]+)?\.body$/.test(path)) {
       parts.push('text');
     } else if ((segment === 'body' && path !== 'body') || segment === 'term') {
-      // 'body.paragraphs[1]' reads as "Paragraph 2", 'glossary[0].term' as "Glossary word 1"
+      // 'body.paragraphs[1]' reads as "Paragraph 2", 'glossary[0].term' as "Glossary word 1".
       continue;
     } else {
       parts.push(FIELD_NAME[segment] ?? segment);
@@ -1423,11 +1359,9 @@ export function fieldIdsFor(path: string): string[] {
 export type StoryAction = 'save' | 'submit' | 'publish' | 'unpublish' | 'archive' | 'delete';
 
 /**
- * What can be done to a story in each status, as the API allows it: a draft
- * or a story in review is edited, submitted or published (one editor may also
- * be the reviewer); a published one is unpublished before it is edited; an
- * archived one stays as it is. Any story may be deleted — the API refuses
- * (IN_USE) when a game has used it, and archiving is the way out then.
+ * What the API allows in each status: a draft or a story in review is edited, submitted or published, a published one
+ * is unpublished before editing, an archived one stays. Delete is always offered; the API refuses it (IN_USE) once a
+ * game has used the story.
  */
 export function availableActions(status: StoryStatus | null): StoryAction[] {
   switch (status) {
@@ -1461,10 +1395,10 @@ export interface ListFilter {
   status: StoryStatus | 'all';
   dialect: StoryDialect | 'all';
   level: StoryLevel | 'all';
-  /** a category slug */
+  /** A category slug. */
   category: string | 'all';
   review: StoryReviewStatus | 'all';
-  /** only the library's featured stories */
+  /** Only the library's featured stories. */
   featured: boolean;
   query: string;
 }

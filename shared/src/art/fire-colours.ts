@@ -1,14 +1,12 @@
 /**
- * The colours the streak's fire is drawn in (`fire.ts`), at each stage, on
- * the light page and the dark, and tinted by an event theme's accent; and how
- * its soft lights fade. The whole fire's flame is painted in its own colours
- * (`fire-sprites.ts`); these are everything round it, and the light
- * version's flame beside a number.
+ * The streak fire's colours at each stage, on light and dark pages and tinted by an event theme's accent, and how its
+ * soft lights fade. The main flame is pre-painted (`fire-sprites.ts`); these colour everything round it, and the small
+ * version's flame.
  */
 import type { FireStage } from '../fire-stages.js';
 import type { FireBasePart, FireTongueId } from './fire.js';
 
-/** How a glow fades from its middle out: offset, and the share of its strength there; softly all the way, with no edge to it. */
+/** A glow's fade from its middle out, as [offset, strength] stops, soft with no edge. */
 export const FIRE_GLOW_FADE = [
   [0, 1],
   [0.3, 0.72],
@@ -16,7 +14,7 @@ export const FIRE_GLOW_FADE = [
   [1, 0],
 ] as const;
 
-/** How the rest of the fire's soft lights fade, the same way: the halo's disc, and the cold hearth's ember from its hot middle out. */
+/** The same fade for the other soft lights: the halo's disc and the cold hearth's ember. */
 export const FIRE_DISC_FADE = [
   [0, 1],
   [0.6, 0.55],
@@ -29,7 +27,7 @@ export const FIRE_CINDER_FADE = [
   [1, 'glow', 0],
 ] as const;
 
-/** How a drift fades along its length, top first: smoke is thickest low down and thins as it rises. */
+/** A drift's fade along its length, top first: smoke is thickest low and thins as it rises. */
 export const FIRE_DRIFT_FADE = {
   smoke: [
     [0, 0],
@@ -38,7 +36,7 @@ export const FIRE_DRIFT_FADE = {
   ],
 } as const;
 
-/** A gradient's colours, evenly spread from the tip of a tongue (or the top of a log) to its root: two, or three. */
+/** A gradient's two or three colours, spread from a tongue's tip (or a log's top) to its root. */
 export type FireStops = readonly [string, string] | readonly [string, string, string];
 
 /** A colour and how strong it is at its strongest. */
@@ -48,17 +46,17 @@ export interface FireTint {
 }
 
 export interface FireColours {
-  /** the light version's flame */
+  /** The small version's flame. */
   tongues: Readonly<Record<FireTongueId, FireStops>>;
-  /** the glow's colour and how strong it is at its middle; null for a fire not burning */
+  /** The glow's colour and strength at its middle; null when not burning. */
   glow: FireTint | null;
-  /** the sparks' colour; null when nothing rises */
+  /** The sparks' colour; null when nothing rises. */
   ember: string | null;
-  /** the Newroz fire's gold: its gold sparks; null for every other fire */
+  /** The Newroz fire's gold sparks; null for every other fire. */
   gold: string | null;
-  /** the sun behind the Newroz fire; null for every other fire */
+  /** The sun behind the Newroz fire; null for every other fire. */
   halo: { disc: FireTint; rays: FireTint } | null;
-  /** a cold hearth's smoke, and its one ember */
+  /** A cold hearth's smoke and its one ember. */
   smoke: FireTint | null;
   cinder: { core: string; glow: string } | null;
   base: Readonly<Record<FireBasePart, FireStops>>;
@@ -68,14 +66,10 @@ export type FireScheme = 'light' | 'dark';
 
 type Wood = Omit<FireColours['base'], 'coal' | 'ash' | 'stone' | 'stoneLight' | 'char'>;
 
-/**
- * The wood, lit by the flame: dark bark glowing orange along its top, which
- * faces the fire, deep in shade underneath; the sawn ends, facing away from
- * it, warm but dim.
- */
+/** The wood in firelight: dark bark glowing orange on top and deep underneath; the sawn ends warm but dim. */
 const LOGS: Record<FireScheme, Wood> = {
   light: { bark: ['#9A5428', '#2E1A0E'], barkShade: ['#7C4420', '#24140B'], barkLight: ['#FFA552', '#9A5428'], cut: ['#8A5634', '#4E2E18'], ring: ['#6A4024', '#4A2A16'] },
-  // a shade lighter on the dark page, so the wood is not lost in it
+  // A shade lighter on the dark page, so the wood is not lost.
   dark: { bark: ['#A65E2E', '#3A2214'], barkShade: ['#88502A', '#2E1B10'], barkLight: ['#FFB060', '#A65E2E'], cut: ['#9A6440', '#5A3620'], ring: ['#784A2C', '#56341E'] },
 };
 
@@ -101,23 +95,19 @@ const CHARRED: Record<FireScheme, Wood & Pick<FireColours['base'], 'char' | 'ash
   },
 };
 
-/** The hearth stones: round, dark, lit warm orange on the faces towards the fire. */
+/** The hearth stones: round and dark, lit warm orange on the faces toward the fire. */
 const STONE: Record<FireScheme, Pick<FireColours['base'], 'stone' | 'stoneLight'>> = {
   light: { stone: ['#6E605A', '#2E2725'], stoneLight: ['#FFA858', '#8A5A40'] },
   dark: { stone: ['#76675F', '#342C29'], stoneLight: ['#FFB060', '#94603F'] },
 };
 
-/** The light version's flame alight, in warm, full colours: deep red-orange outside, through gold, to a heart nearly white. Each layer a little deeper at its tip than at its root, where a flame is hottest. */
+/** The small flame alight: deep red-orange outside through gold to a near-white heart, each layer deeper at its tip. */
 const SMALL_FLAME: Record<FireScheme, FireColours['tongues']> = {
   light: { outer: ['#E4432A', '#F7712D'], core: ['#FFBF2C', '#FFDA5A'], heart: ['#FFF0BA', '#FFFDF0'] },
   dark: { outer: ['#F45530', '#FF7E38'], core: ['#FFCB3A', '#FFE570'], heart: ['#FFF5C8', '#FFFFF6'] },
 };
 
-/**
- * The fire alight, round its painted flame: a warm glow, sparks, and the
- * coals glowing under the logs. On the dark page every colour is a step
- * brighter and the glow stronger.
- */
+/** The fire alight round its painted flame: glow, sparks and coals. On the dark page every colour is a step brighter. */
 const LIT: Record<FireScheme, FireColours> = {
   light: {
     tongues: SMALL_FLAME.light,
@@ -141,23 +131,19 @@ const LIT: Record<FireScheme, FireColours> = {
   },
 };
 
-/** The hottest fires beside a number: the gold paler, and the heart white with a blue root, as the hottest flames burn. */
+/** The hottest fires' small flame: paler gold, and a white heart with a blue root. */
 const HOTTEST: Record<FireScheme, Pick<FireColours['tongues'], 'core' | 'heart'>> = {
   light: { core: ['#FFCC33', '#FFEB94'], heart: ['#FFFFFF', '#FFFEF8', '#7CC2FF'] },
   dark: { core: ['#FFD54A', '#FFF0A6'], heart: ['#FFFFFF', '#FFFFFF', '#8ED0FF'] },
 };
 
-/** The Newroz fire's gold: its gold sparks, and the sun behind it. */
+/** The Newroz fire's gold sparks and the sun behind it. */
 const NEWROZ: Record<FireScheme, Pick<FireColours, 'gold' | 'halo'>> = {
   light: { gold: '#E9A30F', halo: { disc: { colour: '#FFC93D', opacity: 0.55 }, rays: { colour: '#FFB81F', opacity: 0.6 } } },
   dark: { gold: '#FFD34D', halo: { disc: { colour: '#FFB52E', opacity: 0.5 }, rays: { colour: '#FFC23A', opacity: 0.95 } } },
 };
 
-/**
- * A fire not burning (no streak yet): charred logs over ash, one ember still
- * glowing and a curl of smoke, and, beside a number, the small flame in cool
- * grey, its drop of a heart darker, still.
- */
+/** A fire not burning (no streak yet): charred logs over ash, one ember and a curl of smoke; the small flame in grey. */
 const COLD: Record<FireScheme, FireColours> = {
   light: {
     tongues: { outer: ['#9DA4B0', '#B3B9C4'], core: ['#B6BCC6', '#C6CBD3'], heart: ['#7D8491', '#8B919D'] },
@@ -198,14 +184,9 @@ function parseHex(hex: string): [number, number, number] {
 const isHex = (accent: string | null | undefined): accent is string => typeof accent === 'string' && /^#?[0-9a-f]{6}$/i.test(accent.trim());
 
 /**
- * The colours to draw the fire in at `stage`. Alight, it burns in the sun's
- * colours for the page it is on, hotter at the blaze and the Newroz fire,
- * the Newroz fire with its gold. An event's accent (an event theme dressing
- * the app) tints its light — the glow and the light pooled under it, and its
- * sparks — and recolours the light version's flame from the accent's deepest
- * shade outside to near white at the heart; the painted flame, the logs, the
- * stones and the Newroz fire's gold stay as they are. Cold, it is the same
- * whatever the event.
+ * The fire's colours at `stage`. Alight, it uses the page scheme's colours, hotter at the blaze and Newroz. An event
+ * accent tints the glow, the light under it and the sparks, and recolours the small flame from the accent's deepest
+ * shade to near white; the painted flame, logs, stones and Newroz gold are unchanged. A cold fire ignores the accent.
  */
 export function fireColours({ stage, scheme, accent }: { stage: FireStage; scheme: FireScheme; accent?: string | null }): FireColours {
   if (stage === 'cold') return COLD[scheme];

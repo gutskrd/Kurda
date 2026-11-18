@@ -1,8 +1,7 @@
 /**
- * Ez kî me? without a database: what a table is dealt from, how a whole
- * table is dealt, what a phone from before the four answers is dealt, the
- * table's settings and moves as the server takes them, a reported card's
- * note, and the picked words a card is made of (word-cards.ts).
+ * Ez kî me? without a database: what a table is dealt from, how a whole table is dealt, what an older two-answer phone
+ * is dealt, table settings and moves as the server takes them, a reported card's note, and the picked words a card is
+ * made of (word-cards.ts).
  */
 import { describe, expect, it } from 'vitest';
 import { GAME_CONTENT_REVIEW_NOTE_MAX, WHO_AM_I_MIN_TEMPLATES, type GameContentKind, type WhoAmIDeal, type WhoAmIIdentity } from '@kurda/shared';

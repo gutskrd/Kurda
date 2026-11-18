@@ -1,23 +1,14 @@
 /**
- * A recording's own sound, read through the API, for the admin panel to make
- * its mouth timeline from (GET /admin/audio/:kind/file in routes.ts).
- *
- * The panel's batch job decodes every recording in the browser, and a page may
- * only read a file from another site that allows it to; the media bucket and
- * other sites need not. Sent from here, the file comes from the API's own
- * origin, which the panel may already read.
- *
- * Where the bytes come from:
+ * A recording's sound read through the API, so the admin panel can make its mouth timeline in the browser: a page can
+ * read only files from origins that allow it, and the media bucket and other sites need not, while the API's own
+ * origin is readable.
  *
  *   lesson, alphabet  our bucket, by the stored object key (`media_key`), never by a URL
- *   dictionary        `dict_audio.audio_url`, which an import may have set to another
- *                     site: fetched only from DICTIONARY_AUDIO_HOSTS or our CDN, by
- *                     net/outbound.ts's rules
+ *   dictionary        `dict_audio.audio_url`, possibly another site from an import: fetched only from
+ *                     DICTIONARY_AUDIO_HOSTS or our CDN, under net/outbound.ts's rules
  *
- * Either way it is streamed, never held whole, and cut off at
- * AUDIO_FILE_MAX_BYTES; the whole read has AUDIO_FILE_TIMEOUT_MS. It is sent
- * as the audio type it was stored as, or as its first bytes show, and never
- * as anything that is not audio.
+ * Streamed, cut off at AUDIO_FILE_MAX_BYTES, within AUDIO_FILE_TIMEOUT_MS, and sent as its stored audio type or what
+ * its first bytes show, never as anything that is not audio.
  */
 import { Readable } from 'node:stream';
 import type { FastifyReply } from 'fastify';
@@ -35,10 +26,8 @@ export const AUDIO_FILE_MAX_BYTES = 5 * 1024 * 1024;
 export const AUDIO_FILE_TIMEOUT_MS = 10_000;
 
 /**
- * Other sites a dictionary pronunciation is fetched from, besides our own CDN
- * (CDN_BASE_URL). Wikimedia Commons is where Wiktionary's pronunciations, the
- * recordings a lexicon import brings with its words, are kept. A host not here
- * is refused, so adding a source of recordings means adding its host.
+ * Sites besides our CDN that dictionary pronunciations are fetched from: the media host where an imported lexicon's
+ * recordings live. Other hosts are refused, so a new source of recordings means adding its host here.
  */
 export const DICTIONARY_AUDIO_HOSTS: readonly string[] = ['upload.wikimedia.org'];
 
@@ -71,7 +60,7 @@ const tooLarge = (): AppError =>
 /** A file being read: its bytes, and what it was stored as or claims to be. */
 export interface Source {
   body: AsyncIterable<Uint8Array>;
-  /** the type it was stored as; otherwise its first bytes decide */
+  /** The type it was stored as; otherwise its first bytes decide. */
   storedType?: string;
   /** its length, when it is known for certain */
   length?: number;
@@ -145,11 +134,8 @@ export class RecordingFiles {
 }
 
 /**
- * Read all of `source` into memory, within AUDIO_FILE_MAX_BYTES, and say what
- * it is: the type it was stored as, or what its first bytes show, and never
- * anything that is not audio. For a reply that answers byte ranges (a phone's
- * player asks for the start of a file before the rest), which a stream sent
- * as it arrives cannot.
+ * Reads all of `source` within AUDIO_FILE_MAX_BYTES and says what it is (stored type or first bytes, never non-audio),
+ * for replies that serve byte ranges, as a phone player asks for a file's start first.
  */
 export async function readAudio(source: Source, signal: AbortSignal): Promise<{ bytes: Buffer; type: string }> {
   const parts: Uint8Array[] = [];
@@ -172,9 +158,8 @@ export async function readAudio(source: Source, signal: AbortSignal): Promise<{ 
 }
 
 /**
- * Send `source`: its first bytes read to learn its type, then the rest as it
- * arrives. What goes wrong before the first byte is sent is an error the panel
- * can show; after, the response is cut short, which it sees as a failed read.
+ * Sends `source`: the first bytes are read to learn its type, then the rest streams. A failure before the first byte is
+ * an error the panel can show; after, the response is cut short and the panel sees a failed read.
  */
 export async function sendAudio(reply: FastifyReply, source: Source, signal: AbortSignal): Promise<FastifyReply> {
   const reader = source.body[Symbol.asyncIterator]();

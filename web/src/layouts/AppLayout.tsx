@@ -17,28 +17,11 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { FeedbackHost } from '../feedback/FeedbackHost';
 
 /**
- * The app shell. Content pages set their own container + header.
- *
- * One list of places (`useNavLinks`, shared with the landing page), so a
- * place is in the same position on every screen. On a wide screen they are
- * in the top bar (`TopNav`) with the search field and the bell; the bar stays
- * at the top while the page scrolls, and the social column stays at the side.
- *
- * On a phone the shell wears the phone app's chrome. The places are a bar
- * floating over the bottom of the window (`PlacesBar`), on the root of each
- * place and nowhere else: a page you went into has the way back at its top
- * and its bottom edge to itself (`isPlaceRoot`). Which of the two is drawn is
- * decided here, by the window's width, and not left to the styles to hide
- * one: two lists of the same links in the page would be read out twice.
- *
- * A guest is shown only what a guest can use. Offering links that bounce you to
- * a sign-in wall is worse than not offering them — it teaches you the app is
- * mostly closed, when in fact almost all of it is open to read.
- *
- * A page opened from another starts at its top, and Back returns to where the
- * reader was (`PageTop`, shared with the public pages' shell). The rail's
- * and the invites' providers here stand aside for the ones above the routes
- * (App.tsx); they are what the shell has when it is drawn alone.
+ * The app shell; pages set their own container and header. One list of places (`useNavLinks`, shared with the landing
+ * page) sits in the sticky top bar on wide screens, beside the social column. On a phone, place roots get the floating
+ * `PlacesBar` and deeper pages a back button instead (`isPlaceRoot`); the choice is made here by width rather than by
+ * hiding one in CSS, so the links are not read out twice. Guests see only what guests can use. `PageTop` handles
+ * scrolling. The rail and invite providers here defer to those above the routes (App.tsx) and serve the shell alone.
  */
 export function AppLayout(): React.JSX.Element {
   const t = useT();
@@ -60,16 +43,7 @@ export function AppLayout(): React.JSX.Element {
       {/* a visitor keeps "Get started" in a phone's bar here, where most pages have no other way in */}
       <TopNav links={links} joinOnPhone placesBelow />
       <main id="main" className="app-main">
-        {/*
-         * The page waits here, and nothing else does.
-         *
-         * Routes are loaded on demand, so React needs a boundary to hold the
-         * gap. Above the route table it would take the navigation down with
-         * the page and put it back a moment later, which reads as the whole
-         * app blinking on a first visit to a screen. Inside `main`, the bars
-         * stay where they are and only the page is missing — which is the
-         * truth of what is happening.
-         */}
+        {/* Lazy routes suspend inside `main`, so the bars stay put while only the page loads. */}
         <ErrorBoundary>
           <Suspense fallback={<RouteFallback />}>
             <Outlet />

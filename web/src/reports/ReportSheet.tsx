@@ -22,47 +22,30 @@ import { CATEGORY_HINT, CATEGORY_LABEL } from './labels';
 import { MY_REPORTS_PATH } from './restriction';
 
 /**
- * What is being reported. For a game player the id is the GAME's, and `game`
- * + `seat` say which player — the server maps the seat to the person, so the
- * page never needs anyone's account id (shared `FileReportRequest`).
+ * What is being reported. For a game player the id is the game's, and `game` with `seat` names the player; the server
+ * maps the seat to the person, so the page never needs their account id (shared `FileReportRequest`).
  */
 export type ReportTarget =
   | { targetType: Exclude<ReportTargetType, 'game_player'>; targetId: string }
   | { targetType: 'game_player'; targetId: string; game: PlayGame; seat: number };
 
 /**
- * The props of the one report sheet, used everywhere something can be
- * reported: a profile, a direct or group message, a group, a library post or
- * picture post, a comment, a game player by seat.
- *
- * How a new surface uses it (Stories does, for its players):
- *
- *   const [reporting, setReporting] = useState(false);
- *   <ReportSheet
- *     open={reporting}
- *     onClose={() => setReporting(false)}
- *     target={{ targetType: 'game_player', targetId: gameId, game: 'stories', seat: player.seat }}
- *     name={player.name ?? t('…player N…')}
- *   />
- *
- * The done screen offers what fits the place: `block` when the page knows the
- * person's account id (a profile, a message, a post's author), `leaveGroup`
- * when it is a group you can leave (not its owner). There is no "mute a
- * person" in Hevalo, so it offers none.
+ * The props of the one report sheet used everywhere something can be reported. The done screen offers `block` when the
+ * page knows the person's account id, and `leaveGroup` for a group the reader can leave.
  */
 export interface ReportSheetProps {
   open: boolean;
   onClose: () => void;
   target: ReportTarget;
-  /** who or what, for the title: a person's or group's or player's name */
+  /** The person's, group's or player's name, for the title. */
   name?: string;
-  /** offered on the done screen: block this person */
+  /** Offered on the done screen: block this person. */
   block?: { userId: string; name: string } | null;
-  /** offered on the done screen: leave this group */
+  /** Offered on the done screen: leave this group. */
   leaveGroup?: { groupId: string; name: string } | null;
-  /** the block has landed (the page may want to close a thread, or leave a profile) */
+  /** The block has landed, so the page may close a thread or leave a profile. */
   onBlocked?: () => void;
-  /** you have left the group */
+  /** The reader has left the group. */
   onLeftGroup?: () => void;
 }
 
@@ -96,17 +79,12 @@ function reportError(error: ApiError, t: (key: MessageKey) => string): string {
 }
 
 /**
- * The report sheet: pick what is wrong → (help, at once, for "someone may
- * hurt themselves") → an optional note → done, with what happens next and the
- * one-tap things you can also do.
- *
- * Built to be finishable by a child who is upset: the categories are their
- * words, not a policy's; one tap on a category moves on; the note has no
- * minimum; nothing on the way asks them to explain themselves before they can
- * send.
+ * The report sheet: pick what is wrong (with help at once for self-harm), add an optional note, then a done screen
+ * with what happens next and one-tap extras. Built so an upset child can finish it: plain categories, one tap to move
+ * on, and no minimum note.
  */
 export function ReportSheet(props: ReportSheetProps): React.JSX.Element | null {
-  // a fresh sheet every time it opens: a half-filled report from last time is not this one
+  // A fresh sheet every time it opens.
   if (!props.open) return null;
   return <ReportFlow {...props} />;
 }
@@ -124,8 +102,7 @@ function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onLef
   const [left, setLeft] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
-  // each step is a new page of the sheet: say so by moving focus to its heading
-  // (not on the first, where the dialog itself has focus and is announced)
+  // Each later step moves focus to its heading; on the first, the dialog itself has focus.
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
@@ -140,7 +117,7 @@ function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onLef
   function pick(c: ReportCategory): void {
     setCategory(c);
     setError(null);
-    // help comes first, before anything else is asked of them
+    // Help comes first, before anything else is asked.
     setStep(c === 'self_harm' ? 'help' : 'note');
   }
 
@@ -303,7 +280,7 @@ function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onLef
           {receipt.help && (
             <p className="report-help-again">
               {t('report.done.help')}{' '}
-              {/* the helpline the server named — only ever a web address */}
+              {/* The helpline the server named, only ever an https address. */}
               <a href={/^https:\/\//.test(receipt.help.url) ? receipt.help.url : HELPLINE_URL} target="_blank" rel="noopener noreferrer">
                 {t('report.help.link')}
               </a>

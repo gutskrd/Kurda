@@ -23,30 +23,14 @@ import { useAvailability, useGameDialect } from './soloRounds';
 import './detective.css';
 
 /**
- * Detective (/app/games/detective).
+ * Detective (/app/games/detective). A case board holds the case file, the suspects' portraits (app characters or a
+ * silhouette) and pinned evidence in Kurdish only, its meaning hidden until found. Beside it are the current question
+ * and a notebook of deductions with their proof; on a phone the question comes first.
  *
- * The stage is a case board: the case file's title and story at the top, the
- * suspects' portraits (the app's own characters where one plays a suspect,
- * a plain silhouette for anyone else), and the evidence pinned up in rows —
- * messages, statements, notes, and talk overheard with its recording — each
- * in its Kurdish only, with "Meaning not found yet" where its meaning would
- * be. Beside it the question in hand and the notebook, which fills with each
- * deduction made and the cards that prove it. On a phone the question comes
- * first and the board under it, so the player knows what to look for.
- *
- * A card's meaning is found by the deduction it proves (the correction
- * brings it, and the board keeps it) or bought with a hint, as is the case's
- * next written hint. A hint costs nothing but itself: a case has only a few,
- * the board counts how many are left, and says before one is spent that they
- * run out. A wrong first try marks the cards to read again. The verdict and
- * the way on come right under the question (`feedbackInRound`), not under the
- * board. The accusation is the last item: the suspects become the buttons,
- * and once it is made the solution walks back through every deduction.
- *
- * The board is the round's (`board`), kept here as it changes: what a hint
- * bought comes back from the server as the whole board, and what a deduction
- * found is added from its correction. Soranî evidence reads right to left.
- * Nothing on the board moves.
+ * A card's meaning is revealed by the deduction it proves or by spending one of the case's few hints, which the board
+ * counts. A wrong first try marks cards to reread. The verdict sits under the question (`feedbackInRound`). The last
+ * item is the accusation, with suspects as buttons, followed by the full solution. The board (`board`) is replaced by
+ * hint responses and extended by corrections. Soranî evidence reads right to left; nothing on the board moves.
  */
 
 type Round = SoloRound<DetectiveItemView, DetectiveHint, DetectiveCorrection, DetectiveBoardView>;
@@ -70,7 +54,7 @@ const KIND_ICON: Record<EvidenceKind, (p: { size?: number }) => React.JSX.Elemen
 };
 
 /** A suspect's portrait: the character who plays them, drawn from the art kit, or a plain silhouette with their initial. */
-export function Portrait({ suspect, size = 64 }: { suspect: Pick<Suspect, 'id' | 'name' | 'portrait'>; size?: number }): React.JSX.Element {
+function Portrait({ suspect, size = 64 }: { suspect: Pick<Suspect, 'id' | 'name' | 'portrait'>; size?: number }): React.JSX.Element {
   const svg = useMemo(
     () => (suspect.portrait ? { __html: characterSvg(suspect.portrait, { crop: 'head', width: size, idPrefix: `dt-${suspect.id}`, title: suspect.name }) } : null),
     [suspect.portrait, suspect.id, suspect.name, size],
@@ -119,7 +103,7 @@ function useBoard(round: Round): { board: Board | null; spend: (evidence?: strin
   return { board, spend, spending, error };
 }
 
-/** What a player thinks of a suspect while reading: Detective's in-between answer, theirs alone and kept for the round. */
+/** A player's private note on a suspect while reading, kept for the round. */
 type SuspectNote = 'innocent' | 'suspicious' | 'unsure';
 const SUSPECT_NOTES: ReadonlyArray<{ id: SuspectNote; key: MessageKey }> = [
   { id: 'innocent', key: 'games.detective.notes.innocent' },
@@ -127,11 +111,7 @@ const SUSPECT_NOTES: ReadonlyArray<{ id: SuspectNote; key: MessageKey }> = [
   { id: 'unsure', key: 'games.detective.notes.unsure' },
 ];
 
-/**
- * The marks a player puts on the suspects, kept in this tab for as long as
- * the case is open (they are notes, not answers: nothing is sent), and gone
- * once the browser forgets the tab.
- */
+/** The player's marks on the suspects, kept in this tab only, since they are notes and never sent. */
 function useSuspectNotes(caseKey: string): [Record<string, SuspectNote>, (suspect: string, note: SuspectNote) => void] {
   const storeKey = `dt-notes:${caseKey}`;
   const [notes, setNotes] = useState<Record<string, SuspectNote>>(() => {
@@ -371,7 +351,7 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
         <h2 className="dt-title">{meaningIn(board.title, locale) ?? board.title.en}</h2>
         <p className="dt-intro">{meaningIn(board.intro, locale) ?? board.intro.en}</p>
       </header>
-      {/* the question first, then the board it is answered from: on a wide screen the board takes the left column */}
+      {/* The question first, then the board; on a wide screen the board takes the left column. */}
       <div className="dt-layout">
         <Question round={round} board={board} />
         <CaseFile board={board} dialect={dialect} look={look} spend={(e) => void spend(e)} spending={spending} />

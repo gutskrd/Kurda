@@ -16,9 +16,8 @@ interface ThemeValue {
 const ThemeContext = createContext<ThemeValue | null>(null);
 
 /**
- * App-wide light/dark theming (KUR-268). Resolves the persisted preference
- * against the OS scheme (via the tested appearance.ts logic) and exposes the
- * active glass palette. `system` tracks the OS live through `useColorScheme`.
+ * App-wide light and dark theming: resolves the stored preference against the OS scheme (appearance.ts) and provides
+ * the active palette; `system` tracks the OS live.
  */
 export function ThemeProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const os = useColorScheme();
@@ -49,11 +48,7 @@ export function ThemeProvider({ children }: { children: ReactNode }): React.JSX.
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-/**
- * Draws its children with the dark palette whatever the app's scheme: for a
- * moment staged on its own night-dark backdrop (a legendary gift's unwrap),
- * where the light palette's black buttons would sink into the dark.
- */
+/** Draws its children with the dark palette whatever the app's scheme, for a moment staged on its own dark backdrop (a legendary gift's unwrap). */
 export function DarkScheme({ children }: { children: ReactNode }): React.JSX.Element {
   const outer = useTheme();
   const value = useMemo<ThemeValue>(() => ({ ...outer, scheme: 'dark', colors: PALETTES.dark }), [outer]);
@@ -61,10 +56,8 @@ export function DarkScheme({ children }: { children: ReactNode }): React.JSX.Ele
 }
 
 /**
- * Draws its children in a palette of their own, by day or at dusk as the
- * reader has the app: a place with a look of its own (a lesson's warm paper)
- * over the same light or dark as everywhere else, so whatever the app draws
- * inside it, from a sheet to a button, is drawn in that place's colours.
+ * Draws its children in a palette of their own, in the app's current scheme: a place with its own look (a lesson's
+ * warm paper), so anything the app draws inside it, from a sheet to a button, uses that place's colours.
  */
 export function PaletteScope({ palettes, children }: { palettes: Record<ColorScheme, Palette>; children: ReactNode }): React.JSX.Element {
   const outer = useTheme();

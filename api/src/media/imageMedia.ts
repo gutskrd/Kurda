@@ -16,7 +16,7 @@ export type StoreImageResult =
       /** the stored picture's size, px */
       width: number;
       height: number;
-      /** whether the signature is on it (asked for, and the picture was big enough to carry it) */
+      /** Whether the signature is on it: asked for, and the picture large enough to carry it. */
       signed: boolean;
     }
   | { ok: false; status: number; code: string; message: string; reason: string };
@@ -44,37 +44,19 @@ const reject = (status: number, code: string, message: string, reason: string): 
 });
 
 /**
- * Store a user-supplied image as a cost-safe, content-addressed media object and
- * return its confirmed key (KUR-290, shared by the meme/image feed). Same guard
- * chain as a profile photo (KUR-177) — size → Class-A op ceiling → real-MIME +
- * resize + WebP/compress → storage ceiling (fail-closed) → PUT → moderation scan →
- * confirm — but with no per-user swap: memes are additive, and the content hash
- * makes re-uploads idempotent (the same bytes reuse the same object, no new op).
- *
- * A failure at any step before confirm leaves an unconfirmed row the orphan job
- * reclaims and nothing publicly servable. An upload with an owner stops short
- * of confirming on purpose (see `StoreImageOptions.ownerId`).
+ * Options for storing a user image as a content-addressed media object, with the profile photo's guard chain: size,
+ * op ceiling, real type, resize and WebP, storage ceiling (fail-closed), PUT, moderation scan, confirm. Images are
+ * additive with no per-user swap, and identical bytes reuse the same object. A failure before confirming leaves an
+ * unconfirmed row for the orphan job and nothing servable; an owned upload deliberately stops short of confirming.
  */
 export interface StoreImageOptions {
-  /**
-   * Sign the picture for this handle before storing it.
-   *
-   * A picture somebody posts as their own work carries the mark; a picture they
-   * did not make, avatars and everything else do not, which is why this is
-   * asked for rather than assumed.
-   */
+  /** Signs the picture for this handle before storing it: only for a picture posted as the poster's own work. */
   signAs?: string;
   /**
-   * Who is uploading it, for a picture that a post will use.
-   *
-   * Recorded on the row, and mixed into the key: two people uploading the same
-   * bytes (an unsigned meme, say) get an object each, so every upload has
-   * exactly one owner and a post can insist on its author's own
-   * (media/postMedia.ts). Such an upload is left unconfirmed — the post that
-   * uses it confirms it, and one nobody posts is reclaimed by the orphan sweep
-   * after a day instead of staying in the bucket for good. The same picture
-   * uploaded again before it is posted is the same upload; after, it is a new
-   * one, so it can go on a new post.
+   * The uploader of a picture a post will use. Recorded on the row and mixed into the key, so two people uploading the
+   * same bytes get an object each and a post can require its author's own (media/postMedia.ts). It is left unconfirmed
+   * until a post confirms it, and the orphan sweep takes one nobody posts after a day. The same picture uploaded again
+   * before posting is the same upload; after, it is a new one for a new post.
    */
   ownerId?: string;
 }
@@ -119,11 +101,8 @@ export async function storeImageMedia(
   }
 
   /*
-   * Sign before the key is derived. The key is a hash of the stored bytes, and
-   * two people posting the same photo must not collide onto one object now that
-   * each carries a different name — the signature is part of what is stored, so
-   * it has to be part of what is hashed. (An owned upload hashes its owner in
-   * too, for the picture that goes up without a name on it.)
+   * Sign before deriving the key: the key hashes the stored bytes, and the signature is part of them, so two people
+   * posting the same photo do not collide. An owned upload hashes its owner in too, for an unsigned picture.
    */
   let stored = proc.webp;
   let signed = false;
@@ -157,16 +136,13 @@ export async function storeImageMedia(
     signed,
   });
 
-  // storage ceiling against the size actually being written; fail closed on
-  // unknown usage
+  // Storage ceiling against the size actually written; unknown usage fails closed.
   if (wouldExceedStorage(await usage.totalStoredBytes(), stored.length, limits.storageLimitBytes)) {
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
   }
 
-  // the same bytes again: what the scan said about them still stands — but a
-  // hold that only stands for the scanner being down (moderation/image-scan.ts
-  // `onScannerError`, recorded as model 'unavailable') is no verdict on the
-  // picture, so that one is scanned again
+  // The same bytes again keep their scan verdict, except a hold recorded only because the scanner was down (model
+  // 'unavailable'), which is no verdict and is scanned again.
   const existing = await pool.query<{
     scan_status: string; confirmed: boolean; quarantined: boolean; unscanned: boolean | null;
   }>(
@@ -177,13 +153,8 @@ export async function storeImageMedia(
     [key],
   );
   const prior = existing.rows[0];
-  // blocked or taken off the bucket by moderation: never written back, even
-  // once the row has been let go as an orphan (a re-upload would otherwise
-  // put the same bytes on the public CDN again). Not under this key, nor
-  // under any other: an owned upload's key has its owner in it, and an
-  // owner's picture already on a post gets a key of its own below, so the
-  // same bytes taken down under one key would otherwise come back under
-  // another — somebody else's upload of them, or the next one of their own.
+  // Bytes moderation blocked or took off the bucket are never written back under any key, since owned keys include
+  // the owner and a posted picture gets a fresh key below; otherwise the same bytes could return under another key.
   const takenDown = await pool.query(
     `SELECT 1 FROM media_uploads
       WHERE content_sha256 = $1 AND (scan_status = 'blocked' OR quarantine_state IS NOT NULL) LIMIT 1`,
@@ -196,17 +167,12 @@ export async function storeImageMedia(
     return reject(422, 'IMAGE_REJECTED', 'this image was rejected by moderation', 'moderation');
   }
   if (options.ownerId && prior?.confirmed) {
-    // an owned upload is confirmed by the post that uses it, so this picture is
-    // on a post already — up, or removed and kept for moderation. Handing back
-    // its key would refuse it as in use for good, even after its post is gone
-    // (deleting and posting again is how the installed apps change a caption),
-    // so it becomes a new upload of its own: one upload is still one post's.
+    // This owned upload is already on a post (live, or removed and kept for moderation). Returning its key would refuse it
+    // as in use for good, even after the post is gone, so it becomes a new upload: one upload stays one post's.
     key = keyFor(randomUUID());
   } else if (prior?.scan_status === 'cleared' && (prior.confirmed || options.ownerId)) {
-    // idempotent: already stored and cleared → reuse, no new R2 write. An owned
-    // upload counts once it is through the scan (rows are inserted 'pending'
-    // below, so 'cleared' means scanned); one still waiting for its post gets a
-    // fresh day before the sweep, since somebody is evidently about to use it.
+    // Already stored and cleared, so reuse it with no new write. An owned upload awaiting its post gets a fresh day before
+    // the sweep, since someone is about to use it.
     if (!prior.confirmed) await pool.query(`UPDATE media_uploads SET created_at = now() WHERE key = $1`, [key]);
     return ok(true);
   }
@@ -226,8 +192,7 @@ export async function storeImageMedia(
     return reject(502, 'MEDIA_UPLOAD_FAILED', 'could not store the image; please try again', 'put-failed');
   }
 
-  // moderation gate (#294): only a cleared image becomes servable/confirmed; a
-  // gated/blocked one stays unconfirmed → orphan-reclaimed, never publicly served.
+  // Moderation gate: only a cleared image becomes confirmed and servable; anything else stays unconfirmed and is reclaimed.
   const scan = await moderation.scan(key, 'feed');
   if (scan.scanStatus !== 'cleared') {
     return reject(422, 'IMAGE_REJECTED', 'this image was rejected by moderation', 'moderation');

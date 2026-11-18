@@ -33,15 +33,8 @@ function inOrder(sessions: DeviceSession[]): DeviceSession[] {
 }
 
 /**
- * Every device signed in to the account, and the ways to sign them out.
- *
- * One you do not recognise is the clearest sign that somebody else has the
- * password, so each row can be signed out on its own and every other device
- * at once, without signing out here. Signing out here, or everywhere at once,
- * sits at the foot of the card, where it has always been.
- *
- * `refreshKey` changes when something elsewhere on the page has ended sessions
- * (changing the password), and the list is fetched again quietly.
+ * Every device signed in to the account. Each other device can be signed out on its own or all at once, and signing
+ * out here or everywhere sits at the foot. A change of `refreshKey` (such as after a password change) refetches quietly.
  */
 export function SignedInDevices({ refreshKey = 0 }: { refreshKey?: number }): React.JSX.Element {
   const { client, logout } = useAuth();
@@ -62,7 +55,7 @@ export function SignedInDevices({ refreshKey = 0 }: { refreshKey?: number }): Re
     };
   }, []);
 
-  /** Fetch the list. `quiet` keeps the rows on screen until the new ones arrive. */
+  /** Fetches the list; `quiet` keeps the rows on screen until the new ones arrive. */
   const load = useCallback(
     async (quiet = false): Promise<void> => {
       if (!quiet) setState('loading');
@@ -96,7 +89,7 @@ export function SignedInDevices({ refreshKey = 0 }: { refreshKey?: number }): Re
       setError(describeError(res.error, t));
       return;
     }
-    // ended now, or already ended: either way the row has nothing left to sign out
+    // Ended now or already: either way the row has nothing left to sign out.
     setError(null);
     if (!res.ok) setNotice(describeError(res.error, t));
     if (res.ok && res.data.current) {
@@ -212,11 +205,7 @@ export function SignedInDevices({ refreshKey = 0 }: { refreshKey?: number }): Re
         </>
       )}
 
-      {/*
-        Signing out lives here rather than in the nav, where it sat one slip
-        away from ending your session every time you reached for your profile.
-        It belongs with the other things you do to your account.
-      */}
+      {/* Signing out lives here with the other account actions, not in the nav where it is easy to hit by mistake. */}
       <div className="device-here-actions">
         <p className="field-hint" style={{ marginTop: 0 }}>{t('settings.sessions.help')}</p>
         <div className="settings-actions">

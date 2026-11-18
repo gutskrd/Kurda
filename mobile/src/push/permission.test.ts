@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-// the device store reads the platform; the rules themselves never touch React Native
+// The device store reads the platform; the rules themselves never touch React Native.
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }));
 import { memoryStore } from '../keyboard/deviceStore';
 import {
@@ -29,7 +29,7 @@ describe('toPermissionState', () => {
   it('reads granted, never asked and refused', () => {
     expect(toPermissionState({ status: 'granted', granted: true, canAskAgain: true })).toEqual({ status: 'granted', canAsk: false });
     expect(toPermissionState({ status: 'undetermined', granted: false, canAskAgain: true })).toEqual(NEVER_ASKED);
-    // iOS: one answer, and only the Settings app can change it
+    // iOS: one answer, and only the Settings app can change it.
     expect(toPermissionState({ status: 'denied', granted: false, canAskAgain: false })).toEqual({ status: 'denied', canAsk: false });
   });
 
@@ -72,7 +72,7 @@ describe('shouldNudgeReminders', () => {
 
   it('never stands in front of the phone’s own question: nothing while the phone could still ask', () => {
     expect(adult({ permission: NEVER_ASKED })).toBe(false);
-    // Android, after one refusal: asking again would still show its prompt
+    // Android, after one refusal: asking again would still show its prompt.
     expect(adult({ permission: { status: 'denied', canAsk: true } })).toBe(false);
   });
 
@@ -116,7 +116,7 @@ describe('shouldOfferReminders', () => {
   it('never offers once the system prompt has been answered, either way', () => {
     expect(adult({ permission: { status: 'granted', canAsk: false } })).toBe(false);
     expect(adult({ permission: { status: 'denied', canAsk: false } })).toBe(false);
-    // Android could ask again, but they already said no to the phone itself
+    // Android could ask again, but they already said no to the phone itself.
     expect(adult({ permission: { status: 'denied', canAsk: true } })).toBe(false);
     expect(adult({ permission: PUSH_UNAVAILABLE })).toBe(false);
   });
@@ -138,7 +138,7 @@ describe('shouldOfferReminders', () => {
     for (const permission of answers) {
       if (adult({ permission })) expect(settingsAction(permission), JSON.stringify(permission)).toBe('request');
     }
-    // a phone that says it was never asked and will not ask: the button would lead nowhere
+    // A phone that says it was never asked and will not ask: the button would lead nowhere.
     expect(adult({ permission: { status: 'undetermined', canAsk: false } })).toBe(false);
   });
 
@@ -162,7 +162,7 @@ describe('shouldOfferReminders', () => {
 });
 
 describe('minorStatus', () => {
-  /** A server answering `/me` with `reply`, and how often it was asked. */
+  /** A server answering `/me` with `reply`, counting the calls. */
   const server = (reply: unknown) => {
     const get = vi.fn(async () => reply);
     return { get: get as unknown as Parameters<typeof minorStatus>[1]['get'], asked: get };
@@ -173,7 +173,7 @@ describe('minorStatus', () => {
     expect(await minorStatus({ minor: false }, me)).toBe(false);
     expect(await minorStatus({ minor: true }, me)).toBe(true);
     expect(me.asked).not.toHaveBeenCalled();
-    // a fresh sign-in: the session says nothing of the age yet
+    // A fresh sign-in: the session says nothing of the age yet.
     expect(await minorStatus({}, me)).toBe(true);
     expect(await minorStatus(null, me)).toBe(true);
     expect(me.asked).toHaveBeenCalledTimes(2);
@@ -181,18 +181,16 @@ describe('minorStatus', () => {
   });
 
   /*
-   * The server's `minor` means "known to be 13 to 17", so it is false for a
-   * guest and for an account not yet asked its birth month. Read as "an
-   * adult", that offered reminders to people whose age nobody knows — and to
-   * guests, whose phone is not registered, so nothing would ever be sent.
+   * The server's `minor` means "known to be 13 to 17", so it is false for guests and accounts without a birth
+   * month; those must not be read as adults.
    */
   it('does not take a guest, or an account with no birth month on record, for an adult', async () => {
     const adultLooking = server({ ok: true, data: { user: { minor: false } } });
     expect(await minorStatus({ minor: false, guest: true }, adultLooking)).toBeNull();
     expect(await minorStatus({ minor: false, birthDateRequired: true }, adultLooking)).toBeNull();
-    // known from the session alone: the server is not asked
+    // Known from the session alone: the server is not asked.
     expect(adultLooking.asked).not.toHaveBeenCalled();
-    // and when it is the server that says so
+    // And when it is the server that says so.
     expect(await minorStatus({}, server({ ok: true, data: { user: { minor: false, guest: true } } }))).toBeNull();
     expect(await minorStatus({}, server({ ok: true, data: { user: { minor: false, birthDateRequired: true } } }))).toBeNull();
     expect(await minorStatus({}, server({ ok: true, data: { user: { minor: false, guest: false, birthDateRequired: false } } }))).toBe(false);

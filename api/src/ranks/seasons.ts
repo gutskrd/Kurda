@@ -50,27 +50,20 @@ function byTierThenName(a: { tier: RankTier; username: string }, b: { tier: Rank
 }
 
 /**
- * Seasons (contract-4 §R5): quarterly, on the calendar quarters (UTC).
+ * Seasons (contract-4 §R5): quarterly, on UTC calendar quarters.
  *
- * Closing a season — a job that runs every six hours and at start-up, and
- * from the admin panel — does, for every season before the current one:
- * 1. rolls each rating still in it into the new season (its result recorded
- *    as the season's emblem, σ raised to at least 4, μ kept, the season's
- *    counters reset), the same roll a player's next game makes when it gets
- *    there first;
- * 2. marks the season's Stêrk players (Lûtke I, top 1% — at least 20 — of the
- *    active players, 30 rated games, one in the last 14 days of the season),
- *    when the game had enough active players for a top 1% to mean something;
- * 3. hands out the rewards to everyone with 10 or more rated games in a game:
- *    the profile frame of their best peak tier across games (a cosmetic they
- *    own for good; Lûtke and Stêrk animated), the title "Stêrkê <season>" for
- *    a Stêrk, and a few Gems by that tier — one payout per player per season,
+ * Closing (a job every six hours and at start-up, or from the admin panel) does, for every season before the current
+ * one:
+ * 1. Rolls each rating still in it into the new season (result recorded as the emblem, σ raised to at least 4, μ kept,
+ *    counters reset), the same roll a player's next game makes if it gets there first.
+ * 2. Marks the Stêrk players (Lûtke I, top 1% and at least 20 of the active players, 30 rated games, one in the
+ *    season's last 14 days), when the game had enough active players.
+ * 3. Rewards everyone with 10+ rated games in a game: the frame of their best peak tier across games (Lûtke and Stêrk
+ *    animated), the title "Stêrkê <season>" for a Stêrk, and a few Gems by tier. One payout per player per season,
  *    never to a closed or banned account.
  *
- * Every step is idempotent: a result is recorded once per player, season and
- * game; a reward once per player and season (its row, the frame, the title
- * and the Gems are one transaction); re-running a half-done close finishes it.
- * The old quarterly league-tier Gem payout (which paid dormant accounts) is gone.
+ * Every step is idempotent: a result once per player, season and game; a reward once per player and season (row, frame,
+ * title and Gems in one transaction). Re-running a half-done close finishes it.
  */
 export class RankSeasons {
   private readonly wallet: WalletService;
@@ -89,9 +82,8 @@ export class RankSeasons {
   }
 
   /**
-   * Close every season that has ended and is not closed and rewarded yet.
-   * Returns how many it closed. Only one instance does it at a time (the
-   * others find the lock taken and leave it).
+   * Close every season that has ended and is not closed and rewarded yet; returns how many it closed. Only one instance
+   * runs it at a time (the others find the lock taken).
    */
   async closeDue(): Promise<number> {
     const current = seasonOf(this.now()).id;
@@ -229,10 +221,9 @@ export class RankSeasons {
   }
 
   /**
-   * The admin's preview of a season's rewards: everyone `pendingRewards` would
-   * reward, plus the ratings still playing in it (an open season, or one not
-   * closed yet) — "if it closed now". A live rating's peak tier is its points
-   * tier; Stêrk is judged only at the close, so a preview never shows it for them.
+   * The admin's "if it closed now" preview: everyone `pendingRewards` would reward, plus ratings still playing in the
+   * season. A live rating's peak tier is its points tier; Stêrk is judged only at the close, so a preview never shows
+   * it.
    */
   async previewRewards(seasonId: string): Promise<PendingReward[]> {
     const recorded = await this.pendingRewards(seasonId);
@@ -345,10 +336,8 @@ export class RankSeasons {
   // reading
 
   /**
-   * A player's season emblems (10+ rated games in a game that season), newest
-   * first. An emblem is shown under its game's name, so one earned in a game
-   * that is no longer part of Hevalo is not listed; the result stays recorded,
-   * and what it was rewarded with is theirs.
+   * A player's season emblems (10+ rated games in a game that season), newest first. Emblems of retired games are not
+   * listed; the result and its reward stay.
    */
   async emblems(userId: string): Promise<SeasonEmblem[]> {
     const rows = await this.pool.query<{ season_id: string; game: RankedGame; peak_tier: string; peak_points: number; rated_games: number }>(

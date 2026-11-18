@@ -10,22 +10,16 @@ import {
 } from '@kurda/shared';
 
 /**
- * The username rule on the phone, in the reader's words.
- *
- * The rule itself is shared/src/username.ts, the one the server checks with:
- * lowercase letters with ç ê î ş û, digits, dots and underscores, 3 to 30 of
- * them, and so on. What is here is what the phone says about a name, one
- * sentence per rule, whether its own check found the problem as the name was
- * typed or the server did (`INVALID_USERNAME`, api/errors.ts). The server is
- * still the one that knows which names are taken, and the wait between
- * changes.
+ * The username rule in the reader's words. The rule itself is shared/src/username.ts, which the server also uses;
+ * this gives one sentence per rule, whether the phone or the server (`INVALID_USERNAME`, api/errors.ts) found the
+ * problem. Only the server knows which names are taken and the wait between changes.
  */
 export { USERNAME_MAX, USERNAME_MIN };
 
 /** The values the length rules and the hint interpolate, so a caller never invents them. */
 export const USERNAME_RULE_VARS = { min: USERNAME_MIN, max: USERNAME_MAX } as const;
 
-/** Why a name was refused, as a catalogue key and what it interpolates. */
+/** Why a name was refused, as a catalogue key and its placeholders. */
 export interface UsernameMessage {
   message: TranslationKey;
   vars: Record<string, string | number>;
@@ -34,10 +28,8 @@ export interface UsernameMessage {
 export type UsernameCheck = { ok: true; value: string } | ({ ok: false; issue: UsernameReason } & UsernameMessage);
 
 /**
- * The sentence for a rule a name broke, from its reason and, for a character
- * that is not allowed, which ones. The characters are named ("“!” can’t be in
- * a username") and spaces said as spaces; a reason the phone does not know (a
- * newer server) gets the rule as a whole.
+ * The sentence for a broken rule. Disallowed characters are named ("“!” can’t be in a username") and spaces
+ * called spaces; an unknown reason from a newer server gets the rule as a whole.
  */
 export function usernameMessage(reason: string, chars?: unknown): UsernameMessage {
   const vars = { ...USERNAME_RULE_VARS };
@@ -80,10 +72,8 @@ export function checkUsername(raw: string): UsernameCheck {
 }
 
 /**
- * What is said about a name while it is still being typed: only what more
- * typing cannot mend (a character not allowed, a mark at the start or two
- * side by side, a name too long). "ha" and "hamo." are said once the person
- * is done, on Continue or Save.
+ * What is shown while the name is still being typed: only what more typing cannot fix (a disallowed character, a
+ * mark at the start or two in a row, a name too long). "ha" and "hamo." are reported on Continue or Save.
  */
 export function usernameIssueWhileTyping(raw: string): UsernameCheck | null {
   const problem = usernameProblemWhileTyping(raw);

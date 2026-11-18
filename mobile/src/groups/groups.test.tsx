@@ -21,7 +21,7 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 vi.mock('expo-image-picker', () => ({ launchImageLibraryAsync: vi.fn(async () => ({ canceled: true, assets: [] })) }));
 vi.mock('expo-file-system/legacy', () => ({ FileSystemUploadType: { BINARY_CONTENT: 0 }, uploadAsync: async () => ({ status: 500, body: '' }) }));
@@ -48,10 +48,10 @@ describe('starting a group', () => {
     const client = fakeClient({ 'POST /groups': ok({ id: 'g-new' }) });
     testAuth.client = client;
     const { onCreated } = sheet();
-    // no privacy choice: every group is private, and the sheet says so in a line
+    // No privacy choice: every group is private, and the sheet says so.
     expect(screen.queryByText(/privacy|invite-only|everyone|anyone can/i)).toBeNull();
     expect(screen.getByText('Groups are private: only the people added to one can see it.')).toBeTruthy();
-    // a name is all it asks: Create waits for one, and a description can be left out
+    // A name is all it asks: Create waits for one, and a description can be left out.
     expect(screen.getByRole('button', { name: 'Create group' }).getAttribute('aria-disabled')).toBe('true');
     expect(screen.getByLabelText('Description (optional)')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Koma nû' } });
@@ -108,7 +108,7 @@ describe('adding friends to a group', () => {
     testAuth.client = client;
     const { onClose } = sheet();
     const add = await screen.findByRole('button', { name: 'Add roj' });
-    // berfin is in the group already, so she is not offered
+    // Berfin is in the group already, so she is not offered.
     expect(screen.queryByText('berfin')).toBeNull();
     await act(async () => {
       fireEvent.click(add);
@@ -130,7 +130,7 @@ describe('adding friends to a group', () => {
     testAuth.client = fakeClient({ 'GET /friends?limit=500': ok({ friends: [] }) });
     const { onFindPeople } = sheet();
     expect(await screen.findByText(/You have no friends here yet\./)).toBeTruthy();
-    // not an empty list with a Done under it
+    // Not an empty list with a Done under it.
     expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Find people' }));
     expect(onFindPeople).toHaveBeenCalled();
@@ -189,16 +189,16 @@ describe('a group’s own page', () => {
     testAuth.client = fakeClient({ 'GET /groups/g1': detail('member') });
     renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Hevalên Kurmancî' })).toBeTruthy();
-    // how many are in it, and no word about who may come in: there is only one kind of group
+    // How many are in it, and no word about who may come in: there is only one kind of group.
     expect(screen.getByText('4 members')).toBeTruthy();
     expect(screen.queryByText(/open group|invite-only/i)).toBeNull();
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
-    // a member does not edit the group or add to it, and is offered reporting and leaving it
+    // A member does not edit the group or add to it, and is offered reporting and leaving it.
     expect(screen.queryByRole('button', { name: 'Edit group' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Add friends' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Report group' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Leave Hevalên Kurmancî' })).toBeTruthy();
-    // roles under the names, and "You" for yourself
+    // Roles under the names, and "You" for yourself.
     expect(screen.getByText('Owner')).toBeTruthy();
     expect(screen.getByText('Admin')).toBeTruthy();
     expect(screen.getByText('rojda · You')).toBeTruthy();
@@ -209,7 +209,7 @@ describe('a group’s own page', () => {
     testAuth.client = fakeClient({ 'GET /groups/g1': detail('moderator') });
     renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
     await screen.findByText('berfin');
-    // drawn 44 and centred in a row at least 60 tall, so 8 past each edge stays inside it
+    // Drawn 44pt and centred in a row at least 60pt tall, so 8pt past each edge stays inside it.
     expect(reachOf('Post options')).toEqual(OPEN);
   });
 
@@ -223,7 +223,7 @@ describe('a group’s own page', () => {
     expect(await actionsFor('berfin', alert)).toEqual(['View profile']);
     cleanup();
 
-    // an admin may remove a member, but not the owner or another admin
+    // An admin may remove a member, but not the owner or another admin.
     testAuth.client = fakeClient({ 'GET /groups/g1': detail('moderator') });
     renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
     await screen.findByText('berfin');
@@ -236,7 +236,7 @@ describe('a group’s own page', () => {
     testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     const owned = detail('owner');
-    // as the owner, nobody else is
+    // As the owner, nobody else is.
     (owned as { data: { members: Array<{ role: string }> } }).data.members[0]!.role = 'moderator';
     const client = fakeClient({ 'GET /groups/g1': owned, 'PUT /groups/g1/members/u-member/role': ok({ ok: true }) });
     testAuth.client = client;
@@ -246,7 +246,7 @@ describe('a group’s own page', () => {
     const buttons = (alert.mock.calls[0] as [string, string, Button[]])[2];
     await act(async () => buttons.find((b) => b.text === 'Make admin')!.onPress!());
     expect(client.calls.find((c) => c.method === 'PUT')).toEqual({ method: 'PUT', path: '/groups/g1/members/u-member/role', body: { role: 'moderator' } });
-    // the owner deletes the group rather than leaving it, and is told so
+    // The owner deletes the group rather than leaving it, and is told so.
     expect(screen.queryByRole('button', { name: 'Leave Hevalên Kurmancî' })).toBeNull();
     expect(screen.getByText('To leave, make another member the owner first.')).toBeTruthy();
     alert.mockClear();
@@ -275,7 +275,7 @@ describe('a group’s own page, in its one order', () => {
     page();
     await screen.findByText('berfin');
     inOrder('Add friends', 'berfin', 'Requests to come back, 2 waiting', 'Banned', 'Edit group', 'Clear chat for me', 'Delete group');
-    // the members' heading comes before the way to add to them
+    // The members' heading comes before the way to add to them.
     const heading = screen.getByRole('heading', { name: 'Members' });
     expect(heading.compareDocumentPosition(screen.getByRole('button', { name: 'Add friends' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -340,7 +340,7 @@ describe('editing a group', () => {
     renderWithProviders(<GroupEditScreen groupId="g1" onExit={() => undefined} />);
     await screen.findByLabelText('Name');
     expect(reachOf('group-save')).toEqual(OPEN);
-    // drawn 32 tall round its line and reached to 48; the 12 under the picture leaves the camera badge's 4 alone
+    // Drawn 32pt tall and reached to 48pt; the 12pt under the picture leaves the camera badge's 4pt alone.
     expect(reachOf('group-photo-link')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
   });
 

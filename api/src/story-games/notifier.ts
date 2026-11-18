@@ -17,9 +17,8 @@ export interface NotifierOptions {
   /** how long a game's last version is remembered after its last waiter */
   forgetAfterMs?: number;
   /**
-   * The bus rooms this notifier speaks in (never `user:`). Story games keep the
-   * default; the multiplayer learning games (api/src/mp) wait on their own
-   * lobbies' versions through a notifier of their own with another prefix.
+   * The bus room prefix (never `user:`). Story games keep the default; the multiplayer games (api/src/mp) use their own
+   * prefix.
    */
   roomPrefix?: string;
 }
@@ -48,29 +47,21 @@ interface Log {
 }
 
 /**
- * Who is waiting for which story game to change, and waking them when it does.
+ * Tracks who is waiting on which story game and wakes them on change.
  *
- * A long-poll registers here BEFORE it reads the game's version, and the
- * notifier remembers the last version it heard of for each game: a change that
- * commits between that read and the wait would otherwise notify nobody, and
- * the request would sleep through it (a lost wakeup). A waiter that registers
- * with a version older than the one already heard of is woken at once.
+ * A long-poll registers BEFORE reading the game's version, and the notifier remembers the last version heard per game,
+ * so a change committed between that read and the wait still wakes it (no lost wakeups). A waiter registering with an
+ * older version than the last heard is woken at once.
  *
- * Nothing here holds a database connection. A waiting request is a promise and
- * a timer; the pool (ten connections) is never parked behind a sleeping poll.
+ * Nothing here holds a database connection: a waiting request is a promise and a timer.
  *
- * Changes arrive two ways. `notify` is called by whatever committed the change
- * on this instance, and wakes local waiters directly — not through Redis, so a
- * Redis blip does not freeze every game — then publishes `{version}` on the
- * room bus for the other instances, never awaited (a publish that fails after
- * the commit must not fail the request). Exactly one bus listener is registered
- * at boot; our own echo comes back too, and is a no-op because waiters only
- * wake for a version newer than theirs.
+ * `notify` is called by whatever committed the change on this instance and wakes local waiters directly (not through
+ * Redis, so a Redis blip freezes nothing), then publishes `{version}` on the room bus for other instances without
+ * awaiting it (a failed publish after commit must not fail the request). One bus listener is registered at boot; our
+ * own echo is a no-op because waiters only wake for a newer version.
  *
- * Limits: a user may hold two waiting requests per game and four overall. A
- * newer request answers the oldest at once instead of being refused — the old
- * one is usually a tab or a network switch the client has already forgotten,
- * and refusing the new one would leave the live screen spinning.
+ * Limits: two waiting requests per user per game and four overall. A new request answers the oldest at once instead of
+ * being refused, since the old one is usually a tab or connection the client already dropped.
  */
 export class StoryGameNotifier {
   private readonly waiters = new Map<string, Set<Waiter>>();
@@ -125,8 +116,8 @@ export class StoryGameNotifier {
   }
 
   /**
-   * Register a waiter for `gameId` that has seen `version`. Wakes at once when
-   * a newer version is already known or the server is closing.
+   * Register a waiter for `gameId` that has seen `version`. Wakes at once if a newer version is known or the server is
+   * closing.
    */
   register(gameId: string, userId: string, version: number): WaitHandle {
     let resolve!: (reason: WakeReason) => void;
@@ -176,8 +167,8 @@ export class StoryGameNotifier {
   }
 
   /**
-   * A change to `gameId` committed at `version`. Call only after COMMIT: a
-   * waiter woken earlier reads the old row and goes back to sleep.
+   * A change to `gameId` committed at `version`. Call only after COMMIT, or a woken waiter reads the old row and sleeps
+   * again.
    */
   notify(gameId: string, version: number): void {
     this.heard(gameId, version);

@@ -1,7 +1,6 @@
 /**
- * The byte ranges a round's clip answers: one range, from its start, to its
- * end or as a suffix; anything else is the whole file, and a range past the
- * end is refused as unsatisfiable.
+ * The byte ranges a clip answers: one range from a start to an end or as a suffix; anything else is the whole file, and
+ * a range past the end is refused as unsatisfiable.
  */
 import { describe, expect, it } from 'vitest';
 import { byteRange } from './clips.js';

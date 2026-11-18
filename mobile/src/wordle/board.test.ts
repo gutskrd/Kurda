@@ -6,10 +6,10 @@ import {
   ENTER,
   DEL,
   ALPHABET_ROWS,
-  KEYBOARD_ROWS,
   keyboardRows,
   keyFeedback,
   MAX_ATTEMPTS,
+  QWERTY_ROWS,
   typeLetter,
   type Feedback,
   type ScoredGuess,
@@ -60,7 +60,7 @@ describe('buildBoard', () => {
 
 describe('Kurdish keyboard', () => {
   it('covers all 31 Kurmancî letters including Ç Ê Î Ş Û', () => {
-    const letters = KEYBOARD_ROWS.flat().filter((k) => k !== ENTER && k !== DEL);
+    const letters = QWERTY_ROWS.flat().filter((k) => k !== ENTER && k !== DEL);
     expect(letters).toHaveLength(31);
     for (const special of ['ç', 'ê', 'î', 'ş', 'û']) {
       expect(letters).toContain(special);
@@ -73,14 +73,14 @@ describe('Kurdish keyboard', () => {
     const letters = ALPHABET_ROWS.flat().filter((k) => k !== ENTER && k !== DEL);
     expect(letters).toEqual([...KURMANCI_ALPHABET]);
     expect(keyboardRows('alphabet')).toBe(ALPHABET_ROWS);
-    expect(keyboardRows('qwerty')).toBe(KEYBOARD_ROWS);
+    expect(keyboardRows('qwerty')).toBe(QWERTY_ROWS);
   });
 
   it('keeps QWERTY where a thumb expects it and gives ç ê î ş û a row of their own', () => {
-    expect(KEYBOARD_ROWS[0]).toEqual(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']);
-    expect(KEYBOARD_ROWS[2]![0]).toBe(ENTER);
-    expect(KEYBOARD_ROWS[2]![KEYBOARD_ROWS[2]!.length - 1]).toBe(DEL);
-    expect(KEYBOARD_ROWS[3]).toEqual(['ç', 'ê', 'î', 'ş', 'û']);
+    expect(QWERTY_ROWS[0]).toEqual(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']);
+    expect(QWERTY_ROWS[2]![0]).toBe(ENTER);
+    expect(QWERTY_ROWS[2]![QWERTY_ROWS[2]!.length - 1]).toBe(DEL);
+    expect(QWERTY_ROWS[3]).toEqual(['ç', 'ê', 'î', 'ş', 'û']);
   });
 
   it('reads colour memory for a letter, ignoring control keys', () => {
@@ -99,7 +99,7 @@ describe('draft editing', () => {
     draft = typeLetter(draft, 's', 3);
     draft = typeLetter(draft, 'ê', 3);
     draft = typeLetter(draft, 'v', 3);
-    draft = typeLetter(draft, 'x', 3); // full — ignored
+    draft = typeLetter(draft, 'x', 3); // Full — ignored.
     expect(draft).toEqual(['s', 'ê', 'v']);
   });
 

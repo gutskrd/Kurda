@@ -1,9 +1,7 @@
 /**
- * Payment-fraud rules (KUR-073). Pure and deterministic: given signals gathered
- * from the purchase history, decide which flags fire and whether the purchase
- * should be held for review. No bans — a hold is reversible and always ends in
- * a human decision. Family-shared purchases are exempt from receipt-reuse so
- * legitimate Apple family sharing never trips the wire.
+ * Pure payment-fraud rules: from purchase-history signals, decide which flags fire and whether to hold the purchase
+ * for review. No bans: a hold is reversible and always ends in a human decision. Family-shared purchases are exempt
+ * from receipt reuse, so store family sharing never trips it.
  */
 
 /** More than this many IAP redemptions in the trailing hour is suspicious. */

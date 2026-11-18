@@ -23,10 +23,9 @@ export const MAX_LOCK_MINUTES = 24 * 60;
 /** Failures on an account or a network after which a sign-in needs the CAPTCHA. */
 export const CAPTCHA_AFTER_FAILURES = 3;
 /**
- * A network is locked outright only when it looks like spraying: this many
- * failures inside the window, across at least NETWORK_LOCK_ACCOUNTS different
- * accounts. One address can be a whole mobile carrier, so fewer failures, or
- * many against one account, only bring the CAPTCHA.
+ * A network is locked outright only when it looks like spraying: this many failures in the window across at least
+ * NETWORK_LOCK_ACCOUNTS accounts. One address can be a whole mobile carrier, so fewer failures, or many against one
+ * account, only bring the CAPTCHA.
  */
 export const NETWORK_LOCK_FAILURES = 20;
 export const NETWORK_LOCK_ACCOUNTS = 5;
@@ -36,22 +35,18 @@ export function lockDurationMinutes(level: number): number {
 }
 
 /**
- * Progressive lockout bookkeeping (KUR-023). Account, device and IP scopes are
- * tracked independently: an attacker rotating IPs still trips the account
- * lock; an attacker spraying many accounts trips the IP lock; and neither
- * touches a device the owner has signed in from before.
+ * Progressive lockout bookkeeping. Account, device and IP scopes are tracked independently: rotating IPs still trips
+ * the account lock, spraying accounts trips the IP lock, and neither touches a device the owner has signed in from.
  *
- * Where a CAPTCHA is configured, a lock is not a wall: the sign-in asks for the
- * challenge, and the right password with it still gets in (auth/service.ts).
+ * With a CAPTCHA configured a lock is not a wall: sign-in asks for the challenge, and the right password with it still
+ * gets in (auth/service.ts).
  */
 export class LockoutService {
   constructor(private readonly pool: Pick<pg.Pool, 'query'>) {}
 
   /**
-   * What a key is stored as. An address is kept as the keyed hash of its
-   * network (net/network-key.ts): never the raw address, and an IPv6 caller
-   * cannot shed a lock by moving to another address in the same /64. Text that
-   * is not an address is hashed as it is, so it still locks and stays apart.
+   * A key as stored. An address is kept as the keyed hash of its network (net/network-key.ts): never raw, and an IPv6
+   * caller cannot escape a lock by moving within its /64. Non-address text is hashed as is.
    */
   private storedKey(scope: LockoutScope, key: string): string {
     if (scope !== 'ip') return key;
@@ -71,13 +66,11 @@ export class LockoutService {
   }
 
   /**
-   * Registers a failed attempt. Counts decay after the failure window;
-   * hitting the threshold locks the key for an escalating duration and
-   * resets the counter. Returns lock seconds if this failure locked.
+   * Register a failed attempt. Counts decay after the failure window; reaching the threshold locks the key for an
+   * escalating duration and resets the counter. Returns lock seconds if this failure locked.
    *
-   * A network failure names its `target`, the account it was aimed at (an
-   * opaque hash), so the network lock can tell spraying from one person
-   * mistyping (see NETWORK_LOCK_FAILURES).
+   * A network failure names its `target` (an opaque hash of the account aimed at), so the network lock can tell
+   * spraying from one person mistyping (see NETWORK_LOCK_FAILURES).
    */
   async recordFailure(scope: LockoutScope, key: string, target = ''): Promise<number | null> {
     if (scope === 'ip') return this.recordNetworkFailure(key, target);
@@ -133,10 +126,9 @@ export class LockoutService {
   }
 
   /**
-   * A failure from a network, aimed at `target`. The network is locked only
-   * once it has failed NETWORK_LOCK_FAILURES times inside the window across at
-   * least NETWORK_LOCK_ACCOUNTS accounts; the count starts again after a lock.
-   * Rows outside the window are worthless, so each failure sweeps them away.
+   * A failure from a network aimed at `target`. The network locks only after NETWORK_LOCK_FAILURES failures in the
+   * window across at least NETWORK_LOCK_ACCOUNTS accounts; the count restarts after a lock. Each failure sweeps rows
+   * outside the window.
    */
   private async recordNetworkFailure(key: string, target: string): Promise<number | null> {
     const network = this.storedKey('ip', key);
@@ -170,8 +162,8 @@ export class LockoutService {
   }
 
   /**
-   * Ends a lock and its history: the owner has proved who they are another
-   * way (a password reset from their mailbox), so nothing should hold them.
+   * End a lock and its history once the owner has proved who they are another way (a password reset from their
+   * mailbox).
    */
   async release(scope: LockoutScope, key: string): Promise<void> {
     await this.pool.query(`DELETE FROM auth_lockouts WHERE scope = $1 AND key = $2`, [scope, this.storedKey(scope, key)]);

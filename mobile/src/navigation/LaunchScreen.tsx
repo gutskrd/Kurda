@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import { PEEK_VIEW } from '@kurda/shared';
 import SPLASH from '../../assets/splash-icon.png';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { characterLayers } from '../characters/layers';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloPeek } from '../characters/HevaloPeek';
 import { springTo, timing } from '../theme/animate';
 import { GradientBackground } from '../theme/glass';
 import { duration } from '../theme/motion';
@@ -13,40 +14,46 @@ import { spacing, typography } from '../theme/tokens';
 import { LightWash } from './launch/LightWash';
 import { LAUNCH, SPLASH_BACKGROUND, SPLASH_IMAGE_WIDTH, heroPlace } from './launch/splash';
 
-/** Hevalo's drawing head to the tops of his legs, and where its eyes are in it: how the launch draws him. */
+/**
+ * Hevalo's drawing from head to the tops of his legs, with its eye positions: what the launch lines him up with the
+ * splash by.
+ */
 const HERO = characterLayers('hevalo', 'half');
 
 /**
- * What you see while the app finds out who you are.
- *
- * It opens on exactly what the native splash showed — the flat colour, with
- * the deer from the icon in the middle of the window at the size the splash
- * drew him (launch/splash.ts) — so that the moment the app takes over from
- * the system, nothing on the screen moves. Then it comes alive: the page's
- * gradient comes in over the flat colour, the picture's deer gives way to
- * Hevalo himself, arriving with a spring where the picture was, blinking as
- * he lands, and the name and the line under it rise beneath him. A soft
- * light drifts across the page while he waits, breathing and glancing about.
- *
- * It used to be the name breathing on the gradient, and before that a
- * spinner: both said "wait", and this says "here he is". Restoring a session
- * takes a few hundred milliseconds; the point is that those milliseconds are
- * the app, and that the first thing anybody sees of it is Hevalo.
- *
- * For somebody who has asked for less motion nothing travels: the picture
- * fades into him and the words simply appear, and the light stays still.
+ * Where the tear he peeks through goes, so his eyes land where the splash deer's eyes were, at the scale the
+ * head-to-legs drawing would have had (`heroPlace`).
+ */
+function peekPlace(box: number): { width: number; height: number; left: number; top: number } {
+  const half = heroPlace(box, HERO.frame, HERO.eyesAt);
+  // The tear is drawn in his own units, so one scale and its corner's offset from his frame place it.
+  const scale = half.width / HERO.frame.w;
+  return {
+    width: PEEK_VIEW.w * scale,
+    height: PEEK_VIEW.h * scale,
+    left: half.left + (PEEK_VIEW.x - HERO.frame.x) * scale,
+    top: half.top + (PEEK_VIEW.y - HERO.frame.y) * scale,
+  };
+}
+
+/**
+ * What you see while the app finds out who you are. It opens on exactly what the native splash showed
+ * (launch/splash.ts), so nothing moves when the app takes over; then the gradient comes in, the splash deer gives way
+ * to Hevalo arriving on a spring, the words rise beneath him and a soft light drifts while he waits. Under Reduce
+ * Motion nothing travels: he fades in and the words appear.
  */
 export function LaunchScreen(): React.JSX.Element {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
-  // the gradient over the flat colour, the picture's deer, Hevalo arriving, and the words: each 0 → 1 (the picture 1 → 0)
+  // The gradient over the flat colour, the splash picture, Hevalo arriving, and the words: each 0 → 1 (the picture 1 →
+  // 0).
   const ground = useRef(new Animated.Value(0)).current;
   const picture = useRef(new Animated.Value(1)).current;
   const hero = useRef(new Animated.Value(0)).current;
   const words = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // the answer about motion may arrive a moment in: the arrival then goes on from where it is, as a fade
+    // The Reduce Motion answer may arrive a moment in: the arrival then goes on from where it is, as a fade.
     const run = Animated.parallel([
       timing(ground, 1, duration.slow + 180, { delay: LAUNCH.groundMs }),
       timing(picture, 0, LAUNCH.pictureMs, { delay: LAUNCH.heroMs }),
@@ -57,7 +64,7 @@ export function LaunchScreen(): React.JSX.Element {
     return () => run.stop();
   }, [reduce, ground, picture, hero, words]);
 
-  const place = useMemo(() => heroPlace(SPLASH_IMAGE_WIDTH, HERO.frame, HERO.eyesAt), []);
+  const place = useMemo(() => peekPlace(SPLASH_IMAGE_WIDTH), []);
   const arrival = reduce
     ? { opacity: hero }
     : {
@@ -76,12 +83,12 @@ export function LaunchScreen(): React.JSX.Element {
       </Animated.View>
       <LightWash />
       <View style={styles.centre}>
-        {/* the splash picture's own box, centred in the window as the splash centred it; the words hang under it */}
+        {/* The splash picture's own box, centred as the splash centred it; the words hang under it. */}
         <View style={styles.box} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {/* sized in so many words: a picture given no size takes its own, which is the whole file, not the box */}
+          {/* Sized explicitly: an unsized picture takes the whole file's size, not the box. */}
           <Animated.Image source={SPLASH} resizeMode="contain" style={[styles.picture, { opacity: picture }]} testID="launch-picture" />
           <Animated.View style={[styles.hero, { left: place.left, top: place.top, width: place.width, height: place.height }, arrival]} testID="launch-hero">
-            <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="half" height={place.height} />
+            <HevaloPeek size={place.height} pop={false} />
           </Animated.View>
           <Animated.View style={[styles.words, { top: place.top + place.height + spacing.md }, rising]}>
             <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
@@ -94,24 +101,11 @@ export function LaunchScreen(): React.JSX.Element {
 }
 
 /**
- * The app arriving, once it knows where it is going.
+ * The app arriving, once it knows where it is going: whatever follows the launch (intro, sign-in or tabs) fades and
+ * scales up through it on the standard spring, rather than cutting in between two frames.
  *
- * Every one of the three things that can follow the launch screen — the intro,
- * the sign-in stack, the tabs — used to replace it between two frames. A cut
- * from a still wordmark to a full screen reads as a glitch, which is the same
- * reason the tabs cross-fade rather than swap.
- *
- * So whatever comes next comes up through it, on the standard spring: a fade,
- * and a scale that starts just inside its final size, so the screen settles
- * into place rather than appearing at it. It was a 260 ms ease-out, which
- * stopped where it was told; the spring slows into its place the way a
- * placed thing does, with no bounce, and is the same spring the rest of the
- * app arrives on.
- *
- * Behind the screen while it is still faint is the launch's own colour, not
- * whatever the window is painted underneath the app — the system's white or
- * black, which showed through for a frame as the launch screen went and the
- * next one had not yet come: a flash, in the one place nothing should flash.
+ * Behind it while it is still faint is the launch's own colour, not the window's, which would flash white or black for
+ * a frame.
  */
 export function Entrance({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { colors } = useTheme();

@@ -30,11 +30,7 @@ describe('CATEGORY_LABEL', () => {
     for (const c of NOTIFICATION_CATEGORIES) expect(CATEGORY_LABEL[c], c).toBeTruthy();
   });
 
-  /*
-   * The failure this table's type exists to prevent: a key with nothing behind
-   * it renders as the key, so the settings screen reads
-   * "notifications.pref.streak" and typechecks perfectly.
-   */
+  /* A label key with no English would render as the raw key. */
   it('names a key English actually has', () => {
     for (const c of NOTIFICATION_CATEGORIES) {
       expect(en[CATEGORY_LABEL[c]], `${c} → ${CATEGORY_LABEL[c]}`).toBeTruthy();
@@ -53,7 +49,7 @@ describe('quietEnabled', () => {
     expect(quietEnabled(prefs({ quietStartMin: 1320, quietEndMin: 420 }))).toBe(true);
   });
 
-  /* a half-set pair is not "on": the server would refuse to store it */
+  /* A half-set pair is not on, since the server would refuse to store it. */
   it('is off when only one end is set', () => {
     expect(quietEnabled(prefs({ quietStartMin: 1320 }))).toBe(false);
     expect(quietEnabled(prefs({ quietEndMin: 420 }))).toBe(false);
@@ -77,11 +73,7 @@ describe('parseMinute', () => {
     expect(parseMinute('7:05')).toBe(425);
   });
 
-  /*
-   * A time input hands back '' the moment it is cleared, and the value is user
-   * input either way. Returning null keeps a NaN from travelling to the server
-   * as a minute-of-day.
-   */
+  /* A time input gives '' when cleared; returning null keeps a NaN from reaching the server. */
   it('refuses anything that is not a time', () => {
     for (const bad of ['', '  ', '7', '07:5', 'ab:cd', '24:00', '12:60', '-1:00', '07:00:00']) {
       expect(parseMinute(bad), bad).toBeNull();
@@ -102,11 +94,7 @@ describe('quietPatch', () => {
     expect(quietPatch(true, 1320, 420)).toEqual({ quietStartMin: 1320, quietEndMin: 420 });
   });
 
-  /**
-   * The case the server's `refine` rejects: switched on with nothing typed yet.
-   * Sending one end and not the other is a 422, which a reader experiences as a
-   * broken switch rather than as a validation rule.
-   */
+  /** Switched on with nothing typed: sending one end without the other would be refused with a 422. */
   it('never sends half a pair', () => {
     for (const [s, e] of [
       [null, null],

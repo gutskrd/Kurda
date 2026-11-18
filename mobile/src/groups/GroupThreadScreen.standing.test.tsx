@@ -29,7 +29,7 @@ afterEach(() => {
 const DAY = 86_400_000;
 const later = (days: number) => new Date(Date.now() + days * DAY).toISOString();
 
-/** The group as the server answers a member, or — its name and standing, the rest empty — someone banned from it. */
+/** The group as the server answers a member, or (its name and standing, the rest empty) someone banned from it. */
 const group = (standing: GroupStanding, over: Record<string, unknown> = {}) =>
   ok({
     id: 'g1',
@@ -70,13 +70,13 @@ describe('opening a group one is banned from', () => {
     const announce = vi.spyOn(AccessibilityInfo, 'announceForAccessibility');
     expect(await screen.findByRole('heading', { name: /^You’re banned from this group until / })).toBeTruthy();
     expect(screen.getByText('Reason: Spam')).toBeTruthy();
-    // the group by name, and nothing else of it: no way in, no page of it to open, no count of its people
+    // The group by name and nothing else: no way in, no page to open, no member count.
     expect(screen.getAllByText('Newroz club').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Group info' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Chat options' })).toBeNull();
     expect(screen.queryByText(/members/)).toBeNull();
-    // nothing to send from outside the group
+    // Nothing to send from outside the group.
     expect(screen.queryByLabelText('Message…')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Ask to come back' }));
     const note = await screen.findByLabelText('A note (optional)');
@@ -157,7 +157,7 @@ describe('opening a group one is not in', () => {
     const client = open({ 'GET /groups/g1/chat': fail({ code: 'NOT_A_MEMBER', status: 403 }), 'GET /groups/g1': noSuchGroup }, onExit);
     expect(await screen.findByText('There’s no group here, or you’re not in it. Groups are private, so only an admin can add you.')).toBeTruthy();
     expect(screen.getAllByText('Group not found').length).toBeGreaterThan(0);
-    // no way in, no chat, and no page of the group to open
+    // No way in, no chat, and no page of the group to open.
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
     expect(screen.queryByLabelText('Message…')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Group info' })).toBeNull();
@@ -172,7 +172,7 @@ describe('opening a group one is not in', () => {
     open({
       'GET /groups/g1/chat': () => (back ? ok({ messages: [] }) : refused),
       'GET /groups/g1': () => group(back ? { kind: 'member', role: 'member' } : banned({ kind: 'can_ask' })),
-      // approved between the card being drawn and the request being sent: the server says they are not banned
+      // Approved between the card being drawn and the request being sent: the server says they are not banned.
       'POST /groups/g1/requests': () => {
         back = true;
         return fail({ code: 'NOT_BANNED', status: 409, kind: 'client' });
@@ -208,7 +208,7 @@ describe('being removed or banned while the chat is open', () => {
       fireEvent.click(send);
     });
     expect(await screen.findByRole('heading', { name: 'You’re no longer in this group' })).toBeTruthy();
-    // the group they were just in keeps its name; the way back is an admin's to give
+    // The group keeps its name; the way back is an admin's to give.
     expect(await screen.findByText('An admin of the group can add you again.')).toBeTruthy();
     expect(screen.getAllByText('Newroz club').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();

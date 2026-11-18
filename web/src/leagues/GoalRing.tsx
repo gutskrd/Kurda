@@ -2,12 +2,8 @@ import { CheckIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * The weekly goal as a ring (contract 4 §L3, §U): the XP that counts for the
- * league this week against the goal, closing as it fills and turning gold
- * with a tick once it is met — met, you are safe, and that is said in words
- * beside it too. One drawing for the league, personal mode and Home.
- *
- * Nothing about it counts down: it only ever fills.
+ * The weekly goal as a ring that fills with this week's league XP and turns gold with a tick once met, said in words
+ * too. Used by the league, personal mode and Home; it only ever fills, never counts down.
  */
 export function GoalRing({ xp, goal, size = 96, label = true }: { xp: number; goal: number; size?: number; label?: boolean }): React.JSX.Element {
   const t = useT();

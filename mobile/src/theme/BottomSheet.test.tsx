@@ -23,7 +23,7 @@ afterEach(() => {
   forgetReach();
 });
 
-// a phone's screen: jsdom's window has no height, and a sheet's heights are shares of it
+// A phone's screen: jsdom's window has no height, and a sheet's heights are fractions of it.
 Object.defineProperty(window, 'visualViewport', { value: { height: 800, width: 390, scale: 1 }, configurable: true });
 window.dispatchEvent(new Event('resize'));
 
@@ -46,7 +46,7 @@ describe('the bottom sheet', () => {
       </BottomSheet>,
     );
     const closers = screen.getAllByRole('button', { name: 'Close' });
-    // the dimmed page, then the ✕
+    // The dimmed page, then the ✕.
     expect(closers).toHaveLength(2);
     fireEvent.click(closers[1]!);
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -92,7 +92,7 @@ describe('the bottom sheet', () => {
     fireEvent.click(x!);
     expect(onClose).not.toHaveBeenCalled();
 
-    // answered: it closes again as any sheet does
+    // Answered: it closes again like any sheet.
     rerender(
       <BottomSheet visible onClose={onClose} dismissible>
         <Text>Deleting</Text>
@@ -121,10 +121,7 @@ describe('the bottom sheet', () => {
   });
 });
 
-/**
- * A finger on `from`, down `dy` points in steps of 20, and off: `msPerStep`
- * apart, so a flick is as quick as it says; without, it is let go of slowly.
- */
+/** A finger down on `from`, moved `dy` points in steps of 20, and up: `msPerStep` apart for a flick, else released slowly. */
 function drag(from: Element, dy: number, msPerStep?: number): void {
   let time = 1_000_000;
   const clock = vi.spyOn(Date, 'now').mockImplementation(() => time);
@@ -135,7 +132,7 @@ function drag(from: Element, dy: number, msPerStep?: number): void {
     time += msPerStep ?? 1;
   }
   fireEvent.mouseMove(from, at(300 + dy));
-  // let go slowly: held still a moment first, so it lifts with no speed
+  // Released slowly: held still first, so it lifts with no speed.
   if (msPerStep === undefined) time += 200;
   fireEvent.mouseUp(from, at(300 + dy));
   clock.mockRestore();
@@ -160,7 +157,7 @@ describe('the bottom sheet under a finger', () => {
         <Text>Name</Text>
       </BottomSheet>,
     );
-    // 80 points in 40 ms: 2000 points a second, which would carry it about 1000 points
+    // 80 points in 40 ms is 2000 points a second, which would carry it about 1000 points.
     drag(screen.getByText('Name'), 80, 10);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -202,7 +199,7 @@ describe('the bottom sheet under a finger', () => {
     drag(screen.getByText('A'), 500);
     expect(onClose).not.toHaveBeenCalled();
 
-    // a scroll view reports at most every 16 ms
+    // A scroll view reports at most every 16 ms.
     await new Promise((resolve) => setTimeout(resolve, 20));
     list.scrollTop = 0;
     fireEvent.scroll(list);
@@ -247,7 +244,7 @@ describe('how far the bottom sheet’s controls answer a finger', () => {
     );
     const nine = { top: 9, bottom: 9, left: 9, right: 9 };
     expect(reachOf('Back')).toEqual(nine);
-    // the dimmed page is named Close as well, and is drawn first: the name ends on the ✕
+    // The dimmed page is also named Close and drawn first, so the name ends on the ✕.
     expect(reachOf('Close')).toEqual(nine);
   });
 
@@ -274,9 +271,8 @@ describe('how far the bottom sheet’s controls answer a finger', () => {
 });
 
 /**
- * Lays the sheet out where a phone would. react-native-web reports a layout
- * only through a ResizeObserver, which the test page does not have, so the
- * layout handler it keeps on the element is handed the place itself.
+ * Lays the sheet out as a phone would: react-native-web reports layout only through a ResizeObserver, which the test
+ * page lacks, so its layout handler is called directly.
  */
 function layOut(sheet: HTMLElement, layout: { x: number; y: number; width: number; height: number }): void {
   const handler = (sheet as unknown as { __reactLayoutHandler?: (e: unknown) => void }).__reactLayoutHandler;
@@ -294,7 +290,7 @@ describe('a tap on the page just above the bottom sheet', () => {
     );
     layOut(screen.getByTestId('sheet'), { x: 0, y: 500, width: 390, height: 300 });
     const scrim = screen.getAllByRole('button', { name: 'Close' })[0]!;
-    // a grabber tap that landed a little high
+    // A grabber tap that landed a little high.
     fireEvent.click(scrim, { clientX: 195, clientY: 492 });
     fireEvent.click(scrim, { clientX: 195, clientY: 489 });
     expect(onClose).not.toHaveBeenCalled();
@@ -310,12 +306,12 @@ describe('a tap on the page just above the bottom sheet', () => {
       </BottomSheet>,
     );
     const [medium, large] = detentHeights(['medium', 'large'], 800);
-    // laid out at its full height, and resting at medium: what shows starts lower than where it was laid out
+    // Laid out at full height but resting at medium, so what shows starts below the laid-out top.
     layOut(screen.getByTestId('sheet'), { x: 0, y: 800 - large!, width: 390, height: large! });
     const scrim = screen.getAllByRole('button', { name: 'Close' })[0]!;
     fireEvent.click(scrim, { clientX: 195, clientY: 800 - medium! - 6 });
     expect(onClose).not.toHaveBeenCalled();
-    // above what shows, though below where the sheet was laid out: the page, and a close
+    // Above what shows, though below the laid-out top: the page, so a close.
     fireEvent.click(scrim, { clientX: 195, clientY: 800 - large! + 20 });
     expect(onClose).toHaveBeenCalledTimes(1);
   });

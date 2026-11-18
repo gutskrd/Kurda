@@ -15,11 +15,8 @@ describe('favoriteCopy', () => {
   });
 
   /*
-   * A key with nothing behind it renders as the key itself, which the type
-   * cannot catch — `TranslationKey` says the name is spelled right, not that
-   * nine catalogues have a sentence under it. `profile.favoritePoem` in
-   * particular sat in all nine for months with nothing reading it, so the one
-   * thing never checked was whether it reads well when something finally does.
+   * A key with nothing behind it renders as the key itself, which the type cannot catch: `TranslationKey` checks the
+   * name, not that nine catalogues have a sentence.
    */
   it('names keys every language actually has', () => {
     for (const kind of FAVORITE_KINDS) {
@@ -40,9 +37,8 @@ describe('FAVORITE_KINDS', () => {
 });
 
 /**
- * The paths, because a favourite is the one profile write whose URL carries the
- * slot. `/me/favorites/poems` or `/me/favorites/Poem` would 404 at runtime and
- * typecheck perfectly.
+ * The paths, because a favourite is the one profile write whose URL carries the slot: a wrong one would 404 at runtime
+ * and typecheck perfectly.
  */
 describe('the endpoints', () => {
   const spy = () => {
@@ -76,7 +72,7 @@ describe('the endpoints', () => {
     }
   });
 
-  /* the slot in the path is the kind verbatim — no pluralising, no casing */
+  /* The slot in the path is the kind verbatim: no plural, no capital. */
   it('uses the kind itself as the path segment', () => {
     const { client, calls } = spy();
     void setFavorite(client, 'poem' as FavoriteKind, 'x');

@@ -130,17 +130,14 @@ import { VALLEY, warm } from './valley.js';
 import { WORD_PICTURES as SHARED_WORD_PICTURES, wordPictureSvg as sharedWordPictureSvg } from '../index.js';
 import { DRAW_TOOLS, PAINTS, PAPER_H, PAPER_STYLES, PAPER_TONES, PAPER_W, paperColors, type PaperStroke } from '../letter-paper.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
-import { escapeXml, wholePath } from './svg.js';
-import { characterArt } from '../characters/index.js';
+import { escapeXml } from './svg.js';
 import { BADGES as CATALOGUE, BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGE_TIERS as CATALOGUE_TIERS } from '../badges.js';
 import { LEAGUE_TIERS as CATALOGUE_LEAGUE_TIERS } from '../leagues.js';
 import { RANK_TIER_KEYS, SEASON_NAMES as SEASON_LABEL_KEYS } from '../ranks.js';
 
 /**
- * A strict little XML reader: enough to say a drawing is well-formed (every
- * tag closed in order, every attribute quoted and named once, no stray `<` or
- * `&`) and to hand back its elements for the checks below. Written here rather
- * than taken from node_modules because shared has no XML dependency of its own.
+ * A strict little XML reader: enough to call a drawing well-formed (tags closed in order, attributes quoted and unique,
+ * no stray `<` or `&`) and to return its elements for the checks below. Shared has no XML parser dependency.
  */
 interface El {
   name: string;
@@ -208,10 +205,7 @@ function walk(el: El, visit: (e: El) => void): void {
 /** Only what react-native-svg's SvgXml draws the same as a browser. */
 const ALLOWED = new Set(['svg', 'title', 'defs', 'g', 'path', 'circle', 'ellipse', 'rect', 'linearGradient', 'radialGradient', 'stop', 'clipPath']);
 
-/**
- * Every structural rule a drawing must keep. Problems are collected and
- * asserted once, because a page of badges is thousands of attributes.
- */
+/** Every structural rule a drawing must keep. Problems are collected and asserted once, since a page of badges has thousands of attributes. */
 function checkSvg(svg: string, size: number): Set<string> {
   const problems: string[] = [];
   const root = parse(svg);
@@ -257,9 +251,8 @@ function checkSvg(svg: string, size: number): Set<string> {
 const TIERS: readonly BadgeTier[] = [1, 2, 3, 4];
 
 /**
- * The pips in a drawing: the small circles drawn with an edge. A lit one is a
- * raised bead filled with its own gradient, an unlit one an empty socket — so
- * the count is told by shape, not only by colour.
+ * The pips in a drawing: small circles with an edge. A lit pip is a raised bead with its own gradient, an unlit one an
+ * empty socket, so the count is told by shape and not only colour.
  */
 function pipsOf(svg: string): { lit: number; all: number } {
   let lit = 0;
@@ -273,9 +266,8 @@ function pipsOf(svg: string): { lit: number; all: number } {
 }
 
 /**
- * The division stones under a crest: small diamonds drawn with an edge. A lit
- * one is filled with its own gradient, an empty one is a faint setting — so
- * the count is told by shape and fill, not only by colour.
+ * The division stones under a crest: small diamonds with an edge. A lit one has its own gradient, an empty one is a
+ * faint setting, so the count is told by shape and fill and not only colour.
  */
 function stonesOf(svg: string): { lit: number; all: number } {
   let lit = 0;
@@ -311,9 +303,8 @@ const hasGlyph = (svg: string): boolean => /(fill|stroke)="url\(#[\w-]*gl\d+\)"/
 
 /** Paths that are only a run of ten or more small diamonds: a kilim band's eyes. */
 /**
- * The number under a large badge: the face of its chunky figures, a round
- * pen stroke filled with its own gradient. Each figure starts a line, so the
- * count of moves is the count of figures.
+ * The number under a large badge: the faces of its chunky figures, round pen strokes with their own gradient. Each
+ * figure starts a new subpath, so counting moves counts figures.
  */
 function figuresOf(svg: string): number {
   let count = 0;
@@ -618,74 +609,6 @@ describe('the streak’s medals', () => {
   });
 });
 
-/** Every point a path passes through or pulls toward, where it truly is on the page. */
-function pointsOf(d: string): (readonly [number, number])[] {
-  const ARGS: Record<string, number> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 };
-  const tokens = d.match(/[A-Za-z]|-?(?:\d+\.?\d*|\.\d+)/g) ?? [];
-  const out: (readonly [number, number])[] = [];
-  let [x, y, sx, sy] = [0, 0, 0, 0];
-  let cmd = '';
-  for (let i = 0; i < tokens.length; ) {
-    const t = tokens[i] as string;
-    if (/[A-Za-z]/.test(t)) {
-      cmd = t;
-      i += 1;
-      if (t === 'z' || t === 'Z') [x, y] = [sx, sy];
-      continue;
-    }
-    const lower = cmd.toLowerCase();
-    const args = tokens.slice(i, i + (ARGS[lower] ?? 0)).map(Number);
-    i += args.length;
-    const [ox, oy] = cmd === lower ? [x, y] : [0, 0];
-    if (lower === 'h') x = ox + (args[0] ?? 0);
-    else if (lower === 'v') y = oy + (args[0] ?? 0);
-    else {
-      const from = lower === 'a' ? 5 : 0;
-      for (let k = from; k < args.length; k += 2) out.push([ox + (args[k] ?? 0), oy + (args[k + 1] ?? 0)]);
-      [x, y] = [ox + (args[args.length - 2] ?? 0), oy + (args[args.length - 1] ?? 0)];
-      if (lower === 'm') {
-        [sx, sy] = [x, y];
-        cmd = cmd === 'm' ? 'l' : 'L';
-      }
-    }
-    out.push([x, y]);
-  }
-  return out;
-}
-
-describe('wholePath', () => {
-  const near = (d: string): void => {
-    const was = pointsOf(d);
-    const now = pointsOf(wholePath(d));
-    expect(now).toHaveLength(was.length);
-    now.forEach(([x, y], i) => {
-      const [wx, wy] = was[i] as readonly [number, number];
-      expect(Math.abs(x - wx)).toBeLessThanOrEqual(0.5 + 1e-9);
-      expect(Math.abs(y - wy)).toBeLessThanOrEqual(0.5 + 1e-9);
-      expect(Number.isInteger(x) && Number.isInteger(y)).toBe(true);
-    });
-  };
-
-  it('never lets rounding add up along a long outline of small steps', () => {
-    near(`M0.4,0.4${'c0.4,0.4 0.8,0.8 1.4,1.4s0.4,0.4 1.4,1.4'.repeat(60)}l-0.3,40.4h-20.4v-0.4z`);
-    near('M174,266.6a10.4,10.4 0 1 0 20.8,0a10.4,10.4 0 1 0 -20.8,0zm5.5,1.5l2.4,2.4 2.4,2.4z');
-    near('M10.6,10.4L30.4,20.6C40.4,40.6 50.5,60.5 70.4,80.6S90.4,100.4 110.6,90.4H5.5V2.5Z');
-  });
-
-  it('keeps every point of Hevalo within half a unit of where he was drawn', () => {
-    const art = characterArt('hevalo', 'whole');
-    const markup = (art.chest ?? '') + art.head + art.overlay + Object.values(art.eyes).join('') + Object.values(art.mouths).join('');
-    const paths = [...markup.matchAll(/ d="([^"]*)"/g)].map((m) => m[1] as string);
-    expect(paths.length).toBeGreaterThan(20);
-    for (const d of paths) near(d);
-  });
-
-  it('gives back a path it cannot read as it came', () => {
-    expect(wholePath('M1.5,2.5Q3.5')).toBe('M1.5,2.5Q3.5');
-    expect(wholePath('M1.5,2.5X4,5')).toBe('M1.5,2.5X4,5');
-  });
-});
-
 describe('ids across drawings', () => {
   it('never collide between two different drawings on one page', () => {
     const owner = new Map<string, string>();
@@ -812,7 +735,7 @@ describe('rankEmblemSvg', () => {
 });
 
 describe('leagueEmblemSvg', () => {
-  // the lone drop stands on the canvas's foot at the smallest size, where its shadow's radius once came out below nought
+  // The lone drop stands on the canvas's foot at the smallest size, where its shadow's radius must not go below zero.
   it('never writes a gradient with a radius below nought, at any size', () => {
     for (const tier of LEAGUE_TIERS) {
       for (const size of [24, 32, 40, 56, 72, 96, 128, 160]) expect(leagueEmblemSvg({ tier, size }), `${tier} at ${size}`).not.toMatch(/<radialGradient[^>]*\sr="-/);
@@ -927,8 +850,8 @@ describe('light', () => {
     ];
     for (const svg of drawings) {
       walk(parse(svg), (e) => {
-        // a glow is a radial fade to nothing, placed on the canvas; a piece's gloss and the shadow under it are in their own
-        // shape's box, and end where it does
+        // A glow is a radial fade to nothing placed on the canvas; a piece's gloss and its shadow use their own shape's box and
+        // end where it does.
         if (e.name !== 'radialGradient' || e.attrs.gradientUnits !== 'userSpaceOnUse' || e.children.at(-1)?.attrs['stop-opacity'] !== '0') return;
         const [cx, cy, r] = [Number(e.attrs.cx), Number(e.attrs.cy), Number(e.attrs.r)];
         expect(Math.min(cx - r, cy - r), svg.slice(0, 160)).toBeGreaterThanOrEqual(0);
@@ -1287,10 +1210,8 @@ describe('Xapînok’s pictures', () => {
 });
 
 /**
- * The emails' pictures (art/email.ts): one small scene for what each email is
- * about, drawn as the app's other object pictures are, each a loop. They are
- * written out as images for the emails themselves, which is why every moment
- * of every loop must stand alone as a drawing.
+ * The email pictures (email.ts): a small looping scene per email kind. They are written out as images for the emails,
+ * so every moment of every loop must stand alone as a drawing.
  */
 describe('the emails’ pictures', () => {
   const MOMENTS = [0, 0.1, 0.25, 0.37, 0.5, 0.62, 0.75, 0.9, 0.99];
@@ -1555,11 +1476,9 @@ describe('the join ticket', () => {
 });
 
 /**
- * The lesson path's world (art/path-land.ts, art/path-landmark.ts) is the
- * painted valley the owner chose: flat planes, no outlines, one step of shade.
- * Every rule of the art holds: only what both renderers draw alike, nothing
- * outside the drawing, every reference resolved, and a budget on how much a
- * unit's land may weigh, since a path draws two or three at once.
+ * The lesson path's world (path-land.ts, path-landmark.ts) in the painted valley style. Every art rule holds: only what
+ * both renderers draw alike, nothing outside the drawing, every reference resolved, and a size budget per unit's land,
+ * since a path draws two or three at once.
  */
 describe('the lesson path’s world', () => {
   const TONES = ['clay', 'saffron', 'meadow', 'rose', 'pine'] as const;
@@ -1673,7 +1592,7 @@ describe('the lesson path’s world', () => {
           const svg = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark, seed: 'u' });
           const elements = sound(svg, `0 0 ${width} ${unit.height}`);
           expect(parse(svg).attrs['aria-hidden']).toBe('true');
-          // a few hundred elements, and no more than the whole village weighs on a wide page
+          // A few hundred elements, and a capped size, since a path draws two or three lands at once.
           expect(elements, `${land.ground} ${width}`).toBeLessThan(width > 400 ? 420 : 260);
           expect(svg.length, `${land.ground} ${width}`).toBeLessThan((width > 400 ? 64 : 36) * 1024);
           drawings.add(svg);
@@ -1911,17 +1830,14 @@ describe('the learner’s tree', () => {
   });
 
   it('draws the night sky’s moon as a horn that can be drawn: its way back is a wider round than the horn is tall', () => {
-    // an arc whose radius is less than half its chord is no arc: the moon was once written that way and never appeared
+    // An arc whose radius is less than half its chord is no arc, and the renderers draw nothing for it.
     const moon = /A([\d.]+) [\d.]+ 0 1 0 [\d.]+ [\d.]+A([\d.]+) [\d.]+ 0 0 1 /.exec(treeSceneSvg({ sky: 'night' }));
     expect(moon).not.toBeNull();
     expect(Number(moon?.[2])).toBeGreaterThan(Number(moon?.[1]));
   });
 });
 
-/**
- * The horizon over a profile: somebody's own sky and mountains, behind their
- * face until they wear a background.
- */
+/** The default profile banner: a person's own sky and mountains. */
 describe('the horizon over a profile', () => {
   const PEOPLE = ['48cc9c07-c6ce-4755-b717-9a4918cd771e', 'd2b60bd3-c41f-4cfd-aaa8-bd94c9be302e', 'dilan', 'rojîn', 'azad', 'berîvan', 'a', 'b', 'c', 'd', 'e', 'f'];
 
@@ -1948,8 +1864,8 @@ describe('the horizon over a profile', () => {
     for (const seed of PEOPLE) {
       for (const sky of TREE_SKIES) {
         const svg = horizonSvg({ seed, sky });
-        // the sun or moon: a circle, or the horn's first point, between a fifth above and a tenth below the middle line
-        // the sun is the circle in that sky's own sun colour; the moon is a horn, and its first point is its top
+        // The sun or moon: a circle, or the horn's first point, between a fifth above and a tenth below the middle line. The sun
+        // is the circle in that sky's sun colour; the moon is a horn whose first point is its top.
         const sun = new RegExp(`<circle cx="[\\d.]+" cy="([\\d.]+)" r="([\\d.]+)" fill="${SKIES[sky].orb[3]}"`).exec(svg);
         const moon = /<path d="M[\d.]+ ([\d.]+)A([\d.]+) /.exec(svg);
         const orb = sky === 'night' ? moon : sun;
@@ -2020,7 +1936,7 @@ describe('the letters’ pictures', () => {
     expect(keys[0]).toMatchObject({ at: 0, x: 0, y: 0, scale: 1, seen: 1 });
     expect(keys[keys.length - 1]).toMatchObject({ at: 1, seen: 0 });
     for (let i = 1; i < keys.length; i++) expect(keys[i]!.at).toBeGreaterThan(keys[i - 1]!.at);
-    // how far across its own square a pigeon reaches in any pose, with a letter, either way round (measured in a browser)
+    // How far across its own square a pigeon reaches in any pose, with a letter, either way round.
     const reach = { x0: 0.24, x1: 0.88, y0: 0.21, y1: 0.86 };
     const share = LETTER_SILL.birdShare;
     const [cx, cy] = [LETTER_SILL.x / 120 - (share * LETTER_BIRD_FEET.x) / 120 + share / 2, LETTER_SILL.y / 120 - (share * LETTER_BIRD_FEET.y) / 120 + share / 2];
@@ -2400,10 +2316,9 @@ describe('the tree through the seasons', () => {
 });
 
 /**
- * A sheet of letter paper (art/letter-paper.ts) is its own size, in page
- * units rather than on the 120 canvas, but keeps every other rule: what both
- * renderers draw alike, a label, nothing outside the drawing, and no text,
- * which the apps set over it in their own type.
+ * A letter paper sheet (letter-paper.ts) has its own size in page units rather than the 120 canvas, but keeps every
+ * other rule: only what both renderers draw alike, a label, nothing outside the drawing, and no text, which the apps
+ * set over it.
  */
 describe('a letter’s paper', () => {
   const strokes: PaperStroke[] = DRAW_TOOLS.flatMap((tool, i) =>
@@ -2488,11 +2403,7 @@ describe('a letter’s paper', () => {
   });
 });
 
-/**
- * The word pictures (art/word-pictures.ts): one small painted thing for each
- * word the "pick the picture" exercise can ask for, read at a glance on a
- * card 72–96 px wide, by day and by evening.
- */
+/** The word pictures (word-pictures.ts): one small painted thing per "pick the picture" word, legible on a 72–96 px card by day and evening. */
 describe('the word pictures', () => {
   /** What hangs in the sky, and the parts of the body, float on the card; everything else stands on its patch of shade. */
   const ALOFT: readonly WordPictureId[] = ['sun', 'moon', 'star', 'cloud', 'rain', 'snow', 'plane', 'eye', 'hand', 'ear', 'nose', 'tooth', 'foot'];

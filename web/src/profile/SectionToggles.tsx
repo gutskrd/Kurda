@@ -16,14 +16,8 @@ const COPY: Record<ProfileSection, { labelKey: MessageKey; hintKey: MessageKey }
 };
 
 /**
- * Which activity sections your profile shows other people.
- *
- * The current values come from your own public profile rather than /me, because
- * that is the endpoint visitors read — so what this screen shows is literally
- * what they would see, not a second copy that could disagree with it.
- *
- * Each toggle saves on its own: there is no Save button to forget, and the API
- * merges one key at a time so two quick toggles cannot overwrite each other.
+ * Which activity sections the profile shows others, read from the public profile visitors see rather than /me. Each
+ * toggle saves by itself, and the API merges one key at a time so quick toggles do not overwrite each other.
  */
 export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
   const t = useT();
@@ -51,8 +45,7 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
     setError(null);
     const res = await client.patch<{ sections: ProfileSections }>('/me/profile/sections', { [key]: next });
     setBusy(null);
-    // trust the server's answer rather than the optimistic guess — it is the
-    // one the profile will actually be rendered from
+    // The server’s answer replaces the optimistic value, since the profile renders from it.
     if (res.ok) setSections(res.data.sections);
     else setError(describeError(res.error, t));
   }

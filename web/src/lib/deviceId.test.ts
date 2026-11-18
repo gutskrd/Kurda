@@ -20,7 +20,7 @@ describe('deviceId', () => {
     const first = (await fresh()).deviceId();
     expect(first).toMatch(V4);
     expect(localStorage.getItem('hevalo_device_id')).toBe(first);
-    // a new page load reads the same one back
+    // A new page load reads the same one back.
     expect((await fresh()).deviceId()).toBe(first);
   });
 
@@ -43,9 +43,9 @@ describe('deviceId', () => {
   it('keeps a cookie copy, and falls back to it when localStorage is purged', async () => {
     const first = (await fresh()).deviceId();
     expect(document.cookie).toContain(`hevalo_device_id=${first}`);
-    localStorage.clear(); // the browser purged it; the cookie survived
+    localStorage.clear(); // The browser purged it; the cookie survived.
     expect((await fresh()).deviceId()).toBe(first);
-    // and the id is put back for next time
+    // And the id is put back for next time.
     expect(localStorage.getItem('hevalo_device_id')).toBe(first);
   });
 

@@ -5,27 +5,15 @@ import { assetUrl } from '../api/env';
 import { radii } from '../theme/tokens';
 
 /**
- * A story's cover: the picture the editor chose for it (its `cover` key, one
- * of the shared `STORY_COVERS` — the legends' own paintings and the shop's
- * scenes and kilims, which the admin's picker offers), or, when none was
- * chosen, one of the seven painted kilims, so a shelf of stories never has a
- * blank spine on it (design notes §7). Which kilim is the story's own for
- * good: the shared `storyCoverFor` takes it from the slug, so the library,
- * the story's page and the website all lay the story on the same rug.
+ * A story's cover: the editor's chosen picture (its `cover` key, one of shared `STORY_COVERS`), or else one of the
+ * seven kilims, fixed per story by shared `storyCoverFor` from its slug so every surface shows the same one.
  *
- * The pictures are files on the website (`/cosmetics/backgrounds/…`), loaded
- * from there through `assetUrl` as the profile backgrounds are, rather than
- * shipped inside the app a second time. Under the picture is a plain ground
- * in the rug's main colour: that is what the card shows while the picture
- * loads, and what is left if it will not load — a quiet block of a rug's
- * colour, never a broken image and never an empty box.
- *
- * Art colours are the colours of the things drawn, not the interface's: a
- * kilim stays red on the dark theme. Only the frame around the picture is the
- * card's.
+ * Pictures load from the website (`/cosmetics/backgrounds/…`) through `assetUrl` rather than shipping in the app.
+ * A plain ground in the rug's main colour shows while loading and if loading fails, never a broken image. Art keeps
+ * its own colours in the dark theme; only the frame follows the card.
  */
 
-/** The cover, drawn to fill `style`'s box: the story's own picture, or the kilim its slug gives it. */
+/** The cover, filling `style`'s box: the story's own picture, or its slug's kilim. */
 export function StoryCover({
   slug,
   cover,
@@ -39,7 +27,7 @@ export function StoryCover({
 }): React.JSX.Element {
   const art = storyCoverFor({ slug, cover });
   const uri = assetUrl(art.path);
-  // the address that failed, so a story given another picture tries that one
+  // The URL that failed, so a story given another picture tries that one.
   const [failed, setFailed] = useState<string | null>(null);
   const picture = uri !== null && uri !== failed ? uri : null;
   return (

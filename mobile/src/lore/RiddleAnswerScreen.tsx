@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COLUMN, Note } from '../stories/ui';
@@ -17,26 +18,21 @@ import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { getRiddle, getRiddles, revealRiddle } from './api';
-import { centred, dialectOfSlug, inReaderLanguage, kurdishIn, traditionLine, varietyName } from './labels';
+import { centred, dialectOfSlug, inReaderLanguage, kurdishIn, traditionLine } from './labels';
 import { EnglishNote, InLanguage, Section, SourcesList } from './parts';
 import { nextRiddle, rememberAnswer, rememberList, rememberedAnswer, rememberedList } from './store';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
- * A riddle's answer, on a screen of its own: reached by solving it (a right
- * guess, with the small moment and the XP the server paid) or by asking for
- * it on the riddle's page and saying yes once. It has no address of its own
- * — a link opens the riddle, never its answer.
+ * A riddle's answer on a screen of its own, reached by solving it or by confirming a reveal on the riddle's page. It
+ * has no address, so a link opens the riddle, never its answer. It shows the riddle, the answer large with its
+ * translation, why it is right, where it comes from, its sources, and the next unsolved riddle.
  *
- * It shows the riddle again, the answer large in its own Kurdish with its
- * translation, why it is right (the explanation, in Kurdish and in the
- * reader's language), whether it is traditional and from where or newly
- * written, the sources it was found in, and the next riddle not yet solved.
- *
- * The answer is the one the riddle's page was sent; only when the app comes
- * back to this screen without it (restored after being closed) is it asked
- * for again, which for a riddle already solved or revealed changes nothing.
+ * The answer is the one the riddle's page was sent; only when the screen is restored without it is it asked for again,
+ * which changes nothing for a riddle already solved or revealed.
  */
 export function RiddleAnswerScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
+  useHardwareBack(onExit);
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
@@ -70,7 +66,7 @@ export function RiddleAnswerScreen({ slug, onExit }: { slug: string; onExit: () 
   }, [client, dialect, slug, t]);
   useEffect(load, [load]);
 
-  // the question, for a riddle the list did not have (opened from a link, the list not yet read)
+  // The question, for a riddle the list did not have (opened from a link before the list was read).
   useEffect(() => {
     if (card) return;
     let live = true;
@@ -82,7 +78,7 @@ export function RiddleAnswerScreen({ slug, onExit }: { slug: string; onExit: () 
     };
   }, [card, client, slug]);
 
-  // the one just solved or seen is no longer one to offer next
+  // The one just solved or seen is no longer one to offer next.
   const now: RiddleCard['state'] = answer?.solved ? 'solved' : 'revealed';
   const next = list ? nextRiddle(list.map((r) => (r.slug === slug ? { ...r, state: now } : r)), slug) : null;
 
@@ -163,7 +159,7 @@ export function RiddleAnswerScreen({ slug, onExit }: { slug: string; onExit: () 
           {next ? (
             <ClayButton label={t('lore.answer.next')} tone="primary" size="large" icon="question" onPress={() => navigation.replace('Riddle', { slug: next.slug })} testID="riddle-next" />
           ) : list ? (
-            <Note icon="check">{t('lore.answer.allDone', { variety: varietyName(dialect) })}</Note>
+            <Note icon="check">{t('lore.answer.allDone', { variety: t(dialectNameKey(dialect)) })}</Note>
           ) : null}
           <ClayButton label={t('lore.answer.back')} variant="outline" onPress={onExit} />
         </View>

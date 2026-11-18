@@ -19,33 +19,20 @@ import { publishedDictionary } from '../layouts/navLinks';
 import { addRecentSearch, clearRecentSearches, readRecentSearches } from '../search/recentSearches';
 import { Highlighted } from '../search/Highlighted';
 
-/**
- * What a search looks through. People and words are what the API can search
- * (GET /users/search, GET /dictionary/search); posts have no search of their
- * own yet, so there is no chip promising one.
- */
+/** What a search covers: people and words (GET /users/search, GET /dictionary/search); posts have no search yet. */
 type Scope = 'people' | 'words';
 const SCOPES: readonly Scope[] = ['people', 'words'];
 const asScope = (v: string | null): Scope => (v === 'words' ? 'words' : 'people');
 
-/** The people search takes at most thirty characters; the server refuses more. */
+/** The server refuses people searches over thirty characters. */
 const PEOPLE_MAX = 30;
 
 /**
- * Search (/app/search): every result for people and words, from one field.
- *
- * The everyday way to search is the field in the bar (search/NavSearch.tsx),
- * which shows a few of each as you type; its "See all results" lands here.
- * The field is the page's first thing and stays pinned while results scroll
- * under it. What is typed, which kind is being searched and the word open
- * live in the address, so a search can be shared, reloaded and gone back to.
- *
- * With nothing typed it is not a blank page: the searches made on this visit,
- * people you may know, and the ways into the dictionary and the rankings.
- *
- * Both searches need an account. A visitor without one is not shown a field
- * that cannot answer: words are looked up in the published dictionary, which
- * is open to everyone, and finding people says what an account is for.
+ * Search (/app/search): all results for people and words from one field. The bar's field (search/NavSearch.tsx) shows a
+ * few as you type, and "See all results" lands here. The field stays pinned; the query, scope and open word live in the
+ * address so a search can be shared, reloaded and gone back to. With nothing typed it shows this visit's searches,
+ * people you may know, and ways into the dictionary and rankings. Visitors get the published dictionary for words and
+ * an invitation for people, since both searches need an account.
  */
 export function Search(): React.JSX.Element {
   const t = useT();
@@ -54,20 +41,16 @@ export function Search(): React.JSX.Element {
   const scope = asScope(params.get('type'));
   const [query, setQuery] = useState(params.get('q') ?? '');
   const [recents, setRecents] = useState<string[]>(readRecentSearches);
-  // the word open, from the address, so a word from the bar's search opens here and Back closes it
+  // The open word comes from the address, so the bar's search can open one here and Back closes it.
   const entry = params.get('entry');
   const debounced = useDebouncedValue(query.trim(), 300);
   const field = useRef<HTMLInputElement>(null);
   const signedIn = status === 'signedIn';
 
   /*
-   * The address and the field follow each other, each only when the other has
-   * actually moved.
-   *
-   * What is typed goes into the address once typing settles, without a history
-   * entry per letter. A search started somewhere else — the field in the bar,
-   * while this page is open — arrives as a new address, and the field takes it
-   * up, so the page shows what was asked rather than what it was showing.
+   * The address and the field follow each other only when the other really moved: typing reaches the address once it
+   * settles, without a history entry per letter, and a search started in the bar while this page is open arrives as a
+   * new address that the field takes up.
    */
   const asked = params.get('q') ?? '';
   const settled = useRef(debounced);
@@ -91,7 +74,7 @@ export function Search(): React.JSX.Element {
     const p = new URLSearchParams(params);
     if (id) p.set('entry', id);
     else p.delete('entry');
-    // opening a word is a step Back can undo; closing one goes back to the list without adding one
+    // Opening a word adds a step Back can undo; closing one returns to the list without adding one.
     setParams(p, { replace: !id });
   };
 
@@ -223,7 +206,7 @@ function PersonRow({
   meta?: string;
   action?: React.ReactNode;
   onOpen?: () => void;
-  /** what was searched, marked where it appears in the name */
+  /** What was searched, marked where it appears in the name. */
   query?: string;
 }): React.JSX.Element {
   const t = useT();
@@ -261,10 +244,8 @@ function PersonRow({
 }
 
 /**
- * People matching the query. The last answer stays on screen while the next
- * one loads, with its rows marked for the query they answered: a list that
- * blinks to a skeleton on every pause in typing is harder to read than one
- * that updates in place. Only the first search shows the skeleton.
+ * People matching the query. The last answer stays, marked for the query it answered, while the next loads; only the
+ * first search shows a skeleton.
  */
 function PeopleResults({ query, onOpen }: { query: string; onOpen: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -304,7 +285,7 @@ function PeopleResults({ query, onOpen }: { query: string; onOpen: () => void })
 function WordResults({ query, onOpen }: { query: string; onOpen: (entryId: string) => void }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  // the answer on screen and the query it answered, kept while the next one loads (as PeopleResults)
+  // The answer shown and its query, kept while the next loads, as in PeopleResults.
   const [shown, setShown] = useState<{ query: string; result: SearchResult } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
@@ -352,10 +333,7 @@ function WordResults({ query, onOpen }: { query: string; onOpen: (entryId: strin
   );
 }
 
-/**
- * The page before anything is typed: where you were, who you might know, and
- * the two places people most often come here looking for.
- */
+/** The page before anything is typed: recent searches, people you might know, and the two most-sought places. */
 function Explore({
   recents,
   onRecent,
@@ -393,15 +371,11 @@ function Explore({
   );
 }
 
-/**
- * People you may know, with the one action that matters here: Add, which
- * hands them a ticket and leaves "Requested" — itself a way to take the
- * request back (social/FriendTickets.tsx).
- */
+/** People you may know, each with Add, which hands them a ticket and leaves "Requested" to take back (social/FriendTickets.tsx). */
 function Suggestions(): React.JSX.Element | null {
   const t = useT();
   const suggestions = useApiGet<{ suggestions: SuggestedFriend[] }>('/friends/suggestions');
-  // a request that did not go — a full friend list, too many out — says why (lib/limits.ts)
+  // A request that did not go (a full list, too many out) says why (lib/limits.ts).
   const [err, setErr] = useState<string | null>(null);
   const list = suggestions.data?.suggestions ?? [];
   if (suggestions.loading || list.length === 0) return null;
@@ -428,8 +402,7 @@ function Suggestions(): React.JSX.Element | null {
             user={u}
             meta={t('friends.mutual', { count: u.mutualCount })}
             action={
-              // a row's action is a secondary pill: a column of white buttons
-              // down a list would outshout everything else on the page
+              // A secondary pill, so a column of buttons does not outshout the page.
               <AddFriendButton
                 userId={u.userId}
                 name={u.displayName || u.username}
@@ -491,11 +464,7 @@ function ExploreLinks({ signedIn }: { signedIn: boolean }): React.JSX.Element {
   );
 }
 
-/**
- * Search, for a visitor without an account. Words go to the published
- * dictionary, which is open to everyone; people are found by people, so that
- * half says what an account is for and offers one.
- */
+/** Search for a visitor: words go to the published dictionary; finding people explains what an account is for. */
 function GuestSearch({ scope }: { scope: Scope }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();

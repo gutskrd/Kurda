@@ -39,12 +39,13 @@ const upsertBody = z
     path: ['endsAt'],
   });
 
-/** Config-driven events (KUR-089): public active feed + admin CRUD. */
+/** Config-driven events: the public active list and admin editing. */
 export function registerEventRoutes(app: FastifyInstance, events: EventService): void {
-  /** Events live right now, highest priority first. Cached to the next boundary. */
-  app.get('/events/active', { preHandler: requireAuth }, async () => ({
-    events: await events.active(),
-  }));
+  /**
+   * Events live now, highest priority first, and `nextChangeAt`, when that can next change (or null), so a phone
+   * can ask again then rather than on a timer. Cached until that boundary.
+   */
+  app.get('/events/active', { preHandler: requireAuth }, async () => events.active());
 
   /** Admin: every definition regardless of window/enabled. */
   app.get(
@@ -54,16 +55,9 @@ export function registerEventRoutes(app: FastifyInstance, events: EventService):
   );
 
   /**
-   * Admin: create or replace a definition by key (no deploy needed).
-   *
-   * Quests and rewards left out keep what is stored. The panel's form never
-   * sent them, and an upsert that wrote the whole row turned every edit of a
-   * name or a date into "this event has no quests and gives nothing".
-   *
-   * Rewards are not changed here at all. An event that grants currency is the
-   * one kind of event change that needs a second admin's sign-off
-   * (POST /admin/config/changes); accepting rewards on this route as well let one
-   * admin skip that by choosing the other door.
+   * Admin: create or replace a definition by key. Quests and rewards left out keep what is stored, because the
+   * panel's form does not send them. Rewards never change here: granting currency needs a second admin's sign-off
+   * (POST /admin/config/changes), and this route must not be a way around it.
    */
   app.post(
     '/admin/events',

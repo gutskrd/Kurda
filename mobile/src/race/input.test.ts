@@ -11,7 +11,7 @@ describe('applyTypingChange', () => {
   });
 
   it('reads a letter typed with the cursor moved into the middle as the next letter', () => {
-    // the "clicks up" bug: the caret was moved to offset 3 and ê typed there
+    // The caret was moved to offset 3 and ê typed there.
     expect(applyTypingChange('ez ji welat', 'ez êji welat').typed).toBe('ez ji welatê');
   });
 
@@ -21,7 +21,7 @@ describe('applyTypingChange', () => {
 
   it('keeps a word a keyboard put in at once (glide typing, a suggestion)', () => {
     expect(applyTypingChange('ez ', 'ez dixwazim ').typed).toBe('ez dixwazim ');
-    // a suggestion replacing the word being typed
+    // A suggestion replacing the word being typed.
     expect(applyTypingChange('ez dix', 'ez dixwazim').typed).toBe('ez dixwazim');
   });
 
@@ -36,7 +36,7 @@ describe('applyTypingChange', () => {
   it('turns e then a backtick into ê when the shortcut is on, and not when it is off', () => {
     expect(applyTypingChange('we', 'we`', { backtick: true }).typed).toBe('wê');
     expect(applyTypingChange('we', 'we`', { backtick: false }).typed).toBe('we`');
-    // a backtick after a letter without an accented form is itself
+    // A backtick after a letter without an accented form is itself.
     expect(applyTypingChange('wa', 'wa`', { backtick: true }).typed).toBe('wa`');
   });
 

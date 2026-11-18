@@ -11,8 +11,8 @@ export const TOTP_MAX_FAILURES = 5;
 export const TOTP_FAILURE_WINDOW_MINUTES = 15;
 
 /**
- * What checking a code came to. `locked` says for how long, so the client can
- * show it; a wrong code and a code already used are the same `invalid`.
+ * The result of checking a code. `locked` carries how long, for the client; a wrong code and a reused code are both
+ * `invalid`.
  */
 export type CodeCheck = { ok: true } | { ok: false; reason: 'invalid' } | { ok: false; reason: 'locked'; retryAfterSec: number };
 
@@ -37,21 +37,18 @@ export interface TotpState {
 }
 
 /**
- * Admin TOTP enrollment + verification (KUR-099). Enrolling (re)generates an
- * unconfirmed secret; the admin must confirm with a live code before it counts,
- * and only a confirmed secret satisfies the mandatory-2FA guard.
+ * Admin TOTP enrollment and verification. Enrolling (re)generates an unconfirmed secret; it counts only after
+ * confirming with a live code, and only a confirmed secret satisfies the mandatory-2FA guard.
  *
- * Enrollment alone is not enough to reach the admin panel: a session must also
- * have passed a code check, recorded per refresh-token family so it is per login
- * rather than per account. Verifying on one device therefore does not admit a
- * session opened elsewhere with the same password.
+ * A session must also pass a code check, recorded per refresh-token family, so verifying on one device does not admit
+ * another session with the same password.
  */
 export class AdminTotpService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Generate a new secret (unconfirmed) and return it + the provisioning URI.
-   * A lock from wrong codes stays: a new secret is not a way around it.
+   * Generate a new unconfirmed secret and return it with the provisioning URI. An existing wrong-code lock stays: a new
+   * secret is no way around it.
    */
   async enroll(userId: string): Promise<{ secret: string; otpauthUri: string }> {
     const secret = generateSecret();
@@ -67,9 +64,8 @@ export class AdminTotpService {
   }
 
   /**
-   * Confirm enrollment with a live code; marks the secret usable. Entering it
-   * proves possession now, so it also marks this session verified — the code
-   * cannot be entered a second time for that.
+   * Confirm enrollment with a live code, making the secret usable. It also marks this session verified, so the same
+   * code cannot be entered again.
    */
   async confirm(userId: string, code: string, familyId?: string): Promise<CodeCheck> {
     const res = await this.checkCode(userId, code, { confirming: true });
@@ -78,11 +74,8 @@ export class AdminTotpService {
   }
 
   /**
-   * Enrollment and this session's verification, in one round trip.
-   *
-   * A session with no family id (a token minted before families, or any path
-   * that omits the claim) can never be recorded as verified, so it reports
-   * unverified and fails closed rather than being waved through.
+   * Enrollment and this session's verification in one round trip. A session without a family id can never be recorded
+   * as verified, so it reports unverified and fails closed.
    */
   async state(userId: string, familyId: string | undefined): Promise<TotpState> {
     const res = await this.pool.query<{ enrolled: boolean; verified: boolean }>(
@@ -115,9 +108,8 @@ export class AdminTotpService {
   }
 
   /**
-   * Verify a login code against the confirmed secret and, on success, mark this
-   * session verified. `invalid` for a wrong code, a code already used, or an
-   * unenrolled admin; `locked` after too many wrong ones.
+   * Verify a login code against the confirmed secret and on success mark this session verified. `invalid` for a wrong
+   * or reused code or an unenrolled admin; `locked` after too many wrong ones.
    */
   async verify(userId: string, code: string, familyId?: string): Promise<CodeCheck> {
     const res = await this.checkCode(userId, code, { confirming: false });
@@ -126,15 +118,11 @@ export class AdminTotpService {
   }
 
   /**
-   * Check a code under a row lock, so racing requests share one count.
+   * Check a code under a row lock so racing requests share one count.
    *
-   * A code is good once: its time step must be later than the last one
-   * accepted, or a code read over a shoulder (or out of a log) could be
-   * entered again while it is still current. Wrong codes are counted, and
-   * TOTP_MAX_FAILURES of them inside the window lock the second factor —
-   * fifteen minutes the first time, doubling each time after (the same ladder
-   * as the sign-in lockout) — because six digits can otherwise be guessed by
-   * whoever has the password. A right code clears both.
+   * A code works once: its time step must be later than the last accepted, so an overheard or logged code cannot be
+   * replayed while still current. TOTP_MAX_FAILURES wrong codes inside the window lock the second factor for fifteen
+   * minutes, doubling each time after (the sign-in lockout ladder). A right code clears both.
    */
   private async checkCode(userId: string, code: string, opts: { confirming: boolean }): Promise<CodeCheck> {
     const client = await this.pool.connect();

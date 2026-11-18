@@ -46,11 +46,7 @@ async function pick(): Promise<void> {
 }
 
 describe('ProfilePhotoPicker', () => {
-  /*
-   * The whole point. A profile picture is shown in a circle at every size the
-   * app uses it, so uploading one used to be a gamble on whatever the middle of
-   * the file happened to be.
-   */
+  /* Pictures always show in a circle, so the reader chooses the framing. */
   it('lets you frame the picture before it becomes your face', async () => {
     signIn();
     photoFetch();

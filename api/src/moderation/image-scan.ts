@@ -1,15 +1,10 @@
 /**
- * Automatic image-scan verdict mapping (KUR-294). Pure and deterministic: given
- * an automated image scan (NSFW / violence scores + a known-illegal-content
- * hash match), decide what happens to the upload — allow / flag / gate / block,
- * or a hard-block-with-evidence-preservation for a CSAM hash match. The scanner
- * itself (a cloud vision API or self-hosted model + a hashing service) is
- * injected behind a provider-agnostic seam; this module has no I/O so every
- * threshold branch is unit-testable.
+ * Image-scan verdicts, pure and deterministic: given NSFW and violence scores and a known-illegal-content hash match,
+ * decide allow, flag, gate or block, or a hard block with evidence preservation for a CSAM match. The scanner is
+ * injected behind a provider-agnostic seam.
  *
- * Baseline safety default: an image is never publicly served until it clears
- * this verdict (the upload pipeline #013 holds it), and a CSAM match is always
- * hard-blocked with evidence preserved — never a soft-delete.
+ * An image is never served publicly until it clears this verdict (the upload pipeline holds it), and a CSAM match is
+ * always hard-blocked with evidence preserved.
  */
 
 export interface ImageScanResult {
@@ -32,7 +27,7 @@ export interface ImageScanPolicy {
 
 /**
  * `allow`      — publish.
- * `flag`       — publish but enqueue for review (#102).
+ * `flag`       — publish but enqueue for review.
  * `gate`       — blur/hold pending review (not publicly served).
  * `auto_block` — reject the upload (logged, appealable).
  * `hard_block` — CSAM: reject + preserve evidence + reporting path. Never soft-delete.
@@ -67,7 +62,7 @@ export type ImageReason = 'csam' | 'nsfw' | 'violence';
 export interface ImageVerdict {
   action: ImageAction;
   reasons: ImageReason[];
-  /** enters the moderation queue (#102) — flag or worse */
+  /** enters the moderation queue — flag or worse */
   queueForReview: boolean;
   /** not publicly served (gate or any block) */
   withheld: boolean;
@@ -78,10 +73,9 @@ export interface ImageVerdict {
 }
 
 /**
- * Map a scan result to a verdict. A CSAM hash match overrides everything with a
- * hard block + evidence preservation. Otherwise the NSFW and violence scores
- * are each mapped to an action and the most severe wins, with every category at
- * that severity listed as a reason.
+ * Map a scan result to a verdict. A CSAM hash match overrides everything with a hard block and evidence preservation.
+ * Otherwise NSFW and violence are each mapped to an action and the most severe wins, listing every category at that
+ * severity as a reason.
  */
 export function evaluateImageScan(result: ImageScanResult, policy: ImageScanPolicy): ImageVerdict {
   if (result.csamMatch) {
@@ -123,9 +117,8 @@ export function evaluateImageForSurface(
 }
 
 /**
- * When the scanner is unavailable, fail closed for images: **hold** the upload
- * (gate) rather than serve it unscanned. There is no fail-open for image
- * uploads — an unscanned image must never be publicly served.
+ * When the scanner is unavailable, images fail closed: the upload is held (gate). An unscanned image must never be
+ * served publicly.
  */
 export function onScannerError(): ImageVerdict {
   return {

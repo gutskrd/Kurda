@@ -12,20 +12,20 @@ import { suspensionOf } from '../reports/restriction';
 import { sameNotice } from '../maintenance/notice';
 import { authErrorField, type AuthField } from './fieldProblem';
 
-export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
+type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
 
-export interface RegisterInput {
+interface RegisterInput {
   email: string;
   username: string;
   password: string;
   locale?: string;
-  /** asked on the form with no default; the server refuses under 13 */
+  /** Asked on the form with no default; the server refuses under 13. */
   birthYear: number;
   birthMonth: number;
 }
 
-/** Why a sign-in or a sign-up was refused: the words, the server's code, and the field it is about when it is about one. */
-export interface AuthRefusal {
+/** Why a sign-in or sign-up was refused: the message, the server's code, and the field it concerns, if any. */
+interface AuthRefusal {
   message: string;
   code?: string;
   field: AuthField | null;
@@ -36,34 +36,25 @@ interface AuthContextValue {
   user: SessionUser | null;
   client: ApiClient;
   /**
-   * Resolve to the error, or null on success. The code rides along because
-   * some refusals need a way on beside the words: a paused sign-in offers a
-   * new password. The field rides along so the form can say it there
-   * (auth/fieldProblem.ts).
+   * Resolves to the refusal, or null on success. The code lets a paused sign-in offer a new password; the field lets
+   * the form show the problem there (auth/fieldProblem.ts).
    */
   login(email: string, password: string, remember: boolean): Promise<AuthRefusal | null>;
-  /**
-   * Resolve to the error, or null on success. The code rides along because one
-   * refusal is not a message to show under a form: UNDER_MINIMUM_AGE replaces
-   * the form with an explanation.
-   */
+  /** Resolves to the refusal, or null on success. The code matters because UNDER_MINIMUM_AGE replaces the form. */
   register(input: RegisterInput): Promise<AuthRefusal | null>;
   requestPasswordReset(email: string): Promise<void>;
   logout(): Promise<void>;
-  /** Re-fetch the profile (e.g. after editing it elsewhere). */
+  /** Re-fetches the profile, such as after editing it elsewhere. */
   refreshUser(): Promise<void>;
   /**
-   * Set when the account is suspended — at sign-in, or found out mid-session —
-   * with the reasons and the appeal token; the suspension screen shows it
-   * (reports/SuspensionGate.tsx) in place of the app until it is dismissed.
+   * Set when the account is suspended, at sign-in or mid-session, with the reasons and appeal token; the suspension
+   * screen (reports/SuspensionGate.tsx) replaces the app until dismissed.
    */
   suspension: SuspendedErrorDetails | null;
   dismissSuspension(): void;
   /**
-   * Set while Hevalo is offline, with what an admin wrote to show meanwhile;
-   * any request can find out (lib/api.ts). The offline screen
-   * (maintenance/MaintenanceGate.tsx) shows it in place of the app, keeps it
-   * up to date, and sets it back to null when Hevalo is open again.
+   * Set while Hevalo is offline, with the admin's notice, by any request that finds out (lib/api.ts). The offline
+   * screen (maintenance/MaintenanceGate.tsx) replaces the app, updates it, and clears it when Hevalo is back.
    */
   maintenance: MaintenanceNotice | null;
   setMaintenance(notice: MaintenanceNotice | null): void;
@@ -77,17 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   const [user, setUser] = useState<SessionUser | null>(null);
   const [suspension, setSuspension] = useState<SuspendedErrorDetails | null>(null);
   const [maintenance, setMaintenanceState] = useState<MaintenanceNotice | null>(null);
-  // the same, at once: a request that has just found out is still running
+  // The same, synchronously, for requests still running when they find out.
   const offline = useRef(false);
   const setMaintenance = useCallback((notice: MaintenanceNotice | null) => {
     offline.current = notice !== null;
     setMaintenanceState((was) => (sameNotice(was, notice) ? was : notice));
   }, []);
 
-  // Build the client once. onLogout fires when a refresh fails mid-session;
-  // onSuspended when that failure is a suspension, with its reasons;
-  // onMaintenance when Hevalo has been taken offline. Whoever was signed in,
-  // what the app remembers of their answers goes with them (lib/apiMemory.ts).
+  // Build the client once. onLogout fires when a refresh fails mid-session, onSuspended when that failure is a
+  // suspension, and onMaintenance when Hevalo goes offline. Signing out also drops the remembered answers.
   const { client, storage } = useMemo(
     () =>
       createApiClient(
@@ -107,9 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     [setMaintenance],
   );
 
-  // Restore the session on load: if tokens exist, verify them against /me.
-  // While Hevalo is offline the answer is neither yes nor no, so the question
-  // waits, and is asked again once Hevalo is back.
+  // Restore the session on load by verifying any tokens against /me. While Hevalo is offline there is no answer, so
+  // the check waits until it is back.
   useEffect(() => {
     if (status !== 'restoring' || maintenance) return;
     let cancelled = false;
@@ -132,23 +120,19 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     };
   }, [client, storage, status, maintenance]);
 
-  // Presence heartbeat: while signed in, tell the server we're active so friends
-  // see us as online. Fires immediately and then once a minute; the server
-  // derives "online" from the last beat within a short window. Only while the
-  // tab is in view, as the phone beats only while the app is in front: a tab
-  // left behind another one is not somebody here, and coming back to it after a
-  // missed beat beats at once.
+  // Presence heartbeat while signed in and the tab is in view: at once, then every two minutes, well inside the
+  // server's five-minute online window (social/presence.ts). Coming back to the tab beats at once.
   useEffect(() => {
     if (status !== 'signedIn') return;
     const ping = (): void => {
       void client.post('/me/heartbeat');
     };
     ping();
-    return pollWhileVisible(ping, 60_000);
+    return pollWhileVisible(ping, 120_000);
   }, [status, client]);
 
   const applyAuth = (payload: AuthPayload, remember: boolean): void => {
-    // a new person at this browser, or the same one again: nothing kept from before is theirs to see
+    // Whoever signs in, nothing remembered from before is theirs to see.
     forgetAnswers();
     persistTokens(payload.tokens, remember);
     setUser(payload.user);
@@ -160,12 +144,11 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     user,
     client,
     login: async (email, password, remember) => {
-      // the name is what Settings lists this session under ("Chrome on Windows");
-      // not remembered, the server keeps the session a day rather than a month,
-      // as this browser forgets it when the window closes
+      // The device name is what Settings lists this session under. Without "remember", the server keeps the session
+      // for a day rather than a month, as this browser forgets it when the window closes.
       const res = await client.post<AuthPayload>('/auth/login', { email, password, deviceName: thisDeviceName(), remember });
       if (!res.ok) {
-        // a suspended account gets the suspension screen, not a line under the form
+        // A suspended account gets the suspension screen, not a message under the form.
         const suspended = suspensionOf(res.error);
         if (suspended) setSuspension(suspended);
         return { message: describeError(res.error, t), code: res.error.code, field: authErrorField(res.error) };
@@ -184,12 +167,11 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       await client.post('/auth/request-password-reset', { email });
     },
     logout: async () => {
-      // end the session on the server too, not only in this browser. Not
-      // awaited: the token is read before this returns, and signing out must
-      // not wait on a slow network
+      // End the session on the server too. Not awaited: the token is read before this returns, and signing out must
+      // not wait on a slow network.
       void client.endSession();
       storage.clear();
-      // and nothing this account loaded, or was writing, stays behind for whoever is here next
+      // Nothing this account loaded or was writing stays behind for the next person.
       forgetAnswers();
       forgetDrafts();
       setUser(null);

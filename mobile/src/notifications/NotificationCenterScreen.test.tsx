@@ -12,12 +12,12 @@ vi.mock('@react-navigation/native', async () => {
   const { useEffect } = await import('react');
   return {
     useNavigation: () => ({ navigate, goBack: vi.fn() }),
-    // the screen is in front: its focus effect runs once, as on arrival
+    // The screen is in front: its focus effect runs once, as on arrival.
     useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
     useScrollToTop: () => undefined,
   };
 });
-// what the bell is told is unread, as this screen counts it
+// What the bell is told is unread, as this screen counts it.
 const report = vi.fn();
 vi.mock('../messages/unread', async (original) => ({
   ...(await original<typeof import('../messages/unread')>()),
@@ -41,7 +41,7 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 const DAY = 86_400_000;
-// "now", three days back and three weeks back: one in each stretch, whatever the hour the test runs
+// "Now", three days back and three weeks back: one in each stretch, whatever the hour the test runs.
 const when = (ago: number) => new Date(Date.now() - ago).toISOString();
 
 const notice = (id: string, over: Partial<InboxItem>): InboxItem => ({
@@ -80,7 +80,7 @@ function serve(notifications: InboxItem[], incoming: IncomingInvite[] = [], more
   return client;
 }
 
-/** react-native-web wires a press in an effect after the draw: let it run first. */
+/** React-native-web wires a press in an effect after the draw: let it run first. */
 const settle = () => act(async () => undefined);
 
 describe('the notification list', () => {
@@ -91,10 +91,7 @@ describe('the notification list', () => {
     expect(screen.getByLabelText('Loading…')).toBeTruthy();
   });
 
-  /*
-   * Today, This week, Earlier — and unread said in words as well as by the
-   * dot and the tint, so a screen reader hears what the eye sees.
-   */
+  /* Today, This week, Earlier, with unread said in words as well as by the dot and tint. */
   it('cuts the list into Today, This week and Earlier, and says which are unread', async () => {
     serve([
       notice('n1', { createdAt: when(0) }),
@@ -121,9 +118,8 @@ describe('the notification list', () => {
   });
 
   /*
-   * An invite names who sent it while it can still be answered, with Join on
-   * the row; joining is the same as opening it — accepted on the way into
-   * the game's lobby. Once it has run out there is nothing to join.
+   * An invite names its sender while it can still be answered, with Join on the row; joining accepts it on the way into
+   * the lobby. Once expired there is nothing to join.
    */
   it('offers Join on an invite that can still be answered, and joins on the way into the game', async () => {
     const client = serve([notice('n1', { category: 'games', title: 'Game invite', body: 'Azad invited you to play.', data: { kind: 'play_invite', inviteId: 'i1', game: 'wordle-battle', lobbyId: 'l1' } })], [invite]);
@@ -159,7 +155,7 @@ describe('the notification list', () => {
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     expect(await screen.findByText('You’re all caught up.')).toBeTruthy();
     expect(screen.getByText('Game invites, gifts, badges and news from Hevalo will show up here.')).toBeTruthy();
-    // the one way on: finding the friends most of this list comes from
+    // The one way on: finding the friends most of this list comes from.
     await settle();
     fireEvent.click(screen.getByRole('button', { name: 'Find friends' }));
     expect(navigate).toHaveBeenCalledWith('Search');
@@ -198,7 +194,7 @@ function pull(from: Element, dx: number): void {
   fireEvent.mouseMove(from, at(300 + dx));
   time += 200;
   fireEvent.mouseUp(from, at(300 + dx));
-  // a browser clicks where the mouse is let go: the end of a pull, which must not count as a tap
+  // A browser clicks where the mouse is let go, at the end of a pull, which must not count as a tap.
   fireEvent.click(from);
   clock.mockRestore();
 }
@@ -214,9 +210,8 @@ describe('a notification row pulled aside', () => {
   const two = () => [notice('n1', { title: 'A new badge' }), notice('n2', { title: 'Safe this week', category: 'events' })];
 
   /*
-   * Pulled toward its start past halfway, a row stays open on the
-   * notification settings and Delete; Delete is said to the server, the row
-   * goes, and the bell is told one fewer is new.
+   * Pulled toward its start past halfway, a row stays open on Settings and Delete; Delete goes to the server, the row
+   * goes, and the bell counts one fewer.
    */
   it('opens on Settings and Delete, and deletes from there, with the bell counting one fewer', async () => {
     const client = serve(two(), [], { 'DELETE /me/notifications/n1': ok({ ok: true, unread: 1 }) });
@@ -230,7 +225,7 @@ describe('a notification row pulled aside', () => {
     await waitFor(() => expect(report).toHaveBeenLastCalledWith({ notifications: 2 }));
     pull(row, -120);
     const remove = await screen.findByRole('button', { name: 'Delete: A new badge' });
-    // beside the header's own gear, the row's way to the settings
+    // Beside the header's own gear, the row's way to the settings.
     expect(screen.getAllByRole('button', { name: 'Notification settings' })).toHaveLength(2);
     await settle();
     fireEvent.click(remove);
@@ -238,15 +233,15 @@ describe('a notification row pulled aside', () => {
     await waitFor(() => expect(screen.queryByText('A new badge')).toBeNull());
     expect(screen.getByText('Safe this week')).toBeTruthy();
     expect(report).toHaveBeenLastCalledWith({ notifications: 1 });
-    // nothing was opened on the way
+    // Nothing was opened on the way.
     expect(navigate).not.toHaveBeenCalled();
-    // a light knock as it opened, and another as it went
+    // A light knock as it opened, and another as it went.
     expect(felt).toEqual(['tap', 'tap']);
     stop();
   });
 
   it('deletes at once when pulled most of the way across, and keeps it gone when it already was', async () => {
-    // already taken away from another device: gone is what was asked for
+    // Already taken away from another device: gone is what was asked for.
     const client = serve(two(), [], { 'DELETE /me/notifications/n2': { ok: false, error: { kind: 'client', message: 'gone', status: 404 } } });
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     const row = await screen.findByText('Safe this week');
@@ -258,16 +253,16 @@ describe('a notification row pulled aside', () => {
   });
 
   it('puts a row back when the server would not delete it', async () => {
-    // something went wrong on the server's side, a moment after it was asked
+    // Something went wrong on the server's side, a moment after it was asked.
     const refused = { ok: false as const, error: { kind: 'server' as const, message: 'boom', status: 500 } };
     serve(two(), [], { 'DELETE /me/notifications/n2': () => new Promise((answer) => setTimeout(() => answer(refused), 60)) });
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     const row = await screen.findByText('Safe this week');
     await settle();
     pull(row, -280);
-    // gone at once, and the bell counts one fewer, before the server has answered
+    // Gone at once, and the bell counts one fewer, before the server has answered.
     await waitFor(() => expect(report).toHaveBeenLastCalledWith({ notifications: 1 }));
-    // back, and counted again, once it has
+    // Back, and counted again, once it has.
     await waitFor(() => expect(report).toHaveBeenLastCalledWith({ notifications: 2 }));
     await act(() => new Promise((done) => setTimeout(done, 400)));
     expect(screen.getByText('Safe this week')).toBeTruthy();
@@ -286,7 +281,7 @@ describe('a notification row pulled aside', () => {
     tap(row);
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Delete: A new badge' })).toBeNull());
     expect(navigate).not.toHaveBeenCalled();
-    // closed, the same tap opens it
+    // Closed, the same tap opens it.
     await settle();
     tap(row);
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('Badges'));
@@ -300,7 +295,7 @@ describe('a notification row pulled aside', () => {
     pull(row, -120);
     await screen.findByRole('button', { name: 'Delete: A new badge' });
     await settle();
-    // the header's gear is the first, the row's own the second
+    // The header's gear is the first, the row's own the second.
     const settings = screen.getAllByRole('button', { name: 'Notification settings' });
     expect(settings).toHaveLength(2);
     fireEvent.click(settings[1]!);
@@ -343,17 +338,17 @@ describe('the notification list’s filters and pictures', () => {
     expect(container.querySelectorAll('[data-testid^="notice-picture-"]')).toHaveLength(1);
     const league = screen.getByTestId('notice-picture-league');
     expect(league.querySelector('svg')?.getAttribute('data-xml')).toBe('drawn');
-    // nobody is named in either, so both wear Hevalo’s own mark
+    // Nobody is named in either, so both wear Hevalo’s own mark.
     expect(screen.getAllByTestId('notice-from-hevalo')).toHaveLength(2);
   });
 
   it('names who sent a gift, in bold, when they are a friend, with the time after the words', async () => {
     serve([notice('n1', { category: 'friends', title: 'You have a gift', body: 'berfin sent you Gola Şîn.', data: { kind: 'gift', giftId: 'g1', chat: 'dm:u-berfin', fromUserId: 'u-berfin' } })], [], {
-      'GET /me/social': ok({ friends: [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: null }] }),
+      'GET /friends': ok({ total: 1, friends: [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: null }] }),
     });
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     expect(await screen.findByText('Berfin')).toBeTruthy();
-    // each piece said once, with one full stop between them
+    // Each piece said once, with one full stop between them.
     expect(screen.getByRole('button', { name: 'Unread. Berfin sent you a gift. berfin sent you Gola Şîn. just now' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Open' })).toBeTruthy();
     expect(screen.queryByTestId('notice-from-hevalo')).toBeNull();

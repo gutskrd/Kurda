@@ -50,13 +50,10 @@ export type ClaimResult =
   | { ok: false; reason: 'unknown-tag' | 'not-claimable' | 'consent-required' };
 
 /**
- * User tags & badges (KUR-286). The **main tag** is resolved by precedence
- * (Founder > Admin > Kurdish shop-entitlement > none) from RBAC + entitlements —
- * never stored, so it always reflects current roles/purchases (refund removes
- * the Kurdish entitlement → the tag drops). **Claimable** tags are self-claimed
- * (age/gender/ethnicity — sensitive, optional, revocable, consented #109) or
- * auto-granted (year_joined from account age, level from XP). Admins/founder
- * curate the catalog.
+ * User tags. The main tag is resolved by precedence (Founder, Admin, the Kurdish shop entitlement, none) from roles
+ * and entitlements and never stored, so it always reflects current roles and purchases. Claimable tags are
+ * self-claimed (age, gender, ethnicity: sensitive, optional, revocable and consented) or automatic (year joined from
+ * account age, level from XP). Admins curate the catalogue.
  */
 export class TagService {
   constructor(private readonly pool: pg.Pool) {}
@@ -102,8 +99,7 @@ export class TagService {
     return { main, claimable };
   }
 
-  /** All of a user's self-claimed tags incl. hidden ones (for the owner's manage
-   *  UI, KUR-287) — unlike profileTags which only returns displayed tags. */
+  /** All of a user's claimed tags, hidden ones included, for the owner's management screen; `profileTags` returns only displayed ones. */
   async claimedTags(userId: string): Promise<ClaimedTag[]> {
     const res = await this.pool.query<{ key: string; label: string; category: string; value: string | null; sensitive: boolean; displayed: boolean }>(
       `SELECT t.key, t.label, t.category, ut.value, t.sensitive, ut.displayed
@@ -115,7 +111,7 @@ export class TagService {
     return res.rows.map((r) => ({ key: r.key, label: r.label, category: r.category, value: r.value, sensitive: r.sensitive, displayed: r.displayed }));
   }
 
-  /** Self-claim a claimable tag. Sensitive tags require explicit consent (#109). */
+  /** Self-claims a claimable tag; sensitive tags require explicit consent. */
   async claim(userId: string, key: string, value?: string, consent?: boolean): Promise<ClaimResult> {
     const tag = await this.tagByKey(key);
     if (!tag || !tag.active) return { ok: false, reason: 'unknown-tag' };
@@ -174,7 +170,7 @@ export class TagService {
     return res.rows[0] ? toTag(res.rows[0]) : null;
   }
 
-  /** Admin/founder: deactivate a tag (hidden everywhere; history retained). */
+  /** Admin: deactivates a tag, hidden everywhere with its history kept. */
   async deactivate(key: string): Promise<boolean> {
     const res = await this.pool.query(`UPDATE tags SET active = false WHERE key = $1`, [key]);
     return (res.rowCount ?? 0) > 0;

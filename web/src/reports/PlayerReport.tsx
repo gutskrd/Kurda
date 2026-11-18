@@ -3,15 +3,9 @@ import { useT } from '../i18n/I18nProvider';
 import { ReportAction } from './ReportAction';
 
 /**
- * The ⋯ with Report beside another player in a game — in its lobby, while
- * it is played, and on its results.
- *
- * A game never gives the page another player's account, only their seat
- * (the API's `seat:N`), so a player is reported by game and seat and the
- * server finds who sat there. Draw it for everyone but yourself; a name the
- * viewer may not see is "Opponent".
- *
- *   {!p.isMe && <PlayerReport game="wordle-battle" gameId={id} seat={p.seat} name={p.name} />}
+ * The ⋯ with Report beside another player in a game's lobby, play or results. Games expose only seats (`seat:N`), so
+ * a player is reported by game and seat and the server finds who sat there. Draw it for everyone but yourself; a
+ * hidden name shows as "Opponent".
  */
 export function PlayerReport({
   game,
@@ -22,7 +16,7 @@ export function PlayerReport({
   game: PlayGame;
   gameId: string;
   seat: number;
-  /** the name the viewer sees for them, or null when they may not see one */
+  /** The name the viewer sees for them, or null when hidden. */
   name?: string | null;
 }): React.JSX.Element {
   const t = useT();

@@ -3,38 +3,13 @@ import type { AppLocale } from '../locales.js';
 /**
  * The two Kurdish alphabets, for somebody meeting them for the first time.
  *
- * ── how it teaches, and why ───────────────────────────────────────────────
+ * Letters are sorted against the reader's own language (the same, the false friends, the new ones), since a beginner
+ * already reads most of Kurmancî and attention belongs on the differences. Each letter has a word in the reader's
+ * language with the same sound and one Kurdish keyword, and is bridged to its partner in the other script, since many
+ * Kurds read only one. Sounds are described rather than voiced by browser speech, which has no Kurdish voice.
  *
- * Not as thirty-one letters of equal weight. A beginner already reads most of
- * Kurmancî: the letters are Latin and most of them sound the way the reader's
- * own language says them. What trips people up is a small set — the letters
- * they know that sound different (Kurmancî `c` is English "j") and the few
- * they have never seen. So the letters are sorted against the reader's own
- * language: the ones that work the same, the false friends, and the new ones
- * (contrastive analysis; attention goes where the difference is, which is the
- * "noticing" a learner needs before a sound sticks).
- *
- * Every letter is tied to something already known: a word in the reader's
- * language with the same sound in it, and one Kurdish word to remember the
- * letter by — the keyword mnemonic that letter–sound teaching has used for
- * decades because it works. The Kurdish word marks the letter, so the eye
- * meets the shape and the sound together.
- *
- * The two scripts are bridged letter by letter. A great many Kurds read one
- * and not the other — Kurmancî in Latin letters, Soranî in Arabic script —
- * and the shortest way in to the second is through the partner of each letter
- * in the first.
- *
- * Sounds are described, never faked: there is no Kurdish voice in any
- * browser's speech synthesis, and a Turkish or Persian voice reading Kurdish
- * would teach the wrong sound with confidence.
- *
- * ── the data ──────────────────────────────────────────────────────────────
- *
- * A comparison is a word with the sound in square brackets — `[j]am` — or, where
- * the reader's language has no such sound, a short description of how to make
- * it. The Kurdish example words are ordinary, everyday words chosen so the
- * letter is easy to find in them.
+ * A comparison is a word with the sound in square brackets (`[j]am`) or, where the reader's language lacks the sound, a
+ * short description of how to make it. Example words are everyday words in which the letter is easy to find.
  */
 
 /** Languages a sound is compared against. Kurdish readers are shown the other script instead. */
@@ -188,11 +163,7 @@ export function bandOf(letter: string, locale: CompareLocale): Band {
 
 type SoundKey = string; // a Latin letter id, or an ExtraSound
 
-/**
- * What each sound is like, in each language. `[x]` marks the sound inside a
- * word; text with no brackets is a description, for a sound the language has
- * no word for.
- */
+/** What each sound is like, in each language: `[x]` marks the sound inside a word; unbracketed text describes a sound the language lacks. */
 export const LIKE: Record<CompareLocale | 'ku', Record<SoundKey, string>> = {
   en: {
     a: 'f[a]ther', b: '[b]ed', c: '[j]am', ç: '[ch]urch', d: '[d]og', e: 'b[e]d', ê: 'd[ay], held steady',
@@ -335,11 +306,7 @@ export const MEANINGS: Record<Meaning, Record<AppLocale, string>> = {
   lion: { en: 'lion', de: 'Löwe', nl: 'leeuw', fr: 'lion', es: 'león', tr: 'aslan', ar: 'أسد', ku: 'şêr', ckb: 'شێر' },
 };
 
-/**
- * Minimal pairs: two real words that differ only in one mark. Hearing which is
- * which is the skill Kurmancî spelling turns on — a hat on a vowel is a
- * different word, not an accent — so the practice asks for exactly this.
- */
+/** Minimal pairs: two real words differing in one mark, since a hat on a Kurmancî vowel makes a different word, not an accent. */
 export const PAIRS: ReadonlyArray<{ a: { word: string; meaning: Meaning }; b: { word: string; meaning: Meaning } }> = [
   { a: { word: 'kur', meaning: 'boy' }, b: { word: 'kûr', meaning: 'deep' } },
   { a: { word: 'dil', meaning: 'heart' }, b: { word: 'dîl', meaning: 'captive' } },
@@ -376,11 +343,8 @@ export function soraniLikeFor(letter: SoraniLetter, locale: AppLocale): Likeness
 }
 
 /**
- * The four shapes an Arabic-script letter takes, drawn by the font itself.
- *
- * A zero-width joiner either side asks the font for the joined form, so no
- * presentation form is hard-coded and every shape is the real one. A letter
- * that never joins the next has only two shapes, and says so.
+ * The four shapes an Arabic-script letter takes, drawn by the font: a zero-width joiner either side asks for the joined
+ * form, so no presentation form is hard-coded. A letter that never joins the next has only two shapes.
  */
 const ZWJ = '‍';
 export function formsOf(letter: SoraniLetter): { alone: string; start: string; middle: string; end: string } {

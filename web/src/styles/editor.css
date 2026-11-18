@@ -6,21 +6,13 @@
   gap: 10px;
 }
 
-/*
- * The stage is sized by its aspect ratio and the width it is given, so the
- * shape you are framing for is the shape you are looking at. The dark ground
- * shows for the instant before the first draw and never again — the crop always
- * covers the box.
- */
+/* The stage is sized by its aspect ratio and width; the dark ground shows only before the first draw. */
 .framer-stage {
   position: relative;
   width: 100%;
   /*
-   * The height ceiling is expressed as a width, because a `max-height` on an
-   * `aspect-ratio` box does not shrink the width to match — it clips the height
-   * and leaves the width at 100%, which turned the avatar's circle into an
-   * ellipse on a short window. The component hands the ratio down as a custom
-   * property so the cap can be worked out from it.
+   * The height cap is a width, because `max-height` on an `aspect-ratio` box clips the height without narrowing it,
+   * which turns a circle into an ellipse; the component passes the ratio as a custom property.
    */
   max-width: calc(62vh * var(--framer-aspect, 1));
   margin-inline: auto;
@@ -52,10 +44,7 @@
   height: 100%;
 }
 
-/*
- * Thirds, the way a camera shows them: only while the picture is being moved,
- * so it is a guide during the act and not furniture the rest of the time.
- */
+/* Rule-of-thirds lines, shown only while the picture is being moved. */
 .framer-grid {
   position: absolute;
   inset: 0;
@@ -124,12 +113,7 @@
 
 /* ---- the editor's own chrome -------------------------------------------- */
 
-/*
- * Undo and redo sit apart from everything that makes a change, on the opposite
- * side of the bar. They are the two controls that take something back, and
- * putting them next to the controls that add things is how a person reaches for
- * one and hits the other.
- */
+/* Undo and redo sit apart, on the far side of the bar, so they are not hit instead of a control that adds. */
 .editor-history {
   display: flex;
   align-items: center;
@@ -180,11 +164,7 @@
 
 /* ---- framing a profile picture ------------------------------------------ */
 
-/*
- * A profile picture is shown in a circle everywhere the app uses one, so it is
- * framed through a circle too. Narrower than the composer's stage: an avatar is
- * a face, and a full-width crop box for one would be a box mostly full of wall.
- */
+/* A profile picture is framed through a circle, on a narrower stage than the composer's. */
 .avatar-framing {
   display: flex;
   flex-direction: column;
@@ -197,11 +177,7 @@
 
 /* ---- the sticker picker ------------------------------------------------- */
 
-/*
- * Emoji are small and there are fifty-six of them, so they get a denser grid
- * than the seven marks do, and a ceiling with a scrollbar rather than a panel
- * that pushes the photograph off the screen.
- */
+/* The emoji get a denser grid than the marks, with a scrolling height cap so the photo stays on screen. */
 .sticker-grid-emoji {
   grid-template-columns: repeat(8, 1fr);
   gap: 4px;
@@ -231,23 +207,14 @@
 
 /* ---- filters ------------------------------------------------------------ */
 
-/*
- * A horizontal reel, the way every photo editor shows filters, because the
- * whole point is comparing them against each other on your own picture. It
- * scrolls rather than wraps: two ragged rows of thumbnails read as a grid you
- * have to scan, one row reads as a choice you flick through.
- */
+/* Filters in one horizontal row that scrolls, for comparing them on the picture. */
 .filter-strip {
   display: flex;
   gap: 8px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
-  /*
-   * A scrolling row cuts off whatever reaches past it, so it keeps 8px of
-   * room above and below its thumbnails for a press that lands just off one,
-   * and takes the room back in its margins so nothing moves.
-   */
+  /* A scrolling row clips what reaches past it, so 8px of padding above and below is taken back by the margins. */
   padding-block: 8px calc(6px + 8px);
   margin-block: -8px calc(4px - 8px);
 }
@@ -304,11 +271,7 @@
   flex-direction: column;
   gap: 2px;
 }
-/*
- * A slider that is doing something says so: nine rows of zeroes should read as
- * "nothing is on" at a glance, and the one you moved should be findable without
- * reading all nine.
- */
+/* A slider that is set says so, so the changed one is easy to find. */
 .editor-adjust .tool-row.is-set .tool-label {
   color: var(--ink);
 }
@@ -334,14 +297,8 @@
 /* ---- the selected layer ------------------------------------------------- */
 
 /*
- * An outline round what is selected, laid over the canvas rather than painted
- * into it: it stays one crisp pixel at any canvas resolution, and the handles
- * can be real targets with real cursors.
- *
- * The box takes no pointer events. Dragging inside it falls through to the
- * canvas, which already knows how to move a layer — so grabbing the middle of
- * a sticker moves it and grabbing a corner resizes it, without either handler
- * needing to know about the other.
+ * The selection outline sits over the canvas, staying one crisp pixel with real handles. The box ignores the
+ * pointer, so dragging inside it moves the layer on the canvas and the corners resize it.
  */
 .layer-box {
   position: absolute;

@@ -9,14 +9,7 @@ beforeEach(() => {
 });
 
 describe('readRenamed', () => {
-  /*
-   * The one that matters.
-   *
-   * Renaming a browser key does not move what is inside it. Swapping the
-   * string on its own would have signed out everybody who was signed in and
-   * forgotten the language everybody had chosen — the rebrand landing, for
-   * each of them, as "why am I on the English login page".
-   */
+  // Renaming a key does not move its value: without this, the rename would sign everybody out and forget their language.
   it('finds a value left under the old name', () => {
     localStorage.setItem(LEGACY, 'kept');
     expect(readRenamed(localStorage, KEY, LEGACY)).toBe('kept');
@@ -29,11 +22,7 @@ describe('readRenamed', () => {
     expect(localStorage.getItem(LEGACY)).toBeNull();
   });
 
-  /*
-   * And never looks back. Once the old key is gone, a later write under it —
-   * by an older tab still running the previous bundle, say — must not be able
-   * to overwrite what the user has since chosen.
-   */
+  // Once moved, a later write under the old name (an older tab still open) must not override the new value.
   it('prefers the new name once there is one', () => {
     localStorage.setItem(KEY, 'current');
     localStorage.setItem(LEGACY, 'stale');
@@ -45,10 +34,7 @@ describe('readRenamed', () => {
     expect(readRenamed(localStorage, KEY, LEGACY)).toBeNull();
   });
 
-  /*
-   * A private window, or storage the browser has blocked. The caller's own
-   * fallback is the right answer and it is not this function's to pick.
-   */
+  // A private window or blocked storage; the caller's fallback applies.
   it('answers null rather than throwing when storage refuses', () => {
     const refuses = {
       getItem() {
@@ -65,12 +51,7 @@ describe('readRenamed', () => {
     expect(readRenamed(refuses, KEY, LEGACY)).toBeNull();
   });
 
-  /*
-   * An empty string is a value somebody stored, not an absence. `getItem`
-   * returns `''` for it and `null` for a key that is not there, and a check
-   * written as `if (!current)` would treat the two the same and keep reaching
-   * for the old key forever.
-   */
+  // `getItem` returns '' for a stored empty string and null for a missing key; `if (!current)` would confuse them.
   it('treats an empty string as a value, not as a miss', () => {
     localStorage.setItem(KEY, '');
     localStorage.setItem(LEGACY, 'stale');

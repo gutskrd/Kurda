@@ -21,7 +21,7 @@ describe('a game’s verdict', () => {
     expect(screen.getByRole('heading', { name: 'You won!' })).toBeTruthy();
     const trophy = container.querySelector('svg path');
     expect(trophy?.getAttribute('d')).toBe(ICON_PATHS.trophy[0]);
-    // whichever scheme the test's device is in: its gold for words, never white or the label colour
+    // Whichever scheme the test device is in: its gold for text, never white or the label colour.
     expect([LIGHT.goldText, DARK.goldText]).toContain(trophy?.getAttribute('fill'));
   });
 
@@ -31,7 +31,7 @@ describe('a game’s verdict', () => {
     expect(container.querySelector('svg')).toBeNull();
   });
 
-  // the mark is an icon's work now: a screen reader used to be read an emoji before the words, in every language
+  // An emoji in the text would be read out before the words, in every language.
   it('keeps the words free of the emoji the icons replaced', () => {
     for (const [locale, catalogue] of Object.entries(TRANSLATIONS)) {
       for (const key of ['games.youWon', 'games.wordle.solved', 'play.chat.preview', 'comments.voice', 'chat.preview.gift'] as const) {

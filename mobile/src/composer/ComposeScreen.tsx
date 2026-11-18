@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  BackHandler,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -25,11 +24,13 @@ import {
   type WrittenPostType,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDirection } from '../reports/direction';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -86,11 +87,8 @@ function typeOf(uri: string): string {
 }
 
 /**
- * The photo library, several at once, in the order they were tapped.
- *
- * No permission is asked for first: the system's own picker runs outside the
- * app and hands back only the pictures chosen, so there is nothing to grant.
- * Asking anyway meant somebody who said no could not pick a picture at all.
+ * The photo library, several at once, in the order tapped. No permission is asked first: the system picker runs outside
+ * the app and hands back only the chosen pictures, and asking would block anyone who said no.
  */
 async function pickFromLibrary(room: number): Promise<PickedPicture[]> {
   const picked = await ImagePicker.launchImageLibraryAsync({
@@ -105,32 +103,15 @@ async function pickFromLibrary(room: number): Promise<PickedPicture[]> {
 }
 
 /**
- * Writing a post: one box for words and up to four pictures, X-style.
- *
- * It replaces "words or a picture first?" — a sheet that sent you to one of
- * two composers, the writing one without sayings and with a "Save draft" that
- * nobody could ever open again. Here the words come first, focused as it
- * opens; pictures can be added at any moment and go up while you write; a
- * title, the kind of post and a source are there when wanted and out of the
- * way when not. Cancel and Post sit at the top, where the keyboard can never
- * cover them.
- *
- * Three ways in, one screen:
- * - a new post — its draft is kept on this phone as it is written and comes
- *   back the next time (drafts.ts);
- * - `postId`: editing your own post — words, title, pictures and their
- *   descriptions, the source;
- * - finishing a draft an earlier version of the app saved on the server,
- *   offered at the top of an empty composer.
- *
- * Everything that decides what may be posted is `@kurda/shared`
- * post-composer, which the API runs too: the counter counts as the server
- * counts, and Post is on exactly when the server would accept the shape.
+ * Writing a post: one box for words and up to four pictures, which upload while you write; a title, the kind of post
+ * and a source are there when wanted, and Cancel and Post sit at the top, clear of the keyboard. It opens for a new
+ * post (its draft kept on this phone, drafts.ts), for editing your own post (`postId`), or to finish a draft an older
+ * app saved on the server. `@kurda/shared` post-composer, which the API runs too, decides what may be posted, so Post
+ * is enabled exactly when the server would accept it.
  */
 export function ComposeScreen({
   postId,
   onExit,
-  onPosted,
   pick = pickFromLibrary,
   upload = uploadPicture,
   store,
@@ -138,21 +119,21 @@ export function ComposeScreen({
   asMeme = false,
 }: {
   postId?: string;
-  /** open the photo library as it opens — the way in from "Choose a picture" */
+  /** Open the photo library as it opens: the way in from "Choose a picture". */
   startWithPictures?: boolean;
-  /** pictures added are a meme to start with (from Memes); the switch can still turn it off */
+  /** Pictures added make a meme to start with (from Memes); the switch can still turn it off. */
   asMeme?: boolean;
   onExit: () => void;
-  /** a post went up or was saved */
-  onPosted?: (post: ComposerPost) => void;
   pick?: (room: number) => Promise<PickedPicture[]>;
   upload?: typeof uploadPicture;
-  /** where the draft is kept; this phone's storage when left out */
+  /** Where the draft is kept; this phone's storage when left out. */
   store?: DeviceStore;
 }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  // In right-to-left languages the rows start on the right and typing runs right to left, as on every other screen.
+  const dir = useDirection();
   const topInset = useScreenTopInset();
 
   const [mode, setMode] = useState<'new' | 'edit' | 'finish'>(postId ? 'edit' : 'new');
@@ -164,7 +145,7 @@ export function ComposeScreen({
   const [showSource, setShowSource] = useState(false);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** a limit on the account: said with the way to Account standing (reports/SendError) */
+  /** A limit on the account: said with the way to Account standing (reports/SendError). */
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
@@ -183,7 +164,7 @@ export function ComposeScreen({
     [],
   );
 
-  // ---- pictures -------------------------------------------------------------
+  // Pictures.
 
   const patchPicture = useCallback((id: string, patch: Partial<ComposerPicture>) => {
     if (!alive.current) return;
@@ -207,7 +188,7 @@ export function ComposeScreen({
           status: 'done',
           progress: 1,
           mediaKey: res.mediaKey,
-          // the web build's picked file lives only as long as the tab; the uploaded copy outlasts it
+          // The web build's picked file lives only as long as the tab; the uploaded copy outlasts it.
           ...(Platform.OS === 'web' && res.url ? { localUri: res.url } : {}),
         });
       } else patchPicture(picture.id, { status: 'failed', error: res.error });
@@ -247,7 +228,7 @@ export function ComposeScreen({
       const gone = state.pictures.find((p) => p.id === id);
       setState((s) => {
         const pictures = s.pictures.filter((p) => p.id !== id);
-        // a meme is a post with pictures; the last one gone, it is a post again
+        // A meme is a post with pictures; with the last one gone, it is a post again.
         return { draft: { ...s.draft, meme: s.draft.meme && pictures.length > 0 }, pictures };
       });
       if (gone && !gone.existing) void dropPicture(gone.localUri);
@@ -255,7 +236,7 @@ export function ComposeScreen({
     [state.pictures],
   );
 
-  // ---- loading --------------------------------------------------------------
+  // Loading.
 
   useEffect(() => {
     let active = true;
@@ -270,7 +251,7 @@ export function ComposeScreen({
         open(res.data, 'edit');
         return;
       }
-      // a new post: this phone's draft, and any left on the server by an older app
+      // A new post: this phone's draft, and any left on the server by an older app.
       const [draft, drafts] = await Promise.all([
         user ? loadDraft(user.id, store) : Promise.resolve(null),
         listServerDrafts(client),
@@ -281,7 +262,7 @@ export function ComposeScreen({
         const restored = fromStoredDraft(draft);
         const pictures: ComposerPicture[] = [];
         for (const p of restored.pictures) {
-          // a kept file the phone has since lost cannot come back
+          // A kept file the phone has since lost cannot come back.
           if (p.status === 'done' || (await pictureExists(p.localUri))) pictures.push(p);
         }
         if (!active) return;
@@ -295,12 +276,11 @@ export function ComposeScreen({
     return () => {
       active = false;
     };
-    // once, on opening
+    // Once, on opening.
   }, []);
 
-  // "Choose a picture" opens the library straight away, once — a moment after
-  // the composer has finished coming up, since a phone will not show one
-  // screen over another that is still on its way in
+  // "Choose a picture" opens the library once, a moment after the composer has finished coming up, since a phone will
+  // not show one screen over another still on its way in.
   const pickedOnOpen = useRef(false);
   const addPicturesNow = useRef(addPictures);
   addPicturesNow.current = addPictures;
@@ -324,10 +304,8 @@ export function ComposeScreen({
     setReady(true);
   };
 
-  // The draft is saved a moment after each change, only for a new post. Once
-  // the post has gone up or the draft was deleted, a save still waiting would
-  // write the words straight back — and the published post would return as a
-  // draft next time, its pictures' keys already used — so both stop it first.
+  // The draft is saved a moment after each change, for a new post only. Once the post is up or the draft deleted, a
+  // pending save would write it straight back as a draft (with used picture keys), so both cancel it first.
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const discarded = useRef(false);
   useEffect(() => {
@@ -348,7 +326,7 @@ export function ComposeScreen({
     if (user) await clearDraft(user.id, store);
   };
 
-  // ---- what can be posted ---------------------------------------------------
+  // What can be posted.
 
   const draft = withPictures(state);
   const check = canPost(draft);
@@ -394,7 +372,7 @@ export function ComposeScreen({
     }
   };
 
-  // ---- posting and leaving ----------------------------------------------------
+  // Posting and leaving.
 
   const submit = async () => {
     if (!postable) return;
@@ -417,20 +395,19 @@ export function ComposeScreen({
     if (!alive.current) return;
     setPosting(false);
     if (!res.ok) {
-      // it did not go out, and the post is still here to send: in the way, so felt as an error
+      // It did not go out and the post is still here to send: felt as an error.
       haptic('error');
       if (accountLimitOf(res.error)) setRefusal(res.error);
       else setError(describePostError(res.error, t));
       return;
     }
-    // out in the world (or saved): a light knock as the composer closes, as a comment or a message gets
+    // Posted or saved: a light knock as the composer closes, as a comment or a message gets.
     haptic('tap');
     if (mode === 'new') {
       await forgetDraft();
       for (const p of state.pictures) void dropPicture(p.localUri);
     }
     if (mode === 'edit') postSaved(res.data);
-    onPosted?.(res.data);
     onExit();
   };
 
@@ -441,12 +418,8 @@ export function ComposeScreen({
     return true;
   }, [changed, ready, posting, onExit]);
 
-  // Android's back button asks too, rather than dropping an edit
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', requestClose);
-    return () => sub.remove();
-  }, [requestClose]);
+  // Android's back asks too rather than dropping an edit, only while the composer is in front.
+  useHardwareBack(requestClose);
 
   const deleteDraft = async () => {
     setClosing(false);
@@ -455,7 +428,7 @@ export function ComposeScreen({
     onExit();
   };
 
-  // ---- drawing --------------------------------------------------------------
+  // Drawing.
 
   const bodyCounter = counterFor(state.draft.body, FIELD_MAX.body);
   const titleCounter = counterFor(state.draft.title, FIELD_MAX.title);
@@ -468,13 +441,13 @@ export function ComposeScreen({
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[styles.top, styles.column, { paddingTop: topInset }]}>
+        <View style={[styles.top, styles.column, { flexDirection: dir.row, paddingTop: topInset }]}>
           <Pressable
             onPress={requestClose}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
             style={({ pressed }) => [styles.cancel, pressed && heldDim]}
-            // the way out stands alone at the bar's start, as a back button does, and reaches past every edge
+            // The way out stands alone at the bar's start, as a back button does, and reaches past every edge.
             reach="open"
           >
             <Text style={[styles.cancelText, { color: colors.textPrimary }]}>{t('common.cancel')}</Text>
@@ -487,9 +460,9 @@ export function ComposeScreen({
 
         <SendErrorNotice error={refusal} onDismiss={() => setRefusal(null)} style={styles.column} />
         {error ? (
-          <View style={[styles.banner, styles.column, { backgroundColor: colors.dangerFill }]} accessibilityLiveRegion="assertive" accessibilityRole="alert">
+          <View style={[styles.banner, styles.column, { flexDirection: dir.row, backgroundColor: colors.dangerFill }]} accessibilityLiveRegion="assertive" accessibilityRole="alert">
             <Icon name="alert" size={18} color={colors.danger} />
-            <Text style={[styles.bannerText, { color: colors.textPrimary }]}>{error}</Text>
+            <Text style={[styles.bannerText, dir.text, { color: colors.textPrimary }]}>{error}</Text>
           </View>
         ) : null}
 
@@ -508,17 +481,19 @@ export function ComposeScreen({
               <PressableScale
                 onPress={() => setDraftsOpen(true)}
                 accessibilityRole="button"
-                style={[styles.oldDrafts, { backgroundColor: colors.glassFill }]}
+                style={[styles.oldDrafts, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
               >
                 <Icon name="pencil" size={18} tone="primary" />
                 <Text style={[styles.oldDraftsText, { color: colors.textPrimary }]}>
                   {t('composer.oldDrafts', { count: serverDrafts.length })}
                 </Text>
-                <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+                <View style={dir.flip}>
+                  <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+                </View>
               </PressableScale>
             ) : null}
 
-            <View style={styles.writeRow}>
+            <View style={[styles.writeRow, { flexDirection: dir.row }]}>
               <InitialsAvatar name={who} id={user?.id ?? 'me'} size={40} photoUrl={user?.profilePhotoUrl ?? null} />
               <View style={styles.writeMain}>
                 {showTitle ? (
@@ -530,12 +505,12 @@ export function ComposeScreen({
                       placeholder={t('composer.titlePlaceholder')}
                       placeholderTextColor={colors.textSecondary}
                       accessibilityLabel={t('composer.titleLabel')}
-                      style={[styles.titleInput, { color: colors.textPrimary }]}
+                      style={[styles.titleInput, dir.free, { color: colors.textPrimary }]}
                       returnKeyType="next"
                       onSubmitEditing={() => bodyRef.current?.focus()}
                     />
                     {titleMissing ? (
-                      // a hint while the title is still to come, not an error: nothing has gone wrong yet
+                      // A hint while the title is still to come, not an error: nothing has gone wrong yet.
                       <Text style={[styles.fieldNote, { color: colors.textSecondary }]}>{t('composer.error.titleRequired')}</Text>
                     ) : null}
                     {titleCounter.show ? <Counter counter={titleCounter} /> : null}
@@ -551,7 +526,7 @@ export function ComposeScreen({
                   multiline
                   autoFocus={mode === 'new'}
                   textAlignVertical="top"
-                  style={[styles.bodyInput, state.pictures.length > 0 && styles.bodyInputShort, { color: colors.textPrimary }]}
+                  style={[styles.bodyInput, dir.free, state.pictures.length > 0 && styles.bodyInputShort, { color: colors.textPrimary }]}
                 />
               </View>
             </View>
@@ -616,7 +591,7 @@ export function ComposeScreen({
                   placeholder={t('composer.sourcePlaceholder')}
                   placeholderTextColor={colors.textSecondary}
                   accessibilityLabel={t('composer.sourceLabel')}
-                  style={[styles.sourceInput, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
+                  style={[styles.sourceInput, dir.free, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
                 />
                 {sourceCounter.show ? <Counter counter={sourceCounter} /> : null}
               </View>
@@ -629,7 +604,7 @@ export function ComposeScreen({
         {ready ? (
           <View style={[styles.toolbarWrap, { borderTopColor: colors.separator }]}>
             <Text style={[styles.copyHint, styles.column, { color: colors.textSecondary }]}>{t('composer.copyHint')}</Text>
-            <View style={[styles.toolbar, styles.column]}>
+            <View style={[styles.toolbar, styles.column, { flexDirection: dir.row }]}>
               <Tool
                 icon="image"
                 label={t('composer.addPicture')}
@@ -650,7 +625,7 @@ export function ComposeScreen({
         ) : null}
       </KeyboardAvoidingView>
 
-      {/* leaving with something written: keep it, throw it away, or stay */}
+      {/* Leaving with something written: keep it, throw it away, or stay. */}
       <Modal visible={closing} transparent animationType="fade" onRequestClose={() => setClosing(false)}>
         <ReachReset>
           <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
@@ -678,7 +653,7 @@ export function ComposeScreen({
           picture={altPicture}
           onChange={(patchPic) => {
             patchPicture(altPicture.id, patchPic);
-            // "I made this" decides the signature, which is put on at upload: a new choice means a new upload
+            // "I made this" decides the signature, which is added at upload, so a new choice means a new upload.
             if (patchPic.ownWork !== undefined && patchPic.ownWork !== altPicture.ownWork) {
               void startUpload({ ...altPicture, ownWork: patchPic.ownWork });
             }
@@ -765,9 +740,8 @@ function Tool({
 }
 
 /**
- * A switch on a card of its own, with its name and what it does under it.
- * The whole card turns it: the words are the bigger target, and the one the
- * eye goes to, where the switch alone was a 31pt target at the card's edge.
+ * A switch on a card of its own, with its name and what it does under it. The whole card toggles it, so the words are
+ * the target rather than a 31pt switch at the card's edge.
  */
 function SwitchCard({
   title,
@@ -781,19 +755,20 @@ function SwitchCard({
   onValueChange: (on: boolean) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const dir = useDirection();
   return (
     <ToggleRow
       label={title}
       hint={hint}
       value={value}
       onValueChange={onValueChange}
-      style={({ pressed }) => [styles.switchRow, { backgroundColor: colors.glassFill }, pressed && heldDim]}
+      style={({ pressed }) => [styles.switchRow, { flexDirection: dir.row, backgroundColor: colors.glassFill }, pressed && heldDim]}
     >
       {(toggle) => (
         <>
           <View style={styles.flex}>
-            <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{title}</Text>
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>{hint}</Text>
+            <Text style={[styles.switchTitle, dir.text, { color: colors.textPrimary }]}>{title}</Text>
+            <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{hint}</Text>
           </View>
           {toggle}
         </>
@@ -932,7 +907,7 @@ function AltSheet({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  // on a tablet or a wide window the composer keeps a reading width, as X's does
+  // On a tablet or a wide window the composer keeps a reading width.
   column: { width: '100%', maxWidth: 640, alignSelf: 'center' },
   top: {
     flexDirection: 'row',
@@ -975,14 +950,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   bodyInput: { minHeight: 140, fontSize: typography.sizes.md + 1, lineHeight: 24, paddingTop: spacing.sm },
-  // with pictures under it the box no longer needs room to invite writing; it still grows as you type
+  // With pictures under it the box no longer needs room to invite writing; it still grows as you type.
   bodyInputShort: { minHeight: 72 },
   fieldNote: { fontSize: typography.sizes.sm },
   pictures: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: { width: '48.5%', aspectRatio: 1, borderRadius: radii.md, overflow: 'hidden' },
   tileWide: { width: '100%', aspectRatio: 4 / 3 },
   tileImage: { width: '100%', height: '100%' },
-  // the picture dims while it goes up, with the bar across its middle, clear of the buttons on its corners
+  // The picture dims while it uploads, with the bar across its middle, clear of the corner buttons.
   tileShade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: spacing.lg },
   progressTrack: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   progressFill: { height: 6, borderRadius: radii.pill },
@@ -1022,7 +997,7 @@ const styles = StyleSheet.create({
   switchTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   hint: { fontSize: typography.sizes.sm },
   sourceInput: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, fontSize: typography.sizes.md, marginTop: spacing.xs },
-  // the rule runs edge to edge; what sits on it keeps the column's edges, as the top bar does
+  // The rule runs edge to edge; what sits on it keeps the column's edges, as the top bar does.
   toolbarWrap: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: 2 },
   copyHint: { fontSize: typography.sizes.xs, paddingHorizontal: spacing.md },
   toolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md },
@@ -1033,7 +1008,7 @@ const styles = StyleSheet.create({
   sheet: { margin: spacing.md, padding: spacing.lg, borderRadius: radii.lg, gap: spacing.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },
   sheetTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   draftRow: { minHeight: MIN_TOUCH_TARGET, padding: spacing.md, borderRadius: radii.md, gap: 2 },
-  // the gutter is the ScrollView's own, so the form scrolls edge to edge while the keyboard is up
+  // The ScrollView keeps the gutter, so the form scrolls edge to edge while the keyboard is up.
   altScroller: { paddingHorizontal: 0 },
   altBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm },
   altPreview: { width: '100%', height: 160, borderRadius: radii.md },

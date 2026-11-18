@@ -8,9 +8,8 @@ import { useI18n } from '../i18n/I18nContext';
 import { clock } from './types';
 
 /**
- * Inline player for a post's audio rendition (KUR-284, "listen"). Streams a remote
- * URL via expo-audio; a play/pause control, a progress bar, and elapsed/total time.
- * Rendered only when a post has audio, so the hooks always run while mounted.
+ * Inline player for a post's audio narration: streams a remote URL with expo-audio, with play/pause, a progress
+ * bar and elapsed/total time. Rendered only when a post has audio, so its hooks always run while mounted.
  */
 export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
   const player = useAudioPlayer(url);
@@ -39,7 +38,7 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
         accessibilityLabel={status.playing ? t('recorder.pause') : t('recorder.play')}
         hitSlop={8}
       >
-        {/* the player's own glyphs, as the story reader draws them; two characters stood in for them and sat off-centre */}
+        {/* The player's own glyphs, as the story reader draws them. */}
         <Icon name={status.playing ? 'audio-pause' : 'audio-play'} size={20} color={colors.textOnPrimary} />
       </PressableScale>
       <View style={styles.track}>

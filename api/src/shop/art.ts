@@ -1,19 +1,11 @@
 /**
- * Art for the shop's backgrounds and profile icons, uploaded in the admin.
- *
- * The art the shop started with is drawn by scripts/generate-cosmetic-art.mjs
- * and ships with the website. Art added since is uploaded here: the bytes go
- * through the server, are checked and re-encoded to the shape and size the
- * apps draw — a background is a 16:9 WebP, an icon a square PNG that keeps its
- * transparency — and are stored content-addressed under `cosmetic/<kind>/`
- * (cosmetics/access.ts `isUploadedArtKey`), served from the CDN.
- *
- * An upload is held, unconfirmed, until an item is saved with it
- * (`claimArt`): one nobody uses is reclaimed by the orphan sweep after a day,
- * like a picture uploaded for a post that is never made. An item that stops
- * using its art — deleted, or given new art — lets go of it (`releaseArt`),
- * unless another item or a change waiting in Approvals still uses it, and the
- * sweep takes it a day later. That day is the grace to undo a mistake in.
+ * Art for shop backgrounds and profile icons uploaded in the admin; the original art is drawn by
+ * scripts/generate-cosmetic-art.mjs and ships with the website. Uploads go through the server, are checked and
+ * re-encoded to the apps' shape and size (a 16:9 WebP background, a square PNG icon keeping transparency), and are
+ * stored content-addressed under `cosmetic/<kind>/` (cosmetics/access.ts `isUploadedArtKey`), served from the CDN.
+ * An upload stays unconfirmed until an item is saved with it (`claimArt`); unused uploads are swept after a day. An
+ * item that stops using its art releases it (`releaseArt`) unless another item or a pending Approval uses it, and the
+ * sweep takes it a day later, leaving a day to undo a mistake.
  */
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
@@ -32,7 +24,7 @@ export interface ArtSpec {
   shape: string;
   minWidth: number;
   minHeight: number;
-  /** the stored sizes to try, largest first: a picture too detailed for the first falls back to the next */
+  /** The stored sizes to try, largest first; a picture too detailed for one falls back to the next. */
   sizes: ReadonlyArray<readonly [number, number]>;
   /** the most the stored file may weigh, bytes */
   maxBytes: number;
@@ -41,11 +33,9 @@ export interface ArtSpec {
 }
 
 /**
- * The sizes match the art that ships: backgrounds are drawn at 1280×720 and
- * weigh up to about 120 KB, icons at 512×512 and up to about 70 KB. A
- * background may be stored larger (up to 1920×1080) for a sharper picture on
- * a big screen, within the same weight; the minimums are the size below which
- * the picture would look soft where the apps draw it.
+ * Sizes match the shipped art: backgrounds drawn at 1280×720 up to about 120 KB, icons at 512×512 up to about 70 KB.
+ * A background may be stored up to 1920×1080 within the same weight; the minimums are where the picture would look
+ * soft in the apps.
  */
 export const ART_SPECS: Readonly<Record<ArtKind, ArtSpec>> = {
   background: {
@@ -78,18 +68,16 @@ export const ART_SPECS: Readonly<Record<ArtKind, ArtSpec>> = {
   },
 };
 
-/** The formats an upload may be in, by its bytes. No SVG: it is a document that can carry script, not a picture. */
+/** Formats an upload may be, by its bytes. No SVG: it is a document that can carry script. */
 const ACCEPTED: ReadonlySet<string> = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 /**
- * How far a picture may be from its shape and still be trimmed to it, rather
- * than refused. A few pixels' sliver off the edge of a 1921×1080 export is
- * what anyone would want; a 4:3 picture cut to 16:9 loses a quarter of
- * itself, which is a decision for the person who drew it, not for the server.
+ * How far a picture may be from its shape and still be trimmed rather than refused: a sliver off a 1921×1080 export
+ * is fine, but cutting 4:3 to 16:9 loses a quarter, which is the artist's decision.
  */
 export const SHAPE_TOLERANCE = 0.03;
 
-/** As imageProcess.ts: what an upload may decode to, so a tiny file cannot ask for a gigabyte of pixels. */
+/** As in imageProcess.ts: the most pixels an upload may decode to, so a tiny file cannot ask for a gigabyte. */
 const MAX_INPUT_PIXELS = 50_000_000;
 
 const WEBP_QUALITY = [82, 74, 66, 58];
@@ -113,15 +101,13 @@ function orientedSize(meta: Metadata): { width: number; height: number } {
 }
 
 /**
- * Check and re-encode one upload. Pure with respect to I/O — buffers in,
- * buffers out — so every rule here is unit-tested (art.test.ts).
- *
- *   1. the real type, by its bytes: PNG, JPEG or WebP;
- *   2. it decodes, within the pixel limit;
- *   3. it is the kind's shape, within SHAPE_TOLERANCE, and at least its
- *      minimum size — then trimmed to the exact shape from the centre;
- *   4. scaled down (never up) and encoded, stepping quality and then size
- *      down until it fits the kind's weight. Metadata is dropped on the way.
+ * Checks and re-encodes one upload, buffers in and out (unit-tested in art.test.ts):
+ *   1. the real type by its bytes: PNG, JPEG or WebP;
+ *   2. it decodes within the pixel limit;
+ *   3. it has the kind's shape within SHAPE_TOLERANCE and at least its minimum size, then is trimmed to the exact
+ *      shape from the centre;
+ *   4. it is scaled down (never up) and encoded, lowering quality and then size until it fits the weight, without
+ *      metadata.
  */
 export async function processArt(raw: Buffer, kind: ArtKind): Promise<ProcessedArt> {
   const spec = ART_SPECS[kind];
@@ -136,7 +122,7 @@ export async function processArt(raw: Buffer, kind: ArtKind): Promise<ProcessedA
   }
   const { width, height } = orientedSize(meta);
   if (!width || !height) return { ok: false, reason: 'malformed' };
-  // the shape first: a phone's upright photo offered as a background is the wrong shape, not too small
+  // Shape first: an upright phone photo offered as a background is the wrong shape, not too small.
   const ratio = width / height;
   if (Math.abs(ratio / spec.ratio - 1) > SHAPE_TOLERANCE) return { ok: false, reason: 'wrong-shape', width, height };
   if (width < spec.minWidth || height < spec.minHeight) return { ok: false, reason: 'too-small', width, height };
@@ -205,9 +191,9 @@ export interface StoredArt {
   height: number;
   bytes: number;
   contentType: ArtSpec['contentType'];
-  /** a sliver was cut off to make the exact shape */
+  /** A sliver was cut off to make the exact shape. */
   trimmed: boolean;
-  /** the same picture was uploaded before and is stored already */
+  /** The same picture was uploaded before and is already stored. */
   reused: boolean;
 }
 
@@ -266,14 +252,10 @@ function refusal(kind: ArtKind, art: Extract<ProcessedArt, { ok: false }>): Extr
 }
 
 /**
- * Store an uploaded background or icon and return its key.
- *
- * The same guard chain as every other upload (media/imageMedia.ts): size →
- * op ceiling → real type + re-encode → storage ceiling (fail-closed) → PUT.
- * Not the image scanner: only an admin can upload here, behind their second
- * factor, and the picture reaches anyone only through that admin's own save —
- * it is the shop's own art, not a member's picture. Bytes moderation once took
- * down are still refused, wherever they were taken down.
+ * Stores an uploaded background or icon and returns its key, through the usual upload guards (media/imageMedia.ts):
+ * size, op ceiling, real type and re-encode, storage ceiling (fail-closed), PUT. No image scan: only an admin behind
+ * the second factor uploads here, and the art reaches anyone only through that admin's save. Bytes moderation ever
+ * took down are still refused.
  */
 export async function storeArt(deps: ArtDeps, kind: ArtKind, raw: Buffer): Promise<StoreArtResult> {
   const { pool, storage, usage, limits, log } = deps;
@@ -353,16 +335,13 @@ export async function storeArt(deps: ArtDeps, kind: ArtKind, raw: Buffer): Promi
 export type ArtClaim = { ok: true } | { ok: false; code: 'ART_MISSING' | 'ART_WRONG_KIND'; message: string };
 
 /**
- * Hold on to uploaded art for an item, inside the caller's transaction.
- *
- * Built-in art (a file the site ships) needs nothing. Uploaded art must have
- * been uploaded here, as this kind, and not been swept: an upload left unused
- * for a day is gone, and saving an item with it would sell a blank square.
+ * Holds uploaded art for an item inside the caller's transaction. Built-in art needs nothing; uploaded art must have
+ * been uploaded here as this kind and not swept, or the item would sell a blank square.
  */
 export async function claimArt(executor: Pick<pg.PoolClient, 'query'>, key: string | null, category: string): Promise<ArtClaim> {
   if (!key || !isUploadedArtKey(key)) return { ok: true };
   const kind = uploadedArtKind(key);
-  // a background takes background art; everything else (an icon, a power-up, a badge's slot…) a square picture
+  // A background takes background art; everything else (an icon, a power-up, a badge slot…) a square picture.
   const wanted = artKindFor(category);
   if (kind !== wanted) {
     const a = (k: string): string => (k === 'icon' ? 'a square picture' : `a ${k}`);
@@ -382,11 +361,9 @@ export async function claimArt(executor: Pick<pg.PoolClient, 'query'>, key: stri
 }
 
 /**
- * Let go of uploaded art no item uses any more, inside the caller's
- * transaction (after the item has been changed or deleted): unconfirmed, so
- * the orphan sweep deletes it a day from now. Art another item, a change
- * waiting in Approvals, a replaced picture (art/overrides.ts) or the offline
- * screen (maintenance/service.ts) still names is kept. Answers whether it was let go.
+ * Releases uploaded art no item uses any more, inside the caller's transaction after the item changed: unconfirmed,
+ * so the orphan sweep deletes it a day later. Art still named by another item, a pending Approval, an art override or
+ * the offline screen is kept. Returns whether it was released.
  */
 export async function releaseArt(executor: Pick<pg.PoolClient, 'query'>, key: string | null): Promise<boolean> {
   if (!key || !isUploadedArtKey(key)) return false;

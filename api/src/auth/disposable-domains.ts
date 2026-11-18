@@ -1,8 +1,4 @@
-/**
- * Disposable email domain blocklist (KUR-025). Matched by suffix so
- * subdomains (mail.mailinator.com) are caught too. Extend as new
- * services show up in signup analytics.
- */
+/** Disposable email domains, matched by suffix so subdomains are caught too. */
 const DISPOSABLE_DOMAINS = [
   '10minutemail.com',
   '20minutemail.com',

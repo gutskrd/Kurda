@@ -6,30 +6,24 @@ import { describeUploadFailure, uploadWasLimited, normalizeContentType, type Upl
 export type { UploadResult } from './photoUploadResult';
 
 /**
- * Upload a picked/cropped image as the user's profile photo (KUR-177, through-server).
- *
- * POSTs the raw image bytes to `/me/profile-picture`; the server validates the
- * *actual* file type, resizes to ≤512 px, re-encodes to WebP ≤250 KB, enforces the
- * storage / op / rate limits, stores it, and swaps out the old one — returning the
- * public URL. The client's declared content-type is a hint only; the server sniffs.
- *
- * Binary bodies can't go through `ApiClient.request()` (it JSON-encodes), so this
- * streams the file with expo-file-system and attaches the access token directly.
+ * Upload a picked and cropped image as the user's profile photo: the raw bytes to `/me/profile-picture`, where the
+ * server checks the real file type, resizes to at most 512px, re-encodes to WebP, enforces its limits, stores it and
+ * replaces the old one, returning the public URL. Binary bodies cannot go through `ApiClient.request()` (it
+ * JSON-encodes), so the file is streamed with expo-file-system with the access token attached.
  */
 export async function uploadProfilePhoto(
   client: ApiClient,
   photo: { uri: string; contentType: string },
   t: Translate,
-  /** the app's language, so a limit's end is said as the reader would say it */
+  /** The app's language, so a limit's end is said as the reader would say it. */
   locale?: string,
 ): Promise<UploadResult> {
   return uploadPicture(client, '/me/profile-picture', 'profilePhotoUrl', photo, t, locale);
 }
 
 /**
- * A group's picture, the same way: the raw bytes to `/groups/:id/photo`, where
- * the server checks that you are its owner or an admin and puts the picture
- * through every guard a profile photo goes through.
+ * A group's picture, the same way: raw bytes to `/groups/:id/photo`, where the server checks you are its owner or an
+ * admin and applies every guard a profile photo gets.
  */
 export async function uploadGroupPhoto(
   client: ApiClient,
@@ -49,11 +43,12 @@ async function uploadPicture(
   t: Translate,
   locale?: string,
 ): Promise<UploadResult> {
-  try {
+  // The bytes bypass the client, which renews an expired session (15 minutes): a refusal for that is answered by asking
+  // for the account through the client, which renews it, and sending once more.
+  const attempt = async (): Promise<FileSystem.FileSystemUploadResult | null> => {
     const token = await client.getAccessToken();
-    if (!token) return { ok: false, error: t('upload.sessionExpired') };
-
-    const res = await FileSystem.uploadAsync(`${client.baseUrl}${path}`, photo.uri, {
+    if (!token) return null;
+    return FileSystem.uploadAsync(`${client.baseUrl}${path}`, photo.uri, {
       httpMethod: 'POST',
       headers: {
         authorization: `Bearer ${token}`,
@@ -61,6 +56,14 @@ async function uploadPicture(
       },
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
     });
+  };
+  try {
+    let res = await attempt();
+    if (res?.status === 401) {
+      await client.get('/me');
+      res = await attempt();
+    }
+    if (!res) return { ok: false, error: t('upload.sessionExpired') };
 
     if (res.status >= 200 && res.status < 300) {
       try {
@@ -68,7 +71,7 @@ async function uploadPicture(
         const url = body[field];
         if (url) return { ok: true, url };
       } catch {
-        // fall through to the generic error below
+        // Fall through to the generic error below.
       }
       return { ok: false, error: t('upload.noPhotoReturned') };
     }

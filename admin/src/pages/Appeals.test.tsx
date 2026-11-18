@@ -91,7 +91,7 @@ describe('appeals', () => {
     await user.click(await screen.findByRole('button', { name: 'Answer' }));
     const drawer = await screen.findByRole('dialog', { name: 'Answer @baran' });
     const send = within(drawer).getByRole('button', { name: 'Send the answer' });
-    // nothing to read yet: it cannot be sent
+    // Nothing to read yet: it cannot be sent.
     expect(send).toBeDisabled();
     await user.click(within(drawer).getByRole('radio', { name: /Overturn it/ }));
     await user.type(within(drawer).getByLabelText(/What @baran reads/), 'We looked again: it was a joke between family. The mute is lifted.');
@@ -119,7 +119,7 @@ describe('appeals', () => {
     expect(kinds).not.toContain('permanent_ban');
     await user.selectOptions(within(drawer).getByLabelText('Action'), 'chat_mute');
     await user.click(within(drawer).getByRole('radio', { name: '3 d' }));
-    // the standard words follow the original rule
+    // The standard words follow the original rule.
     expect(within(drawer).getByLabelText(/What @baran is told/)).toHaveValue('Your messages broke Hevalo’s rule on bullying and harassment.');
     await user.type(within(drawer).getByLabelText(/What @baran reads/), 'A suspension was too much. It is now a 3-day chat mute.');
     await user.click(within(drawer).getByRole('button', { name: 'Send the answer' }));

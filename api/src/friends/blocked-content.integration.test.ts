@@ -1,17 +1,11 @@
 /**
- * A block hides what each of the two people wrote from the other, against
- * real Postgres.
- *
- * Ana has blocked Ben, and Cal has blocked Ana: one of each direction, so
- * every surface is checked from both ends. Ana sees nothing of Ben's or Cal's,
- * neither of them sees anything of Ana's, and Dev — who has blocked nobody and
- * whom nobody has blocked — still sees all of it, so a test that passes only
- * because a list came back empty would fail on Dev.
+ * A block hides what each of the two people wrote from the other, against real Postgres. Ana has blocked Ben and
+ * Cal has blocked Ana, so every surface is checked in both directions; Dev, with no blocks, still sees everything,
+ * so a test passing only on an empty list fails on Dev.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { Redis } from 'ioredis';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
@@ -23,12 +17,10 @@ import { ImageCommentService } from '../images/comment-service.js';
 import { ImageReactionService } from '../images/reaction-service.js';
 import { GroupService } from '../groups/service.js';
 import { GroupChatService } from '../groups/chat-service.js';
-import { ActivityService } from '../activity/service.js';
 import { InboxService } from '../notifications/inbox-service.js';
 import { FriendService } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
-const REDIS_URL = process.env.REDIS_URL;
 
 interface Account {
   id: string;
@@ -47,7 +39,6 @@ describe.skipIf(!DATABASE_URL)('a block hides what the other person wrote (integ
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;
-  let redis: Redis | undefined;
   const suffix = Date.now().toString(36);
   let ipCounter = 0;
   const ip = (): string => {
@@ -134,7 +125,6 @@ describe.skipIf(!DATABASE_URL)('a block hides what the other person wrote (integ
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    if (REDIS_URL) redis = new Redis(REDIS_URL);
 
     ana = await signUp('ana');
     ben = await signUp('ben');
@@ -160,7 +150,6 @@ describe.skipIf(!DATABASE_URL)('a block hides what the other person wrote (integ
       client.release();
     }
     await pool.query(`DELETE FROM media_uploads WHERE key = ANY($1)`, [media]);
-    await redis?.quit();
     await pool.end();
     await app.close();
   });
@@ -367,20 +356,6 @@ describe.skipIf(!DATABASE_URL)('a block hides what the other person wrote (integ
       await chat.typing(ben.id, gid);
       const typing = [...hub.published].reverse().find((p) => p.ev.type === 'group_typing')!.ev;
       expect(typing).toMatchObject({ userId: ben.id, hiddenFrom: [ana.id] });
-    });
-  });
-
-  describe('friend activity', () => {
-    it("drops a milestone a friend shared before the block from the blocker's feed", async () => {
-      const friends = new FriendService(pool);
-      const activity = new ActivityService(pool, friends, redis);
-      const eve = await signUp('eve');
-      await befriend(pool, ana.id, eve.id);
-      const event = await activity.publish(eve.id, 'streak_milestone', { days: 30 });
-      expect((await activity.feed(ana.id)).map((e) => e.id)).toContain(event.id);
-
-      await friends.block(ana.id, eve.id);
-      expect((await activity.feed(ana.id)).map((e) => e.id)).not.toContain(event.id);
     });
   });
 

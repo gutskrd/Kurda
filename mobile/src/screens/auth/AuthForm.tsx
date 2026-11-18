@@ -19,14 +19,10 @@ import { useI18n } from '../../i18n/I18nContext';
 import { BackButton } from '../../navigation/BackButton';
 import { useDirection } from '../../reports/direction';
 
-/** How tall the window Hevalo looks in at is drawn over the sign-in choice; its width follows. */
+/** The height of Hevalo's window over the sign-in choice; its width follows. */
 const WINDOW_HEIGHT = 150;
 
-/**
- * Where a screen's own rows start in the order things rise in: the name and
- * its line, the hero and the title come first (`useListEntrance` counts
- * them), so a screen that rises its buttons in after them counts on from here.
- */
+/** The entrance rows the head uses (name, hero, title, counted by `useListEntrance`); a screen's own rows count on from here. */
 export const AUTH_HEAD_ROWS = 3;
 
 export function AuthScreenShell({
@@ -38,31 +34,25 @@ export function AuthScreenShell({
   says,
 }: {
   title: string;
-  /** the line under the title — the browser's auth-head has always had one */
+  /** The line under the title, as on the website. */
   subtitle?: string;
   children: ReactNode;
   onBack?: () => void;
-  /** what stands over the title: a breathing glyph, or Hevalo himself at a village window (the sign-in choice) */
+  /** Shown above the title: a breathing glyph, or Hevalo at his window (the sign-in choice). */
   hero?: IconName | 'hevalo';
-  /** what Hevalo says from the window, in a bubble under it, his mouth moving with the words */
+  /** What Hevalo says from the window, in a bubble, with lip-sync. */
   says?: string;
 }) {
   const { colors } = useTheme();
-  // the head rises in a row at a time, as a list's rows do; a screen's own buttons may follow on (AUTH_HEAD_ROWS)
+  // The head rises in row by row; a screen's own buttons may follow on (AUTH_HEAD_ROWS).
   const entering = useListEntrance(true);
-  // his greeting is said once the window is there, while the screen is in front, and never under Reduce Motion
+  // His greeting plays once the window is there and the screen is in front, never under Reduce Motion.
   const reduce = useReducedMotion();
   const focused = useScreenFocus();
   const speech = useSpokenLine(hero === 'hevalo' && says ? says : null, !reduce && focused);
-  /**
-   * A hero makes the head a centred composition.
-   *
-   * The two screens that show one — the sign-in choice and the code screen —
-   * also centre everything underneath: the glyph, the buttons, the code field,
-   * the links. Only the title and the line under it were left-aligned, so a
-   * centred 52pt glyph sat directly above a heading that started at the left
-   * edge. The screens with fields have no hero and stay left-aligned, because a
-   * centred heading above left-aligned labels is the same mistake mirrored.
+  /*
+   * A hero centres the whole head, matching the centred content below it. Screens with fields have no hero and stay
+   * left-aligned, since a centred heading over left-aligned labels would mismatch the other way.
    */
   const centred = Boolean(hero);
 
@@ -72,20 +62,15 @@ export function AuthScreenShell({
   return (
     <GradientBackground>
       {onBack ? (
-        // the one way back every screen has — the bare chevron, on the reading side — where this page had a "‹ Back" of its own in the brand's ink
+        // The app's standard back chevron, on the reading side.
         <View style={[styles.back, { top: insets.top + spacing.sm }, mirrored ? styles.backEnd : styles.backStart]}>
           <BackButton onPress={onBack} />
         </View>
       ) : null}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/*
-          Scrolls once the form is taller than the screen — sign-up with its
-          birth month, or with a note above it, on a small phone — and stays
-          centred while it is not. Fixed, the overflow ran under the way back
-          and off the bottom with the button in it.
-        */}
+        {/* Scrolls once the form is taller than the screen (e.g. sign-up on a small phone), and stays centred otherwise. */}
         <ScrollView
-          // clear of the way back above, and as much below, so a form that fits stays in the middle
+          // Padding clears the back button above and matches below, so a form that fits stays centred.
           contentContainerStyle={[styles.screen, { paddingVertical: insets.top + MIN_TOUCH_TARGET + spacing.sm }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -96,16 +81,10 @@ export function AuthScreenShell({
         </Rise>
         <GlassCard>
           {hero === 'hevalo' ? (
-            /*
-              Hevalo looking in at the window: we are in the village room and
-              he has come to see who is at the door. He comes up over the sill
-              as the card arrives, and is alive while the choice is made. A
-              glyph of a person stood here, breathing; the app's own character
-              is who should greet somebody choosing how to come in.
-            */
+            /* Hevalo looking in at the window, rising over the sill as the card arrives. */
             <Rise delay={entering(1)} style={styles.hero}>
               <HevaloWindow size={WINDOW_HEIGHT} speech={speech} text={says ?? null} />
-              {/* and says hello, in a bubble under the sill: the words are his, the window stays decorative */}
+              {/* His greeting in a bubble under the sill; the window itself stays decorative. */}
               {says ? <SpeechBubble text={says} tail="top" tone="inset" style={styles.heroBubble} /> : null}
             </Rise>
           ) : hero ? (
@@ -132,25 +111,12 @@ export function AuthScreenShell({
 }
 
 /**
- * One labelled field.
+ * One labelled field. `autoComplete` (Android) and `textContentType` (iOS) let the keychain and password managers
+ * fill it. A secure field gets a show-password toggle, since passwords are easy to mistype on a phone. In a form of
+ * several fields, Return says Next and moves on, and Done on the last one submits.
  *
- * `autoComplete` and `textContentType` are the two halves of the same thing —
- * Android reads the first, iOS the second — and without them the keychain and
- * the password manager have nothing to offer. The browser has had this for free
- * from `autoComplete` since the form was written; the phone had to be told.
- *
- * A secure field gets the eye, because a password you cannot read is a password
- * you mistype on a phone keyboard, and the web has had the toggle all along.
- *
- * A form of several fields says on the keyboard where Return goes: Next to the
- * field below, keeping the keyboard up, and Done on the last, which sends it.
- *
- * Refused, it shakes once as its line appears under it, the way the one field
- * of a sign-in step does: a red sentence alone is easy to miss on a form whose
- * button was just pressed, and a wrong password ought to feel like one. Still
- * under Reduce Motion, where the red edge and the line say it.
- *
- * In Soranî and Arabic the label, the typing and the eye start on the right.
+ * A refusal shakes the field once as its error appears, so it is not missed; under Reduce Motion the red edge and
+ * the message carry it alone. Mirrors for right-to-left languages.
  */
 export function Field(props: {
   label: string;
@@ -161,7 +127,7 @@ export function Field(props: {
   autoCapitalize?: 'none' | 'words';
   keyboardType?: 'default' | 'email-address';
   placeholder?: string;
-  /** what the keychain should offer here */
+  /** What the keychain should offer here. */
   complete?: 'email' | 'username' | 'current-password' | 'new-password';
   returnKeyType?: 'next' | 'done';
   onSubmitEditing?: () => void;
@@ -174,7 +140,7 @@ export function Field(props: {
   const mirrored = dir.row === 'row-reverse';
   const [reveal, setReveal] = useState(false);
   const hidden = props.secure && !reveal;
-  // once, as a refusal appears (or is replaced by another): not while its line simply stays
+  // Shakes once as a refusal appears or changes, not while it stays.
   const shake = useShake();
   const refusal = props.error ?? null;
   const shown = useRef<string | null>(refusal);
@@ -207,7 +173,7 @@ export function Field(props: {
           autoCorrect={false}
           returnKeyType={props.returnKeyType}
           onSubmitEditing={props.onSubmitEditing}
-          // Next moves on without the keyboard dropping and coming back up
+          // Next moves on without the keyboard dropping and coming back up.
           submitBehavior={props.returnKeyType === 'next' ? 'submit' : undefined}
           ref={props.inputRef}
           testID={props.testID}
@@ -218,7 +184,7 @@ export function Field(props: {
             accessibilityRole="button"
             accessibilityLabel={reveal ? t('auth.hidePassword') : t('auth.showPassword')}
             accessibilityState={{ selected: reveal }}
-            // the eye stands alone at the field's end, so it reaches past every edge, over the field's own padding
+            // The eye stands alone at the field's end, so it reaches past every edge.
             reach="open"
             reachSize={AFFIX_SIZE}
             style={({ pressed }) => [styles.affix, mirrored ? styles.affixStart : styles.affixEnd, pressed && heldDim]}
@@ -232,11 +198,11 @@ export function Field(props: {
   );
 }
 
-/** The show-password eye: its glyph, and the box it is drawn in, the glyph and its padding wide and the field tall. */
+/** The show-password eye: its glyph size, and its box, as wide as the glyph plus padding and as tall as the field. */
 const AFFIX_ICON = 20;
 const AFFIX_SIZE = { width: AFFIX_ICON + spacing.xs * 2, height: MIN_TOUCH_TARGET };
 
-/** iOS wants its own vocabulary for the same four things Android names plainly. */
+/** iOS names the same four things differently. */
 const TEXT_CONTENT_TYPE = {
   email: 'emailAddress',
   username: 'username',
@@ -245,12 +211,12 @@ const TEXT_CONTENT_TYPE = {
   none: undefined,
 } as const;
 
-/** A link under a form. `destructive` is for the one that cannot be undone (deleting the account): the screen's one red. */
-export function LinkText(props: { label: string; onPress: () => void; destructive?: boolean }) {
+/** A link under a form. */
+export function LinkText(props: { label: string; onPress: () => void }) {
   const { colors } = useTheme();
   return (
     <Pressable onPress={props.onPress} accessibilityRole="button" style={({ pressed }) => [styles.link, pressed && heldDim]}>
-      <Text style={[styles.linkText, { color: props.destructive ? colors.danger : colors.primary }]}>{props.label}</Text>
+      <Text style={[styles.linkText, { color: colors.primary }]}>{props.label}</Text>
     </Pressable>
   );
 }
@@ -264,7 +230,7 @@ export function FormError({ message }: { message: string | null }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
-  // the chevron sits inside its 44-point target, so the target starts short of the gutter and the glyph meets it
+  // The chevron sits inside its 44-point target, so the target starts short of the gutter and the glyph meets it.
   back: { position: 'absolute', top: spacing.xl, zIndex: 1 },
   backStart: { left: spacing.lg - (MIN_TOUCH_TARGET - 26) / 2 },
   backEnd: { right: spacing.lg - (MIN_TOUCH_TARGET - 26) / 2 },
@@ -294,13 +260,7 @@ const styles = StyleSheet.create({
   affixStart: { left: spacing.sm },
   error: { fontSize: typography.sizes.xs, marginTop: spacing.xs },
   formError: { fontSize: typography.sizes.sm, marginBottom: spacing.md, textAlign: 'center' },
-  /**
-   * A link is still something a finger has to land on.
-   *
-   * The text is 18pt tall, which was the whole tappable box — well under the
-   * 44 a fingertip needs. The box grew and the margin shrank by what it gained,
-   * so the words sit where they always did and the target around them does not.
-   */
+  // A full touch target round 18pt text; the margin shrinks by what the box gains, so the words do not move.
   link: { marginTop: spacing.xs, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
 });

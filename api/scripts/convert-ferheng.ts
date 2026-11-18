@@ -1,11 +1,8 @@
 /**
- * One Wîkîferheng chunk → a lexicon file, for looking at before importing it.
+ * Converts one Wîkîferheng chunk into a lexicon file to inspect or dry-run before importing; the conversion is in
+ * `ferheng.ts`, and `import-ferheng.ts` does the whole set without intermediate files.
  *
  *   tsx scripts/convert-ferheng.ts <in.json> <out.json> [--dialect kurmanji]
- *
- * The conversion itself lives in `ferheng.ts`; this is the file-at-a-time way
- * in, so the output can be read and a dry-run import tried against it.
- * `import-ferheng.ts` does the whole set without writing intermediate files.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';

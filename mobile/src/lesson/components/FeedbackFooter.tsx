@@ -24,72 +24,59 @@ import { HevaloWindow } from '../../characters/HevaloWindow';
 import { useValley } from '../ValleyScope';
 import { CARD, PORTRAIT_PALETTES } from '../valley';
 
-/** How tall Hevalo's window is in the sheet when he comes in to react: a little smaller than a voice's character. */
+/** Hevalo's window height in the sheet when he comes in to react: a little smaller than a voice's character. */
 const STAND_IN = 96;
 
-/** Hevalo's round portrait beside the verdict, and the verdict's mark pinned to its foot. */
+/** Hevalo's round portrait beside the verdict, with the verdict's mark pinned to its foot. */
 const PORTRAIT = 58;
 const MARK = 24;
 
-/** The hairline along the top of the bar, between the lesson and its foot. */
+/** The hairline along the bar's top, between the lesson and its foot. */
 const EDGE = CARD.edge;
 
-/** Answers that are Kurdish typed by the learner, set letter by letter against the right one (as the website does). */
+/** Answer types where the learner types Kurdish, compared letter by letter with the right answer (as on the website). */
 const TYPED: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening']);
 
 interface Props {
-  /** null while the learner is still answering */
+  /** Null while the learner is still answering. */
   feedback: Feedback | null;
   canCheck: boolean;
   submitting: boolean;
   onCheck: () => void;
   onContinue: () => void;
-  /** the exercise sends its answer by itself as it is completed (pairs answered as they are made): no Check */
+  /** The exercise submits itself as it completes (pairs graded as made), so there is no Check. */
   answersItself?: boolean;
-  /** the exercise's character is on its stage above and reacts there, so the banner needs no second one */
+  /** The exercise's character reacts on its own stage above, so the banner needs no second one. */
   staged?: boolean;
-  /** Hevalo, in to react where nobody else is on screen: a cheer, or a curious tilt of the head at a miss */
+  /** Hevalo, reacting where nobody else is on screen: a cheer, or a curious tilt at a miss. */
   standIn?: CharacterReaction | null;
-  /** the course's variety of Kurdish, so the answers are set in its direction */
+  /** The course's variety of Kurdish, so answers are set in its direction. */
   dialect?: string | null;
-  /** what kind of slip a typed miss was, in words: "Only the marks differ: e → ê" */
+  /** The kind of slip a typed miss was, in words: "Only the marks differ: e → ê". */
   hint?: string | null;
-  /** a word of praise in Kurdish for a right answer, with its meaning under it */
+  /** A Kurdish word of praise for a right answer, with its meaning under it. */
   praise?: string | null;
-  /** the skill's tips, offered after a miss: "Why? Read the tips" */
+  /** Opens the skill's tips after a miss: "Why? Read the tips". */
   onWhy?: () => void;
-  /** "Can't listen now" / "Can't speak now", at the start of the bar while answering */
+  /** "Can't listen now" / "Can't speak now", at the bar's start while answering. */
   putOff?: { label: string; onPress: () => void } | null;
-  /** what was just put off for the rest of the lesson, said for a few seconds with a way to undo it */
+  /** What was just put off for the rest of the lesson, shown for a few seconds with an undo. */
   putAway?: { label: string; onUndo: () => void } | null;
 }
 
 /**
- * The lesson's action bar: cream, along the foot of the paper under a
- * hairline. While answering it holds Check, and the way to put off what
- * cannot be done here and now; once graded it becomes the verdict bar,
- * sliding up on a spring in the verdict's green or warm red with Continue
- * exactly where Check was — so the thumb never moves and the rhythm is tap,
- * tap. An exercise that answers itself (pairs answered as they are made) has
- * no Check.
+ * The lesson's action bar along the foot under a hairline. While answering it holds Check and the put-off action;
+ * once graded it springs up as the verdict bar in green or warm red with Continue exactly where Check was, so the
+ * thumb never moves. Self-submitting exercises have no Check.
  *
- * The verdict is said beside Hevalo in a small round portrait, in the display
- * face, in words and a mark — a round badge at the portrait's foot with a
- * check that pops in and draws itself for a right answer, or a quiet cross —
- * never colour alone, and a screen reader hears it as one sentence. A typed
- * answer is set above the right one with the letters that differ marked, and
- * what kind of slip it was in a line under them; a miss says it will come
- * back, and offers the skill's tips. The native recording is there to hear,
- * and says itself a moment after the verdict unless that is turned off
- * (Settings → Sounds).
+ * The verdict sits beside Hevalo's small portrait in words and a mark (a check that pops and draws itself, or a quiet
+ * cross), never colour alone, and is read as one sentence. A typed answer is shown above the right one with the
+ * differing letters marked and the kind of slip explained; a miss says it will come back and offers the tips. The
+ * native recording plays itself shortly after the verdict unless turned off (Settings → Sounds).
  *
- * Hevalo comes in to react only where nobody else is on screen to, popping
- * up in his window in place of his portrait: on the first answer, on a miss
- * (curious, never sad) and at a run's milestone. Under Reduce Motion the bar
- * fades in where it is, and the badge does not pop.
- *
- * Both sit clear of the home indicator: the lesson is full screen, and the
- * bottom edge of a phone without a home button belongs to the system's swipe.
+ * Hevalo pops up in his window instead of the portrait only where nobody else is on screen: on the first answer, on
+ * a miss (curious, never sad) and at run milestones. Under Reduce Motion the bar fades in and the badge does not pop.
+ * Both stay clear of the home indicator.
  */
 export function FeedbackFooter({
   feedback,
@@ -118,7 +105,7 @@ export function FeedbackFooter({
   const dir = useDirection();
   const kurdish: TextStyle = isSoraniDialect(dialect) ? { writingDirection: 'rtl' } : { writingDirection: 'ltr' };
 
-  // up from below the screen on a spring as the verdict arrives; a fade where it is under Reduce Motion
+  // Springs up from below as the verdict arrives; fades in place under Reduce Motion.
   useEffect(() => {
     slide.stopAnimation();
     slide.setValue(0);
@@ -128,8 +115,8 @@ export function FeedbackFooter({
     return () => run.stop();
   }, [feedback, slide, reduce]);
 
-  // the native recording says itself a moment after the verdict, once it has loaded — not for a spoken answer,
-  // which was just heard beside it, and not when the learner has asked for quiet
+  // The native recording plays a moment after the verdict once loaded, except for a spoken answer (just heard beside
+  // it) or when the learner asked for quiet.
   const verdictAt = useRef(0);
   const said = useRef<Feedback | null>(null);
   useEffect(() => {
@@ -147,12 +134,12 @@ export function FeedbackFooter({
   }, [feedback, loaded, play]);
 
   if (!feedback) {
-    // nothing in it (pairs that answer themselves): no bar, only the room at the foot
+    // Nothing to show (self-submitting pairs): no bar, only the room at the foot.
     const bare = answersItself && !putAway && !putOff;
     return (
       <View style={[styles.footer, { paddingBottom: bottom }, !bare && { backgroundColor: valley.bar, borderTopColor: valley.line, borderTopWidth: EDGE }]}>
         {putAway ? (
-          // said where the learner is looking, for long enough to change their mind
+          // Shown where the learner is looking, long enough to change their mind.
           <View style={[styles.aside, { flexDirection: dir.row }]} accessibilityLiveRegion="polite">
             <Text style={[styles.asideText, dir.text, { color: colors.textSecondary }]}>{putAway.label}</Text>
             <Pressable onPress={putAway.onUndo} accessibilityRole="button" hitSlop={6} style={({ pressed }) => [styles.link, pressed && styles.pressed]}>
@@ -182,15 +169,15 @@ export function FeedbackFooter({
   const tint = good ? colors.success : colors.danger;
   const verdict = t(feedbackTitle(feedback));
   const headline = praise ?? verdict;
-  // one sentence for a screen reader: the verdict in the reader's words, then the praise
+  // One sentence for screen readers: the verdict in the reader's words, then the praise.
   const spoken = praise ? `${verdict}. ${praise}` : verdict;
-  // from just below the screen: its own height once measured, and further than any sheet is tall until then
+  // From just below the screen: its own height once measured, and further than any sheet until then.
   const translateY = reduce ? 0 : slide.interpolate({ inputRange: [0, 1], outputRange: [height || 600, 0] });
   const typed = TYPED.has(feedback.exerciseType) && feedback.given !== undefined && !!feedback.correction;
   const diff = typed ? letterDiff(feedback.given!, feedback.correction!) : null;
   const voice = staged ? null : knownVoice(feedback.modelAudioVoice);
 
-  // Hevalo in his window, when he comes in to react; otherwise in his round portrait, quiet, with the verdict's mark
+  // Hevalo in his window when he comes in to react; otherwise quiet in his round portrait with the verdict's mark.
   const inWindow = !!standIn && !voice;
   const verdictBlock = (
     <View style={styles.verdict}>
@@ -245,7 +232,7 @@ export function FeedbackFooter({
     >
       {inWindow ? (
         <View style={[styles.withFace, { flexDirection: dir.row }]}>
-          {/* he reacts beside the verdict, which says it in words: nothing for a screen reader to hear twice */}
+          {/* He reacts beside the verdict, which already says it in words, so screen readers skip him. */}
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="lesson-stand-in">
             <HevaloWindow size={STAND_IN} flip={dir.rtl} reaction={standIn} />
           </View>
@@ -282,11 +269,8 @@ export function FeedbackFooter({
 }
 
 /**
- * Hevalo, head and shoulders in a small round portrait on a cream rim, ringed
- * in the verdict's colour, with the verdict's mark pinned to its foot on the
- * side the words are. Quiet: the words beside him say the verdict, so a screen
- * reader passes him by, and he reacts only when he comes in at his window
- * instead.
+ * Hevalo head and shoulders in a small round portrait, ringed in the verdict's colour with its mark pinned at the
+ * foot on the words' side. Hidden from screen readers, since the words say the verdict.
  */
 function Portrait({ good, end, children }: { good: boolean; end: boolean; children: React.ReactNode }): React.JSX.Element {
   const valley = useValley();
@@ -304,7 +288,7 @@ function Portrait({ good, end, children }: { good: boolean; end: boolean; childr
   );
 }
 
-/** The verdict's mark: a check that pops in and draws itself, or a cross that simply fades in; on a `rim` where it sits on a picture. */
+/** The verdict's mark: a check that pops and draws itself, or a cross that fades in; on a `rim` over a picture. */
 function Badge({ good, size = 32, rim }: { good: boolean; size?: number; rim?: string }): React.JSX.Element {
   const valley = useValley();
   const reduce = useReducedMotion();
@@ -337,7 +321,7 @@ function Badge({ good, size = 32, rim }: { good: boolean; size?: number; rim?: s
   );
 }
 
-/** A typed answer, or the right one, with the letters that differ marked: underlined, in gold, never colour alone. */
+/** A typed answer, or the right one, with the differing letters underlined in gold, never colour alone. */
 function Compared({ label, segments, kurdish, row }: { label: string; segments: DiffSegment[]; kurdish: TextStyle; row: ViewStyle['flexDirection'] }) {
   const { colors } = useTheme();
   return (
@@ -358,7 +342,7 @@ function Compared({ label, segments, kurdish, row }: { label: string; segments: 
   );
 }
 
-/** The native recording, with whoever says it beside the button when an editor has chosen somebody. */
+/** The native recording, with its speaker beside the button when an editor chose one. */
 function HearIt({
   voice,
   model,
@@ -371,7 +355,7 @@ function HearIt({
   voice: RecordingVoice | null;
   model: AudioControls;
   source?: string;
-  /** what the recording says, when the answer shows it */
+  /** What the recording says, when the answer shows it. */
   text?: string;
   tone: 'success' | 'danger';
   row: ViewStyle['flexDirection'];
@@ -382,7 +366,7 @@ function HearIt({
   if (!voice) return button;
   return (
     <View style={[styles.hearRow, { flexDirection: row }]}>
-      {/* head to waist, cheering a right answer and tilting its head at one that was not yet; a tap says it again */}
+      {/* Head to waist, cheering a right answer and tilting its head at a miss; a tap replays it. */}
       <SpeakingCharacter
         speaker={voice.speaker}
         voice={voice}
@@ -421,7 +405,7 @@ const styles = StyleSheet.create({
   titleRow: { alignItems: 'center', gap: spacing.sm + 4 },
   badge: { borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   portraitWrap: { width: PORTRAIT, height: PORTRAIT },
-  // a cream rim, ringed outside in the verdict's colour
+  // A cream rim, ringed outside in the verdict's colour.
   portrait: { flex: 1, borderRadius: radii.pill, borderWidth: EDGE, padding: 2.5 },
   portraitFace: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' },
   portraitMark: { position: 'absolute', bottom: -4 },

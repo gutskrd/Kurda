@@ -22,30 +22,11 @@ import { QuestRows } from './QuestRows';
 import { pressedDim } from '../theme/motion';
 
 /**
- * Today's three quests, in one of two places.
- *
- * After a lesson that moved any (`place: 'lesson'`, with the session's
- * `steps`), it is a moment of its own between the streak and wherever the
- * learner was going: "Daily quests", each bar moving from where the lesson
- * found it to where it left it, and a quest finished just now lifting with a
- * gold edge. With a chest to open the main button is "Open chest", and
- * "Later" leaves it waiting on Learn; without one, "Continue" goes on.
- *
- * From Learn (`place: 'learn'`) it is the quests as they stand, each bar
- * filling to where it is as the list opens, with a way back and "Open chest"
- * while one waits.
- *
- * Under today's three, in either place, "Earlier" lists the quests of the
- * last week that were done and whose chests were never opened: a chest is
- * not lost at midnight. The month's tally (MonthlyQuests) heads the list
- * from Learn, where the list is the whole screen, and closes it after a
- * lesson, where the day's own rows are the news.
- *
- * "Open chest" opens each chest waiting, one after another (ChestScreen):
- * Continue on one goes to the next, and after the last back to where the
- * learner was going — the lesson's way on, or this list. The list is read
- * from `GET /me/quests` when it opens; after a lesson, if it cannot be read,
- * the quests the lesson moved are shown on their own.
+ * Today's three quests, in two places. After a lesson (`place: 'lesson'`, with the session's `steps`) it is a
+ * moment of its own: bars move from where the lesson found them, with "Open chest" or "Later" when a chest waits.
+ * From Learn (`place: 'learn'`) it is the list as it stands, headed by the month's tally (MonthlyQuests). Below
+ * today's three, "Earlier" lists last week's unopened chests. "Open chest" opens each waiting chest in turn
+ * (ChestScreen). Loaded from `GET /me/quests`; after a lesson, a failed load shows the quests the lesson moved.
  */
 export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 'learn'; steps?: QuestStep[]; onDone: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -72,7 +53,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
       live = false;
     };
   }, [client, attempt]);
-  // from Learn, pulled down, the day's quests are read again; a failure keeps the list that is there
+  // From Learn, pulled down, the day's quests are read again; a failure keeps the list that is there.
   const pull = usePullRefresh(() =>
     client.get<QuestDay>('/me/quests').then((res) => {
       if (!res.ok) return;
@@ -83,13 +64,13 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
 
   const rows = useMemo(() => withOpened(questRows(day, place === 'lesson' ? steps : []), opened), [day, steps, place, opened]);
   const earlier = useMemo(() => withOpened(waitingRows(day), opened), [day, opened]);
-  // the chests open in the order they are listed: today's, then the earlier days'
+  // Chests open in list order: today's, then earlier days'.
   const all = useMemo(() => [...rows, ...earlier], [rows, earlier]);
-  // after a lesson the list waits for its answer; if none comes, the steps are what is known
+  // After a lesson the list waits for its answer; if none comes, the steps are what is known.
   const shown = status === 'loading' ? null : rows;
   const finishedNow = place === 'lesson' && (shown ?? []).some(justDone);
   const waiting = nextChest(all);
-  // from Learn the bars fill from empty the first time the list is shown; back from a chest, they are simply where they are
+  // From Learn the bars fill from empty the first time; back from a chest they are static.
   const listSeen = useRef(false);
   useEffect(() => {
     if (shown) listSeen.current = true;
@@ -105,7 +86,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
       if (!was) return;
       const after = open ? withOpened(all, [was.id]) : all;
       if (open) setOpened((ids) => [...ids, was.id]);
-      // a chest that stayed shut ends the run of them: it waits on Learn
+      // A chest that stayed shut ends the run of them: it waits on Learn.
       const next = open ? nextChest(after, was.id) : null;
       setChest(next);
       if (!next && place === 'lesson') onDone();

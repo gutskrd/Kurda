@@ -22,7 +22,7 @@ export const ADDRESS_PURPOSE = 'security-log-address';
 export interface SecurityEventInput {
   /** the account it is about: the one signed in to, failed on, locked, changed */
   userId?: string | null;
-  /** whether that account is staff, when the caller already knows; looked up when it matters otherwise */
+  /** Whether that account is staff, when the caller knows; otherwise looked up when it matters. */
   staff?: boolean;
   /** anything else worth seeing — never a password, a token, a code or an email address */
   details?: Record<string, unknown>;
@@ -44,27 +44,18 @@ interface Logger {
   error: (obj: unknown, msg: string) => void;
 }
 
-/** A country as Cloudflare names it, or null; `XX` and `T1` (unknown, Tor) are kept, they say something too. */
+/** A country as Cloudflare names it, or null; `XX` and `T1` (unknown, Tor) are kept, since they say something too. */
 function countryOf(header: unknown): string | null {
   return typeof header === 'string' && /^[A-Z0-9]{2}$/.test(header) ? header : null;
 }
 
 /**
- * The security log (migration 1751000200000): every sign-in, failure, lockout,
- * refusal and change of access, kept so the owner can see whether someone is
- * trying to get in, and how far they got.
- *
- * `record` takes everything about where an event came from from the request
- * being served (security/context.ts): the network as its keyed hash, the
- * address sealed so only a superadmin can read it and only by giving a reason,
- * the country when a trusted Cloudflare edge said it, the device as its
- * browser and system, the request id. Callers say only what happened and to
- * whom.
- *
- * It never throws and never slows the request it is recording much: a write
- * that fails is logged and dropped, never the sign-in that caused it. A
- * warning or worse also goes on the "Needs attention" list, and a critical one
- * is handed to `onCritical` (the alert emails, security/alerts.ts).
+ * The security log (migration 1751000200000): every sign-in, failure, lockout, refusal and access change, so the owner
+ * can see whether someone is trying to get in and how far they got. `record` takes the event's origin from the current
+ * request (security/context.ts): the network as a keyed hash, the address sealed so only a superadmin can read it with
+ * a reason, the country from a trusted Cloudflare edge, the browser and system, and the request id; callers say only
+ * what happened and to whom. It never throws: a failed write is logged and dropped, never the sign-in. Warnings and
+ * worse go on the "Needs attention" list, and critical events to `onCritical` (security/alerts.ts).
  */
 export class SecurityLog implements SecurityRecorder {
   /** recently recorded keys of the once-in-a-while kinds, when there is no Redis to share them in */
@@ -130,7 +121,7 @@ export class SecurityLog implements SecurityRecorder {
     if (severity === 'critical') this.options.onCritical?.();
   }
 
-  /** Whether this is the first event with these parts in `seconds`: shared through Redis when there is one. */
+  /** Whether this is the first event with these parts within `seconds`, shared through Redis when available. */
   private async firstIn(seconds: number, parts: ReadonlyArray<string | null | undefined>): Promise<boolean> {
     const key = `security-log:once:${createHash('sha256').update(parts.map((p) => p ?? '').join('\n')).digest('hex').slice(0, 32)}`;
     if (this.options.redis) {
@@ -156,11 +147,9 @@ export class SecurityLog implements SecurityRecorder {
   }
 
   /**
-   * The daily clean-up, within what the table itself allows: events past their
-   * retention go (90 days, a year for warnings and worse; the trigger refuses
-   * anything younger), and the sealed address of every event older than
-   * SECURITY_ADDRESS_DAYS is forgotten. In batches, so a large backlog never
-   * holds one long lock.
+   * The daily clean-up within what the table allows: events past retention go (90 days, a year for warnings and worse;
+   * a trigger refuses younger ones), and sealed addresses older than SECURITY_ADDRESS_DAYS are forgotten. In batches,
+   * so a backlog never holds one long lock.
    */
   async purge(): Promise<{ deleted: number; addressesForgotten: number }> {
     let deleted = 0;

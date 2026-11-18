@@ -1,8 +1,6 @@
 /**
- * Job priority + load-shedding policy (KUR-119). Jobs fall into three classes;
- * critical work (auth emails) always runs and outranks everything, bulk work
- * (analytics) is shed first when the queue backs up, so a spike degrades
- * gracefully instead of delaying password resets behind a mountain of events.
+ * Job priority and load shedding. Jobs fall into three classes: critical work (auth emails) always runs first, and
+ * bulk work (analytics) is shed first when the queue backs up, so a spike never delays password resets.
  */
 
 export type JobClass = 'critical' | 'standard' | 'bulk';
@@ -39,10 +37,8 @@ export const DEFAULT_BACKPRESSURE: BackpressurePolicy = {
 };
 
 /**
- * Whether a producer should shed (drop) this enqueue given the current waiting
- * depth. Critical jobs are NEVER shed; bulk sheds first, standard only under a
- * severe backlog — so non-critical load is dropped before critical queues
- * degrade.
+ * Whether a producer should drop this enqueue at the current waiting depth. Critical jobs are never shed, bulk goes
+ * first, and standard only under a severe backlog.
  */
 export function shouldShed(jobName: string, waitingDepth: number, policy: BackpressurePolicy = DEFAULT_BACKPRESSURE): boolean {
   switch (classForJob(jobName)) {

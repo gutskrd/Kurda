@@ -21,23 +21,9 @@ import {
 } from './samples';
 
 /**
- * Pictures of Hevalo, drawn in Hevalo's own parts.
- *
- * The landing page shows the product rather than describing it, and these are
- * the pictures. They are markup rather than screenshots for three reasons: they
- * are a few hundred bytes instead of a few hundred kilobytes, they stay sharp at
- * every size, and their words are the reader's language — a German visitor sees
- * "Wortduell" on the battle, not a frozen English screenshot.
- *
- * Every label in them that the app already has is the app's own key — the
- * game's name, "You", the league tier, "Level 12" — so the picture says exactly
- * what the screen does. They only ever show what the product really does; see
- * `samples.ts` for where each piece of Kurdish comes from.
- *
- * Each one is a single image to assistive technology: `role="img"` with a
- * sentence describing it, so a screen reader hears "a Peyvok battle between you
- * and Rojîn" once, instead of thirty letter tiles one by one. Nothing inside is
- * focusable or clickable — a button in a picture that does nothing is a lie.
+ * The landing page's pictures of the product, built from the app's own parts as markup rather than screenshots: small,
+ * sharp at any size, and in the reader's language. Labels reuse the app's catalogue keys, and the Kurdish comes from
+ * `samples.ts`. Each is one `role="img"` with a describing sentence, and nothing inside is focusable or clickable.
  */
 
 /** One picture: an image to a screen reader, a piece of the app to the eye. */
@@ -51,7 +37,7 @@ export function Mock({ label, className, children }: { label: string; className?
 
 /** A face from the app's own avatar set. Decorative: the mock's label names who is there. */
 function Face({ src, size = 36, lazy = true }: { src: string; size?: number; lazy?: boolean }): React.JSX.Element {
-  // a default deer an admin replaced is shown as its new picture, as in the app
+  // A default deer an admin replaced shows its new picture, as in the app.
   const face = useAvatarSrc(src) ?? src;
   return (
     <img
@@ -77,12 +63,7 @@ export function Ku({ children, className }: { children: ReactNode; className?: s
 
 type Mark = 'green' | 'yellow' | 'gray' | 'empty';
 
-/**
- * A Peyvok row in the real game's colours.
- *
- * `--i` staggers the tiles so a row can turn over left to right, the way the
- * game reveals a guess; the stylesheet decides whether it animates at all.
- */
+/** A Peyvok row in the game's colours; `--i` staggers the tiles so the stylesheet can flip them in order. */
 export function TileRow({ word, marks, row = 0 }: { word: string; marks: ReadonlyArray<Mark>; row?: number }): React.JSX.Element {
   const letters = Array.from(word);
   return (
@@ -123,12 +104,7 @@ export function WordCardMock(): React.JSX.Element {
   );
 }
 
-/**
- * A battle invite, as it arrives in a chat.
- *
- * Pasting a battle link into a message really does turn into this card — see
- * `GameInviteCard` — so the eyebrow, the title and the button are its words.
- */
+/** A battle invite as it arrives in a chat, using `GameInviteCard`'s words. */
 export function InviteMock(): React.JSX.Element {
   const t = useT();
   return (
@@ -149,7 +125,7 @@ export function InviteMock(): React.JSX.Element {
   );
 }
 
-/** This week, among friends — the same rows every leaderboard in the app uses. */
+/** This week among friends, in the same rows as every leaderboard. */
 export function FriendsBoardMock(): React.JSX.Element {
   const t = useT();
   const rows = [
@@ -172,7 +148,7 @@ export function FriendsBoardMock(): React.JSX.Element {
   );
 }
 
-/* ---- the four games, small ------------------------------------------------ */
+/* ---- The four games, small ------------------------------------------------ */
 
 /** Peyvok's on-screen keyboard: the row with the letters Kurmancî adds. */
 export function WordleMini(): React.JSX.Element {
@@ -230,10 +206,8 @@ export function RaceMini(): React.JSX.Element {
 }
 
 /**
- * A story being read: lines of text, one word from the glossary marked with
- * its meaning open beside it, the headphones of a story read aloud, and the
- * quiz's answer under it — the parts of the reader, without inventing a
- * sentence of Kurdish for the picture (the one word is the page's own).
+ * A story being read: placeholder lines, one glossary word with its meaning, the read-aloud headphones and a quiz
+ * answer, without inventing Kurdish sentences for the picture.
  */
 export function StoriesMini(): React.JSX.Element {
   const t = useT();
@@ -263,12 +237,9 @@ export function StoriesMini(): React.JSX.Element {
   );
 }
 
-/* ---- progress ------------------------------------------------------------- */
+/* ---- Progress ------------------------------------------------------------- */
 
-/**
- * A profile, a league and a daily reward, stacked the way they sit together in
- * the app: what you look like, where you stand, and what showing up paid.
- */
+/** A profile, a league and a daily reward, stacked as they sit in the app. */
 export function ProgressMock(): React.JSX.Element {
   const t = useT();
   return (
@@ -296,7 +267,7 @@ export function ProgressMock(): React.JSX.Element {
   );
 }
 
-/* ---- the community -------------------------------------------------------- */
+/* ---- The community -------------------------------------------------------- */
 
 /** A poem on the wall, with its recording. */
 export function PostMock(): React.JSX.Element {

@@ -1,7 +1,6 @@
 /**
- * The admin's backgrounds and icons, against real Postgres with a bucket in
- * memory: uploading art, adding and editing items, and deleting them — which
- * deletes only what nobody has, and retires the rest for the people who do.
+ * The admin's backgrounds and icons against real Postgres with an in-memory bucket: uploading art, adding and editing
+ * items, and deleting them, which removes only what nobody has and retires the rest.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

@@ -9,10 +9,8 @@ import { en } from '../i18n/en';
 import { PRINCIPLES } from './principles';
 
 /**
- * Every way in to "How Hevalo teaches": the front page's section, the footer
- * on every public page, About and the FAQ. A page nobody can reach is a page
- * that does not exist, and an anchor that names no section lands at the top
- * of the page with nothing to say why.
+ * Every link to "How Hevalo teaches" (the front page, the public footer, About and the FAQ), and that each anchor
+ * names a real section.
  */
 describe('the ways in to How Hevalo teaches', () => {
   it('gives the front page a section of four principles, each a link to its own', () => {
@@ -29,7 +27,7 @@ describe('the ways in to How Hevalo teaches', () => {
       const [path, anchor] = a.getAttribute('href')!.split('#');
       expect(path).toBe('/how-hevalo-teaches');
       expect(ids, `#${anchor} names no section`).toContain(anchor);
-      // the card is named for the principle it opens, as the section there is
+      // The card is named for the principle it opens.
       expect(a).toHaveTextContent(en[PRINCIPLES.find((p) => p.id === anchor)!.title]);
     }
     expect(within(section).getByRole('link', { name: 'How Hevalo teaches, with the studies' })).toHaveAttribute(

@@ -13,31 +13,29 @@ const imageQuery = z.object({
   scale: z.coerce.number().min(1).max(WIDGET_IMAGE.maxScale).default(1),
   sky: z.enum(WIDGET_SKIES).optional(),
 });
-// either may be left out, to change only the other: the letter page pins, the settings switch shows the words
+// Either may be left out to change only the other: the letter page pins, the settings switch shows the words.
 const prefsBody = z.object({ pinnedLetterId: z.uuid().nullable().optional(), showWords: z.boolean().optional() });
 // the token this phone had before, if any, goes when the new one is made
 const tokenBody = z.object({ replaces: z.string().max(200).optional() }).nullish();
 
 /** The hour a widget's budget runs over. */
 const HOUR_MS = 3_600_000;
-/** The address-wide limit every route also has: high, as many phones may share a network, each with its own budget below. */
+/** The address-wide limit on every route: high, since many phones may share a network, each with its own budget below. */
 const BY_ADDRESS = { rateLimit: { max: 600, windowMs: 60_000, per: 'ip' as const } };
 
 /**
- * The letter widget (letters/widget.ts).
+ * The letter widget (letters/widget.ts):
  *
- *   POST   /letters/widget/tokens          (account) a token for this phone's widget, shown once: `{ token }`
+ *   POST   /letters/widget/tokens          (account) a token for this phone's widget, shown once, ending with this session
  *   DELETE /letters/widget/tokens          (account) every widget of the account, on every phone
- *   DELETE /letters/widget/tokens/current  (widget)  this widget's own token: the app signing out
- *   GET    /letters/widget/prefs           (account) the widget page: what is pinned, the words, the letter shown, how many phones
- *   PUT    /letters/widget/prefs           (account) pin a letter or let go of it, show the words or not
+ *   DELETE /letters/widget/tokens/current  (widget)  this widget's own token, when the app signs out
+ *   GET    /letters/widget/prefs           (account) the pin, the words switch, the letter shown, how many phones
+ *   PUT    /letters/widget/prefs           (account) pin or unpin a letter, show the words or not
  *   GET    /letters/widget/feed            (widget)  the letter to show, and when to ask again
- *   GET    /letters/widget/image?w&h&scale&sky  (widget)  its picture: the paper and drawing, the writer's pigeon; no text
+ *   GET    /letters/widget/image?w&h&scale&sky  (widget)  its picture, without text
  *
- * "(widget)" routes take `Authorization: Widget <token>` and nothing else: no
- * other route accepts that token, and these accept no session, so a token
- * handed to a home screen can read the letter it shows and no more. Each
- * widget has `WIDGET_HITS_PER_HOUR` requests an hour, all of its routes together.
+ * "(widget)" routes take only `Authorization: Widget <token>`, which no other route accepts, so a token on a home
+ * screen can read only the letter it shows. Each widget has `WIDGET_HITS_PER_HOUR` requests an hour across its routes.
  */
 export function registerLetterWidgetRoutes(app: FastifyInstance, widget: LetterWidgetService, store?: RateLimitStore): void {
   const budget: RateLimitStore = store ?? (app.hasDecorator('redis') && app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore());
@@ -68,7 +66,8 @@ export function registerLetterWidgetRoutes(app: FastifyInstance, widget: LetterW
   app.post(
     '/letters/widget/tokens',
     { schema: { body: tokenBody }, config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } }, preHandler: requireAccount },
-    async (req) => widget.createToken(req.user!.id, (req.body as { replaces?: string } | null | undefined)?.replaces),
+    // made in this request's session, and ended with it
+    async (req) => widget.createToken(req.user!.id, req.user!.familyId, (req.body as { replaces?: string } | null | undefined)?.replaces),
   );
 
   app.delete('/letters/widget/tokens', { preHandler: requireAccount }, async (req, reply) => {
@@ -95,7 +94,7 @@ export function registerLetterWidgetRoutes(app: FastifyInstance, widget: LetterW
     const q = req.query as z.infer<typeof imageQuery>;
     const sky: WidgetSky = q.sky ?? 'day';
     const picture = await widget.picture(callerOf(req).userId);
-    // the same picture at the same size has the same tag: a widget that has it hears so without anything being drawn
+    // The same picture at the same size has the same tag, so a widget that has it gets a 304 without drawing.
     const { width, height } = widgetPixels({ w: q.w, h: q.h, scale: q.scale });
     const etag = widgetImageEtag(widgetImageKey(picture, sky, width, height));
     // a private cache may keep it, but asks each time whether it is still the letter shown

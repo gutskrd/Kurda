@@ -1,7 +1,6 @@
 /**
- * A typed answer in a learning game is taken as a lesson takes one, with each
- * variety's lenient letters as typos: case, punctuation and spacing never
- * matter, a lost mark is accepted as a typo, another word is wrong.
+ * A typed game answer is graded like a lesson's, with each variety's lenient letters as typos: case, punctuation and
+ * spacing never matter, a lost mark is a typo, another word is wrong.
  */
 import { describe, expect, it } from 'vitest';
 import { typedVerdict, wordsInPlace } from './typed.js';

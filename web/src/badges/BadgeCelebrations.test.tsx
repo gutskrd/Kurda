@@ -103,7 +103,7 @@ describe('BadgeCelebrations', () => {
       rt.emit(env);
       expect(screen.getByRole('dialog', { name: 'Cihgirtî (Placed)' })).toBeInTheDocument();
     });
-    // a badge with one tier is not "Zêr", though it is drawn in gold
+    // A single-tier badge is not called "Zêr", though it is drawn in gold.
     expect(screen.getByRole('dialog')).not.toHaveTextContent('Zêr');
     expect(screen.getByRole('dialog')).toHaveTextContent(en['badges.unlocked']);
   });
@@ -117,7 +117,7 @@ describe('BadgeCelebrations', () => {
 
   it('waits while a game is being played', async () => {
     const { fetchMock } = mount([unseen('agir', 1)], <Playing />);
-    // the unlock is in hand, and still nothing is drawn over the game
+    // The unlock has arrived, and still nothing is drawn over the game.
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.includes('/me/badges/unseen'))).toBe(true));
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -125,17 +125,14 @@ describe('BadgeCelebrations', () => {
 
   it('waits behind a game’s own result', async () => {
     const { fetchMock } = mount([unseen('agir', 1)], <Holding />);
-    // the unlock is in hand, and still nothing is drawn over the game
+    // The unlock has arrived, and still nothing is drawn over the game.
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.includes('/me/badges/unseen'))).toBe(true));
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
 
-/*
- * Under the way on, a quiet Share: the badge by its name and the site's
- * address, and nothing of who earned it.
- */
+/* The Share button under the celebration names the badge and the site, and nothing of who earned it. */
 describe('sharing a badge', () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -146,7 +143,7 @@ describe('sharing a badge', () => {
     const share = within(dialog).getByRole('button', { name: 'Share' });
     expect(onward).toHaveClass('btn-primary');
     expect(share).toHaveClass('btn-secondary');
-    // after the way on, in the order they are read and reached
+    // After the main button, in reading and tab order.
     expect(onward.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(dialog).getAllByRole('button', { name: 'Share' })).toHaveLength(1);
   });
@@ -161,10 +158,10 @@ describe('sharing a badge', () => {
     expect(share).toHaveBeenCalledTimes(1);
     const text = (share.mock.calls[0]![0] as ShareData).text!;
     expect(text).toBe(`I earned the “Agir” badge on Hevalo. 🏅\n${window.location.origin}/win/badge`);
-    // the account is "rojda" (id "me"): neither is in it, nor a page about them
+    // The account is "rojda" (id "me"); neither appears, nor a link to them.
     for (const theirs of ['rojda', '/users/', '/profile', '@']) expect(text).not.toContain(theirs);
 
-    // sharing is not the way on: the badge is still there, and not yet marked seen
+    // Sharing does not close the celebration or mark the badge seen.
     expect(screen.getByRole('dialog', { name: 'Agir (Fire)' })).toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([url]) => url.includes('/me/badges/seen'))).toBe(false);
   });

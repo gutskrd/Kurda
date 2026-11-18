@@ -1,10 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import type { MultiGame, MultiSeat } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { HostIcon, SwapIcon } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { PlayerReport } from '../reports/PlayerReport';
 import { useRail } from '../social/RailProvider';
@@ -12,13 +12,7 @@ import { multiSeatName } from './MultiRoom';
 import '../learn/path.css';
 import './teams.css';
 
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
-
-/**
- * Each team's colour, one of the path's tones (`lp-tone-*`, which have a
- * light and a dark version), and its name: a team is always named as well as
- * coloured, so the colour is never the only way to tell them apart.
- */
+/** Each team's tone from the path's palette (`lp-tone-*`); a team is always named too, never told apart by colour alone. */
 export const TEAM_TONE: Readonly<Record<number, string>> = { 1: 'saffron', 2: 'river', 3: 'rose', 4: 'pine' };
 const TEAM_KEY: Readonly<Record<number, MessageKey>> = { 1: 'play.teams.team1', 2: 'play.teams.team2' };
 
@@ -27,17 +21,14 @@ export function teamName(team: number, t: Translate): string {
   return key ? t(key) : t('play.teams.teamN', { team });
 }
 
-export function teamTone(team: number | null | undefined): string {
+function teamTone(team: number | null | undefined): string {
   return TEAM_TONE[team ?? 1] ?? 'saffron';
 }
 
 /**
- * The teams of a team game's lobby, on the website: one column per team in
- * its colour and name, each player by seat (a friend by name, anyone else as
- * "Player N"), the host marked. A player moves themselves with "Join" on the
- * other team; the host can move anyone, and remove them, as in every lobby. A
- * report sits beside each other player, by seat. It stands where the lobby's
- * roster stands in a game without teams (play/MultiRoom.tsx).
+ * A team game's lobby teams: a column per team in its colour and name, players by seat, the host marked. Players move
+ * themselves with "Join" on another team; the host can move or remove anyone. It stands where the roster does in a game
+ * without teams (play/MultiRoom.tsx).
  */
 export function TeamPicker({
   players,
@@ -46,7 +37,6 @@ export function TeamPicker({
   isHost,
   game,
   gameId,
-  note,
   onTeam,
   onRemove,
 }: {
@@ -56,8 +46,6 @@ export function TeamPicker({
   isHost: boolean;
   game: MultiGame;
   gameId: string;
-  /** what the game says about its teams (three play together…) */
-  note?: ReactNode;
   onTeam: (seat: number, team: number) => Promise<void>;
   onRemove: (seat: number) => Promise<void>;
 }): React.JSX.Element {
@@ -84,7 +72,6 @@ export function TeamPicker({
           {t('play.teams.title')} · {t('stories.game.players', { count: present.length, max })}
         </h2>
       </div>
-      {note}
       <div className="team-columns">
         {numbers.map((team) => {
           const members = present.filter((p) => (p.team ?? 1) === team);

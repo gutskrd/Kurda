@@ -48,19 +48,11 @@ interface MatchRow {
 type Executor = Pick<pg.PoolClient, 'query'>;
 
 /**
- * Single-elimination tournaments (KUR-060). Admins schedule; players register;
- * on start the field is seeded by Game Ranks points, the bracket auto-generates
- * (top seeds get byes for non-power-of-two fields), and winners propagate up
- * the tree by slot; the champion is paid the configured reward once,
- * idempotently.
- *
- * There is no game to play a match in yet, so results are an admin's entry
- * and tournaments stay out of the apps until there is. The no-show sweeper is
- * gone (contract-4): with nothing to play, nobody could ever "show", and it
- * advanced the higher seed of every empty match on a timer — a bracket nobody
- * played still crowned, and paid, a champion.
+ * Single-elimination tournaments: admins schedule, players register, and on start the field is seeded by Game Ranks
+ * points and the bracket generated (top seeds get byes); winners move up by slot and the champion is paid once. There
+ * is no game to play matches in yet, so results are entered by an admin and tournaments stay out of the apps.
  */
-/** Grants Gems for a rule/refId; injected so tournaments stay decoupled (KUR-068). */
+/** Grants Gems for a rule and reference id. */
 export interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
@@ -136,10 +128,7 @@ export class TournamentService {
     }
   }
 
-  /**
-   * Seed the field and generate the bracket. Fewer than two registrants →
-   * the tournament is cancelled rather than started.
-   */
+  /** Seeds the field and generates the bracket; with fewer than two registrants the tournament is cancelled instead. */
   async start(tournamentId: string): Promise<void> {
     const client = await this.pool.connect();
     try {
@@ -257,9 +246,8 @@ export class TournamentService {
   }
 
   /**
-   * Record a match winner and advance the bracket. The final's winner completes
-   * the tournament and is paid the reward (once). Returns whether the champion
-   * was just crowned.
+   * Records a match winner and advances the bracket; the final's winner completes the tournament and is paid once.
+   * Returns whether a champion was just crowned.
    */
   async reportResult(tournamentId: string, matchId: string, winnerId: string): Promise<{ champion: boolean }> {
     const client = await this.pool.connect();
@@ -338,7 +326,7 @@ export class TournamentService {
       ]);
       return;
     }
-    // drop the winner into the parent slot; if it now has both players it's ready
+    // Drop the winner into the parent slot; with both players there it is ready.
     const { slot: pSlot, side } = parentSlot(match.slot);
     const col = side === 'a' ? 'player_a' : 'player_b';
     const parent = await client.query<MatchRow>(
@@ -361,10 +349,8 @@ export class TournamentService {
     userId: string,
     reward: { zer: number; gems: number },
   ): Promise<void> {
-    // Nobody the economy does not pay is paid a prize (economy/standing.ts): a
-    // closed or banned account, a confirmed bot, a shadow-flagged cheater or a
-    // payment-fraud hold. The bracket still says who won; an admin can pay by
-    // hand once a review clears them.
+    // Nobody the economy does not pay gets a prize (economy/standing.ts); the bracket still names the winner, and an admin
+    // can pay by hand once a review clears them.
     if (await isEconomyBlocked(this.pool, userId)) return;
     // idempotent: the (idempotencyKey) guard makes a retry a no-op
     if (reward.zer > 0) {
@@ -385,8 +371,7 @@ export class TournamentService {
         idempotencyKey: `tourn:${tournamentId}:gems`,
       });
     }
-    // config-driven tournament-win Gem grant (KUR-068), idempotent per tournament
-    // and champion: ledger keys are unique across everyone, so the key names both
+    // Config-driven Gem grant, idempotent per tournament and champion; ledger keys are global, so the key names both.
     if (this.gems) await this.gems.grant(userId, 'tournament_win', `${tournamentId}:${userId}`).catch(() => undefined);
     // the champion's achievement; idempotent, best-effort like the grant above
     if (this.achievements) await this.achievements.award(userId, 'tournament-win').catch(() => undefined);
@@ -418,16 +403,9 @@ export class TournamentService {
   }
 
   /**
-   * Full bracket view for the live UI (KUR-060).
-   *
-   * Any signed-in player can read any bracket, so it names a minor (or an
-   * account whose age is not on record yet) only to themselves and their
-   * friends (users/age.ts `shownToSql`). To anyone else that entrant is a
-   * place in the draw with no name or id — `userId` and `username` null, and
-   * null wherever a match or the result would have carried their id — which
-   * keeps the bracket's shape without making it a list of children to look
-   * up. `viewerId` undefined is the staff view (the admin routes), with
-   * every name.
+   * The full bracket view. Any signed-in player can read any bracket, so a minor or an account with no age on record is
+   * named only to themselves and their friends (users/age.ts `shownToSql`); to others they are an unnamed place, with
+   * `userId`, `username` and match references null. `viewerId` undefined is the staff view, with every name.
    */
   async bracket(tournamentId: string, viewerId?: string): Promise<{
     id: string;

@@ -1,16 +1,11 @@
 /**
- * Peyvok multiplayer Battle — placement ranking (KUR-306). Pure comparator +
- * ranking for a match where every player raced the same hidden word. The
- * server drives the match (session engine #051, realtime #049); this module
- * decides the finishing order and the placement XP, so it is fully
- * unit-testable with no I/O.
+ * Peyvok Battle placement, pure: ranking and placement XP for a match where everyone raced the same hidden word.
  *
- * Tiebreak chain (per the spec):
- *   1. First to solve the word (solvers rank above non-solvers).
- *   2. If multiple solve it, the fewest guesses wins.
- *   3. If still tied, the fastest completion time wins.
- * Players who didn't solve are ranked below all solvers, by how close they got
- * (progress), then by time.
+ * Tiebreak chain:
+ * 1. Solvers rank above non-solvers.
+ * 2. Among solvers, fewest guesses wins.
+ * 3. Then fastest completion time.
+ * Non-solvers rank by how close they got (progress), then time.
  */
 
 export interface BattlePlayerResult {
@@ -68,18 +63,12 @@ export function rankBattle(players: readonly BattlePlayerResult[]): RankedBattle
   return ranked;
 }
 
-/** The match winner(s) — rank 1. Usually one; more only on an exact tie. */
-export function battleWinners(ranked: readonly RankedBattlePlayer[]): RankedBattlePlayer[] {
-  return ranked.filter((p) => p.rank === 1);
-}
-
 export const BATTLE_PARTICIPATION_XP = 20;
 export const BATTLE_WIN_XP = 100;
 
 /**
- * Placement XP: 1st place earns BATTLE_WIN_XP, last place earns
- * BATTLE_PARTICIPATION_XP, and places in between scale linearly by rank. A
- * solo match (or any 1-player edge) earns the win amount. Tunable.
+ * Placement XP: first earns BATTLE_WIN_XP, last earns BATTLE_PARTICIPATION_XP, places between scale linearly. A
+ * one-player match earns the win amount.
  */
 export function placementXp(rank: number, playerCount: number): number {
   if (playerCount <= 1) return BATTLE_WIN_XP;

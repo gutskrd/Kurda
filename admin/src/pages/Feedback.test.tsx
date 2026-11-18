@@ -150,7 +150,7 @@ describe('the inbox', () => {
     const marked = (c: Call) => json({ ...item({ id: c.path.split('/').pop()! }), ...(c.body as object) });
     const { calls } = show(
       '#/feedback',
-      // by now one of the first page has been read: the server counts two new answers
+      // By now one of the first page has been read: the server counts two new answers.
       on('GET', /beforeId=fb-2$/, json({ items: [item({ id: 'fb-3', comment: 'Answer three' })], total: 2 })),
       on('GET', '/admin/feedback?status=new&limit=50', json({ items: [item(), item({ id: 'fb-2', comment: 'Answer two' })], total: 3 })),
       on('PATCH', /^\/admin\/feedback\/fb-\d$/, marked),
@@ -158,15 +158,15 @@ describe('the inbox', () => {
     expect(await screen.findByRole('button', { name: 'Show more (1 left)' })).toBeInTheDocument();
     await user.click(screen.getAllByRole('button', { name: 'Mark read' })[0]!);
     await waitFor(() => expect(patches(calls)).toHaveLength(1));
-    // still one to come: the answer marked stays on screen, and is not counted twice
+    // Still one to come: the answer marked stays on screen, and is not counted twice.
     expect(await screen.findByRole('button', { name: 'Show more (1 left)' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Show more (1 left)' }));
     expect(await screen.findByText('Answer three')).toBeInTheDocument();
-    // asked for what comes after the last one shown, not for an offset that would now skip "Answer three"
+    // Asked for what comes after the last one shown, not for an offset that would now skip "Answer three".
     expect(calls.some((c) => c.path === '/admin/feedback?status=new&limit=50&beforeId=fb-2')).toBe(true);
     expect(calls.some((c) => c.path.includes('offset='))).toBe(false);
     expect(screen.queryByRole('button', { name: /Show more/ })).not.toBeInTheDocument();
-    // marking one of the first page keeps the pages shown after it
+    // Marking one of the first page keeps the pages shown after it.
     await user.click(screen.getAllByRole('button', { name: 'Mark read' })[0]!);
     await waitFor(() => expect(patches(calls)).toHaveLength(2));
     expect(screen.getByText('Answer three')).toBeInTheDocument();

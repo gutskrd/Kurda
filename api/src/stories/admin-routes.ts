@@ -1,6 +1,5 @@
 /**
- * Writing stories in the admin panel (the same people who edit lessons and
- * record their audio; the admin 2FA gate covers every /admin route).
+ * Story writing routes for the admin panel (lesson editors; the admin 2FA gate covers every /admin route).
  *
  *   GET    /admin/stories?q&status&dialect&level&category&review&featured&limit&offset
  *                                            a page of stories, with what stands between each and publishing
@@ -27,24 +26,16 @@
  *   PUT    /admin/story-categories/:slug     { name, position? }
  *   DELETE /admin/story-categories/:slug     409 IN_USE with the count, unless ?force=1 (the stories are left unfiled)
  *
- * Every change to a story carries the `lockVersion` the editor loaded — in the
- * body, or as `?lockVersion=` on DELETE — and a stale one is refused with 409
- * STALE. It is required, not optional: publishing is the review gate, and a
- * publish that named no version would publish whatever is stored at that
- * moment, including a draft the importer replaced after the reviewer read it.
- * Publishing a story no reviewer approved is 409 NOT_REVIEWED.
+ * Every story change must carry the `lockVersion` the editor loaded (in the body, or `?lockVersion=` on DELETE); a stale
+ * one is 409 STALE. It is required because publishing is the review gate: a publish without a version could publish a
+ * draft the importer replaced after the reviewer read it. Publishing an unapproved story is 409 NOT_REVIEWED.
  *
- * A story that fails `validateStory` is refused with 422 INVALID and
- * `details: { errors, warnings }`, each with a path to the field. Every story
- * returned carries `problems`: what would stop it being published and what
- * is worth a second look.
+ * A story failing `validateStory` is 422 INVALID with `details: { errors, warnings }`, each with a field path. Every
+ * story returned carries `problems`: what blocks publishing and what deserves a second look.
  *
- * The whole-story PUT still takes the translations with everything else, and
- * a changed translation still counts as changed content there (the approval
- * goes, as it always did). The per-language PUT is how a translation alone is
- * corrected, on a published story too, without the Kurdish approval going.
- * Neither ever takes `translationReview` from the editor: it follows from what
- * changed, and from the review route.
+ * The whole-story PUT takes translations too, and a changed translation there counts as changed content (the approval
+ * goes). The per-language PUT corrects one translation, on a published story too, without losing the Kurdish approval.
+ * Neither takes `translationReview` from the editor: it follows from what changed and from the review route.
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';

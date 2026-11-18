@@ -25,26 +25,14 @@ import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability, useGameDialect } from './soloRounds';
 
 /**
- * Build a Sentence (/app/learn/practice/build-sentence), an exercise
- * of the lessons' practice. It is a round of the solo kit like the games
- * played alone, which is why it lives beside them; Learn's Lessons half is
- * where a learner finds it (learn/practiceTools.tsx).
+ * Build a Sentence (/app/learn/practice/build-sentence), a lesson practice exercise run on the solo kit, hence its
+ * place beside the games; learners find it in learn/practiceTools.tsx.
  *
- * The stage: the meaning on a card, a ruled line the sentence is laid on,
- * and a tray of word tiles under it — the sentence's own words and a few that
- * are not. A tile lifts off the tray under the finger and snaps onto the end
- * of the line; one tapped on the line flies home to its place in the tray,
- * which keeps a ghost of it so nothing shuffles. When the line is right it
- * settles: the tiles close up and the rule fills with the exercise's colour.
- *
- * A wrong first try marks the first word out of place on the player's own
- * line and leaves the rest to them; once an item is done the sentence is laid
- * out the right way round, every word with what it means where the approved
- * lessons and stories say so. Before a round, the ladder: six rungs from
- * short sentences to two clauses, the ones opened, and where the learner is.
- *
- * Soranî reads right to left, the line filling from the right. Under reduced
- * motion nothing travels or bounces: a tile that moved fades in where it lands.
+ * The meaning is on a card above a ruled line and a tray of word tiles, including some distractors. A tapped tile
+ * snaps onto the line's end; one tapped on the line flies back to its slot, which keeps a ghost so nothing shuffles.
+ * A right line settles and fills with the exercise's colour. A wrong first try marks the first misplaced word; once
+ * done, the sentence is shown with each word's meaning where known. Before a round, a ladder of six rungs shows
+ * progress. Soranî fills from the right. Under Reduce Motion a moved tile just fades in.
  */
 
 type Round = SoloRound<SentenceItemView, SentenceHint, SentenceCorrection>;
@@ -52,7 +40,7 @@ type Round = SoloRound<SentenceItemView, SentenceHint, SentenceCorrection>;
 /** The exercise's colour, from the registry: one of the path's tones. */
 const TONE = learnGame('build-sentence').tone;
 
-export const RUNG_KEY: Record<SentenceRung, MessageKey> = {
+const RUNG_KEY: Record<SentenceRung, MessageKey> = {
   short: 'games.sentence.rung.short',
   question: 'games.sentence.rung.question',
   negation: 'games.sentence.rung.negation',
@@ -81,9 +69,8 @@ const FLY_MS = 300;
 const SNAP_EASE = 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 
 /**
- * Each tile from where it was to where it is now (first, last, invert, play):
- * the one that moved flies and snaps in with a hair of overshoot, the others
- * close up behind it. Under reduced motion only the one that moved fades in.
+ * Animates each tile from its old position (first, last, invert, play): the moved one flies in with slight overshoot
+ * and the others close up. Under Reduce Motion only the moved one fades in.
  */
 function flyAndSnap(tiles: ReadonlyMap<number, HTMLElement>, was: ReadonlyMap<number, DOMRect>, moved: number): void {
   const still = prefersReducedMotion();
@@ -286,7 +273,7 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
 }
 
 /** The ladder as a path: six rungs bottom to top, the opened ones in colour, the learner's own marked. */
-export function SentenceLadder({ ladder }: { ladder: SentenceLadderView }): React.JSX.Element {
+function SentenceLadder({ ladder }: { ladder: SentenceLadderView }): React.JSX.Element {
   const t = useT();
   return (
     <section className={`bs-ladder lp-tone-${TONE}`} aria-labelledby="bs-ladder-title">

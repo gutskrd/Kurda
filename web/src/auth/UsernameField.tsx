@@ -5,27 +5,13 @@ import { useT } from '../i18n/I18nProvider';
 import { usernameRefusalText, usernameRuleText } from '../lib/usernameText';
 
 /**
- * A username field, as signing up and changing a username both have it.
+ * The username field for sign-up and username changes. It lowercases as you type, keeping the caret in place, and
+ * changes nothing else: a disallowed character stays and is named under the field, and there is no maxlength, so
+ * the reader is told why rather than finding a dead key. While typing it reports only what more typing cannot fix;
+ * the rest shows once the field is left. The rules show from the start, with keys for the five Kurdish letters.
  *
- * A username is lowercase (shared/src/username.ts), so the field writes it
- * that way as it is typed: a capital comes out as its lowercase letter, Ê as
- * ê as much as H as h, with the caret left where it was. Nothing else is
- * changed, and nothing is held back. A character that cannot be in a username
- * stays in the field and is named under it ("“!” can’t be in a username"), so
- * the reader is told why rather than finding a key that does nothing; for the
- * same reason the field has no length limit of its own, and says a name is
- * too long instead of refusing the next key.
- *
- * What is said while typing is only what more typing cannot mend. "ha" is not
- * too short yet and "hamo." is on its way to "hamo.k": those are said once the
- * field is left, or by the form when it is sent (`problem`). What a username
- * may be made of is said under the field from the start, and the five Kurdish
- * letters are keys beside it for a keyboard that has none of them.
- *
- * `problem` is what the form or the server said about the name (taken, or the
- * rule it broke when sent) and is shown in place of the field's own, read out
- * at once where `urgent` (the form was just refused) and politely otherwise;
- * `ok` is an all-clear to show when nothing is wrong (a name that is free).
+ * `problem` is the form's or server's verdict and replaces the field's own, announced at once when `urgent`; `ok` is
+ * an all-clear such as a free name.
  */
 export function UsernameField({
   id,
@@ -49,19 +35,19 @@ export function UsernameField({
   placeholder?: string;
   autoFocus?: boolean;
   disabled?: boolean;
-  /** `problem` is a refusal of the form just sent, to be read out at once */
+  /** `problem` refuses the form just sent and is announced at once. */
   urgent?: boolean;
-  /** the wrapper's class, when the form marks and shakes the field itself (auth/fieldProblem.ts) */
+  /** The wrapper's class, when the form marks and shakes the field itself (auth/fieldProblem.ts). */
   className?: string;
 }): React.JSX.Element {
   const t = useT();
   const input = useRef<HTMLInputElement>(null);
-  /** where the caret belongs after the field's text was rewritten: lowercased, or a key's letter put in */
+  /** Where the caret belongs after the text was rewritten by lowercasing or a letter key. */
   const caret = useRef<number | null>(null);
-  /** the field was left since it was last typed in: everything wrong with the name is said, not only what typing cannot mend */
+  /** The field was left since last typed in, so every problem with the name is shown. */
   const [left, setLeft] = useState(false);
 
-  // a controlled input whose value is rewritten puts its caret at the end; this puts it back
+  // A controlled input whose value is rewritten moves its caret to the end; this puts it back.
   useLayoutEffect(() => {
     const at = caret.current;
     caret.current = null;
@@ -71,7 +57,7 @@ export function UsernameField({
     el.setSelectionRange(at, at);
   }, [value]);
 
-  /** What was typed, lowercased; the caret is only put back when the rewrite moved it, or `place` asks for it. */
+  /** Writes the text lowercased; the caret is restored only when the rewrite moved it or `place` asks. */
   const write = (text: string, at: number, place = false): void => {
     const next = lowercaseAsTyped(text, at);
     if (place || next.text !== text || next.caret !== at) caret.current = next.caret;
@@ -79,7 +65,7 @@ export function UsernameField({
     onChange(next.text);
   };
 
-  // a key's letter goes in where the caret is, and the caret goes on after it, in the field
+  // A letter key inserts at the caret and moves the caret after it.
   const typeKey = (letter: string): void => {
     const el = input.current;
     const at = el ? { start: el.selectionStart ?? value.length, end: el.selectionEnd ?? value.length } : { start: value.length, end: value.length };
@@ -103,13 +89,13 @@ export function UsernameField({
         id={id}
         className="input"
         type="text"
-        // a handle reads left to right in every language
+        // A handle reads left to right in every language.
         dir="ltr"
         value={value}
         onChange={(e) => write(e.target.value, e.target.selectionStart ?? e.target.value.length)}
         onBlur={() => setLeft(true)}
         autoComplete="username"
-        // a name is typed as it is meant: no capital put on it, nothing corrected, no red wave under a Kurdish word
+        // No autocapitalising, autocorrect or spellcheck on a name.
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}

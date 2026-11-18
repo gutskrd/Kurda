@@ -1,11 +1,7 @@
 /**
- * What the practice hub offers, from what GET /practice/hub says: the one
- * thing most worth doing now, for the card at the top, and the row for every
- * other kind of practice — each either ready to start or saying, in one line,
- * why it is not. Among the rows, each beside the kind it is nearest to, are
- * the lessons' two exercises that have a screen of their own
- * (practice/exercises.ts), when they can be done now. Pure, so the choices
- * are tested apart from the screen.
+ * What the practice hub offers, from GET /practice/hub: the one thing most worth doing for the top card, and a
+ * row for every other kind, ready or saying in one line why not. The two lesson exercises with their own screens
+ * (practice/exercises.ts) sit beside their nearest kind when available. Pure.
  */
 import { ACCURACY_BONUS_XP, BASE_LESSON_XP, type HueName, type PracticeHub, type PracticeHubUnit, type PracticeMode } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
@@ -13,11 +9,11 @@ import type { IconName } from '../theme/Icon';
 import type { ExerciseRoute, PhoneExercise } from './exercises';
 
 /**
- * The card at the top:
- *   due    — words waiting for review, with how many;
- *   unit   — nothing due: the unit finished last, to go back over;
- *   weak   — nothing due and no unit finished: the hardest words again;
- *   none   — nothing learned yet: the lessons are where it starts.
+ * The top card:
+ *   due    words waiting for review, with their count;
+ *   unit   nothing due: the unit finished last;
+ *   weak   nothing due and no unit finished: the hardest words;
+ *   none   nothing learned yet: the lessons.
  */
 export type Hero = { kind: 'due'; count: number } | { kind: 'unit'; unit: PracticeHubUnit } | { kind: 'weak' } | { kind: 'none' };
 
@@ -36,10 +32,8 @@ export interface Line {
 }
 
 /**
- * What a row does when pressed: start a session of its kind, open the unit
- * picker, open Settings to allow the microphone, or open an exercise's own
- * screen. Null for a row with nothing to do, which is shown, dimmed, with its
- * reason.
+ * What a row does when pressed: start a session, open the unit picker, open Settings for the microphone, or open
+ * an exercise's screen. Null for a row with nothing to do, shown dimmed with its reason.
  */
 export type RowAction = { kind: 'start'; mode: PracticeMode } | { kind: 'pick' } | { kind: 'settings' } | { kind: 'open'; route: ExerciseRoute } | null;
 
@@ -48,22 +42,18 @@ export interface HubRow {
   icon: IconName;
   title: TranslationKey;
   detail: Line;
-  /** something is waiting in it (mistakes to put right), said in the app’s violet as well as in words */
+  /** Something is waiting in it (mistakes to fix), shown in violet as well as in words. */
   waiting: boolean;
   action: RowAction;
 }
 
 /**
- * Every other kind of practice, in a fixed order, never hidden: a kind with
- * nothing in it says what would put something there. Speaking also answers to
- * the learner turning speaking off, and to a microphone refused for good —
- * then the row is the way to Settings, where only it can be allowed again.
+ * Every other kind of practice, in a fixed order and never hidden: an empty kind says what would fill it.
+ * Speaking also reflects the learner turning speaking off and a microphone denied for good, when the row leads to
+ * Settings.
  *
- * The exercises are the exception to "never hidden": one is in the list only
- * while it can be done (`exercises` holds those), since what keeps it away is
- * content an editor has yet to publish, which nothing the learner does would
- * change. Building a sentence follows the words it is made of, and Hear It,
- * Find It follows listening.
+ * Exercises are the exception: one is listed only while available (`exercises`), since only an editor publishing
+ * content can change that. Building a sentence follows words, and Hear It, Find It follows listening.
  */
 export function hubRows(hub: PracticeHub, { micRefused, exercises = [] }: { micRefused: boolean; exercises?: readonly PhoneExercise[] }): HubRow[] {
   const count = (n: number, one: TranslationKey, many: TranslationKey): Line => (n === 1 ? { key: one } : { key: many, count: n });
@@ -117,10 +107,8 @@ function speakRow(hub: PracticeHub, micRefused: boolean): HubRow {
 }
 
 /**
- * What a practice session pays, said on the button that starts one: half of
- * what a fresh lesson does, from none right to all right. The server's
- * practice service halves `lessonCompletionXp` and rounds the same way, so
- * the promise is the one it keeps.
+ * What a practice session pays, shown on its start button: half a fresh lesson's XP, from none right to all
+ * right. The server's practice service halves `lessonCompletionXp` and rounds the same way.
  */
 export const PRACTICE_XP_FACTOR = 0.5;
 
@@ -132,9 +120,7 @@ export function practiceXpRange(): { min: number; max: number } {
 }
 
 /**
- * The hue each kind's badge wears (shared `hues.ts`): one each, so the rows
- * are told apart at a glance, and all of one family, so a list of them reads
- * as one list. Violet is left out: it is the app's own, and on this screen it
- * belongs to the card at the top and its button.
+ * Each kind's badge hue (shared `hues.ts`): distinct so rows are told apart, from one family so they read as one
+ * list. Violet is left out: on this screen it belongs to the top card and its button.
  */
 export const ROW_HUES: Record<HubRow['key'], HueName> = { mistakes: 'pink', words: 'gold', sentence: 'blue', listen: 'green', hear: 'indigo', speak: 'orange', unit: 'teal' };

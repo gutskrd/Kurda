@@ -48,14 +48,14 @@ describe('what the sheet says', () => {
   it('draws the freezes held among the places for them', () => {
     expect(freezeSlots(kept)).toEqual({ held: 0, max: 1 });
     expect(freezeSlots({ ...kept, freezes: 1 })).toEqual({ held: 1, max: 1 });
-    // an older response says no maximum: one, as the server allows
+    // An older response says no maximum: one, as the server allows.
     expect(freezeSlots({ ...kept, maxFreezes: undefined, freezes: 3 })).toEqual({ held: 1, max: 1 });
   });
 
   it('says how many more lessons earn the next freeze', () => {
     expect(nextFreeze(kept)).toEqual({ key: 'learn.kept.earn', params: { count: 2 } });
     expect(nextFreeze({ ...kept, freezeProgress: 4 })).toEqual({ key: 'learn.kept.earnOne' });
-    // a count that filled while one was held: the next lesson earns it
+    // A count that filled while one was held: the next lesson earns it.
     expect(nextFreeze({ ...kept, freezeProgress: 5 })).toEqual({ key: 'learn.kept.earnOne' });
   });
 

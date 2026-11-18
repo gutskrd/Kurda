@@ -18,11 +18,7 @@ const person = (n: number, blockedAt: string): Record<string, unknown> => ({
   blockedAt,
 });
 
-/**
- * A fetch stub that answers the blocklist and records every call, so a test can
- * assert on the request the component actually made (method and path), not only
- * on what ended up on screen.
- */
+/** A fetch stub that answers the blocklist and records every call, so tests can check the requests made. */
 function stubApi(pages: Array<{ blocked: unknown[]; total: number }>): ReturnType<typeof vi.fn> {
   let next = 0;
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -45,17 +41,13 @@ describe('the blocklist in Settings', () => {
 
     expect(await screen.findByText('Person 1')).toBeInTheDocument();
     expect(screen.getByText('Person 2')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument(); // the count beside the heading
-    // the date is what tells an old block from one placed by accident today
+    expect(screen.getByText('2')).toBeInTheDocument(); // The count beside the heading.
+    // The date tells an old block from one placed by accident today.
     expect(screen.getByText(/@person1 · blocked/)).toBeInTheDocument();
     expect(screen.getByText(/@person2 · blocked .*2024/)).toBeInTheDocument();
   });
 
-  /**
-   * The name of someone you blocked is text, not a button. Their profile is a
-   * 404 to you the moment you block them, so a link would go nowhere — see the
-   * component comment.
-   */
+  /** A blocked person's name is text, not a link, since their profile is a 404 to the blocker. */
   it('does not offer a link to a profile that no longer answers', async () => {
     stubApi([{ blocked: [person(1, '2026-09-03T10:00:00.000Z')], total: 1 }]);
     renderApp(<BlockedUsers />);
@@ -73,7 +65,7 @@ describe('the blocklist in Settings', () => {
     const user = userEvent.setup();
     const unblock = screen.getByRole('button', { name: /unblock person 1/i });
 
-    // one press only arms it — nothing has been sent yet
+    // One press only arms it; nothing has been sent yet.
     await user.click(unblock);
     expect(fetchMock.mock.calls.filter((c) => String(c[0]).includes('/friends/u1/block')).length).toBe(0);
 
@@ -83,7 +75,7 @@ describe('the blocklist in Settings', () => {
     const call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/friends/u1/block'));
     expect(call).toBeTruthy();
     expect((call![1] as RequestInit).method).toBe('DELETE');
-    // the count follows the list down rather than going stale
+    // The count follows the list down.
     expect(screen.queryByText('1')).not.toBeInTheDocument();
   });
 
@@ -107,7 +99,7 @@ describe('the blocklist in Settings', () => {
     await userEvent.setup().click(more);
 
     expect(await screen.findByText('Person 3')).toBeInTheDocument();
-    // once everything is shown there is nothing left to ask for
+    // Once everything is shown there is nothing left to ask for.
     await waitFor(() => expect(screen.queryByRole('button', { name: /show more/i })).not.toBeInTheDocument());
   });
 
@@ -126,8 +118,7 @@ describe('the blocklist in Settings', () => {
     await user.click(screen.getByRole('button', { name: /unblock person 1/i }));
     await user.click(screen.getByRole('button', { name: /press again to confirm/i }));
 
-    // still blocked, and told so — the dangerous failure here is a row that
-    // vanishes while the block is still in force
+    // Still blocked, and the row stays: a row vanishing while the block holds would mislead.
     await waitFor(() => expect(screen.getByRole('button', { name: /unblock person 1/i })).toBeInTheDocument());
     expect(screen.getByText('Person 1')).toBeInTheDocument();
   });

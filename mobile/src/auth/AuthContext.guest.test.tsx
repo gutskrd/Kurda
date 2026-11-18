@@ -72,7 +72,8 @@ describe('trying Hevalo as a guest', () => {
   it('asks for a guest session with the phone’s name and language, and is signed in as a guest on its tokens', async () => {
     const calls = stubFetch((url) => (url.endsWith('/auth/guest') ? json(201, GUEST) : json(200, { user: GUEST.user })));
     const { result, storage } = await startAsGuest(calls);
-    expect(calls.find((c) => c.url.endsWith('/auth/guest'))!.body).toEqual({ deviceName: 'iPhone', locale: 'en' });
+    // And the phone's own time zone, so the account's days are the learner's from the first lesson.
+    expect(calls.find((c) => c.url.endsWith('/auth/guest'))!.body).toEqual({ deviceName: 'iPhone', locale: 'en', timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone });
     expect(await storage.get()).toEqual({ accessToken: 'guest-acc', refreshToken: 'guest-ref' });
     expect(result.current.status).toBe('signedIn');
     expect(result.current.isGuest).toBe(true);
@@ -114,7 +115,7 @@ describe('trying Hevalo as a guest', () => {
       birthMonth: 3,
       acceptTerms: true,
     });
-    // the session is the same one; only who it belongs to changed, and the email is still to be proven
+    // The session is the same one; only who it belongs to changed, and the email is still to be proven.
     expect(await storage.get()).toEqual({ accessToken: 'guest-acc', refreshToken: 'guest-ref' });
     expect(result.current.isGuest).toBe(false);
     expect(result.current.user).toMatchObject({ username: 'rojda', email: 'r@example.com', emailVerified: false, guest: false });
@@ -137,14 +138,12 @@ describe('trying Hevalo as a guest', () => {
   });
 
   /*
-   * Apple or Google claims the guest only when the sign-in carries the
-   * guest's session, and the server does not renew one that ran out on that
-   * route — it just makes a second account. So the session is renewed first,
-   * and the sign-in goes with the fresh token.
+   * Apple or Google claims the guest only when the sign-in carries the guest's session, and that route does not renew
+   * an expired one, so the session is renewed first.
    */
   it('signs a guest in with Google on a renewed session, so the server claims the guest', async () => {
     const seen: Array<{ url: string; token: string | null }> = [];
-    // the guest's first token runs out once the session has started
+    // The guest's first token runs out once the session has started.
     let expired = false;
     vi.stubGlobal(
       'fetch',

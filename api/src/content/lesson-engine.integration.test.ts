@@ -1,14 +1,10 @@
 /**
- * Lesson results and rewards that should follow learning, not replays, against
- * real Postgres: first completion (of a lesson, whichever version), revealed
- * mistakes, perfect-lesson Gems at most once per learner and lesson,
- * first-perfect, honest spacing on a replay, and speaking kept out of review.
+ * Lesson results and rewards that follow learning, not replays, against real Postgres: first completion (of any
+ * version), revealed mistakes, perfect-lesson Gems at most once per learner and lesson, first-perfect, honest spacing
+ * on replays, and speaking kept out of review.
  *
- * The perfect-lesson gem rule is switched off now (free gems are rare), so a
- * perfect lesson pays none: the last test says so. The rule is still there
- * for an admin to switch back on, and the code that pays it must then pay
- * once per learner and lesson and never for a replay, so this suite switches
- * it on for itself to go on covering that.
+ * The perfect-lesson gem rule is switched off, so a perfect lesson pays none (the last test checks this). The rule can
+ * still be switched back on, so this suite enables it for itself to keep covering the once-per-learner payment.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -78,9 +74,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   }
 
   /**
-   * Play the lesson once. `right` picks what to answer: true answers every
-   * exercise right; false gets the multiple choice wrong, slips a diacritic on
-   * the translation and rates the recording "try again".
+   * Play the lesson once. `right` true answers everything right; false gets the multiple choice wrong, slips a
+   * diacritic in the translation and rates the recording "try again".
    */
   async function play(player: Player, right: boolean) {
     const start = await authed(player, 'GET', `/lessons/${lessonId}/session`);
@@ -240,9 +235,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   let legacy: Player;
 
   /**
-   * Perfect-lesson Gems used to be paid per session, under the session id.
-   * Asking again for the results of a session paid that way must not pay the
-   * learner a second time under the key they are paid under now.
+   * Gems once paid per session under the session id must not be paid again under the current per-learner key when the
+   * results are asked for again.
    */
   it('re-completing a session paid under the old per-session key pays nothing more', async () => {
     legacy = await register('eng3');
@@ -266,10 +260,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(5);
   });
 
-  /**
-   * Importing a corrected lesson makes a new version with a new id at the same
-   * place. To the learner it is the lesson they already finished.
-   */
+  /** A corrected lesson's new version (new id, same slot) is the lesson the learner already finished. */
   it('a new version of a finished lesson is not a first completion and pays no Gems again', async () => {
     const unitId = await repo.createUnit(courseId, 2, 'Y2', 'Unit two');
     const skillId = await repo.createSkill(unitId, 1, 'A', 'Water');
@@ -304,8 +295,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   });
 
   /**
-   * Repeating a finished lesson pays a quarter twice a day, then nothing
-   * (contract 4 §L4) — and the ledger says what of it counts for the league.
+   * Repeating a finished lesson pays a quarter twice a day, then nothing (contract 4 §L4), and the ledger says what
+   * counts for the league.
    */
   it('a lesson finished a third time in a day pays nothing', async () => {
     const repeater = await register('eng_rep');
@@ -324,11 +315,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   });
 
   /**
-   * The Gem idempotency key is global, so a grant keyed on less than the
-   * learner pays only the first person ever to earn it. Deliberately changed
-   * (contract 4 §B): lessons now report to the badges, which pay no Gems, so
-   * this asks the same of the perfect-lesson Gems and of the badge count —
-   * every learner gets their own.
+   * The Gem idempotency key is global, so a key without the learner would pay only the first person ever. Each learner
+   * is paid and counted on their own (contract 4 §B: lessons report to the badges, which pay no Gems).
    */
   it('every learner who finishes a perfect lesson is paid, and counted, on their own', async () => {
     const second = await register('eng2');
@@ -346,9 +334,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   });
 
   /**
-   * As it is for everyone now: the rule is off, so the same perfect first
-   * completion pays no Gems. Everything else it earns is unchanged — the XP,
-   * the first completion, the perfect lesson counted towards its badge.
+   * With the rule off, a perfect first completion pays no Gems; the XP, the first completion and the perfect-lesson
+   * badge count are unchanged.
    */
   it('a perfect first completion pays no Gems while the rule is switched off, as the migration left it', async () => {
     await perfectRuleOff();

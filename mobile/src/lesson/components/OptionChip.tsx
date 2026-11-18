@@ -6,15 +6,9 @@ import type { TileState } from '../../theme/Tile';
 import { useValley } from '../ValleyScope';
 
 /**
- * An option's round chip, at its start: its number while it waits, in the
- * pomegranate's red once chosen, and the verdict's mark once graded — a check
- * that draws in on the one chosen right (and stands on the right one beside a
- * miss), a cross on the one chosen wrong. Its number is a place in the list
- * and nothing more on a phone, so it is not read out: the option's own label
- * is, with its verdict.
- *
- * The same chip sits at the corner of a picture card, so a picture answers
- * back exactly as a line of words does.
+ * An option's round chip: its number while waiting, red once chosen, and the verdict's mark once graded (a check
+ * drawing in on the right one, a cross on a wrong choice). The number is not read out; the option's own label is,
+ * with its verdict. Picture cards use the same chip.
  */
 export function OptionChip({ state, selected, n }: { state: TileState; selected: boolean; n: string }): React.JSX.Element {
   const valley = useValley();
@@ -39,7 +33,7 @@ export function OptionChip({ state, selected, n }: { state: TileState; selected:
   );
 }
 
-/** An option's chip, and the mark drawn in it. */
+/** The chip's size, and the mark drawn in it. */
 const CHIP = 26;
 const CHIP_MARK = 15;
 

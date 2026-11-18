@@ -5,10 +5,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { MarkdownView } from './MarkdownView';
 import { useI18n } from '../i18n/I18nContext';
 
-/**
- * Grammar "Tips" sheet (KUR-038). Rendered inside a Modal so opening it
- * mid-lesson never unmounts the player — session state is untouched.
- */
+/** The grammar tips sheet. It renders in a Modal so opening it mid-lesson never unmounts the player. */
 export function GrammarTips({ source, onClose }: { source: string; onClose: () => void }) {
   const { t } = useI18n();
   return (

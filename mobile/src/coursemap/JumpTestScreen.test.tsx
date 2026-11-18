@@ -57,22 +57,22 @@ function open(ways: { onPath?: () => void; onAgain?: () => void } = {}) {
   );
 }
 
-/** Answer the one item, and go on to the results. */
+/** Answers the one item and goes on to the results. */
 async function sitIt(): Promise<void> {
   await screen.findByRole('radio', { name: 'av' });
-  // on a busy run the question can be drawn again (as the profile and the goal come in) between finding the
-  // choice and pressing it, and a press on the old one is lost: press until the choice shows as taken
+  // Under load the question can redraw between finding the choice and pressing it, losing the press, so press
+  // until the choice shows as taken.
   await waitFor(() => {
     fireEvent.click(screen.getByRole('radio', { name: 'av' }));
     expect(screen.getByRole('radio', { name: 'av' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('button', { name: 'Check' }).getAttribute('aria-disabled')).toBeNull();
   });
   fireEvent.click(screen.getByRole('button', { name: 'Check' }));
-  // the verdict sheet brings Hevalo in at his window: the first one drawn in a file can take a while
+  // The first verdict sheet in a file draws Hevalo's window, which can be slow.
   fireEvent.click(await screen.findByRole('button', { name: 'Continue' }, { timeout: 5000 }));
 }
 
-// the first sitting in the file draws everything for the first time: on a busy run it takes longer than the usual five seconds
+// The first test in the file draws everything for the first time, which can exceed five seconds under load.
 describe('the test that jumps ahead', { timeout: 15_000 }, () => {
   it('is played as a practice session, and says the unit is open when it is passed', async () => {
     const client = serve(test(2));
@@ -83,7 +83,7 @@ describe('the test that jumps ahead', { timeout: 15_000 }, () => {
     await sitIt();
     expect(await screen.findByRole('heading', { name: 'Chapter 3 is open!' })).toBeTruthy();
     expect(screen.getByText('9 of 10 right. The lessons you skipped stay open to come back to.')).toBeTruthy();
-    // Hevalo cheers it, his head in at the window
+    // Hevalo cheers at his window.
     expect(within(screen.getByTestId('jump-results')).getByTestId('hevalo-window')).toBeTruthy();
     expect(felt).toContain('celebrate');
     stop();
@@ -126,7 +126,7 @@ describe('the test that jumps ahead', { timeout: 15_000 }, () => {
     expect(onPath).toHaveBeenCalled();
   });
 
-  // Android's back is the test's ✕ too: a test opened again with an answer in it asks before it goes
+  // Android's back acts as the test's close button, so a resumed test with an answer asks first.
   it('asks before Android’s back leaves a test part-way through', async () => {
     serve(
       ok({

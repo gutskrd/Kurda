@@ -2,10 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ApiError, ApiResult } from '../lib/types';
 
 /**
- * A message the reader has sent that the server has not answered for yet, or
- * could not be reached for: drawn in the thread at once, in its place at the
- * end, and never as a sent one. `sending` is on its way; `failed` did not get
- * there and waits for "Try again" or to be taken back.
+ * A message the server has not confirmed, shown at the end of the thread and never as sent: `sending` is on its way,
+ * `failed` waits for a retry or removal.
  */
 export interface Unsent {
   /** its own, never the server's: `local:` and a count */
@@ -19,20 +17,9 @@ export interface Unsent {
 const notReached = (error: ApiError): boolean => error.kind === 'network' || error.kind === 'server';
 
 /**
- * What a thread has sent and not yet had answered — the part of a
- * conversation that is the reader's alone until the server has it.
- *
- * Send used to hold the words in the box and the button on "Sending…" until
- * the server replied, and only then show the message; a chat answers the
- * press itself. So a message goes into the thread the moment it is sent, a
- * little dimmed, the box is empty for the next one, and the server is told
- * behind that, one message at a time so two sent quickly arrive in the order
- * they were written. When it answers, `onDelivered` hands the thread the real
- * message and this one goes. When it cannot be reached the bubble stays,
- * marked as not sent, with a way to try again — it is never shown as sent.
- * When the server hears it and refuses it (moderation, a block, a limit),
- * that is not something trying again mends: the bubble goes and `onRefused`
- * is given why, and the words, to say so as the thread always has.
+ * A thread's unconfirmed messages. Each shows dimmed at once while the box clears, and is sent one at a time so order
+ * is kept. On success `onDelivered` gets the real message; on a network failure it stays marked with a retry; a
+ * refusal (moderation, a block, a limit) removes it and passes the reason and words to `onRefused`.
  */
 export function useOutbox<T>({
   post,

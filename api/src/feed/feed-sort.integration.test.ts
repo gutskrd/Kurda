@@ -70,7 +70,7 @@ describe.skipIf(!DATABASE_URL)('community feed order (integration)', () => {
     // A: a story from three days ago, one heart
     made.A = await library('story', 72, 0);
     await engage('r1', 'library', made.A, 'like');
-    // B: a poem from forty days ago, three hearts and a repost — and a bookmark, which is nobody's business and counts for nothing
+    // B: a poem from forty days ago with three hearts, a repost and a bookmark, which is private and counts for nothing.
     made.B = await library('poem', 40 * 24, 0);
     for (const r of ['r1', 'r2', 'r3']) await engage(r, 'library', made.B, 'like');
     await engage('r1', 'library', made.B, 'repost');

@@ -1,42 +1,12 @@
 /**
- * The learning games, in one list: what each is, how it is played, what it
- * is made of and what it pays. The API counts what each game can be played
- * with (GET /games/availability), the admin panel files content by it, and
- * both apps build Learn's games from it, so a game added here is added
- * everywhere at once.
+ * The learning games on the shared kit (api/src/games) in one list: what each is, how it is played, what it is made of
+ * and what it pays. The API counts what each can be played with, the admin files content by it, and both apps build
+ * Learn's games from it. Peyvok, Peyvok Battle, the rhyme games, the typing race and the story games have their own pages.
  *
- * Peyvok, Peyvok Battle, the rhyme games, the typing race and the story games
- * are not in this list: they have their own pages, rules and tables, and stay
- * as they are. These are the games built on the shared kit (api/src/games).
- *
- * A game opens for a learner only when it has enough approved content for
- * their variety (`minimum`, at some difficulty), and is listed only by an app
- * that has a screen for it. One still short of content is listed after the
- * open ones as coming soon, with no way in (`listedLearnGames`).
- *
- * What a game pays: XP only when it is played online with other people. A
- * round played alone, against Hevalo, or on one phone passed round a room
- * pays none (`paysAlone`), so nothing here can be earned by one person at a
- * screen with nobody to play against. The lessons' two exercises below are
- * lessons, and pay as lessons do.
- *
- * Two entries are not games any more but exercises of the lessons' practice
- * (`place: 'lessons'`): Build a Sentence and Hear It, Find It. They
- * are still rounds of the solo kit, made, checked and paid by the same rules,
- * which is why they stay in this list; Learn's Games never lists them, and
- * the lessons' practice does.
- *
- * Don't Say the Word!, Kurdish Bluff, The Village and What Would You Say? are
- * no longer part of Hevalo (`RETIRED_GAME_IDS`). Nothing lists, opens or
- * starts one; their names are kept only so that what was written while they
- * were played is still read for what it is.
- *
- * Per-game modules. The registry is data only and imports no game: a game's
- * own rules live in a folder of its own beside this file —
- * `build-sentence/` for Build a Sentence, `last-letter/` for The Last
- * Letter, `multi/` for the multiplayer engine every game with friends shares — and are
- * exported through `games/index.ts`, one line per module. A new game adds its
- * entry here and its folder there; nothing else in this file changes.
+ * A game opens only with enough approved content in the learner's variety (`minimum`) and an app screen for it; one still
+ * short is listed as coming soon. XP is paid only for games played online with other people (`paysAlone`). Build a
+ * Sentence and Hear It, Find It are lesson practice (`place: 'lessons'`), paid as lessons. Retired games
+ * (`RETIRED_GAME_IDS`) are kept so old rows still read. Data only: each game's rules live in its own folder.
  */
 import type { UnitTone } from '../lesson-path.js';
 import type { GameContentKind } from './content.js';
@@ -53,17 +23,10 @@ export const LEARN_GAME_IDS = [
 ] as const;
 export type LearnGameId = (typeof LEARN_GAME_IDS)[number];
 
-export function isLearnGameId(v: unknown): v is LearnGameId {
-  return (LEARN_GAME_IDS as readonly unknown[]).includes(v);
-}
-
 /**
- * Games that were part of Hevalo once and are not any more. No list, page,
- * invitation or lobby offers one, and the server refuses to start one. The
- * names stay known because rows written while they were played still carry
- * them (matches, rounds played alone, XP, old invitations in a chat):
- * whatever reads such a row says the game is no longer played, rather than
- * failing on a name it has never heard of.
+ * Games no longer part of Hevalo: nothing lists, invites to or opens one, and the server refuses to start one. Their names
+ * stay known because old rows carry them (matches, solo rounds, XP, chat invitations), so readers can say the game is
+ * retired instead of failing.
  */
 export const RETIRED_GAME_IDS = ['dont-say', 'bluff', 'kingdom', 'what-would-you-say'] as const;
 export type RetiredGameId = (typeof RETIRED_GAME_IDS)[number];
@@ -73,12 +36,9 @@ export function isRetiredGame(v: unknown): v is RetiredGameId {
 }
 
 /**
- * The XP sources nothing pays from any more: the retired games', and the ones
- * games paid from while a round played alone still earned XP (Who Am I?,
- * Memory Thief and Detective alone, The Last Letter against Hevalo).
- * They are still game sources: XP already in the ledger under one of them
- * keeps counting as game XP, under the league's daily cap, exactly as it did
- * the day it was earned.
+ * XP sources nothing pays from any more: the retired games', and those solo rounds paid from while they still earned XP
+ * (Who Am I?, Memory Thief and Detective alone, The Last Letter against Hevalo). They remain game sources, so XP already
+ * in the ledger under them still counts as game XP under the league's daily cap.
  */
 export const RETIRED_GAME_XP_SOURCES: readonly string[] = [
   'game_dont_say_place',
@@ -93,28 +53,22 @@ export const RETIRED_GAME_XP_SOURCES: readonly string[] = [
 /** How a game is played: alone, with others, or either. */
 export type LearnGameMode = 'solo' | 'multi' | 'both';
 
-/**
- * Where a learner finds an entry: among Learn's games, or with the lessons'
- * practice (an exercise the solo kit runs that is not a game).
- */
+/** Where a learner finds an entry: among Learn's games, or with the lessons' practice (a solo-kit exercise that is not a game). */
 export type LearnGamePlace = 'games' | 'lessons';
 
 /**
  * Approved Kurdish a game reads where it already is, besides its own rows:
- *   lesson-sentences — published lessons' translations and conversation lines, with English and accepted orders
- *   conversations    — published lessons' conversations, a few lines at a time
- *   vocabulary       — published lessons' word pairs, and published stories' glossaries
- *   story-passages   — published stories' paragraphs, with the glossary terms in each
- *   recordings       — people's recordings (lesson, alphabet and dictionary audio), never synthesised ones
- *   dictionary       — dictionary rows, only ever to check a player's word (and `in_games` words for the computer's moves)
+ *   lesson-sentences  published lessons' translations and conversation lines, with English and accepted orders
+ *   conversations     published lessons' conversations, a few lines at a time
+ *   vocabulary        published lessons' word pairs and published stories' glossaries
+ *   story-passages    published stories' paragraphs, with each one's glossary terms
+ *   recordings        people's recordings (lesson, alphabet and dictionary audio), never synthesised ones
+ *   dictionary        dictionary rows, only to check a player's word (and `in_games` words for the computer's moves)
  */
 export const TRUSTED_SOURCES = ['lesson-sentences', 'conversations', 'vocabulary', 'story-passages', 'recordings', 'dictionary'] as const;
 export type TrustedSource = (typeof TRUSTED_SOURCES)[number];
 
-/**
- * The picture on a game's card, by name. Each app draws it from its own icon
- * set (the phone's names are these; the browser maps them to the same glyphs).
- */
+/** A game card's picture by name; each app draws it from its own icon set (the phone's names are these; the browser maps them). */
 export type GameGlyph = 'tiles' | 'eye' | 'headphones' | 'search' | 'text-t' | 'people' | 'question';
 
 export interface LearnGame {
@@ -123,23 +77,15 @@ export interface LearnGame {
   place: LearnGamePlace;
   /** how many people play one game; a solo game is 1 to 1 */
   players: { min: number; max: number };
-  /** players type their own words, which go through the chat's safety checks before anyone else sees them */
+  /** players type their own words, which pass the chat's safety checks before anyone else sees them */
   freeText: boolean;
   /** the approved sources it reads */
   sources: readonly TrustedSource[];
   /** its own `game_content` kinds */
   contentKinds: readonly GameContentKind[];
-  /**
-   * The approved items of its main content one difficulty must hold for the
-   * game to be offered at it: sentences, passages, case files, cards…
-   */
+  /** The approved items of its main content one difficulty must hold for the game to be offered at it (sentences, passages, case files, cards…). */
   minimum: number;
-  /**
-   * The XP ledger sources it pays from; every one is a game source, under the
-   * league's daily cap. None for a game that is only ever played alone: XP is
-   * for lessons, their exercises, and games played online with other people
-   * (`paysAlone`).
-   */
+  /** The XP ledger sources it pays from, all game sources under the league's daily cap; none for a game only ever played alone (`paysAlone`). */
   xpSources: readonly string[];
   /** the varieties it can be played in; dialects never mix in one game */
   dialects: readonly GameDialect[];
@@ -171,7 +117,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     freeText: false,
     sources: ['story-passages', 'conversations'],
     contentKinds: ['passage'],
-    // fifteen passages a difficulty, so a round of five is not the same few passages again and again
+    // Fifteen passages a difficulty, so a round of five does not repeat the same few.
     minimum: 15,
     xpSources: [],
     dialects: GAME_DIALECTS,
@@ -200,7 +146,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     freeText: false,
     sources: ['lesson-sentences', 'story-passages', 'recordings'],
     contentKinds: ['case_file'],
-    // three cases a difficulty, so a learner who solves one has another to go to
+    // Three cases a difficulty, so a learner who solves one has another.
     minimum: 3,
     xpSources: [],
     dialects: GAME_DIALECTS,
@@ -211,14 +157,14 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     id: 'last-letter',
     mode: 'both',
     place: 'games',
-    // alone against Hevalo, or two to six with friends (last-letter/rules.ts)
+    // Alone against Hevalo, or two to six with friends (last-letter/rules.ts).
     players: { min: 1, max: 6 },
     freeText: false,
     sources: ['dictionary', 'vocabulary'],
     contentKinds: [],
-    // the words a chain can check, as its own rule counts them (LAST_LETTER_MIN_DICTIONARY_WORDS)
+    // The words a chain can check, as its own rule counts them (LAST_LETTER_MIN_DICTIONARY_WORDS).
     minimum: 1500,
-    // with friends; a game against Hevalo pays nothing
+    // With friends; a game against Hevalo pays nothing.
     xpSources: ['game_last_letter'],
     dialects: GAME_DIALECTS,
     glyph: 'text-t',
@@ -240,7 +186,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   },
   {
     id: 'who-am-i',
-    // a card is read by somebody else: with friends online, or on one phone passed round a room; never alone
+    // A card is read by somebody else, online with friends or on one passed-round phone; never alone.
     mode: 'multi',
     place: 'games',
     players: { min: 2, max: 6 },
@@ -261,43 +207,28 @@ export function learnGame(id: LearnGameId): LearnGame {
 }
 
 /**
- * Whether a round of this played alone earns XP. Only the lessons' own
- * exercises do. A game played alone, against Hevalo, or on one phone passed
- * round a room is practice: nobody else is there to play against, and XP that
- * can be had that way is XP anyone can have for the asking. Game XP comes
- * from games played online with other people.
+ * Whether a solo round of this earns XP: only the lessons' own exercises do. Alone, against Hevalo or on one passed-round
+ * phone is practice, and XP available that way would be XP for the asking; game XP comes from playing online with others.
  */
 export function paysAlone(id: LearnGameId): boolean {
   const game = learnGame(id);
   return game.place === 'lessons' && game.xpSources.length > 0;
 }
 
-/**
- * Every XP source the learning games pay from or ever paid from, for the
- * API's list of game sources (and its league cap).
- */
+/** Every XP source the learning games pay or ever paid from, for the API's list of game sources and its league cap. */
 export const LEARN_GAME_XP_SOURCES: readonly string[] = [...new Set([...LEARN_GAMES.flatMap((g) => g.xpSources), ...RETIRED_GAME_XP_SOURCES])];
-
-/** Everything the solo kit runs a round of, the lessons' two exercises included, in the registry's order. */
-export function soloGames(): LearnGame[] {
-  return LEARN_GAMES.filter((g) => g.mode === 'solo' || g.mode === 'both');
-}
 
 /** A game as Learn lists it, and whether it can be played in the learner's variety yet. */
 export interface ListedLearnGame {
   game: LearnGame;
-  /** false while the game is still short of approved content: listed as coming soon, with no way in */
+  /** false while the game is short of approved content: listed as coming soon, with no way in */
   ready: boolean;
 }
 
 /**
- * The games an app lists in Learn: every game it has a screen for
- * (`playable`), those with enough approved content in the learner's variety
- * first and the rest after them as coming soon, each group in the registry's
- * order. A game is shown before its content is ready so a learner knows it is
- * on its way; it opens only once it is, so nothing is ever played on drafts.
- * Before the availability has arrived (null) nothing is listed, so the cards
- * do not reshuffle as it lands. The lessons' exercises are never in the list.
+ * The games an app lists in Learn: those it has a screen for (`playable`), ready ones in the learner's variety first and
+ * the rest after as coming soon, each in registry order, so learners see what is coming but never play on drafts. Nothing
+ * is listed before availability arrives (null), so cards do not reshuffle; lesson exercises are never listed.
  */
 export function listedLearnGames(
   availability: { games: ReadonlyArray<{ id: string; available: boolean }> } | null | undefined,
@@ -310,12 +241,9 @@ export function listedLearnGames(
 }
 
 /**
- * The exercises the lessons' practice offers besides its own sessions: those
- * an app has a screen for (`playable`) that can be done in the learner's
- * variety now, in the registry's order. One that is short of approved content
- * is not shown at all: practice is a place to do something, and a card that
- * opens nothing does not belong in it. Nothing is listed before the
- * availability has arrived.
+ * The exercises the lessons' practice offers besides its own sessions: those an app has a screen for that are ready in the
+ * learner's variety, in registry order. Unready ones are left out, since practice is for doing things. Nothing is listed
+ * before availability arrives.
  */
 export function lessonExercises(
   availability: { games: ReadonlyArray<{ id: string; available: boolean }> } | null | undefined,
@@ -328,21 +256,14 @@ export function lessonExercises(
 
 const DAY_MS = 86_400_000;
 
-/**
- * Which of `count` games a page puts forward today, by its place among them:
- * a different one each day, the same one for everybody all day (UTC), on the
- * website and on the phone alike. Null while there is nothing to put forward.
- */
+/** Which of `count` games a page features today: a different one each UTC day, the same for everybody, on both apps; null when there are none. */
 export function gameOfTheDay(count: number, now: number): number | null {
   return count > 0 ? Math.floor(now / DAY_MS) % count : null;
 }
 
 /**
- * The game a kind of content belongs to. Each kind belongs to exactly one
- * game, with one exception: riddles and proverbs (`LORE_KINDS`) are the
- * Stories section's collections, kept as game content only for its review
- * workflow, and belong to none — so they are never counted for a game,
- * listed among the games or played as one.
+ * The game a kind of content belongs to; each kind has exactly one, except riddles and proverbs (`LORE_KINDS`), the
+ * Stories collections kept as game content only for review, which belong to none and are never counted, listed or played.
  */
 export function gameOfKind(kind: GameContentKind): LearnGame | null {
   return LEARN_GAMES.find((g) => g.contentKinds.includes(kind)) ?? null;

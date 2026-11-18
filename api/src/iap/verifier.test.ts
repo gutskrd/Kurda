@@ -54,10 +54,10 @@ describe('createReceiptVerifier', () => {
   });
 
   it('reads the stub-named flag in production as purchases off, never as the stub', () => {
-    // the old name boots, and what it gets is the verifier that refuses every receipt
+    // The old name boots, with the verifier that refuses every receipt.
     expect(createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'true' }))).toBeInstanceOf(UnavailableReceiptVerifier);
     expect(createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'true', IAP_PURCHASES_OFF: 'true' }))).toBeInstanceOf(UnavailableReceiptVerifier);
-    // false is not a request for anything: without the new flag either, production still refuses to start
+    // 'false' requests nothing: without the new flag, production still refuses to start.
     expect(() => createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'false' }))).toThrow(/IAP_PURCHASES_OFF=true/);
     // outside production the stub is what runs anyway, and the flag changes nothing
     expect(createReceiptVerifier(cfg({ NODE_ENV: 'development', IAP_ALLOW_STUB: 'true' }))).toBeInstanceOf(StubReceiptVerifier);
@@ -74,13 +74,8 @@ describe('createReceiptVerifier', () => {
   });
 
   /**
-   * The reason the stub must never be the production verifier.
-   *
-   * Every field it returns is read out of the token it was handed, so a caller
-   * writes their own receipt — including `environment: 'production'`, which is
-   * what the sandbox check in IapService.redeem tests. Nothing here is a
-   * vulnerability while the stub stays in dev; all of it is the moment it does
-   * not.
+   * Why the stub must never verify in production: every field it returns comes from the token, so a caller writes
+   * their own receipt, `environment: 'production'` included, which is what the sandbox check tests.
    */
   it('shows what the stub would have accepted in production', async () => {
     const forged = JSON.stringify({ transactionId: 'i-made-this-up', environment: 'production' });

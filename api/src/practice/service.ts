@@ -42,10 +42,7 @@ interface ExerciseRow {
 export type PracticeExercise = DeliveredFields & {
   id: string;
   type: ExerciseType;
-  /**
-   * The variety of Kurdish of the item's course. A review mixes courses, so
-   * each item says its own, and a client offers the letters it is typed in.
-   */
+  /** The Kurdish variety of the item's course; a review mixes courses, so a client offers the right letters per item. */
   dialect?: string;
 };
 
@@ -54,11 +51,7 @@ export interface PracticeSession {
   exercises: PracticeExercise[];
 }
 
-/**
- * A practice session as it stands, for a client coming back to it: its items
- * in the order they were chosen, and what has been answered so far — the
- * lesson's `SessionView`, for practice.
- */
+/** A practice session as it stands, for a returning client: its items in chosen order and the answers so far. */
 export interface PracticeSessionView extends PracticeSession {
   completed: boolean;
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
@@ -74,7 +67,7 @@ export interface PracticeAnswerResult {
   verdict: Verdict;
   accepted: boolean;
   correction?: string;
-  /** the native recording of the item's Kurdish, now that it is answered (as AnswerResult) */
+  /** The native recording of the item's Kurdish, now that it is answered. */
   modelAudioUrl?: string;
   /** who says `modelAudioUrl`, when a character is chosen for it */
   modelAudioVoice?: RecordingVoice;
@@ -84,21 +77,17 @@ export interface PracticeAnswerResult {
 /** A second try at a practice item: graded, never recorded (as the lesson's RetryResult). */
 export type PracticeRetryResult = Omit<PracticeAnswerResult, 'duplicate'>;
 
-/** What practice has to offer right now, for a "Review" entry to show before starting one. */
+/** What practice offers now, for a "Review" entry to show before starting. */
 export interface PracticeDue {
-  /** items due for review now — what a session takes first */
+  /** Items due for review now, which a session takes first. */
   due: number;
   /** every item practice could draw on, due or not; 0 means a session would come back empty */
   available: number;
-  /** a review this learner started recently and has not finished, to go back to; null when there is none */
+  /** A recent unfinished review to go back to, or null. */
   open: string | null;
 }
 
-/**
- * What a session is asked for: exactly these exercises ("practise these now"),
- * or a kind of practice — the ordinary review when nothing is said, and a
- * unit's review with the unit's id.
- */
+/** What a session is asked for: exactly these exercises, or a kind of practice (the ordinary review by default, or a unit's). */
 export interface PracticeAsk {
   exerciseIds?: string[];
   mode?: PracticeMode;
@@ -109,14 +98,9 @@ export interface PracticeAsk {
 export const MISTAKE_DAYS = 30;
 
 /*
- * The statements below share these parts, so the hub counts exactly what a
- * session would find. Each is a list of CTEs, `$1` the learner.
- *
- * done: the places in a skill the learner has finished, in any version of
- * their lesson, and when last — a corrected lesson is a new row at the same
- * place, and is still the lesson they finished (as the course map reads it).
- * finished: what each of those places holds now, its newest published lesson,
- * so practice serves the lesson as it stands rather than a version replaced.
+ * Shared CTE parts, so the hub counts exactly what a session would find; `$1` is the learner. done: the skill places
+ * the learner finished, in any version, and when last (a corrected lesson is a new row at the same place). finished:
+ * each place's newest published lesson, so practice serves the lesson as it stands.
  */
 const FINISHED_LESSONS = `done AS (
     SELECT l.skill_id, l.position, max(ls.completed_at) AS at
@@ -131,15 +115,11 @@ const FINISHED_LESSONS = `done AS (
   )`;
 
 /*
- * missed: the exercises whose latest answer since `$2`, in a lesson or in
- * practice, was not accepted — put right by getting them right, anywhere. A
- * second try in a lesson is never recorded, so a miss put right there is still
- * one to practise. Only exercises of a published lesson (a version replaced
- * may hold the very mistake the new one fixed), and never speaking, which the
- * learner rates themselves. A lesson session takes no answer after it expires,
- * so one that expired before `$2` is not read at all. A test to jump ahead
- * (path_jumps) is not read either: it asks about units the learner skipped,
- * and it schedules nothing, so it adds no mistakes and clears none.
+ * missed: exercises whose latest answer since `$2`, in a lesson or practice, was not accepted, until answered right
+ * anywhere. Lesson second tries are never recorded, so a miss fixed there still counts. Only exercises of published
+ * lessons (a replaced version may hold the very mistake the new one fixed), never speaking (self-rated). Lesson
+ * sessions that expired before `$2` take no answers and are skipped, as are jump-ahead tests, which ask about skipped
+ * units and schedule nothing.
  */
 const MISSED = `answered AS (
     SELECT a.exercise_id, a.accepted, a.answered_at
@@ -162,10 +142,8 @@ const MISSED = `answered AS (
   )`;
 
 /**
- * How long a review left unfinished is offered to go back to — a lesson's
- * session lasts as long (SESSION_TTL_HOURS in content/sessions.ts). After
- * that the items it chose may no longer be the ones due, and a new review
- * chooses afresh.
+ * How long an unfinished review is offered to go back to, matching a lesson session's lifetime (SESSION_TTL_HOURS in
+ * content/sessions.ts); after that its items may no longer be the due ones.
  */
 const OPEN_REVIEW_HOURS = 24;
 
@@ -173,7 +151,7 @@ export interface PracticeResults {
   correct: number;
   total: number;
   accuracy: number;
-  /** what was missed, with the question and its right answer (as a lesson's results) */
+  /** What was missed, with the question and its right answer, as a lesson's results show. */
   mistakes: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
   /** with the days lately learned, for the week row (as a lesson's results) */
@@ -182,14 +160,13 @@ export interface PracticeResults {
   jump?: JumpOutcome;
   /** today's quests this session moved, before and after; absent when it moved none */
   quests?: QuestStep[];
-  /** the water this session earned the learner's tree, and what is held now; absent when it earned none */
+  /** The water this session earned the learner's tree, and what is held now; absent when none was earned. */
   tree?: WaterEarned;
 }
 
 /**
- * "Practice" mode (KUR-034): generates a review session from the SR due
- * queue, grades answers (updating SM-2), and awards reduced XP on
- * completion. Empty queues suggest the next new lesson instead.
+ * Practice: builds a review session from the due queue, grades answers (updating SM-2), and pays reduced XP on
+ * completion. With nothing due it suggests the next new lesson.
  */
 export class PracticeService {
   private readonly xp: XpService;
@@ -216,24 +193,12 @@ export class PracticeService {
   }
 
   /**
-   * Build a practice session, or an empty-state suggestion when there's nothing to review.
-   *
-   * Candidates are review items that are exercises — joined to `exercises`, so
-   * only ids that resolve to one are ever cast to a uuid. A saved dictionary
-   * word (`dict:<entryId>`) has no exercise to practise it with: it keeps its
-   * schedule and stays in the review queue, and practice leaves it out rather
-   * than failing the whole session on the cast. Speaking items are left out
-   * too, since their answers cannot move the schedule (`feedsReview`).
-   *
-   * `exerciseIds` narrows the session to those exercises — "practise these now"
-   * after a lesson, with the items just missed. They are taken only from the
-   * learner's own review items, under the same rules, so it cannot reach an
-   * exercise the learner has never answered (or one from an unpublished lesson).
-   *
-   * `mode` picks another kind of practice (`choose`); each draws only on what
-   * the learner has met, and comes back empty rather than failing when there is
-   * nothing of its kind. Whatever the kind, the session is answered, paid and
-   * counted for the streak by the same rules.
+   * Builds a practice session, or an empty-state suggestion. Candidates are review items that resolve to exercises, so
+   * only real exercise ids are cast to uuid: saved dictionary words (`dict:<entryId>`) keep their schedule but are left
+   * out, as are speaking items, whose answers cannot move the schedule (`feedsReview`). `exerciseIds` narrows the
+   * session to those exercises, taken only from the learner's own review items under the same rules. `mode` picks
+   * another kind (`choose`), drawing only on what the learner has met and returning empty when there is nothing.
+   * Every kind is answered, paid and counted for the streak by the same rules.
    */
   async start(userId: string, ask: PracticeAsk = {}): Promise<PracticeSession | EmptyPractice> {
     const chosen = ask.exerciseIds ? await this.ownItems(userId, ask.exerciseIds) : await this.choose(userId, ask.mode ?? 'review', ask.unitId);
@@ -241,11 +206,7 @@ export class PracticeService {
     return session ?? { empty: true, suggestion: await this.nextLesson(userId) };
   }
 
-  /**
-   * A session over these exercises, in this order, or null when none of them
-   * is there any more. A test to jump ahead (`jump`) is a session too, marked
-   * as one in the same statement (jump/service.ts).
-   */
+  /** A session over these exercises in this order, or null when none exists any more; a jump-ahead test is marked in the same statement. */
   async begin(userId: string, ids: string[], jump?: JumpTarget): Promise<PracticeSession | null> {
     const exercises = await this.loadExercises(ids);
     if (exercises.length === 0) return null;
@@ -266,7 +227,7 @@ export class PracticeService {
     return { sessionId, exercises: await this.deliver(sessionId, exercises) };
   }
 
-  /** Exercises as a client sees them: answers stripped, options shuffled for this session, recordings, tiles and meanings attached. */
+  /** Exercises as a client sees them: answers stripped, options shuffled per session, recordings, tiles and meanings attached. */
   private async deliver(sessionId: string, exercises: ExerciseRow[]): Promise<PracticeExercise[]> {
     const delivered = await deliverExercises(this.pool, sessionId, exercises);
     return exercises.map((ex, i) => ({
@@ -278,11 +239,8 @@ export class PracticeService {
   }
 
   /**
-   * The learner's practice session as it stands, so leaving and coming back
-   * picks up where they were: the same items in the same order, options
-   * shuffled with the same seed, and the answers already given. Without it a
-   * reload started a new session and left the old one unfinished, its answers
-   * counted for the schedule and never for the day.
+   * The learner's practice session as it stands, so returning resumes it: the same items and order, options shuffled
+   * with the same seed, and the answers given. Otherwise a reload would start a new session and strand the old one.
    */
   async view(sessionId: string, userId: string): Promise<PracticeSessionView> {
     const session = await this.loadSession(sessionId, userId);
@@ -327,7 +285,7 @@ export class PracticeService {
     return res.rows.map((r) => r.id);
   }
 
-  /** Exercises of these types from the lessons the learner has finished, a different handful each time. */
+  /** Exercises of these types from lessons the learner finished, a different handful each time. */
   private async finishedItems(userId: string, types: readonly string[]): Promise<string[]> {
     const res = await this.pool.query<{ id: string }>(
       `WITH ${FINISHED_LESSONS}
@@ -340,10 +298,8 @@ export class PracticeService {
   }
 
   /**
-   * A handful from the lessons the learner has finished in one unit, anything
-   * but speaking (which has its own practice). A unit they have not finished a
-   * lesson in is refused: nothing in it has been met, and it is somebody else's
-   * way through the course.
+   * A handful from the lessons the learner finished in one unit, anything but speaking. A unit with no finished lesson
+   * is refused, since nothing in it has been met.
    */
   private async unitItems(userId: string, unitId: string): Promise<string[]> {
     const res = await this.pool.query<{ reached: boolean; ids: string[] }>(
@@ -371,7 +327,7 @@ export class PracticeService {
     );
     const dueIds = due.rows.map((r) => r.item_id);
 
-    // weakest known words (lowest easiness), not necessarily due — used to pad
+    // The weakest known words (lowest easiness), not necessarily due, for padding.
     const weak = await this.pool.query<{ item_id: string }>(
       `SELECT r.item_id FROM review_items r
        JOIN exercises e ON e.id::text = r.item_id
@@ -395,18 +351,10 @@ export class PracticeService {
   }
 
   /**
-   * How many items are due, and how many practice could draw on at all —
-   * counted as `start` chooses them, so the number a "Review" entry shows is
-   * the number a session will find: saved dictionary words and speaking items,
-   * which practice cannot serve, are not in it.
-   *
-   * And the review the learner left unfinished, if they started one in the
-   * last day. A lesson is picked up where it stopped because opening it
-   * resumes its session; a review is not opened by anything but its own
-   * address, so without this a learner who left one and came back through
-   * "Review" started another, and the first stayed unfinished — its answers
-   * moved the schedule and never counted for the day. A test to jump ahead is
-   * not a review, and is not offered here.
+   * Items due and items practice could draw on, counted as `start` chooses them, so a "Review" entry shows what a
+   * session will find (saved words and speaking excluded). Also the review left unfinished in the last day: unlike a
+   * lesson, a review is reopened only by its own address, so without this the learner would start another. Jump-ahead
+   * tests are not offered here.
    */
   async due(userId: string): Promise<PracticeDue> {
     const [counts, open] = await Promise.all([
@@ -430,16 +378,10 @@ export class PracticeService {
   }
 
   /**
-   * Everything the practice hub shows, in one statement however much the
-   * learner has done: what review has (as `due` counts it), the mistakes to
-   * put right, whether listening, speaking and word practice would find
-   * anything, whether speaking is turned off, and the units finished, the
-   * latest first.
-   *
-   * A unit is finished as the course map finishes it: every skill in it has a
-   * published lesson, and every published lesson in it is done. Its number is
-   * its place among the course's units that have skills, which is where the
-   * path draws it, and so the colour it has there.
+   * Everything the practice hub shows in one statement: review (as `due` counts it), mistakes to put right, whether
+   * listening, speaking and word practice would find anything, whether speaking is off, and finished units, latest
+   * first. A unit is finished as the course map says: every skill has a published lesson and every published lesson is
+   * done. Its number is its place among the course's units with skills, as the path draws and colours it.
    */
   async hub(userId: string): Promise<PracticeHub> {
     const now = new Date();
@@ -565,12 +507,9 @@ export class PracticeService {
   }
 
   /**
-   * Grade one answer, update SM-2, and record it (idempotent per exercise).
-   *
-   * Everything here keys on the stored session's id, never on the one in the
-   * URL: Postgres finds a session by its id in capitals too, but the shuffle
-   * seed is text, and a multiple-choice answer graded under a seed the options
-   * were not shown with is mapped back to the wrong option.
+   * Grades one answer, updates SM-2 and records it, idempotent per exercise. Everything keys on the stored session id,
+   * never the URL's: Postgres matches the id in capitals too, but the shuffle seed is text, and grading under the wrong
+   * seed maps a choice to the wrong option.
    */
   async submitAnswer(
     sessionId: string,
@@ -614,10 +553,8 @@ export class PracticeService {
       if (result.accepted) {
         await client.query(`UPDATE practice_sessions SET correct_count = correct_count + 1 WHERE id = $1`, [session.id]);
       }
-      // feed SM-2 so practice actually strengthens the item (KUR-033); an
-      // item padded in before it was due cannot stretch its own interval
-      // (`ReviewService.record`). A test to jump ahead asks what has not been
-      // learned yet, so its answers schedule nothing.
+      // Feed SM-2 so practice strengthens the item; an item padded in before it was due cannot stretch its own interval
+      // (`ReviewService.record`). Jump-ahead tests ask about unlearned material, so they schedule nothing.
       if (feedsReview(ex.type) && session.jump_unit_id === null) {
         const quality = qualityFromVerdict(result.verdict, result.accepted);
         await this.reviews.record(userId, exerciseId, quality, new Date(), client);
@@ -634,10 +571,9 @@ export class PracticeService {
   }
 
   /**
-   * Grade a second try at an item already answered in this session and record
-   * nothing — the re-ask after a miss, as `LessonSessionService.retry`: no
-   * answer row, no score, no XP, no review. Only an answered item, so the
-   * correction a retry returns is never read before the answer that counts.
+   * Grades a second try at an item already answered in this session and records nothing (no answer row, score, XP or
+   * review), as `LessonSessionService.retry`. Only for answered items, so the correction is never seen before the
+   * answer that counts.
    */
   async retry(sessionId: string, userId: string, exerciseId: string, answer: unknown): Promise<PracticeRetryResult> {
     const session = await this.loadSession(sessionId, userId);
@@ -667,22 +603,15 @@ export class PracticeService {
   }
 
   /**
-   * Finalize: award reduced XP once, credit the daily goal, and — when enough
-   * was answered to be learning — the streak. Idempotent.
-   *
-   * A listening item put off and never answered ("Can't listen now") is left
-   * out of the score, as in a lesson (`SKIPPABLE_TYPES`): the accuracy and the
-   * XP are out of the items answered or that could have been.
-   *
-   * A test to jump ahead pays nothing — no XP, no streak day, no goal: it
-   * opens the path, and the lessons it opens pay as ever. Here it is decided,
-   * by the server alone, out of every item asked (one not answered counts as
-   * missed), and a pass raises how far the course is open (`settleJump`).
+   * Finalizes once: reduced XP, the daily goal, and the streak when enough was answered to count as learning. A
+   * listening item put off and never answered is left out of the score, as in a lesson (`SKIPPABLE_TYPES`). A
+   * jump-ahead test pays nothing (no XP, streak day or goal); the server decides it from every item asked, unanswered
+   * ones counting as missed, and a pass opens the course further (`settleJump`).
    */
   async complete(sessionId: string, userId: string): Promise<PracticeResults> {
     const session = await this.loadSession(sessionId, userId);
     const correct = session.correct_count;
-    // the items put off and never answered, and the listening ones answered right (for the quests), in one read
+    // Items put off and never answered, and listening items answered right (for the quests), in one read.
     const counts = await this.pool.query<{ n: number; listening_right: number }>(
       `SELECT (SELECT count(*)::int FROM exercises e
                 WHERE e.id = ANY($1::uuid[]) AND e.type = ANY($3::text[])
@@ -693,8 +622,7 @@ export class PracticeService {
     );
     const total = Math.max(0, session.total_count - counts.rows[0]!.n);
     const accuracy = total > 0 ? correct / total : 0;
-    // the misses with their right answers, in the order they were asked, so a
-    // review ends the way a lesson does: with what to fix, not just a score
+    // The misses with their right answers in asked order, so a review ends like a lesson: with what to fix.
     const missed = await this.pool.query<{ exercise_id: string; verdict: Verdict; type: ExerciseType; payload: unknown }>(
       `SELECT a.exercise_id, a.verdict, e.type, e.payload
        FROM practice_answers a JOIN exercises e ON e.id = a.exercise_id
@@ -736,10 +664,8 @@ export class PracticeService {
           passedNow = jumpPassed(claimed.rows[0]!.correct_count, session.total_count);
           await settleJump(client, userId, { sessionId: session.id, ...jumpTo }, passedNow);
         } else if (claimedNow) {
-          // Learning only when the items were actually worked through today
-          // (see countsAsLearning and answeredTodaySql), out of every item, put
-          // off or not. Practice pays its XP only then: a review can be started
-          // on a single item at will, so XP for an empty one was XP on demand.
+          // Learning only when the items were worked through today (countsAsLearning, answeredTodaySql), out of every item.
+          // XP is paid only then, since a review can be started on a single item at will.
           const tz = safeTimeZone(timeZone);
           const answered = await client.query<{ n: number }>(answeredTodaySql('practice_answers'), [
             session.id,
@@ -754,7 +680,7 @@ export class PracticeService {
             streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           }
           const goal = await this.goals.evaluate(client, userId, timeZone);
-          // today's quests, the XP one by the day's XP as the goal just counted it; practice moves no lesson quest
+          // Today's quests, the XP one by the day's XP as the goal just counted it; practice moves no lesson quest.
           if (learning) {
             const listeningRight = counts.rows[0]!.listening_right;
             quests = await moveQuests(client, userId, tz, { lesson: false, accuracy, perfect: false, listeningRight, xpToday: goal.earnedXp });

@@ -1,12 +1,7 @@
 /**
- * Whether the screen a guide is on is the one in front.
- *
- * Hevalo's lines and the slow drift of a landing screen's art stop when the
- * screen is behind another, so nothing runs for a screen nobody sees. The
- * navigator's own hook throws outside a navigator, and the intro slides are
- * drawn by the app root with no navigator round them, so this reads the
- * navigation context directly and answers "in front" where there is none:
- * such a screen is only mounted while it is shown.
+ * Whether the screen a guide is on is in front, so Hevalo's lines and the landing art stop behind another screen. The
+ * navigator's own hook throws outside a navigator, and the intro slides have none, so this reads the navigation context
+ * directly and answers "in front" where there is none.
  */
 import { useContext, useEffect, useState } from 'react';
 import { NavigationContext } from '@react-navigation/native';

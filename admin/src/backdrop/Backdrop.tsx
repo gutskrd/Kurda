@@ -15,11 +15,8 @@ function compile(gl: WebGLRenderingContext, type: number, source: string): WebGL
 }
 
 /**
- * Starts the ribbons on a canvas at the screen's own resolution and keeps it
- * the window's size; returns what stops them. They move only while the page
- * is in view, and stand still for anyone who asks for less motion. Without a
- * graphics chip to draw them (an old browser, a test) it does nothing, and the
- * dark violet behind the canvas stays.
+ * Starts the ribbons on a window-sized canvas at the screen's resolution and returns what stops them. They move only
+ * while the page is in view and stand still under reduced motion; without WebGL it does nothing and the CSS glow stays.
  */
 export function startRibbons(canvas: HTMLCanvasElement): () => void {
   let gl: WebGLRenderingContext | null = null;
@@ -54,7 +51,7 @@ export function startRibbons(canvas: HTMLCanvasElement): () => void {
   const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   let frame = 0;
   let last = 0;
-  // the ribbons' own clock, which stops while the page is hidden so they carry on from where they were
+  // The ribbons' own clock, which stops while the page is hidden so they carry on from where they were.
   let clock = STILL_AT;
 
   const draw = (): void => {
@@ -63,10 +60,9 @@ export function startRibbons(canvas: HTMLCanvasElement): () => void {
   };
 
   const size = (): void => {
-    // the box the ribbons fill is the screen at its largest (backdrop.css): a keyboard or a browser bar
-    // coming and going leaves it as it is, and the ribbons where they are; a new width redraws them
+    // The box is the screen at its largest (backdrop.css), so a keyboard or browser bar leaves it; a new width redraws.
     const box = canvas.parentElement;
-    // sharp on a high-density screen, but no more than twice over: the finest line is under a pixel already
+    // Sharp on a high-density screen, but no more than twice over: the finest line is under a pixel already.
     const pixels = Math.min(window.devicePixelRatio || 1, 2);
     const width = Math.round((box?.clientWidth || window.innerWidth) * pixels);
     const height = Math.round((box?.clientHeight || window.innerHeight) * pixels);
@@ -86,7 +82,7 @@ export function startRibbons(canvas: HTMLCanvasElement): () => void {
     const since = last ? now - last : FRAME_MS;
     if (since < FRAME_MS) return;
     last = now;
-    // a long gap (the tab was asleep) does not jump the ribbons ahead
+    // A long gap (the tab was asleep) does not jump the ribbons ahead.
     clock += Math.min(since, 100) / 1000;
     draw();
   };
@@ -116,11 +112,7 @@ export function startRibbons(canvas: HTMLCanvasElement): () => void {
   };
 }
 
-/**
- * The admin's backdrop (ribbons.ts): violet ribbons on black behind every
- * page, fixed, so they never scroll. Decorative, so hidden from assistive
- * technology.
- */
+/** The console's backdrop (ribbons.ts): violet ribbons on black, fixed behind every page and hidden from assistive technology. */
 export function Backdrop(): React.JSX.Element {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => (canvas.current ? startRibbons(canvas.current) : undefined), []);

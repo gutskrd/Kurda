@@ -7,11 +7,8 @@ import { ChipRadio } from '../play/ChipRadio';
 import type { MpDialectOffer } from './mpAvailability';
 
 /**
- * What a host chooses for a table of Who Am I? with friends, as chips in the
- * invite sheet (play/InviteSheet.tsx) and on the game's own page: only what
- * is offered — a dialect the game can be played in, a difficulty the
- * identities fill — and the longest the game may run, with the lobby's
- * settings handed up as they change.
+ * A host's choices for Who Am I? with friends, as chips in the invite sheet (play/InviteSheet.tsx) and on the game's
+ * page: only offered dialects and difficulties, and the time limit, reported up as they change.
  */
 
 export type TableOffer = MpDialectOffer & { difficulties?: GameDifficulty[] };
@@ -47,7 +44,7 @@ export function TableChoices({
   const difficulties = GAME_DIFFICULTIES.filter((d) => open.find((o) => o.dialect === chosenDialect)?.difficulties?.includes(d));
   const chosenDifficulty = difficulty && difficulties.includes(difficulty) ? difficulty : (difficulties[0] ?? null);
   useEffect(() => {
-    // a table this app makes offers the friends all four answers (yes, could be, no, not sure); one without the count is a table of two
+    // Tables made here offer all four answers (yes, could be, no, not sure); one without the count is a table of two.
     onChange(chosenDialect && chosenDifficulty ? { dialect: chosenDialect, difficulty: chosenDifficulty, minutes, answers: 4 } : null);
   }, [chosenDialect, chosenDifficulty, minutes, onChange]);
   if (!chosenDialect || !chosenDifficulty) return <p className="story-setup-note">{t('games.whoAmI.notOffered')}</p>;

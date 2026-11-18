@@ -52,11 +52,9 @@ const draftOf = (l: LessonDetail): Draft => ({
 });
 
 /**
- * One lesson: its titles and exercises, edited as forms (with the JSON behind
- * them one tab away, for what the forms do not cover), checked as the server
- * checks them, and moved draft → in review → published. A published lesson
- * cannot change; "Start a new version" makes an editable draft of it, and
- * learners keep the published one until that is approved.
+ * One lesson: its titles and exercises as forms (the JSON a tab away), checked as the server checks them, and moved
+ * from draft to published. A published lesson cannot change; "Start a new version" makes a draft, and learners keep
+ * the published one until it is approved.
  */
 export function LessonEditor({ id }: { id: string }): React.JSX.Element {
   const toast = useToast();
@@ -89,13 +87,13 @@ export function LessonEditor({ id }: { id: string }): React.JSX.Element {
 
   useEffect(() => {
     void load();
-    // a new address is a new editor (Lessons keys it by id)
+    // A new address is a new editor (Lessons keys it by id).
   }, []);
 
   const editable = lesson?.status === 'draft';
   const dirty = !!lesson && !!draft && editable && !sameDraft(draftOf(lesson), draft);
 
-  // leaving with unsaved work asks first, in the admin's own dialog
+  // Leaving with unsaved work asks first, in the admin's own dialog.
   const dirtyRef = useRef(false);
   dirtyRef.current = dirty;
   useEffect(() => {
@@ -281,7 +279,7 @@ export function LessonEditor({ id }: { id: string }): React.JSX.Element {
   const append = (added: Exercise[]): void =>
     update({ exercises: [...draft.exercises, ...added].slice(0, 50).map((e, i) => ({ ...e, position: i + 1 })) });
   const addConversation = (): void => append([{ position: 0, type: 'conversation', payload: blankPayload('conversation') }]);
-  // a conversation can be recorded once it is saved: its page reads the lesson from the server
+  // A conversation can be recorded once it is saved: its page reads the lesson from the server.
   const saved = new Set(
     lesson.exercises.filter((e) => e.type === 'conversation').map((e) => String((e.payload as { id?: unknown }).id ?? '')),
   );
@@ -364,7 +362,7 @@ export function LessonEditor({ id }: { id: string }): React.JSX.Element {
         </Banner>
       )}
 
-      {/* what the server said about something other than one exercise (each exercise shows its own) */}
+      {/* What the server said about something other than one exercise (each exercise shows its own). */}
       {serverIssues.some((i) => !/^exercises\[\d+\]/.test(i.path)) && (
         <Banner tone="bad" title="The server refused the draft">
           {serverIssues

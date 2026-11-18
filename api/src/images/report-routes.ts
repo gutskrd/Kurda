@@ -7,11 +7,7 @@ import { ImageReportService, type ImageTargetType } from './report-service.js';
 const idParam = z.object({ id: z.uuid() });
 const reportBody = z.object({ reason: z.string().max(500).optional() });
 
-/**
- * Image/meme reporting (KUR-292). Signed-in users report a post or a comment with
- * a reason; the report feeds the unified moderation queue (#102). Rate-limited
- * (#010); one report per user per item.
- */
+/** Image post and comment reports, feeding the shared moderation queue. Rate limited; one report per user per item. */
 export function registerImageReportRoutes(app: FastifyInstance, reports?: ReportsService): void {
   const mod = new ImageReportService(app.db, reports);
   const report = (type: ImageTargetType) => async (req: FastifyRequest, reply: FastifyReply) => {

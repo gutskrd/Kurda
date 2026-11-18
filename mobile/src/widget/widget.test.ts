@@ -16,15 +16,13 @@ import {
 import { WIDGET_LOCALES, WIDGET_STRINGS, widgetDate, widgetText } from './strings';
 
 /*
- * The widget is three programs that never meet: this app, the iPhone
- * extension (Swift, mobile/targets/letter-widget) and the Android widget's
- * resources written at build time. Nothing compiles the Swift here, so what
- * the three must agree on — where the token is left, the widget's kind, its
- * words, the paper's colours — is read out of the Swift and the strings
- * files and held to the app's own values.
+ * The widget spans three programs: this app, the iPhone extension (Swift, mobile/targets/letter-widget) and the
+ * Android resources written at build time. Nothing compiles the Swift here, so what they must agree on (the
+ * token's location, the widget kind, its words, the paper colours) is read from the Swift and strings files and
+ * checked against the app's values.
  */
 
-/** Node's file system, which this workspace's types do not describe: the test reads the files it runs beside. */
+/** Node's file system, which this workspace's types do not describe; the test reads the files beside it. */
 interface Files {
   readFileSync(path: string, encoding: 'utf8'): string;
   readdirSync(path: string): string[];
@@ -53,7 +51,7 @@ function readStrings(text: string): Record<string, string> {
 describe('the widget’s contract with the server', () => {
   it('asks for a picture the server will draw: whole points within bounds, the longer side inside its pixels', () => {
     expect(widgetImageSize(158.4, 158.4, 3)).toEqual({ w: 158, h: 158, scale: 3 });
-    // a large widget at 3× would pass 1600 pixels: the density comes down instead
+    // A large widget at 3× would pass 1600 pixels: the density comes down instead.
     const large = widgetImageSize(364, 382, 3);
     expect(large.w).toBe(364);
     expect(large.h * large.scale).toBeLessThanOrEqual(WIDGET_IMAGE.maxPixels);
@@ -98,10 +96,10 @@ describe('the widget’s own words', () => {
     for (const locale of WIDGET_LOCALES) {
       expect(Object.keys(WIDGET_STRINGS[locale]).sort(), locale).toEqual(keys);
       for (const key of keys) expect(widgetText(locale, key as never).trim().length, `${locale} ${key}`).toBeGreaterThan(0);
-      // the sealed line names who the letter is from, and the signed-out line names the app
+      // The sealed line names who the letter is from, and the signed-out line names the app.
       expect(WIDGET_STRINGS[locale].sealed, locale).toContain('{name}');
       expect(WIDGET_STRINGS[locale].signedOut, locale).toContain('Hevalo');
-      // written into Localizable.strings and Android resources; a raw quote or backslash would need escaping there
+      // Written into Localizable.strings and Android resources, where a raw quote or backslash would need escaping.
       for (const key of keys) expect(WIDGET_STRINGS[locale][key as 'name'], `${locale} ${key}`).not.toMatch(/["\\]/);
     }
   });
@@ -146,7 +144,7 @@ describe('the widget’s own words', () => {
     expect(Object.keys(FOLDERS).sort()).toEqual([...WIDGET_LOCALES].sort());
     expect(FOLDERS.en).toBe('values');
     expect(FOLDERS.ckb).toBe('values-b+ckb');
-    // an apostrophe ends an Android string unless it is escaped; a leading @ makes it a reference
+    // An apostrophe ends an Android string unless it is escaped; a leading @ makes it a reference.
     expect(resourceText("it's <b> & @home")).toBe("it\\'s &lt;b&gt; &amp; @home");
     expect(resourceText('@home')).toBe('\\@home');
   });
@@ -160,7 +158,7 @@ describe('what the iPhone extension reads', () => {
     expect(feed).toContain(`static let apiBaseKey = "${WIDGET_KEYS.apiBase}"`);
     expect(feed).toContain(`static let localeKey = "${WIDGET_KEYS.locale}"`);
     expect(feed).toContain(`static let rejectedKey = "${WIDGET_KEYS.rejected}"`);
-    // and it marks a refused token the way the app reads it
+    // And it marks a refused token the way the app reads it.
     expect(feed).toContain('defaults?.set("1", forKey: rejectedKey)');
   });
 
@@ -215,7 +213,7 @@ describe('the build’s configuration', () => {
     expect(widget).toBeDefined();
     expect(widget!.label).toBe('@string/letter_widget_name');
     expect(widget!.description).toBe('@string/letter_widget_description');
-    // Android's own clock, every half hour (its least); the app asks for more when something changes
+    // Android's own clock, every half hour (its least); the app asks for more when something changes.
     expect(widget!.updatePeriodMillis).toBe(30 * 60 * 1000);
     expect(plugin('./plugins/withLetterWidgetStrings.cjs')).toBeDefined();
   });

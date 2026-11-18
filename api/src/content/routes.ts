@@ -9,7 +9,7 @@ import type { MilestoneRecorder } from '../achievements/service.js';
 
 const answerBodySchema = z.object({
   exerciseId: z.uuid(),
-  /** Shape depends on the exercise type; graded server-side (KUR-027). */
+  /** Shape depends on the exercise type; graded server-side. */
   answer: z.unknown(),
 });
 
@@ -19,11 +19,11 @@ export function registerLessonRoutes(
   xp?: XpService,
   milestones?: MilestoneRecorder,
 ): void {
-  // perfect first completions ask for their Gems (KUR-068) inside `complete`; the rule is switched off, so none are paid unless an admin switches it on
+  // perfect first completions ask for their Gems inside `complete`; the rule is switched off, so none are paid unless an admin switches it on
   const sessions = new LessonSessionService(app.db, { xp, gems, milestones });
   const content = new ContentRepository(app.db);
 
-  /** A skill's markdown grammar note for the "Tips" tab (KUR-038), and the words its lessons bring in, for its guide. */
+  /** A skill's markdown grammar note for the "Tips" tab, and the words its lessons bring in, for its guide. */
   app.get(
     '/skills/:id/grammar',
     { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
@@ -64,9 +64,8 @@ export function registerLessonRoutes(
   );
 
   /**
-   * A second try at an item already answered in this session — the re-ask a
-   * client makes a few exercises after a miss. Graded like an answer; records
-   * nothing, so it moves no score, XP, review or Gems (see `retry`).
+   * A second try at an item already answered in this session (the re-ask a client makes a few exercises after a miss).
+   * Graded like an answer but records nothing, so no score, XP, review or Gems move (see `retry`).
    */
   app.post(
     '/sessions/:id/retry',
@@ -82,8 +81,8 @@ export function registerLessonRoutes(
   );
 
   /**
-   * Finish the session and get the results summary. A perfect first
-   * completion pays Gems; a replay never does (see `complete`).
+   * Finish the session and get the results summary. A perfect first completion pays Gems; a replay never does (see
+   * `complete`).
    */
   app.post(
     '/sessions/:id/complete',

@@ -13,8 +13,7 @@ const itemBody = z.object({
   sku: z.string().min(1).max(80),
   name: z.string().min(1).max(120),
   description: z.string().max(500).optional(),
-  // 'tag' is the Kurdish identity tag the tags migration sells (tag_kurdish):
-  // without it here the item could be listed but never saved again
+  // 'tag' is the Kurdish identity tag (tag_kurdish); without it the item could be listed but never saved again.
   category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'misc']).optional(),
   currency: z.enum(['zer', 'gems']),
   price: z.number().int().min(0).max(10_000_000),
@@ -38,17 +37,15 @@ const giftBody = z.object({
 
 const purchaseBody = z.object({
   sku: z.string().min(1).max(80),
-  /** required so retries never double-charge (KUR-071) */
+  /** Required so retries never charge twice. */
   idempotencyKey: z.string().min(8).max(120),
-  /** the price the client displayed; rejected if it changed (KUR-070) */
+  /** The price the client showed; refused if it has changed. */
   expectedPrice: z.number().int().min(0).max(10_000_000).optional(),
 });
 
 /**
- * How the shop's gift button says no, for the one friend it gifts. It has
- * always answered a refusal with an error, and phone builds in people's hands
- * read those codes; the chat's own route (`POST /gifts`) lists the skipped
- * instead, since a group gift can reach some friends and not others.
+ * How the shop's gift button refuses its one friend: as an error, whose codes installed phone builds read. The chat's
+ * route (`POST /gifts`) lists the skipped instead, since a group gift can reach some friends and not others.
  */
 const SHOP_GIFT_REFUSALS: Readonly<Record<SkipReason, () => AppError>> = {
   already_owned: () => new AppError('ALREADY_OWNED', 409, 'they already own this item'),
@@ -58,11 +55,8 @@ const SHOP_GIFT_REFUSALS: Readonly<Record<SkipReason, () => AppError>> = {
 };
 
 /**
- * Shop catalog + purchase + gifting + inventory (KUR-071).
- *
- * Every purchase is final. There is no route that hands an item back for
- * currency, and nothing in the inventory says what one would be worth: the
- * owner of an item whose art was replaced is told once, and keeps it.
+ * Shop catalogue, purchases, gifting and inventory. Every purchase is final: no route returns an item for currency,
+ * and the owner of an item whose art was replaced is told once and keeps it.
  */
 export function registerShopRoutes(
   app: FastifyInstance,
@@ -70,14 +64,9 @@ export function registerShopRoutes(
   deps: { gifts: GiftService; refreshed?: RefreshedNotices },
 ): void {
   /**
-   * Admin: create/update a catalog item.
-   *
-   * A new price of 1,000 or more is not set here. Such a price is the change
-   * that needs a second admin's sign-off (POST /admin/config/changes), and
-   * accepting it on this route as well let one admin skip that by choosing the
-   * other door — as live events' rewards did. Sending an item back with the
-   * price it already has is not a change, so the rest of a dear item can still
-   * be edited here.
+   * Admin: creates or updates a catalogue item. A new price of 1,000 or more is refused here, since it needs a second
+   * admin's sign-off (POST /admin/config/changes) and this route must not bypass that; resending an item's existing
+   * price is not a change, so the rest of an expensive item can still be edited.
    */
   app.post(
     '/shop/items',
@@ -120,11 +109,8 @@ export function registerShopRoutes(
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
 
   /**
-   * Admin: the FULL catalog, including inactive / out-of-stock items and their
-   * prices. `GET /shop` is the player-facing view (filtered to what they can buy),
-   * so managing prices needs its own unfiltered listing. Each item carries its
-   * art's URL and how many people own it; retired items (deleted while people
-   * owned them, shop/catalogue.ts) only with `?retired=include`.
+   * Admin: the full catalogue with inactive and out-of-stock items and their prices, since `GET /shop` shows only what
+   * a player can buy. Each item has its art URL and owner count; retired items only with `?retired=include`.
    */
   app.get(
     '/admin/shop/items',
@@ -143,8 +129,7 @@ export function registerShopRoutes(
     },
   );
 
-  /** Live catalog, filtered to what this user can currently see/buy. Cosmetic
-   *  items carry a resolved `assetUrl` so the client can render thumbnails. */
+  /** The live catalogue this user can see and buy, with a resolved `assetUrl` on cosmetic items for thumbnails. */
   app.get('/shop', { preHandler: requireAuth }, async (req) => ({
     items: (await shop.catalog(req.user!.id)).map((i) => ({
       ...i,
@@ -167,17 +152,9 @@ export function registerShopRoutes(
   );
 
   /**
-   * Buy an item for a friend.
-   *
-   * Friends only, deliberately. An unsolicited gift from a stranger is a way to
-   * put your name in front of someone who has not agreed to hear from you — the
-   * same reason direct messages are friends-only. It also means the notification
-   * it sends can never be used to reach a stranger.
-   *
-   * The same send as the chat's gift button (`GiftService`), with its rules,
-   * and like every gift it arrives in the chat between the two of you — which
-   * is why it now asks for the birth month a message asks for. The answer
-   * keeps the shape this route has always had.
+   * Buys an item for a friend; friends only, as an unsolicited gift would put a stranger's name in front of someone, as
+   * direct messages are friends-only. It is the chat gift button's send (`GiftService`) with its rules, arriving in the
+   * pair's chat, so it needs a birth month like a message. The answer keeps this route's original shape.
    */
   app.post(
     '/shop/gift',
@@ -202,7 +179,7 @@ export function registerShopRoutes(
         gifted: true,
         duplicate: result.duplicate,
         sku: result.item.sku,
-        // in the item's own currency, as it always was
+        // In the item's own currency.
         balance: result.balance[result.item.currency],
       };
     },
@@ -218,13 +195,8 @@ export function registerShopRoutes(
   }));
 
   /**
-   * Just the count.
-   *
-   * Every signed-in tab asked for this once a minute to draw the badge, and the
-   * full list joins shop_items and users for up to fifty rows to answer a
-   * question that is really "any?". The count now rides on `/me/social`
-   * (`unread.gifts`), which the apps already poll; this stays for the phone
-   * builds in people's hands that still ask here.
+   * Just the unopened gift count, for the phone's badge; the browser reads it from `/me/social`, but the phone has no
+   * such poll, and the full list joins two tables for up to fifty rows to answer "any?".
    */
   app.get('/me/gifts/unseen', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
     unseen: await shop.unseenGiftCount(req.user!.id),
@@ -235,11 +207,7 @@ export function registerShopRoutes(
     seen: await shop.markGiftsSeen(req.user!.id),
   }));
 
-  /**
-   * The caller's owned items, incl. a resolved cosmetic `assetUrl`, and
-   * `refreshedItems`: the items whose art was replaced that the caller has not
-   * been told about yet — see shared/src/cosmetics.ts.
-   */
+  /** The caller's owned items with a resolved `assetUrl`, and `refreshedItems` not yet announced (shared/src/cosmetics.ts). */
   app.get('/me/inventory', { preHandler: requireAuth }, async (req) => {
     const userId = req.user!.id;
     const [items, refreshedItems] = await Promise.all([shop.inventory(userId), deps.refreshed?.unnoticed(userId)]);

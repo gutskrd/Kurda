@@ -1,11 +1,7 @@
 /**
- * A letter's own paper and the letter widget, against real Postgres: the
- * paper, drawing and notes carried by every way a letter is sent, no drawing
- * on a first letter to a stranger, notes held to the letter's rules and its
- * word filter, the paper remembered for the next letter, a reported letter
- * kept whole for the case and a removed one keeping nothing, the data export
- * and erasure, and the widget: its tokens, the letter it may be pinned to,
- * the letter it shows, its picture and its hourly budget.
+ * A letter's paper and the letter widget, against real Postgres: paper, drawing and notes on every kind of send, no
+ * drawing to a stranger, notes under the letter's rules and filter, the remembered paper, reported and removed
+ * letters, export and erasure, and the widget's tokens, pin, shown letter, picture and hourly budget.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
@@ -29,7 +25,7 @@ import { loadConfig } from '../config/env.js';
 import { bornYearsAgo } from '../test/age.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
 import { GdprService, eraseAccountData } from '../gdpr/service.js';
-import { hashWidgetToken } from './widget.js';
+import { WIDGET_TOKEN_DAYS, hashWidgetToken } from './widget.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -87,7 +83,7 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
     pool = new pg.Pool({ connectionString: DATABASE_URL });
   });
 
-  // every scenario starts with no bird out anywhere and none at a window, so the bird called is the one the test sent
+  // Every scenario starts with no bird out or visiting, so the bird called is the one the test sent.
   beforeEach(async () => {
     await pool.query(`UPDATE letter_visits SET ended_at = now(), outcome = 'closed' WHERE ended_at IS NULL`);
     await pool.query(`UPDATE letters SET status = 'recalled' WHERE status = 'flying'`);
@@ -103,7 +99,7 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
     it('carries a letter’s paper, drawing and notes by every way a letter is sent, and remembers the paper for the next', async () => {
       const [a, b] = [await adult('rta'), await adult('rtb')];
       expect((await home(a)).paper).toEqual(DEFAULT_PAPER);
-      // the first letter to a stranger: its paper and a note, which the one who calls the bird reads with it
+      // The first letter to a stranger, with paper and a note the caller reads with it.
       expect((await out(a, firstDecor)).statusCode).toBe(200);
       expect((await home(a)).paper).toEqual(paper);
       const { visitor } = (await call('POST', '/letters/call', b.token)).json() as { visitor: LetterVisitor };
@@ -122,7 +118,7 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       const seen = await thread(b, met.threadId);
       expect(seen.letters.map((l) => l.decor)).toEqual([firstDecor, drawn, later]);
       expect((await home(a)).paper).toEqual(later.paper);
-      // a letter without a decor, or with nothing more than the default paper, is kept as none, and the paper chosen stays as it was
+      // No decor, or only the default paper, is stored as none, and the chosen paper stays.
       const plain = await write(b, met.threadId, { paper: DEFAULT_PAPER, strokes: [], notes: [] });
       expect((plain.json() as { letter: { decor: unknown } }).letter.decor).toBeNull();
       expect((await home(b)).paper).toEqual(DEFAULT_PAPER);
@@ -171,13 +167,13 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       const evidence = r.rows[0]!.evidence;
       expect(evidence.decor).toEqual(drawn);
       expect(evidence.context.find((m) => m.id === theirs.id)).toMatchObject({ notes: [note.text], drawn: true });
-      // taken down, as moderation takes a letter down: nothing of it is shown, its paper and notes with its words
+      // Taken down by moderation: nothing is shown, paper and notes included.
       await pool.query(`UPDATE letters SET status = 'removed' WHERE id = $1`, [theirs.id]);
       for (const p of [a, b]) {
         const removed = (await thread(p, met.threadId)).letters.find((l) => l.id === theirs.id)!;
         expect(removed).toMatchObject({ removed: true, body: '', decor: null });
       }
-      // the case still has what was reported
+      // The case still has what was reported.
       expect((await pool.query(`SELECT evidence->'decor' AS d FROM reports WHERE target_id = $1`, [theirs.id])).rows[0].d).toEqual(drawn);
     });
 
@@ -255,6 +251,51 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       expect((await asWidget(after, '/letters/widget/feed')).statusCode).toBe(401);
     });
 
+    /* A phone signed out from elsewhere, lost or handed on, must stop showing the account's letters too. */
+    it('ends with the session it was made in: that device signed out, or its session run out', async () => {
+      const a = await adult('wsa');
+      const login = await send('POST', '/auth/login', {}, { email: a.email, password: 'a-strong-password1' });
+      expect(login.statusCode, login.body).toBe(200);
+      const elsewhere = (login.json() as { tokens: { accessToken: string } }).tokens.accessToken;
+      const mine = await tokenFor(a);
+      const made = await call('POST', '/letters/widget/tokens', elsewhere);
+      expect(made.statusCode, made.body).toBe(200);
+      const theirs = (made.json() as { token: string }).token;
+      expect((await asWidget(mine, '/letters/widget/feed')).statusCode).toBe(200);
+      expect((await asWidget(theirs, '/letters/widget/feed')).statusCode).toBe(200);
+
+      // the other device signed out from the session list: its widget goes, this one stays
+      const { sessions } = (await call('GET', '/me/sessions', a.token)).json() as { sessions: Array<{ id: string; current: boolean }> };
+      const other = sessions.find((s) => !s.current)!;
+      expect((await call('DELETE', `/me/sessions/${other.id}`, a.token)).statusCode).toBe(200);
+      expect((await asWidget(theirs, '/letters/widget/feed')).statusCode).toBe(401);
+      expect((await asWidget(mine, '/letters/widget/feed')).statusCode).toBe(200);
+
+      // a session that ran out, signed out by nobody, ends its widget the same way
+      await pool.query(`UPDATE refresh_tokens SET expires_at = now() - interval '1 minute' WHERE user_id = $1 AND revoked_at IS NULL`, [a.id]);
+      expect((await asWidget(mine, '/letters/widget/feed')).statusCode).toBe(401);
+    });
+
+    it('lasts its days at most, and a token made before tokens kept their session reads as ended until the app makes a new one', async () => {
+      const a = await adult('wda');
+      const token = await tokenFor(a);
+      expect((await asWidget(token, '/letters/widget/feed')).statusCode).toBe(200);
+      await pool.query(`UPDATE letter_widget_tokens SET created_at = now() - make_interval(days => $2::int) - interval '1 minute' WHERE token_hash = $1`, [
+        hashWidgetToken(token),
+        WIDGET_TOKEN_DAYS,
+      ]);
+      expect((await asWidget(token, '/letters/widget/feed')).statusCode).toBe(401);
+
+      const older = await tokenFor(a);
+      await pool.query(`UPDATE letter_widget_tokens SET family_id = NULL WHERE token_hash = $1`, [hashWidgetToken(older)]);
+      expect((await asWidget(older, '/letters/widget/feed')).statusCode).toBe(401);
+      // the app's next start hands the widget a new one in its place
+      const fresh = await tokenFor(a, older);
+      expect((await asWidget(fresh, '/letters/widget/feed')).statusCode).toBe(200);
+      const kept = await pool.query<{ family_id: string | null }>(`SELECT family_id FROM letter_widget_tokens WHERE token_hash = $1`, [hashWidgetToken(fresh)]);
+      expect(kept.rows[0]!.family_id).not.toBeNull();
+    });
+
     it('may be pinned only to a letter a pen pal sent you, not taken down and not across a block', async () => {
       const [a, b, c, d] = [await adult('pna'), await adult('pnb'), await adult('pnc'), await adult('pnd')];
       const met = await meet(a, b, { out: firstDecor });
@@ -296,7 +337,7 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       expect((await call('POST', '/letters/call', b.token)).statusCode).toBe(200);
       expect((await feed(token)).letter).toBeNull();
       const met = (await answer(b, drawn)).json() as VisitorAnswer;
-      // her letter, answered, is the first a pen pal sent him; her next one is on its way, so the widget asks sooner
+      // Her answered letter is the first a pen pal sent him; her next is on its way, so the widget asks sooner.
       const first = await feed(token);
       expect(first).toMatchObject({ pinned: false, showWords: true, letter: { threadId: met.threadId, from: { name: expect.any(String) }, excerpt: letter, paper, rtl: false, drawn: false } });
       expect(first.refreshAfter).toBe(900);
@@ -307,7 +348,7 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       expect((await write(a, met.threadId, drawn, long)).statusCode).toBe(200);
       const newest = await feed(token);
       expect(newest.letter!.id).not.toBe(firstId);
-      // his turn now, and no bird of his out: nothing is on its way to him
+      // His turn now with no bird of his out, so nothing is on its way to him.
       expect(newest.refreshAfter).toBe(1800);
       expect(newest.letter).toMatchObject({ drawn: true, paper: drawn.paper });
       expect([...newest.letter!.excerpt].length).toBeLessThanOrEqual(WIDGET_EXCERPT_MAX);
@@ -323,7 +364,7 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       expect(await feed(token)).toMatchObject({ showWords: false, letter: { id: firstId, excerpt: '' } });
       expect((await putPrefs(b, { showWords: true })).statusCode).toBe(200);
 
-      // taken down, the pin no longer shows it, and the newest is shown instead
+      // Taken down, the pinned letter is no longer shown and the newest is shown instead.
       await pool.query(`UPDATE letters SET status = 'removed' WHERE id = $1`, [firstId]);
       expect(await feed(token)).toMatchObject({ pinned: false, letter: { id: newest.letter!.id } });
       expect(((await call('GET', '/letters/widget/prefs', b.token)).json() as WidgetSettings).pinnedLetterId).toBeNull();

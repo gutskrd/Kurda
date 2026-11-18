@@ -2,44 +2,43 @@ import type { RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import { joined } from '../play/joining';
-import type { Feedback, ScoredGuess } from './board';
+import type { Difficulty, Feedback, ScoredGuess } from './board';
 import type { WordMeanings } from './WordAnswer';
 
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type { Difficulty };
 
 export interface OpponentView {
-  /** `seat:N` — never another player's account id */
+  /** `seat:N` — never another player's account id. */
   userId: string;
   seat?: number;
-  /** a friend's name (or anyone's in an open battle); null shows "Opponent N" */
+  /** A friend's name (or anyone's in an open battle); null shows "Opponent N". */
   name?: string | null;
   guessCount: number;
   solved: boolean;
   status: string;
-  /** green letters found so far — how far along they are, without their word */
+  /** Green letters found so far — how far along they are, without their word. */
   progress: number;
   finished: boolean;
 }
 
 export interface BattleState {
   id: string;
-  /** `cancelled`: the host left the lobby, which calls the battle off for everyone */
+  /** `cancelled`: the host left the lobby, which calls the battle off for everyone. */
   status: 'lobby' | 'active' | 'finished' | 'cancelled';
   difficulty: Difficulty;
   targetLength: number;
   maxPlayers: number;
-  /** the viewer's own id when they host, else the host's `seat:N` */
+  /** The viewer's own id when they host, else the host's `seat:N`. */
   createdBy: string;
   isHost?: boolean;
   /**
-   * The six characters a friend types to join (Games → Join with a code), while
-   * the battle can still be joined; null once it has started, finished or been
-   * called off. Older servers leave it out.
+   * The six-character join code (Games → Join with a code) while the battle can be joined; null once started,
+   * finished or cancelled. Older servers omit it.
    */
   code?: string | null;
-  /** the rematch or next round, once there is one */
+  /** The rematch or next round, once there is one. */
   nextLobbyId?: string | null;
-  /** everyone in it, by seat, named as this viewer may see them */
+  /** Everyone in it, by seat, named as this viewer may see them. */
   players?: Array<{ seat: number; userId: string; name: string | null; avatarUrl: string | null; isMe: boolean; isHost: boolean; gone: boolean }>;
   me: {
     guesses: ScoredGuess[];
@@ -49,9 +48,9 @@ export interface BattleState {
     remainingAttempts: number;
   } | null;
   opponents: OpponentView[];
-  /** revealed only once the whole match is finished */
+  /** Revealed only once the whole match is finished. */
   target: string | null;
-  /** Rated or Friendly (Game Ranks): the host's choice, and once started whether it counts */
+  /** Rated or Friendly (Game Ranks): the host's choice, and once started whether it counts. */
   rated?: RatedState;
 }
 
@@ -59,15 +58,15 @@ export interface BattleState {
 export interface BattleResults {
   id: string;
   target: string;
-  /** what the word means, in every language a word card gives; absent from a server from before it */
+  /** What the word means, in every language a word card gives; absent from a server from before it. */
   meanings?: WordMeanings;
   difficulty: Difficulty;
   ranking: Array<{
-    /** the viewer's own id on their own row, `seat:N` on everyone else's */
+    /** The viewer's own id on their own row, `seat:N` on everyone else's. */
     userId: string;
-    /** the player's seat (`seat:N` is everyone else's userId): what a report names them by */
+    /** The player's seat (`seat:N` is everyone else's userId): what a report names them by. */
     seat?: number;
-    /** null unless you may see it (a friend, or anyone in an open battle) */
+    /** Null unless you may see it (a friend, or anyone in an open battle). */
     name?: string | null;
     isMe?: boolean;
     rank: number;
@@ -79,45 +78,35 @@ export interface BattleResults {
 }
 
 /**
- * Peyvok Battle (KUR-306), over the REST endpoints rather than the socket.
- *
- * The API says so itself: "State/results are poll-safe; the realtime gateway
- * pushing opponent progress is an additive transport on top of these same
- * endpoints." So this polls while a match is live, and the socket can be laid
- * over it later without any of this changing.
- *
- * What an opponent's row carries is deliberately thin — a guess count and how
- * many letters they have green. Never their guesses, which would hand you the
- * answer to the word you are both racing for.
+ * Peyvok Battle over the poll-safe REST endpoints: this polls while a match is live, and a realtime push can be
+ * layered on later without changes. An opponent's row carries only a guess count and how many letters are green,
+ * never their guesses, which would give away the shared answer.
  */
-/** `rated`: the host's Rated/Friendly choice (the server remembers it for their next battle). */
+/** `rated`: the host's Rated/Friendly choice, which the server remembers for their next battle. */
 export const createBattle = (client: ApiClient, difficulty: Difficulty, rated?: boolean): Promise<ApiResult<BattleState>> =>
   client.post('/wordle/battles', rated === undefined ? { difficulty } : { difficulty, rated });
 
 export const joinBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
-  client.post(`/wordle/battles/${id}/join`);
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/join`);
 
 export const startBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
-  client.post(`/wordle/battles/${id}/start`);
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/start`);
 
-/**
- * Leave: out of the lobby (the host leaving calls it off for everyone), or
- * out of a battle under way, finished where you stand so nobody waits for you.
- */
+/** Leave the lobby (the host leaving cancels it for everyone), or a battle under way, finishing where you stand so nobody waits. */
 export const leaveBattle = (client: ApiClient, id: string): Promise<ApiResult<{ ok: true }>> =>
-  client.post(`/wordle/battles/${id}/leave`);
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/leave`);
 
 /** The host takes a player out of the lobby, by seat; they cannot join it again. */
 export const removeFromBattle = (client: ApiClient, id: string, seat: number): Promise<ApiResult<BattleState>> =>
-  client.post(`/wordle/battles/${id}/remove`, { seat });
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/remove`, { seat });
 
 export const guessInBattle = (client: ApiClient, id: string, word: string): Promise<ApiResult<BattleState>> =>
-  client.post(`/wordle/battles/${id}/guesses`, { word });
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/guesses`, { word });
 
 export const getBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
-  // an invite to it accepted a moment ago is let land first: until it has, this is nobody's battle (play/joining.ts)
-  joined(id).then(() => client.get(`/wordle/battles/${id}`));
+  // Let an invite accepted a moment ago land first: until it has, this battle is nobody's (play/joining.ts).
+  joined(id).then(() => client.get(`/wordle/battles/${encodeURIComponent(id)}`));
 
 /** 409s until the match is over — the word is in here, so it cannot come sooner. */
 export const getResults = (client: ApiClient, id: string): Promise<ApiResult<BattleResults>> =>
-  client.get(`/wordle/battles/${id}/results`);
+  client.get(`/wordle/battles/${encodeURIComponent(id)}/results`);

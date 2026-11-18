@@ -22,15 +22,9 @@ interface Friend {
 }
 
 /**
- * Bringing friends into a group, which is the only way anyone gets in: the
- * reader's friends who are not in it yet, each with Add. One added says Added
- * and stays in the list, so a second tap is never a second request; one the
- * server will not take says why under the list. Done, at the foot, closes the
- * sheet onto the group's chat.
- *
- * It opens by itself on a group made a moment ago, so it must never be an
- * empty sheet: someone with no friends yet is told so in a sentence, with the
- * way to find people (`onFindPeople`) as the one button.
+ * Bringing friends into a group, the only way anyone gets in: the reader's friends not in it yet, each with Add. An
+ * added friend stays in the list as Added, so a second tap is never a second request. It opens by itself on a new
+ * group, so someone with no friends is told so, with `onFindPeople` as the one button.
  */
 export function AddFriendsSheet({
   visible,
@@ -41,10 +35,10 @@ export function AddFriendsSheet({
 }: {
   visible: boolean;
   groupId: string;
-  /** who is in the group already, left out of the list */
+  /** Who is in the group already, left out of the list. */
   memberIds: readonly string[];
   onClose: () => void;
-  /** to where people are found and made friends, for someone who has none yet */
+  /** To where people are found and befriended, for someone who has no friends yet. */
   onFindPeople: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -86,7 +80,7 @@ export function AddFriendsSheet({
   };
 
   const shown = (friends ?? []).filter((f) => !memberIds.includes(f.userId) || added.has(f.userId));
-  // nobody to list because they have no friends at all, which is not the same as every friend being in already
+  // Nobody to list because they have no friends at all, which is not the same as every friend being in already.
   const friendless = friends !== null && friends.length === 0 && error === null;
   return (
     <BottomSheet visible={visible} onClose={onClose} title={t('groups.addFriends.title')} detents={['medium', 'large']} contentStyle={styles.sheet}>
@@ -154,6 +148,6 @@ const styles = StyleSheet.create({
   name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   sub: { fontSize: typography.sizes.xs },
   error: { fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
-  // the one button of the sheet, clear of the list and inside the gutter the rows keep
+  // The sheet's one button, clear of the list and inside the rows' gutter.
   foot: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
 });

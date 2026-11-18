@@ -1,11 +1,6 @@
 /*
- * The composer: one box for words and pictures.
- *
- * A centred glass panel on a wide screen, the same panel the rest of the app's
- * dialogs use; on a phone it is the whole screen, with Cancel and Post in a
- * header at the top so the keyboard never covers them. Every control is at
- * least 44px to the touch, and every field is 16px or larger so iOS Safari
- * does not zoom the page when one is focused.
+ * The composer: a centred glass panel on a wide screen, full screen on a phone with Cancel and Post in a header above
+ * the keyboard. Every control has at least a 44px target, and fields are at least 16px so iOS does not zoom on focus.
  */
 .cmp-overlay {
   position: fixed;
@@ -98,7 +93,7 @@
   opacity: 0.45;
   cursor: default;
 }
-/* under a finger, a finger's height */
+/* A finger's height on touch screens. */
 @media (pointer: coarse) {
   .cmp-post {
     min-height: 44px;
@@ -114,7 +109,7 @@
   box-shadow: 0 0 0 3px var(--focus);
 }
 
-/* ---- the writing ---------------------------------------------------------- */
+/* ---- The writing ---------------------------------------------------------- */
 .cmp-scroll {
   flex: 1;
   min-height: 0;
@@ -162,7 +157,7 @@
   font-size: 0.82rem;
   font-weight: 600;
 }
-/* 16px at least: iOS Safari zooms into anything smaller */
+/* At least 16px, since iOS zooms into smaller fields on focus. */
 .cmp-input {
   font-size: 1rem;
 }
@@ -183,7 +178,7 @@
   font-size: 0.82rem;
   line-height: 1.45;
 }
-/* its own thought, not the end of the description's hint */
+/* A separate note, not the end of the description's hint. */
 .cmp-hint.cmp-own-posted {
   margin-top: 14px;
 }
@@ -218,7 +213,7 @@
   font-weight: 700;
 }
 
-/* a çîrok or a helbest: two chips that are radios */
+/* A çîrok or a helbest: two chips that are radios. */
 .cmp-kind {
   display: flex;
   gap: 6px;
@@ -251,7 +246,7 @@
   box-shadow: 0 0 0 3px var(--focus);
 }
 
-/* ---- the pictures --------------------------------------------------------- */
+/* ---- The pictures --------------------------------------------------------- */
 .cmp-tiles {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -300,7 +295,7 @@
   font: inherit;
   cursor: pointer;
 }
-/* 36px drawn, 44px to the touch: the hit area reaches past the chip */
+/* Drawn at 36px with a 44px hit area reaching past the chip. */
 .cmp-tile-remove::after,
 .cmp-tile-alt::after {
   content: '';
@@ -375,7 +370,7 @@
   margin-top: 12px;
 }
 
-/* a switch is a checkbox that looks like one */
+/* A switch is a checkbox styled as one. */
 .cmp-switch-row {
   display: flex;
   align-items: center;
@@ -466,14 +461,12 @@
   min-height: 36px;
   padding: 0 12px;
   color: var(--ink);
-  /* "Try again" on one line, even where the words are long (Soranî) */
+  /* "Try again" on one line, even in languages with long words. */
   white-space: nowrap;
 }
-/* a long reason would push Try again out of a small tile: three lines show,
-   screen readers get all of it, and the toolbar says what to do */
+/* A long reason shows three lines so Try again stays in the tile; screen readers get all of it. */
 .cmp-tile-why {
-  /* clear of the remove button in the top corner at the inline end (the left in
-     RTL); Try again, below it, has the tile's whole width */
+  /* Clear of the remove button at the inline end's top corner; Try again below has the full width. */
   padding-inline-end: 38px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -483,7 +476,7 @@
   line-height: 1.3;
 }
 
-/* ---- the toolbar ---------------------------------------------------------- */
+/* ---- The toolbar ---------------------------------------------------------- */
 .cmp-foot {
   display: flex;
   align-items: center;
@@ -532,7 +525,7 @@
   color: var(--danger);
 }
 
-/* ---- leaving, and old drafts -------------------------------------------- */
+/* ---- Leaving, and old drafts -------------------------------------------- */
 .cmp-confirm {
   padding: 28px 20px 24px;
   text-align: center;

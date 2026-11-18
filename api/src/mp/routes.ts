@@ -30,10 +30,7 @@ const pollQuery = z.object({ v: z.coerce.number().int().min(0).max(2_147_483_647
 const seatBody = z.object({ seat: z.number().int().min(1).max(100) });
 const teamBody = z.object({ seat: z.number().int().min(1).max(100), team: z.number().int().min(1).max(4) });
 const dialectQuery = z.object({ dialect: z.enum(['kmr', 'ckb']).optional() });
-/**
- * A game's own choices or move: an object at the door, read field by field by
- * the game's rules (each module parses what it takes, and refuses the rest).
- */
+/** A game's own choices or move: an object at the door, parsed field by field by the game's module. */
 const gameBody = z.record(z.string(), z.unknown());
 
 /** Create 20/min, join 10/min, moves 60/min, the long-poll 120/min, other controls 60/min (as the story games). */
@@ -57,20 +54,14 @@ const HOUSEKEEPING_EVERY_MS = 6 * 60 * 60 * 1000;
 const FIRST_HOUSEKEEPING_MS = 5 * 60 * 1000;
 
 /**
- * The multiplayer learning games' own routes, under `/mp/:game` — one set for
- * every game the engine runs. Lobbies are made through the play layer
- * (`POST /play/lobbies`), so invites, codes and cards work as for every
- * game; these are the room itself. Members only on every route: anyone else,
- * and a player the host removed, gets the same 404 as for a game that does
- * not exist (someone the join rule lets in may look at an open lobby, to join
- * it). Joining and playing against Hevalo need a birth month on record, like
- * everything else that puts people together or pays.
+ * The multiplayer games' room routes under `/mp/:game`, one set for every game on the engine. Lobbies are made through
+ * the play layer (`POST /play/lobbies`). Every route is members-only: anyone else, and a player the host removed, gets
+ * the same 404 as for a missing game (someone the join rule admits may view an open lobby to join it). Joining and
+ * playing against Hevalo need a birth month on record.
  *
- * `GET /mp/:game/:id?v=` is the long-poll the apps fall back on when the
- * realtime connection is down: it answers at once when the game moved past
- * version `v`, else when it does (or after 20 s, or just after its next
- * deadline). With the connection up they read it without `v` on each
- * `play_changed`.
+ * `GET /mp/:game/:id?v=` is the long-poll fallback when realtime is down: it answers at once if the game is past
+ * version `v`, else when it moves (or after 20 s, or just after its next deadline). With realtime up, apps read it
+ * without `v` on each `play_changed`.
  *
  * Returns the adapters the play layer drives, one per game.
  */

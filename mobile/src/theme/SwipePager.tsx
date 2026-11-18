@@ -4,38 +4,24 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useDirection } from '../reports/direction';
 
 /**
- * How long after the first page is shown the others are drawn behind it, so
- * that a first swipe uncovers a page and not a blank. Long enough that the
- * page somebody came for has asked for its own things first.
+ * How long after the first page shows the others are drawn behind it, so a first swipe uncovers a page rather than a
+ * blank, after the first page has started its own requests.
  */
 export const NEIGHBOURS_AFTER_MS = 600;
 
-/** A turn the switch asked for is given this long to arrive before the pager listens to the finger again. */
+/** How long a turn requested by the switch has to arrive before the pager follows the finger again. */
 const TURN_TIMEOUT_MS = 700;
 
 /**
- * Pages side by side under one switch, turned with a finger as well as with
- * the switch.
+ * Pages side by side under one switch, turned by swiping as well as by the switch. The pages sit in the platform's
+ * own paging scroller, so a swipe feels like every other swipe and inner lists still scroll vertically; nothing is
+ * animated by hand.
  *
- * A phone's pages are pulled across, not only pointed at: the switch at the
- * top of Learn said there were three places, and nothing but a tap on a word
- * took anybody from one to the next. Here the pages lie in a row and the row
- * is the phone's own paging scroller, so a swipe has the weight, the snap and
- * the edge every other swipe on the phone has, and the lists inside go on
- * scrolling up and down as they did: the phone already tells a sideways drag
- * from a downward one. Nothing is animated by hand.
- *
- * The switch and the pages are two views of one choice (`value`). A swipe
- * that passes the middle of the next page chooses it, so the switch's capsule
- * moves while the page is still arriving; a tap on the switch turns the pages
- * to match, and the pages it passes on the way are not choices.
- *
- * Only the page asked for is drawn at first; the rest follow a moment later
- * (`NEIGHBOURS_AFTER_MS`), or at once when a swipe begins. A page not showing
- * is hidden from a screen reader, which reads the one that is. In a language
- * read from the right the first page is the one on the right. Under Reduce
- * Motion a tap on the switch changes the page without the slide; a swipe
- * still moves with the finger, since that motion is the reader's own.
+ * The switch and the pages share one value (`value`): a swipe past the middle of the next page chooses it, moving
+ * the switch while the page arrives, and a tap on the switch turns the pages without choosing those it passes. Only
+ * the chosen page is drawn at first; the rest follow after `NEIGHBOURS_AFTER_MS`, or at once when a swipe begins.
+ * Hidden pages are hidden from screen readers. In right-to-left languages the first page is on the right. Under
+ * Reduce Motion a switch tap changes page without the slide; a swipe still follows the finger.
  */
 export function SwipePager<T extends string>({
   pages,
@@ -44,11 +30,11 @@ export function SwipePager<T extends string>({
   renderPage,
   testID,
 }: {
-  /** the pages, in the order the switch shows them */
+  /** The pages, in the switch's order. */
   pages: readonly T[];
   value: T;
   onChange: (page: T) => void;
-  /** one page's contents; `active` is whether it is the one showing */
+  /** One page's contents; `active` is whether it is showing. */
   renderPage: (page: T, active: boolean) => ReactNode;
   testID?: string;
 }): React.JSX.Element {
@@ -56,21 +42,21 @@ export function SwipePager<T extends string>({
   const reduceMotion = useReducedMotion();
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
-  // the window's width until the pager has been measured: a tab's pages are the width of the screen
+  // The window's width until the pager is measured, since a tab's pages are as wide as the screen.
   const [measured, setMeasured] = useState(0);
   const width = measured > 0 ? measured : window.width;
-  // the pages as they lie from the left
+  // The pages as they lie from the left.
   const laid = useMemo(() => (mirrored ? [...pages].reverse() : [...pages]), [pages, mirrored]);
   const index = Math.max(0, laid.indexOf(value));
 
   const scroller = useRef<ScrollView>(null);
-  // the page the scroller is on, or has been sent to
+  // The page the scroller is on, or has been sent to.
   const at = useRef(index);
-  // the page a tap on the switch is turning to, while the turn is under way
+  // The page a switch tap is turning to, while the turn is under way.
   const heading = useRef<number | null>(null);
   const headingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const placedAt = useRef<{ index: number; width: number } | null>(null);
-  // where the scroller starts, so the page asked for is the first one drawn
+  // Where the scroller starts, so the chosen page is the first drawn.
   const start = useRef({ x: index * width, y: 0 }).current;
 
   const [drawn, setDrawn] = useState<ReadonlySet<T>>(() => new Set([value]));
@@ -88,11 +74,11 @@ export function SwipePager<T extends string>({
     headingTimer.current = null;
   };
 
-  // the switch chose a page, or the pager was measured: the pages turn to match
+  // The switch chose a page, or the pager was measured: turn the pages to match.
   useEffect(() => {
     const before = placedAt.current;
     if (before && before.width === width && at.current === index) return;
-    // the first placing, a new width and Reduce Motion all put the page there; only a tap on the switch slides to it
+    // The first placement, a new width and Reduce Motion jump to the page; only a switch tap slides to it.
     const slide = before !== null && before.width === width && !reduceMotion;
     placedAt.current = { index, width };
     at.current = index;
@@ -110,7 +96,7 @@ export function SwipePager<T extends string>({
     if (width <= 0) return;
     const x = e.nativeEvent.contentOffset.x;
     if (heading.current !== null) {
-      // on its way to the page the switch chose: the pages it passes are not chosen
+      // On the way to the switch's page, the pages passed are not chosen.
       if (Math.abs(x - heading.current * width) < 1) arrived();
       return;
     }
@@ -127,7 +113,7 @@ export function SwipePager<T extends string>({
       ref={scroller}
       horizontal
       pagingEnabled
-      // a page's own list answers a tap on the clock; this row of pages is not what scrolls to the top
+      // A page's own list handles a tap on the status bar; this row of pages does not scroll to top.
       scrollsToTop={false}
       bounces={false}
       overScrollMode="never"
@@ -139,7 +125,7 @@ export function SwipePager<T extends string>({
       onLayout={(e) => setMeasured(e.nativeEvent.layout.width)}
       onScroll={follow}
       onScrollBeginDrag={() => {
-        // a finger on the pages ends a turn the switch began, and the pages either side had better be there
+        // A finger on the pages ends a switch-started turn, and the neighbouring pages must be there.
         arrived();
         drawAll();
       }}

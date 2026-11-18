@@ -4,27 +4,14 @@ import { localeDir } from '@kurda/shared';
 import { BookmarkIcon, GearIcon, MedalIcon, MoreIcon, ShareIcon, ShopIcon, TrophyIcon, UsersIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
+import { useUnseenGifts } from '../shop/useUnseenGifts';
 import { keepInView } from '../reports/keepInView';
 import { shareProfileLink } from './share';
 
 /**
- * Everything that is yours but is not your profile, behind one button in the
- * far corner of its banner — where the menu of a profile is looked for, and
- * where the menu about anybody else is too: the shop, what you saved, your
- * friends, your badges and ranks, and settings.
- *
- * These used to be spread across the top bar — a shop icon, a gear, a face
- * that opened a popup — which on a phone either crowded the bar or hid in a
- * menu of their own. They are all about you, so they live with you.
- *
- * Six, and no more. The record of your reports and your account's standing
- * were here as a seventh and an eighth; both are pages of Settings, two rows
- * down its Safety section, and a menu that repeats what the page behind its
- * last item holds only gets longer to read.
- *
- * A list of links behind a disclosure button rather than an ARIA menu: every
- * entry goes to a page, so each is an ordinary link, read and tabbed through
- * as one. Escape and a click elsewhere close it.
+ * The owner's menu in the profile banner's corner: shop, saved, friends, badges and ranks, and settings. Reports and
+ * account standing stay in Settings. It is a disclosure of ordinary links rather than an ARIA menu, since every entry
+ * is a page; Escape and an outside click close it.
  */
 export function ProfileMenu(): React.JSX.Element {
   const t = useT();
@@ -34,7 +21,7 @@ export function ProfileMenu(): React.JSX.Element {
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const pop = useRef<HTMLDivElement>(null);
-  const gifts = data.unread.gifts ?? 0;
+  const gifts = useUnseenGifts();
   const requests = data.unread.requests;
 
   useLayoutEffect(() => {
@@ -69,8 +56,7 @@ export function ProfileMenu(): React.JSX.Element {
     { to: '/app/settings', label: t('nav.settings'), icon: <GearIcon size={20} /> },
   ];
   const waiting = gifts > 0 || requests > 0;
-  // the button is named for what it holds, in the items' own words, so the name cannot fall behind the list:
-  // "Menu" said nothing, and on a phone it was the name of the bar's menu button as well
+  // The button is named after its items, in their own words, so the name stays in step with the list.
   const holds = items.map((item) => item.label).join(localeDir(locale) === 'rtl' ? '، ' : ', ');
 
   return (
@@ -107,10 +93,7 @@ export function ProfileMenu(): React.JSX.Element {
   );
 }
 
-/**
- * Sharing your profile: the device's own share sheet where there is one, and
- * the link copied where there is not (a desktop), said in the button itself.
- */
+/** Shares the profile through the share sheet, or copies the link and says so in the button. */
 export function ShareProfile({ userId, name }: { userId: string; name: string }): React.JSX.Element {
   const t = useT();
   const [copied, setCopied] = useState(false);

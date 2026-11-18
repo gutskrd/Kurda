@@ -7,17 +7,14 @@ import { withKit } from '../test/render';
 import { GameContent } from './GameContent';
 
 /**
- * The Game content page: the list and its filters, the importers, the
- * readiness view, and one row's editor — the checks it runs as the content is
- * typed (Kurdish in the other variety's script is refused before a save is
- * tried), its review panel, and publishing only what was approved. And what
- * it no longer does: a scene of What Would You Say?, which is no longer part
- * of Hevalo, can be neither imported nor written here.
+ * The Game content page: the list and its filters, the importers, the readiness view, and one row's editor with its
+ * live checks (Kurdish in the other variety's script refused before a save), review panel and publishing only what was
+ * approved. A retired game's kind (What Would You Say?) can be neither imported nor written.
  */
 
 const ID = '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde0001';
 
-// stand-in Kurdish for the fixtures, never shown to a learner
+// stand-in Kurdish for the fixtures, never shown to a learner.
 function row(over: Partial<AdminGameContent> = {}): AdminGameContent {
   return {
     id: ID,
@@ -169,7 +166,7 @@ describe('one row', () => {
 });
 
 describe('the party games’ cards', () => {
-  // stand-in Kurdish for the fixtures, never shown to a learner
+  // stand-in Kurdish for the fixtures, never shown to a learner.
   const vocabulary = {
     words: [
       { key: 'w:kmr:1', ku: 'pisîk', meanings: { en: 'cat', de: 'Katze' } },
@@ -208,7 +205,7 @@ describe('the party games’ cards', () => {
       dialect: 'kmr',
       payload: { word: 'pisîk', meanings: { en: 'cat', de: 'Katze' }, category: 'animals', hint: { ku: 'heywan', meanings: { en: 'animal' } }, forms: [] },
     });
-    // no Kurdish was typed: every Kurdish field is a picked word
+    // No Kurdish was typed: every Kurdish field is a picked word.
     expect(page.querySelector('input[lang="ku"]')).toBeNull();
   });
 
@@ -232,7 +229,7 @@ describe('scenes of a game that is no longer part of Hevalo', () => {
     expect(button(page, 'Passages from stories (Kurmancî)')).not.toBeNull();
     expect(button(page, /^Scenes from conversations/)).toBeNull();
     expect(text(page)).not.toContain('What Would You Say?');
-    // neither the kind nor the game is offered for a new row or as a filter
+    // Neither the kind nor the game is offered for a new row or as a filter.
     for (const option of page.querySelectorAll('option')) expect(option.textContent).not.toMatch(/Scenario|What Would You Say/);
   });
 
@@ -243,7 +240,7 @@ describe('scenes of a game that is no longer part of Hevalo', () => {
     expect((page.querySelector('select') as HTMLSelectElement).value).toBe('sentence');
   });
 
-  // the server lists and opens no such row; one that reached the page all the same (a server a version behind) must not break it
+  // The server lists and opens no such row; one that reached the page all the same (a server a version behind) must not break it.
   it('do not break the page if the server still hands one over: the list names it as stored, and it is not opened', async () => {
     const payload = { situation: { en: 'Hamo says this to you.' } };
     const scene = { ...row(), kind: 'scenario', game: 'what-would-you-say', headline: 'Tu çend salî yî?', payload } as unknown as AdminGameContent;

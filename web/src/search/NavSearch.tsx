@@ -23,10 +23,7 @@ const DEBOUNCE_MS = 250;
 /** Past searches offered in the panel; the Search page has room for the rest. */
 const RECENT_SHOWN = 6;
 
-/**
- * The Search page at a query: where "See all results" goes, and where a word
- * opens (the page shows an entry from its address, so a word can be linked to).
- */
+/** The Search page at a query, where "See all results" goes and where a word opens. */
 export function searchPath(q: string, extra: Record<string, string> = {}): string {
   const params = new URLSearchParams({ q, ...extra });
   return `/app/search?${params.toString()}`;
@@ -44,34 +41,19 @@ type Choice =
 interface Option {
   id: string;
   choice: Choice;
-  /** where the option leads, so a middle click or a long press can open it in a new tab */
+  /** Where the option leads, so a middle click or a long press can open it in a new tab. */
   href: string;
 }
 
 /**
- * Search, in the bar: a field on a wide screen, a button that turns the bar
- * into a field on a phone, and the results in a panel hanging from it. On a
- * phone the field and the results open out of that button, so the search is
- * seen to come from where it was asked for.
+ * The search in the bar: a field on a wide screen, or a button that opens one on a phone, with results in a panel
+ * below. A few people and words come back as you type, "See all results" opens the Search page, and an empty field
+ * offers this visit's past searches.
  *
- * It is the one search box. People and words come back together as you type,
- * a few of each — enough to pick the person or the word you meant without
- * leaving the page you are on — and "See all results" opens the Search page
- * for everything else. With nothing typed it offers what you searched for
- * earlier on this visit.
- *
- * A combobox in the ARIA sense: the focus stays in the field the whole time,
- * the arrow keys move through the options (`aria-activedescendant`), Enter
- * takes the one that is lit or else opens all the results, and Escape closes
- * the panel — on a phone, closing the field as well and handing the focus back
- * to the button that opened it. "/" anywhere outside a field jumps here, which
- * is the key people already reach for. It is not drawn in the field: the few
- * who use it know it, and for everyone else a key cap in the box was one more
- * thing to read before typing.
- *
- * A visitor without an account can look a word up in the published
- * dictionary, which is open to everyone; finding people needs an account, and
- * the panel says so rather than offering a search that cannot answer.
+ * It is an ARIA combobox: focus stays in the field, the arrow keys move through options (`aria-activedescendant`),
+ * Enter takes the highlighted one or opens all results, and Escape closes the panel (and on a phone the field,
+ * returning focus to its button). "/" outside a field jumps here. Visitors can look words up in the published
+ * dictionary; finding people needs an account, which the panel says.
  */
 export function NavSearch(): React.JSX.Element {
   const t = useT();
@@ -88,14 +70,14 @@ export function NavSearch(): React.JSX.Element {
   const boxRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
-  /** where the focus was before "/" brought it here, to give it back on Escape */
+  /** Where the focus was before "/" brought it here, to return it on Escape. */
   const returnTo = useRef<HTMLElement | null>(null);
 
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const [recents, setRecents] = useState<string[]>(readRecentSearches);
-  /** the middle of the button that opens the search on a phone, which the field and its results open out of (shell.css) */
+  /** The centre of the phone's search button, which the field and its results open out of (shell.css). */
   const [from, setFrom] = useState<{ x: number; y: number } | null>(null);
 
   const term = query.trim();
@@ -103,11 +85,9 @@ export function NavSearch(): React.JSX.Element {
   const quick = useQuickSearch(signedIn && open ? debounced : '');
 
   /*
-   * Open, and put the cursor in the field. The open state is committed first
-   * (`flushSync`) because on a phone the field is not on screen until it is,
-   * and a phone only raises its keyboard for a focus given in the same tap.
-   * Where the button is, is read first: once open, the field is over it. A
-   * wide screen has no button, and nothing to read.
+   * Opens the search and focuses the field. The open state is committed first (`flushSync`) because on a phone the
+   * field is not on screen until then, and a phone only raises its keyboard for a focus given in the same tap. The
+   * button's position is read before the field covers it.
    */
   const show = useCallback((): void => {
     const button = openerRef.current?.getBoundingClientRect();
@@ -115,25 +95,25 @@ export function NavSearch(): React.JSX.Element {
       if (button && button.width > 0) setFrom({ x: Math.round(button.left + button.width / 2), y: Math.round(button.top + button.height / 2) });
       setOpen(true);
     });
-    // the field is in the bar, always in sight: focusing it must not scroll the page under it
+    // The field is always in sight in the bar, so focusing it must not scroll the page.
     inputRef.current?.focus({ preventScroll: true });
   }, []);
 
-  /** Put the panel away; on a phone the field goes too, and the button gets the focus back. */
+  /** Closes the panel; on a phone the field closes too and the button gets the focus back. */
   const hide = useCallback((): void => {
     setOpen(false);
     setActive(-1);
     if (isNarrow()) openerRef.current?.focus({ preventScroll: true });
   }, []);
 
-  // moving to another page puts the search away and empties it
+  // Moving to another page closes and empties the search.
   useEffect(() => {
     setOpen(false);
     setActive(-1);
     setQuery('');
   }, [pathname]);
 
-  // a press anywhere outside closes it, as it closes every other thing that opens
+  // A press anywhere outside closes it.
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent): void => {
@@ -145,7 +125,7 @@ export function NavSearch(): React.JSX.Element {
     return () => document.removeEventListener('pointerdown', onDown);
   }, [open]);
 
-  // "/" from anywhere that is not itself somewhere to type
+  // "/" from anywhere that is not itself a text field.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
@@ -159,7 +139,7 @@ export function NavSearch(): React.JSX.Element {
     return () => document.removeEventListener('keydown', onKey);
   }, [show]);
 
-  // the option lit by the arrow keys stays in view in a long list
+  // The option highlighted by the arrow keys stays in view in a long list.
   const options = buildOptions();
   const lit = open && active >= 0 ? options[active] : undefined;
   const litId = lit?.id;
@@ -190,7 +170,7 @@ export function NavSearch(): React.JSX.Element {
     return out;
   }
 
-  /** Done with the search: empty it, put it away, and remember what was looked for. */
+  /** Ends the search: empties and closes it, and optionally remembers the query. */
   const finish = (remember: boolean): void => {
     if (remember && term) setRecents(addRecentSearch(term));
     setOpen(false);
@@ -203,7 +183,7 @@ export function NavSearch(): React.JSX.Element {
     const { choice } = option;
     switch (choice.kind) {
       case 'recent':
-        // a past search is typed back in, and searched again
+        // A past search is typed back in and searched again.
         setQuery(choice.term);
         setActive(-1);
         inputRef.current?.focus({ preventScroll: true });
@@ -218,7 +198,7 @@ export function NavSearch(): React.JSX.Element {
         navigate(option.href);
         return;
       case 'dictionary':
-        // the published dictionary is files on the edge, not a route in here
+        // The published dictionary is static files, not a route in this app.
         finish(false);
         window.location.assign(option.href);
         return;
@@ -258,7 +238,7 @@ export function NavSearch(): React.JSX.Element {
           setQuery('');
           return;
         }
-        // nothing left to close: the focus goes back to where "/" took it from
+        // Nothing left to close, so the focus goes back to where "/" took it from.
         const back = returnTo.current;
         returnTo.current = null;
         if (back && back.isConnected && back !== document.body) back.focus();
@@ -271,7 +251,7 @@ export function NavSearch(): React.JSX.Element {
   };
 
   const onOptionClick = (e: React.MouseEvent<HTMLAnchorElement>, option: Option): void => {
-    // a new tab or window is the browser's to open, from the link's own address
+    // Modified clicks are left to the browser, which opens the link's own address.
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     e.preventDefault();
     choose(option);
@@ -295,7 +275,7 @@ export function NavSearch(): React.JSX.Element {
         href={option.href}
         tabIndex={-1}
         className={`nav-search-option is-${option.choice.kind}`}
-        // the field keeps the focus while an option is pressed
+        // The field keeps the focus while an option is pressed.
         onMouseDown={(e) => e.preventDefault()}
         onMouseMove={() => index !== active && setActive(index)}
         onClick={(e) => onOptionClick(e, option)}
@@ -311,7 +291,7 @@ export function NavSearch(): React.JSX.Element {
       className={`nav-search${open ? ' is-open' : ''}`}
       style={from ? ({ '--search-from-x': `${from.x}px`, '--search-from-y': `${from.y}px` } as React.CSSProperties) : undefined}
       onBlur={(e) => {
-        // tabbing out of the search closes it; a press elsewhere is the pointer handler's
+        // Tabbing out closes the search; a press elsewhere is handled by the pointer listener.
         const next = e.relatedTarget as Node | null;
         if (next && !boxRef.current?.contains(next)) {
           setOpen(false);
@@ -319,7 +299,7 @@ export function NavSearch(): React.JSX.Element {
         }
       }}
     >
-      {/* a phone's way in: the bar has no room for a field until it is asked for */}
+      {/* On a phone the bar has no room for a field until this button opens one. */}
       <button
         ref={openerRef}
         type="button"
@@ -413,7 +393,7 @@ export function NavSearch(): React.JSX.Element {
           )}
           {!term && recents.length === 0 && <p className="nav-search-note">{t('search.hint')}</p>}
 
-          {/* what is happening, said once, where a screen reader hears it */}
+          {/* The search status, announced once to screen readers. */}
           <div role="status" className="nav-search-status">
             {term && signedIn && quick.error && <p className="nav-search-note">{quick.error}</p>}
             {term && signedIn && !quick.error && !found && quick.loading && (
@@ -488,7 +468,7 @@ function OptionBody({ option, term }: { option: Option; term: string }): React.J
             <span className="nav-search-title" dir="auto">
               <Highlighted text={choice.user.displayName || choice.user.username} query={term} />
             </span>
-            {/* a username is written left to right whatever the page is, "@" first */}
+            {/* A username reads left to right on any page, "@" first. */}
             <span className="nav-search-sub" dir="ltr">
               @<Highlighted text={choice.user.username} query={term} />
               {choice.user.friend && <span dir="auto"> · {t('search.friend')}</span>}

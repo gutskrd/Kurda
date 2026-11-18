@@ -6,17 +6,11 @@ import { currentBan, type CurrentBan } from './sanctions-service.js';
 import type { Executor } from './tx.js';
 
 /**
- * The refusal a banned account gets when it tries to sign in or refresh.
+ * The refusal a banned account gets at sign-in or refresh: sign-in, refresh and social sign-in all answer 403
+ * ACCOUNT_SUSPENDED with the statement of reasons (until when or permanent, the rule, what we told them, whether they
+ * can appeal) and an appeal token that can only read their standing and file the appeal.
  *
- * Login never looked at bans: a banned person signed in with 200, got tokens,
- * and only then met a bare 403 on the next request. Now sign-in, refresh and
- * social sign-in all answer 403 ACCOUNT_SUSPENDED with the statement of reasons
- * — until when (or permanent), the rule, what we told them, whether they can
- * still ask for a review — and an appeal token that can read their standing
- * and file that request, and nothing else.
- *
- * Checked after the password, never before: whether an address belongs to a
- * banned account is not something to tell whoever types it in.
+ * Checked after the password, never before, so whether an address is banned is never revealed to whoever types it.
  */
 export async function suspensionError(
   config: AppConfig,

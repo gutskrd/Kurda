@@ -24,19 +24,16 @@ import { OPTION_MIN_HEIGHT, QuestionSteps, showEnglish } from './Question';
 import { questionIn } from '../legend';
 import { translatedText, translationToggle } from './translated';
 
-/** The one thing said aloud on a reveal: the verdict, and the right answer. */
-export function revealAnnouncement(myCorrect: boolean | null, right: string, t: Translate): string {
+/** The one announcement on a reveal: the verdict and the right answer. */
+function revealAnnouncement(myCorrect: boolean | null, right: string, t: Translate): string {
   const verdict = myCorrect === true ? t('stories.reveal.right') : myCorrect === false ? t('stories.reveal.wrong') : t('stories.reveal.noAnswer');
   return `${verdict} ${t('stories.reveal.answerWas', { answer: right })}`;
 }
 
 /**
- * The answer (contract §A1 "Reveal"): the right option with a tick and the
- * words "Right answer" (never colour alone), your own choice marked, the
- * one-line explanation, and the sentence of the story that answers it, quoted
- * in the story's own direction. In a duo or group, how many got it — not who —
- * and a Continue that waits for everyone (or the reveal's time limit); the
- * host cannot skip it for the others. Alone, Next.
+ * The answer (contract §A1 "Reveal"): the right option with a tick and the words "Right answer" (never colour
+ * alone), your choice marked, the explanation, and the story sentence that answers it in the story's direction. In
+ * a duo or group, how many got it (not who) and a Continue that waits for everyone or the time limit; alone, Next.
  */
 export function Reveal({
   view,
@@ -59,20 +56,19 @@ export function Reveal({
   const q = view.question;
   const said = useRef<number | null>(null);
 
-  // the review item carries the prompt and options once the game is over; before that, the question does
+  // Once the game is over the review item carries the prompt and options; before that, the question does.
   const item = view.results?.review.find((x) => x.index === r?.index);
   const prompt = item?.prompt ?? q?.prompt ?? '';
   const options = item?.options ?? q?.options ?? [];
   const right = r ? (options[r.correctIndex] ?? '') : '';
 
-  // Said, and the screen reader's place left alone: moving it to the verdict
-  // would cut the announcement off after its first words, and the right
-  // answer is the part that matters (only a new question moves focus).
+  // Announced without moving focus: focusing the verdict would cut the announcement off before the right answer.
+  // Only a new question moves focus.
   useEffect(() => {
     if (!r || said.current === r.index) return;
     said.current = r.index;
     announce(revealAnnouncement(r.myCorrect, right, t));
-    // felt as the verdict on your answer is shown; nothing when you gave none
+    // A haptic for the verdict on your answer; none when you gave none.
     if (r.myCorrect !== null) haptic(r.myCorrect ? 'correct' : 'wrong');
   }, [r, right, announce, t]);
 
@@ -81,7 +77,7 @@ export function Reveal({
   const dir = storyTextStyle(dialect);
   const props = storyTextProps(dialect);
   const english = showEnglish(prefs.englishUnder, view.settings.level);
-  // the explanation in the reader's language where the story has it, else the English
+  // The explanation in the reader's language where the story has it, else English.
   const tr = questionIn(item ?? r, locale);
   const trSet = tr ? translatedText(tr.lang) : null;
   const quote = story ? evidenceText(story.paragraphs, r.evidenceParagraph, r.evidenceSentence) : null;
@@ -127,8 +123,8 @@ export function Reveal({
           const mine = i === r.myChoice;
           const tag = correct ? t('stories.reveal.rightAnswer') : mine ? t('stories.reveal.yourAnswer') : null;
           return (
-            // not one label for the row: the option is read in the story's
-            // language and its tag ("Right answer") in the app's, each by its own voice
+            // No single label for the row: the option is read in the story's language and its tag ("Right answer") in the
+            // app's, each in its own voice.
             <View
               key={i}
               style={[
@@ -225,7 +221,7 @@ const styles = StyleSheet.create({
   verdictText: { ...display(typography.sizes.lg) },
   prompt: { ...display(typography.sizes.lg), lineHeight: 30 },
   options: { gap: spacing.sm },
-  // the tiles the question offered, in their shape, laid flat now that there is nothing to press and saying which was right
+  // The question's tiles in their shape, laid flat now that nothing is pressable, marking which was right.
   option: {
     alignItems: 'center',
     gap: spacing.sm,

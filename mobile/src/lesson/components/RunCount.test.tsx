@@ -5,7 +5,7 @@ vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
-// the fire as its props: how big it burns and what it grows from, whoever draws it
+// The fire as its props: how big it burns and what it grows from.
 vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { AccessibilityInfo } from 'react-native';
@@ -40,7 +40,7 @@ describe('a run of right answers', () => {
   });
 
   for (const reduceMotion of [false, true]) {
-    // springing in, or under Reduce Motion fading in where it is: either way said, and gone in about a second
+    // Springing in, or fading in under Reduce Motion: either way announced, and gone in about a second.
     it(`holds its milestone for about a second, says it, and moves on${reduceMotion ? ' under Reduce Motion' : ''}`, async () => {
       patchReactNativeWeb({ reduceMotion });
       vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -49,7 +49,7 @@ describe('a run of right answers', () => {
       renderWithProviders(<RunMoment count={25} onDone={onDone} />);
       expect(screen.getByRole('button', { name: '25 in a row!' })).toBeTruthy();
       expect(said).toEqual(['25 in a row!']);
-      // a blaze since 20: nothing more to grow into
+      // A blaze since 20, with nothing more to grow into.
       expect(fire().dataset.stage).toBe('blaze');
       expect(fire().dataset.from).toBeUndefined();
       await act(() => vi.advanceTimersByTimeAsync(RUN_MOMENT_MS - 100));

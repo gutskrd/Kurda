@@ -1,8 +1,6 @@
 /**
- * The list of uploaded pictures the app keeps: from the copy on the phone
- * until the server answers, the server's answer once it does, the last good
- * list whatever goes wrong after that, and asked for again when the app comes
- * back to the front after a quarter of an hour.
+ * The uploaded-art list: the stored copy until the server answers, then the server's list, the last good list
+ * after any failure, and a refresh on returning to the foreground after 15 minutes.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ArtOverridesResponse } from '@kurda/shared';
@@ -25,7 +23,7 @@ const GIR = `${CDN}/rank-gir.png`;
 const DERS = `${CDN}/badge-ders.png`;
 const DERS_ZER = `${CDN}/badge-ders-zer.png`;
 
-/** The phone's storage, kept in a map a test can read; `broken` makes every read and write fail, as a full disk would. */
+/** Device storage backed by a map; `broken` makes every read and write fail, as a full disk would. */
 function store(seed: ArtOverridesResponse | string | null = null, broken = false): DeviceStore & { data: Map<string, string> } {
   const data = new Map<string, string>();
   if (seed !== null) data.set(ART_OVERRIDES_KEY, typeof seed === 'string' ? seed : JSON.stringify(seed));
@@ -163,15 +161,15 @@ describe('keeping the list while the app runs', () => {
     await vi.waitFor(() => expect(artOverride('rank', 'gir')).toBe(GIR));
     expect(client.calls[0]).toMatchObject({ method: 'GET', path: '/art/overrides' });
 
-    // back after five minutes: the list is fresh enough
+    // Back after five minutes: the list is fresh enough.
     now += 5 * 60_000;
     app.move('active');
-    // in the background nothing is asked
+    // In the background nothing is asked.
     now += ART_OVERRIDES_STALE_MS;
     app.move('background');
     expect(client.calls).toHaveLength(1);
 
-    // back after more than a quarter of an hour since the answer
+    // Back after more than a quarter of an hour since the answer.
     app.move('active');
     await vi.waitFor(() => expect(client.calls).toHaveLength(2));
 

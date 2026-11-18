@@ -21,29 +21,19 @@ import { checkStatus, useMaintenance } from './maintenance';
 const POLL_MS = MAINTENANCE_POLL_SECONDS * 1000;
 
 /**
- * "Hevalo is offline for a while", over the whole app.
+ * "Hevalo is offline for a while", over the whole app. Mounted once at the root, above the navigator and the
+ * crash screen, and drawn only while there is a notice (maintenance.ts). Shows the admin's text and picture,
+ * falling back to the app's own words, and the expected return time.
  *
- * Mounted once at the root, over the navigator and the app's own crash screen,
- * and drawn only while there is a notice (maintenance.ts): any call answered
- * 503 MAINTENANCE puts it up. It shows what the admin wrote — or the app's own
- * words in the reader's language where they left a field empty — with their
- * picture or Hevalo the deer, and when Hevalo is expected back.
- *
- * It asks `GET /status` every half minute while it is up and the app is in
- * front, at once when the app comes back to the front, and whenever "Try
- * again" is pressed. When the answer is that Hevalo is open, it goes, and the
- * screens under it open again where they were (App.tsx).
+ * Polls `GET /status` every 30 s while in the foreground, on returning to the foreground and on "Try again". When
+ * Hevalo is open again it goes, and the screens underneath resume where they were (App.tsx).
  */
 export function MaintenanceScreen(): React.JSX.Element | null {
   const notice = useMaintenance();
   return notice ? <OfflineNotice notice={notice} /> : null;
 }
 
-/**
- * Ask whether Hevalo is back: every half minute while the app is in front, at
- * once when it comes back to the front, and when the button asks. One question
- * at a time; `asking` is only the button's own.
- */
+/** Check whether Hevalo is back, one request at a time; `asking` only drives the button's state. */
 function useStatusChecks(client: ApiClient): { asking: boolean; askNow: () => void } {
   const [asking, setAsking] = useState(false);
   const inFlight = useRef<Promise<void> | null>(null);
@@ -65,7 +55,7 @@ function useStatusChecks(client: ApiClient): { asking: boolean; askNow: () => vo
       stop();
       timer = setInterval(() => void ask(), POLL_MS);
     };
-    // a phone in a pocket asks nothing; coming back to the front asks at once
+    // A phone in a pocket asks nothing; coming back to the front asks at once.
     if (AppState.currentState !== 'background') start();
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
@@ -77,7 +67,7 @@ function useStatusChecks(client: ApiClient): { asking: boolean; askNow: () => vo
     });
     return () => {
       stop();
-      // react-native-web hands back nothing where the page cannot say whether it is visible
+      // react-native-web hands back nothing where the page cannot say whether it is visible.
       sub?.remove();
     };
   }, [ask]);
@@ -98,11 +88,11 @@ function OfflineNotice({ notice }: { notice: MaintenanceNotice }): React.JSX.Ele
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const { asking, askNow } = useStatusChecks(client);
-  // an uploaded picture that does not load gives way to the deer, rather than to an empty frame
+  // An uploaded picture that does not load gives way to the deer, rather than to an empty frame.
   const [brokenPicture, setBrokenPicture] = useState<string | null>(null);
   const picture = notice.pictureUrl && notice.pictureUrl !== brokenPicture ? notice.pictureUrl : null;
 
-  // a gentle fade in; nothing at all for somebody who has asked for less motion
+  // A gentle fade in; nothing at all for somebody who has asked for less motion.
   const enter = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
   useEffect(() => {
     if (reduceMotion) {
@@ -112,17 +102,17 @@ function OfflineNotice({ notice }: { notice: MaintenanceNotice }): React.JSX.Ele
     timing(enter, 1, duration.slow).start();
   }, [enter, reduceMotion]);
 
-  // the screens under the notice stay where they were: Android's back does not move them unseen
+  // The screens under the notice stay put: Android's back must not navigate them unseen.
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();
   }, []);
 
-  // the admin's own words are read in their own direction; the app's in the reader's language
+  // The admin's own words are read in their own direction; the app's in the reader's language.
   const titleDir = notice.title ? dir.free : dir.text;
   const messageDir = notice.message ? dir.free : dir.text;
-  // a time already gone is no promise, so it is left out rather than shown in the past
+  // A time already gone is no promise, so it is left out rather than shown in the past.
   const backBy = notice.backBy && Date.parse(notice.backBy) > Date.now() ? formatExpectedAt(notice.backBy, locale) : null;
 
   return (
@@ -184,7 +174,7 @@ function OfflineNotice({ notice }: { notice: MaintenanceNotice }): React.JSX.Ele
 const styles = StyleSheet.create({
   page: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
   column: { width: '100%', maxWidth: 480, alignItems: 'center', gap: spacing.md },
-  // the admin's wide picture, or the deer standing in the same frame
+  // The admin's wide picture, or the deer standing in the same frame.
   picture: {
     width: '100%',
     aspectRatio: 16 / 9,

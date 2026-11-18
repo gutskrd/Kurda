@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ClipError, RATE, encodeWav, mixToMono, resampleLinear, shape, voicedRange } from './audioClip';
 
-/** silence, then `voice` seconds of a 200 Hz tone at `level`, then silence */
+/** Silence, then `voice` seconds of a 200 Hz tone at `level`, then silence. */
 function take(before: number, voice: number, after: number, level = 0.3): Float32Array {
   const out = new Float32Array(Math.round((before + voice + after) * RATE));
   const a = Math.round(before * RATE);
   const b = a + Math.round(voice * RATE);
   for (let i = a; i < b; i++) out[i] = Math.sin((2 * Math.PI * 200 * i) / RATE) * level;
-  // a little room noise everywhere
+  // A little room noise everywhere.
   for (let i = 0; i < out.length; i++) out[i]! += (((i * 7919) % 100) / 100 - 0.5) * 0.002;
   return out;
 }
@@ -64,7 +64,7 @@ describe('a phone’s recording, on a browser that cannot resample it itself', (
     const second = new Float32Array(48000).map((_, i) => Math.sin((2 * Math.PI * 200 * i) / 48000));
     const out = resampleLinear(second, 48000, RATE);
     expect(out.length).toBe(RATE);
-    // the same tone: a quarter of a period in, the wave is at its peak
+    // The same tone: a quarter of a period in, the wave is at its peak.
     const quarter = Math.round(RATE / 200 / 4);
     expect(out[quarter]!).toBeGreaterThan(0.95);
     expect(resampleLinear(second, 48000, 48000)).toBe(second);

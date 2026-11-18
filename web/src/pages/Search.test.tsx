@@ -59,7 +59,7 @@ describe('Search', () => {
     show();
 
     await userEvent.type(await screen.findByRole('searchbox'), 'new');
-    // what was typed is marked where it appears, in the name and the username
+    // What was typed is marked where it appears, in the name and the username.
     expect(await screen.findByRole('button', { name: /Newroz/ })).toBeInTheDocument();
     expect([...document.querySelectorAll('mark')].map((m) => m.textContent)).toEqual(['New', 'new']);
     expect(asked).toContain('/users/search?q=new');
@@ -120,7 +120,7 @@ describe('Search', () => {
     expect(screen.getByText('Baran')).toBeInTheDocument();
     expect(screen.getByText('Mutual friends: 2')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
-    // handed over: what is left is Requested, with its ticket, and a screen reader hears it went
+    // Handed over: what is left is Requested, with its ticket, and a screen reader hears it went.
     expect(await screen.findByRole('button', { name: 'Cancel your request to Baran' })).toHaveTextContent('Requested');
     expect(screen.getByText('Request sent')).toHaveAttribute('role', 'status');
     expect(posts).toContainEqual({ path: '/friends/requests', body: { userId: 'u5' } });
@@ -134,7 +134,7 @@ describe('Search', () => {
     await userEvent.type(await screen.findByRole('searchbox'), 'rojda{Enter}');
     await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
 
-    // a chip that searches again, and a way to forget them
+    // A chip that searches again, and a way to forget them.
     expect(await screen.findByRole('button', { name: 'rojda' })).toBeInTheDocument();
     expect(sessionStorage.getItem('hevalo_recent_searches')).toContain('rojda');
     expect(localStorage.getItem('hevalo_recent_searches')).toBeNull();
@@ -183,7 +183,7 @@ describe('Search', () => {
     await userEvent.click(screen.getByRole('button', { name: 'bar' }));
     expect(field()).toHaveValue('berfin');
     await waitFor(() => expect(asked).toContain('/users/search?q=berfin'));
-    // and the address stays on what was asked, not what the page had been showing
+    // And the address stays on what was asked, not what the page had been showing.
     expect(screen.getByTestId('where').textContent).toBe('/app/search?q=berfin');
   });
 
@@ -203,7 +203,7 @@ describe('Search', () => {
     await userEvent.click(await screen.findByRole('button', { name: /^add$/i }));
     const requested = await screen.findByRole('button', { name: 'Cancel your request to Baran' });
     await userEvent.click(requested);
-    // armed, not fired
+    // Armed, not fired.
     expect(fetch.mock.calls.some(([, init]) => init?.method === 'DELETE')).toBe(false);
     await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
     expect(await screen.findByRole('button', { name: /^add$/i })).toBeEnabled();

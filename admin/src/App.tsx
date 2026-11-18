@@ -12,7 +12,7 @@ export function App(): React.JSX.Element {
     <AuthProvider>
       <ToastProvider>
         <DialogProvider>
-          {/* the API refuses every /admin route without 2FA, so the console opens only once the sign-in has cleared it */}
+          {/* The API refuses every /admin route without 2FA, so the console opens only once the sign-in has cleared it. */}
           <SignIn warm={loadConsole}>{(signOut) => <Console onSignOut={signOut} />}</SignIn>
         </DialogProvider>
       </ToastProvider>

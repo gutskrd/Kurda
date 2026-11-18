@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// the fire as its props: how big it burns and whether it stands still, whoever draws it
+// The fire as its props: how big it burns and whether it stands still, whoever draws it.
 vi.mock('../theme/Fire', () => import('../theme/testing/fireProbe'));
 import { cleanup, screen, within } from '@testing-library/react';
 import { fireLadder, fireLevel, fireSizeToFit } from '@kurda/shared';
@@ -16,9 +16,8 @@ import type { Streak } from './format';
 import { StreakSheet } from './StreakSheet';
 
 /*
- * The streak's sheet, opened from Learn's fire and the profile's streak: the
- * numbers a missed day never takes away, and the ladder of the fire's stages —
- * reached, burning now, and ahead, each said in full to a screen reader.
+ * The streak sheet, opened from Learn's fire and the profile: the numbers a missed day never resets, and the fire
+ * ladder's stages, each announced in full.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -72,14 +71,14 @@ describe('the streak sheet', () => {
       'rung-ahead',
       'rung-ahead',
     ]);
-    // each stage drawn as it is, the one now as today has grown it; those ahead stand still
+    // Each stage drawn as it is: the current one as today has grown it, those ahead still.
     expect(rungFires().map((f) => f.dataset.stage)).toEqual(['spark', 'kindling', 'campfire', 'bigfire', 'bonfire', 'blaze', 'newroz']);
     expect(rungFires().map((f) => f.dataset.still === 'true')).toEqual([false, false, false, true, true, true, true]);
     expect(rungFires()[2]!.dataset.growth).toBe(String(fireLevel(9).growth));
-    // each framed to fill the same square, so a spark is as plain as the Newroz fire and every row as tall
+    // Each framed to fill the same square, so a spark is as visible as the Newroz fire and every row is as tall.
     expect(rungFires().map((f) => f.dataset.framed)).toEqual(Array(7).fill('true'));
     expect(rungFires().map((f) => Number(f.dataset.size))).toEqual(fireLadder(9).map((step) => fireSizeToFit(step.stage, 44, 44)));
-    // the one now said in words on the screen too, and only it
+    // Only the current stage is labelled on screen too.
     expect(within(ladder()).getAllByText('Now')).toHaveLength(1);
     expect(within(ladder()).getByText('Day 365')).toBeTruthy();
   });

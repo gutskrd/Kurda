@@ -1,9 +1,6 @@
 /**
- * Bringing back a streak that ended, as the streak's sheet needs it: which day
- * to name as the last one, whether the gems are short, and what a refusal
- * means. The server decides everything (shared streak-repair.ts holds the
- * rules, POST /me/streak/repair applies them); this only reads what it said.
- * Pure, so each answer is tested apart from the sheet.
+ * Restoring an ended streak, for the streak sheet: the last day to name, whether gems are short, and what a
+ * refusal means. The server decides (rules in shared streak-repair.ts, applied by POST /me/streak/repair). Pure.
  */
 import type { StreakRepairOffer } from '@kurda/shared';
 import type { Streak } from './format';
@@ -20,29 +17,22 @@ export interface RepairResult {
 }
 
 /**
- * A moment inside the last day the streak can be restored on: the minute
- * before the offer ends. The sheet names that day ("until the end of
- * Thursday") rather than counting down to the instant; null when the server's
- * date cannot be read.
+ * A moment inside the last day the streak can be restored, a minute before the offer ends, so the sheet names
+ * that day; null when the date is unreadable.
  */
 export function repairLastDay(offer: Pick<StreakRepairOffer, 'until'>): Date | null {
   const ends = Date.parse(offer.until);
   return Number.isNaN(ends) ? null : new Date(ends - 60_000);
 }
 
-/**
- * Whether the gems are known to be short of the price. Not while the balance
- * is still unread (null), and never for a free restore: then the button stays
- * live and the server answers.
- */
+/** Whether gems are known to be short of the price: never while the balance is unread or for a free restore, so the server answers then. */
 export function gemsShort(offer: Pick<StreakRepairOffer, 'costGems' | 'free'>, gems: number | null): boolean {
   return !offer.free && gems !== null && gems < offer.costGems;
 }
 
 /**
- * What a refused restore means for the sheet: the gems were short after all
- * (read the balance again and say so), the streak can no longer be restored
- * (say so, and read the streak again), or something else went wrong.
+ * What a refused restore means: gems short after all (reload the balance), no longer restorable (reload the
+ * streak), or another failure.
  */
 export type RepairRefusal = 'short' | 'gone' | 'other';
 

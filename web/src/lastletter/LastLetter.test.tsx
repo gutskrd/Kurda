@@ -206,7 +206,7 @@ describe('Tîpa Dawî, the room', () => {
     expect(input).toHaveAttribute('dir', 'rtl');
     expect(input).toHaveAttribute('lang', 'ckb');
     expect(screen.getByRole('list', { name: 'The chain' })).toHaveAttribute('dir', 'rtl');
-    // in the ring and in the "starts with" line, and as the box's placeholder
+    // In the ring and the "starts with" line, and as the box's placeholder.
     expect(screen.getAllByText('ئا')).toHaveLength(2);
     expect(input).toHaveAttribute('placeholder', 'ئا…');
   });
@@ -218,7 +218,7 @@ describe('Tîpa Dawî, the room', () => {
         status: 'finished',
         code: null,
         players: [seat(1, { userId: 'me', isMe: true, isHost: true }), seat(2, { bot: 'hevalo' })],
-        // a game against Hevalo pays nothing: the server sends no XP for either seat
+        // A game against Hevalo pays nothing, so the server sends no XP for either seat.
         results: [
           { seat: 2, place: 1, score: 9, xpAwarded: null },
           { seat: 1, place: 2, score: 8, xpAwarded: 0 },
@@ -229,12 +229,12 @@ describe('Tîpa Dawî, the room', () => {
     renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
     expect(await screen.findByRole('heading', { name: 'Game over' })).toBeInTheDocument();
     expect(screen.getByText('Hevalo won this time.')).toBeInTheDocument();
-    // and every word of the game, read again with who played it
+    // Every word of the game, with who played it.
     expect(screen.getByRole('heading', { name: 'The words of this game' })).toBeInTheDocument();
     const results = screen.getByRole('list', { name: 'Results' });
     expect(within(results).getByText('Hevalo')).toBeInTheDocument();
     expect(within(results).getByText('Words: 8')).toBeInTheDocument();
-    // no XP on the places, never a "+0 XP", and one line under them that says where XP is earned
+    // No XP on the places, never "+0 XP", and one line saying where XP is earned.
     expect(results).not.toHaveTextContent('XP');
     expect(screen.queryByText(/\d+ XP/)).toBeNull();
     expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
@@ -257,7 +257,7 @@ describe('Tîpa Dawî, the room', () => {
     const results = await screen.findByRole('list', { name: 'Results' });
     const [first, second] = within(results).getAllByRole('listitem');
     expect(within(first!).getByText('+16 XP')).toBeInTheDocument();
-    // a place that earned none shows none, rather than a zero
+    // A place that earned no XP shows none rather than a zero.
     expect(second).not.toHaveTextContent('XP');
     expect(screen.queryByText(/Played alone, a game earns no XP/)).toBeNull();
   });

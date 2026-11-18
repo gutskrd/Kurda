@@ -56,7 +56,7 @@ describe('RankResult', () => {
     expect(await screen.findByText('+24')).toBeInTheDocument();
     expect(screen.getByText('you beat a higher-ranked player')).toBeInTheDocument();
     expect(screen.getByText('28 points to Gir I')).toBeInTheDocument();
-    // a screen reader hears it once, in a sentence
+    // Screen readers hear it once, as a sentence.
     expect(screen.getByRole('status')).toHaveTextContent('+24 points: you beat a higher-ranked player. You have 472 points.');
   });
 

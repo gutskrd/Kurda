@@ -24,7 +24,6 @@ describe('a lesson’s own name', () => {
     expect(lessonTitle(map([skill({ firstLessonId: 'l1', lessons })]), 'l2')).toBe('Hamo at the blue gate');
   });
 
-  // a map from before the server listed a skill’s lessons names only the skill
   it('is the skill’s name for its first lesson, on a map that does not list the lessons', () => {
     expect(lessonTitle(map([skill({ firstLessonId: 'l1' })]), 'l1')).toBe('Greetings');
   });

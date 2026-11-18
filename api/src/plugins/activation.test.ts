@@ -1,11 +1,6 @@
 /**
- * The activation rule, read as a rule.
- *
- * `activation.integration.test.ts` proves the gate against real routes and a
- * real database. This covers the part that has no route behind it: what happens
- * to an endpoint nobody has written yet. Deny-by-default is only true if it
- * stays true for the next person's endpoint, and the only place to check that
- * is here.
+ * The activation rule as a rule, for endpoints that do not exist yet: deny-by-default holds only if a future route is
+ * refused too, which the integration test cannot show.
  */
 import { describe, expect, it } from 'vitest';
 import { blockedBeforeActivation } from './activation.js';
@@ -35,8 +30,7 @@ describe('blockedBeforeActivation', () => {
   });
 
   it('refuses a route that does not exist yet', () => {
-    // the exemptions name a method as well as a path on purpose: `DELETE /me`
-    // is leaving, and leaving is not editing
+    // Exemptions name a method as well as a path: `DELETE /me` is leaving, not editing.
     expect(blockedBeforeActivation('PATCH', '/me')).toBe(true);
     expect(blockedBeforeActivation('PUT', '/me')).toBe(true);
     expect(blockedBeforeActivation('POST', '/me/sessions')).toBe(true);
@@ -50,12 +44,7 @@ describe('blockedBeforeActivation', () => {
     expect(blockedBeforeActivation('POST', '/me/heartbeats')).toBe(true);
   });
 
-  /**
-   * The exemption used to be the prefix `/auth/`, and these are the routes
-   * that shows to be wrong. Sending an SMS is filed under authentication and
-   * costs money; an account that has not proved it owns its email address has
-   * no business spending it.
-   */
+  /** Not every auth route is a way through the gate: sending an SMS costs money and is refused before confirmation. */
   it('refuses the auth routes that are not the way through the gate', () => {
     expect(blockedBeforeActivation('POST', '/auth/phone/send')).toBe(true);
     expect(blockedBeforeActivation('POST', '/auth/phone/verify')).toBe(true);

@@ -26,17 +26,9 @@ import { Loading } from '../theme/Loading';
 const PAGE = 20;
 
 /**
- * The posts you kept.
- *
- * The bookmark on a card had nowhere to lead on the phone — you could save
- * something and never find it again. This is where it goes, the same list the
- * web app shows, scoped to you by the server.
- *
- * Unsaving from here removes the card, because a list of saved posts with an
- * unsaved one still sitting in it is a lie that survives until the next reload.
- *
- * The posts run the width of the screen with the hairline between them, as
- * they do on Home, so a post saved from the wall looks the same here.
+ * The posts you saved, the same list the web app shows, scoped to you by the server. Unsaving here removes the
+ * card, so the list never shows an unsaved post until the next reload. Posts run full width with hairlines
+ * between, as on Home.
  */
 export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -44,7 +36,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   const { t } = useI18n();
   const navigation = useNavigation<RootNavigation>();
   const dir = useDirection();
-  // nothing floats over the foot of this page: the last post only has to clear the home indicator
+  // Nothing floats over the foot of this page: the last post only has to clear the home indicator.
   const bottom = useScreenBottomInset(spacing.lg);
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
@@ -56,10 +48,8 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   const fetchPage = useCallback((offset: number) => getSaved(client, { limit: PAGE, offset }), [client]);
 
   /*
-   * Come back to from a post, the list is as it was left — every page that
-   * was loaded, at the same place — and is brought up to date quietly
-   * (feed/keep.ts): a post unsaved on its own page is gone from here, and
-   * nothing else moves. It used to be replaced by its first page each time.
+   * Returning from a post keeps the list as it was, every loaded page at the same place, and refreshes it quietly
+   * (feed/keep.ts): a post unsaved on its own page disappears and nothing else moves.
    */
   const { onScroll, forget } = useQuietRefocus<FeedItem>({
     loaded: items !== null,
@@ -70,12 +60,12 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
     },
     keyOf: feedKey,
     pageSize: PAGE,
-    // what the read says is no longer saved does not stay in a list of what is
+    // What the reload says is no longer saved is removed from the list of saved posts.
     apply: (update) => setItems((prev) => (prev ? update(prev).filter((i) => i.engagement.bookmarked) : prev)),
     retry: error ? () => void refresh() : undefined,
   });
 
-  // the list as it first opens
+  // The list as it first opens.
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -104,7 +94,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
       setError(null);
     }
     setRefreshing(false);
-    // `forget` is the same function for as long as the screen is there
+    // `forget` is the same function for as long as the screen is there.
   }, [fetchPage]);
 
   const loadMore = useCallback(async () => {
@@ -126,7 +116,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
     );
   }, []);
 
-  // a post you deleted is not kept here either
+  // A post you deleted is not kept here either.
   useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
 
   const entering = useListEntrance(!!items && items.length > 0);
@@ -162,11 +152,11 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
-              // what belongs here, and the way to the posts there are to keep
+              // What belongs here, and the way to the posts there are to keep.
               <EmptyState
                 title={t('saved.empty')}
                 body={t('saved.empty.body')}
-                action={{ label: t('saved.empty.browse'), onPress: () => navigation.navigate('Tabs', { screen: 'Home' }) }}
+                action={{ label: t('saved.empty.browse'), onPress: () => navigation.popTo('Tabs', { screen: 'Home' }) }}
               />
             }
             ListFooterComponent={
@@ -184,6 +174,6 @@ const feedKey = (item: FeedItem): string => item.key;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // in the page's gutter, where the posts' own words start
+  // In the page's gutter, where the posts' own words start.
   sub: { fontSize: typography.sizes.sm, marginBottom: spacing.sm, paddingHorizontal: layout.gutter },
 });

@@ -5,6 +5,7 @@ import type { MyReport } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { EmptyState } from '../theme/EmptyState';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
@@ -21,13 +22,9 @@ import { formatDay } from './sendErrors';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * My reports: everything you reported and what became of it.
- *
- * A report used to vanish into a thank-you: nothing on the phone said it had
- * been looked at. The receipt is here at once ("Waiting for review"), and the
- * outcome when there is one — "We took action" with no word about what, since
- * what happened to someone else is theirs; or "it doesn't break our rules",
- * with a way to ask for a second look, once.
+ * My reports: everything you reported and what became of it. The receipt shows at once ("Waiting for review"), then the
+ * outcome: "We took action" with no word about what (that is the other person's), or "it doesn't break our rules", with
+ * a way to ask for a second look, once.
  */
 export function MyReportsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -50,7 +47,7 @@ export function MyReportsScreen({ onExit }: { onExit: () => void }): React.JSX.E
   useEffect(() => {
     void load();
   }, [load]);
-  // pulled down, the reports are read again: an outcome may have come since
+  // Pulled down, the reports are read again: an outcome may have come since.
   const pull = usePullRefresh(load);
 
   return (
@@ -60,7 +57,7 @@ export function MyReportsScreen({ onExit }: { onExit: () => void }): React.JSX.E
         loading={loading && reports.length === 0}
         error={reports.length === 0 ? error : null}
         isEmpty={reports.length === 0}
-        emptyText={t('reports.empty')}
+        empty={<EmptyState title={t('reports.empty')} body={t('reports.emptyBody')} />}
         onRetry={load}
       >
         <FlatList

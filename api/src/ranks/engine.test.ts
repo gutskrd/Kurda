@@ -38,8 +38,7 @@ const entry = (userId: string, state: PlayerState, place: number, over: Partial<
 
 describe('rateGame (OpenSkill Plackett-Luce)', () => {
   it('matches the published 1v1 values from the default rating', () => {
-    // Weng-Lin PL with μ 25, σ 25/3, β 25/6, τ 25/300: the reference numbers
-    // of the openskill test-suite
+    // Weng-Lin PL with μ 25, σ 25/3, β 25/6, τ 25/300: the reference numbers of the openskill test suite.
     const [a, b] = rateGame({
       entries: [entry('a', freshState(S), 1), entry('b', freshState(S), 2)],
       weight: 1,

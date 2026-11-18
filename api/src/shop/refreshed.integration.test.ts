@@ -1,10 +1,6 @@
 /**
- * Refreshed shop items against real Postgres: the one-time notice, and that an
- * owner keeps the item — a purchase is final, and there is no way to hand one
- * back for currency.
- *
- * The items are made here and replaced by running migration 1751000161000 over
- * them, which is how production's owners got their rows.
+ * Refreshed shop items against real Postgres: the one-time notice, and that the owner keeps the item, since purchases
+ * are final. The items are made here and replaced by running migration 1751000161000 over them, as production's were.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

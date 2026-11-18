@@ -2,30 +2,20 @@ import { lessonAudioKey, storySentences, type RecordingVoice, type StoryNarratio
 import { knownVoice, type PlaybackClock } from '../characters/voice';
 
 /**
- * Listening to a story: the recorded sentences, one after another.
- *
- * The audio studio records a story sentence by sentence (the same split
- * `storySentences` makes here), so a paragraph is heard as a queue of short
- * recordings. A paragraph with recordings gets a Listen button that plays its
- * own; a story with recordings also gets the player bar — play and pause,
- * the sentence before and after, a seek line over the whole story as one
- * stitched track (the server's `narration`, each sentence with where it
- * starts), the speed, and the sentence being read lit up in the text (a tap
- * on it says it again). Nothing plays from tapping the rest of the text: a
- * tap on a word opens its meaning, and a tap that also started sound would be
- * two things at once.
- *
- * The player is passed in, so the queue's rules run in a test without audio.
+ * Listening to a story as a queue of recorded sentences (split as `storySentences` does). A paragraph with
+ * recordings gets its own Listen; a story with recordings also gets the player bar, which treats the whole story as
+ * one stitched track (the server's `narration`). Tapping text never plays sound, since a tap on a word opens its
+ * meaning. The player is injected, so the queue's rules are tested without audio.
  */
 
 export interface NarrationItem {
   paragraph: number;
-  /** index into storySentences(paragraph), which is what the reader highlights */
+  /** Index into storySentences(paragraph), which the reader highlights. */
   sentence: number;
   url: string;
-  /** its recording key (also its key in the story's `voices`), when the item came from the server's track */
+  /** Its recording key (also its key in the story's `voices`), for items from the server's track. */
   key?: string;
-  /** where it starts on the stitched track, and how long it runs; a paragraph's own queue has neither */
+  /** Where it starts on the stitched track and how long it runs; a paragraph's own queue has neither. */
   startMs?: number;
   durationMs?: number;
 }
@@ -43,16 +33,15 @@ export function narrationItems(paragraphs: readonly string[], audio: Readonly<Re
   return items;
 }
 
-/** The server's stitched track as the narrator's queue: each sentence with its place on the timeline. */
+/** The server's stitched track as the narrator's queue, each sentence with its place on the timeline. */
 export function narrationTrack(narration: StoryNarration): NarrationItem[] {
   return narration.sentences.map((s) => ({ paragraph: s.paragraph, sentence: s.sentence, url: s.url, key: s.key, startMs: s.startMs, durationMs: s.durationMs }));
 }
 
 /**
- * Which item of a queue plays at `ms` on its track, and how far into it: the
- * same rule as the shared `narrationAt`, on the narrator's own items. Before
- * the start it is the first from the beginning; at or past the end the last
- * at its end, so a seek to either edge lands somewhere playable.
+ * Which item plays at `ms` on the track, and the offset into it, by the same rule as shared `narrationAt`. Before
+ * the start it is the first item; at or past the end the last at its end, so seeking to either edge lands somewhere
+ * playable.
  */
 export function trackAt(items: readonly NarrationItem[], ms: number): { index: number; offsetMs: number } {
   if (items.length === 0) return { index: -1, offsetMs: 0 };
@@ -81,10 +70,7 @@ export function clockText(ms: number): string {
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
-/**
- * What a recorded sentence says, and who says it when an editor has chosen a
- * character for it (`voices` is keyed like `audio`, by `lessonAudioKey`).
- */
+/** A recorded sentence's text, and its speaker when an editor chose a character (`voices` is keyed like `audio`, by `lessonAudioKey`). */
 export function narrationLine(
   paragraphs: readonly string[],
   voices: Readonly<Record<string, RecordingVoice>> | undefined,
@@ -95,43 +81,43 @@ export function narrationLine(
   return { text, voice: key && voices && Object.hasOwn(voices, key) ? knownVoice(voices[key]) : null };
 }
 
-/** What the player says of itself between the sentences: waiting for sound, or unable to make it. */
+/** The player's state between sentences: waiting for sound, or unable to play. */
 export interface PlayerStatus {
   buffering: boolean;
   error: boolean;
 }
 
-/** A small surface of an audio player: what the queue needs and nothing more. */
+/** The small audio player interface the queue needs. */
 export interface PlayerLike {
   load(url: string): void;
   play(): void;
   pause(): void;
-  /** to a point inside the loaded recording, in seconds */
+  /** Seeks within the loaded recording, in seconds. */
   seek(seconds: number): void;
   setRate(rate: number): void;
-  /** called when the loaded recording plays to its end */
+  /** Called when the loaded recording plays to its end. */
   onEnded(listener: () => void): () => void;
-  /** called as the player waits for sound, has it again, or gives up on it */
+  /** Called as the player waits for sound, has it again, or gives up. */
   onStatus?(listener: (status: PlayerStatus) => void): () => void;
   release(): void;
-  /** where the loaded recording is, for a speaking character to follow and the seek line to read */
+  /** The loaded recording's position, for a speaking character and the seek line. */
   readonly clock?: PlaybackClock;
 }
 
-export type NarrationScope = 'paragraph' | 'story';
+type NarrationScope = 'paragraph' | 'story';
 
 export interface NarrationState {
   playing: boolean;
   current: NarrationItem | null;
-  /** what is being played: one paragraph's Listen, or the whole-story bar */
+  /** What is playing: one paragraph's Listen, or the whole-story bar. */
   scope: NarrationScope | null;
-  /** the paragraph whose Listen started it (scope 'paragraph') */
+  /** The paragraph whose Listen started it (scope 'paragraph'). */
   paragraph: number | null;
   index: number;
   total: number;
-  /** waiting for the recording's sound */
+  /** Waiting for the recording's sound. */
   buffering: boolean;
-  /** the recording would not play */
+  /** The recording would not play. */
   error: boolean;
   rate: number;
 }
@@ -149,7 +135,7 @@ export class Narrator {
   private rate = 1;
   private buffering = false;
   private error = false;
-  /** where on the story's track it stood when last stopped part-way; null when it never played or played to its end */
+  /** Where on the story's track it stopped part-way; null when it never played or played to the end. */
   private resume: number | null = null;
 
   constructor(
@@ -157,7 +143,7 @@ export class Narrator {
     private readonly onChange: (state: NarrationState) => void,
   ) {}
 
-  /** the player's clock once there is a player; a character reads it while a sentence plays */
+  /** The player's clock once there is a player; a character reads it while a sentence plays. */
   get clock(): PlaybackClock | null {
     return this.player?.clock ?? null;
   }
@@ -182,16 +168,12 @@ export class Narrator {
     return trackLength(this.queue);
   }
 
-  /**
-   * Where the whole story stood when it was last stopped before its end — a
-   * paragraph's Listen taking over, the reader closed — so the bar goes on
-   * from inside that sentence rather than from the first one.
-   */
+  /** Where the story stopped before its end (a paragraph's Listen took over, the reader closed), so the bar resumes inside that sentence. */
   get resumeMs(): number | null {
     return this.resume;
   }
 
-  /** Where on the stitched track the sound is now: the sentence's start plus how far into it the player is. */
+  /** The current position on the stitched track: the sentence's start plus the player's offset into it. */
   positionMs(): number {
     const item = this.scope ? this.queue[this.index] : undefined;
     if (!item) return 0;
@@ -200,10 +182,10 @@ export class Narrator {
     return (item.startMs ?? 0) + (length > 0 ? Math.min(into, length) : into);
   }
 
-  /** Play these from `start`: a paragraph's sentences, or the whole story. */
+  /** Plays these from `start`: a paragraph's sentences, or the whole story. */
   play(items: readonly NarrationItem[], scope: NarrationScope, start = 0): void {
     if (items.length === 0) return;
-    // a new story queue starts where it is told to; a paragraph's leaves the story's place alone
+    // A new story queue starts where told; a paragraph's queue leaves the story's place alone.
     if (scope === 'story') this.resume = null;
     else this.keepPlace();
     this.queue = [...items];
@@ -213,13 +195,13 @@ export class Narrator {
     this.startCurrent();
   }
 
-  /** Pause, or carry on from where it paused inside the sentence. */
+  /** Pauses, or resumes from inside the sentence. */
   toggle(): void {
     if (!this.scope) return;
     const p = this.ensurePlayer();
     if (this.playing) p.pause();
     else {
-      // a sentence that would not play is asked for again from its start
+      // A sentence that failed is requested again from its start.
       if (this.error) {
         this.startCurrent();
         return;
@@ -242,17 +224,13 @@ export class Narrator {
     this.startCurrent();
   }
 
-  /** The sentence being read, from its start again. */
+  /** Replays the current sentence from its start. */
   replay(): void {
     if (!this.scope) return;
     this.startCurrent();
   }
 
-  /**
-   * To a point on the stitched track: the sentence there is loaded if it is
-   * not the one playing, and the sound moves to the point inside it. Paused
-   * stays paused — the seek line moves, the voice waits.
-   */
+  /** Seeks on the stitched track, loading the sentence there if it is not the current one. A paused player stays paused. */
   seek(ms: number): void {
     if (!this.scope || this.queue.length === 0) return;
     const at = trackAt(this.queue, ms);
@@ -276,7 +254,7 @@ export class Narrator {
     this.emit();
   }
 
-  /** Silence, and forget the queue: questions started, the screen closed. The story's place is kept. */
+  /** Silences and forgets the queue (questions started, screen closed), keeping the story's place. */
   stop(): void {
     this.keepPlace();
     this.player?.pause();
@@ -290,7 +268,7 @@ export class Narrator {
     this.emit();
   }
 
-  /** The screen is gone: let the player go too. */
+  /** Releases the player when the screen is gone. */
   dispose(): void {
     this.stop();
     this.unsubscribe?.();
@@ -332,12 +310,12 @@ export class Narrator {
       this.startCurrent();
       return;
     }
-    // the last sentence ended: done, the highlight goes, and the next play starts the story again
+    // The last sentence ended: done, the highlight goes, and the next play starts the story over.
     this.stop();
     this.resume = null;
   }
 
-  /** The story queue's place on its track, kept before the queue goes; only a track with times has one. */
+  /** Keeps the story queue's track position before the queue goes; only a timed track has one. */
   private keepPlace(): void {
     const item = this.queue[this.index];
     if (this.scope === 'story' && item && item.startMs !== undefined) this.resume = this.positionMs();
@@ -346,12 +324,11 @@ export class Narrator {
   private status(status: PlayerStatus): void {
     if (!this.scope) return;
     const was = { buffering: this.buffering, error: this.error, playing: this.playing };
-    // a recording that failed is not waiting for anything any more
+    // A failed recording is no longer waiting for anything.
     this.buffering = status.buffering && !status.error;
     if (status.error) {
-      // the sound stopped on its own; the text stays readable and the bar says why.
-      // The error is cleared by the next sentence loaded or by play, never by a
-      // later quiet status: the player keeps reporting while the bar says it.
+      // The sound stopped by itself; the text stays readable and the bar says why. The error clears only with the next
+      // sentence loaded or play, never with a later quiet status, since the player keeps reporting meanwhile.
       this.error = true;
       this.playing = false;
     }

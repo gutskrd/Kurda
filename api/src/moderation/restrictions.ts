@@ -4,24 +4,15 @@ import { activeRestriction, mutedError } from './sanctions-service.js';
 import type { Executor } from './tx.js';
 
 /**
- * preHandler: the signed-in user is not muted for `scope`.
+ * preHandler: the signed-in user is not muted for `scope`. Every route creating text or media asks first, and a
+ * restricted call answers 403 MUTED with the end time: `chat` on direct and group messages, `post` on library and image
+ * posts and comments, `media` on picture and voice uploads. Gifts and game cards are posted into chats by other
+ * services (gifts, play invites), which ask the same via `assertUnrestricted`, so a chat mute stops them too.
  *
- * Mutes were written (by admins, the queue and the spam engine) and never read,
- * so a muted person kept messaging and posting. Every route that creates text or
- * media now asks first, and a restricted call answers 403 MUTED with when it
- * ends: `chat` on direct and group messages, `post` on library posts and
- * comments and image posts and comments, `media` on picture and voice uploads.
- * A gift or a game card is posted into a chat as a message too, by a service
- * other routes call (gifts, play invites), so those services ask the same
- * question with `assertUnrestricted` and give the same answer: a chat mute
- * stops them as it stops text.
+ * Text shown to others outside posts counts too: a new group's name and description (`post`), and a changed display
+ * name, bio or username (checked in PATCH /me only when one changes).
  *
- * Text that is shown to others outside a post counts too: a new group's name
- * and description (`post`), and a changed display name, bio or username (the
- * check is in PATCH /me, which only asks when one of those changes).
- *
- * Put it after the guard that signs the user in (`requireBirthMonth` or
- * `requireAuth`); without a user it does nothing and leaves the answer to them.
+ * Put it after the guard that signs the user in (`requireBirthMonth` or `requireAuth`); without a user it does nothing.
  */
 export function requireUnrestricted(scope: Exclude<RestrictionScope, 'account'>) {
   return async function unrestricted(req: FastifyRequest, _reply: FastifyReply): Promise<void> {
@@ -37,13 +28,10 @@ export async function assertUnrestricted(db: Executor, userId: string, scope: Ex
 }
 
 /**
- * Whether a voice file may be attached to a post or comment by this person:
- * a confirmed audio upload that moderation has not taken down, from someone
- * who is not barred from media (403 MUTED, thrown). A feature limit used to
- * stop the upload routes only, so a key uploaded some other way — or before
- * the limit — could still be published by attaching it. And a picture is not
- * a voice note: a posted picture is a confirmed upload too, and its key is in
- * its public address.
+ * Whether this person may attach a voice file to a post or comment: a confirmed audio upload that moderation has not
+ * taken down, from someone not barred from media (403 MUTED, thrown). Checked at attach time because a key uploaded
+ * another way, or before the limit, could otherwise be published; and a picture upload is not a voice note even though
+ * its key is public.
  */
 export async function voiceAttachable(db: Executor, userId: string, key: string): Promise<boolean> {
   await assertUnrestricted(db, userId, 'media');

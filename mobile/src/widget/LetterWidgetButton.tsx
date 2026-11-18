@@ -5,9 +5,8 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
- * The way to the letter widget's page from the letters screen's header: the
- * squares a phone shows for its widgets, named in words for a screen reader.
- * Not on the website build of the phone app, which has no home screen.
+ * The letters screen's header button to the letter widget's page: the widget-squares icon, labelled in words for
+ * screen readers. Absent from the web build, which has no home screen.
  */
 export function LetterWidgetButton(): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();

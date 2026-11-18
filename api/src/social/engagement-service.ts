@@ -4,16 +4,9 @@ import { AppError } from '../plugins/errors.js';
 import { writtenForSql } from '../users/age.js';
 
 /**
- * Liking, saving and reposting a post, whatever kind of post it is.
- *
- * Stories, poems and pictures share one feed, so they share one heart, one
- * bookmark and one repost. Everything here works in (type, id) pairs rather
- * than knowing which table a post came from — the feed already knows that, and
- * teaching this service too would mean two of everything.
- *
- * A repost is the third kind rather than a table of its own: one per person
- * per post, counted on the post, listed newest-first for whoever made it. That
- * is a like, with a different name and a different meaning to a reader.
+ * Liking, saving and reposting any kind of post. Stories, poems and pictures share one feed, so they share one heart,
+ * bookmark and repost, keyed by (type, id) without knowing which table a post came from. A repost is a third kind
+ * rather than its own table: one per person per post, counted on the post and listed newest first for its maker.
  */
 
 export const TARGET_TYPES = ['library', 'image'] as const;
@@ -59,16 +52,9 @@ export class EngagementService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Add or remove, and say which it ended up being.
-   *
-   * A toggle rather than separate add/remove calls: the button is one button,
-   * and a client that thinks it knows the current state can be wrong — two
-   * tabs, a stale poll. Letting the database decide from what is actually
-   * stored means the answer is always the truth.
-   *
-   * Only a post the person can read is liked, saved or reposted (`readable`);
-   * taking one off always works, so a post that has since gone out of their
-   * reach can still be let go of.
+   * Adds or removes, and reports which. A toggle, because the client's idea of the state can be stale (two tabs, an old
+   * poll), so the database decides from what is stored. Only a post the person can read can be engaged with
+   * (`readable`); removing always works, so a post since out of reach can be let go.
    */
   async toggle(
     userId: string,
@@ -93,12 +79,9 @@ export class EngagementService {
   }
 
   /**
-   * Whether `userId` can read this post where it is shown: published, not a
-   * minor's they are no friend of, nobody blocked either way — the rules the
-   * wall and the post's own page read it by (feed/service.ts). Anything else
-   * was taken as readily, by id: a like on a draft, on a post that was taken
-   * down, on a child's poem its reader may not see, or on a post of somebody
-   * who blocked them, each one counted in what the post shows its readers.
+   * Whether `userId` can read this post where it is shown: published, not a minor's they are not friends with, no
+   * block either way, as the wall and post page decide (feed/service.ts). Otherwise drafts, removed posts, a child's
+   * poem or a blocker's post could be liked by id and counted.
    */
   async readable(userId: string, type: TargetType, id: string): Promise<boolean> {
     // the table is one of two literals, chosen by the type checked above it
@@ -112,12 +95,7 @@ export class EngagementService {
     return (res.rowCount ?? 0) > 0;
   }
 
-  /**
-   * Totals and the viewer's own state, for a page of posts at once.
-   *
-   * One query for the whole page rather than one per card: a feed of 24 posts
-   * would otherwise be 24 round trips to draw 24 hearts.
-   */
+  /** Totals and the viewer's own state for a page of posts, in one query rather than one per card. */
   async forPosts(
     viewerId: string | null,
     type: TargetType,
@@ -133,8 +111,7 @@ export class EngagementService {
       n: number;
       mine: boolean;
     }>(
-      // COALESCE because a signed-out viewer makes every `user_id = $3` NULL,
-      // and bool_or over nothing but NULLs is NULL rather than false
+      // COALESCE because a signed-out viewer makes every `user_id = $3` NULL, and bool_or over only NULLs is NULL.
       `SELECT target_id, kind, count(*)::int AS n,
               COALESCE(bool_or(user_id = $3), false) AS mine
          FROM post_engagements
@@ -145,8 +122,7 @@ export class EngagementService {
 
     for (const r of rows.rows) {
       const e = out.get(r.target_id)!;
-      // named rather than if/else: an `else` branch counted a repost as a
-      // bookmark the moment 'repost' existed, silently and on every card
+      // Each kind is named explicitly; an else branch would count any new kind as a bookmark.
       if (r.kind === 'like') {
         e.likes = r.n;
         e.liked = r.mine;
@@ -180,11 +156,8 @@ export class EngagementService {
   }
 
   /**
-   * Drop everything pointing at a post that no longer exists.
-   *
-   * Called when a post is removed. Nothing depends on it having run — reads
-   * start from live posts — but leaving the rows would let a deleted post keep
-   * inflating someone's "liked" count.
+   * Drops everything pointing at a removed post. Reads start from live posts, so nothing depends on it, but leftover
+   * rows would inflate someone's "liked" count.
    */
   async sweepOrphans(type: TargetType, id: string): Promise<void> {
     await this.pool.query(`DELETE FROM post_engagements WHERE target_type = $1 AND target_id = $2`, [type, id]);

@@ -74,7 +74,7 @@ describe('DimenPost', () => {
     await waitFor(() => expect(like.textContent).toContain('3'));
     expect(calls).toContain('GET /posts/image/i1/engagement');
     expect(screen.getByRole('button', { name: 'Sign in to repost' }).textContent).toContain('1');
-    // the words above the picture, read whole, and the comments under the post
+    // The words above the picture, read whole, and the comments under the post.
     expect(screen.getByText('Çiyayên welêt').closest('.fcard-body')?.nextElementSibling).toHaveClass('fcard-media');
     expect(screen.getByRole('article')).toHaveClass('is-page');
     expect(await screen.findByRole('region', { name: 'Comments' })).toBeInTheDocument();
@@ -106,7 +106,7 @@ describe('DimenPost', () => {
     await screen.findByRole('button', { name: 'Like (3)' });
     expect(screen.queryByRole('group', { name: 'Reactions' })).not.toBeInTheDocument();
     expect(calls.some((c) => c.includes('/reaction'))).toBe(false);
-    // nor the old badge and views line over the picture
+    // Nor the old badge and views line over the picture.
     expect(screen.queryByText('40 views')).not.toBeInTheDocument();
   });
 });

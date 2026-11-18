@@ -14,22 +14,19 @@ import { formatNumber } from '../i18n/format';
 /** One of the four: a picture, the number or word, and what it is. */
 export interface OverviewTile {
   key: string;
-  /** the fire, the flag, the emblem, the bolt — drawn in a 36-point box */
+  /** The fire, the flag, the emblem, the bolt, drawn in a 36pt box. */
   art: ReactNode;
-  /** a number counts up as the tile arrives; a word is simply there; null is not known */
+  /** A number counts up as the tile arrives; a word is simply there; null is not known. */
   value: number | string | null;
   label: string;
   onPress?: () => void;
 }
 
 /**
- * The four things a profile is about at a glance — the streak, the course,
- * the league, the XP — as a grid of two by two under the face. The tiles rise
- * in one after another the first time they are filled (useListEntrance), and
- * a number in one counts up to where it is. A tile with somewhere to go
- * (the streak's story, the league, the lesson path) is a button and gives
- * under the finger; one that is only a number is not, because a control that
- * looks tappable and is not is worse than one that never did.
+ * The four things a profile is about at a glance (the streak, the course, the league, the XP) as a two-by-two grid
+ * under the face. The tiles rise in one after another the first time they fill, and numbers count up. A tile with
+ * somewhere to go is a button; one that is only a number is not, since a control that looks tappable and is not is
+ * worse.
  */
 export function OverviewGrid({ tiles }: { tiles: OverviewTile[] }): React.JSX.Element {
   const { colors } = useTheme();
@@ -76,21 +73,14 @@ export function OverviewSkeleton(): React.JSX.Element {
 }
 
 /**
- * The widest word a tile is asked to hold, at the tile's size: a course or a
- * league by name ("Kurmancî", "Okyanûs", "الكرمانجية") is about a hundred
- * points at 22, wider than any count the tiles show.
+ * The widest word a tile holds at its size: a course or league name ("Kurmancî", "Okyanûs", "الكرمانجية") is about
+ * 100pt at 22pt, wider than any count.
  */
 const WIDEST_WORD = 100;
 
 /**
- * Two to a row where a tile's words fit beside its picture, and one to a row
- * where they do not.
- *
- * Two to a row on every phone left "Kurmancî" as "Kur…" at 320 and at 360,
- * which is the width of a great many phones, and on any phone whose reader
- * had asked for larger text: half a narrow screen, less the picture, is
- * seventy points. One to a row keeps the same tile, with all of its room.
- * `width` is the window's, `fontScale` the reader's text size.
+ * Two to a row where a tile's words fit beside its picture, else one to a row: half a 320pt or 360pt screen, less the
+ * picture, cut "Kurmancî" short, as did larger text. `width` is the window's, `fontScale` the reader's text size.
  */
 export function overviewColumns(width: number, fontScale: number): 1 | 2 {
   const content = Math.min(width, layout.column) - layout.gutter * 2;
@@ -105,10 +95,8 @@ function useCellStyle() {
 }
 
 /**
- * A number counting from where it last was to where it is now: from nothing
- * the first time, and from the old number when the profile is asked for
- * again and the number has moved on. The span is settled once per change, so
- * a render for some other reason does not restart or cut short the count.
+ * A number counting from where it last was to where it is now (from nothing the first time). The span is fixed once per
+ * change, so an unrelated render does not restart or cut short the count.
  */
 function useCountTo(to: number): number {
   const [span, setSpan] = useState({ from: 0, to });
@@ -119,7 +107,7 @@ function useCountTo(to: number): number {
 function Tile({ tile }: { tile: OverviewTile }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
-  // the picture on the side the language starts from, the words lined up after it
+  // The picture on the side the language starts from, the words after it.
   const dir = useDirection();
   const numeric = typeof tile.value === 'number';
   const count = useCountTo(numeric ? (tile.value as number) : 0);
@@ -138,7 +126,7 @@ function Tile({ tile }: { tile: OverviewTile }): React.JSX.Element {
       </View>
     </>
   );
-  // the number as it will be, not as it is mid-count, is what a screen reader is told
+  // A screen reader is told the final number, not the one mid-count.
   const label = `${settled} ${tile.label}`;
   const style = [styles.tile, { flexDirection: dir.row, backgroundColor: colors.controlTrack }];
   if (!tile.onPress) {
@@ -155,9 +143,9 @@ function Tile({ tile }: { tile: OverviewTile }): React.JSX.Element {
   );
 }
 
-/** the box the picture is drawn in */
+/** The box the picture is drawn in. */
 const ART = 36;
-/** the room inside a tile, round it and beside its picture, and between two tiles */
+/** The room inside a tile, round it and beside its picture, and between two tiles. */
 const TILE_PAD = spacing.sm + 4;
 const TILE_GAP = spacing.sm + 2;
 const GRID_GAP = spacing.sm;
@@ -165,7 +153,7 @@ const GRID_GAP = spacing.sm;
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP },
-  // two to a row with the gap between them, or one to a row (overviewColumns)
+  // Two to a row with the gap between, or one to a row (overviewColumns).
   half: { flexBasis: '46%', flexGrow: 1 },
   whole: { flexBasis: '100%' },
   tile: { alignItems: 'center', gap: TILE_GAP, borderRadius: radii.md, paddingHorizontal: TILE_PAD, paddingVertical: spacing.sm + 2, minHeight: 60 },

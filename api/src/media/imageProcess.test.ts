@@ -32,11 +32,7 @@ describe('processImage', () => {
   });
 
   it('converts a photo format no browser can draw', async () => {
-    /*
-     * AVIF stands in for HEIC here: the same ISO-BMFF container, the same libheif
-     * decoder, and one sharp can also *write*, so the test needs no binary
-     * fixture. If this passes, an iPhone's camera roll goes through too.
-     */
+    /* AVIF stands in for HEIC: the same container and decoder, and sharp can write it, so no binary fixture is needed. */
     const avif = await sharp({ create: { width: 900, height: 600, channels: 3, background: { r: 20, g: 90, b: 160 } } })
       .avif({ quality: 50 })
       .toBuffer();
@@ -52,11 +48,8 @@ describe('processImage', () => {
 
   it('blames the missing codec, not the file, when a HEIC will not decode', async () => {
     /*
-     * A real HEIC cannot be built here — sharp's prebuilt binaries cannot write
-     * HEVC either — so this is a well-formed `ftypheic` container with no
-     * picture in it. That is enough: it sniffs as HEIC and fails to decode,
-     * which is exactly what a genuine iPhone photo does on a build without the
-     * HEVC decoder. Telling that person their photo is corrupt would be wrong.
+     * A real HEIC cannot be built here, so this is a well-formed `ftypheic` container with no picture: it sniffs as HEIC
+     * and fails to decode, as a genuine photo does on a build without the HEVC decoder, and must not be called corrupt.
      */
     const heicHeader = Buffer.concat([
       Buffer.from([0, 0, 0, 0x18]),

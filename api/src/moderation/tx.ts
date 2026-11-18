@@ -4,10 +4,9 @@ import type pg from 'pg';
 export type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * Run `fn` in one transaction: committed if it returns, rolled back if it
- * throws (and the error passed on). Moderation decisions touch a case, its
- * reports, sanctions, the enforced user columns, the audit and the inbox —
- * all of it lands together or none of it does.
+ * Run `fn` in one transaction: committed if it returns, rolled back (and rethrown) if it throws. Moderation decisions
+ * touch a case, its reports, sanctions, enforced user columns, the audit and the inbox, and all of it must land
+ * together or not at all.
  */
 export async function inTransaction<T>(pool: pg.Pool, fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();

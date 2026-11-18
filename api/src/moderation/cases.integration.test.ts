@@ -1,8 +1,7 @@
 /**
- * The moderation admin API (M4/M5) against real Postgres: the queue and its
- * filters, the claim lease, decisions with their preview, sanctions on the
- * reported person and on reporters, the second-approval rule and its
- * single-admin fallback, CSAM, reopen and escalate, appeals, and the audit.
+ * The moderation admin API (M4/M5) against real Postgres: queue and filters, the claim lease, decisions with preview,
+ * sanctions on the reported person and reporters, the second-approval rule and its single-admin fallback, CSAM, reopen
+ * and escalate, appeals, and the audit.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

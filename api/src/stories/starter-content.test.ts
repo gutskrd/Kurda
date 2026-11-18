@@ -1,21 +1,13 @@
 /**
- * Guards the starter Stories (api/content/stories/*.json) so a story the native
- * reviewer edits, or one added later, is caught in CI rather than when a game
- * quotes it. Everything is checked with the shared helpers the reader, the
- * audio studio and the API use: a sentence counted here is the sentence the
- * reader highlights, the studio records and a reveal quotes.
+ * Guards the starter Stories (api/content/stories/*.json) so a reviewer's edit or a new story is caught in CI rather
+ * than when a game quotes it. Checks use the shared helpers of the reader, studio and API, so a sentence counted here
+ * is the one the reader highlights, the studio records and a reveal quotes.
  *
- * The starters are seeded as drafts, and a draft may be unfinished — but these
- * are the files a native speaker publishes as they stand, so they are held to
- * what a published story must be: a question bank big enough for its length,
- * and evidence for every reveal down to the sentence. Each bank is also written
- * in the order a game asks it, so the file is reviewed the way players meet it.
+ * Starters are held to published standards: a big enough bank for their length and sentence-level evidence for every
+ * reveal. Each bank is written in the order a game asks it, so the file is reviewed as players meet it.
  *
- * The legends (legends.json) are held to more: each is a saga told in sections,
- * passes the whole check a published story passes, carries a few questions to
- * think about, its notes and its sources, and is translated whole into every
- * language it is translated into at all — a learner reading in German meets
- * no question left in English.
+ * The legends (legends.json) must also be sagas in sections that pass the whole publish check, with reflection
+ * questions, notes and sources, and be translated whole into every language they are translated into at all.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -74,15 +66,14 @@ const legends = read('legends.json') as StarterLegend[];
 const stories = [...read('kurmanci.json'), ...read('sorani.json'), ...read('road.json'), ...legends];
 
 /**
- * The reader and the studio cut a sentence after any full stop, so a sentence
- * ending in one of these is cut short; stories write the word out (the
- * contract's list, and the Soranî "etc.").
+ * The reader and studio cut a sentence after any full stop, so stories write these abbreviations out (the contract's
+ * list, and the Soranî "etc.").
  */
 const ABBREVIATIONS = ['dr.', 'prof.', 'hwd.', 'b.z.', 'p.z.', 'هتد.'];
 
 /**
- * Speech opened by a dash (at the start, or after a colon or a sentence end)
- * and closed by another, the narration going on after it.
+ * Speech opened by a dash (at the start, or after a colon or sentence end) and closed by another, with narration
+ * continuing after it.
  */
 const DASH_SPEECH = /(?:^|[:.!?؟…])\s*[—–―]\s*([^—–―]+)[—–―]/g;
 
@@ -137,12 +128,9 @@ describe('the starter stories', () => {
     });
 
     it('is written in the order a game asks it', () => {
-      // A game asks its questions in the order of the text, by the sentence each
-      // cites (items citing the same one as written), and the gist last. Written in
-      // that order, the bank reads the way players meet it, so whoever checks that
-      // no reveal hands a later question its answer is checking the order a game
-      // uses; an evidence sentence that would move an item past another fails here
-      // rather than reordering every game unseen.
+      // Games ask questions in text order by cited sentence (ties as written), the gist last. Banks are written in that
+      // order so a reviewer checking that no reveal answers a later question sees the order games use; evidence that would
+      // move an item past another fails here instead of silently reordering every game.
       const asked = story.questions.flatMap((q, i) =>
         q.kind === 'gist' ? [] : [{ i, p: q.evidenceParagraph ?? -1, s: q.evidenceSentence ?? -1 }],
       );

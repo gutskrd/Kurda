@@ -6,6 +6,7 @@ import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { haptic } from '../../feedback/haptics';
 import { useI18n } from '../../i18n/I18nContext';
+import { useHardwareBack } from '../../navigation/hardwareBack';
 import { useDirection } from '../../reports/direction';
 import { springTo, useShake } from '../../theme/animate';
 import { display } from '../../theme/fonts';
@@ -19,81 +20,72 @@ import { useGuideReaction } from './reaction';
 import { heldDim } from '../../theme/MotionParts';
 
 /**
- * How a step's turn with the server ended: on to the next, or refused — with
- * the line to show under the field (null when the screen has said it in its
- * own way, with a notice), the step the refusal is really about when it is
- * an earlier one (a password found in a leak, said on the password step), and
- * what Hevalo says about it in place of his usual "have another look".
+ * How a step's turn with the server ended: on to the next, or refused, with the line for under the field (null when the
+ * screen said it its own way), the step the refusal is really about when it is an earlier one, and what Hevalo says in
+ * place of his usual line.
  */
 export type StepOutcome = { ok: true } | { ok: false; error: string | null; at?: string; says?: string };
 
 /** What a step's field is given, to take part in the flow. */
 export interface StepTools {
-  /** go on, as the Continue button does: for the keyboard's return key */
+  /** Go on, as the Continue button does: for the keyboard's return key. */
   submit: () => void;
-  /** the answer changed: the line that refused the last one goes */
+  /** The answer changed: the line that refused the last one goes. */
   edited: () => void;
-  /** why this step was refused, for the field to show it was */
+  /** Why this step was refused, for the field to show it. */
   error: string | null;
-  /** the server has the answer and the flow is waiting on it */
+  /** The server has the answer and the flow is waiting on it. */
   busy: boolean;
 }
 
 /** One question of a guided flow. */
 export interface FlowStep {
-  /** names the step, for the slides and for a refusal that points back at it */
+  /** Names the step, for the slides and for a refusal that points back at it. */
   key: string;
-  /** the question, as the large heading */
+  /** The question, as the large heading. */
   question: string;
-  /** what Hevalo says on arriving at it */
+  /** What Hevalo says on arriving at it. */
   says: string;
-  /** the one field or control under the question */
+  /** The one field or control under the question. */
   render: (tools: StepTools) => ReactNode;
-  /** why the answer cannot go on, or null: said under the field with a shake, before the server is asked */
+  /** Why the answer cannot go on, or null: said under the field with a shake, before the server is asked. */
   check?: () => string | null;
-  /** the server's turn, after the check; the flow waits on it */
+  /** The server's turn, after the check; the flow waits on it. */
   commit?: () => Promise<StepOutcome>;
-  /** the button's word, where it is not Continue (Create account, Start learning) */
+  /** The button's word, where it is not Continue (Create account, Start learning). */
   action?: string;
-  /** under the field: a Forgot link, the terms line */
+  /** Under the field: a Forgot link, the terms line. */
   footer?: ReactNode;
 }
 
 /**
- * One question per screen, with Hevalo as the guide.
+ * One question per screen, with Hevalo as the guide: a segmented progress bar, a chevron back a step (or out, on the
+ * first), Hevalo saying the step's line, the question over one field, and Continue above the keyboard. Steps slide the
+ * way the reader reads. A refused answer shakes, shows one line under the field and gets Hevalo's tilt (plus an error
+ * buzz when the server refused it); a passing one gets a tick, his cheer, and the next question. Under Reduce Motion
+ * everything is simply its end state.
  *
- * A thin segmented bar at the top fills a step at a time on a spring; a
- * chevron goes back a step (or out of the flow, on the first); Hevalo stands
- * under the bar saying the step's line; the question is a large heading over
- * one field; and the Continue button sits at the foot of the screen, above
- * the keyboard. Steps turn the way the reader reads (SlideSwap, mirrored for
- * Soranî and Arabic). An answer that is refused shakes, shows one line under
- * the field, and gets Hevalo's tilt of the head — and, when it is the server
- * that refused it (a wrong password, a wrong code), the buzz of something
- * that did not go through; one that passes gets a light tick and his cheer,
- * and the next question. Under Reduce Motion the bar, the slides and the
- * shake are simply the end state.
- *
- * The flow owns which step is showing and the refusals; the screen owns the
- * answers, in its own state, and what each step is (`FlowStep`). A `notice`
- * from the screen — an address that may already have an account — is shown
- * over the field of whichever step is up.
+ * The flow owns which step shows and the refusals; the screen owns the answers and the steps (`FlowStep`). A `notice`
+ * from the screen shows over the current step's field.
  */
 export function StepFlow({
   steps,
   onFinish,
   onExit,
+  presented = false,
   notice,
   progress = true,
   testID = 'step-flow',
 }: {
   steps: readonly FlowStep[];
-  /** the last step went through */
+  /** The last step went through. */
   onFinish: () => void;
-  /** back from the first step; without it the first step has no way back */
+  /** Back from the first step; without it the first step has no way back. */
   onExit?: () => void;
+  /** Opened over the app rather than pushed: the first step's way out is ✕, as on every presented page. */
+  presented?: boolean;
   notice?: ReactNode;
-  /** false leaves the bar out: a flow of one question (the emailed code) has nothing to count */
+  /** False leaves the bar out: a flow of one question (the emailed code) has nothing to count. */
   progress?: boolean;
   testID?: string;
 }): React.JSX.Element {
@@ -105,13 +97,14 @@ export function StepFlow({
   const [direction, setDirection] = useState<SlideDirection>('forward');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // what Hevalo says in place of the step's line, after a refusal
+  // What Hevalo says in place of the step's line, after a refusal.
   const [said, setSaid] = useState<string | null>(null);
   const { reaction, react } = useGuideReaction();
   const shake = useShake();
 
   const step = steps[Math.min(index, steps.length - 1)]!;
   const canBack = index > 0 || onExit !== undefined;
+  const closes = presented && index === 0;
 
   const goTo = (next: number, way: SlideDirection): void => {
     setIndex(next);
@@ -139,10 +132,10 @@ export function StepFlow({
       const out = await step.commit();
       setBusy(false);
       if (!out.ok) {
-        // the server said no to something that was asked for (a wrong password, a wrong code): felt, as well as seen.
-        // An answer the screen itself turns back before asking is not: that field is still being typed in
+        // The server refused something that was asked for: felt as well as seen. An answer the screen turns back itself
+        // is not, since that field is still being typed in.
         haptic('error');
-        // a refusal about an earlier answer: back to that step, with the line under its field
+        // A refusal about an earlier answer: back to that step, with the line under its field.
         const at = out.at !== undefined && out.at !== step.key ? steps.findIndex((s) => s.key === out.at) : -1;
         if (at >= 0) {
           goTo(at, at < index ? 'back' : 'forward');
@@ -166,6 +159,8 @@ export function StepFlow({
     if (index > 0) goTo(index - 1, 'back');
     else onExit?.();
   };
+  // Android's back goes back a question as the chevron does; from the first it leaves as any screen does.
+  useHardwareBack(index > 0 ? back : null);
 
   const tools: StepTools = {
     submit: () => void submit(),
@@ -183,12 +178,16 @@ export function StepFlow({
               <Pressable
                 onPress={back}
                 accessibilityRole="button"
-                accessibilityLabel={t('common.back')}
+                accessibilityLabel={t(closes ? 'common.close' : 'common.back')}
                 hitSlop={8}
                 style={({ pressed }) => [styles.back, pressed && heldDim]}
                 testID="step-back"
               >
-                <Icon name="chevron-left" size={26} color={colors.textPrimary} style={dir.flip ?? undefined} />
+                {closes ? (
+                  <Icon name="close" size={24} color={colors.textPrimary} />
+                ) : (
+                  <Icon name="chevron-left" size={26} color={colors.textPrimary} style={dir.flip ?? undefined} />
+                )}
               </Pressable>
             ) : (
               <View style={styles.back} />
@@ -231,10 +230,9 @@ export function StepFlow({
 }
 
 /**
- * Where the flow is: a thin bar in as many pieces as there are steps, the
- * ones done and the one up filled in the brand's colour. A piece fills by
- * growing from its start side on the standard spring — a transform, so it
- * never lays the row out again — and is simply full under Reduce Motion.
+ * Where the flow is: a bar in one piece per step, the done and current ones filled in the brand's colour. A piece fills
+ * from its start side on the standard spring, as a transform so the row is not laid out again; under Reduce Motion it
+ * is simply full.
  */
 function Progress({ count, filled, mirrored, label }: { count: number; filled: number; mirrored: boolean; label: string }): React.JSX.Element {
   const { colors } = useTheme();

@@ -15,7 +15,7 @@ describe('the wall’s calls', () => {
     await getFeed(client, { section: 'gotin', kind: 'helbest', limit: 20, offset: 40 });
     expect(get).toHaveBeenCalledWith('/feed?section=gotin&kind=helbest&limit=20&offset=40');
 
-    // a null kind is "no kind", not `kind=null` — the server would refuse that
+    // A null kind is "no kind", not `kind=null` — the server would refuse that.
     await getFeed(client, { section: 'all', kind: null });
     expect(get).toHaveBeenLastCalledWith('/feed?section=all');
 
@@ -42,10 +42,8 @@ describe('the wall’s calls', () => {
   });
 
   /**
-   * A shared link has to be absolute and has to point at the real site: that is
-   * the host whose Worker writes the post's title, author and picture into the
-   * page head, which is the whole reason a pasted link unfurls into something
-   * worth tapping.
+   * A shared link must be absolute and point at the real site, which writes the post's title, author and picture
+   * into the page head so a pasted link unfurls.
    */
   it('shares an absolute link to the site, not a bare path', () => {
     expect(postUrl({ href: '/app/library/123' })).toBe(`${SITE_ORIGIN}/app/library/123`);

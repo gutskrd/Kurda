@@ -7,9 +7,8 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { GoldButton, PictureCards, PictureTiles, type PictureOption } from './parts';
 
 /**
- * The parts Xapînok's screens are built from: choices drawn as
- * pictures that are still radios, a long list folded without ever hiding the
- * one chosen, and the one gold thing to press.
+ * The parts Xapînok's screens are built from: picture choices that are still radios, a long list folded without hiding
+ * the chosen one, and the one gold button.
  */
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -20,7 +19,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 
 afterEach(cleanup);
 
-// stand-in Kurdish for the fixtures, never shown to a learner
+// Stand-in Kurdish for the fixtures, never shown to a learner.
 const options: PictureOption<string>[] = Array.from({ length: 15 }, (_, i) => ({ value: `c${i}`, label: `kom ${i}`, hint: `group ${i}`, art: <View />, tone: '#3d8bd9' }));
 
 function Tiles({ start, first, strip }: { start: string; first?: number; strip?: boolean }): React.JSX.Element {

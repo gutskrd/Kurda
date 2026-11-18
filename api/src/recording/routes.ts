@@ -1,24 +1,16 @@
 /**
- * Recording by person: everything each voice of the course has to say, in
- * course order, for the admin's "Record by person" page.
+ * Recording by person: everything each voice of the course says, in course order, for the admin page.
  *
- *   GET /admin/recording/people           one entry per voice — the voice plan's characters, any
- *                                         conversation part no character plays, a narrator for each
- *                                         variety — with what is recorded and what is left, by variety;
- *                                         and the voices linked to the account asking (`mine`); and
- *                                         the road's chapters, how far each is recorded and whether it
- *                                         is online yet (content/road-chapters.ts)
- *   GET /admin/recording/people/:voice    that voice's lines, a page at a time (`?cursor=` from the
- *                                         page before), narrowed by `?dialect=kmr|ckb` and
- *                                         `?status=todo|done|all`; each with the key its take is filed
- *                                         under, what it means, where it is said and whether that is
- *                                         published, the line before it, and its take if there is one
+ *   GET /admin/recording/people           one entry per voice (plan characters, uncast conversation parts, a narrator
+ *                                         per variety) with recorded and remaining counts by variety, the caller's
+ *                                         linked voices (`mine`), and each road chapter's recording progress and
+ *                                         whether it is online (content/road-chapters.ts)
+ *   GET /admin/recording/people/:voice    that voice's lines a page at a time (`?cursor=`), filtered by
+ *                                         `?dialect=kmr|ckb` and `?status=todo|done|all`, each with its take key,
+ *                                         meaning, where it is said and whether published, the line before, and its take
  *
- * Read-only: a take is sent to the upload route the studio already uses
- * (PUT /admin/lesson-audio, PUT /admin/alphabet/audio), with the voice's
- * speaker and a lip-sync timeline, so it is filed and audited as any take is.
- * Who may read what is recording/access.ts: a voice actor sees only the
- * voices linked to their account.
+ * Read-only: takes go to the studio's upload routes (PUT /admin/lesson-audio, PUT /admin/alphabet/audio) with the
+ * voice's speaker and a lip-sync timeline, filed and audited as any take. Access rules are in recording/access.ts.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';

@@ -1,7 +1,6 @@
 /**
- * Reading the road's unit files, without a database: what each lesson is
- * called and where it goes, which lessons are fit to seed, and that nothing
- * a writer can put in a file — or leave out of the folder — throws.
+ * Reading the road's unit files without a database: each lesson's name and place, which lessons are fit to seed, and
+ * that nothing a writer puts in (or leaves out of) the folder throws.
  */
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

@@ -3,7 +3,7 @@ import type pg from 'pg';
 import { sendEmailJob } from '../jobs/email.js';
 import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
-import { mediaKey, type MediaStorage } from '../media/storage.js';
+import { PrivateStorageUnavailable, mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { lockPersonFor } from '../limits/limits.js';
 import { inTransaction } from '../moderation/tx.js';
@@ -23,23 +23,31 @@ import { UNCONFIRMED_SIGNUP, UNCONFIRMED_SIGNUP_DAYS, forgetOldSends } from '../
 
 export const DELETION_GRACE_DAYS = 14;
 
+/**
+ * Cancels a deletion still in its grace period, since the app and the notice promise that signing in again keeps the
+ * account. Every sign-in path calls this before issuing a session. True when there was a deletion to cancel.
+ */
+export async function cancelPendingDeletion(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<boolean> {
+  const result = await executor.query(
+    `UPDATE users SET deletion_requested_at = NULL
+     WHERE id = $1 AND deletion_requested_at IS NOT NULL AND deleted_at IS NULL`,
+    [userId],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
 export interface GdprDeps {
   storage?: MediaStorage | null;
   jobs?: JobQueue;
   log?: { info: (obj: unknown, msg: string) => void; warn: (obj: unknown, msg: string) => void };
   /**
-   * Takes a closing account out of the story games it is still in. The API
-   * passes its own; by default one that pays rewards as the API does but wakes
-   * nobody (the worker passes one that tells the API instances, over Redis).
+   * Takes a closing account out of the story games it is in. The API passes its own; the default pays as the API does
+   * but wakes nobody, and the worker passes one that notifies the API instances over Redis.
    */
   storyGames?: Pick<StoryGamesService, 'leaveAll'>;
   /** The same for the multiplayer learning games (api/src/mp). */
   multiplayer?: Pick<MultiplayerService, 'leaveAll'>;
-  /**
-   * Revokes at Apple what Sign in with Apple issued for an account that is
-   * closing for good (auth/apple-tokens.ts). Null or absent where Apple's key
-   * is not configured, and nothing is revoked.
-   */
+  /** Revokes Sign in with Apple for an account closing for good (auth/apple-tokens.ts); null where the key is not configured. */
   apple?: Pick<AppleTokens, 'revokeFor'> | null;
 }
 
@@ -55,7 +63,11 @@ export class GdprService {
     this.multiplayer = deps.multiplayer ?? standaloneMultiplayer(pool, { log: deps.log });
   }
 
-  /** Starts the 14-day grace period; logging in again cancels it. */
+  /**
+   * Starts the 14-day grace period, which signing in again cancels. Every session of the account ends here, on every
+   * device, so nothing carries on signed in unaware; the next screen anywhere is the sign-in. Ending the sessions also
+   * takes the account's phones off its notifications (migration `push-ends-with-its-session`).
+   */
   async requestDeletion(userId: string): Promise<void> {
     const result = await this.pool.query<{ email: string | null; username: string; locale: string }>(
       `UPDATE users SET deletion_requested_at = now()
@@ -63,6 +75,7 @@ export class GdprService {
        RETURNING email, username, locale`,
       [userId],
     );
+    await this.pool.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [userId]);
     const user = result.rows[0];
     // the notice goes to the address; a guest's row has none (DELETE /me closes a guest at once)
     if (user && user.email !== null && this.deps.jobs) {
@@ -77,37 +90,17 @@ export class GdprService {
     }
   }
 
-  /** Called on successful login — a returning user keeps their account. */
+  /** A returning user keeps their account (`cancelPendingDeletion`). */
   async cancelDeletion(userId: string): Promise<boolean> {
-    const result = await this.pool.query(
-      `UPDATE users SET deletion_requested_at = NULL
-       WHERE id = $1 AND deletion_requested_at IS NOT NULL AND deleted_at IS NULL`,
-      [userId],
-    );
-    return (result.rowCount ?? 0) > 0;
+    return cancelPendingDeletion(this.pool, userId);
   }
 
   /**
-   * Closes, for good, the accounts whose grace period ended: Sign in with
-   * Apple revoked, then everything the person put in the account deleted
-   * (`eraseAccountData`) and the account's own fields scrubbed, in one
-   * transaction. What the app tells them when they ask — "your account and all
-   * your data will be permanently deleted" — is what happens.
-   *
-   * It used to be different for adults: their account was anonymized and what
-   * they had written, recorded and uploaded stayed up under a "deleted_…"
-   * name, their messages in their friends' conversations with it. Only a
-   * minor's went. Somebody who deletes their account expects their posts and
-   * their voice to go with it, and that is what deleting an account has to
-   * mean.
-   *
-   * What stays is the scrubbed row with the learning history every deleted
-   * account keeps (XP, lessons, streaks, ledgers) — numbers tied to no name,
-   * address or birth date — and moderation records, which are about other
-   * people's safety. Gifts already given stay with whoever received them,
-   * shown as from a former member (shop `giftsReceived`).
-   *
-   * Idempotent — sets deleted_at, so a rerun skips processed rows.
+   * Closes for good the accounts whose grace period ended, in one transaction each: Sign in with Apple revoked,
+   * everything the person put in the account deleted (`eraseAccountData`), and the account's own fields scrubbed, as
+   * the app promises. What stays is the scrubbed row with its anonymous learning history (XP, lessons, streaks,
+   * ledgers) and moderation records, which concern other people's safety; gifts already given stay with their
+   * recipients as from a former member. Idempotent: deleted_at is set, so a rerun skips processed rows.
    */
   async anonymizeExpired(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - DELETION_GRACE_DAYS * 24 * 3_600_000);
@@ -127,32 +120,13 @@ export class GdprService {
   }
 
   /**
-   * Closes one account now and removes what the person put in it, with no
-   * grace period and no email.
+   * Closes one account now and removes its data, with no grace period and no email. For an account just found to
+   * belong to someone under 13, who has no choice to change their mind and whose address may be a child's; and for a
+   * guest (auth/guest.ts) who deletes or goes idle for GUEST_IDLE_DAYS, who has no address and no way back.
    *
-   * For the one case where waiting would be wrong: an account we have just
-   * learned belongs to someone under 13. The fourteen-day grace exists so a
-   * user can change their mind, and that is not a choice this account has.
-   * No email either — the address may be a child's.
-   *
-   * It removes what an ordinary deletion removes at the end of its grace
-   * period: `eraseAccountData` deletes their posts, pictures, comments, voice
-   * notes, messages, friendships, groups, story games, devices,
-   * notifications, analytics and consent records, in one transaction with the
-   * anonymizing — either the account is gone or none of it is, and the client
-   * is told it was closed only after it was. Their files are deleted from storage after the commit;
-   * any the storage cannot delete at once are left to the orphan sweep, which
-   * deletes them on its next run.
-   *
-   * What stays is the anonymized row with the learning history every deleted
-   * account keeps (XP, lessons, streaks, ledgers) — numbers tied to no name,
-   * address or birth date — and moderation records, which are about other
-   * people's safety.
-   *
-   * The same close serves a guest (auth/guest.ts) who taps delete, or whom
-   * nobody has touched for GUEST_IDLE_DAYS: a guest has no address for a
-   * notice and no way to sign in again, so the grace period would wait for
-   * nothing.
+   * It removes what an ordinary deletion removes, in one transaction with the anonymising, so the client hears it was
+   * closed only once it was. Files are deleted after the commit, and any storage cannot delete at once go on the next
+   * orphan sweep. What stays is the same as for `anonymizeExpired`.
    */
   async closeNow(userId: string, reason: 'under_minimum_age' | 'guest_left' | 'guest_idle' | 'never_confirmed'): Promise<void> {
     await this.leaveStoryGames(userId);
@@ -162,17 +136,9 @@ export class GdprService {
   }
 
   /**
-   * Closes the guests nobody has touched for GUEST_IDLE_DAYS (jobs/guest-jobs.ts).
-   *
-   * "Touched" is the latest of what the row already records: when it was
-   * made, the app's presence heartbeat (`last_seen_at`, sent while the app is
-   * open), and the last refresh token issued to it — the app refreshes its
-   * session whenever it is used, so a guest still learning has a token from
-   * this week, and one left on a phone's home screen does not. Nothing new is
-   * written on a request to know this.
-   *
-   * Idempotent — each close sets deleted_at, so a rerun skips processed rows;
-   * batched, since the job runs twice a day and a backlog can wait a run.
+   * Closes the guests nobody has touched for GUEST_IDLE_DAYS (jobs/guest-jobs.ts). "Touched" is the latest of
+   * creation, the presence heartbeat (`last_seen_at`) and the last refresh token, which the app renews whenever it is
+   * used, so nothing new is written to know it. Idempotent and batched; a backlog waits for the next run.
    */
   async purgeIdleGuests(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - GUEST_IDLE_DAYS * 24 * 3_600_000);
@@ -190,19 +156,11 @@ export class GdprService {
   }
 
   /**
-   * Ends a sign-up whose address was never confirmed (auth/pending-signups.ts),
-   * and says what became of it.
-   *
-   * One made from nothing is closed at once, with no grace period and no
-   * notice: there is nothing on it to come back for, and a notice would be
-   * mail to an address nobody showed to be theirs. One a guest made by giving
-   * an address keeps everything that guest learned, so the claim lapses: the
-   * address, the password and the code go, and the row is a guest again, its
-   * sessions as they were. `keepLearning: false` closes that one too, for the
-   * person who asked for their account to be deleted.
-   *
-   * Checked again under the row's lock: an account confirmed, deleted or
-   * linked to a provider a moment ago is left alone ('kept').
+   * Ends a sign-up whose address was never confirmed (auth/pending-signups.ts) and says what became of it. One made
+   * from nothing is closed at once with no notice, since there is nothing to come back for and the address was never
+   * shown to be theirs. One a guest made by giving an address keeps the guest's learning: the address, password and
+   * code go and the row is a guest again, unless `keepLearning: false` asks for it to be closed too. Rechecked under
+   * the row's lock, so an account confirmed, deleted or linked a moment ago is 'kept'.
    */
   async endUnconfirmedSignup(userId: string, opts: { keepLearning?: boolean } = {}): Promise<'closed' | 'lapsed' | 'kept'> {
     const keepLearning = opts.keepLearning ?? true;
@@ -232,11 +190,9 @@ export class GdprService {
   }
 
   /**
-   * Frees an address that an unconfirmed sign-up is holding, for whoever is
-   * about to sign up with it, claim an account under it or arrive from a
-   * provider that confirmed it. Nothing happens when the address is free, or
-   * is held by an account that confirmed it: that one keeps it, and the
-   * caller is refused by the unique index as before.
+   * Frees an address held by an unconfirmed sign-up for whoever is about to sign up, claim an account or arrive from a
+   * provider with it. An address that is free, or confirmed by its account, is left alone, and the unique index
+   * refuses the caller as before.
    */
   async releaseAddress(email: string, exceptUserId: string | null = null): Promise<void> {
     const holder = await this.pool.query<{ id: string }>(
@@ -248,10 +204,8 @@ export class GdprService {
   }
 
   /**
-   * Ends the sign-ups nobody confirmed within UNCONFIRMED_SIGNUP_DAYS
-   * (jobs/guest-jobs.ts), and forgets the counts of confirmation emails that
-   * are no longer counted over. Batched and idempotent, like the guests' purge
-   * it runs beside.
+   * Ends the sign-ups nobody confirmed within UNCONFIRMED_SIGNUP_DAYS and forgets confirmation-email counts no longer
+   * in their window. Batched and idempotent, like the guest purge beside it.
    */
   async purgeUnconfirmedSignups(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - UNCONFIRMED_SIGNUP_DAYS * 24 * 3_600_000);
@@ -269,11 +223,9 @@ export class GdprService {
   }
 
   /**
-   * A closing account leaves the story games it is still in first, through
-   * the games' own leave path — each game locked on its own, after nothing
-   * else is held — so a lobby it hosts closes and a running game stops
-   * waiting for a player who will never come back. Finished games stay for
-   * the other players; the erase that follows takes this account's seat out.
+   * A closing account first leaves its story games through the games' own leave path, each game locked on its own
+   * with nothing else held, so a hosted lobby closes and a running game stops waiting. Finished games stay for the
+   * other players; the erase that follows removes this account's seat.
    */
   private async leaveStoryGames(userId: string): Promise<void> {
     await this.storyGames.leaveAll(userId).catch((err) => {
@@ -286,12 +238,10 @@ export class GdprService {
   }
 
   /**
-   * App Store guideline 5.1.1(v): deleting an account that signed in with
-   * Apple revokes, at Apple, the refresh token kept for it, which ends the
-   * app's Sign in with Apple for that person too. Asked before anonymizing,
-   * which deletes the identity that holds the token, and outside its
-   * transaction, which no request to another service should hold open. Apple
-   * refusing or not answering is logged and the account closes all the same.
+   * Revokes the Sign in with Apple refresh token of an account being deleted, as the App Store requires (guideline
+   * 5.1.1(v)). Called before anonymising, which deletes the identity holding the token, and outside its transaction,
+   * since no call to another service should hold one open. A refusal or timeout is logged and the account closes
+   * anyway.
    */
   private async revokeAppleSignIn(userId: string): Promise<void> {
     await this.deps.apple?.revokeFor(userId).catch((err: unknown) => {
@@ -316,17 +266,14 @@ export class GdprService {
       client.release();
     }
     await this.deleteFiles(files);
-    // what a report still holds as evidence leaves the public bucket now, and
-    // is deleted with the evidence (the five-minute sweep retries a failure)
+    // Evidence a report still holds leaves the public bucket now; the five-minute sweep retries a failure.
     await runQuarantine(this.pool, this.deps.storage, { log: this.deps.log });
     return files.length;
   }
 
   /**
-   * Delete stored objects nothing references any more. They were already
-   * marked as orphans in the transaction that let go of them, so one that
-   * fails here — or every one, when no storage is configured — is deleted by
-   * the next orphan sweep (media/service.ts) instead.
+   * Deletes stored objects nothing references. They were marked as orphans in the transaction that released them, so
+   * any that fail here, or all of them without storage, go on the next orphan sweep (media/service.ts).
    */
   private async deleteFiles(keys: string[]): Promise<void> {
     if (!this.deps.storage) return;
@@ -347,8 +294,7 @@ export class GdprService {
   }
 
   private async anonymize(userId: string, executor: Pick<pg.Pool, 'query'> = this.pool): Promise<void> {
-    // what they wrote to the support address, with the answers to it: it is
-    // found by their address, which the next statement replaces, so first
+    // Support mail is found by their address, which the next statement replaces, so it goes first.
     await eraseSupportMail(executor, userId);
     await executor.query(
       `UPDATE users SET
@@ -363,7 +309,7 @@ export class GdprService {
        WHERE id = $1 AND deleted_at IS NULL`,
       [userId],
     );
-    // the names they used to have are theirs too, and no longer held for anybody
+    // Their former usernames go too, and are no longer held for anybody.
     await executor.query(`DELETE FROM username_history WHERE user_id = $1`, [userId]);
     // their tree, and the kinds of tree they bought
     await executor.query(`DELETE FROM user_trees WHERE user_id = $1`, [userId]);
@@ -375,10 +321,8 @@ export class GdprService {
     await executor.query(`DELETE FROM oauth_identities WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM email_tokens WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [userId]);
-    // what sign-in protection kept about the account: its devices and networks
-    // (and the failure counts kept under them), the security emails it was
-    // sent, any count or lock on it, the failures aimed at it, and the networks
-    // it was seen on
+    // What sign-in protection kept: devices and networks with their failure counts, security emails sent, any count or
+    // lock on the account, failures aimed at it, and the networks it was seen on.
     await executor.query(
       `DELETE FROM auth_lockouts WHERE scope = 'device' AND key IN (SELECT device_hash FROM known_devices WHERE user_id = $1)`,
       [userId],
@@ -388,9 +332,7 @@ export class GdprService {
     await executor.query(`DELETE FROM auth_lockouts WHERE scope = 'account' AND key = $1::text`, [userId]);
     await executor.query(`DELETE FROM auth_network_failures WHERE target_hash = $1`, [userHash(userId)]);
     await executor.query(`DELETE FROM network_sightings WHERE user_id = $1`, [userId]);
-    // off this week's league table at once (their earlier weeks stay, tied to
-    // no name), their showcase gone from the profile nobody can open now, and
-    // no badge push queued for an account that is closed
+    // Off this week's league table at once (earlier weeks stay, anonymous), showcase gone, and no badge push queued.
     await executor.query(
       `UPDATE league_members SET left_at = now()
         WHERE user_id = $1 AND left_at IS NULL
@@ -399,11 +341,9 @@ export class GdprService {
     );
     await executor.query(`DELETE FROM badge_showcase WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM badge_push_days WHERE user_id = $1`, [userId]);
-    // what they wrote in the rating box or Send feedback is their words; the
-    // stars and chips stay in the counts, tied to an anonymised account. An
-    // answer that was only words has nothing left once they go — and the
-    // table refuses an empty answer, so scrubbing it would fail, after the
-    // account above was already anonymised and would never be picked again
+    // Feedback text is their words; stars and chips stay in the counts, anonymous. An answer that was only words is
+    // deleted, because the table refuses an empty answer and a failing scrub here would strand an account already
+    // anonymised above.
     await executor.query(
       `DELETE FROM app_feedback WHERE user_id = $1 AND stars IS NULL AND cardinality(categories) = 0`,
       [userId],
@@ -414,13 +354,13 @@ export class GdprService {
   }
 
   /**
-   * Creates an export request; the worker fulfills it. One a day: asking again
-   * within 24 hours answers with the request already made. Under the person's
-   * lock, so two taps at once make one export, not two whole copies of
-   * everything (each is a full build and a file in storage).
+   * Creates an export request for the worker. One a day: asking again within 24 hours returns the existing request.
+   * Taken under the person's lock, so two taps make one export rather than two full builds.
    */
   async requestExport(userId: string): Promise<string> {
-    if (!this.deps.storage) {
+    // Exports are kept only in a bucket readable through a signed link (media/storage.ts `putPrivate`); without one the
+    // request is refused rather than promised.
+    if (!this.deps.storage?.hasPrivateBucket) {
       throw new AppError('EXPORT_NOT_AVAILABLE', 503, 'data export is not available right now');
     }
     return inTransaction(this.pool, async (client) => {
@@ -441,10 +381,7 @@ export class GdprService {
     });
   }
 
-  /**
-   * Gathers everything we store about the user into one document — the birth
-   * month and year included, which are personal data like the rest.
-   */
+  /** Gathers everything stored about the user into one document, birth month and year included. */
   async buildExport(userId: string): Promise<Record<string, unknown>> {
     const user = await this.pool.query(
       `SELECT id, email, username, display_name, bio, locale, timezone, roles,
@@ -484,8 +421,7 @@ export class GdprService {
         WHERE p.user_id = $1 ORDER BY g.created_at DESC LIMIT 1000`,
       [userId],
     );
-    // their multiplayer learning games, as they played them, with what they
-    // typed in each — nothing about the other players
+    // Their multiplayer learning games with what they typed in each, nothing about other players.
     const multiplayerGames = await this.pool.query(
       `SELECT l.game, l.mode, l.dialect, l.status, l.started_at, l.finished_at, p.seat, p.place, p.score, p.xp_awarded,
               COALESCE((SELECT json_agg(json_build_object('text', m.text, 'at', m.created_at) ORDER BY m.seq)
@@ -494,9 +430,7 @@ export class GdprService {
         WHERE p.user_id = $1 ORDER BY l.created_at DESC LIMIT 1000`,
       [userId],
     );
-    // when they were asked for a rating, and their answers as they gave them;
-    // the inbox's status and staff notes are the team's working state, not
-    // something they told us
+    // When they were asked for a rating and their answers; the inbox status and staff notes are the team's, not theirs.
     const prompts = await this.pool.query(
       `SELECT app_feedback_prompted_at, store_review_prompted_at, store_review_count, store_review_version
          FROM users WHERE id = $1`,
@@ -509,29 +443,23 @@ export class GdprService {
     );
     // their Game Ranks, every change with its reason (ranks/gdpr.ts)
     const ranks = await exportRanks(this.pool, userId);
-    // the letters they wrote to pen pals, each with its paper, drawing and notes,
-    // and whether each was delivered; the letters written to them are their pen
-    // pals' words, not theirs
+    // The letters they wrote, each with its paper, drawing, notes and delivery; letters to them are their pen pals'
+    // words.
     const letters = await this.pool.query(
       `SELECT body, decor, status, created_at AS written_at, delivered_at FROM letters WHERE sender_id = $1 ORDER BY created_at`,
       [userId],
     );
     // the bird they chose to carry them, and how often they changed it
     const letterBird = await this.pool.query(`SELECT bird, changes, chosen_at, updated_at FROM letter_birds WHERE user_id = $1`, [userId]);
-    // the birds they called to their window, and how each visit ended; the letters those birds carried are their writers' words
+    // The birds they called to their window and how each visit ended; the letters those birds carried are others' words.
     const birdsCalled = await this.pool.query(`SELECT called_at, ended_at, outcome FROM letter_visits WHERE visitor_id = $1 ORDER BY called_at`, [userId]);
-    // the paper they last wrote on, what they chose for the letter widget, and
-    // when each phone's widget was made and last read (the tokens themselves
-    // are kept only as hashes, which would mean nothing to them)
+    // The paper they last used, their widget choices, and when each phone's widget was made and last read (tokens are
+    // kept only as hashes, which would mean nothing to them).
     const letterPaper = await this.pool.query(`SELECT paper, updated_at FROM letter_prefs WHERE user_id = $1`, [userId]);
     const widgetPrefs = await this.pool.query(`SELECT pinned_letter_id, show_words, updated_at FROM letter_widget_prefs WHERE user_id = $1`, [userId]);
     const widgets = await this.pool.query(`SELECT created_at, last_used_at FROM letter_widget_tokens WHERE user_id = $1 ORDER BY created_at`, [userId]);
-    // what they wrote to the support address from this account's address, and
-    // what they were answered; who on the team answered is not theirs
-    // the devices and networks that have signed in to the account, by when,
-    // the networks it was seen on by day, and the security emails it was sent;
-    // each device and network is kept only as a keyed hash, which would mean
-    // nothing to them, so the hashes are left out
+    // Devices and networks that signed in, the networks seen by day, and security emails sent. Devices and networks are
+    // kept only as keyed hashes, which are left out.
     const devices = await this.pool.query(
       `SELECT kind, first_seen_at, last_seen_at, expires_at FROM known_devices WHERE user_id = $1 ORDER BY first_seen_at`,
       [userId],
@@ -544,6 +472,7 @@ export class GdprService {
       `SELECT kind, sent_at FROM security_notices WHERE user_id = $1 ORDER BY sent_at`,
       [userId],
     );
+    // Their mail to the support address from this account's address and the answers; who answered is not theirs.
     const support = await this.pool.query(
       `SELECT e.subject, e.received_at, e.text_body, e.html_body,
               COALESCE((SELECT json_agg(json_build_object('body', r.body, 'sentAt', r.sent_at) ORDER BY r.sent_at)
@@ -581,7 +510,11 @@ export class GdprService {
     };
   }
 
-  /** Worker-side fulfillment: build, upload, mark completed. */
+  /**
+   * Worker-side fulfilment: build, upload, mark completed, and delete the person's earlier export files. Without a
+   * writable private bucket no export is made (PrivateStorageUnavailable), never one in the public bucket; the request
+   * is withdrawn as the job fails, so GET /me/export stops promising one and the person can ask again later.
+   */
   async fulfillExport(exportId: string): Promise<void> {
     if (!this.deps.storage) throw new Error('storage not configured');
     const row = await this.pool.query<{ user_id: string; completed_at: Date | null }>(
@@ -590,26 +523,44 @@ export class GdprService {
     );
     const record = row.rows[0];
     if (!record || record.completed_at) return; // idempotent
+    if (!this.deps.storage.hasPrivateBucket) {
+      await this.pool.query(`DELETE FROM user_exports WHERE id = $1 AND completed_at IS NULL`, [exportId]);
+      throw new PrivateStorageUnavailable();
+    }
 
     const body = Buffer.from(JSON.stringify(await this.buildExport(record.user_id), null, 2));
     const sha256Hex = createHash('sha256').update(body).digest('hex');
     const key = mediaKey('user-export', sha256Hex, 'application/json');
-    /*
-     * Written with private, no-store headers and straight from here.
-     *
-     * This used to take a signed upload URL and PUT to it over the network —
-     * the server fetching a URL it had just signed for itself, to reach a
-     * bucket it holds the credentials for. The round trip bought nothing, and
-     * it went through the path that stamps `public, max-age=31536000,
-     * immutable` on what it stores, because everything else that path stores is
-     * a picture. So a file holding one person's account, sessions and linked
-     * identities was a public object with a year-long cache directive.
-     */
+    // Written privately with no-store headers, straight from here; the signed-upload path would store it as a public,
+    // year-long cached object.
     await this.deps.storage.putPrivate(key, body, 'application/json');
     await this.pool.query(
       `UPDATE user_exports SET storage_key = $2, completed_at = now() WHERE id = $1`,
       [exportId, key],
     );
+    await this.deleteEarlierExports(record.user_id, exportId, key);
+  }
+
+  /**
+   * Deletes the files of the person's earlier exports once a newer one is ready, since only the newest is offered. One
+   * that cannot be deleted keeps its key and is retried with the next export or when the account closes.
+   */
+  private async deleteEarlierExports(userId: string, exportId: string, kept: string): Promise<void> {
+    const earlier = await this.pool.query<{ id: string; storage_key: string }>(
+      `SELECT id, storage_key FROM user_exports WHERE user_id = $1 AND id <> $2 AND storage_key IS NOT NULL`,
+      [userId, exportId],
+    );
+    const deleted: string[] = [];
+    for (const old of earlier.rows) {
+      try {
+        // the same bytes have the same key: that file is the new export's too
+        if (old.storage_key !== kept) await this.deps.storage!.delete(old.storage_key);
+        deleted.push(old.id);
+      } catch (err) {
+        this.deps.log?.warn({ err, userId }, 'could not delete an earlier data export; it is tried again with the next one');
+      }
+    }
+    if (deleted.length > 0) await this.pool.query(`UPDATE user_exports SET storage_key = NULL WHERE id = ANY($1::uuid[])`, [deleted]);
   }
 
   /** Latest export status + fresh signed URL when ready. */
@@ -639,11 +590,8 @@ export class GdprService {
 }
 
 /**
- * Mail the account's owner sent to the support address, and the answers to it
- * (they go with it, by the foreign key). Found by the account's address, which
- * is the one thing the inbox knows them by — so this has to run before the
- * address is replaced, and it is the reason a closed account's address does
- * not live on in the inbox after the account itself has been anonymized.
+ * Erases the account owner's mail to the support address and the answers to it (by foreign key). The inbox knows
+ * them only by address, so this must run before the address is replaced.
  */
 export async function eraseSupportMail(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<void> {
   await executor.query(
@@ -654,21 +602,11 @@ export async function eraseSupportMail(executor: Pick<pg.Pool, 'query'>, userId:
 }
 
 /**
- * Everything a closing account holds beyond its own fields, deleted in the
- * caller's transaction (see `GdprService.anonymizeExpired` and `closeNow`). Returns the storage
- * keys nobody else uses any more, already marked as orphans, for the caller to
- * delete from storage once this has committed.
- *
- * A file a report still holds as evidence is not returned: it is marked as an
- * orphan all the same (the sweep leaves it alone while the evidence is kept,
- * and takes it once the retention lets it go), and it is quarantined — taken
- * off the public bucket into private storage — since nothing may show the
- * person's picture any more, and the bucket would otherwise go on serving it.
- *
- * Posts and pictures go with the comments, reactions and likes on them. The
- * person's own comments on other people's posts are emptied the way a deleted
- * comment is (the tombstone keeps the replies under it in place) and no longer
- * counted. Groups they own are handed on before they leave them.
+ * Deletes everything a closing account holds beyond its own fields, in the caller's transaction, and returns the
+ * storage keys nobody else uses, already marked as orphans, to delete after the commit. A file a report holds as
+ * evidence is marked too but not returned: it is quarantined into private storage, since nothing may show it now,
+ * and the sweep takes it once retention allows. Posts and pictures go with their comments, reactions and likes; the
+ * person's comments elsewhere become tombstones that keep replies in place. Owned groups are handed on first.
  */
 export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<string[]> {
   const q = (sql: string, params: unknown[] = [userId]) => executor.query(sql, params);
@@ -685,11 +623,9 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
     `SELECT storage_key AS key FROM user_exports WHERE user_id = $1 AND storage_key IS NOT NULL`,
     [userId],
   );
-  // the pictures on their written posts, and every other picture they uploaded
-  // for a post: never posted (the sweep would take those in a day; a closed
-  // account's go now), or taken off a reported post and kept for its case —
-  // a report's evidence marks those, so they are quarantined below like any
-  // other file held as evidence
+  // Pictures on their written posts and every other post upload: unposted ones (the sweep would take those in a day;
+  // a closed account's go now) and ones taken off a reported post, which the report marks as evidence so they are
+  // quarantined below.
   const pictures = await executor.query<{ key: string }>(
     `SELECT m.media_key AS key FROM library_post_media m JOIN library_posts p ON p.id = m.post_id WHERE p.author_id = $1
      UNION SELECT key FROM media_uploads WHERE uploader_id = $1`,
@@ -737,16 +673,13 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   );
   await q(`DELETE FROM image_reactions WHERE user_id = $1`);
 
-  // story games: their name off the games they hosted, then their answers and
-  // seats (they left the unfinished ones through the leave path before this
-  // transaction). The games first: a game's own transactions lock it before
-  // its players, and this takes them in the same order.
+  // Story games: their name off hosted games, then their answers and seats (unfinished ones were left beforehand).
+  // Games first, because a game's transactions lock it before its players.
   await q(`UPDATE story_games SET host_id = NULL WHERE host_id = $1`);
   await q(`DELETE FROM story_game_answers WHERE user_id = $1`);
   await q(`DELETE FROM story_game_players WHERE user_id = $1`);
-  // the multiplayer learning games, the same way: their name off the lobbies
-  // they hosted, what they typed off every move (the move itself stays, for
-  // the others' game), then their seats
+  // Multiplayer learning games likewise: name off hosted lobbies, their text off every move (the move stays for the
+  // others), then their seats.
   await q(`UPDATE game_lobbies SET host_id = NULL WHERE host_id = $1`);
   await q(`UPDATE game_moves SET user_id = NULL, text = NULL WHERE user_id = $1`);
   await q(`DELETE FROM game_lobby_players WHERE user_id = $1`);
@@ -762,11 +695,10 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // the voices they recorded for the course, and their name off the links they made for others
   await q(`DELETE FROM recording_voices WHERE user_id = $1`);
   await q(`UPDATE recording_voices SET linked_by = NULL WHERE linked_by = $1`);
-  // their Game Ranks: ratings, history, leaves, choices, seasons (ranks/gdpr.ts)
+  // Their Game Ranks data (ranks/gdpr.ts).
   await eraseRanks(executor, userId);
 
-  // messages, both sides of every conversation they were in — the gifts in
-  // them with the rest
+  // Both sides of every conversation they were in, gifts included.
   await q(`DELETE FROM dm_messages WHERE user_lo = $1 OR user_hi = $1`);
   // and every correspondence with a pen pal, both sides of it, as with messages
   await q(`DELETE FROM letters WHERE sender_id = $1 OR recipient_id = $1`);
@@ -774,37 +706,28 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // and the bird they chose to carry them, and the birds they called to their window
   await q(`DELETE FROM letter_birds WHERE user_id = $1`);
   await q(`DELETE FROM letter_visits WHERE visitor_id = $1`);
-  // the paper they last wrote on, and their letter widgets: every phone's token
-  // and what they pinned (a pin of somebody else's on one of their letters let
-  // go when the letter went)
+  // Their last paper and their letter widgets (a pin of someone else's on one of their letters went with the letter).
   await q(`DELETE FROM letter_prefs WHERE user_id = $1`);
   await q(`DELETE FROM letter_widget_tokens WHERE user_id = $1`);
   await q(`DELETE FROM letter_widget_prefs WHERE user_id = $1`);
   await q(`DELETE FROM group_messages WHERE sender_id = $1`);
-  // and a gift posted in a group for them alone, a message about nobody else;
-  // one to several friends stays for the others, its card no longer listing a
-  // closed account (gifts/cards.ts)
+  // A group gift for them alone goes; one to several friends stays for the others, no longer listing a closed account
+  // (gifts/cards.ts).
   await q(
     `DELETE FROM group_messages m
       WHERE m.gift_batch_id IS NOT NULL
         AND m.gift_batch_id IN (SELECT g.batch_id FROM gifts g WHERE g.to_user_id = $1)
         AND NOT EXISTS (SELECT 1 FROM gifts o WHERE o.batch_id = m.gift_batch_id AND o.to_user_id <> $1)`,
   );
-  // The line each friend was sent about a present from them ("<name> sent you
-  // …", with their id in its data) is in the friend's notifications, not
-  // theirs, so the delete of their own below does not reach it. Found through
-  // the gifts they gave, which name every friend who was sent one — the shop's
-  // older lines, which have the same kind and sender, as well.
+  // The notification each friend got about a present from them sits in the friend's list, so their own delete below
+  // misses it. It is found through the gifts they gave, which also covers the shop's older notifications.
   await q(
     `DELETE FROM notifications
       WHERE user_id IN (SELECT to_user_id FROM gifts WHERE from_user_id = $1::uuid)
         AND data->>'kind' = 'gift' AND data->>'fromUserId' = $1::text`,
   );
-  // The gift rows stay: what they gave is the recipient's, and what they were
-  // given stays with the anonymized account as its other history does (its
-  // row is kept, so the foreign keys' own clean-up never runs). Only the line
-  // from someone else's present back to this account goes, so it reads as
-  // from a former member.
+  // Gift rows stay: given ones belong to the recipient, received ones stay with the anonymised row like its other
+  // history. Only the link back to this account goes, so they read as from a former member.
   await q(`UPDATE gifts SET from_user_id = NULL WHERE from_user_id = $1`);
 
   // groups: hand on the ones they own, then leave them all
@@ -817,10 +740,9 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM group_mutes WHERE user_id = $1`);
   await q(`DELETE FROM group_bans WHERE user_id = $1`);
   await q(`DELETE FROM group_rejoin_requests WHERE user_id = $1`);
-  // and the note that they were taken out of a group that was open, kept so that it could be undone (migration 1751000420000)
+  // And the note that they were removed from a formerly open group, kept so it could be undone.
   await q(`DELETE FROM open_group_closures WHERE user_id = $1`);
-  // and their name off what they did as an admin, which then reads as an admin's (the account is
-  // anonymized, not deleted, so the foreign keys' SET NULL never runs)
+  // Their name off what they did as a group admin; the account is anonymised, not deleted, so SET NULL never runs.
   await q(`UPDATE group_bans SET banned_by = NULL WHERE banned_by = $1`);
   await q(`UPDATE group_rejoin_requests SET decided_by = NULL WHERE decided_by = $1`);
   await q(`UPDATE groups SET chat_cleared_by = NULL WHERE chat_cleared_by = $1`);
@@ -836,8 +758,7 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM device_tokens WHERE user_id = $1`);
   await q(`DELETE FROM notification_prefs WHERE user_id = $1`);
   await q(`DELETE FROM notifications WHERE user_id = $1`);
-  // game invites from and to them, and their rematch offers: the account is
-  // anonymized, not deleted, so the foreign keys' cascade never runs
+  // Game invites from and to them and their rematch offers; the account is anonymised, so the cascade never runs.
   await q(`DELETE FROM play_invites WHERE host_id = $1 OR invitee_id = $1`);
   await q(`DELETE FROM play_rematches WHERE user_id = $1`);
   await q(`DELETE FROM streak_reminders_sent WHERE user_id = $1`);
@@ -847,7 +768,7 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM app_feedback WHERE user_id = $1`);
   await q(`DELETE FROM user_tags WHERE user_id = $1`);
   await q(`DELETE FROM saved_words WHERE user_id = $1`);
-  // the badges they showed on their profile, as the rest of what was shown there
+  // The badges shown on their profile.
   await q(`DELETE FROM user_badges WHERE user_id = $1`);
   await q(`DELETE FROM badge_users WHERE user_id = $1`);
   await q(`DELETE FROM badge_rated_games WHERE user_id = $1`);
@@ -866,9 +787,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
      WHERE id = $1`,
   );
 
-  // files nobody else uses (keys are content hashes, so two people can share
-  // one), marked as orphans; the ones held as evidence are quarantined instead
-  // of deleted
+  // Files nobody else uses (keys are content hashes, so people can share one), marked as orphans; evidence is
+  // quarantined instead.
   const unused = await executor.query<{ key: string; evidence: boolean }>(
     `SELECT k.key,
             (EXISTS (SELECT 1 FROM media_uploads m WHERE m.key = k.key AND m.preserve_evidence)
@@ -879,8 +799,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
         AND NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_media_id = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_post_media pm WHERE pm.media_key = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = k.key)`,
-    // once each: an old picture post's upload is both its picture and one of
-    // their uploads, and a key twice would fail the marking below
+    // Once each: an old picture post's upload is both its picture and their upload, and a duplicate key would fail the
+    // marking.
     [[...new Set([...keys.rows, ...pictures.rows].map((r) => r.key))]],
   );
   const evidence = unused.rows.filter((r) => r.evidence).map((r) => r.key);

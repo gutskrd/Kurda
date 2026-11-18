@@ -112,8 +112,7 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
     expect(res.statusCode).toBe(200);
     const items = mine(res.json());
 
-    // the point of merging: a poem posted this morning is not invisible to
-    // someone who happened to be browsing pictures
+    // Merged, a poem posted this morning is visible to someone browsing pictures.
     expect(items.map((i) => i.kind)).toEqual(['gotin', 'poem', 'image', 'story']);
   });
 
@@ -200,7 +199,7 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
     const asReader = mine((await get('/feed?limit=50', tokens.reader)).json()).find((i) => i.id === made.poem)!;
     expect(asReader.engagement).toMatchObject({ likes: 1, liked: true });
 
-    // the count is public; whose like it was is not
+    // The count is public; whose like it was is not.
     const asGuest = mine((await get('/feed?limit=50')).json()).find((i) => i.id === made.poem)!;
     expect(asGuest.engagement).toMatchObject({ likes: 1, liked: false });
   });
@@ -211,8 +210,7 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
     const firstPage = await page('/feed?limit=2&offset=0');
     const secondPage = await page('/feed?limit=2&offset=2');
 
-    // merging two tables in the client would need over-fetching both sides to
-    // be sure of the boundary; the union orders them once
+    // The union orders both tables once, so pages meet without gaps or repeats.
     expect(firstPage.concat(secondPage).map((i) => i.key)).toEqual(all.slice(0, 4).map((i) => i.key));
   });
 
@@ -236,8 +234,7 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
     await save('image', made.picture!);
 
     const saved = (await get('/me/saved', tokens.reader)).json().items as Item[];
-    // the picture was saved second, so it is first — the order is when you saved
-    // it, not when it was posted
+    // Saved posts come in the order they were saved, not posted.
     expect(saved.map((i) => i.key)).toEqual([`image:${made.picture}`, `library:${made.story}`]);
     // and it is a full card, not a stub: the wall and the list are the same shape
     expect(saved[0]!.author.username).toBe(`feed_author_${suffix}`.slice(0, 30));

@@ -9,12 +9,8 @@ import { useT } from '../i18n/I18nProvider';
 const LINGER_MS = 8_000;
 
 /**
- * What just arrived, announced in the corner.
- *
- * A game invite expires in two minutes, so the badge alone is not enough — you
- * have to be told while it is still worth acting on. Toasts stack, cap at three,
- * and each one is a button that opens the rail, because being told about
- * something you then have to go find is only half a notification.
+ * New arrivals announced in the corner, since a game invite expires in two minutes and a badge alone is too easy to
+ * miss. Toasts stack up to three, and each opens the rail.
  */
 export function RailToasts({
   arrivals,
@@ -66,7 +62,7 @@ function Toast({
           ) : (
             <BellIcon size={18} />
           )}
-          {/* a friend request is a ticket, in a heart's colour, as it is everywhere (ui/Ticket.tsx) */}
+          {/* A friend request is a ticket in the heart colour, as everywhere (ui/Ticket.tsx). */}
           <span className={`rail-toast-kind${arrival.kind === 'request' ? ' ticket--friend is-ticket' : ''}`} aria-hidden>
             {arrival.kind === 'challenge' ? <GameIcon size={11} /> : arrival.kind === 'request' ? <TicketIcon size={11} /> : null}
           </span>
@@ -77,8 +73,7 @@ function Toast({
         </span>
       </button>
       <CloseButton className="rail-toast-x" label={t('rail.dismiss')} onClick={onDismiss} />
-      {/* a bar that drains, so the toast's remaining time is visible rather than
-          a surprise when it vanishes mid-read */}
+      {/* A draining bar shows the toast's remaining time. */}
       <span className="rail-toast-timer" aria-hidden />
     </div>
   );

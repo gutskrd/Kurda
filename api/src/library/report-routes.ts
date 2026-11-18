@@ -7,11 +7,7 @@ import { LibraryModerationService, type LibraryTargetType } from './moderation-s
 const idParam = z.object({ id: z.uuid() });
 const reportBody = z.object({ reason: z.string().max(500).optional() });
 
-/**
- * Community library reporting (KUR-285). Signed-in users report a post or
- * comment (text or audio) with a reason; the report feeds the unified
- * moderation queue (#102). Rate-limited (#010); one report per user per item.
- */
+/** Library post and comment reports, feeding the shared moderation queue. Rate limited; one report per user per item. */
 export function registerLibraryReportRoutes(app: FastifyInstance, reports?: ReportsService): void {
   const mod = new LibraryModerationService(app.db, reports);
   const report = (type: LibraryTargetType) =>

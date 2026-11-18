@@ -7,17 +7,12 @@ interface JobDef {
   label: string;
   what: string;
   path: string;
-  /** asked first: it changes what players see */
+  /** Asked first: it changes what players see. */
   ask?: string;
   describe: (res: Record<string, unknown>) => string;
 }
 
-/**
- * The jobs a person may run from here. The weekly league settle and the
- * season close used to be here too; they live on the Leagues and Seasons
- * pages now, beside what they change and with their status. The board by
- * rating went with the old Elo rating: game ranks have boards of their own.
- */
+/** The jobs a person may run from here; the league settle and season close are on the Leagues and Seasons pages. */
 const JOBS: JobDef[] = [
   {
     key: 'leaderboards',
@@ -52,11 +47,7 @@ function bytes(n: number): string {
   return `${v.toFixed(v < 10 ? 1 : 0)} ${units[i]}`;
 }
 
-/**
- * System: the jobs the server runs on its own, to run now; storage use against
- * its limits; and a test notification. They were mixed in with the Gem rules
- * under "Ops"; the jobs that change what players see are asked first.
- */
+/** System: the server's scheduled jobs to run now (asked first where players see the change), storage use, a test notification. */
 export function System(): React.JSX.Element {
   return (
     <div>

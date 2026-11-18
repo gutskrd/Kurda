@@ -1,45 +1,28 @@
 /**
- * Writing stories in the admin panel: drafts, review, publishing, the
- * library's categories.
+ * Story writing for the admin panel: drafts, review, publishing, and the library's categories.
  *
  *   draft ──submit──▶ in_review ──publish──▶ published ──unpublish──▶ draft
  *     └──────────────publish──────────────────▲      any ──archive──▶ archived
  *
- * A draft or a story in review can be edited; a published one is unpublished
- * first (it leaves the hub at once — games already under way keep their own
- * copy), so what learners read is always exactly what someone published.
- * Every change carries the `lockVersion` the editor loaded, and a stale one is
- * refused, so two editors cannot silently overwrite each other.
+ * Only drafts and stories in review can be edited; a published story is unpublished first (games under way keep their
+ * own copy), so learners always read exactly what someone published. Every change carries the editor's `lockVersion`
+ * and a stale one is refused, so editors cannot silently overwrite each other.
  *
- * Editorial review is separate from publication. A reviewer approves a story
- * (`review`), and only an approved story can be published; a change to its
- * content — title, summary, text, glossary, questions, reflections, notes,
- * translations — sends an approved story back to unreviewed, while a change to
- * how it is filed (category, tradition, attribution, sources, cover, reading
- * time) does not.
+ * Review is separate from publication: only an approved story can be published. A content change (title, summary, text,
+ * glossary, questions, reflections, notes, translations) resets an approved story to unreviewed; a filing change
+ * (category, tradition, attribution, sources, cover, reading time) does not.
  *
- * Translations have a second way in. The whole-story save (`update`) still
- * takes them with everything else, only while the story is a draft or in
- * review, and still counts a changed translation as changed content — a
- * restructured text and its translations are saved together that way. One
- * language can also be corrected on its own (`saveTranslation`), in any status
- * but archived and without unpublishing: the Kurdish approval stays, since the
- * Kurdish did not change, and that language is marked unreviewed until a
- * native speaker of it says otherwise (`reviewTranslation`). Either way, each
- * language whose translation changed is marked unreviewed.
+ * Translations have two ways in. The whole-story save (`update`, draft or in review only) takes them with everything
+ * else and counts a changed translation as changed content. `saveTranslation` corrects one language in any status but
+ * archived, without unpublishing: the Kurdish approval stays and that language is marked unreviewed until
+ * `reviewTranslation`. Either way every changed language is marked unreviewed.
  *
- * `validateStory` (@kurda/shared) decides what may be saved: at the draft
- * stage an unfinished story is fine (no text yet, between lengths, too few
- * questions, no category), anything broken is not; submitting and publishing
- * require the whole story. The importer and the starter seeding go through
- * `saveStory` below, so all three write a story the same way — and all three
- * link each glossary term to its dictionary entry, when the term is a
- * headword, so the reader can save the word.
+ * `validateStory` (@kurda/shared) decides what may be saved: a draft may be unfinished but not broken; submitting and
+ * publishing need the whole story. The importer and starter seeding also store through `saveStory`, so all three write
+ * stories the same way and link glossary terms that are headwords to their dictionary entries.
  *
- * Publishing, unpublishing, archiving, deleting, reviewing, featuring and the
- * category changes are audited with the story before and after — the whole of
- * it, text and questions, on the side where it is live — beside the automatic
- * one-line audit of every admin call.
+ * Publishing, unpublishing, archiving, deleting, reviewing, featuring and category changes are audited with the whole
+ * story before and after on its live side, beside the one-line audit of every admin call.
  */
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
@@ -107,9 +90,8 @@ export interface StoryDraft extends StoryInput {
 /** What goes with a save besides the story: which other story it is a version of. */
 export interface SaveOptions {
   /**
-   * Another story's id: this one joins its translation group (the same
-   * story in another variety). Null leaves the group; left out, nothing
-   * about the group changes.
+   * Another story's id: this one joins its translation group (the same story in another variety). Null leaves the
+   * group; omitted, the group is unchanged.
    */
   sameStoryAs?: string | null;
 }
@@ -285,11 +267,9 @@ function trimmedOrNull(v: string | null | undefined): string | null {
 
 
 /**
- * What is stored: titles, options and translations trimmed, an empty optional
- * field as null, the text (and each translation) with one kind of line
- * ending, a blank translation dropped. Validation runs on this, so what is
- * checked is what is saved. Whatever a client sent for a gloss's dictionary
- * link is dropped here: the server resolves it when the story is saved.
+ * What is stored: titles, options and translations trimmed, empty optional fields as null, one kind of line ending,
+ * blank translations dropped. Validation runs on this, so what is checked is what is saved. Client-sent gloss
+ * dictionary links are dropped; the server resolves them on save.
  */
 export function tidyStory<T extends StoryInput>(story: T): T {
   const translations: Record<string, string> = {};
@@ -342,10 +322,8 @@ function sorted<T>(map: Record<string, T> | null | undefined): Array<[string, T]
 }
 
 /**
- * Everything of a story in one interface language, in one fixed order: its
- * text, title and summary, each question, each reflection and each note in
- * that language. Two equal strings are the same translation; a change to any
- * of it is what marks the language unreviewed.
+ * Everything of a story in one interface language, in a fixed order (text, title, summary, questions, reflections,
+ * notes). Equal strings mean the same translation; any change marks the language unreviewed.
  */
 export function canonicalLocale(story: StoryInput, locale: string): string {
   const meta = story.metaTranslations?.[locale];
@@ -375,10 +353,8 @@ export function translatedLocales(story: StoryInput): string[] {
 }
 
 /**
- * The per-language review after a change: each language whose translation
- * changed (or appeared, or went) is unreviewed again — a native speaker read
- * something else — and the others keep what they had. A language with nothing
- * left in it keeps no entry.
+ * The per-language review after a change: each language whose translation changed, appeared or went is unreviewed
+ * again; others keep theirs. A language with nothing left keeps no entry.
  */
 export function reviewAfterChange(
   before: StoryInput,
@@ -396,13 +372,9 @@ export function reviewAfterChange(
 }
 
 /**
- * A story's content in one fixed order — jsonb does not keep the key order it
- * was given — for telling whether an import or a save changed what a
- * reviewer read. The content is what the reader meets: title, summary, text,
- * glossary (terms and meanings, not their dictionary links), questions,
- * reflections, notes, and every translation of them. Where the story is filed,
- * who it is attributed to and its sources are not content, and changing them
- * does not undo a review.
+ * A story's content in a fixed order (jsonb does not keep key order), for telling whether an import or save changed
+ * what a reviewer read: title, summary, text, glossary (terms and meanings, not dictionary links), questions,
+ * reflections, notes and their translations. Filing, attribution and sources are not content and do not undo a review.
  */
 export function canonicalContent(story: StoryInput): string {
   return JSON.stringify([
@@ -475,13 +447,9 @@ export function storyInputOf(row: StoryRow, questions: readonly StoryQuestionInp
 }
 
 /**
- * A story as the audit keeps it on one side of a status change. Stories have
- * no version history — unpublishing, editing and publishing again overwrites
- * the row — so on the side where a story is live (just published, or about
- * to be unpublished or archived) the audit keeps the whole of it, questions
- * included: which text a reviewer approved, and what learners read until it
- * was pulled, can always be told afterwards. A draft or a story in review is
- * noted by its status alone; its content is on the other side of the entry.
+ * A story as the audit keeps it on one side of a status change. Stories have no version history, so on the live side
+ * (just published, or about to be unpublished or archived) the audit keeps the whole story with its questions, to tell
+ * later what was approved and read. A draft or story in review is noted by status alone.
  */
 function auditState(
   row: StoryRow,
@@ -506,12 +474,9 @@ function pgCode(err: unknown): string | undefined {
 }
 
 /**
- * The glossary with each term linked to its dictionary entry, when it is a
- * headword in the story's variety: the term normalised as the dictionary
- * normalises its headwords (letters only, case folded; `letterKey`) and
- * matched exactly, so "sêv" is not linked to "sev". Several entries for one
- * headword take the first by spelling. A term that is no headword keeps no
- * link at all, so a stored glossary without matches reads as it was written.
+ * The glossary with each term linked to its dictionary entry when it is a headword in the story's variety: normalised
+ * like headwords (letters only, case folded; `letterKey`) and matched exactly, so "sêv" does not link to "sev". Several
+ * entries for one headword take the first by spelling. Unmatched terms keep no link.
  */
 export async function matchGlossary(db: Executor, dialect: StoryDialect, glossary: readonly StoryGlossEntry[]): Promise<StoryGlossEntry[]> {
   const keys = glossary.map((g) => letterKey(g.term));
@@ -541,15 +506,12 @@ export function saveParam(i: number): string {
 }
 
 /**
- * Write a story's content and its whole bank into an existing row or a new
- * one, inside the caller's transaction. Does not validate (the caller has)
- * and does not touch status or lock_version beyond what `set` says.
+ * Write a story's content and whole bank into an existing or new row inside the caller's transaction. Does not validate
+ * (the caller has) and touches status or lock_version only as `set` says.
  *
- * Used by the admin routes, the importer and the starter seeding, so a story
- * is stored the same way whichever door it came in by: the word count, the
- * length, the recording keys and the glossary's dictionary links always
- * match the text. The per-language review is written as the story carries it
- * (none when it carries none): the caller decides it (`reviewAfterChange`).
+ * The admin routes, the importer and the starter seeding all store through here, so the word count, length, recording
+ * keys and glossary links always match the text. The per-language review is written as the story carries it; the caller
+ * decides it (`reviewAfterChange`).
  */
 export async function saveStory(
   db: Executor,
@@ -675,11 +637,9 @@ export interface ActionContext {
 }
 
 /**
- * One language of a story as an editor corrects it (PUT
- * /admin/stories/:id/translations/:locale). Each part is optional: left out,
- * it stays as it is; null (or, in a list, a null entry) removes it. The lists
- * line up with the story's own — one entry per question of the bank, per
- * reflection, per note, in their order — so they are sent whole or not at all.
+ * One language of a story as an editor corrects it (PUT /admin/stories/:id/translations/:locale). Each part is
+ * optional: omitted stays, null (or a null list entry) removes it. Lists line up one-to-one with the story's questions,
+ * reflections and notes, so they are sent whole or not at all.
  */
 export interface LocaleTranslationInput {
   /** the whole text in this language, paragraph for paragraph, headings included */
@@ -725,11 +685,9 @@ function withLocale(story: StoryInput, locale: string, input: LocaleTranslationI
 }
 
 /**
- * What a save left out, as stored: the title and summary per language, the
- * reflections, notes and sources, and a question's translations — the last
- * only for a question whose Kurdish is as stored at its place, since a
- * translation of other words would no longer be one. An editor opened before
- * these existed saves without them, and must not delete them by doing so.
+ * Keep what a save left out from what is stored: per-language title and summary, reflections, notes, sources, and
+ * question translations (only where the question's Kurdish is unchanged). An editor opened before these fields existed
+ * must not delete them by saving.
  */
 function keepUnsent<T extends StoryInput>(input: T, stored: StoryInput): T {
   const same = (a: StoryQuestionInput, b: StoryQuestionInput | undefined): boolean =>
@@ -982,13 +940,9 @@ export class StoryAdminService {
   }
 
   /**
-   * Replace a draft (or a story in review) with what the editor sent, if
-   * nobody changed it since they loaded it. A change to the content of an
-   * approved story takes its approval away: the reviewer read something else.
-   * Translations are part of what is sent and of that content, as they always
-   * were: a translation changed here resets the approval too, and its language
-   * is marked unreviewed. To correct a translation alone — and on a published
-   * story — `saveTranslation` is the way.
+   * Replace a draft or story in review with what the editor sent, if unchanged since they loaded it. A content change
+   * takes an approved story's approval away, translations included (their languages are marked unreviewed). To correct
+   * a translation alone, or on a published story, use `saveTranslation`.
    */
   async update(id: string, input: StoryDraft, lockVersion: number, ctx: ActionContext, options: SaveOptions = {}): Promise<AdminStory> {
     const sent = validateStory(tidyStory(input), 'draft');
@@ -1028,9 +982,7 @@ export class StoryAdminService {
   }
 
   /**
-   * Join or leave a translation group. Joining another story's group makes
-   * one for it when it has none; two stories in one group are one story told
-   * twice, so a story cannot join its own.
+   * Join or leave a translation group. Joining a story without a group makes one; a story cannot join its own group.
    */
   private async linkVersions(client: Executor, id: string, otherId: string | null): Promise<void> {
     if (otherId === null) {
@@ -1050,8 +1002,7 @@ export class StoryAdminService {
   }
 
   /**
-   * The story row under FOR UPDATE, after the existence and lock checks every
-   * change shares: 404 for no such story, 409 STALE when the editor's copy is
+   * The story row under FOR UPDATE after the shared checks: 404 for no such story, 409 STALE when the editor's copy is
    * older than what is stored.
    */
   private async lockStory(db: Executor, id: string, lockVersion: number): Promise<StoryRow> {
@@ -1072,16 +1023,12 @@ export class StoryAdminService {
   }
 
   /**
-   * A status change inside the caller's transaction, with every check and
-   * the audit of `transition`. Answers whether the published list changed
-   * (the story was published, or now is): the caller empties the list cache
-   * after it commits, as `transition` does. The importer's --publish goes
-   * through here, so a story published from a file is checked, attributed
-   * and audited exactly as one published in the admin panel.
+   * A status change inside the caller's transaction, with every check and the audit of `transition`. Returns whether
+   * the published list changed, so the caller can empty the list cache after commit. The importer's --publish goes
+   * through here, so a story published from a file is checked, attributed and audited like one published in the panel.
    *
-   * Publishing needs the reviewer's approval first (409 NOT_REVIEWED): the
-   * whole-story check says the story is complete, the review says someone
-   * read it.
+   * Publishing needs approval first (409 NOT_REVIEWED): the whole-story check says the story is complete, the review
+   * says someone read it.
    */
   async transitionIn(
     client: Executor,
@@ -1127,9 +1074,8 @@ export class StoryAdminService {
   }
 
   /**
-   * Approve a story, or withdraw its approval, with a note. Approval is what
-   * publishing waits for; withdrawing it from a live story is refused, since
-   * the story would go on being read — unpublish it first, which says so.
+   * Approve a story, or withdraw approval, with a note. Withdrawing approval from a live story is refused; unpublish it
+   * first.
    */
   async review(id: string, input: { approved: boolean; note?: string | null }, ctx: ActionContext & { lockVersion: number }): Promise<AdminStory> {
     await this.tx(async (client) => this.reviewIn(client, id, input, ctx));
@@ -1169,14 +1115,10 @@ export class StoryAdminService {
   }
 
   /**
-   * Correct one language of a story — its text, title and summary, questions,
-   * reflections and notes in that language, any of them — in any status but
-   * archived, published included, without taking it offline. The Kurdish is
-   * not touched, so the story's approval stays; the language is marked
-   * unreviewed (its native speaker has not read the new words). Only that
-   * language's problems refuse the save (422 INVALID with their paths), so a
-   * fix to one translation is never held up by another. Audited with the
-   * language before and after; a live story's lists are refreshed at once.
+   * Correct one language of a story (text, title, summary, questions, reflections, notes) in any status but archived,
+   * without taking it offline. The Kurdish is untouched, so the approval stays; the language is marked unreviewed. Only
+   * that language's problems refuse the save (422 INVALID with paths). Audited with the language before and after; a
+   * live story's lists refresh at once.
    */
   async saveTranslation(
     id: string,
@@ -1251,9 +1193,8 @@ export class StoryAdminService {
   }
 
   /**
-   * Record whether a native speaker has read one language's translation, with
-   * who, when and a note. Learners see a translation either way; this is the
-   * editors' record of which ones have been checked. Audited.
+   * Record whether a native speaker has read one language's translation, with who, when and a note. Learners see
+   * translations either way; this is the editors' record. Audited.
    */
   async reviewTranslation(
     id: string,
@@ -1318,10 +1259,8 @@ export class StoryAdminService {
   }
 
   /**
-   * Delete a story nobody has played. A game keeps a reference to the story
-   * it was played on (the foreign key refuses the delete), so a story that
-   * was ever used answers 409 IN_USE: archive it instead. The audit keeps the
-   * whole story, so a deletion can be undone by hand.
+   * Delete a story nobody has played. Games reference their story (the foreign key refuses the delete), so a used story
+   * answers 409 IN_USE: archive it instead. The audit keeps the whole story so a deletion can be undone by hand.
    */
   async delete(id: string, ctx: ActionContext & { lockVersion: number }): Promise<void> {
     let wasPublished = false;
@@ -1434,10 +1373,8 @@ export class StoryAdminService {
   }
 
   /**
-   * Delete a category. One with stories filed under it is refused with how
-   * many (409 IN_USE) unless forced, when those stories are left unfiled —
-   * the table sets their category to null — and have to be filed again
-   * before they can be published anew.
+   * Delete a category. One with stories is refused with their count (409 IN_USE) unless forced, when the stories are
+   * left unfiled (category set to null) and must be filed again before republishing.
    */
   async deleteCategory(slug: string, force: boolean, ctx: ActionContext): Promise<{ slug: string; deleted: true; unfiled: number }> {
     const unfiled = await this.tx(async (client) => {

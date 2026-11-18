@@ -19,12 +19,9 @@ import { readingNote, useTicker } from './clock';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
 
 /**
- * Reading together (contract §A1 "Reading"): the story, then "I've finished
- * reading". Nobody is shown a countdown and nobody is named: only how many
- * have finished. Once the slowest reader has had time (the soft cap), the
- * host may start the questions, and everyone is told so with a "take the
- * time you need"; in the last minute before they start on their own, that
- * they start in about a minute. A solo reader starts the questions whenever.
+ * Reading together (contract §A1 "Reading"): the story, then "I've finished reading". No countdown and no names,
+ * only how many have finished. After the soft cap the host may start the questions and everyone is told to take
+ * their time; in the last minute they are told the questions start soon. A solo reader starts whenever.
  */
 export function Reading({
   view,

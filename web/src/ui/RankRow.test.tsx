@@ -5,14 +5,9 @@ import postcss, { type Rule } from 'postcss';
 import { RankList, RankRow } from './RankRow';
 
 /*
- * A row whose name is a link answers across the whole row: the link's own
- * `::after` is stretched over the row, so a finger that lands on the place,
- * the face or the score still opens the profile, and a control after the
- * score lies over the stretch and keeps its own presses. The markup is
- * checked in the page; the stretch itself is the stylesheet's, so that is
- * read from the disk (a stylesheet a test imports arrives empty) and held to
- * what the stretch needs. This workspace's types are the browser's, so the
- * little asked of the machine the suite runs on is described here in full.
+ * A row whose name is a link answers across the whole row, through the link's stretched `::after`, while a trailing
+ * control keeps its own presses. The stylesheets are read from disk, since an imported stylesheet arrives empty in
+ * tests; this workspace has browser types, so the file system calls are typed here.
  */
 interface FileSystem {
   readFileSync(file: URL, encoding: 'utf8'): string;
@@ -20,7 +15,7 @@ interface FileSystem {
 }
 const fileSystem = 'node:fs';
 const { readFileSync, readdirSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
-// the app's sources, wherever the suite is run from; held in a name, so the build does not take it for an asset of its own
+// The app's sources, wherever the suite runs from; held in a variable so the bundler does not treat it as an asset.
 const here = import.meta.url;
 const src = new URL('../', here);
 const sheets = readdirSync(src, { recursive: true })
@@ -58,7 +53,7 @@ describe('a leaderboard row with a profile to open', () => {
     expect(links[0]).toHaveAccessibleName('dilan');
     expect(links[0]).toHaveAttribute('href', '/app/users/p1');
     expect(links[0]).toHaveClass('rank-name');
-    // the stretch is measured from the row, so the link is the row’s own child and not inside anything else that might be positioned
+    // The stretch is measured from the row, so the link must be the row’s direct child.
     expect(links[0]!.parentElement).toBe(row);
     expect(row).toHaveClass('rank-row');
   });
@@ -82,7 +77,7 @@ describe('the stretch, as the stylesheet writes it', () => {
     expect(said('.rank-row', 'position')).toEqual(['relative']);
     expect(said('a.rank-name::after', 'content')).toEqual(["''"]);
     expect(said('a.rank-name::after', 'position')).toEqual(['absolute']);
-    // and half the 2px between rows above and below, so the rows’ areas meet and none reaches into the next row
+    // Half the 2px gap above and below, so the rows’ areas meet without overlapping.
     expect(said('.rank-list', 'gap')).toEqual(['2px']);
     expect(said('a.rank-name::after', 'inset')).toEqual(['-1px 0']);
   });
@@ -92,7 +87,7 @@ describe('the stretch, as the stylesheet writes it', () => {
     const positioned: string[] = [];
     for (const { path, root } of sheets) {
       root.walkRules((rule) => {
-        // the name itself, as the last part of a selector: not its pseudo-elements, and not a rule for what it is not
+        // Rules whose last part is the name itself, not its pseudo-elements or a :not() of it.
         const names = rule.selectors.filter((s) => /\.rank-name(?![\w-])/.test(s.replace(/:not\([^)]*\)/g, '').split(/[\s>+~]+/).pop() ?? '') && !s.includes('::'));
         if (names.length && rule.nodes.some((n) => n.type === 'decl' && n.prop === 'position')) positioned.push(`${path}: ${names.join(', ')}`);
       });

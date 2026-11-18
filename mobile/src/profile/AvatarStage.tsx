@@ -5,13 +5,10 @@ import { springTo } from '../theme/animate';
 import { radii } from '../theme/tokens';
 
 /**
- * The face on its own small stage: two soft discs of the profile's colour
- * behind it — the league's water, or the brand before there is a league —
- * and the face springing in onto them as the profile opens, on the bouncy
- * spring, from a little smaller. The discs are decoration and say nothing to
- * a screen reader; under Reduce Motion the face is simply there. `size` is
- * the stage; the face inside is the caller's and keeps its own size, so a
- * season frame round it stays exactly as it was.
+ * The face on its own small stage: two soft discs of the profile's colour behind it (the league's, or the brand's
+ * before there is a league), with the face springing in from a little smaller as the profile opens (simply there under
+ * Reduce Motion). The discs are decorative. `size` is the stage; the face inside keeps its own size, so a season frame
+ * round it is unchanged.
  */
 export function AvatarStage({ tint, size, children }: { tint: string; size: number; children: ReactNode }): React.JSX.Element {
   const reduce = useReducedMotion();
@@ -50,7 +47,8 @@ export function AvatarStage({ tint, size, children }: { tint: string; size: numb
 const styles = StyleSheet.create({
   stage: { alignItems: 'center', justifyContent: 'center' },
   disc: { position: 'absolute', borderRadius: radii.pill },
-  // the outer disc is barely there, the inner one a shade more, so the face sits in a pool of its colour rather than on a badge
+  // The outer disc is barely there and the inner a shade more, so the face sits in a pool of its colour rather than on
+  // a badge.
   outer: { top: 0, left: 0, opacity: 0.1 },
   inner: { opacity: 0.16 },
   face: { alignItems: 'center', justifyContent: 'center' },

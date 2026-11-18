@@ -1,7 +1,6 @@
 /**
- * Story games over HTTP, against real Postgres: solo, duo and group from
- * creation to results, the join rule and its order, the identity rule, the
- * host controls, and the reads around a game (active, history, its story).
+ * Story games over HTTP against real Postgres: solo, duo and group from creation to results, the join rule and its
+ * order, the identity rule, host controls, and the reads around a game (active, history, its story).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -727,10 +726,8 @@ describe.skipIf(!DATABASE_URL)('story games (integration)', () => {
     });
 
     /*
-     * A game keeps its own copy of the text, but not of the translations or
-     * of who wrote the story: those are read from the story as it is now. A
-     * story taken back to draft can carry edits nobody has reviewed, so while
-     * it is not published and approved they are left out.
+     * A game keeps its own copy of the text but reads translations and attribution from the live story, leaving them
+     * out while it is not published and approved, since a story back in draft can carry unreviewed edits.
      */
     it('serves the translations and the attribution only while the story is published and approved', async () => {
       const me = await signUp('rtr');

@@ -16,12 +16,6 @@ afterEach(() => {
 
 const letters = (rows: readonly (readonly string[])[]): string[] => rows.flat().filter((k) => k !== ENTER && k !== BACKSPACE);
 
-/*
- * The old layout put ê û î beside e u i: a 13-key top row that could not fit a
- * phone, wrapped differently below 560px, with the most easily confused pairs
- * side by side. Its tests pinned that layout; these pin the one that replaced
- * it (contract §K3): QWERTY, and ç ê î ş û as a row of their own.
- */
 describe('the on-screen layouts', () => {
   it('both have all 31 letters, each once', () => {
     for (const rows of [QWERTY_ROWS, ALPHABET_ROWS]) {
@@ -45,7 +39,7 @@ describe('the on-screen layouts', () => {
 });
 
 describe('WordleKeyboard', () => {
-  /** A browser answering these media queries (keyboard/device.ts asks which pointers there are and how wide it is). */
+  /** A browser answering these media queries (keyboard/device.ts asks about pointers and width). */
   const media = (matches: string[]): void => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: matches.includes(query), media: query, addEventListener() {}, removeEventListener() {} }));
   };
@@ -55,7 +49,7 @@ describe('WordleKeyboard', () => {
     renderApp(<WordleKeyboard keyboard={{}} onPress={() => {}} disabled={false} />);
     expect(document.querySelector('.wordle-keys')).toHaveClass('is-desktop');
     expect(screen.getByText('Type with your keyboard, or click the keys. ç ê î ş û are on the bottom row.')).toBeInTheDocument();
-    // the same keys either way: only how they are drawn changes
+    // The same keys either way; only how they are drawn changes.
     expect(document.querySelectorAll('.wordle-krow')).toHaveLength(4);
   });
 
@@ -107,7 +101,7 @@ describe('WordleKeyboard', () => {
   it('does not take the focus on a click, so a Space typed next does not press the key again', () => {
     renderApp(<WordleKeyboard keyboard={{}} onPress={() => undefined} disabled={false} />);
     for (const name of ['e', 'ç', 'Enter', 'Backspace']) {
-      // fireEvent returns false when the default (focusing the button) was prevented
+      // fireEvent returns false when the default (focusing the button) was prevented.
       expect(fireEvent.mouseDown(screen.getByRole('button', { name }))).toBe(false);
     }
   });
@@ -120,19 +114,13 @@ describe('WordleKeyboard', () => {
 });
 
 describe('WordleBoard', () => {
-  /**
-   * The cap used to be a number written straight into an inline `max-width`,
-   * which no media query could reach — so a phone got the same 54px cells as a
-   * desktop and six rows of them pushed the keyboard below the fold. The row
-   * publishes its column count and the stylesheet does the arithmetic, which is
-   * what lets the cell size shrink on a small screen.
-   */
+  // A media query cannot reach an inline `max-width`, so the row publishes its column count for the stylesheet instead.
   it('publishes its column count so the stylesheet can size the cells', () => {
     renderApp(<WordleBoard targetLength={8} guesses={[]} current="" totalRows={6} showCurrent />);
     const row = document.querySelector('.wordle-row') as HTMLElement;
     expect(row.style.getPropertyValue('--wordle-cols')).toBe('8');
     expect(row.style.gridTemplateColumns).toBe('repeat(8, 1fr)');
-    // and nothing hard-codes a width any more
+    // Nothing hard-codes a width.
     expect(row.style.maxWidth).toBe('');
   });
 

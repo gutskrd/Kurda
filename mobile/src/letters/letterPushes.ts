@@ -3,12 +3,9 @@ import { letterNoticeOf, type LetterNotice } from '@kurda/shared';
 import { pushSupported } from '../push/device';
 
 /**
- * A letter's notification arriving while the app is open, read as a letter's
- * (`letterNoticeOf`). The letters window and an open correspondence listen
- * for it and read themselves again, so a bird lands there and a letter shows
- * there without the notification being tapped. Returns how to stop
- * listening; where there are no notifications (the web build), nothing is
- * heard.
+ * Calls `listener` for letter notifications that arrive while the app is open (`letterNoticeOf`), so the window and
+ * an open correspondence refresh without a tap. Returns an unsubscribe; does nothing where notifications are
+ * unavailable (the web build).
  */
 export function onLetterNotice(listener: (notice: LetterNotice) => void): () => void {
   if (!pushSupported()) return () => undefined;
@@ -19,7 +16,7 @@ export function onLetterNotice(listener: (notice: LetterNotice) => void): () => 
     });
     return () => sub.remove();
   } catch {
-    // a binary without the module: the realtime ping still says when a letter came
+    // A build without the module still hears new letters through the realtime ping.
     return () => undefined;
   }
 }

@@ -1,19 +1,13 @@
-/** Tab registry — pure data so it stays unit-testable without React Native. */
+/** The tab registry, as plain data so it is testable without React Native. */
 import type { TranslationKey } from '../i18n/translations';
 import type { IconName } from '../theme/icon-paths';
 
 export interface TabDef {
   /** Route name used by navigation and deep links. */
   name: TabName;
-  /**
-   * The tab's name, looked up at render time so it follows the chosen
-   * language: the word under its icon, and what a screen reader says for it.
-   */
+  /** The tab's name, looked up at render time so it follows the chosen language. */
   labelKey: TranslationKey;
-  /**
-   * Which glyph the bar draws (see theme/Icon). The Profile tab draws your
-   * own picture instead, and keeps a glyph only for before you are known.
-   */
+  /** The glyph the bar draws. The Profile tab draws your picture instead, and uses this only before you are known. */
   icon: IconName;
   /** The same glyph drawn solid, for while you are on the tab. */
   activeIcon: IconName;
@@ -24,48 +18,24 @@ export interface TabDef {
 export type TabName = 'Home' | 'Learn' | 'Messages' | 'Profile';
 
 /**
- * Four places, in the order a day with the app tends to go.
- *
- *   Home is the community's wall — what everyone wrote and pictured — and is
- *   where you land.
- *
- *   Learn is lessons, stories and games together, behind one switch at its
- *   top. Lessons and games were two places (the lessons a screen pushed from
- *   the top of Play), and continuing a lesson took two taps and a decision;
- *   it is one tap now, a story to read is two, and a game is two from
- *   anywhere.
- *
- *   Messages is conversations — with one person or with a group — and the
- *   friend requests waiting on you, at the top where they cannot sink.
- *
- *   Profile is you: your picture is the tab, and settings, the shop and what
- *   you saved are behind its menu.
- *
- * What left: Play is Learn's Games view, and the old Inbox split in two — its
- * conversations and requests are Messages, its notifications are the bell.
- * Search was the fifth tab and is the magnifier beside that bell now, at the
- * top of every tab and of the pages behind them, as it is on the website: it
- * is something done from wherever you are, not a place to go and stand in.
- * `legacyTabPath` keeps the old links working.
+ * The four tabs: Home (the community wall, where you land), Learn (lessons, stories and games behind one switch),
+ * Messages (conversations and friend requests) and Profile (you, with settings and the shop behind its menu). Search is
+ * not a tab but the magnifier at the top of every tab; `legacyTabPath` keeps old links working.
  */
 export const TABS: readonly TabDef[] = [
   { name: 'Home', labelKey: 'nav.home', icon: 'home', activeIcon: 'home-fill', path: 'home' },
   { name: 'Learn', labelKey: 'nav.learn', icon: 'book', activeIcon: 'book-fill', path: 'learn' },
   { name: 'Messages', labelKey: 'nav.messages', icon: 'send', activeIcon: 'send-fill', path: 'messages' },
-  // your picture is this tab; the glyph is only for before you are known
+  // Your picture is this tab; the glyph is only for before you are known.
   { name: 'Profile', labelKey: 'nav.profile', icon: 'person', activeIcon: 'person', path: 'profile' },
 ] as const;
 
-/** react-navigation linking config: hevalo://learn opens the Learn tab, etc. */
+/** Linking config: hevalo://learn opens the Learn tab, and so on. */
 export function linkingScreens(): Record<TabName, string> {
   return Object.fromEntries(TABS.map((t) => [t.name, t.path])) as Record<TabName, string>;
 }
 
-/**
- * The three groups of the Learn tab, in the order the switch shows them:
- * the lessons, the stories to read, and the games. Stories sit between the
- * two because that is what they are — reading first, a quiz after.
- */
+/** The Learn tab's three views, in the switch's order. Stories sit between the two as reading first, a quiz after. */
 export type LearnView = 'lessons' | 'stories' | 'games';
 
 export const LEARN_VIEWS: readonly LearnView[] = ['lessons', 'stories', 'games'] as const;
@@ -75,31 +45,14 @@ export function isLearnView(v: unknown): v is LearnView {
 }
 
 /**
- * An address from before the tabs changed, as the address it is now.
+ * An address from an older layout, as the address it is now: links in old notifications, chats and emails still say
+ * where things were. `hevalo://play` and `/app/games` open Learn's Games view, `hevalo://inbox` opens Messages, and the
+ * battle's old `app/games/wordle-battle?id=…` opens the battle. The website's `/app/learn…` addresses are read too,
+ * since story links are often copied from a browser; `/app/stories` is left alone, being the website's old wall
+ * address.
  *
- * Links outlive layouts: a notification sent last month, a link pasted into
- * a chat, an invite in somebody's email all say where things *were*. So
- * `hevalo://play` (and the website's `/app/games`) open Learn on its Games
- * view, `hevalo://inbox` opens Messages, and a Peyvok Battle invite at its
- * old `app/games/wordle-battle?id=…` opens the battle. Everything else — a
- * lesson, any other game's invite — is passed through untouched; only the
- * exact old addresses are rewritten, with their query kept.
- *
- * The website's Learn addresses are read here too, since a link to a story
- * is copied from a browser as often as from the app: `/app/learn` is the
- * Learn tab, `/app/learn/stories` its Stories view, `/app/learn/games` its
- * Games view, and `/app/learn/stories/<slug>` the story itself, at the
- * reader's own address. `/app/stories` is left alone: on the website that is
- * the community wall's old address, not the library's.
- *
- * Two games became exercises of the lessons' practice, and four were
- * retired. A link to Build a Sentence or Hear It, Find It at its old
- * place among the games opens the exercise where it is now; a link to Don't
- * Say the Word!, Kurdish Bluff, The Village or What Would You Say?, whatever
- * room it named, opens Learn's games, where what can be played is.
- *
- * Pure, so the rewriting is tested without a navigator; App.tsx runs every
- * incoming path through it before React Navigation reads it.
+ * Games that became practice exercises open the exercise; retired games open Learn's games. Only the exact old
+ * addresses are rewritten, with their query kept; App.tsx runs every incoming path through this.
  */
 export function legacyTabPath(path: string): string {
   const [rawPath = '', query] = path.split('?', 2);
@@ -108,7 +61,7 @@ export function legacyTabPath(path: string): string {
   const rest = query ? `&${query}` : '';
   const story = /^app\/learn\/stories\/([^/]+)$/.exec(bare);
   if (story) return `${lead}app/games/stories/${story[1]}${query ? `?${query}` : ''}`;
-  // a game's invite link (shared join-link.ts): it lands on Games, where Join with a code is and takes the code pasted or typed
+  // A game's invite link (shared join-link.ts) lands on Games, where Join with a code takes the code.
   if (/^join\/[a-z-]+\/[A-Za-z0-9]+$/.test(bare)) return `${lead}learn?view=games`;
   switch (bare) {
     case 'app/learn':
@@ -120,19 +73,19 @@ export function legacyTabPath(path: string): string {
     case 'app/play':
     case 'app/learn/games':
       return `${lead}learn?view=games${rest}`;
-    // the lessons' two exercises, from when they were listed among the games
+    // The lessons' two exercises, from when they were listed among the games.
     case 'app/games/build-sentence':
       return `${lead}app/learn/practice/build-sentence`;
     case 'app/games/hear-it':
       return `${lead}app/learn/practice/hear-it`;
-    // games Hevalo no longer has: the room a link named is gone with them
+    // Retired games: the room a link named is gone with them.
     case 'app/games/dont-say':
     case 'app/games/bluff':
     case 'app/games/village':
     case 'app/games/kingdom':
     case 'app/games/what-would-you-say':
       return `${lead}learn?view=games`;
-    // the word game's lobby, from before the game was renamed
+    // The word game's lobby under its old name.
     case 'app/games/wordle-battle':
       return `${lead}app/games/peyvok-battle${query ? `?${query}` : ''}`;
     case 'inbox':

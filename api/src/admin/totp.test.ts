@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { base32Decode, base32Encode, generateSecret, matchTotpStep, otpauthUri, totpCode, verifyTotp } from './totp.js';
+import { base32Decode, base32Encode, generateSecret, matchTotpStep, otpauthUri, totpCode } from './totp.js';
 
 // RFC 6238 test seed: ASCII "12345678901234567890" as base32.
 const RFC_SECRET = base32Encode(Buffer.from('12345678901234567890', 'ascii'));
@@ -19,23 +19,6 @@ describe('totpCode (RFC 6238 vectors, SHA-1, 6 digits)', () => {
   });
 });
 
-describe('verifyTotp', () => {
-  it('accepts the current code and tolerates ±1 step skew', () => {
-    const now = 1_700_000_000_000;
-    const code = totpCode(RFC_SECRET, now);
-    expect(verifyTotp(RFC_SECRET, code, now)).toBe(true);
-    expect(verifyTotp(RFC_SECRET, code, now + 30_000)).toBe(true); // next step, within window
-    expect(verifyTotp(RFC_SECRET, code, now + 120_000)).toBe(false); // too far
-  });
-
-  it('rejects malformed and wrong codes', () => {
-    const now = 1_700_000_000_000;
-    expect(verifyTotp(RFC_SECRET, '000000', now)).toBe(false);
-    expect(verifyTotp(RFC_SECRET, 'abcdef', now)).toBe(false);
-    expect(verifyTotp(RFC_SECRET, '12345', now)).toBe(false);
-  });
-});
-
 describe('matchTotpStep', () => {
   it('names the time step a code belongs to, so a used one can be refused', () => {
     const now = 1_700_000_000_000;
@@ -45,6 +28,8 @@ describe('matchTotpStep', () => {
     expect(matchTotpStep(RFC_SECRET, totpCode(RFC_SECRET, now + 30_000), now)).toBe(step + 1);
     expect(matchTotpStep(RFC_SECRET, totpCode(RFC_SECRET, now + 120_000), now)).toBeNull();
     expect(matchTotpStep(RFC_SECRET, 'abcdef', now)).toBeNull();
+    expect(matchTotpStep(RFC_SECRET, '000000', now)).toBeNull();
+    expect(matchTotpStep(RFC_SECRET, '12345', now)).toBeNull();
   });
 });
 
@@ -53,7 +38,7 @@ describe('generateSecret / otpauthUri', () => {
     const secret = generateSecret();
     expect(secret).toMatch(/^[A-Z2-7]+$/);
     const code = totpCode(secret);
-    expect(verifyTotp(secret, code)).toBe(true);
+    expect(matchTotpStep(secret, code)).not.toBeNull();
     const uri = otpauthUri(secret, 'admin@hevalo.app');
     expect(uri).toContain('otpauth://totp/Hevalo%20Admin:admin%40hevalo.app');
     expect(uri).toContain(`secret=${secret}`);

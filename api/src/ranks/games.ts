@@ -2,9 +2,8 @@ import { MULTI_GAMES, type FriendlyReason, type MultiGame, type RankedGame, type
 import type { Executor } from './store.js';
 
 /**
- * Where each ranked game keeps its lobbies, for the few reads Game Ranks makes
- * of them itself (who is in a lobby, by seat, for the expected gains; whether
- * a finished game was rated). Literals only: never built from input.
+ * Where each ranked game keeps its lobbies, for Game Ranks' own reads (seats for expected gains, whether a finished
+ * game was rated). Literals only: never built from input.
  */
 interface GameTables {
   table: string;
@@ -29,8 +28,7 @@ function isMulti(game: RankedGame): boolean {
 }
 
 /**
- * A ranked game's tables. The name is checked against the map itself, not only
- * where a route reads it, so nothing but these literals can reach the SQL that
+ * A ranked game's tables. The name is checked against the map itself so only these literals can reach the SQL that
  * names them.
  */
 export function tablesOf(game: RankedGame): GameTables {

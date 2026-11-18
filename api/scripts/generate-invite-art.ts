@@ -1,27 +1,13 @@
 /**
- * The picture a game's invite link shows where it is pasted.
- *
- * A link shared out of a lobby (shared/src/join-link.ts) is unfurled by
- * whatever it was pasted into, and nothing that unfurls a link draws SVG. So
- * each game that can be joined by a code gets a card here, written into the
- * website's public folder as an image:
- *
- *   web/public/invite/<game>.png   1200 by 630, the size link previews ask for
- *
- * It is the game's own cover (shared/src/art/games.ts), large, on the night
- * the games are played on, under the lamp: the same picture the game has on
- * the Games page and at its start, so the card in a message is the game the
- * friend will open. Nothing on it is in a reader's own language: what a cover
- * writes is Kurdish, by hand, and what a preview says is its title and its
- * line, which the website's edge script writes (web: worker.ts) — a picture
- * with English painted on it would read wrongly in eight of the nine
- * languages the invite is sent in.
+ * Writes the card a game's invite link shows when pasted (web/public/invite/<game>.png, 1200 by 630), since nothing
+ * that previews a link draws SVG. It is the game's own cover (shared/src/art/games.ts) on the games' night scene, so
+ * the card is the game the friend opens. It carries no words in the reader's language: the preview's title and line
+ * come from the website's edge script, and English on the picture would be wrong in eight of the nine languages.
+ * A story game has no emblem; its link shows the site's card.
  *
  * Run after a cover is changed, and commit what it writes:
  *
  *   npm run invite:art --workspace api
- *
- * A story game has no emblem of its own; its link shows the site's card.
  */
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';

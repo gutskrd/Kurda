@@ -1,10 +1,7 @@
 /**
- * The Hevalo book from the road's own files: what a chapter holds, lesson by
- * lesson; that every kind of exercise gives it something and nothing Kurdish
- * in it is the book's own invention; that every scene is told in the book's
- * own words, whole, beside its drawing; the word list's Kurdish order, the
- * alphabet and the people; and a PDF that is one — of the chapters asked for
- * and only those, far shorter than the book it replaces, small and quick.
+ * The book from the road's own files: what a chapter holds lesson by lesson; that every exercise kind contributes and
+ * nothing Kurdish is invented; that every scene is told in the book's words beside its drawing; the word list's Kurdish
+ * order, the alphabet and the people; and a valid PDF of exactly the chapters asked for, small and quick.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

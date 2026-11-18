@@ -10,18 +10,11 @@ export interface SecurityMailer {
 }
 
 /**
- * Telling the superadmins when something critical happens: an admin console
- * sign-in from somewhere new, two-step codes locked, a sign-in surge, a lock on
- * a staff account.
- *
- * Every critical alert not emailed yet goes in one email, and the next email
- * waits at least ALERT_EMAIL_GAP_MINUTES, so an attack sends a few emails, not
- * hundreds. The claim on `emailed_at` is one update, so two sweeps never send
- * the same alert twice; when nobody could be reached the claim is given back
- * for the next sweep. An alert already marked reviewed is not sent.
- *
- * The email says what kind of thing happened and how many times, and where to
- * look. It never holds an address, an account or anything else from the log.
+ * Emails the superadmins when something critical happens (a console sign-in from somewhere new, locked two-step
+ * codes, a sign-in surge, a locked staff account). Every unsent critical alert goes in one email and the next waits
+ * at least ALERT_EMAIL_GAP_MINUTES, so an attack sends a few emails, not hundreds. Claiming `emailed_at` is one update,
+ * so two sweeps never send the same alert; if nobody could be reached the claim is released. Reviewed alerts are not
+ * sent. The email gives the kind and count and where to look, never an address or account.
  */
 export class SecurityAlerts {
   constructor(
@@ -68,7 +61,7 @@ export class SecurityAlerts {
       failure ??= err;
     }
     if (sent === 0) {
-      // nobody was told: the next sweep tries again
+      // Nobody was told, so the next sweep tries again.
       await this.pool
         .query(`UPDATE security_alerts SET emailed_at = NULL WHERE event_id = ANY($1::uuid[])`, [claimed.rows.map((r) => r.event_id)])
         .catch(() => undefined);

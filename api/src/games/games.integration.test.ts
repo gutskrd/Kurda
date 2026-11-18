@@ -1,10 +1,8 @@
 /**
- * The learning games against real Postgres and Redis: only approved Kurdish
- * reaches a learner, the varieties never mix, a solo round is made, checked,
- * resumed, expired and paid on the server (performance XP, the first-try
- * bonus, nothing for a recent repeat, learning only at half right), the
- * ladder moves, and game content goes through the stories' review model in
- * the admin panel, with its importers and readiness view.
+ * The learning games against real Postgres and Redis: only approved Kurdish reaches learners, varieties never mix, solo
+ * rounds are made, checked, resumed, expired and paid on the server (performance XP, first-try bonus, nothing for
+ * recent repeats, learning only at half right), the ladder moves, and game content follows the stories' review model in
+ * the admin with its importers and readiness view.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

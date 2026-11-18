@@ -29,27 +29,20 @@ import { decoysFor } from '../mp/games/impostor.js';
 import type { PublishedContent, TrustedSources } from './sources.js';
 
 /**
- * Impostor for one phone passed round a room
- * (shared/src/games/impostor/couch.ts): where it can be played, and the cards
- * for an evening.
+ * Impostor on one phone passed round a room (shared/src/games/impostor/couch.ts): where it can be played, and the
+ * cards for an evening.
  *
  *   GET  /games/impostor/couch?dialect=kmr|ckb   the difficulties it is offered at, each with its categories
  *   POST /games/impostor/couch/deck              { dialect, difficulty, category?, count?, exclude? }: cards to play with (10 a minute)
  *
- * The cards are the table game's own: approved, published word cards, read
- * through the trusted readers, so a draft or a card waiting for review never
- * reaches a room. Each comes with the three other words a caught impostor
- * guesses among and, where its category has one, a second word for the odd
- * one out: the card's own `twin` where an editor chose one, else another of
- * its category. Only categories with `IMPOSTOR_CATEGORY_MIN` cards at the
- * difficulty are offered or dealt from, as at the table. `exclude` names the
- * words the room has already played tonight; they are dealt again only once
- * nothing else is left, so a long evening never runs dry.
+ * The cards are the table game's own approved, published word cards, read through the trusted readers, so drafts never
+ * reach a room. Each comes with three other words for a caught impostor's guess and, where its category has one, a
+ * second word for the odd one out (the card's chosen `twin`, else another of its category). Only categories with
+ * `IMPOSTOR_CATEGORY_MIN` cards at the difficulty are offered or dealt. `exclude` names words already played tonight;
+ * they are dealt again only when nothing else is left.
  *
- * What this does not do, on purpose. It is told nothing about the people in
- * the room: no names, no result. The phone holds every card, so it cannot be
- * trusted to say who won, and a round played this way is never paid or rated;
- * there is no route here that a result could be sent to.
+ * Deliberately told nothing about the people in the room: no names, no result. The phone holds every card, so it
+ * cannot be trusted with a result, and these rounds are never paid or rated.
  */
 
 type Card = Pick<PublishedContent<'word_card'>, 'level' | 'payload'>;
@@ -69,10 +62,8 @@ const deckBody = z.strictObject({
 const at = (pool: readonly Card[], difficulty: GameDifficulty): Card[] => pool.filter((row) => (DIFFICULTY_LEVELS[difficulty] as readonly number[]).includes(row.level));
 
 /**
- * Where the game is offered, pure: a difficulty once its approved cards reach
- * the game's minimum and at least one of its categories can be dealt from, and
- * in it every category with `IMPOSTOR_CATEGORY_MIN` cards. A category's name
- * is its cards' own hint.
+ * Where the game is offered, pure: a difficulty once its approved cards reach the minimum and at least one category can
+ * be dealt, listing every category with `IMPOSTOR_CATEGORY_MIN` cards. A category's name is its cards' hint.
  */
 export function couchOffer(pool: readonly Card[], dialect: GameDialect): CouchOffer {
   const difficulties: CouchOffer['difficulties'] = [];
@@ -92,11 +83,8 @@ export function couchOffer(pool: readonly Card[], dialect: GameDialect): CouchOf
 }
 
 /**
- * The second word for the odd one out, pure: the card's own twin where an
- * editor chose one and it is still an approved card of the variety, else the
- * first other card of its category in the seed's order; never one too close
- * to the word (`impostorTooClose`), which would make the odd one out no
- * different at all.
+ * The odd-one-out word, pure: the card's chosen twin if still an approved card of the variety, else the first other
+ * card of its category in seed order; never one too close to the word (`impostorTooClose`).
  */
 function twinFor(chosen: WordCardContent, all: readonly WordCardContent[], same: readonly WordCardContent[], dialect: GameDialect): WordCardContent | undefined {
   const key = (w: string): string => foldForDialect(w, dialect, true);
@@ -107,12 +95,9 @@ function twinFor(chosen: WordCardContent, all: readonly WordCardContent[], same:
 }
 
 /**
- * An evening's cards, pure: drawn in the seed's order from the difficulty's
- * approved cards in categories that can be dealt from (the one asked for, or
- * any), no word twice, and the words in `exclude` only once every other has
- * been dealt. Each card's other options come from its own category first
- * (`decoysFor`), and its second word, for the odd one out, only ever from its
- * own category (`twinFor`).
+ * An evening's cards, pure: drawn in seed order from the difficulty's approved cards in dealable categories (the
+ * requested one, or any), no word twice, and `exclude` words only once every other has been dealt. Other options come
+ * from the card's category first (`decoysFor`); the odd-one-out word only from its own category (`twinFor`).
  */
 export function couchDeck(
   pool: readonly Card[],

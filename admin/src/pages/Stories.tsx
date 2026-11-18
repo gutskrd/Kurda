@@ -7,18 +7,15 @@ import { StoryEditor } from './StoryEditor';
 import { StoryList } from './StoryList';
 
 /**
- * Stories: the texts the app's library offers to read, each with the
- * questions a quiz asks about it. The list is #/stories, a story
- * #/stories/<id>, a new one #/stories/new, the library's categories
- * #/stories/categories — addresses of their own, so the back button leaves a
- * story for the list and a story can be bookmarked or sent to a reviewer.
+ * Stories: the library's texts, each with its quiz questions, at #/stories, #/stories/<id>, #/stories/new and
+ * #/stories/categories, so a story can be bookmarked or sent to a reviewer.
  */
 export function Stories(): React.JSX.Element {
   const route = useRoute();
   const toast = useToast();
   const sub = route.rest[0] ?? '';
-  // a story just created is handed to its own page, so it is not loaded again —
-  // once: opened again later, it is loaded like any other, or it would be stale
+  // A story just created is handed to its own page, so it is not loaded again —
+  // once: opened again later, it is loaded like any other, or it would be stale.
   const created = useRef<AdminStory | null>(null);
   useEffect(() => {
     if (created.current && sub !== created.current.id) created.current = null;
@@ -36,7 +33,7 @@ export function Stories(): React.JSX.Element {
       initial={initial}
       onCreated={(story) => {
         created.current = story;
-        // replace, so Back from the new story goes to the list, not to an empty form
+        // Replace, so Back from the new story goes to the list, not to an empty form.
         location.replace(`#/stories/${story.id}`);
       }}
       onDeleted={(title) => {

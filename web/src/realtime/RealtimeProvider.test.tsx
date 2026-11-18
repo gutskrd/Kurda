@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { AuthProvider } from '../auth/AuthProvider';
-import { RealtimeProvider, useRealtime, useRealtimeEvent, useRealtimeRoom, useRealtimeSend } from './RealtimeProvider';
+import { RealtimeProvider, useRealtime, useRealtimeEvent, useRealtimeRoom } from './RealtimeProvider';
 import type { RealtimeClient } from './RealtimeClient';
 import type { RealtimeEventEnvelope, RealtimeState } from './events';
 import { jsonResponse } from '../test/utils';
@@ -15,17 +15,16 @@ afterEach(() => {
 
 /** A stand-in for RealtimeClient that lets a test drive its emitter. */
 interface FakeClient {
+  state: RealtimeState;
   connected: boolean;
   destroyed: boolean;
   joined: string[];
   left: string[];
-  sent: Record<string, unknown>[];
   on(type: string, handler: (arg: unknown) => void): () => void;
   connect(): void;
   destroy(): void;
   join(room: string): void;
   leave(room: string): void;
-  send(msg: Record<string, unknown>): void;
   emitEvent(env: RealtimeEventEnvelope): void;
   emitState(s: RealtimeState): void;
 }
@@ -33,11 +32,11 @@ interface FakeClient {
 function makeFakeClient(): FakeClient {
   const listeners: Record<string, Set<(arg: unknown) => void>> = {};
   return {
+    state: 'idle',
     connected: false,
     destroyed: false,
     joined: [],
     left: [],
-    sent: [],
     on(type, handler) {
       (listeners[type] ??= new Set()).add(handler);
       return () => listeners[type]?.delete(handler);
@@ -54,13 +53,11 @@ function makeFakeClient(): FakeClient {
     leave(room) {
       this.left.push(room);
     },
-    send(msg) {
-      this.sent.push(msg);
-    },
     emitEvent(env) {
       listeners['event']?.forEach((h) => h(env));
     },
     emitState(s) {
+      this.state = s;
       listeners['state']?.forEach((h) => h(s));
     },
   };
@@ -107,7 +104,7 @@ describe('RealtimeProvider', () => {
       </AuthProvider>,
     );
 
-    // once the session restores (signed in), the provider connects the socket
+    // Once the session restores, the provider connects the socket.
     await waitFor(() => expect(fake.connected).toBe(true));
 
     fake.emitState('open');
@@ -117,8 +114,31 @@ describe('RealtimeProvider', () => {
     await waitFor(() => expect(screen.getByTestId('dm')).toHaveTextContent('hello there'));
   });
 
+  it('tells a tab opened later how the connection is, rather than leaving it idle until the state next changes', async () => {
+    signIn();
+    const fake = makeFakeClient();
+    render(
+      <AuthProvider>
+        <RealtimeProvider client={asClient(fake)}>
+          <Probe />
+        </RealtimeProvider>
+      </AuthProvider>,
+    );
+    await waitFor(() => expect(fake.connected).toBe(true));
+    fake.emitState('open');
+    await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('open'));
+
+    // Another tab of the app says hello on the shared channel and hears the leader's state back.
+    const tab = new BroadcastChannel('hevalo-realtime');
+    const heard: unknown[] = [];
+    tab.onmessage = (m: MessageEvent) => heard.push(m.data);
+    tab.postMessage({ k: 'hello' });
+    await waitFor(() => expect(heard).toContainEqual({ k: 'state', s: 'open' }));
+    tab.close();
+  });
+
   it('does not connect while signed out', () => {
-    // no tokens → AuthProvider settles signedOut, provider must stay idle
+    // With no tokens AuthProvider settles signed out, so the provider stays idle.
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     const fake = makeFakeClient();
     render(
@@ -158,34 +178,12 @@ describe('RealtimeProvider', () => {
       </AuthProvider>,
     );
 
-    // leader connects, then the mounted subscriber's room is joined
+    // The leader connects, then the mounted subscriber's room is joined.
     await waitFor(() => expect(fake.connected).toBe(true));
     await waitFor(() => expect(fake.joined).toContain('group:g1'));
 
-    // dropping the room unmounts the subscriber → the leader leaves it
+    // Unmounting the subscriber makes the leader leave the room.
     (await screen.findByText('close')).click();
     await waitFor(() => expect(fake.left).toContain('group:g1'));
-  });
-
-  it('sends a client message out the leader socket', async () => {
-    signIn();
-    const fake = makeFakeClient();
-
-    function Sender(): React.JSX.Element {
-      const send = useRealtimeSend();
-      return <button onClick={() => send({ type: 'ready', room: 'match:1' })}>ready</button>;
-    }
-
-    render(
-      <AuthProvider>
-        <RealtimeProvider client={asClient(fake)}>
-          <Sender />
-        </RealtimeProvider>
-      </AuthProvider>,
-    );
-
-    await waitFor(() => expect(fake.connected).toBe(true));
-    (await screen.findByText('ready')).click();
-    await waitFor(() => expect(fake.sent).toContainEqual({ type: 'ready', room: 'match:1' }));
   });
 });

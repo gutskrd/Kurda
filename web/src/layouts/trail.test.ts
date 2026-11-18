@@ -6,7 +6,7 @@ afterEach(() => {
   window.history.replaceState(null, '', '/');
 });
 
-/** A visit, page by page: each is given the router's number and noted, as a shell notes it when it draws one. */
+/** A visit page by page, each noted under its router index as a shell would. */
 function walk(...pages: string[]): void {
   pages.forEach((address, idx) => {
     window.history.replaceState({ idx, key: `k${idx}` }, '', address);

@@ -2,15 +2,8 @@ import type { DmMessage } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Whether your last message got there, and whether it was read.
- *
- * The server has tracked delivered_at and read_at all along and publishes
- * dm_delivered / dm_read events, but nothing on the client ever showed any of
- * it — so a message you sent looked identical whether it had been read or had
- * failed to arrive.
- *
- * Shown only on the newest message of your own run: repeating it against every
- * bubble is noise, since a read receipt implies everything before it.
+ * Whether the reader's message was delivered and read (from the server's dm_delivered and dm_read events). Shown only
+ * on the newest message of the reader's run, since a receipt covers everything before it.
  */
 export function ReadReceipt({ message }: { message: DmMessage }): React.JSX.Element {
   const t = useT();

@@ -2,20 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * The two halves of a typing indicator, and the sentence for it.
+ * Both halves of a typing indicator and its sentence, against the same shapes as `web/src/chat/useTyping.ts` (a
+ * copy, since `TranslationKey` differs between the apps).
  *
- * Written against the same shapes as `web/src/chat/useTyping.ts`, and kept as
- * its own copy because `TranslationKey` differs between the apps. The reasoning
- * is the browser's and holds here:
- *
- * Sending is throttled rather than debounced. A ping goes out on the first
- * keystroke so the other side sees it immediately, then at most one more per
- * interval however fast you type. Debouncing would only tell them once you
- * *paused*, which is the opposite of what the indicator is for.
- *
- * Receiving expires on its own. There is no "stopped typing" event — the sender
- * may background the app, lose the connection, or simply stop — so an indicator
- * that relied on being switched off would stay on screen for good.
+ * Sending is throttled, not debounced: a ping goes out on the first keystroke, then at most one per interval.
+ * Debouncing would only report a pause, the opposite of the point. Receiving expires by itself, since there is no
+ * "stopped typing" event (the sender may background the app or lose the connection).
  */
 
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
@@ -39,12 +31,7 @@ export function useTypingSignal(send: () => void): () => void {
   }, []);
 }
 
-/**
- * Names currently typing, each dropped once its ping goes stale.
- *
- * One timer sweeps the whole map rather than a timeout per person, so a busy
- * group does not accumulate them.
- */
+/** Names currently typing, each dropped once its ping goes stale. One timer sweeps the map rather than a timeout per person. */
 export function useTypingWatch(): { typing: string[]; note: (name: string) => void } {
   const seen = useRef<Map<string, number>>(new Map());
   const [typing, setTyping] = useState<string[]>([]);
@@ -73,13 +60,9 @@ export function useTypingWatch(): { typing: string[]; note: (name: string) => vo
 }
 
 /**
- * "zana is typing…", "zana and rojîn are typing…", "3 people are typing…"
- *
- * Three whole sentences rather than one built from parts: "and" sits between the
- * two names in English and after both of them in some languages, and the verb
- * agrees with the count — Kurmancî says `dinivîse` for one and `dinivîsin` for
- * more. A sentence assembled from fragments could not survive translation, so
- * each shape is its own key.
+ * "zana is typing…", "zana and rojîn are typing…", "3 people are typing…": three whole sentences rather than one
+ * built from parts, since word order and verb agreement differ by language (Kurmancî: `dinivîse` for one,
+ * `dinivîsin` for more), so each shape is its own key.
  */
 export function typingLabel(names: readonly string[], t: Translate): string {
   if (names.length === 0) return '';

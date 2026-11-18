@@ -10,29 +10,17 @@ import { ensureWidgetToken, forgetWidgetToken } from './tokens';
 import { forgetLetterDrafts } from '../letters/drafts';
 
 /**
- * Keeps the home-screen letter widget in step with the app. Renders nothing;
- * mounted once under the account (App.tsx), outside the screens, so a sign-out
- * is heard however it happens — from Settings, a session that ran out, an
- * account deleted.
- *
- * - Signed in with an account that can have pen pals: the widget has a token
- *   (tokens.ts), in the app's language, and is asked to show what is new.
- * - Signed out, or a guest: the token is taken away from the server and the
- *   phone, and the widget says to open Hevalo.
- * - A letter arriving while the app is open (its notification shown, or
- *   tapped): the widget is asked to reload, so it is waiting there when the
- *   app is closed. With the app closed the widget asks for itself, at the time
- *   its last feed gave.
- * - Back to the front: a token the widget found refused is replaced, and the
- *   widget reloads — at most every ten minutes, since nothing is new most times.
- * - Signed out, however it happened: letters half written on this phone are
- *   let go too (letters/drafts.ts), so whoever signs in next finds none.
+ * Keeps the home-screen letter widget in step with the account. Renders nothing; mounted once under the account
+ * (App.tsx) so every kind of sign-out is noticed. Signed in with pen pals, the widget gets a token (tokens.ts)
+ * and reloads; signed out or a guest, the token is revoked and the widget says to open Hevalo, and unfinished
+ * letter drafts are discarded (letters/drafts.ts). A letter notice while the app is open reloads the widget;
+ * returning to the foreground replaces a refused token and reloads at most every ten minutes.
  */
 
 /** How often coming back to the app may reload the widget. */
 const FRONT_RELOAD_MS = 10 * 60_000;
 
-/** A notification about a letter, a pen pal's or your own bird home with an answer (api letters/service.ts sends `kind: 'letter'`). */
+/** A letter notification: a pen pal's, or your own bird home with an answer (api letters/service.ts sends `kind: 'letter'`). */
 export function isLetterNotice(data: unknown): boolean {
   return letterNoticeOf(data) !== null;
 }
@@ -40,7 +28,7 @@ export function isLetterNotice(data: unknown): boolean {
 export function LetterWidgetSync(): null {
   const { client, status, isGuest, user, baseUrl } = useAuth();
   const { locale } = useI18n();
-  // a guest has no pen pals, and an address not yet confirmed has no letters to show
+  // A guest has no pen pals, and an address not yet confirmed has no letters to show.
   const withLetters = status === 'signedIn' && !isGuest && user !== null && user.emailVerified !== false;
 
   useEffect(() => {
@@ -58,7 +46,7 @@ export function LetterWidgetSync(): null {
     const front = AppState.addEventListener('change', (state) => {
       if (state !== 'active') return;
       void ensureWidgetToken({ client, apiBase: baseUrl, locale }).then((outcome) => {
-        // a token just made has reloaded the widget already
+        // A token just made has reloaded the widget already.
         if (outcome === 'kept') reloadLetterWidget({ unlessWithinMs: FRONT_RELOAD_MS });
       });
     });

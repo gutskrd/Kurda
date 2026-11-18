@@ -1,19 +1,9 @@
 import Svg, { Path } from 'react-native-svg';
 
 /**
- * The real Google "G", in its four colours.
- *
- * Not a Phosphor glyph. Every other icon in this app is monochrome and takes
- * the theme's tint, which is right for icons that mean something — a bell, a
- * trash can — and wrong for a company's mark. The button said "Continue with
- * Google" beside a grey letter G that was not Google's G.
- *
- * It is also what Google asks for: their Sign-In branding guidelines require
- * this mark on a Sign in with Google button, at these colours, which is why
- * the colours are written here rather than taken from the palette. They do not
- * change with the theme, because it is not our logo to theme.
- *
- * Drawn on Google's own 18×18 grid and scaled, so the proportions are theirs.
+ * Google's "G" in its four colours, as its Sign-In branding guidelines require on a Sign in with Google button. The
+ * colours are fixed here rather than taken from the palette and do not change with the theme, since it is not our
+ * logo. Drawn on Google's 18×18 grid and scaled, so the proportions are theirs.
  */
 export function GoogleMark({ size = 18 }: { size?: number }): React.JSX.Element {
   return (

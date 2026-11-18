@@ -1,31 +1,9 @@
 /**
- * The picture a shared win carries: a postcard from Sêvan.
- *
- * Somebody who finishes a lesson, keeps a streak, earns a badge, has a good
- * league week or solves the day's word may share it. What goes out is a line
- * in their own words and a link, and wherever that link is pasted it is drawn
- * as a card with a picture. This is the picture: a small scene of the village
- * with the people of the road in it, the letter bird on its way out with the
- * news, and in the corner Hevalo's stamp, cancelled, because letters in
- * Hevalo travel by bird and a win sent to somebody is a postcard.
- *
- *   lesson   the blue gate by day: Hamo pleased with you, and Hevalo caught
- *            with the apple that was meant to be yours
- *   streak   the fire on its hill by night, with the days kept on the stamp
- *   badge    the hives in flower, and a medal on the stamp
- *   league   the old bridge, and the league's own stone on the stamp
- *   peyvok   the school, and the day's word game on the stamp
- *
- * Nothing on it is written: a drawing has no words (a font is not drawn the
- * same everywhere, and a word is read in one language), so the only marks
- * are a streak's days, in the figures the badges use. Nothing on it is about
- * who sent it, either: a card says what was done, never by whom.
- *
- * Everything in it is drawn already and is only placed here: the friends in
- * the book's poses (`bookCastSvg`, their rigs unchanged), the landmarks of
- * the lesson road, the stamp's outline, the postmark, the medal, the letter
- * bird. It is drawn for 1200 by 630, which is what a link preview shows
- * without cropping, and is the same picture at any size.
+ * The picture on a shared win's link preview: a postcard scene with the characters, the letter bird carrying the news
+ * and a cancelled stamp in the corner. One scene per kind (lesson, streak, badge, league, peyvok). It carries no words,
+ * since fonts and languages differ; the only marks are a streak's days in the badge figures. It never says who sent it.
+ * Everything is placed from existing drawings (the book's poses via `bookCastSvg`, the lesson road's landmarks, the
+ * stamp, postmark and medal). Drawn at 1200 × 630, what link previews show uncropped, and the same at any size.
  */
 import { HUES, type HueName, type HueSteps } from '../hues.js';
 import type { LeagueTier } from '../leagues.js';
@@ -40,14 +18,14 @@ import { pathLandmarkSvg } from './path-landmark.js';
 import { stampOutline, stampShapeFor } from './stamp.js';
 import { Drawing, n2 as num, prefixFor } from './svg.js';
 
-/** One colour taken part of the way to another: a shade of a hue's own step, for ground that stands in front of other ground. */
+/** One colour taken `share` of the way to another, for ground that stands in front of other ground. */
 function blend(from: string, to: string, share: number): string {
   const part = (hex: string, at: number): number => parseInt(hex.slice(at, at + 2), 16);
   const mix = (at: number): string => Math.round(part(from, at) + (part(to, at) - part(from, at)) * share).toString(16).padStart(2, '0');
   return `#${mix(1)}${mix(3)}${mix(5)}`;
 }
 
-/** The card's size: what a link preview draws without cropping. */
+/** The card's size: what a link preview shows without cropping. */
 export const SHARE_CARD = { width: 1200, height: 630 } as const;
 
 /** The wins that have a card of their own. */
@@ -60,16 +38,16 @@ export function isShareCardKind(v: unknown): v is ShareCardKind {
 
 export interface ShareCardOptions {
   kind: ShareCardKind;
-  /** a streak's days, drawn on its stamp; left off, the stamp carries the fire alone */
+  /** A streak's days, drawn on its stamp; without them the stamp shows the fire alone. */
   days?: number;
-  /** the league a week was won in; the first league's stone without one */
+  /** The league a week was won in; the first league when omitted. */
   tier?: LeagueTier;
-  /** its name for a screen reader; without one the picture is decorative and hidden */
+  /** The accessible label; without one the picture is decorative and hidden. */
   title?: string;
   idPrefix?: string;
 }
 
-/** A card's own scene: its hue, whether the sun is up, what stands on the hill and how the two friends take the news. */
+/** A card's scene: its hue, whether the sun is up, what stands on the hill, and the two friends' poses. */
 interface Scene {
   hue: HueName;
   night: boolean;
@@ -93,26 +71,26 @@ const FEET = 596;
 /** The stamp's own measures, before it is tilted into its corner. */
 const STAMP = { w: 216, h: 264, x: 908, y: 46, margin: 20, tilt: 5 } as const;
 
-/** A drawing that is a whole picture of its own, laid into a box of the card: it keeps its proportions and stands on the box's foot. */
+/** A whole drawing placed into a box of the card, keeping its proportions and standing on the box's foot. */
 function placed(svg: string, x: number, y: number, width: number, height: number): string {
   return svg
     .replace(/ width="[\d.]+" height="[\d.]+"(?= viewBox)/, '')
-    // inside the card it is the card's own kind of thing already, and need not say so again
+    // Nested inside the card, it needs no namespace of its own.
     .replace(' xmlns="http://www.w3.org/2000/svg"', '')
-    // nor does a part of the picture have a name of its own: the card is one picture, named once or not at all
+    // The card is one picture, labelled once or not at all, so its parts carry no names.
     .replace(/ role="img" aria-labelledby="[^"]*"/, '')
     .replace(/<title[^>]*>[^<]*<\/title>/, '')
-    // a head that tilts leans out of its own box, and is not to lose an ear to it
+    // A tilting head leans out of its own box; let it overflow rather than clip an ear.
     .replace('<svg ', `<svg x="${num(x)}" y="${num(y)}" width="${num(width)}" height="${num(height)}" preserveAspectRatio="xMidYMax meet" overflow="visible" `);
 }
 
-/** How wide a picture is for its height, read from its own size. */
+/** A drawing's aspect ratio, read from its own size. */
 function ratioOf(svg: string): number {
   const box = / width="([\d.]+)" height="([\d.]+)"/.exec(svg);
   return box ? Number(box[1]) / Number(box[2]) : 1;
 }
 
-/** The sky, what hangs in it, and the two hills. Flat planes: a far hill, a near one, and nothing shaded. */
+/** The sky, what hangs in it, and the two hills, in flat planes. */
 function backdrop(scene: Scene, hue: HueSteps, dark: HueSteps): string {
   const { width: w, height: h } = SHARE_CARD;
   const far = `M0 ${HORIZON - 4}C190 ${HORIZON - 78} 400 ${HORIZON - 72} 590 ${HORIZON - 20}C780 ${HORIZON + 30} 980 ${HORIZON - 44} ${w} ${HORIZON - 66}V${h}H0Z`;
@@ -125,10 +103,10 @@ function backdrop(scene: Scene, hue: HueSteps, dark: HueSteps): string {
       .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`)
       .join('');
     return (
-      // a night the colour of the hue, deep but not black, so the fire has something to light
+      // A night in the hue's colour, deep but not black, so the fire has something to light.
       `<rect width="${w}" height="${h}" fill="${dark.wash}"/>` +
       `<g fill="${dark.deep}">${stars}</g>` +
-      // the moon is the part of one round that another does not cover
+      // The moon is the part of one circle that another does not cover.
       `<path d="M150 70a58 58 0 1 0 66 94a48 48 0 0 1 -66 -94Z" fill="${HUES.dark.gold.deep}"/>` +
       `<path d="${far}" fill="${dark.tint}" opacity="0.7"/>` +
       `<path d="${near}" fill="${dark.tint}"/>`
@@ -146,7 +124,7 @@ function backdrop(scene: Scene, hue: HueSteps, dark: HueSteps): string {
 
 /** A landmark of the lesson road standing on the hill, `size` across, its foot at `FEET`. */
 function landmark(which: PathLandmark, cx: number, size: number, dark: boolean, id: string): string {
-  // a landmark stands a little above the foot of its own canvas, on its own shade
+  // A landmark stands a little above the foot of its own canvas, on its own shade.
   return placed(pathLandmarkSvg({ landmark: which, dark, idPrefix: `${id}lm` }), cx - size / 2, FEET + size * 0.07 - size, size, size);
 }
 
@@ -157,17 +135,17 @@ function hamo(pose: BookPose<'hamo'>, cx: number, height: number, id: string): s
   return placed(svg, cx - width / 2, FEET - height, width, height);
 }
 
-/** Hevalo close to, from the chest up, coming into the picture from its lower edge as he comes into everything. */
+/** Hevalo from the chest up, rising into the picture from its lower edge. */
 function hevalo(pose: BookPose<'hevalo'>, cx: number, size: number, id: string): string {
   const svg = bookCastSvg({ who: 'hevalo', pose, idPrefix: `${id}deer` });
-  // high enough that what he holds in his mouth is in the picture; the rise in front of him hides where his chest ends
+  // High enough that what he holds in his mouth is in the picture; the rise in front hides where his chest ends.
   return placed(svg, cx - size / 2, SHARE_CARD.height - size - RISE, size, size);
 }
 
-/** How far Hevalo stands up out of the card's lower edge, behind the rise of ground in front of him. */
+/** How far Hevalo rises out of the card's lower edge, behind the near rise of ground. */
 const RISE = 30;
 
-/** The rise of ground nearest of all, which he looks over. */
+/** The nearest rise of ground, which he looks over. */
 function rise(fill: string): string {
   const { width: w, height: h } = SHARE_CARD;
   return `<path d="M${w - 600} ${h}C${w - 520} ${h - RISE - 22} ${w - 250} ${h - RISE - 26} ${w} ${h - RISE - 4}V${h}Z" fill="${fill}"/>`;
@@ -178,7 +156,7 @@ function bird(cx: number, cy: number, size: number, id: string): string {
   return placed(letterBirdSvg({ bird: 2, pose: 'wings-up', letter: true, shadow: false, idPrefix: `${id}bird` }), cx - size / 2, cy - size / 2, size, size);
 }
 
-/** What a card's stamp has to say beyond its kind: a streak's days, or none to draw, and the league it is the stone of. */
+/** What a card's stamp shows beyond its kind: a streak's days, if any, and the league whose stone it carries. */
 interface News {
   days: number | null;
   tier: LeagueTier;
@@ -187,13 +165,13 @@ interface News {
 /** The longest streak whose days fit on the stamp: four figures. */
 const MOST_DAYS = 9999;
 
-/** What was asked for, as it will be drawn: days that are no count of days are left off, and a week with no league named is the first league's. */
+/** The request as drawn: days that are not a valid count are dropped, and a league week with no tier uses the first. */
 function newsOf(opts: ShareCardOptions): News {
   const counted = opts.kind === 'streak' && typeof opts.days === 'number' && Number.isFinite(opts.days) && opts.days >= 1;
   return { days: counted ? Math.min(MOST_DAYS, Math.floor(opts.days!)) : null, tier: opts.kind === 'league' && opts.tier ? opts.tier : 'dilop' };
 }
 
-/** What a stamp shows: a picture in the middle of its paper, and under it, for a streak, its days. */
+/** A stamp's face: a picture in the middle of its paper and, for a streak, the days below it. */
 function stampFace(kind: ShareCardKind, news: News, hue: HueSteps, dr: Drawing, id: string): string {
   const { w, h, margin } = STAMP;
   const inner = { x: margin, y: margin, w: w - margin * 2, h: h - margin * 2 };
@@ -204,7 +182,7 @@ function stampFace(kind: ShareCardKind, news: News, hue: HueSteps, dr: Drawing, 
   else if (kind === 'badge') face = picture(streakMedalSvg({ idPrefix: `${id}medal` }), 164);
   else if (kind === 'league') face = picture(leagueEmblemSvg({ tier: news.tier, idPrefix: `${id}tier` }), 164);
   else if (kind === 'peyvok') {
-    // a game's cover is a square to its own edges: it is cut round, as it is wherever it is shown
+    // A game cover is square to its own edges, so it is cut round here as it is everywhere it is shown.
     const size = 152;
     const x = w / 2 - size / 2;
     const y = inner.y + (inner.h - size) / 2;
@@ -212,7 +190,7 @@ function stampFace(kind: ShareCardKind, news: News, hue: HueSteps, dr: Drawing, 
     face = `<g clip-path="url(#${cut})">${placed(gameEmblemSvg({ game: 'peyvok', idPrefix: `${id}game` }), x, y, size, size)}</g>`;
   } else if (days === null) face = picture(pathLandmarkSvg({ landmark: 'newroz', idPrefix: `${id}fire` }), 176);
   else {
-    // the fire above, and its days under it as a stamp has its price
+    // The fire above, its days below like a stamp's price.
     const figures = String(days);
     const tall = figures.length > 3 ? 46 : 58;
     face =
@@ -222,11 +200,11 @@ function stampFace(kind: ShareCardKind, news: News, hue: HueSteps, dr: Drawing, 
   return `<rect x="${inner.x}" y="${inner.y}" width="${inner.w}" height="${inner.h}" rx="12" fill="${hue.tint}"/>` + face;
 }
 
-/** Hevalo's stamp in the card's corner, cancelled: its shade, its paper, what is printed on it, and the postmark struck over its corner. */
+/** Hevalo's cancelled stamp in the card's corner: its shade, paper, print and the postmark over its corner. */
 function stamp(kind: ShareCardKind, news: News, scene: Scene, hue: HueSteps, dr: Drawing, id: string): string {
   const { w, h, x, y, tilt } = STAMP;
   const outline = stampOutline(w, h, stampShapeFor(w));
-  // one ink that shows on the white paper and on the sky alike, by day and by night
+  // One ink that shows on the white paper and the sky alike, day or night.
   const ink = scene.night ? HUES.dark[scene.hue].base : hue.deep;
   const mark = bookPostmarkSvg({ ink, idPrefix: `${id}pm` });
   return (
@@ -235,7 +213,7 @@ function stamp(kind: ShareCardKind, news: News, scene: Scene, hue: HueSteps, dr:
     `<path d="${outline}" fill="#ffffff"/>` +
     stampFace(kind, news, hue, dr, id) +
     `</g>` +
-    // struck over the stamp's upper corner and on to the card, as a postmark is
+    // Struck over the stamp's upper corner and onto the card, as a postmark is.
     placed(mark, x - 168, y - 78, 236, 236)
   );
 }
@@ -248,7 +226,7 @@ export function shareCardSvg(opts: ShareCardOptions): string {
   const hue = HUES.light[scene.hue];
   const dark = HUES.dark[scene.hue];
   const news = newsOf(opts);
-  // two cards that are drawn the same are the same drawing, to the letter
+  // Identical requests give identical drawings, ids included.
   const id = prefixFor(opts.idPrefix, 'share-card', opts.kind, news.days ?? '', opts.kind === 'league' ? news.tier : '');
   const dr = new Drawing(id);
   const corner = stamp(opts.kind, news, scene, hue, dr, id);
@@ -258,7 +236,7 @@ export function shareCardSvg(opts: ShareCardOptions): string {
     hamo(scene.hamo, 150, 430, id) +
     bird(600, 128, 170, id) +
     corner +
-    // he stands clear of the stamp: what is printed on it is the news
+    // He stands clear of the stamp, whose print is the news.
     hevalo(scene.hevalo, 760, 388, id) +
     rise(scene.night ? blend(dark.tint, '#000000', 0.18) : '#93d2a3');
   const { defs } = dr.parts();

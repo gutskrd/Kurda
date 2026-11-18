@@ -9,19 +9,11 @@ import { useI18n } from '../i18n/I18nContext';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * The letters a keyboard may not have, as keys: ç ê î ş û for Kurmancî, the
- * Soranî letters for Soranî (`@kurda/shared` `specialKeys`, the same set the
- * lessons offer).
- *
- * Each key is a full 44pt target and the row wraps, so twelve Soranî letters
- * fit a narrow phone instead of running off its edge. A key never takes the
- * focus from the text box it types into: it is a plain pressable, not a field,
- * so the phone's keyboard stays up and the next key goes on where this one
- * left off.
- *
- * Kurmancî gets a shift key, because a race text starts its sentences with
- * capitals and Ş is not on an English keyboard either. It capitalises the next
- * letter only, the way a phone's own shift does.
+ * Keys for the letters a keyboard may lack: ç ê î ş û for Kurmancî, the Soranî letters for Soranî
+ * (`@kurda/shared` `specialKeys`, as the lessons use). Each key is a 44 pt target and the row wraps, so twelve
+ * Soranî letters fit a narrow phone. Keys are plain pressables, not fields, so the text box keeps focus and the
+ * keyboard stays up. Kurmancî gets a shift key, since race texts start sentences with capitals; it capitalises
+ * only the next letter.
  */
 export function KeyBar({
   dialect,
@@ -33,9 +25,9 @@ export function KeyBar({
 }: {
   dialect: TypingDialect;
   onKey: (letter: string) => void;
-  /** the letters, when not the variety's usual set (the lessons keep their own order) */
+  /** The letters, when not the variety's usual set (the lessons keep their own order). */
   keys?: readonly string[];
-  /** a shift key for Kurmancî capitals; a lesson answer is not case-sensitive */
+  /** A shift key for Kurmancî capitals; a lesson answer is not case-sensitive. */
   withShift?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -96,7 +88,7 @@ export function KeyBar({
 
 const styles = StyleSheet.create({
   bar: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
-  // Soranî letters in the order a Soranî reader expects them: from the right
+  // Soranî letters in the order a Soranî reader expects them: from the right.
   rtl: { flexDirection: 'row-reverse' },
   key: {
     minWidth: MIN_TOUCH_TARGET,

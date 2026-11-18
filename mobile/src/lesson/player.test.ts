@@ -50,9 +50,9 @@ describe('initPlayer', () => {
         },
       }),
     );
-    expect(currentExercise(s)?.id).toBe('c'); // c is next
+    expect(currentExercise(s)?.id).toBe('c'); // 'c' is next.
     expect(s.answeredCount).toBe(2);
-    // b was missed before the learner left; its second try is still ahead
+    // 'b' was missed before the learner left, and its second try is still ahead.
     expect(s.steps.slice(s.index).map((st) => (st.reask ? `${st.exerciseId}*` : st.exerciseId))).toEqual(['c', 'b*']);
   });
 
@@ -130,7 +130,7 @@ describe('reduce', () => {
       s = reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'wrong', accepted: false }) });
       s = reduce(s, { type: 'CONTINUE' });
     }
-    // three first asks and three second tries, and nothing cut short
+    // Three first asks and three second tries, with nothing cut short.
     expect(s.answeredCount).toBe(exercises.length);
     expect(s.reasked).toEqual(['a', 'b', 'c']);
   });
@@ -148,7 +148,7 @@ describe('reduce', () => {
     let s = start();
     s = reduce(s, { type: 'SKIP' });
     expect(s.index).toBe(1);
-    expect(s.answeredCount).toBe(0); // not counted
+    expect(s.answeredCount).toBe(0); // Not counted.
     expect(s.status).toBe('answering');
   });
 
@@ -156,7 +156,7 @@ describe('reduce', () => {
     let s = start();
     s = reduce(s, { type: 'SKIP' });
     s = reduce(s, { type: 'SKIP' });
-    s = reduce(s, { type: 'SKIP' }); // skip the 3rd/last
+    s = reduce(s, { type: 'SKIP' }); // Skip the third and last.
     expect(s.status).toBe('finished');
   });
 
@@ -170,14 +170,14 @@ describe('reduce', () => {
     let s = start();
     s = reduce(s, { type: 'ANSWERED', result: answer() });
     const again = reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'wrong', accepted: false }) });
-    expect(again).toBe(s); // no change
+    expect(again).toBe(s); // No change.
   });
 });
 
 describe('feedbackTitle', () => {
   it('says a typo was accepted only when it was', () => {
     expect(feedbackTitle({ verdict: 'typo', accepted: true, exerciseType: 'translate' })).toBe('lesson.almostTypo');
-    // a strict spelling item: the same slip, not accepted
+    // A strict spelling item: the same slip, not accepted.
     expect(feedbackTitle({ verdict: 'typo', accepted: false, exerciseType: 'writing' })).toBe('lesson.almostStrict');
   });
 

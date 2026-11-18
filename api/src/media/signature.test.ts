@@ -49,8 +49,7 @@ describe('renderSignature', () => {
   });
 
   it('cannot be broken out of by a hostile handle', async () => {
-    // usernames are validated on the way in, but a mark that trusts its input is
-    // one schema change away from being an injection point
+    // Usernames are validated on input, but the mark must not trust its input.
     const png = await renderSignature({ username: '"><script>x</script>', width: 900, height: 700 });
     expect(png.length).toBeGreaterThan(0);
     expect((await sharp(png).metadata()).format).toBe('png');
@@ -80,8 +79,7 @@ describe('signPicture', () => {
   });
 
   it('signs a dark picture and a bright one alike', async () => {
-    // a plain white handle disappears into half the photos people post, which is
-    // why the mark carries its own plate
+    // A plain white handle disappears on many photos, so the mark carries its own plate.
     for (const rgb of [{ r: 5, g: 5, b: 5 }, { r: 250, g: 250, b: 250 }]) {
       const base = await picture(800, 600, rgb);
       const res = await signPicture(base, 'ada');

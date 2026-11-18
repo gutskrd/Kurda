@@ -4,29 +4,21 @@ import { evidenceObjectKey } from './pseudonym.js';
 import type { Executor } from './tx.js';
 
 /**
- * Taking evidence off the public bucket.
+ * Taking evidence off the public bucket. Media is served from a public-read bucket behind a CDN (`CDN_BASE_URL/<key>`,
+ * year-long `immutable` cache), so marking an upload blocked only stops new uses; the object stays fetchable. For CSAM,
+ * and for a closed child's picture still held as evidence, that must not happen, so the file is quarantined:
  *
- * Media is served straight from a public-read bucket behind a CDN, at
- * `CDN_BASE_URL/<key>`, with a year-long `immutable` cache. Marking an upload
- * "blocked" only stops new posts from using it; the object itself stays where
- * every earlier viewer, scraper and cache can fetch it. For CSAM, and for a
- * closed child's picture that a report still holds as evidence, that is the
- * one thing that must not happen. So such a file is quarantined:
- *
- *   1. in the decision's transaction it is marked (`requestQuarantine`):
- *      'pending', and kept from every cleanup;
- *   2. after the commit (`runQuarantine`) it is copied to private storage — the
- *      evidence bucket, or a keyed private key in the main one — and only then
- *      is the public object deleted, so a failed copy never loses the evidence;
- *      the CDN is asked to forget the URL where a purge is configured;
- *   3. it is 'done', with `quarantine_key` saying where the original is now.
- *      The case view signs links to that copy; the retention sweep deletes it
+ *   1. in the decision's transaction it is marked 'pending' (`requestQuarantine`) and kept from every cleanup;
+ *   2. after commit (`runQuarantine`) it is copied to private storage (the evidence bucket, or a keyed private key in
+ * the main
+ *      one), and only then is the public object deleted, so a failed copy never loses evidence; the CDN is purged where
+ * configured;
+ *   3. it is marked 'done', with `quarantine_key` naming the copy. The case view signs links to it; the retention sweep
+ * deletes it
  *      with the rest of the evidence.
  *
- * Storage calls happen outside any transaction, and a step that fails leaves
- * the file 'pending' for the five-minute moderation sweep to try again. Every
- * step can be repeated: the private key is the same for the same file, and
- * deleting what is already gone is not an error.
+ * Storage calls happen outside any transaction; a failed step leaves the file 'pending' for the five-minute sweep.
+ * Every step is repeatable: the private key is stable, and deleting what is gone is not an error.
  */
 
 /** Mark files for quarantine and keep them from cleanup, in the caller's transaction. */
@@ -52,9 +44,8 @@ export interface QuarantineRunOptions {
 }
 
 /**
- * Move pending files off the public bucket. Returns how many were finished.
- * Never throws: without storage (local development) nothing can move and the
- * files stay pending; a file whose move fails stays pending for the sweep.
+ * Move pending files off the public bucket; returns how many finished. Never throws: without storage (local
+ * development) files stay pending, and a failed move stays pending for the sweep.
  */
 export async function runQuarantine(
   db: Executor,

@@ -6,19 +6,13 @@ import { RANK_TOOL_ROLES } from '../admin/roles.js';
 import { AppError } from '../plugins/errors.js';
 import type { LeagueService } from './service.js';
 
-// a real calendar day: 2026-13-45 has the right shape and used to reach `new Date` as a 500
+// A real calendar date, so a well-shaped 2026-13-45 is a 400.
 const weekQuery = z.object({ week: z.iso.date().optional() });
 const runBody = z.object({ force: z.boolean().optional() }).optional();
 
-/**
- * Learning Leagues (KUR-062, contract 4 §L): the caller's week, and the admin's
- * view of the groups and the weekly runs.
- */
+/** Learning League routes: the caller's week, and the admin's view of groups and weekly runs. */
 export function registerLeagueRoutes(app: FastifyInstance, leagues: LeagueService): void {
-  /**
-   * The caller's week (`LeagueView` in @kurda/shared): their group and its
-   * zones, or personal mode. Reading it never joins anyone — learning XP does.
-   */
+  /** The caller's week (`LeagueView`): their group and its zones, or personal mode. Reading never joins; learning XP does. */
   app.get('/me/league', { preHandler: requireAccount }, async (req) => leagues.standings(req.user!.id));
 
   /** Admin: a week's groups (this week by default), the tier spread, and the settle and merge runs. */
@@ -43,9 +37,8 @@ export function registerLeagueRoutes(app: FastifyInstance, leagues: LeagueServic
   );
 
   /**
-   * Admin: run the weekly settle now. It does nothing a week's run has done
-   * already; `force` runs its steps again (each is idempotent, so nobody moves
-   * or is paid twice), for a run that finished with something left over.
+   * Admin: runs the weekly settle now. It repeats nothing a week's run has done; `force` reruns its idempotent steps
+   * for a run that left something over.
    */
   app.post(
     '/admin/leagues/settle',
@@ -53,7 +46,7 @@ export function registerLeagueRoutes(app: FastifyInstance, leagues: LeagueServic
     async (req) => leagues.settleDue(new Date(), { force: (req.body as z.infer<typeof runBody>)?.force ?? false }),
   );
 
-  /** Admin: run Wednesday's merge of small groups now (from Wednesday 00:00 UTC on). */
+  /** Admin: runs Wednesday's merge of small groups now (from Wednesday 00:00 UTC on). */
   app.post(
     '/admin/leagues/merge',
     { schema: { body: runBody }, preHandler: requireRoles(...RANK_TOOL_ROLES) },

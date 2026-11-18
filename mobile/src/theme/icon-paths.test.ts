@@ -3,21 +3,16 @@ import { ICON_PATHS, ICON_VIEWBOX } from './icon-paths';
 import { TABS } from '../navigation/tabs';
 
 /**
- * That the file still matches Phosphor is checked by the generator itself
- * (`node mobile/scripts/generate-icon-paths.mjs --check`, which mobile's lint
- * runs) — it needs to read the filesystem, and this workspace deliberately has
- * no node types, so app code cannot reach for `fs` and break on a device.
- *
- * What is worth asserting here is what a reader of the app would notice.
+ * The generator itself checks the file still matches the icon package (`node mobile/scripts/generate-icon-paths.mjs
+ * --check`, run by mobile's lint), since that needs the file system, which this workspace's types leave out so app
+ * code cannot reach for `fs`. Here only what a reader would notice is asserted.
  */
 describe('icon paths', () => {
   it('gives every name something to draw', () => {
     for (const [name, paths] of Object.entries(ICON_PATHS)) {
       expect(paths.length, name).toBeGreaterThan(0);
       for (const d of paths) {
-        // every Phosphor path opens with an absolute moveto; an empty or
-        // truncated string renders as nothing at all, which reads as a missing
-        // icon rather than as an error
+        // Every path starts with an absolute moveto; an empty or truncated one would render as a silently missing icon.
         expect(d.startsWith('M'), `${name}: ${d.slice(0, 12)}`).toBe(true);
         expect(d.length, name).toBeGreaterThan(20);
       }

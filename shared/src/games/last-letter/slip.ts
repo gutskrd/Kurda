@@ -1,9 +1,7 @@
 /**
- * The slips a word box can see for itself before a word is sent, so they cost
- * no strike: not one word in the game's letters, the wrong first letter, a
- * word already in the chain. The server judges every word again (and alone
- * asks the dictionary); this is only so a player is told about a typo before
- * it counts. Both apps word the answer from their own catalogues.
+ * The slips a word box can catch before sending, so they cost no strike: not one word in the game's letters, the wrong
+ * first letter, a word already in the chain. The server judges every word again (and alone asks the dictionary); both apps
+ * word the answer from their own catalogues.
  */
 import { beginsWith, wordKey } from '../letters.js';
 import type { LastLetterBoard } from './rules.js';

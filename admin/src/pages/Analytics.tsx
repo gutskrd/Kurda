@@ -12,7 +12,7 @@ interface ActivityPoint {
 interface FunnelStep {
   step: string;
   users: number;
-  /** of the first step's people, the share still here */
+  /** Of the first step's people, the share still here. */
   rateFromFirst: number;
   rateFromPrev: number;
 }
@@ -81,10 +81,8 @@ export function retentionAt(points: readonly RetentionPoint[], dayN: number): { 
 }
 
 /**
- * Core analytics (KUR-106): active people, sign-ups, the onboarding and lesson
- * funnels, and retention, for a range picked in one tap, each figure beside
- * the same figure for the period just before. A failure used to draw zeros
- * everywhere — "nobody used Hevalo today" — so it is now said as a failure.
+ * Core analytics: active people, sign-ups, the onboarding and lesson funnels and retention for a chosen range, each
+ * beside the period before. A failure is said as one, never drawn as zeros.
  */
 export function Analytics(): React.JSX.Element {
   const toast = useToast();
@@ -106,7 +104,7 @@ export function Analytics(): React.JSX.Element {
 
   const data = useLoad(async () => {
     const q = `from=${from}&to=${to}`;
-    // the same number of days just before, to compare with
+    // The same number of days just before, to compare with.
     const before = `from=${daysBefore(from, days)}&to=${daysBefore(from, 1)}`;
     const [a, p, on, le, re] = await Promise.all([
       api<{ points: ActivityPoint[] }>(`/admin/analytics/activity?${q}`),
@@ -188,7 +186,7 @@ export function Analytics(): React.JSX.Element {
               tone={d.previous.length > 0 ? versus(average(d.activity), average(d.previous), days).tone : 'neutral'}
               icon="users"
             />
-            {/* the last day shown, which is today only when the range ends today */}
+            {/* The last day shown, which is today only when the range ends today. */}
             <Stat label="Active in a day" value={(latest?.dau ?? 0).toLocaleString()} hint={latest ? `On ${dayLabel(latest.day)}` : 'No data in this range'} />
             <Stat label="Active in a month" value={(latest?.mau ?? 0).toLocaleString()} hint={latest ? `The 30 days to ${dayLabel(latest.day)}` : undefined} />
             <Stat
@@ -224,13 +222,8 @@ export function Analytics(): React.JSX.Element {
 }
 
 /**
- * A bar per day, with the highest value and the first and last day written
- * beside it, and the total under it unless it is a level rather than a count
- * (`total={false}`: what is in circulation is not summed over days).
- *
- * A day's own number is read by pointing at its bar, or by touching it and
- * sliding along: it takes the total's place under the chart. It used to be a
- * tooltip, which a finger never brings up.
+ * A bar per day with the highest value and the first and last day beside it, and the total under it unless it is a
+ * level (`total={false}`). Pointing at a bar, or touching and sliding, puts that day's number in the total's place.
  */
 export function Bars({ points, unit, total: showTotal = true }: { points: Array<{ day: string; value: number }>; unit: string; total?: boolean }): React.JSX.Element {
   const [at, setAt] = useState<number | null>(null);
@@ -240,7 +233,7 @@ export function Bars({ points, unit, total: showTotal = true }: { points: Array<
   const peak = points.reduce((a, b) => (b.value > a.value ? b : a));
   const chosen = at === null ? undefined : points[at];
 
-  // the bar under the pointer, or the nearest one: a bar can be a few pixels wide
+  // The bar under the pointer, or the nearest one: a bar can be a few pixels wide.
   const pick = (e: React.PointerEvent<HTMLDivElement>): void => {
     const bars = [...e.currentTarget.children] as HTMLElement[];
     let best = 0;
@@ -289,7 +282,7 @@ export function Bars({ points, unit, total: showTotal = true }: { points: Array<
         ) : (
           <span />
         )}
-        {/* one day is named once */}
+        {/* One day is named once. */}
         <span>{points.length > 1 ? dayLabel(points[points.length - 1]!.day) : ''}</span>
       </figcaption>
     </figure>
@@ -328,10 +321,8 @@ function Funnel({ title, description, steps }: { title: string; description: str
 }
 
 /**
- * Retention as a grid that fits a phone: a row for each day people joined,
- * newest first, and a column for each day after (1, 7, 30), the share who came
- * back in each cell, shaded by how many. The totals across the range are on
- * top. Fourteen rows at first; the rest on request.
+ * Retention as a grid that fits a phone: a row per join day, newest first, a column per day after (1, 7, 30), each
+ * cell the shaded share who came back, totals on top. Fourteen rows at first.
  */
 export function Retention({ points }: { points: readonly RetentionPoint[] }): React.JSX.Element {
   const [all, setAll] = useState(false);

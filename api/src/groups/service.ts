@@ -36,11 +36,9 @@ import { isNotKnownAdultUser } from '../users/age.js';
 import { approvedNotice, bannedNotice, declinedNotice, removedNotice, requestNotice, type NoticeGroup, type PushNotice } from './notices.js';
 
 /**
- * A group's name or description as it is kept: control characters out
- * (`stripControlChars`), and the invisible ones a name could hide behind —
- * the zero-width space, the byte-order mark and the bidi overrides and
- * isolates that can make text read back to front — out as well. The
- * zero-width joiner and non-joiner stay: Soranî spelling and emoji use them.
+ * A group's name or description as stored: control characters removed, and the invisible ones a name could hide
+ * behind (zero-width space, byte-order mark, bidi overrides and isolates). Zero-width joiner and non-joiner stay,
+ * since Soranî spelling and emoji use them.
  */
 function cleanGroupText(text: string): string {
   return stripControlChars(text)
@@ -49,10 +47,8 @@ function cleanGroupText(text: string): string {
 }
 
 /**
- * A group's name and description are read by every member, and its name by
- * anyone banned from it, so words the chat would mask are refused outright
- * rather than published masked. A ban's reason and a request's note are held
- * to the same.
+ * Every member reads a group's name and description, and banned people its name, so words the chat would mask are
+ * refused rather than published masked. Ban reasons and request notes are held to the same.
  */
 function screenGroupText(...texts: Array<string | null | undefined>): void {
   for (const text of texts) {
@@ -62,10 +58,7 @@ function screenGroupText(...texts: Array<string | null | undefined>): void {
   }
 }
 
-/**
- * A ban's reason or a request's note as it is kept: cleaned like a group's
- * own text, empty as none, and refused past `max` or for words not allowed.
- */
+/** A ban reason or request note as stored: cleaned like group text, empty as null, refused past `max` or for banned words. */
 function cleanNote(text: string | null | undefined, max: number): string | null {
   const clean = text != null ? cleanGroupText(text) || null : null;
   if (clean && clean.length > max) throw new AppError('TEXT_TOO_LONG', 400, `at most ${max} characters`);
@@ -75,14 +68,12 @@ function cleanNote(text: string | null | undefined, max: number): string | null 
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { canonicalPair } from '../friends/pair.js';
 
-/** SQL: the ban behind `alias` is in force — for good, or not run out yet. `alias` is always a literal here. */
+/** SQL: the ban behind `alias` is in force, permanent or not yet expired. `alias` is always a literal here. */
 const inForce = (alias: string): string => `(${alias}.until IS NULL OR ${alias}.until > now())`;
 
 /**
- * SQL: how many requests to come back are waiting in the group `group`, as the
- * owner or admin `viewer` sees them — from people still banned (a request
- * outlives its ban only until it is next met), and not from anyone with a
- * block between them and the viewer, whose words do not reach them.
+ * SQL: how many requests to come back wait in group `group` as owner or admin `viewer` sees them: from people still
+ * banned, and not from anyone with a block between them and the viewer.
  */
 function waitingRequestsSql(group: string, viewer: string): string {
   return `SELECT count(*)::int FROM group_rejoin_requests wr
@@ -90,11 +81,11 @@ function waitingRequestsSql(group: string, viewer: string): string {
             WHERE wr.group_id = ${group} AND wr.status = 'pending' AND ${notBlockedSql('wr.user_id', viewer)}`;
 }
 
-/** A ban in force on one person, as the paths that change it read it (`GroupService.banInForce`). */
+/** A ban in force on one person, as the paths that change it read it. */
 interface BanRow {
   until: Date | null;
   declines: number;
-  /** a request was turned down and the next may not be sent yet */
+  /** A request was turned down and the next may not be sent yet. */
   waiting: boolean;
   request_after: Date | null;
   requests_closed: boolean;
@@ -102,10 +93,7 @@ interface BanRow {
   pending: boolean;
 }
 
-/**
- * Where the viewer stands with a group, from `GroupService.get`'s read: a
- * member, or (the only other viewer `get` answers) someone banned from it.
- */
+/** Where the viewer stands with a group, from `GroupService.get`'s read: a member, or someone banned from it. */
 function standingOf(
   role: Role | null,
   row: { until: Date | null; reason: string | null; waiting: boolean; request_after: Date | null; requests_closed: boolean | null; request_sent_at: Date | null },
@@ -126,14 +114,10 @@ async function areFriends(executor: Pick<pg.Pool, 'query'>, a: string, b: string
 }
 
 /**
- * Hold a person to the group limits (@kurda/shared `MAX_GROUPS_OWNED`,
- * `MAX_GROUP_MEMBERSHIPS`) before they are given one more group to own or to
- * be in, under their lock, inside the caller's transaction. Archived groups
- * count for neither. `theirs` is for a group someone else is handing them —
- * being added, or ownership passed on — so the refusal says whose limit it is.
- *
- * The lock is taken before any group row is (`addMember` locks the group), the
- * one order every path here keeps.
+ * Holds a person to the group limits (`MAX_GROUPS_OWNED`, `MAX_GROUP_MEMBERSHIPS`) before giving them one more group,
+ * under their lock in the caller's transaction; archived groups do not count. `theirs` is for a group someone else
+ * hands them, so the refusal says whose limit it is. The person's lock is taken before any group row, the order
+ * every path here keeps.
  */
 async function assertGroupRoom(
   client: Pick<pg.Pool, 'query'>,
@@ -180,9 +164,8 @@ export interface GroupMember {
 }
 
 /**
- * A group as `GET /groups/:id` answers a member: its roster, and where the
- * viewer stands with it. Someone banned is answered in the same shape with
- * only the name, the picture and their standing filled in (`GroupService.get`).
+ * A group as `GET /groups/:id` answers a member: its roster and where the viewer stands. A banned person gets the
+ * same shape with only the name, picture and standing filled in.
  */
 export interface GroupDetail extends Group {
   members: GroupMember[];
@@ -193,46 +176,25 @@ export interface GroupDetail extends Group {
 }
 
 /**
- * Groups / clubs (KUR-084): clubs with owner/moderator/member roles and a
- * 100-member cap. Ownership transfers explicitly; when an owner's account is
- * deleted the reconcile pass promotes the oldest moderator (else oldest
- * member, else archives). Group weekly XP is summed from members' ledgers for
- * the group leaderboard.
+ * Groups with owner, moderator and member roles and a 100-member cap. Ownership transfers explicitly; when an
+ * owner's account is deleted, the reconcile pass promotes the oldest moderator, else the oldest member, else
+ * archives the group. Weekly XP is summed from members' ledgers for the group leaderboard.
  *
- * Every group is private. Its name, picture, description, roster and messages
- * are for its members; to anyone else who has its id it does not exist (404),
- * and nothing lists, searches or suggests groups. The one exception is a
- * person banned from it, who is still told its name, its picture and where
- * they stand, so that they can ask to come back.
+ * Every group is private: its name, picture, description, roster and messages are for members, it is a 404 to
+ * anyone else, and nothing lists or suggests groups. A banned person is still told its name, picture and their
+ * standing, so they can ask to come back.
  *
- * There is one way in: the owner or a moderator adds one of their own friends
- * (`invite`, which adds outright rather than asking). Nobody joins by
- * themselves. The rule is the same for every account, so the answer to an add
- * says nothing about the age of the person added; and since every friendship
- * a minor has is one they started, every group a minor is in is one that
- * someone they chose put them in. That is why members see one another whole —
- * the full roster, every message — whatever their ages: what a minor sees of
- * the other members, and they of the minor, is what a group has always shown
- * its own members.
+ * The only way in is the owner or a moderator adding one of their friends (`invite`). The rule is the same for every
+ * account, so an add reveals nothing about age, and since a minor starts all their own friendships, every group a
+ * minor is in was chosen for them by someone they chose. That is why members see each other whole, whatever their
+ * ages. Groups that were open before (`groups.privacy` = 'open', migration 1751000420000) are the exception: their
+ * members walked in, so they stay rooms for known adults (`staysAdultsOnly`), and a game shared there admits nobody
+ * on that account (play/access.ts).
  *
- * A group that was open before every group became private is the one place
- * that reasoning does not reach: its members walked in, nobody chose them
- * (`groups.privacy` still says 'open' of it, and says nothing else any more;
- * migration 1751000420000). It goes on as what it was, a room for known
- * adults: nobody not known to be one is added to it or let back into it
- * (`staysAdultsOnly`), and a game shared into it lets no member in on that
- * account (play/access.ts).
- *
- * One person owns at most MAX_GROUPS_OWNED groups and is in at most
- * MAX_GROUP_MEMBERSHIPS (`assertGroupRoom`), whether they start a group, are
- * added to one or are handed one. A group passed on by the server itself
- * (`handOnGroup`) is not held to it: nobody asked for that.
- *
- * Removed and banned differ (@kurda/shared group-membership.ts): someone
- * removed may be added again like anybody; someone banned may not until the
- * ban runs out or is lifted, but may ask to come back. Letting them back in
- * keeps the rule above, so a request answered yes by an admin who is not
- * their friend lifts the ban without adding them.
+ * A person owns at most MAX_GROUPS_OWNED groups and is in at most MAX_GROUP_MEMBERSHIPS (`assertGroupRoom`), except
+ * for a group the server hands on (`handOnGroups`). Someone removed may be added again; someone banned may not until
+ * the ban ends or is lifted, but may ask to come back, and an approval from an admin who is not their friend lifts
+ * the ban without adding them.
  */
 export class GroupService {
   constructor(
@@ -240,11 +202,7 @@ export class GroupService {
     private readonly deps: { push?: PushNotice; log?: { warn(obj: unknown, msg: string): void } } = {},
   ) {}
 
-  /**
-   * Push lines already written to people's notifications, after the change
-   * they tell of has committed. A push that fails is logged and the change
-   * stands: the line is in their list either way.
-   */
+  /** Pushes notifications already written, after the change commits; a failed push is logged and the change stands. */
   private async push(items: ReadonlyArray<{ userId: string; notification: Notification }>): Promise<void> {
     const push = this.deps.push;
     if (!push) return;
@@ -253,7 +211,7 @@ export class GroupService {
     }
   }
 
-  /** The user's role in the group, or null if not a member (KUR-085 authz). */
+  /** The user's role in the group, or null if not a member. */
   async memberRole(groupId: string, userId: string): Promise<Role | null> {
     return this.roleOf(this.pool, groupId, userId);
   }
@@ -278,7 +236,7 @@ export class GroupService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      // strip control/invisible chars from user-visible text (#108)
+      // Strip control and invisible characters from user-visible text.
       const name = cleanGroupText(input.name);
       const description = input.description != null ? cleanGroupText(input.description) || null : null;
       screenGroupText(name, description);
@@ -304,10 +262,8 @@ export class GroupService {
   }
 
   /**
-   * Whether this group has to stay closed to this person: it was open once,
-   * so its members are strangers to one another, and the person is not known
-   * to be an adult. The refusal says only that the group takes nobody new,
-   * never why.
+   * Whether this group must stay closed to this person: it was open once, so its members are strangers, and the
+   * person is not known to be an adult. The refusal says only that the group takes nobody new.
    */
   private async staysAdultsOnly(client: Pick<pg.Pool, 'query'>, groupId: string, userId: string): Promise<boolean> {
     const g = await client.query<{ was_open: boolean }>(`SELECT privacy = 'open' AS was_open FROM groups WHERE id = $1`, [groupId]);
@@ -333,11 +289,8 @@ export class GroupService {
   }
 
   /**
-   * The ban on `userId` in this group while it is in force, its row locked
-   * for the caller's transaction; null when there is none. One that has run
-   * out is deleted as it is met, and a request still waiting on it is closed
-   * with it (withdrawn: nobody had to decide it), so neither turns up again
-   * if they are banned another time.
+   * The ban on `userId` in this group while in force, its row locked for the caller's transaction, or null. An expired
+   * ban is deleted when met, closing any request still waiting on it as withdrawn, so neither returns with a later ban.
    */
   private async banInForce(client: Pick<pg.Pool, 'query'>, groupId: string, userId: string): Promise<BanRow | null> {
     const r = await client.query<BanRow>(
@@ -357,14 +310,9 @@ export class GroupService {
   }
 
   /**
-   * Owner/moderator adds one of their friends: the only way into a group.
-   *
-   * The same rule for everybody (see the class note): the person added is a
-   * friend of whoever adds them. It does not look at the age of the person
-   * being added, so no answer here can tell a minor's account from an
-   * adult's. Not while they are banned from the group: the person's lock
-   * first (as a ban takes it), so a ban and an add of the same person cannot
-   * pass each other.
+   * An owner or moderator adds one of their friends, the only way into a group. It never looks at the added person's
+   * age, so no answer can tell a minor's account from an adult's. Refused while they are banned; the person's lock is
+   * taken first, as a ban takes it, so a ban and an add cannot pass each other.
    */
   async invite(inviterId: string, groupId: string, targetId: string): Promise<void> {
     const client = await this.pool.connect();
@@ -423,10 +371,7 @@ export class GroupService {
     }
   }
 
-  /**
-   * Take a member out. It leaves no ban: they can be added again, and their
-   * notifications say so.
-   */
+  /** Takes a member out without a ban, so they can be added again; their notification says so. */
   async removeMember(actorId: string, groupId: string, targetId: string): Promise<void> {
     const told = await this.inTransaction(async (client) => {
       const actorRole = await this.requireRole(client, groupId, actorId);
@@ -474,13 +419,9 @@ export class GroupService {
   }
 
   /**
-   * Change how a group presents itself — its name, its description, or both —
-   * as its owner or one of its admins (`canEditGroup`). The text is cleaned as
-   * it is when a group is made: invisible and control characters taken out,
-   * trimmed, and held to the same lengths; an empty description clears it.
-   * Who changed it, and when, is kept, so a report about the new name reaches
-   * the person who wrote it. To someone who is not in the group it does not
-   * exist, as everywhere.
+   * Changes a group's name, description or both, as owner or admin (`canEditGroup`). The text is cleaned and limited
+   * as at creation, and an empty description clears it. Who changed it and when are kept, so a report about the new
+   * name reaches its author. To a non-member the group does not exist.
    */
   async update(actorId: string, groupId: string, input: { name?: string; description?: string | null }): Promise<{ name: string; description: string | null }> {
     const name = input.name !== undefined ? cleanGroupText(input.name) : undefined;
@@ -548,17 +489,11 @@ export class GroupService {
   }
 
   /**
-   * Ban someone, as the owner or an admin, over someone they outrank when
-   * that person is a member (`canManage`); nobody bans themselves or the
-   * owner. The person must be in the group now, or have posted in it (so
-   * leaving just before a ban does not escape it), or be banned already,
-   * which this replaces: how long, why and by whom, keeping where their
-   * asking stands.
-   *
-   * In one transaction: out of the group, the ban, with `deleteMessages`
-   * every message of theirs in the group gone, and the line in their
-   * notifications. The caller takes them out of the live room and tells the
-   * room their messages went.
+   * Bans someone, as owner or admin, over a member they outrank (`canManage`); nobody bans themselves or the owner.
+   * The person must be in the group, have posted in it (so leaving first does not escape a ban), or be banned already,
+   * in which case this replaces the ban but keeps their request standing. In one transaction: out of the group, the
+   * ban, with `deleteMessages` their messages removed, and the notification. The caller removes them from the live
+   * room and tells the room their messages went.
    */
   async ban(
     actorId: string,
@@ -593,7 +528,7 @@ export class GroupService {
       if (!targetRole && !grp.posted && !already) throw new AppError('BAD_TARGET', 404, 'not a member');
 
       if (targetRole) await client.query(`DELETE FROM group_members WHERE group_id = $1 AND user_id = $2`, [groupId, targetId]);
-      // one that ran out was deleted above, so this replaces only a ban in force, keeping its declines and its stop
+      // Expired bans were deleted above, so this replaces only a ban in force, keeping its declines and stop.
       const row = await client.query<{
         until: Date | null; reason: string | null; created_at: Date; requests_closed: boolean;
         username: string; profile_photo_key: string | null; selected_avatar_key: string | null; banned_by: string | null;
@@ -635,9 +570,8 @@ export class GroupService {
   }
 
   /**
-   * Lift a ban, as the owner or an admin. It does not add them back: they may
-   * be added again. A request of theirs still waiting is closed with it
-   * (withdrawn, by the admin who lifted the ban).
+   * Lifts a ban, as owner or admin, without adding them back; they may be added again. A waiting request of theirs is
+   * closed as withdrawn by that admin.
    */
   async unban(actorId: string, groupId: string, targetId: string): Promise<void> {
     await this.requireModerator(this.pool, groupId, actorId);
@@ -678,12 +612,9 @@ export class GroupService {
   }
 
   /**
-   * Ask to come back, as someone banned from the group right now. Never a
-   * way to pester its admins: one request waits at a time (the database holds
-   * it), each one turned down makes the next wait longer, the admins can stop
-   * them, and the route caps how many a person sends a day across all groups.
-   * To anyone who is not banned from the group and not in it, it does not
-   * exist, here as everywhere.
+   * Asks to come back, as someone banned now. One request waits at a time (enforced by the database), each refusal
+   * lengthens the next wait, admins can stop requests, and the route caps them per day across groups. To anyone
+   * neither banned nor a member the group does not exist.
    */
   async requestToRejoin(userId: string, groupId: string, rawNote?: string | null): Promise<GroupRequestState> {
     const note = cleanNote(rawNote, GROUP_REQUEST_NOTE_MAX);
@@ -717,11 +648,9 @@ export class GroupService {
   }
 
   /**
-   * The line to each owner and admin about the requests waiting, for those
-   * not told about this group in the last day ("Someone asked…", a day later
-   * "3 people asked…"). Written in the caller's transaction under the group's
-   * own lock, so two requests at once tell them once; the count is what each
-   * of them will find waiting.
+   * Notifies each owner and admin of waiting requests, if not told about this group in the last day ("Someone
+   * asked…", later "3 people asked…"). Written in the caller's transaction under the group's lock, so two requests at
+   * once notify once, with the count they will find.
    */
   private async tellAdmins(client: Pick<pg.Pool, 'query'>, group: NoticeGroup): Promise<Array<{ userId: string; notification: Notification }>> {
     await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`group-requests:${group.id}`]);
@@ -748,7 +677,7 @@ export class GroupService {
     );
   }
 
-  /** The requests to come back waiting, oldest first, for the owner and admins (the ones `waitingRequestsSql` counts). */
+  /** The waiting requests to come back, oldest first, for owner and admins (the ones `waitingRequestsSql` counts). */
   async requests(actorId: string, groupId: string, publicUrl: PublicUrl = () => null): Promise<GroupRejoinRequest[]> {
     await this.requireModerator(this.pool, groupId, actorId);
     const r = await this.pool.query<{
@@ -773,7 +702,7 @@ export class GroupService {
     }));
   }
 
-  /** Answer the request `targetId` has waiting under a ban in force; 404 REQUEST_NOT_FOUND when there is none. */
+  /** Answers the request `targetId` has waiting under a ban in force; 404 REQUEST_NOT_FOUND when there is none. */
   private async answer(client: Pick<pg.Pool, 'query'>, groupId: string, targetId: string, actorId: string, status: 'approved' | 'declined'): Promise<BanRow> {
     const ban = await this.banInForce(client, groupId, targetId);
     const answered = ban?.pending
@@ -788,12 +717,9 @@ export class GroupService {
   }
 
   /**
-   * Let someone back, as the owner or an admin: in one transaction the ban
-   * is lifted and they are a member again — when every rule for being put in
-   * a group allows it: room in the group, their own group limit, and that
-   * whoever lets them back is a friend of theirs (the rule an add keeps).
-   * When one does not, the ban is still lifted and `rejoined` is false: they
-   * can be added, as anyone can.
+   * Lets someone back, as owner or admin: in one transaction the ban is lifted and they rejoin, if every rule for
+   * adding allows it (room in the group, their own limit, and the admin being their friend). Otherwise the ban is
+   * still lifted and `rejoined` is false, so they can be added like anyone.
    */
   async approve(actorId: string, groupId: string, targetId: string): Promise<{ rejoined: boolean }> {
     const { rejoined, told } = await this.inTransaction(async (client) => {
@@ -826,9 +752,8 @@ export class GroupService {
   }
 
   /**
-   * Turn a request down, as the owner or an admin: one more turned down, the
-   * next request waits longer (`requestCooldownDays`), and with `stopRequests`
-   * none is taken from them again while this ban lasts.
+   * Turns a request down, as owner or admin: the next request waits longer (`requestCooldownDays`), and with
+   * `stopRequests` no more are taken while this ban lasts.
    */
   async decline(actorId: string, groupId: string, targetId: string, stopRequests = false): Promise<void> {
     const told = await this.inTransaction(async (client) => {
@@ -849,21 +774,10 @@ export class GroupService {
   }
 
   /**
-   * A group as one of its members sees it: what it is, its whole roster, and
-   * their own role. Its owner and admins are also told how many requests to
-   * come back wait for them.
-   *
-   * A group is private, so this is where that is kept. A member sees
-   * everything, every other member included whatever their ages: each of them
-   * was put there by somebody they chose (the class note). Someone banned
-   * from the group, while it is not archived, is told its name, its picture
-   * and where they stand — banned, until when, and how asking to come back
-   * stands — and nothing more: no description, no owner, no roster, no count.
-   * To everybody else the group does not exist: the same 404 as an id that
-   * was never a group's, so knowing an id tells nobody anything.
-   *
-   * Two statements however many members (the apps poll it): the group with
-   * everything about the viewer, then the roster.
+   * A group as a member sees it: what it is, its whole roster and their role; owners and admins also get the count of
+   * waiting requests. Someone banned from an unarchived group gets only its name, picture and their standing (until
+   * when, and their request's state). Everyone else gets the same 404 as an unknown id. Two statements however many
+   * members, since the apps poll it.
    */
   async get(groupId: string, viewerId: string, publicUrl: PublicUrl = () => null): Promise<GroupDetail> {
     const g = await this.pool.query<{
@@ -949,7 +863,7 @@ export class GroupService {
     }));
   }
 
-  /** Group's total XP this week (group leaderboard hook, KUR-084). */
+  /** The group's total XP this week, for the group leaderboard. */
   async weeklyXp(groupId: string, now: Date = new Date()): Promise<number> {
     const r = await this.pool.query<{ sum: string | null }>(
       `SELECT COALESCE(SUM(l.amount), 0)::text sum
@@ -960,10 +874,7 @@ export class GroupService {
     return Number(r.rows[0]?.sum ?? 0);
   }
 
-  /**
-   * Heal groups whose owner's account was deleted (owner_id nulled): promote the
-   * oldest moderator, else the oldest member, else archive the empty group.
-   */
+  /** Heals groups whose owner's account was deleted: oldest moderator, else oldest member, else archive. */
   async reconcileOwnerless(): Promise<number> {
     const orphans = await this.pool.query<{ id: string }>(
       `SELECT id FROM groups WHERE owner_id IS NULL AND archived_at IS NULL`,
@@ -974,18 +885,8 @@ export class GroupService {
 }
 
 /**
- * Give a group with no owner a new one: the oldest moderator, else the oldest
- * member, else the group is archived. Runs in the caller's transaction when
- * given one. For a group whose owner's account was deleted.
- */
-export async function handOnGroup(executor: Pick<pg.Pool, 'query'>, groupId: string): Promise<void> {
-  await handOnGroups(executor, [groupId]);
-}
-
-/**
- * `handOnGroup` for every one of these groups, in one statement: each
- * group's successor is picked as there, promoted and named owner, and a group
- * with nobody left is archived. Each group is decided on its own rows only.
+ * Gives each ownerless group a new owner in one statement: its oldest moderator, else its oldest member, else the
+ * group is archived. Runs in the caller's transaction when given one.
  */
 export async function handOnGroups(executor: Pick<pg.Pool, 'query'>, groupIds: readonly string[]): Promise<void> {
   if (groupIds.length === 0) return;

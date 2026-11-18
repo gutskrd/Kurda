@@ -172,11 +172,7 @@ describe('MessageList', () => {
     expect(screen.getByText('Today')).toBeInTheDocument();
   });
 
-  /**
-   * The day separators are the only words this component owns, and the month
-   * and weekday names beside them come from `toLocaleDateString` — which takes
-   * the browser's language, not the one the reader chose, unless it is told.
-   */
+  /** Month and weekday names come from `toLocaleDateString`, which uses the browser language unless given a locale. */
   it('separates days in the reader’s language', async () => {
     localStorage.setItem('hevalo_locale', 'de');
     await preloadCatalogue();
@@ -245,11 +241,7 @@ describe('MessageList', () => {
     expect(container.querySelectorAll('.chat-day')).toHaveLength(0);
   });
 
-  /**
-   * A message can be reported where it is read: from its options, which a
-   * keyboard reaches by a button that is out of sight until focused. Only
-   * other people's messages — your own are not yours to report.
-   */
+  /** Reporting is in a message’s options, reached by keyboard through a button hidden until focused; never on your own. */
   it('offers Report among other people’s messages’ options, and only theirs', async () => {
     const onReport = vi.fn();
     show(
@@ -280,11 +272,7 @@ describe('MessageList', () => {
     expect(screen.getByText('a wrapped present').closest('.bubble')).toHaveClass('is-card');
   });
 
-  /*
-   * Nothing sits beside a message. Held on a touch screen, or right-clicked,
-   * it opens its options under it: Copy for its words, Report for someone
-   * else's. A finger that moves is scrolling and opens nothing.
-   */
+  /* A long press or right-click opens the options (Copy, and Report for others’ messages); a moving finger scrolls. */
   it('opens a message’s options when it is held, with Copy and Report', async () => {
     vi.useFakeTimers();
     try {

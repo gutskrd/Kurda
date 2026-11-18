@@ -13,13 +13,9 @@ import './impostor.css';
 const NEW_PATH = '/app/games/impostor';
 
 /**
- * Impostor (/app/games/impostor): one word for everyone but the
- * impostor, two rounds of Kurdish clues, a vote. Without an id it is the
- * start (Start.tsx): the game in a line and one thing to press, offered only
- * where approved word cards are; with one, the room (play/MultiRoom.tsx) with
- * the table inside. The word is never in the address: the room is found by its id.
- * With `couch=1` it is the game for people in one room, on this one phone
- * (Couch.tsx).
+ * Impostor (/app/games/impostor): one word for all but the impostor, two rounds of Kurdish clues, then a vote.
+ * Without an id it shows the start (Start.tsx); with one, the room (play/MultiRoom.tsx), found by id so the word is
+ * never in the address; with `couch=1`, the one-phone game (Couch.tsx).
  */
 export function Impostor(): React.JSX.Element {
   const [params] = useSearchParams();
@@ -44,11 +40,7 @@ export function Impostor(): React.JSX.Element {
 
 type LobbySettings = { difficulty?: string; clueSeconds?: number; category?: string | null };
 
-/**
- * What a lobby plays with, for the people waiting in it: the variety, the
- * level, the category when the host chose one (by its Kurdish name, read from
- * the list the host chose in) and the time for a clue.
- */
+/** The lobby's settings for those waiting: variety, level, any chosen category by its Kurdish name, and clue time. */
 function LobbyNote({ dialect, settings }: { dialect: GameDialect; settings: LobbySettings }): React.JSX.Element {
   const t = useT();
   const offer = useImpostorCategories(settings.category ? dialect : null);

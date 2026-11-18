@@ -1,9 +1,6 @@
 /**
- * `usePullRefresh` for component tests. A list or a scroller draws its
- * `refreshControl` round itself (react-native-web clones the control with
- * the scroller as its child), and on the web the real control has nothing to
- * pull, so this one is a button over the scroller (test id `pull-to-refresh`):
- * pressing it is the pull. Wired with
+ * `usePullRefresh` for component tests. On the web the real control has nothing to pull, so this draws a button
+ * over the scroller (test id `pull-to-refresh`); pressing it is the pull. Wire with
  * `vi.mock('…/net/usePullRefresh', () => import('…/net/testing/pullRefresh'))`.
  */
 import { createElement, Fragment, type ReactNode } from 'react';

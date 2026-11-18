@@ -7,28 +7,24 @@ describe('validateEmail', () => {
     expect(validateEmail('  rojda@example.com  ')).toBeNull();
   });
   /*
-   * The addresses an iPhone hands out: iCloud and me.com, a plus tag, Apple's
-   * private relay, and capitals the keyboard or a password manager put in.
-   * None of them may be turned away on the phone before the server sees them.
+   * The addresses an iPhone hands out (iCloud and me.com, a plus tag, private relay, capitals) must not be turned away
+   * before the server sees them.
    */
   it('accepts iCloud, plus-tagged, private relay and capitalised addresses', () => {
     for (const address of ['name@example.com', 'Name.Surname+tag@example.com', 'x@privaterelay.appleid.com', 'ROJDA@EXAMPLE.COM', 'a.b-c_d@mail.example.com']) {
       expect(validateEmail(address), address).toBeNull();
     }
   });
-  /*
-   * A keyboard ends a word with a full stop, and an address copied out of a
-   * sentence brings its comma: the address is what is in front of them.
-   */
+  /* A keyboard ends a word with a full stop, and an address copied from a sentence brings its comma. */
   it('takes an address as it was meant: without a full stop or comma after it', () => {
     expect(cleanEmail('rojda@example.com.')).toBe('rojda@example.com');
     expect(cleanEmail(' rojda@example.com, ')).toBe('rojda@example.com');
     expect(cleanEmail('rojda@example.com .')).toBe('rojda@example.com');
     expect(validateEmail('rojda@example.com.')).toBeNull();
     expect(validateEmail('rojda@example.com,')).toBeNull();
-    // the dots that belong to it stay
+    // The dots that belong to it stay.
     expect(cleanEmail('name.surname@mail.example.com')).toBe('name.surname@mail.example.com');
-    // and nothing but a full stop is still nothing
+    // And nothing but a full stop is still nothing.
     expect(validateEmail(' . ')).toBe('required');
   });
   it('rejects empties and malformed values', () => {
@@ -41,7 +37,7 @@ describe('validateEmail', () => {
 describe('validatePassword', () => {
   it('accepts ≥8 chars with a letter and a number', () => {
     expect(validatePassword('abcde123')).toBeNull();
-    expect(validatePassword('şêrîn123')).toBeNull(); // Kurdish letters count as letters
+    expect(validatePassword('şêrîn123')).toBeNull(); // Kurdish letters count as letters.
   });
   it('mirrors the server policy reasons', () => {
     expect(validatePassword('')).toBe('required');

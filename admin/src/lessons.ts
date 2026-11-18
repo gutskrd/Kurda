@@ -1,8 +1,6 @@
 /**
- * The Lessons page as data: what the API sends, an exercise's blank form per
- * type, and the checks an exercise must pass — the same limits as the server's
- * payload schemas (api/src/content/exercises.ts), said in words, so a draft is
- * not sent only to come back refused. The server still decides.
+ * The Lessons page as data: what the API sends, an exercise's blank form per type, and the checks an exercise must
+ * pass, the server's payload limits (api/src/content/exercises.ts) in words so a draft is not sent only to be refused.
  */
 import {
   ASKS_BY_TYPE,
@@ -87,7 +85,7 @@ export interface CourseOption {
 export interface LessonList {
   lessons: LessonRow[];
   skills: SkillOption[];
-  /** every course; missing from an API older than this panel, which then offers no course filter */
+  /** Every course; missing from an API older than this panel, which then offers no course filter. */
   courses?: CourseOption[];
   total: number;
 }
@@ -100,7 +98,7 @@ export interface Exercise {
   payload: Payload;
 }
 
-/** GET /admin/content/lessons/:id */
+/** GET /admin/content/lessons/:id. */
 export interface LessonDetail {
   id: string;
   skillId: string;
@@ -126,11 +124,7 @@ export function recordHref(lesson: { skillId: string; position: number }, missin
   return `#/audio/lessons?lesson=${encodeURIComponent(`${lesson.skillId}:${lesson.position}`)}${missingOnly ? '&show=missing' : ''}`;
 }
 
-/**
- * A new conversation's id: what its lines' recordings are filed under, kept by
- * every later version of the lesson. Random, so two conversations written at
- * once by two people never share recordings.
- */
+/** A new conversation's id, which its recordings are filed under in every version; random, so two never share recordings. */
 export function newConversationId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(8));
   return `c${Array.from(bytes, (b) => b.toString(36).padStart(2, '0')).join('')}`.slice(0, 14);
@@ -142,7 +136,7 @@ export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
   const carried = { ...(typeof from.say === 'string' && from.say ? { say: from.say } : {}), ...(isSpeakerId(from.voice) ? { voice: from.voice } : {}) };
   switch (type) {
     case 'conversation':
-      // Xezo and Hamo to start, each with a line: the smallest conversation there is
+      // Xezo and Hamo to start, each with a line: the smallest conversation there is.
       return {
         id: typeof from.id === 'string' && from.id ? from.id : newConversationId(),
         title: '',
@@ -170,8 +164,10 @@ export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
   }
 }
 
-const str = (v: unknown): string => (typeof v === 'string' ? v : '');
-const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
+/** A payload value as text, or '' when it is not a string. */
+export const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+/** A payload value as a list of texts, or [] when it is not a list. */
+export const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
 
 /** What each ask is called in the editor, with what its question box then holds. */
 export const ASK_NAME: Record<ExerciseAsk, string> = {
@@ -286,7 +282,7 @@ function conversationIssues(p: Payload, out: Issue[]): void {
   if (speakers.length > 0 && speakers.every((s) => s.learner === true)) out.push({ path: 'speakers', message: 'The learner needs a character to talk with.' });
   const cast = new Set<string>();
   speakers.forEach((s, i) => {
-    // the learner's own part: theirs to read and say, recorded by nobody
+    // The learner's own part: theirs to read and say, recorded by nobody.
     if (s.learner === true) {
       if (cast.has('learner')) out.push({ path: `speakers.${i}.character`, message: 'The learner already has a part.' });
       cast.add('learner');
@@ -346,11 +342,7 @@ function conversationForSave(p: Payload): Payload {
   };
 }
 
-/**
- * What is sent: positions 1, 2, 3… in the order on screen, text trimmed, and
- * optional fields left out when empty (the schemas refuse an empty string
- * where they allow none at all).
- */
+/** What is sent: positions in screen order, text trimmed, and empty optional fields left out (the schemas refuse ''). */
 export function forSave(exercises: readonly Exercise[]): Exercise[] {
   const trim = (x: unknown): unknown =>
     typeof x === 'string'
@@ -376,10 +368,7 @@ export function forSave(exercises: readonly Exercise[]): Exercise[] {
   });
 }
 
-/**
- * The server's issues for one exercise (`exercises[2].payload.prompt`, or
- * `exercises[2].prompt` as the update route words them), as paths inside it.
- */
+/** The server's issues for one exercise (`exercises[2].payload.prompt` or `exercises[2].prompt`), as paths inside it. */
 export function issuesFor(issues: readonly Issue[], index: number): Issue[] {
   const head = `exercises[${index}]`;
   return issues

@@ -6,35 +6,30 @@ import { textDir } from './textDir';
 
 /** A picture in the composer: what the draft keeps, and what only this page knows. */
 export interface ComposerPicture {
-  /** this page's own id for it */
+  /** This page's own id for it. */
   id: string;
-  /** the picked file, while this page has it — needed to upload it again (to edit it, or to change "I made this") */
+  /** The picked file while this page has it, needed to upload again after an edit or an "I made this" change. */
   file: File | null;
-  /** what the tile shows: an object URL, or the uploaded picture's address */
+  /** What the tile shows: an object URL or the uploaded picture's address. */
   previewUrl: string | null;
   mediaKey: string | null;
-  /** the uploaded picture's public address, which a draft keeps to show it again */
+  /** The uploaded picture's public address, which a draft keeps to show it again. */
   serverUrl: string | null;
   altText: string;
-  /** "I made this": the signature goes on at upload */
+  /** "I made this", which adds the signature at upload. */
   ownWork: boolean;
   status: 'uploading' | 'ready' | 'failed';
-  /** 0–1 while uploading */
+  /** From 0 to 1 while uploading. */
   progress: number;
   error: string | null;
-  /** already on the post being edited: its signature is settled */
+  /** Already on the post being edited, so its signature is settled. */
   existing: boolean;
 }
 
 /**
- * The pictures on a post being written: up to four tiles, each with what it
- * needs — how far its upload is, why it failed and a way to try again, a way
- * to take it off, and a way to describe it.
- *
- * "Describe" opens the details under the tiles rather than a dialog over a
- * dialog: the alt text, "I made this", and Edit. A tile says "ALT" until it
- * has a description and shows a tick once it does, so a picture nobody
- * described is visible at a glance.
+ * The pictures on a post being written: up to four tiles with upload progress, errors and retry, remove, and describe.
+ * "Describe" opens the details (alt text, "I made this", Edit) below rather than in a nested dialog. A tile says "ALT"
+ * until described and shows a tick once it is.
  */
 export function PictureTiles({
   pictures,
@@ -44,7 +39,7 @@ export function PictureTiles({
   onRetry,
 }: {
   pictures: ComposerPicture[];
-  /** whose details are open */
+  /** Whose details are open. */
   openId: string | null;
   onOpen: (id: string | null) => void;
   onRemove: (id: string) => void;
@@ -106,7 +101,7 @@ export function PictureTiles({
   );
 }
 
-/** The open picture's details: what it shows, whether you made it, and Edit. */
+/** The open picture's details: its description, whether you made it, and Edit. */
 export function PictureDetails({
   picture,
   index,
@@ -119,7 +114,7 @@ export function PictureDetails({
   index: number;
   onAltChange: (text: string) => void;
   onOwnWorkChange: (own: boolean) => void;
-  /** absent when there is nothing this page can edit (the file is not here) */
+  /** Omitted when this page does not have the file to edit. */
   onEdit?: () => void;
   onDone: () => void;
 }): React.JSX.Element {
@@ -127,7 +122,7 @@ export function PictureDetails({
   const altId = useId();
   const ownId = useId();
   const used = postTextLength(picture.altText);
-  // the signature is decided at upload: only a picture this page still has can go up again
+  // The signature is set at upload, so only a picture this page still has can be uploaded again.
   const canChangeOwn = !picture.existing && picture.file !== null;
 
   return (
@@ -153,8 +148,7 @@ export function PictureDetails({
       </p>
 
       {picture.existing ? (
-        // a picture already on the post: the server does not say whether it was
-        // stamped, so no switch claims either way — only how to change it
+        // The server does not say whether a posted picture was signed, so no switch claims either way.
         <p className="cmp-hint cmp-own-posted">{t('composer.ownWorkPosted')}</p>
       ) : (
         <>

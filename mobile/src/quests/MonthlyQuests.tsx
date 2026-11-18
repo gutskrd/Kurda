@@ -13,21 +13,18 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { monthProgress } from './model';
 
-/** When the count starts to climb and the bar to fill, once the screen is there, and how long they take. */
+/** When the count starts climbing and the bar filling after the screen appears, and how long they take. */
 const FILL_AT_MS = 350;
 const FILL_MS = 700;
 /** Xezal on the card, head to waist. */
 const CHARACTER_HEIGHT = 108;
 
 /**
- * The month's quests, as a card: how many are done this month, counting up
- * as the screen opens, over a bar of how much of the month's possible that
- * is so far (model.ts `monthProgress`) — in the saffron of a rare
- * chest, with Xezal at its end, cheering when a chest waits to be opened and
- * otherwise just glad to see you. The bar fills as the count climbs (a
- * translate on the native driver; the count by frames, as `useCountUp`
- * does); under Reduce Motion both are simply where they are. The words say
- * everything Xezal would, so a screen reader passes her by.
+ * The month's quests as a card: the count done of the month's possible so far, counting up on open over a bar of
+ * the same (model.ts `monthProgress`), with "this month" said once in the corner. In a rare chest's saffron, with
+ * Xezal at its end cheering when a chest waits. The bar fills with the count (a native-driver translate; the
+ * count by frames, as `useCountUp` does); under Reduce Motion both are static. The text says everything Xezal
+ * would, so screen readers skip her.
  */
 export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean }): React.JSX.Element {
   const { colors, scheme } = useTheme();
@@ -48,7 +45,7 @@ export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean })
     run.start();
     return () => run.stop();
   }, [reduce, share, fill]);
-  // the fill slides in from the reading side, as every bar's fill does
+  // The fill slides in from the reading side, as every bar's fill does.
   const translateX = fill.interpolate({ inputRange: [0, 1], outputRange: [dir.rtl ? width : -width, 0] });
   const soFar = t('quests.monthly.soFar', { done: formatNumber(done, locale), possible: formatNumber(possible, locale) });
 
@@ -57,7 +54,7 @@ export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean })
       <View style={styles.words}>
         <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{t('quests.monthly.title')}</Text>
         <Text style={[styles.title, dir.text, { color: tone.ink }]} accessibilityRole="header">
-          {t('quests.month', { count: formatNumber(count, locale) })}
+          {t('quests.month', { count: formatNumber(count, locale), possible: formatNumber(possible, locale) })}
         </Text>
         <View
           style={[styles.track, { backgroundColor: `${tone.lip}80` }]}
@@ -69,7 +66,6 @@ export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean })
         >
           <Animated.View style={[styles.fill, { backgroundColor: colors.gold, opacity: width > 0 ? 1 : 0, transform: [{ translateX }] }]} />
         </View>
-        <Text style={[styles.soFar, dir.text, { color: tone.ink }]}>{soFar}</Text>
       </View>
       <View style={styles.character} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <SpeakingCharacter speaker="xezo" player={null} playing={false} crop="half" height={CHARACTER_HEIGHT} flip={!dir.rtl} reaction={cheer ? 'cheer' : null} />
@@ -85,7 +81,6 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.md), fontVariant: ['tabular-nums'] },
   track: { height: 10, borderRadius: radii.pill, overflow: 'hidden', marginTop: spacing.xs },
   fill: { ...StyleSheet.absoluteFill, borderRadius: radii.pill },
-  soFar: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, opacity: 0.9, fontVariant: ['tabular-nums'] },
-  // she stands on the card's foot, her waist at its edge
+  // She stands on the card's foot, her waist at its edge.
   character: { marginBottom: 0 },
 });

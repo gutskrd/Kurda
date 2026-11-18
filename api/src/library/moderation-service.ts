@@ -6,15 +6,10 @@ export type LibraryTargetType = 'library_post' | 'library_comment';
 export type ReportResult = { ok: true; deduped: boolean } | { ok: false; reason: 'not-found' };
 
 /**
- * Community library reports (KUR-285), now written through the one report
- * service every surface uses (moderation/reports-service.ts): the post or
- * comment is snapshotted at report time, so the case keeps what it said even if
- * the author edits or deletes it, and the report joins its case at once instead
- * of waiting for somebody to open the queue. `library_reports` keeps its
- * history and takes no new rows.
- *
- * The old route has no category, so these arrive as "something else" with the
- * reason as the note; the new report sheet sends a category of its own.
+ * Library reports, written through the shared report service: the post or comment is snapshotted at report time, so
+ * the case keeps what it said after edits or deletion, and the report joins its case at once. `library_reports`
+ * keeps its history and takes no new rows. This route has no category, so it files "something else" with the reason
+ * as the note.
  */
 export class LibraryModerationService {
   private readonly reports: ReportsService;

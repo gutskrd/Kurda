@@ -1,50 +1,35 @@
 /**
- * Admin RBAC (KUR-099). Four admin roles, each granting a fixed set of
- * capabilities. Enforcement is always server-side (see `requireAdmin`); this
- * module is the single source of truth for "which role can do what", shared by
- * the API guards and the admin app's nav (where it only hides UI — never the
- * access control itself).
+ * Admin RBAC: four admin roles, each with a fixed set of capabilities. Enforcement is always server-side (see
+ * `requireAdmin`); this module is the single source of truth for which role can do what, shared by the API guards and
+ * the admin app's nav (which only hides UI).
  */
 
 export const ADMIN_ROLES = ['superadmin', 'content_editor', 'moderator', 'support'] as const;
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 
 /**
- * The legacy catch-all role. Most admin routes are still guarded by
- * requireRoles('admin') rather than an RBAC role, so anything asking "is this
- * person staff at all" — the 2FA gate especially — must count it, or an account
- * holding only 'admin' would slip past.
+ * The legacy catch-all role. Most admin routes are still guarded by requireRoles('admin'), so any "is this person
+ * staff" check, the 2FA gate especially, must count it.
  */
 export const LEGACY_ADMIN_ROLE = 'admin';
 
 /**
- * Who may use the Game Ranks, Seasons, Leagues and Badges tools under /admin
- * (contract 4 §U, Admin): the legacy catch-all role they were first guarded
- * by, and `superadmin`, which is granted everything. Like the shop, the config
- * approvals and the tags, these are guarded by a role list rather than a
- * capability; the admin app's nav reads the same list (RANK_TOOLS).
+ * Who may use the Game Ranks, Seasons, Leagues and Badges tools under /admin (contract 4 §U): the legacy role and
+ * `superadmin`. Guarded by a role list rather than a capability; the admin app's nav reads the same list (RANK_TOOLS).
  */
 export const RANK_TOOL_ROLES = [LEGACY_ADMIN_ROLE, 'superadmin'] as const;
 
 /**
- * Someone who lends a voice to the course and does nothing else in the
- * console: the "Record by person" page and the uploads it makes, for the
- * voices a superadmin has linked to the account (api/src/recording). It is
- * deliberately not one of ADMIN_ROLES: those grant capabilities, and
- * `requireAdmin` with no role list lets any of them in, so a voice actor
- * there would reach more than recording. It grants no capability at all;
- * only the routes that name it in their role list open to it.
+ * Someone who only records for the course: the "Record by person" page and its uploads, for the voices a superadmin
+ * linked to the account (api/src/recording). Deliberately not in ADMIN_ROLES, since `requireAdmin` with no role list
+ * admits any of those; it grants no capability and opens only routes that name it.
  */
 export const VOICE_ACTOR_ROLE = 'voice_actor';
 
 /**
- * Every role that can reach anything under /admin, and so must clear 2FA.
- *
- * 'founder' is here because it curates the tag catalog through /admin/tags,
- * and the voice actor because it records through /admin/recording and the
- * upload routes. The rule is deliberately "anything under /admin", with no
- * exceptions — a role that could reach staff surface without 2FA would be the
- * hole the gate exists to close, and exceptions are exactly what gets forgotten.
+ * Every role that can reach anything under /admin, and so must clear 2FA. 'founder' curates tags through /admin/tags
+ * and the voice actor records through /admin/recording and the upload routes. Deliberately no exceptions: a role
+ * reaching staff surface without 2FA is the hole the gate closes.
  */
 export const PRIVILEGED_ROLES: readonly string[] = [...ADMIN_ROLES, LEGACY_ADMIN_ROLE, 'founder', VOICE_ACTOR_ROLE];
 
@@ -86,10 +71,9 @@ export function isAdmin(roles: readonly string[]): boolean {
 }
 
 /**
- * What the legacy catch-all role can do through capability guards. Moderation
- * only: every moderation route used to be guarded by `requireRoles('admin')`,
- * and moving them to the capability must not lock out an account that holds
- * just that role. Everything else it reaches is still guarded by the role itself.
+ * What the legacy role can do through capability guards: moderation only, so moving moderation routes from
+ * `requireRoles('admin')` to the capability does not lock it out. Everything else it reaches is still guarded by the
+ * role itself.
  */
 const LEGACY_ADMIN_CAPABILITIES: readonly Capability[] = ['moderation.act'];
 

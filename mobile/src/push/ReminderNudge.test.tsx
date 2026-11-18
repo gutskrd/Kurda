@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-// a phone, so there is push to offer (the web build has none)
+// A phone, so there is push to offer (the web build has none).
 vi.mock('react-native', async () => {
-  // react-native-web ships no types
+  // react-native-web ships no types.
   const rn = (await import('../play/testing/native')) as unknown as Record<string, object> & { Platform: object };
   return { ...rn, Platform: { ...rn.Platform, OS: 'ios' } };
 });
@@ -31,7 +31,7 @@ const NEVER_ASKED = { status: 'undetermined', granted: false, canAskAgain: true 
 const REFUSED_FOR_GOOD = { status: 'denied', granted: false, canAskAgain: false } as const;
 
 beforeEach(() => {
-  // turned down, on a phone that will not ask again: the one case the banner is for
+  // Turned down, on a phone that will not ask again: the one case the banner is for.
   notificationsStub.permission = { ...REFUSED_FOR_GOOD };
   notificationsStub.afterRequest = { status: 'granted', granted: true, canAskAgain: true };
   notificationsStub.requests = 0;
@@ -51,7 +51,7 @@ describe('the reminder banner on Learn', () => {
     const { container } = renderWithProviders(<ReminderNudge hold={false} store={store} />);
     expect(await screen.findByText(LINE)).toBeTruthy();
     await settle();
-    // seen once, out of the same budget as the screen after a lesson
+    // Seen once, out of the same budget as the screen after a lesson.
     expect(JSON.parse(store.data.get(OFFER_KEY)!).shown).toBe(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Open phone settings' }));
@@ -61,14 +61,14 @@ describe('the reminder banner on Learn', () => {
   });
 
   it('never stands in front of the phone’s own question: nothing while the phone could still ask', async () => {
-    // never asked, and Android after one refusal, which would show its prompt again
+    // Never asked, and Android after one refusal, which would show its prompt again.
     for (const permission of [NEVER_ASKED, { status: 'denied', granted: false, canAskAgain: true } as const]) {
       notificationsStub.permission = { ...permission };
       const store = memoryStore();
       const { container } = renderWithProviders(<ReminderNudge hold={false} store={store} />);
       await settle();
       expect(container.textContent, permission.status).toBe('');
-      // not shown, so not counted, and nothing asked of the phone
+      // Not shown, so not counted, and nothing asked of the phone.
       expect(store.data.has(OFFER_KEY)).toBe(false);
       expect(notificationsStub.requests).toBe(0);
       cleanup();
@@ -79,7 +79,7 @@ describe('the reminder banner on Learn', () => {
     renderWithProviders(<ReminderNudge hold={false} store={memoryStore()} />);
     await screen.findByText(LINE);
     expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual(['Open phone settings', 'Close']);
-    // "Allow" and "Turn on" belonged to a banner that led to the phone's question
+    // "Allow" and "Turn on" belonged to a banner that led to the phone's question.
     expect(screen.queryByRole('button', { name: /allow|turn on/i })).toBeNull();
     expect(notificationsStub.requests).toBe(0);
   });
@@ -110,7 +110,7 @@ describe('the reminder banner on Learn', () => {
     expect(screen.queryByText(LINE)).toBeNull();
     cleanup();
 
-    // a guest has no birth month, so the server does not call one a minor; nothing is sent to one either
+    // A guest has no birth month, so the server does not call one a minor; nothing is sent to guests either.
     testAuth.client = fakeClient({ 'GET /me': ok({ user: { minor: false, guest: true } }) });
     renderWithProviders(<ReminderNudge hold={false} store={memoryStore()} />);
     await settle();

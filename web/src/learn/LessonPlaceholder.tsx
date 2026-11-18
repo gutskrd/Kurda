@@ -4,23 +4,10 @@ import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * A lesson, before it is here: the frame the lesson will stand in, drawn at
- * once, with only the exercise still to come.
- *
- * Opening a lesson used to show three different waits one after another — a
- * page heading's two grey bars while the lesson's code arrived, then a spinner
- * alone on an empty screen while its session was asked for, then the lesson.
- * Each was a different picture of the same wait, and none of them looked like
- * what was coming. This is one picture for all of it, made of the lesson's own
- * parts and their own class names (styles/learn.css), so nothing moves when
- * the real thing takes its place: the ✕ where the ✕ is — and it works, the way
- * out is never something to wait for — the progress track empty beside it, the
- * line of the lesson's name over the shape of a question and its answers, and
- * the bar at the foot with the place of its one button.
- *
- * It is what the lesson's shell shows while a lesson's or a review's code is
- * on its way (layouts/FocusLayout.tsx), and what the pages themselves show
- * while their session is (pages/Lesson.tsx, Review.tsx, NextLesson.tsx).
+ * A lesson before it arrives, drawn from the lesson's own parts and class names (styles/learn.css) so nothing moves when
+ * it lands: a working ✕, the empty progress track, the title line over the shape of a question and answers, and the
+ * action bar. Shown by the lesson shell while the code loads (layouts/FocusLayout.tsx) and by the pages while their
+ * session loads (pages/Lesson.tsx, Review.tsx, NextLesson.tsx).
  */
 export function LessonPlaceholder({ label, exitTo = '/app/learn' }: { label: string; exitTo?: string }): React.JSX.Element {
   const t = useT();
@@ -35,7 +22,7 @@ export function LessonPlaceholder({ label, exitTo = '/app/learn' }: { label: str
             <div className="lesson-progress" aria-hidden="true" />
           </div>
         </header>
-        {/* said once, as loading; the boxes inside are not read out */}
+        {/* Announced once as loading; the boxes are not read out. */}
         <SkeletonRegion label={label} className="lesson-stage">
           <p className="lesson-kicker">
             <Skeleton line w="24%" />

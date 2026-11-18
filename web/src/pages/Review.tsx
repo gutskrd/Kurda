@@ -10,9 +10,9 @@ import { PRACTICE_PATHS, SessionPlayer } from '../learn/SessionPlayer';
 import type { EmptyPractice, PracticeSessionView } from '../learn/types';
 
 interface Passed {
-  /** "practise these now": the exercises to practise, from a results screen */
+  /** "Practise these now": the exercises to practise, from a results screen. */
   exerciseIds?: string[];
-  /** the session just started, handed to its own address so it is not fetched twice */
+  /** The session just started, handed to its own address so it is not fetched twice. */
   session?: PracticeSessionView;
 }
 
@@ -25,18 +25,11 @@ function passedState(state: unknown): Passed {
 }
 
 /**
- * Review (/app/learn/review): a practice session over what is due, played in
- * the lesson player. Starting one asks the server for the items — the due ones
- * first, padded with the weakest — or, from a results screen, exactly the
- * mistakes just made. The session then gets its own address
- * (/app/learn/review/:sessionId), so leaving and coming back, or a reload,
- * picks it up where it stopped instead of starting another.
- *
- * Both addresses render this same element, so the router keeps one instance
- * across them; keyed by the session (or, before there is one, by the visit),
- * each is a page of its own. Otherwise the session just started was fetched
- * again under its new address, and "practise these now" at the end of a
- * review reopened the review it came from instead of starting one.
+ * Review (/app/learn/review): a practice session in the lesson player over what is due (padded with the weakest
+ * items), or from a results screen exactly the mistakes just made. The session then gets its own address
+ * (/app/learn/review/:sessionId), so leaving or reloading resumes it. Both addresses render this element, keyed by
+ * session (or by visit before one exists), so a new session is not fetched again and "practise these now" starts a new
+ * review.
  */
 export function Review(): React.JSX.Element {
   const { sessionId } = useParams();
@@ -56,7 +49,7 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
   const [empty, setEmpty] = useState<EmptyPractice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  // one start per attempt, even when an effect runs twice
+  // One start per attempt, even when an effect runs twice.
   const started = useRef<number | null>(null);
   const exerciseIds = passed.exerciseIds;
 
@@ -90,8 +83,8 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
         }
         navigate(`/app/learn/review/${res.data.sessionId}`, { replace: true, state: { session: res.data } });
       });
-    // `view` and the passed ids are read, not followed: the session in hand is
-    // not a reason to fetch it again, and a start happens once per attempt
+    // `view` and the passed ids are read, not followed: having the session is no reason to refetch, and a start happens
+    // once per attempt.
   }, [sessionId, attempt, client, navigate, t]);
 
   if (error) {
@@ -120,7 +113,7 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
       </div>
     );
   }
-  // a review is played in the lesson's frame, so that frame is what waits for it
+  // A review plays in the lesson's frame, so that frame is what waits for it.
   if (!view) return <LessonPlaceholder label={t('review.loading')} />;
   return (
     <SessionPlayer

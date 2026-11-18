@@ -34,15 +34,11 @@ export interface SendGiftInput {
   fromId: string;
   toIds: readonly string[];
   sku: string;
-  /**
-   * Where the gift is posted: the direct message with its one recipient, or a
-   * group's channel. Null from the shop, where it goes to the direct message
-   * with its one recipient too — every gift lives in a chat.
-   */
+  /** Where the gift is posted: a direct message or a group's channel. Null from the shop, which posts to the direct message. */
   chat: GiftChatRef | null;
   /** the request's retry key; each recipient's gift is keyed `${key}:${recipient}` */
   idempotencyKey: string;
-  /** the price the sender was shown; refused if it has changed */
+  /** The price the sender was shown; refused if it has changed. */
   expectedPrice?: number;
 }
 
@@ -67,9 +63,9 @@ export interface GiftDeps {
   groupChat: GroupChatService;
   realtime: GiftRealtime;
   inbox?: { record(userId: string, notification: Notification): Promise<void> };
-  /** the escalation mute (KUR-086), which a gift answers to as a message does */
+  /** The escalation mute, which applies to a gift as to a message. */
   moderation?: { isChatMuted(userId: string): Promise<boolean> };
-  /** the badges, told a gift was given (Diyarî) */
+  /** The badges, told a gift was given (Diyarî). */
   badges?: { onGiftSent(fromUserId: string): Promise<void> };
   log?: { warn: (obj: unknown, msg: string) => void };
 }
@@ -89,11 +85,11 @@ interface Posted {
 
 /** What one send settled, inside its transaction, for the work after it. */
 interface Settled {
-  /** every recipient already had this request's gift: nothing was done */
+  /** Every recipient already had this request's gift, so nothing was done. */
   replay: boolean;
   batchId: string;
   item: SendGiftOutcome['item'];
-  /** recipients who have this request's gift, in the order asked — the earlier attempts' too */
+  /** Recipients who have this request's gift, in the order asked, earlier attempts included. */
   sent: string[];
   /** recipients given it by this call, with their gift's id */
   given: Array<{ toId: string; giftId: string }>;
@@ -102,42 +98,21 @@ interface Settled {
 }
 
 /**
- * Gifts: an item from the shop, bought for friends, that arrives in a chat as
- * a wrapped present (shared `gifts.ts` for what this is careful about).
+ * Gifts: a shop item bought for friends that arrives in a chat as a wrapped present. Every entry point (the shop's
+ * gift button, a direct message, a group) goes through one set of rules:
  *
- * One way to send for every door — the shop's gift button, and the gift
- * button in a direct message or a group — so there is one set of rules:
+ * - Friends only, refused outright otherwise, as a direct message is.
+ * - A day of friendship first when either side is not a known adult, against the "add, gift, groom" pattern.
+ * - Daily caps per sender and per pair over the last 24 hours, and per recipient from everyone together
+ *   (`GIFTS_RECEIVED_PER_DAY`), so throwaway accounts cannot pour items into one account.
+ * - Not from an account paused from moving value (economy/standing.ts): 403 GIFTS_PAUSED.
+ * - Never currency: a gift is an item, and purchases are final, so it cannot move currency between accounts.
+ * - Not a unique item the recipient owns, decided under `lockEntitlement` so two friends gifting it cannot both win.
+ * - Never free, or it would be an unlimited free way to put a notification in front of someone.
+ * - Not while muted from chat, with the same answers as a message (403 MUTED, then CHAT_MUTED).
  *
- * - **Friends only.** Anyone else is refused outright, as a direct message is.
- * - **A day of friendship first**, between anyone who is not a known adult:
- *   the "add, gift, groom" pattern is the one a fresh friendship allows. The
- *   minor rules mean every such friendship is one the minor started, which
- *   is why it is a wait rather than a refusal.
- * - **A daily cap**, per sender and per pair, over the last 24 hours rather
- *   than since midnight — midnight is the sender's, and the cap is for the
- *   recipient. A gift is a present, not a stream. And one per recipient,
- *   from everyone together (`GIFTS_RECEIVED_PER_DAY`), so a farm of
- *   throwaway accounts cannot pour items into one main account.
- * - **Not from an account paused from moving value** — a confirmed bot, or
- *   one on a payment-fraud hold (economy/standing.ts): 403 GIFTS_PAUSED.
- * - **Never currency.** A gift is an item; nothing turns it back into Zêr or
- *   Gewher (purchases are final, and there is no return), so a gift can
- *   never be a way to move currency between accounts.
- * - **Not something they own already** (a unique item), decided under a lock
- *   (`lockEntitlement`) so two friends gifting it at once cannot both win.
- * - **Never free.** A price-0 item cannot be gifted: it would be a way to put
- *   a notification in front of someone at no cost and without limit.
- * - **Not while muted from chat.** A gift is a message in the chat, so a chat
- *   mute stops it as it stops text, with the same answer (403 MUTED and until
- *   when, then the escalation mute's CHAT_MUTED) — otherwise someone muted for
- *   harassing a person could keep putting things in front of them.
- *
- * A friend a rule turns away is skipped, and the answer says which and why
- * (they are friends of the sender, so saying is safe); the rest still get it.
- * Everything that changes — the debits, the items, the gift rows, the chat
- * message — is one transaction: a gift happens completely or not at all.
- * Telling people (realtime, the inbox) happens after it commits, and a
- * failure there never undoes a present.
+ * A friend a rule turns away is skipped and the answer says why; the rest still get it. The debits, items, gift
+ * rows and chat message are one transaction. Notifying happens after the commit, and its failure never undoes a gift.
  */
 export class GiftService {
   constructor(
@@ -157,8 +132,7 @@ export class GiftService {
     if (chat?.kind !== 'group' && (toIds.length !== 1 || (chat?.kind === 'dm' && chat.userId !== toIds[0]))) {
       throw new AppError('BAD_RECIPIENTS', 400, 'a gift here goes to the one friend you are talking to');
     }
-    // muted from chat: refused as a message would be (a group's own rules,
-    // the escalation mute among them, are asked by assertCanPost below)
+    // Muted from chat is refused as a message would be; the group's own rules are checked by assertCanPost below.
     await assertUnrestricted(this.pool, fromId, 'chat');
     if (chat?.kind !== 'group' && this.deps.moderation && (await this.deps.moderation.isChatMuted(fromId))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
@@ -171,8 +145,7 @@ export class GiftService {
       throw new AppError('NOT_FRIENDS', 403, 'you can only send gifts to friends');
     }
 
-    // In a group the gift is a message in its channel: the sender must be able
-    // to post there, and each recipient must be someone who reads it.
+    // In a group the gift is a channel message, so the sender must be able to post and each recipient must read it.
     const outsideGroup = new Set<string>();
     if (chat?.kind === 'group') {
       await this.deps.groupChat.assertCanPost(chat.groupId, fromId);
@@ -184,11 +157,8 @@ export class GiftService {
 
     const settled = await this.settle(input, toIds, outsideGroup, now);
 
-    // Telling people comes straight after the commit, and on its own. The
-    // gift has happened, and a retry of this request replays it without
-    // telling anyone, so nothing the sender's answer needs (their balance,
-    // their view of the message) may fail first and leave the friends never
-    // told of a present that is theirs.
+    // Notify straight after the commit, before anything else can fail: a retry replays the gift without notifying, so a
+    // failure first would leave friends never told of a present that is theirs.
     if (settled.given.length > 0) {
       await this.deliver(settled, input).catch((err) =>
         this.deps.log?.warn({ err, batchId: settled.batchId }, 'a gift was given but telling people failed'),
@@ -222,25 +192,18 @@ export class GiftService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      // One send at a time per sender. The daily cap is a count, and two sends
-      // counted side by side would both fit under it; a retry arriving while
-      // its first attempt is still running waits here, then finds that
-      // attempt's gifts below instead of failing on them.
+      // One send at a time per sender, so two sends cannot both fit under the daily cap; a retry arriving mid-attempt
+      // waits here and then finds that attempt's gifts.
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`gift-send:${fromId}`]);
 
-      // Before anything else: which of these recipients already have this
-      // request's gift? A retry must be recognised first, or the owns-it check
-      // would report that a friend owns the very item the first try gave them.
+      // Recognise a retry first, or the owns-it check would report a friend owning the item the first try gave them.
       const prior = await client.query<{ to_user_id: string; batch_id: string; sku: string }>(
         `SELECT to_user_id, batch_id, sku FROM gifts
           WHERE from_user_id = $1 AND idempotency_key = ANY($2::text[])`,
         [fromId, toIds.map((to) => recipientKey(idempotencyKey, to))],
       );
-      // A retry is the same request: the same item, one gift it made, and the
-      // same chat. A key matched on its own would let a send in one chat add
-      // friends to a gift posted in another — listed on a card in a chat they
-      // are not in, to people who may not see their name, and told of a gift
-      // in a chat that never got its message.
+      // A retry must match the item, the one gift it made and the chat; a key alone would let a send in one chat add
+      // friends to a gift posted in another.
       const reused = () => new AppError('IDEMPOTENCY_REUSED', 409, 'that request key was already used');
       if (prior.rows.some((r) => r.sku !== sku)) throw reused();
       if (new Set(prior.rows.map((r) => r.batch_id)).size > 1) throw reused();
@@ -254,7 +217,7 @@ export class GiftService {
       if (!item) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
       const summary = { sku: item.sku, name: item.name, price: item.price, currency: item.currency };
 
-      // a full replay: the stored result, whatever the catalog says now
+      // A full replay: the stored result, whatever the catalogue says now.
       if (toIds.every((to) => had.has(to))) {
         await client.query('COMMIT');
         return { replay: true, batchId, item: summary, sent: toIds, given: [], skipped: [], posted: null };
@@ -278,17 +241,9 @@ export class GiftService {
         return allowed;
       });
 
-      // Each recipient's item is changed under its lock, all of them taken
-      // here and in one order (by id). For something there is only one of,
-      // that is what makes "they own it already" true when it is decided. For
-      // anything else it is what keeps two people giving the same thing to
-      // the same friends, listed the other way round, from each holding one
-      // friend's item while waiting for the other's: a deadlock, and a gift
-      // that fails. The grants below can then go in the order asked.
-      //
-      // The recipient's day of gifts is held first, in the same order: two
-      // senders gifting one person at the same moment would otherwise both
-      // count the day before the other's gift and both fit under its cap.
+      // Each recipient's items are locked here in one order (by id), so "they own it already" holds when decided, and two
+      // people giving the same thing to the same friends in opposite order cannot deadlock. The recipient's day of gifts
+      // is locked first in the same order, so two senders cannot both fit under its cap.
       for (const to of [...candidates].sort()) {
         await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`gift-received:${to}`]);
         await lockEntitlement(client, to, sku);
@@ -346,8 +301,7 @@ export class GiftService {
       const given: Settled['given'] = [];
       for (const to of candidates) {
         const giftId = randomUUID();
-        // the ledger says 'gift', so gifts can be told from purchases; one
-        // debit per recipient, each with its own key, so a retry pays nothing
+        // Ledger reason 'gift' tells gifts from purchases; one debit per recipient with its own key, so a retry pays nothing.
         const debit = await this.deps.wallet.debitWithin(client, {
           userId: fromId,
           currency: item.currency,
@@ -363,8 +317,7 @@ export class GiftService {
            ON CONFLICT (user_id, sku) DO UPDATE SET quantity = user_entitlements.quantity + 1`,
           [to, sku],
         );
-        // clock_timestamp, not now(): the recipients of one gift keep the order
-        // they were given it in, which is the order its card lists them in
+        // clock_timestamp, not now(), keeps recipients in the order given, which is the order the card lists them.
         await client.query(
           `INSERT INTO gifts (id, from_user_id, to_user_id, sku, price, currency, idempotency_key, batch_id, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, clock_timestamp())`,
@@ -373,9 +326,8 @@ export class GiftService {
         given.push({ toId: to, giftId });
       }
 
-      // One message for the whole send, when this call is the one that made the
-      // batch. A retry that reaches a friend the first attempt skipped adds
-      // them to the batch, and the message already there shows them.
+      // One message per send, posted by the call that made the batch; a retry reaching a skipped friend joins the batch
+      // and the existing message shows them.
       let posted: Posted | null = null;
       if (given.length > 0 && prior.rows.length === 0) posted = await this.post(client, fromId, given[0]!.toId, chat, batchId);
 
@@ -399,12 +351,9 @@ export class GiftService {
   }
 
   /**
-   * Of these friends, the ones a gift cannot pass to yet: the friendship is
-   * younger than `GIFT_MIN_FRIENDSHIP_HOURS` and the sender or the friend is
-   * not a known adult (a minor, or someone whose age is not on record) —
-   * measured from when it was accepted, or made if that was never recorded.
-   * And, read here inside the transaction, any who stopped being a friend
-   * since the check at the door.
+   * The friends a gift cannot reach yet: the friendship is younger than `GIFT_MIN_FRIENDSHIP_HOURS` (from acceptance,
+   * or creation if unrecorded) and either side is not a known adult. Also, read inside the transaction, anyone who
+   * stopped being a friend since the check at the door.
    */
   private async notYetAllowed(client: pg.PoolClient, fromId: string, toIds: string[]): Promise<Set<string>> {
     if (toIds.length === 0) return new Set();
@@ -497,14 +446,9 @@ export class GiftService {
   }
 
   /**
-   * After the commit: the message where it was posted, a `gift_received` to
-   * each recipient with their own card, and a line in their notifications.
-   *
-   * A group room is read by everyone in it at once, so the card published
-   * there is no one's in particular (nobody is "me" on it); each recipient's
-   * own card — theirs to open — comes with their `gift_received`. Names on the
-   * room's card are safe for every member: a recipient has to be a member, and
-   * the members of a group see one another.
+   * After the commit: the message where it was posted, a `gift_received` with their own card to each recipient, and a
+   * notification. The card published to a group room is nobody's in particular; names on it are safe for every
+   * member, since recipients are members and members see one another.
    */
   private async deliver(settled: Settled, input: SendGiftInput): Promise<void> {
     const { fromId, chat } = input;
@@ -516,8 +460,7 @@ export class GiftService {
     if (settled.posted && chat?.kind === 'group') {
       const roomCard = await this.card(settled.batchId, { id: null, seesEveryone: true });
       const message = this.message(settled.posted, fromId, sender, roomCard, 'group');
-      // a message in the channel like any other, so it is kept from the
-      // members with a block between them and the sender, as a message is
+      // A channel message like any other, so it is kept from members with a block between them and the sender.
       await this.deps.groupChat
         .hiddenFrom(chat.groupId, fromId)
         .then((hidden) =>
@@ -532,7 +475,7 @@ export class GiftService {
     }
 
     for (const { toId, giftId } of settled.given) {
-      // in a direct message the two are the pair; in a group every recipient is a member, and members see one another
+      // In a direct message the two are the pair; in a group every recipient is a member, and members see one another.
       const card = await this.card(settled.batchId, { id: toId, seesEveryone: true });
       if (!card) continue;
       if (settled.posted && !inGroup) {
@@ -571,13 +514,9 @@ export class GiftService {
   }
 
   /**
-   * The recipient unwraps their gift: it is opened (and seen, which clears the
-   * badge), and the card comes back with what they can put on. The sender
-   * hears about it once — `gift_opened` on their own channel, unless a block
-   * now stands between them — and so does a group the gift is in
-   * (`group_msg_gift_opened {groupId, messageId, batchId}`), so every
-   * member's card can show it; the card itself is per viewer, so members
-   * fetch theirs (`GET /gifts/batches/:batchId`) rather than being sent one.
+   * The recipient unwraps their gift: it is opened and seen, and the card comes back with what they can wear. The
+   * sender hears once (`gift_opened`, unless a block now stands between them), and a group gets
+   * `group_msg_gift_opened {groupId, messageId, batchId}` so members refetch their per-viewer cards.
    */
   async open(userId: string, giftId: string): Promise<{ card: GiftCard; equippable: EquippableCategory | null }> {
     const opened = await this.pool.query<{ batch_id: string; from_user_id: string | null }>(
@@ -606,9 +545,7 @@ export class GiftService {
       const warn = (err: unknown) => this.deps.log?.warn({ err, giftId }, 'gift opened, but telling people failed');
       const from = first.from_user_id;
       if (from) {
-        // Not when a block now stands between the two of them: opening a
-        // present is the recipient's activity, which a block keeps from the
-        // other side. Silently, as a block is — the gift opens all the same.
+        // Not across a block: opening is the recipient's activity, which a block hides. Silently; the gift opens anyway.
         const event: GiftUserEvent = { type: 'gift_opened', batchId, giftId };
         await this.deps.friends
           .areBlocked(userId, from)
@@ -630,16 +567,10 @@ export class GiftService {
   }
 
   /**
-   * One gift card, for someone who can see the message it is on: its sender,
-   * a recipient, or someone who reads the group it was posted in. Anyone else
-   * is told there is no such gift.
-   *
-   * A gift between two people — in their direct messages, or from the shop
-   * before gifts were in the chat — is part of their conversation, and a
-   * block between them hides it from both as it hides the thread: otherwise
-   * the person blocked could keep asking for the card, and read on it the
-   * other's name, current picture, and whether they have opened it. A group's
-   * gifts follow the group, which a block between two members does not hide.
+   * One gift card for someone who can see its message: the sender, a recipient, or a reader of its group; anyone else
+   * is told there is no such gift. A gift between two people is part of their conversation, so a block hides it from
+   * both, or the blocked person could keep reading the other's name, picture and whether they opened it. Group gifts
+   * follow the group, which a block between members does not hide.
    */
   async batchCard(viewerId: string, batchId: string): Promise<GiftCard> {
     const rows = await this.pool.query<{ from_user_id: string | null; to_user_id: string }>(
@@ -662,7 +593,7 @@ export class GiftService {
     return card;
   }
 
-  /** The roster rule for a card: everyone in a direct message, and to a member of the group it was posted in. */
+  /** The roster rule for a card: everyone in a direct message, and members of the group it was posted in. */
   private async seesEveryone(where: Awaited<ReturnType<typeof batchChat>>, viewerId: string): Promise<boolean> {
     if (where?.kind !== 'group') return true;
     const r = await this.pool.query<{ sees: boolean }>(
@@ -673,10 +604,8 @@ export class GiftService {
   }
 
   /**
-   * What the sender can give these friends: everything on sale now with a
-   * price, and for something there is only one of, which of them own it
-   * already — so the picker can say so instead of the send refusing. Friends
-   * only, like sending; the sender's balance rides along.
+   * What the sender can give these friends: everything on sale with a price, and for unique items which friends own
+   * them already, so the picker can say so. Friends only, with the sender's balance.
    */
   async catalog(
     fromId: string,
@@ -729,15 +658,10 @@ function giftNotFound(): AppError {
 }
 
 /**
- * Is a gift posted at `where` one this send could have made — the same group,
- * or (a direct message, or the shop, which posts to one) the same two people?
- *
- * A gift with no message is from before gifts had them, when only the shop
- * gave them, or its message has gone since (with its group, or with a closed
- * child's messages). A direct-message send may be its retry: it has the one
- * recipient, who has the gift already, so all a retry can do is answer from
- * it. A group's send cannot, as it could add people to a gift whose chat is
- * not this one.
+ * Whether a gift posted at `where` is one this send could have made: the same group, or the same two people for a
+ * direct message or the shop. A gift with no message predates gift messages or lost it with its group or a closed
+ * child's messages; a direct-message send may still be its retry, since it has the one recipient, but a group send
+ * may not, as it could add people to a gift in another chat.
  */
 function postedIn(where: BatchChat | null, chat: GiftChatRef | null, fromId: string, toId: string): boolean {
   if (chat?.kind === 'group') return where?.kind === 'group' && where.groupId === chat.groupId;

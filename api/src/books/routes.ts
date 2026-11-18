@@ -1,13 +1,11 @@
 /**
- * The Hevalo book, for anyone to download: the chapters of the road that are
- * online, and nothing ahead of them.
+ * The Hevalo book, for anyone to download: the road's online chapters and nothing ahead of them.
  *
  *   GET /books/road        which chapters the book holds today ({ chapters: [1, 2] })
  *   GET /books/road.pdf    the book itself (?chapter=N for that chapter alone, when it is online)
  *
- * A book is made once for each set of chapters and kept in memory: the files
- * it is made from change only with a deploy, and a chapter going online makes
- * a new set. A road with nothing online yet has no book.
+ * Each set of chapters is made once and kept in memory: the source files change only with a deploy, and a chapter going
+ * online makes a new set. A road with nothing online has no book.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';

@@ -21,14 +21,9 @@ import type { MessageKey } from '../i18n/en';
 import { lastAnswer, remember } from '../lib/apiMemory';
 
 /**
- * The letter's paper in the browser: what the composer keeps while a letter
- * is made, and the few sums the sheet needs — where a pointer is on the page,
- * how much more drawing a letter can carry, where a new note goes.
- *
- * The page itself, its limits and its colours are the shared contract
- * (shared/src/letter-paper.ts). A letter is laid out in the page's own units,
- * PAPER_W across whatever size it shows at, so a flower drawn beside a word
- * on a wide screen is beside the same word on a phone.
+ * The composer's paper state and arithmetic: pointer positions, remaining drawing capacity, and new note placement.
+ * The page, limits and colours come from shared/src/letter-paper.ts; everything is in page units (PAPER_W wide), so a
+ * drawing lines up with the words at any size.
  */
 
 /** What the composer can undo: the lines drawn and the notes placed. The paper is a choice made again, not a step to take back. */
@@ -59,10 +54,8 @@ export function pointsUsed(strokes: readonly PaperStroke[]): number {
 }
 
 /**
- * How many more points a new line may have before the letter could not carry
- * it: the points left under the limit, and — near the size limit, which a
- * drawing reaches first when it is mostly long lines — about as many as the
- * bytes left would hold, at the ten or so each point costs.
+ * How many more points a new line may have: the points left under the limit, capped near the size limit by the bytes
+ * left at about ten per point.
  */
 export function pointsLeft(decor: LetterDecor): number {
   if (decor.strokes.length >= DECOR_STROKES_MAX) return 0;
@@ -105,12 +98,8 @@ export const DECOR_PROBLEM: Readonly<Record<DecorProblem, MessageKey>> = {
 };
 
 /**
- * The paper the composer opens on when the page that holds it does not say:
- * the one last written on. The letters page learns it from the server (the
- * paper you last wrote on) and every letter sent sets it, so a
- * correspondence opened from there starts on your own paper too. It is kept
- * with the tab's other answers (lib/apiMemory.ts), so it belongs to the
- * account it was learned for and goes when that account signs out.
+ * The default paper when the page does not specify one: the last written on, learned from the server and set by each
+ * sent letter. Kept in the tab's API memory (lib/apiMemory.ts), so it is cleared on sign-out.
  */
 const PAPER_KEY = '#letters/paper';
 

@@ -1,8 +1,4 @@
-/**
- * Days learned and freezes earned by learning (StreakService) against real
- * Postgres: what a run of finished sessions leaves on the row, and what /me
- * shows of it.
- */
+/** Days learned and freezes earned by learning, against real Postgres: what finished sessions leave on the row and what /me shows. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -85,7 +81,7 @@ describe.skipIf(!DATABASE_URL)('learning streak (integration)', () => {
       headers: { authorization: `Bearer ${token}` },
       remoteAddress: '10.142.0.2',
     });
-    // …so the current streak starts again while the other two keep what was done
+    // …so the current streak restarts while the other two keep what was done.
     expect(me.json().user.streak).toMatchObject({ longest: 5, daysLearned: 5 });
     expect(me.json().user.streak.current).toBeLessThanOrEqual(1);
   });
@@ -107,7 +103,7 @@ describe.skipIf(!DATABASE_URL)('learning streak (integration)', () => {
     expect(after).toMatchObject({ current: 4, freezeUsedOn: shiftDate(today, -1) });
   });
 
-  /** Ten sessions, one a day from the 1st of August: enough learning for two freezes, if there is room for two. */
+  /** Ten sessions, one a day from 1 August: enough for two freezes if there is room for two. */
   const tenDays = async (id: string) => {
     let last = await streaks.recordActivity(id, 'UTC', at('2026-08-01'));
     for (let i = 1; i < 10; i++) last = await streaks.recordActivity(id, 'UTC', at(shiftDate('2026-08-01', i)));

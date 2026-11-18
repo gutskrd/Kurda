@@ -1,12 +1,9 @@
 /**
- * The starter library: each learning game's first set of rows, made once from
- * the course Hevalo ships and put straight in front of learners, so that a
- * game can be played the day it is installed rather than the day somebody has
- * approved several hundred cards one at a time.
+ * The starter library: each learning game's first rows, made once from the course Hevalo ships and published at once,
+ * so games are playable on install rather than after hundreds of cards are approved by hand.
  *
- * What it makes, per variety, from the lessons and stories as they stand
- * (`TrustedSources` in its `course` scope: every lesson and story that is not
- * archived, published or not yet):
+ * Made per variety from the lessons and stories as they stand (`TrustedSources` `course` scope: every non-archived
+ * lesson and story, published or not):
  *
  *   passage        The Memory Thief          stories' paragraphs, and conversations a few lines at a time
  *   word_card      Impostor          the course's words, sorted into the starter categories
@@ -14,29 +11,20 @@
  *   identity       Who Am I?                 the course's words for the things the starter table knows
  *   sentence       Build a Sentence  the lessons' sentences, for the lessons' practice
  *
- * Who Am I?'s cards and questions then come from its curated deck
- * (who-am-i-deck.ts), seeded right after the library: it replaces the cards
- * made here that nobody has touched, and a variety whose deck is in is made
- * no more cards from the course's glosses, however late its course arrives.
+ * Who Am I?'s cards and questions then come from its curated deck (who-am-i-deck.ts), seeded right after: it replaces
+ * untouched cards made here, and a variety with its deck in gets no more cards from course glosses.
  *
- * None of these rows holds Kurdish of its own. The words, lines and
- * paragraphs are copied from the course, as the admin panel's importers copy
- * them (content-drafts.ts makes both); the only Kurdish written for the games
- * is the starter categories' names and the starter questions of Who Am I?,
- * which are listed for a native speaker like any other new Kurdish.
+ * None of these rows holds Kurdish of its own: words, lines and paragraphs are copied from the course as the admin
+ * importers copy them (content-drafts.ts makes both). The only Kurdish written for the games is the starter category
+ * names and Who Am I?'s starter questions, listed for native review like any new Kurdish.
  *
- * The rows go in published (`source = 'starter'`, approved, with no reviewer
- * named: the admin panel shows such a row as not yet read by a person). The
- * same step publishes what was already waiting as an untouched draft: the
- * starter questions and the starter case, and anything an importer made that
- * nobody has opened since (`lock_version = 0`). A row a person has edited,
- * sent back, unpublished or archived is theirs and is left exactly as it is.
+ * Rows go in published (`source = 'starter'`, approved with no named reviewer, shown in the admin as unread). The same
+ * step publishes untouched waiting drafts (the starter questions and case, and anything an importer made that nobody
+ * has opened, `lock_version = 0`). A row a person edited, sent back, unpublished or archived is left exactly as it is.
  *
- * It runs once per variety: a row in `content_seeds` remembers it, so a row
- * an editor deletes afterwards stays gone, and nothing is published behind an
- * editor's back on a later start. A variety whose course is not in the
- * database yet makes nothing and is tried again on the next start. Nothing
- * here throws: a failure is logged and the API starts without it.
+ * Runs once per variety (remembered in `content_seeds`), so later deletions stay and nothing is published behind an
+ * editor's back on a later start. A variety whose course is not loaded yet makes nothing and is retried on the next
+ * start. Nothing here throws: a failure is logged and the API starts without it.
  */
 import type pg from 'pg';
 import type { FastifyBaseLogger } from 'fastify';

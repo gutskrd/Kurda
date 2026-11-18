@@ -22,8 +22,7 @@ import { postDeleted } from './postDeleted';
 import { pressedDim } from '../theme/motion';
 
 /**
- * The pieces of a post's own page that came with pictures on written posts:
- * the pictures as the grid takes them, the "Source / credit" line, and the
+ * The pieces of a written post's own page: its pictures as the grid takes them, the "Source / credit" line, and the
  * author's menu to edit or delete it.
  */
 
@@ -50,23 +49,20 @@ export function SourceCredit({ text }: { text: string }): React.JSX.Element {
 export type MenuPost = Pick<FeedItem, 'targetType' | 'id'> & { authorId: string };
 
 export interface PostMenu {
-  /** undefined on anybody else's post, so there is nothing to offer */
+  /** Undefined on anybody else's post, so there is nothing to offer. */
   open: (() => void) | undefined;
-  /** the menu while it is open; render it anywhere, it is a sheet over the screen */
+  /** The menu while it is open; it is a sheet over the screen, so it can render anywhere. */
   sheet: React.JSX.Element | null;
-  /** the same menu for a screen reader, as an action on whatever opens it */
+  /** The same menu for a screen reader, as an action on whatever opens it. */
   a11y: Pick<PressableProps, 'accessibilityActions' | 'onAccessibilityAction'>;
 }
 
 /**
- * Your own post's menu: Edit for a written post (a picture's caption is not
- * edited on the phone) and Delete, which asks first, since nothing brings a
- * post back. A deleted post leaves every list showing it (postDeleted.ts)
- * and `onDeleted` runs, so the page it was deleted from can close.
+ * Your own post's menu: Edit for a written post (captions are not edited on the phone) and Delete, which confirms
+ * first. A deleted post leaves every list showing it (postDeleted.ts) and `onDeleted` runs, so its page can close.
  *
- * `onActivate` is what the element carrying `a11y` does when tapped: naming
- * actions of its own takes over a screen reader's double tap as well, so the
- * tap is handed back to it (as NotificationRow does).
+ * `onActivate` is what the element carrying `a11y` does when tapped: custom actions take over a screen reader's double
+ * tap, so the tap is handed back (as NotificationRow does).
  */
 export function usePostMenu(
   post: MenuPost,
@@ -108,11 +104,8 @@ export function PostMenuButton({ post, onDeleted }: { post: MenuPost; onDeleted?
 }
 
 /**
- * The menu, from the bottom of the screen; Delete turns it into the question.
- *
- * Asked in the sheet itself rather than in an alert after it: an alert raised
- * while a sheet is still closing is dropped on iOS, and the Delete would seem
- * to do nothing.
+ * The menu from the bottom of the screen; Delete turns it into the question, in the sheet itself, since an alert raised
+ * while a sheet closes is dropped on iOS.
  */
 function PostMenuSheet({ post, onClose, onDeleted }: { post: MenuPost; onClose: () => void; onDeleted?: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -144,7 +137,7 @@ function PostMenuSheet({ post, onClose, onDeleted }: { post: MenuPost; onClose: 
   };
 
   return (
-    // not closed while the delete is on its way: closing then would hide whether it worked
+    // Not closed while the delete is on its way, which would hide whether it worked.
     <BottomSheet visible onClose={onClose} dismissible={!busy}>
       {confirming ? (
         <View style={styles.confirm}>
@@ -181,7 +174,7 @@ function MenuRow({ icon, label, danger = false, onPress }: { icon: IconName; lab
 const styles = StyleSheet.create({
   credit: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   creditText: { flex: 1, fontSize: typography.sizes.sm, fontStyle: 'italic' },
-  // the height GlassRow gives a row a thumb is meant to land on
+  // The height GlassRow gives a row meant for a thumb.
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52 },
   pressed: { opacity: pressedDim },
   rowText: { fontSize: typography.ios.row },

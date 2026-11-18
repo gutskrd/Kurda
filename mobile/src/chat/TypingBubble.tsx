@@ -13,33 +13,25 @@ import { typingLabel } from './typing';
 const TURN_MS = 1900;
 /** How long after the dot before it each one drops. */
 const STAGGER_MS = 200;
-/** The bubble's nod over one turn: a tilt as the first dot lands, back past level, and still before the dots go. */
+/** The bubble's nod over one cycle: a tilt as the first dot lands, back past level, and still before the dots go. */
 const NOD = { inputRange: [0, 0.16, 0.36, 0.56, 0.7, 1], outputRange: ['0deg', '-1.8deg', '1.3deg', '-0.6deg', '0deg', '0deg'] };
 
 /**
- * Somebody is writing: a bubble of their own, where their message is about
- * to land, with three dots dropping into it one after another.
- *
- * It was a grey line of italics over the composer, "rojda is typing…", which
- * is a sentence to read about a thing that can simply be seen. A bubble in
- * the thread is where the eye already is, and the dots say the rest. The
- * sentence is still there for a screen reader, announced when it changes, and
- * printed over the bubble in a group, where it matters who.
- *
- * The dots are a loop, so they run only while this screen is the one in
- * front and never for somebody who has asked for less motion: then the three
- * dots simply stand in the bubble.
+ * Somebody is typing: a bubble of their own where their message will land, with three dots dropping in one after
+ * another. The sentence is still announced for screen readers when it changes, and printed over the bubble in a
+ * group, where it matters who. The dots loop only while this screen is focused and motion is allowed; otherwise
+ * they stand still in the bubble.
  */
 export function TypingBubble({
   names,
   face,
   named = false,
 }: {
-  /** who is writing; nothing is drawn for nobody */
+  /** Who is writing; nothing is drawn for nobody. */
   names: readonly string[];
-  /** whose face stands beside the bubble: the one friend of a chat between two */
+  /** Whose face stands beside the bubble: the one friend of a chat between two. */
   face?: { id: string; name: string; photoUrl?: string | null };
-  /** print who over the bubble: a group, where there is more than one it could be */
+  /** Print who over the bubble: a group, where there is more than one it could be. */
   named?: boolean;
 }): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -54,7 +46,7 @@ export function TypingBubble({
       turn.setValue(0);
       return;
     }
-    // never an "interaction": a loop that held one would keep the thread's rows waiting to draw for as long as it ran
+    // Never an "interaction": a loop holding one would keep the thread's rows waiting to render while it ran.
     const loop = Animated.loop(Animated.timing(turn, { toValue: 1, duration: TURN_MS, easing: Easing.linear, useNativeDriver: true, isInteraction: false }));
     loop.start();
     return () => {
@@ -81,7 +73,7 @@ export function TypingBubble({
             {label}
           </Text>
         ) : null}
-        {/* the bubble nods as each dot lands in it, turning about the corner its tail is at */}
+        {/* The bubble nods as each dot lands in it, turning about the corner its tail is at. */}
         <Animated.View
           accessible={!named}
           accessibilityLabel={named ? undefined : label}
@@ -102,16 +94,15 @@ export function TypingBubble({
 }
 
 /**
- * One dot of the three. It falls into place from above, lands a little
- * squashed, settles, waits for the others and shrinks away: the same turn
- * for each, begun `delay` of a turn later.
+ * One of the three dots: it drops in from above, lands slightly squashed, settles, waits, and shrinks away, each
+ * `delay` of a cycle after the last.
  */
 function Dot({ turn, delay, still, color }: { turn: Animated.Value; delay: number; still: boolean; color: string }): React.JSX.Element {
   if (still) return <View style={[styles.dot, styles.dotStill, { backgroundColor: color }]} />;
-  // the points of the turn this dot moves at, each `delay` later than the first dot's
+  // The points of the turn this dot moves at, each `delay` later than the first dot's.
   const at = (share: number): number => Math.min(1, delay + share * (1 - 2 * (STAGGER_MS / TURN_MS)));
   const inputRange = [0, at(0), at(0.16), at(0.26), at(0.36), at(0.74), at(0.9), 1];
-  // a range has to climb: the first dot has no wait before it, so its first two points are the same one
+  // Interpolation input must increase: the first dot has no wait, so its first two points coincide.
   const range = inputRange.map((v, i) => v + i * 1e-4);
   return (
     <Animated.View

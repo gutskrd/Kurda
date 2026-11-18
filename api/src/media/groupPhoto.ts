@@ -12,17 +12,14 @@ export type SetGroupPhotoResult =
 
 const refuse = (status: number, code: string, message: string): SetGroupPhotoResult => ({ ok: false, status, code, message, reason: code.toLowerCase() });
 const noSuchGroup = (): SetGroupPhotoResult => refuse(404, 'GROUP_NOT_FOUND', 'no such group');
-/** Why this person may not change the picture: not in the group, it does not exist for them; in it, they are not its owner or an admin. */
+/** Why this person may not change the picture: a non-member gets "no such group", a member that they are not owner or admin. */
 const notAllowed = (role: string | null): SetGroupPhotoResult =>
   role === null ? noSuchGroup() : refuse(403, 'NOT_GROUP_ADMIN', 'only the owner and admins can change the group');
 
 /**
- * Put up a group's picture: every guard a profile photo goes through
- * (`storeScannedPhoto`), then a swap with the group row locked that checks
- * again that the person is still the group's owner or one of its admins, sets
- * the picture and who put it up, confirms the new object and un-confirms the
- * old one. The replaced object is deleted unless another group shows the same
- * picture or a report is holding it as evidence.
+ * Puts up a group's picture: every profile-photo guard (`storeScannedPhoto`), then a swap with the group row locked
+ * that rechecks the person is owner or admin, sets the picture and who put it up, and confirms the new object while
+ * unconfirming the old. The replaced object is deleted unless another group shows it or a report holds it as evidence.
  */
 export async function setGroupPhoto(deps: ProfilePhotoDeps, groupId: string, actorId: string, raw: Buffer): Promise<SetGroupPhotoResult> {
   const { pool, storage, log } = deps;
@@ -43,7 +40,7 @@ export async function setGroupPhoto(deps: ProfilePhotoDeps, groupId: string, act
   return { ok: true, photoUrl: storage.publicUrl(stored.key), reused: false };
 }
 
-/** Take the group's picture down, back to its initials. The same people may, and the same care is taken over the object. */
+/** Takes the group's picture down, back to its initials, with the same permissions and the same care over the object. */
 export async function clearGroupPhoto(
   deps: Pick<ProfilePhotoDeps, 'pool' | 'storage' | 'usage' | 'log'>,
   groupId: string,
@@ -85,7 +82,7 @@ async function roleIn(executor: Pick<pg.Pool, 'query'>, groupId: string, userId:
   return role && isRole(role) ? role : null;
 }
 
-/** Confirm the new picture and set it, with the group row locked and the person's right to do it asked again. */
+/** Confirms and sets the new picture with the group row locked, rechecking the person's right to do it. */
 async function swap(
   pool: pg.Pool,
   groupId: string,
@@ -97,7 +94,7 @@ async function swap(
     await client.query('BEGIN');
     const g = await client.query<{ photo_key: string | null; archived_at: Date | null }>(`SELECT photo_key, archived_at FROM groups WHERE id = $1 FOR UPDATE`, [groupId]);
     const group = g.rows[0];
-    // removed, demoted or the group archived while the picture was being checked: the new object is left to the orphan job
+    // Removed, demoted or archived meanwhile: the new object is left to the orphan job.
     if (!group || group.archived_at) {
       await client.query('ROLLBACK');
       return { ok: false, refusal: noSuchGroup() };
@@ -121,7 +118,7 @@ async function swap(
   }
 }
 
-/** Un-confirm a replaced picture so it leaves the storage total and the orphan job reclaims it — unless another group still shows it. */
+/** Unconfirms a replaced picture so it leaves the storage total and the orphan job reclaims it, unless another group shows it. */
 export async function unconfirmIfUnused(executor: Pick<pg.Pool, 'query'>, key: string | null): Promise<void> {
   if (!key) return;
   const stillUsed = await executor.query(`SELECT 1 FROM groups WHERE photo_key = $1 LIMIT 1`, [key]);
@@ -129,7 +126,7 @@ export async function unconfirmIfUnused(executor: Pick<pg.Pool, 'query'>, key: s
   await executor.query(`UPDATE media_uploads SET confirmed_at = NULL, created_at = now() WHERE key = $1`, [key]);
 }
 
-/** Delete a replaced picture now, unless a group still shows it or a report's evidence holds it; the orphan job retries a failure. */
+/** Deletes a replaced picture now unless a group shows it or a report holds it; the orphan job retries a failure. */
 async function dropIfUnused(
   pool: Pick<pg.Pool, 'query'>,
   storage: MediaStorage,

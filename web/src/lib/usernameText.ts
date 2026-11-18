@@ -1,18 +1,10 @@
 import { USERNAME_MAX, USERNAME_MIN, refusedChars, type UsernameReason } from '@kurda/shared';
-import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
- * A username turned down, in the reader's words: one sentence per rule of
- * shared/src/username.ts, the same whether the field's own check found it or
- * the server did (`INVALID_USERNAME`, whose details carry the reason and, for
- * a character that is not allowed, the characters).
- *
- * A character that is not allowed is named ("“!” can’t be in a username"),
- * and spaces said as spaces, rather than only being told something cannot be
- * in it. A reason this page does not know (a newer server) gets the rule as a
- * whole.
+ * A refused username in the reader's words, one sentence per rule of shared/src/username.ts, whether the field or the
+ * server (`INVALID_USERNAME`) found it. Disallowed characters are named, spaces as spaces; an unknown reason gets the
+ * whole rule.
  */
 export function usernameRefusalText(reason: UsernameReason | string, chars: unknown, t: Translate): string {
   switch (reason) {
@@ -40,7 +32,7 @@ export function usernameRefusalText(reason: UsernameReason | string, chars: unkn
   }
 }
 
-/** What a username may be made of, said under the field before anything is typed. */
+/** What a username may contain, shown under the field. */
 export function usernameRuleText(t: Translate): string {
   return t('auth.usernameRule', { min: USERNAME_MIN, max: USERNAME_MAX });
 }

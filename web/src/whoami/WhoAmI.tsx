@@ -25,6 +25,7 @@ import { HelpIcon } from '../components/icons';
 import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, ApiResult } from '../lib/types';
 import { haptic } from '../lib/haptics';
@@ -64,7 +65,6 @@ const TONE = learnGame('who-am-i').tone;
 
 type Board = WhoAmITableBoard;
 type View = MultiView<Board | null>;
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** How long each of a turn's three waits is given, for the bar that empties with it. */
 const PHASE_SECONDS: Record<Board['phase'], number> = { ask: WHO_AM_I_ASK_SECONDS, answer: WHO_AM_I_ANSWER_SECONDS, decide: WHO_AM_I_DECIDE_SECONDS };
@@ -78,19 +78,14 @@ const YOU_KEY: Record<Exclude<WhoAmITableMark, 'right'>, MessageKey> = {
 };
 
 /**
- * Who Am I? (/app/games/who-am-i): everyone wears a card on their forehead
- * that everyone else can read and they cannot, and finds out who they are by
- * asking yes/no questions in Kurdish. The friends who read the card answer
- * yes, could be, no or not sure, and the card's own answer is the judge of
- * theirs. It is never played alone. Three pages in one:
+ * Who Am I? (/app/games/who-am-i): each player wears a card only the others can read and asks yes/no questions in
+ * Kurdish; the friends answer yes, could be, no or not sure, judged by the card's own answer. Never played alone.
  *
  *   /app/games/who-am-i            the start: the two ways to play
  *   /app/games/who-am-i?couch=1    one phone passed round a room (Couch.tsx)
  *   /app/games/who-am-i?id=…       a table with friends online (play/MultiRoom.tsx)
  *
- * Each way is offered only where approved identities and questions allow,
- * and nothing says "coming soon". An address left over from the round that
- * used to be played alone (`?solo=1`) lands on the start.
+ * Each way is offered only where approved content allows. An old `?solo=1` address lands on the start.
  */
 export function WhoAmI(): React.JSX.Element {
   const [params] = useSearchParams();
@@ -112,12 +107,8 @@ export function WhoAmI(): React.JSX.Element {
 }
 
 /**
- * The start: the hidden deer on the night, what the game is in a line or two
- * a beginner reads at a glance, and the two ways to play it. One phone passed
- * round a room is the main way in, first and with the page's gold button;
- * a table with friends online is the quieter card under it. A way the
- * reviewed words cannot fill yet is left out, and with neither the page says
- * so plainly.
+ * The start: the hidden deer, a short description and the two ways to play, one phone first with the gold button and
+ * online as a quieter card. A way without enough reviewed content is left out, and with neither the page says so.
  */
 function Start(): React.JSX.Element {
   const t = useT();
@@ -234,30 +225,11 @@ function tableSeats(board: Board, me: number | null, name: (seat: number) => str
 }
 
 /**
- * The table's own staging, inside the room (play/MultiRoom.tsx):
- *
- * - whose turn it is and what the turn is waiting for, with the wait's
- *   countdown drawn from the server's clock;
- * - everyone's forehead, the reader's own card hidden until it comes off;
- * - then what the reader can do now: on their turn, their questions, the
- *   few worth asking next first and, for a beginner, each with what it
- *   means; while a friend's question is on the table, that friend's card and
- *   the dialect's yes and no; once the card has answered, its verdict and
- *   how everyone answered;
- * - and, on their turn, the way to say they know who they are. Only that
- *   opens the words to choose from, with Guess under them: until then
- *   nothing on the board lists who the reader could be, so the questions do
- *   the finding out. A turn that has to be a guess opens them by itself.
- *
- * The page draws only what the server's view holds. The reader's own card is
- * in it only once it is off their forehead, so nothing here could show it
- * sooner.
- *
- * A turn's waits are short, and on a phone the page is longer than the
- * screen. So when the table moves on to something that concerns the reader
- * (a question for them to answer, the card's verdict, their own turn), that
- * part is brought into view; nothing moves for a turn that is not theirs to
- * act on.
+ * The table inside the room (play/MultiRoom.tsx): whose turn it is with the server-timed wait, everyone's foreheads
+ * (the reader's own hidden until it comes off), and what the reader can do now, such as their questions (suggested
+ * first), a friend's question with its answer keys, or the verdict and everyone's answers. Only saying "I know who I
+ * am" opens the guess tiles, unless the turn must be a guess. The page draws only the server's view, which holds the
+ * reader's card only once it is off. When the table moves to something for the reader, that part scrolls into view.
  */
 function TableBoard({
   view,
@@ -497,11 +469,8 @@ function turnLines(board: Board, me: number | null, name: (seat: number) => stri
 }
 
 /**
- * A question on the table: for whoever asked it, their question and who has
- * answered so far (never what); for everyone else, the asker's card beside
- * the question, and the answer keys until they have answered (yes, could be,
- * no and not sure, or yes and no at a table made for two), then what they
- * said.
+ * A question on the table: the asker sees who has answered (never what); everyone else sees the asker's card, the
+ * answer keys until they answer (four, or two at a two-answer table), then their answer.
  */
 function Pending({
   board,
@@ -556,10 +525,8 @@ function Pending({
 }
 
 /**
- * The card's verdict on the last question, for everyone: what it said, and how
- * each friend's answer went by the card (right, close, wrong, not sure, or no
- * answer in time). A reader who could see the card may say its answer looks
- * wrong; the asker, who could not, is not asked to.
+ * The card's verdict on the last question and how each friend's answer compared; a reader who could see the card may
+ * report its answer as wrong, but not the asker.
  */
 function Told({
   game,

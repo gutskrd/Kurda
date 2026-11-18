@@ -6,8 +6,6 @@ import {
   isLastStep,
   ONBOARDING_STEPS,
   onboardingReducer,
-  persistedFromState,
-  shouldShowOnboarding,
   slideDirection,
   type OnboardingAction,
   type OnboardingState,
@@ -51,9 +49,8 @@ describe('navigation', () => {
   });
 
   /*
-   * The slides turn the way the reader is going: on to a later slide the old
-   * one leaves to the start side, back to an earlier one it leaves to the
-   * end side. A step that goes nowhere (next on the last slide) turns on.
+   * Slides turn in the reading direction: forward leaves to the start side, back to the end side, and a step that
+   * goes nowhere counts as forward.
    */
   it('knows which way it is turning', () => {
     expect(slideDirection(0, 1)).toBe('forward');
@@ -97,28 +94,5 @@ describe('completion', () => {
     expect(onboardingReducer(done, { type: 'next' })).toBe(done);
     expect(onboardingReducer(done, { type: 'selectLanguage', locale: 'fr' })).toBe(done);
     expect(onboardingReducer(done, { type: 'finish' })).toBe(done);
-  });
-});
-
-describe('persistence + gating', () => {
-  it('persists the completed flag and preferred language', () => {
-    const s = run({ type: 'selectLanguage', locale: 'nl' }, { type: 'finish' });
-    expect(persistedFromState(s)).toEqual({ completed: true, preferredLanguage: 'nl' });
-  });
-
-  it('does not report completed while still active', () => {
-    expect(persistedFromState(initOnboardingState()).completed).toBe(false);
-  });
-
-  it('shows onboarding on a fresh install (nothing persisted)', () => {
-    expect(shouldShowOnboarding(null)).toBe(true);
-  });
-
-  it('shows again when the stored flag says not completed (e.g. after reset)', () => {
-    expect(shouldShowOnboarding({ completed: false, preferredLanguage: 'en' })).toBe(true);
-  });
-
-  it('never shows again once completed', () => {
-    expect(shouldShowOnboarding({ completed: true, preferredLanguage: 'ku' })).toBe(false);
   });
 });

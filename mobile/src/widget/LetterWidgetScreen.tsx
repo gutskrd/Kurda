@@ -20,27 +20,21 @@ import { widgetDate, widgetText } from './strings';
 import { removeEveryWidget } from './tokens';
 
 /**
- * The letter widget's page, in letter settings (from the letters screen's
- * header).
+ * The letter widget's settings page, opened from the letters screen's header.
  *
- * At the top, what the widget shows now, drawn as it is on the home screen: the
- * real picture the server makes for it (asked with this phone's widget token)
- * and the words set over it as the widget sets them. Under it, whether that is
- * the newest letter or one kept there, with "Always show the newest letter" to
- * let a kept one go — a letter is kept from the letter itself. Then the one
- * choice that matters for privacy: whether the widget shows the words, or
- * only the paper and who it is from, sealed, since a home screen is seen by
- * whoever is holding the phone. Then how to put the widget on the home screen,
- * this phone's way first; and, when the widget is on more than one phone, a
- * way to take it off the others (a lost phone, a phone given away).
+ * At the top, what the widget shows now as it appears on the home screen: the server's picture for it (fetched
+ * with this device's widget token) with the text overlaid as the widget does. Under it, whether that is the
+ * newest letter or a pinned one, with "Always show the newest letter" to unpin (a letter is pinned from the
+ * letter itself). Then the privacy choice: show the words, or only the paper and sender, sealed, since anyone
+ * holding the phone sees the home screen. Then how to add the widget, this platform's steps first, and, when it
+ * is on several devices, a way to remove it from the others.
  *
- * Every change is the account's and saved at once; this phone's widget is
- * asked to catch up (prefs.ts).
+ * Every change belongs to the account and saves at once; this device's widget is asked to catch up (prefs.ts).
  */
 
 /** A medium widget's shape, which the preview takes: about twice as wide as it is tall. */
 const MEDIUM_RATIO = 0.47;
-/** The preview's width: a medium widget's on a phone, never wider than a hand, never so narrow there is no paper to see. */
+/** The preview width: a medium phone widget's, never wider than a hand nor too narrow to show the paper. */
 const PREVIEW_MAX = 360;
 const PREVIEW_MIN = 240;
 
@@ -69,7 +63,7 @@ export function LetterWidgetScreen({ onExit }: { onExit: () => void }): React.JS
     async (change: { pinnedLetterId?: string | null; showWords?: boolean }) => {
       if (load.kind !== 'ready') return;
       const before = load.settings;
-      // the switch moves under the finger; it goes back if the server says no
+      // The switch moves under the finger; it goes back if the server says no.
       setLoad({ kind: 'ready', settings: { ...before, ...change } });
       setBusy(true);
       setProblem(null);
@@ -151,14 +145,12 @@ function WidgetSettingsBody({
   const width = Math.max(PREVIEW_MIN, Math.min(PREVIEW_MAX, screen - layout.gutter * 2));
   const iphone = (
     <HowToAdd
-      key="iphone"
       title={t('keyboard.guide.onIphone')}
       steps={[t('letterWidget.add.iphone1'), t('letterWidget.add.iphone2'), t('letterWidget.add.iphone3')]}
     />
   );
   const android = (
     <HowToAdd
-      key="android"
       title={t('keyboard.guide.onAndroid')}
       steps={[t('letterWidget.add.android1'), t('letterWidget.add.android2'), t('letterWidget.add.android3')]}
     />
@@ -184,8 +176,8 @@ function WidgetSettingsBody({
         <View style={styles.bird} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <SvgXml xml={letterBirdSvg({ bird: settings.letter?.from.bird ?? 0, pose: 'hello', letter: true, size: 96, idPrefix: 'lwb' })} width={96} height={96} />
         </View>
-        {/* this phone's way first */}
-        {Platform.OS === 'android' ? [android, iphone] : [iphone, android]}
+        {/* This platform's steps only: an iPhone app explaining another platform's home screen reads as made for both. */}
+        {Platform.OS === 'android' ? android : iphone}
       </SettingsSection>
       {settings.widgets > 1 || othersGone ? (
         <SettingsSection title={t('letterWidget.othersTitle')}>
@@ -206,7 +198,7 @@ function WidgetSettingsBody({
   );
 }
 
-/** What the widget shows now, at a medium widget's shape: its picture and its words, as the home screen has them. */
+/** What the widget shows now, at a medium widget's shape: its picture and text, as on the home screen. */
 function WidgetPreview({ settings, config, width }: { settings: WidgetSettings; config: WidgetConfig | null; width: number }): React.JSX.Element {
   const { locale } = useI18n();
   const letter = settings.letter;
@@ -220,7 +212,7 @@ function WidgetPreview({ settings, config, width }: { settings: WidgetSettings; 
   const picture = useMemo(() => {
     if (!config) return null;
     const size = widgetImageSize(width, height, PixelRatio.get());
-    // what it is a picture of, so a new letter is not shown the last one's picture from the phone's cache
+    // What it is a picture of, so a new letter never shows the last one's cached picture.
     const subject = letter ? `${letter.id}-${letter.from.bird}` : 'empty';
     return { uri: `${widgetImageUrl(config.apiBase, size, widgetSkyAt(new Date().getHours()))}&v=${subject}`, headers: { authorization: widgetAuthorization(config.token) } };
   }, [config, height, letter, width]);

@@ -2,17 +2,11 @@ import type { TokenPair } from './types';
 import { readRenamed } from './renamedKey';
 
 /**
- * Browser token persistence. "Remember me" chooses localStorage (survives a
- * browser restart) vs sessionStorage (cleared when the tab closes). We keep the
- * tokens in one JSON blob and always clear both stores on write, so switching
- * the remember choice never leaves a stale copy behind.
- *
- * Note: this is the same trade-off the API is built around — access tokens are
- * short-lived and refreshed; the refresh token rotates server-side with theft
- * detection. The browser is untrusted; no security decision is made here.
+ * Token persistence. "Remember me" picks localStorage (survives a restart) over sessionStorage (cleared with the tab).
+ * Writes clear both stores so switching the choice leaves no stale copy. No security decision is made here.
  */
 const KEY = 'hevalo_tokens';
-/* what it was called while the app was MyKurda; see `readRenamed`. */
+/* The key's name before the rename; see `readRenamed`. */
 const LEGACY_KEY = 'mykurda_tokens';
 
 export interface TokenStorage {
@@ -38,11 +32,11 @@ function readFrom(store: Storage): TokenPair | null {
 export function createTokenStorage(): TokenStorage {
   return {
     get() {
-      // prefer a persistent session, fall back to a tab-only one
+      // Prefer a persistent session, then a tab-only one.
       return readFrom(localStorage) ?? readFrom(sessionStorage);
     },
     set(tokens) {
-      // default writes persist; setRemember() below re-homes them
+      // Writes persist by default; persistTokens re-homes them.
       localStorage.setItem(KEY, JSON.stringify(tokens));
       sessionStorage.removeItem(KEY);
     },
@@ -53,7 +47,7 @@ export function createTokenStorage(): TokenStorage {
   };
 }
 
-/** Persist the current tokens in the chosen store (called right after sign-in). */
+/** Stores the tokens in the chosen store, right after sign-in. */
 export function persistTokens(tokens: TokenPair, remember: boolean): void {
   localStorage.removeItem(KEY);
   sessionStorage.removeItem(KEY);

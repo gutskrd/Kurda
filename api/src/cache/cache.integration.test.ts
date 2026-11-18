@@ -1,7 +1,4 @@
-/**
- * Integration tests — require REDIS_URL (provided by the CI migrations
- * job's Redis service container). Skipped otherwise.
- */
+/** Cache against real Redis; skipped without REDIS_URL. */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Redis } from 'ioredis';
 import { Cache } from './cache.js';

@@ -100,7 +100,7 @@ describe.skipIf(!DATABASE_URL)('session management (integration)', () => {
       remoteAddress: '10.11.0.4',
     });
     expect(refresh.statusCode).toBe(401);
-    // and its access token stops now, not when its fifteen minutes are up
+    // Its access token stops now, not when its fifteen minutes are up.
     expect((await authed('GET', '/me', tabletTokens.accessToken)).statusCode).toBe(401);
 
     const after = await authed('GET', '/me/sessions', phoneTokens.accessToken);
@@ -161,7 +161,7 @@ describe.skipIf(!DATABASE_URL)('session management (integration)', () => {
     expect(del.statusCode).toBe(200);
     expect(del.json().everywhere).toBe(true);
 
-    // the very token that made the request is dead now
+    // The very token that made the request is dead now.
     const me = await authed('GET', '/me', phoneTokens.accessToken);
     expect(me.statusCode).toBe(401);
 
@@ -358,7 +358,7 @@ describe.skipIf(!DATABASE_URL)('signed-in devices, each listed once (integration
     expect(row!.short_lived).toBe(true);
     expect(row!.expires_at.getTime() - Date.now()).toBeLessThanOrEqual(day);
 
-    // remembered, or not said at all: the month it always was
+    // Remembered, or never sent: the month it always was.
     await endAll();
     await signIn('browser-a', CHROME);
     [row] = await expiry();

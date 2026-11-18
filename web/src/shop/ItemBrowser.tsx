@@ -7,22 +7,15 @@ import { SearchField } from '../components/SearchField';
 import './items.css';
 
 /**
- * The pieces the Shop, the inventory (Edit Profile) and the chat's gift picker
- * all browse items with, so that the three read as one system: the same kinds
- * on the same tabs in the same order, with counts; the same search, the same
- * orders to sort by; the same line saying how many there are and the same way
- * back to everything.
- *
- * What is shown, and in which order, is decided by `@kurda/shared`
- * (shop-items.ts), the rules the phone's screens are written against too, so
- * a search or an order means the same thing on both. Only the words and the
- * drawing are here.
+ * The parts the Shop, the inventory (Edit Profile) and the chat's gift picker browse items with: kind tabs with
+ * counts, search, sort, the results line and the way back to everything. What is shown and in which order comes from
+ * `@kurda/shared` (shop-items.ts), as on the phone; only the words and the drawing are here.
  */
 
 export type KindTab = ItemCategory | 'all';
 
-/** What a kind is called: on its tab, over its section, in a count. */
-export const KIND_LABEL: Readonly<Record<KindTab, MessageKey>> = {
+/** What a kind is called on its tab, over its section and in a count. */
+const KIND_LABEL: Readonly<Record<KindTab, MessageKey>> = {
   all: 'items.kind.all',
   background: 'items.kind.background',
   icon: 'items.kind.icon',
@@ -48,23 +41,18 @@ export function useIdPrefix(name: string): string {
 }
 
 /** The ids that tie a tab list to the one panel it controls. */
-export const tabId = (prefix: string, kind: KindTab): string => `${prefix}-tab-${kind}`;
-export const panelId = (prefix: string): string => `${prefix}-panel`;
+const tabId = (prefix: string, kind: KindTab): string => `${prefix}-tab-${kind}`;
+const panelId = (prefix: string): string => `${prefix}-panel`;
 
 /** A number as the reader's language writes it. */
-export function useCountFormat(): (n: number) => string {
+function useCountFormat(): (n: number) => string {
   const locale = useLocale();
   return (n) => n.toLocaleString(locale);
 }
 
 /**
- * The kinds, as tabs, each with how many it holds.
- *
- * Real tabs (tablist / tab / aria-selected): one stop in the Tab order, the
- * arrow keys move between them (mirrored on a right-to-left page, where the
- * next kind is to the left) and choosing is moving, as the pattern has it;
- * Home and End go to either end. The row scrolls sideways on a phone rather
- * than squeezing a label, and the chosen tab is always scrolled into full view.
+ * The kinds as tabs with their counts. Real ARIA tabs: one Tab stop, arrow keys move and select (mirrored right to
+ * left), Home and End jump to either end. On a phone the row scrolls sideways, keeping the chosen tab in full view.
  */
 export function KindTabs({
   kinds,
@@ -73,7 +61,7 @@ export function KindTabs({
   onChange,
   idPrefix,
 }: {
-  /** the tabs, in order — 'all' first when there is one */
+  /** The tabs in order, 'all' first when there is one. */
   kinds: readonly KindTab[];
   value: KindTab;
   counts: Readonly<Partial<Record<KindTab, number>>>;
@@ -85,8 +73,7 @@ export function KindTabs({
   const refs = useRef(new Map<KindTab, HTMLButtonElement>());
   const strip = useRef<HTMLDivElement>(null);
 
-  // the chosen tab in full view, clear of the fade at the row's end — sideways
-  // only, so choosing a tab never scrolls the page
+  // Keep the chosen tab in full view, clear of the end fade, scrolling only sideways so the page never moves.
   useEffect(() => {
     const row = strip.current;
     const tab = refs.current.get(value);
@@ -100,7 +87,7 @@ export function KindTabs({
   }, [value]);
 
   function onKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, index: number): void {
-    // the page's direction is its `dir` (I18nProvider sets it on <html> for Arabic and Soranî)
+    // The page's direction is its `dir`, which I18nProvider sets on <html>.
     const rtl = e.currentTarget.closest('[dir]')?.getAttribute('dir') === 'rtl';
     let next: number;
     if (e.key === 'ArrowRight') next = rtl ? index - 1 : index + 1;
@@ -163,7 +150,7 @@ export function KindPanel({
   );
 }
 
-/** A search over names and descriptions. Its label says what it searches; the glass says it is a search. */
+/** A search over names and descriptions, labelled with what it searches. */
 export function ItemSearch({
   value,
   onChange,
@@ -185,7 +172,7 @@ export function ItemSearch({
       maxLength={80}
       placeholder={placeholder}
       aria-label={label}
-      // a search box should not try to correct the Kurdish typed into it
+      // A search box should not try to correct the Kurdish typed into it.
       autoComplete="off"
       autoCorrect="off"
       spellCheck={false}
@@ -199,8 +186,7 @@ export function ItemSort({ value, onChange }: { value: ItemSort; onChange: (next
   const id = useIdPrefix('item-sort');
   return (
     <div className="item-sort">
-      {/* the word on a wide screen; on a phone the arrows stand for it, and
-          the word stays the select's name for a screen reader */}
+      {/* The word on a wide screen; on a phone the arrows replace it, and it stays the select's accessible name. */}
       <label className="item-sort-label" htmlFor={id}>
         <SortIcon size={17} className="item-sort-glyph" />
         <span className="item-sort-word">{t('items.sort')}</span>
@@ -216,7 +202,7 @@ export function ItemSort({ value, onChange }: { value: ItemSort; onChange: (next
   );
 }
 
-/** A narrowing that is on or off ("Within my balance"): a checkbox, as it always was. */
+/** An on/off narrowing such as "Within my balance", as a checkbox. */
 export function FilterToggle({
   checked,
   onChange,
@@ -234,7 +220,7 @@ export function FilterToggle({
   );
 }
 
-/** One choice of a few, drawn as a segmented control over real radios (the arrow keys move it). */
+/** One choice of a few, as a segmented control over real radios. */
 export function SegmentedChoice<T extends string>({
   label,
   value,
@@ -266,9 +252,8 @@ export function ItemToolbar({ children }: { children: ReactNode }): React.JSX.El
 }
 
 /**
- * How many there are, said politely when it changes, and the way back to
- * everything once anything has been narrowed. The line keeps its height
- * whether or not the button is there, so nothing below it moves.
+ * The result count, announced politely when it changes, with "Clear filters" once anything is narrowed. The line keeps
+ * its height either way, so nothing below moves.
  */
 export function ResultsLine({
   count,
@@ -276,7 +261,7 @@ export function ResultsLine({
   onClear,
 }: {
   count: number;
-  /** anything narrowed: offer "Clear filters" */
+  /** Anything is narrowed, so offer "Clear filters". */
   filtered: boolean;
   onClear: () => void;
 }): React.JSX.Element {
@@ -296,7 +281,7 @@ export function ResultsLine({
   );
 }
 
-/** Nothing matches: say so where the items would be, with the way out. */
+/** Nothing matches: says so where the items would be, with a way to clear the filters. */
 export function NoMatches({ onClear }: { onClear: () => void }): React.JSX.Element {
   const t = useT();
   return (

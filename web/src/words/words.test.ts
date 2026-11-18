@@ -45,11 +45,11 @@ describe('what a word means to this reader', () => {
     expect(meaningOf(red, 'ckb', 'de', translator(de))).toEqual({ text: 'rot', script: null });
   });
 
-  /** a Kurdish reader is shown the other dialect's word, in that dialect's script */
+  /** A Kurdish reader is shown the other dialect's word, in that dialect's script. */
   it('shows a Kurdish reader the same word in the other dialect', () => {
     expect(meaningOf(red, 'kmr', 'ku', translator(ku))).toEqual({ text: 'سوور', script: 'ckb' });
     expect(meaningOf(red, 'ckb', 'ckb', translator(ku))).toEqual({ text: 'sor', script: 'kmr' });
-    // the Soranî word under a Soranî reader's Kurmancî page is their own: no script to mark
+    // On a Kurmancî page a Soranî reader's gloss is in their own language, so no script is marked.
     expect(meaningOf(red, 'kmr', 'ckb', translator(ku))).toEqual({ text: 'سوور', script: null });
   });
 

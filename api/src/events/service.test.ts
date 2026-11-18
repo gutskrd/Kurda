@@ -62,8 +62,7 @@ function fakePool(rows: Row[]) {
     query: async (sql: string) => {
       if (/^\s*SELECT/i.test(sql)) {
         state.selectCount += 1;
-        // active() filters enabled + ends_at > now; the service re-filters by
-        // window, so returning the enabled rows is enough here.
+        // The service re-filters by window, so returning the enabled rows is enough here.
         return { rows: state.rows.filter((r) => r.enabled), rowCount: state.rows.length };
       }
       // upsert/setEnabled paths just need to succeed
@@ -81,12 +80,12 @@ describe('EventService.active caching', () => {
     const svc = new EventService(pool, cache);
 
     const first = await svc.active(now);
-    expect(first.map((e) => e.key)).toEqual(['a', 'b']);
+    expect(first.events.map((e) => e.key)).toEqual(['a', 'b']);
     expect(state.selectCount).toBe(1);
 
     // second call hits cache — no new SELECT
     const second = await svc.active(now);
-    expect(second.map((e) => e.key)).toEqual(['a', 'b']);
+    expect(second.events.map((e) => e.key)).toEqual(['a', 'b']);
     expect(state.selectCount).toBe(1);
   });
 
@@ -106,7 +105,7 @@ describe('EventService.active caching', () => {
       startsAt: '2026-03-21T00:00:00.000Z',
       endsAt: '2026-03-22T00:00:00.000Z',
     });
-    // cache was invalidated → next active() re-queries
+    // The cache was invalidated, so the next call queries again.
     await svc.active(now);
     expect(state.selectCount).toBe(2);
   });
@@ -124,5 +123,34 @@ describe('EventService.active caching', () => {
     clock += 31_000;
     await svc.active(new Date(clock));
     expect(state.selectCount).toBe(2);
+  });
+
+  it('says when the live set next changes: the soonest start or end still ahead, or null', async () => {
+    const now = new Date('2026-03-21T12:00:00.000Z');
+    const { pool } = fakePool([
+      row({ key: 'live', ends_at: new Date('2026-03-22T00:00:00.000Z') }),
+      row({ key: 'soon', starts_at: new Date('2026-03-21T18:00:00.000Z'), ends_at: new Date('2026-03-25T00:00:00.000Z') }),
+    ]);
+    const svc = new EventService(pool);
+    const active = await svc.active(now);
+    expect(active.events.map((e) => e.key)).toEqual(['live']);
+    expect(active.nextChangeAt).toBe('2026-03-21T18:00:00.000Z');
+
+    const none = new EventService(fakePool([]).pool);
+    expect(await none.active(now)).toEqual({ events: [], nextChangeAt: null });
+  });
+
+  it('reads again once the boundary has passed, even while a jittered TTL keeps the entry', async () => {
+    let clock = Date.parse('2026-03-21T23:59:00.000Z');
+    const { pool, state } = fakePool([row({ key: 'a' })]);
+    // The TTL stretched by the most jitter allows, so the entry outlives the window's end.
+    const cache = new Cache(new MemoryCacheClient(() => clock), undefined, { jitterRatio: 0.1, rng: () => 0.999 });
+    const svc = new EventService(pool, cache);
+
+    expect((await svc.active(new Date(clock))).events.map((e) => e.key)).toEqual(['a']);
+    clock += 61_000;
+    const after = await svc.active(new Date(clock));
+    expect(state.selectCount).toBe(2);
+    expect(after.events).toEqual([]);
   });
 });

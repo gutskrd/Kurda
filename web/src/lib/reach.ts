@@ -1,29 +1,15 @@
 /**
- * What answers a finger, and how far past its edges: the lists the website's
- * reach is written from.
- *
- * A control is drawn at its size, but a finger that lands a few pixels off it
- * should still press it. `styles/reach.css` gives every control named here an
- * area that answers past its edges (a `::before` of no weight, so the
- * control's own rules always win), up to 44px with a mouse and 48px when any
- * pointer is a finger, and never further than half the gap to its neighbour.
- * The lists are kept here rather than only in the stylesheet so the tests can
- * hold the stylesheet to them (`reach.test.ts`) and can count every clickable
- * that is not yet in any of them (`pressables.test.ts`).
- *
- * A class belongs in exactly one list:
+ * The classes that get an enlarged touch area in `styles/reach.css`: a weightless `::before` up to 44px with a mouse
+ * and 48px with a finger, never past half the gap to a neighbour. Kept here so `reach.test.ts` can hold the stylesheet
+ * to these lists and `pressables.test.ts` can find clickables missing from all of them. Each class is in one list:
  *
  *   - `REACH_CONTROLS`: buttons, chips, tabs and the like, on every pointer.
- *   - `STANDALONE_LINKS`: links that stand on a line of their own; they reach
- *     only where a pointer is coarse, because with a mouse a link is pointed
- *     at, not aimed for.
- *   - `HAND_TUNED`: controls whose area was already cut by hand to the seam
- *     with their neighbour; a general rule would undo that work.
- *   - `LARGE_ENOUGH`: reviewed and at least 48px each way already.
+ *   - `STANDALONE_LINKS`: links on a line of their own, enlarged only under a coarse pointer.
+ *   - `HAND_TUNED`: areas already cut by hand to the seam with their neighbour.
+ *   - `LARGE_ENOUGH`: reviewed and at least 48px each way.
  *
- * `SCROLLERS` are the sideways-scrolling rows that hold controls. A scrolling
- * box cuts off whatever reaches past it, so each one keeps room above and below
- * its controls (padding, taken back by a negative margin so nothing moves).
+ * `SCROLLERS` are sideways-scrolling rows of controls; they clip overflow, so each gets padding above and below,
+ * offset by a negative margin.
  */
 
 /** Controls that reach to the minimum on every pointer. */
@@ -71,35 +57,35 @@ export const REACH_CONTROLS = [
   '.nav-search-clear',
   '.lesson-leave',
   '.lesson-play-round',
-  // the story player's buttons are 44 across and its speed 36 tall with a mouse: no bigger than a fingertip, so they reach as the rest do
+  // The story player's buttons are 44px across and its speed 36px tall with a mouse.
   '.story-player-btn',
   '.story-player-rate',
   '.letters-change',
-  // a suspect's notes in Detective, small pills that wrap under the name (games/detective.css)
+  // A suspect's notes in Detective (games/detective.css).
   '.dt-note',
 ] as const;
 
-/** Links on a line of their own, which reach only under a coarse pointer. */
+/** Links on a line of their own, enlarged only under a coarse pointer. */
 export const STANDALONE_LINKS = ['.auth-alt a', '.link', '.by-zagrosian', '.reach-line'] as const;
 
-/** Areas already cut by hand to their seams; they keep their own rules and stay out of both lists. */
+/** Areas already cut by hand to their seams; they keep their own rules. */
 export const HAND_TUNED = [
-  // a filter chip and its clear, which meet in the middle (styles/filter.css)
+  // A filter chip and its clear button meet in the middle (styles/filter.css).
   '.ffilter-chip-main',
   '.ffilter-chip-clear',
-  // a picture's remove and alt-text buttons, on the corners of its tile (composer/composer.css)
+  // A picture's remove and alt-text buttons on its tile's corners (composer/composer.css).
   '.cmp-tile-remove',
   '.cmp-tile-alt',
-  // adding a member, beside the field it reads (groups/groups.css)
+  // Adding a member, beside its field (groups/groups.css).
   '.gadd-btn',
-  // a lesson's words and its slow chip, in the running line (styles/learn.css)
+  // A lesson's words and its slow chip, in running text (styles/learn.css).
   '.lesson-word',
   '.lesson-slow-chip',
-  // seen-by, under a message (styles/pages.css)
+  // Seen-by, under a message (styles/pages.css).
   '.mkp-seen',
-  // the gaps in a memory game's line, whose ::before is their glow (games/memory-thief.css)
+  // A memory game's gaps, whose ::before is their glow (games/memory-thief.css).
   '.mt-gap',
-  // a story's replay and its glossed words: running text, where every word is its own target
+  // A story's replay and glossed words, in running text where every word is a target.
   '.story-replay',
   '.story-gloss',
 ] as const;
@@ -122,13 +108,13 @@ export const LARGE_ENOUGH = [
   '.framer-zoom-btn',
   '.story-size-btn',
   '.chat-game-action',
-  // a lesson's tile (learn/Tile.tsx)
+  // A lesson's tile (learn/Tile.tsx).
   '.tile',
-  // Who Am I's answers and verdicts, 84 tall in a row of three (whoami/whoami.css)
+  // Who Am I's answers, 84px tall in a row of three (whoami/whoami.css).
   '.wa-answer-btn',
 ] as const;
 
-/** The sideways-scrolling rows that hold controls, each with room above and below them for their reach. */
+/** Sideways-scrolling rows of controls, padded above and below for their reach. */
 export const SCROLLERS = [
   '.note-filters',
   '.mkp-tabs',
@@ -138,7 +124,7 @@ export const SCROLLERS = [
   '.imp-cat-strip',
   '.pic-radio.is-strip .pic-radio-options',
   '.ll-cards',
-  // not `.pp-track`: a post's pictures scroll there, but each slide is a whole button the size of the strip, with no reach to keep
+  // Not `.pp-track`: each of its slides is a button the size of the strip, with no reach to keep.
   '.filter-strip',
   '.yours-trees',
   '.item-tabs',

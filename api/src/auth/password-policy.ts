@@ -1,11 +1,8 @@
 /**
- * Password policy (KUR-014): the single source of truth for what makes a
- * password acceptable, enforced server-side on register and password-reset.
- * The mobile client mirrors these rules for instant feedback, but this is the
- * authority — a weak password is rejected here regardless of the client.
+ * Password policy: the single source of truth for an acceptable password, enforced server-side on register and reset.
+ * The mobile client mirrors it for instant feedback, but this is the authority.
  *
- * Policy: at least 8 characters (capped at 128 so an over-long input can't be
- * used to burn Argon2 CPU), containing at least one letter and one digit.
+ * At least 8 characters (capped at 128 so long input cannot burn Argon2 CPU), with at least one letter and one digit.
  */
 
 export const PASSWORD_MIN = 8;
@@ -20,13 +17,7 @@ export const PASSWORD_ERROR_MESSAGE: Record<PasswordReason, string> = {
   'needs-number': 'Password must include at least one number.',
 };
 
-/** One-line summary shown next to the password field. */
-export const PASSWORD_RULES_TEXT = `At least ${PASSWORD_MIN} characters, including a letter and a number.`;
-
-/**
- * Validates a raw password against the policy. Checked in a fixed order so the
- * caller can surface one specific, actionable reason.
- */
+/** Validate a raw password against the policy, checking in a fixed order so the caller can show one specific reason. */
 export function validatePassword(password: string): { ok: true } | { ok: false; reason: PasswordReason } {
   if (password.length < PASSWORD_MIN) return { ok: false, reason: 'too-short' };
   if (password.length > PASSWORD_MAX) return { ok: false, reason: 'too-long' };

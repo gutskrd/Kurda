@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { CharacterPoint } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
-import { SpeakingCharacter, type CharacterReaction } from '../../characters/SpeakingCharacter';
+import { HevaloPeek } from '../../characters/HevaloPeek';
+import type { CharacterReaction } from '../../characters/SpeakingCharacter';
 import { useDirection } from '../../reports/direction';
 import { timing } from '../../theme/animate';
 import { duration } from '../../theme/motion';
@@ -11,14 +12,12 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useScreenFocus } from './focus';
 import { useSpokenLine } from './speech';
 
-/** How tall Hevalo stands beside his bubble, head to waist. */
-export const GUIDE_HEIGHT = 96;
+/** How tall Hevalo and the tear he looks through stand beside his bubble, from his antlers to the tear's foot. */
+const GUIDE_HEIGHT = 96;
 
 /**
- * Where Hevalo looks while somebody answers: down and a little across, at the
- * field under the question. In the drawing's own terms, so it holds when he
- * is turned round for a language read from the right (he stands on the other
- * side then, and the field is still below and across from him).
+ * Where Hevalo looks while somebody answers: down and a little across, at the field under the question. In the
+ * drawing's own terms, so it holds when he is mirrored for a right-to-left language.
  */
 export const GAZE_AT_FIELD: CharacterPoint = { x: 0.4, y: 0.55 };
 
@@ -26,54 +25,39 @@ export const GAZE_AT_FIELD: CharacterPoint = { x: 0.4, y: 0.55 };
 const TAIL = 12;
 
 /**
- * Hevalo at the top of a step, saying its line.
+ * Hevalo at the top of a step, poking through a tear in the page (characters/HevaloPeek) beside a speech bubble. His
+ * mouth moves with the line (guide/speech.ts), he looks at the field (`gaze`), reacts to refused and right answers
+ * (`reaction`), and greets a tap.
  *
- * He stands head to waist beside a speech bubble with the words in it, and
- * says them: his mouth moves with the line (guide/speech.ts), he breathes,
- * blinks, and looks where he is told (`gaze`, at the field), tilts his head
- * at a refused answer and cheers at a right one (`reaction`), and greets a
- * tap. The bubble's words fade in whenever they change.
- *
- * He is decorative: the words in the bubble carry the meaning, and a screen
- * reader hears them and passes him by. Under Reduce Motion the words simply
- * change and he stays still; when the screen is behind another he says
- * nothing until it is in front again.
+ * He is decorative: the bubble's words carry the meaning, and a screen reader skips him. Under Reduce Motion the words
+ * simply change and he stays still; behind another screen he says nothing.
  */
 export function HevaloGuide({
   says,
   reaction = null,
   gaze = null,
-  resting = false,
-  onPress,
   style,
 }: {
   says: string;
   reaction?: CharacterReaction | null;
   gaze?: CharacterPoint | null;
-  resting?: boolean;
-  onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const dir = useDirection();
   const reduce = useReducedMotion();
   const focused = useScreenFocus();
-  const speech = useSpokenLine(says, !reduce && focused && !resting);
+  const speech = useSpokenLine(says, !reduce && focused);
   return (
     <View style={[styles.row, { flexDirection: dir.row }, style]} testID="hevalo-guide">
       <View aria-hidden testID="hevalo-guide-figure">
-        <SpeakingCharacter
-          speaker="hevalo"
-          player={speech.player}
-          playing={speech.playing}
-          source={speech.source}
+        <HevaloPeek
+          size={GUIDE_HEIGHT}
+          speech={speech}
           text={says}
-          crop="half"
-          height={GUIDE_HEIGHT}
           flip={dir.rtl}
           gaze={gaze}
           reaction={reaction}
-          resting={resting}
-          onPress={onPress ?? greeted}
+          onPress={greeted}
         />
       </View>
       <SpeechBubble text={says} tail="start" style={styles.bubble} />
@@ -81,29 +65,24 @@ export function HevaloGuide({
   );
 }
 
-/** A tap on Hevalo is answered by his greeting alone, where there is nothing to say again. */
+/** A tap on Hevalo is answered by his greeting alone. */
 const greeted = (): void => undefined;
 
 /**
- * The words a character says, in a bubble with a tail toward the one saying
- * them: on its start side for a character standing beside it, on top for one
- * above it, or underneath for one below. New words fade in; under Reduce
- * Motion they are simply there. The words are read aloud as they change,
- * since they are what the character is saying to the person.
+ * The words a character says, in a bubble whose tail points to the speaker: its start side, top or bottom. New words
+ * fade in (simply appear under Reduce Motion) and are read aloud as they change.
  */
 export function SpeechBubble({
   text,
   tail,
   tone = 'glass',
   style,
-  testID = 'speech-bubble',
 }: {
   text: string;
   tail: 'start' | 'top' | 'bottom';
-  /** glass on the page's gradient; the control track's tint on a card, which is glass already */
+  /** Glass on the page's gradient; the control track's tint on a card, which is glass already. */
   tone?: 'glass' | 'inset';
   style?: StyleProp<ViewStyle>;
-  testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const face = tone === 'inset' ? colors.controlTrack : colors.glassFill;
@@ -113,7 +92,7 @@ export function SpeechBubble({
   const first = useRef(true);
 
   useEffect(() => {
-    // the first words are there as the bubble arrives; later ones come in
+    // The first words are there as the bubble arrives; later ones fade in.
     if (first.current) {
       first.current = false;
       return;
@@ -129,7 +108,7 @@ export function SpeechBubble({
   }, [text, reduce, fade]);
 
   const mirrored = dir.row === 'row-reverse';
-  // the tail is a triangle drawn with borders, wholly outside the face: on a translucent face an overlap would show through
+  // The tail is a border triangle wholly outside the face: on a translucent face an overlap would show through.
   const point =
     tail === 'top'
       ? [styles.tailTop, { borderBottomColor: face }]
@@ -139,7 +118,7 @@ export function SpeechBubble({
           ? [styles.tailEnd, { borderLeftColor: face }]
           : [styles.tailStart, { borderRightColor: face }];
   return (
-    <View style={[styles.bubbleWrap, style]} testID={testID}>
+    <View style={[styles.bubbleWrap, style]} testID="speech-bubble">
       <View style={[styles.tail, point]} />
       <View style={[styles.bubbleFace, { backgroundColor: face, shadowColor: colors.softShadow }]}>
         <Animated.Text style={[styles.words, dir.text, { color: colors.textPrimary, opacity: fade }]} accessibilityLiveRegion="polite">
@@ -164,7 +143,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   words: { fontSize: typography.sizes.md, lineHeight: 23 },
-  // a point drawn with borders: the two beside it clear, the one toward the face in its colour
+  // A point drawn with borders: the two beside it clear, the one toward the face in its colour.
   tail: { position: 'absolute', width: 0, height: 0, borderStyle: 'solid', borderColor: 'transparent' },
   tailStart: { left: -TAIL + 1, top: '50%', marginTop: -TAIL * 0.7, borderTopWidth: TAIL * 0.7, borderBottomWidth: TAIL * 0.7, borderRightWidth: TAIL },
   tailEnd: { right: -TAIL + 1, top: '50%', marginTop: -TAIL * 0.7, borderTopWidth: TAIL * 0.7, borderBottomWidth: TAIL * 0.7, borderLeftWidth: TAIL },

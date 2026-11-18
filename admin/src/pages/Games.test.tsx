@@ -81,7 +81,7 @@ describe('Rhyme', () => {
     const field = screen.getByLabelText('The word, spelled right');
     await user.clear(field);
     await user.type(field, 'dil{Enter}');
-    // the same word: nothing to send
+    // The same word: nothing to send.
     expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(0);
 
     await user.click(screen.getByRole('button', { name: 'More for “dil”' }));

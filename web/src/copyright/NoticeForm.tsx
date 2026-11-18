@@ -50,18 +50,12 @@ const EMPTY: Draft = {
   signature: '',
 };
 
-/** Room past each limit before the box stops taking text, so the counter can say "too long" instead. */
+/** Room past each limit before the box stops taking text, so the counter can say "too long" first. */
 const slack = (max: number) => max + 200;
 
 /**
- * The copyright notice: everything the EU's Digital Services Act (Art. 16)
- * and the US DMCA (§512(c)(3)) ask a notice to hold, in the order somebody
- * thinks of them — who you are, what was yours, where it is on Hevalo, why,
- * and the two statements and the signature that make it a notice.
- *
- * No sign-in: a rights holder is usually not a member. The answer is the same
- * receipt whatever the link leads to, so the form never says whether a post
- * exists.
+ * The copyright notice form, with everything DSA Art. 16 and DMCA §512(c)(3) require. No sign-in needed. The reply is
+ * the same receipt whatever the link leads to, so the form never reveals whether a post exists.
  */
 export function NoticeForm(): React.JSX.Element {
   const { client } = useAuth();
@@ -120,8 +114,7 @@ export function NoticeForm(): React.JSX.Element {
       setD(EMPTY);
       reset();
     } else {
-      // the form ran the API's own check, so a 422 here means the two disagree —
-      // say something useful rather than nothing
+      // The form ran the API's own check, so a 422 here means they disagree; show something useful.
       setError(res.error.code === 'INVALID_NOTICE' ? t('copyright.notice.invalid') : describeError(res.error, t));
     }
   }

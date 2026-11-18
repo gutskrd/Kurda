@@ -1,9 +1,8 @@
 import type { GoogleResult } from './googleTypes';
 
 /**
- * Web stub for the native Google module (KUR-018). The web target (used for
- * development previews) doesn't run the native SDK, so it reports the feature
- * as unconfigured and the UI falls back to its "coming soon" affordance.
+ * Web stub for the native Google module: the web build does not run the native SDK, so it reports the feature as
+ * unconfigured.
  */
 export const isGoogleConfigured = false;
 

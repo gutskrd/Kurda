@@ -22,7 +22,7 @@ interface FakeInvite {
   status: string;
 }
 
-/** A pool holding a few invites to the one lobby, as the fan-out reads, accepts and expires them. */
+/** A pool holding a few invites to one lobby, as the fan-out reads, accepts and expires them. */
 function fakePool(invites: Array<Omit<FakeInvite, 'status'>> = []) {
   const rows: FakeInvite[] = invites.map((i) => ({ ...i, status: 'pending' }));
   const queries: string[] = [];
@@ -118,7 +118,7 @@ describe('PlayEvents', () => {
     events.changed('wordle-battle', 'lobby-1');
     await settle();
     const updates = notifier.told.filter((t) => t.event.type === 'play_invite_update');
-    // c's invite was held: c never had a banner, so only the host hears it
+    // c's invite was held, so c never had a banner and only the host hears it.
     expect(updates.map((u) => `${u.userId}:${u.event.inviteId as string}:${u.event.status as string}`).sort()).toEqual([
       'b:inv-1:accepted',
       'host:inv-1:accepted',

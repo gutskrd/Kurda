@@ -1,16 +1,8 @@
 /**
- * Rhyme multiplayer (1v1 / free-for-all) placement — pure comparator + ranking
- * for a match where every player raced the same prompt within one timed window
- * (KUR-299). The server drives the match (session engine #051, realtime #049);
- * this decides the finishing order + placement XP, fully unit-testable.
+ * Rhyme multiplayer placement, pure: ranking and placement XP for a match where everyone raced the same prompt in one
+ * window.
  *
- * Order: highest score first; if tied, more perfect rhymes; still tied, the
- * player whose last rhyme came first; still tied → share a rank.
- *
- * The tie-break used to put the player with *fewer* accepted rhymes ahead, as
- * the more efficient one, which on an equal score rewarded finding less. A
- * perfect rhyme is the better find, and of two players with the same, the one
- * who got there first did the faster thinking.
+ * Order: highest score; then more perfect rhymes; then whoever found their last rhyme first; still tied, a shared rank.
  */
 
 export interface RhymeMatchPlayerResult {
@@ -56,8 +48,8 @@ export const RHYME_PARTICIPATION_XP = 15;
 export const RHYME_WIN_XP = 80;
 
 /**
- * Placement XP: 1st earns RHYME_WIN_XP, last earns RHYME_PARTICIPATION_XP, places
- * between scale linearly by rank. A 1-player edge earns the win amount.
+ * Placement XP: first earns RHYME_WIN_XP, last earns RHYME_PARTICIPATION_XP, places between scale linearly. A
+ * one-player match earns the win amount.
  */
 export function rhymePlacementXp(rank: number, playerCount: number): number {
   if (playerCount <= 1) return RHYME_WIN_XP;

@@ -118,7 +118,7 @@ describe('Rhyme (solo training)', () => {
       stubRound(60000);
       renderApp(<Rhyme />, ['/app/games/rhyme']);
       await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
-      // while the clock runs nothing speaks of XP
+      // While the clock runs nothing speaks of XP.
       await screen.findByRole('button', { name: 'End round' });
       expect(screen.queryByText(/XP/)).toBeNull();
 
@@ -143,11 +143,7 @@ describe('Rhyme (solo training)', () => {
   });
 });
 
-/*
- * A variety without enough curated prompts would open a round on the other
- * variety's word, or on none: it keeps its chip, marked coming soon, and says
- * so where Start would be.
- */
+/* A variety without enough prompts keeps its chip, marked coming soon, and says so where Start would be. */
 describe('Rhyme, in the varieties it is offered in', () => {
   const answer = (sorani: boolean) => ({
     dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: sorani ? 80 : 0, available: sorani } },
@@ -177,7 +173,7 @@ describe('Rhyme, in the varieties it is offered in', () => {
     expect(screen.queryByRole('button', { name: 'Start' })).toBeNull();
     expect(fetched.mock.calls.some(([url]) => String(url).includes('/rhyme/training'))).toBe(false);
 
-    // the other chip brings Start back
+    // The other chip brings Start back.
     await userEvent.click(screen.getByRole('tab', { name: 'Kurmancî' }));
     expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
   });
@@ -227,9 +223,9 @@ describe('Rhyme, once a round is over', () => {
       }),
     );
     renderApp(<Rhyme />, ['/app/games/rhyme']);
-    // the French words arrive with their catalogue, a moment after the page
+    // The French words arrive with their catalogue, a moment after the page.
     await userEvent.click(await screen.findByRole('button', { name: 'Commencer' }));
-    // nothing of what was missed while the clock runs
+    // Nothing of what was missed while the clock runs.
     await screen.findByText('baran');
     expect(screen.queryByText('nan')).toBeNull();
 
@@ -237,7 +233,7 @@ describe('Rhyme, once a round is over', () => {
     const list = await screen.findByRole('region', { name: 'Les rimes qui t’ont échappé' });
     expect(within(list).getByText('nan')).toBeInTheDocument();
     expect(within(list).getByText('pain')).toBeInTheDocument();
-    // a word nobody has written a meaning for is still a rhyme worth knowing
+    // A word nobody has written a meaning for is still a rhyme worth knowing.
     expect(within(list).getByText('jiyan')).toBeInTheDocument();
     expect(within(list).getAllByRole('listitem')).toHaveLength(2);
   });
@@ -259,7 +255,7 @@ describe('Rhyme, once a round is over', () => {
   });
 
   it('turns away a word whose ending does all the rhyming, in general words', async () => {
-    // malan is mal with an ending: only the ending rhymes with baran
+    // Malan is mal with an ending: only the ending rhymes with baran.
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {

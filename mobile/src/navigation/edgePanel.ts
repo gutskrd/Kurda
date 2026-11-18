@@ -6,18 +6,11 @@ import { DragSamples, releaseSpring } from '../theme/animate';
 import { DRAG_SLOP } from '../theme/motion';
 
 /**
- * How a panel attached to a side of the screen moves: in and out on the
- * interface's spring, shut under a finger, and shut by Android's back.
+ * How a panel attached to a side of the screen moves: in and out on the interface spring, dragged shut by a finger, and
+ * shut by Android's back. The menu and the new-message panel both use it.
  *
- * The menu and the new-message panel are the same kind of thing from the same
- * edge, and they used to move in two ways: one sprang and could be dragged
- * shut, the other ran a timing of its own and could only be tapped away. Both
- * are built on this now, so they cannot drift apart again.
- *
- * `away` is how far the panel is from open, in points towards its edge: 0 is
- * open and `width` is gone. `sign` is which way that edge is: 1 for the right
- * of the screen, -1 for the left. Under Reduce Motion the panel is simply
- * there, or not.
+ * `away` is the distance from open in points towards the panel's edge: 0 is open, `width` is gone. `sign` is 1 for the
+ * right edge and -1 for the left. Under Reduce Motion the panel is simply there or not.
  */
 export function useEdgePanel({
   open,
@@ -32,7 +25,7 @@ export function useEdgePanel({
 }): { away: Animated.Value; panHandlers: GestureResponderHandlers } {
   const reduceMotion = useReducedMotion();
   const away = useRef(new Animated.Value(open ? 0 : width)).current;
-  // the speed a drag let go at, for the spring that finishes what it started
+  // The speed a drag was let go at, so the spring continues it.
   const flick = useRef(0);
 
   useEffect(() => {
@@ -44,22 +37,17 @@ export function useEdgePanel({
     const v = flick.current;
     flick.current = 0;
     /*
-     * Started and left alone.
-     *
-     * Stopping it in a cleanup looked tidy and was the bug: the effect re-runs
-     * when `open` flips, so the cleanup called stop() on the animation that had
-     * just finished — which detaches the value from the view. The next one ran,
-     * the number changed, and nothing on screen moved. Animated already
-     * supersedes an earlier animation on the same value when a new one starts,
-     * so there was never anything to clean up.
+     * Not stopped in a cleanup: the effect re-runs when `open` flips, and stop() there would detach the value that had
+     * just finished animating, so the next animation would not move the view. A new animation already supersedes the
+     * old one.
      */
-    // a flick is finished on the spring a finger's throw gets; a tap on its button, on the interface's own (there within 300 ms)
+    // A flick finishes on the release spring; a tap on the panel's button on the interface spring.
     releaseSpring(away, to, v, { kind: v ? 'release' : 'chrome' }).start();
   }, [open, reduceMotion, away, width]);
 
-  // the system back gesture closes the panel before it leaves the screen
+  // The system back gesture closes the panel before it leaves the screen.
   useEffect(() => {
-    // BackHandler is Android's; the web build logs an error if you touch it
+    // BackHandler is Android-only; the web build logs an error if it is touched.
     if (!open || Platform.OS !== 'android') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       onClose();
@@ -68,7 +56,7 @@ export function useEdgePanel({
     return () => sub.remove();
   }, [open, onClose]);
 
-  // the responder is built once; these keep what it reads current
+  // The responder is built once; these keep what it reads current.
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const signRef = useRef(sign);
@@ -77,13 +65,9 @@ export function useEdgePanel({
   widthRef.current = width;
 
   /**
-   * Drag it shut.
-   *
-   * Only horizontal movement claims the gesture, so a list inside the panel
-   * still scrolls. It follows the finger one to one towards its edge, and
-   * gives with the rubber band the other way, where there is nothing more to
-   * open. Let go, it goes where the flick would have carried it — shut, or
-   * back open — and the spring starts at the finger's speed.
+   * Drag it shut. Only horizontal movement claims the gesture, so a list inside still scrolls. It follows the finger
+   * towards its edge and rubber-bands the other way; let go, it goes where the flick would carry it, at the finger's
+   * speed.
    */
   const pan = useRef(
     (() => {
@@ -101,7 +85,7 @@ export function useEdgePanel({
       return PanResponder.create({
         onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > DRAG_SLOP && Math.abs(g.dx) > Math.abs(g.dy),
         onPanResponderGrant: (_e, g) => {
-          // from where the finger caught it, even mid-flight
+          // From where the finger caught it, even mid-flight.
           drag.dx0 = g.dx;
           drag.from = 0;
           drag.at = 0;
@@ -111,7 +95,7 @@ export function useEdgePanel({
           samples.add(signRef.current * g.dx);
         },
         onPanResponderMove: (_e, g) => {
-          // positive is towards the edge it came from
+          // Positive is towards the edge it came from.
           samples.add(signRef.current * g.dx);
           const p = drag.from + signRef.current * (g.dx - drag.dx0);
           drag.at = p < 0 ? -rubberBand(-p, widthRef.current) : Math.min(p, widthRef.current);
@@ -125,4 +109,12 @@ export function useEdgePanel({
   ).current;
 
   return { away, panHandlers: pan.panHandlers };
+}
+
+/**
+ * Panels open over a screen close when a page is pushed over it; left open underneath, they took Android's back from
+ * the page in front.
+ */
+export function useCloseOnBlur(navigation: { addListener: (type: 'blur', listener: () => void) => () => void }, close: () => void): void {
+  useEffect(() => navigation.addListener('blur', close), [navigation, close]);
 }

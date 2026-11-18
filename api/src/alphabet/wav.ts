@@ -1,8 +1,6 @@
 /**
- * Just enough of a WAV reader to check what the admin panel sends: that it is
- * plain PCM, and how long it lasts. The panel trims and levels every recording
- * before it uploads, so a file that is minutes long, or not PCM, did not come
- * from it.
+ * Just enough of a WAV reader to check an admin upload: that it is plain PCM, and how long it lasts. The panel
+ * trims every recording first, so anything long or not PCM did not come from it.
  */
 export interface WavInfo {
   channels: number;

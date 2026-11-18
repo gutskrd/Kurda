@@ -47,7 +47,7 @@ describe('working through a list', () => {
     held.waiting.get(2)!.fail(new Error('the server fell over'));
     await tick();
     expect(held.started).toEqual([1, 2, 3]);
-    // then let whatever is in hand finish, until the list is done
+    // Then let whatever is in hand finish, until the list is done.
     while (held.waiting.size > 0) {
       for (const w of [...held.waiting.values()]) w.ok();
       await tick();
@@ -69,7 +69,7 @@ describe('working through a list', () => {
     held.waiting.get(2)!.ok();
     await tick();
     await tick();
-    // the two in hand finished; nothing else began
+    // The two in hand finished; nothing else began.
     expect(held.started).toEqual([1, 2]);
     control.resume();
     await tick();
@@ -90,7 +90,7 @@ describe('working through a list', () => {
     control.cancel();
     await run;
     expect(held.started).toEqual([1, 2, 3]);
-    // 2 and 3 were stopped, not failed; 4 was never started
+    // 2 and 3 were stopped, not failed; 4 was never started.
     expect(outcomes).toEqual([{ item: 1, ok: true }]);
     expect(control.signal.aborted).toBe(true);
   });
@@ -197,7 +197,7 @@ describe('when the server asks to slow down', () => {
     );
     expect(outcomes.every((o) => o.ok)).toBe(true);
     expect(outcomes.map((o) => o.item).sort()).toEqual([1, 2, 3, 4]);
-    // item 2 was tried three times, after two waits of the length asked for
+    // Item 2 was tried three times, after two waits of the length asked for.
     expect(started.filter((n) => n === 2)).toHaveLength(3);
     expect(Date.now() - at).toBeGreaterThanOrEqual(55);
     expect(holds[0]).toBeGreaterThanOrEqual(at + 30);

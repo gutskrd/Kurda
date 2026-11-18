@@ -70,10 +70,9 @@ export function useCanHostOpen(): boolean {
 }
 
 /**
- * The presets a host picks after the mode: the story (or a length and
- * "Surprise me"), how many questions, the timer, whether the text stays on
- * screen, and who may join. Every group is a radio group under its own label
- * (contract §A1). The invite sheet shows the same fields for a Stories game.
+ * The presets a host picks after the mode: the story (or a length and "Surprise me"), question count, timer, whether
+ * the text stays on screen, and who may join, each a labelled radio group (contract §A1). The invite sheet shows
+ * the same fields for a Stories game.
  */
 export function StoryPresetFields({
   state,
@@ -85,16 +84,16 @@ export function StoryPresetFields({
 }: {
   state: SetupState;
   onChange: (next: SetupState) => void;
-  /** the variety's published stories, for the lengths and the pick list */
+  /** The variety's published stories, for the lengths and the story list. */
   stories: readonly StoryListItem[];
   fixedStory?: StoryListItem | null;
   canHostOpen: boolean;
-  /** a game that exists already has its story: no "Surprise me" to pick (the lobby's settings) */
+  /** An existing game already has its story, so no "Surprise me" (the lobby's settings). */
   noSurprise?: boolean;
 }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t } = useI18n();
-  // the story chosen wears the violet's wash, as every chosen option does; green is for a right answer alone
+  // The chosen story gets the violet wash like every chosen option; green is only for a right answer.
   const chosenFill = hueSteps(scheme, 'violet').wash;
   const set = (patch: Parameters<typeof changeSetup>[1]) => onChange(changeSetup(state, patch));
   const lengths = availableLengths(stories, state.dialect);
@@ -225,13 +224,9 @@ export function StoryPresetFields({
 }
 
 /**
- * Setting up a story game: alone, with a friend, or with a group.
- *
- * From the hub nothing is chosen yet (a length and "Surprise me", or a story
- * from the list); from the reader the story is the one just read and its
- * length is fixed. The sheet makes the game and hands its first view back —
- * a solo game is already reading (or, from the reader, already asking), a duo
- * or group is a lobby with the host in it.
+ * Setting up a story game alone, with a friend, or with a group. From the hub nothing is chosen yet; from the
+ * reader the story is the one just read and its length is fixed. The sheet creates the game and returns its first
+ * view: solo is already reading (or asking, from the reader), a duo or group is a lobby with the host in it.
  */
 export function SetupSheet({
   dialect,
@@ -246,7 +241,7 @@ export function SetupSheet({
   stories: readonly StoryListItem[];
   story?: StoryListItem | null;
   initialMode: StoryGameMode;
-  /** solo from the reader: the story was just read, so straight to the questions */
+  /** Solo from the reader: the story was just read, so go straight to the questions. */
   skipReading?: boolean;
   onClose: () => void;
   onCreated: (view: StoryGameView) => void;
@@ -261,7 +256,7 @@ export function SetupSheet({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // with a friend or a group: Rated or Friendly, where the host left it (solo has nobody to rank against)
+  // With others: Rated or Friendly, as the host left it (solo has nobody to rank against).
   const [rated, setRated] = useRatedChoice('stories');
 
   const create = async (): Promise<void> => {
@@ -277,7 +272,7 @@ export function SetupSheet({
       return;
     }
     if (state.mode === 'solo') {
-      // "Quiz yourself" starts from these next time, on this phone
+      // "Quiz yourself" starts from these next time on this phone.
       update({
         quiz: {
           questionCount: { ...prefs.quiz.questionCount, [state.length]: state.questionCount },
@@ -307,10 +302,8 @@ export function SetupSheet({
       }
     >
       {/*
-        Choices named in words are chips, which wrap to a second row; a
-        segmented control cuts "Mit einem Freund" or larger text to an
-        ellipsis, and the words are the only way to tell the modes apart.
-        Short ones (lengths, counts, access) stay segmented.
+        Mode choices are wrapping chips, since a segmented control cuts "Mit einem Freund" or larger text to an ellipsis
+        and the words are the only way to tell modes apart. Short choices stay segmented.
       */}
       <View style={styles.field}>
         <SectionLabel>{t('stories.setup.mode')}</SectionLabel>

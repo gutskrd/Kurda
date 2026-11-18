@@ -1,18 +1,17 @@
 import type { PostMediaView, WrittenPostType } from '@kurda/shared';
 
 /**
- * A written post as `GET`/`POST`/`PATCH /library/posts` send it back: words,
- * up to four pictures, or both. The older `LibraryPost` in lib/types predates
- * the saying and the pictures and stays for the pages that only list titles.
+ * A written post as `GET`/`POST`/`PATCH /library/posts` return it: words, up to four pictures, or both. The older
+ * `LibraryPost` in lib/types remains for pages that only list titles.
  */
 export interface ComposedPost {
   id: string;
   authorId: string;
   author?: { id: string; username: string; avatarUrl: string | null };
   type: WrittenPostType;
-  /** null on a saying */
+  /** Null on a saying. */
   title: string | null;
-  /** '' on a post that is only its pictures */
+  /** '' on a post that is only pictures. */
   body: string;
   media: PostMediaView[];
   meme: boolean;

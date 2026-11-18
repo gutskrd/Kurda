@@ -21,38 +21,28 @@ import { PromptScene, saidStyle } from './SpeechBubble';
 import { PromptWords } from './PromptWords';
 
 /*
- * The parts of a question that says what it asks (`ask`): the line alone in
- * the bubble, with its play and slow play; the cue under it; the gap a
- * missing word goes in; and the badge over a question that brings in a new
- * word. An item without an ask is drawn as it always was, and uses none of
- * these.
+ * The parts of a question with an `ask`: the line alone in the bubble with play and slow play, the cue under it, the
+ * gap for a missing word, and the "New word" badge. Items without an ask use none of these.
  */
 
-/** The play mark at the start of the bubble: drawn smaller than a fingertip, and reaching one. */
+/** The bubble's play mark, drawn smaller than a fingertip but reaching one. */
 const SPEAKER = 32;
 
-/** A picture item's word, alone in the bubble: large, since it is the whole question. */
+/** A picture item's word alone in the bubble, large since it is the whole question. */
 const PICTURE_WORD = display(32);
 
-/** An English line, to be put into Kurdish: the reading face, a step under the Kurdish line's size, for it is not the Kurdish. */
+/** An English line to put into Kurdish: the reading face, a step under the Kurdish line's size. */
 const ENGLISH: TextStyle = { fontSize: typography.sizes.md + 2, lineHeight: 25, fontWeight: typography.weights.semibold, writingDirection: 'ltr' };
 
-/** How a gap stands: waiting, holding the word chosen or typed, or graded. */
+/** A gap's state: waiting, holding the chosen or typed word, or graded. */
 export type GapState = 'empty' | 'filled' | 'right' | 'wrong';
 
 /**
- * The question's character beside a bubble holding the line alone.
- *
- * A Kurdish line is set in the display face, its words a tap away from what
- * they mean (new words first, and dotted in gold), with the round play mark
- * at its start and "Slow" under the bubble whenever the native recording may
- * be heard before answering — said by its character, whose mouth follows it.
- * An English line, which the learner is to put into Kurdish, is plain words
- * with nothing to play: there is no recording of it, and the Kurdish one
- * would give the answer away. A picture item's line is its one Kurdish word,
- * set large. A 'missing' item's line has the slot its word goes in (`gap`).
- * The cue, when the line alone could be read two ways, is a small pill under
- * the bubble.
+ * The question's character beside a bubble holding the line alone. A Kurdish line is in the display face with
+ * tappable meanings (new words first, gold dots), a play mark, and "Slow" under the bubble when the recording may be
+ * heard first, lip-synced by its character. An English line to translate has nothing to play, since the Kurdish
+ * recording would give the answer away. A picture item's line is its one word, large; a 'missing' item's line holds
+ * the slot (`gap`). A cue pill sits under the bubble when the line alone is ambiguous.
  */
 export function AskScene({
   exercise,
@@ -61,10 +51,10 @@ export function AskScene({
   gap,
 }: {
   exercise: Exercise;
-  /** the item's native recording, to play from the bubble (`useAudio(exercise.modelAudioUrl)`) */
+  /** The item's native recording, to play from the bubble (`useAudio(exercise.modelAudioUrl)`). */
   model: AudioControls;
   reaction: CharacterReaction | null;
-  /** a 'missing' item's gap: the word in it, and how it stands */
+  /** A 'missing' item's gap: the word in it, and its state. */
   gap?: { word: string | null; state: GapState };
 }): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -73,7 +63,7 @@ export function AskScene({
   const english = lineIsEnglish(exercise.ask);
   const playable = !english && model.supported && !model.error;
   const voice = english ? null : knownVoice(exercise.modelAudioVoice);
-  // lit while it plays slowly, so a tap on it is seen to have done something
+  // Lit while playing slowly, so the tap is seen to work.
   const [slow, setSlow] = useState(false);
   const { playing, play } = model;
   useEffect(() => {
@@ -135,11 +125,7 @@ export function AskScene({
   );
 }
 
-/**
- * "Slow": the line again at three quarters of its speed, as often as wanted —
- * a small chip under the bubble with the speaker in it, lit in the
- * pomegranate's red while it plays slowly. The same under a listening clip.
- */
+/** "Slow": replays the line at 0.75× as often as wanted, a small chip under the bubble lit red while it plays. Also used under listening clips. */
 export function SlowButton({ onPress, disabled = false, lit = false }: { onPress: () => void; disabled?: boolean; lit?: boolean }): React.JSX.Element {
   const { t } = useI18n();
   const valley = useValley();
@@ -162,8 +148,8 @@ export function SlowButton({ onPress, disabled = false, lit = false }: { onPress
   );
 }
 
-/** A few words of context beside the line ("to two people"), quiet under the bubble. */
-export function CuePill({ cue }: { cue: string }): React.JSX.Element {
+/** A few words of context for the line ("to two people"), quiet under the bubble. */
+function CuePill({ cue }: { cue: string }): React.JSX.Element {
   const valley = useValley();
   return (
     <View style={[styles.cue, { backgroundColor: valley.track }]} testID="ask-cue">
@@ -175,13 +161,11 @@ export function CuePill({ cue }: { cue: string }): React.JSX.Element {
 }
 
 /**
- * The gap in a 'missing' item's line: an empty slot a word wide on a ruled
- * line, until a word is chosen or typed into it; then the word itself, in the
- * line's own face, on the pomegranate's red rule — and, once graded, on the
- * verdict's green or red, popping or shaking as an option does. A screen
- * reader hears "Missing word" until there is one, and the word after.
+ * The gap in a 'missing' item's line: an empty word-wide slot on a rule, then the chosen or typed word on a red
+ * rule, and once graded on the verdict's colour, popping or shaking like an option. Screen readers hear "Missing
+ * word" until filled, then the word.
  */
-export function GapSlot({ word, state, style }: { word: string | null; state: GapState; style?: StyleProp<TextStyle> }): React.JSX.Element {
+function GapSlot({ word, state, style }: { word: string | null; state: GapState; style?: StyleProp<TextStyle> }): React.JSX.Element {
   const { t } = useI18n();
   const valley = useValley();
   const filled = !!word && word.length > 0;
@@ -197,11 +181,7 @@ export function GapSlot({ word, state, style }: { word: string | null; state: Ga
   );
 }
 
-/**
- * Over a question that brings in a word for the first time, in the place of
- * the lesson's name: "New word", in a small pill of the sun's gold with a red
- * sparkle at its start. A screen reader hears which words are new.
- */
+/** "New word" in a small gold pill with a red sparkle, in place of the lesson's name over a question introducing one. Screen readers hear which words. */
 export function NewWordBadge({ words }: { words: NewWord[] }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -227,20 +207,19 @@ export function NewWordBadge({ words }: { words: NewWord[] }): React.JSX.Element
 const SLOW = 30;
 
 /*
- * The slow chip reaches down to a fingertip's 48 but only 4 up: in a listening
- * item the bubble over it, 4 above, is a button of its own (say the clip
- * again), and the two reaches must not meet in that gap.
+ * The slow chip reaches down to 48 but only 4 up: in a listening item the bubble 4 above is its own button (replay
+ * the clip), and the two reaches must not meet in that gap.
  */
 const SLOW_REACH = reachSlop(null, SLOW, { limit: { top: spacing.xs } });
 
-/** The gap's least width, about a short word's: it grows with the word put in it. */
+/** The gap's minimum width, about a short word's; it grows with the word in it. */
 const GAP_WIDTH = 64;
 
-/** The badge's height, the lesson name's line it stands in for and a little more. */
+/** The badge's height: the lesson name's line it replaces, and a little more. */
 export const BADGE = 22;
 
 const styles = StyleSheet.create({
-  // the play mark at the top of the bubble's start, however many lines follow it
+  // The play mark at the top of the bubble's start, however many lines follow.
   said: { alignItems: 'flex-start', gap: spacing.sm + 2 },
   play: { marginTop: 1 },
   grow: { flexShrink: 1, flexGrow: 1 },

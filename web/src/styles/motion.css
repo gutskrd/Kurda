@@ -1,42 +1,18 @@
 /*
- * How the website moves — one place for it, on the tokens in tokens.css
- * (--dur-*, --ease-*, --press-scale), the same numbers the phone keeps.
+ * The website's motion, on the tokens in tokens.css (--dur-*, --ease-*, --press-scale) that the phone shares: presses
+ * that give and spring back, answers that pop or shake (as do refused form fields), sliding bars, a list's first
+ * screenful rising in once, sheets and dialogs coming from their openers, page cross-fades with carried pictures, like
+ * and coin bursts, Peyvok tiles turning, join-code and ticket animations, and celebrations (ranks/Celebration.tsx).
+ * Only a loading shimmer, a caret, a ticket's glint and a page's featured emblem (games/GameArt.tsx) loop, and only
+ * while in front.
  *
- * What moves, and only that: a press gives a little and springs back; an
- * answer pops when it was right and shakes once when it was not, and so does
- * a field a form was refused over; a bar slides to its new value; a list's
- * first screenful rises in once, the first time it arrives in a tab; a sheet
- * or a dialog comes up while the scrim fades, and leaves the way it came — a
- * dialog and a small menu out of whatever was pressed to open them; a page
- * fades into the next, and the picture of a card that was pressed travels to
- * the head of its page, and back to the card on the way back; a
- * heart pops with a tiny burst, and the day's coin with the same burst in
- * gold; a Peyvok row turns over tile by tile, its colour changing while each
- * tile is edge-on; a speaking character rises into its tile; a join code's
- * tiles drop onto their ticket and the boxes a code is typed into answer each
- * key; an invitation is handed over as a ticket — it swings in, tears, folds
- * away, flies an arc to a friend, gets stamped; and something earned is
- * celebrated (ranks/Celebration.tsx). Nothing loops but a loading shimmer, a
- * typing caret, a ticket's slow glint or light and the one emblem a page puts
- * forward (games/GameArt.tsx) — each only while it is in front — and nothing
- * moves while it is being read.
- *
- * Nothing that is not a celebration or a value on the move takes longer than
- * `--dur-slow`, which is under 300ms.
- *
- * Only transform and opacity are animated. Under prefers-reduced-motion,
- * base.css takes every duration to nothing, so each of these lands at its end
- * at once: the colour and the mark are the answer, the content is simply
- * there. The few things that would still show a final frame of motion (the
- * flecks, the ring) are hidden outright below.
+ * Apart from celebrations and moving values nothing takes longer than `--dur-slow` (under 300ms). Only transform and
+ * opacity animate. Under Reduce Motion base.css zeroes every duration so each lands at its end; the few things that
+ * would still show a final frame of motion are hidden below.
  */
 
 /* ---- press ---------------------------------------------------------------- */
-/*
- * A lesson's tile — an answer, a card to pair, a word — sinks onto its lip
- * under the finger and springs back up when let go; Check and Continue too.
- * A spent tile settles onto its lip the same way.
- */
+/* A lesson tile, Check and Continue sink onto their lip when pressed and spring back; a spent tile settles the same way. */
 .tile,
 .lesson-bar-go {
   transition:
@@ -58,11 +34,7 @@
   transform: translateY(-2px) scale(var(--press-scale));
   transition-duration: 80ms;
 }
-/*
- * The rest of what can be pressed — pills, rows, bare icons — answers at the
- * end of shell.css, the last sheet, since a pressed state has to come after
- * every hover it outranks.
- */
+/* Other pressables answer at the end of shell.css, the last sheet, since a pressed state must follow every hover. */
 
 /* ---- an answer, answered ---------------------------------------------------- */
 @keyframes answer-pop {
@@ -166,11 +138,7 @@
 .lesson-feedback.is-right .lesson-verdict-mark {
   animation: answer-pop var(--dur-slow) var(--ease-spring);
 }
-/*
- * The verdict sheet rises into the action bar's place (learn/ActionBar.tsx):
- * up from below the screen on the out-curve as it fades in, quicker, so it
- * is there before it has finished arriving. Continue removes it at once.
- */
+/* The verdict sheet rises into the action bar's place (learn/ActionBar.tsx), quickly and fading in; Continue removes it at once. */
 @keyframes sheet-up {
   from {
     transform: translateY(100%);
@@ -245,10 +213,7 @@
 }
 
 /* ---- progress ------------------------------------------------------------- */
-/*
- * The lesson's bar slides to each new value rather than jumping: a full-width
- * fill moved along its track, so nothing is laid out again on each frame.
- */
+/* The lesson's bar slides a full-width fill along its track, so nothing is laid out on each frame. */
 .lesson-progress > span {
   inset-inline-end: 0;
   transform: translateX(calc((var(--p, 0) - 1) * 100%));
@@ -258,11 +223,8 @@
   transform: translateX(calc((1 - var(--p, 0)) * 100%));
 }
 /*
- * The other bars that move to a new value are moved the same way, on the same
- * token: a rank's climb, the level on a profile card, a player's meter in a
- * game, the letters and words opened so far. Each of them animated its width,
- * which is layout on every frame, over anything from 0.3s to 0.9s. Their
- * tracks clip, so the part of the fill that is not yet earned is out of sight.
+ * Other moving bars (rank climb, profile level, game meters, letters and words opened) slide the same way on the same
+ * token rather than animating width; their tracks clip the unearned part.
  */
 .rank-progress-fill,
 .pcard-level-fill,
@@ -505,10 +467,8 @@
   color: var(--success);
 }
 /*
- * The rest of the results arrive after the words, on the shared timeline
- * (@kurda/shared RESULTS_TIMING): the three cards a beat apart as the words
- * land, today's goal moving from where it stood to where it is, and the
- * league and level rows last. Skipped, it is all simply there.
+ * The rest of the results follow the words on the shared timeline (@kurda/shared RESULTS_TIMING): the three cards a
+ * beat apart, today's goal moving, then league and level rows. Skipped, everything is simply there.
  */
 .lesson-results:has(> .celebrate.is-playing) > :not(.celebrate, .end-stats, .lesson-moments),
 .lesson-results:has(> .celebrate.is-playing) :is(.end-stat, .lesson-goal, .lesson-moment.is-goal) {
@@ -534,11 +494,10 @@
 
 /* ---- a list arriving ---------------------------------------------------------- */
 /*
- * Its first screenful rises 8px and fades in, a beat apart, once: the class is
- * only on the list for a moment after its content first arrives (useArrival),
- * so a refresh, a filter or a row added later just appears.
+ * The first screenful rises 8px and fades in a beat apart, once: the class is on the list only briefly after its
+ * content first arrives (useArrival), so later changes just appear.
  */
-/* a wrapper that only groups rows for this, and takes no part in the layout */
+/* A wrapper that only groups rows for this and takes no part in the layout. */
 .list-arrival {
   display: contents;
 }
@@ -591,25 +550,15 @@
   animation-duration: var(--dur-slow);
   animation-timing-function: var(--ease-spring);
 }
-/*
- * On a phone the sheet is fixed to the bottom edge and slides up its whole
- * height. A spring's overshoot there is a twentieth of that height: the sheet
- * lifted clear of the edge it is attached to and showed the page under it
- * before settling. It slides on the emphasis curve instead — fast, then a long
- * settle, and never past where it stops.
- */
+/* On a phone the bottom sheet slides on the emphasis curve rather than a spring, whose overshoot lifted it off the edge. */
 @media (max-width: 640px) {
   .sheet-panel {
     animation-timing-function: var(--ease-emphasis);
   }
 }
 /*
- * Closed, each leaves the way it came (components/Modal.tsx, Sheet.tsx, on
- * lib/motion.ts `useLeaving`): the scrim fades and the panel goes back down
- * the few pixels it rose — a phone's sheet back off the bottom edge — in one
- * `--dur` on the out-curve. What is drawn for that moment is only a picture:
- * it is inert, and takes no press. A reader who asked for less motion never
- * sees it: nothing is left drawn once it is closed.
+ * Closing reverses the opening (components/Modal.tsx, Sheet.tsx, via lib/motion.ts `useLeaving`): the scrim fades and
+ * the panel sinks back in one `--dur`. The leaving picture is inert, and nothing is left drawn under Reduce Motion.
  */
 @keyframes scrim-leave {
   to {
@@ -649,14 +598,9 @@
   }
 }
 /*
- * A dialog opened from something comes from it (components/Modal.tsx, on
- * lib/opener.ts): its panel grows out of the point that was pressed, or out
- * of the control the keyboard was on, on the same spring, and closing takes
- * it back there. The point is the panel's transform origin, set as it opens.
- * The few pixels a dialog rises are left out here: where it comes from is the
- * opener's to say, and a rise on top of that pulled it off its line. A dialog
- * that opens by itself has no opener, and keeps the rise. A sheet comes from
- * the bottom edge, which is where it lives, whatever opened it.
+ * A dialog grows from its opener (components/Modal.tsx, lib/opener.ts): the pressed point or focused control is the
+ * transform origin, and closing returns there. Such dialogs skip the usual rise; one that opens by itself keeps it.
+ * Sheets always come from the bottom edge.
  */
 @keyframes panel-grow {
   from {
@@ -680,12 +624,8 @@
   animation-name: panel-shrink;
 }
 /*
- * A small menu that hangs from its ⋯ comes from it the same way, quicker: it
- * grows a little, out of the point that was pressed, as it fades in. The
- * class and the point are given when the menu has been placed
- * (reports/keepInView.ts). It is the `scale` that grows, not the transform:
- * placing a menu back inside the window is done with a transform of its own,
- * which a movement written as one would have thrown away while it played.
+ * A ⋯ menu grows from its button the same way, quicker, once placed (reports/keepInView.ts). It animates `scale`, not
+ * `transform`, since placing the menu uses a transform of its own.
  */
 @keyframes menu-grow {
   from {
@@ -699,26 +639,10 @@
 
 /* ---- a change of page ----------------------------------------------------------- */
 /*
- * Going to another page is carried, not cut (lib/viewTransition.tsx): the
- * browser keeps a picture of the page being left and the next one fades in
- * over it, in one `--dur`. Nothing in the page travels: a whole page sliding
- * or growing on every link would be movement on the most used thing there is.
- *
- * The bars are not the page. For as long as a page is changing, the top bar
- * and a phone's bar of places each carry a name of their own, which lifts
- * them out of the page's picture: they are drawn above it, where they stand,
- * while the page changes beneath them, and a picture on its way to a page
- * passes under them as the page itself does. A bar the next page does not
- * have fades with the page it belonged to.
- *
- * It is the bars that are named, and not the page's own region. The page
- * scrolls with the window, so a picture of `main` is as tall as the document
- * and hangs from wherever the document's top is: tried, it moved the old page
- * by however far the two pages' scrolls differed, and was drawn over both
- * bars and over anything open above the page. So the page is everything
- * without a name of its own, and whatever is on the screen is in its picture,
- * in the order it was drawn. An open dialog or sheet is over the bars, so
- * while one is, the bars stay in the picture under it.
+ * Page changes cross-fade in one `--dur` (lib/viewTransition.tsx); the page itself does not travel. The top bar and
+ * the phone's bar of places get their own transition names, so they stay above the changing page and pictures pass
+ * under them. The bars are named rather than `main`, which scrolls with the window and would be offset by scroll
+ * differences. While a dialog or sheet is open the bars stay in the page's picture under it.
  */
 .is-changing-page .nav {
   view-transition-name: top-bar;
@@ -736,18 +660,9 @@
   animation-timing-function: var(--ease-out);
 }
 /*
- * What a card carries to its page, and a page back to its card: the picture
- * crosses the screen from the one box to the other and takes its size, in
- * `--dur-slow` on the emphasis curve, which never passes where it stops (a
- * picture that overshot its place would be read as a second movement).
- *
- * A picture fills its box all the way, cut to it and never stretched, so a
- * cover that is wider on the page than on its card stays one picture. A card
- * that becomes a page is words, and words are not scaled: both ends are drawn
- * at their own size from the box's top corner, the card fading as the box
- * opens to the page's size and shows the page inside it. One that finds
- * nothing to land on is only part of the page it was on, and goes with it, at
- * the page's pace.
+ * A carried picture moves between card and page in `--dur-slow` on the emphasis curve, which never overshoots. Pictures
+ * fill their box, cropped, never stretched; words are not scaled but drawn at their own size, the card fading as the
+ * box opens. One with nothing to land on leaves with its page.
  */
 ::view-transition-group(carried-picture),
 ::view-transition-group(carried-card),
@@ -817,11 +732,8 @@
 
 /* ---- the day's reward, claimed -------------------------------------------------- */
 /*
- * Claiming the reward used to change a number and add a line of words; the
- * coin it is about did not move. Now it lands: the coin pops, once, and throws
- * the six sparks a like throws, in the reward's gold (components/DailyReward.tsx,
- * which also gives a phone its small buzz). Smaller than a tile, so its pop
- * is larger than a tile's to be seen at all.
+ * The claimed reward's coin pops once and throws a like's six sparks in gold (components/DailyReward.tsx, which also
+ * vibrates a phone); it is smaller than a tile, so its pop is larger.
  */
 @keyframes coin-pop {
   0% {
@@ -862,12 +774,8 @@
 
 /* ---- a lobby's join code ------------------------------------------------------ */
 /*
- * A lobby's ticket (play/CodeTicket.tsx). Its tiles drop onto it one after
- * another the first time it is shown, turning down into place with a little
- * overshoot. While it is in front (`is-awake`: on the screen, its tab the one
- * being looked at) a light crosses them every seven seconds, faint and quick;
- * the class comes off as soon as it is not, and the light stops. A press on
- * the code sinks the tiles onto their lip, as an answer tile sinks.
+ * A lobby's ticket (play/CodeTicket.tsx): tiles drop in one after another with a little overshoot the first time.
+ * While in front (`is-awake`) a faint light crosses them every seven seconds. A press sinks the tiles like answer tiles.
  */
 @keyframes code-tile-in {
   from {
@@ -954,14 +862,9 @@
 
 /* ---- tickets ------------------------------------------------------------------ */
 /*
- * How a ticket moves (ui/Ticket.tsx). An invite swings in as it arrives,
- * hung from its top edge, and settles; Join tears the stub off along the
- * perforation, and it drops away to the start side while the body gives a
- * little; Not now folds the ticket over and away; a stamp lands with a small
- * thump; a ticket waiting on somebody has a faint light cross it now and then,
- * only while it is in front (`is-awake`). Under Reduce Motion each of these
- * is simply its end, and the scripts that wait for a tear or a flight do not
- * wait.
+ * Ticket motion (ui/Ticket.tsx): an invite swings in from its top edge, Join tears off the stub, Not now folds it away,
+ * a stamp lands with a thump, and a waiting ticket glints while in front (`is-awake`). Under Reduce Motion each is
+ * its end and scripts waiting on a tear or flight do not wait.
  */
 @keyframes ticket-swing-in {
   from {
@@ -1064,12 +967,9 @@
 }
 
 /*
- * Handing tickets over (play/InviteTickets.tsx): a friend's ticket is written
- * out as they are picked — it slides up into the hand with a turn, and their
- * name follows it in; Send tears each off and throws it to its friend's face
- * in the list, one after another, shrinking as it goes, with specks where it
- * lands; a refusal brings them back, and the hand shakes once. After sending,
- * the tickets are dealt into a fan, a group's pinned.
+ * Handing tickets over (play/InviteTickets.tsx): a picked friend's ticket slides up with their name; Send tears each
+ * off and throws it to the friend's face with specks where it lands; a refusal brings them back with a shake. Sent
+ * tickets are dealt into a fan, a group's pinned.
  */
 @keyframes admit-in {
   from {
@@ -1086,12 +986,7 @@
     transform: translateX(calc(var(--t-out, -1) * 6px));
   }
 }
-/*
- * Thrown, not slid: a thing let go of travels an arc. It lifts off the hand,
- * gathers speed over the top — by then further across than it is along, and
- * above the straight line to the face — and comes down onto the face slowing.
- * The two halves carry their own curves so that it does not pause at the top.
- */
+/* Thrown in an arc: lifting, speeding over the top above the straight line, and slowing onto the face, with no pause at the top. */
 @keyframes admit-fly {
   18% {
     opacity: 1;
@@ -1154,11 +1049,8 @@
 }
 
 /*
- * A friendship (social/FriendTickets.tsx): Add turns into a small ticket that
- * lifts off the button and slips away to the person asked, and Requested's
- * own ticket pops on; taking the request back brings the ticket home. An
- * accepted request has its stub torn off (as Join's is) and its "Friends"
- * stamp lands with a burst; a declined one folds away.
+ * Friend requests (social/FriendTickets.tsx): Add becomes a small ticket that slips away and Requested's pops on;
+ * withdrawing brings it home; an accepted request tears its stub and stamps "Friends"; a declined one folds away.
  */
 @keyframes ask-away {
   from {
@@ -1205,11 +1097,8 @@
 
 /* ---- typing a code in ----------------------------------------------------------- */
 /*
- * Typing a code (play/JoinCode.tsx): each character pops into its box (a
- * pasted code pops in left to right), the caret blinks in the box being
- * filled; while it is checked a wave runs along the boxes; getting in turns
- * them over to green one after another, the colour changing as each is edge
- * on; a refusal shakes them once.
+ * Typing a code (play/JoinCode.tsx): characters pop into their boxes, the caret blinks, a wave runs while checking,
+ * success turns the boxes green one by one, and a refusal shakes them once.
  */
 @keyframes code-pop {
   0% {
@@ -1305,13 +1194,8 @@
 
 /* ---- Peyvok --------------------------------------------------------------------- */
 /*
- * A guess on the board (components/WordleBoard.tsx), answered where it was
- * typed. One the game will not take shakes its row once, as a wrong answer
- * does. One that is judged turns its tiles over, each a beat after the one
- * before, and a tile takes its colour — and the edge it stands on — while it
- * is edge-on, so the row is read left to right as it turns rather than all at
- * once. The word found pops along its row when the last tile is down. The
- * beats are the component's too (`REVEAL`): the result waits for them.
+ * Peyvok guesses (components/WordleBoard.tsx): a refused row shakes once; a judged row turns tile by tile, each taking
+ * its colour while edge-on, and the found word pops after the last tile. The beats match the component's `REVEAL`.
  */
 @keyframes answer-shake-again {
   0%,
@@ -1335,10 +1219,8 @@
   }
 }
 /*
- * The same shake under two names: a row refused twice running shakes twice, by
- * taking the other name. A form's field refused by the server is shaken the
- * same way (auth/fieldProblem.ts) — what is typed into, not its label nor the
- * words under it, which have to be read while it happens.
+ * One shake under two names, so a row refused twice in a row shakes twice. Server-refused form fields shake the same
+ * way (auth/fieldProblem.ts), the field only, not its label or message.
  */
 .wordle-row.is-shake-a,
 .field.is-shake-a > .input,
@@ -1405,12 +1287,7 @@
     animation: none;
   }
 }
-/*
- * Typing a code, still: the characters are simply there, nothing shakes,
- * flips or waves, the caret stays lit, and the colours change at once (no
- * box waits for the one before it). `is-still` is the same choice, read once
- * by the code boxes, which also leave out the flecks.
- */
+/* Typing a code under Reduce Motion: nothing pops, shakes or waves, the caret stays lit, and colours change at once (`is-still`). */
 @media (prefers-reduced-motion: reduce) {
   .code-box,
   .code-boxes,
@@ -1449,12 +1326,8 @@
   }
 }
 /*
- * A change of page, still: the page simply changes. Nothing is carried for a
- * reader who asked for less motion (lib/viewTransition.tsx does not begin),
- * and should the browser picture a page all the same, the old picture is not
- * shown and nothing fades, travels or grows. A dialog does not grow from its
- * opener either: it is asked for no origin (components/Modal.tsx), and is
- * there as it was before.
+ * Page changes under Reduce Motion: lib/viewTransition.tsx does not start one, and any browser picture is hidden and
+ * still. Dialogs get no opener origin (components/Modal.tsx).
  */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),

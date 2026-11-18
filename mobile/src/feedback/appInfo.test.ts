@@ -11,7 +11,7 @@ describe('appInfo', () => {
     expect(nativeBuildNumber({ ExpoApplication: { nativeBuildVersion: '42' } })).toBe('42');
     expect(nativeBuildNumber({ ExpoApplication: { nativeBuildVersion: ' ' } })).toBeNull();
     expect(nativeBuildNumber({})).toBeNull();
-    // a test, like the web preview, has no native modules at all
+    // A test, like the web preview, has no native modules at all.
     expect(nativeBuildNumber()).toBeNull();
   });
 
@@ -30,7 +30,7 @@ describe('appInfo', () => {
 
   it('has no "Rate Hevalo" until the addresses exist', () => {
     expect(rateUrl('ios', { ios: '', android: '' })).toBeNull();
-    expect(rateUrl('ios')).toBeNull(); // app.json ships them empty
+    expect(rateUrl('ios')).toBeNull(); // app.json ships them empty.
   });
 });
 

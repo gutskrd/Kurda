@@ -1,15 +1,7 @@
-/**
- * The pages played with nothing else on the screen (layouts/FocusLayout.tsx):
- * a lesson, a review, and the way to a new account's first lesson, which shows
- * the lesson's frame until it has found the lesson.
- */
+/** Pages shown alone (layouts/FocusLayout.tsx): a lesson, a review, and the route to a new account’s first lesson. */
 const FOCUSED = /^\/app\/learn\/(lesson|review|next)(\/|$)/;
 
-/**
- * Whether a page is one of them: what the invite banner and the rating box
- * ask before they show, so whatever arrives during a lesson waits for the
- * page after it.
- */
+/** Whether a page is focused, so the invite banner and rating box wait until the learner leaves it. */
 export function isFocusedPath(pathname: string): boolean {
   return FOCUSED.test(pathname);
 }

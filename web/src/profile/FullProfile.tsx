@@ -51,12 +51,8 @@ export interface ProfileFact {
 }
 
 /**
- * A row of numbers about somebody: each a figure with its word under it, four
- * to a row at most. Where a number has a page of its own (your friends, your
- * badges) the whole tile is the way in.
- *
- * The word comes first in the markup and the figure first on the screen: read
- * aloud it is "Streak, 12 days", looked at it is a 12 with "Streak" under it.
+ * A row of up to four figures with their labels; a tile with its own page links there. The label comes first in the
+ * markup so screen readers say "Streak, 12 days", while the figure shows first.
  */
 export function ProfileFacts({ facts }: { facts: readonly ProfileFact[] }): React.JSX.Element | null {
   if (facts.length === 0) return null;
@@ -91,11 +87,7 @@ export function ProfileFacts({ facts }: { facts: readonly ProfileFact[] }): Reac
   );
 }
 
-/**
- * A section of a profile that only its owner is shown: what you have earned
- * and hold, which is nobody else's business. It says so, so that nobody has
- * to wonder who else is reading their longest streak.
- */
+/** A profile section only its owner sees, labelled as such. */
 export function OnlyYou({ title, children }: { title: string; children: React.ReactNode }): React.JSX.Element {
   const t = useT();
   return (
@@ -113,23 +105,9 @@ export function OnlyYou({ title, children }: { title: string; children: React.Re
 }
 
 /**
- * A whole profile, yours or somebody else's, in one column that reads the
- * same on a phone and on a desk: who this is, then what they have done.
- *
- *   the card   their banner and face with the menu in its corner, their
- *              name, where they are from, what they say about themselves,
- *              what you can do (edit and share your own; befriend, message
- *              or play somebody else), how far they are into their level,
- *              and four numbers: streak, XP, friends, badges
- *   showcase   the badges they chose to show, their ranks and their league
- *   favourites the poem and the story they picked
- *   people     who they know
- *   yours      on your own profile only: what nobody else is shown
- *   activity   what they posted and played — the long part, and so the last
- *
- * The numbers used to be a second card in a side column, which a phone has
- * no room for and so dropped to the very bottom, under every post somebody
- * had ever written. They are about the person, so they are with the person.
+ * A full profile in one column: the card (banner, face, menu, name, origin, bio, actions, level and four figures),
+ * then the showcase (badges, ranks, league), favourites, friends, owner-only sections, and activity last as the
+ * longest part.
  */
 export function FullProfile({
   view,
@@ -177,11 +155,7 @@ export function FullProfile({
   return (
     <div className="mkp-page">
       <div className="mkp-wrap">
-        {/*
-          The same card as the profile popup and the front page's picture of
-          one, only wider. Their background is the banner, where it reads as
-          theirs and the text below it stays on the app's own surface.
-        */}
+        {/* The popup's card, wider; the background is the banner, so the text below stays on the app’s surface. */}
         <ProfileCard
           wide
           name={view.name}
@@ -225,7 +199,7 @@ export function FullProfile({
                 </ul>
               )}
               <GiftedNote background={view.background} icon={view.icon} />
-              {/* their own words, with their name: nobody else's profile says "no bio yet", and yours offers to be written */}
+              {/* The bio: others’ empty bios show nothing, and the owner’s offers to be written. */}
               {view.bio ? (
                 <p className="mkp-bio" dir="auto">
                   {view.bio}

@@ -13,20 +13,19 @@ import type { Spoken } from '../alphabet/audio';
 import { knownVoice } from '../characters/voice';
 
 /**
- * The word sets' sounds on the phone, as the alphabet's are (alphabet/audio.ts):
- * a synthesised clip from the website where one could be made, a recording
- * made in the admin panel in its place, and who says it. The recordings come
- * in the alphabet's own answer, GET /alphabet/audio, under the words' keys.
+ * The word sets' sounds, as for the alphabet (alphabet/audio.ts): a synthesised clip from the website where one
+ * exists, an admin-panel recording in its place, and its speaker. Recordings come with the alphabet's own GET
+ * /alphabet/audio, under the words' keys.
  */
 export const WORDS_BASE = assetUrl(SYNTHESISED_WORDS_PATH) ?? SYNTHESISED_WORDS_PATH;
 
 export interface WordsAudio {
   sounds: WordSetSounds;
-  /** who says the recording at `src`; null for a synthesised clip and for a recording nobody was chosen for */
+  /** The speaker of the recording at `src`; null for a synthesised clip or a recording without one. */
   voiceOf: (src: string | null) => Spoken | null;
 }
 
-/** The words' sounds from GET /alphabet/audio's answer: only the recordings worth playing, and only speakers this app can draw. */
+/** The words' sounds from GET /alphabet/audio: only recordings worth playing, and only speakers this app can draw. */
 export function wordsAudio(answer: Partial<AlphabetAudioResponse> | null | undefined): WordsAudio {
   const recorded = wordSetRecordings(answer?.clips);
   const voices = new Map<string, Spoken>();
@@ -43,14 +42,12 @@ export function wordsAudio(answer: Partial<AlphabetAudioResponse> | null | undef
 /** The synthesised clips alone: what every word plays until the recordings are known. */
 const GENERATED = wordsAudio(null);
 
-/** How long to wait before asking once more for the recordings, when the first answer did not come. */
+/** How long to wait before retrying the recordings when the first request got no answer. */
 const ASK_AGAIN_MS = 20_000;
 
 /**
- * The words' sounds for a screen: the synthesised clips from the first frame,
- * and the recordings in their place once the server names them — asked for
- * in the background, and once more a little later if the first answer does
- * not come, as the alphabet does.
+ * The words' sounds for a screen: synthesised clips from the first frame, replaced by recordings once the server
+ * names them, retried once if the first request gets no answer.
  */
 export function useWordsAudio(client: ApiClient): WordsAudio {
   const [audio, setAudio] = useState<WordsAudio>(GENERATED);

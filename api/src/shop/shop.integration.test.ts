@@ -1,4 +1,4 @@
-/** Shop purchase flow (KUR-071) against real Postgres. */
+/** Shop purchase flow against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

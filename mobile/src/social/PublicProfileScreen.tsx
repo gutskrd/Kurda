@@ -45,39 +45,38 @@ interface Profile {
   userId: string;
   username: string;
   displayName: string | null;
-  /** what they say about themselves, and where they are from: sent with a profile you may see */
+  /** What they say about themselves, and where they are from: sent with a profile you may see. */
   bio?: string | null;
   country?: string | null;
-  /** the server resolves this (uploaded photo → chosen avatar); the phone was dropping it */
+  /** The server resolves this (uploaded photo, else chosen avatar). */
   avatarUrl?: string | null;
   friendStatus: FriendStatus;
   private: boolean;
-  /** their XP as older servers sent it; today it comes inside `level` */
+  /** Their XP as older servers sent it; current ones send it inside `level`. */
   xp?: number;
-  /** their level and the XP behind it: where their XP is, on a profile you may see */
+  /** Their level and the XP behind it: where their XP is, on a profile you may see. */
   level?: { xp: number; level: number } | null;
   streak?: number;
-  /** their league tier, or null for someone not in the leagues (never a made-up "bronze") */
+  /** Their league tier, or null for someone not in the leagues (never a made-up "bronze"). */
   tier?: string | null;
   league?: ProfileLeague | null;
-  /** Game Ranks per game played; "Resting" ones carry no tier for others */
+  /** Game Ranks per game played; "Resting" ones carry no tier for others. */
   ranks?: ProfileRank[];
-  /** the season frame they wear round their avatar */
+  /** The season frame they wear round their avatar. */
   frameSku?: string | null;
-  /** the picture of a frame from the shop; a season frame is drawn from its SKU */
+  /** The picture of a frame from the shop; a season frame is drawn from its SKU. */
   frameUrl?: string | null;
-  /** badges earned (and the legacy tournament win) */
+  /** Badges earned (and the legacy tournament win). */
   achievements?: number;
-  /** the three badges they chose to show */
+  /** The three badges they chose to show. */
   badges?: ShowcaseBadge[];
-  /** which activity sections they let people see; null when private */
+  /** Which activity sections they let people see; null when private. */
   sections?: ProfileSections | null;
-  /** their tree as it stands today; null before they plant one or when private, absent on a server without trees */
+  /** Their tree as it stands today; null before they plant one or when private, absent on a server without trees. */
   tree?: TreeGlimpse | null;
   /*
-   * What they pinned to their profile. The API only sends these when the post
-   * behind them is still published, so there is nothing to check here — an
-   * unpublished favourite arrives as null and simply does not draw.
+   * What they pinned to their profile. The API sends these only while the post is still published, so an unpublished
+   * one arrives as null and simply does not draw.
    */
   favoritePoem?: FavoriteRef | null;
   favoriteStory?: FavoriteRef | null;
@@ -89,28 +88,19 @@ const BANNER = 104;
 const FACE = 96;
 
 /**
- * Somebody else's profile (KUR-082).
- *
- * Who they are first — their sky and their face, the name they chose, where
- * they are from and their own words — then the one thing most people came to
- * do, as the filled button: write to a friend, ask to be friends, answer
- * somebody who asked first. Their numbers and what they have made follow.
- *
- * Everything that is about ending something, or about telling a moderator,
- * is behind the ⋯ at the end of the bar at the top, where the menu about a
- * person is looked for: send their profile on, stop being friends, report
- * them, block them. Report and Block are two separate, plainly named items,
- * each one tap from the menu; they used to be two words at the foot of the
- * card, under everything else on it.
+ * Somebody else's profile: who they are first (their sky and face, the name they chose, where they are from, their
+ * bio), then the one thing most people came to do as the filled button (write to a friend, ask to be friends, answer a
+ * request), then their numbers and what they made. Ending something or telling a moderator is behind the ⋯ in the top
+ * bar: share their profile, unfriend, report, block, each one tap from the menu.
  */
 export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit: () => void }) {
   const { client } = useAuth();
-  // anyone's profile is open to a guest; writing to them or befriending them is the account's (auth/AccountGate)
+  // Anyone's profile is open to a guest; writing to or befriending them needs an account (auth/AccountGate).
   const { require } = useAccountGate();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  // in Soranî and Arabic the numbers start on the right, as the reading does
+  // In right-to-left languages the numbers start on the right, as reading does.
   const dir = useDirection();
   const { width: windowWidth } = useWindowDimensions();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -121,8 +111,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const { announce, region } = useAnnouncer();
 
   /*
-   * A request that has gone out is said aloud, as the button hands its ticket
-   * over (TicketSlip); not on arriving at a profile already requested.
+   * A sent request is announced as the button hands its ticket over (TicketSlip), not on arriving at a profile already
+   * requested.
    */
   const status = profile?.friendStatus ?? null;
   const lastStatus = useRef(status);
@@ -133,12 +123,12 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   }, [status, announce, t]);
 
   const load = useCallback(() => {
-    void client.get<Profile>(`/users/${userId}`).then((res) => {
+    void client.get<Profile>(`/users/${encodeURIComponent(userId)}`).then((res) => {
       if (res.ok) {
         setProfile(res.data);
         setError(null);
       } else if (res.error.kind === 'client' && res.error.status === 404) {
-        setNotFound(true); // genuinely unavailable — distinct from offline/server error
+        setNotFound(true); // Genuinely unavailable, as distinct from offline or a server error.
       } else {
         setError(res.error);
       }
@@ -150,15 +140,15 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const perform = useCallback(
     async (status: FriendStatus) => {
       setBusy(true);
-      // an offer made — a request sent, or one accepted — is felt; taking one back is quiet
+      // An offer made (a request sent, or accepted) is felt; taking one back is quiet.
       if (status === 'none' || status === 'pending_in') haptic('tap');
       let res: ApiResult<unknown> | null = null;
       if (status === 'none') res = await client.post('/friends/requests', { userId });
-      else if (status === 'pending_in') res = await client.post(`/friends/requests/${userId}/accept`);
-      else if (status === 'pending_out') res = await client.delete(`/friends/requests/${userId}`);
-      else if (status === 'friends') res = await client.delete(`/friends/${userId}`);
+      else if (status === 'pending_in') res = await client.post(`/friends/requests/${encodeURIComponent(userId)}/accept`);
+      else if (status === 'pending_out') res = await client.delete(`/friends/requests/${encodeURIComponent(userId)}`);
+      else if (status === 'friends') res = await client.delete(`/friends/${encodeURIComponent(userId)}`);
       setBusy(false);
-      // a request that did not go — a full friend list, too many out — says why (limits/limitCopy.ts)
+      // A request that did not go (a full friend list, too many outgoing) says why (limits/limitCopy.ts).
       if (res && !res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
       load();
     },
@@ -166,13 +156,9 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 
   /**
-   * The button, and the question the two destructive states ask first.
-   *
-   * Sending a request and accepting one happen on the tap — they are offers, and
-   * an offer made by accident costs the other person a notification. Cancelling
-   * a request and ending a friendship do not: both throw away something the two
-   * of you already have, and neither is recoverable without the other person
-   * agreeing again, so both name the person and wait to be told yes.
+   * The button, and the confirmation the two destructive states ask first. Sending or accepting a request happens on
+   * tap. Cancelling a request and ending a friendship throw away something shared that only the other person could
+   * restore, so both name the person and wait for a yes.
    */
   const act = useCallback(
     (status: FriendStatus) => {
@@ -191,14 +177,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 
   const block = useCallback(() => {
-    // named as the menu over it names them: the name they chose, else their handle
+    // Named as the menu names them: the name they chose, else their handle.
     Alert.alert(t('moderation.blockWhoTitle', { name: profile?.displayName ?? profile?.username ?? '' }), t('moderation.blockNote'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('moderation.block'),
         style: 'destructive',
         onPress: () => {
-          // blocked: their profile is gone for you; not blocked (the most anyone may block): say why
+          // Blocked: their profile is gone for you; not blocked (at the block limit): say why.
           void blockUser(client, userId).then((res) => {
             if (res.ok) onExit();
             else if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
@@ -215,7 +201,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     void Share.share({ message: t('profile.shareMessage', { name, url: `${SITE_ORIGIN}/app/users/${profile.userId}` }) });
   }, [profile, name, t]);
 
-  /** The menu about them: what is not the one thing most people came to do. */
+  /** The menu about them: everything but the one thing most people came to do. */
   const more = useCallback(() => {
     if (!profile) return;
     showActions({
@@ -223,14 +209,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       cancel: t('common.cancel'),
       actions: [
         { label: t('profile.share'), onPress: share },
-        // a friendship is ended from here, asked first (act): it is not a button beside "Message"
+        // A friendship is ended from here, confirmed first (act), not by a button beside "Message".
         ...(profile.friendStatus === 'friends' ? [{ label: t('friends.removeFriend'), destructive: true, onPress: () => act('friends') }] : []),
         { label: t('moderation.report'), onPress: () => setReporting(true) },
         { label: t('moderation.block'), destructive: true, onPress: block },
       ],
     });
   }, [profile, name, share, act, block, t]);
-  // nothing to end, report or block about yourself
+  // Nothing to end, report or block about yourself.
   const menu = profile && profile.friendStatus !== 'self' ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} testID="profile-more" /> : null;
 
   if (notFound) {
@@ -261,12 +247,13 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         >
           {() => {
             if (!profile) return null;
-            // a friend's button would only say so: ending it is in the menu, and what you do with a friend is write and play
+            // A friend's button would only say so: ending it is in the menu, and what you do with a friend is write and
+            // play.
             const labelKey = profile.friendStatus === 'friends' ? null : friendActionLabel(profile.friendStatus);
             const cardWidth = windowWidth - layout.gutter * 2;
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
-          {/* their own sky behind their face: the picture the website draws in their banner */}
+          {/* Their own sky behind their face: the picture the website draws in their banner. */}
           <Horizon seed={profile.userId} width={cardWidth} height={BANNER} style={styles.banner} />
           <View style={[styles.face, { borderColor: colors.background, backgroundColor: colors.background }]}>
           <Framed
@@ -278,12 +265,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={FACE} photoUrl={profile.avatarUrl} />
           </Framed>
           </View>
-          {/*
-            The name they chose leads and the handle follows, as on your own
-            profile and on the website. It was the other way round here: the
-            handle large, and the name somebody picked for themselves small
-            under it.
-          */}
+          {/* The name they chose leads and the handle follows, as on your own profile and the website. */}
           <Text style={[styles.username, { color: colors.textPrimary }]} accessibilityRole="header">
             {profile.displayName ?? profile.username}
           </Text>
@@ -294,11 +276,11 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
               <Text style={[styles.countryName, { color: colors.textSecondary }]}>{countryName(profile.country, locale) ?? profile.country}</Text>
             </View>
           ) : null}
-          {/* their own words: the one part of a profile that is not a number */}
+          {/* Their own words: the one part of a profile that is not a number. */}
           {!profile.private && profile.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{profile.bio}</Text> : null}
           {profile.private ? <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text> : null}
 
-          {/* what you can do sits with who they are, above the numbers, where a thumb finds it without scrolling */}
+          {/* What you can do sits with who they are, above the numbers, within thumb reach without scrolling. */}
           {profile.friendStatus !== 'self' ? (
             <View style={styles.actions}>
               {profile.friendStatus === 'friends' ? (
@@ -309,17 +291,17 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     size="large"
                     onPress={() => require('message') && navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
                   />
-                  {/* the quiz's 1v1 challenge went with the quiz: any game, through the invite sheet */}
+                  {/* A challenge is any game, through the invite sheet. */}
                   <PlayWithButton friendId={profile.userId} name={profile.displayName ?? profile.username} />
                 </>
               ) : null}
               {labelKey ? (
-                // a request is a ticket handed over: it slips away from the button, and home again when taken back
+                // A request is a ticket handed over: it slips away from the button, and home again when taken back.
                 <TicketSlip sent={profile.friendStatus === 'pending_out'}>
                   <ClayButton
                     label={t(labelKey)}
                     icon={profile.friendStatus === 'pending_out' ? 'ticket' : profile.friendStatus === 'none' ? 'user-plus' : undefined}
-                    // an undo is pressable but not an invitation, so it stays neutral
+                    // An undo is pressable but not an invitation, so it stays neutral.
                     tone={isActionable(profile.friendStatus) && !isUndo(profile.friendStatus) ? 'primary' : 'neutral'}
                     size="large"
                     busy={busy}
@@ -334,10 +316,10 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           {profile.private ? null : (
             <>
               <View style={[styles.stats, { flexDirection: dir.row }]}>
-                {/* grouped, and in the reader's own digits, as the same numbers are on their own profile */}
+                {/* Grouped and in the reader's own digits, as on their own profile. */}
                 <Stat label={t('profile.streak')} value={formatNumber(profile.streak ?? 0, locale)} fire={fireLevel(profile.streak ?? 0)} />
                 <Stat label={t('profile.stat.xp')} value={formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale)} />
-                {/* a league only while they take part, translated; nothing for somebody never in one */}
+                {/* A league only while they take part, translated; nothing for somebody never in one. */}
                 {knownTier(profile.league?.tier ?? profile.tier) ? (
                   <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
                 ) : null}
@@ -352,8 +334,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                 badges={profile.badges ?? []}
               />
 
-              {/* behind the same privacy check as the stats: pinning a poem is
-                  something you did for people who can see your profile */}
+              {/* Behind the same privacy check as the stats: a pinned poem is for people who can see the profile. */}
               {profile.favoritePoem ? (
                 <FavoriteRow label={t('profile.favoritePoem')} title={profile.favoritePoem.title} />
               ) : null}
@@ -363,14 +344,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             </>
           )}
 
-          {/* the same sheet as everywhere else something can be reported, opened from the menu at the top */}
+          {/* The same report sheet as everywhere, opened from the top menu. */}
           <ReportSheet
             visible={reporting}
             target={{ type: 'user', userId: profile.userId }}
             name={profile.displayName ?? profile.username}
             blockable={{ userId: profile.userId, name: profile.displayName ?? profile.username }}
             onClose={() => setReporting(false)}
-            // blocked from the report: the profile is gone to you now
+            // Blocked from the report: the profile is gone to you now.
             onBlocked={() => {
               setReporting(false);
               onExit();
@@ -389,11 +370,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 }
 
-/**
- * The card while it loads, in its own shape: the picture, the name, the four
- * numbers and the two buttons a friend's profile has — so the card that
- * arrives is the one that was standing there.
- */
+/** The card while it loads, in its own shape, so the card that arrives is the one that was standing there. */
 function ProfileCardSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -421,7 +398,7 @@ function ProfileCardSkeleton(): React.JSX.Element {
   );
 }
 
-/** ClayButton's large size */
+/** ClayButton's large size. */
 const LARGE_BUTTON = 50;
 
 /** No title: on a profile the person is the title, and their name is on the card below. */
@@ -448,14 +425,14 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: spacing.xxl },
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  // the band of sky runs to the card's edges, so the card clips it to its own corners
+  // The band of sky runs to the card's edges, so the card clips it to its corners.
   card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, overflow: 'hidden' },
   banner: { height: BANNER, alignSelf: 'stretch', marginHorizontal: -spacing.xl },
-  // their face stands half over the band's lower edge, ringed in the page's own colour
+  // Their face stands half over the band's lower edge, ringed in the page's colour.
   face: { marginTop: -(FACE / 2 + 4 + spacing.sm), borderRadius: radii.pill, borderWidth: 4 },
   username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   display: { fontSize: typography.sizes.md },
-  // the flag and the name of where they are from, as your own profile draws them
+  // The flag and the name of where they are from, as your own profile draws them.
   country: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
   flag: { width: 22, height: 16 },
   countryName: { fontSize: typography.sizes.sm },

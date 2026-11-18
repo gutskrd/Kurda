@@ -81,9 +81,8 @@ interface Call {
   body: unknown;
 }
 /**
- * Signed in, with the letters API answering from `answers` (method and path
- * to body), which a test changes as the server would change, and `fails`
- * (method and path to an error) answered once each. Every request is kept.
+ * Signs in with the letters API answering from `answers` (method and path to body), which tests change as the server
+ * would, and `fails` answered once each; every request is recorded.
  */
 function signIn(answers: Record<string, unknown>, fails: Record<string, { status: number; code: string; details?: unknown }> = {}): Call[] {
   const calls: Call[] = [];

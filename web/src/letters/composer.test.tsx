@@ -7,11 +7,7 @@ import { renderApp, jsonResponse } from '../test/utils';
 import { LettersPage } from './LettersPage';
 import { LetterThreadPage } from './LetterThreadPage';
 
-/*
- * The letter's own paper: writing on it, the tools under it — Draw, Text,
- * Paper — what a first letter to a stranger may carry, what is sent, and every
- * letter read on the paper it was written on.
- */
+/* The letter paper: writing, the Draw, Text and Paper tools, a first letter's limits, what is sent, and reading. */
 
 /** jsdom has no PointerEvent: a mouse event that says which pointer it was and what kind. */
 class TestPointerEvent extends MouseEvent {

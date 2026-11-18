@@ -1,9 +1,7 @@
 /**
- * Peyvok daily selection, XP, and statistics (KUR-304) — the pure, testable
- * pieces of the daily/practice service. Deterministic daily-word choice (same
- * word for everyone on a given UTC day, rotating every 24h with no near-term
- * repeats), the XP-by-guess-count table, and streak/stats aggregation. Storage,
- * HTTP, and the guess engine (#303) live elsewhere; this module has no I/O.
+ * Peyvok daily selection, XP and statistics, pure: deterministic daily words (the same for everyone on a UTC day, no
+ * near-term repeats), the XP-by-guesses table, and streak and stats aggregation. Storage, HTTP and the guess engine
+ * live elsewhere.
  */
 import { letterCount } from '@kurda/shared';
 
@@ -59,26 +57,20 @@ function seededShuffle<T>(items: readonly T[], seed: number): T[] {
 export const DAILY_REPEAT_DAYS = 180;
 
 /**
- * How many days back a new daily word must not repeat: half a year, or one
- * day less than the pool lasts when it is smaller than that (a pool of 120
- * words can go 119 days without a repeat, and not 180).
+ * How many days a new daily word must not repeat: half a year, or one day less than the pool lasts when it is smaller
+ * (a 120-word pool can go 119 days without a repeat).
  */
 export function dailyRepeatWindow(poolSize: number): number {
   return Math.max(0, Math.min(DAILY_REPEAT_DAYS, poolSize - 1));
 }
 
 /**
- * The daily word for a given UTC day + difficulty. Deterministic (so every
- * player gets the same word), and because it indexes a seeded permutation of
- * the pool by day, each word appears exactly once per `pool.length`-day cycle —
- * i.e. no repeat until the whole pool has been used. Returns null for an empty
- * pool (caller falls back a difficulty tier).
+ * The daily word for a UTC day and difficulty. Deterministic, and since it indexes a seeded permutation of the pool by
+ * day, each word appears once per `pool.length`-day cycle. Null for an empty pool (the caller falls back a tier).
  *
- * `recent` are words set lately (the stored schedule, `wordle_daily`): the
- * pick walks on through the permutation past them, so a pool that grew or
- * shrank since — which reorders the permutation — still never brings back a
- * word players saw a few days ago. If every word is recent it takes the day's
- * own word anyway: a repeat is better than no game.
+ * `recent` are words set lately (the stored `wordle_daily` schedule): the pick walks past them, so a pool that changed
+ * size (reordering the permutation) never brings back a recent word. If every word is recent it takes the day's own
+ * word anyway.
  */
 export function pickDailyWord(
   pool: readonly string[],
@@ -149,17 +141,12 @@ export interface WordleGameResult {
 }
 
 /**
- * Fold a finished game into the player's stats. Only **daily** games move the
- * streak: a win on the day after the last daily continues it, a win after a gap
- * resets it to 1, and a loss breaks it. Practice games update the totals but
- * never the streak. No XP comes of either: Peyvok is played alone, and XP is
- * for lessons and for games online with other people.
+ * Fold a finished game into the player's stats. Only **daily** games move the streak: a win the day after the last
+ * daily continues it, a win after a gap resets it to 1, and a loss breaks it. Practice updates totals only. No XP
+ * either way (Peyvok is played alone).
  *
- * There is a daily word for each difficulty, and a day counts once: the first
- * daily a player finishes on a day moves the streak, and any other daily the
- * same day counts in the totals only. Otherwise a second word the same day
- * would read as a gap and reset the streak to 1, or a lost hard word undo the
- * easy one won that morning.
+ * Each difficulty has a daily word, but a day counts once: the first daily finished that day moves the streak and
+ * others count in totals only, so a second word the same day cannot reset the streak or undo a morning win.
  */
 export function applyGameResult(stats: WordleStats, result: WordleGameResult): { stats: WordleStats } {
   const next: WordleStats = {

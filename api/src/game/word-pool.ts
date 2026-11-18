@@ -1,16 +1,8 @@
 /**
- * The words a Peyvok can ask for.
- *
- * Peyvok is played in Kurmancî, on a keyboard of the 31 Kurmancî letters. Its
- * pool was every word marked for the games, whatever its variety — and the
- * admin screen adds Soranî words to the same pool, for the rhyme games
- * (game-content-routes). A Soranî target, or a Kurmancî headword with a letter
- * outside the alphabet (an é in a loanword), is a round nobody can type an
- * answer to. So a target is a Kurmancî word made only of letters the keyboard
- * has, and written in lower case: a headword with a capital is a name, and a
- * name is no answer. Guesses are checked against the whole Kurmancî
- * dictionary, where a bigger lexicon only helps, and against the words the
- * course teaches.
+ * The words a Peyvok can ask for. Peyvok is Kurmancî on a 31-letter keyboard, but the shared pool also holds Soranî
+ * words for the rhyme games and loanwords with letters outside the alphabet. So a target must be a lower-case Kurmancî
+ * word of keyboard letters only (a capitalised headword is a name). Guesses are checked against the whole Kurmancî
+ * dictionary and the course's taught words.
  */
 import type pg from 'pg';
 import { KURMANCI_ALPHABET, dictionaryKey, letterKey } from '@kurda/shared';
@@ -41,9 +33,8 @@ export async function loadWordlePool(executor: Pick<pg.Pool, 'query'>): Promise<
 export const RECENT_TARGETS = 30;
 
 /**
- * The words the given players were last set, at most `limit` each: their own
- * Peyvok games, daily and practice, and the battles they raced. A word one of
- * them saw this morning is no puzzle for them this afternoon.
+ * The words the given players were last set, at most `limit` each: their own daily and practice games and the battles
+ * they raced.
  */
 export async function recentTargets(
   executor: Pick<pg.Pool, 'query'>,
@@ -67,9 +58,8 @@ export async function recentTargets(
 }
 
 /**
- * The dictionary entry a Peyvok answer is, for saving it to the learner's
- * words: the Kurmancî game word spelt exactly so (a folded lookup, then the
- * letters compared with their marks), a curated one first.
+ * The dictionary entry a Peyvok answer is, for saving to the learner's words: the Kurmancî game word spelt exactly so
+ * (folded lookup, then compared with marks), curated first.
  */
 export async function wordleEntryId(executor: Pick<pg.Pool, 'query'>, target: string): Promise<string | null> {
   const res = await executor.query<{ id: string; headword: string }>(
@@ -80,16 +70,12 @@ export async function wordleEntryId(executor: Pick<pg.Pool, 'query'>, target: st
 }
 
 /**
- * Is a Peyvok guess a word: a Kurmancî dictionary entry spelt exactly so, or a
- * word the course teaches (a published word card).
+ * Whether a Peyvok guess is a word: a Kurmancî dictionary entry spelt exactly so, or a course word (published word
+ * card).
  *
- * Found by the folded key, which is how an imported lexicon is indexed
- * (1751000115000), and then compared letter for letter with its marks: kecik
- * is not keçik, and a guess the tiles score as a different word is not
- * accepted as this one. Only Kurmancî entries count, so a Zazakî or Soranî
- * word in the same dictionary is not a Peyvok guess. A word a lesson taught is
- * a word whether or not the dictionary has it yet: a learner who typed it has
- * not typed nonsense.
+ * Found by the folded key (how imported lexicons are indexed, 1751000115000), then compared with marks: kecik is not
+ * keçik, so a guess the tiles would score as another word is not accepted. Only Kurmancî entries count. A taught word
+ * counts even if the dictionary lacks it.
  */
 export async function isWordleGuess(executor: Pick<pg.Pool, 'query'>, normalized: string): Promise<boolean> {
   if (!normalized) return false;

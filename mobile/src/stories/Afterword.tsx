@@ -4,6 +4,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { textIn } from '../lore/labels';
+import { openableSourceUrl } from '../lore/sourceLink';
 import { useDirection } from '../reports/direction';
 import { Icon } from '../theme/Icon';
 import { heldDim } from '../theme/MotionParts';
@@ -15,21 +16,13 @@ import { noteIn, reflectionIn } from './legend';
 import { storyTextProps, storyTextStyle } from './storyText';
 
 /**
- * What follows a legend once it is read, under the check: questions to
- * think about, what is known about the story, and where it comes from. One
- * column with room between the parts, each under a quiet label — not a wall
- * of cards — and every Kurdish text in the story's own direction with the
- * reader's translation under it (English where theirs has none yet).
- *
- * "Think about it" is the story's reflections: open questions, nothing to
- * answer here, nothing scored and no XP. "Behind the story" is its notes —
- * what is history and what is legend, how the versions differ, what a custom
- * in it means. The sources say what each one is (a historical record, a
- * legend as collected, an oral telling, a literary work, an adaptation) and
- * open the ones that are online in the browser.
+ * What follows a legend once read: questions to think about, notes on the story, and its sources, in one column
+ * under quiet labels. Kurdish texts keep the story's direction with the reader's translation under them (English
+ * where theirs is missing). Reflections are open questions with nothing scored; the notes separate history from
+ * legend; the sources say what kind each is and link those online.
  */
 
-export const SOURCE_TYPE_KEY: Record<StorySourceType, TranslationKey> = {
+const SOURCE_TYPE_KEY: Record<StorySourceType, TranslationKey> = {
   historical: 'stories.source.historical',
   legendary: 'stories.source.legendary',
   oral: 'stories.source.oral',
@@ -49,7 +42,7 @@ function Label({ children }: { children: string }): React.JSX.Element {
   );
 }
 
-/** Think about it: the reflections, numbered, each with its translation. Nothing to submit. */
+/** Think about it: the numbered reflections, each with its translation. Nothing to submit. */
 export function Reflections({ story }: { story: Story }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -86,7 +79,7 @@ export function Reflections({ story }: { story: Story }): React.JSX.Element | nu
   );
 }
 
-/** Behind the story: each note under its own title, in Kurdish and in the reader’s language. */
+/** Behind the story: each note under its own title, in Kurdish and in the reader's language. */
 export function AboutStory({ story }: { story: Story }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -123,7 +116,7 @@ export function AboutStory({ story }: { story: Story }): React.JSX.Element | nul
   );
 }
 
-/** The sources a telling draws on: what kind each is, its title and author, and a link where it is online. */
+/** The sources a telling draws on: each one's kind, title and author, and a link where it is online. */
 export function StorySources({ story }: { story: Story }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -134,18 +127,20 @@ export function StorySources({ story }: { story: Story }): React.JSX.Element | n
       <Label>{t('lore.sources')}</Label>
       <View style={styles.sources}>
         {story.sources.map((s, i) => {
+          // Only an https address is a link (lore/sourceLink.ts); any other source reads as plain text.
+          const url = openableSourceUrl(s.url);
           const body = (
             <View style={styles.flex}>
               <Text style={[styles.sourceType, dir.text, { color: colors.textSecondary }]}>{t(SOURCE_TYPE_KEY[s.type])}</Text>
-              <Text style={[styles.sourceTitle, dir.free, { color: s.url ? colors.primary : colors.textPrimary }]}>{s.title}</Text>
+              <Text style={[styles.sourceTitle, dir.free, { color: url ? colors.primary : colors.textPrimary }]}>{s.title}</Text>
               {s.author ? <Text style={[styles.sourceMeta, dir.free, { color: colors.textSecondary }]}>{s.author}</Text> : null}
               {s.note ? <Text style={[styles.sourceMeta, dir.free, { color: colors.textSecondary }]}>{s.note}</Text> : null}
             </View>
           );
-          return s.url ? (
+          return url ? (
             <Pressable
               key={`${s.title}-${i}`}
-              onPress={() => void Linking.openURL(s.url!).catch(() => undefined)}
+              onPress={() => void Linking.openURL(url).catch(() => undefined)}
               accessibilityRole="link"
               accessibilityLabel={`${s.title}, ${t(SOURCE_TYPE_KEY[s.type])}`}
               accessibilityHint={t('lore.source.open')}
@@ -173,7 +168,7 @@ const styles = StyleSheet.create({
   number: { width: 28, height: 28, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   numberText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   flex: { flex: 1, gap: 2 },
-  // the story's own serif at book weight, as its text is set: a question to think over, not a heading
+  // The story's serif at book weight: a question to think over, not a heading.
   reflectionText: { fontFamily: displayFont, fontWeight: typography.weights.regular, fontSize: typography.sizes.md, lineHeight: Math.round(typography.sizes.md * 1.5) },
   translation: { fontSize: typography.sizes.sm, lineHeight: 21 },
   note: { gap: spacing.xs, marginTop: spacing.xs },

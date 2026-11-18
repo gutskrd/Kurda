@@ -19,37 +19,31 @@ import { notBlockedSql } from '../friends/blocked.js';
 import { BIRD_SQL, NAME_SQL, NOT_BANNED_SQL, YOUR_TURN_SQL, personOf } from './service.js';
 
 /**
- * The letter widget on a phone's home screen (shared/src/letter-paper.ts):
- * its tokens, what the account chooses for it, and the letter it shows.
+ * The letter widget on a phone's home screen: its tokens, the account's choices for it, and the letter it shows.
  *
- * A widget cannot sign in, and should not hold the account's own session: it
- * runs outside the app, and keeps what it holds where the app shares it. So
- * it reads with a token of its own, made by the signed-in app and handed to
- * the widget, which these routes alone accept (`Authorization: Widget …`) and
- * which can read nothing but the letter it shows. The token is random and
- * kept only as its SHA-256, so the table never holds anything that would let
- * somebody read; each phone has one, a few phones per account, the one longest
- * unused making way for a new one. It also remembers the account's token
- * version when it was made: a new password, signing out everywhere or a ban
- * ends the widgets with the sessions.
+ * A widget runs outside the app and must not hold the account's session, so it reads with its own token, made by the
+ * signed-in app, accepted only by the widget routes (`Authorization: Widget …`) and able to read only the letter
+ * shown. Tokens are random and stored only as SHA-256; each phone has one, a few per account, the longest unused
+ * making way. A token records the account's token version, so a new password, signing out everywhere or a ban ends
+ * it, and the session it was made in, so it reads only while that session is live (migration
+ * `widget-ends-with-its-session`). It lasts at most WIDGET_TOKEN_DAYS; the app makes a new one at each start.
  *
- * The letter shown is the one pinned, while it may still be shown, or else
- * the newest one a pen pal sent you in a correspondence still open: never a
- * stranger's bird at your window, never a letter taken down, never across a
- * block, never from an account closed or banned. Seeing it on the widget does
- * not mark it read: that is for opening it in the app.
+ * The letter shown is the pinned one while it may still be shown, else the newest a pen pal sent in an open
+ * correspondence: never a stranger's visiting bird, a removed letter, one across a block, or one from a closed or
+ * banned account. Showing it does not mark it read.
  */
 
 /** A widget's token: a prefix that says what it is, then 32 random bytes. */
 const TOKEN_RE = /^hvw_[A-Za-z0-9_-]{43}$/;
 /** How often a token's last use is written down: the widget's use, not each request. */
 const LAST_USED_EVERY_MS = 5 * 60_000;
+/** The longest a widget's token lasts from when it was made, whatever happens to its session. */
+export const WIDGET_TOKEN_DAYS = 30;
+/** A session's id as access tokens carry it (auth/tokens.ts). */
+const FAMILY_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /**
- * How long a widget waits before it asks again, in seconds. The app asks it to
- * reload at once when a letter comes or the choices change, but only while the
- * app runs; so a widget showing the newest letter asks twice as often while a
- * letter may be on its way (your bird out, or a pen pal's turn to write), and
- * a pinned one, which nothing new replaces, least often.
+ * Seconds a widget waits before asking again. The app reloads it at once on changes, but only while running, so a
+ * widget showing the newest letter asks more often while one may be on its way, and a pinned one least often.
  */
 export const WIDGET_REFRESH = { newest: 30 * 60, awaited: 15 * 60, pinned: 60 * 60 } as const;
 
@@ -78,10 +72,8 @@ interface ShownRow {
 }
 
 /**
- * SQL: the letter `l`, written by `u`, may be shown on the widget of `me` —
- * delivered to them in a correspondence, not taken down, its writer's account
- * open and not banned, and no block between the two. `me` is a literal from
- * this file.
+ * SQL: letter `l` by `u` may be shown on `me`'s widget: delivered to them in a correspondence, not removed, its
+ * writer's account open and not banned, and no block between them. `me` is a literal from this file.
  */
 const SHOWABLE_SQL = (me: string): string => `l.recipient_id = ${me} AND l.thread_id IS NOT NULL AND l.status = 'delivered'
      AND u.deleted_at IS NULL AND ${NOT_BANNED_SQL('u')}
@@ -93,12 +85,13 @@ export class LetterWidgetService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * A token for a new widget, shown once. `replaces` is the token this phone
-   * had before, if any: it goes in the same step, so a phone keeps one token
-   * however often the app hands its widget a fresh one (after a new password,
-   * say). Past `WIDGET_TOKENS_MAX` the token longest unused is dropped.
+   * A token for a new widget, shown once. `replaces` is the phone's previous token, removed in the same step so a phone
+   * keeps one token; past `WIDGET_TOKENS_MAX` the longest unused goes. `familyId` is the asking session, which the
+   * widget depends on; a request whose access token names no session gets 401, as an expired one does, so the app
+   * renews and asks again rather than receiving a token that could never read.
    */
-  async createToken(userId: string, replaces?: string): Promise<WidgetTokenResult> {
+  async createToken(userId: string, familyId: string | null | undefined, replaces?: string): Promise<WidgetTokenResult> {
+    if (!familyId || !FAMILY_RE.test(familyId)) throw new AppError('UNAUTHORIZED', 401, 'authentication required');
     const token = `hvw_${randomBytes(32).toString('base64url')}`;
     const client = await this.pool.connect();
     try {
@@ -110,7 +103,12 @@ export class LetterWidgetService {
       if (replaces && TOKEN_RE.test(replaces)) {
         await client.query(`DELETE FROM letter_widget_tokens WHERE user_id = $1 AND token_hash = $2`, [userId, hashWidgetToken(replaces)]);
       }
-      await client.query(`INSERT INTO letter_widget_tokens (user_id, token_hash, token_version) VALUES ($1, $2, $3)`, [userId, hashWidgetToken(token), me.rows[0].token_version]);
+      await client.query(`INSERT INTO letter_widget_tokens (user_id, token_hash, token_version, family_id) VALUES ($1, $2, $3, $4)`, [
+        userId,
+        hashWidgetToken(token),
+        me.rows[0].token_version,
+        familyId,
+      ]);
       await client.query(
         `DELETE FROM letter_widget_tokens WHERE id IN (
            SELECT id FROM letter_widget_tokens WHERE user_id = $1
@@ -127,16 +125,22 @@ export class LetterWidgetService {
     return { token };
   }
 
-  /** Whose a widget token is, or null for one that is not a token, was removed, or belongs to an account that can no longer read. */
+  /**
+   * The owner of a widget token, or null when it is not a token, was removed, is past WIDGET_TOKEN_DAYS, was made in an
+   * ended session or in none, or belongs to an account that can no longer read.
+   */
   async authenticate(raw: string): Promise<WidgetCaller | null> {
     if (!TOKEN_RE.test(raw)) return null;
     const r = await this.pool.query<{ id: string; user_id: string; last_used_at: Date | null }>(
       `SELECT t.id, t.user_id, t.last_used_at
          FROM letter_widget_tokens t JOIN users u ON u.id = t.user_id
         WHERE t.token_hash = $1 AND t.token_version = u.token_version
+          AND t.created_at > now() - make_interval(days => $2::int)
+          AND EXISTS (SELECT 1 FROM refresh_tokens rt
+                       WHERE rt.family_id = t.family_id AND rt.user_id = t.user_id AND rt.revoked_at IS NULL AND rt.expires_at > now())
           AND u.deleted_at IS NULL AND NOT u.guest
           AND ${NOT_BANNED_SQL('u')}`,
-      [hashWidgetToken(raw)],
+      [hashWidgetToken(raw), WIDGET_TOKEN_DAYS],
     );
     const row = r.rows[0];
     if (!row) return null;
@@ -169,7 +173,7 @@ export class LetterWidgetService {
   /** The letter the widgets show now, and whether it is the pinned one. */
   private async shown(userId: string, pinnedLetterId: string | null): Promise<{ row: ShownRow | null; pinned: boolean }> {
     if (pinnedLetterId) {
-      // a letter pinned may be from a correspondence since ended: it was chosen to stay
+      // A pinned letter may be from an ended correspondence; it was chosen to stay.
       const pinned = await this.pool.query<ShownRow>(
         `SELECT ${SHOWN_COLUMNS} FROM letters l JOIN users u ON u.id = l.sender_id WHERE l.id = $2 AND ${SHOWABLE_SQL('$1::uuid')}`,
         [userId, pinnedLetterId],
@@ -239,11 +243,9 @@ export class LetterWidgetService {
   }
 
   /**
-   * Pin a letter to the widgets, or let them show the newest again (null), and
-   * whether they show the words; either may be left out to keep it as it is.
-   * Only a letter a pen pal sent you in a correspondence can be pinned: 404
-   * NOT_FOUND for any other (or across a block, where the correspondence is
-   * not there at all), 409 LETTER_REMOVED for one moderation took down.
+   * Pins a letter to the widgets, or returns them to the newest (null), and sets whether they show the words; either
+   * may be left out. Only a letter a pen pal sent you can be pinned: 404 NOT_FOUND otherwise (including across a
+   * block), 409 LETTER_REMOVED for one moderation took down.
    */
   async setPrefs(userId: string, change: Partial<WidgetPrefs>): Promise<WidgetSettings> {
     if (change.pinnedLetterId) {

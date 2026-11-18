@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 /*
- * A navigator that holds a screen back the way the real one does: while the
- * screen asks to keep itself (`usePreventRemove`), going back hands the screen
- * the action instead of leaving, and the screen lets it through with
- * `dispatch`. Without a prevention, going back leaves at once (`left`).
+ * A navigator that holds a screen back as the real one does: while the screen prevents removal (`usePreventRemove`),
+ * going back hands it the action instead of leaving, and it lets it through with `dispatch`. Without prevention, back
+ * leaves at once (`left`).
  */
 const nav = vi.hoisted(() => {
   const held: { prevent: boolean; ask: ((e: { data: { action: { type: string } } }) => void) | null } = { prevent: false, ask: null };
@@ -79,9 +78,8 @@ describe('leaving Edit profile', () => {
   });
 
   /*
-   * A name typed and not saved used to vanish on back without a word: now
-   * leaving asks, keeping on editing is the first answer, and discarding
-   * lets the very same back through.
+   * Leaving with an unsaved edit asks; keeping on editing is the first answer, and discarding lets the same back
+   * through.
    */
   it('asks before throwing away an edit, and keeps it when asked to', async () => {
     await openEdit();
@@ -108,7 +106,7 @@ describe('leaving Edit profile', () => {
 });
 
 describe('the country', () => {
-  // the one chosen is what it is set to, not a button that does nothing; Remove next to it takes it off
+  // The chosen one shows what it is set to, not a button that does nothing; Remove next to it clears it.
   it('shows the chosen country as its value, with one tap to take it off', async () => {
     await openEdit();
     expect(screen.getByText('Germany')).toBeTruthy();
@@ -119,7 +117,7 @@ describe('the country', () => {
     expect(screen.getByText('— None —')).toBeTruthy();
   });
 
-  // drawn 36 tall, each chip answers over 48; the found ones wrap onto rows a gap apart and share it
+  // Drawn 36pt tall, each chip answers over 48pt; the found ones wrap onto rows a gap apart and share it.
   it('lets its chips answer a finger a little above and below, the found ones only to the middle of the gap', async () => {
     await openEdit();
     expect(reachOf('Remove, Germany')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
@@ -130,9 +128,7 @@ describe('the country', () => {
 
 describe('saving', () => {
   /*
-   * Save sits under the fields and goes once there is nothing left to save:
-   * what it did is said where it was, and read out, not at the top of a page
-   * scrolled away from it.
+   * Save sits under the fields and goes once nothing is left to save; what it did is said where it was, and read out.
    */
   it('says the profile was updated where Save was, and stops saying it once a field is typed in again', async () => {
     testAuth.client = fakeClient({
@@ -145,7 +141,7 @@ describe('saving', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Save changes' }));
     const said = await screen.findByText('Profile updated.');
     expect(said.getAttribute('aria-live')).toBe('polite');
-    // under the details, ahead of the avatars
+    // Under the details, ahead of the avatars.
     const avatarHeading = screen.getByRole('heading', { name: 'Avatar' });
     expect(said.compareDocumentPosition(avatarHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByDisplayValue('Rojda Amed').compareDocumentPosition(said) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -156,18 +152,14 @@ describe('saving', () => {
   });
 });
 
-/**
- * Hevalo+ cannot be had in the app, so an avatar kept for members is not
- * offered to anybody else: a locked tile with no way to unlock it here would
- * be an offer of something the app does not sell.
- */
+/** Hevalo+ cannot be had in the app, so a members-only avatar is not offered to anybody else. */
 describe('choosing an avatar', () => {
   const avatars = [
     { key: 'deer', requiresPremium: false },
     { key: 'lion', requiresPremium: true },
   ];
 
-  // each is named by its place, never by its key ("default-03")
+  // Each is named by its place, never by its key ("default-03").
   it('shows somebody without Hevalo+ only the avatars they can wear', async () => {
     testAuth.client = fakeClient({ 'GET /me': ok({ user: ME }), 'GET /cosmetics/avatars': ok({ avatars }) });
     await openEdit();

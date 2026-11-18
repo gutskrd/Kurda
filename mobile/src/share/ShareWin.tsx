@@ -3,25 +3,17 @@ import { useI18n } from '../i18n/I18nContext';
 import { ClayButton } from '../theme/glass';
 
 /**
- * Hand a message to whatever the phone shares with: the system sheet, where
- * the messaging app somebody already uses is. The whole message is the text,
- * its address last. Putting the sheet away is a choice, not a failure, and
- * there is nothing to say after it either way.
+ * Hand a message to the system share sheet, with the address at the end of the text. Dismissing the sheet is a
+ * choice, not a failure, so nothing is said either way.
  */
 export function shareOut(text: string): void {
   void Share.share({ message: text }).catch(() => undefined);
 }
 
 /**
- * "Share", on a moment worth showing somebody: a lesson finished, a streak's
- * big day, a badge, a league week that went well.
- *
- * It is offered and never pushed. One quiet button, the neutral pill at its
- * own width, beside the way on, which stays the main thing on the screen; it
- * holds nothing back, earns nothing, counts nothing, and is not asked a
- * second time. It is not felt in the hand: like the app's other Share
- * buttons it only opens the system's sheet, and a buzz is kept for something
- * that happened (feedback/haptics.ts).
+ * "Share" on a win: a finished lesson, a streak milestone, a badge, a good league week. Offered, never pushed:
+ * one neutral pill beside the main action, with no reward and no repeat prompt. No haptic, as with the app's
+ * other Share buttons (feedback/haptics.ts).
  */
 export function ShareWin({ text, style, testID = 'share-win' }: { text: string; style?: StyleProp<ViewStyle>; testID?: string }): React.JSX.Element {
   const { t } = useI18n();
@@ -29,6 +21,6 @@ export function ShareWin({ text, style, testID = 'share-win' }: { text: string; 
 }
 
 const styles = StyleSheet.create({
-  // as wide as its words, in the middle: a full-width button here would stand beside the way on as its equal
+  // Sized to its label: full width would compete with the main action beside it.
   own: { alignSelf: 'center' },
 });

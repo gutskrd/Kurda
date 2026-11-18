@@ -1,8 +1,4 @@
-/**
- * The equipped background and icon are drawn from whatever URL the API gives:
- * a path on this site for the art the shop ships with, a whole CDN address for
- * art uploaded in the admin. Neither is rewritten on the way.
- */
+/** Equipped backgrounds and icons use the API’s URL as given: a site path for built-in art, or a full CDN address. */
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import { CosmeticBackground, IconOverlay } from './cosmetic-parts';

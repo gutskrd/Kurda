@@ -40,7 +40,7 @@ const updateBody = z.object({
     .max(50),
 });
 
-/** Admin content management: draft→review→publish with optimistic locking (KUR-100). */
+/** Admin content management: draft→review→publish with optimistic locking. */
 export function registerContentAdminRoutes(
   app: FastifyInstance,
   content: ContentAdminService,
@@ -51,11 +51,9 @@ export function registerContentAdminRoutes(
   const guardNoValidation = { config: { skipValidation: true }, preHandler: guard.preHandler };
 
   /**
-   * The lessons, one row per slot (its newest version), the skills a new one
-   * can go in, and the courses — so the panel lists lessons by title instead
-   * of asking for a pasted id. `status` filters on the newest version (`all`
-   * includes archived slots, which are left out otherwise); `course` keeps one
-   * course's lessons, by its slug; `q` matches titles or an id.
+   * The lessons (one row per slot, its newest version), the skills a new one can go in, and the courses, so the panel
+   * lists lessons by title. `status` filters on the newest version (`all` includes archived slots, otherwise left out);
+   * `course` keeps one course's lessons by slug; `q` matches titles or an id.
    */
   app.get('/admin/content/lessons', { schema: { querystring: listQuery }, preHandler: guard.preHandler }, async (req) => {
     const q = req.query as z.infer<typeof listQuery>;

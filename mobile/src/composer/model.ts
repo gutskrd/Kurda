@@ -16,26 +16,22 @@ import {
 import type { ComposerPost } from './api';
 
 /**
- * The composer's state, kept apart from the screen so it can be tested.
- *
- * What is written is a `PostDraft` (`@kurda/shared` post-composer), the same
- * shape the browser keeps, so the limits, the counting and the request it
- * becomes are the API's own. On top of it each picture carries what the phone
- * is doing with it right now — uploading, how far, or why it failed — which is
- * never saved: a picture comes back from a draft either uploaded or not.
+ * The composer's state, kept apart from the screen so it can be tested. What is written is a `PostDraft`
+ * (`@kurda/shared` post-composer), so the limits, counting and request are the API's own. Each picture also carries its
+ * live upload state (uploading, progress, failure), which is never saved.
  */
 
 export type PictureStatus = 'uploading' | 'done' | 'failed';
 
 export interface ComposerPicture extends PostPictureDraft {
-  /** stable while the picture is on screen, so a finished upload finds its tile */
+  /** Stable while the picture is on screen, so a finished upload finds its tile. */
   id: string;
   status: PictureStatus;
-  /** 0 to 1 while uploading */
+  /** 0 to 1 while uploading. */
   progress: number;
-  /** what went wrong, already in the reader's language */
+  /** What went wrong, already in the reader's language. */
   error: string | null;
-  /** already on the post being edited: its "I made this" was settled when it went up */
+  /** Already on the post being edited: its "I made this" was settled when it went up. */
   existing: boolean;
 }
 
@@ -60,9 +56,8 @@ export const FIELD_MAX: Readonly<Record<PostTextField, number>> = {
 };
 
 /**
- * What a counter under a field shows: nothing while there is plenty of room,
- * the characters left once a tenth of the limit or less is left, and how far
- * over (negative) past it. Counted exactly as the server counts.
+ * What a counter under a field shows: nothing while there is plenty of room, the characters left once a tenth of the
+ * limit or less remains, and how far over (negative) past it. Counted as the server counts.
  */
 export function counterFor(text: string, max: number): { show: boolean; left: number; over: boolean } {
   const left = max - postTextLength(text);
@@ -74,7 +69,7 @@ export function toStoredDraft(state: ComposerState, now: number = Date.now()): P
   return {
     ...state.draft,
     pictures: state.pictures.map(({ mediaKey, localUri, altText, ownWork, status }) => ({
-      // a key only once the upload has finished: a half-sent picture is sent again
+      // A key only once the upload has finished: a half-sent picture is sent again.
       mediaKey: status === 'done' ? mediaKey : null,
       localUri,
       altText,
@@ -86,17 +81,15 @@ export function toStoredDraft(state: ComposerState, now: number = Date.now()): P
 }
 
 /**
- * An upload no post uses is cleared away by the server after a day. A draft
- * older than this keeps its pictures' files but forgets their keys, and they
- * are uploaded again — a key that may already be gone would only fail at Post.
+ * The server clears an unused upload after a day; a draft older than this keeps its pictures' files but forgets their
+ * keys and uploads them again, since a stale key would only fail at Post.
  */
 export const UPLOAD_KEEP_MS = 20 * 60 * 60 * 1000;
 
 /**
- * A draft back from the device, as the composer's state. Each picture says
- * whether it still needs uploading (`needsUpload`) — a picture with neither a
- * usable key nor a file is dropped by `parsePostDraft` already, or here when
- * its key is too old and it has no file.
+ * A draft back from the device as the composer's state. Each picture says whether it still needs uploading
+ * (`needsUpload`); one with neither a usable key nor a file is dropped (by `parsePostDraft`, or here when its key is
+ * too old and it has no file).
  */
 export function fromStoredDraft(draft: PostDraft, now: number = Date.now()): ComposerState {
   const stale = now - draft.savedAt > UPLOAD_KEEP_MS;
@@ -148,7 +141,7 @@ export function fromPost(post: ComposerPost): ComposerState {
   return {
     draft: {
       ...emptyPostDraft(0),
-      // a gotin was never "chosen"; leaving it null lets a title turn it into a çîrok, as in a new post
+      // A gotin was never "chosen"; leaving it null lets a title turn it into a çîrok, as in a new post.
       type: post.type === 'gotin' ? null : post.type,
       title: post.title ?? '',
       body: post.body,
@@ -160,9 +153,8 @@ export function fromPost(post: ComposerPost): ComposerState {
 }
 
 /**
- * What an edit changes, as `PATCH /library/posts/:id` takes it — only the
- * fields that differ from the post as it was, so an edit that changes nothing
- * sends nothing, and a field cleared is sent as cleared.
+ * What an edit changes, as `PATCH /library/posts/:id` takes it: only the fields that differ, so an unchanged edit sends
+ * nothing, and a cleared field is sent as cleared.
  */
 export function toUpdateRequest(before: ComposerPost, state: ComposerState): UpdatePostRequest | null {
   if (state.pictures.some((p) => p.status !== 'done' || !p.mediaKey)) return null;

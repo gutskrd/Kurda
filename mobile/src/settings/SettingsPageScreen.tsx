@@ -21,11 +21,7 @@ import { SettingsChoice, SettingsNote, SettingsPage, SettingsRow, SettingsSectio
 export const SETTINGS_PAGES = ['language', 'theme', 'sounds', 'keyboard', 'leagues', 'visibility', 'credits'] as const;
 export type SettingsPageKey = (typeof SETTINGS_PAGES)[number];
 
-/**
- * One page of Settings: a short list of one kind of thing, with what each
- * choice means said beside it, saved the moment it is changed. There is no
- * Save button to forget, and nothing on a page belongs to another.
- */
+/** One Settings page: a short list of one kind of choice, each explained beside it and saved as soon as it changes. */
 export function SettingsPageScreen({ page, onExit }: { page: SettingsPageKey; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   switch (page) {
@@ -74,7 +70,7 @@ export function SettingsPageScreen({ page, onExit }: { page: SettingsPageKey; on
   }
 }
 
-/** Every language the app is written in, each named in itself, so it can be found by someone who reads no other. */
+/** Every language the app is in, each named in itself so it can be found by someone who reads no other. */
 function LanguageList(): React.JSX.Element {
   const { t, locale, setLocale } = useI18n();
   return (
@@ -84,10 +80,7 @@ function LanguageList(): React.JSX.Element {
   );
 }
 
-/**
- * Light, dark or the phone's own, and the seasonal themes. A choice shows
- * itself across the whole app at once, which is all the preview it needs.
- */
+/** Light, dark or the system setting, plus the seasonal themes; a choice applies across the app at once. */
 function ThemeList(): React.JSX.Element {
   const { t } = useI18n();
   const { scheme, preference, setPreference } = useTheme();
@@ -111,10 +104,8 @@ function ThemeList(): React.JSX.Element {
 }
 
 /**
- * The app's own chimes and its buzz. Turning either on plays it once, so the
- * switch shows what it does; turning it off is not felt. The lesson's spoken
- * Kurdish is neither: it always plays when asked, and the third switch says
- * whether it is also said by itself after each answer.
+ * The app's sounds and haptics. Turning either on plays it once; turning it off does nothing noticeable. Spoken
+ * Kurdish in lessons always plays when asked; the third switch sets whether it also plays after each answer.
  */
 function SoundsList(): React.JSX.Element {
   const { t } = useI18n();
@@ -144,7 +135,7 @@ function SoundsList(): React.JSX.Element {
         }}
       />
       <SettingsSwitch
-        icon="audio-play"
+        icon="speaker-high"
         title={t('settings.sounds.autoplay')}
         subtitle={t('settings.sounds.autoplayHint')}
         value={autoplay}
@@ -154,11 +145,7 @@ function SoundsList(): React.JSX.Element {
   );
 }
 
-/**
- * The account could not be read, so a choice cannot be shown as it is: what
- * went wrong, and the way to ask again, rather than a switch that waits
- * greyed out for ever.
- */
+/** The account could not be read, so show the error and a retry rather than a switch left disabled. */
 function NotRead({ failed, retry }: { failed: string; retry: () => void }): React.JSX.Element {
   const { t } = useI18n();
   return (
@@ -183,9 +170,8 @@ function LeaguesList(): React.JSX.Element {
 }
 
 /**
- * Who can see your profile: each of the four with what it means under it, so
- * the difference between "anyone on the web" and "Hevalo members" is read
- * before choosing, not found out after. Under 18 the open web is not offered.
+ * Profile visibility: each of the four options with its meaning, so the difference is clear before choosing.
+ * Under 18, the open web is not offered.
  */
 function VisibilityList(): React.JSX.Element {
   const { t } = useI18n();
@@ -201,7 +187,7 @@ function VisibilityList(): React.JSX.Element {
         isDisabled={(v) => !visibilityOffered(v, minor)}
         onChange={changeVisibility}
       />
-      {/* none of the four ticked is a page that has not been told which one it is */}
+      {/* None of the four ticked is a page that has not been told which one it is. */}
       {visibility === null && failed ? <NotRead failed={failed} retry={retry} /> : null}
       {minor ? <SettingsNote>{t('settings.visibility.minorHint')}</SettingsNote> : null}
     </SettingsSection>

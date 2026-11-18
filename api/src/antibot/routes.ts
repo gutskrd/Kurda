@@ -6,10 +6,8 @@ import type { BotDetectionService } from './service.js';
 const userParam = z.object({ userId: z.uuid() });
 
 /**
- * Behavioral bot detection routes (KUR-110). Admin review + confirm/clear of
- * flagged accounts, a manual scoring-job trigger, and the authenticated
- * challenge check the client calls at session start to decide whether to present
- * the invisible CAPTCHA.
+ * Bot detection routes: admin review, confirm or clear of flagged accounts, a manual scoring run, and the check the
+ * client makes at session start to decide whether to show the invisible CAPTCHA.
  */
 export function registerAntibotRoutes(app: FastifyInstance, bots: BotDetectionService): void {
   /** Client session-start check: does this account owe an invisible CAPTCHA? */

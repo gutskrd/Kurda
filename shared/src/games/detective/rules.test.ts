@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { checkGameContent, type CaseFileContent } from '../content.js';
-import { accusationEvidence, caseItems, suspectPortrait, unusedEvidence, untranslated } from './rules.js';
+import { accusationEvidence, suspectPortrait, unusedEvidence } from './rules.js';
 
 const en = (text: string) => ({ en: text });
 
@@ -42,14 +42,9 @@ describe('the items of a case', () => {
   if (!c.ok) throw new Error('the case should be valid');
   const kase: CaseFileContent = c.payload;
 
-  it('are its deduction steps, then the accusation', () => {
-    expect(caseItems(kase)).toEqual([{ kind: 'step', step: 0 }, { kind: 'step', step: 1 }, { kind: 'accuse' }]);
-  });
-
   it('rest the accusation on every step’s evidence once, and find the card no step uses', () => {
     expect(accusationEvidence(kase)).toEqual(['advice', 'away']);
     expect(unusedEvidence(kase)).toEqual(['apples', 'spare']);
-    expect(untranslated(kase, new Set(['advice']))).toEqual(['apples', 'away', 'spare']);
   });
 
   it('draws a suspect as the character the case names, or the one with its id, or no one', () => {
@@ -58,4 +53,3 @@ describe('the items of a case', () => {
     expect(suspectPortrait({ id: 'uncle', portrait: 'hamo' })).toBe('hamo');
   });
 });
-

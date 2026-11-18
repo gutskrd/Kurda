@@ -1,4 +1,4 @@
-/** Threaded library comments via HTTP (CI integration job). KUR-283. */
+/** Threaded library comments over HTTP. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -49,7 +49,7 @@ describe.skipIf(!DATABASE_URL)('library comments (integration)', () => {
     expect((await call('POST', `/library/posts/${postId}/comments`, undefined, { body: 'hi' })).statusCode).toBe(401);
     expect((await call('POST', `/library/posts/${postId}/comments`, authorTok, {})).statusCode).toBe(422);
 
-    // a voice comment must reference a confirmed audio upload (KUR-282)
+    // A voice comment must reference a confirmed audio upload.
     expect((await call('POST', `/library/posts/${postId}/comments`, otherTok, { audioMediaId: 'media/unconfirmed.mp3' })).statusCode).toBe(422);
     await pool.query(
       `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)

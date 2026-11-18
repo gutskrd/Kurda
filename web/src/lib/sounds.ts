@@ -1,25 +1,19 @@
 /**
- * The lesson's chimes on the website — the same four moments, and the same
- * notes, as the phone's (mobile/src/feedback/sounds.ts), drawn by the browser
- * itself with Web Audio rather than played from files:
+ * Lesson chimes, synthesised with Web Audio from the same notes as the phone's (mobile/src/feedback/sounds.ts):
  *
- *   correct   two bright notes, a fifth apart. A run of right answers climbs
- *             a step each time (`step` 0–3), so the run can be heard
- *   wrong     two low, muffled notes, quieter: never a buzzer
+ *   correct   two bright notes a fifth apart, a step higher for each answer in a run (`step` 0–3)
+ *   wrong     two low, muffled, quieter notes
  *   complete  four notes rising to the octave, the last left to ring
- *   reward    three quick high notes and a low shimmer under them: a streak
- *             kept today ("Day 12"), the phone's `reward`
+ *   reward    three quick high notes over a low shimmer, for a streak kept today
  *
- * Only ever started by the reader's own answer (which is what a browser lets
- * play), never two within 90 ms, and not when Settings → Sounds → Lesson
- * sounds is off on this device. Nothing else on the site makes a sound but
- * the gift chime (gifts/motion.ts).
+ * Only played in response to an answer (browsers block other autoplay), never twice within 90 ms, and not when Lesson
+ * sounds is off in Settings on this device.
  */
 export type LessonSound = 'correct' | 'wrong' | 'complete' | 'reward';
 
 const KEY = 'hevalo_lesson_sounds';
 
-/** Settings → Sounds → Lesson sounds. On unless turned off on this device. */
+/** Settings → Sounds → Lesson sounds; on unless turned off on this device. */
 export function lessonSoundsOn(): boolean {
   try {
     return localStorage.getItem(KEY) !== 'off';
@@ -33,17 +27,15 @@ export function setLessonSounds(on: boolean): void {
     if (on) localStorage.removeItem(KEY);
     else localStorage.setItem(KEY, 'off');
   } catch {
-    // private browsing without storage: the choice lasts as long as the page
+    // Private browsing without storage: the choice lasts as long as the page.
   }
 }
 
 const AUTOPLAY_KEY = 'hevalo_autoplay_audio';
 
 /**
- * Settings → Sounds → Play pronunciations automatically: the native recording
- * of an answer's Kurdish plays by itself a moment after the verdict. On unless
- * turned off on this device. It is the lesson's own audio, not a chime, so the
- * lesson sounds switch above does not silence it.
+ * Settings → Sounds → Play pronunciations automatically: an answer's recording plays a moment after the verdict. On
+ * unless turned off on this device; it is lesson audio, not a chime, so the lesson sounds switch does not affect it.
  */
 export function autoplayOn(): boolean {
   try {
@@ -58,15 +50,15 @@ export function setAutoplay(on: boolean): void {
     if (on) localStorage.removeItem(AUTOPLAY_KEY);
     else localStorage.setItem(AUTOPLAY_KEY, 'off');
   } catch {
-    // as above: for as long as the page is open
+    // Private browsing without storage: the choice lasts as long as the page.
   }
 }
 
 /** Semitones from A4 to Hz. */
 const hz = (n: number): number => 440 * 2 ** (n / 12);
 
-/** A right answer's pair of notes, by how far into a run it is: E5–B5, F♯5–C♯6, G♯5–D♯6, B5–F♯6. */
-export const CORRECT_NOTES: readonly (readonly [number, number])[] = [
+/** A right answer's two notes by position in a run: E5–B5, F♯5–C♯6, G♯5–D♯6, B5–F♯6. */
+const CORRECT_NOTES: readonly (readonly [number, number])[] = [
   [hz(7), hz(14)],
   [hz(9), hz(16)],
   [hz(11), hz(18)],
@@ -88,7 +80,7 @@ function context(): AudioContext | null {
   return ctx;
 }
 
-/** One struck note: a sine with a quieter octave (or none, muffled), a 6 ms rise and a soft fall. */
+/** One struck note: a sine with a quieter octave (none when muffled), a 6 ms rise and a soft fall. */
 function bell(c: AudioContext, at: number, freq: number, level: number, tail: number, octave = 0.3): void {
   for (const [mult, amp] of [
     [1, 1],
@@ -108,7 +100,7 @@ function bell(c: AudioContext, at: number, freq: number, level: number, tail: nu
   }
 }
 
-/** Which chime a moment is, by name — what a test hears. */
+/** The chime's name, as tests hear it. */
 export function soundName(sound: LessonSound, step = 0): string {
   return sound === 'correct' ? `correct-${Math.min(4, Math.max(1, step + 1))}` : sound;
 }
@@ -132,7 +124,7 @@ export function playLessonSound(sound: LessonSound, step = 0): void {
       bell(c, at, hz(-12), 0.09, 0.35, 0.05);
       bell(c, at + 0.11, hz(-16), 0.09, 0.45, 0.05);
     } else if (sound === 'reward') {
-      // G6, B6, D7 a beat apart, then the G an octave under the first (mobile/scripts/generate-sounds.mjs)
+      // G6, B6, D7 a beat apart, then the G an octave under the first (mobile/scripts/generate-sounds.mjs).
       [hz(22), hz(26), hz(29)].forEach((f, i) => bell(c, at + i * 0.06, f, 0.07, 0.25));
       bell(c, at + 0.18, hz(10), 0.06, 0.5);
     } else {
@@ -140,17 +132,17 @@ export function playLessonSound(sound: LessonSound, step = 0): void {
       bell(c, at + 0.27, hz(15), 0.12, 1.4);
     }
   } catch {
-    // a browser that will not make a sound is a quiet lesson, not a broken one
+    // A browser that will not make a sound leaves a quiet lesson, not a broken one.
   }
 }
 
-/** Told of every chime that would play (after the rules above) — for tests, and nothing else. */
+/** Hears every chime that would play, after the rules above; for tests. */
 export function onLessonSound(listener: (sound: string) => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
 
-/** Forget the last chime's time — for tests, whose answers come faster than anybody's. */
+/** Forgets the last chime's time, for tests. */
 export function resetLessonSounds(): void {
   last = 0;
 }

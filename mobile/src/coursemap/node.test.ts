@@ -23,11 +23,6 @@ describe('flattenMap', () => {
 });
 
 describe('STATE_LABEL', () => {
-  /**
-   * The node used to announce its raw state to a screen reader — "Silav,
-   * locked" — because the label was a template literal holding the enum.
-   * Every state now has a word, and every language has to have it.
-   */
   it('gives every skill state a word in all nine languages', () => {
     const states: SkillState[] = ['locked', 'unlocked', 'completed', 'gold', 'decayed'];
     for (const state of states) {

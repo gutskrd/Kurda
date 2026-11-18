@@ -23,18 +23,12 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 
 /**
- * The small parts the word sets are drawn with, on their tiles, their sheet
- * and their practice alike: a colour's swatch, a number's digits (Soranî's
- * own beside the Western ones), a day's name with the number inside it marked
- * in the app's violet and underlined — "look at this", as the alphabet marks a
- * letter in its word — and a word with its Soranî Latin under the script.
+ * The small parts word sets are drawn with, on tiles, sheets and practice alike: a colour swatch, a number's
+ * digits (Soranî's beside the Western ones), a day name with its number marked in violet and underlined (as the
+ * alphabet marks a letter in its word), and a word with its Soranî Latin underneath.
  */
 
-/**
- * The edge a swatch needs on this page: none where the colour stands out from
- * it, a fine line where it would vanish into it — white on the light page,
- * black on the dark one.
- */
+/** The edge a swatch needs on this page: none where it stands out, a fine line where it would vanish (white on light, black on dark). */
 export function useSwatchEdge(hex: string): string {
   const { colors } = useTheme();
   return contrastRatio(hex, colors.background) < SWATCH_CONTRAST ? colors.textSecondary : 'transparent';
@@ -47,7 +41,7 @@ export function Swatch({ hex, size, style }: { hex: string; size: number; style?
   return <View style={[{ width: size, height: size, borderRadius: size / 4, backgroundColor: hex, borderColor: edge }, styles.edge, style]} />;
 }
 
-/** A number's digits: the Western ones in Kurmancî; in Soranî the ones it is printed in, with the Western ones beside them. */
+/** A number's digits: Western in Kurmancî; in Soranî its printed digits with the Western ones beside them. */
 export function Digits({ value, dialect, size }: { value: number; dialect: AlphabetScript; size: number }): React.JSX.Element {
   const { colors } = useTheme();
   const western = String(value);
@@ -78,10 +72,7 @@ export function DayName({ day, dialect, style }: { day: WordDay; dialect: Alphab
   );
 }
 
-/**
- * A Kurdish word in its dialect, and for Soranî the same word in Latin
- * letters under it — the bridge for a reader of the other script.
- */
+/** A Kurdish word in its dialect, with the Latin spelling under Soranî as a bridge for readers of the other script. */
 export function WordText({
   word,
   dialect,
@@ -120,7 +111,7 @@ export function WordText({
   );
 }
 
-/** How many of this set's words have been opened here, as the alphabet shows its letters: in the violet every bar of progress is in. */
+/** How many of this set's words have been opened here, as the alphabet shows its letters, in the violet of every progress bar. */
 export function Progress({ explored, total }: { explored: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -149,9 +140,8 @@ export function dateIn(at: DayOfYear, locale: AppLocale, t: ReturnType<typeof us
 }
 
 /**
- * What a word means for this reader, and the script it is in when it is
- * Kurdish (a Kurdish reader is shown the other dialect's word): a number's
- * digits, a Kurdish month's dates, else its meaning.
+ * What a word means for this reader, and its script when Kurdish (a Kurdish reader sees the other dialect's
+ * word): a number's digits, a Kurdish month's dates, else its meaning.
  */
 export function meaningOf(
   word: SetWord,

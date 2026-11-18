@@ -1,19 +1,15 @@
 import { useEffect, useState } from 'react';
 
 /**
- * expo-audio's recorder and expo-file-system's file calls, for the tests of
- * what records a take: a speaking exercise and a voice note.
+ * Fakes for expo-audio's recorder and expo-file-system, for tests of speaking exercises and voice notes.
  *
- * The microphone answers as the test says (`mic.answer`), or cannot be asked
- * for at all (`mic.failToAsk`), every audio mode set is kept in order
- * (`mic.modes`), and a take runs on the test's clock (`mic.recorder.run(ms)`)
- * rather than a real one. As on an iPhone, a take's clock goes back to nought
- * the moment it stops, so a duration read after stopping is caught out. Each
- * take is written to a file of its own, which `mic.files` holds until
- * something deletes it.
+ * The permission answer is set by the test (`mic.answer`, or `mic.failToAsk`), audio modes are recorded in order
+ * (`mic.modes`), and takes run on the test's clock (`mic.recorder.run(ms)`). As on iOS, a take's clock resets to
+ * zero when it stops, so reading the duration after stopping is caught. Each take gets its own file in
+ * `mic.files` until deleted.
  *
- * Wired with `vi.mock('expo-audio', () => import('…/recording/testing/fakeMic'))`
- * and the same for 'expo-file-system/legacy'.
+ * Wire with `vi.mock('expo-audio', () => import('…/recording/testing/fakeMic'))`, and the same for
+ * 'expo-file-system/legacy'.
  */
 
 interface Permission {
@@ -59,7 +55,7 @@ export class FakeRecorder {
     return { canRecord: true, isRecording: this.on, durationMillis: this.ms, mediaServicesDidReset: false, url: this.uri };
   }
 
-  /** the take goes on for `ms` more */
+  /** The take goes on for `ms` more. */
   run(ms: number): void {
     this.ms += ms;
     this.emit();
@@ -78,26 +74,26 @@ export class FakeRecorder {
 }
 
 export const mic = {
-  /** what a request for the microphone is answered with */
+  /** What a request for the microphone is answered with. */
   answer: GRANTED,
-  /** what asking again later finds (Settings visited in the meantime); `answer` when unset */
+  /** What asking again later finds (Settings visited in the meantime); `answer` when unset. */
   later: null as Permission | null,
-  /** every audio mode set, in order */
+  /** Every audio mode set, in order. */
   modes: [] as Array<Record<string, unknown>>,
-  /** what the recorder was asked, in order: ask, prepare, record, stop */
+  /** What the recorder was asked, in order: ask, prepare, record, stop. */
   calls: [] as string[],
-  /** the options each take was readied with */
+  /** The options each take was readied with. */
   prepared: [] as unknown[],
-  /** the take files on the device, and their size in bytes */
+  /** The take files on the device, and their size in bytes. */
   files: new Map<string, number>(),
   deleted: [] as string[],
   takes: 0,
-  /** how big the next take's file turns out */
+  /** How big the next take's file turns out. */
   nextSize: 24_000,
   failToPrepare: false,
-  /** the request for the microphone itself goes wrong: no answer, an error */
+  /** The request for the microphone itself goes wrong: no answer, an error. */
   failToAsk: false,
-  /** the recorder the component under test made */
+  /** The recorder the component under test made. */
   recorder: null as FakeRecorder | null,
   reset(): void {
     mic.answer = GRANTED;

@@ -24,7 +24,7 @@ patchReactNativeWeb({ reduceMotion: true });
 
 const ID = '00000000-0000-4000-8000-0000000000bb';
 
-// stand-in words for the tiles, never shown to a learner
+// stand-in words for the tiles, never shown to a learner.
 const item = (index: number, tiles: string[]): SentenceItemView => ({ index, meaning: { en: `Meaning ${index}` }, tiles, rung: 'short', level: 1 });
 
 const ladder = (dialect: 'kmr' | 'ckb'): SentenceLadderView & { open: string | null } => ({
@@ -106,7 +106,7 @@ describe('BuildSentenceScreen', () => {
     ]);
     testAuth.client = client;
     renderWithProviders(<BuildSentenceScreen onExit={() => undefined} />);
-    // once a difficulty can be played
+    // Once a difficulty can be played.
     await screen.findByText('Up to 16 XP');
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     expect(await screen.findByText('Meaning 0')).toBeTruthy();
@@ -124,7 +124,7 @@ describe('BuildSentenceScreen', () => {
     expect(await screen.findByText('Look again from the marked word.')).toBeTruthy();
     expect(within(line).getByRole('button', { name: 'malê, First word out of place' })).toBeTruthy();
 
-    // the same line again is not a second try: it has to change first
+    // Sending the same line again is not a second try: it has to change first.
     expect(screen.getByRole('button', { name: 'Try again' }).getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(within(line).getByRole('button', { name: 'malê, First word out of place' }));
     fireEvent.click(within(tray).getByRole('button', { name: 'malê' }));
@@ -132,7 +132,7 @@ describe('BuildSentenceScreen', () => {
     expect(await screen.findByText('Here is how it goes.')).toBeTruthy();
     expect(client.calls.filter((c) => c.path.endsWith('/answers'))[1]!.body).toEqual({ index: 0, answer: { order: [1, 0] }, attempt: 2 });
     expect(screen.getByText('home')).toBeTruthy();
-    // a word with no meaning listed says so to a screen reader, and draws no dash under itself
+    // A word with no meaning listed says so to a screen reader, and draws no dash under itself.
     expect(screen.getByLabelText(/, No meaning listed$/)).toBeTruthy();
     expect(screen.queryByText('—')).toBeNull();
     expect(screen.getByText(/the verb comes at the end/)).toBeTruthy();
@@ -150,7 +150,7 @@ describe('BuildSentenceScreen', () => {
       streak: null,
     });
     renderWithProviders(<BuildSentenceScreen onExit={() => undefined} />);
-    // once a difficulty can be played
+    // Once a difficulty can be played.
     await screen.findByText('Up to 16 XP');
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     fireEvent.click(within(await screen.findByTestId('sentence-tray')).getByRole('button', { name: 'a' }));
@@ -158,7 +158,7 @@ describe('BuildSentenceScreen', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
     expect(await screen.findByText('0 of 1 right')).toBeTruthy();
     expect(screen.getByText('Get at least 1 right on the first try to earn XP and count today. This time: 0.')).toBeTruthy();
-    // an exercise of the lessons pays as a lesson does: the line for a game played alone is not its to show
+    // An exercise of the lessons pays as a lesson does, so the played-alone line is not shown.
     expect(screen.queryByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeNull();
   });
 
@@ -167,7 +167,7 @@ describe('BuildSentenceScreen', () => {
     testAuth.client = routes('ckb', ['ماڵ', 'من'], []);
     renderWithProviders(<BuildSentenceScreen onExit={() => undefined} />);
     expect(await screen.findByText('In Soranî')).toBeTruthy();
-    // once a difficulty can be played
+    // Once a difficulty can be played.
     await screen.findByText('Up to 16 XP');
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     const tray = await screen.findByTestId('sentence-tray');
@@ -182,9 +182,8 @@ describe('BuildSentenceScreen', () => {
 });
 
 /*
- * Build a Sentence was a game once. It is an exercise of the lessons'
- * practice now: nothing on the way calls it a game, and leaving it goes back
- * to wherever it was opened from.
+ * Build a Sentence is an exercise of the lessons' practice: nothing on the way calls it a game, and leaving it goes
+ * back to wherever it was opened from.
  */
 describe('Build a Sentence, as an exercise of the lessons', () => {
   const finished = { correct: 0, total: 1, firstTry: 0, xp: 0, learningCounted: false, needed: 1, items: [{ index: 0, correct: false, firstTry: false, xp: 0, repeat: false }], streak: null };
@@ -201,7 +200,7 @@ describe('Build a Sentence, as an exercise of the lessons', () => {
     expect(await screen.findByRole('button', { name: 'Another round' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Play again' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Back to games' })).toBeNull();
-    // Done leaves the exercise: the app takes the learner back to where they opened it (practice/exercises.ts)
+    // Done leaves the exercise, back to where the learner opened it (practice/exercises.ts).
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     expect(onExit).toHaveBeenCalledTimes(1);
   });
@@ -214,7 +213,7 @@ describe('Build a Sentence, as an exercise of the lessons', () => {
     });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
-    // the game put forward is drawn with the list, whichever game it is today
+    // The game put forward is drawn with the list, whichever game it is today.
     expect(await screen.findByTestId('game-featured')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));

@@ -5,8 +5,8 @@ import { SEEN_KEY, parseSeen, useSeen } from '../alphabet/seen';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * Which words of each set this reader has opened, per dialect — on this phone
- * only, as the alphabet keeps its letters (alphabet/seen.ts), one key a set.
+ * Which words of each set this reader has opened, per dialect, on this device only, as the alphabet keeps its
+ * letters (alphabet/seen.ts); one key per set.
  */
 export const wordsSeenKey = (set: WordSetId): string => `hevalo_words_${set}_seen_v1`;
 
@@ -15,14 +15,14 @@ export function useWordsSeen(set: WordSetId, dialect: AlphabetScript, store: Dev
   return useSeen(dialect, store, wordsSeenKey(set));
 }
 
-/** How many of a set's words were opened in either dialect, from what was stored: ids it no longer has do not count. */
+/** How many of a set's words were opened in either dialect; stored ids the set no longer has do not count. */
 export function countSeen(set: WordSetId, raw: string | null): number {
   const seen = parseSeen(raw);
   const opened = new Set([...seen.kmr, ...seen.ckb]);
   return wordSet(set).filter((w) => opened.has(w.id)).length;
 }
 
-/** Each set's count, read again whenever the list of sets comes back into view (after a set was opened). */
+/** Each set's count, re-read whenever the list of sets regains focus. */
 export function useSeenCounts(store: DeviceStore = deviceStore): Partial<Record<WordSetId, number>> {
   const [counts, setCounts] = useState<Partial<Record<WordSetId, number>>>({});
   useFocusEffect(
@@ -41,13 +41,13 @@ export function useSeenCounts(store: DeviceStore = deviceStore): Partial<Record<
   return counts;
 }
 
-/** How many of `script`'s letters were opened in the alphabet, from what it stored: ids it no longer has do not count. */
+/** How many of `script`'s letters were opened in the alphabet; stored ids it no longer has do not count. */
 export function countLetters(script: AlphabetScript, raw: string | null): number {
   const opened = new Set(parseSeen(raw)[script]);
   return (script === 'ckb' ? SORANI_LETTERS : LATIN_LETTERS).filter((l) => opened.has(l.id)).length;
 }
 
-/** The letters' card: how many of the alphabet's letters were opened, read again whenever the list comes back into view. */
+/** The letters' card count, re-read whenever the list regains focus. */
 export function useLettersSeen(script: AlphabetScript, store: DeviceStore = deviceStore): { seen: number; total: number } {
   const [seen, setSeen] = useState(0);
   useFocusEffect(

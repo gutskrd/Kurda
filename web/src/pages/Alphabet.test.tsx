@@ -29,7 +29,7 @@ describe('Alphabet', () => {
     localStorage.setItem('hevalo_locale', 'de');
     show();
     const watch = (await screen.findByRole('heading', { name: /Bekannt, aber anders gesprochen/ })).closest('section')!;
-    // Kurmancî v is German w, and z is a voiced s
+    // Kurmancî v is German w, and z is a voiced s.
     expect(within(watch).getByRole('button', { name: 'V, wie W' })).toBeInTheDocument();
     expect(within(watch).getByRole('button', { name: 'Z, wie S' })).toBeInTheDocument();
   });
@@ -87,14 +87,14 @@ describe('Alphabet', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     const dots = screen.getByRole('list', { name: /Question 1 of 8/ });
     expect(within(dots).getAllByRole('listitem')).toHaveLength(8);
-    // an English reader starts by listening, and the sound plays by itself
+    // An English reader starts by listening, and the sound plays by itself.
     expect(screen.getByText('Listen. Which letter is it?')).toBeInTheDocument();
     expect(played).toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument();
 
     const options = screen.getAllByRole('button').filter((b) => b.classList.contains('ab-option'));
     expect(options).toHaveLength(3);
-    // answer with the keyboard, the way a desktop reader can
+    // Answer with the keyboard, the way a desktop reader can.
     await userEvent.keyboard('1');
     const status = await screen.findByRole('status');
     expect(status).toHaveTextContent(/Right\.|Not quite: it’s/);
@@ -109,7 +109,7 @@ describe('Alphabet', () => {
   it('ends with a score and a round of just the misses', async () => {
     show();
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
-    // answer every question with the first option until the round ends
+    // Answer every question with the first option until the round ends.
     for (let i = 0; i < 20 && !screen.queryByText(/right first time/); i++) {
       await userEvent.keyboard('1');
       await userEvent.click(await screen.findByRole('button', { name: 'Next' }));

@@ -1,8 +1,6 @@
 /**
- * Shared contract for the platform-split Google module (KUR-018).
- * `google.ts` is the native implementation (imports the native SDK); Metro
- * swaps in `google.web.ts` for the web bundle so the native-only module is
- * never pulled into a web build.
+ * Shared contract for the platform-split Google module: `google.ts` is the native implementation, and Metro swaps in
+ * `google.web.ts` for the web bundle so the native SDK is never pulled in there.
  */
 import type { TranslationKey } from '../i18n/translations';
 
@@ -11,8 +9,6 @@ export type GoogleResult =
   | { kind: 'cancelled' }
   | { kind: 'not-configured' }
   /**
-   * `messageKey` is ours and is translated; `message` is whatever the Google
-   * SDK said and is not. The screen says only ours: the SDK's detail is
-   * English and technical, and is kept here for whoever is debugging a build.
+   * `messageKey` is ours and translated; `message` is the SDK's own English detail, kept for debugging and never shown.
    */
   | { kind: 'error'; messageKey: TranslationKey; message?: string };

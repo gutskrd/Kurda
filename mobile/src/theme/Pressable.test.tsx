@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-/*
- * react-native-web drops hitSlop before the page, so the native Pressable is
- * wrapped to note what it is given: the reach a phone would answer over.
- */
+// react-native-web drops hitSlop, so the native Pressable is wrapped to record the reach a phone would use.
 const native = vi.hoisted(() => ({ given: new Map<string, unknown>() }));
 vi.mock('react-native', async () => {
   const web = await import('react-native-web');
@@ -25,11 +22,7 @@ import { usePressScale } from './animate';
 import { PRESS_SCALE } from './motion';
 import { PRESS_DELAY_MS, Pressable, QUICK_RELEASE_MS, ReachGroup, ReachReset, TAP_FLASH_MS, resolveReach } from './Pressable';
 
-/*
- * The app's Pressable (theme/Pressable.tsx): how far past what it draws a
- * control answers a finger, how neighbours share the gap between them, and a
- * press too quick to see still being seen.
- */
+// How far past its drawing a control answers, how neighbours share the gap, and how a too-quick press is still seen.
 
 patchReactNativeWeb();
 afterEach(() => {
@@ -70,7 +63,7 @@ describe('a control’s reach', () => {
   it('gives no reach where the size is not known, or where it is already big enough', () => {
     expect(resolveReach({ onPress: press }, null)).toBeUndefined();
     expect(resolveReach({ onPress: press, style: { flex: 1 } }, null)).toBeUndefined();
-    // a width in percent is not a size that can be counted from
+    // A percentage width is not a size to count from.
     expect(resolveReach({ onPress: press, style: styles.row }, null)).toBeUndefined();
   });
 
@@ -94,7 +87,7 @@ describe('a control’s reach', () => {
   it('leaves alone a press that answers at once, and a control that is only held', () => {
     expect(resolveReach({ onPress: press, pressDelay: 0, style: styles.icon }, null)).toBeUndefined();
     expect(resolveReach({ style: styles.icon }, null)).toBeUndefined();
-    // asked for by name, a reach still holds
+    // Requested by name, a reach still holds.
     expect(resolveReach({ reach: 'open', style: styles.icon }, null)).toEqual(even(9));
   });
 
@@ -179,7 +172,7 @@ describe('neighbours’ reaches', () => {
 });
 
 describe('a press too quick to see', () => {
-  /** A finger down and up on the control, with `ms` between them. */
+  /** A finger down and up on the control, `ms` apart. */
   async function tap(target: HTMLElement, ms: number): Promise<void> {
     fireEvent.mouseDown(target, { button: 0, buttons: 1 });
     if (ms > 0) await act(async () => vi.advanceTimersByTimeAsync(ms));
@@ -211,7 +204,7 @@ describe('a press too quick to see', () => {
   it('does not flash a press that was held long enough to be seen', async () => {
     vi.useFakeTimers();
     render(<Lit />);
-    // the press shows after its delay; let go well after it showed
+    // The press shows after its delay; released well after it showed.
     await tap(screen.getByTestId('lit'), PRESS_DELAY_MS + QUICK_RELEASE_MS + 30);
     expect(opacity()).toBe('1');
   });
@@ -220,7 +213,7 @@ describe('a press too quick to see', () => {
     vi.useFakeTimers();
     const { unmount } = render(<Lit />);
     await tap(screen.getByTestId('lit'), 0);
-    // the flash's own timer is the one a tap adds beyond what the touch system keeps
+    // The flash's own timer is the one a tap adds beyond the touch system's.
     const lit = vi.getTimerCount();
     unmount();
     expect(vi.getTimerCount()).toBe(lit - 1);
@@ -228,7 +221,7 @@ describe('a press too quick to see', () => {
 });
 
 describe('a button that gives under the finger', () => {
-  /** The hook, drawn, and every animation it starts from here on, in the order they were made. */
+  /** The hook rendered, and every animation it starts from now, in order. */
   function probe(): { hook: () => ReturnType<typeof usePressScale>; made: () => [string, unknown][]; sequence: ReturnType<typeof vi.spyOn> } {
     let hook: ReturnType<typeof usePressScale> | null = null;
     function Probe(): React.JSX.Element {
@@ -255,7 +248,7 @@ describe('a button that gives under the finger', () => {
       hook().onPressIn();
       hook().onPressOut();
     });
-    // the give as the finger lands, then on release the whole give again and only then the spring
+    // The dip as the finger lands, then on release the full dip again, and only then the spring.
     expect(made()).toEqual([
       ['timing', PRESS_SCALE],
       ['timing', PRESS_SCALE],

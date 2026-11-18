@@ -10,16 +10,13 @@ import type { UserSummary } from '../lib/types';
 import { ticketToneClass } from '../ui/Ticket';
 import { recentFriends } from './playApi';
 
-/** Friends a picker asks for: as many as `GET /friends` gives in one page. */
+/** As many friends as `GET /friends` gives in one page. */
 const FRIENDS_LIMIT = 500;
 
 /**
- * Choosing friends to ask: a search over your friends, the ones you asked
- * recently on this device first, and who is online now (a dot, and the word
- * for a screen reader). Checkboxes, so choosing several is ordinary; when only
- * one may be asked (a game for two), choosing another swaps them. A friend
- * ticked has a ticket by their name, in the game's colour: theirs is being
- * written out (play/InviteTickets.tsx).
+ * Choosing friends to ask: a search, with friends asked recently on this device first and who is online marked (a dot,
+ * and a word for screen readers). Checkboxes, except where only one may be asked, when choosing another swaps them. A
+ * ticked friend gets a ticket by their name in the game's colour (play/InviteTickets.tsx).
  */
 export function FriendPicker({
   selected,
@@ -32,11 +29,11 @@ export function FriendPicker({
   selected: readonly string[];
   onChange: (next: string[]) => void;
   max: number;
-  /** already in the game, or already asked */
+  /** Already in the game, or already asked. */
   exclude?: readonly string[];
-  /** the game being asked to, whose colour a friend's ticket is */
+  /** The game being asked to, whose colour a friend's ticket takes. */
   tone?: PlayGame;
-  /** the friends, once they are known, so whoever shows the tickets can name them */
+  /** The friends once known, so whoever shows the tickets can name them. */
   onFriends?: (friends: UserSummary[]) => void;
 }): React.JSX.Element {
   const t = useT();
@@ -44,8 +41,7 @@ export function FriendPicker({
   const [friends, setFriends] = useState<UserSummary[] | null>(null);
   const [q, setQ] = useState('');
   const recent = useMemo(() => recentFriends(), []);
-  // whoever the sheet was opened for comes first; ticking more does not reorder
-  // the list under the pointer
+  // Whoever the sheet was opened for comes first; ticking more does not reorder the list under the pointer.
   const [pinned] = useState(() => new Set(selected));
 
   useEffect(() => {
@@ -59,7 +55,7 @@ export function FriendPicker({
     return () => {
       alive = false;
     };
-  }, [client]); // the list once; who is told about it may change without asking again
+  }, [client]); // The list once; who is told about it may change without asking again.
 
   const visible = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase();
@@ -67,7 +63,7 @@ export function FriendPicker({
     const matching = needle
       ? list.filter((f) => `${f.displayName ?? ''} ${f.username}`.toLocaleLowerCase().includes(needle))
       : list;
-    // the friend it was opened for, recent ones, then who is online, then by name
+    // The friend it was opened for, recent ones, who is online, then by name.
     const rank = (f: UserSummary): number => {
       if (pinned.has(f.userId)) return -1;
       const r = recent.indexOf(f.userId);

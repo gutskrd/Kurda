@@ -1,30 +1,17 @@
 /**
- * A sign-up by email whose address has not been confirmed: what it is, how
- * long it is kept, and how much mail it may cause.
+ * An email sign-up whose address is unconfirmed: how long it is kept and how much mail it may cause. Such an account
+ * can do nothing (plugins/activation.ts); the rest of the policy is here:
  *
- * Such an account can do nothing (plugins/activation.ts), which is half of a
- * policy. The other half is here:
+ * - It holds its address and username for `UNCONFIRMED_SIGNUP_DAYS`, then is ended (gdpr/service.ts
+ *   `purgeUnconfirmedSignups`), since nobody proved the address was theirs.
+ * - It does not block the person who can confirm the address: signing up, claiming a guest or a provider sign-in with
+ *   that address ends the unconfirmed sign-up and proceeds (`releaseAddress`). The owner is whoever reads the mail, not
+ *   whoever registered first.
+ * - Its confirmation emails are counted per account and per address (`allowVerificationEmail`): each costs money and
+ *   may land in someone else's mailbox.
  *
- * - It holds its address and its username for `UNCONFIRMED_SIGNUP_DAYS`, then
- *   it is ended (gdpr/service.ts `purgeUnconfirmedSignups`). Nobody proved the
- *   address was theirs, so keeping it, and an account under it, is keeping a
- *   stranger's address for no reason.
- *
- * - It does not keep the address from the person who can confirm it. Signing
- *   up, claiming a guest account or signing in through a provider with an
- *   address that an unconfirmed sign-up holds ends that sign-up and goes
- *   ahead (`releaseAddress`): the first to register an address is not its
- *   owner, the one who reads its mail is.
- *
- * - The confirmation emails it can cause are counted, for the account and for
- *   the address (`allowVerificationEmail`). Each one is paid for, and each one
- *   lands in a mailbox that may be somebody else's.
- *
- * "Ended" is not always "closed". A sign-up made from nothing has nothing on
- * it, so it is closed and its address and name are free at once. A guest who
- * gave an address and never confirmed it has everything they learned on the
- * row, so the claim lapses and they are a guest again, on the same phone, with
- * nothing lost.
+ * "Ended" is not always "closed": a sign-up made from nothing is closed, freeing its address and name at once; a guest
+ * who gave an address and never confirmed it becomes a guest again on the same phone, with nothing lost.
  */
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
@@ -42,20 +29,17 @@ export function addressKey(email: string): string {
 }
 
 /**
- * An account (`u`) that signed up by email and never confirmed the address:
- * not a guest, not closed, not staff, and with no provider vouching for who
- * it is. Only these are ever ended by the rules here.
+ * An account (`u`) that signed up by email and never confirmed: not a guest, not closed, not staff, and with no
+ * provider vouching for it. Only these are ever ended here.
  */
 export const UNCONFIRMED_SIGNUP = `u.email_verified_at IS NULL AND NOT u.guest AND u.deleted_at IS NULL AND u.email IS NOT NULL
         AND cardinality(u.roles) = 0
         AND NOT EXISTS (SELECT 1 FROM oauth_identities oi WHERE oi.user_id = u.id)`;
 
 /**
- * Whether one more confirmation email may go to this address for this
- * account today, counting it if so. Two counts that both have to be under
- * the ceiling: the account's, so one sign-up cannot be used to write to a
- * stranger all day, and the address's, so signing up again and again with
- * the same address cannot either.
+ * Whether one more confirmation email may go to this address for this account today, counting it if so. Both counts
+ * must be under the ceiling: the account's, so one sign-up cannot mail a stranger all day, and the address's, so
+ * repeated sign-ups with it cannot either.
  */
 export async function allowVerificationEmail(pool: Pick<pg.Pool, 'query'>, userId: string, email: string): Promise<boolean> {
   const key = addressKey(email);

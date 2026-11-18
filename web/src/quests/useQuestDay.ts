@@ -10,11 +10,7 @@ interface QuestDayState {
   loading: boolean;
 }
 
-/**
- * Today's quests (GET /me/quests), read once when `enabled`, with a way to
- * read them again. A day without its list of quests is an answer this client
- * cannot use, and is treated as one that failed.
- */
+/** Today's quests (GET /me/quests), read once when `enabled`, with a reload; an answer without the list counts as failed. */
 export function useQuestDay(enabled = true): QuestDayState & { reload: () => void } {
   const { client } = useAuth();
   const t = useT();

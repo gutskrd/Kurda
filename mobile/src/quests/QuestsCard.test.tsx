@@ -78,7 +78,7 @@ describe('the quests card on Learn', () => {
     expect(screen.queryByTestId('quests-card')).toBeNull();
   });
 
-  // the chest shakes now and then while one waits to be opened — for somebody who has not asked for less motion — and sits still otherwise
+  // The chest shakes now and then while one waits to be opened, unless motion is reduced, and sits still otherwise.
   it('shakes the chest while one can be opened, and not once every chest is open', async () => {
     patchReactNativeWeb({ reduceMotion: false });
     try {

@@ -6,7 +6,6 @@ import {
   applyGuess,
   initGame,
   keyboardFromGuesses,
-  normalizeWord,
   toLetters,
   InMemoryDictionary,
   type GuessRejection,
@@ -26,6 +25,7 @@ import {
   type Difficulty,
   type WordleStats,
 } from './wordle-daily.js';
+import { normalizeWord } from './rhyme.js';
 import { isWordleGuess, loadWordlePool, recentTargets, wordleEntryId } from './word-pool.js';
 import { meaningsOf, type WordMeanings } from './word-meanings.js';
 
@@ -47,10 +47,8 @@ export type SaveWordResult =
   | { ok: false; reason: 'not-found' | 'not-finished' | 'no-entry' };
 
 /**
- * The answer of a finished game, for the results card: what it means in every
- * language a word card gives (the app shows the reader's own), and the
- * dictionary entry to save it as. Exactly this word — never the nearest
- * search hit, which is how a different word's meaning used to be shown.
+ * A finished game's answer for the results card: its meanings in every language a word card gives (the app shows the
+ * reader's own) and the dictionary entry to save it as. Exactly this word, never the nearest search hit.
  */
 export interface WordleWordCard {
   /** null when the dictionary has no entry spelt exactly so, and there is nothing to save */
@@ -61,9 +59,8 @@ export interface WordleWordCard {
 }
 
 /**
- * Client-safe view of a game. `target` is only ever populated once the game is
- * over (won/lost) — while `status === 'playing'` it stays null so the answer
- * never leaks. Guesses carry only their scored feedback, not the target.
+ * Client-safe view of a game. `target` stays null while `status === 'playing'` and is filled only once the game is
+ * over, so the answer never leaks. Guesses carry only their feedback.
  */
 export interface WordleGameView {
   id: string;
@@ -101,10 +98,9 @@ interface GameRow {
 export const MAX_ATTEMPTS = 6;
 
 /**
- * Daily & practice Peyvok backend (KUR-304). Server-authoritative: the target
- * lives in `wordle_games` and guesses are scored here (via the #303 engine) so
- * the answer is withheld until the game ends. Finishing a game folds the daily
- * streak (#031) and per-player stats in one transaction; it pays no XP.
+ * Daily and practice Peyvok, server-authoritative: the target lives in `wordle_games` and guesses are scored here, so
+ * the answer is withheld until the game ends. Finishing folds the daily streak and stats in one transaction; it pays no
+ * XP.
  */
 export class WordleService {
   private readonly streaks: StreakService;
@@ -123,12 +119,8 @@ export class WordleService {
   }
 
   /**
-   * Start (or resume) today's daily game at a difficulty. There is one daily
-   * word per difficulty, the same for every player on a given UTC day; a
-   * second call the same day at the same difficulty returns the existing game
-   * (resumes an unfinished one, or the finished result) — never a fresh word.
-   * Another difficulty is another daily, so the chips the apps show in daily
-   * mode each mean what they say.
+   * Start (or resume) today's daily game at a difficulty. Each difficulty has one daily word per UTC day, the same for
+   * everyone; calling again the same day returns the existing game (unfinished or finished), never a new word.
    */
   async startDaily(userId: string, difficulty: Difficulty): Promise<StartResult> {
     const dayIndex = utcDayIndex(this.now());
@@ -161,9 +153,8 @@ export class WordleService {
   }
 
   /**
-   * Start a fresh practice game: a random word, unlimited, no streak/daily
-   * effect — and none of the player's last RECENT_TARGETS words, so the same
-   * word does not come round twice in an evening.
+   * Start a fresh practice game: a random word with no streak or daily effect, avoiding the player's last
+   * RECENT_TARGETS words.
    */
   async startPractice(userId: string, difficulty: Difficulty): Promise<StartResult> {
     const picked = await this.practiceTarget(userId, difficulty);
@@ -179,9 +170,8 @@ export class WordleService {
   }
 
   /**
-   * Score one guess against the (server-held) target. A rejected guess (wrong
-   * length / not a dictionary word) does not consume an attempt. A winning or
-   * sixth guess finishes the game, awarding XP + streak + stats atomically.
+   * Score one guess against the server-held target. A rejected guess (wrong length, not a dictionary word) uses no
+   * attempt. A winning or sixth guess finishes the game, updating streak and stats atomically.
    */
   async guess(userId: string, gameId: string, word: string): Promise<GuessResult> {
     const client = await this.pool.connect();
@@ -262,10 +252,8 @@ export class WordleService {
   }
 
   /**
-   * Save a finished game's word to the player's words (SM-2, as the
-   * dictionary's own save does), and count it once toward `wordsLearned`.
-   * Saving it again changes nothing and counts nothing; a full list is the
-   * dictionary's refusal, passed on as it is.
+   * Save a finished game's word to the player's words (SM-2, as the dictionary's own save does) and count it once
+   * toward `wordsLearned`. Saving again changes and counts nothing; a full list is the dictionary's refusal, passed on.
    */
   async saveWord(userId: string, gameId: string): Promise<SaveWordResult> {
     const res = await this.pool.query<GameRow>(`SELECT * FROM wordle_games WHERE id = $1 AND user_id = $2`, [gameId, userId]);
@@ -303,10 +291,8 @@ export class WordleService {
   // ---- internals -------------------------------------------------------------
 
   /**
-   * Fold a finished game into the stats and the streak, inside the caller's
-   * transaction. It pays no XP: Peyvok is played alone, and XP is for lessons
-   * and for games online with other people. `xpAwarded` stays in what the
-   * apps are sent, always nothing, for the app versions that still read it.
+   * Fold a finished game into the stats and streak inside the caller's transaction. Pays no XP; `xpAwarded` is still
+   * sent, always zero, for app versions that read it.
    */
   private async finish(
     client: pg.PoolClient,
@@ -334,7 +320,7 @@ export class WordleService {
 
     await this.saveStats(client, row.user_id, nextStats);
 
-    // a daily win also counts toward the global daily streak (#031) — but not
+    // a daily win also counts toward the global daily streak — but not
     // as a day learned, nor towards a freeze or the daily Zêr: those are paid
     // for lessons and practice. The streak it returns still feeds streak-30.
     let streak: StreakSummary | null = null;
@@ -382,10 +368,7 @@ export class WordleService {
     return res.rows[0] ?? null;
   }
 
-  /**
-   * The daily word of a day at a difficulty, falling back to an easier tier
-   * when the pool is empty (per the spec's empty-pool edge case).
-   */
+  /** A day's word at a difficulty, falling back to an easier tier when the pool is empty. */
   private async dailyTarget(difficulty: Difficulty, dayIndex: number): Promise<{ target: string; difficulty: Difficulty } | null> {
     const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];
     // the word list read once, and each tier's pool cut from it (an empty tier used to read it all again)
@@ -399,15 +382,10 @@ export class WordleService {
   }
 
   /**
-   * A day's word at a difficulty, as the schedule (`wordle_daily`) holds it.
-   *
-   * The first player to ask on a day sets it, and from then on it is that
-   * day's word whatever happens to the pool: a word an admin adds reorders
-   * the permutation `pickDailyWord` walks, and used to move today's word for
-   * everyone who had not played yet. A day already played before the schedule
-   * existed keeps the word it was played with. A new word skips every word set
-   * in the last `dailyRepeatWindow` days, so a growing pool never brings one
-   * back early either.
+   * A day's word at a difficulty as the schedule (`wordle_daily`) holds it. The first player to ask sets it, and it
+   * stays that day's word however the pool changes (an added word reorders the permutation `pickDailyWord` walks). Days
+   * played before the schedule existed keep their word. A new word skips every word set in the last `dailyRepeatWindow`
+   * days.
    */
   private async scheduledWord(difficulty: Difficulty, dayIndex: number, pool: readonly string[]): Promise<string> {
     const set = await this.pool.query<{ word: string }>(`SELECT word FROM wordle_daily WHERE day_index = $1 AND difficulty = $2`, [
@@ -442,8 +420,8 @@ export class WordleService {
   }
 
   /**
-   * A practice word: random, falling back to an easier tier when the pool is
-   * empty, and none of the player's recent targets while the band has others.
+   * A practice word: random, falling back to an easier tier when the pool is empty, avoiding the player's recent
+   * targets while the band has others.
    */
   private async practiceTarget(userId: string, difficulty: Difficulty): Promise<{ target: string; difficulty: Difficulty } | null> {
     const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];
@@ -469,9 +447,8 @@ export class WordleService {
   }
 
   /**
-   * Difficulty pool = the Kurmancî game words of the right letter-length,
-   * stable order (word-pool.ts: never a Soranî word, nor one with a letter the
-   * keyboard does not have).
+   * Difficulty pool: the Kurmancî game words of the right letter length, in stable order (word-pool.ts: never Soranî,
+   * never a letter the keyboard lacks).
    */
   private rehydrate(row: GameRow): WordleGame {
     const base = initGame(row.target_length);

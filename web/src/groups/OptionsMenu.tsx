@@ -10,18 +10,14 @@ export interface MenuItem {
   run: () => void;
 }
 
-/**
- * A ⋯ and what it holds: at the end of a member's row, and in a group
- * thread's header. Only what you may do is ever in it. Escape or a press
- * outside closes it and gives the focus back to the ⋯.
- */
+/** A ⋯ menu for a member's row or a group thread's header; Escape or a press outside closes it and refocuses the ⋯. */
 export function OptionsMenu({
   label,
   items,
   disabled = false,
   className = 'ginfo-menu',
 }: {
-  /** names the ⋯ and its list for a screen reader */
+  /** Names the ⋯ and its list for screen readers. */
   label: string;
   items: MenuItem[];
   disabled?: boolean;
@@ -32,7 +28,7 @@ export function OptionsMenu({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLSpanElement>(null);
 
-  // at the far edge of a phone, the open list is nudged back inside; at the foot of the dialog it opens upwards
+  // At a phone's edge the open list is nudged back inside; at the foot of the dialog it opens upwards.
   useLayoutEffect(() => {
     const list = listRef.current;
     if (!open || !list) return;
@@ -47,7 +43,7 @@ export function OptionsMenu({
     listRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
-        // the menu's Escape, not the dialog's under it
+        // The menu's Escape, not the dialog's under it.
         e.stopPropagation();
         setOpen(false);
         buttonRef.current?.focus();

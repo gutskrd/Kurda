@@ -10,18 +10,10 @@ import { WalletReconciler } from '../wallet/reconcile.js';
 import type { JobQueue } from './queue.js';
 
 /**
- * The recurring housekeeping every deployment needs: closing the accounts
- * whose deletion grace period is over (GDPR erasure), closing the guest
- * accounts nobody has touched for two months (auth/guest.ts), letting go of
- * uploads nothing claimed, and checking once a day that every balance still
- * equals its ledger (wallet/reconcile.ts). Only the definitions' names and payloads are
- * scheduled here; whichever process consumes the queue runs them
- * (jobs/worker.ts registers them all).
- *
- * The dedicated worker scheduled these, and only it did — but it is not
- * deployed, the API consumes the queue itself, and so a deletion that was
- * asked for was never carried out. Both call this now; the schedules have
- * stable ids, so two callers keep one schedule each.
+ * The recurring housekeeping every deployment needs: closing accounts whose deletion grace period is over, closing
+ * idle guest accounts, releasing uploads nothing claimed, and a daily check that every balance equals its ledger.
+ * Only names and payloads are scheduled here; whichever process consumes the queue runs them (jobs/worker.ts). Both
+ * the API and the worker call this, and stable schedule ids keep one schedule each.
  */
 export async function scheduleMaintenance(queue: JobQueue, pool: pg.Pool, storage: MediaStorage | null): Promise<string[]> {
   const gdpr = new GdprService(pool, { storage });

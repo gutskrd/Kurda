@@ -22,7 +22,7 @@ describe('Letters and words', () => {
     expect(letters).toHaveAttribute('href', '/app/alphabet?script=kmr');
     expect(letters).toHaveTextContent('Alfabe');
     expect(letters).toHaveAccessibleDescription('Every letter, and how it sounds');
-    // first, before the four sets, each with its own picture
+    // First, before the four sets, each with its own picture.
     const cards = screen.getAllByRole('link', { name: / explored$/ });
     expect(cards[0]).toBe(letters);
     expect(cards).toHaveLength(5);
@@ -60,7 +60,7 @@ describe('Letters and words', () => {
     expect(name).toHaveAttribute('lang', 'ckb');
   });
 
-  /** a Kurmancî reader's title already is the Kurmancî name, so the card names the set in Soranî instead */
+  /** A Kurmancî reader's title already is the Kurmancî name, so the card names the set in Soranî instead. */
   it('gives a Kurmancî reader the Soranî name beside the Kurmancî title', async () => {
     localStorage.setItem('hevalo_locale', 'ku');
     show();

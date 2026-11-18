@@ -34,7 +34,7 @@ describe('PostPictures', () => {
   it('keeps one picture at its own shape, within limits', () => {
     const { rerender } = renderApp(<PostPictures images={[pic(1, null, 1000, 500)]} />);
     expect(screen.getByRole('group')).toHaveStyle({ aspectRatio: '1.91' });
-    // a very tall photo is not allowed to take the whole wall
+    // A very tall photo may not take the whole wall.
     rerender(<PostPictures images={[pic(1, null, 500, 2000)]} />);
     expect(screen.getByRole('group')).toHaveStyle({ aspectRatio: '0.8' });
   });
@@ -48,7 +48,7 @@ describe('PostPictures', () => {
   });
 
   describe('one at a time, on the wall', () => {
-    /** Where the strip has been scrolled to: jsdom lays nothing out, so the sizes are given. */
+    /** Scrolls the strip; jsdom has no layout, so the sizes are given. */
     function scrollTo(track: HTMLElement, left: number, width = 400): void {
       Object.defineProperty(track, 'clientWidth', { configurable: true, value: width });
       track.scrollLeft = left;
@@ -62,7 +62,7 @@ describe('PostPictures', () => {
       expect(strip.querySelector('.pp-grid')).toBeNull();
       expect(strip).toHaveStyle({ aspectRatio: '1.91' });
       expect(strip.querySelectorAll('.pp-slide')).toHaveLength(3);
-      // each still says which it is, or what it shows; the counter and the dots are not read out
+      // Each says which it is or what it shows; the counter and dots are not read out.
       expect(within(strip).getByRole('button', { name: 'Open picture 2 of 3' })).toBeInTheDocument();
       const counter = strip.querySelector('.pp-counter')!;
       expect(counter).toHaveAttribute('aria-hidden', 'true');
@@ -115,7 +115,7 @@ describe('PostPictures', () => {
       const dialog = screen.getByRole('dialog', { name: 'Picture 2 of 2' });
       expect(within(dialog).getByRole('img', { name: 'Mountains' })).toHaveAttribute('src', 'https://cdn.test/2.webp');
       expect(within(dialog).getByText('2 of 2')).toBeInTheDocument();
-      // focus starts on the way out
+      // Focus starts on Close.
       expect(within(dialog).getByRole('button', { name: 'Close' })).toHaveFocus();
     });
 
@@ -150,7 +150,7 @@ describe('PostPictures', () => {
       const second = screen.getByRole('button', { name: 'Open picture 2 of 2' });
       await userEvent.click(second);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      // an undescribed picture still says what it is
+      // An undescribed picture still says what it is.
       expect(screen.getByRole('img', { name: 'Picture 2, no description' })).toBeInTheDocument();
 
       await userEvent.keyboard('{Escape}');

@@ -4,7 +4,7 @@ import appJson from '../../app.json';
 import appConfig, { GOOGLE_SIGNIN_PLUGIN, googleIosUrlScheme, googleSignInPlugin } from '../../app.config';
 import { googleSignInAvailable } from './googleClientIds';
 
-// made-up ids in the shape Google issues them; no real client is named in the repository
+// made-up ids in the shape Google issues them; no real client is named in the repository.
 const IOS_ID = '123456789012-abcdefghijklmnopqrstuvwxyz012345.apps.googleusercontent.com';
 const IOS_SCHEME = 'com.googleusercontent.apps.123456789012-abcdefghijklmnopqrstuvwxyz012345';
 const WEB_ID = '123456789012-zyxwvutsrqponmlkjihgfedcba543210.apps.googleusercontent.com';
@@ -52,13 +52,22 @@ describe('app.config.ts', () => {
     vi.unstubAllEnvs();
   });
 
-  it('is app.json unchanged when the build has no iOS client id', () => {
+  it('is app.json unchanged when the build has no iOS client id and no Firebase file', () => {
     vi.stubEnv('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', '');
+    vi.stubEnv('GOOGLE_SERVICES_JSON', '');
     expect(appConfig(context())).toEqual(appJson.expo);
+  });
+
+  it('points the Android build at the Firebase file the build names, so Android phones can get push tokens', () => {
+    vi.stubEnv('GOOGLE_SERVICES_JSON', '/builds/secrets/google-services.json');
+    const config = appConfig(context());
+    expect(config.android).toEqual({ ...appJson.expo.android, googleServicesFile: '/builds/secrets/google-services.json' });
+    expect(config.ios).toEqual(appJson.expo.ios);
   });
 
   it('adds the plugin with the reversed id, after app.json’s own plugins, when it has one', () => {
     vi.stubEnv('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', IOS_ID);
+    vi.stubEnv('GOOGLE_SERVICES_JSON', '');
     const config = appConfig(context());
     expect(config.plugins?.slice(0, -1)).toEqual(appJson.expo.plugins);
     expect(config.plugins?.at(-1)).toEqual([GOOGLE_SIGNIN_PLUGIN, { iosUrlScheme: IOS_SCHEME }]);

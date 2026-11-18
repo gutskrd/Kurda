@@ -1,14 +1,6 @@
 /**
- * Pure notification-preference helpers (KUR-095) — no React.
- *
- * The browser had no way to change any of this: `GET`/`PUT /me/notification-prefs`
- * went uncalled, so a reader who signed up in a browser could not turn a category
- * off or set quiet hours without installing the app.
- *
- * Written against the same shapes as `mobile/src/notifications/prefs.ts`, minus
- * its `stepMinute` — the phone nudges quiet hours in half-hours with two
- * buttons, and a browser has `<input type="time">`, which is better at this than
- * anything worth building. Which is why `parseMinute` exists here and not there.
+ * Pure notification-preference helpers, with the same shapes as `mobile/src/notifications/prefs.ts`. The phone steps
+ * quiet hours by half-hours, while the browser uses `<input type="time">`, hence `parseMinute` here.
  */
 import type { MessageKey } from '../i18n/en';
 
@@ -16,23 +8,16 @@ export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'letters', 'games',
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 /**
- * `MessageKey`, not string.
- *
- * The phone's copy of this table records why: these were once typed as strings
- * and the screen printed them straight out, so people read the literal words
- * `notifications.pref.streak` in their settings, in all nine languages, because
- * a key drops into a string slot without the compiler saying a word.
- *
- * `marketing` reads as news and offers, which is what the category is for, and
- * is the one that defaults to off — the server treats it as explicit opt-in.
+ * Each category's label, typed as `MessageKey` so a missing key fails to compile rather than rendering raw. `marketing`
+ * reads as news and offers, and is the explicit opt-in that defaults to off.
  */
 export const CATEGORY_LABEL: Record<NotificationCategory, MessageKey> = {
   streak: 'notifications.pref.streak',
   friends: 'notifications.pref.friends',
-  // letters by bird have their own switch: somebody writing to you is not the same as a friend's news
+  // Letters have their own switch, separate from friends' news.
   letters: 'notifications.pref.letters',
   games: 'notifications.pref.games',
-  // league and badge news (contract 4): off by default for a teen, on the server's side
+  // League and badge news; the server turns it off by default for a teen.
   progress: 'notifications.pref.progress',
   events: 'notifications.pref.events',
   marketing: 'notifications.pref.news',
@@ -41,10 +26,10 @@ export const CATEGORY_LABEL: Record<NotificationCategory, MessageKey> = {
 export interface NotificationPrefs {
   streak: boolean;
   friends: boolean;
-  /** a pen pal's bird at the window, your own home with an answer; as `friends` is until it is chosen (the server's rule) */
+  /** Letters from pen pals; until chosen, the server makes it match `friends`. */
   letters: boolean;
   games: boolean;
-  /** league and badge news (contract 4) */
+  /** League and badge news. */
   progress: boolean;
   events: boolean;
   marketing: boolean;
@@ -53,12 +38,12 @@ export interface NotificationPrefs {
   quietEndMin: number | null;
 }
 
-/** Quiet hours are on only when both ends are set — the server's rule. */
+/** Quiet hours are on only when both ends are set, as on the server. */
 export function quietEnabled(prefs: NotificationPrefs): boolean {
   return prefs.quietStartMin !== null && prefs.quietEndMin !== null;
 }
 
-/** "HH:MM" for a minute-of-day, which is also what a time input wants. */
+/** "HH:MM" for a minute-of-day, which is also a time input's format. */
 export function formatMinute(min: number): string {
   const h = Math.floor(min / 60) % 24;
   const m = min % 60;
@@ -66,11 +51,8 @@ export function formatMinute(min: number): string {
 }
 
 /**
- * A minute-of-day from a time input's "HH:MM", or null if it is not one.
- *
- * A time input hands back `''` whenever it is cleared or half-typed, and the
- * field is user input besides, so this refuses anything it cannot read rather
- * than returning a `NaN` that would travel all the way to the server.
+ * A minute-of-day from a time input's "HH:MM", or null when it is not one, such as the `''` of a cleared or half-typed
+ * field, so a `NaN` never reaches the server.
  */
 export function parseMinute(value: string): number | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
@@ -82,19 +64,14 @@ export function parseMinute(value: string): number | null {
 }
 
 /** Quiet hours as the server will accept them: both ends, or neither. */
-export interface QuietPatch {
+interface QuietPatch {
   quietStartMin: number | null;
   quietEndMin: number | null;
 }
 
 /**
- * The pair, resolved.
- *
- * `PUT /me/notification-prefs` refuses a half-set pair — its schema has a
- * `refine` saying both or neither — and a 422 from a settings toggle reads to
- * the person as "the switch is broken". Turning quiet hours on with nothing
- * typed yet is the ordinary way to arrive at that half state, so this fills in
- * the default window rather than sending something that cannot be accepted.
+ * Quiet hours resolved for `PUT /me/notification-prefs`, which refuses a half-set pair. Turning them on with nothing
+ * typed fills in the default window.
  */
 export function quietPatch(enabled: boolean, start: number | null, end: number | null): QuietPatch {
   if (!enabled) return { quietStartMin: null, quietEndMin: null };
@@ -104,6 +81,6 @@ export function quietPatch(enabled: boolean, start: number | null, end: number |
   };
 }
 
-/** 22:00–07:00, the window somebody switching this on almost certainly means. */
+/** The default window, 22:00–07:00. */
 export const DEFAULT_QUIET_START = 22 * 60;
 export const DEFAULT_QUIET_END = 7 * 60;

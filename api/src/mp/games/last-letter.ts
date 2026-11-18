@@ -33,45 +33,30 @@ import type { GameModule, LobbyChoices } from '../module.js';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * The Last Letter on the server: what the pure rules
- * (shared/src/games/last-letter/rules.ts) cannot decide alone.
+ * Last Letter's server side: what the pure rules (shared/src/games/last-letter/rules.ts) cannot decide alone.
  *
- * A player's word is checked against the dictionary of the game's dialect,
- * inside the game's transaction, so what was played and what was judged are
- * the same moment:
- * - the entry exists in that dialect, compared letter for letter in the
- *   dialect's own letters (`wordKey`: ê is not e, ھ written as ه is still ھ),
- *   found through the folded key the dictionary is indexed by;
- * - it is not a proper noun: a Kurmancî headword written with a capital is a
- *   name (the dictionary gives names the part of speech of a noun), so only an
- *   entry spelt in lower case counts;
- * - at least one of its senses is a part of speech a chain takes (a noun, a
- *   verb, an adjective, an adverb, a pronoun, a number). An admin's curated
- *   game word with no senses yet counts too: an admin chose it as a word;
- * - it is not on the profanity list, which also counts an offense, as a chat
- *   message does.
+ * A player's word is checked against the game dialect's dictionary inside the game's transaction. It counts when:
+ * - the entry exists in that dialect, compared in the dialect's own letters (`wordKey`: ê is not e, ھ written as ه is
+ *   still ھ), found through the folded key the dictionary is indexed by;
+ * - it is not a proper noun: a capitalised Kurmancî headword is a name (the dictionary tags names as nouns), so only
+ *   lower-case entries count;
+ * - at least one sense is a part of speech a chain takes (noun, verb, adjective, adverb, pronoun, numeral), or it is an
+ *   admin-curated game word with no senses yet;
+ * - it is not on the profanity list, which also records an offense as chat does.
  *
- * The meaning shown beside a word is the short English gloss of an entry an
- * admin curated for the games (`in_games`) — never a gloss nobody reviewed,
- * and never one of the dictionary's Kurdish definitions, which nobody has —
- * or the meanings a lesson gives a word it teaches, in every language it
- * gives them, each short enough for a card.
+ * The meaning shown is the short English gloss of an entry curated for the games (`in_games`), never an unreviewed
+ * gloss or a Kurdish definition, or the meanings a lesson gives a word it teaches, each short enough for a card.
  *
- * A word that is not there but differs from exactly one word that is only by
- * its marks (kecik for keçik, cay for çay) is not judged at all: the move
- * says which word it most likely was (`verdict: 'spelling'`) and the rules
- * ask the player, who keeps the turn. Two or more such words, and the guess
- * would be ours to make, so it is struck as any other word not found.
+ * A missing word that differs from exactly one known word only by its marks (kecik for keçik) is not judged: the move
+ * names the likely word (`verdict: 'spelling'`) and the rules ask the player, who keeps the turn. With two or more such
+ * words it is struck like any unknown word.
  *
- * Hevalo plays only curated words of the game's dialect, chosen at random among
- * those that fit, and now and then cannot think of one (more often as the chain
- * grows), so a game against Hevalo can be won.
+ * Hevalo plays only curated words of the game's dialect at random among those that fit, and sometimes fails to find one
+ * (more often as the chain grows), so it can be beaten.
  *
- * The words the course teaches count as well (`courseWords`): every published
- * word card is a word a lesson pairs with its meaning, so a player may play
- * it whether or not the dictionary has it yet, with the lesson's meaning
- * beside it, and Hevalo may play it when it has no curated word that fits.
- * They are counted with the dictionary's for both of the game's minimums.
+ * Words the course teaches count too (`courseWords`): every published word card may be played with its lesson meaning,
+ * whether or not the dictionary has it, and Hevalo may play one when no curated word fits. They count toward both of
+ * the game's minimums.
  */
 
 /** The parts of speech a word in a chain may be. */
@@ -154,12 +139,9 @@ const ENTRY_COLUMNS = `e.headword, e.in_games,
      FROM dict_senses s WHERE s.entry_id = e.id) AS senses`;
 
 /**
- * Whether `key` (a word in the dialect's letters) is a word a chain takes, and
- * the meaning to show with it. One indexed lookup (`headword_folded`) over the
- * spellings the dictionary may hold it under; every candidate is then compared
- * in the dialect's own letters. The same lookup holds the words that differ
- * from it only by their marks, so a word not found is checked for being one
- * of those (`spelling`) at no extra cost.
+ * Whether `key` (in the dialect's letters) is a word a chain takes, and the meaning to show. One indexed lookup
+ * (`headword_folded`) over the spellings the dictionary may hold it under, then each candidate is compared in the
+ * dialect's letters. The same rows hold the words differing only by marks, so the `spelling` check costs nothing extra.
  */
 export async function checkWord(db: Executor, dialect: LetterDialect, key: string): Promise<CheckedWord> {
   const keys = [...new Set(lookupSpellings(dialect, key).map((s) => dictionaryKey(s)))];
@@ -191,18 +173,15 @@ export async function checkWord(db: Executor, dialect: LetterDialect, key: strin
 }
 
 /**
- * The words the course teaches, as its published word cards hold them: each
- * by its letters in the dialect, with the short English meaning its lesson
- * gives it. A name, a word the filter refuses and anything that is not one
- * word of the dialect are left out. Kept for a minute per variety: a move
- * may ask twice, a variety holds a thousand cards and more, and each is read
- * through the word filter, which is too much to do again on every word
- * somebody types. A card published or taken down shows within that minute.
+ * The words the course teaches, from its published word cards: each by its letters in the dialect, with its lesson's
+ * short English meaning. Names, filtered words and anything that is not one word are left out. Cached per variety for a
+ * minute, since a variety has a thousand or more cards and each goes through the word filter; a card published or
+ * withdrawn shows within that minute.
  */
 const COURSE_WORDS_MS = 60_000;
 const courseWordsKept = new Map<LetterDialect, { at: number; words: Promise<Map<string, TaughtWord>> }>();
 
-/** Read the cards again on the next ask (for the tests, which publish a card and play it at once). */
+/** Drop the cache so the next ask reads the cards again (tests publish a card and play it at once). */
 export function forgetCourseWords(): void {
   courseWordsKept.clear();
 }
@@ -273,10 +252,8 @@ export async function hevaloWord(db: Executor, state: LastLetterState): Promise<
 }
 
 /**
- * The words a chain can be checked against and the words Hevalo can play:
- * the dictionary's entries of a dialect and its curated ones, each with the
- * words the course teaches (published word cards) beside them. Every count
- * stops at what the rule needs.
+ * The counts behind the game's minimums: dictionary entries of a dialect for checking, curated ones for Hevalo, each
+ * plus the course's published word cards. Every count stops at what the rule needs.
  */
 export async function lastLetterCounts(db: Executor, dialect: LetterDialect): Promise<{ words: number; hevalo: number }> {
   const res = await db.query<{ words: number; hevalo: number; taught: number }>(
@@ -315,8 +292,8 @@ export const lastLetterModule: GameModule<LastLetterState, LastLetterMove, LastL
     const key = wordKey(state.dialect, raw.word);
     if (key === null) return { move: { key: null, verdict: 'not-a-word', meaning: null }, text: typed };
     if (filterText(key).flagged) return { move: { key, verdict: 'not-allowed', meaning: null }, text: typed, offense: true };
-    // the rules strike a wrong letter or a repeat whatever the dictionary says: no lookup for those, except a wrong
-    // letter that is the right one with a mark left off (cay when ç is asked for), which may be a spelling slip
+    // The rules strike a wrong letter or a repeat without a lookup, except a wrong letter that is the right one missing
+    // its mark (cay when ç is asked for), which may be a spelling slip.
     const required = requiredLetter(state);
     const wrongLetter = required !== null && !beginsWith(state.dialect, key, required);
     const slipOfMark = wrongLetter && dictionaryKey(Array.from(key)[0] ?? '') === dictionaryKey(required!);

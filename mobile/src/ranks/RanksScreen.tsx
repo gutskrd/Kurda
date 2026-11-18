@@ -22,7 +22,7 @@ import { usePullRefresh } from '../net/usePullRefresh';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { Chips } from '../theme/Chips';
-import { GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -36,17 +36,14 @@ import { getMyRanks, getRankBoard } from './api';
 import { PlacementEmblem, RankEmblem } from './art';
 import { TIER_NAME_KEY, cardHeadline, daysLeftText, nextStepText, rankLabel, rankName, seasonTitle, tierMeaning } from './format';
 import { Meter } from './Meter';
-import { ShieldPips } from './RankCard';
+import { ShieldPips } from './ShieldPips';
 import { PLACING_TINT, rankTint } from './tint';
 import { PressableScale } from '../theme/MotionParts';
 
 /**
- * One game's rank up close (contract 4 §R, §U): the emblem large, the points
- * and the way to the next division, the climb from Deşt to Stêrk with where
- * you stand on it, and the game's boards — your friends (always, at any age)
- * and the top players (known adults only, by name only when their profile is
- * public; hidden while too few people play rated for a top list to mean
- * anything).
+ * One game's rank up close: the emblem, the points and the way to the next division, the climb from Deşt to Stêrk, and
+ * the game's boards: your friends (always) and the top players (known adults only, named only when their profile is
+ * public, and hidden while too few play rated for a top list to mean anything).
  */
 export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -75,7 +72,7 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
       void load();
     }, [load]),
   );
-  // pulled down, the ranks are read again
+  // Pulled down, the ranks are read again.
   const pull = usePullRefresh(load);
 
   const card = ranks?.ranks.find((r) => r.game === game) ?? null;
@@ -84,7 +81,7 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
     <GradientBackground>
       <ScreenHeader title={t('ranks.title')} onBack={onExit} browse />
       <View style={styles.picker}>
-        {/* six games, each as wide as its name and the row scrolling: shared out in sixths, every name was cut to its first letters */}
+        {/* Six games in a scrolling row, each as wide as its name: in equal sixths every name was cut short. */}
         <Chips<RankedGame> options={RANKED_GAMES} value={game} onChange={setGame} labelOf={(g) => t(GAME_NAME_KEY[g])} />
       </View>
       <AsyncBoundary loading={!ranks && !error} error={!ranks ? error : null} onRetry={load} skeleton={<RanksSkeleton />}>
@@ -120,11 +117,7 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
   );
 }
 
-/**
- * A game's rank while it loads, in the page's own layout: the emblem, the
- * rank's name, its points and meter, the three numbers, the season's row and
- * the climb — the column the screen is about to fill.
- */
+/** A game's rank while it loads, in the page's own layout. */
 function RanksSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -173,7 +166,7 @@ function RanksSkeleton(): React.JSX.Element {
   );
 }
 
-/** display(34) sets 1.12 */
+/** display(34) sets 1.12. */
 const HERO_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
 
 function Hero({ card }: { card: RankCard }): React.JSX.Element {
@@ -286,17 +279,23 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
   const dir = useDirection();
   const [scope, setScope] = useState<RankBoardScope>('friends');
   const [board, setBoard] = useState<RankBoard | null>(null);
+  // The table on its way is a shimmer of rows; one that did not come says so, with a way to ask again.
+  const [boardFailed, setBoardFailed] = useState(false);
+  const [boardAsk, setBoardAsk] = useState(0);
 
   useEffect(() => {
     let live = true;
     setBoard(null);
+    setBoardFailed(false);
     void getRankBoard(client, game, scope).then((res) => {
-      if (live && res.ok) setBoard(res.data);
+      if (!live) return;
+      if (res.ok) setBoard(res.data);
+      else setBoardFailed(true);
     });
     return () => {
       live = false;
     };
-  }, [client, game, scope]);
+  }, [client, game, scope, boardAsk]);
 
   return (
     <View style={styles.section}>
@@ -309,7 +308,17 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
         onChange={setScope}
         labelOf={(s) => (s === 'friends' ? t('ranks.board.friends') : t('ranks.board.top'))}
       />
-      {!board ? null : board.hidden ? (
+      {!board ? (
+        boardFailed ? (
+          <ErrorRetry onRetry={() => setBoardAsk((n) => n + 1)} />
+        ) : (
+          <View style={styles.boardLoading}>
+            <Skeleton height={44} />
+            <Skeleton height={44} />
+            <Skeleton height={44} />
+          </View>
+        )
+      ) : board.hidden ? (
         <Text style={[styles.small, styles.boardNote, { color: colors.textSecondary }]}>{t('ranks.board.hidden', { count: FEW_PLAYERS })}</Text>
       ) : board.entries.length === 0 ? (
         <Text style={[styles.small, styles.boardNote, { color: colors.textSecondary }]}>
@@ -357,7 +366,7 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  // a centred line in the hero spans it, so a bar given as a share of it has something to be a share of
+  // A centred line in the hero spans it, so a bar sized as a share of it has something to be a share of.
   stretch: { alignSelf: 'stretch' },
   picker: { paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
   content: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 680, alignSelf: 'center' },
@@ -385,6 +394,7 @@ const styles = StyleSheet.create({
   here: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 3 },
   hereText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   boardNote: { paddingVertical: spacing.sm },
+  boardLoading: { gap: spacing.xs },
   entry: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.sm, minHeight: MIN_TOUCH_TARGET + 8 },
   pos: { width: 24, textAlign: 'center', fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   noEmblem: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },

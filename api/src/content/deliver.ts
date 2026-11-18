@@ -19,15 +19,11 @@ export interface Deliverable {
 }
 
 /**
- * Exercises as a session's client sees them, whichever kind of session it is
- * (a lesson, a practice session or test to jump ahead, a placement question):
- * answers stripped and options shuffled with the session's seed
- * (`sanitizeExercise`), the studio's recordings (`lessonAudioFor`), the word
- * tiles of a translation or a listening item (`wordBanks`) and the prompt's
- * words with their meanings (`promptTokens`). Every exercise of the session is
- * passed at once: tiles are drawn from the session's other items, meanings from
- * its pairs, and the recordings and the dictionary are one statement each for
- * the whole session.
+ * Exercises as a session's client sees them, for any session kind (lesson, practice, jump-ahead test, placement):
+ * answers stripped and options shuffled with the session's seed (`sanitizeExercise`), studio recordings
+ * (`lessonAudioFor`), word tiles for translations and listening items (`wordBanks`), and prompt words with meanings
+ * (`promptTokens`). All exercises are passed at once: tiles come from the session's other items, meanings from its
+ * pairs, and recordings and dictionary lookups are one statement each.
  */
 export async function deliverExercises(db: Pick<pg.Pool, 'query'>, sessionId: string, exercises: readonly Deliverable[]): Promise<DeliveredFields[]> {
   const items = exercises.map((ex) => ({ type: ex.type, payload: ex.payload, dialect: ex.dialect, seed: exerciseSeed(sessionId, ex.id) }));

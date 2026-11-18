@@ -1,9 +1,7 @@
 /**
- * Letters by bird against real Postgres: a bird out until somebody calls it,
- * answered with the same bird or sent on, the day's calls, pen pals writing
- * in turn, the bands that never mix, blocks and goodbyes, what a letter may
- * not hold, a report on a letter, a closed account taking its letters, and
- * choosing a bird: free the first time, paid for in Zêr after.
+ * Letters by bird against real Postgres: a bird out until called, answered or sent on, daily calls, pen pals writing
+ * in turn, unmixed age bands, blocks and goodbyes, forbidden content, reports, a closed account's letters, and
+ * choosing a bird (free first, then Zêr).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -70,7 +68,7 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
   });
 
-  // every scenario starts with no bird out anywhere and none at a window, so the bird called is the one the test sent
+  // Every scenario starts with no bird out or visiting, so the bird called is the one the test sent.
   beforeEach(async () => {
     await pool.query(`UPDATE letter_visits SET ended_at = now(), outcome = 'closed' WHERE ended_at IS NULL`);
     await pool.query(`UPDATE letters SET status = 'recalled' WHERE status = 'flying'`);
@@ -161,7 +159,7 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     expect((await write(a, 'Pir xweş e.')).statusCode).toBe(200);
     expect((await home(b)).arrival).toMatchObject({ threadId: met.threadId, person: { id: a.id } });
 
-    // once they have said goodbye, no bird comes with what was left unread
+    // After a goodbye no bird brings what was left unread.
     expect((await call('POST', `/letters/threads/${met.threadId}/end`, a.token)).statusCode).toBeLessThan(300);
     expect((await home(b)).arrival).toBeNull();
   });
@@ -170,7 +168,7 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     const [a, b] = [await adult('turna'), await adult('turnb')];
     const met = await meet(a, b);
     const write = (p: Person, body = 'Spas ji bo nameya te, hevalê min!') => call('POST', `/letters/threads/${met.threadId}`, p.token, { body });
-    // he answered her bird: it is hers to write now, not his again
+    // He answered her bird, so it is her turn to write.
     expect((await write(b)).json()).toMatchObject({ code: 'NOT_YOUR_TURN' });
     expect((await write(a)).statusCode).toBe(200);
     expect((await write(a, 'Û tiştekî din jî heye.')).json()).toMatchObject({ code: 'NOT_YOUR_TURN' });

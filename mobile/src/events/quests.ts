@@ -1,4 +1,4 @@
-/** Pure event-quest view helpers (KUR-091) — no React Native. */
+/** Pure event-quest view helpers, with no React Native. */
 
 import type { TranslationKey } from '../i18n/translations';
 import type { Translate } from '../api/errors';
@@ -46,24 +46,14 @@ export function progressPct(q: Pick<QuestView, 'current' | 'target'>): number {
   return Math.max(0, Math.min(1, q.current / q.target));
 }
 
-/** Display title, falling back to a per-type default. */
-/**
- * What a quest is called.
- *
- * An event's own title comes from the server and is English, because the API
- * has no locale to write it in yet; the fallbacks are ours and are translated.
- */
+/** A quest's title. Event titles come from the server in English (the API has no locale yet); the fallbacks are translated. */
 export function questTitle(q: QuestView, t: Translate): string {
   return q.titleEn ?? t(DEFAULT_TITLE[q.type]);
 }
 
 export type RewardCurrency = 'zer' | 'gems';
 
-/**
- * What a quest pays, currency by currency — Zêr, then gems — for the row to
- * draw with the app's own coin and gem, as the shop and the gift sheet do.
- * Empty when it pays nothing.
- */
+/** What a quest pays, Zêr then gems, for the row to draw with the app's coin and gem. Empty when it pays nothing. */
 export function rewardParts(reward: QuestReward): Array<{ currency: RewardCurrency; amount: number }> {
   const parts: Array<{ currency: RewardCurrency; amount: number }> = [];
   if (reward.zer && reward.zer > 0) parts.push({ currency: 'zer', amount: reward.zer });
@@ -71,11 +61,7 @@ export function rewardParts(reward: QuestReward): Array<{ currency: RewardCurren
   return parts;
 }
 
-/**
- * The reward in words, for a screen reader, which says nothing for a drawn
- * coin: "+200 Zêr, +30 Gems", in the words the chest and the league use for
- * what they pay. `count` formats each amount for the reader's language.
- */
+/** The reward in words for screen readers ("+200 Zêr, +30 Gems"); `count` formats each amount for the locale. */
 export function rewardSpoken(reward: QuestReward, t: Translate, count: (n: number) => string = String): string {
   return rewardParts(reward)
     .map((p) => (p.currency === 'zer' ? t('quests.chest.reward', { amount: count(p.amount) }) : t('leagues.gems', { count: count(p.amount) })))

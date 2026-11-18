@@ -9,7 +9,7 @@ import { gameView } from './testing/views';
 import { StoryGameScreen } from './StoryGameScreen';
 import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
 
-// the game the screen is showing, set by each test
+// The game the screen shows, set by each test.
 const game = vi.hoisted(() => ({ view: null as StoryGameView | null }));
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -39,7 +39,7 @@ describe('StoryGameScreen', () => {
     resetHardwareBack();
   });
 
-  // iOS cannot swipe a game away; Android's back asks first while the story is being read and answered
+  // iOS cannot swipe a game away; Android's back asks first while the story is being played.
   it('asks before Android’s back leaves a game under way, and lets it go once the game is done', () => {
     const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
       buttons?.find((b) => b.style === 'destructive')?.onPress?.();
@@ -75,6 +75,6 @@ describe('StoryGameScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back to the story' }));
     expect(navigation.popTo).toHaveBeenCalledWith('StoryReader', { slug: 'bajar' });
     fireEvent.click(screen.getByRole('button', { name: 'Another story' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Stories');
+    expect(navigation.popTo).toHaveBeenCalledWith('Stories');
   });
 });

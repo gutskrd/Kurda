@@ -1,13 +1,6 @@
 /**
- * The ticket both apps draw on their "Join with a code" card and sheet: one
- * outline, so the website and the phone hand over the same ticket.
- *
- * It is a plain admission ticket lying flat: a stub on the side where reading
- * starts, a tear line with a notch bitten from the top and the bottom edge
- * where it meets them (the same place the lobby's code ticket has its
- * notches), and three tiles on the body where a code goes. The geometry is
- * drawn for left-to-right; a right-to-left page mirrors the whole picture.
- * Colours are the caller's, so each app paints it from its own palette.
+ * The admission ticket both apps draw on the "Join with a code" card and sheet: a stub, a notched tear line and three
+ * code tiles. Drawn left-to-right (a right-to-left page mirrors it); colours are the caller's.
  */
 
 /** The ticket's box, in the units of the paths below. */

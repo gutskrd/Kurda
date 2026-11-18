@@ -1,8 +1,6 @@
 /**
- * Inviting a friend, end to end, for every game — with the settings the apps
- * send (web/src/play/InviteSheet.tsx, mobile/src/play/InviteSheet.tsx):
- * Friendly and Rated, the host making the lobby with the friend asked, the
- * friend seeing the banner and saying yes, and the game starting with both.
+ * Inviting a friend end to end for every game, with the settings the apps send: Friendly and Rated, the host's lobby
+ * with the friend asked, the friend's banner and yes, and the game starting with both.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -178,11 +176,7 @@ describe.skipIf(!DATABASE_URL)('play: inviting a friend to every game (integrati
     }
   });
 
-  /**
-   * An app talking to an API without these routes (one deployed from before
-   * them) gets the not-found handler's answer, and the apps tell that from a
-   * game that is gone by its words: it used to read "This game isn't available".
-   */
+  /** An app calling an API without these routes gets the not-found handler's wording, which the apps tell from a gone game. */
   it('a path the API has no route for answers in the words the apps tell from a game that is gone', async () => {
     const [host] = await pair('nr');
     const missing = await call(host, 'POST', '/play/no-such-route', {});

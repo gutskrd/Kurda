@@ -12,20 +12,17 @@ import type { AudioControls } from '../useAudio';
 import { useValley } from '../ValleyScope';
 import { CARD } from '../valley';
 
-/** The stage the character beside a bubble stands on, head to waist; Hevalo's window, standing in, as wide. */
+/** The stage the character beside a bubble stands on, head to waist; Hevalo's window is as wide when standing in. */
 const FIGURE = 150;
 const FIGURE_WIDTH = 118;
 const WINDOW = 134;
 
-/** Longer than this, what a bubble says is a scene told in sentences rather than a line said. */
+/** Past this length a bubble holds a scene in sentences rather than a spoken line. */
 const A_LINE = 48;
 
 /**
- * How the words in a bubble are set: in the display face, as the lesson's
- * Kurdish and its questions are. A line said — "Silav! Bi xêr hatî!" — is set
- * large and heavy; a scene told in a few sentences around what is said is set
- * a size smaller in the face's regular weight, so a paragraph of it reads as
- * a paragraph rather than as a headline.
+ * How a bubble's words are set, in the display face: a spoken line ("Silav! Bi xêr hatî!") large and heavy, a scene
+ * of a few sentences a size smaller at regular weight, so it reads as a paragraph rather than a headline.
  */
 export function saidStyle(words: string | undefined): TextStyle {
   return (words?.length ?? 0) <= A_LINE ? LINE : SCENE;
@@ -34,17 +31,15 @@ export function saidStyle(words: string | undefined): TextStyle {
 const LINE: TextStyle = display(21);
 const SCENE: TextStyle = { fontFamily: displayFont, fontSize: typography.sizes.md + 1, lineHeight: 25, fontWeight: typography.weights.regular };
 
-/** A bubble of one line. */
+/** A one-line bubble's height. */
 const BUBBLE = 56;
 
-/** The one corner drawn tight, at the foot on the speaker's side: the bubble comes out of them there, with no tail. */
+/** The one tight corner, at the foot on the speaker's side, where the bubble comes from them without a tail. */
 const TIGHT = 6;
 
 /**
- * A speech bubble, a cream card on a sandy edge like the lesson's answers,
- * its corner at the foot on the side its speaker stands drawn tight, which is
- * where it comes out of them. Tapped, it does `onPress` (says it again);
- * `accessibilityLabel` is what it is for a screen reader then.
+ * A speech bubble: a cream card on a sandy edge with its tight corner toward its speaker. Tapped, it calls `onPress`
+ * (say it again), with `accessibilityLabel` naming it.
  */
 function SpeechBubble({
   tail,
@@ -74,16 +69,10 @@ function SpeechBubble({
 }
 
 /**
- * Who asks, and what they say: a character head to waist with a speech bubble
- * beside it, its tight corner toward them — on the right, facing left, in a
- * right-to-left language.
- *
- * The character is whoever says the item's recording, following the sound
- * with their mouth, and saying it again when tapped. With nobody chosen for
- * it, Hevalo puts his head in at the window there instead, listening rather than
- * saying it — and, since he says nothing, hidden from a screen reader. Either
- * way they react to the verdict: pleased when it was right, a curious tilt of
- * the head when not.
+ * Who asks and what they say: a character, head to waist, with a bubble whose tight corner faces them (mirrored in
+ * right-to-left languages). The character is whoever says the recording, lip-synced and repeating it when tapped;
+ * with nobody chosen, Hevalo listens at his window instead, hidden from screen readers since he says nothing.
+ * Either reacts to the verdict: pleased when right, a curious tilt when not.
  */
 export function PromptScene({
   voice,
@@ -94,16 +83,16 @@ export function PromptScene({
   below,
   children,
 }: {
-  /** who says the recording, when the app can draw them */
+  /** Who says the recording, when the app can draw them. */
   voice: RecordingVoice | null;
-  /** the recording's player, when there is one to follow */
+  /** The recording's player, when there is one to follow. */
   audio: AudioControls | null;
   reaction: CharacterReaction | null;
-  /** say it again: a tap on whoever says it */
+  /** Says it again, on a tap on the speaker. */
   onReplay?: () => void;
-  /** the bubble as a button of its own (a clip to hear again), and what it is called; plain words otherwise */
+  /** The bubble as its own button (a clip to replay) and its label; plain words otherwise. */
   bubble?: { onPress: () => void; label: string } | null;
-  /** under the bubble, on its side: the slow play */
+  /** Under the bubble, on its side: the slow play. */
   below?: ReactNode;
   children: ReactNode;
 }): React.JSX.Element {
@@ -112,7 +101,7 @@ export function PromptScene({
   const speaker = voice?.speaker ?? 'hevalo';
   return (
     <View style={[styles.scene, { flexDirection: dir.row }]} testID="prompt-scene">
-      {/* on a small stage of their own, in their own light, whose foot cuts them off at the waist; Hevalo, standing in, in his window */}
+      {/* On their own small stage and light, cut off at the waist; or Hevalo standing in, at his window. */}
       <View aria-hidden={!says} style={styles.figure}>
         {!says && speaker === 'hevalo' ? (
           <HevaloWindow size={WINDOW} flip={dir.rtl} reaction={reaction} />
@@ -141,7 +130,7 @@ export function PromptScene({
 }
 
 const styles = StyleSheet.create({
-  // the bubble's foot level with the speaker's, where its tight corner meets them
+  // The bubble's foot level with the speaker's, where its tight corner meets them.
   scene: { alignItems: 'flex-end', gap: spacing.sm + 2 },
   figure: { width: FIGURE_WIDTH },
   side: { flex: 1, gap: spacing.xs },

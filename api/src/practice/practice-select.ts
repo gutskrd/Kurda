@@ -1,11 +1,12 @@
 /**
- * Practice-session item selection (KUR-034). Pure so the padding rule is
- * unit-testable. Due items are always prioritised; when too few are due,
- * the session is padded with the learner's weakest known words so a review
- * is still worthwhile (edge case: "only 2 due items").
+ * Pure practice item selection. Due items come first; when too few are due, the session is padded with the learner's
+ * weakest known words so a review is still worth doing.
  */
 
-export const PRACTICE_TARGET = 10;
+import { PRACTICE_SESSION_SIZE } from '@kurda/shared';
+
+/** One session's size, shared with the apps, which send at most this many items of their own (lesson-player.ts). */
+export const PRACTICE_TARGET = PRACTICE_SESSION_SIZE;
 export const PRACTICE_MIN = 4;
 
 export interface SelectOptions {

@@ -2,22 +2,10 @@ import { useId, useMemo, type CSSProperties } from 'react';
 import { CHEST_LAYERS, chestDrawing, type ChestTier } from '@kurda/shared';
 
 /**
- * A quest's chest, the drawing the phone shows too (shared `art/chest.ts`):
- * a chunky trunk seen from three quarters, amber wood in iron for a common
- * chest, in gold for a rare one, pomegranate lacquer in gold with a garnet
- * in its lock for an epic one. `size` is how wide the shut chest is; the
- * height follows.
- *
- * Its layers are groups named by part (`data-part`), which the stylesheet
- * (quests.css) moves: `open` stands it open with the light out of it,
- * `popping` plays the opening — the chest hops (the shared CHEST_HOP: a
- * crouch, a spring up with the lid bursting open at the top, a landing),
- * everything but the shadow moving as one group (`chest-hop`) about the
- * chest's foot while the shadow shrinks under it, the light blooms, the rays
- * turn and the stars burst as it lands — `shine` passes a glint over its lock
- * now and then, and `reach` is how far the rays go, as a multiple of the
- * drawing's own. Under reduced motion the stylesheet lets everything land
- * where it ends. A picture only: whatever holds it says what it is.
+ * A quest's chest, drawn as on the phone (shared `art/chest.ts`), one look per tier; `size` is the shut chest's width.
+ * Its layers are groups named by `data-part`, which quests.css animates: `open` shows it open and lit, `popping` plays
+ * the shared CHEST_HOP opening, `shine` passes a glint over the lock, and `reach` scales the rays. Under Reduce Motion
+ * everything lands where it ends. Decorative; the holder labels it.
  */
 export function Chest({
   tier,
@@ -36,7 +24,7 @@ export function Chest({
   size?: number;
   className?: string;
 }): React.JSX.Element {
-  // two chests on one page keep their gradients and clips apart
+  // Two chests on one page keep their gradients and clips apart.
   const id = `chest${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const drawing = useMemo(() => chestDrawing(tier, { size, idPrefix: id }), [tier, size, id]);
   const { box } = drawing;

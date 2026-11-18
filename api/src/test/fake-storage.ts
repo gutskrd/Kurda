@@ -1,17 +1,18 @@
-import type { MediaStorage } from '../media/storage.js';
+import { PrivateStorageUnavailable, type MediaStorage } from '../media/storage.js';
 
 /**
- * An in-memory stand-in for the media bucket and the private evidence storage,
- * for the moderation suites: what is public, what is kept privately, and what
- * the CDN was asked to forget. `failCopies` makes the next copies throw, as a
- * storage outage would.
+ * An in-memory media bucket and private evidence storage for the moderation suites: what is public, what is private,
+ * and what the CDN was asked to forget. `failCopies` makes the next copies throw. Data exports go to `privateFiles`
+ * only while `hasPrivateBucket` is true, as with real storage.
  */
 export class FakeStorage {
   readonly publicObjects = new Map<string, { contentType: string | undefined }>();
   readonly evidence = new Map<string, { contentType: string | undefined; cacheControl: string }>();
+  readonly privateFiles = new Map<string, Buffer>();
   readonly purged: string[] = [];
   failCopies = 0;
   purgeAnswer: boolean | null = true;
+  hasPrivateBucket = true;
 
   constructor(private readonly cdn = 'https://cdn.test') {}
 
@@ -34,6 +35,12 @@ export class FakeStorage {
 
   async delete(key: string): Promise<void> {
     this.publicObjects.delete(key);
+    this.privateFiles.delete(key);
+  }
+
+  async putPrivate(key: string, body: Buffer): Promise<void> {
+    if (!this.hasPrivateBucket) throw new PrivateStorageUnavailable();
+    this.privateFiles.set(key, body);
   }
 
   async copyToEvidence(key: string, target: string, contentType?: string): Promise<void> {

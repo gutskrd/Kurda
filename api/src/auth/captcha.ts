@@ -5,10 +5,9 @@ const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/sit
 type FetchLike = typeof fetch;
 
 /**
- * Cloudflare Turnstile verification (KUR-025).
- * - No TURNSTILE_SECRET → CAPTCHA disabled (dev/test), always passes.
- * - Provider outage → CAPTCHA_FAIL_OPEN decides: 'true' admits traffic
- *   (availability over strictness), default rejects.
+ * CAPTCHA verification.
+ * - No TURNSTILE_SECRET: CAPTCHA disabled (dev/test), always passes.
+ * - Provider outage: CAPTCHA_FAIL_OPEN decides; 'true' admits traffic, the default rejects.
  */
 export async function verifyCaptcha(
   config: AppConfig,

@@ -16,7 +16,7 @@ import { GameContent } from './GameContent';
 
 const ID = '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde00a1';
 
-// stand-in Kurdish for the fixtures, never shown to a learner
+// stand-in Kurdish for the fixtures, never shown to a learner.
 const riddlePayload = {
   slug: 'kmr-si',
   difficulty: 'medium',
@@ -124,7 +124,7 @@ describe('a riddle', () => {
     await type(answer.querySelector('input[aria-label="Accepted form 1"]'), 'سێبەر');
     expect(text(page)).toContain('write this in Kurmancî’s Latin letters only');
     await type(answer.querySelector('input[aria-label="Accepted form 1"]'), 'sî');
-    // hard: the level select follows, and cannot be chosen apart from it
+    // Hard: the level select follows, and cannot be chosen apart from it.
     await pick(page, 'hard');
     const level = [...page.querySelectorAll('select')].find((s) => [...s.options].some((o) => o.textContent === 'Level 5'))!;
     expect(level.value).toBe('5');
@@ -185,7 +185,7 @@ describe('a published riddle’s translations', () => {
     await click(tab);
     const form = page.querySelector('[aria-label="German translation"]') as HTMLElement;
     expect(text(form)).toContain('Not translated yet');
-    // each hint is shown beside the Kurdish it translates
+    // Each hint is shown beside the Kurdish it translates.
     expect(text(form)).toContain(riddlePayload.hints[1]);
     const inputs = form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[lang="de"], textarea[lang="de"]');
     await type(inputs[0], de.question);

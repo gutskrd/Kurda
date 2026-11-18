@@ -14,8 +14,7 @@ import { StoriesView } from './StoriesView';
 import { StoriesScreen } from './StoriesScreen';
 import { forgetReach, reachLimitOf, reachOf } from '../testing/reach';
 
-// jsdom has no matchMedia, and react-native-web reads the colour scheme and
-// Reduce Motion (for the loading skeleton) through it
+// jsdom has no matchMedia, which react-native-web uses for the colour scheme and Reduce Motion.
 vi.hoisted(() => {
   window.matchMedia ??= ((media: string) => ({
     matches: false,
@@ -34,9 +33,9 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// Pull to refresh as a button, since the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
-// every control noted as it is drawn, so its reach can be read
+// Records each control as it is drawn, so its reach can be read.
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
 
 const story = (over: Partial<StoryListItem>): StoryListItem => ({
@@ -95,7 +94,7 @@ const library = (over: Partial<StoryLibrary> = {}): StoryLibrary => ({
   ...over,
 });
 
-/** The library as the server answers it for Kurmancî, which is what a phone that has chosen nothing asks for. */
+/** The library as the server answers for Kurmancî, which a phone with no choice requests. */
 function client(extra: Parameters<typeof fakeClient>[0] = {}, lib: StoryLibrary = library()) {
   return fakeClient({
     'GET /stories/library?dialect=kurmanci': ok(lib),
@@ -104,7 +103,7 @@ function client(extra: Parameters<typeof fakeClient>[0] = {}, lib: StoryLibrary 
   });
 }
 
-/** The Soranî page: its own stories and counts, with the reader's shelves as they are on either page. */
+/** The Soranî page: its own stories and counts, with the reader's shelves the same on either page. */
 const SORANI_LIBRARY = library({
   featured: [],
   recent: [BAZAR],
@@ -116,10 +115,10 @@ const SORANI_LIBRARY = library({
 
 /** The colour an icon was drawn in. */
 const fillOf = (button: HTMLElement): string | null | undefined => button.querySelector('path')?.getAttribute('fill');
-/** A colour's red, green and blue, however it is written: #595870 or rgb(89, 88, 112). */
+/** A colour's red, green and blue, from #595870 or rgb(89, 88, 112). */
 const rgbOf = (colour: string): number[] =>
   colour.startsWith('#') ? [1, 3, 5].map((at) => parseInt(colour.slice(at, at + 2), 16)) : (colour.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
-// the app opens by night until the reader chooses otherwise, and nobody has in these tests
+// The app opens in dark mode until the reader chooses otherwise, which nobody does here.
 const NIGHT = PALETTES.dark;
 
 async function openJoin(): Promise<void> {
@@ -127,7 +126,7 @@ async function openJoin(): Promise<void> {
   await screen.findByLabelText('Join code');
 }
 
-/** Typed or pasted into the one field under the six boxes; the sixth character sends it. */
+/** Types or pastes into the one field under the six boxes; the sixth character sends it. */
 function typeCode(value: string): void {
   fireEvent.change(screen.getByLabelText('Join code'), { target: { value } });
 }
@@ -135,7 +134,7 @@ function typeCode(value: string): void {
 describe('the library’s helpers', () => {
   it('shows the variety chosen last time on this phone; with none chosen, Soranî in a Soranî interface, else Kurmancî', () => {
     expect(shownDialect('en', 'sorani')).toBe('sorani');
-    // a choice is a choice, whatever the interface is in
+    // A choice holds whatever the interface language.
     expect(shownDialect('ckb', 'kurmanci')).toBe('kurmanci');
     expect(shownDialect('ckb', null)).toBe('sorani');
     expect(shownDialect('de', null)).toBe('kurmanci');
@@ -161,9 +160,9 @@ describe('the library’s helpers', () => {
       limit: 24,
       offset: undefined,
     });
-    // the list's own order is left out, so its question is the one it always was
+    // The default order is omitted, so the request stays as it always was.
     expect(libraryQuery('', { ...NO_FILTER, level: 1 }, 'kurmanci').sort).toBeUndefined();
-    // every list is one variety's: the one on show is always part of the question
+    // Every list is one variety's, so the shown one is always in the request.
     expect(libraryQuery('', { ...NO_FILTER, all: true }, 'kurmanci', 24)).toMatchObject({ dialect: 'kurmanci', limit: 24, offset: 24 });
   });
 
@@ -173,7 +172,7 @@ describe('StoriesView', () => {
   beforeEach(() => {
     localStorage.clear();
     resetPrefsCache();
-    // each test starts with a quiet phone: the chips tapped in the one before must not use up the bookmark's buzz
+    // Each test starts with no haptics recorded, so earlier chip taps do not use up the bookmark's.
     resetHaptics();
     testAuth.user = { ...testAuth.user, guest: false };
     navigation.navigate.mockClear();
@@ -188,12 +187,12 @@ describe('StoriesView', () => {
     testAuth.client = client();
     renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Categories' });
-    // 36 tall, wrapping onto rows 8 apart and 8 from each other: half of that every way, so 44 by the word and 8 more
+    // 36 tall, wrapping onto rows 8 apart: half of that every way, so 44 tall by the word plus 8.
     for (const name of ['All stories, 3', 'Animal fables, 1', 'Village life, 1']) {
       expect(reachLimitOf(name)).toEqual({ top: 4, bottom: 4, left: 4, right: 4 });
       expect(reachOf(name)).toEqual({ top: 4, bottom: 4, left: 4, right: 4 });
     }
-    // drawn at 32 over the cover, 14 in from the card's corner: 8 every way reaches 48 and stays on the card
+    // Drawn at 32 over the cover, 14 in from the corner: 8 every way reaches 48 and stays on the card.
     expect(reachOf('Bookmark')).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
   });
 
@@ -214,13 +213,13 @@ describe('StoriesView', () => {
     expect(await screen.findByLabelText(/Your progress\. 1 of 3 stories read\. Average check score: 80%/)).toBeTruthy();
     const headings = screen.getAllByRole('heading').map((h) => h.textContent);
     expect(headings).toEqual(['Continue reading', 'Featured', 'Recently added', 'Categories', 'Bookmarks', 'Play together']);
-    // a card reads its title in the story's language and shows its facts in the app's
+    // A card reads its title in the story's language and shows its facts in the app's.
     const cards = screen.getAllByRole('button', { name: 'Bajar' });
     expect(cards[0]!.getAttribute('lang')).toBe('ku');
-    // its level by a plain name, never the CEFR letter
+    // Its level by a plain name, never the CEFR letter.
     expect(within(cards[0]!).getByText('Beginner')).toBeTruthy();
     expect(within(cards[0]!).queryByText('A2')).toBeNull();
-    // the minutes beside the level, the category whole on a line of its own: never cut to make room for the other
+    // The minutes beside the level, and the category whole on its own line.
     expect(within(cards[0]!).getByText('~2 min')).toBeTruthy();
     expect(within(cards[0]!).getByText('Village life')).toBeTruthy();
     fireEvent.click(cards[0]!);
@@ -236,7 +235,7 @@ describe('StoriesView', () => {
     const headings = screen.getAllByRole('heading').map((h) => h.textContent);
     expect(headings).toEqual(['Continue reading', 'Featured', 'Legends and history', 'Recently added', 'Categories', 'Bookmarks', 'Play together']);
     const shelf = screen.getByRole('heading', { name: 'Legends and history' }).parentElement!;
-    // the shelf's name says what they are once: no card on it says it again
+    // The shelf's name says the category once; no card repeats it.
     expect(within(shelf).getAllByText('Legends and history')).toHaveLength(1);
     fireEvent.click(within(shelf).getByRole('button', { name: 'Kawayê Hesinkar' }));
     expect(navigation.navigate).toHaveBeenCalledWith('StoryReader', { slug: 'kmr-kawaye-hesinkar' });
@@ -245,7 +244,7 @@ describe('StoriesView', () => {
   it('names the categories it knows in every language from its own words, and one added since from the list', async () => {
     localStorage.setItem('kurda_locale_v1', 'de');
     const kawa = story({ id: 's9', slug: 'kmr-kawaye-hesinkar', title: 'Kawayê Hesinkar', level: 3, length: 'saga', category: 'legend', cover: 'kawa', me: me() });
-    // the list names its categories in English, Kurmancî and Soranî only; the two at the end are an editor’s since
+    // The list names categories only in English, Kurmancî and Soranî; the last two were added by an editor.
     const categories = [
       ...CATEGORIES,
       { slug: 'legend', name: { en: 'Legends and history', ku: 'Efsane û dîrok' }, position: 2, count: 1 },
@@ -254,14 +253,14 @@ describe('StoriesView', () => {
     ];
     testAuth.client = client({}, library({ legends: [kawa], categories }));
     renderWithProviders(<StoriesView />);
-    // the legends' shelf is named in German, and so is every chip of a category the app knows
+    // The legends shelf is named in German, as is every chip of a category the app knows.
     expect(await screen.findByRole('heading', { name: 'Sagen und Geschichte' })).toBeTruthy();
     const shelf = screen.getByRole('heading', { name: 'Kategorien' }).parentElement!;
     for (const name of [/^Tierfabeln,/, /^Dorfleben,/, /^Alltag,/, /^Sagen und Geschichte,/]) expect(within(shelf).getByRole('button', { name })).toBeTruthy();
-    // one the app does not know keeps the list's own name: German where it has one, else English
+    // One the app does not know keeps the list's own name: German where it has one, else English.
     expect(within(shelf).getByRole('button', { name: /^Gedichte,/ })).toBeTruthy();
     expect(within(shelf).getByRole('button', { name: /^Songs,/ })).toBeTruthy();
-    // and a card says its category the same way
+    // And a card names its category the same way.
     expect(screen.getAllByText('Dorfleben').length).toBeGreaterThan(0);
   });
 
@@ -289,16 +288,16 @@ describe('StoriesView', () => {
     fireEvent.change(screen.getByLabelText('Search stories'), { target: { value: 'na' } });
     fireEvent.change(screen.getByLabelText('Search stories'), { target: { value: 'nan' } });
     expect(await screen.findByText('25 stories found')).toBeTruthy();
-    // the clear button sits at the field's end, 4 from the funnel: the two share that gap, and the funnel still reaches 8 above and below
+    // The clear button sits 4 from the funnel at the field's end: they share that gap, and the funnel still reaches 8 vertically.
     expect(reachOf('Clear search')).toEqual({ top: 2, bottom: 2, left: 2, right: 2 });
     expect(reachOf('stories-filter')).toEqual({ top: 8, bottom: 8, left: 2, right: 2 });
-    // the pause swallowed the half-typed word
+    // The pause absorbed the half-typed word.
     expect(c.calls.filter((call) => call.path.startsWith('/stories?')).map((call) => call.path)).toEqual(['/stories?q=nan&dialect=kurmanci&limit=24']);
     expect(screen.queryByRole('heading', { name: 'Featured' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(await screen.findByRole('button', { name: 'Bajar' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Nanê Germ' })).toBeTruthy();
-    // back to the shelves
+    // Back to the shelves.
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
     expect(await screen.findByRole('heading', { name: 'Featured' })).toBeTruthy();
   });
@@ -315,22 +314,22 @@ describe('StoriesView', () => {
     testAuth.client = c;
     renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
-    // no row of bare level letters over the shelves any more
+    // No row of bare level letters over the shelves.
     expect(screen.queryByRole('button', { name: 'A2' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Narrated' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
 
     expect(names(group('Sort by'))).toEqual(['Easiest first', 'Newest', 'A to Z']);
-    // only the levels that have a story, each by a plain name with what it means
+    // Only levels with a story, each by a plain name and description.
     expect(names(group('Level'))).toEqual(['Any level', 'Starter, First words and short sentences', 'Beginner, Everyday sentences and short stories']);
-    // which Kurdish is the switch over the search, and nowhere in the sheet: two controls for one thing would be a fault
+    // The variety is the switch over the search and never also in the sheet.
     expect(within(sheet()).queryByRole('radiogroup', { name: 'Kurdish' })).toBeNull();
     expect(within(sheet()).queryByRole('radio', { name: /Soranî|Kurmancî/ })).toBeNull();
     expect(names(group('Length'))).toEqual(['Any length', 'Short, 1–2 min', 'Medium, 3–5 min', 'Long, 5–8 min', 'Saga, 10–27 min']);
     expect(within(sheet()).getByRole('switch', { name: 'Read aloud' })).toBeTruthy();
     expect(names(group('Category'))).toEqual(['Any category', 'Animal fables, 1', 'Village life, 1', 'Everyday life, 1']);
     expect(sheet().textContent).not.toMatch(/\b[ABC][12]\b/);
-    // the whole library's count is known without asking
+    // The whole library's count is known without asking.
     expect(within(sheet()).getByRole('button', { name: 'Show 3 stories' })).toBeTruthy();
     expect(counts(c)).toEqual([]);
   });
@@ -347,7 +346,7 @@ describe('StoriesView', () => {
     fireEvent.click(within(group('Level')).getByRole('radio', { name: 'Beginner, Everyday sentences and short stories' }));
     fireEvent.click(within(group('Length')).getByRole('radio', { name: 'Long, 5–8 min' }));
     expect(await within(sheet()).findByRole('button', { name: 'Show 1 story' })).toBeTruthy();
-    // one question for the settled choices, not one per tap; the order changes no count; no list yet
+    // One request for the settled choices, not one per tap; order does not change a count; no list yet.
     fireEvent.click(within(group('Sort by')).getByRole('radio', { name: 'Newest' }));
     expect(counts(c)).toEqual(['/stories?level=2&dialect=kurmanci&length=long&limit=1']);
     expect(lists(c)).toEqual([]);
@@ -356,7 +355,7 @@ describe('StoriesView', () => {
     fireEvent.click(within(sheet()).getByRole('button', { name: 'Show 1 story' }));
     expect(await screen.findByText('1 story found')).toBeTruthy();
     expect(lists(c)).toEqual(['/stories?level=2&dialect=kurmanci&length=long&sort=newest&limit=24']);
-    // the funnel says what is on, and a chip under the search says each part
+    // The funnel says what is on, and a chip under the search names each part.
     expect(screen.getByRole('button', { name: 'Sort and filter — Newest, Beginner, Long' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Newest' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Beginner' })).toBeTruthy();
@@ -388,7 +387,7 @@ describe('StoriesView', () => {
     expect(reset()).toBe(true);
     fireEvent.click(within(group('Level')).getByRole('radio', { name: 'Starter, First words and short sentences' }));
     fireEvent.click(within(sheet()).getByRole('button', { name: 'Close' }));
-    // closed without Show: nothing was asked for, and the sheet opens again on what the library shows
+    // Closed without Show: nothing was requested, and the sheet reopens on what the library shows.
     expect(lists(c)).toEqual([]);
     expect(screen.getByRole('button', { name: 'Sort and filter' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
@@ -406,25 +405,25 @@ describe('StoriesView', () => {
     testAuth.client = c;
     renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
-    // a category from the shelves' own chips, with its count
+    // A category from the shelf's own chips, with its count.
     fireEvent.click(screen.getByRole('button', { name: 'Animal fables, 1' }));
     expect(felt).toEqual(['select']);
     expect(await screen.findByRole('button', { name: 'بازاڕ' })).toBeTruthy();
     expect(screen.getByText('1 story found')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sort and filter — Animal fables' })).toBeTruthy();
 
-    // a chip opens the sheet on what is shown
+    // A chip opens the sheet on what is shown.
     fireEvent.click(screen.getByRole('button', { name: 'Animal fables' }));
     expect(group('Category').querySelector('[aria-checked="true"]')?.getAttribute('aria-label')).toBe('Animal fables, 1');
     fireEvent.click(within(sheet()).getByRole('switch', { name: 'Read aloud' }));
     fireEvent.click(await within(sheet()).findByRole('button', { name: 'Show 1 story' }));
     await waitFor(() => expect(lists(c).at(-1)).toBe('/stories?category=fable&dialect=kurmanci&audio=1&limit=24'));
 
-    // each part's ✕ lets just that part go
+    // Each part's ✕ removes only that part.
     fireEvent.click(screen.getByRole('button', { name: 'Remove Read aloud' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Sort and filter — Animal fables' })).toBeTruthy());
     expect(screen.queryByRole('button', { name: 'Clear all' })).toBeNull();
-    // and with two on, Clear all lets both go
+    // With two on, Clear all removes both.
     fireEvent.click(screen.getByRole('button', { name: 'Animal fables' }));
     fireEvent.click(within(sheet()).getByRole('switch', { name: 'Read aloud' }));
     fireEvent.click(await within(sheet()).findByRole('button', { name: 'Show 1 story' }));
@@ -434,8 +433,8 @@ describe('StoriesView', () => {
     stop();
   });
 
-  /** The switch's two sides as they are named (a variety has one name in every language), and the one that is on. */
-  const sides = () => screen.getAllByRole('radio', { name: /^(Kurmancî|Soranî)$/ });
+  /** The switch's two sides, named in Latin or Arabic script by the interface. */
+  const sides = () => screen.getAllByRole('radio', { name: /^(Kurmancî|Soranî|کورمانجی|سۆرانی)$/ });
   const chosen = () => sides().filter((r) => r.getAttribute('aria-checked') === 'true').map((r) => r.getAttribute('aria-label'));
   const kept = (): unknown => JSON.parse(localStorage.getItem('hevalo_stories_prefs_v1') ?? '{}').dialect;
   const pages = (c: ReturnType<typeof client>) => c.calls.filter((call) => call.path.startsWith('/stories/library')).map((call) => call.path);
@@ -447,12 +446,12 @@ describe('StoriesView', () => {
     await screen.findByRole('heading', { name: 'Featured' });
     expect(within(screen.getByRole('radiogroup', { name: 'Variety' })).getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual(['Kurmancî', 'Soranî']);
     expect(chosen()).toEqual(['Kurmancî']);
-    // nothing chosen yet, so nothing kept
+    // Nothing chosen yet, so nothing kept.
     expect(kept()).toBeUndefined();
     expect(screen.getByLabelText(/Your progress\. 1 of 3 stories read/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('radio', { name: 'Soranî' }));
-    // the Soranî page: its own newest, its own counts, its own tally
+    // The Soranî page: its own newest, counts and tally.
     expect(await screen.findByLabelText(/Your progress\. 0 of 1 stories read/)).toBeTruthy();
     expect(chosen()).toEqual(['Soranî']);
     expect(kept()).toBe('sorani');
@@ -461,12 +460,12 @@ describe('StoriesView', () => {
     expect(within(recent).queryByRole('button', { name: 'Nanê Germ' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Featured' })).toBeNull();
     expect(screen.getByRole('button', { name: 'All stories, 1' })).toBeTruthy();
-    // what the reader is part-way through is theirs, whatever its variety
+    // What the reader is part-way through is theirs, whatever its variety.
     const reading = screen.getByRole('heading', { name: 'Continue reading' }).parentElement!;
     expect(within(reading).getByRole('button', { name: 'Bajar' })).toBeTruthy();
     expect(pages(c)).toEqual(['/stories/library?dialect=kurmanci', '/stories/library?dialect=sorani']);
 
-    // back again: the page shown before is there at once, and asked for again behind it
+    // Back again: the previous page shows at once and is re-requested behind it.
     fireEvent.click(screen.getByRole('radio', { name: 'Kurmancî' }));
     expect(screen.getByRole('heading', { name: 'Featured' })).toBeTruthy();
     expect(kept()).toBe('kurmanci');
@@ -484,10 +483,10 @@ describe('StoriesView', () => {
     });
     testAuth.client = c;
     renderWithProviders(<StoriesView />);
-    // the phone remembered Soranî: its page is the one asked for, and the other never is
+    // The phone remembered Soranî, so only its page is requested.
     expect(await screen.findByLabelText(/Your progress\. 0 of 1 stories read/)).toBeTruthy();
     expect(chosen()).toEqual(['Soranî']);
-    // the sheet counts the variety's own stories, and offers the levels it has
+    // The sheet counts the variety's own stories and offers its levels.
     fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
     expect(within(sheet()).getByRole('button', { name: 'Show 1 story' })).toBeTruthy();
     expect(names(group('Level'))).toEqual(['Any level', 'Starter, First words and short sentences']);
@@ -516,11 +515,11 @@ describe('StoriesView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Animal fables, 1' }));
     expect(await screen.findByRole('button', { name: 'Nanê Germ' })).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'Soranî' }));
-    // the Kurmancî list leaves at once: it is never shown under the other variety's name
+    // The Kurmancî list goes at once, never shown under the other variety's name.
     expect(screen.queryByRole('button', { name: 'Nanê Germ' })).toBeNull();
     expect(await screen.findByRole('button', { name: 'بازاڕ' })).toBeTruthy();
     expect(lists(c)).toEqual(['/stories?category=fable&dialect=kurmanci&limit=24', '/stories?category=fable&dialect=sorani&limit=24']);
-    // the category chosen stays chosen
+    // The chosen category stays chosen.
     expect(screen.getByRole('button', { name: 'Sort and filter — Animal fables' })).toBeTruthy();
   });
 
@@ -529,17 +528,18 @@ describe('StoriesView', () => {
     const c = client({ 'GET /stories/library?dialect=sorani': ok(SORANI_LIBRARY) });
     testAuth.client = c;
     const view = renderWithProviders(<StoriesView />);
-    await waitFor(() => expect(chosen()).toEqual(['Soranî']));
-    // the interface's own variety is only where the switch starts: nothing was chosen, so nothing is kept
+    // A Soranî interface names the varieties in its own script.
+    await waitFor(() => expect(chosen()).toEqual(['سۆرانی']));
+    // The interface's variety is only where the switch starts: nothing was chosen, so nothing is kept.
     expect(kept()).toBeUndefined();
     view.unmount();
 
-    // a reader of the Soranî interface who chose Kurmancî finds Kurmancî
+    // A Soranî-interface reader who chose Kurmancî finds Kurmancî.
     resetPrefsCache();
     localStorage.setItem('hevalo_stories_prefs_v1', JSON.stringify({ dialect: 'kurmanci' }));
     renderWithProviders(<StoriesView />);
     await screen.findByRole('radiogroup', { name: 'شێوەزار' });
-    expect(chosen()).toEqual(['Kurmancî']);
+    expect(chosen()).toEqual(['کورمانجی']);
   });
 
   it('says so when the stories for a game’s setup do not come, and opens no empty sheet', async () => {
@@ -561,7 +561,7 @@ describe('StoriesView', () => {
     const stop = onHaptic((event) => felt.push(event));
     renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
-    // Nanê Germ is on two shelves; one tap marks both and files it under Bookmarks
+    // Nanê Germ is on two shelves; one tap marks both and files it under Bookmarks.
     const featured = screen.getByRole('heading', { name: 'Featured' }).parentElement!;
     fireEvent.click(within(featured).getByRole('button', { name: 'Bookmark' }));
     expect(felt).toEqual(['tap']);
@@ -569,11 +569,11 @@ describe('StoriesView', () => {
     const bookmarks = screen.getByRole('heading', { name: 'Bookmarks' }).parentElement!;
     expect(within(bookmarks).getByRole('button', { name: 'Nanê Germ' })).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Bookmarked' }).length).toBeGreaterThanOrEqual(3);
-    // a bookmark that is on is the violet of everything chosen; one that is off, the page's quiet ink
+    // An active bookmark is the chosen violet; an inactive one the page's quiet ink.
     for (const on of screen.getAllByRole('button', { name: 'Bookmarked' })) expect(fillOf(on)).toBe(NIGHT.primary);
     for (const off of screen.getAllByRole('button', { name: 'Bookmark' })) expect(fillOf(off)).toBe(NIGHT.textSecondary);
 
-    // the Soranî story's bookmark cannot be taken off: the mark comes back and the refusal is said
+    // The Soranî story's bookmark cannot be removed: the mark comes back and the refusal shows.
     const before = screen.getAllByRole('button', { name: 'Bookmarked' }).length;
     fireEvent.click(within(bookmarks).getAllByRole('button', { name: 'Bookmarked' }).at(-1)!);
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Bookmarked' }).length).toBe(before));
@@ -611,7 +611,7 @@ describe('StoriesView', () => {
     renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
     await openJoin();
-    // too short to be a code, and nothing a code cannot hold: nothing is asked yet
+    // Too short to be a code, and nothing a code cannot hold, so nothing is requested yet.
     typeCode('AB1');
     expect((screen.getByLabelText('Join code') as HTMLInputElement).value).toBe('AB');
     expect(c.calls.some((call) => call.path === '/play/join')).toBe(false);

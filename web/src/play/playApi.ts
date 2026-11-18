@@ -1,8 +1,4 @@
-/**
- * Playing with friends, the same way for every online game (contract §B):
- * what a game is called, where its lobby is, and how an invite's settings
- * read in a line. The shapes are @kurda/shared's `play` ones.
- */
+/** Playing with friends across every online game: names, lobby paths, joining and invite summaries (shared `play` shapes). */
 import {
   invitePath,
   isMissingRoute,
@@ -19,46 +15,34 @@ import { INVITE_NAME_KEY } from '../lib/gameInvites';
 import { dialectName } from '../learn/map';
 import { gamePath, storyError } from '../stories/api';
 import { rememberedExtraTime } from '../stories/prefs';
+import type { Translate } from '../i18n/I18nProvider';
 
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
-
-/** A game's name, as the catalogue says it (the invite cards' own map). */
+/** A game's name as a catalogue key. */
 export const GAME_NAME_KEY: Record<PlayGame, MessageKey> = INVITE_NAME_KEY;
 
-/**
- * Where someone already in a game goes to play it. A story game has a page
- * of its own; the battle and the match live at their invite address.
- */
+/** Where a member of a game goes to play it: a story game's own page, or the battle's and match's invite address. */
 export function lobbyPath(game: PlayGame, lobbyId: string): string {
   return game === 'stories' ? gamePath(lobbyId) : invitePath({ type: game, id: lobbyId });
 }
 
-/**
- * Where someone not in a game yet goes to get in: the invite link's own
- * address — the lobby of a battle or a match, with its Join; a story game's
- * link joins on arrival.
- */
+/** Where someone not yet in a game goes to get in: its invite address (a story game's link joins on arrival). */
 export function joinPath(game: PlayGame, lobbyId: string): string {
   return invitePath({ type: game, id: lobbyId });
 }
 
-/** Each game's own join, so a card or "Join next round" gets you in with one tap. */
+/** Each game's own join route, so a card or "Join next round" joins in one tap. */
 const JOIN: Record<PlayGame, (lobbyId: string) => { path: string; body?: unknown }> = {
   'wordle-battle': (id) => ({ path: `/wordle/battles/${encodeURIComponent(id)}/join` }),
   'rhyme-match': (id) => ({ path: `/rhyme/matches/${encodeURIComponent(id)}/join` }),
-  // a story game takes your remembered Extra time with you
+  // A story game takes your remembered Extra time with you.
   stories: (id) => ({ path: '/story-games/join', body: { id, extraTime: rememberedExtraTime() } }),
-  // every multiplayer learning game joins through the one engine's route
+  // Every multiplayer learning game joins through the engine's one route.
   'last-letter': (id) => ({ path: `/mp/last-letter/${encodeURIComponent(id)}/join` }),
   impostor: (id) => ({ path: `/mp/impostor/${encodeURIComponent(id)}/join` }),
   'who-am-i': (id) => ({ path: `/mp/who-am-i/${encodeURIComponent(id)}/join` }),
 };
 
-/**
- * Joins a lobby through its game's own route (the join rule is checked there,
- * as for a link). Already being in it is not a failure: the answer is the same
- * lobby either way.
- */
+/** Joins a lobby through its game's own route; already being in it is not a failure. */
 export async function joinLobby(client: ApiClient, game: PlayGame, lobbyId: string): Promise<ApiResult<null>> {
   const { path, body } = JOIN[game](lobbyId);
   const res = await client.post<unknown>(path, body);
@@ -66,9 +50,9 @@ export async function joinLobby(client: ApiClient, game: PlayGame, lobbyId: stri
   return res;
 }
 
-/** The refusals playing with friends can meet, in the reader's words. */
+/** Refusals when playing with friends, in the reader's words. */
 const PLAY_ERROR_KEY: Record<string, MessageKey> = {
-  // one answer for every game nobody may see, as the server gives it
+  // One answer for every game nobody may see, as the server gives it.
   GAME_NOT_FOUND: 'stories.error.notFound',
   NOT_FOUND: 'stories.error.notFound',
   INVITE_NOT_FOUND: 'stories.error.notFound',
@@ -85,28 +69,22 @@ const PLAY_ERROR_KEY: Record<string, MessageKey> = {
   NOT_HOST: 'play.error.notHost',
   CANNOT_START: 'play.teams.uneven',
   NOT_A_MEMBER: 'play.error.notMember',
-  // CHAT_MUTED and MUTED are said by describeError (reports/restriction.ts), with the time
+  // CHAT_MUTED and MUTED are worded by describeError (reports/restriction.ts), with the time.
   NOT_FRIENDS: 'chat.error.notFriends',
-  // Every choice here is a chip the page itself offers, so a server that
-  // refuses one is a server on other rules than the page: the site is updated
-  // in seconds and the server takes minutes, or one was published without the
-  // other. The server's own words for it ("these settings are not offered")
-  // were shown as they came, in English, and told nobody what to do.
+  // Every choice is a chip the page offers, so a refusal means the server runs other rules than the page (deploys
+  // land at different times).
   BAD_SETTINGS: 'play.error.serverBehind',
 };
 
 export function playError(error: ApiError, t: Translate): string {
-  // No such route is not "no such game": the API this app talks to is older
-  // than playing with friends (a build whose API has not been deployed yet).
-  // Read like any NOT_FOUND it told the host making a game "This game isn't
-  // available", which was true of nothing they could act on.
+  // A missing route means the API predates playing with friends, not that the game is unavailable.
   if (isMissingRoute(error)) return t('play.error.notOnServer');
   const key = error.code ? PLAY_ERROR_KEY[error.code] : undefined;
-  // a story game's own refusals (no story of that length, too many games) next
+  // Then a story game's own refusals (no story of that length, too many games).
   return key ? t(key) : storyError(error, t);
 }
 
-/** One part of an invite's description, with the language it is in when it is a story's own words. */
+/** One part of an invite's description, with its language when it is a story's own words. */
 export interface SummaryPart {
   text: string;
   lang?: string;
@@ -123,7 +101,7 @@ const LENGTH_KEY: Record<StoryLength, MessageKey> = {
   short: 'stories.length.short',
   medium: 'stories.length.medium',
   long: 'stories.length.long',
-  // a legend told in chapters
+  // A legend told in chapters.
   saga: 'stories.length.saga',
 };
 
@@ -146,7 +124,7 @@ export function summaryParts(game: PlayGame, summary: InviteSummary, t: Translat
   return parts;
 }
 
-/** Recently asked friends, remembered on this device for the picker's "Recent". */
+/** Friends asked recently, remembered on this device for the picker's "Recent". */
 const RECENT_KEY = 'hevalo.play.recent';
 const RECENT_MAX = 8;
 
@@ -164,6 +142,6 @@ export function rememberFriends(ids: readonly string[]): void {
     const next = [...ids, ...recentFriends().filter((id) => !ids.includes(id))].slice(0, RECENT_MAX);
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
   } catch {
-    // a device that will not remember just has no "Recent"
+    // A device that will not remember just has no "Recent".
   }
 }

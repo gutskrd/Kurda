@@ -1,10 +1,7 @@
 /**
- * The press's way with text (sheet.ts): a paragraph broken into lines by
- * rule. A no-break space holds an option's letter to its option and an
- * answer's number to its answer; an en or em space keeps its width and still
- * breaks; a paragraph cut short ends on an ellipsis that is measured with
- * its line; a balanced paragraph evens out its lines; and the file names its
- * author.
+ * The press's text handling (sheet.ts): paragraphs broken into lines by rule. A no-break space holds an option's letter
+ * or an answer's number to its text; en and em spaces keep their width and still break; a truncated paragraph ends on
+ * an ellipsis measured with its line; a balanced paragraph evens its lines; and the file names its author.
  */
 import { describe, expect, it } from 'vitest';
 import { Press, type Line, type Type } from './sheet.js';

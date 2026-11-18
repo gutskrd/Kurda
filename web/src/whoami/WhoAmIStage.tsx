@@ -27,48 +27,20 @@ import { Button } from '../components/Button';
 import { CheckIcon, CloseIcon, FlagIcon, HelpIcon } from '../components/icons';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 
 /**
- * Who Am I?'s stage on the website, the same for the game with friends online
- * (WhoAmI.tsx) and the one passed round a room on one phone (Couch.tsx):
+ * Who Am I?'s stage, shared by the online table (WhoAmI.tsx) and the one-phone game (Couch.tsx): Hevalo's silhouette
+ * with the forehead card (a question mark until readable, then the word and meaning); the table of foreheads; the
+ * Kurdish questions with suggested ones first and the card's answer stamped in the dialect's words; the guess tiles
+ * (online, only after "I know who I am"); the answer and judge keys, each with a word and mark as well as colour; and
+ * the verdict card.
  *
- * - Hevalo's silhouette with a card on his forehead. The card shows a
- *   question mark until its word may be read; then it turns over to show the
- *   word and its meaning.
- * - The table: every player as a small forehead, with what a viewer may read
- *   on it, their points and questions, and whose turn it is.
- * - The questions, in Kurdish. The few the rules suggest asking next come
- *   first, under a label of their own: on one phone as keys a thumb wide,
- *   each with what it means under it, picked with one tap; online as the
- *   first rows of the list. In the list, Ask asks a question, and the card's
- *   answer is stamped on it in the dialect's own words: yes, could be or no
- *   (Erê / Dibe / Na, بەڵێ / ڕەنگە / نەخێر). A beginner reads what every
- *   question means under it; at the other levels a tap shows it.
- * - The tiles, the words a player at a table online could be: pick one,
- *   then Guess. A tile already guessed wrong is crossed out. They are not
- *   there until the player says they know who they are. In one room there
- *   are none: who a player is, is said out loud.
- * - Keys a thumb wide for what a friend says to somebody else's question: yes,
- *   could be and no in a row, in the dialect's own words and in the order
- *   the dialect reads, with not sure as a quieter key under them (only yes
- *   and no at a table made for two answers). Each key wears its word and a
- *   mark as well as its colour, so no answer is told by colour alone. Three
- *   keys of the same colours for what a room says to a guess said out loud:
- *   that is it, close, or not yet.
- * - The card's own verdict on a question, as a card of the answer's colour,
- *   amber for "could be" with a line that says what that means; under it the
- *   way to say the card's answer looks wrong.
- *
- * Nothing here decides what may be shown. A card is drawn when its word is
- * handed in and hidden when it is not, so the rules' view (`viewFor`) stays
- * the only judge of who reads what.
- *
- * Kurdish is marked with its own language and direction everywhere, so a
- * Soranî question reads right to left inside an English page. Where a button
- * holds a Kurdish word and what it means, a space stands between the two, so
- * its name is read out as two words and not run together. Under Reduce
- * Motion nothing turns over or drops; the stamp and the card simply appear.
+ * Nothing here decides what may be shown: a card is drawn only when its word is passed in, so the rules' view
+ * (`viewFor`) is the only judge. Kurdish carries its own language and direction, and a button holding a Kurdish word
+ * and its meaning keeps a space between them so screen readers read two words. Under Reduce Motion nothing turns or
+ * drops.
  */
 
 const CATEGORY_KEY: Record<string, MessageKey> = {
@@ -94,8 +66,6 @@ const GLOSS_KEY: Record<WhoAmISays, MessageKey> = {
   unsure: 'games.whoAmI.unsure',
 };
 
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
-
 /** The game's own page: its start, and where a game on one phone or with friends is left for. */
 export const WHO_AM_I_PATH = '/app/games/who-am-i';
 
@@ -108,17 +78,9 @@ export const WHO_AM_I_END_KEY: Record<NonNullable<WhoAmITableBoard['endedBy']>, 
   abandoned: 'games.whoAmI.end.tooFew',
 };
 
-/**
- * An answer in the dialect's own words: what the card said (yes, could be, no), or what a friend said, which may also
- * be not sure. The card answers in the Kurdish being played, whatever the page is written in.
- */
+/** An answer (yes, could be, no, or a friend's not sure) in the Kurdish being played, whatever the page's language. */
 export function answerWord(dialect: GameDialect, answer: WhoAmIAnswer | 'unsure', t: Translate): string {
   return t(WORD_KEY[dialect][answer]);
-}
-
-/** The dialect's own yes or no, for a line that has only those two. */
-export function yesNo(dialect: GameDialect, answer: boolean, t: Translate): string {
-  return answerWord(dialect, answer ? 'yes' : 'no', t);
 }
 
 /** An answer in the reader's language, for under the Kurdish; none when the reader's language is that Kurdish. */
@@ -132,11 +94,7 @@ export function categoryName(category: string | null, t: Translate): string | nu
   return key ? t(key) : null;
 }
 
-/**
- * The silhouette as the decoration it is here: without a title or an id of
- * its own, since the words beside it say whose card it wears and a table
- * draws it once for every player.
- */
+/** The silhouette as decoration, without a title or ids, since nearby words name it and a table draws it per player. */
 function plainDeer(width: number): string {
   return deerSilhouetteSvg('currentColor', width, '')
     .replace(/<title[^>]*>[\s\S]*?<\/title>/, '')
@@ -144,12 +102,7 @@ function plainDeer(width: number): string {
     .replace(' role="img"', '');
 }
 
-/**
- * A sentence in the reader's language with Kurdish in it ("Your friends said
- * {said}, but the card says {truth}."). The sentence keeps its own word
- * order, and each Kurdish word is marked as the Kurdish it is, so it is read
- * and laid out as Kurdish wherever it falls.
- */
+/** A sentence in the reader's language with Kurdish words filled in, each marked with its language and direction. */
 export function WithWords({ text, words, dialect }: { text: string; words: Readonly<Record<string, string>>; dialect: GameDialect }): React.JSX.Element {
   const script = dialectDirection(dialect);
   // split at the holes and keep their names: every second part is a hole
@@ -243,11 +196,7 @@ export interface TableSeat {
   left: boolean;
 }
 
-/**
- * The table: every player as a small forehead with their card on it, their
- * points and how many questions they have asked, a mark for a card that is
- * done or a player who has gone, and whose turn it is.
- */
+/** The table: each player's forehead and card, points, questions asked, done or gone marks, and whose turn it is. */
 export function Foreheads({ dialect, seats, turn, label }: { dialect: GameDialect; seats: readonly TableSeat[]; turn: number | null; label: string }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
@@ -317,11 +266,8 @@ export function Stamp({ dialect, answer }: { dialect: GameDialect; answer: WhoAm
 }
 
 /**
- * One question on its own, in Kurdish: tapping it shows what it means in the
- * reader's language. `hint` says so under it, where the question is the thing
- * on the screen; on the verdict's card it is left out. With `shown` the
- * meaning is under it from the start and nothing is tapped: where a screen is
- * read by a room, nobody should have to know there was something to press.
+ * One Kurdish question whose meaning shows on a tap, with `hint` saying so. With `shown` the meaning is visible from
+ * the start, for a screen read by a room.
  */
 export function QuestionCard({
   dialect,
@@ -371,11 +317,7 @@ export function QuestionCard({
   );
 }
 
-/**
- * Questions as rows, in the order given: each in Kurdish with what it means
- * (under it where `meanings` says so, at a tap otherwise), and at its end the
- * card's answer as a stamp once it is asked, or Ask where the page takes one.
- */
+/** Questions as rows in order, each with its meaning (shown per `meanings` or on a tap) and the answer stamp or Ask. */
 export function QuestionList({
   dialect,
   questions,
@@ -452,11 +394,8 @@ export function askedFirst(questions: readonly WhoAmIQuestion[], asked: readonly
 }
 
 /**
- * The deck of questions, for a player on a screen of their own. While one may
- * be asked, the few the rules suggest come first under their own label, so a
- * learner who does not know where to begin is shown; then the rest under
- * theirs, those asked carrying the card's answer. When nothing may be asked
- * the deck is the player's notes, and nothing in it is suggested.
+ * The question deck on a player's own screen: suggested questions first while one may be asked, then the rest with
+ * any answers; when nothing may be asked it serves as notes with nothing suggested.
  */
 export function QuestionDeck({
   dialect,
@@ -521,12 +460,7 @@ export function QuestionDeck({
   );
 }
 
-/**
- * The questions to ask next, for a phone passed round a room: each a key a
- * thumb wide, the Kurdish large and what it means under it, there without a
- * tap, since a beginner picks by the meaning. One tap picks a question; what
- * follows (reading it out, turning the phone round) is the page's own.
- */
+/** Suggested questions on one phone, as large keys with the meaning always shown; one tap picks a question. */
 export function SuggestedQuestions({
   dialect,
   questions,
@@ -561,11 +495,7 @@ export function SuggestedQuestions({
   );
 }
 
-/**
- * The words a player at a table online could be: pick one, then Guess; a tile
- * already guessed wrong is crossed out. The page shows them once the player
- * says they know who they are, and not before.
- */
+/** The guess tiles at an online table: pick one, then Guess; wrong guesses are crossed out. */
 export function GuessTiles({
   dialect,
   tiles,
@@ -641,11 +571,7 @@ export function GuessTiles({
   );
 }
 
-/**
- * "Could be" as a mark beside its word: a wave, in the weight of the check and
- * the cross on the keys beside it. The icon set has no wave of this meaning,
- * so it is drawn here, on the same 256-unit grid.
- */
+/** The "could be" wave mark, drawn here on the icon set's 256-unit grid to match the check and cross. */
 function MaybeMark(): React.JSX.Element {
   return (
     <svg width={22} height={22} viewBox="0 0 256 256" aria-hidden="true" focusable="false">
@@ -685,11 +611,8 @@ function AnswerKey({ dialect, answer, disabled, onAnswer }: { dialect: GameDiale
 }
 
 /**
- * What a friend says to a question about somebody else's card, a thumb wide:
- * yes, could be and no in a row, in the dialect's own words and in the order
- * the dialect reads (so in Soranî the yes is on the right), and not sure as a
- * quieter key under them, for whoever cannot tell from the card. A table made
- * for two answers (`answers` 2) offers yes and no alone, as it always did.
+ * A friend's answer keys: yes, could be and no in the dialect's words and reading order, with a quieter not sure
+ * below; `answers` 2 offers only yes and no.
  */
 export function AnswerKeys({
   dialect,
@@ -725,11 +648,7 @@ export type Judged = 'right' | 'close' | 'wrong';
 /** Each judgement in the colours and marks of the answer it stands nearest to, so the two sets of keys read alike. */
 const JUDGED_AS: Record<Judged, WhoAmISays> = { right: 'yes', close: 'sometimes', wrong: 'no' };
 
-/**
- * The room's three keys for a guess said out loud, in the reader's language,
- * since a guess is no question of the game's: that is it, close, not yet. In
- * the colours, the marks and the order of yes, could be and no.
- */
+/** The room's keys for a spoken guess (right, close, not yet) in the reader's language, styled like yes, could be and no. */
 export function JudgeKeys({ label, words, onJudge }: { label: string; words: Readonly<Record<Judged, string>>; onJudge: (judged: Judged) => void }): React.JSX.Element {
   const order: readonly Judged[] = ['right', 'close', 'wrong'];
   return (
@@ -754,13 +673,8 @@ export const MARK_KEY: Record<WhoAmITableMark, MessageKey> = {
 };
 
 /**
- * What the card itself said to a question: who asked what, the card's yes,
- * could be or no, and under it whatever the page adds (how each friend
- * answered, whether the room was right). A card of the answer's own colour,
- * so the truth is never mistaken for one more opinion at the table; "could
- * be" says under it what that means, since it is the one answer a learner may
- * not expect from a card. `shown` puts what the question means under it
- * without a tap, as on a phone handed back and forth.
+ * The card's verdict on a question, in the answer's colour so it is not mistaken for an opinion, with "could be"
+ * explained and the page's extras below. `shown` shows the question's meaning without a tap.
  */
 export function VerdictCard({
   dialect,
@@ -801,15 +715,11 @@ export function VerdictCard({
 }
 
 /** A card and a question as the server knows them: by their ids on one phone, by the game and the seat at a table it runs. */
-export type ReportBody = { identity: string; question: string } | { game: string; seat: number; question: string };
+type ReportBody = { identity: string; question: string } | { game: string; seat: number; question: string };
 
 /**
- * The way to say a card's answer looks wrong, at the foot of its verdict, for
- * a reader who could see the card: one tap, nothing to type, and a thank-you
- * in its place. The server only counts it on the card for the people who keep
- * the cards; nothing a player sends changes what a card says. The thank-you
- * takes the focus, since the button pressed is gone, and the line is a live
- * one, so it is heard as well as seen.
+ * One tap to report a card's answer as wrong, replaced by a thank-you that takes focus and is announced. The server only
+ * counts it for the content editors; it never changes the card.
  */
 export function ReportAnswer({ body }: { body: ReportBody }): React.JSX.Element {
   const t = useT();
@@ -850,11 +760,8 @@ export function ReportAnswer({ body }: { body: ReportBody }): React.JSX.Element 
 }
 
 /**
- * How the game scores, folded away under the table: read once, and there when
- * somebody asks. `guesses` is how many wrong guesses put a player out where
- * the note stands: one more in one room, with nothing to pick from, than at
- * a table online. `answers` is how many the friends are offered: only a
- * table of four says how "could be" and "not sure" score.
+ * The scoring rules, folded under the table. `guesses` is how many wrong guesses put a player out (one more on one
+ * phone than online); `answers` is how many answers are offered, and only four explains "could be" and "not sure".
  */
 export function ScoringNote({ guesses = WHO_AM_I_GUESSES, answers = 4 }: { guesses?: number; answers?: WhoAmIAnswerCount }): React.JSX.Element {
   const t = useT();

@@ -1,9 +1,6 @@
 /**
- * Choosing an item's picture: a file from the picker or dropped on the frame,
- * shown at once, checked here, then uploaded straight away so the server's
- * own checks answer before the form is saved. The frame is the shape the apps
- * draw it in — a background 16:9, an icon square over a checkerboard, so what
- * is see-through looks see-through.
+ * Choosing an item's picture, picked or dropped: shown at once, checked here, then uploaded straight away so the
+ * server's checks answer before the form is saved. The frame has the shape the apps draw it in.
  */
 import { useEffect, useId, useRef, useState, type DragEvent } from 'react';
 import { apiUpload } from '../api';
@@ -39,19 +36,19 @@ export function ArtPicker({
   generic = false,
 }: {
   kind: ArtKind;
-  /** the item's art as it is now (editing), or null for a new item */
+  /** The item's art as it is now (editing), or null for a new item. */
   currentUrl: string | null;
-  /** a new picture is stored (or the last one failed: null) */
+  /** A new picture is stored (or the last one failed: null). */
   onChange: (art: UploadedArt | null) => void;
-  /** an upload is running: the form waits for it */
+  /** An upload is running: the form waits for it. */
   onBusy: (busy: boolean) => void;
-  /** the form's own complaint (no picture yet, or one the save refused) */
+  /** The form's own complaint (no picture yet, or one the save refused). */
   error?: string | null;
-  /** a picture the item can do without (it then shows its glyph) */
+  /** A picture the item can do without (it then shows its glyph). */
   optional?: boolean;
-  /** the field's name, when it is not the item's own picture ("New picture") */
+  /** The field's name, when it is not the item's own picture ("New picture"). */
   label?: string;
-  /** speak of "a picture", not of the shop's kind of art: for pictures that are not shop items */
+  /** Speak of "a picture", not of the shop's kind of art: for pictures that are not shop items. */
   generic?: boolean;
 }): React.JSX.Element {
   const inputId = useId();
@@ -61,7 +58,7 @@ export function ArtPicker({
   const [status, setStatus] = useState<Status>({ at: 'idle' });
   const [dragging, setDragging] = useState(false);
   const [broken, setBroken] = useState(false);
-  // a later pick wins over an earlier one still uploading
+  // A later pick wins over an earlier one still uploading.
   const ticket = useRef(0);
   const names = generic ? { one: 'picture', a: 'a', plural: 'Pictures' } : KIND_NAME[kind];
 
@@ -77,7 +74,7 @@ export function ArtPicker({
     const mine = ++ticket.current;
     const fail = (problem: string): void => {
       if (mine !== ticket.current) return;
-      // back to the picture the item has, with what was wrong with this one
+      // Back to the picture the item has, with what was wrong with this one.
       setPreview(null);
       setStatus({ at: 'failed', problem });
       onChange(null);
@@ -90,7 +87,7 @@ export function ArtPicker({
     setStatus({ at: 'uploading' });
     onBusy(true);
     const size = await measureImage(file);
-    // a size the browser could not read is left to the server, which reads every format it takes
+    // A size the browser could not read is left to the server, which reads every format it takes.
     const wrongSize = size ? checkSize(kind, size.width, size.height) : null;
     if (wrongSize) return fail(wrongSize);
     try {
@@ -170,7 +167,7 @@ export function ArtPicker({
           accept={ACCEPTED_TYPES.join(',')}
           onChange={(e) => {
             void take(e.target.files?.[0]);
-            // the same file picked again is a new pick (after fixing it elsewhere)
+            // The same file picked again is a new pick (after fixing it elsewhere).
             e.target.value = '';
           }}
         />

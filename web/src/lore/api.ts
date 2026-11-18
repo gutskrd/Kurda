@@ -1,16 +1,7 @@
 /**
- * Where the riddles and the proverbs live, what they ask the API, and what a
- * visitor's tab remembers of the riddles they played.
- *
- * They are the Stories section's two companion shelves (Learn → Stories), so
- * their addresses sit beside the library's. The shapes are @kurda/shared's
- * (`RiddleCard`, `RiddleAnswer`, `ProverbView` …): the API sends them and the
- * phone reads the same, so nothing here redefines one.
- *
- * A riddle never spoils itself. Its list and its page carry the question and
- * how many hints it has; a hint is one request when it is asked for, and the
- * answer comes with a right guess or a reveal the learner confirmed. Nothing
- * here asks for any of those ahead of time.
+ * Riddle and proverb paths, API helpers and a visitor's per-tab riddle progress. The shapes are @kurda/shared's. A
+ * riddle never spoils itself: hints are fetched one at a time on request, and the answer only comes with a right guess
+ * or a confirmed reveal.
  */
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -20,22 +11,20 @@ import { rememberVariety } from '../stories/prefs';
 
 export const RIDDLES = '/app/learn/riddles';
 export const riddlePath = (slug: string): string => `${RIDDLES}/${encodeURIComponent(slug)}`;
-/** A riddle's answer has an address of its own, so seeing it is always a step somebody took. */
+/** A riddle's answer has its own address, so seeing it is always a deliberate step. */
 export const answerPath = (slug: string): string => `${riddlePath(slug)}/answer`;
 
 export const PROVERBS = '/app/learn/proverbs';
 export const proverbPath = (slug: string): string => `${PROVERBS}/${encodeURIComponent(slug)}`;
-/** The round on the proverbs; no proverb's slug can be this, since every slug starts with its variety. */
+/** The proverb round; no proverb slug can collide, since every slug starts with its variety. */
 export const PROVERB_ROUND = `${PROVERBS}/play`;
 
 /** A list's address in one variety. */
 export const inVariety = (path: string, dialect: GameDialect): string => `${path}?dialect=${dialect}`;
 
 /**
- * The variety a list is showing: the address's, when it names one (a link
- * somebody shared), else the learner's own. Choosing the other one writes it
- * into the address, and the stories remember it too, so the library and its
- * two companions open on the same Kurdish.
+ * The variety a list shows: the address's when it names one, else the learner's own. Choosing another writes it into
+ * the address and the stories remember it too, so the library and its companions match.
  */
 export function useLoreDialect(): [GameDialect, (next: GameDialect) => void] {
   const fallback = useGameDialect();
@@ -60,10 +49,8 @@ export function useLoreDialect(): [GameDialect, (next: GameDialect) => void] {
 }
 
 /**
- * Something in the reader's own language, from a row's translations: theirs,
- * else English. Nothing when the reader's language is the row's own (a
- * Kurmancî reader on a Kurmancî riddle reads the original), nor when neither
- * is there.
+ * A row's translation in the reader's language, else English; null when the reader's language is the row's own or
+ * neither exists.
  */
 export function inReaderLanguage<T>(
   translations: Partial<Record<AppLocale, T>> | undefined,
@@ -77,7 +64,7 @@ export function inReaderLanguage<T>(
   return en ? { locale: 'en', value: en } : null;
 }
 
-/** The same, as a hook: memoised on what it reads. */
+/** The same, as a memoised hook. */
 export function useReaderLanguage<T>(
   translations: Partial<Record<AppLocale, T>> | undefined,
   locale: AppLocale,
@@ -86,17 +73,13 @@ export function useReaderLanguage<T>(
   return useMemo(() => inReaderLanguage(translations, locale, dialect), [translations, locale, dialect]);
 }
 
-// ---------------------------------------------------------------------------
-// what a visitor's tab keeps
+// ---- What a visitor's tab keeps ----
 
 /**
- * A visitor's riddles, for as long as the tab is open: the hints taken and
- * whether each was solved or its answer shown. The server keeps nothing for
- * somebody signed out, and progress is what an account is for, so this is
- * kept in the tab only — enough that a riddle's page, its answer and the
- * list agree with each other while somebody plays.
+ * A visitor's riddle progress for the tab's lifetime: hints taken, and whether solved or revealed. The server keeps
+ * nothing for visitors; this keeps the riddle, answer and list pages consistent.
  */
-export interface VisitorRiddle {
+interface VisitorRiddle {
   hints: number;
   state: RiddleState;
 }
@@ -117,7 +100,7 @@ export function visitorRiddle(slug: string): VisitorRiddle | null {
   return v && typeof v.hints === 'number' && typeof v.state === 'string' ? v : null;
 }
 
-/** A visitor's riddle moved on: a hint taken, solved, or its answer shown. A solved riddle stays solved. */
+/** Records a visitor's progress on a riddle; a solved riddle stays solved. */
 export function rememberVisitorRiddle(slug: string, next: Partial<VisitorRiddle>): void {
   const all = readVisitor();
   const was = all[slug] ?? { hints: 0, state: 'new' as RiddleState };
@@ -126,25 +109,24 @@ export function rememberVisitorRiddle(slug: string, next: Partial<VisitorRiddle>
   try {
     sessionStorage.setItem(VISITOR_KEY, JSON.stringify(all));
   } catch {
-    // a tab that will not remember still plays: the page holds what it needs
+    // Without storage the page still holds what it needs.
   }
 }
 
-/** For tests: forget the visitor's riddles. */
+/** For tests: forgets the visitor's riddles. */
 export function forgetVisitorRiddles(): void {
   try {
     sessionStorage.removeItem(VISITOR_KEY);
   } catch {
-    // nothing kept, nothing to forget
+    // Nothing kept, nothing to forget.
   }
 }
 
-// ---------------------------------------------------------------------------
-// translations on or off
+// ---- Translations on or off ----
 
 const TRANSLATIONS_KEY = 'hevalo.lore.translations';
 
-/** Whether the riddles' list shows each question's translation: off until the reader asks, then as they left it. */
+/** Whether the riddle list shows translations: off until turned on, then as last left. */
 export function rememberedTranslations(): boolean {
   try {
     return localStorage.getItem(TRANSLATIONS_KEY) === 'on';
@@ -157,6 +139,6 @@ export function rememberTranslations(on: boolean): void {
   try {
     localStorage.setItem(TRANSLATIONS_KEY, on ? 'on' : 'off');
   } catch {
-    // the choice holds for this visit
+    // The choice holds for this visit.
   }
 }

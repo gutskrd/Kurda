@@ -5,7 +5,7 @@ const WINDOWS = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (K
 const IPAD = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
 const PHONE = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36';
 
-/** A browser that answers these media queries, and says it is this one. */
+/** A browser that matches these media queries and reports this user agent. */
 function browser({ ua, matches }: { ua: string; matches: string[] }): void {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: matches.includes(query),
@@ -28,7 +28,7 @@ describe('keyboardKind', () => {
   });
 
   it('draws a desk keyboard for a laptop whose touch screen is its main pointer', () => {
-    // the case that showed a phone's keys on a laptop: a coarse primary pointer, a desktop system
+    // A touch-screen laptop: a coarse primary pointer on a desktop system.
     expect(keyboardKind({ narrow: false, anyFinePointer: false, platform: 'windows' })).toBe('desktop');
     expect(keyboardKind({ narrow: false, anyFinePointer: false, platform: 'linux' })).toBe('desktop');
   });

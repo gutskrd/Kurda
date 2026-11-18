@@ -1,19 +1,14 @@
 import type { CharState, TypingComparison } from '@kurda/shared';
 
 /**
- * The race text cut into words, for drawing.
- *
- * Every keystroke used to redraw every character of the text — up to two
- * thousand nested Text nodes on a long one, which is the lag a cheap Android
- * phone shows first (map3-race-keyboards R13). Drawn a word at a time, and
- * each word redrawn only when something in it changed, a keystroke redraws
- * one or two words. It is also what lets a Soranî text join its letters and
- * run right to left, a word being the unit the line breaks at.
+ * The race text split into words for drawing. Each word re-renders only when something in it changes, so a
+ * keystroke redraws one or two words instead of every character (thousands of Text nodes lag cheap Android
+ * phones). Words are also the unit a Soranî line breaks and joins at, right to left.
  */
 export interface RaceWord {
-  /** index of the word's first character in the text (code points) */
+  /** Index of the word's first character in the text (code points). */
   start: number;
-  /** the word's characters, its trailing spaces included */
+  /** The word's characters, its trailing spaces included. */
   chars: string[];
 }
 
@@ -31,22 +26,19 @@ export function splitWords(text: string): RaceWord[] {
   return words;
 }
 
-/** What one word looks like right now — plain values, so a word can tell when it has not changed. */
+/** One word's current look, as plain values, so a word can tell when it has not changed. */
 export interface WordView {
-  /** one letter per character: o(k), a(ccent forgiven), w(rong), p(ending) */
+  /** One letter per character: o(k), a(ccent forgiven), w(rong), p(ending). */
   states: string;
-  /** the caret's place within the word, or -1 */
+  /** The caret's place within the word, or -1. */
   caret: number;
-  /** characters typed that the text does not have, before the word's character at `at` */
+  /** Characters typed that the text does not have, before the word's character at `at`. */
   extra: Array<{ at: number; text: string }>;
 }
 
 const CODE: Record<CharState, string> = { ok: 'o', accent: 'a', wrong: 'w', pending: 'p' };
 
-/**
- * How one word looks given the comparison so far. `last`: this is the text's
- * last word, which also shows what was typed past the end of the text.
- */
+/** How one word looks given the comparison so far. `last` marks the text's last word, which also shows what was typed past the end. */
 export function wordView(word: RaceWord, cmp: TypingComparison | null, finished: boolean, last = false): WordView {
   const end = word.start + word.chars.length;
   let states = '';

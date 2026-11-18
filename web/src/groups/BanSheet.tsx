@@ -14,13 +14,9 @@ const DURATION: Record<GroupBanDuration, MessageKey> = {
 };
 
 /**
- * Banning somebody from a group, as its owner or an admin.
- *
- * How long is a choice of three, made in plain sight; a reason is optional,
- * and the person banned reads it, which the field says. Their messages can go
- * with them. One line says how a ban differs from removing somebody — the
- * difference is the whole reason to pick one — and the button that does it
- * names who it bans.
+ * Banning somebody from a group as its owner or an admin: one of three durations, an optional reason the banned person
+ * reads, and optionally removing their messages. A line explains how a ban differs from removal, and the button names
+ * who it bans.
  */
 export function BanSheet({
   groupId,
@@ -31,10 +27,10 @@ export function BanSheet({
 }: {
   groupId: string;
   groupName: string;
-  /** who is being banned; null: the sheet is closed */
+  /** Who is being banned; null closes the sheet. */
   member: { userId: string; username: string } | null;
   onClose: () => void;
-  /** the ban is in force (the server's account of it, when it sent one) */
+  /** The ban is in force, with the server's record of it when sent. */
   onBanned: (ban: GroupBan | null) => void;
 }): React.JSX.Element | null {
   if (!member) return null;
@@ -87,7 +83,7 @@ function BanForm({
   return (
     <Sheet open onClose={onClose} label={title} className="gban-sheet">
       <p className="report-eyebrow">
-        {/* the group's name in its own direction, the line in the page's, clear of the close */}
+        {/* The group's name in its own direction, the line in the page's, clear of the close button. */}
         <bdi>{groupName}</bdi>
       </p>
       <form className="gban" onSubmit={(e) => void ban(e)}>

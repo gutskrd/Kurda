@@ -15,11 +15,7 @@ import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { cleanFeedbackText, type FeedbackService } from './service.js';
 
-/**
- * The rating box and "Send feedback" (contract §F), the native store prompt's
- * bookkeeping, and the admin's feedback inbox. Shapes: @kurda/shared
- * `feedback`.
- */
+/** The rating box, Send feedback, the store prompt's bookkeeping and the admin's feedback inbox. */
 
 /** What an app calls its version: "1.4.0", "1.4.0 (52)", "web-2026.10.12" — not free text. */
 const appVersion = z
@@ -30,9 +26,8 @@ const appVersion = z
   .regex(/^[\w.+() -]+$/);
 
 /**
- * Free text up to `max` characters as it will be kept (`cleanFeedbackText`),
- * not as it was sent: the table holds the kept text to the limit, and NFC can
- * make one character three, so a text that passed as sent could fail there.
+ * Free text up to `max` characters as it will be stored (`cleanFeedbackText`), not as sent: NFC can turn one
+ * character into three, so text that passed as sent could fail the table's limit.
  */
 const keptText = (max: number) =>
   z
@@ -55,8 +50,7 @@ const feedbackBody = z
     appVersion,
     locale: z.enum(APP_LOCALE_CODES).optional(),
   })
-  // "not now" is /dismiss; an answer has to say something, and a comment of
-  // nothing but control characters is kept as nothing
+  // "Not now" is /dismiss, so an answer must say something; control characters alone count as nothing.
   .refine(
     (b) => b.stars !== undefined || (b.categories?.length ?? 0) > 0 || cleanFeedbackText(b.comment) !== null,
     { message: 'stars, a category or a comment' },
@@ -70,10 +64,7 @@ const starsList = z
   .regex(/^[1-5](,[1-5])*$/)
   .transform((s) => [...new Set(s.split(',').map(Number))]);
 
-/**
- * A filter the inbox sends empty — the search box cleared, "All" picked — is
- * no filter, not a malformed one.
- */
+/** A filter the inbox sends empty (search cleared, "All" picked) is no filter, not a malformed one. */
 const filter = <T extends z.ZodType>(schema: T) =>
   z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? undefined : v), schema.optional());
 
@@ -86,7 +77,7 @@ const listQuery = z.object({
   q: filter(z.string().trim().max(80)),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).max(100_000).default(0),
-  // the last answer already shown: the next page starts after it, wherever marking has moved the rest
+  // The last answer already shown: the next page starts after it, however marking has moved the rest.
   beforeId: filter(z.uuid()),
 });
 
@@ -97,17 +88,13 @@ const patchBody = z
   })
   .refine((b) => b.status !== undefined || b.adminNote !== undefined, { message: 'nothing to change' });
 
-/**
- * Who reads the feedback: the moderators, the superadmins, support, and the
- * legacy catch-all admin role. (In /admin/session terms that is everyone with
- * `users.view`, plus the legacy role, which has no capabilities of its own.)
- */
+/** Who reads the feedback: moderators, superadmins, support, and the legacy admin role. */
 export const FEEDBACK_READERS = ['moderator', 'superadmin', 'admin', 'support'] as const;
 
 export function registerFeedbackRoutes(app: FastifyInstance, feedback: FeedbackService): void {
   const readers = [requireAuth, requireRoles(...FEEDBACK_READERS)];
 
-  /** Is the box due, and may this phone ask for a store review now. */
+  /** Whether the box is due, and whether this phone may ask for a store review now. */
   app.get(
     '/me/app-feedback/state',
     { schema: { querystring: stateQuery }, preHandler: requireAuth },

@@ -30,7 +30,7 @@ const wonGame = {
   keyboard: { k: 'green', a: 'green', r: 'green' },
   remainingAttempts: 5,
   target: 'kar',
-  // what the server sends for a game played alone
+  // What the server sends for a game played alone.
   xpAwarded: 0,
 };
 
@@ -44,7 +44,7 @@ describe('Wordle', () => {
       }),
     );
     renderApp(<Wordle />, ['/app/games/peyvok']);
-    // the keyboard renders once the game has started
+    // The keyboard renders once the game has started.
     expect(await screen.findByRole('button', { name: 'k' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enter' })).toBeInTheDocument();
   });
@@ -77,7 +77,7 @@ describe('Wordle', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
-        // a daily already played, opened again: its result is on the page at once
+        // A daily already played, opened again: its result is on the page at once.
         if (url.includes('/wordle/daily')) return jsonResponse(200, wonGame);
         return jsonResponse(200, {});
       }),
@@ -85,7 +85,7 @@ describe('Wordle', () => {
     renderApp(<Wordle />, ['/app/games/peyvok']);
     expect(await screen.findByText(/solved it/i)).toBeInTheDocument();
     expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
-    // that line is the page's one mention of XP: no figure of it, not even a zero
+    // That line is the page's one mention of XP: no figure of it, not even a zero.
     expect(screen.queryByText(/\d+ XP/)).toBeNull();
     expect(screen.getAllByText(/XP/)).toHaveLength(1);
   });
@@ -116,7 +116,7 @@ describe('Wordle', () => {
   });
 });
 
-// web-race-rating: the physical keyboard, and telling the rating box
+// Web-race-rating: the physical keyboard, and telling the rating box.
 describe('Peyvok and the keyboard in front of you', () => {
   function stubGame(first: unknown, afterGuess: unknown = wonGame): { guesses: unknown[] } {
     const seen = { guesses: [] as unknown[] };
@@ -175,12 +175,7 @@ describe('Peyvok and the keyboard in front of you', () => {
     expect(heard).toEqual([]);
   });
 
-  /**
-   * A guess the board will not take used to change a line of words under it
-   * and nothing else. The row it was typed in shakes now, once for each
-   * refusal — the same shake under its other name the second time, since a
-   * class that is already there does not play again.
-   */
+  // Each refusal shakes the row, alternating between two class names since a class already present does not replay.
   it('shakes the row a guess was refused in, and again for the next refusal', async () => {
     vi.stubGlobal(
       'fetch',
@@ -196,7 +191,7 @@ describe('Peyvok and the keyboard in front of you', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Enter' }));
     await waitFor(() => expect(document.querySelector('.wordle-row.is-refused')).toHaveClass('is-shake-b'));
-    // only the row being typed in: the empty ones under it stay still
+    // Only the row being typed in: the empty ones under it stay still.
     expect(document.querySelectorAll('.wordle-row.is-refused')).toHaveLength(1);
   });
 
@@ -215,14 +210,11 @@ describe('Peyvok and the keyboard in front of you', () => {
     await screen.findByText(/solved it/i);
     const judged = document.querySelector('.wordle-row.is-judged');
     expect(judged).toHaveClass('is-found');
-    // each tile knows its place in the row, which is what staggers the turn
+    // Each tile knows its place in the row, which is what staggers the turn.
     expect([...judged!.querySelectorAll<HTMLElement>('.wordle-cell')].map((cell) => cell.style.getPropertyValue('--i'))).toEqual(['0', '1', '2']);
   });
 
-  /**
-   * The page asked "daily or practice?" and "how hard?" above every game, and
-   * forgot the answers each time it was opened. It opens on the last ones now.
-   */
+  // The mode and difficulty last played on this device are where the page opens.
   it('opens on the mode and difficulty last played on this device', async () => {
     const started: string[] = [];
     vi.stubGlobal(
@@ -250,11 +242,7 @@ describe('Peyvok and the keyboard in front of you', () => {
   });
 });
 
-/*
- * The quiet Share under the result, as the phone's game has: the grid of
- * squares with the score over it and the site's address under it. Squares and
- * counts only, so neither a guess nor the word is in it.
- */
+/* The quiet Share under the result, as on the phone: the grid with the score and the site's address, never a guess or the word. */
 describe('Peyvok’s result, shared', () => {
   const SITE = window.location.origin;
 
@@ -292,10 +280,10 @@ describe('Peyvok’s result, shared', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
     const text = said();
     expect(text.length).toBeGreaterThan(0);
-    // "kar" was the guess and the word
+    // "kar" was the guess and the word.
     expect(text).not.toMatch(/kar/i);
     for (const theirs of ['rojda', 'u-4471', '/users/', '@']) expect(text).not.toContain(theirs);
-    // one address, and it is the word game's own page, which is about nobody
+    // One address, and it is the word game's own page, which is about nobody.
     expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/peyvok`]);
   });
 
@@ -305,7 +293,7 @@ describe('Peyvok’s result, shared', () => {
     localStorage.setItem('hevalo_peyvok_choice', JSON.stringify({ mode: 'practice', difficulty: 'hard' }));
     const said = open({ practice: lostGame });
     await screen.findByText(/out of tries/i);
-    // playing again stays the result's main button, and Share comes after it
+    // Playing again stays the result's main button, and Share comes after it.
     const again = screen.getByRole('button', { name: 'Play again' });
     const share = screen.getByRole('button', { name: 'Share' });
     expect(again).toHaveClass('btn-primary');
@@ -323,9 +311,8 @@ describe('Peyvok’s result, shared', () => {
 });
 
 /*
- * The result names the word and what it means, in the reader's language, from
- * the word card for exactly that word; and Save to vocabulary saves it by the
- * game, so the server keeps the word the game was about and counts it once.
+ * The result names the word with its meaning from that word's own card, and Save to vocabulary saves it by the game, so
+ * the server keeps exactly that word and counts it once.
  */
 describe('Peyvok’s word, once the game is over', () => {
   const card = { entryId: 'e-kar', meanings: { en: 'work', ku: 'kar', de: 'Arbeit' }, saved: false };
@@ -347,7 +334,7 @@ describe('Peyvok’s word, once the game is over', () => {
     renderApp(<Wordle />, ['/app/games/peyvok']);
 
     expect(await screen.findByText('Arbeit')).toBeInTheDocument();
-    // the German words arrive with their catalogue, a moment after the page
+    // The German words arrive with their catalogue, a moment after the page.
     const save = await screen.findByRole('button', { name: 'Zum Wortschatz hinzufügen' });
     expect(save).toHaveAttribute('aria-pressed', 'false');
     await userEvent.click(save);
@@ -423,7 +410,7 @@ describe('Peyvok’s word, once the game is over', () => {
   });
 
   it('shows the game of the chip pressed last, even when the one before it answers after it', async () => {
-    // every difficulty has its own daily now: a slow answer for Medium must not land under Hard
+    // Every difficulty has its own daily now: a slow answer for Medium must not land under Hard.
     let answerMedium: (r: Response) => void = () => undefined;
     vi.stubGlobal(
       'fetch',

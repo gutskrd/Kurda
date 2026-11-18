@@ -15,10 +15,8 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { ProfileActivity } from './ProfileActivity';
 
 /*
- * The strip of five over what somebody has been doing (profile/ProfileActivity):
- * the chosen one marked as the place you are in, a section hidden from others
- * still there for its owner and said to be hidden, and the strip read from
- * the right in a language read from the right.
+ * The strip of five over somebody's activity: the chosen one marked as where you are, a section hidden from others
+ * still there for its owner and said to be hidden, and the strip read from the right in right-to-left languages.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -54,7 +52,7 @@ describe('the activity strip', () => {
     open({ own: true, sections: { posts: true, games: true, likes: true, reposts: true, saved: false } });
     await act(async () => undefined);
     expect(screen.getByRole('tab', { name: 'Saved, Hidden' })).toBeTruthy();
-    // the old marker was a lone dot after the word
+    // Not a lone dot after the word.
     expect(screen.queryByText(/ ·$/)).toBeNull();
   });
 

@@ -8,7 +8,7 @@ import { jsonResponse, renderApp } from '../test/utils';
 const HOST = '0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f';
 
 beforeEach(() => {
-  // the emblem is one still picture under reduced motion, which is all a test needs of it
+  // The emblem is one still picture under reduced motion, which is all a test needs of it.
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined }));
 });
 afterEach(() => {
@@ -66,10 +66,10 @@ describe('a game’s invite link', () => {
     expect(await screen.findByText('Hamo is waiting for you at the table.')).toBeInTheDocument();
     expect(screen.getByLabelText('The code: K V X V 5 E')).toBeInTheDocument();
     expect(screen.getByText('Or open Games → Join with a code and type KVX V5E.')).toBeInTheDocument();
-    // no Join for someone the server does not know yet
+    // No Join for someone the server does not know yet.
     expect(screen.queryByRole('button', { name: 'Join the game' })).toBeNull();
     await userEvent.click(screen.getByRole('link', { name: 'Create an account and join' }));
-    // the whole address goes with them, so making an account lands them back on this invitation
+    // The whole address goes with them, so making an account lands them back on this invitation.
     expect(screen.getByTestId('where')).toHaveTextContent(`/register|{"from":"/join/impostor/KVXV5E?from=${HOST}"}`);
   });
 
@@ -87,13 +87,13 @@ describe('a game’s invite link', () => {
     page(`/join/impostor/KVXV5E?from=${HOST}`);
     await userEvent.click(await screen.findByRole('button', { name: 'Join the game' }));
     expect(await screen.findByText('You and Hamo aren’t friends on Hevalo yet. Send a friend request, and join when they say yes.')).toBeInTheDocument();
-    // the way forward stands in for "no such code", which beside it would read as a broken link
+    // The way forward stands in for "no such code", which beside it would read as a broken link.
     expect(screen.queryByText('No open game has this code. Check it, or ask your friend for a new one.')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send Hamo a friend request' }));
     expect(await screen.findByText('Your friend request is on its way to Hamo. When they accept, tap Join again.')).toBeInTheDocument();
     const asked = fetchMock.mock.calls.find(([url]) => String(url).endsWith('/friends/requests'))!;
     expect(JSON.parse(String((asked[1] as RequestInit).body))).toEqual({ userId: HOST });
-    // still on the invitation, with Join there to press again
+    // Still on the invitation, with Join there to press again.
     expect(screen.getByRole('button', { name: 'Join the game' })).toBeEnabled();
   });
 

@@ -2,23 +2,14 @@ import { Fragment, memo, useMemo } from 'react';
 import type { CharState, TypingComparison } from '@kurda/shared';
 
 /**
- * The race's text, coloured as it is typed — rendered word by word.
- *
- * It used to be one span per character, every one of them re-rendered on every
- * key: up to 2000 elements for a long text, which is the kind of thing that
- * makes typing lag on a slow phone (map3 R13). Each word is its own memoised
- * piece now, re-rendered only when how it has been typed changes — so a key
- * press touches the word being typed and nothing else.
- *
- * A Soranî text is in Arabic script, which joins its letters: a span around
- * each one can break the joins in some browsers, and the text reads right to
- * left. So a Soranî word is coloured as a whole (contract §K3: "word-level
- * spans"), and the paragraph carries its `lang` and `dir`.
+ * The race's text, coloured as it is typed. Each word is a memoised piece, so a key press re-renders only the word
+ * being typed. A Soranî word is coloured as a whole, since spans inside joined Arabic script can break the joins, and
+ * the paragraph carries its `lang` and `dir`.
  */
 
 interface WordRange {
   start: number;
-  /** exclusive; the spaces after the word belong to it, so they are coloured too */
+  /** Exclusive; the spaces after the word belong to it, so they are coloured too. */
   end: number;
 }
 
@@ -55,11 +46,11 @@ const CHAR_CLASS: Record<CharState, string> = {
 
 interface WordProps {
   text: string;
-  /** one letter per character of the word: o(k) a(ccent) w(rong) p(ending) — and what the memo compares */
+  /** One letter per character, o(k), a(ccent), w(rong) or p(ending), so the memo compares a string. */
   states: string;
-  /** where the caret is in this word, or -1 */
+  /** Where the caret is in this word, or -1. */
   caret: number;
-  /** characters typed that the text does not have, by the offset in the word they come before */
+  /** Extra characters typed that the text does not have, by the offset in the word they come before. */
   extra: string;
   byWord: boolean;
 }
@@ -104,7 +95,7 @@ export function RaceText({
   finished,
 }: {
   id: string;
-  /** the text as the racer sees it (`displayTarget`) */
+  /** The text as the racer sees it (`displayTarget`). */
   text: string;
   comparison: TypingComparison | null;
   rtl: boolean;
@@ -131,7 +122,7 @@ export function RaceText({
           const run = extraAt.get(i);
           if (run) extras.push([i - w.start, run]);
         }
-        // the caret after the last character sits on the last word
+        // A caret after the last character sits on the last word.
         const inWord = caret >= w.start && (caret < w.end || (last && caret === w.end));
         return (
           <Word

@@ -10,28 +10,23 @@ import {
   type RealtimeState,
 } from './events';
 
-/** WebSocket.OPEN — the numeric readyState for an open socket. */
+/** WebSocket.OPEN, the numeric readyState for an open socket. */
 const WS_OPEN = 1;
 
 /**
- * Framework-agnostic realtime client for the Hevalo gateway.
+ * Framework-agnostic client for the realtime gateway (api/src/realtime/gateway.ts). It fetches a single-use ticket
+ * over the authenticated API, opens `wss://…/realtime?ticket=…` (never with the JWT), receives `hello` with a resume
+ * token, then `{type:'event',room,event}` frames. The server pings at the protocol level, so there is no app
+ * heartbeat. One socket per instance, reconnecting with exponential backoff and jitter.
  *
- * Protocol (see api/src/realtime/gateway.ts): fetch a single-use ticket over the
- * bearer-authed API, open `wss://…/realtime?ticket=…` (never the JWT), receive
- * `hello` with a resume token, then receive `{type:'event',room,event}` frames.
- * The server pings at the protocol level (the browser auto-pongs), so there is
- * no application heartbeat here. One socket per instance; production reconnect
- * with exponential backoff + jitter. Phase B only transports events — no feature
- * logic, no React.
- *
- * Security: the ticket and resume token are held in memory only, never logged,
- * never persisted, never exposed publicly. Diagnostics carry safe metadata only.
+ * Security: the ticket and resume token live in memory only and are never logged, stored or exposed; diagnostics
+ * carry safe metadata only.
  */
 
-/** Result of fetching a realtime ticket (reuses the bearer-authed API client). */
-export type TicketResult = { ok: true; ticket: string } | { ok: false };
+/** Result of fetching a realtime ticket. */
+type TicketResult = { ok: true; ticket: string } | { ok: false };
 
-/** Safe, credential-free diagnostic signal (for dev logging / tests). */
+/** A credential-free diagnostic signal, for dev logging and tests. */
 export type RealtimeDiagnostic =
   | { category: 'state'; state: RealtimeState }
   | { category: 'reconnect-scheduled'; attempt: number; delayMs: number }
@@ -52,14 +47,14 @@ export interface WebSocketLike {
   onclose: ((ev: { code?: number }) => void) | null;
   onerror: ((ev?: unknown) => void) | null;
 }
-export interface WebSocketCtor {
+interface WebSocketCtor {
   new (url: string): WebSocketLike;
 }
 
 export interface RealtimeClientOptions {
   /** HTTP(S) base URL of the API (from web/src/lib/config.ts); converted to ws(s). */
   url: string;
-  /** Fetches a fresh single-use ticket. Reuses the existing API client's auth. */
+  /** Fetches a fresh single-use ticket with the API client's auth. */
   fetchTicket: () => Promise<TicketResult>;
   /** Injectable WebSocket constructor; defaults to the global one. */
   WebSocketImpl?: WebSocketCtor;
@@ -73,7 +68,7 @@ export interface RealtimeClientOptions {
   takeoverCooldownMs?: number;
   /** Jitter source in [0,1). Injectable for deterministic tests. Default Math.random. */
   random?: () => number;
-  /** Optional credential-free diagnostics sink (dev logging / tests). */
+  /** Optional credential-free diagnostics sink, for dev logging and tests. */
   onDiagnostic?: (info: RealtimeDiagnostic) => void;
 }
 
@@ -97,18 +92,13 @@ export class RealtimeClient {
 
   private socket: WebSocketLike | null = null;
   private _state: RealtimeState = 'idle';
-  /**
-   * In-memory only — never persisted, never logged, never exposed. A true
-   * ECMAScript private field (#) so it is non-enumerable and never serialized
-   * (e.g. by an accidental JSON.stringify of the client).
-   */
+  /** In memory only. A true private field (#), so it is never serialized, even by an accidental JSON.stringify. */
   #resumeToken?: string;
   private _resumedRooms: string[] = [];
 
   /**
-   * Rooms the app wants joined (beyond the auto-joined `user:<id>`). Re-sent on
-   * every (re)open so a reconnect or a resume-miss lands back in them. The server
-   * authorizes each join against its per-room invite grant.
+   * Rooms the app wants joined beyond the automatic `user:<id>`, re-sent on every open so a reconnect lands back in
+   * them. The server authorises each join against its per-room grant.
    */
   private readonly desiredRooms = new Set<string>();
 
@@ -117,7 +107,7 @@ export class RealtimeClient {
   private online = true;
   private attempt = 0;
   private pendingTakeover = false;
-  /** invalidates in-flight ticket fetches when the target socket is abandoned */
+  /** Invalidates in-flight ticket fetches when their socket is abandoned. */
   private generation = 0;
 
   private reconnectTimer?: ReturnType<typeof setTimeout>;
@@ -154,7 +144,7 @@ export class RealtimeClient {
     }
   }
 
-  // ---- public API --------------------------------------------------------
+  // ---- Public API ----
 
   get state(): RealtimeState {
     return this._state;
@@ -165,34 +155,34 @@ export class RealtimeClient {
     return this._resumedRooms;
   }
 
-  /** Begin connecting (idempotent while already active). */
+  /** Begins connecting; idempotent while already active. */
   connect(): void {
     if (this.destroyed) return;
-    if (this._state !== 'idle' && this._state !== 'closed') return; // already active
+    if (this._state !== 'idle' && this._state !== 'closed') return;
     this.shouldReconnect = true;
     this.attempt = 0;
     this.pendingTakeover = false;
     void this.openSocket(true);
   }
 
-  /** Intentional close; will not auto-reconnect. Safe to call repeatedly. */
+  /** Closes intentionally, without reconnecting. Safe to call repeatedly. */
   disconnect(): void {
     this.shouldReconnect = false;
     this.clearTimers();
-    this.generation++; // abandon any in-flight ticket fetch
+    this.generation++; // Abandon any in-flight ticket fetch.
     if (this.socket) {
       try {
         this.socket.close(CLOSE_NORMAL, 'client disconnect');
       } catch {
-        /* already closing */
+        /* Already closing. */
       }
-      // onclose will settle the state to 'closed'
+      // onclose settles the state to 'closed'.
     } else if (this._state !== 'idle') {
       this.setState('closed');
     }
   }
 
-  /** Permanently tear down: disconnect + remove listeners. Safe to call repeatedly. */
+  /** Tears down for good: disconnects and removes listeners. Safe to call repeatedly. */
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
@@ -210,10 +200,8 @@ export class RealtimeClient {
   }
 
   /**
-   * Join a room to receive its events (e.g. `group:<id>`). Idempotent: the room
-   * is remembered and (re)joined on every open, so it survives reconnects. The
-   * caller must have been granted access server-side first (for group chat, that
-   * grant is refreshed by fetching the channel history).
+   * Joins a room, such as `group:<id>`, and rejoins it on every open. The caller must have been granted access
+   * server-side first; for group chat, fetching the channel history refreshes the grant.
    */
   join(room: string): void {
     if (this.destroyed) return;
@@ -221,37 +209,23 @@ export class RealtimeClient {
     this.trySend({ type: 'join', room });
   }
 
-  /** Leave a room; stops re-joining it on future reconnects. */
+  /** Leaves a room and stops rejoining it on reconnect. */
   leave(room: string): void {
     this.desiredRooms.delete(room);
     this.trySend({ type: 'leave', room });
   }
 
-  /**
-   * Send an arbitrary client message (e.g. a game's `ready` / `answer`). Returns
-   * whether it actually went out; a message sent while the socket is not open is
-   * simply dropped (games are server-timed and resync from a snapshot on connect,
-   * so silently dropping a stale send is safe).
-   */
-  send(message: Record<string, unknown>): boolean {
-    if (this.destroyed) return false;
-    if (this.socket && this.socket.readyState === WS_OPEN) {
-      try {
-        this.socket.send(JSON.stringify(message));
-        return true;
-      } catch {
-        return false;
-      }
+  /** Sends a protocol control message (join or leave) if the socket is open; otherwise it is dropped. */
+  private trySend(msg: ClientMessage): void {
+    if (this.destroyed || !this.socket || this.socket.readyState !== WS_OPEN) return;
+    try {
+      this.socket.send(JSON.stringify(msg));
+    } catch {
+      // A failed send is like one made while closed: the next open rejoins every room.
     }
-    return false;
   }
 
-  /** Send a protocol control message (join/leave) if the socket is open. */
-  private trySend(msg: ClientMessage): boolean {
-    return this.send(msg as unknown as Record<string, unknown>);
-  }
-
-  /** Subscribe to an event; returns an unsubscribe function. */
+  /** Subscribes to an event; returns an unsubscribe function. */
   on<K extends EventName>(type: K, handler: ListenerMap[K]): () => void {
     this.listeners[type].add(handler);
     return () => {
@@ -259,11 +233,11 @@ export class RealtimeClient {
     };
   }
 
-  // ---- connection lifecycle ---------------------------------------------
+  // ---- Connection lifecycle ----
 
   private async openSocket(isFirst: boolean): Promise<void> {
     if (this.destroyed || !this.shouldReconnect) return;
-    if (this.socket) return; // single-socket invariant
+    if (this.socket) return; // One socket at a time.
     if (!this.online) {
       this.setState('reconnecting');
       this.diag({ category: 'reconnect-suppressed', reason: 'offline' });
@@ -278,7 +252,7 @@ export class RealtimeClient {
     } catch {
       ticket = { ok: false };
     }
-    // abandoned (disconnected/destroyed) or superseded while awaiting
+    // Abandoned (disconnected or destroyed) or superseded while awaiting.
     if (this.destroyed || !this.shouldReconnect || gen !== this.generation || this.socket) return;
     if (!ticket.ok) {
       this.diag({ category: 'ticket-failed' });
@@ -311,18 +285,17 @@ export class RealtimeClient {
     ws.onerror = () => {
       if (this.socket !== ws) return;
       this.diag({ category: 'socket-error' });
-      // a close event follows; reconnection is handled there
+      // A close event follows, which handles reconnection.
     };
   }
 
   private onOpen(): void {
     this.setState('open');
     this.pendingTakeover = false;
-    // re-join every desired room (a fresh socket starts in only `user:<id>`;
-    // re-sending is harmless if the resume already rejoined it server-side)
+    // Rejoin every desired room: a fresh socket starts only in `user:<id>`, and re-sending after a resume is harmless.
     for (const room of this.desiredRooms) this.trySend({ type: 'join', room });
     this.clearStableTimer();
-    // reset backoff only after the connection proves stable (avoids 1s-flap loops)
+    // Reset backoff only once the connection proves stable, to avoid fast flapping loops.
     this.stableTimer = setTimeout(() => {
       this.attempt = 0;
     }, this.opts.stableAfterMs);
@@ -340,12 +313,11 @@ export class RealtimeClient {
       return;
     }
     if (code === CLOSE_CONNECTED_ELSEWHERE) {
-      // newest-wins: back off hard so two instances don't war (Phase C: leadership)
+      // The newest connection wins, so back off hard to keep two instances from fighting.
       this.pendingTakeover = true;
       this.diag({ category: 'takeover' });
     }
-    // code 4003 (bad/used ticket) needs no special handling: every attempt
-    // fetches a brand-new ticket, so we simply reconnect.
+    // A bad or used ticket (4003) needs no special case, since every attempt fetches a new ticket.
     this.scheduleReconnect();
   }
 
@@ -356,7 +328,7 @@ export class RealtimeClient {
     }
     this.setState('reconnecting');
     if (!this.online) {
-      // the 'online' handler resumes; don't burn attempts while offline
+      // The 'online' handler resumes, so no attempts are spent while offline.
       this.diag({ category: 'reconnect-suppressed', reason: 'offline' });
       return;
     }
@@ -370,7 +342,7 @@ export class RealtimeClient {
     }, delay);
   }
 
-  /** Exponential backoff (base = initial·2^attempt, capped) with 50–100% jitter. */
+  /** Exponential backoff (initial·2^attempt, capped) with 50–100% jitter. */
   private backoffDelay(): number {
     const base = Math.min(this.opts.maxBackoffMs, this.opts.initialBackoffMs * 2 ** this.attempt);
     const jittered = base / 2 + this.opts.random() * (base / 2);
@@ -385,7 +357,7 @@ export class RealtimeClient {
     return url;
   }
 
-  // ---- message handling --------------------------------------------------
+  // ---- Message handling ----
 
   private onMessage(raw: string): void {
     let msg: unknown;
@@ -403,7 +375,7 @@ export class RealtimeClient {
 
     switch (msg.type) {
       case 'hello': {
-        // kept in memory only; never logged/persisted/exposed
+        // Kept in memory only; never logged, stored or exposed.
         this.#resumeToken = typeof msg.resumeToken === 'string' ? msg.resumeToken : undefined;
         this._resumedRooms = Array.isArray(msg.resumedRooms)
           ? msg.resumedRooms.filter((r): r is string => typeof r === 'string')
@@ -426,26 +398,25 @@ export class RealtimeClient {
         });
         return;
       }
-      // pong / joined / left are transport plumbing; unknown types ignored safely
+      // pong, joined and left are transport plumbing; unknown types are ignored.
       default:
         return;
     }
   }
 
-  // ---- browser lifecycle -------------------------------------------------
+  // ---- Browser lifecycle ----
 
   private readonly handleOnline = (): void => {
     this.online = true;
     if (this.destroyed || !this.shouldReconnect) return;
-    if (this.socket) return; // already connected/connecting
+    if (this.socket) return; // Already connected or connecting.
     this.clearReconnectTimer();
     void this.openSocket(false);
   };
 
   private readonly handleOffline = (): void => {
     this.online = false;
-    // stop trying while offline; a live socket will drop on its own and be
-    // handled by onClose (which then waits for 'online')
+    // Stop trying while offline; a live socket drops on its own and onClose then waits for 'online'.
     this.clearReconnectTimer();
   };
 
@@ -457,16 +428,16 @@ export class RealtimeClient {
     void this.openSocket(false);
   };
 
-  // ---- emitter -----------------------------------------------------------
+  // ---- Emitter ----
 
   private emit<K extends EventName>(type: K, payload: Parameters<ListenerMap[K]>[0]): void {
     if (this.destroyed) return;
-    // snapshot so a handler that (un)subscribes mid-emit is safe
+    // Snapshot, so a handler that subscribes or unsubscribes mid-emit is safe.
     for (const handler of [...this.listeners[type]]) {
       try {
         (handler as (arg: typeof payload) => void)(payload);
       } catch {
-        // a throwing consumer must never break the client or other handlers
+        // A throwing consumer must never break the client or other handlers.
       }
     }
   }
@@ -482,7 +453,7 @@ export class RealtimeClient {
     this.opts.onDiagnostic?.(info);
   }
 
-  // ---- timers ------------------------------------------------------------
+  // ---- Timers ----
 
   private clearReconnectTimer(): void {
     if (this.reconnectTimer !== undefined) {

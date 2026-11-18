@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-// the fire as its props: which stage burns, whoever draws it
+// The fire as its props: which stage burns.
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -10,11 +10,8 @@ import { jsonResponse, renderApp } from '../test/utils';
 import { StreakSheet } from './StreakSheet';
 
 /*
- * A streak that ended, in the streak's sheet on the website, as on the phone:
- * one calm sentence saying which streak and through which day it can be
- * brought back, one button with what that costs, and — once it is pressed —
- * the streak back, with the site's own celebration. The server decides
- * everything; the sheet sends a request with nothing in it and reads the answer.
+ * Restoring an ended streak in the streak sheet, as on the phone: one sentence, one priced button, then the streak back
+ * with the site's celebration. The server decides; the sheet sends an empty request and reads the answer.
  */
 
 /** The offer ends as the 12th begins: the last day is the 11th. */
@@ -79,10 +76,10 @@ describe('a streak that can be restored', () => {
     const restore = within(sheet).getByRole('button', { name: 'Restore for 50 gems' });
     await waitFor(() => expect(sent.some((s) => s.path.endsWith('/me/wallet'))).toBe(true));
     expect(restore).toBeEnabled();
-    // enough gems: nothing about the balance, nothing that hurries, and nothing to buy
+    // Enough gems: nothing about the balance, nothing that hurries, and nothing to buy.
     expect(within(sheet).queryByText(/^Your gems:/)).not.toBeInTheDocument();
     expect(within(sheet).queryByText(/hurry|lose|last chance|hours? left|minutes? left|buy|purchase/i)).not.toBeInTheDocument();
-    // the streak's own story is all still there
+    // The streak's own story is all still there.
     expect(within(sheet).getByRole('heading', { name: 'Finish a lesson to start a streak' })).toBeInTheDocument();
     expect(within(sheet).getByText('Longest streak').nextElementSibling).toHaveTextContent('12');
     expect(within(sheet).getByRole('heading', { name: 'How your fire grows' })).toBeInTheDocument();
@@ -104,14 +101,14 @@ describe('a streak that can be restored', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
 
     const title = await screen.findByRole('heading', { name: 'Your 12-day streak is back' });
-    // the headline takes the focus the button had, so it is read out
+    // The headline takes the focus the button had, so it is read out.
     expect(title).toHaveFocus();
     expect(screen.getByText('The days you missed are kept. It goes on with your next lesson.')).toBeInTheDocument();
-    // the offer is gone, the fire is the restored streak's, and the numbers and the ladder are its own
+    // The offer is gone, the fire is the restored streak's, and the numbers and the ladder are its own.
     expect(screen.queryByRole('button', { name: /^Restore/ })).not.toBeInTheDocument();
     expect(screen.getAllByTestId('fire')[0]).toHaveAttribute('data-stage', 'campfire');
     expect(document.querySelector('.fire-rung.is-now')).toHaveTextContent('Campfire');
-    // the celebration the site already has: its ring and its flecks, and the reward chime, once
+    // The celebration the site already has: its ring and its flecks, and the reward chime, once.
     const moment = document.querySelector('.streak-restored')!;
     expect(moment).toHaveClass('celebrate', 'is-playing');
     expect(moment.querySelector('.celebrate-ring')).not.toBeNull();
@@ -141,7 +138,7 @@ describe('a streak that can be restored', () => {
     expect(screen.getByText('Gems come from moving up a league, season rewards and events.')).toBeInTheDocument();
     const restore = screen.getByRole('button', { name: 'Restore for 50 gems' });
     expect(restore).toBeDisabled();
-    // why it cannot be pressed is tied to it, for a screen reader
+    // Why it cannot be pressed is tied to it, for a screen reader.
     expect(restore).toHaveAccessibleDescription(/Your gems: 20/);
     await userEvent.click(restore);
     expect(posts(sent)).toHaveLength(0);
@@ -160,7 +157,7 @@ describe('a streak that can be restored', () => {
     api({
       gems: () => gems,
       repair: () => {
-        gems = 10; // spent somewhere else since the sheet opened
+        gems = 10; // Spent somewhere else since the sheet opened.
         return jsonResponse(402, { code: 'INSUFFICIENT_FUNDS', message: 'not enough Gems' });
       },
     });
@@ -176,7 +173,7 @@ describe('a streak that can be restored', () => {
     open(ended(paid));
     await userEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('This streak can no longer be brought back.');
-    // nothing left to press that could only fail again
+    // Nothing left to press that could only fail again.
     expect(screen.queryByRole('button', { name: /^Restore/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/^Your 12-day streak ended/)).not.toBeInTheDocument();
   });

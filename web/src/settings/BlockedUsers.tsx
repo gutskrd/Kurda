@@ -11,7 +11,7 @@ import { useT } from '../i18n/I18nProvider';
 /** Matches the server's page size, so "Show more" asks for exactly one more page. */
 const PAGE = 25;
 
-/** "3 Sep" / "3 Sep 2024" — the year only when it is not this one. */
+/** "3 Sep" or "3 Sep 2024", with the year only when it is not this one. */
 function when(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -25,19 +25,8 @@ interface Page {
 }
 
 /**
- * The people you have blocked, and the only way back.
- *
- * A block is deliberately total: the other person disappears from search, from
- * your friends list and from every board, and their profile answers "no such
- * user" — which means that the moment it is done, there is no longer any screen
- * anywhere in the app that could offer to undo it. Without this list a block
- * placed by accident, or in a moment, is permanent in practice. That is the
- * whole reason it lives in Settings: it is account state, like your privacy
- * setting, not a social screen.
- *
- * Names here are deliberately not clickable. Every other user's name in the app
- * opens their card, but a blocked user's profile is a 404 to you by design, so
- * a link would be a promise the app cannot keep.
+ * The people the reader has blocked, and the only way to unblock them: a block hides the person everywhere, so no
+ * other screen could offer to undo it. Names are not links, since a blocked profile is a 404 to the blocker.
  */
 export function BlockedUsers(): React.JSX.Element {
   const { client } = useAuth();
@@ -57,7 +46,7 @@ export function BlockedUsers(): React.JSX.Element {
     };
   }, []);
 
-  /** Load one page. `offset` 0 replaces the list; anything else appends. */
+  /** Loads one page; `offset` 0 replaces the list, anything else appends. */
   const load = useCallback(
     async (offset: number): Promise<void> => {
       if (offset === 0) setState('loading');
@@ -68,8 +57,7 @@ export function BlockedUsers(): React.JSX.Element {
         if (offset === 0) setState('error');
         return;
       }
-      // a 200 with a body that isn't a page is still a failure to show a list;
-      // an empty one is the right thing to show, and better than a crash
+      // A 200 without a list shows as empty rather than crashing.
       const page = res.data.blocked ?? [];
       setError(null);
       setTotal(res.data.total ?? page.length);
@@ -84,12 +72,8 @@ export function BlockedUsers(): React.JSX.Element {
   }, [load]);
 
   /**
-   * Unblock, then take the row out — rather than reloading the page from the
-   * server, which would shuffle everything below the row you just touched.
-   *
-   * Only on success. An unblock that quietly failed while the row vanished
-   * would leave you believing you had let someone back in, or kept them out,
-   * with no way to tell which.
+   * Unblocks, then removes the row without reloading, which would shuffle the rows below. The row goes only on success,
+   * so a failed unblock never looks done.
    */
   async function unblock(user: BlockedUser): Promise<void> {
     const res = await client.delete(`/friends/${user.userId}/block`);
@@ -160,11 +144,7 @@ export function BlockedUsers(): React.JSX.Element {
             </div>
           )}
 
-          {/*
-            Said here rather than only inside the confirm, because it is the part
-            people get wrong: unblocking does not restore a friendship, and it
-            does put you back within reach of someone you chose to get away from.
-          */}
+          {/* Shown outside the confirm too: unblocking does not restore a friendship, but does make the reader reachable again. */}
           <p className="field-hint" style={{ marginBottom: 0, marginTop: 14 }}>
             {t('settings.blocked.unblockHint')}
           </p>

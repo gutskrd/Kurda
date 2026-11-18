@@ -15,11 +15,9 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/tokens';
 
 /**
- * "4 in a row", with the streak's fire as big as the run has grown it
- * (`runFireLevel`), in gold, just above the progress bar while a run
- * of right answers lasts (shown from `RUN_SHOWN_FROM`). It pops as it grows,
- * and is still under Reduce Motion. `end` is a mirrored header's: it sits over
- * the start of the bar, on the right.
+ * "4 in a row" in gold with the streak's fire sized to the run (`runFireLevel`), just above the progress bar while a
+ * run lasts (from `RUN_SHOWN_FROM`). It pops as it grows, but not under Reduce Motion. `end` places it for a
+ * mirrored header.
  */
 export function RunLabel({ count, end }: { count: number; end: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -44,16 +42,13 @@ export function RunLabel({ count, end }: { count: number; end: boolean }): React
   );
 }
 
-/** How big a milestone's fire is drawn, framed: the biggest a run grows (the blaze) about 200 high, so a longer run's fire is a bigger one. */
+/** A milestone fire's framed size: the largest stage (the blaze) about 200 high, so longer runs show bigger fires. */
 const RUN_FIRE = fireSizeToFit('blaze', 200, 200);
 
 /**
- * A run's milestone (`runMilestone`: 5, 10, …), between one exercise and the
- * next: "10 in a row!" in big gold letters, springing in over the lesson
- * (under its bar, which stays gold) for about a second, and said to a screen
- * reader. Where the run's fire reached a new stage it grows into it, and the
- * moment lasts until it has (shared `runMoment`). A tap anywhere moves on at
- * once. Under Reduce Motion it fades in where it is.
+ * A run milestone (`runMilestone`: 5, 10, …) between exercises: "10 in a row!" springs in over the lesson for about
+ * a second and is announced. If the fire reached a new stage it grows into it first (shared `runMoment`). A tap
+ * moves on at once; under Reduce Motion it fades in.
  */
 export function RunMoment({ count, onDone }: { count: number; onDone: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -74,13 +69,13 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
       run.stop();
       clearTimeout(id);
     };
-    // once, as it arrives
+    // Only once, as it arrives.
   }, []);
 
   const scale = reduce ? 1 : p.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
   const opacity = p.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
   return (
-    // the page itself again, laid over the lesson: the same light, so nothing shows where it begins
+    // The page's own background laid over the lesson, so its edge does not show.
     <GradientBackground style={styles.over}>
       <Pressable onPress={() => done.current()} accessibilityRole="button" accessibilityLabel={words} aria-modal style={styles.moment} testID="lesson-run-moment">
         <Animated.View style={[StyleSheet.absoluteFill, { opacity }]} pointerEvents="none">

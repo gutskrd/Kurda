@@ -33,9 +33,9 @@ describe('Settings', () => {
   it('is one list in a few named sections, each row showing what it is set to', async () => {
     testAuth.client = fakeClient({ 'GET /me': ME() });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    // somewhere to ask is a section of its own now, not three rows in a list of ten under "About"
+    // Where to get help is a section of its own.
     for (const name of ['Account', 'Preferences', 'Privacy', 'Help', 'About & legal']) expect(screen.getByRole('heading', { name })).toBeTruthy();
-    // the account's own values arrive with /me; this phone's own are there at once
+    // The account's own values arrive with /me; this phone's own are there at once.
     expect(await screen.findByRole('button', { name: 'Username, @rojda' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Profile visibility, Hevalo members' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Weekly leagues, On' })).toBeTruthy();
@@ -50,7 +50,7 @@ describe('Settings', () => {
     });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
     expect(await screen.findByText('Some things are limited for now.')).toBeTruthy();
-    // an account in good standing is just a row
+    // An account in good standing is just a row.
     cleanup();
     testAuth.client = fakeClient({
       'GET /me': ME(),
@@ -69,7 +69,7 @@ describe('Settings', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'visibility' });
     fireEvent.click(screen.getByRole('button', { name: 'Sounds and vibration' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'sounds' });
-    fireEvent.click(screen.getByRole('button', { name: 'Notifications' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Notification settings' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Notifications');
     fireEvent.click(screen.getByRole('button', { name: 'Blocked people' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('BlockedUsers');
@@ -79,11 +79,11 @@ describe('Settings', () => {
     testAuth.client = fakeClient({ 'GET /me': ME() });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
     const search = screen.getByLabelText('Search settings');
-    // the accents are on the keyboard page; "e" for "ê" is the same letter to a search
+    // The accents are on the keyboard page; "e" for "ê" is the same letter to a search.
     fireEvent.change(search, { target: { value: 'ACCÉNTS' } });
     expect(screen.getByRole('button', { name: /^Keyboard and accents/ })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Language/ })).toBeNull();
-    // a section with nothing left in it is not shown at all
+    // A section with nothing left in it is not shown at all.
     expect(screen.queryByRole('heading', { name: 'Account' })).toBeNull();
 
     fireEvent.change(search, { target: { value: 'vibration' } });
@@ -93,17 +93,14 @@ describe('Settings', () => {
     expect(screen.getByText('No settings match “zzzz”.')).toBeTruthy();
   });
 
-  /*
-   * A row's name keeps room for its longest word beside what the row is set
-   * to: the value ends in an ellipsis before the name breaks inside a word.
-   */
+  /* A row's name keeps room for its longest word: the value ends in an ellipsis before the name breaks inside a word. */
   it('keeps a row’s longest word whole beside its value, and leaves the value some of the row', () => {
-    // "Gebruikersnaam" (14 letters) at 17 points: kept whole, even on a 320-point phone
+    // "Gebruikersnaam" (14 letters) at 17 points: kept whole, even on a 320-point phone.
     expect(titleRoom('Gebruikersnaam', 1, 288)).toBeGreaterThanOrEqual(132);
     expect(titleRoom('Sichtbarkeit des Profils', 1, 288)).toBeGreaterThanOrEqual(110);
-    // a short name asks for little, so the value keeps what it had
+    // A short name asks for little, so the value keeps what it had.
     expect(titleRoom('Theme', 1, 288)).toBeLessThan(60);
-    // larger text needs more room, and the name never takes more than three fifths of the row
+    // Larger text needs more room, and the name never takes more than three fifths of the row.
     expect(titleRoom('Benutzername', 1.3, 288)).toBeGreaterThan(titleRoom('Benutzername', 1, 288));
     expect(titleRoom('Benachrichtigungseinstellungen', 1.6, 288)).toBe(172);
   });
@@ -175,7 +172,7 @@ describe('Settings pages', () => {
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
-  // the lesson's Kurdish says itself after each answer unless this is off; it is kept on this phone
+  // The lesson's Kurdish says itself after each answer unless this is off; it is kept on this phone.
   it('lets the pronunciations after each answer be turned off, and keeps that on the phone', async () => {
     testAuth.client = fakeClient();
     resetAutoplayPref();
@@ -210,7 +207,7 @@ describe('Settings pages', () => {
     fireEvent.click(within(group).getByRole('radio', { name: 'Light' }));
     const tick = within(group).getByRole('radio', { name: 'Light' }).querySelector('svg');
     expect(tick).toBeTruthy();
-    // the palette's violet, not the ink the rest of the row is drawn in
+    // The palette's violet, not the ink the rest of the row is drawn in.
     const drawn = tick!.outerHTML.toLowerCase();
     expect([LIGHT.primary, DARK.primary].some((violet) => drawn.includes(violet.toLowerCase()))).toBe(true);
     expect(drawn.includes(LIGHT.textPrimary.toLowerCase())).toBe(false);

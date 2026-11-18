@@ -28,7 +28,7 @@ import { Loading } from '../theme/Loading';
 
 type Kind = ItemCategory;
 
-/** Always offered, even with none of them: frames are earned or bought, and the empty tab says where. */
+/** Always offered, even with none: frames are earned or bought, and the empty tab says where. */
 const ALWAYS: readonly Kind[] = ['background', 'icon', 'frame'];
 
 /** More than this many of one kind and a search field is worth its row. */
@@ -41,8 +41,8 @@ const MIN_TILE: Record<'wide' | 'square', number> = { wide: 100, square: 72 };
 type Way = { action: TranslationKey; to: 'Shop' | 'Season' };
 
 /**
- * What a kind says when there is none of it, and where to get some. A frame
- * has two ways in: a season hands one out, and the shop sells its own.
+ * What a kind says when there is none of it, and where to get some. A frame has two ways in: a season hands one out,
+ * and the shop sells its own.
  */
 const EMPTY: Partial<Record<Kind, { text: TranslationKey; ways: readonly Way[] }>> = {
   background: { text: 'edit.noBackgrounds', ways: [{ action: 'shop.refreshed.open', to: 'Shop' }] },
@@ -57,18 +57,10 @@ const EMPTY: Partial<Record<Kind, { text: TranslationKey; ways: readonly Way[] }
 };
 
 /**
- * The things you own, and putting them on (KUR-088).
- *
- * Sorted by kind, as the shop is: Backgrounds, Icons and Frames, each with
- * how many you have, and Tags and More when you own any. Every tile says what
- * it is under it — the shelves were rows of unnamed squares, and a screen
- * reader heard "Equip" thirty times. Past eight of a kind, a search field.
- * Everything here is already yours — buying still happens in the Shop, which
- * the phone already has, rather than being built a second time.
- *
- * Tapping what you are already wearing takes it off, because the alternative is
- * a wardrobe you can add to and never empty. Frames are worn here the way the
- * Season screen wears them, which until now was the only place they could be.
+ * The things you own, and putting them on. Sorted by kind as the shop is (Backgrounds, Icons, Frames, and Tags and More
+ * when you own any), each with its count; every tile is named under it, and past eight of a kind there is a search
+ * field. Buying stays in the Shop. Tapping what you are wearing takes it off. Frames are worn here as on the Season
+ * screen.
  */
 export function CosmeticPicker({
   equippedBackground,
@@ -79,7 +71,7 @@ export function CosmeticPicker({
   equippedBackground: string | null;
   equippedIcon: string | null;
   iconVisible: boolean;
-  /** told after anything lands, so the screen above can re-read /me */
+  /** Told after anything lands, so the screen above can re-read /me. */
   onChanged: () => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -92,10 +84,10 @@ export function CosmeticPicker({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showIcon, setShowIcon] = useState(iconVisible);
-  // null until chosen: then the first kind you own any of
+  // Null until chosen; then the first kind you own any of.
   const [tab, setTab] = useState<Kind | null>(null);
   const [query, setQuery] = useState('');
-  // the frame being worn is on the public profile, not on /me (as SeasonScreen reads it)
+  // The frame being worn is on the public profile, not on /me (as SeasonScreen reads it).
   const [wearing, setWearing] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
 
@@ -121,7 +113,7 @@ export function CosmeticPicker({
       if (busy) return;
       setBusy(sku);
       setError(null);
-      // tapping what you have on takes it off
+      // Tapping what you have on takes it off.
       void equip(client, slot, equipped ? null : sku).then((res) => {
         setBusy(null);
         if (res.ok) onChanged();
@@ -179,7 +171,7 @@ export function CosmeticPicker({
 
   const equippedSku = current === 'background' ? equippedBackground : current === 'icon' ? equippedIcon : current === 'frame' ? wearing : null;
   const wide = current === 'background';
-  const room = width || 327; // before the first layout, the width of a small phone
+  const room = width || 327; // Before the first layout, the width of a small phone.
   const columns = Math.max(2, Math.floor((room + GAP) / (MIN_TILE[wide ? 'wide' : 'square'] + GAP)));
   const tile = Math.floor((room - GAP * (columns - 1)) / columns);
 
@@ -192,9 +184,9 @@ export function CosmeticPicker({
     const on = item.sku === equippedSku;
     const name = nameOf(item);
     const tier = current === 'frame' ? frameTierOf(item.sku) : null;
-    // under Frames, "Zozan" says it on the tile; a screen reader still hears "Zozan season frame"
+    // Under Frames, "Zozan" says it on the tile; a screen reader still hears "Zozan season frame".
     const caption = tier ? t(TIER_NAME_KEY[tier]) : name;
-    const art = tile - 4; // inside the 2pt ring that marks what you are wearing
+    const art = tile - 4; // Inside the 2pt ring that marks what you are wearing.
     return (
       <PressableScale
         key={item.sku}
@@ -205,7 +197,7 @@ export function CosmeticPicker({
         accessibilityHint={on ? t('edit.hint.takeOff') : t('edit.hint.wear')}
         style={[styles.tile, { width: tile }]}
       >
-        {/* what you are wearing is ringed and ticked in the violet every choice that is on wears */}
+        {/* What you are wearing is ringed and ticked in the violet every chosen option wears. */}
         <View style={[styles.ring, wide ? styles.ringWide : styles.ringSquare, { borderColor: on ? colors.primary : 'transparent' }]}>
           {tier ? (
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
@@ -218,7 +210,7 @@ export function CosmeticPicker({
               </SeasonFramed>
             </View>
           ) : current === 'frame' && item.assetUrl ? (
-            // one of the shop's frames, round your own face as a season frame is
+            // One of the shop's frames, round your own face as a season frame is.
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
               <PictureFramed url={item.assetUrl} size={Math.round(art * 0.86)}>
                 <InitialsAvatar
@@ -316,11 +308,8 @@ export function CosmeticPicker({
             )}
           </View>
 
-          {/*
-            Showing it and owning it are different questions, so they are
-            different controls: this hides the icon without giving it up.
-            The words turn it as well as the switch does.
-          */}
+          {/* Showing it and owning it are different questions, so this switch hides the icon without giving it up.
+             The words toggle it as well as the switch. */}
           {current === 'icon' && ofKind.length > 0 ? (
             <ToggleRow label={t('edit.showPremiumIcon')} value={showIcon} onValueChange={toggleIcon} />
           ) : null}

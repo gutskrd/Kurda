@@ -1,36 +1,16 @@
 /**
- * Impostor: everyone at the table is dealt the same Kurdish word —
- * except one secret impostor, whose card shows only the category it belongs
- * to. In two rounds each player in turn gives one short clue in Kurdish, which
- * must not say the word; then everyone votes for who they think the impostor
- * is. A caught impostor gets one guess at the word from four options. The
- * reveal shows the word, what it means and every clue.
+ * Impostor: everyone is dealt the same Kurdish word except one secret impostor, whose card shows only its category. Over
+ * two rounds each player gives one short Kurdish clue that must not say the word, then everyone votes for the impostor. A
+ * caught impostor gets one guess at the word from four options. The reveal shows the word, its meaning and every clue.
+ * Pure rules (multi/rules.ts); the card and the decoys are dealt on the server from approved word cards of the lobby's
+ * variety and difficulty (api/src/mp/games/impostor.ts), and the free-text gate decides whether a clue may be shown.
  *
- * These are the rules alone, pure (shared/src/games/multi/rules.ts). The card
- * and the three other words the guess is chosen from are dealt on the server
- * from approved word cards of the lobby's variety and difficulty, before the
- * game starts (api/src/mp/games/impostor.ts), and handed to `init` in the
- * settings; whether a clue may be shown at all is the free-text gate's.
- *
- * What is hidden, and from whom:
- * - the word, its meaning and the other options are never in the impostor's
- *   view until the impostor is caught and guesses (the options then; the word
- *   only at the reveal);
- * - who the impostor is is in nobody's view but the impostor's own (as "you
- *   are the impostor") until the vote catches them or the game is revealed;
- * - how anyone voted is in nobody's view before the reveal, only who has
- *   voted.
- *
- * A clue that says the word is refused, for everyone but the impostor: a
- * refusal would tell the impostor they had guessed the word. Their clue is
- * shown as written, and a clue that says the word gives its writer away.
- *
- * The impostor never speaks first: the first clue would be theirs with
- * nothing heard yet to build on, which gives them away for no fault of their
- * own, so the speaking order is turned round until someone holding the word
- * opens it. A voter who cannot tell may say so (`IMPOSTOR_UNSURE_VOTE`):
- * that vote counts for nobody, and it is still a vote, so the table does not
- * wait on it. The reveal says why an impostor got away (`impostorEscape`).
+ * Hidden: the word, its meaning and the options from the impostor until caught (the options then, the word at the
+ * reveal); who the impostor is from everyone but them until caught or revealed; how anyone voted until the reveal. A clue
+ * saying the word is refused for everyone but the impostor, since a refusal would tell them the word; their clue shows as
+ * written and gives them away. The impostor never speaks first, having nothing to build on. A voter may say they cannot
+ * tell (`IMPOSTOR_UNSURE_VOTE`): it counts for nobody but still counts as voted. The reveal says why an impostor escaped
+ * (`impostorEscape`).
  */
 import { sameClue, saysBanned, textSlip, type TextLimits, type TextSlip } from '../clues.js';
 import type { Meanings } from '../content.js';
@@ -44,39 +24,37 @@ export const IMPOSTOR_MIN_PLAYERS = 3;
 export const IMPOSTOR_MAX_PLAYERS = 8;
 /** Each player gives this many clues: one a round. */
 export const IMPOSTOR_CLUE_ROUNDS = 2;
-/** The time a host may give a clue: from quick to unhurried. */
+/** The time a host may give for a clue, from quick to unhurried. */
 export const IMPOSTOR_CLUE_SECONDS = [20, 30, 45, 60] as const;
 export type ImpostorClueSeconds = (typeof IMPOSTOR_CLUE_SECONDS)[number];
 export const IMPOSTOR_DEFAULT_CLUE_SECONDS: ImpostorClueSeconds = 30;
-/** The first speaker reads their card first: their turn is this much longer. */
+/** The first speaker reads their card first, so their turn is this much longer. */
 export const IMPOSTOR_FIRST_TURN_EXTRA_MS = 8_000;
 export const IMPOSTOR_VOTE_MS = 45_000;
 export const IMPOSTOR_GUESS_MS = 25_000;
-/** The caught impostor's choice: the word and this many others, less one. */
+/** The caught impostor's choice: the word among this many options. */
 export const IMPOSTOR_GUESS_OPTIONS = 4;
-/** One clue: a word or a few, never a sentence that explains. */
+/** One clue: a word or a few, never an explaining sentence. */
 export const IMPOSTOR_CLUE_LIMITS: TextLimits = { maxChars: 40, maxWords: 4 };
 /**
- * The fewest cards a category needs at a difficulty before a word is dealt
- * from it. The caught impostor picks the word among others of its category,
- * so a small category is a guess with the answer nearly given away; with
- * eight, three others can always be found that are not the word give or take
- * an ending, or the same thing under another name.
+ * The fewest cards a category needs at a difficulty before its words are dealt. The caught impostor picks the word among
+ * others of its category, so a small one nearly gives it away; with eight, three others can always be found that are not
+ * the word give or take an ending or a synonym.
  */
 export const IMPOSTOR_CATEGORY_MIN = 8;
-/** The vote of someone who cannot tell: it counts for nobody. Seats are numbered from 1, so 0 is never a player. */
+/** The vote of someone who cannot tell, counting for nobody; seats start at 1, so 0 is never a player. */
 export const IMPOSTOR_UNSURE_VOTE = 0;
 
 /** Points: a vote for the impostor; the impostor not caught; caught but naming the word; the table catching them. */
 export const IMPOSTOR_POINTS = { rightVote: 1, escaped: 3, guessedWord: 2, caught: 2 } as const;
 
-/** The card everyone but the impostor is dealt, as the server took it from an approved word card. */
+/** The card everyone but the impostor is dealt, from an approved word card. */
 export interface ImpostorCard {
   word: string;
   meanings: Meanings;
   /** other forms of the word a clue may not say either */
   forms: string[];
-  /** what the impostor is told instead: the category, in Kurdish, with its meaning */
+  /** what the impostor is told instead: the category in Kurdish with its meaning */
   hint: { ku: string; meanings: Meanings };
 }
 
@@ -91,9 +69,9 @@ export interface ImpostorSettings {
   dialect: GameDialect;
   difficulty: GameDifficulty;
   clueSeconds: ImpostorClueSeconds;
-  /** the category the word is drawn from, by its slug; null or absent for any */
+  /** the category slug the word is drawn from; null or absent for any */
   category?: string | null;
-  /** dealt on the server at the start; never stored with the lobby, never in a view */
+  /** dealt on the server at the start; never stored with the lobby or put in a view */
   deal?: ImpostorDeal;
 }
 
@@ -109,7 +87,7 @@ export type ImpostorPhase = 'clues' | 'vote' | 'guess' | 'reveal';
 
 export type ImpostorEnd = 'escaped' | 'caught' | 'guessed' | 'impostor-left' | 'too-few' | 'abandoned';
 
-/** Why an impostor got away: the top of the vote was shared, it landed on someone else, or nobody named anyone. */
+/** Why an impostor got away: a shared top of the vote, the vote landing on someone else, or nobody named. */
 export type ImpostorEscape = 'tie' | 'wrong-out' | 'no-votes';
 
 interface SeatState {
@@ -120,7 +98,7 @@ interface SeatState {
 interface Clue {
   round: number;
   seat: number;
-  /** null when the turn passed without one (the time ran out, the player was away or left) */
+  /** null when the turn passed without one (time ran out, or the player was away or left) */
   text: string | null;
 }
 
@@ -137,10 +115,10 @@ export interface ImpostorState {
   phase: ImpostorPhase;
   turn: { seat: number; round: number; n: number; startedAt: number; endsAt: number } | null;
   clues: Clue[];
-  /** each vote cast: a seat, IMPOSTOR_UNSURE_VOTE for "not sure", or null for a seat whose time ran out without one */
+  /** each vote: a seat, IMPOSTOR_UNSURE_VOTE for "not sure", or null when a seat's time ran out */
   votes: Array<{ seat: number; for: number | null }>;
   voting: { startedAt: number; endsAt: number } | null;
-  /** the seat the table voted out (the most votes, alone at the top), once counted */
+  /** the seat the table voted out (most votes, alone at the top), once counted */
   accused: { seat: number; votes: number } | null;
   guessing: { startedAt: number; endsAt: number } | null;
   /** the option the impostor chose, or null for none */
@@ -163,13 +141,13 @@ export interface ImpostorBoard {
   order: number[];
   turn: { seat: number; round: number; n: number; startedAt: string; endsAt: string } | null;
   clues: Clue[];
-  /** while the table votes: who has voted (never for whom), and the viewer's own vote (IMPOSTOR_UNSURE_VOTE for "not sure") */
+  /** while voting: who has voted (never for whom) and the viewer's own vote (IMPOSTOR_UNSURE_VOTE for "not sure") */
   vote: { startedAt: string; endsAt: string; voted: number[]; mine: number | null } | null;
-  /** the seat the vote landed on, once counted (when it was the impostor, they are caught) */
+  /** the seat the vote landed on, once counted; if it was the impostor, they are caught */
   accused: { seat: number; votes: number } | null;
-  /** the caught impostor's guess: the options, which the whole table watches */
+  /** the caught impostor's guess options, which the whole table watches */
   guess: { seat: number; startedAt: string; endsAt: string; options: string[] } | null;
-  /** once the game is over: everything */
+  /** everything, once the game is over */
   reveal: {
     impostor: number;
     word: string;
@@ -187,7 +165,7 @@ export interface ImpostorBoard {
   yourTurn: boolean;
   /** the viewer has a vote to cast now */
   yourVote: boolean;
-  /** the viewer is the caught impostor, and may guess now */
+  /** the viewer is the caught impostor and may guess now */
   yourGuess: boolean;
   endedBy: ImpostorEnd | null;
 }
@@ -244,7 +222,7 @@ function toVote(s: ImpostorState): number[] {
     .filter((seat) => !s.votes.some((v) => v.seat === seat));
 }
 
-/** A vote that names a seat: neither one whose time ran out nor one that was not sure. */
+/** A vote naming a seat: neither one whose time ran out nor "not sure". */
 const named = (v: { for: number | null }): v is { for: number } => v.for !== null && v.for !== IMPOSTOR_UNSURE_VOTE;
 
 /** Every vote is in: who the table chose, and what follows. */
@@ -253,7 +231,7 @@ function count(s: ImpostorState, now: number): void {
   for (const v of s.votes) if (named(v)) tally.set(v.for, (tally.get(v.for) ?? 0) + 1);
   const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
   const top = ranked[0];
-  // nobody voted, or a tie at the top: the table could not agree, and the impostor slips away
+  // Nobody voted, or the top is shared: the table could not agree and the impostor slips away.
   if (!top || (ranked[1] && ranked[1][1] === top[1])) {
     s.accused = null;
     return finish(s, now, 'escaped');
@@ -275,27 +253,20 @@ function guessedRight(s: ImpostorState): boolean {
   return s.guessed !== null && s.options[s.guessed] === s.card.word;
 }
 
-/** Why the impostor got away, for the reveal to say; null for any other end. */
+/** Why the impostor got away, for the reveal; null for any other end. */
 export function impostorEscape(s: Pick<ImpostorState, 'endedBy' | 'accused' | 'votes' | 'impostor'>): ImpostorEscape | null {
   if (s.endedBy !== 'escaped') return null;
   if (s.accused && s.accused.seat !== s.impostor) return 'wrong-out';
   return s.votes.some(named) ? 'tie' : 'no-votes';
 }
 
-/**
- * The speaking order with someone holding the word first: the drawn order
- * turned round, so who follows whom stays as it was drawn.
- */
+/** The speaking order with a word holder first: the drawn order rotated, so who follows whom stays as drawn. */
 export function impostorFirstSpeaker(order: readonly number[], impostors: readonly number[]): number[] {
   const at = order.findIndex((seat) => !impostors.includes(seat));
   return at <= 0 ? [...order] : [...order.slice(at), ...order.slice(0, at)];
 }
 
-/**
- * A word's English meanings, each on its own: lower case, without an article
- * or "to", and with what it says in brackets kept apart as its qualifier
- * ("uncle (father’s brother)" is the uncle, qualified).
- */
+/** A word's English meanings one by one: lower case, without an article or "to", any bracketed qualifier kept apart ("uncle (father’s brother)"). */
 function meaningParts(en: string | undefined): Array<{ key: string; qualifier: string }> {
   const brackets: string[] = [];
   const plain = (en ?? '').toLowerCase().replace(/\([^)]*\)/g, (b) => `\u0000${brackets.push(b.slice(1, -1).trim()) - 1}\u0000`);
@@ -315,21 +286,17 @@ function meaningParts(en: string | undefined): Array<{ key: string; qualifier: s
     .filter((part) => part.key !== '');
 }
 
-/** Whether two meanings share one: the same word, unless both say in brackets which of its senses, and differently. */
+/** Whether two meanings share one: the same word, unless both bracket different senses of it. */
 function sameMeaning(a: string | undefined, b: string | undefined): boolean {
   const theirs = meaningParts(b);
   return meaningParts(a).some((x) => theirs.some((y) => x.key === y.key && (x.qualifier === '' || y.qualifier === '' || x.qualifier === y.qualifier)));
 }
 
 /**
- * Whether two cards are too close to stand side by side in one round: the
- * same word give or take an ending of up to three letters (bizin and bizinek,
- * مێشک and مێشکی), or the same thing under another name (two words that share
- * an English meaning, as jîr and zîrek both mean "clever"). Such a pair would
- * hand the caught impostor the word among the options, or give the odd one
- * out a word that is no different at all. Two senses of one English word
- * that the meanings tell apart in brackets (the uncle on the father's side
- * and the one on the mother's) are different things.
+ * Whether two cards are too close for one round: the same word give or take an ending of up to three letters (bizin and
+ * bizinek, مێشک and مێشکی), or the same thing under another name (jîr and zîrek both mean "clever"). Such a pair would hand
+ * the caught impostor the word among the options, or give the odd one out no different word. Two senses of one English
+ * word told apart in brackets (the paternal and maternal uncle) are different things.
  */
 export function impostorTooClose(
   a: { word: string; meanings?: { en?: string } },
@@ -340,7 +307,7 @@ export function impostorTooClose(
   const kb = foldForDialect(b.word, dialect, true);
   if (ka === kb) return true;
   const [short, long] = ka.length <= kb.length ? [ka, kb] : [kb, ka];
-  // a word of two letters begins too many others (ba, the wind, and bahoz, the storm) to be read as their stem
+  // A two-letter word begins too many others (ba, the wind; bahoz, the storm) to be read as their stem.
   if (short.length >= 3 && long.startsWith(short) && long.length - short.length <= 3) return true;
   return sameMeaning(a.meanings?.en, b.meanings?.en);
 }
@@ -361,16 +328,14 @@ export function impostorScores(s: ImpostorState): Map<number, number> {
 }
 
 /**
- * Whether a finished game counted: the table played it out to a vote, an
- * escape or a guess. Called off with every person gone, with too few left to
- * hide among, or with the impostor gone, it did not: nobody wins a game like
- * that, so it pays no placement and is not rated.
+ * Whether a finished game counted: played out to a vote, an escape or a guess. Called off with everyone gone, too few
+ * left to hide among, or the impostor gone, nobody wins, so it pays no placement and is not rated.
  */
 export function impostorCounted(s: Pick<ImpostorState, 'finishedAt' | 'endedBy'>): boolean {
   return s.finishedAt !== null && s.endedBy !== 'abandoned' && s.endedBy !== 'too-few' && s.endedBy !== 'impostor-left';
 }
 
-/** What a clue would be refused for, judged as the rules judge it (the server again, always). */
+/** What a clue would be refused for, judged as the rules judge it (and the server again, always). */
 export function impostorClueRefusal(
   s: Pick<ImpostorState, 'dialect' | 'card' | 'impostor' | 'clues'>,
   seat: number,
@@ -383,7 +348,7 @@ export function impostorClueRefusal(
   return null;
 }
 
-/** A clue box's own check, for a player who holds the word (the impostor's box checks only the slips). */
+/** A clue box's own check for a word holder; the impostor's box checks only the slips. */
 export function impostorClueSlip(
   board: Pick<ImpostorBoard, 'dialect' | 'hand' | 'clues'>,
   text: string,
@@ -428,7 +393,7 @@ export const impostorRules: GameRules<ImpostorState, ImpostorMove, ImpostorSetti
       finishedAt: null,
       endedBy: null,
     };
-    // a deal that never came, or too few people: nothing to play
+    // A deal that never came, or too few people: nothing to play.
     if (!deal || people.length < IMPOSTOR_MIN_PLAYERS) {
       finish(state, start.now, 'too-few');
       return state;
@@ -515,7 +480,7 @@ export const impostorRules: GameRules<ImpostorState, ImpostorMove, ImpostorSetti
       finish(next, now, 'impostor-left');
       return next;
     }
-    // too few left to hide among; once the impostor is caught, the guess still stands
+    // Too few left to hide among; once the impostor is caught, the guess still stands.
     if (next.phase !== 'guess' && present(next).length < IMPOSTOR_MIN_PLAYERS) {
       finish(next, now, 'too-few');
       return next;
@@ -562,7 +527,7 @@ export const impostorRules: GameRules<ImpostorState, ImpostorMove, ImpostorSetti
       hand,
       order: [...state.order],
       turn: state.turn ? { seat: state.turn.seat, round: state.turn.round, n: state.turn.n, startedAt: iso(state.turn.startedAt), endsAt: iso(state.turn.endsAt) } : null,
-      // a clue the viewer may not be shown reads as a turn that passed without one
+      // A clue the viewer may not be shown reads as a turn that passed without one.
       clues: state.clues.map((c) => ({ ...c, text: hidden.includes(c.seat) ? null : c.text })),
       vote:
         state.phase === 'vote' && state.voting
@@ -601,7 +566,7 @@ export const impostorRules: GameRules<ImpostorState, ImpostorMove, ImpostorSetti
   places(state: ImpostorState): readonly Placed[] {
     const scores = impostorScores(state);
     const rank = (list: SeatState[]): SeatState[] => [...list].sort((a, b) => (scores.get(b.seat) ?? 0) - (scores.get(a.seat) ?? 0) || a.seat - b.seat);
-    // still at the table first, by points; then those who left
+    // Still at the table first, by points; then those who left.
     const ordered = [...rank(state.seats.filter((x) => !x.left)), ...rank(state.seats.filter((x) => x.left))];
     const placed: Placed[] = [];
     ordered.forEach((x, i) => {

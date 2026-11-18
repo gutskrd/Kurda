@@ -13,18 +13,10 @@ import { pressedDim } from '../theme/motion';
 const DISC = 34;
 
 /**
- * A conversation's message field: one rounded pill with the words on one
- * side of it and Send inside it on the other, growing upwards to five lines
- * or so as a long message is written, with Send staying by the last line.
- *
- * The field and the button were two shapes side by side, a grey pill and a
- * disc beside it. Inside the pill the button reads as the field's own, the
- * row is one control shorter, and the words get the width the gap took.
- *
- * In a browser the field being typed in is ringed in violet, as a keyboard
- * needs and as what has the focus is everywhere: the ring is the pill's,
- * since the browser's own would be a rectangle drawn round the words inside
- * it. A phone shows a caret and no ring.
+ * A conversation's message field: one rounded pill with the text on one side and Send inside it on the other,
+ * growing upward to about five lines with Send staying by the last line. In a browser the focused field shows a
+ * violet ring on the pill, since the browser's own would be a rectangle around the text; phones show only a
+ * caret.
  */
 export function MessageField({
   value,
@@ -54,7 +46,7 @@ export function MessageField({
         onChangeText={onChangeText}
         maxLength={maxLength}
         multiline
-        // a browser draws an empty multi-line field two lines tall; a phone draws one, and is left to it
+        // A browser draws an empty multi-line field two lines tall; a phone draws one, and is left to it.
         {...(Platform.OS === 'web' ? { rows: 1 } : null)}
         accessibilityLabel={t('chat.messagePlaceholder')}
       />
@@ -64,17 +56,10 @@ export function MessageField({
 }
 
 /**
- * The composer's Send, the same wherever something written is sent — a chat,
- * a club's thread, a comment: an arrow in a filled circle once there is
- * something to send, a faint arrow before — the shape every message field
- * has, so nobody has to look for it. (A comment's used to be a bare chevron,
- * the glyph that elsewhere means "go on to the next page".) Ready, the circle
- * is the colour your own words are sent in.
- *
- * Empty, it is disabled and says so to a screen reader, rather than taking
- * the tap and doing nothing with it. The arrow points the way the text runs.
- * `label` is what it is called when it is not a message being sent ("Post
- * comment").
+ * The composer's Send button, shared by chats, club threads and comments: an arrow in a filled circle once there
+ * is something to send, a faint arrow before, filled in the colour your own messages use. Empty, it is disabled
+ * and announced as such. The arrow points in the text direction. `label` names it when it is not sending a
+ * message ("Post comment").
  */
 export function SendButton({ ready, onPress, label }: { ready: boolean; onPress: () => void; label?: string }): React.JSX.Element {
   const { colors } = useTheme();
@@ -99,10 +84,10 @@ export function SendButton({ ready, onPress, label }: { ready: boolean; onPress:
 }
 
 const styles = StyleSheet.create({
-  // the buttons stay by the last line as a long message grows the field upwards
+  // The buttons stay by the last line as a long message grows the field upwards.
   field: { flex: 1, alignItems: 'flex-end', borderRadius: radii.xl },
   fieldRinged: { outlineWidth: 2, outlineStyle: 'solid' },
-  // 44 on one line, as every field is: the line and the padding round it add up to it
+  // 44 on one line, as every field is: the line and the padding round it add up to it.
   fieldInput: {
     flex: 1,
     minHeight: MIN_TOUCH_TARGET,
@@ -113,7 +98,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     lineHeight: 22,
     textAlignVertical: 'center',
-    // the pill wears the ring (above); a browser's own ignores a width, and has to be told there is none
+    // The pill wears the ring (above); the browser's own ignores a width and must be told there is none.
     outlineWidth: 0,
     ...({ outlineStyle: 'none' } as object),
   },

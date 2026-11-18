@@ -1,8 +1,6 @@
 /*
- * The page a game's invite link opens (play/InvitePage.tsx): the game's
- * picture and name on the night every game opens on (games/game-stage.css),
- * the code as tiles, and the one thing to press under it. A page for one
- * look and one tap, so it is narrow, centred and short on a phone.
+ * The page an invite link opens (play/InvitePage.tsx), on the games' night backdrop (games/game-stage.css): narrow,
+ * centred and short on a phone.
  */
 .invite-page {
   display: grid;
@@ -19,7 +17,7 @@
   width: 132px;
   height: auto;
 }
-/* the code, as the lobby's own ticket shows it: a tile a character, a gap in the middle */
+/* The code as the lobby's ticket shows it: a tile per character, a gap in the middle. */
 .invite-code {
   display: flex;
   justify-content: center;

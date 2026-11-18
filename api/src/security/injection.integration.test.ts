@@ -1,11 +1,7 @@
 /**
- * Hostile input against the endpoints that take free text (integration).
- *
- * SQL injection payloads, LIKE wildcards, NUL characters and references to rows
- * that do not exist, sent to sign-up, sign-in, the reset form, the dictionary,
- * user search and the admin lists. Every one must be answered with a 4xx or an
- * ordinary result: never a 500, never the database's own words, never anyone
- * else's data.
+ * Hostile input against free-text endpoints: SQL injection payloads, LIKE wildcards, NUL characters and references to
+ * missing rows, sent to sign-up, sign-in, the reset form, the dictionary, user search and admin lists. Each must get a
+ * 4xx or an ordinary result: never a 500, the database's own words, or anyone else's data.
  */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -18,7 +14,7 @@ import { pass2fa } from '../test/admin-2fa.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
-/** Classic injection strings, and the shapes that used to reach Postgres badly. */
+/** Classic injection strings, and shapes that once reached Postgres badly. */
 const PAYLOADS = [
   "' OR '1'='1",
   "'; DROP TABLE users; --",
@@ -38,18 +34,15 @@ const PAYLOADS = [
 const DATABASE_WORDS = /syntax error|violates|relation "|column "|invalid input syntax|invalid input value|invalid byte sequence|constraint|pg_|SQLSTATE/i;
 
 /**
- * What a response says, with the credentials it hands out taken from it. A
- * token is a few hundred random letters, digits, "-" and "_", and about one
- * sign-up in two hundred spells "pg_" somewhere in its own: that is chance,
- * not the database speaking. This suite signs up a dozen times, so it failed
- * on it roughly one run in fifteen.
+ * A response body with its tokens replaced: random tokens contain "pg_" by chance about once in two hundred sign-ups,
+ * which is not the database speaking.
  */
 const spoken = (body: string): string => body.replace(/"(accessToken|refreshToken)":"[^"]*"/g, '"$1":"(a token)"');
 
 describe('what counts as the database speaking', () => {
   it('is never a token’s own letters, and is still anything the driver says beside one', () => {
-    // The made-up tokens are plain on purpose: one that looked real would read, to anyone checking the
-    // repository for leaked credentials, as a credential. All they need is "pg_" in them, in either case.
+    // The fake tokens are plainly fake, so a credential scanner does not mistake them for real ones; they only need "pg_"
+    // in either case.
     const tokens = '"tokens":{"accessToken":"aaaa.aaPg_a.apg_","refreshToken":"aaaa_aaaaPG_aaaaaaaa"}';
     expect(`{${tokens}}`).toMatch(DATABASE_WORDS);
     expect(spoken(`{${tokens}}`)).not.toMatch(DATABASE_WORDS);
@@ -97,10 +90,7 @@ describe.skipIf(!DATABASE_URL)('hostile input (integration)', () => {
       remoteAddress: nextIp(),
     });
 
-  /**
-   * No 500, nothing the database said, and (outside staff tools, whose user
-   * list shows addresses by design) nothing of the other account's.
-   */
+  /** No 500, nothing from the database, and nothing of the other account's, outside staff tools, whose user list shows addresses by design. */
   function harmless(res: { statusCode: number; body: string }, what: string, staff = false): void {
     expect(res.statusCode, `${what}: ${res.body.slice(0, 300)}`).toBeLessThan(500);
     expect(spoken(res.body), what).not.toMatch(DATABASE_WORDS);
@@ -176,12 +166,11 @@ describe.skipIf(!DATABASE_URL)('hostile input (integration)', () => {
   });
 
   it('searches take wildcards literally', async () => {
-    // usernames hold underscores; `_` used to match any letter there
+    // Usernames hold underscores, which must match only themselves.
     const people = await get(`/users/search?q=${encodeURIComponent(`lk_u_${s}`)}`);
     expect(people.statusCode).toBe(200);
     expect(people.json().results.map((r: { username: string }) => r.username)).toEqual([`lk_u_${s}`]);
-    // and `%` used to list everyone; now it finds only a name holding it, as
-    // a display name may (they are searched too, and these tests register one)
+    // `%` finds only names containing it, as a display name may (these tests register one).
     const everyone = await get(`/users/search?q=${encodeURIComponent('%%')}`);
     expect(everyone.statusCode).toBe(200);
     for (const r of everyone.json().results as Array<{ username: string; displayName: string | null }>) {
@@ -212,7 +201,7 @@ describe.skipIf(!DATABASE_URL)('hostile input (integration)', () => {
         harmless(await get(`/images?${param}=${encodeURIComponent(p.slice(0, 200))}`), `images ${param}=${p}`);
       }
     }
-    // the admin user search matches what was typed, underscores included
+    // The admin user search matches what was typed, underscores included.
     const exact = await get(`/admin/users?q=${encodeURIComponent(`lk_u_${s}`)}`, adminToken);
     expect(exact.json().users.map((u: { username: string }) => u.username)).toEqual([`lk_u_${s}`]);
   });

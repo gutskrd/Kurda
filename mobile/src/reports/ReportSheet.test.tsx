@@ -51,17 +51,17 @@ describe('ReportSheet', () => {
 
     expect(screen.getByText('Report this message')).toBeTruthy();
     expect(screen.getByText('What’s wrong?')).toBeTruthy();
-    // the most urgent categories come first, in plain words
+    // The most urgent categories come first, in plain words.
     const options = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'));
     expect(options.indexOf('A child is in danger (including sexual messages or pictures)')).toBeLessThan(
       options.indexOf('Bullying or harassment'),
     );
-    // shared REPORT_CATEGORIES' copyright, in the app's words, after harassment
+    // Shared REPORT_CATEGORIES' copyright category, in the app's words, after harassment.
     expect(options.indexOf('Copies someone else’s work')).toBeGreaterThan(options.indexOf('Bullying or harassment'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Bullying or harassment' }));
     expect(screen.getByText('You chose: Bullying or harassment')).toBeTruthy();
-    // no minimum: sending with an empty note is fine
+    // No minimum: sending with an empty note is fine.
     fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
 
     await waitFor(() => expect(screen.getByText('Thanks for telling us')).toBeTruthy());
@@ -71,7 +71,7 @@ describe('ReportSheet', () => {
       body: { targetType: 'dm_message', targetId: 'm1', category: 'harassment' },
     });
     expect(screen.getByText('What happens next')).toBeTruthy();
-    // nothing to block or leave was offered, so nothing is shown
+    // Nothing to block or leave was offered, so nothing is shown.
     expect(screen.queryByRole('button', { name: /^Block/ })).toBeNull();
 
     fireEvent.click(screen.getByText('My reports'));
@@ -87,7 +87,7 @@ describe('ReportSheet', () => {
 
     expect(screen.getByText('Report Rojda')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Someone may hurt themselves' }));
-    // help comes before the note
+    // Help comes before the note.
     expect(screen.getByText('If someone is in danger right now')).toBeTruthy();
     expect(screen.queryByText('Send report')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Find a helpline' }));
@@ -100,7 +100,7 @@ describe('ReportSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
     await waitFor(() => expect(screen.getByText('Thanks for telling us')).toBeTruthy());
     expect(client.calls[0]?.body).toEqual({ targetType: 'user', targetId: 'u2', category: 'self_harm', note: 'they said goodbye' });
-    // and once more at the end
+    // And once more at the end.
     expect(screen.getByRole('link', { name: 'Find a helpline' })).toBeTruthy();
     open.mockRestore();
   });

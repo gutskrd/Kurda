@@ -32,6 +32,7 @@ import { Modal } from '../components/Modal';
 import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { useAsksBeforeLeaving } from '../layouts/BackButton';
 import { dialectName } from '../learn/map';
 import { haptic } from '../lib/haptics';
@@ -65,57 +66,29 @@ import {
 } from './WhoAmIStage';
 
 /**
- * Who Am I? on one phone, passed round a room (/app/games/who-am-i?couch=1).
+ * Who Am I? on one phone passed round a room (/app/games/who-am-i?couch=1), running the shared rules
+ * (shared/src/games/who-am-i/rules.ts) on cards the server deals (couch.ts). The holder picks a question (suggested or
+ * from the list) and reads it out, then turns the phone to the friends, who see the card and tap yes, could be, no or
+ * not sure; the phone hides the card and shows its verdict. A question of their own is answered out loud and only
+ * counted. A guess is said out loud and judged by the friends: right, close (no guess spent, turn passes) or not yet.
  *
- * The rules are the table's own (shared/src/games/who-am-i/rules.ts), run
- * here on the page from the cards the server deals for the room (couch.ts);
- * this is the phone's part in them. It asks who is playing, fetches a card
- * for each, and then goes from hand to hand, with nothing for anyone to
- * remember. Whoever holds it picks a question, one of the few the rules
- * suggest or any on their list, and reads it out; they turn the phone to
- * their friends, who see the card and the question together and tap yes,
- * could be, no or not sure themselves; the phone hides the card and comes
- * back with what the card itself says; and the holder passes the phone on,
- * or says they know who they are. A player may also ask the room a question
- * of their own: the friends answer that one out loud, looking at the card,
- * and the phone only counts it. There is nothing to pick a guess from: a
- * player who knows says who they are out loud and turns the phone round once
- * more, and the friends, reading the card, tap whether that is it, whether it
- * is close (another word for the same thing, which costs no guess and passes
- * the turn), or not yet.
+ * Because one screen is shared by people who must not read their own card:
+ * - a card is drawn only on the friends' screen, hidden by their tap, by leaving the page or by the screen locking;
+ * - the holder's screen never lists words to guess from, and shows nobody's card;
+ * - the button to the friends' screen ignores taps briefly, so a double tap cannot reveal the card;
+ * - a screen with only the next player's name sits between players;
+ * - a question or guess costs nothing until the friends answer it;
+ * - cards live in memory only; player names stay on this phone for the next game and are never sent;
+ * - leaving asks first, since the cards and points go with the page.
  *
- * What it is careful about, because one screen is shared by people who must
- * not read their own card:
- * - a card is drawn on the friends' screen alone, which the holder opens
- *   with the phone already turned away from them: the friends' one tap
- *   answers and hides it, and switching away from the page or the screen
- *   locking hides it too;
- * - nothing on the holder's own screen says who they could be: no list of
- *   words to choose from, only what the card has answered so far;
- * - the way to that screen takes no tap in its first moment, so a double
- *   tap on the board cannot run on into it and turn the card up;
- * - between two players there is always a screen with nothing on it but the
- *   next player's name;
- * - the holder's own card is never drawn until it comes off, and nobody
- *   else's card is on the holder's board either: a neighbour glancing over
- *   must not read their own;
- * - a question or a guess costs nothing until the friends have answered it:
- *   until then the way back leaves the rules as they were;
- * - the cards stay in memory for the game and are never stored; the players'
- *   names are kept on this phone only, so the next game starts with them,
- *   and are never sent anywhere;
- * - leaving asks first, since the cards and the points go with the page.
- *
- * No turn has a clock: the phone waits for the room. A game played this way
- * earns nothing, because the phone holds every card.
+ * No turn has a clock. A game played this way earns nothing, since the phone holds every card.
  */
 
 const KEPT = 'hevalo.whoami.couch';
 
 /**
- * How long the way to the friends' screen takes no tap after it appears: longer than the gap inside a double tap.
- * A hurried second tap on the board can land where that button has just appeared, and would turn the card up in
- * front of its own wearer.
+ * How long the button to the friends' screen ignores taps after appearing, longer than a double tap's gap, so a second
+ * tap cannot reveal the card to its wearer.
  */
 const TURN_ROUND_MS = 400;
 
@@ -190,8 +163,6 @@ interface Game {
   state: WhoAmITableState;
   step: Step;
 }
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** The table as one seat reads it: the rules' own view, the only thing a screen here is drawn from. */
 function viewOf(game: Game, seat: number): WhoAmITableBoard {
@@ -296,10 +267,7 @@ export function Couch(): React.JSX.Element {
     setGame(next);
   };
 
-  /**
-   * What the friends said to a guess spoken out loud: they are its judge, with the card in front of them. Whatever
-   * the rules make of the move, the card is off the screen at once.
-   */
+  /** Applies the friends' judgement of a spoken guess; the card leaves the screen at once. */
   const judged = (judgement: Judged): void => {
     const seat = game?.state.turn ?? null;
     if (!game || seat === null) return;
@@ -320,10 +288,8 @@ export function Couch(): React.JSX.Element {
   };
 
   /**
-   * What the friends tapped. The question is asked for the holder and answered
-   * for the room in one step, so it costs nothing before this and the card is
-   * off the screen the moment it is answered: whatever the rules say, the
-   * phone is back on the holder's board.
+   * Applies the friends' answer, asking and answering the question in one step so it costs nothing before; the card
+   * leaves the screen at once and the phone returns to the holder's board.
    */
   const answer = (question: string, says: WhoAmISays): void => {
     const seat = game?.state.turn ?? null;
@@ -384,10 +350,8 @@ export function Couch(): React.JSX.Element {
 }
 
 /**
- * A game under way, by where the phone is in it: between two players, on the
- * holder's board, a question or a guess being said, the phone turned to the
- * friends, what came of a guess, the end. While there is still something to
- * lose, the way out is under every one of them.
+ * A game under way, by phase: between players, the holder's board, a question or guess being said, the friends'
+ * screen, a guess's result, and the end. While there is something to lose, every phase offers the way out.
  */
 function Play({
   game,
@@ -510,9 +474,8 @@ function announcement(game: Game, t: Translate): string {
 }
 
 /**
- * What a board with nothing answered on it tells its holder, when the turn is not simply a suggested question to
- * pick: that the list is used up, or that nothing on it is suggested any more. In one room a turn is never forced to
- * be a guess, so neither is a dead end: a question of their own is always there.
+ * The note on a board when there is no suggested question: the list is used up, or nothing is suggested. Neither is
+ * a dead end, since a question of the holder's own is always possible.
  */
 function boardNote(mine: NonNullable<WhoAmITableBoard['mine']>, t: Translate): string | null {
   if (mine.asked.length >= mine.questions.length) return t('games.whoAmI.couch.listDone');
@@ -652,16 +615,9 @@ function HandOver({ name, onMine }: { name: string; onMine: () => void }): React
 }
 
 /**
- * The holder's own screen, read from where the rules say the turn stands,
- * with everything a beginner needs in the order they need it: the way to say
- * they know who they are, a few questions worth asking with what each means,
- * the whole list folded away, a question of their own, and last what they
- * know so far. Once a question is answered the card's verdict is on top, and
- * the turn is to say who they are or to pass the phone on.
- *
- * Nothing on it says who the holder could be: there are no words to choose
- * from, and nobody's card can be read on it, their own or anybody else's. So
- * the friends can hand the phone straight back to it.
+ * The holder's screen, in a beginner's order: say who they are, suggested questions with meanings, the full list
+ * folded away, their own question, and what they know so far. After an answer, the verdict is on top and the turn is
+ * to guess or pass. Nothing on it reveals any card, so the friends can hand the phone straight back.
  */
 function Board({
   game,
@@ -798,10 +754,8 @@ function Board({
 }
 
 /**
- * The holder is about to turn the phone round. A question picked from the
- * list is here large, to read out, with what it means; for one of their own,
- * or for who they are, they are told to say it. Nothing has been asked of the
- * rules yet, so the way back costs nothing.
+ * Before turning the phone: a picked question shown large with its meaning to read out, or an instruction to say
+ * their own question or guess. Nothing has reached the rules yet, so going back costs nothing.
  */
 function Say({ game, seat, said, onFriends, onBack }: { game: Game; seat: number; said: Said; onFriends: () => void; onBack: () => void }): React.JSX.Element | null {
   const t = useT();
@@ -850,15 +804,9 @@ function Say({ game, seat, said, onFriends, onBack }: { game: Game; seat: number
 }
 
 /**
- * The friends' screen, with the phone turned away from its holder: the
- * holder's card on the deer's forehead, large, so nobody has to remember a
- * card. For a question from the list it stands beside the question, and the
- * friends tap the dialect's yes, could be, no or not sure themselves. For one
- * the holder asked out loud they answer out loud, in the same words if they
- * can, and tap that they are done. For a guess said out loud they are its
- * judge, and tap whether that is who the holder is, close (another word for
- * the same thing, say a region's own), or not yet. Any of those taps takes the
- * card off the screen, and so does the page being hidden.
+ * The friends' screen with the holder's card large on the deer's forehead. For a listed question they tap the
+ * answer; for the holder's own question they answer aloud and tap done; for a guess they judge it right, close (such
+ * as a regional word) or not yet. Any tap, or the page being hidden, takes the card off screen.
  */
 function Friends({
   game,
@@ -929,11 +877,7 @@ function Friends({
   );
 }
 
-/**
- * A card found is the game's happiest moment: it comes off inside the app's
- * own celebration (ranks/Celebration.tsx), the light and the flecks round it,
- * felt once as it lands. A tap on it skips to the end.
- */
+/** A found card comes off inside the app's celebration (ranks/Celebration.tsx); a tap skips to the end. */
 function Cheer({ seed, children }: { seed: number; children: React.ReactNode }): React.JSX.Element {
   const moment = useCelebrationMoment();
   return (
@@ -946,12 +890,9 @@ function Cheer({ seed, children }: { seed: number; children: React.ReactNode }):
 }
 
 /**
- * What came of a guess said out loud: the card coming off for a right one or
- * for the last wrong one, and for any other miss only that it was one and how
- * many guesses are left. A close one is no miss: it says so, that no guess was
- * spent, and that the turn passes on, with the card still hidden. There is no
- * word to name in either: it was said, not picked, and the phone never heard
- * it.
+ * A spoken guess's result: the card comes off for a right guess or the last wrong one; another miss shows the guesses
+ * left; a close guess spends none and passes the turn with the card still hidden. The guess itself is never named,
+ * since the phone never heard it.
  */
 function Guessed({ game, seat, judged, onNext }: { game: Game; seat: number; judged: Judged; onNext: () => void }): React.JSX.Element | null {
   const t = useT();

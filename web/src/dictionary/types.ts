@@ -1,11 +1,8 @@
 import type { DictionaryAudio } from '@kurda/shared';
 
-/**
- * Dictionary contract — mirrors the server (KUR-043/044/047), and deliberately
- * the same shape the phone uses. One API, one set of names for what it returns.
- */
+/** The dictionary API's shapes, as the server sends them and the phone app uses them. */
 
-export type MatchType = 'exact' | 'prefix' | 'contains' | 'definition' | 'fuzzy';
+type MatchType = 'exact' | 'prefix' | 'contains' | 'definition' | 'fuzzy';
 
 export interface SearchHit {
   entryId: string;
@@ -13,23 +10,23 @@ export interface SearchHit {
   dialect: string;
   pos: string | null;
   definitionEn: string | null;
-  /** most of an imported lexicon is defined in Kurdish alone, with no English at all */
+  /** Most of the imported lexicon is defined in Kurdish alone, with no English. */
   definitionKu: string | null;
   matchType: MatchType;
 }
 
 export interface SearchResult {
   query: string;
-  /** true when nothing matched exactly and these are the closest words instead */
+  /** True when nothing matched exactly and these are the closest words instead. */
   fuzzy: boolean;
   results: SearchHit[];
 }
 
-export interface Sense {
+interface Sense {
   id: string;
   position: number;
   pos: string;
-  /** null when the word is defined in Kurdish alone */
+  /** Null when the word is defined in Kurdish alone. */
   definitionEn: string | null;
   definitionKu: string | null;
   examples: Array<{ textKu: string; textEn: string | null }>;
@@ -40,10 +37,10 @@ export interface Entry {
   headword: string;
   dialect: string;
   senses: Sense[];
-  /** its pronunciations, each with who says it when an editor chose a character */
+  /** Its pronunciations, each with its character when an editor chose one. */
   audio: DictionaryAudio[];
   xrefs: Array<{ entryId: string; headword: string; relation: string }>;
-  /** whether the reader has bookmarked this entry (KUR-047) */
+  /** Whether the reader has bookmarked this entry. */
   saved?: boolean;
 }
 

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-// a phone, so there is push to ask about; a test can make it the web build, which has none
+// A phone, so there is push to ask about; a test can make it the web build, which has none.
 const phone = vi.hoisted(() => ({ os: 'ios' }));
 vi.mock('react-native', async () => {
-  // react-native-web ships no types
+  // react-native-web ships no types.
   const rn = (await import('../play/testing/native')) as unknown as Record<string, object> & { Platform: object };
   return {
     ...rn,
@@ -21,9 +21,9 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// Android's back, pressed by the test (navigation/testing/hardwareBack)
+// Android's back, pressed by the test (navigation/testing/hardwareBack).
 vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
-// a badge earned meanwhile waits on the screen (badges/BadgeCelebrationHost.tsx)
+// A badge earned meanwhile waits on the screen (badges/BadgeCelebrationHost.tsx).
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { Text } from 'react-native';
@@ -63,7 +63,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** Let what was asked for come back: the phone's answer, the record, the account's age. */
+/** Resolve what was requested: the phone's answer, the record, the account's age. */
 const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
 
 /** The screen, and how often the lesson's way on was taken from it. */
@@ -78,7 +78,7 @@ describe('the screen before the phone’s question about notifications', () => {
     const store = memoryStore();
     const onDone = shown(store);
     expect(screen.getByRole('heading', { name: TITLE })).toBeTruthy();
-    // what the server sends an adult: a reminder on a day the streak waits, word of a letter, word of a badge
+    // What the server sends an adult: a streak reminder, a letter notice, a badge notice.
     expect(screen.getByText(/short reminder on a day your streak is still waiting/)).toBeTruthy();
     expect(screen.getByText(/when a letter arrives or you earn a badge/)).toBeTruthy();
     expect(screen.getByText(/You can change this any time in Settings/)).toBeTruthy();
@@ -87,14 +87,14 @@ describe('the screen before the phone’s question about notifications', () => {
     expect(buttons).toHaveLength(1);
     expect(buttons[0]!.textContent).toBe('Continue');
     expect(screen.queryAllByRole('link')).toHaveLength(0);
-    // the yes and the no are the phone's: none of its words, and no way round it
+    // The yes and the no are the phone's: none of its words, and no way round it.
     for (const word of [/allow/i, /not now/i, /later/i, /skip/i, /close/i, /cancel/i]) expect(screen.queryByText(word), String(word)).toBeNull();
 
-    // nothing is asked just by looking, and nothing goes on by itself
+    // Nothing is asked just by looking, and nothing goes on by itself.
     await settle();
     expect(notificationsStub.requests).toBe(0);
     expect(onDone).not.toHaveBeenCalled();
-    // seen, so counted
+    // Seen, so counted.
     expect(JSON.parse(store.data.get(OFFER_KEY)!).shown).toBe(1);
   });
 
@@ -113,7 +113,7 @@ describe('the screen before the phone’s question about notifications', () => {
     await settle();
     expect(notificationsStub.requests).toBe(1);
     expect(onDone).toHaveBeenCalledTimes(1);
-    // and says nothing about it: no second question, no word about Settings, nothing left busy
+    // And says nothing about it: no second question, no word about Settings, nothing left busy.
     expect(screen.queryByText(/phone settings/i)).toBeNull();
     expect(screen.getByRole('button', { name: 'Continue' }).getAttribute('aria-busy')).not.toBe('true');
   });
@@ -145,7 +145,7 @@ describe('the screen before the phone’s question about notifications', () => {
   });
 
   it('takes a press made twice as one, and never shows a spinner while the phone asks', async () => {
-    // the phone's question stays up
+    // The phone's question stays up.
     notificationsStub.prompt = new Promise(() => undefined);
     const onDone = shown();
     const button = screen.getByRole('button', { name: 'Continue' });
@@ -175,7 +175,7 @@ describe('the screen before the phone’s question about notifications', () => {
     now += 1;
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(onDone).toHaveBeenCalledTimes(1);
-    // an answer that comes after all is not a second way on, and the phone was asked once
+    // A late answer is not a second way on, and the phone was asked once.
     answer();
     await settle();
     expect(onDone).toHaveBeenCalledTimes(1);
@@ -192,7 +192,7 @@ describe('the screen before the phone’s question about notifications', () => {
   });
 
   it('is written in the reader’s language', async () => {
-    // the language chosen is kept in the browser's storage on the web build, which is where a test can set it
+    // On the web build the chosen language is in browser storage, where a test can set it.
     phone.os = 'web';
     localStorage.setItem('kurda_locale_v1', 'ku');
     try {
@@ -222,7 +222,7 @@ describe('whether the screen follows a lesson', () => {
   it('follows for an adult who has never been asked, and finding that out asks nothing and counts nothing', async () => {
     const store = memoryStore();
     renderWithProviders(<Due store={store} />);
-    // not known until the phone, the record and the account have answered
+    // Not known until the phone, the record and the account have answered.
     expect(screen.getByTestId('due').textContent).toBe('null');
     await settle();
     expect(screen.getByTestId('due').textContent).toBe('true');
@@ -262,17 +262,17 @@ describe('whether the screen follows a lesson', () => {
     expect(await due()).toBe('false');
     testAuth.client = fakeClient();
     expect(await due()).toBe('false');
-    // not yet asked its birth month: the server's "not a minor" is not "an adult"
+    // Not yet asked its birth month: the server's "not a minor" is not "an adult".
     serveMe({ minor: false, birthDateRequired: true });
     expect(await due()).toBe('false');
   });
 
   it('never follows for a guest, to whom nothing is sent', async () => {
-    // as the server answers for one: no birth month, so not "a minor"
+    // As the server answers for one: no birth month, so not "a minor".
     serveMe({ minor: false, guest: true });
     expect(await due()).toBe('false');
 
-    // and known from the session itself, without asking the server
+    // And known from the session itself, without asking the server.
     const client = fakeClient({ 'GET /me': ok({ user: { minor: false } }) });
     testAuth.client = client;
     const account = testAuth.user;
@@ -290,12 +290,12 @@ describe('whether the screen follows a lesson', () => {
     expect(await due()).toBe('false');
     notificationsStub.permission = { ...REFUSED_FOR_GOOD };
     expect(await due()).toBe('false');
-    // Android after one refusal: it could ask again, but they already said no to the phone itself
+    // Android after one refusal: it could ask again, but they already said no to the phone itself.
     notificationsStub.permission = { status: 'denied', granted: false, canAskAgain: true };
     expect(await due()).toBe('false');
     notificationsStub.permission = { status: 'undetermined', granted: false, canAskAgain: false };
     expect(await due()).toBe('false');
-    // the web build has no push to ask about
+    // The web build has no push to ask about.
     notificationsStub.permission = { ...NEVER_ASKED };
     phone.os = 'web';
     expect(await due()).toBe('false');

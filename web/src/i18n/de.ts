@@ -828,8 +828,6 @@ export const de: Catalogue = {
   'report.aboutPlayer': 'Mehr zu {name}',
   'report.group': 'Diese Gruppe melden',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Sicherheit',
-  'settings.safety.help': 'Was aus deinen Meldungen wurde, und Entscheidungen über dein Konto.',
   'standing.backToSettings': 'Einstellungen',
   'reports.mine.title': 'Meine Meldungen',
   'reports.mine.intro': 'Was du gemeldet hast und was wir entschieden haben. Nur du siehst das.',
@@ -3184,10 +3182,10 @@ export const de: Catalogue = {
   'games.whoAmI.notOffered': 'Für „Ez kî me?“ in diesem Kurdisch braucht es noch mehr geprüfte Wörter und Fragen.',
   'games.whoAmI.share': 'Spiel mit mir „Ez kî me?“ auf Hevalo! Öffne Spiele → Mit einem Code beitreten und gib {code} ein.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} {tier}-Liga',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'Mitteilungen',
   'notifications.pref.streak': 'Serien-Erinnerungen',
   'notifications.pref.friends': 'Aktivität von Freunden',
@@ -3201,7 +3199,7 @@ export const de: Catalogue = {
   'notifications.quietFrom': 'Von',
   'notifications.quietTo': 'Bis',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'Tags',
   'tags.main': 'Haupt-Tag',
   'tags.noMain': 'Noch kein Haupt-Tag.',

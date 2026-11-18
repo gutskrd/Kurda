@@ -31,12 +31,7 @@ describe('SourceLine', () => {
     );
   });
 
-  /**
-   * The condition of using Wîkîferheng, not a preference. A translation that
-   * drops a placeholder would render a sentence with a hole in it where the
-   * attribution used to be, in one language only — which is exactly the kind of
-   * thing nobody notices until the licence is already being breached.
-   */
+  /** The attribution is a licence condition, so no translation may drop a placeholder. */
   it.each(Object.entries(CATALOGUES))('keeps both attributions in %s', (_locale, catalogue) => {
     const sentence = catalogue['dictionary.source'] ?? en['dictionary.source'];
     expect(sentence).toContain('{source}');

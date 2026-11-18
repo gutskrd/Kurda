@@ -124,7 +124,7 @@ describe('VerifyEmail', () => {
 
     await userEvent.type(input, '456');
     await waitFor(() => expect(sent).toEqual([{ code: '123456' }]));
-    // the boxes turn green and the button says so, for the eye and for the ear
+    // The boxes turn green and the button says so, for the eye and for the ear.
     await waitFor(() => expect(document.querySelector('.code-entry')).toHaveClass('is-joined'));
     expect(screen.getByRole('button', { name: 'Confirmed!' })).toBeDisabled();
     expect(screen.getByRole('status')).toHaveTextContent('Confirmed!');
@@ -153,7 +153,7 @@ describe('VerifyEmail', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Confirm email' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Enter the 6-digit code from your email.');
     expect(sent).toEqual([]);
-    // the typing goes on where it was
+    // The typing goes on where it was.
     expect(await field()).toHaveFocus();
     await userEvent.type(await field(), '4');
     expect(screen.queryByRole('alert')).toBeNull();
@@ -236,7 +236,7 @@ describe('VerifyEmail', () => {
     expect(document.querySelector('.code-entry')).toHaveClass('is-error');
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input).toHaveAccessibleDescription(expect.stringMatching(/isn’t correct/i));
-    // typed again from the first box, without a click: the field kept the focus
+    // Typed again from the first box, without a click: the field kept the focus.
     expect(boxes()).toEqual(['', '', '', '', '', '']);
     expect(input).toHaveFocus();
 
@@ -260,7 +260,7 @@ describe('VerifyEmail', () => {
 
     renderApp(<VerifyEmail />, ['/verify-email?token=gone']);
     expect(await screen.findByRole('alert')).toHaveTextContent('That confirmation link is invalid or has expired — enter the code below instead.');
-    // it is said above the boxes it points to
+    // It is said above the boxes it points to.
     const said = screen.getByRole('alert');
     expect(said.compareDocumentPosition(await field()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await userEvent.type(await field(), '1');
@@ -287,7 +287,7 @@ describe('VerifyEmail', () => {
 
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(await screen.findByText(/sent a new code/i)).toBeInTheDocument();
-    // asking again waits a minute, and the link says how long is left
+    // Asking again waits a minute, and the link says how long is left.
     expect(screen.getByRole('button', { name: /send a new code \(\d+s\)/i })).toBeDisabled();
   });
 
@@ -310,20 +310,20 @@ describe('VerifyEmail', () => {
     );
 
     renderApp(<VerifyEmail />, ['/verify-email']);
-    // the address is shown as it was typed, and it is the button that puts it right
+    // The address is shown as it was typed, and it is the button that puts it right.
     const chip = await screen.findByRole('button', { name: 'ada@exmaple.com. Wrong address? Change it' });
-    // how long an unconfirmed sign-up is kept is said on the screen
+    // How long an unconfirmed sign-up is kept is said on the screen.
     expect(screen.getByText(/isn’t confirmed within 7 days is removed/)).toBeInTheDocument();
 
     await userEvent.click(chip);
-    // one thing at a time: the code for the old address is not asked for meanwhile
+    // One thing at a time: the code for the old address is not asked for meanwhile.
     expect(screen.queryByLabelText(/verification code/i)).toBeNull();
     await userEvent.type(screen.getByLabelText('New email address'), 'ada@example.com');
     await userEvent.click(screen.getByRole('button', { name: 'Send the code there' }));
 
     await waitFor(() => expect(changed).toEqual([{ email: 'ada@example.com' }]));
     expect(await screen.findByText('We sent a code to your new address.')).toBeInTheDocument();
-    // the screen now shows the address the code went to, and the boxes are back, ready
+    // The screen now shows the address the code went to, and the boxes are back, ready.
     expect(await screen.findByRole('button', { name: 'ada@example.com. Wrong address? Change it' })).toBeInTheDocument();
     expect(screen.queryByLabelText('New email address')).toBeNull();
     expect(await field()).toHaveFocus();

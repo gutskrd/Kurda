@@ -1,18 +1,7 @@
 /*
- * The public pages: the front page, About, Privacy and Terms.
- *
- * The app's own tokens throughout — the same black, the same glass, the same
- * serif — so walking from the front page into the app is walking from one room
- * into the next, not into a different building. What changes is the scale:
- * these pages have one idea per screen and the room to say it slowly.
- *
- * Motion is CSS only, and there is little of it on purpose: the hero's tiles
- * turn over once, two cards drift, sections rise as they arrive. Scroll reveals
- * use scroll-driven animation, so there is no script watching the page, and a
- * browser that does not support it simply shows everything — content is never
- * hidden waiting for JavaScript. All of it stops for prefers-reduced-motion.
- *
- * Everything is `lp-` so none of it can leak into the app's screens.
+ * The public pages (front page, About, Privacy, Terms), built from the app's own tokens at a larger scale, one idea
+ * per screen. Motion is CSS only and minimal: the hero tiles turn once, two cards drift, and sections rise in. All of it
+ * stops under Reduce Motion. Every class is prefixed `lp-` so nothing leaks into the app.
  */
 
 /* ---- type ---------------------------------------------------------------- */
@@ -860,13 +849,7 @@
 .doc-link:hover {
   text-decoration-color: var(--ink);
 }
-/*
- * The sentence under the sign-up form that names the two documents
- * (pages/Register.tsx). Where a finger is about, each of its links answers a
- * little above and below its words (reach.css); its lines stand far enough
- * apart there that a link on one line never answers a press meant for the line
- * under it.
- */
+/* The sign-up sentence naming both documents (pages/Register.tsx): on touch screens its lines are spaced so link reaches never overlap. */
 @media (any-pointer: coarse) {
   .oauth-note {
     line-height: 1.9;
@@ -993,11 +976,8 @@
 }
 
 /*
- * Sections rise as they arrive. `lp-armed` is put on the page by a few lines of
- * script (see `useReveal`) only once it knows it can take it off again — so a
- * renderer, a preview service or a browser without IntersectionObserver gets
- * every section, plainly visible, and nothing ever waits on a scroll to exist.
- * Once in, a section stays in: scrolling back up does not hide it again.
+ * Sections rise into view. `useReveal` adds `lp-armed` only once it can remove it again, so without observer support
+ * every section is visible. A section that has appeared stays.
  */
 .lp-armed .lp-reveal {
   transition:
@@ -1009,11 +989,7 @@
   transform: translateY(24px);
 }
 
-/*
- * Reduced motion: everything that moves on its own stops, and the hero's tiles
- * are simply there. The global rule in base.css shortens durations but leaves
- * delays alone, which would hold each tile invisible for its delay first.
- */
+/* Under Reduce Motion everything self-moving stops, and the hero tiles show at once, since base.css keeps delays. */
 @media (prefers-reduced-motion: reduce) {
   .ps-battle .lp-tile:not(.lp-tile--empty),
   .lp-float,

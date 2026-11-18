@@ -92,7 +92,7 @@ describe('the lesson key bar', () => {
     renderWithProviders(<Answer dialect="kurmanci" />);
     fireEvent.click(screen.getByRole('button', { name: 'Type ê' }));
     expect((screen.getByLabelText('Your answer') as HTMLInputElement).value).toBe('ê');
-    // a lesson answer is not case-sensitive: no shift key
+    // A lesson answer is not case-sensitive: no shift key.
     expect(screen.queryByRole('button', { name: 'Capital letter' })).toBeNull();
   });
 

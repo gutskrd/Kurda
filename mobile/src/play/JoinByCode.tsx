@@ -38,26 +38,16 @@ import { joinCodeError, typedCode } from './joinCode';
 import { lobbyRoute } from './routes';
 
 /**
- * Join with a code: the way into any of the games for somebody a friend told
- * a code to — on the Games hub, in the Stories library, and where a game of
- * your own is set up.
+ * Join with a code, the way into any game for someone a friend told a code to: on the Games hub, in the Stories
+ * library, and where you set up a game.
  *
- * Six boxes and one real text field. The boxes are only a picture of what is
- * in the field (hidden from a screen reader); the field lies over them, so a
- * tap anywhere on them types into it, and paste, the keyboard's suggestions,
- * an input method and an Arabic-script keyboard's digits all work the way they
- * do in any field. What goes in is upper-cased and kept to what a code can
- * contain (joinCode.ts `typedCode`); a whole old invite link pasted in opens
- * its lobby straight away, as it always has.
+ * Six boxes drawn from one real text field laid over them, so paste, suggestions, input methods and Arabic-script
+ * digits work as in any field; the boxes are hidden from screen readers. Input is normalised by `typedCode`, and a
+ * pasted old invite link opens its lobby straight away. The sixth character sends the code (Join stays for retries).
  *
- * Each character pops into its box, the box it goes to next is lit with a
- * caret, and the sixth sends the code by itself (Join is there for whoever
- * waits for a button, and for trying again). While the server is asked a wave
- * runs along the boxes; a code that worked turns them green one after another,
- * with a small burst and the phone's success buzz, and the lobby opens. One
- * that did not shakes them in red, buzzes once, and says why — and typing
- * again clears it. Under Reduce Motion nothing moves: the colours and the
- * words say it all, and the lobby opens a beat after the green.
+ * While asking, a wave runs along the boxes; success turns them green one by one with a burst and haptic, then
+ * opens the lobby; a refusal shakes them red and says why until typing resumes. Under Reduce Motion nothing moves,
+ * and the lobby opens a beat after the green.
  */
 export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -71,7 +61,7 @@ export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.E
   const [phase, setPhase] = useState<Phase>('typing');
   const [message, setMessage] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
-  // how many boxes have turned green; they turn one after another as the code is accepted
+  // How many boxes have turned green; they turn one after another once the code is accepted.
   const [flipped, setFlipped] = useState(0);
   const timers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const busy = useRef(false);
@@ -123,13 +113,13 @@ export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.E
 
   const change = (text: string): void => {
     if (phase === 'joining' || phase === 'success') return;
-    // an old invite link, pasted: its lobby, as the link always opened it
+    // An old pasted invite link opens its lobby, as the link always did.
     const invite = parseInvite(text);
     if (invite) {
       open(invite.type, invite.id);
       return;
     }
-    // any key after a refusal is typing again: the red and the words go, even when the code stays as it was
+    // Any key after a refusal counts as retyping: the red and the message clear even if the code is unchanged.
     if (phase === 'error' && text !== code) {
       setPhase('typing');
       setMessage(null);
@@ -180,7 +170,7 @@ export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.E
           style={styles.field}
         />
       </Animated.View>
-      {/* said to a screen reader once, by the announcer, rather than by a live region here as well */}
+      {/* Announced once by the announcer, not also by a live region here. */}
       {message ? (
         <View style={[styles.message, { backgroundColor: colors.dangerFill, flexDirection: rtl ? 'row-reverse' : 'row' }]} testID="join-message">
           <Icon name="alert" size={16} color={colors.danger} />
@@ -194,10 +184,10 @@ export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.E
 
 type Phase = 'typing' | 'joining' | 'error' | 'success';
 
-/** Each box turns green this long after the one before it, taking this long to flip over. */
+/** The delay between boxes turning green, and how long each flip takes. */
 export const FLIP_STAGGER_MS = 80;
 export const FLIP_MS = 300;
-/** From the code being accepted to the lobby opening: the flips, then the burst. */
+/** From acceptance to the lobby opening: the flips, then the burst. */
 export const SUCCESS_MS = 1250;
 export const SUCCESS_REDUCED_MS = 450;
 /** The burst starts as the last box lands. */
@@ -208,7 +198,7 @@ const BOX_SPLIT = 14;
 const BOX_MAX = 48;
 const BOX_TALL = 1.18;
 
-/** The six boxes, drawn from the field's value. Never read by a screen reader: the field is. */
+/** The six boxes, drawn from the field's value; screen readers read the field instead. */
 function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Phase; focused: boolean; flipped: number }): React.JSX.Element {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
@@ -218,7 +208,7 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
   const height = Math.round(size * BOX_TALL);
   const active = focused && (phase === 'typing' || phase === 'error') ? Math.min(code.length, JOIN_CODE_LENGTH - 1) : -1;
 
-  // a character popping into its box: from a little small to its size, on the bouncy spring
+  // A character popping into its box, from slightly small to full size on the bouncy spring.
   const pops = useRef(Array.from({ length: JOIN_CODE_LENGTH }, () => new Animated.Value(1))).current;
   const before = useRef(code);
   useEffect(() => {
@@ -233,7 +223,7 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
     }
   }, [code, reduce, pops]);
 
-  // the wave while the server is asked: a loading shimmer, the one loop the motion rules allow
+  // The wave while asking the server: a loading shimmer, the one loop the motion rules allow.
   const wave = useRef(Array.from({ length: JOIN_CODE_LENGTH }, () => new Animated.Value(0))).current;
   useEffect(() => {
     if (phase !== 'joining' || reduce || !awake) return;
@@ -250,7 +240,7 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
     };
   }, [phase, reduce, awake, wave]);
 
-  // the flip as a box turns green: over on its edge and back, the colour changing as it is side-on
+  // A box's flip to green: over on its edge and back, the colour changing when side-on.
   const flips = useRef(Array.from({ length: JOIN_CODE_LENGTH }, () => new Animated.Value(0))).current;
   const burst = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -266,7 +256,7 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
     return () => run.stop();
   }, [phase, reduce, flips, burst]);
 
-  // the caret in the box the next character goes to, blinking as a caret does; still under Reduce Motion
+  // The caret in the next box, blinking; still under Reduce Motion.
   const caret = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (active < 0 || reduce || !awake) {
@@ -292,7 +282,7 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
       importantForAccessibility="no-hide-descendants"
       aria-hidden
     >
-      {/* from behind the boxes, so the flecks fly out from under them */}
+      {/* Behind the boxes, so the flecks fly out from under them. */}
       {phase === 'success' && !reduce ? (
         <ConfettiBurst progress={burst} count={18} seed={7} colours={[colors.gold, colors.success]} reach={Math.min(150, width * 0.45)} testID="join-burst" />
       ) : null}
@@ -336,10 +326,9 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
 }
 
 /**
- * The way to the sheet from the Games hub and from setting up a game: a card
- * with two tickets on it, the front one in the sun's gold and one in green
- * behind it, a line saying what it is for, and the sheet on a tap. A guest is
- * offered an account first, as for every other way into a game with people.
+ * The entry to the sheet from the Games hub and game setup: a card with two tickets (gold in front, green behind),
+ * a line saying what it is for, and the sheet on a tap. A guest is offered an account first, as for every way into
+ * a game with people.
  */
 export function JoinCodeCard({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const { colors } = useTheme();
@@ -365,7 +354,7 @@ export function JoinCodeCard({ style }: { style?: StyleProp<ViewStyle> }): React
           <Text style={[styles.cardTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
             {title}
           </Text>
-          {/* as long as its language needs: cut short at three lines, the end of the sentence (what to do with the code) was lost in German */}
+          {/* No line limit: cut at three lines, German lost the end of the sentence. */}
           <Text style={[styles.cardLine, dir.text, { color: colors.textSecondary }]}>{line}</Text>
         </View>
         <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip} />
@@ -376,14 +365,10 @@ export function JoinCodeCard({ style }: { style?: StyleProp<ViewStyle> }): React
 }
 
 /**
- * Two tickets, one tucked behind the other: the outline the website draws
- * too (a stub, a tear line with a notch bitten from each edge where it meets
- * them, three tiles where the code goes), the front one in the sun's gold and
- * one in green behind it. Flat cut-outs: the stub a shade of the ticket's own
- * colour, the tear line and the tiles in the card's colour as if punched
- * through. A right-to-left reader sees it mirrored, stub first on the right.
+ * Two tickets, one tucked behind the other, in the outline the website draws too: a stub, a notched tear line and
+ * three tiles, the front in gold and the back in green, as flat cut-outs. Mirrored for right-to-left readers.
  */
-export function TicketMotif({ size }: { size: number }): React.JSX.Element {
+function TicketMotif({ size }: { size: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const height = size * 0.8;
@@ -414,7 +399,7 @@ const styles = StyleSheet.create({
   char: { writingDirection: 'ltr', textAlign: 'center', includeFontPadding: false },
   caret: { width: 3, borderRadius: radii.pill },
   shine: { backgroundColor: SHINE },
-  // over the boxes, the size of them, so a tap anywhere on them is a tap in the field
+  // Over the boxes and the same size, so a tap anywhere on them focuses the field.
   field: {
     position: 'absolute',
     top: 0,
@@ -426,7 +411,7 @@ const styles = StyleSheet.create({
     color: 'transparent',
     backgroundColor: 'transparent',
     borderWidth: 0,
-    // the boxes show where typing goes; a browser's focus ring round the whole row would say it twice
+    // The boxes show where typing goes, so a focus ring round the row would repeat it.
     outlineWidth: 0,
     fontSize: 1,
   },

@@ -1,15 +1,8 @@
 /**
- * The shop's art, the stickers, the filter's flag and the admin's backdrop are
- * drawn by scripts/generate-cosmetic-art.mjs — and this is what holds that to
- * be true of the files that ship.
- *
- * It runs the generator into a temporary folder and compares what comes out
- * with what is committed. The same script makes the same SVG on every machine
- * (checked first), and sharp and the compositor's arithmetic turn the
- * same SVG into the same pixels; the comparison is byte-for-byte where it can
- * be and pixel-for-pixel within a hair where an encoder build differs, so a
- * picture that was edited or swapped by hand fails here while a different
- * libwebp does not.
+ * Checks that the shipped shop art, stickers, filter flag and admin backdrop are what
+ * scripts/generate-cosmetic-art.mjs draws. The generator runs into a temporary folder and its output is compared
+ * with what is committed: byte for byte where possible, else pixel for pixel within a small tolerance, so a hand
+ * edit fails while a different WebP encoder build does not.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -75,7 +68,7 @@ describe('the cosmetic art generator', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  // (every scene laid up twice over, grass blade by blade and blossom by blossom: seconds, not milliseconds)
+  // Slow: every scene is laid out twice, blade by blade.
   it('writes the same SVG every time it is asked', () => {
     for (const piece of gen.BACKGROUNDS) expect(gen.backgroundSvg(piece)).toBe(gen.backgroundSvg(piece));
     for (const piece of gen.ICONS) expect(gen.iconSvg(piece)).toBe(gen.iconSvg(piece));
@@ -124,13 +117,8 @@ describe('the cosmetic art generator', () => {
   });
 
   /**
-   * What is committed is what the generator draws.
-   *
-   * Equal bytes settle it. Otherwise both are decoded and must agree to within
-   * a level and a half per channel on average — what re-encoding the same
-   * pixels at a different WebP quality comes to, and far below what a
-   * substituted picture would — with hardly a pixel far off, so a patch
-   * painted over one corner is caught as well.
+   * Equal bytes settle it. Otherwise both are decoded and must agree within about a level and a half per channel on
+   * average, with hardly a pixel far off, so a patch painted over one corner is caught too.
    */
   it('matches every committed file', async () => {
     const drift: string[] = [];

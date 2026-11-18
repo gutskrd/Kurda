@@ -1,7 +1,6 @@
 /**
- * Clearing a group's chat, for oneself or for everyone, against real Postgres
- * and through the routes the apps call: who may, what each member's history
- * and unread count then hold, and what the room is told.
+ * Clearing a group's chat for oneself or for everyone, against real Postgres through the apps' routes: who may,
+ * what each member's history and unread count hold afterwards, and what the room is told.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -53,7 +52,7 @@ describe.skipIf(!DATABASE_URL)('clearing a group chat (integration)', () => {
   const bodies = async (tag: string, gid: string) => (await history(tag, gid)).messages.map((m: { body: string }) => m.body);
   const unread = async (tag: string, gid: string) => (await chat.unread(id[tag]!)).find((u) => u.groupId === gid)?.unread;
 
-  /** A group of the owner's, with an admin and two members: the owner's friends, added by the owner. */
+  /** A group of the owner's with an admin and two members, the owner's friends, added by the owner. */
   async function group(): Promise<string> {
     const { id: gid } = await groups.create(id.owner!, { name: `Clear ${suffix} ${++n}` });
     await addFriendsToGroup(pool, gid, id.owner!, id.admin!, id.m1!, id.m2!);
@@ -98,7 +97,7 @@ describe.skipIf(!DATABASE_URL)('clearing a group chat (integration)', () => {
     expect(await bodies('m1', gid)).toEqual([]);
     expect((await history('m1', gid)).cleared).toEqual(cleared);
     expect(await unread('m1', gid)).toBe(0);
-    // everyone else still sees them, and nothing was deleted
+    // Everyone else still sees them, and nothing was deleted.
     expect(await bodies('m2', gid)).toEqual(['yek', 'du']);
     expect((await history('m2', gid)).cleared.forMe).toBeNull();
 
@@ -157,7 +156,7 @@ describe.skipIf(!DATABASE_URL)('clearing a group chat (integration)', () => {
     expect(await bodies('m1', gid)).toEqual([]);
     expect(await unread('m1', gid)).toBe(0);
 
-    // and the same for a member's own clear, though it was never read
+    // The same for a member's own clear, even though it was never read.
     const own = await group();
     await chat.clear(id.m1!, own, 'me');
     await pool.query(

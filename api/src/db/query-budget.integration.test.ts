@@ -1,21 +1,9 @@
 /**
- * How many statements the hottest calls send to Postgres, against real
- * Postgres (test/query-count.ts).
- *
- * Every statement is a round trip on a small paid database, and the calls here
- * are the ones made most: what the apps poll (the social rail, the heartbeat,
- * an open thread), what a lesson costs, and what the badges, the leagues and
- * the batch writes do for many rows at once. Two kinds of check:
- *
- * - a budget: no more statements than the call takes today, so one added on a
- *   hot path is a decision somebody makes rather than an accident;
- * - the same count for few rows and for many, which is what fails when a
- *   lookup moves into a loop (an N+1) even if the budget has room to spare.
- *
- * A call is counted the second time it is made, as a polling client makes it,
- * once the first has settled what happens only once (the day's network
- * sighting, a first badge count). The budgets include the auth middleware's
- * own read of the session.
+ * How many statements the hottest calls send to Postgres (test/query-count.ts). Each check is either a budget (no
+ * more statements than the call takes today, so an extra one on a hot path is a decision) or the same count for
+ * few rows and for many, which catches an N+1. A call is counted the second time it is made, as a polling client
+ * makes it, after one-off work (the day's network sighting, a first badge count). Budgets include the auth
+ * middleware's session read.
  */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -74,14 +62,10 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
   const call = (method: 'GET' | 'POST', url: string, tag: string, payload?: unknown) =>
     app.inject({ method, url, headers: { authorization: `Bearer ${tokens[tag]!}` }, payload: payload as object, remoteAddress: `10.${net}.9.9` });
 
-  /** Let what a call set going and did not wait for finish, so it is not counted against the next. */
+  /** Lets work a call started in the background finish, so it is not counted against the next call. */
   const settle = () => poolQuiet(app.db);
 
-  /**
-   * The offline gate's setting is read at most once every five seconds per
-   * process (maintenance/service.ts), by whichever request comes then: shared
-   * by every request rather than paid by one, so it is left out of a count.
-   */
+  /** The offline gate's setting is read at most every five seconds per process, so it is left out of counts. */
   const SHARED_CACHE = /\bFROM maintenance\b/;
 
   /** The statements the app's pool sends for one call. */
@@ -104,11 +88,7 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
     await pool.query(`INSERT INTO dm_messages (user_lo, user_hi, sender_id, body) VALUES ($1, $2, $3, $4)`, [lo, hi, from, body]);
   }
 
-  /**
-   * A published lesson of `count` multiple-choice items, all answered with
-   * option 0. Their prompts are Kurdish, so starting it looks their words up in
-   * the dictionary, as a real lesson's start does.
-   */
+  /** A published lesson of `count` multiple-choice items, all answered 0, with Kurdish prompts looked up on start. */
   async function lesson(position: number, count: number): Promise<string> {
     const repo = new ContentRepository(pool);
     const unitId = (await pool.query<{ id: string }>(`SELECT id FROM units WHERE course_id = $1`, [courseId])).rows[0]!.id;
@@ -186,8 +166,8 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
     });
 
     it('the day quests are the session read, the time zone and one statement, on the first look as on every other', async () => {
-      // Learn reads them on every visit; the first look of the day makes them in the same statement, and
-      // reads the earlier days' chests still waiting with them (after another call, which notes the day's network sighting)
+      // Read on every visit to Learn; the day's first look creates them in the same statement and reads waiting chests
+      // (after another call notes the day's network sighting).
       await call('GET', '/me/daily-goal', 'f5');
       await pool.query(
         `INSERT INTO user_quests (user_id, day, kind, target, chest, progress, done_at)
@@ -233,10 +213,7 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(b.count, b.statements.join('\n')).toBeLessThanOrEqual(3);
     });
 
-    /**
-     * A group of `me`'s with `members` of the friends in it, and `banned` of
-     * the others banned from it, each with a request to come back waiting.
-     */
+    /** A group of `me`'s with `members` friends in it and `banned` others banned, each asking to come back. */
     async function groupWith(name: string, members: string[], banned: string[]): Promise<string> {
       const groups = new GroupService(pool);
       const { id } = await groups.create(ids.me!, { name: `${name} ${suffix}`.slice(0, 40) });
@@ -285,7 +262,7 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
 
   describe('a lesson', () => {
     it('starting, answering and finishing cost the same however many items it has', async () => {
-      // each learner finishes a first lesson, which joins the week's league and makes the first badge count
+      // Each learner finishes a first lesson, joining the week's league and making the first badge count.
       const warm = await lesson(1, 2);
       await play('la', warm);
       await play('lb', warm);
@@ -294,8 +271,8 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       const long = await play('lb', await lesson(3, 6));
       const shown = (x: { statements: readonly string[] }) => x.statements.join('\n');
       expect(long.start.count, shown(long.start)).toBe(short.start.count);
-      // the session read, the lesson, the new session, its exercises with their answers, and the meanings of the
-      // prompts' words, one dictionary statement for the whole lesson (a recorded lesson adds one for its recordings)
+      // Session read, lesson, new session, exercises with answers, and one dictionary statement for the prompts' words
+      // (a recorded lesson adds one for its recordings).
       expect(long.start.count, shown(long.start)).toBeLessThanOrEqual(5);
       for (const answer of [...short.answers, ...long.answers]) {
         expect(answer.count, shown(answer)).toBe(short.answers[0]!.count);
@@ -311,7 +288,7 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       const some = await queriesDuring(pool, () => badges.evaluate(ids.la!, BADGE_TRIGGERS.learning));
       const all = await queriesDuring(pool, () => badges.evaluate(ids.la!));
       expect(all.count, all.statements.join('\n')).toBe(some.count);
-      // BEGIN, the learner's lock, their state, every measure, their badges, COMMIT (and one write if any moved)
+      // BEGIN, the learner's lock, state, every measure, badges, COMMIT, and one write if anything moved.
       expect(all.count, all.statements.join('\n')).toBeLessThanOrEqual(7);
     });
 

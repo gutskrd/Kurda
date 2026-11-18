@@ -21,7 +21,7 @@ describe('lesson repeats', () => {
   });
 
   it('pays two repeats a day and nothing for the third', () => {
-    // done once on an earlier day, then twice today: those two were repeats
+    // Done once on an earlier day, then twice today: those two were repeats.
     expect(lessonXp(1, { priorCompletions: 1, priorCompletionsToday: 0 })).toBe(5);
     expect(lessonXp(1, { priorCompletions: 2, priorCompletionsToday: 1 })).toBe(5);
     expect(lessonXp(1, { priorCompletions: 3, priorCompletionsToday: 2 })).toBe(0);

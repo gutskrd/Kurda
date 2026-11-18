@@ -10,13 +10,9 @@ import { ReportSheet } from './ReportSheet';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * Report one player of a game, by their seat.
- *
- * A game shows people who are not your friends as "Player 2", and that is all
- * the report needs: the server maps the game and the seat to the person, so the
- * phone never holds anyone else's account id. A quiet flag at the end of their
- * row, with the sheet behind it; no Block on the done screen, since there is no
- * account here to block.
+ * Report one player of a game by their seat: the server maps game and seat to the person, so the phone never holds
+ * anyone else's account id. A quiet flag at the end of their row; no Block on the done screen, since there is no
+ * account to block.
  */
 export function PlayerReportButton({
   game,
@@ -27,7 +23,7 @@ export function PlayerReportButton({
   game: PlayGame;
   gameId: string;
   seat: number;
-  /** what the game calls them: their name when you may see it, else null ("Player 3") */
+  /** What the game calls them: their name when you may see it, else null ("Player 3"). */
   name: string | null;
 }): React.JSX.Element {
   const { colors } = useTheme();

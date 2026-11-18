@@ -3,9 +3,8 @@ import { makePushSendJob, type PushSendPayload } from './push-jobs.js';
 import type { PushService } from '../push/service.js';
 
 /**
- * The push job's part in a push that quiet hours hold back: it is queued
- * again for when they end, once, and when it comes back it goes only if what
- * it tells of is still waiting.
+ * A push held back by quiet hours is queued again once for when they end, and then goes only if what it tells of
+ * is still waiting.
  */
 
 const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };

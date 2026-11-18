@@ -15,14 +15,8 @@ import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchResult } from '../dictionary/types';
 
 /**
- * The dictionary (KUR-045), which the browser did not have at all — a Kurdish
- * site where you could not look a word up, while the phone had a whole tab of
- * it.
- *
- * Search-as-you-type against the same endpoints the phone uses, the same
- * debounce, and the same closest-matches fallback when nothing matches exactly.
- * Recents live for the session only: a search history that outlives the visit
- * is a record of what someone did not know, and nobody asked us to keep one.
+ * The dictionary: search as you type against the phone's endpoints, with the same debounce and closest-match fallback.
+ * Recent searches last only for the session, since a lasting history would record what someone did not know.
  */
 export function Dictionary(): React.JSX.Element {
   const { client } = useAuth();
@@ -36,7 +30,7 @@ export function Dictionary(): React.JSX.Element {
   const [saved, setSaved] = useState<SavedWord[]>([]);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const debounced = useDebouncedValue(query, 250);
-  // where the tool's card on Learn lands when it is pressed, and what goes back to it
+  // Where the tool's card on Learn lands, and what goes back to it.
   const head = useGrowsInto('learn:dictionary', { shape: 'card' });
 
   const loadSaved = useCallback(() => {
@@ -162,12 +156,12 @@ export function Dictionary(): React.JSX.Element {
         </section>
       ) : null}
 
-      {/* "no results" only once an answer has said so, not in the moment before the first search goes out */}
+      {/* "No results" only once an answer says so, not before the first search goes out. */}
       {!idle && !searching && result !== null && results.length === 0 && !failed ? (
         <EmptyState title={t('dictionary.noResults', { query: query.trim() })} message="" />
       ) : null}
 
-      {/* the first search's rows, before there are any; a later search keeps the last ones up meanwhile */}
+      {/* The first search's placeholder rows; later searches keep the last rows up meanwhile. */}
       {!idle && !result && !failed ? <DictRowsSkeleton /> : null}
 
       {results.length > 0 ? (

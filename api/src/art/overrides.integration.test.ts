@@ -1,11 +1,4 @@
-/**
- * Pictures put in place of the built-in art, against real Postgres: an
- * uploaded picture given to a slot shows in the public list the apps load, a
- * level's own picture and the one for every level both, a reset brings the
- * original back and lets the old picture go, the history keeps both, and only
- * the admins who keep the art can change it. Any shop item can carry a square
- * picture too.
- */
+/** Pictures put in place of the built-in art, against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -112,7 +105,7 @@ describe.skipIf(!DATABASE_URL)('pictures put in place of the built-in art (integ
     const reset = await call(admin, 'DELETE', '/admin/art/rank:zozan', { note: 'back to the original' });
     expect(reset.statusCode).toBe(200);
     expect((await published()).overrides['rank:zozan']).toBeUndefined();
-    // the sweep takes it a day from now: the day to change one's mind in
+    // The orphan sweep takes it only a day later.
     expect(await confirmed(key)).toBe(false);
     const history = (await call(admin, 'GET', '/admin/art/rank:zozan/history')).json().history as Array<{ assetKey: string | null; note: string | null }>;
     expect(history[0]).toMatchObject({ assetKey: null, note: 'back to the original' });

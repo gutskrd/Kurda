@@ -30,15 +30,13 @@ interface Row {
 }
 
 /**
- * Optional SMS phone verification (KUR-297). Wraps the pure OTP state machine
- * (`phone-verification.ts`) with persistence + a provider-agnostic SMS sender.
+ * Optional SMS phone verification: the pure OTP state machine (`phone-verification.ts`) with persistence and a
+ * provider-agnostic SMS sender.
  *
- * Privacy-minimized: the raw number is **never stored** — only a hash (for the
- * accounts-per-number cap + recycle detection) and a masked display form. The
- * client re-supplies the number on each `send`, so a resend (same in-flight
- * number) is detected by hash and gated by the pure cooldown / send-cap; a new
- * number starts a fresh session. A verified phone raises trust (#295) and is
- * exported/deleted with the account (#024).
+ * The raw number is never stored, only a hash (for the accounts-per-number cap and recycle detection) and a masked
+ * display form. Clients resend the number on each `send`, so a resend to the same in-flight number is detected by hash
+ * and gated by the cooldown and send cap; a new number starts a fresh session. A verified phone raises trust and is
+ * exported and deleted with the account.
  */
 export class PhoneVerificationService {
   private readonly pool: pg.Pool;
@@ -52,9 +50,8 @@ export class PhoneVerificationService {
   }
 
   /**
-   * Send a code to `rawPhone`. First send for a number starts a session; sending
-   * again to the same in-flight number is a resend (cooldown + per-session cap
-   * from the pure core). Switching numbers replaces the session.
+   * Send a code to `rawPhone`. A first send starts a session; sending again to the same in-flight number is a resend
+   * (cooldown and per-session cap); a different number replaces the session.
    */
   async send(userId: string, rawPhone: string): Promise<SendResult> {
     const e164 = normalizeE164(rawPhone);
@@ -63,10 +60,8 @@ export class PhoneVerificationService {
     const masked = maskE164(e164);
     const now = this.now();
 
-    // A number verifies at most ONE account at a time: verifying detaches it
-    // from any prior holder (recycle). That exclusivity is the anti-farm lever —
-    // a number can't keep many accounts verified — so no separate send-time cap
-    // is needed; SMS-send abuse is bounded by the per-user/IP rate limit (#010).
+    // A number verifies at most ONE account at a time: verifying detaches it from any prior holder (recycle). That
+    // exclusivity is the anti-farm lever, so no send-time cap is needed; send abuse is bounded by the per-user/IP limit.
     const existing = await this.load(userId);
     const code = genCode();
     let state: VerificationState;
@@ -97,10 +92,7 @@ export class PhoneVerificationService {
     return { ok: true, masked, resent };
   }
 
-  /**
-   * Verify a code for `rawPhone`. On success the account's phone is marked
-   * verified (and the number is detached from any prior account — recycling).
-   */
+  /** Verify a code for `rawPhone`. On success the phone is marked verified and detached from any previous account. */
   async verify(userId: string, rawPhone: string, code: string): Promise<VerifyResultOut> {
     const row = await this.load(userId);
     if (!row) return { ok: false, reason: 'no-session' };

@@ -41,19 +41,19 @@ describe('the library', () => {
 
     const card = cardOf('Şengê û Pengê', shelf('Featured'));
     expect(within(card).getByRole('link')).toHaveAttribute('href', '/app/learn/stories/senge-u-penge');
-    // a story's own words are marked as Kurdish; its level is a plain name, with what that means on hover, and never a CEFR letter
+    // A story's words are marked as Kurdish; its level is a plain name with a hover hint, never a CEFR letter.
     expect(within(card).getByText('Şengê û Pengê')).toHaveAttribute('lang', 'ku');
     expect(within(card).getByText('Beginner')).toHaveAttribute('title', 'Everyday sentences and short stories');
     expect(within(card).queryByText('A2')).toBeNull();
     expect(within(card).getByText('Animal fables')).toBeInTheDocument();
     expect(within(card).getByText('~4 min')).toBeInTheDocument();
     expect(within(card).getByText('Read aloud')).toBeInTheDocument();
-    // a story without a chosen cover lies on its own rug; one with a cover wears its picture
+    // A story without a chosen cover lies on its own rug; one with a cover wears its picture.
     expect(card.querySelector('.story-cover img')).toHaveAttribute('src', `/cosmetics/backgrounds/${storyRugFor('senge-u-penge').file}`);
     expect(card.querySelector('.story-cover svg')).toBeNull();
     expect(cardOf('Dara Tûyê', shelf('Bookmarks')).querySelector('.story-cover img')).toHaveAttribute('src', '/cosmetics/backgrounds/made-06-gola-sin.webp');
 
-    // a story part-read says how long is left, and shows it as a hairline
+    // A story part-read says how long is left, and shows it as a hairline.
     const started = cardOf('Bazar', shelf('Continue reading'));
     expect(within(started).getByText('2 min left')).toBeInTheDocument();
     expect(started.querySelector('.story-card-progress > span')).toHaveStyle({ width: '50%' });
@@ -103,7 +103,7 @@ describe('the library', () => {
     expect(await screen.findByText('Qelema Şîn')).toBeInTheDocument();
     expect(calls.filter((c) => c.path.startsWith('/stories?')).map((c) => c.path)).toEqual(['/stories?q=qelem&dialect=kurmanci&limit=24']);
     expect(screen.getByText('Stories found: 1')).toBeInTheDocument();
-    // the shelves make way for the finds
+    // The shelves make way for the finds.
     expect(screen.queryByRole('region', { name: 'Featured' })).toBeNull();
   });
 
@@ -126,10 +126,10 @@ describe('the library', () => {
     await userEvent.click(screen.getByRole('button', { name: 'More stories' }));
     expect(await screen.findByText('Çîrok 24')).toBeInTheDocument();
     expect(calls.at(-1)?.path).toBe('/stories?level=2&dialect=kurmanci&audio=1&limit=24&offset=24');
-    // every find is here: no More to ask for
+    // Every find is here: no More to ask for.
     expect(screen.queryByRole('button', { name: 'More stories' })).toBeNull();
 
-    // the filters let go all at once, the shelves come back
+    // The filters let go all at once, the shelves come back.
     await userEvent.click(screen.getByRole('button', { name: 'Clear all' }));
     expect(await screen.findByRole('region', { name: 'Featured' })).toBeInTheDocument();
   });
@@ -138,7 +138,7 @@ describe('the library', () => {
     const { calls } = fakeApi({ 'GET /stories/library': libraryFixture(), 'GET /stories': { stories: [], total: 0 } });
     library();
     const categories = await screen.findByRole('region', { name: 'Categories' });
-    // only categories with a story in them are offered
+    // Only categories with a story in them are offered.
     expect(within(categories).queryByRole('button', { name: /Legends/ })).toBeNull();
     await userEvent.click(within(categories).getByRole('button', { name: /Nature/ }));
     await waitFor(() => expect(calls.at(-1)?.path).toBe('/stories?category=nature&dialect=kurmanci&limit=24'));
@@ -149,7 +149,7 @@ describe('the library', () => {
     localStorage.setItem('hevalo_locale', 'ku');
     fakeApi({ 'GET /stories/library': libraryFixture() });
     library();
-    // on the Categories shelf, and in the panel's categories alike
+    // On the Categories shelf, and in the panel's categories alike.
     expect(await screen.findAllByRole('button', { name: /Çîrokên ajalan/ })).toHaveLength(1);
     await userEvent.click(await screen.findByRole('button', { name: 'Rêz bike û parzûn bike' }));
     expect(within(screen.getByRole('dialog')).getByRole('radio', { name: /Çîrokên ajalan/ })).toBeInTheDocument();
@@ -159,7 +159,7 @@ describe('the library', () => {
     localStorage.setItem('hevalo_locale', 'de');
     const kawa = listItem({ id: 'k1', slug: 'kmr-kawaye-hesinkar', title: 'Kawayê Hesinkar', level: 3, length: 'saga', category: 'legend', cover: 'kawa' });
     const fixture = libraryFixture({ legends: [kawa] });
-    // the list names its categories in English, Kurmancî and Soranî only; the two at the end are an editor’s since
+    // The list names categories in English, Kurmancî and Soranî only; the last two were added by an editor since.
     fixture.categories = [
       ...fixture.categories.map((c) => (c.slug === 'legend' ? { ...c, count: 1 } : c)),
       { slug: 'poems', name: { en: 'Poems', de: 'Gedichte' }, position: 8, count: 1 },
@@ -167,14 +167,14 @@ describe('the library', () => {
     ];
     fakeApi({ 'GET /stories/library': fixture });
     library();
-    // the legends' shelf is named in German, and so is every chip of a category the app knows
+    // The legends' shelf is named in German, and so is every chip of a category the app knows.
     expect(await screen.findByRole('region', { name: 'Sagen und Geschichte' })).toBeInTheDocument();
     const categories = shelf('Kategorien');
     for (const name of [/^Tierfabeln/, /^Alltag/, /^Natur/, /^Sagen und Geschichte/]) expect(within(categories).getByRole('button', { name })).toBeInTheDocument();
-    // a category the app does not know keeps the list's own name: German where it has one, else English
+    // A category the app does not know keeps the list's own name: German where it has one, else English.
     expect(within(categories).getByRole('button', { name: /^Gedichte/ })).toBeInTheDocument();
     expect(within(categories).getByRole('button', { name: /^Songs/ })).toBeInTheDocument();
-    // and a card says its category the same way
+    // And a card says its category the same way.
     expect(within(shelf('Empfohlen')).getByText('Tierfabeln')).toBeInTheDocument();
   });
 
@@ -217,7 +217,7 @@ describe('the library', () => {
     library();
     const card = (await screen.findByText(/Question 2 of 5/)).closest('a')!;
     expect(card).toHaveAttribute('href', '/app/games/stories/play/g9');
-    // the sixth character joins on its own, through the one join every game shares
+    // The sixth character joins on its own, through the one join every game shares.
     await userEvent.type(screen.getByLabelText('Join with a code'), 'abc-234');
     expect(await screen.findByText('the game page')).toBeInTheDocument();
     expect(calls.find((c) => c.path === '/play/join')?.body).toEqual({ code: 'ABC234' });
@@ -249,18 +249,18 @@ describe('the library', () => {
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', '1 of 4 stories finished');
 
     await userEvent.click(within(screen.getByRole('group', { name: 'Which Kurdish' })).getByRole('radio', { name: 'Soranî' }));
-    // the Soranî page: its own newest, its own counts and tally, and no Kurmancî story on its shelves
+    // The Soranî page: its own newest, its own counts and tally, and no Kurmancî story on its shelves.
     await waitFor(() => expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', '0 of 1 stories finished'));
     expect(chosen()).toEqual(['Soranî']);
     expect(localStorage.getItem('hevalo.stories.variety')).toBe('sorani');
     expect(within(shelf('Recently added')).getByText('بازاڕ')).toBeInTheDocument();
     expect(within(shelf('Recently added')).queryByText('Şengê û Pengê')).toBeNull();
     expect(screen.queryByRole('region', { name: 'Featured' })).toBeNull();
-    // what the reader is part-way through is theirs, whatever its variety
+    // What the reader is part-way through is theirs, whatever its variety.
     expect(within(shelf('Continue reading')).getByText('Bazar')).toBeInTheDocument();
     expect(pages(calls)).toEqual(['/stories/library?dialect=kurmanci', '/stories/library?dialect=sorani']);
 
-    // back again: the page shown before is there at once, and asked for again behind it
+    // Back again: the page shown before is there at once, and asked for again behind it.
     await userEvent.click(within(screen.getByRole('group', { name: 'Which Kurdish' })).getByRole('radio', { name: 'Kurmancî' }));
     expect(screen.getByRole('region', { name: 'Featured' })).toBeInTheDocument();
     await waitFor(() => expect(pages(calls)).toHaveLength(3));
@@ -310,7 +310,7 @@ describe('the library', () => {
     const order = ['Featured', 'Legends and history', 'Recently added'];
     expect(regions().filter((n) => order.includes(n))).toEqual(order);
     expect(within(shelf('Legends and history')).getByRole('link', { name: /Kawayê Hesinkar/ })).toHaveAttribute('href', '/app/learn/stories/kmr-kawaye-hesinkar');
-    // the shelf's name says what they are once: no card on it says it again
+    // The shelf's name says what they are once: no card on it says it again.
     expect(within(shelf('Legends and history')).queryByText('Legends and history', { selector: '.story-card-meta span' })).toBeNull();
     expect(within(shelf('Legends and history')).getByText('Kawayê Hesinkar').closest('.story-card')!.querySelector('.story-cover img')).toHaveAttribute(
       'src',
@@ -378,20 +378,20 @@ describe('the library’s sort and filter panel', () => {
   it('puts one funnel beside the search, and every choice in plain words behind it', async () => {
     const { calls } = await open();
     await screen.findByRole('region', { name: 'Featured' });
-    // no rows of chips over the shelves any more, and no chip while nothing is on
+    // No rows of chips over the shelves any more, and no chip while nothing is on.
     expect(screen.queryByRole('button', { name: 'Beginner' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Clear all' })).toBeNull();
     const funnel = screen.getByRole('button', { name: 'Sort and filter' });
     expect(funnel).toHaveAttribute('aria-haspopup', 'dialog');
     await userEvent.click(funnel);
 
-    // the order: the list’s three, easiest first as it always was, and where the keyboard starts
+    // The list's three orders, easiest first by default, where the keyboard starts.
     expect(names(group('Sort by'))).toEqual(['Easiest first', 'Newest', 'A to Z']);
     expect(within(group('Sort by')).getByRole('radio', { name: 'Easiest first' })).toHaveFocus();
-    // only the levels that have a story, each by a plain name with what it means
+    // Only the levels that have a story, each by a plain name with what it means.
     expect(names(group('Level'))).toEqual(['Any level', 'Starter', 'Beginner', 'Intermediate']);
     expect(within(group('Level')).getByRole('radio', { name: 'Starter' })).toHaveAccessibleDescription('First words and short sentences');
-    // which Kurdish is the switch at the library's top, and nowhere in the panel: two controls for one thing would be a fault
+    // Which Kurdish is the library's switch, never also a control in the panel.
     expect(within(panel()).queryByRole('radiogroup', { name: 'Kurdish' })).toBeNull();
     expect(within(panel()).queryByRole('radio', { name: /Kurmancî|Soranî/ })).toBeNull();
     expect(names(group('Length'))).toEqual(['Any length', 'Short', 'Medium', 'Long', 'In chapters']);
@@ -399,12 +399,12 @@ describe('the library’s sort and filter panel', () => {
     const aloud = within(panel()).getByRole('switch', { name: 'Read aloud' });
     expect(aloud).toHaveAttribute('aria-checked', 'false');
     expect(aloud).toHaveAccessibleDescription('Only stories you can listen to from start to finish');
-    // the categories with something in them, each with how many
+    // The categories with something in them, each with how many.
     expect(names(group('Category'))).toEqual(['Any category', 'Animal fables, Stories: 1', 'Everyday life, Stories: 1', 'Nature, Stories: 1']);
-    // never a bare CEFR letter
+    // Never a bare CEFR letter.
     expect(panel().textContent).not.toMatch(/\b[ABC][12]\b/);
 
-    // nothing to reset yet, and the whole library's count is known without asking
+    // Nothing to reset yet, and the whole library's count is known without asking.
     expect(within(panel()).getByRole('button', { name: 'Reset' })).toBeDisabled();
     expect(within(panel()).getByRole('button', { name: 'Show 4 stories' })).toBeInTheDocument();
     expect(counts(calls)).toEqual([]);
@@ -416,11 +416,11 @@ describe('the library’s sort and filter panel', () => {
     await userEvent.click(within(group('Level')).getByRole('radio', { name: 'Beginner' }));
     await userEvent.click(within(group('Length')).getByRole('radio', { name: 'Short' }));
     expect(await within(panel()).findByRole('button', { name: 'Show 7 stories' })).toBeInTheDocument();
-    // one cheap question for the settled choices, not one per tap, and no list yet
+    // One cheap count for the settled choices, not one per tap, and no list yet.
     expect(counts(calls)).toEqual(['/stories?level=2&dialect=kurmanci&length=short&limit=1']);
     expect(lists(calls)).toEqual([]);
     expect(where()).toBe('');
-    // the order does not change how many there are, so it asks nothing
+    // The order does not change how many there are, so it asks nothing.
     await userEvent.click(within(group('Sort by')).getByRole('radio', { name: 'Newest' }));
     expect(counts(calls)).toHaveLength(1);
 
@@ -428,7 +428,7 @@ describe('the library’s sort and filter panel', () => {
     await waitFor(() => expect(lists(calls)).toEqual(['/stories?level=2&dialect=kurmanci&length=short&sort=newest&limit=24']));
     expect(where()).toBe('?level=A2&length=short&sort=newest');
     expect(screen.queryByRole('dialog')).toBeNull();
-    // the funnel says what is on, and has the keyboard back; a chip says each part
+    // The funnel says what is on, and has the keyboard back; a chip says each part.
     expect(screen.getByRole('button', { name: 'Sort and filter — Newest, Beginner, Short' })).toHaveFocus();
     expect(screen.getByRole('button', { name: 'Newest' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Beginner' })).toBeInTheDocument();
@@ -458,7 +458,7 @@ describe('the library’s sort and filter panel', () => {
     expect(where()).toBe('?length=short');
 
     await userEvent.click(funnel);
-    // it opens on what is shown, and the list on show already says how many
+    // It opens on what is shown, and the list on show already says how many.
     expect(within(group('Length')).getByRole('radio', { name: 'Short' })).toHaveAttribute('aria-checked', 'true');
     expect(within(group('Level')).getByRole('radio', { name: 'Any level' })).toHaveAttribute('aria-checked', 'true');
     expect(within(panel()).getByRole('button', { name: 'Show 7 stories' })).toBeInTheDocument();
@@ -475,21 +475,21 @@ describe('the library’s sort and filter panel', () => {
   it('reads the order, the length and read aloud back from the address, and lets each part go from its chip', async () => {
     const { calls } = await open('/app/learn/stories?sort=title&length=long&audio=1&category=fable');
     await waitFor(() => expect(lists(calls)).toEqual(['/stories?category=fable&dialect=kurmanci&length=long&audio=1&sort=title&limit=24']));
-    // the category is named once the library has said what it is called
+    // The category is named once the library has said what it is called.
     expect(await screen.findByRole('button', { name: 'Sort and filter — A to Z, Long, Read aloud, Animal fables' })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Remove Long' }));
     await waitFor(() => expect(where()).toBe('?audio=1&category=fable&sort=title'));
-    // the chip went, so the keyboard lands on the funnel rather than nowhere
+    // The chip went, so the keyboard lands on the funnel rather than nowhere.
     expect(screen.getByRole('button', { name: 'Sort and filter — A to Z, Read aloud, Animal fables' })).toHaveFocus();
     await userEvent.click(screen.getByRole('button', { name: 'Back to easiest first' }));
     await waitFor(() => expect(where()).toBe('?audio=1&category=fable'));
     await userEvent.click(screen.getByRole('button', { name: 'Remove Read aloud' }));
     await waitFor(() => expect(where()).toBe('?category=fable'));
-    // one part left: its own ✕ is enough
+    // One part left: its own ✕ is enough.
     expect(screen.queryByRole('button', { name: 'Clear all' })).toBeNull();
 
-    // a chip opens the panel on its part, and the keyboard goes back to it on Escape
+    // A chip opens the panel on its part, and the keyboard goes back to it on Escape.
     const chip = screen.getByRole('button', { name: 'Animal fables' });
     await userEvent.click(chip);
     expect(within(group('Category')).getByRole('radio', { name: 'Animal fables, Stories: 1' })).toHaveAttribute('aria-checked', 'true');

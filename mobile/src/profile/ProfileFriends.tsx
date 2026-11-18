@@ -14,14 +14,7 @@ import { useDirection } from '../reports/direction';
 /** Enough to show who someone knows without turning a profile into a directory. */
 const SHOW = 12;
 
-/**
- * A friend, as `GET /users/:id/friends` actually returns one.
- *
- * `userId`, not `id`. The browser's copy of this type said `id` once and every
- * face in its list opened `/users/undefined` — the one thing the list is for
- * did not work, and nothing in the types noticed, because the shape was
- * declared by hand rather than taken from the endpoint.
- */
+/** A friend as `GET /users/:id/friends` returns one: `userId`, not `id`, as the endpoint names it. */
 interface FriendOf {
   userId: string;
   username: string;
@@ -30,20 +23,10 @@ interface FriendOf {
 }
 
 /**
- * Who this person knows (KUR-090).
- *
- * A profile that shows a level, a streak and what someone is wearing but not
- * who they know is a profile of an account rather than of a person — and on a
- * community app, who someone knows is most of what makes anyone else findable.
- *
- * The privacy rules are the profile's own and live on the server: a profile
- * whose detail you may not see returns no friends at all, so there is nothing
- * to gate here. Nothing is rendered when the list is empty, because "0 friends"
- * on somebody's profile is a worse thing to publish than silence.
- *
- * Each face opens that person's own profile, which is how you get from one
- * person to the next without going back to search. In Soranî and Arabic the
- * faces run from the right, and the row starts scrolled to that end.
+ * Who this person knows. Privacy is the server's: a profile whose detail you may not see returns no friends, so there
+ * is nothing to gate here. Nothing renders for an empty list, since "0 friends" is worse to publish than silence. Each
+ * face opens that person's profile; in right-to-left languages the faces run from the right, starting scrolled to that
+ * end.
  */
 export function ProfileFriends({ userId }: { userId: string }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -60,15 +43,14 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
   useEffect(() => {
     let cancelled = false;
     setFriends(null);
-    // ask for the twelve this draws, not all five hundred somebody may have;
-    // `total` is what the line underneath needs, and it comes back with the page
+    // Ask for the twelve this draws, not every friend; `total` comes back with the page for the line underneath.
     void client
       .get<{ friends: FriendOf[]; total?: number }>(`/users/${userId}/friends?limit=${SHOW}`)
       .then((res) => {
         if (cancelled) return;
         const list = res.ok ? (res.data.friends ?? []) : [];
         setFriends(list);
-        // an API that predates paging sends no total — it sent every friend
+        // An API that predates paging sends no total; it sent every friend.
         setTotal(res.ok ? (res.data.total ?? list.length) : 0);
       });
     return () => {
@@ -89,7 +71,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.row, { flexDirection: dir.row }]}
-        // right to left, the first face is on the right: start the row there
+        // Right to left, the first face is on the right: start the row there.
         onContentSizeChange={() => {
           if (mirrored) scroller.current?.scrollToEnd({ animated: false });
         }}

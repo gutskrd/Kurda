@@ -1,8 +1,4 @@
-/*
- * Hevalo offline for a while (maintenance/MaintenanceGate.tsx): one calm
- * column in place of the app, on the page's own colour in either scheme. It
- * fades in, and with reduced motion it is simply there.
- */
+/* Hevalo offline (maintenance/MaintenanceGate.tsx): one calm column on the page colour, fading in except under Reduce Motion. */
 .maintenance {
   display: flex;
   flex-direction: column;

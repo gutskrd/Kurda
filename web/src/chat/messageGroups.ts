@@ -1,15 +1,6 @@
 /**
- * Grouping a flat message list into what a chat should actually show.
- *
- * A thread rendered as one bubble per message repeats the sender's name on every
- * line, gives no sense of when anything happened, and reads as a wall. Real
- * conversation arrives in bursts, so messages are folded into:
- *
- *   day section  →  run (one sender, one burst)  →  messages
- *
- * Kept pure and separate from rendering so the rules are testable on their own —
- * the edge cases (midnight, a burst spanning it, a reply to yourself an hour
- * later) are all about time arithmetic, not markup.
+ * Folds a flat message list into day sections of runs (one sender, one burst), kept pure so the time rules are
+ * testable apart from rendering.
  */
 
 /** The minimum a message needs for grouping. */
@@ -20,13 +11,13 @@ export interface Groupable {
 }
 
 /** Consecutive messages from one sender, close together in time. */
-export interface Run<T> {
+interface Run<T> {
   senderId: string;
   messages: T[];
 }
 
 /** All the runs that happened on one calendar day. */
-export interface DaySection<T> {
+interface DaySection<T> {
   /** `YYYY-MM-DD` in local time — the grouping key. */
   day: string;
   /** What to print on the separator: "Today", "Yesterday", a weekday, a date. */
@@ -34,11 +25,7 @@ export interface DaySection<T> {
   runs: Run<T>[];
 }
 
-/**
- * A gap longer than this starts a new run even for the same sender. Five minutes
- * is long enough to keep a burst of typing together and short enough that a reply
- * an hour later is visibly a separate moment.
- */
+/** A gap longer than this starts a new run even for the same sender. */
 const RUN_GAP_MS = 5 * 60 * 1000;
 
 /** Local calendar day, not UTC — a message at 01:00 belongs to the day you saw it. */
@@ -54,22 +41,8 @@ function daysApart(a: Date, b: Date): number {
   return Math.round((bt - at) / 86_400_000);
 }
 
-/**
- * What a day separator should read, relative to `now`.
- *
- * Recent days get a name because that is how people refer to them; anything
- * older gets a date, since "Tuesday" stops being useful past a week.
- */
-/**
- * What language the date is in, and what the two special days are called.
- *
- * Passing these rather than reading a context keeps this function pure and
- * testable. `undefined` for the locale is what `toLocaleDateString` already
- * meant — the browser's own — which is the right default for a caller that has
- * not been translated yet, and wrong for one that has: an app set to Spanish
- * should not name its months in English because the browser is.
- */
-export interface DayLabelWords {
+/** The date's locale (undefined means the browser's) and the words for today and yesterday, passed in to stay pure. */
+interface DayLabelWords {
   locale?: string;
   today?: string;
   yesterday?: string;
@@ -77,6 +50,7 @@ export interface DayLabelWords {
   earlier?: string;
 }
 
+/** A day separator relative to `now`: today, yesterday, a weekday within the week, otherwise a date. */
 export function dayLabel(date: Date, now = new Date(), words: DayLabelWords = {}): string {
   const { locale, today = 'Today', yesterday = 'Yesterday' } = words;
   const diff = daysApart(date, now);
@@ -91,13 +65,7 @@ export function dayLabel(date: Date, now = new Date(), words: DayLabelWords = {}
   });
 }
 
-/**
- * Clock time on a message, e.g. "14:05" — the locale decides 12h vs 24h.
- *
- * `undefined` means the browser's own, which is the right answer only for a
- * caller that has no language of its own to offer: an app set to German should
- * show 14:05 even in a browser configured for American English.
- */
+/** A message's clock time, with the locale choosing 12 or 24 hours; undefined uses the browser's locale. */
 export function timeLabel(iso: string, locale?: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -105,12 +73,8 @@ export function timeLabel(iso: string, locale?: string): string {
 }
 
 /**
- * Fold an ascending (oldest-first) message list into day sections of runs.
- *
- * A message starts a new run when the sender changes, when the day changes, or
- * when more than RUN_GAP_MS has passed. An unparseable timestamp never merges
- * into a neighbouring run — better a stray single bubble than a message silently
- * filed under the wrong day.
+ * Folds an oldest-first message list into day sections of runs. A new run starts on a new sender, a new day or a gap
+ * over RUN_GAP_MS; an unparseable timestamp never joins a neighbouring run.
  */
 export function groupMessages<T extends Groupable>(
   messages: readonly T[],
@@ -149,21 +113,10 @@ export function groupMessages<T extends Groupable>(
   return sections;
 }
 
-/**
- * Longer than this between the end of one run and the start of the next, and
- * the conversation paused there: the run before the pause says when it was.
- */
+/** A gap between runs longer than this is a pause, so the run before it shows its time. */
 const MOMENT_GAP_MS = 10 * 60 * 1000;
 
-/**
- * Whether a run is where a moment of the conversation ends, and so the one
- * that carries the time: the last of its day, or the last before a pause.
- *
- * A time under every run is a column of the same minute down the side of a
- * lively exchange. People read a conversation in moments — this, then a while
- * later that — so the time is printed once a moment, where it ends, and every
- * other run keeps its own for a screen reader and for a pointer resting on it.
- */
+/** Whether a run ends a moment of the conversation (last of its day or before a pause), and so prints its time. */
 export function endsAMoment<T extends Groupable>(runs: readonly Run<T>[], index: number): boolean {
   const next = runs[index + 1];
   if (!next) return true;
@@ -177,11 +130,7 @@ export function endsAMoment<T extends Groupable>(runs: readonly Run<T>[], index:
 /** One emoji, with whatever joins and modifies it (a skin tone, a flag's second half, a family's joiners). */
 const EMOJI = /(?:\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3|\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*)/gu;
 
-/**
- * Whether a message is nothing but one to three emoji, which a chat shows
- * large and without a bubble: a heart sent on its own is the whole message,
- * and reads as one at that size.
- */
+/** Whether a message is only one to three emoji, which the thread shows large and without a bubble. */
 export function isEmojiOnly(body: string | null | undefined): boolean {
   if (!body) return false;
   const text = body.trim();

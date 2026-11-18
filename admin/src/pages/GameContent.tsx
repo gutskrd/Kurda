@@ -68,9 +68,8 @@ import { IdentityFields, QuestionTemplateFields, WordPicker } from './GameWordCa
 import { ProverbFields, RiddleFields, TranslationsPanel } from './LoreFields';
 
 /**
- * Game content: the learning games' own rows — sentences, passages, case
- * files, cards — written, imported, reviewed and published the way stories
- * are (api/src/games/content-admin.ts).
+ * Game content: the learning games' rows (sentences, passages, case files, cards), written, imported, reviewed and
+ * published as stories are (api/src/games/content-admin.ts).
  *
  *   #/game-content              every row, filtered by game, kind, variety, level and status, and the importers
  *   #/game-content/readiness    what each game can be played with, per variety and level
@@ -78,17 +77,10 @@ import { ProverbFields, RiddleFields, TranslationsPanel } from './LoreFields';
  *   #/game-content/new?kind=…   a new draft of a kind
  *   #/game-content/<id>         one row: its content, its review, its status (and a riddle's or a proverb's translations)
  *
- * Learners only ever meet a row that is published, and only an approved row
- * can be published. The importers copy approved Kurdish (published lessons'
- * sentences, published stories' paragraphs, published vocabulary sorted into
- * starter categories for Impostor) into drafts, so nothing is typed
- * again; the word and forbidden-word cards are made by picking their words
- * from published vocabulary (GameCardFields.tsx). Each draft still goes
- * through review before a game may show it.
- *
- * The Stories' riddles and proverbs are written here too (LoreFields.tsx),
- * through the same review, though they belong to no game; their translations
- * are saved and reviewed one language at a time beside the row.
+ * Learners meet only published rows, and only approved rows are published. The importers copy approved Kurdish from
+ * published lessons, stories and vocabulary into drafts, and word cards pick their words from published vocabulary
+ * (GameCardFields.tsx), so Kurdish is never typed again. The Stories' riddles and proverbs are written here too
+ * (LoreFields.tsx), their translations saved and reviewed per language.
  */
 export function GameContent(): React.JSX.Element {
   const route = useRoute();
@@ -104,10 +96,8 @@ const STATUS_TONE: Record<AdminGameContent['status'], Tone> = { draft: 'warn', i
 const REVIEW_TONE: Record<AdminGameContent['reviewStatus'], Tone> = { unreviewed: 'warn', approved: 'ok' };
 
 /**
- * A row's review state as its badge says it. The starter library publishes
- * its rows with no reviewer named (api/src/games/starter-library.ts): such a
- * row is live, and nobody has read it yet, which is what its badge says —
- * not "Approved", a word that means a person looked.
+ * A row's review state for its badge. The starter library publishes rows with no reviewer
+ * (api/src/games/starter-library.ts), so such a row says it is live and unread, not "Approved".
  */
 function reviewBadge(row: Pick<AdminGameContent, 'reviewStatus' | 'reviewedBy' | 'source'>): { tone: Tone; label: string } {
   if (row.source === 'starter' && row.reviewStatus === 'approved' && row.reviewedBy === null) return { tone: 'warn', label: 'Not read by a person yet' };
@@ -224,7 +214,7 @@ function Rows(): React.JSX.Element {
         );
       },
     },
-    // a row of a kind this console no longer knows (written for a game that is gone) is named by what it is stored as
+    // A row of a kind this console no longer knows (written for a game that is gone) is named by what it is stored as.
     { key: 'kind', header: 'Kind', cell: (r) => KIND_NAME[r.kind] ?? r.kind },
     { key: 'game', header: 'Game', cell: (r) => (r.game ? (GAME_NAME[r.game as LearnGameId] ?? r.game) : isLoreKind(r.kind) ? COLLECTION_NAME : '—') },
     { key: 'dialect', header: 'Variety', cell: (r) => GAME_DIALECT_NAME[r.dialect] },
@@ -361,7 +351,7 @@ function Readiness(): React.JSX.Element {
   );
 }
 
-// ---------- one row ----------
+// ---------- One row ----------
 
 /** The meanings of a field, English first: the one every other language falls back to. */
 function MeaningsFields({ value, onChange, label, readOnly }: { value: Record<string, string>; onChange: (v: Record<string, string>) => void; label: string; readOnly: boolean }): React.JSX.Element {
@@ -511,11 +501,7 @@ function PassageFields({ payload, onChange, dialect, readOnly }: { payload: Reco
   );
 }
 
-/**
- * Any other kind, as its fields in JSON: the kind's blank to start from,
- * checked against its schema as it is typed, every issue with the field it is
- * about. The Kurdish inside it still has to be in the row's script.
- */
+/** Any other kind as JSON: its blank to start from, checked against its schema while typing, each issue by its field. */
 function JsonFields({ payload, onChange, readOnly }: { payload: Record<string, unknown>; onChange: (p: Record<string, unknown>) => void; readOnly: boolean }): React.JSX.Element {
   const [text, setText] = useState(() => JSON.stringify(payload, null, 2));
   const [broken, setBroken] = useState<string | null>(null);
@@ -544,11 +530,7 @@ function JsonFields({ payload, onChange, readOnly }: { payload: Record<string, u
   );
 }
 
-/**
- * Whether a reviewer has read the row: approval is what publishing waits
- * for, and a change to the content after it takes it away again — the
- * stories' review section (StoryReviewSections.tsx), for game content.
- */
+/** The review section, as for stories (StoryReviewSections.tsx): publishing waits for approval, and a change takes it away. */
 function ReviewPanel({ row, busy, pending, onReview }: { row: AdminGameContent | null; busy: boolean; pending: boolean; onReview: (approved: boolean, note: string | null) => void }): React.JSX.Element {
   const [note, setNote] = useState(row?.reviewNote ?? '');
   const approved = row?.reviewStatus === 'approved';
@@ -591,7 +573,7 @@ function ReviewPanel({ row, busy, pending, onReview }: { row: AdminGameContent |
                 <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} maxLength={600} />
               </Field>
               <div className="row st-review-actions">
-                {/* a starter row nobody has read can be approved as it stands: that puts a reader's name on it, and it stays live */}
+                {/* A starter row nobody has read can be approved as it stands: that puts a reader's name on it, and it stays live. */}
                 {approved && row.reviewedBy !== null ? (
                   row.status === 'published' ? (
                     <span className="subtle">Unpublish it first to withdraw its approval.</span>
@@ -626,7 +608,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // what was loaded becomes what is edited, and again after every save
+  // What was loaded becomes what is edited, and again after every save.
   const take = (r: AdminGameContent): void => {
     setRow(r);
     setKind(r.kind);
@@ -634,14 +616,14 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
     setLevel(r.level);
     setPayload(r.payload as unknown as Record<string, unknown>);
   };
-  // a row written for a game that is no longer part of Hevalo has no schema and no fields here: it is never taken up for editing
+  // A row written for a game that is no longer part of Hevalo has no schema and no fields here: it is never taken up for editing.
   const retired = !!loaded.data && !isKind(loaded.data.kind);
   useEffect(() => {
     if (loaded.data && !retired) take(loaded.data);
   }, [loaded.data, retired]);
 
   const checked = useMemo(() => checkGameContent(kind, dialect, payload), [kind, dialect, payload]);
-  // a riddle's level is its difficulty's, never chosen on its own
+  // A riddle's level is its difficulty's, never chosen on its own.
   const riddleLevel = kind === 'riddle' ? RIDDLE_LEVELS[payload.difficulty as keyof typeof RIDDLE_LEVELS] : undefined;
   const effectiveLevel = riddleLevel ?? level;
   const pending = !!row && (effectiveLevel !== row.level || JSON.stringify(payload) !== JSON.stringify(row.payload));
@@ -760,7 +742,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
 
       <Section title="Content">
         {!row && kind === 'identity' ? (
-          // a card of a picked word: its Kurdish is copied from approved content, never typed in a blank
+          // A card of a picked word: its Kurdish is copied from approved content, never typed in a blank.
           <WordPicker kind={kind} dialect={dialect} />
         ) : kind === 'identity' ? (
           <IdentityFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
@@ -830,7 +812,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
       </Section>
 
       {row && isLoreKind(row.kind) && (
-        // a translation saved changes the row's translations only: the Kurdish being edited above stays as it is
+        // A translation saved changes the row's translations only: the Kurdish being edited above stays as it is.
         <TranslationsPanel row={row} onSaved={(r) => setRow((cur) => (cur ? { ...cur, translations: r.translations } : r))} />
       )}
 

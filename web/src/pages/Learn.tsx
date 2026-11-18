@@ -24,10 +24,10 @@ import { TreeCard } from '../tree/TreeCard';
 import { BookCard } from '../learn/BookCard';
 import { publishedDictionary } from '../layouts/navLinks';
 
-/** Three letters a beginner meets first: one familiar, one with a mark, one with a hat. */
+/** Three letters a beginner meets first: a familiar one, one with a cedilla, one with a circumflex. */
 const ALPHABET_TEASER = 'Aa Çç Êê';
 
-/** GET /me/daily-goal */
+/** GET /me/daily-goal. */
 interface DailyGoal {
   goal: number;
   effectiveGoal: number;
@@ -37,15 +37,9 @@ interface DailyGoal {
 }
 
 /**
- * Review, among the practice tools: what is due now, and the way in. The
- * number is the one a session will find (GET /practice/due counts as a session
- * chooses), so "3 due" never opens a review of five. A review left part-way
- * through is offered first, at its own address, so coming back picks it up
- * rather than starting another beside it.
- *
- * Its button is a secondary one even when words are due: the page has one
- * primary action, the path's own "Start" or "Continue", and two equal white
- * buttons a screen apart ask the learner to choose before they can start.
+ * Review among the practice tools: what is due and the way in. The count matches what a session will find
+ * (GET /practice/due), and a review left part-way is offered first at its own address. Its button stays secondary, since
+ * the path's "Start" or "Continue" is the page's one primary action.
  */
 function ReviewEntry({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element {
   const t = useT();
@@ -86,7 +80,7 @@ function ReviewEntry({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element
   );
 }
 
-/** Today's goal as a small ring: how much of it is done, drawn round. */
+/** Today's goal as a small ring. */
 function GoalRing({ share, met }: { share: number; met: boolean }): React.JSX.Element {
   const r = 11;
   const c = 2 * Math.PI * r;
@@ -99,15 +93,9 @@ function GoalRing({ share, met }: { share: number; met: boolean }): React.JSX.El
 }
 
 /**
- * Today, in one row above the path: the streak, which opens its whole story
- * (`StreakSheet`), today's goal as a ring with its XP, and what review has
- * waiting, as a chip that opens it.
- *
- * Informational and kind. Nothing here counts down or warns about losing
- * anything — the streak is a number that went up, and a day without one is an
- * invitation to start, not a failure to report. Its shape holds the place
- * until the answers are in, so the path below does not jump when they land,
- * and a part that fails is quietly left out: the path is the page.
+ * Today in one row above the path: the streak (opening `StreakSheet`), today's goal as a ring with its XP, and review's
+ * count as a chip. Nothing counts down or warns. It holds its shape until the answers arrive, and a failed part is left
+ * out, since the path is the page.
  */
 function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element {
   const t = useT();
@@ -115,7 +103,7 @@ function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element 
   const goal = useApiGet<DailyGoal>('/me/daily-goal');
   const me = useApiGet<{ user: MeProfile }>('/me');
   const [streakOpen, setStreakOpen] = useState(false);
-  // a streak restored in the sheet is the streak here too, from then on: the strip's fire and its number
+  // A streak restored in the sheet becomes the strip's streak from then on.
   const [restored, setRestored] = useState<StreakSummary | null>(null);
   const g = goal.data;
   const summary = restored ?? me.data?.user?.streak;
@@ -154,7 +142,7 @@ function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element 
               aria-valuetext={g.completed ? t('learn.today.done') : t('learn.today.goal', { xp: number(g.earnedXp), goal: number(target) })}
             >
               <GoalRing share={g.progress} met={g.completed} />
-              {/* a goal that is passed is done, not a fraction past its end: "130/20 XP" becomes what was earned, with the mark of done */}
+              {/* A passed goal shows as done with what was earned, not "130/20 XP". */}
               {g.completed ? (
                 <>
                   <span aria-hidden="true">{t('leagues.result.xp', { xp: number(g.earnedXp) })}</span>
@@ -178,23 +166,16 @@ function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element 
 }
 
 /**
- * Practice tools: review, the alphabet, the words to know and the dictionary,
- * side by side, and after them the lessons' two exercises (building a
- * sentence, finding what was heard) where the learner's variety has enough
- * approved content for them (learn/practiceTools.tsx).
- *
- * Tools, not courses — each is something to reach for between lessons — so
- * they share a row rather than each taking a card of the page's full width.
- * The dictionary a visitor gets is the published one, which needs no account;
- * review and the exercises are the learner's own, so a visitor is not shown
- * them.
+ * Practice tools in one row: review, the alphabet, the words to know and the dictionary, then the two lesson exercises
+ * where the variety has enough content (learn/practiceTools.tsx). Visitors get the published dictionary but not review
+ * or the exercises, which are the learner's own.
  */
 function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Element {
   const t = useT();
-  // review is the learner's own, so what is due is only ever handed over for somebody signed in
+  // Review is the learner's own, so what is due is only passed for someone signed in.
   const signedIn = due !== null;
   const locale = useLocale();
-  // a tool's card becomes the head of the tool's page when it is pressed, and the head comes back to the card (lib/viewTransition.tsx)
+  // A tool's card grows into its page's head and back (lib/viewTransition.tsx).
   const wordsCard = useGrowsFrom('learn:words', { shape: 'card' });
   const dictionaryCard = useGrowsFrom('learn:dictionary', { shape: 'card' });
   const dictionary = signedIn ? (
@@ -217,7 +198,7 @@ function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Elemen
       </h2>
       <div className={`learn-tools${signedIn ? '' : ' is-guest'}`}>
         {due && <ReviewEntry due={due} />}
-        {/* the letters every course is written in, and the first words after them: one way in (pages/Words.tsx) */}
+        {/* The letters every course is written in, then the first words: one way in (pages/Words.tsx). */}
         <Link ref={wordsCard} to="/app/learn/words" className="learn-tool learn-tool-link">
           <span className="learn-tool-letters" lang="ku" aria-hidden="true">
             {ALPHABET_TEASER}
@@ -291,13 +272,7 @@ function CourseCard({ entry }: { entry: CourseEntry }): React.JSX.Element {
   );
 }
 
-/**
- * What a visitor without an account sees where the courses would be.
- *
- * Asked, in place, rather than bounced: a course keeps your progress, so it
- * needs somebody to keep it for, and that is said plainly beside the way to
- * become somebody. The tools above it and the games one switch away are open.
- */
+/** What a visitor sees where the courses would be: asked in place, since a course needs someone to keep progress for. */
 function GuestCourses(): React.JSX.Element {
   const t = useT();
   return (
@@ -318,10 +293,7 @@ function GuestCourses(): React.JSX.Element {
   );
 }
 
-/**
- * Whose path Learn shows: the course asked for (`?course=`), else the one the
- * learner is furthest into, else the first with anything open, else the first.
- */
+/** Whose path Learn shows: the course asked for (`?course=`), else the furthest, else the first with anything open, else the first. */
 function pickCourse(entries: CourseEntry[], asked: string | null): CourseEntry | null {
   const chosen = entries.find((e) => e.course.id === asked);
   if (chosen) return chosen;
@@ -333,12 +305,12 @@ function Lessons(): React.JSX.Element {
   const t = useT();
   const [params] = useSearchParams();
   const { entries, error, reload } = useCourses();
-  // what review has waiting is asked once here, for the strip, the path and the review tool alike
+  // What review has waiting is fetched once here, for the strip, the path and the review tool.
   const due = useApiGet<PracticeDue>('/practice/due');
   const picked = entries ? pickCourse(entries, params.get('course')) : null;
-  // a lesson opened from here comes back here, on the same course
+  // A lesson opened from here returns here, on the same course.
   const home = picked && entries && entries.length > 1 ? `/app/learn?course=${encodeURIComponent(picked.course.id)}` : '/app/learn';
-  // the path is handed the map and the courses this page already holds, so it does not ask for them again
+  // The path gets the map and courses this page already holds, so it does not fetch them again.
   const courses = useMemo(() => (entries ?? []).map((e) => e.course), [entries]);
   return (
     <>
@@ -361,7 +333,7 @@ function Lessons(): React.JSX.Element {
           ))}
         </nav>
       )}
-      {/* the path is Learn's home: the course picked, its lessons one tap away */}
+      {/* The path is Learn's home: the picked course, its lessons a tap away. */}
       {picked ? (
         <section className="learn-path" aria-label={picked.course.title}>
           <CoursePath
@@ -399,12 +371,8 @@ function Lessons(): React.JSX.Element {
 }
 
 /**
- * Learn (/app/learn), on its Lessons half: today in one row and today's quests
- * in a slim card under it (quests/QuestsCard.tsx), then the path of
- * the course the learner is in — the lesson path is Learn's home, with Hevalo
- * beside the stop to do now — then the practice tools and every course with
- * how far the learner is through it. The Games half is pages/Games.tsx,
- * behind the same header.
+ * Learn (/app/learn), Lessons half: today's row and quests card (quests/QuestsCard.tsx), the current course's path, the
+ * practice tools, and every course with its progress. The Games half is pages/Games.tsx, under the same header.
  */
 export function Learn(): React.JSX.Element {
   const { status } = useAuth();

@@ -1,17 +1,24 @@
 /**
- * @react-navigation/native for component tests: `useNavigation` hands back a
- * recorder, `useFocusEffect` runs its effect once on mount, as a screen
- * coming into focus would — and again each time a test says the screen was
- * come back to (`refocus()`, inside `act`) — and `useScrollToTop` (a tab's
- * list listening for its tab to be tapped again) does nothing. A screen that keeps itself
- * (`usePreventRemove`) is held as the navigator holds it: `backOut()` goes
- * back the way the header's back would, handing the screen the action while
- * it keeps itself and leaving (`navigation.goBack`) when it does not; the
- * screen lets the action through with `navigation.dispatch`. Wired with
+ * @react-navigation/native for component tests. `useNavigation` returns a recorder; `useFocusEffect` runs on mount
+ * and again on `refocus()` (a tab switch) or `backFromPage()` (a page pushed over the tabs and closed), inside
+ * `act`; `useScrollToTop` does nothing. A screen using `usePreventRemove` is held as the navigator holds it:
+ * `backOut()` hands it the action while it prevents removal, else goes back. Wire it with
  * `vi.mock('@react-navigation/native', () => import('…/play/testing/navigation'))`.
  */
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { vi } from 'vitest';
+
+/** Told when a page is pushed over the tabs, as the tabs' own screen blurs then. */
+const tabsBlurred = new Set<() => void>();
+const tabs = {
+  addListener(type: string, listener: () => void): () => void {
+    if (type !== 'blur') return () => undefined;
+    tabsBlurred.add(listener);
+    return () => {
+      tabsBlurred.delete(listener);
+    };
+  },
+};
 
 export const navigation = {
   navigate: vi.fn(),
@@ -19,14 +26,16 @@ export const navigation = {
   popTo: vi.fn(),
   goBack: vi.fn(),
   setParams: vi.fn(),
+  setOptions: vi.fn(),
   dispatch: vi.fn(),
+  getParent: () => tabs,
 };
 
 export function useNavigation() {
   return navigation;
 }
 
-/** Every screen under test that listens for its focus: each is told when a test comes back to it. */
+/** Every screen under test with a focus effect, each told when a test returns to it. */
 const focused = new Set<() => void>();
 
 export function useFocusEffect(effect: () => void | (() => void)): void {
@@ -38,16 +47,22 @@ export function useFocusEffect(effect: () => void | (() => void)): void {
       focused.delete(again);
     };
   }, []);
-  // left and come back to: the effect's cleanup runs, then the effect again, as blur and focus do
+  // Left and returned to: the cleanup runs, then the effect again, as blur and focus do.
   useEffect(() => effect(), [effect, round]);
 }
 
-/** The screen was left and come back to — from a post, another tab: its focus effects run again. Call inside `act`. */
+/** Simulates leaving the screen and coming back, so its focus effects run again. Call inside `act`. */
 export function refocus(): void {
   focused.forEach((again) => again());
 }
 
-/** A screen under test is the one in front, so whatever moves while it is in view moves. */
+/** Simulates a page pushed over the tabs and closed again: the tabs blur, then the screen comes back. Call inside `act`. */
+export function backFromPage(): void {
+  tabsBlurred.forEach((blur) => blur());
+  refocus();
+}
+
+/** The screen under test is always in front. */
 export function useIsFocused(): boolean {
   return true;
 }
@@ -58,7 +73,7 @@ type Ask = (e: { data: { action: { type: string } } }) => void;
 const held: { prevent: boolean; ask: Ask | null } = { prevent: false, ask: null };
 
 export function usePreventRemove(prevent: boolean, ask: Ask): void {
-  // held as the screen is drawn, so a press that follows a screen appearing finds it held
+  // Held from the first layout, so a press right after the screen appears finds it held.
   useLayoutEffect(() => {
     held.prevent = prevent;
     held.ask = ask;
@@ -69,7 +84,7 @@ export function usePreventRemove(prevent: boolean, ask: Ask): void {
   });
 }
 
-/** Back, as the navigator takes it: to the screen while it keeps itself, else away (`navigation.goBack`). */
+/** Back, as the navigator takes it: to the screen while it prevents removal, else away (`navigation.goBack`). */
 export function backOut(): void {
   if (held.prevent && held.ask) held.ask({ data: { action: { type: 'GO_BACK' } } });
   else navigation.goBack();

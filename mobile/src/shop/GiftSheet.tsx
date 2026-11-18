@@ -28,15 +28,9 @@ interface Friend {
 }
 
 /**
- * Who to send it to (KUR-087).
- *
- * Friends only, which is the server's rule rather than this screen's — a gift
- * from a stranger is a way to put something in front of somebody who has not
- * agreed to hear from you.
- *
- * The shared BottomSheet, which is a Modal, not a positioned View: anything
- * else inside the tab navigator draws under the tab bar and lets taps through
- * to it.
+ * Who to send it to: friends only, which is the server's rule (a gift from a stranger would reach somebody who never
+ * agreed to hear from you). The shared BottomSheet is a Modal, since anything else in the tab navigator draws under the
+ * tab bar and lets taps through.
  */
 export function GiftSheet({
   item,
@@ -45,22 +39,22 @@ export function GiftSheet({
 }: {
   item: { sku: string; name: string; price: number; currency: string };
   onClose: () => void;
-  /** `to`: the friend it went to (`name` as the list showed them) — the gift is in your chat with them now */
+  /** `to`: the friend it went to (`name` as the list showed them); the gift is in your chat with them now. */
   onSent: (balance: number, to: { userId: string; username: string; name: string }) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  // each friend's face on the side the language starts from, their name lined up after it
+  // Each friend's face on the side the language starts from, their name lined up after it.
   const dir = useDirection();
 
   const [friends, setFriends] = useState<Friend[] | null>(null);
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
-  // the refusal, and the friend it was about (some answers name them)
+  // The refusal, and the friend it was about (some answers name them).
   const [error, setError] = useState<{ error: ApiError; name: string } | null>(null);
-  // one key per friend chosen, kept until the server has answered: a retry
-  // after a dropped connection must not send — and charge for — a second gift
+  // One key per chosen friend, kept until the server has answered, so a retry after a dropped connection cannot send
+  // (and charge for) a second gift.
   const keys = useRef(new Map<string, string>());
 
   useEffect(() => {
@@ -88,8 +82,8 @@ export function GiftSheet({
           onSent(res.data.balance, { userId: to.userId, username: to.username, name });
           return;
         }
-        // the server said no, so nothing was sent: the next try is a new one.
-        // Offline or a server error may have sent it, so that key is kept.
+        // The server said no, so nothing was sent and the next try is a new one. Offline or a server error may have
+        // sent it, so that key is kept.
         if (res.error.kind === 'client' || res.error.kind === 'rate_limited') keys.current.delete(to.userId);
         haptic('error');
         setError({ error: res.error, name });
@@ -128,7 +122,7 @@ export function GiftSheet({
                 key={f.userId}
                 onPress={() => send(f)}
                 accessibilityRole="button"
-                // each row names its friend: a screen reader heard "Send <item>" on every one
+                // Each row names its friend, not only the item.
                 accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
                 style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
               >
@@ -144,8 +138,8 @@ export function GiftSheet({
       )}
 
       {error && restrictionOf(error.error) ? (
-        // a limit on the account (a gift is a chat message): calm, what and
-        // until when, and Account standing after this sheet has closed
+        // A limit on the account (a gift is a chat message): calmly what and until when, with Account standing once
+        // this sheet has closed.
         <SendErrorNotice error={error.error} onNavigate={onClose} style={styles.notice} />
       ) : error ? (
         <Text style={[styles.note, dir.text, { color: colors.danger }]} accessibilityLiveRegion="polite">
@@ -161,12 +155,10 @@ export function GiftSheet({
 }
 
 /**
- * A refused Shop gift, in the reader's language. This route answers a friend
- * who cannot take it with a code of its own (where the chat's gift route
- * names them among the skipped), so those three are said here as the chat
- * says them; the rest as the chat's gift picker does.
+ * A refused Shop gift in the reader's language. This route answers a friend who cannot take it with codes of its own,
+ * so those three are worded as the chat words them; the rest as the chat's gift picker does.
  */
-export function shopGiftErrorText(error: ApiError, name: string, t: Translate): string {
+function shopGiftErrorText(error: ApiError, name: string, t: Translate): string {
   switch (error.code) {
     case 'ALREADY_OWNED':
       return t('gift.skipped.alreadyOwned', { name });
@@ -183,7 +175,7 @@ export function shopGiftErrorText(error: ApiError, name: string, t: Translate): 
 
 const styles = StyleSheet.create({
   note: { fontSize: typography.sizes.sm },
-  // lined up with the search field and the list, inside the sheet's own padding
+  // Lined up with the search field and the list, inside the sheet's own padding.
   notice: { marginHorizontal: 0, marginBottom: 0 },
   search: { marginTop: spacing.xs },
   list: { marginTop: spacing.xs },

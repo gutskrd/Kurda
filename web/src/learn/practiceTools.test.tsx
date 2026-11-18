@@ -17,7 +17,7 @@ function server(games: Record<string, boolean> | 'never', signedIn = true): Fetc
   if (signedIn) localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   const fetchMock = vi.fn(async (url: string) => {
     if (url.includes('/games/availability')) {
-      // 'never': the answer does not arrive while the test looks
+      // 'never': the answer does not arrive while the test looks.
       if (games === 'never') return new Promise<Response>(() => undefined);
       return jsonResponse(200, {
         dialect: 'kmr',
@@ -25,7 +25,7 @@ function server(games: Record<string, boolean> | 'never', signedIn = true): Fetc
       });
     }
     if (url.endsWith('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'ada@example.com', emailVerified: true } });
-    // the Learn page reads its courses too: none here, which it draws as an empty list
+    // The Learn page reads its courses too: none here, which it draws as an empty list.
     if (url.endsWith('/courses')) return jsonResponse(200, { courses: [] });
     return jsonResponse(200, {});
   });
@@ -41,10 +41,10 @@ describe('the lessons’ two exercises among the practice tools', () => {
     renderApp(<ExerciseTools />);
     expect(await screen.findByRole('link', { name: /^Build a Sentence/ })).toHaveAttribute('href', '/app/learn/practice/build-sentence');
     expect(screen.getByRole('link', { name: /^Hear It, Find It/ })).toHaveAttribute('href', '/app/learn/practice/hear-it');
-    // each says in a line what it is, as the other tools do
+    // Each says in a line what it is, as the other tools do.
     expect(screen.getByText('Put a sentence’s words in order')).toBeInTheDocument();
     expect(screen.getByText('Listen and find what was said')).toBeInTheDocument();
-    // a game the same answer names is not a practice tool
+    // A game the same answer names is not a practice tool.
     expect(screen.getAllByRole('link')).toHaveLength(2);
   });
 
@@ -77,7 +77,7 @@ describe('Learn’s practice tools', () => {
   it('shows a visitor neither, and does not ask the server about them', async () => {
     const fetchMock = server({ 'build-sentence': true, 'hear-it': true }, false);
     renderApp(<Learn />, ['/app/learn']);
-    // the tools a visitor has are there
+    // The tools a visitor has are there.
     expect(await screen.findByRole('link', { name: /Dictionary/ })).toBeInTheDocument();
     expect(screen.queryByText('Build a Sentence')).toBeNull();
     expect(screen.queryByText('Hear It, Find It')).toBeNull();

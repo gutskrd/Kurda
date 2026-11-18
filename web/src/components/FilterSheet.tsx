@@ -1,24 +1,12 @@
 /**
- * Sort and filter, as one panel behind a funnel: the pieces the community
- * wall (feed/FeedFilter.tsx) and the stories library (stories/LibraryFilter.tsx)
- * are both built from, so the two look and work the same.
+ * Sort and filter as one panel behind a funnel, shared by the community wall (feed/FeedFilter.tsx) and the stories
+ * library (stories/LibraryFilter.tsx). Styles are in styles/filter.css.
  *
- * - `useFilterSheet` holds whether the panel is open and the draft in it.
- *   Choices in the panel are a draft: nothing behind it changes until the
- *   apply button, and ✕, Escape or a press outside leave things as they were.
- * - `FilterSheet` is the funnel and the panel. On a wide screen the panel
- *   drops from the funnel; on a phone it rises from the bottom edge as a sheet.
- *   It is a modal dialog either way: the keyboard starts on the first choice
- *   made, stays inside the panel, and goes back where it came from when the
- *   panel closes.
- * - `FilterSection`, `FilterRadios`, `FilterOption`, `FilterPill` and
- *   `FilterToggle` are what goes in it: a titled group, a radio group the arrow
- *   keys move through, a row with a tick and a line of hint, a chip in a row,
- *   and an on-and-off switch.
- * - `FilterChip` says what is on while something is: it opens the panel again,
- *   and its ✕ undoes just that part.
- *
- * How it looks is in styles/filter.css.
+ * - `useFilterSheet` holds the open state and the draft; nothing changes until apply, and ✕, Escape or an outside
+ *   press discard the draft.
+ * - `FilterSheet` is the funnel and a modal panel: a popover on a wide screen, a bottom sheet on a phone.
+ * - `FilterSection`, `FilterRadios`, `FilterOption`, `FilterPill` and `FilterToggle` are its contents.
+ * - `FilterChip` shows an active choice; it reopens the panel, and its ✕ undoes just that part.
  */
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { Button } from './Button';
@@ -27,30 +15,28 @@ import { CheckIcon, CloseIcon, FunnelIcon } from './icons';
 import { useT } from '../i18n/I18nProvider';
 import { keepInView } from '../reports/keepInView';
 
-/** What a sheet's parts share: whether it is open, the draft, and the ways to open, close and apply it. */
+/** What a sheet's parts share: open state, the draft, and the ways to open, close and apply. */
 export interface FilterSheetControl<V> {
-  /** the panel's id, which the funnel and the chips point at while it is open */
+  /** The panel's id, which the funnel and chips point at while it is open. */
   id: string;
   open: boolean;
   draft: V;
   setDraft: (next: V | ((d: V) => V)) => void;
-  /** opens the panel on what is shown now, remembering where from; pressed again while open, closes it */
+  /** Opens the panel on the current value, remembering the opener; toggles when already open. */
   show: (from: HTMLElement | null) => void;
-  /** closes it; `back` puts the keyboard back where the panel was opened from */
+  /** Closes it; `back` returns focus to the opener. */
   close: (back: boolean) => void;
-  /** closes it and hands on the draft, when it differs from what is shown */
+  /** Closes it and applies the draft when it differs from what is shown. */
   apply: () => void;
-  /** changes what is shown at once, without the panel: a chip's ✕ */
+  /** Changes what is shown at once, without the panel (a chip's ✕). */
   undo: (next: V) => void;
   buttonRef: React.RefObject<HTMLButtonElement | null>;
   panelRef: React.RefObject<HTMLDivElement | null>;
 }
 
 /**
- * The state of one sort and filter panel over `value`. `normalise` says the
- * same choice once (a range only where it means something), and `same` says
- * whether two values show the same thing, so applying an unchanged draft asks
- * for nothing.
+ * The state of one panel over `value`. `normalise` puts a choice in one canonical form, and `same` compares two values
+ * so applying an unchanged draft asks for nothing.
  */
 export function useFilterSheet<V>({
   value,
@@ -67,7 +53,7 @@ export function useFilterSheet<V>({
   const [draft, setDraft] = useState<V>(value);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  // what opened the panel, so the keyboard goes back there when it closes
+  // The opener, for returning focus on close.
   const opener = useRef<HTMLElement | null>(null);
   const refocus = useRef(false);
   const id = useId();
@@ -87,7 +73,7 @@ export function useFilterSheet<V>({
   };
   const apply = (): void => {
     const next = normalise(draft);
-    // the chip that opened it may be about to go, so the funnel is where the keyboard lands
+    // The chip that opened it may be about to go, so focus lands on the funnel.
     opener.current = null;
     close(true);
     if (!same(next, normalise(value))) onChange(next);
@@ -98,14 +84,14 @@ export function useFilterSheet<V>({
     onChange(normalise(next));
   };
 
-  // after the render that closed the panel or cleared a part: the chip may be gone by then
+  // After the render that closed the panel or cleared a part, since the chip may be gone by then.
   useEffect(() => {
     if (open || !refocus.current) return;
     refocus.current = false;
     (opener.current?.isConnected ? opener.current : buttonRef.current)?.focus();
   });
 
-  // as a popover beside a narrow window's edge the panel is nudged back inside; as a sheet it is already
+  // As a popover near a narrow window's edge the panel is nudged inside; as a sheet it already is.
   useLayoutEffect(() => {
     const panel = panelRef.current;
     if (open && panel && getComputedStyle(panel).position !== 'fixed') keepInView(panel);
@@ -113,14 +99,14 @@ export function useFilterSheet<V>({
 
   useEffect(() => {
     if (!open) return;
-    // the keyboard starts on the first choice made, the first thing in the panel
+    // Focus starts on the first chosen option.
     panelRef.current?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]')?.focus();
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== 'Escape') return;
       e.stopPropagation();
       close(true);
     };
-    // a press anywhere else closes it, the scrim behind the sheet included; the funnel and the chips toggle it themselves
+    // A press anywhere else closes it, the sheet's scrim included; the funnel and chips toggle it themselves.
     const onDown = (e: PointerEvent): void => {
       const target = e.target as Element | null;
       if (!target || panelRef.current?.contains(target)) return;
@@ -138,11 +124,7 @@ export function useFilterSheet<V>({
   return { id, open, draft, setDraft, show, close, apply, undo, buttonRef, panelRef };
 }
 
-/**
- * The funnel and, while it is open, the panel: a head with its title and ✕,
- * the choices in a body that scrolls on its own, and a foot that stays put
- * with Reset and the button that shows what was chosen.
- */
+/** The funnel and, while open, the panel: a head with title and ✕, a scrolling body, and a fixed foot with Reset and apply. */
 export function FilterSheet<V>({
   control,
   label,
@@ -156,9 +138,9 @@ export function FilterSheet<V>({
   children,
 }: {
   control: FilterSheetControl<V>;
-  /** the funnel's name, saying what is on when something is */
+  /** The funnel's name, saying what is on when something is. */
   label: string;
-  /** whether anything differs from the plain view: the funnel is filled in */
+  /** Whether anything differs from the plain view; fills the funnel. */
   filled: boolean;
   title: string;
   resetLabel: string;
@@ -172,7 +154,7 @@ export function FilterSheet<V>({
   const { id, open, buttonRef, panelRef } = control;
   const titleId = `${id}-title`;
 
-  /** The keyboard stays in the panel: Tab from the last control comes round to the first, and back. */
+  /** Keeps Tab inside the panel, wrapping at both ends. */
   const trap = (e: React.KeyboardEvent): void => {
     if (e.key !== 'Tab') return;
     const focusable = [...(panelRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]):not([tabindex="-1"])') ?? [])];
@@ -207,7 +189,7 @@ export function FilterSheet<V>({
 
       {open && (
         <>
-          {/* behind the sheet on a phone; nothing on a wider screen, where the panel is a popover */}
+          {/* Behind the sheet on a phone; nothing on a wider screen, where the panel is a popover. */}
           <span className="ffilter-scrim" aria-hidden="true" />
           <div className="ffilter-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} id={id} ref={panelRef} onKeyDown={trap}>
             <div className="ffilter-head">
@@ -234,7 +216,7 @@ export function FilterSheet<V>({
   );
 }
 
-/** One group of choices in the panel, under its title where it has one; `id` names the title, for the radio group under it. */
+/** One group of choices under an optional title; `id` names the title for a radio group under it. */
 export function FilterSection({ title, id, children }: { title?: string; id?: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <section className={`ffilter-section${title ? '' : ' is-untitled'}`}>
@@ -249,9 +231,8 @@ export function FilterSection({ title, id, children }: { title?: string; id?: st
 }
 
 /**
- * A radio group the arrow keys move through, choosing as they go — down and
- * up in a list; along the row, the way the page reads, in a row of chips.
- * Only the chosen one is a Tab stop, so Tab goes from group to group.
+ * A radio group the arrow keys move through, choosing as they go: up and down in a list, along the reading direction in
+ * a row of chips. Only the chosen one is a Tab stop.
  */
 export function FilterRadios({
   label,
@@ -259,7 +240,7 @@ export function FilterRadios({
   className,
   children,
 }: {
-  /** the id of what names the group, its section's title */
+  /** The id of the element naming the group, its section's title. */
   label: string;
   axis: 'vertical' | 'horizontal';
   className?: string;
@@ -274,7 +255,7 @@ export function FilterRadios({
     const forward = axis === 'vertical' ? 'ArrowDown' : rtl ? 'ArrowLeft' : 'ArrowRight';
     const back = axis === 'vertical' ? 'ArrowUp' : rtl ? 'ArrowRight' : 'ArrowLeft';
     const to: Partial<Record<string, number>> = { [forward]: at + 1, [back]: at - 1, Home: 0, End: radios.length - 1 };
-    // a list also answers left and right, and a row up and down, the same way
+    // A list also answers left and right, and a row up and down.
     if (axis === 'vertical') Object.assign(to, { ArrowRight: rtl ? at - 1 : at + 1, ArrowLeft: rtl ? at + 1 : at - 1 });
     else Object.assign(to, { ArrowDown: at + 1, ArrowUp: at - 1 });
     const next = to[e.key];
@@ -291,7 +272,7 @@ export function FilterRadios({
   );
 }
 
-/** One choice in a list: its name, a line under it saying what it means where that is not obvious, and a tick when chosen. */
+/** One choice in a list: its name, an optional hint, and a tick when chosen. */
 export function FilterOption({ on, label, hint, onChoose }: { on: boolean; label: string; hint?: string; onChoose: () => void }): React.JSX.Element {
   const hintId = useId();
   return (
@@ -318,7 +299,7 @@ export function FilterOption({ on, label, hint, onChoose }: { on: boolean; label
   );
 }
 
-/** One choice in a row of chips, the chosen one filled in ink; with a count after its word where there is one. */
+/** One choice in a row of chips, filled when chosen, with an optional count. */
 export function FilterPill({
   on,
   label,
@@ -328,9 +309,9 @@ export function FilterPill({
 }: {
   on: boolean;
   label: string;
-  /** how many there are of it, already written in the reader's numbers */
+  /** The count, already formatted for the reader. */
   count?: string;
-  /** the count in words, for the ear: "Stories: 12" */
+  /** The count for screen readers: "Stories: 12". */
   countLabel?: string;
   onChoose: () => void;
 }): React.JSX.Element {
@@ -382,7 +363,7 @@ export function FilterToggle({ on, label, hint, onChange }: { on: boolean; label
   );
 }
 
-/** A part of what is shown, while it differs from the plain view: opens the panel, and its ✕ undoes just that part. */
+/** An active part of the filter: opens the panel, and its ✕ undoes just that part. */
 export function FilterChip<V>({
   control,
   icon,

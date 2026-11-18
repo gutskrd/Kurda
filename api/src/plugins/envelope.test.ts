@@ -160,12 +160,7 @@ describe('error envelope', () => {
 });
 
 describe('retry-after', () => {
-  /**
-   * LOCKED works out exactly how long the lockout has left and puts it in
-   * details, where nothing looked. Both apps read the header and render a
-   * countdown from it, so until this the lockout was reported as a flat "try
-   * again later" — the number and the thing that wanted it never met.
-   */
+  /** A lockout's Retry-After header carries the exact remaining time, which both apps count down from. */
   it('sends the header when an AppError carries retryAfterSec', async () => {
     const a = testApp();
     a.get('/locked', async () => {
@@ -210,11 +205,7 @@ describe('retry-after', () => {
 });
 
 describe('null characters', () => {
-  /*
-   * Postgres cannot store or compare text holding U+0000 and answers with an
-   * error, so one used to turn any route that touched the database into a 500.
-   * They are taken out before any schema or handler sees the request.
-   */
+  /* Postgres cannot store or compare text holding U+0000, so NULs are removed before any schema or handler sees the request. */
   const search = z.object({ q: z.string().max(100) });
 
   it('takes them out of a body, at any depth, before the schema checks it', async () => {

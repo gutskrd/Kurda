@@ -1,12 +1,7 @@
 /*
- * Sort and filter (components/FilterSheet.tsx): the community wall's and the
- * stories library's.
- *
- * A funnel in ink, filled in while anything is narrowed; behind it one panel
- * — a popover under the funnel on a wide screen, a sheet from the bottom edge
- * on a phone. While anything differs from the plain view, a chip for each
- * part says what, and its ✕ undoes that part. No colour of its own: a filter
- * is not an alert.
+ * Sort and filter (components/FilterSheet.tsx) for the community wall and the stories library: an ink funnel, filled
+ * while anything is narrowed, opening a popover on wide screens or a bottom sheet on phones. A chip with ✕ shows each
+ * active part. No colour of its own, since a filter is not an alert.
  */
 .ffilter {
   position: relative;
@@ -107,11 +102,7 @@
   min-width: 0;
 }
 
-/*
- * The panel: a popover under the funnel on a wide screen, a sheet from the
- * bottom edge on a phone. A head with its title and ✕, the choices in a body
- * that scrolls on its own, and a foot that stays put with Reset and Show posts.
- */
+/* The panel: a head with title and ✕, a scrolling body of choices, and a fixed foot with Reset and Show posts. */
 .ffilter-panel {
   position: absolute;
   top: calc(100% + 6px);
@@ -229,12 +220,7 @@
   outline: 2px solid var(--focus, var(--ink));
   outline-offset: -2px;
 }
-/*
- * The range: a row of chips that wraps, the chosen one filled in ink. Each
- * chip reaches past its edges (reach.css), but only as far as half the gap
- * to the chip beside it or on the next line, so two reaches meet in the
- * middle of the gap rather than one taking the other's presses.
- */
+/* The range chips wrap, the chosen one filled; each reaches only half the gap (reach.css) so reaches meet in the middle. */
 .ffilter-periods {
   display: flex;
   flex-wrap: wrap;

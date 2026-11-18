@@ -9,16 +9,10 @@ import { USERNAME_RULE_VARS, usernameIssueWhileTyping } from './validate';
 import { UsernameKeys, useUsernameTyping } from './typing';
 
 /**
- * The name step of signing up and of claiming a guest account: the step's
- * field, written in lowercase as it is typed (./typing.tsx), the five Kurdish
- * letters as keys under it, and one line under those.
- *
- * The line says what a username may be made of until there is something to
- * say about the name typed, and then says that instead, gently: only what more
- * typing cannot mend ("“!” can’t be in a username", a dot at the start), never
- * "too short" under every key. The rest is the step's check, said when
- * Continue is pressed (StepFlow), and once the step has refused the name the
- * flow's own line is the one under the field.
+ * The username step of sign-up and of claiming a guest account: the field, lowercased as typed (./typing.tsx),
+ * the five Kurdish letters as keys, and one line underneath. The line says what a username may contain until
+ * there is something to say about the typed name, and then only what more typing cannot fix; the step's full
+ * check runs on Continue (StepFlow), whose refusal then takes the line.
  */
 export function UsernameStepField({
   tools,

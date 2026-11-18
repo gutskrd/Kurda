@@ -13,7 +13,7 @@ describe('the Christmas window', () => {
     expect(isChristmas(on('2027-01-06'))).toBe(true);
   });
 
-  /** Both ends, because an off-by-one here is a scarf in February. */
+  /** Both ends, to catch an off-by-one. */
   it('is closed on either side of it', () => {
     expect(isChristmas(on('2026-11-30'))).toBe(false);
     expect(isChristmas(on('2027-01-07'))).toBe(false);

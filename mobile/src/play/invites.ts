@@ -1,16 +1,9 @@
 import { isPlayGame, type IncomingInvite, type PlayUserEvent } from '@kurda/shared';
 
 /**
- * The invites the banner shows, kept from `GET /play/invites` and the events
- * on your own channel. Pure, so the rules are tested apart from the banner:
- *
- * - only pending invites that have not run out are shown, newest first, and
- *   only to a game this app can open: one to a game that has since been
- *   retired is not an invitation to anything;
- * - a new invite from the same host for the same game replaces the old one
- *   (the server cancels the old one too, and says so);
- * - any answer — yours from another device, the host taking it back, the
- *   lobby starting or filling — removes it.
+ * The invites the banner shows, from `GET /play/invites` and your own channel's events. Pure, so the rules are
+ * tested apart from the banner: only pending, unexpired invites to games this app can open are shown, newest first;
+ * a new invite from the same host for the same game replaces the old one; and any answer from anywhere removes it.
  */
 export function addInvite(list: readonly IncomingInvite[], invite: IncomingInvite): IncomingInvite[] {
   const rest = list.filter((i) => i.id !== invite.id);
@@ -29,7 +22,7 @@ export function liveInvites(list: readonly IncomingInvite[], now: number): Incom
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
-/** Milliseconds until the next of these runs out, so the banner can drop it then; null when none will. */
+/** Milliseconds until the next invite expires, so the banner can drop it then; null when none will. */
 export function nextExpiry(list: readonly IncomingInvite[], now: number): number | null {
   const times = list.map((i) => Date.parse(i.expiresAt) - now).filter((ms) => ms > 0);
   return times.length ? Math.min(...times) : null;

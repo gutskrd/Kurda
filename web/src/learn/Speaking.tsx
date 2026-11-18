@@ -22,20 +22,11 @@ type Take =
   | { status: 'problem'; message: MessageKey };
 
 /**
- * Say it aloud (KUR-036): record after a tap, hear yourself beside the native
- * speaker, and say how close it was — "Sounded right / Close / Try again".
- *
- * Nothing on the server can judge a recording, and saying "correct" to every
- * one taught nothing, so the learner's ear is the judge: the rating is the
- * answer, and comparing one's own attempt with the model is the practice. The
- * take never leaves the browser — nothing on the server would listen to it,
- * and a stored copy of every learner's voice was data kept for no use. "Try again" brings the phrase back later in the lesson, like any
- * miss. A rating chosen is the answer once Check, in the action bar, sends
- * it, as on the phone; until then another can be chosen. A refused
- * microphone is said plainly, as where things stand and where the browser
- * lets that be changed, never as an instruction to allow it, and never
- * switches speaking off for good; "Can't speak now", in the action bar, puts
- * speaking off for the rest of the lesson.
+ * Say it aloud: record after a tap, compare with the native speaker, and rate it "Sounded right / Close / Try again".
+ * The server cannot judge recordings, so the learner's rating is the answer, sent by Check as on the phone; "Try again"
+ * brings the phrase back later like any miss. The take never leaves the browser. A refused microphone is described
+ * plainly with where to change it, never as an instruction and never turning speaking off for good; "Can't speak now"
+ * puts speaking off for the rest of the lesson.
  */
 export function Speaking({ exercise, dialect, locked, busy, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
@@ -54,7 +45,7 @@ export function Speaking({ exercise, dialect, locked, busy, formId, onReady, onA
     [own],
   );
 
-  // a new take: check it is a take at all, then it is ready to hear and rate
+  // A new take: check it is a take at all, then it is ready to hear and rate.
   const seen = useRef<Blob | null>(null);
   useEffect(() => {
     if (!take || seen.current === take.blob) return;
@@ -75,14 +66,8 @@ export function Speaking({ exercise, dialect, locked, busy, formId, onReady, onA
 
   const phase = recorder.phase;
 
-  // Keyboard focus follows the recording. Each step replaces the button just
-  // pressed — Record gives way to Stop, Stop to "Saving…" and then the ratings
-  // — and a focused button that goes away leaves the focus on the page itself,
-  // so a keyboard or screen-reader user would have to find their way back from
-  // the top. The step's first button takes it instead: Stop while recording,
-  // "Hear yourself" once the take is saved, Record (or the microphone again)
-  // after a problem. Only focus the flow itself lost is moved: never away from
-  // wherever the learner has gone meanwhile.
+  // Focus follows the recording: each step replaces the pressed button (Record, Stop, "Saving…", the ratings), which would
+  // drop focus to the page, so the step's first button takes it. Only focus the flow itself lost is moved.
   const root = useRef<HTMLDivElement>(null);
   const controls = useRef<HTMLDivElement>(null);
   const step = !supported
@@ -184,9 +169,9 @@ export function Speaking({ exercise, dialect, locked, busy, formId, onReady, onA
 
   return (
     <div className="lesson-exercise" ref={root}>
-      {/* "Repeat after Hamo" when the item says it asks that and Hamo says the model */}
+      {/* "Repeat after Hamo" when the item asks that and Hamo says the model. */}
       <Ask focus>{askHeadline(exercise, t, { tiles: false, dialect }) ?? t('lesson.speak.ask')}</Ask>
-      {/* the speaker stays while the take is compared: it speaks again when the model is played there */}
+      {/* The speaker stays during the comparison and speaks again when the model plays. */}
       <ExerciseVoice clips={exerciseClips(exercise)}>
         <Prompt text={exercise.prompt} />
         {exercise.modelAudioUrl && taken.status !== 'ready' && (

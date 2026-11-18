@@ -62,18 +62,18 @@ describe('Shop', () => {
     vi.stubGlobal('fetch', makeFetch(calls));
     renderApp(<Shop />, ['/app/shop']);
 
-    // affordable background shows its price and buys with the expected-price guard
+    // Affordable background shows its price and buys with the expected-price guard.
     const sunset = (await screen.findByText('Sunset')).closest('figure')!;
     expect(within(sunset).getByText(/500 Zêr/)).toBeInTheDocument();
     await userEvent.click(within(sunset).getByRole('button', { name: 'Buy' }));
-    // it asks first, and says that the purchase is final
+    // It asks first, and says that the purchase is final.
     const confirm = await screen.findByRole('dialog', { name: 'Buy Sunset?' });
     expect(calls.some((c) => c.url.includes('/shop/purchase'))).toBe(false);
     await userEvent.click(within(confirm).getByRole('button', { name: 'Buy' }));
     expect(await screen.findByText(/Sunset is yours/)).toBeInTheDocument();
     const buy = calls.find((c) => c.url.includes('/shop/purchase'));
     expect(buy?.body).toMatchObject({ sku: 'bg-1', expectedPrice: 500 });
-    // after buying it flips to Owned
+    // After buying it flips to Owned.
     expect(within(sunset).getByText('Owned')).toBeInTheDocument();
   });
 
@@ -100,7 +100,7 @@ describe('Shop', () => {
     const pricey = (await screen.findByText('Pricey')).closest('figure')!;
 
     expect(within(pricey).getByRole('button', { name: 'Buy' })).toBeDisabled();
-    // the number you are saving towards, and the gap — 5000 wanted, 1000 held
+    // The number you are saving towards, and the gap — 5000 wanted, 1000 held.
     expect(within(pricey).getByText(/5,000 Zêr/)).toBeInTheDocument();
     expect(within(pricey).getByText(/4,000 more/)).toBeInTheDocument();
   });
@@ -111,24 +111,24 @@ describe('Shop', () => {
     await screen.findByText('Sunset');
 
     const tabs = screen.getAllByRole('tab');
-    // All, then only the kinds on sale, in the shared order; no empty "Frames" or "More"
+    // All, then only the kinds on sale, in the shared order; no empty "Frames" or "More".
     expect(tabs.map((tab) => tab.textContent)).toEqual(['All4', 'Backgrounds2', 'Icons1', 'Tags1']);
     expect(screen.getByRole('tab', { name: /All/ })).toHaveAttribute('aria-selected', 'true');
 
-    // under All, a titled section per kind, each with its own count
+    // Under All, a titled section per kind, each with its own count.
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
     expect(headings).toEqual(['Backgrounds2', 'Icons1', 'Tags1']);
 
-    // the tag the Tags card sends people here to buy is on sale, priced, and drawn as a tag
+    // The tag the Tags card sends people here to buy is on sale, priced, and drawn as a tag.
     const tag = screen.getByText('Kurdish Tag').closest('figure')!;
     expect(within(tag).getByText(/500 Zêr/)).toBeInTheDocument();
     expect(within(tag).getByRole('button', { name: 'Buy' })).toBeEnabled();
     expect(tag.querySelector('.item-glyph svg')).not.toBeNull();
-    // and every item says what it is under its Kurdish name
+    // And every item says what it is under its Kurdish name.
     expect(within(screen.getByText('Îstîkan').closest('figure')!).getByText('Tea glass')).toBeInTheDocument();
   });
 
-  /** Pictures can be uploaded for every kind of item now, not only backgrounds and icons. */
+  /** Pictures can be uploaded for every kind of item. */
   it('draws an item’s own picture whatever its kind, its glyph where it has none, and a video background as a video', async () => {
     const items: ShopItem[] = [
       { sku: 'freeze', name: 'Cemed', description: 'Streak freeze', category: 'streak_freeze', currency: 'zer', price: 200, isUnique: false, premiumOnly: false, assetUrl: 'https://cdn.test/art/freeze.png' },
@@ -163,11 +163,11 @@ describe('Shop', () => {
     const frame = (await screen.findByText('Xeleka Laleyan')).closest('figure')!;
     const worn = frame.querySelector('.shop-thumb-frame .art-frame.is-made') as HTMLElement;
     expect(worn.querySelector('img.art-frame-ring')).toHaveAttribute('src', '/cosmetics/frames/made-01-lale.png');
-    // the face in the middle two thirds of it, whoever is looking
+    // The face in the middle two thirds of it, whoever is looking.
     expect((worn.querySelector('.art-frame-face') as HTMLElement).style.width).toBe(`${Math.round((104 * 2) / 3)}px`);
     expect(within(frame).getByRole('button', { name: 'Buy' })).toBeEnabled();
     expect(frame).toHaveTextContent('1,400');
-    // an icon is still its own picture, with nothing round it
+    // An icon is still its own picture, with nothing round it.
     const icon = screen.getByText('Roj').closest('figure')!;
     expect(icon.querySelector('.art-frame')).toBeNull();
     expect(icon.querySelector('.shop-thumb-icon img')).toHaveAttribute('src', '/cosmetics/icons/made-02-roj.png');
@@ -182,7 +182,7 @@ describe('Shop', () => {
 
     expect(screen.getByRole('tab', { name: /Icons/ })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tabpanel')).toHaveAccessibleName(/Icons/);
-    // just that kind's grid: no section headings, and nothing of another kind
+    // Just that kind's grid: no section headings, and nothing of another kind.
     expect(screen.queryByRole('heading', { name: /Backgrounds/ })).not.toBeInTheDocument();
     expect(tileNames()).toEqual(['Îstîkan']);
   });
@@ -192,7 +192,7 @@ describe('Shop', () => {
     renderApp(<Shop />, ['/app/shop']);
     await screen.findByText('Sunset');
 
-    // one stop in the Tab order: the chosen tab
+    // One stop in the Tab order: the chosen tab.
     expect(screen.getByRole('tab', { name: /All/ })).toHaveAttribute('tabindex', '0');
     expect(screen.getByRole('tab', { name: /Icons/ })).toHaveAttribute('tabindex', '-1');
 
@@ -203,7 +203,7 @@ describe('Shop', () => {
     await userEvent.keyboard('{End}');
     expect(screen.getByRole('tab', { name: /Tags/ })).toHaveAttribute('aria-selected', 'true');
     expect(tileNames()).toEqual(['Kurdish Tag']);
-    // past the end wraps round to the start
+    // Past the end wraps round to the start.
     await userEvent.keyboard('{ArrowRight}');
     expect(screen.getByRole('tab', { name: /All/ })).toHaveAttribute('aria-selected', 'true');
   });
@@ -227,7 +227,7 @@ describe('Shop', () => {
 
     await userEvent.type(search, 'istikan');
     expect(tileNames()).toEqual(['Îstîkan']);
-    // the tabs count what the search lets through
+    // The tabs count what the search lets through.
     expect(screen.getByRole('tab', { name: /All/ })).toHaveTextContent('1');
     expect(screen.getByRole('tab', { name: /Backgrounds/ })).toHaveTextContent('0');
 
@@ -250,7 +250,7 @@ describe('Shop', () => {
 
   it('keeps the view in the address, so it survives a reload and Back', async () => {
     vi.stubGlobal('fetch', makeFetch([]));
-    // a reload of a narrowed Shop: the address is all there is
+    // A reload of a narrowed Shop: the address is all there is.
     renderApp(
       <>
         <Shop />
@@ -264,11 +264,11 @@ describe('Shop', () => {
     expect(screen.getByLabelText('Sort')).toHaveValue('price-desc');
     expect(screen.getByRole('checkbox', { name: 'Within my balance' })).toBeChecked();
 
-    // and what is chosen goes back into it
+    // And what is chosen goes back into it.
     await userEvent.click(screen.getByRole('tab', { name: /Tags/ }));
     expect(screen.getByTestId('where')).toHaveTextContent('/app/shop?kind=tag&q=tea&sort=price-desc&afford=1');
     await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
-    // a plain Shop has a plain address
+    // A plain Shop has a plain address.
     expect(screen.getByTestId('where').textContent).toBe('/app/shop');
   });
 
@@ -294,12 +294,12 @@ describe('Shop', () => {
 
     await userEvent.click(screen.getByLabelText('Within my balance'));
 
-    expect(screen.getByText('Sunset')).toBeInTheDocument(); // 500, held 1000
+    expect(screen.getByText('Sunset')).toBeInTheDocument(); // 500, held 1000.
     expect(screen.queryByText('Pricey')).not.toBeInTheDocument(); // 5000
   });
 
   it('holds a gem-priced item against the gems, not the Zêr', async () => {
-    // plenty of Zêr, few gems: "Within my Zêr" used to let a 40-gem item through on 1,000 Zêr
+    // Plenty of Zêr, few gems: a 40-gem item must not pass on 1,000 Zêr.
     const night: ShopItem = { sku: 'bg-gem', name: 'Night sky', description: null, category: 'background', currency: 'gems', price: 40, isUnique: true, premiumOnly: false, assetUrl: null };
     vi.stubGlobal('fetch', makeFetch([], [], { items: [...CATALOGUE, night], balances: { zer: 1000, gems: 10 } }));
     renderApp(<Shop />, ['/app/shop']);
@@ -315,8 +315,7 @@ describe('Shop', () => {
   });
 
   it('keeps something you already own, however dear it was', async () => {
-    // 'Pricey' costs 5000 against a balance of 1000, but it is already owned —
-    // telling someone they cannot afford what they own would be nonsense
+    // 'Pricey' costs 5000 against 1000, but it is owned, and nobody is told they cannot afford what they have.
     vi.stubGlobal('fetch', makeFetch([], ['bg-2']));
     renderApp(<Shop />, ['/app/shop']);
     await screen.findByText('Sunset');
@@ -332,7 +331,7 @@ describe('Shop', () => {
     vi.stubGlobal('fetch', makeFetch([], [], { items: [plain, ...CATALOGUE] }));
     renderApp(<Shop />, ['/app/shop']);
     const tile = (await screen.findByText('Plain')).closest('figure')!;
-    // what the filter calls it, rather than "0 Zêr"
+    // What the filter calls it, rather than "0 Zêr".
     expect(within(tile).getByText('Free')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('checkbox', { name: 'Free' }));
@@ -347,7 +346,7 @@ describe('Shop', () => {
     const count = screen.getByRole('status');
     expect(count).toHaveAttribute('aria-live', 'polite');
     expect(count).toHaveTextContent('4 items');
-    // nothing is narrowed yet, so there is nothing to clear
+    // Nothing is narrowed yet, so there is nothing to clear.
     expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('tab', { name: /Backgrounds/ }));
@@ -360,10 +359,7 @@ describe('Shop', () => {
     expect(screen.getByLabelText('Search the shop')).toHaveValue('');
   });
 
-  /**
-   * The picker read `friend.id`, which `GET /friends` never sends (it is
-   * `userId`), so every gift from the web posted no recipient and was refused.
-   */
+  // `GET /friends` sends `userId`, not `id`, so the gift must post that.
   it('gifts to the friend picked — by their userId — and points to the chat it went to', async () => {
     const calls: Array<{ url: string; body: unknown }> = [];
     const shop = makeFetch(calls);
@@ -453,12 +449,12 @@ describe('Shop', () => {
     );
     renderApp(<Shop />, ['/app/shop']);
     const plain = (await screen.findByText('Plain')).closest('figure')!;
-    // a free item is had, not bought, and says so with no coin beside it
+    // A free item is had, not bought, and says so with no coin beside it.
     expect(within(plain).getByRole('button', { name: 'Get it free' })).toBeInTheDocument();
     expect(within(plain).getByText('Free')).toBeInTheDocument();
     expect(within(plain).queryByRole('button', { name: 'Gift Plain to a friend' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Gift Sunset to a friend' })).toBeInTheDocument();
-    // nothing is spent on it, so it is simply taken: no confirmation to get through
+    // Nothing is spent on it, so it is simply taken: no confirmation to get through.
     await userEvent.click(within(plain).getByRole('button', { name: 'Get it free' }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
@@ -480,7 +476,7 @@ describe('Shop', () => {
 
     expect(screen.getByText(/Nothing matches that/)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('0 items');
-    // one way out, in the empty state itself
+    // One way out, in the empty state itself.
     const clear = screen.getAllByRole('button', { name: 'Clear filters' });
     expect(clear).toHaveLength(1);
     await userEvent.click(clear[0]!);
@@ -489,10 +485,7 @@ describe('Shop', () => {
   });
 });
 
-/**
- * What of yours the Shop can change: the bird that carries your letters, and
- * the tree you grow. Both are asked for only for somebody signed in.
- */
+/** What of yours the Shop can change: your letters' bird and your tree, fetched only for someone signed in. */
 describe('Shop: your bird and your tree', () => {
   /** GET /letters: a pen pal page with this bird, chosen or not, and this much Zêr. */
   const letters = (over: Partial<LettersHome> = {}): LettersHome => ({
@@ -524,10 +517,8 @@ describe('Shop: your bird and your tree', () => {
   });
 
   /**
-   * A server for a signed-in Shop: the catalogue as above, and whatever else
-   * it is given by "METHOD /path" (a function is called with the body, and an
-   * array is answered one entry per call); anything it is not given is a 404,
-   * as a server without that part would answer.
+   * A server for a signed-in Shop: the catalogue, plus routes by "METHOD /path" (a function gets the body, an array
+   * answers one entry per call); anything else is a 404, as a server without that part answers.
    */
   function signedInShop(routes: Record<string, unknown>, { zer = 1200 }: { zer?: number } = {}) {
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
@@ -570,18 +561,18 @@ describe('Shop: your bird and your tree', () => {
       const calls = signedInShop({ 'GET /letters': ok(letters()) });
       renderApp(<Shop />, ['/app/shop']);
       expect(await screen.findByRole('heading', { name: 'Your pen pal bird' })).toBeInTheDocument();
-      // read as the window reads it, so looking at the shop never lands a letter the window has not shown
+      // Read as the window reads it, so looking at the shop never lands a letter the window has not shown.
       expect(calls.filter((c) => c.path === '/letters').map((c) => c.search)).toEqual(['?landings=1']);
       const group = screen.getByRole('radiogroup', { name: 'Choose a new bird' });
       expect(within(group).getAllByRole('radio')).toHaveLength(8);
       expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' })).toBeChecked();
       expect(within(group).getByRole('radio', { name: 'Brown bird' })).not.toBeChecked();
-      // what a new one costs, against what there is, before anything is picked
+      // What a new one costs, against what there is, before anything is picked.
       expect(screen.getByText('A new bird costs 500 Zêr. You have 1,200 Zêr.')).toBeInTheDocument();
       expect(screen.getByText('Pink bird, your bird now', { selector: '.yours-picked span' })).toBeInTheDocument();
-      // nothing to buy until another bird is picked
+      // Nothing to buy until another bird is picked.
       expect(screen.queryByRole('button', { name: /Get this bird/ })).toBeNull();
-      // and the way to the letters themselves
+      // And the way to the letters themselves.
       expect(screen.getByRole('link', { name: 'Letters' })).toHaveAttribute('href', '/app/letters');
     });
 
@@ -595,7 +586,7 @@ describe('Shop: your bird and your tree', () => {
       expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 500 Zêr.')).toBeInTheDocument();
       await userEvent.click(within(group).getByRole('radio', { name: 'Brown bird' }));
       await userEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
-      // free, so simply taken: no dialog, nothing spent
+      // Free, so simply taken: no dialog, nothing spent.
       expect(screen.queryByRole('dialog')).toBeNull();
       await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
       expect(await screen.findByRole('radio', { name: 'Brown bird, your bird now' })).toBeChecked();
@@ -617,7 +608,7 @@ describe('Shop: your bird and your tree', () => {
       expect(within(ask).getByText(/Every purchase is final/)).toBeInTheDocument();
       expect(calls.some((c) => c.path === '/letters/bird')).toBe(false);
 
-      // keeping the bird asks nothing more and buys nothing
+      // Keeping the bird asks nothing more and buys nothing.
       await userEvent.click(within(ask).getByRole('button', { name: 'Keep my bird' }));
       expect(screen.queryByRole('dialog')).toBeNull();
       expect(calls.some((c) => c.path === '/letters/bird')).toBe(false);
@@ -629,7 +620,7 @@ describe('Shop: your bird and your tree', () => {
       await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
       expect(await screen.findByRole('radio', { name: 'Brown bird, your bird now' })).toBeChecked();
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-      // what is left, at the top of the Shop and under the birds
+      // What is left, at the top of the Shop and under the birds.
       expect(balance()).toBe('700 Zêr');
       expect(screen.getByText('A new bird costs 500 Zêr. You have 700 Zêr.')).toBeInTheDocument();
     });
@@ -653,7 +644,7 @@ describe('Shop: your bird and your tree', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       const ask = await screen.findByRole('dialog', { name: 'Buy Brown bird?' });
       await userEvent.click(within(ask).getByRole('button', { name: 'Get this bird · 500 Zêr' }));
-      // the dialog stays, with the balance as it now is and the gap to close
+      // The dialog stays, with the balance as it now is and the gap to close.
       expect(await within(ask).findByText('You need 400 more Zêr.')).toBeInTheDocument();
       expect(within(ask).getByText('You have 100 Zêr.')).toBeInTheDocument();
       expect(within(ask).getByRole('button', { name: 'Get this bird · 500 Zêr' })).toBeDisabled();
@@ -669,7 +660,7 @@ describe('Shop: your bird and your tree', () => {
       await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
       await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Get this bird · 500 Zêr' }));
-      // no error to read: the dialog goes, and the bird is the one the server says is yours
+      // No error to read: the dialog goes, and the bird is the one the server says is yours.
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
       expect(screen.queryByRole('alert')).toBeNull();
       expect(await screen.findByRole('radio', { name: 'Brown bird, your bird now' })).toBeChecked();
@@ -686,7 +677,7 @@ describe('Shop: your bird and your tree', () => {
       expect(await screen.findByRole('heading', { name: 'Your tree' })).toBeInTheDocument();
       expect(screen.getByText('Planting another tree replaces the one you have. It starts again from a seed.')).toBeInTheDocument();
       expect(screen.getAllByRole('article')).toHaveLength(TREE_SPECIES.length);
-      // the one that stands cannot be planted over itself
+      // The one that stands cannot be planted over itself.
       expect(within(tile('Hinar (Pomegranate)')).getByText('Growing now')).toBeInTheDocument();
       expect(within(tile('Hinar (Pomegranate)')).queryByRole('button')).toBeNull();
       expect(within(tile('Berû (Oak)')).getByText('Free')).toBeInTheDocument();
@@ -695,7 +686,7 @@ describe('Shop: your bird and your tree', () => {
       expect(within(tile('Tû (Mulberry)')).getByRole('button', { name: 'Plant: Tû (Mulberry)' })).toBeEnabled();
       expect(within(tile('Kaj (Pine)')).getByText(/1,000 Zêr/)).toBeInTheDocument();
       expect(within(tile('Kaj (Pine)')).getByRole('button', { name: 'Buy: Kaj (Pine)' })).toBeEnabled();
-      // too dear: its price, the gap, and no buy
+      // Too dear: its price, the gap, and no buy.
       expect(within(tile('Dara Şevê (Night tree)')).getByText('1,000 more')).toBeInTheDocument();
       expect(within(tile('Dara Şevê (Night tree)')).getByRole('button', { name: 'Buy: Dara Şevê (Night tree)' })).toBeDisabled();
       expect(screen.getByRole('link', { name: 'My tree' })).toHaveAttribute('href', '/app/tree');
@@ -717,7 +708,7 @@ describe('Shop: your bird and your tree', () => {
 
       await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.path === '/me/tree/kinds/kaj/buy')).toBe(true));
       expect(calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
-      // it is theirs to plant now; the pomegranate still stands, and the balance follows
+      // It is theirs to plant now; the pomegranate still stands, and the balance follows.
       expect(await within(tile('Kaj (Pine)')).findByRole('button', { name: 'Plant: Kaj (Pine)' })).toBeInTheDocument();
       expect(within(tile('Kaj (Pine)')).getByText('Yours')).toBeInTheDocument();
       expect(within(tile('Hinar (Pomegranate)')).getByText('Growing now')).toBeInTheDocument();
@@ -733,7 +724,7 @@ describe('Shop: your bird and your tree', () => {
       await userEvent.click(await screen.findByRole('button', { name: 'Plant: Berû (Oak)' }));
       const ask = await screen.findByRole('dialog', { name: 'Plant Berû?' });
       expect(within(ask).getByText('Your Hinar will be gone, with everything it has grown. The water you hold stays with you.')).toBeInTheDocument();
-      // planting spends nothing: no price, and nothing said about purchases
+      // Planting spends nothing: no price, and nothing said about purchases.
       expect(within(ask).queryByText(/Zêr/)).toBeNull();
       await userEvent.click(within(ask).getByRole('button', { name: 'Keep my tree' }));
       expect(screen.queryByRole('dialog')).toBeNull();

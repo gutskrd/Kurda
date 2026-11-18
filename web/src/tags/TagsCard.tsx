@@ -17,17 +17,9 @@ import {
 import { claimTag, myClaimedTags, myTags, setTagDisplayed, tagCatalog, unclaimTag } from './api';
 
 /**
- * Tags & badges (KUR-286/287), which the browser had none of.
- *
- * Three things in one pane, because they are three views of one question —
- * what this profile says about its owner:
- *
- *  - the **main tag**, which is not stored anywhere: the server derives it from
- *    roles and shop entitlements every time, so a refund drops it. Read-only
- *    here by nature, not by choice.
- *  - the tags you have claimed, each of which you can show, hide, or give up.
- *  - what is left to add, and the sensitive ones among them, which need consent
- *    said out loud before they are claimed (#109).
+ * The profile's tags: the main tag (derived by the server from roles and shop entitlements, so read-only), the
+ * claimed tags, which can be shown, hidden or given up, and the tags left to claim, where sensitive ones need
+ * explicit consent.
  */
 export function TagsCard(): React.JSX.Element {
   const { client } = useAuth();
@@ -39,7 +31,7 @@ export function TagsCard(): React.JSX.Element {
   const [failure, setFailure] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
 
-  /* claim form: which tag, the optional value, and whether consent was given */
+  /* The claim form: which tag, the optional value, and whether consent was given. */
   const [claiming, setClaiming] = useState<TagRow | null>(null);
   const [value, setValue] = useState('');
   const [consent, setConsent] = useState(false);
@@ -55,12 +47,7 @@ export function TagsCard(): React.JSX.Element {
       setFailure((!mine.ok && mine.error) || (!claimedRes.ok && claimedRes.error) || (!cat.ok ? cat.error : null));
       return;
     }
-    /*
-     * Defaulted, not trusted. A 200 whose body is missing `tags` used to put
-     * `undefined` into a list and take the whole Edit Profile page down with it
-     * on the next render — this card sits below four others that were working
-     * fine. An absent list means no tags, which is a thing this pane can say.
-     */
+    /* Defaulted, not trusted: an absent list means no tags, and must not take the Edit Profile page down. */
     setProfile({ main: mine.data.main ?? null, claimable: mine.data.claimable ?? [] });
     setClaimed(claimedRes.data.tags ?? []);
     setCatalog(cat.data.tags ?? []);
@@ -83,7 +70,7 @@ export function TagsCard(): React.JSX.Element {
     const res = await claimTag(client, {
       key: claiming.key,
       value: value.trim() || undefined,
-      // only sent for a tag that needs it; the server decides whether it does
+      // Only sent for a tag that needs it; the server decides whether it does.
       consent: claiming.sensitive ? true : undefined,
     });
     setBusy(false);
@@ -95,13 +82,7 @@ export function TagsCard(): React.JSX.Element {
     await load();
   }, [claiming, busy, client, value, load]);
 
-  /**
-   * Showing and hiding, optimistically.
-   *
-   * A switch that waits for the round trip reads as one that did not register.
-   * A rejection re-reads everything rather than guessing which way to put it
-   * back: the server is the only thing that knows what is stored.
-   */
+  /** Shows or hides a tag optimistically; a rejection reloads everything from the server rather than guessing. */
   const toggleDisplay = useCallback(
     async (tag: ClaimedTag, displayed: boolean) => {
       setClaimed((prev) => prev.map((c) => (c.key === tag.key ? { ...c, displayed } : c)));
@@ -114,14 +95,7 @@ export function TagsCard(): React.JSX.Element {
     [client, load],
   );
 
-  /*
-   * The asking belongs to `ConfirmButton`, not to `confirm()`. That component
-   * exists specifically in place of the browser dialog and says why in its own
-   * docstring: a dialog the app cannot style, which lands outside the page for a
-   * screen reader and is blocked outright in some embedded browsers, leaving the
-   * action silently impossible. Every other destructive control in the browser —
-   * removing a friend, a favourite, a block, a comment — goes through it.
-   */
+  /* Confirmation goes through `ConfirmButton`, like every destructive control, never the browser's `confirm()`. */
   const revoke = useCallback(
     async (tag: ClaimedTag) => {
       const res = await unclaimTag(client, tag.key);
@@ -135,7 +109,7 @@ export function TagsCard(): React.JSX.Element {
   const toBuy = catalog && profile ? purchasableTags(catalog, profile.main ?? null) : [];
 
   return (
-    // `#tags` is where the inventory's Tags tab sends an owned tag (profile/CosmeticCustomizer)
+    // The inventory's Tags tab links an owned tag here (profile/CosmeticCustomizer).
     <section id="tags" className="card tags-card" style={{ marginTop: 24 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('tags.title')}</h2>
 
@@ -191,8 +165,7 @@ export function TagsCard(): React.JSX.Element {
             </ul>
           )}
 
-          {/* auto-granted tags are shown so they are not a mystery, and carry no
-              controls: nothing the reader does earns or removes them */}
+          {/* Automatic tags are shown with no controls, since nothing the reader does earns or removes them. */}
           {(profile?.claimable ?? []).some((c) => c.auto) && (
             <p className="field-hint" style={{ marginTop: 8 }}>
               {t('tags.automatic')}:{' '}
@@ -230,12 +203,7 @@ export function TagsCard(): React.JSX.Element {
                 onChange={(e) => setValue(e.target.value)}
               />
 
-              {/*
-                A sensitive tag is claimed only once consent has been ticked, and
-                the button stays disabled until it is — the server refuses the
-                claim otherwise, and a refusal after the fact reads as a bug
-                rather than as the question it is.
-              */}
+              {/* A sensitive tag needs consent ticked first; the server refuses the claim otherwise. */}
               {claiming.sensitive && (
                 <label className="section-toggle">
                   <input type="checkbox" checked={consent} disabled={busy} onChange={(e) => setConsent(e.target.checked)} />
@@ -264,7 +232,7 @@ export function TagsCard(): React.JSX.Element {
             </div>
           )}
 
-          {/* bought, not claimed — the Shop is where these come from */}
+          {/* Bought in the Shop, not claimed. */}
           {toBuy.length > 0 && (
             <p className="field-hint" style={{ marginTop: 12, marginBottom: 0 }}>
               {toBuy.map((tag) => (

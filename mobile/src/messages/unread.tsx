@@ -2,30 +2,31 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useRealtimeListener, useRealtimeReconnect } from '../realtime/RealtimeProvider';
+import { onBackFromBackground } from '../net/backFromBackground';
 import { useUnseenGifts } from '../shop/useUnseenGifts';
 import { messagesUnread } from './list';
 
 /** What is waiting, by where it waits. */
 export interface UnreadCounts {
-  /** unread direct messages, summed over every conversation */
+  /** Unread direct messages, summed over every conversation. */
   chats: number;
-  /** unread group messages, summed over every group */
+  /** Unread group messages, summed over every group. */
   groups: number;
-  /** friend requests waiting on an answer */
+  /** Friend requests waiting on an answer. */
   requests: number;
-  /** notifications not yet opened (the bell at the top of every tab) */
+  /** Notifications not yet opened (the bell at the top of every tab). */
   notifications: number;
-  /** gifts not yet unwrapped (the dot on Profile) */
+  /** Gifts not yet unwrapped (the dot on Profile). */
   gifts: number;
 }
 
 interface UnreadValue {
   counts: UnreadCounts;
-  /** the number on the Messages tab */
+  /** The number on the Messages tab. */
   messages: number;
-  /** ask the server again; `soon` is a nudge that may be folded into one already on its way */
+  /** Ask the server again; `soon` is a nudge that may be folded into one already on its way. */
   refresh: (opts?: { soon?: boolean }) => void;
-  /** a screen that has just loaded the same lists says what it found, so nothing is asked twice */
+  /** A screen that has just loaded the same lists says what it found, so nothing is asked twice. */
   report: (patch: Partial<Omit<UnreadCounts, 'gifts'>>) => void;
 }
 
@@ -38,31 +39,22 @@ const UnreadContext = createContext<UnreadValue>({
   report: () => undefined,
 });
 
-/**
- * How long a nudge waits before it asks, so a burst of them — three messages
- * arriving together, a quick hop across the tabs — becomes one round of
- * requests rather than one per event.
- */
+/** How long a nudge waits before refetching, so a burst of events becomes one round of requests. */
 const SETTLE_MS = 600;
 /** A nudge within this long of the last answer is ignored: the counts are fresh. */
 const FRESH_MS = 15_000;
+/** How long the counts wait for the realtime connection, which asks for them as it opens, before asking anyway. */
+export const OPEN_WAIT_MS = 3_000;
 
 /**
- * The badges' numbers, for the whole tab shell.
+ * The tab shell's badge counts: unread direct messages, unread group messages, friend requests and unopened
+ * notifications. Read on realtime reconnect, when a direct message or gift arrives on your channel, and when a
+ * screen reports it has read something. When the shell appears and on returning from the background
+ * (net/backFromBackground.ts) they are read once, as the connection opens, or after OPEN_WAIT_MS without one. No
+ * polling timer.
  *
- * Four cheap counts — unread direct messages, unread group messages, friend
- * requests, unopened notifications — read when the shell first appears, when
- * the app comes back to the front, when the realtime connection comes back,
- * when a direct message or a gift arrives on your own channel, and when a
- * screen that has just read something says so. No timer: a badge that is
- * wrong for a few seconds until you look is better than a phone asking the
- * server every minute whether anything happened.
- *
- * The gift count is the one the shop's badge already keeps (useUnseenGifts),
- * so the two cannot disagree.
- *
- * A guest's counts are all zero without asking: nothing can be sent to one,
- * and the four routes are among those refused to one.
+ * The gift count is the shop badge's own (useUnseenGifts), so the two agree. A guest's counts are zero without
+ * asking, since all four routes refuse guests.
  */
 export function UnreadProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { client, user, isGuest } = useAuth();
@@ -71,8 +63,11 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
   const [counts, setCounts] = useState<Omit<UnreadCounts, 'gifts'>>(EMPTY);
   const lastAnswer = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set while the counts wait for the connection to open; a read as it opens also covers anything sent before.
+  const awaitingOpen = useRef(false);
 
   const load = useCallback(() => {
+    awaitingOpen.current = false;
     if (!signedIn) return;
     void Promise.all([
       client.get<{ conversations: { unread: number }[] }>('/chat/conversations'),
@@ -90,14 +85,27 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
     });
   }, [client, signedIn]);
 
-  const refresh = useCallback(
-    (opts?: { soon?: boolean }) => {
-      if (opts?.soon && Date.now() - lastAnswer.current < FRESH_MS) return;
+  const schedule = useCallback(
+    (ms: number) => {
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(load, SETTLE_MS);
+      timer.current = setTimeout(load, ms);
     },
     [load],
   );
+
+  const refresh = useCallback(
+    (opts?: { soon?: boolean }) => {
+      // A nudge is answered by a recent read, or by the one coming when the connection opens.
+      if (opts?.soon && (awaitingOpen.current || Date.now() - lastAnswer.current < FRESH_MS)) return;
+      schedule(SETTLE_MS);
+    },
+    [schedule],
+  );
+
+  const awaitOpen = useCallback(() => {
+    awaitingOpen.current = true;
+    schedule(OPEN_WAIT_MS);
+  }, [schedule]);
 
   const report = useCallback((patch: Partial<Omit<UnreadCounts, 'gifts'>>) => {
     setCounts((prev) => ({ ...prev, ...patch }));
@@ -108,21 +116,24 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
       setCounts(EMPTY);
       return;
     }
-    load();
-    const foreground = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refresh();
-    });
+    awaitOpen();
+    const stopListening = onBackFromBackground(AppState, awaitOpen);
     return () => {
-      foreground.remove();
+      stopListening();
+      awaitingOpen.current = false;
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [signedIn, load, refresh]);
+  }, [signedIn, awaitOpen]);
 
-  useRealtimeReconnect(refresh);
+  // The read that was waiting goes at once; a later reconnect is settled like any nudge.
+  useRealtimeReconnect(() => {
+    if (awaitingOpen.current) schedule(0);
+    else refresh();
+  });
   useRealtimeListener(
     useCallback(
       (event, room) => {
-        // a new direct message on your own channel; receipts and typing change no count
+        // A new direct message on your own channel; receipts and typing change no count.
         if (room.startsWith('user:') && event.type === 'dm') refresh();
       },
       [refresh],

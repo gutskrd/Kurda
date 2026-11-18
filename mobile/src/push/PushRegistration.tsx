@@ -4,26 +4,21 @@ import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { onPermissionGranted } from './device';
 import { registerDevice, removeDevice } from './pushClient';
+import { registeredPushToken, rememberPushToken, takePushToken } from './thisDevice';
 import { getPushToken } from './tokenSource';
 
 /**
- * Registers this device for push while signed in and unregisters on sign-out
- * (KUR-094). Renders nothing, and never asks for permission: it registers
- * whenever there is a token to register — at sign-in, the moment the app is
- * allowed to notify (the offer after a lesson, Settings), and on coming back
- * to the front, in case it was allowed in the phone's settings meanwhile.
- * Mounted once under the signed-in tree.
- *
- * Not for a guest: nothing is sent to a guest — no messages, invites or gifts
- * — and registering the phone is one of the routes refused to one, so the
- * phone is registered once the account is claimed, as at any sign-in.
+ * Registers this device for push while signed in and unregisters it when the signed-in tree goes away. Renders
+ * nothing and never asks for permission: it registers whenever a token is available, at sign-in, when
+ * notifications are allowed, and on returning to the foreground in case they were allowed in the phone's
+ * settings. Signing out and deleting the account unregister the phone themselves before the session clears
+ * (sharing the token through push/thisDevice.ts). Not for guests: nothing is sent to them and the route refuses
+ * them, so the phone registers once the account is claimed.
  */
 export function PushRegistration(): null {
   const { client, status, isGuest } = useAuth();
   const { t } = useI18n();
-  const tokenRef = useRef<string | null>(null);
-  // read when a token is fetched, so a change of language renames the Android
-  // channel next time without unregistering and registering the phone
+  // Read when a token is fetched, so a language change renames the Android channel next time without re-registering.
   const channelName = useRef(t('notifications.title'));
   channelName.current = t('notifications.title');
 
@@ -32,28 +27,25 @@ export function PushRegistration(): null {
     let active = true;
     const sync = () => {
       void getPushToken(channelName.current).then((device) => {
-        // the same token again needs no second registration this session
-        if (!active || !device || device.token === tokenRef.current) return;
-        tokenRef.current = device.token;
+        // The same token again needs no second registration this session.
+        if (!active || !device || device.token === registeredPushToken()) return;
+        rememberPushToken(device.token);
         void registerDevice(client, device);
       });
     };
     sync();
     const offGranted = onPermissionGranted(sync);
-    // only while there is no token yet: fetching one is a request to Expo, and
-    // a phone already registered needs nothing new every time it is opened
+    // Only while there is no token yet: fetching one is a network request, and a registered phone needs nothing
+    // new on every open.
     const foreground = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && !tokenRef.current) sync();
+      if (state === 'active' && !registeredPushToken()) sync();
     });
     return () => {
       active = false;
       offGranted();
       foreground.remove();
-      const token = tokenRef.current;
-      if (token) {
-        tokenRef.current = null;
-        void removeDevice(client, token);
-      }
+      const token = takePushToken();
+      if (token) void removeDevice(client, token);
     };
   }, [client, status, isGuest]);
 

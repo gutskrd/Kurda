@@ -11,9 +11,8 @@ import { InviteSheet } from './InviteSheet';
 import { pressedDim } from '../theme/motion';
 
 /**
- * "Play" with a friend (contract §B1): on their profile a full button, on a
- * friends-list row an icon. Both open the invite sheet with that friend
- * already picked; the game and its presets are chosen there.
+ * "Play" with a friend (contract §B1): a full button on their profile, an icon on a friends-list row. Both open the
+ * invite sheet with the friend picked.
  */
 export function PlayWithButton({ friendId, name, compact = false }: { friendId: string; name: string; compact?: boolean }): React.JSX.Element {
   const { colors } = useTheme();

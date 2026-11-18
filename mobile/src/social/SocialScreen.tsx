@@ -34,7 +34,7 @@ interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
-  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose) */
+  /** Their picture as the server resolves it (an uploaded photo, else the avatar they chose). */
   avatarUrl?: string | null;
 }
 
@@ -49,12 +49,8 @@ interface Suggestion extends UserRow {
 }
 
 /**
- * Friends (KUR-082): find people, and see and manage every friendship in
- * flight — friends, requests coming in, requests you sent, and who to ask next.
- *
- * A pushed screen, opened from the friend count on your profile and from the
- * profile's menu, so it has a way back; it used to carry the menu button it
- * had as a tab, which did nothing once it was not one.
+ * Friends: find people, and see and manage every friendship in flight (friends, incoming and sent requests, and who to
+ * ask next). A pushed screen, opened from the friend count and the menu on your profile.
  */
 export function SocialScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
@@ -62,7 +58,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
 
   const { t } = useI18n();
-  // in Soranî and Arabic the rows start on the right, as the friend request tickets above them already do
+  // In right-to-left languages the rows start on the right, as the request tickets above do.
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
@@ -74,13 +70,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [failed, setFailed] = useState(false);
-  // the list's place is held until the first answer, rather than "search to start" showing to somebody with friends
+  // The list's place is held until the first answer, rather than "search to start" showing to somebody with friends.
   const [settled, setSettled] = useState(false);
   const reduce = useReducedMotion();
   const { announce, region } = useAnnouncer();
-  /** requests answered here: stamped "Friends" or folding away, until the lists come back without them */
+  /** Requests answered here: stamped "Friends" or folding away, until the lists come back without them. */
   const [answers, setAnswers] = useState<Record<string, RequestAnswer>>({});
-  /** suggestions just asked: their button says "Requested" for a moment before they move to the sent list */
+  /** Suggestions just asked: their button says "Requested" for a moment before they move to the sent list. */
   const [asked, setAsked] = useState<ReadonlySet<string>>(new Set());
 
   const loadLists = useCallback(() => {
@@ -94,11 +90,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
       }
     });
     const incoming = client.get<{ requests: UserRow[] }>('/friends/requests').then((r) => r.ok && setRequests(r.data.requests));
-    /*
-     * The half of the relationship the phone could not see. A request you sent
-     * was invisible here and unactionable on their profile, so the only way to
-     * find out whether you had already asked somebody was to remember.
-     */
+    /* Requests you sent, so you can see and withdraw them. */
     const outgoing = client
       .get<{ requests: UserRow[] }>('/friends/requests/outgoing')
       .then((r) => r.ok && setSent(r.data.requests));
@@ -110,16 +102,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
       void loadLists();
     }, [loadLists]),
   );
-  // pulled down, the three lists are read again (the suggestions stay: they change far more slowly)
+  // Pulled down, the three lists are read again (the suggestions stay: they change far more slowly).
   const pull = usePullRefresh(loadLists);
 
   /*
-   * Suggestions load once, not on every focus like the three lists above.
-   *
-   * Who you may know is a friends-of-friends join the API itself calls expensive
-   * and rate limits to 30/min — and it is answering a question that does not
-   * change between two visits to a tab. The other three do change, because
-   * acting on a request anywhere else in the app changes them.
+   * Suggestions load once, not on every focus like the three lists above: it is a friends-of-friends query the API rate
+   * limits to 30/min, and its answer does not change between visits, while the other lists change with every request
+   * answered anywhere.
    */
   useEffect(() => {
     void client
@@ -143,9 +132,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   );
 
   /**
-   * Answer a request on its ticket: stamped "Friends" for a moment, or folded
-   * away, and then the lists are asked again — which also brings back one
-   * whose answer did not get through.
+   * Answer a request on its ticket (stamped "Friends" for a moment, or folded away), then read the lists again, which
+   * also brings back one whose answer did not get through.
    */
   const respond = useCallback(
     (u: UserRow, accept: boolean) => {
@@ -166,7 +154,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     [client, loadLists, reduce, announce, t],
   );
 
-  /* the same words the profile uses to withdraw the same request */
+  /* The same words the profile uses to withdraw the same request. */
   const withdraw = useCallback(
     (u: UserRow) => {
       const undo = undoAction('pending_out')!;
@@ -185,13 +173,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   );
 
   /**
-   * Ask, and take them off the list of people to ask.
-   *
-   * The button answers at once — it hands a small ticket over and says
-   * "Requested" — and the row leaves a moment later, rather than by
-   * refetching: they have just moved from "suggested" to "requested", the
-   * suggestion query is the expensive one, and a row that stays put as it was
-   * after a tap reads as a tap that did not register.
+   * Ask, and take them off the suggestions. The button answers at once (a ticket handed over, "Requested") and the row
+   * leaves a moment later rather than by refetching, since the suggestion query is the expensive one.
    */
   const addFriend = useCallback(
     (userId: string) => {
@@ -200,7 +183,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
       setAsked((prev) => new Set(prev).add(userId));
       void Promise.all([client.post('/friends/requests', { userId }), wait(reduce ? 0 : ASKED_HOLD_MS)]).then(([res]) => {
         setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
-        // a request that did not go — a full friend list, too many out — says why (limits/limitCopy.ts)
+        // A request that did not go (a full friend list, too many outgoing) says why (limits/limitCopy.ts).
         if (!res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
         loadLists();
       });
@@ -211,38 +194,37 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const openProfile = (userId: string) => navigation.navigate('UserProfile', { userId });
 
   /**
-   * One person.
-   *
-   * `subtitle` replaces the display name rather than joining it: on a suggestion
-   * the reason it is being suggested at all — how many friends you share — is
-   * the more useful of the two, and a phone row has space for one.
+   * One person. `subtitle` replaces the display name rather than joining it: on a suggestion the number of shared
+   * friends is the more useful line, and a phone row has room for one.
    */
   const row = (u: UserRow, right?: React.ReactNode, subtitle?: string) => {
     const sub = subtitle ?? u.displayName;
+    // The person and the row's button side by side, never nested: a screen reader reaches only the outer of two nested
+    // buttons.
     return (
-      <PressableScale
-        key={u.userId}
-        style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
-        onPress={() => openProfile(u.userId)}
-        accessibilityRole="button"
-        accessibilityLabel={
-          u.displayName
-            ? t('friends.openProfileNamed', { username: u.username, name: u.displayName })
-            : t('friends.openProfile', { username: u.username })
-        }
-      >
-        <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
-        <View style={styles.rowMain}>
-          <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
-          {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}
-        </View>
+      <View key={u.userId} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
+        <PressableScale
+          style={[styles.rowOpen, { flexDirection: dir.row }]}
+          onPress={() => openProfile(u.userId)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            u.displayName
+              ? t('friends.openProfileNamed', { username: u.username, name: u.displayName })
+              : t('friends.openProfile', { username: u.username })
+          }
+        >
+          <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
+          <View style={styles.rowMain}>
+            <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
+            {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}
+          </View>
+        </PressableScale>
         {right}
-      </PressableScale>
+      </View>
     );
   };
 
-  /** Takes a key, not a word: the two headings here were plain English, and
-      a label built at the call site is invisible to the i18n gate. */
+  /** Takes a catalogue key, so the heading is visible to the i18n check. */
   const section = (key: TranslationKey) => (
     <Text style={[styles.section, dir.text, { color: colors.textSecondary }]}>{t(key)}</Text>
   );
@@ -252,16 +234,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
-        {/* Library and Memes used to be two links here, into two screens
-            showing halves of the same wall. Both now live on the Civak tab,
-            together, which is what this tab stopped being about. */}
         <LargeTitle
           left={<BackButton onPress={onExit} />}
           title={t('nav.friends')}
           style={styles.head}
           right={
             <Pressable
-              onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+              onPress={() => navigation.popTo('Tabs', { screen: 'Messages' })}
               reachSize={{ height: LINK_LINE }}
               style={({ pressed }) => [styles.messagesLink, { flexDirection: dir.row }, pressed && heldDim]}
               accessibilityRole="button"
@@ -279,7 +258,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             data={results}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
-            // the keyboard is up while the results come in: a tap on one opens it, rather than only putting the keyboard away
+            // The keyboard is up while results come in: a tap on one opens it, rather than only dismissing the
+            // keyboard.
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => row(item)}
             ListEmptyComponent={
@@ -341,7 +321,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                 {section('friends.title')}
               </View>
             }
-            // a friend's row has a Play button: any game, that friend picked (play/InviteSheet)
+            // A friend's row has a Play button: any game, with that friend picked (play/InviteSheet).
             renderItem={({ item }) => row(item, <PlayWithButton friendId={item.userId} name={item.displayName ?? item.username} compact />)}
             ListEmptyComponent={
               settled ? <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text> : <PeopleSkeleton />
@@ -383,10 +363,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   );
 }
 
-/** A line of words beside an 18pt glyph, as the Messages link and a request's Cancel are drawn: the Pressable reaches it to a fingertip. */
+/**
+ * A line of words beside an 18pt glyph, as the Messages link and a request's Cancel are drawn; the Pressable reaches it
+ * to a fingertip.
+ */
 const LINK_LINE = 22;
 
-/** People in grey, row for row: the face, the name and the line under it, the button at the end. */
+/** People in grey, row for row: the face, the name and its line, the button at the end. */
 function PeopleSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -415,6 +398,7 @@ const styles = StyleSheet.create({
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
+  rowOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rowMain: { flex: 1 },
   username: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   display: { fontSize: typography.sizes.sm },

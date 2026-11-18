@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, AppState, Platform, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Animated, AppState, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
@@ -58,10 +58,10 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useCourseDialect } from '../learn/courseDialect';
 import { PartyTimer } from '../party/Composer';
-import { PARTY_DIALECT_NAME, PARTY_LEVEL_KEY } from '../party/PartyStart';
+import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { useDirection } from '../reports/direction';
 import { ChoiceChips, Note, SectionLabel } from '../stories/ui';
-import { ClayButton, GlassCard, Segmented } from '../theme/glass';
+import { ClayButton, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Loading } from '../theme/Loading';
 import { useTheme } from '../theme/ThemeProvider';
@@ -69,59 +69,26 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { CategoryArt, EmblemArt, WayArt } from './art';
 import { kurdishStyle } from './ImpostorBoard';
 import type { CouchAsk } from './ImpostorStart';
-import { Cloth, GoldButton, PictureCards, PictureTiles, StepTitle } from './parts';
+import { Card, Cloth, GoldButton, PictureCards, PictureTiles, StepTitle, listed } from './parts';
 import { TABLE } from './table';
 import { WAY_KEY, WAY_NOTE } from './ways';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 import { turnCard } from '../theme/animate';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
- * Impostor on one phone, passed round a room.
+ * Impostor on one phone, passed round a room: the phone's part in the shared rules
+ * (shared/src/games/impostor/couch.ts), as the website's web/src/impostor/Couch.tsx is, played at the game's own table
+ * (table.ts). Because one screen is shared by people who must not see each other's cards, a card shows only while its
+ * holder presses it, a blank screen with the next name stands between players, cards are never stored, names stay on
+ * this phone, and every draw uses the phone's random generator. A round earns nothing, since the phone holds every
+ * card.
  *
- * The rules are shared/src/games/impostor/couch.ts; this is the phone's part
- * in them, the website's screens (web/src/impostor/Couch.tsx) in the phone's
- * own parts. It asks who is playing and how, fetches an evening's cards
- * (approved word cards, dealt by the server), and walks the room through each
- * round: the phone handed to each player to read their card, the clues said
- * out loud in turn, the talk, the vote, the caught impostor's guess, and the
- * cards turned over with the evening's score.
- *
- * What it is careful about, because one screen is shared by people who must
- * not see each other's cards:
- * - a card is on the screen only while its holder is pressing it; letting go,
- *   leaving the app or the screen locking hides it;
- * - between two players there is always a screen that shows nothing, with the
- *   next player's name on it;
- * - the cards stay in memory for the evening and are never stored; the
- *   players' names are kept on this phone only, so the next evening starts
- *   with them, and are never sent anywhere;
- * - every draw comes from the phone's own random generator, not a clock.
- *
- * A round played here earns nothing: the phone holds every card, so nothing it
- * could report about who won would be worth believing.
- *
- * A tap that is easy to make by mistake can be taken back for a moment
- * (UNDO_MS): going to the vote, and each vote. Taking one back must never
- * show what it took back, so a tap that would show something new (who was
- * caught, the cards turned over) waits out that moment before it is played,
- * and one that shows nothing new is played at once with the way back under
- * it. The caught impostor's guess is asked once more instead, since it ends
- * the round.
- *
- * With two impostors, catching one is not the end: the rest of the room
- * votes once more for the other, against a short clock, and an impostor
- * still hidden after that is paid for it. The game is set once for the
- * evening, so a card with no second word plays one round the plain way and
- * says so, and the next card is dealt the way the room chose again. A fresh
- * batch of cards is asked for without the words already played tonight.
- *
- * The setup is three numbered steps a room can answer without reading
- * anything twice (who is playing, which game, what about), the rules folded
- * under them with the answers they already have, and Deal the cards pinned
- * under the list where a thumb is. The round is played at the game's own
- * table (table.ts): the pass screen, the clue and the talk on its night
- * cloth, a card face down in the mask and face up on paper.
+ * An easily mistaken tap (going to the vote, each vote) can be taken back for UNDO_MS, and a tap that would reveal
+ * something waits out that moment first, so an undo never shows what it took back. With two impostors, catching one
+ * leads to a short second vote. A card with no second word plays one round the plain way; fresh batches skip tonight's
+ * words.
  */
 
 const KEPT = 'hevalo_couch_v1';
@@ -130,7 +97,7 @@ const ANY = '';
 /** How long a tap can be taken back: long enough to see the slip, short enough not to hold the room up. */
 const UNDO_MS = 3000;
 
-/** What this phone remembers from the last evening: the names and how the game was set. Anything else it finds, it ignores. */
+/** What this phone remembers from the last evening: the names and how the game was set; anything else is ignored. */
 async function readKept(): Promise<CouchKept | null> {
   try {
     const raw = Platform.OS === 'web' ? (globalThis.localStorage?.getItem(KEPT) ?? null) : await SecureStore.getItemAsync(KEPT);
@@ -146,25 +113,14 @@ async function writeKept(kept: CouchKept): Promise<void> {
     if (Platform.OS === 'web') globalThis.localStorage?.setItem(KEPT, value);
     else await SecureStore.setItemAsync(KEPT, value);
   } catch {
-    // a phone that will not keep them only asks for the names again next time
+    // A phone that will not keep them only asks for the names again next time.
   }
 }
 
 /** A seed for one round's draws, from the phone's own random generator (the one a new device id comes from). */
 const freshSeed = (): string => newDeviceId();
 
-/** Names read as a list the way the reader's language joins them; a comma where the phone cannot say. */
-function listed(names: readonly string[], locale: string): string {
-  try {
-    const formats = Intl as unknown as { ListFormat?: new (locale: string, options: { type: 'conjunction' }) => { format(items: readonly string[]): string } };
-    if (formats.ListFormat) return new formats.ListFormat(locale, { type: 'conjunction' }).format(names);
-  } catch {
-    // an older engine has no list format: the comma below says it well enough
-  }
-  return names.join(', ');
-}
-
-/** Whether a screen reader is reading the phone: its user cannot press and hold, so the card is turned by a tap instead. */
+/** Whether a screen reader is on: its user cannot press and hold, so the card turns on a tap instead. */
 function useScreenReader(): boolean {
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -181,36 +137,22 @@ function useScreenReader(): boolean {
   return on;
 }
 
-/**
- * A glass card with its contents laid out by `style`. The glass card's own
- * style is its frame's (where it sits among its neighbours), so a gap or an
- * alignment given there never reaches what is inside it.
- */
-function Card({ style, children }: { style: StyleProp<ViewStyle>; children: React.ReactNode }): React.JSX.Element {
-  return (
-    <GlassCard>
-      <View style={style}>{children}</View>
-    </GlassCard>
-  );
-}
-
 interface Evening {
   dialect: GameDialect;
   difficulty: GameDifficulty;
   category: string | null;
   /**
-   * How the room set the game. Every round is dealt from this, not from the
-   * round before: a card with no second word plays one round the plain way,
-   * and the next card is played the way the room chose again.
+   * How the room set the game. Every round is dealt from this rather than the round before, so after a card with no
+   * second word the next is played the way the room chose.
    */
   wanted: CouchSettings;
   deck: CouchCard[];
-  /** the card being played, by its place in the deck */
+  /** The card being played, by its place in the deck. */
   at: number;
-  /** how many rounds have been started this evening */
+  /** How many rounds have been started this evening. */
   played: number;
   game: CouchState;
-  /** the points before this round, by seat */
+  /** The points before this round, by seat. */
   totals: number[];
 }
 
@@ -218,11 +160,11 @@ interface Evening {
 interface Take {
   before: CouchState;
   after: CouchState;
-  /** the tap shows something new, so it waits out the moment before it is played (see the header) */
+  /** The tap shows something new, so it waits out the moment before it is played. */
   held: boolean;
-  /** what was chosen, said while a held tap waits */
+  /** What was chosen, said while a held tap waits. */
   said: string;
-  /** when it was made, so a second tap starts its own moment */
+  /** When it was made, so a second tap starts its own moment. */
   at: number;
 }
 
@@ -240,12 +182,12 @@ export function CouchGame({ onLeave, ask }: { onLeave: () => void; ask?: CouchAs
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [take, setTake] = useState<Take | null>(null);
-  // a vote taken back opens again on the voter's own screen, not on the one that asks for the phone
+  // A vote taken back reopens on the voter's own screen, not on the one that asks for the phone.
   const [resumed, setResumed] = useState(false);
-  // the words played on this screen tonight, however often the game was changed: the next batch is dealt without them
+  // The words played on this screen tonight, however often the game was changed: the next batch is dealt without them.
   const tonight = useRef<string[]>([]);
 
-  // the moment to take a tap back: once it is over, a held tap is played and any other simply stands
+  // The moment to take a tap back: once it is over, a held tap is played and any other simply stands.
   useEffect(() => {
     if (!take) return;
     const timer = setTimeout(() => {
@@ -342,7 +284,7 @@ export function CouchGame({ onLeave, ask }: { onLeave: () => void; ask?: CouchAs
     setResumed(true);
     setEvening({ ...evening, game: take.before });
   };
-  // the second vote's clock ran out: a vote already chosen, and waiting out its moment, still counts
+  // The second vote's clock ran out: a vote already chosen and waiting out its moment still counts.
   const secondTimeUp = (): void => {
     const base = take?.held ? take.after : evening.game;
     setTake(null);
@@ -354,7 +296,7 @@ export function CouchGame({ onLeave, ask }: { onLeave: () => void; ask?: CouchAs
       <View style={[styles.countPill, { backgroundColor: colors.controlTrack }]}>
         <Text style={[styles.count, { color: colors.textSecondary }]}>{t('games.couch.game', { n: evening.played })}</Text>
       </View>
-      {/* said before any card is read: the room asked for an odd word, and this card has none */}
+      {/* Said before any card is read: the room asked for an odd word, and this card has none. */}
       {game.oddFallback && game.phase === 'deal' ? (
         <View accessibilityLiveRegion="polite">
           <Note icon="lightbulb">{t('games.couch.oddFallback')}</Note>
@@ -382,7 +324,7 @@ export function CouchGame({ onLeave, ask }: { onLeave: () => void; ask?: CouchAs
   );
 }
 
-// ---------- who is playing, and how ----------
+// Who is playing, and how.
 
 function Setup({
   offers,
@@ -394,7 +336,7 @@ function Setup({
   offers: readonly CouchOffer[];
   busy: boolean;
   failed: boolean;
-  /** a way to play or a category chosen on the start: it wins over what this phone remembers */
+  /** A way to play or category chosen on the start; it wins over what this phone remembers. */
   ask?: CouchAsk;
   onStart: (names: string[], settings: CouchSettings, dialect: GameDialect, difficulty: GameDifficulty, category: string | null) => void;
 }): React.JSX.Element {
@@ -404,7 +346,7 @@ function Setup({
   const insets = useSafeAreaInsets();
   const [names, setNames] = useState<string[]>(() => Array.from({ length: COUCH_MIN_PLAYERS + 1 }, () => ''));
   const [settings, setSettings] = useState<CouchSettings>(() => ({ ...COUCH_DEFAULTS, ...(ask?.way ? { way: ask.way } : {}) }));
-  // the learner's own Kurdish first, where the game is offered in it, until the room chooses another
+  // The learner's own Kurdish first, where the game is offered in it, until the room chooses another.
   const preferred = useCourseDialect();
   const [chosenDialect, setDialect] = useState<GameDialect | null>(null);
   const dialect = chosenDialect ?? (offers.some((o) => o.dialect === preferred) ? preferred : offers[0]!.dialect);
@@ -412,7 +354,7 @@ function Setup({
   const [category, setCategory] = useState(ask?.category ?? ANY);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [slip, setSlip] = useState<TranslationKey | null>(null);
-  // what the phone kept arrives a moment after the screen: it fills the form only if nobody has started typing
+  // What the phone kept arrives a moment after the screen: it fills the form only if nobody has started typing.
   const touched = useRef(false);
   useEffect(() => {
     let alive = true;
@@ -424,7 +366,7 @@ function Setup({
     return () => {
       alive = false;
     };
-    // what was asked for on the way in is read once, as the phone's memory is
+    // What was asked for on the way in is read once, as the phone's memory is.
   }, []);
 
   const offer = offers.find((o) => o.dialect === dialect) ?? offers[0]!;
@@ -441,7 +383,7 @@ function Setup({
   const canRemove = names.length > COUCH_MIN_PLAYERS;
   const canAdd = names.length < COUCH_MAX_PLAYERS;
   const roomForTwo = names.length >= COUCH_TWO_IMPOSTORS_FROM;
-  // an empty box takes the name on its placeholder: "Player 3"
+  // An empty box takes the name on its placeholder: "Player 3".
   const named = names.map((n, i) => (n.trim() === '' ? t('games.couch.playerName', { n: i + 1 }) : n));
   const script = kurdishStyle(offer.dialect);
   const clueNow = settings.clueSeconds === 0 ? t('games.couch.noClock') : t('games.party.seconds', { count: settings.clueSeconds });
@@ -465,7 +407,7 @@ function Setup({
           <View style={styles.names}>
             {names.map((name, i) => (
               <View key={i} style={[styles.nameRow, { flexDirection: dir.row }]}>
-                {/* the player's initial on a quiet disc: it was gold on a gold wash, 1.8:1 and gold off the table */}
+                {/* The player's initial on a quiet disc, for contrast off the table. */}
                 <View style={[styles.nameN, { backgroundColor: colors.controlTrack }]}>
                   <Text style={[styles.nameNText, { color: colors.textPrimary }]}>{name.trim() === '' ? i + 1 : name.trim().slice(0, 1).toUpperCase()}</Text>
                 </View>
@@ -534,7 +476,7 @@ function Setup({
                 options={offers.map((o) => o.dialect)}
                 value={offer.dialect}
                 onChange={setDialect}
-                labelOf={(d) => PARTY_DIALECT_NAME[d]}
+                labelOf={(d) => t(dialectNameKey(d))}
               />
             </View>
           ) : null}
@@ -573,7 +515,7 @@ function Setup({
           ) : null}
         </Card>
 
-        {/* the rules have sensible answers already: they wait folded, saying what they are set to */}
+        {/* The rules have sensible answers already, so they wait folded, saying what they are set to. */}
         <Card style={styles.form}>
           <Pressable
             onPress={() => setRulesOpen((open) => !open)}
@@ -646,7 +588,7 @@ function Setup({
         </Card>
       </ScrollView>
 
-      {/* Deal the cards: under the list, where a thumb is, whatever the list is scrolled to */}
+      {/* Deal the cards stays under the list, where a thumb is, however the list is scrolled. */}
       <View style={[styles.go, { paddingBottom: insets.bottom + spacing.sm, borderTopColor: colors.separator, backgroundColor: colors.background }]}>
         {failed ? <Note tone="danger">{t('games.couch.failed')}</Note> : null}
         <GoldButton label={t('games.couch.start')} busy={busy} onPress={start} />
@@ -656,7 +598,7 @@ function Setup({
   );
 }
 
-// ---------- one round ----------
+// One round.
 
 function Round({
   game,
@@ -676,9 +618,9 @@ function Round({
   totals: readonly number[];
   busy: boolean;
   failed: boolean;
-  /** a tap waiting out its moment before it is played: said in place of the choice it was made on */
+  /** A tap waiting out its moment before it is played: said in place of the choice it was made on. */
   held: Take | null;
-  /** a vote was just taken back: the voter's own screen opens again at once */
+  /** A vote was just taken back: the voter's own screen opens again at once. */
   resumed: boolean;
   play: (next: CouchState, undo?: { said: string }) => void;
   onUndo: () => void;
@@ -726,8 +668,7 @@ function Round({
 }
 
 /**
- * The way back from a tap, for a moment: the button, and a line under it
- * that runs out as the moment does (still under Reduce Motion, where the
+ * The way back from a tap: the button, and a line under it that runs out with the moment (under Reduce Motion the
  * button simply goes when the moment is over).
  */
 function UndoBar({ onUndo, onCloth = false }: { onUndo: () => void; onCloth?: boolean }): React.JSX.Element {
@@ -751,14 +692,14 @@ function UndoBar({ onUndo, onCloth = false }: { onUndo: () => void; onCloth?: bo
         accessibilityLabel={t('common.undo')}
         style={({ pressed }) => [styles.undoButton, { flexDirection: dir.row, borderColor: onCloth ? TABLE.veil : colors.clayBorder, opacity: pressed ? pressedDim : 1 }]}
       >
-        {/* back, the way the reader's language reads */}
+        {/* Back, the way the reader's language reads. */}
         <View style={dir.flip}>
           <Icon name="chevron-left" size={18} color={ink} />
         </View>
         <Text style={[styles.undoText, { color: ink }]}>{t('common.undo')}</Text>
       </Pressable>
       <View style={[styles.undoTrack, { backgroundColor: onCloth ? TABLE.veil : colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {/* it runs out towards where the reader started reading */}
+        {/* It runs out towards where the reader started reading. */}
         <Animated.View
           style={[styles.undoTime, { backgroundColor: onCloth ? TABLE.gold : colors.textSecondary, transformOrigin: dir.rtl ? 'right' : 'left', transform: [{ scaleX: left }] }]}
         />
@@ -808,7 +749,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
   const script = kurdishStyle(game.dialect);
   const hand = couchHand(game, seat);
 
-  // the card goes face down the moment the app is not the one in front: another app, the lock screen, the app switcher
+  // The card goes face down the moment the app is not in front: another app, the lock screen, the app switcher.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state !== 'active') setShown(false);
@@ -879,11 +820,11 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
         </View>
       </View>
       <Pressable
-        // the card is turned while it is held: it turns the moment it is touched, nothing scrolls under it
+        // The card turns the moment it is touched, with nothing scrolling under it.
         pressDelay={0}
         onPressIn={reader ? undefined : show}
         onPressOut={reader ? undefined : hide}
-        // someone listening to the phone cannot press and hold: for them a tap turns the card, and another turns it back
+        // A screen reader user cannot press and hold, so a tap turns the card and another turns it back.
         onPress={reader ? () => (shown ? hide() : show()) : undefined}
         accessibilityRole="button"
         accessibilityLabel={t('games.couch.hold')}
@@ -905,14 +846,17 @@ function Progress({ done, of }: { done: number; of: number }): React.JSX.Element
   return (
     <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {Array.from({ length: of }, (_, i) => (
-        // how far round the room the phone has gone, filled in the violet a progress bar fills in; gold is kept for what is earned
+        // Filled in the progress violet; gold is kept for what is earned.
         <View key={i} style={[styles.dot, { backgroundColor: i < done ? colors.primary : i === done ? colors.textPrimary : colors.controlTrack }]} />
       ))}
     </View>
   );
 }
 
-/** A clock for one moment of the round: it starts when the moment does, and says once that its time is up. `small` for one above other things to press. */
+/**
+ * A clock for one moment of the round: it starts with the moment and says once that its time is up. `small` for one
+ * above other things to press.
+ */
 function Countdown({ seconds, onEnd, small = false }: { seconds: number; onEnd: () => void; small?: boolean }): React.JSX.Element {
   const { t } = useI18n();
   const [from] = useState(() => Date.now());
@@ -976,7 +920,10 @@ function Clues({ game, onNext, onVote }: { game: CouchState; onNext: () => void;
   );
 }
 
-/** The room talks it over; the clock running out goes to the vote as the button does, but with no way back, since nobody tapped it. */
+/**
+ * The room talks it over; the clock running out goes to the vote as the button does, but with no way back, since nobody
+ * tapped it.
+ */
 function Talk({ game, onVote, onTimeUp }: { game: CouchState; onVote: () => void; onTimeUp: () => void }): React.JSX.Element {
   const { t } = useI18n();
   return (
@@ -1004,7 +951,7 @@ function Choice({ label, onPress, kurdish, accent = false }: { label: string; on
       }}
       accessibilityRole="button"
       accessibilityLabel={label}
-      // the guess's words are edged in the violet of what can be pressed: gold is kept for what is earned
+      // The guess's words are edged in the violet of what can be pressed; gold is kept for what is earned.
       style={({ pressed }) => [styles.choice, { backgroundColor: colors.glassFill, borderColor: accent ? colors.primary : 'transparent', opacity: pressed ? pressedDim : 1 }]}
     >
       {kurdish ? (
@@ -1017,9 +964,8 @@ function Choice({ label, onPress, kurdish, accent = false }: { label: string; on
 }
 
 /**
- * One private vote, with the phone passed to the voter first: a choice for
- * each seat they may name (never their own, nor in the second vote the
- * impostor already caught), and one for not choosing anyone.
+ * One private vote, the phone passed to the voter first: a choice for each seat they may name (never their own, nor the
+ * impostor already caught), and one for nobody.
  */
 function SecretVote({
   names,
@@ -1033,10 +979,10 @@ function SecretVote({
   names: readonly string[];
   voter: number;
   suspects: readonly number[];
-  /** how many of this vote's voters have voted, and how many it has */
+  /** How many of this vote's voters have voted, and how many it has. */
   done: number;
   of: number;
-  /** the voter has the phone already (their vote was just taken back) */
+  /** The voter has the phone already (their vote was just taken back). */
   startOpen: boolean;
   onVote: (seat: number | null) => void;
 }): React.JSX.Element {
@@ -1091,10 +1037,8 @@ function OpenVote({ names, suspects, onPoint }: { names: readonly string[]; susp
 }
 
 /**
- * The room's second vote, once one of two impostors is caught: first what it
- * is for, then the vote against COUCH_SECOND_VOTE_SECONDS. The clock starts
- * when the room is ready, not while the caught impostor still holds the
- * phone, and runs on through every voter's turn with it.
+ * The room's second vote once one of two impostors is caught: what it is for, then the vote against
+ * COUCH_SECOND_VOTE_SECONDS. The clock starts when the room is ready, not while the caught impostor holds the phone.
  */
 function SecondVote({ onTimeUp, children }: { onTimeUp: () => void; children: React.ReactNode }): React.JSX.Element {
   const { t } = useI18n();
@@ -1132,7 +1076,7 @@ function Guess({ game, onGuess }: { game: CouchState; onGuess: (option: number) 
   const name = game.players[game.accused ?? 0]!;
   if (!mine) return <PassTo name={name} title={t('games.couch.guessPass', { name })} onMine={() => setMine(true)} />;
   if (chosen !== null) {
-    // the word sits inside the sentence in its own script, whichever way the sentence runs
+    // The word sits inside the sentence in its own script, whichever way the sentence runs.
     const [before, after] = t('games.couch.guessConfirm', { word: '\u0001' }).split('\u0001');
     return (
       <>
@@ -1206,14 +1150,14 @@ function Reveal({
         : game.settings.way === 'odd'
           ? 'games.couch.end.oddCaught'
           : 'games.impostor.end.caught';
-  // why the impostors got away, said before that they did
+  // Why the impostors got away, said before that they did.
   const why =
     reveal.escape === 'tie'
       ? t('games.impostor.end.tie')
       : reveal.escape === 'wrong-out' && game.accused !== null
         ? t('games.impostor.end.wrongOut', { name: game.players[game.accused]! })
         : null;
-  // the second vote, for the impostor the first did not catch: caught as well, or still hidden and paid for it
+  // The second vote, for the impostor the first did not catch: caught as well, or still hidden and paid for it.
   const other = reveal.second ? (reveal.impostors.find((seat) => seat !== game.accused) ?? null) : null;
   const afterSecond: string[] = [];
   if (reveal.second && other !== null) {
@@ -1221,7 +1165,7 @@ function Reveal({
     else if (reveal.second.accused !== null) afterSecond.push(t('games.impostor.end.wrongOut', { name: game.players[reveal.second.accused]! }));
   }
   if (reveal.stillHidden !== null) afterSecond.push(t('games.couch.end.stillHidden', { name: game.players[reveal.stillHidden]!, count: IMPOSTOR_POINTS.escaped }));
-  // who chose nobody said so; in a private second vote, who had not voted when the clock ran out did not vote at all
+  // Who chose nobody said so; in a private second vote, whoever had not voted when the clock ran out did not vote.
   const voteLine = (voter: number, suspect: number | null): string =>
     suspect === null
       ? t('games.impostor.votedUnsure', { name: game.players[voter]! })
@@ -1229,7 +1173,7 @@ function Reveal({
   const secondVotes = reveal.second?.votes ?? [];
   const missed = game.second?.done && game.settings.vote === 'secret' ? game.second.voters.slice(secondVotes.length) : [];
   const scaleX = turn.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] });
-  // the turn comes a touch past flat before it settles: the face is simply there by then
+  // The turn goes a touch past flat before it settles, so the face is already there by then.
   const face = turn.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [0, 0, 1, 1], extrapolate: 'clamp' });
   return (
     <>
@@ -1250,7 +1194,7 @@ function Reveal({
                   </Text>
                 </Animated.View>
               </Animated.View>
-              {/* a second line before an ellipsis: "Berfînê Xa…" is nobody's name */}
+              {/* A second line before an ellipsis: "Berfînê Xa…" is nobody's name. */}
               <Text style={[styles.flipName, { color: colors.textSecondary }]} numberOfLines={2}>
                 {name}
               </Text>
@@ -1336,10 +1280,8 @@ function Reveal({
             accessibilityLabel={`${row.name}: ${t('games.couch.roundPoints')} ${row.round}, ${t('games.couch.total')} ${row.total}`}
             style={[styles.scoreRow, { flexDirection: dir.row, borderTopColor: colors.separator }, place > 0 ? styles.scoreRule : null]}
           >
-            {/*
-              The impostor is marked by the card's own sign, as on the cards above: the name was red, which says "wrong", beside a
-              green +3 when the impostor had got away with it.
-            */}
+            {/* The impostor is marked by the card's own sign, as on the cards above; red would read as "wrong" beside
+               a green +3. */}
             <View style={[styles.scoreName, styles.scoreWho, { flexDirection: dir.row }]}>
               {reveal.impostors.includes(row.seat) ? <Icon name="eye-off" size={16} color={colors.textSecondary} /> : null}
               <Text style={[styles.scoreText, styles.flexText, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -1377,7 +1319,7 @@ const styles = StyleSheet.create({
   nameRow: { alignItems: 'center', gap: spacing.sm },
   nameN: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   nameNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  // a text field is as wide as its text wants unless told it may be narrower: without that the row runs off the card
+  // A text field is as wide as its text unless allowed to shrink; without it the row runs off the card.
   nameInput: { flex: 1, minWidth: 0, minHeight: 48, fontSize: typography.sizes.md, borderRadius: radii.md, paddingHorizontal: 12 },
   nameRemove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   rulesHead: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', gap: spacing.sm },
@@ -1386,7 +1328,7 @@ const styles = StyleSheet.create({
   rulesChip: { paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },
   rulesChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   turned: { transform: [{ rotate: '180deg' }] },
-  // the one divider on the screen: what scrolls ends here, and what is always in reach begins
+  // The screen's one divider: what scrolls ends here, and what is always in reach begins.
   go: { gap: spacing.sm, paddingTop: spacing.sm, paddingHorizontal: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth },
   goNote: { fontSize: typography.sizes.xs, textAlign: 'center' },
   pass: { alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.xl, paddingHorizontal: spacing.lg },
@@ -1396,7 +1338,7 @@ const styles = StyleSheet.create({
   passTitle: { fontSize: typography.sizes.xl, lineHeight: 34, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.ink },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   dot: { width: 22, height: 6, borderRadius: radii.pill },
-  // the card lifts off the screen: its shadow is its own, round the shape it has
+  // The card lifts off the screen with a shadow round its own shape.
   cardShadow: {
     alignSelf: 'center',
     width: '100%',
@@ -1438,10 +1380,10 @@ const styles = StyleSheet.create({
   clock: { alignSelf: 'stretch', alignItems: 'stretch', gap: spacing.xs },
   clockLeft: { fontSize: 56, fontWeight: typography.weights.bold, textAlign: 'center', fontVariant: ['tabular-nums'] },
   clockSmall: { fontSize: 40 },
-  // the second vote's clock sits above whoever has the phone: smaller than a turn's own stage
+  // The second vote's clock sits above whoever has the phone, smaller than a turn's own stage.
   secondClock: { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
   secondTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
-  // the way back from a tap: a quiet button, and the line that runs out under it
+  // The way back from a tap: a quiet button, and the line that runs out under it.
   undo: { alignSelf: 'center', alignItems: 'stretch', gap: 6, width: 200, maxWidth: '100%' },
   undoButton: {
     minHeight: MIN_TOUCH_TARGET,
@@ -1455,7 +1397,7 @@ const styles = StyleSheet.create({
   undoText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   undoTrack: { height: 3, borderRadius: radii.pill, overflow: 'hidden' },
   undoTime: { flex: 1, borderRadius: radii.pill },
-  // a tap waiting out its moment: what was chosen, on the cloth, with the way back
+  // A tap waiting out its moment: what was chosen, on the cloth, with the way back.
   held: { alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.xl, paddingHorizontal: spacing.lg },
   confirmWord: { fontWeight: typography.weights.bold },
   order: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
@@ -1470,11 +1412,11 @@ const styles = StyleSheet.create({
   flip: { width: 72, height: 92, borderWidth: 1.5, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', padding: 4 },
   flipFace: { alignItems: 'center' },
   flipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
-  // the tag is a longer word than most cards' own in several languages: a size down keeps it off the card's edge
+  // The tag is longer than most cards' words in several languages, so a size down keeps it off the card's edge.
   flipTag: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textAlign: 'center' },
   flipName: { fontSize: typography.sizes.xs },
   whoWas: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
-  // the rows of the score sit against each other, a rule between them: the table reads as one thing
+  // The score's rows sit against each other with a rule between, so the table reads as one thing.
   score: { gap: 0 },
   scoreRow: { alignItems: 'center', gap: spacing.sm, minHeight: 40 },
   scoreRule: { borderTopWidth: StyleSheet.hairlineWidth },

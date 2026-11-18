@@ -1,11 +1,7 @@
 /**
- * New-account trust levels + per-level velocity caps (KUR-295). Pure and
- * deterministic: the effective trust level is a function of account facts
- * (age + verification + clean history), and each level has velocity caps on
- * high-abuse actions. The write paths call getTrustLevel() + checkActionAllowed()
- * per request (no cached authority); the rate-limiter (#010) supplies the
- * rolling counts and the store. New accounts start tight and relax as they age
- * and verify — legitimate users are promoted automatically, never by hand.
+ * Pure new-account trust levels and per-level velocity caps. The level follows from account facts (age, verification,
+ * clean history), and each level caps high-abuse actions. Write paths compute it per request with the rate limiter's
+ * rolling counts; accounts start tight and relax automatically as they age and verify.
  */
 
 export type TrustLevel = 'new' | 'basic' | 'established';
@@ -14,7 +10,7 @@ export interface AccountFacts {
   /** how long the account has existed, in ms */
   accountAgeMs: number;
   emailVerified: boolean;
-  /** optional phone verification (#297) — fast-tracks trust */
+  /** Optional phone verification, which fast-tracks trust. */
   phoneVerified: boolean;
   /** confirmed policy violations on record */
   priorViolations: number;
@@ -28,10 +24,8 @@ export const ESTABLISHED_MIN_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const ESTABLISHED_FAST_AGE_MS = 24 * 60 * 60 * 1000; // 1 day
 
 /**
- * The account's effective trust level. Any confirmed violation holds it at
- * `new` (earn trust back over time / via moderation). Otherwise: email
- * verification + enough age → `established` (sooner if phone-verified);
- * verified + past the basic age → `basic`; else `new`.
+ * The effective trust level. A confirmed violation holds it at `new`; otherwise a verified email with enough age is
+ * `established` (sooner with a verified phone), verified past the basic age is `basic`, and anything else `new`.
  */
 export function getTrustLevel(facts: AccountFacts): TrustLevel {
   if (facts.priorViolations > 0) return 'new';
@@ -55,11 +49,7 @@ export type ThrottledAction = 'message' | 'group_create' | 'comment' | 'upload' 
 /** The window the caps are measured over. */
 export const VELOCITY_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
-/**
- * Max actions per VELOCITY_WINDOW_MS by trust level. Tight for `new` (a bot's
- * first hour), generous for `established` so real power users are unaffected.
- * Config-driven — these are defaults.
- */
+/** Most actions per VELOCITY_WINDOW_MS by level: tight for `new` (a bot's first hour), generous for `established`. Defaults. */
 export const VELOCITY_CAPS: Record<TrustLevel, Record<ThrottledAction, number>> = {
   new: { message: 20, group_create: 1, comment: 15, upload: 3, post: 2 },
   basic: { message: 100, group_create: 5, comment: 60, upload: 20, post: 10 },
@@ -72,11 +62,7 @@ export interface ActionAllowance {
   remaining: number;
 }
 
-/**
- * Whether one more `action` is allowed given how many the user has already
- * taken in the current window. Fail-closed if a cap is somehow missing (cap 0),
- * which cannot happen for the typed action set but keeps the check safe.
- */
+/** Whether one more `action` is allowed after `taken` in the current window; a missing cap reads as 0, failing closed. */
 export function checkActionAllowed(
   level: TrustLevel,
   action: ThrottledAction,

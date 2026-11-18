@@ -1,7 +1,7 @@
-# Submitting Hevalo to the App Store
+# Submitting Hevalo to the App Store and Google Play
 
 What has to be true, and what has to be filled in, before the iOS build is sent
-for review. The code side is checked against the review guidelines in this
+for review, and the Android build after it (section 8). The code side is checked against the review guidelines in this
 repository's tests and audits; this page is the part that lives outside the
 code: App Store Connect, the server's settings, and the content. What goes into
 the listing itself, word for word in every language, is in
@@ -34,12 +34,17 @@ by the account holder.
 
 ## 1. Accounts and agreements (owner)
 
-- [ ] Apple Developer Program membership is active for the business
-      (Zagrosian, KvK 42217689), enrolled as an organisation so the store
-      shows the business, not a private name, as the seller.
+- [x] Apple Developer Program membership is active (it renews each August).
+      Zagrosian (KvK 42217689) is an eenmanszaak, and Apple takes only legal
+      entities as organisations, so the membership is the owner's own, as an
+      individual: the store names the owner as the seller and Hevalo as the
+      app. Having Zagrosian named as the seller needs a legal entity, such as
+      a BV, and the membership moved to it through Apple's developer support.
 - [ ] App Store Connect → Business: the free apps agreement is accepted. The
       **Paid Apps** agreement, with bank and tax details, is only needed once
-      something is sold; nothing is in 1.0.0.
+      something is sold; nothing is in 1.0.0. When it is, the bank details are
+      the business's own ING account, entered there by the owner; account
+      numbers never go into this repository.
 - [ ] App Store Connect → the app → App Information → **Digital Services Act**:
       trader status declared, with the address, telephone number and email
       from the trade register (they are in `shared/src/provider.ts`). Apple
@@ -65,7 +70,9 @@ by the account holder.
       first, so nothing is refused for its length.
 - [ ] Screenshots: the six in `docs/app-store/screenshots/` into the
       **6.9-inch iPhone** slot, in their numbered order. The store makes every
-      smaller iPhone's from them. No iPad set: the app is not offered on iPad.
+      smaller iPhone's from them. No iPad set: the build is iPhone-only
+      (`supportsTablet: false`), so an iPad runs it in its iPhone window, and
+      the store asks for iPad screenshots only from apps built for iPad.
 - [ ] **Age rating** questionnaire, answered as below. The result is **13+**,
       which matches the app: it asks for a birth month and refuses anybody
       under 13, so it is not in the Kids category.
@@ -80,7 +87,8 @@ by the account holder.
   | Social media disabled for users under 13 | No | there are no accounts under 13, but the store means the age-range check, which 1.0.0 does not make |
   | Messaging and chat | Yes | direct messages and groups |
   | Advertising | No | |
-  | Profanity, horror, alcohol, medical, wellness, sexuality, violence | None | the app's own content; what members post is moderated |
+  | Realistic violence | Infrequent/Mild | the legends and the history behind them tell of killings and a massacre (Halabja), in words, never shown |
+  | Profanity, horror, alcohol, medical, wellness, sexuality, cartoon or fantasy violence | None | the app's own content; what members post is moderated |
   | Gambling, simulated gambling | No | |
   | Contests | None | leagues pay Zêr and gems, which are not money |
   | Loot boxes | No | a quest's chest is earned, never bought, and holds Zêr |
@@ -88,7 +96,9 @@ by the account holder.
   | Dating and relationships | No | |
 
 - [ ] **Availability**: every country and region except the **United States**
-      and **Brazil** (section 0).
+      and **Brazil** (section 0), and **China mainland**: the country list
+      names Taiwan, Palestine and Kurdistan as countries, which that
+      storefront refuses.
 - [ ] Export compliance: the build already declares
       `ITSAppUsesNonExemptEncryption = false` (only the system's HTTPS).
 - [ ] Accessibility Nutrition Labels (optional): fill in only what was tried
@@ -101,9 +111,10 @@ Most of the app sits behind an account, and a new account waits for an emailed
 code. A reviewer cannot receive that code, so give them accounts that are
 already through it.
 
-- [ ] **Demo account 1**: an adult account, email confirmed, with at least one
-      friend, one group, a few posts in its feed, a tree planted, and some Zêr
-      to spend in the shop.
+- [ ] **Demo account 1**: an adult account (a birth month that makes it
+      18 or over), email confirmed, with at least one friend, one group, a few
+      posts in its feed, a letter on its window, a tree planted, and some Zêr
+      to spend in the shop. Sign in with it on a phone once before submitting.
 - [ ] **Demo account 2**: the friend, so that chat, gifts and a game against a
       person can be tried. Put both sign-ins in the notes, never in this
       repository.
@@ -118,15 +129,26 @@ already through it.
   > - Report: the "…" menu on any post, comment, message or group, and the
   >   "…" at the top of any profile → Report.
   > - Block: the "…" at the top of a profile → Block; the list is in
-  >   Settings → Blocked.
+  >   Settings → Privacy → Blocked people.
   > - Text is filtered for objectionable words when it is posted; reported
   >   content is reviewed by a person within 24 hours and removed, and the
   >   account that posted it is restricted or closed.
-  > - Terms are agreed to at sign-up; they are in Settings → About Hevalo.
-  > - Contact: support@hevalo.app, also in Settings → About Hevalo.
+  > - Terms are agreed to at sign-up; they are in Settings → About & legal →
+  >   Terms of Use.
+  > - Contact: support@hevalo.app, also in Settings → Help → Contact support.
   >
   > Account deletion (Guideline 5.1.1(v)): Settings → Delete account. It is
   > also offered on the email-code screen of a new account.
+  >
+  > Letters (pen pals): a learner can send one letter at a time to another
+  > learner chosen at random, and only within the same age band (13–15,
+  > 16–17, adults). Letters carry no links or contact details, pass the same
+  > word filter, and every letter can be reported and its writer blocked.
+  > Direct messages are between friends only, and people under 18 cannot be
+  > sent friend requests.
+  >
+  > The "How are you enjoying Hevalo?" stars are our own feedback form; they
+  > never lead to the App Store, and the store's rating prompt is the system's.
   >
   > Sign in with Apple is offered wherever Google is.
   > Nothing is sold: Zêr and gems are earned by learning and cannot be bought.
@@ -137,10 +159,24 @@ already through it.
 
 ## 4. Server settings (owner, on the hosting dashboard)
 
-- [ ] `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`: the Sign in with
-      Apple key. Without them a deleted account's Apple sign-in is not revoked
-      with Apple, which the deletion guideline asks for.
-- [ ] `APPLE_CLIENT_IDS` contains `app.hevalo.mobile`.
+Nobody has signed in with Apple or Google on the live server yet (its logs
+have no such request), so none of these has been proven by use. Check each on
+the dashboard before submitting, and sign in once with Apple from the
+TestFlight build (section 6).
+
+- [ ] `APPLE_CLIENT_IDS` contains `app.hevalo.mobile`. Without it the server
+      answers every Sign in with Apple with "not configured", the button the
+      reviewer is most likely to try fails, and the app is rejected under 2.1.
+- [ ] `APPLE_TEAM_ID` (`C66L2R2VX2`), `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`: the
+      Sign in with Apple key. Without them a deleted account's Apple sign-in
+      is not revoked with Apple, which the deletion guideline asks for. Set
+      them before review: only sign-ins made after the key exists can be
+      revoked.
+- [ ] Email delivery works (the email service's key is set and the sending
+      domain verified): a new email account cannot get past its code without
+      it.
+- [ ] Media storage works: a profile picture and a voice note upload from the
+      TestFlight build.
 - [ ] `GOOGLE_CLIENT_IDS` contains the web, iOS and Android client ids, and the
       build has `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` and
       `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`. Without them the Google button is
@@ -183,6 +219,14 @@ npx eas-cli submit --platform ios --profile production
 The first build asks for the Apple account once and makes the certificates,
 the provisioning profile and the push notification key itself.
 
+- [ ] **owner**: once the app record exists, put its Apple ID (App Store
+      Connect → App Information → Apple ID) next to the team id under
+      `submit.production.ios` in `mobile/eas.json`, as `ascAppId`, so later
+      submissions do not ask for it. The team id (`appleTeamId`) is already
+      there, from the developer account's membership page.
+- [ ] Tried once on an iPad as well: App Review opens iPhone apps on an iPad,
+      and every screen has to work in that window.
+
 - [ ] Installed from TestFlight on a real iPhone and walked through once:
       sign up, the emailed code, a lesson, a profile picture (photo prompt),
       a voice note (microphone prompt, then refuse it once and see the app
@@ -190,6 +234,11 @@ the provisioning profile and the push notification key itself.
       delete account.
 - [ ] The same walk with the system text size at its largest, and once in a
       right-to-left language.
+- [ ] After the first upload, read App Store Connect's processing email. The
+      photo picker's library contains camera code the app never calls; if the
+      email asks for a camera purpose string (ITMS-90683), say so and one is
+      added before submitting.
+- [ ] No in-app purchase products attached to the 1.0.0 submission.
 
 ## 7. The day it is approved
 
@@ -200,6 +249,59 @@ the provisioning profile and the push notification key itself.
 - [ ] `ios.appStoreUrl` in `mobile/app.json` is filled in, so "Rate Hevalo"
       appears in Settings and opens the store page; until then the row is not
       shown.
+
+## 8. Google Play (owner, after the iOS build is through)
+
+The same build makes the Android app (`app.hevalo.mobile`). Play asks for
+much of what the App Store does, in its own words.
+
+- [ ] A Play Console developer account. Google offers organisation accounts
+      to businesses with a D-U-N-S number, checked against the trade-register
+      details (`shared/src/provider.ts`), and then shows Zagrosian as the
+      developer; ask for the number for the eenmanszaak first. If Google does
+      not take it, a personal account names the owner, as on the App Store.
+- [ ] **Push on Android**: Android phones get their notification token through
+      Firebase. Create a Firebase project for `app.hevalo.mobile`, download its
+      `google-services.json`, and add it to the build service as a file
+      variable named `GOOGLE_SERVICES_JSON` (visibility: secret), so the build
+      reads it without it ever being in this repository (`mobile/app.config.ts`).
+      Then upload the Firebase service-account key (FCM V1) under the build
+      service's credentials for Android. Without both, Android builds run but
+      receive no reminders.
+- [ ] **Google sign-in on Android**: the Android OAuth client in the Google
+      Cloud project needs the SHA-1 of Play's app-signing key (Play Console →
+      Test and release → App integrity), not only the upload key's. Without it
+      the Google button fails on every phone that installed from Play.
+- [ ] Store listing: name, short description (80), full description (4000),
+      in the languages of `listing.md`; the 512 × 512 icon, a 1024 × 500
+      feature graphic, and phone screenshots.
+- [ ] **Data safety** form, answered from [`privacy.md`](privacy.md): the same
+      data, collected for the same purposes, encrypted in transit, none of it
+      shared or sold, and deletion offered inside the app.
+- [ ] **Account deletion** web address (asked for in the data safety form):
+      `https://hevalo.app/privacy`, whose "Your choices" part says how to
+      delete an account and what happens in the 14 days after. Anyone can
+      also delete it on the website, under Settings, without the app.
+- [ ] **Content rating** questionnaire (IARC): user interaction, users can
+      share content with each other, no location shared, nothing bought. The
+      answers mirror section 2's table.
+- [ ] **Target audience**: 13 and over, not designed for children.
+- [ ] The privacy policy address, the same as on iOS.
+- [ ] A closed test first: Play asks new personal accounts for twelve testers
+      over fourteen days before production; an organisation account can go to
+      production straight away, but one internal test round on real Android
+      phones is still worth it (the walk in section 6).
+- [ ] **Payments profile** (only once something is sold): the business's ING
+      account, entered by the owner in the Play Console's payments settings.
+- [ ] The day it is live: `android.playStoreUrl` in `mobile/app.json` is filled
+      in, so "Rate Hevalo" appears on Android, and the website's store column
+      lists Google Play.
+
+```bash
+cd mobile
+npx eas-cli build --platform android --profile production
+npx eas-cli submit --platform android --profile production
+```
 
 ## Selling (Hevalo+ and Gewher), when it is turned on
 

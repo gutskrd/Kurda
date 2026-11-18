@@ -4,9 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../theme/tokens';
 
 /**
- * Geometry for the tab bar, kept in one place so the bar (TabBar) and the
- * scrollable tab screens agree on how much bottom space to reserve —
- * otherwise the bar would cover the last row of content.
+ * Tab bar geometry, in one place so the bar and the scrollable tab screens agree on how much bottom space to reserve.
  */
 /** The bar's own height: an icon with its word under it, and room round both for the capsule behind the tab you are on. */
 export const TAB_BAR_HEIGHT = 64;
@@ -15,11 +13,8 @@ export const TAB_BAR_HEIGHT = 64;
 export const TAB_BAR_SIDE = 16;
 
 /**
- * How far above the screen's bottom edge the bar floats.
- *
- * Just over the home indicator on a phone that has one (most of its 34
- * points are empty band, and the bar may sit in them), and a small margin
- * up from the edge on a phone that has none.
+ * How far above the screen's bottom edge the bar floats: just over the home indicator where there is one (most of its
+ * 34pt is empty and the bar may sit in it), and a small margin up from the edge where there is none.
  */
 export function tabBarLift(bottomInset: number): number {
   return Math.max(bottomInset - 8, 12);
@@ -31,24 +26,16 @@ export function useTabBarInset(): number {
   return tabBarLift(insets.bottom) + TAB_BAR_HEIGHT + spacing.md;
 }
 
-/**
- * Top padding a custom-header stack/modal screen needs so its header (back /
- * close button, title) clears the status bar and notch / Dynamic Island (KUR-269).
- */
+/** Top padding a custom-header screen needs so its header clears the status bar and the notch or Dynamic Island. */
 export function useScreenTopInset(): number {
   const insets = useSafeAreaInsets();
   return insets.top + spacing.md;
 }
 
 /**
- * Bottom padding for the last thing on a screen the tab bar is not over — a
- * lesson's Check button, a chat's composer — so it clears the home indicator
- * instead of sitting on it. Never less than `min`, the room the screen gives
- * it anyway on a phone with no indicator.
- *
- * While the keyboard is up the keyboard is what is under it, and the home
- * indicator is under the keyboard: keeping the inset then would leave a band
- * of empty page between what is being typed and the keys.
+ * Bottom padding for the last thing on a screen the tab bar is not over (a lesson's Check button, a chat's composer),
+ * so it clears the home indicator; never less than `min`. While the keyboard is up there is no inset, since the
+ * indicator is under the keyboard.
  */
 export function useScreenBottomInset(min: number): number {
   const insets = useSafeAreaInsets();

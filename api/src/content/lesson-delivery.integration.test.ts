@@ -1,4 +1,4 @@
-/** Lesson delivery + submission (KUR-028) against real Postgres (CI job). */
+/** Lesson delivery + submission against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -188,7 +188,7 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     expect(res.json().user.streak).toMatchObject({ current: 1, longest: 1 });
   });
 
-  it('completing the lesson meets the default daily goal (KUR-032)', async () => {
+  it('completing the lesson meets the default daily goal', async () => {
     // the perfect completion above awarded 20 XP == the default goal of 20
     const res = await authed('GET', `/me/daily-goal`);
     expect(res.json()).toMatchObject({ goal: 20, earnedXp: 20, completed: true });
@@ -228,7 +228,7 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     expect(a.json().sessionId).toBe(b.json().sessionId);
   });
 
-  it('delivers the skill grammar note in the session + via the route (KUR-038)', async () => {
+  it('delivers the skill grammar note in the session + via the route', async () => {
     const skill = await pool.query<{ skill_id: string }>(
       `SELECT skill_id FROM lessons WHERE id = $1`,
       [lessonId],

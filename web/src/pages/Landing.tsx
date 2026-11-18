@@ -26,42 +26,15 @@ import { FaqList } from '../components/FaqList';
 import { useStoriesAvailable } from '../stories/catalogue';
 
 /*
- * The front door.
- *
- * It is built around one idea, "Learn Kurdish. Play together.", and read by
- * someone deciding in a minute whether this is for them. So it goes in the
- * order that person's questions come in: what is it (the hero, with the app
- * itself on the phone), is it for me (the section for those who grew up
- * hearing Kurdish, straight after), what do I do with friends, what are the
- * games, what is a lesson like, why it works, what keeps me coming back, who
- * else is here, and the plain answers to what is left.
- *
- * Three rules hold it together.
- *
- * Show, don't list. Every section that can show the product does, with the
- * pictures in `landing/mocks.tsx`, drawn in the app's own words and colours.
- *
- * Say it the way a person would. No labels over the headings, no slogans
- * that turn on "not this but that", no rows of three; each heading says one
- * concrete thing and the sentence under it backs it up.
- *
- * Never promise what is not there. Lessons, games, friends, leagues, Zêr,
- * the dictionary and the community work in the browser today; the phone apps
- * are not in the stores yet, and the page says so. Nothing here counts users,
- * quotes reviews or claims a credential: there is nothing true of that kind
- * to say yet.
+ * The front page, ordered by a newcomer's questions: what it is (the hero, with the app on a phone), whether it is for
+ * them (heritage learners), friends, games, lessons, how it teaches, progress, community, and the FAQ. Sections show the
+ * product (landing/mocks.tsx) rather than list it, headings say one concrete thing in plain words, and nothing promises
+ * what is not there: no user counts, reviews or credentials, and the phone apps are said to be not yet in the stores.
  */
 
 /**
- * Let sections rise into view as they arrive — once each, and only where it is
- * safe to.
- *
- * The page arms itself (`lp-armed`, which is what hides the not-yet-arrived)
- * only when it has an IntersectionObserver to bring them back and the reader has
- * not asked for less motion. Anything that renders the page without scrolling
- * it — a crawler, a link preview, a full-page screenshot — either never arms it
- * or sees everything intersect at once, so there is no state in which a section
- * exists and cannot be seen.
+ * Sections rise into view once as they arrive. The page arms itself (`lp-armed`, which hides unarrived sections) only
+ * with an IntersectionObserver and motion allowed, so crawlers, previews and full-page screenshots always see everything.
  */
 function useReveal(): React.RefObject<HTMLDivElement | null> {
   const ref = useRef<HTMLDivElement>(null);
@@ -89,7 +62,7 @@ function useReveal(): React.RefObject<HTMLDivElement | null> {
   return ref;
 }
 
-/** A section's opening: the claim, a sentence of support, and a question over it where one helps the reader find themselves. */
+/** A section's opening: the claim, a supporting sentence, and a question above it where one helps. */
 function SectionHead({
   id,
   kicker,
@@ -118,7 +91,7 @@ function SectionHead({
   );
 }
 
-/** Learn a word → challenge a friend → keep each other going. */
+/** Learn a word, challenge a friend, keep each other going. */
 const TOGETHER: ReadonlyArray<{ title: MessageKey; body: MessageKey; visual: React.ReactNode }> = [
   { title: 'landing.together.step1', body: 'landing.together.step1Body', visual: <WordCardMock /> },
   { title: 'landing.together.step2', body: 'landing.together.step2Body', visual: <InviteMock /> },
@@ -126,12 +99,8 @@ const TOGETHER: ReadonlyArray<{ title: MessageKey; body: MessageKey; visual: Rea
 ];
 
 /**
- * The four games, each linked to where it is played.
- *
- * Every game needs an account, the solo rounds too — the server keeps the
- * score against the player — so a guest who follows one is asked to make one
- * when they get there, which is what the Games page itself says. The note
- * under the tiles says so before they click.
+ * The four games, each linked to where it is played. Every game needs an account, so the note under the tiles says so
+ * before a visitor clicks, as the Games page does.
  */
 const GAMES: ReadonlyArray<{
   id: string;
@@ -175,12 +144,7 @@ const GAMES: ReadonlyArray<{
   },
 ];
 
-/**
- * Whether there are stories to show yet, asked only once the games come near
- * the screen — most visitors to the front page never scroll that far, and the
- * question costs a request. Without an IntersectionObserver it is not asked,
- * and the card reads as it always does.
- */
+/** Whether the games section is near the screen, so the stories check is only made for visitors who scroll that far. */
 function useNearScreen(ref: React.RefObject<HTMLElement | null>): boolean {
   const [near, setNear] = useState(false);
   useEffect(() => {
@@ -209,12 +173,7 @@ const LEARN_POINTS: MessageKey[] = [
   'landing.learn.point4',
 ];
 
-/**
- * Four of the principles "How Hevalo teaches" sets out, each card a link to
- * its section there. The titles are the page's own, so the card and the
- * section it opens are called the same thing; the line under each says only
- * what Hevalo does, and the page carries the studies.
- */
+/** Four principles from "How Hevalo teaches", each linking to its section there under the same title. */
 const SCIENCE: ReadonlyArray<{ id: string; title: MessageKey; body: MessageKey }> = [
   { id: 'retrieval', title: 'teach.retrieval.title', body: 'landing.science.retrieval' },
   { id: 'spacing', title: 'teach.spacing.title', body: 'landing.science.spacing' },
@@ -222,7 +181,7 @@ const SCIENCE: ReadonlyArray<{ id: string; title: MessageKey; body: MessageKey }
   { id: 'voices', title: 'teach.voices.title', body: 'landing.science.voices' },
 ];
 
-/** Learn → Earn → Customize → Play, and round again. */
+/** Learn, earn, customise, play, and round again. */
 const LOOP: ReadonlyArray<{ title: MessageKey; body: MessageKey }> = [
   { title: 'landing.progress.learn', body: 'landing.progress.learnBody' },
   { title: 'landing.progress.earn', body: 'landing.progress.earnBody' },
@@ -236,13 +195,13 @@ export function Landing(): React.JSX.Element {
   const revealRoot = useReveal();
   const gamesRef = useRef<HTMLElement>(null);
   const stories = useStoriesAvailable(useNearScreen(gamesRef));
-  // the phone in the hero shows the app in turn: the path you learn on, a game with a friend, the stories
+  // The hero phone shows the path, a game with a friend, and the stories in turn.
   const heroScreens: PhoneScreen[] = [
     { id: 'path', label: t('learn.view.lessons'), screen: <PathScreen /> },
     { id: 'battle', label: t('nav.games'), screen: <BattleScreen /> },
     { id: 'stories', label: t('learn.view.stories'), screen: <StoriesScreen /> },
   ];
-  // warm the API early so sign-in later doesn't pay the cold-start penalty
+  // Warm the API early so a later sign-in does not pay the cold start.
   useEffect(() => {
     warmApi();
   }, []);
@@ -253,11 +212,7 @@ export function Landing(): React.JSX.Element {
       <section className="lp-hero" aria-labelledby="lp-hero-title">
         <div className="container lp-hero-grid">
           <div className="lp-hero-copy">
-            {/*
-              Two sentences, so two keys — each one translates on its own and
-              keeps its own word order. The second is set softer, which is a
-              choice about emphasis rather than about where a line breaks.
-            */}
+            {/* Two sentences, two keys, so each translates with its own word order; the second is set softer. */}
             <h1 id="lp-hero-title" className="lp-display">
               <span>{t('landing.hero.title1')}</span> <span className="lp-display-soft">{t('landing.hero.title2')}</span>
             </h1>
@@ -326,7 +281,7 @@ export function Landing(): React.JSX.Element {
                 <div className="game-tile-visual">{g.visual}</div>
                 <div className="game-tile-text">
                   <h3>
-                    {/* the whole tile is the link; the name is what it is called */}
+                    {/* The whole tile is the link; the name is its label. */}
                     <Link to={g.href} className="game-stretch">
                       {t(g.name)}
                     </Link>
@@ -369,7 +324,7 @@ export function Landing(): React.JSX.Element {
                 <li key={p}>{t(p)}</li>
               ))}
             </ul>
-            {/* the lessons need an account; the alphabet is open to everyone */}
+            {/* Lessons need an account; the alphabet is open to everyone. */}
             <Link to="/app/alphabet" className="doc-link reach-line lp-alphabet">
               {t('alphabet.link')}
             </Link>
@@ -385,7 +340,7 @@ export function Landing(): React.JSX.Element {
             {SCIENCE.map((p) => (
               <div className="lp-column lp-principle lp-reveal" key={p.id}>
                 <h3 className="lp-h3">
-                  {/* the whole card is the link; the principle is what it is called */}
+                  {/* The whole card is the link; the principle is its label. */}
                   <Link to={`/how-hevalo-teaches#${p.id}`} className="lp-principle-link">
                     {t(p.title)}
                   </Link>

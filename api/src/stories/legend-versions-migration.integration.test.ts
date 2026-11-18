@@ -1,15 +1,10 @@
 /**
- * Migration 1751000560000 against real Postgres: each legend's two tellings
- * are linked where both are there and neither is in a group, a pair an editor
- * already linked to something is left alone, running it again changes
- * nothing, and down unlinks only a pair still alone in its group. Its own
- * `up` and `down` are run on stories put under the legends' slugs for the
- * test, and then once through node-pg-migrate itself, as `migrate down` and
- * `migrate up` would run them.
+ * Migration 1751000560000 against real Postgres: each legend's two tellings are linked where both exist and neither is
+ * grouped, an editor's existing link is left alone, re-running changes nothing, and down unlinks only a pair still
+ * alone in its group. Its `up` and `down` run on stories created under the legends' slugs, then once through
+ * node-pg-migrate itself.
  *
- * The migration names real slugs. On a database that already holds a story
- * under one of them the tests are skipped: those stories are not theirs to
- * unlink and delete.
+ * The migration names real slugs, so the tests skip on a database already holding a story under one of them.
  */
 import { afterAll, beforeAll, describe, expect, it, type TestContext } from 'vitest';
 import { dirname, join } from 'node:path';

@@ -1,9 +1,7 @@
 /**
- * Everything about an answer that is not about where the lesson is: the
- * learner's draft and its wire shape, the match-pairs taps, the Kurdish key
- * bar, the letter-by-letter comparison feedback shows, and what kind of slip a
- * typed miss was. Pure, and shared by the browser and the phone for the reason
- * `lesson-player.ts` is.
+ * Everything about an answer that is not about where the lesson is: the draft and its wire shape, match-pairs taps, the
+ * Kurdish key bar, the letter-by-letter comparison feedback shows, and the kind of slip a typed miss was. Pure and shared
+ * by both apps, like `lesson-player.ts`.
  */
 import { answerKey, foldDiacritics, foldLetter } from './kurdish-text.js';
 import type { ExerciseType, SelfRating } from './lesson-player.js';
@@ -16,22 +14,15 @@ export interface MatchPair {
   right: string;
 }
 
-/**
- * The learner's in-progress answer, keyed by exercise type. The player holds
- * this locally; `encodeAnswer` turns it into the server's wire shape (graded
- * server-side — the client never knows the correct answer).
- */
+/** The learner's in-progress answer by exercise type; `encodeAnswer` gives the wire shape. The server grades, and the client never knows the answer. */
 export type DraftAnswer =
   | { type: 'multiple_choice'; choice: number | null }
-  /** the answer to the question after the conversation, chosen as a multiple-choice answer is */
+  /** the answer to the question after the conversation, chosen like a multiple-choice answer */
   | { type: 'conversation'; choice: number | null }
   | { type: 'translate'; text: string }
   | { type: 'listening'; text: string }
   | { type: 'writing'; text: string }
-  /**
-   * whether a take has been recorded (it stays on the device), and how the
-   * learner rated it beside the model
-   */
+  /** whether a take was recorded (it stays on the device), and how the learner rated it beside the model */
   | { type: 'speaking'; recorded: boolean; selfRating?: SelfRating | null }
   | { type: 'match_pairs'; matches: MatchPair[] };
 
@@ -62,15 +53,14 @@ export function isDraftComplete(draft: DraftAnswer, pairCount: number): boolean 
     case 'writing':
       return draft.text.trim().length > 0;
     case 'speaking':
-      // recorded and rated: the rating is the answer, the take never leaves
-      // the device
+      // Recorded and rated: the rating is the answer, and the take never leaves the device.
       return draft.recorded && Boolean(draft.selfRating);
     case 'match_pairs':
       return draft.matches.length === pairCount;
   }
 }
 
-/** Encode a draft into the request body the answers endpoint expects. */
+/** The request body the answers endpoint expects for a draft. */
 export function encodeAnswer(draft: DraftAnswer): unknown {
   switch (draft.type) {
     case 'multiple_choice':
@@ -94,11 +84,7 @@ export const MIN_RECORDING_MS = 1000;
 /** A plausible clip has at least this many bytes; fewer is a silent or failed capture. */
 export const MIN_RECORDING_BYTES = 800;
 
-/**
- * Why a recording is not worth uploading, or null when it is: too short to be
- * an attempt, or too small to hold any sound. Checked before the upload is
- * spent, on the phone and in the browser alike.
- */
+/** Why a recording is not worth uploading (too short to be an attempt, too small to hold sound), or null; checked before uploading. */
 export function recordingProblem({ durationMs, byteSize }: { durationMs: number; byteSize: number }): 'tooShort' | 'silent' | null {
   if (durationMs < MIN_RECORDING_MS) return 'tooShort';
   if (byteSize < MIN_RECORDING_BYTES) return 'silent';
@@ -124,10 +110,7 @@ export function isRightMatched(state: Pick<MatchState, 'matches'>, right: string
   return state.matches.some((m) => m.right === right);
 }
 
-/**
- * Tap a left card: matched → unmatch it; already selected → deselect;
- * otherwise select it (waiting for a right card).
- */
+/** Taps a left card: a matched one is unmatched, the selected one deselected, any other selected to await a right card. */
 export function tapLeft(state: MatchState, left: string): MatchState {
   if (isLeftMatched(state, left)) {
     return { matches: state.matches.filter((m) => m.left !== left), selectedLeft: null };
@@ -135,10 +118,7 @@ export function tapLeft(state: MatchState, left: string): MatchState {
   return { ...state, selectedLeft: state.selectedLeft === left ? null : left };
 }
 
-/**
- * Tap a right card: matched → unmatch it; else if a left is selected, form
- * the pair; else nothing (no left chosen yet).
- */
+/** Taps a right card: a matched one is unmatched; with a left selected the pair forms; otherwise nothing. */
 export function tapRight(state: MatchState, right: string): MatchState {
   if (isRightMatched(state, right)) {
     return { ...state, matches: state.matches.filter((m) => m.right !== right) };
@@ -151,9 +131,8 @@ export function tapRight(state: MatchState, right: string): MatchState {
 }
 
 /**
- * Which meaning each Kurdish card pairs with, by their texts, from a delivered
- * exercise's `pairOf`. Null when the server sent none, or one that does not fit
- * the cards: the pairs are then made freely and graded together at Check.
+ * Which meaning each Kurdish card pairs with, by text, from a delivered exercise's `pairOf`. Null when the server sent
+ * none or one that does not fit the cards; pairs are then made freely and graded together at Check.
  */
 export function pairKey(lefts: readonly string[], rights: readonly string[], pairOf: readonly number[] | undefined): Map<string, string> | null {
   if (!pairOf || pairOf.length !== lefts.length) return null;
@@ -166,13 +145,13 @@ export function pairKey(lefts: readonly string[], rights: readonly string[], pai
   return key;
 }
 
-/** A card waiting for its partner while pairs are answered as they are made: either side may be picked first. */
+/** A card waiting for its partner while pairs are answered as made; either side may be picked first. */
 export interface PickedCard {
   side: 'left' | 'right';
   text: string;
 }
 
-/** Pairs answered as they are made: the ones found so far, and a card waiting for its partner. */
+/** Pairs answered as they are made: those found so far, and a card waiting for its partner. */
 export interface LiveMatchState {
   matches: MatchPair[];
   picked: PickedCard | null;
@@ -184,11 +163,9 @@ export const emptyLiveMatch: LiveMatchState = { matches: [], picked: null };
 export type LiveMatchOutcome = 'picked' | 'unpicked' | 'matched' | 'missed' | 'ignored';
 
 /**
- * A tap while pairs are answered as they are made (`pairKey`). A card already
- * matched is spent; the picked card tapped again is let go; another card on its
- * side takes its place; a card on the other side tries the pair — kept when the
- * key says so, and either way nothing stays picked. `pair` is the two cards just
- * tried, for the screen to flash green or red.
+ * A tap while pairs are answered as made (`pairKey`): a matched card is spent; tapping the picked card lets it go; another
+ * card on its side replaces it; a card on the other side tries the pair, kept if the key agrees, and nothing stays picked.
+ * `pair` is the two cards just tried, for the screen to flash.
  */
 export function tapLive(
   state: LiveMatchState,
@@ -208,22 +185,21 @@ export function tapLive(
 // ---------- word tiles ----------
 
 /*
- * An answer built from word tiles (a delivered exercise's `bank`): the tiles
- * laid on the line are held by their places in the bank, in the order laid, so
- * the same word twice in the bank stays two tiles.
+ * An answer built from word tiles (a delivered exercise's `bank`): placed tiles are held by their bank index in the order
+ * placed, so the same word twice in the bank stays two tiles.
  */
 
-/** Lay a bank tile at the end of the line; one already there stays where it is. */
+/** Lays a bank tile at the end of the line; one already there stays put. */
 export function placeTile(placed: readonly number[], index: number): number[] {
   return placed.includes(index) ? [...placed] : [...placed, index];
 }
 
-/** Take a tile off the line, back to its place in the bank; the ones after it close up. */
+/** Takes a tile off the line; the ones after it close up. */
 export function liftTile(placed: readonly number[], index: number): number[] {
   return placed.filter((i) => i !== index);
 }
 
-/** The answer the line reads, sent as a typed one is: its words joined by single spaces. */
+/** The answer the line reads, sent like a typed one: its words joined by single spaces. */
 export function tileAnswer(bank: readonly string[], placed: readonly number[]): string {
   return placed
     .map((i) => bank[i])
@@ -233,13 +209,10 @@ export function tileAnswer(bank: readonly string[], placed: readonly number[]): 
 
 // ---------- the Kurdish key bar ----------
 
-/** The Kurmancî letters a Latin keyboard lacks (KUR-037). */
+/** The Kurmancî letters a Latin keyboard lacks. */
 export const KURMANJI_KEYS = ['ê', 'î', 'û', 'ç', 'ş'] as const;
 
-/**
- * The Soranî letters an Arabic or Persian keyboard lacks, or types as a
- * different character that only looks the same.
- */
+/** The Soranî letters an Arabic or Persian keyboard lacks, or types as a lookalike character. */
 export const SORANI_KEYS = ['ڕ', 'ڵ', 'ێ', 'ۆ', 'ە', 'ی', 'ک', 'گ', 'چ', 'پ', 'ژ', 'ڤ'] as const;
 
 /** Whether a course's `dialect` is Soranî, which is written in Arabic script. */
@@ -253,7 +226,7 @@ export function typingKeys(dialect: string | null | undefined): readonly string[
   return isSoraniDialect(dialect) ? SORANI_KEYS : KURMANJI_KEYS;
 }
 
-/** Whether text is written in the Arabic script (Soranî), so it is set right to left. */
+/** Whether text is in the Arabic script (Soranî), so it is set right to left. */
 export function isArabicScript(text: string): boolean {
   return /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/.test(text);
 }
@@ -263,10 +236,7 @@ export interface Selection {
   end: number;
 }
 
-/**
- * Insert `insert` into `text` at the current selection, replacing any
- * selected range. Returns the new text and the caret position after it.
- */
+/** Inserts `insert` at the selection, replacing any selected range; returns the new text and the caret after it. */
 export function insertAtSelection(text: string, selection: Selection, insert: string): { text: string; caret: number } {
   const start = Math.max(0, Math.min(selection.start, text.length));
   const end = Math.max(start, Math.min(selection.end, text.length));
@@ -282,12 +252,12 @@ export interface DiffSegment {
   differs: boolean;
 }
 
-/** The letter as grading reads it: case and keyboard variants do not make it different. */
+/** A letter as grading reads it: case and keyboard variants do not make it different. */
 function letterOf(ch: string): string {
   return foldLetter(ch.toLowerCase());
 }
 
-/** Join consecutive letters with the same flag into one segment. */
+/** Joins consecutive letters with the same flag into one segment. */
 function segments(chars: string[], differs: boolean[]): DiffSegment[] {
   const out: DiffSegment[] = [];
   chars.forEach((ch, i) => {
@@ -299,21 +269,16 @@ function segments(chars: string[], differs: boolean[]): DiffSegment[] {
 }
 
 /**
- * The learner's answer and the right one, each split into the letters they
- * share and the ones they do not, so feedback can mark exactly what to fix:
- * "sev" against "sêv" marks the e in one and the ê in the other.
- *
- * The shared letters are a longest common subsequence, compared as grading
- * compares them (case and a Soranî keyboard's variant letters do not count
- * as different). Answers are a sentence at most, so the quadratic table is a
- * few thousand cells.
+ * Both answers split into the letters they share and those they do not, so feedback marks exactly what to fix: "sev"
+ * against "sêv" marks the e and the ê. The shared letters are a longest common subsequence compared as grading compares
+ * (case and keyboard variants ignored); answers are a sentence at most, so the quadratic table stays small.
  */
 export function letterDiff(given: string, expected: string): { given: DiffSegment[]; expected: DiffSegment[] } {
   const a = Array.from(given.normalize('NFC'));
   const b = Array.from(expected.normalize('NFC'));
   const ka = a.map(letterOf);
   const kb = b.map(letterOf);
-  // lcs[i][j] = length of the longest common subsequence of a[i..] and b[j..]
+  // lcs[i][j] is the length of the longest common subsequence of a[i..] and b[j..].
   const lcs: number[][] = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
   for (let i = a.length - 1; i >= 0; i--) {
     for (let j = b.length - 1; j >= 0; j--) {
@@ -340,14 +305,9 @@ export function letterDiff(given: string, expected: string): { given: DiffSegmen
 // ---------- what kind of slip it was ----------
 
 /**
- * A typed miss that is one thing, said in a line under the comparison:
- *   marks     — the same letters, only Kurmancî's marks differ ("s → ş");
- *   lookalike — Soranî: a letter written as the one it looks like without its
- *               mark ("ر → ڕ");
- *   order     — the right words, in another order;
- *   missing   — one word left out;
- *   extra     — one word too many.
- * Anything else is more than one slip, and the letters marked say it better.
+ * A typed miss that is one thing, said under the comparison: `marks`, only Kurmancî's marks differ ("s → ş");
+ * `lookalike`, a Soranî letter written as its unmarked lookalike ("ر → ڕ"); `order`, the right words in another order;
+ * `missing`, one word left out; `extra`, one word too many. Anything else is more than one slip.
  */
 export type TypedHint =
   | { kind: 'marks'; pairs: Array<[string, string]> }
@@ -357,25 +317,22 @@ export type TypedHint =
   | { kind: 'extra'; word: string };
 
 /**
- * Soranî letters that are another letter with a mark: ڕ is ر with a small v
- * under it, ڵ is ل with one over it, ێ is ی with one under it, ۆ is و with one
- * over it, ڤ is ف with three dots; and the vowel ە is a stroke away from h in
- * many faces, and a Persian keyboard types one for the other. A keyboard's own
- * variants (ك for ک, ي for ی, `foldLetter`) are not here: grading reads them as
- * the same letter already (`answerKey`), so they are never a miss.
+ * Soranî letters that are another letter with a mark (ڕ ر, ڵ ل, ێ ی, ۆ و, ڤ ف), and ە, a stroke from h in many fonts and
+ * swapped by Persian keyboards. Keyboard variants such as ك for ک are absent: grading already reads them as the same
+ * letter (`answerKey`), so they are never a miss.
  */
 const SORANI_MARKED: Record<string, string> = { 'ڕ': 'ر', 'ڵ': 'ل', 'ێ': 'ی', 'ۆ': 'و', 'ڤ': 'ف', 'ە': 'ھ' };
 
-/** Punctuation, Latin and Arabic-script: it says nothing about which words were written. */
+/** Latin and Arabic-script punctuation, which says nothing about which words were written. */
 const PUNCTUATION = /[.,!?;:"'“”‘’()¡¿…—–\-؟،؛«»]/g;
 
-/** An answer's words as written (for saying one back) and as grading reads them (for comparing). */
+/** An answer's words as written, for saying one back, and as grading reads them, for comparing. */
 function wordsOf(text: string): { shown: string[]; keys: string[] } {
   const shown = text.normalize('NFC').replace(PUNCTUATION, ' ').trim().split(/\s+/).filter(Boolean);
   return { shown, keys: shown.map(answerKey) };
 }
 
-/** The letters that differ, place by place, in two texts of one length; each pair once. */
+/** The letters that differ, place by place, between two texts of one length; each pair once. */
 function letterPairs(given: string, expected: string): Array<[string, string]> {
   const a = Array.from(given);
   const b = Array.from(expected);
@@ -386,7 +343,7 @@ function letterPairs(given: string, expected: string): Array<[string, string]> {
   return [...pairs.values()];
 }
 
-/** Where `longer` has one word that `shorter` lacks, and is otherwise the same; -1 when it is not. */
+/** Where `longer` has one word that `shorter` lacks and is otherwise the same; -1 when not. */
 function oneOut(longer: string[], shorter: string[]): number {
   let at = shorter.findIndex((word, i) => word !== longer[i]);
   if (at < 0) at = shorter.length;
@@ -394,10 +351,8 @@ function oneOut(longer: string[], shorter: string[]): number {
 }
 
 /**
- * What kind of slip a typed miss was (`TypedHint`), or null when it is more
- * than one thing or nothing at all. Words are compared as grading compares
- * them — case, punctuation and a keyboard's variant letters do not count —
- * and the first kind that fits is the one said.
+ * The kind of slip a typed miss was (`TypedHint`), or null when it is more than one thing or nothing. Words are compared as
+ * grading compares them, ignoring case, punctuation and keyboard variants, and the first kind that fits is said.
  */
 export function typedHint(given: string, expected: string, dialect?: string | null): TypedHint | null {
   const a = wordsOf(given);

@@ -1,8 +1,5 @@
-import type { Translate } from '../api/errors';
-import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
-import { describeUploadFailure, uploadWasLimited, normalizeContentType } from '../profile/photoUploadResult';
 import type { Category, Comment, ImagePost } from './types';
 
 export interface FeedFilters {
@@ -25,7 +22,7 @@ function query(filters: FeedFilters): string {
 export const listPosts = (client: ApiClient, filters: FeedFilters = {}): Promise<ApiResult<{ posts: ImagePost[] }>> =>
   client.get(`/images${query(filters)}`);
 
-export const getPost = (client: ApiClient, id: string): Promise<ApiResult<ImagePost>> => client.get(`/images/${id}`);
+export const getPost = (client: ApiClient, id: string): Promise<ApiResult<ImagePost>> => client.get(`/images/${encodeURIComponent(id)}`);
 
 export const createPost = (
   client: ApiClient,
@@ -42,7 +39,7 @@ export const listComments = (
   if (page.offset != null) p.set('offset', String(page.offset));
   if (page.sort) p.set('sort', page.sort);
   const s = p.toString();
-  return client.get(`/images/${postId}/comments${s ? `?${s}` : ''}`);
+  return client.get(`/images/${encodeURIComponent(postId)}/comments${s ? `?${s}` : ''}`);
 };
 
 export const addComment = (
@@ -50,52 +47,12 @@ export const addComment = (
   postId: string,
   body: string,
   parentId?: string,
-): Promise<ApiResult<Comment>> => client.post(`/images/${postId}/comments`, { body, ...(parentId ? { parentId } : {}) });
+): Promise<ApiResult<Comment>> => client.post(`/images/${encodeURIComponent(postId)}/comments`, { body, ...(parentId ? { parentId } : {}) });
 
 /** Direct replies to a comment, oldest first: one branch, loaded when it is opened. */
 export const listReplies = (client: ApiClient, commentId: string): Promise<ApiResult<{ comments: Comment[] }>> =>
-  client.get(`/images/comments/${commentId}/replies?limit=50`);
+  client.get(`/images/comments/${encodeURIComponent(commentId)}/replies?limit=50`);
 
 /** Delete your own comment; the server keeps a placeholder where it had replies. */
 export const deleteComment = (client: ApiClient, commentId: string): Promise<ApiResult<Comment>> =>
-  client.delete(`/images/comments/${commentId}`);
-
-/** `limited`: refused by a limit on the account (see `UploadResult`). */
-export type MemeUploadResult = { ok: true; imageMediaId: string; url: string } | { ok: false; error: string; limited?: boolean };
-
-/**
- * Upload a picked image through the server (KUR-291): POST the raw bytes to
- * `/images/upload`; the server validates/resizes/WebP-compresses/moderates it and
- * returns a media id to attach to a post. Mirrors the profile-photo through-server
- * upload — binary bodies can't go through `ApiClient.request()` (it JSON-encodes).
- */
-export async function uploadMemeImage(
-  client: ApiClient,
-  photo: { uri: string; contentType: string },
-  t: Translate,
-  /** the app's language, so a limit's end is said as the reader would say it */
-  locale?: string,
-): Promise<MemeUploadResult> {
-  try {
-    const token = await client.getAccessToken();
-    if (!token) return { ok: false, error: t('upload.sessionExpired') };
-
-    const res = await FileSystem.uploadAsync(`${client.baseUrl}/images/upload`, photo.uri, {
-      httpMethod: 'POST',
-      headers: { authorization: `Bearer ${token}`, 'content-type': normalizeContentType(photo.contentType) },
-      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-    });
-    if (res.status >= 200 && res.status < 300) {
-      try {
-        const body = JSON.parse(res.body) as { imageMediaId?: string; url?: string };
-        if (body.imageMediaId && body.url) return { ok: true, imageMediaId: body.imageMediaId, url: body.url };
-      } catch {
-        // fall through
-      }
-      return { ok: false, error: t('upload.noImageReturned') };
-    }
-    return { ok: false, error: describeUploadFailure(res.status, res.body, t, locale), limited: uploadWasLimited(res.status, res.body) };
-  } catch (e) {
-    return { ok: false, error: (e as Error)?.message ?? t('upload.imageFailed') };
-  }
-}
+  client.delete(`/images/comments/${encodeURIComponent(commentId)}`);

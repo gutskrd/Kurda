@@ -73,10 +73,10 @@ const showReal = (at = '/app', joinOnPhone = true) =>
     [at],
   );
 
-/** The phone's menu button, by its name with nothing waiting behind it. */
+/** The phone's menu button, named with nothing waiting behind it. */
 const menuButton = () => screen.getByRole('button', { name: /^Menu/ });
 
-/** The names of the places, in the order the bar draws them (not the phone menu's extra rows). */
+/** The places' names in the bar's order (not the phone menu's extra rows). */
 const places = (container: HTMLElement) =>
   [...container.querySelectorAll('.nav-links > li:not(.nav-mobile-actions) .nav-link-label')].map((el) => el.textContent);
 
@@ -88,8 +88,7 @@ describe('TopNav', () => {
 
     for (const label of ['Home', 'Games']) {
       const link = screen.getByRole('link', { name: label });
-      // decorative, so it adds nothing to the accessible name — the label still
-      // reads exactly as the word, with a glyph drawn before it
+      // Decorative, so the accessible name is still just the word.
       expect(link.querySelector('.nav-link-icon svg'), label).not.toBeNull();
     }
   });
@@ -101,7 +100,7 @@ describe('TopNav', () => {
     await waitFor(() => expect(places(container)).toEqual(['Home', 'Learn', 'Messages', 'Profile']));
     expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/app/profile');
     expect(screen.getByRole('link', { name: 'Messages' })).toHaveAttribute('href', '/app/messages');
-    // search is not a page to go to first: it is typed into, in the bar
+    // Search is typed into in the bar, not a page to go to first.
     const bar = container.querySelector<HTMLElement>('header.nav')!;
     expect(within(bar).getByRole('combobox', { name: 'Search for people or words' })).toBeInTheDocument();
     expect(within(bar).queryByRole('link', { name: 'Search' })).not.toBeInTheDocument();
@@ -125,7 +124,7 @@ describe('TopNav', () => {
   it('keeps a place lit on the pages inside it', async () => {
     signIn();
     railFetch(you());
-    // the Games half and Rankings are Learn; Settings, the Shop and your tree are your profile; letters by bird are Messages
+    // Games and Rankings belong to Learn; Settings, the Shop and your tree to your profile; letters to Messages.
     for (const [at, place] of [
       ['/app/games', 'Learn'],
       ['/app/rankings', 'Learn'],
@@ -166,19 +165,19 @@ describe('TopNav', () => {
     const purse = await screen.findByTitle('Your Zêr and gems');
     expect(purse.textContent).toContain('13,880');
     expect(purse.textContent).toContain('90');
-    // both on one control, one above the other, so they read as a pair
+    // Both on one control, one above the other, so they read as a pair.
     expect(purse.querySelectorAll('.purse-row')).toHaveLength(2);
     expect(purse).toHaveAttribute('href', '/app/shop');
   });
 
   it('shows no balances until they have actually arrived', async () => {
     signIn();
-    // a response from before the field existed, or the very first render
+    // A response from before the field existed, or the very first render.
     railFetch(null);
     show();
 
     await screen.findByRole('link', { name: 'Home' });
-    // a zero that later becomes 13,880 is worse than a moment of nothing
+    // A zero that later becomes 13,880 is worse than a moment of nothing.
     expect(screen.queryByTitle('Your Zêr and gems')).not.toBeInTheDocument();
   });
 
@@ -189,7 +188,7 @@ describe('TopNav', () => {
 
     const profile = await screen.findByRole('link', { name: 'Profile' });
     await waitFor(() => expect(profile.querySelector('.level-ring-fill')).not.toBeNull());
-    // the ring is filled to the fraction, not to a rounded step
+    // The ring is filled to the exact fraction.
     const fill = container.querySelector<SVGCircleElement>('.level-ring-fill')!;
     const r = Number(fill.getAttribute('r'));
     const [drawn] = fill.getAttribute('stroke-dasharray')!.split(' ').map(Number);
@@ -198,7 +197,7 @@ describe('TopNav', () => {
 
   it('keeps the ring inside its circle for a level that just filled', async () => {
     signIn();
-    // a progress of 1 must not draw past the end of the circumference
+    // A progress of 1 must not draw past the end of the circumference.
     railFetch(you({ level: { level: 9, progress: 1, xp: 0, currentLevelXp: 0, nextLevelXp: 1 } }));
     const { container } = showReal();
 
@@ -211,7 +210,7 @@ describe('TopNav', () => {
   it('lights only the page you are on, not its parent', async () => {
     signIn();
     railFetch(you());
-    // /app is the parent of every route, so it stayed lit everywhere
+    // /app is the parent of every route.
     show('/app/games');
 
     expect(screen.getByRole('link', { name: 'Games' })).toHaveClass('active');
@@ -233,7 +232,7 @@ describe('TopNav', () => {
     show();
 
     await screen.findByRole('link', { name: 'Home' });
-    // it sat one slip from ending your session; it lives in Settings now
+    // Signing out lives in Settings.
     expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /^saved/i })).not.toBeInTheDocument();
   });
@@ -245,7 +244,7 @@ describe('TopNav', () => {
 
     expect(bar.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
     expect(bar.getByRole('link', { name: 'Get started' })).toBeInTheDocument();
-    // nothing to spend and nowhere to spend it until there is an account
+    // Nothing to spend until there is an account.
     expect(screen.queryByTitle('Your Zêr and gems')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Notifications/ })).not.toBeInTheDocument();
   });
@@ -275,7 +274,7 @@ describe('TopNav', () => {
     expect(list).toHaveClass('open');
     expect(screen.getByRole('button', { name: 'Close' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'Home' })).toHaveFocus();
-    // what the wide bar keeps elsewhere is in the menu: friends, the shop with your purse, settings
+    // What the wide bar keeps elsewhere is in the menu: friends, the shop with your purse, settings.
     const extras = within(container.querySelector<HTMLElement>('.nav-mobile-actions')!);
     expect(extras.getByRole('link', { name: 'Friends' })).toHaveAttribute('href', '/app/friends');
     expect(extras.getByRole('link', { name: /Shop/ })).toHaveTextContent('13,880');
@@ -306,11 +305,11 @@ describe('TopNav', () => {
     await screen.findByRole('link', { name: 'Home' });
     await userEvent.click(menuButton());
     const list = container.querySelector('.nav-links')!;
-    // through the places and on to the bar's own buttons: still inside, still open
+    // Through the places and on to the bar's own buttons: still inside, still open.
     await userEvent.tab();
     expect(screen.getByRole('link', { name: 'Learn' })).toHaveFocus();
     expect(list).toHaveClass('open');
-    // on past the close button, into the page the menu was covering
+    // On past the close button, into the page the menu was covering.
     const onPage = screen.getByRole('button', { name: 'On the page' });
     for (let i = 0; i < 30 && document.activeElement !== onPage; i++) await userEvent.tab();
     expect(onPage).toHaveFocus();
@@ -350,7 +349,7 @@ describe('TopNav', () => {
     );
     const button = screen.getByRole('button', { name: 'Menu, 3 unread' });
     expect(button.querySelector('.nav-toggle-dot')).not.toBeNull();
-    // and the count itself is on Messages, said in words
+    // The count itself is on Messages, in words.
     expect(screen.getByRole('link', { name: 'Messages 3 unread' }).querySelector('.nav-badge')!.textContent).toBe('3');
   });
 
@@ -371,7 +370,7 @@ describe('TopNav', () => {
 
     showReal('/', false);
     const front = within(document.querySelector<HTMLElement>('.nav-actions')!);
-    // the front page has its own invitation, a screen tall
+    // The front page has its own invitation, a screen tall.
     expect(front.getByRole('link', { name: 'Get started' })).toHaveClass('nav-desktop-only');
     await userEvent.click(menuButton());
     const extras = within(document.querySelector<HTMLElement>('.nav-mobile-actions')!);
@@ -385,7 +384,7 @@ describe('TopNav', () => {
     document.documentElement.dir = 'rtl';
     try {
       const { container } = show();
-      // no direction of its own, so it takes the page's
+      // No direction of its own, so it takes the page's.
       expect(container.querySelector('header.nav')).not.toHaveAttribute('dir');
       for (const label of container.querySelectorAll('.nav-link-label')) expect(label).toHaveAttribute('dir', 'auto');
     } finally {
@@ -393,10 +392,7 @@ describe('TopNav', () => {
     }
   });
 
-  /**
-   * The unopened-gift count rides on /me/social; nothing polls /me/gifts/unseen
-   * from every tab. A gift waiting puts a dot on Profile, where the Shop is.
-   */
+  // The unopened-gift count comes with /me/social, so nothing polls /me/gifts/unseen; a waiting gift dots Profile.
   it('marks Profile when a gift is waiting, from the rail, without polling for it', async () => {
     signIn();
     const fetchMock = railFetch(you(), { unread: { notifications: 0, groups: 0, requests: 0, challenges: 0, gifts: 2 } });
@@ -407,12 +403,7 @@ describe('TopNav', () => {
   });
 });
 
-/**
- * Inside the app a phone has the places in a bar of their own along the
- * bottom (layouts/PlacesBar.tsx), and the app's shell says so (`placesBelow`).
- * The top is then the phone app's: the brand or the way back, and search and
- * the bell in one pill.
- */
+/** Inside the app a phone has the places in the bottom bar (`placesBelow`), and the top is the brand or back, plus one pill. */
 describe('TopNav on a phone', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -438,14 +429,14 @@ describe('TopNav on a phone', () => {
     const { container } = showPhone('/app');
     const bar = container.querySelector<HTMLElement>('header.nav')!;
     expect(bar).toHaveClass('nav-phone');
-    // once the session is back: somebody signed in stays inside the app
+    // Once the session is back, someone signed in stays inside the app.
     await waitFor(() => expect(within(bar).getByRole('link', { name: 'Hevalo home' })).toHaveAttribute('href', '/app'));
     const pill = within(container.querySelector<HTMLElement>('.nav-pill')!);
     expect(pill.getByRole('button', { name: 'Search' })).toBeInTheDocument();
     expect(await pill.findByRole('button', { name: 'Notifications' })).toBeInTheDocument();
-    // search before the bell, as they are read
+    // Search before the bell, in reading order.
     expect(container.querySelector('.nav-pill')!.firstElementChild).toHaveClass('nav-search');
-    // the places are the shell's bar along the bottom, and there is no menu to hold them or anything else
+    // The places are in the bottom bar, and there is no menu.
     expect(within(bar).queryByRole('navigation')).toBeNull();
     expect(screen.queryByRole('link', { name: 'Learn' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Menu/ })).toBeNull();
@@ -461,12 +452,12 @@ describe('TopNav on a phone', () => {
     const bar = within(container.querySelector<HTMLElement>('header.nav')!);
     const back = bar.getByRole('button', { name: 'Back' });
     expect(bar.queryByRole('link', { name: 'Hevalo home' })).toBeNull();
-    // first at the top, before search and the bell
+    // First at the top, before search and the bell.
     expect(container.querySelector('.nav-inner')!.firstElementChild).toBe(back);
-    // the bell is there once the session is back, and with the session the places a way back can lead to
+    // The bell appears once the session is back, and with it the places a way back can lead to.
     await bar.findByRole('button', { name: 'Notifications' });
     await userEvent.click(back);
-    // opened cold: to the root of the place Settings is behind
+    // Opened cold: back to the root of the place Settings is behind.
     expect(screen.getByTestId('where').textContent).toBe('/app/profile');
   });
 
@@ -479,7 +470,7 @@ describe('TopNav on a phone', () => {
     expect(bar.getByRole('link', { name: 'Hevalo home' })).toHaveAttribute('href', '/');
     expect(bar.getByRole('button', { name: 'Search' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Notifications/ })).toBeNull();
-    // the way in besides Get started is the shell's, beside the places
+    // Sign in is the shell's, beside the places.
     expect(bar.queryByRole('link', { name: 'Sign in' })).toBeNull();
   });
 

@@ -7,12 +7,7 @@ import { forgetPartyOffers } from '../party/offer';
 import { forgetImpostorCategories } from './categories';
 import { Impostor } from './Impostor';
 
-/**
- * Xapînok on the website, phase by phase: the start where it is
- * offered and where it is not, the lobby, a clue turn (yours, with the slips
- * the box sees, and someone else's in the light), the impostor's own card, the
- * vote, the caught impostor's guess, and the reveal.
- */
+/** Xapînok on the website phase by phase: the start, lobby, clue turns, the impostor’s card, vote, guess and reveal. */
 
 // stand-in Kurdish for the fixtures, never shown to a learner
 afterEach(() => {

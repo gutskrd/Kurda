@@ -18,7 +18,7 @@ import { Button } from '../components/Button';
 import { BlockIcon, DrawIcon, FlagIcon, HostIcon, InviteIcon, RemovePersonIcon, SafetyIcon, SignOutIcon, TrashIcon, UserIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
 import { ReportSheet } from '../reports/ReportSheet';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import { GroupAvatar } from './GroupAvatar';
 import { GroupEdit } from './GroupEdit';
 import { GroupAsk } from './GroupAsk';
@@ -29,7 +29,7 @@ import { BansSection, RequestsSection, useModeration } from './GroupModeration';
 import { announceGroupsChanged } from './groupsChanged';
 import { membersLine } from './memberCount';
 
-/** Something that cannot be taken back, waiting for a yes. */
+/** Something irreversible, waiting for confirmation. */
 type Ask =
   | { kind: 'remove' | 'owner'; member: GroupMember }
   | { kind: 'leave' }
@@ -38,30 +38,14 @@ type Ask =
   | { kind: 'unban'; ban: GroupBan };
 
 /**
- * A group's own page, opened from its thread: what it is, who is in it, and
- * what you may do about it. A member's page only: nobody else is shown a
- * group at all.
+ * A group's own page for its members: the group's picture, name, description and size, then always in this order:
  *
- * At the top the group itself — its picture, name, description and how many
- * are in it. Then, always in the same order, so the page reads the same for
- * everyone and only grows with what you may do:
+ * - the members, with roles noted quietly; owners and admins get "Add friends" first. Actions on a member wait behind
+ *   a ⋯, shown only when the shared rules (which the server also uses) allow something;
+ * - for owners and admins, requests to come back (only while there are some), then bans;
+ * - actions on the group itself: edit, report, leave, or delete for the owner.
  *
- * - the members, one plain row each: a face, a name, and a quiet word under it
- *   for the owner and the admins. For the owner and the admins "Add friends"
- *   leads the list, since adding a friend is the only way anyone comes in.
- *   Nothing to press on a row but the person: what you may do about somebody
- *   (make them an admin, hand them the group, remove or ban them) waits behind
- *   a ⋯ at its end, and only when there is something. The rules are
- *   @kurda/shared's, which the server decides with too, so nothing is offered
- *   that would be refused;
- * - who asks to come back, for the owner and the admins, and only while
- *   somebody does; then who is banned;
- * - what is about the group itself, apart at the end: edit it (the owner and
- *   the admins), report it, leave it, or for its owner delete it.
- *
- * Anything that cannot be undone — removing someone, handing on the group,
- * leaving it, deleting it, turning a request down, lifting a ban — asks first,
- * in a step of its own with the plain consequences and Cancel beside it.
+ * Anything irreversible asks first in a step of its own, with the consequences and Cancel.
  */
 export function GroupInfo({
   detail,
@@ -70,11 +54,11 @@ export function GroupInfo({
   showRequests = false,
 }: {
   detail: GroupDetail;
-  /** reload the group (its name, picture and roster) after a change */
+  /** Reloads the group's name, picture and roster after a change. */
   onChanged: () => Promise<void>;
-  /** you are no longer in it (left, or deleted it): whatever showed it goes */
+  /** The reader left or deleted it, so whatever showed it goes. */
   onLeft: () => void;
-  /** opened to answer the requests to come back: they are brought into view */
+  /** Opened to answer requests to come back, which are scrolled into view. */
   showRequests?: boolean;
 }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -84,22 +68,22 @@ export function GroupInfo({
   const [ask, setAsk] = useState<Ask | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** what the last action did, said where a screen reader hears it */
+  /** What the last action did, announced to screen readers. */
   const [done, setDone] = useState<string | null>(null);
   const [reporting, setReporting] = useState(false);
   const [banning, setBanning] = useState<GroupMember | null>(null);
   const [adding, setAdding] = useState(false);
-  /** turning a request down stops that person's requests too */
+  /** Declining a request also stops that person's requests. */
   const [stopRequests, setStopRequests] = useState(false);
 
   const myRole = detail.myRole;
   const mayEdit = canEditGroup(myRole);
   const moderates = canModerateGroup(myRole);
   const moderation = useModeration(detail.id, moderates);
-  // the list once it has come, the group's own count until then
+  // The list once loaded, the group's own count until then.
   const waiting = moderation.requests?.length ?? detail.pendingRequests ?? 0;
 
-  // the requests sit under the members: whoever came to answer them is taken there, once
+  // The requests sit under the members; a reader who came to answer them is scrolled there once.
   const requestsRef = useRef<HTMLDivElement>(null);
   const shownRequests = useRef(false);
   useEffect(() => {
@@ -131,7 +115,7 @@ export function GroupInfo({
   const setRole = (m: GroupMember, role: 'moderator' | 'member'): Promise<void> =>
     act(() => client.put(`/groups/${detail.id}/members/${m.userId}/role`, { role }));
 
-  /** a request or a ban changed: both lists, and the roster and its count, are read again */
+  /** After a request or ban changes, reloads both lists and the roster. */
   async function afterModeration(): Promise<void> {
     await Promise.all([moderation.reload(), onChanged()]);
   }
@@ -146,7 +130,7 @@ export function GroupInfo({
       setError(describeError(res.error, t));
       return;
     }
-    // the ban is lifted either way; whether they are back in depends on the group's usual rules
+    // The ban is lifted either way; whether they are back in depends on the group's rules.
     setDone(res.data.rejoined === false ? t('groups.requests.approvedOut', { name: r.username }) : t('groups.requests.approvedIn', { name: r.username }));
     await afterModeration();
   }
@@ -198,7 +182,7 @@ export function GroupInfo({
     }
   }
 
-  // what an action did, first in the page in every view, so it stays put while a yes is asked for and is heard when it changes
+  // The action status comes first in every view, so it stays put during confirmations and is announced on change.
   const status = (
     <p className={done ? 'msg msg-success ginfo-done' : 'sr-only'} role="status">
       {done}
@@ -249,7 +233,7 @@ export function GroupInfo({
     );
   }
 
-  // owner, then admins, then everyone else by name
+  // Owner, then admins, then everyone else by name.
   const members = [...detail.members].sort((a, b) => roleRank(b.role) - roleRank(a.role) || a.username.localeCompare(b.username));
   const roleWord = (role: Role): string | null =>
     role === 'owner' ? t('groups.role.owner') : role === 'moderator' ? t('groups.role.admin') : null;
@@ -305,7 +289,7 @@ export function GroupInfo({
               : [];
             return (
               <li className="ginfo-member" key={m.userId}>
-                {/* the person is the row: it opens their profile */}
+                {/* The row opens the person's profile. */}
                 <button type="button" className="ginfo-who" onClick={() => openProfile({ kind: 'user', userId: m.userId, username: m.username })}>
                   <Avatar url={m.avatarUrl} glyphSize={18} />
                   <span className="ginfo-who-text">
@@ -377,7 +361,7 @@ export function GroupInfo({
         )}
         {myRole === 'owner' && (
           <>
-            {/* the server refuses an owner's leave — a group with no owner has nobody to hand it on — so it says what to do instead */}
+            {/* The server refuses an owner's leave, so this says what to do instead. */}
             <li className="ginfo-note">{t('groups.ownerCannotLeave', { group: detail.name })}</li>
             <li>
               <button type="button" className="ginfo-end-row is-danger" onClick={() => setAsk({ kind: 'delete' })}>
@@ -427,11 +411,11 @@ export function GroupInfo({
   );
 }
 
-/** What each yes says: its title, the plain consequences, the button that does it, and whether that button is the danger colour. */
+/** Each confirmation's title, consequences, button label, and whether the button is the danger colour. */
 function askWords(
   ask: Ask,
   detail: GroupDetail,
-  t: ReturnType<typeof useT>,
+  t: Translate,
 ): { title: string; body: React.ReactNode; action: string; danger: boolean } {
   switch (ask.kind) {
     case 'remove': {
@@ -441,7 +425,7 @@ function askWords(
         body: (
           <>
             <p>{t('groups.removeFrom', { name, group: detail.name })}</p>
-            {/* removed is not banned: they can be added again, and are told so */}
+            {/* Removed is not banned: they can be added again, and are told so. */}
             <p>{t('groups.remove.canBeAdded', { name })}</p>
           </>
         ),

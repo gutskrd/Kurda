@@ -5,12 +5,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, spacing, typography } from '../theme/tokens';
 
 /**
- * Which Hevalo this is, in one quiet line at the very end of Settings: the
- * version, and the build number when the binary has one.
- *
- * It is what support asks first, and what a tester names when a build
- * misbehaves, so it can be selected and copied. It sits below every section
- * and is not a row: nothing happens when it is pressed.
+ * The app version, and build number when there is one, in a quiet line at the end of Settings. Support asks for
+ * it first, so it is selectable; it is not a row and does nothing when pressed.
  */
 export function VersionLine({ build = nativeBuildNumber() }: { build?: string | null }): React.JSX.Element {
   const { t } = useI18n();

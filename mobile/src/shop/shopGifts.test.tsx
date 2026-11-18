@@ -9,6 +9,7 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }) }));
 import { act, cleanup, fireEvent, renderHook, screen, waitFor } from '@testing-library/react';
+import { AppState } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -20,6 +21,7 @@ patchReactNativeWeb();
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 const item = { sku: 'bg_mountain', name: 'Mountain dawn', price: 500, currency: 'Zêr' };
@@ -30,7 +32,7 @@ describe('GiftSheet (the Shop)', () => {
     testAuth.client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': ok({ balance: 4100 }) });
     const onSent = vi.fn();
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={onSent} />);
-    // each row is named for its friend, not only for the item
+    // Each row is named for its friend, not only for the item.
     fireEvent.click(await screen.findByRole('button', { name: 'A gift for Şîlan' }));
     await waitFor(() => expect(onSent).toHaveBeenCalledWith(4100, { userId: 'u2', username: 'shilan', name: 'Şîlan' }));
   });
@@ -69,8 +71,8 @@ describe('GiftSheet (the Shop)', () => {
     ];
     testAuth.client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': () => answers.shift()! });
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={() => undefined} />);
-    // each refusal re-enables the row in a later render; let it settle before
-    // pressing again, or the press can land while the row is still busy
+    // Each refusal re-enables the row in a later render; let it settle before pressing again, or the press can land
+    // while the row is still busy.
     const settle = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
     fireEvent.click(await screen.findByText('Şîlan'));
     expect(await screen.findByText('Şîlan already has it.')).toBeTruthy();
@@ -118,25 +120,50 @@ describe('GiftSentNote', () => {
 });
 
 describe('useUnseenGifts', () => {
-  it('reads the count from /me/social, again when a gift arrives, and never on a timer', async () => {
+  it('reads the count alone, again when a gift arrives, and never on a timer', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     let unseen = 1;
-    const client = fakeClient({ 'GET /me/social': () => ok({ unread: { gifts: unseen } }) });
+    const client = fakeClient({ 'GET /me/gifts/unseen': () => ok({ unseen }) });
     testAuth.client = client;
     const { result } = renderHook(() => useUnseenGifts());
     await waitFor(() => expect(result.current).toBe(1));
 
-    // a minute passes: nothing is asked (the old poll asked every 60 s)
+    // A minute passes and nothing is asked: there is no poll.
     const asked = client.calls.length;
     await act(async () => {
       vi.advanceTimersByTime(120_000);
     });
     expect(client.calls.length).toBe(asked);
-    expect(client.calls.some((c) => c.path === '/me/gifts/unseen')).toBe(false);
+    // The social summary reads friends, groups and notifications too, for one number.
+    expect(client.calls.some((c) => c.path === '/me/social')).toBe(false);
 
-    // a gift arrives (GiftArrivals calls this): counted again
+    // A gift arrives (GiftArrivals calls this): counted again.
     unseen = 2;
     act(() => refreshGiftBadge());
     await waitFor(() => expect(result.current).toBe(2));
+  });
+
+  it('counts again back from the background, and not after a glance at Control Centre', async () => {
+    const listeners: Array<(state: string) => void> = [];
+    vi.spyOn(AppState, 'addEventListener').mockImplementation(((_type: string, cb: (state: string) => void) => {
+      listeners.push(cb);
+      return { remove: () => undefined };
+    }) as unknown as typeof AppState.addEventListener);
+    const send = (state: string) => act(() => listeners.forEach((cb) => cb(state)));
+    const client = fakeClient({ 'GET /me/gifts/unseen': ok({ unseen: 0 }) });
+    testAuth.client = client;
+    renderHook(() => useUnseenGifts());
+    const counts = () => client.calls.filter((c) => c.path === '/me/gifts/unseen').length;
+    await waitFor(() => expect(counts()).toBe(1));
+
+    // iOS: inactive and active again, with the app running and its connection open all along.
+    send('inactive');
+    send('active');
+    expect(counts()).toBe(1);
+
+    send('inactive');
+    send('background');
+    send('active');
+    await waitFor(() => expect(counts()).toBe(2));
   });
 });

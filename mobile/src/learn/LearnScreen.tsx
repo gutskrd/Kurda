@@ -25,32 +25,18 @@ const VIEW_LABEL: Record<LearnView, TranslationKey> = {
 };
 
 /**
- * The Learn tab: lessons, stories and games, one switch between them.
+ * The Learn tab: lessons, stories and games behind one switch, so all three are one tap away and read as practice
+ * together. Stories sit in the middle: reading first, a quiz after. The three lie side by side under the switch
+ * (theme/SwipePager), so a swipe or a tap turns between them, and each keeps its place.
  *
- * Lessons and games were two places — Play in the middle of the bar, and the
- * lessons a screen pushed from the top of it — which made continuing a lesson
- * two taps and a decision, and hid the course behind a row that looked like a
- * setting. One tab with a switch at its top keeps all three one tap away and
- * makes clear they belong together: the stories and the games are practice
- * too. Stories sit in the middle because that is what they are: reading
- * first, a quiz after.
- *
- * The three lie side by side under the switch (theme/SwipePager), so a swipe
- * turns from one to the next as well as a tap on its name, and each keeps its
- * place while another is looked at.
- *
- * `view` is what a link asked for (`hevalo://play` asks for Games), and
- * `onViewShown` clears it so the same link works a second time.
+ * `view` is what a link asked for (`hevalo://play` asks for Games); `onViewShown` clears it so the same link
+ * works again.
  */
 export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView; onViewShown?: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const [view, setView] = useLearnView(requested, onViewShown);
 
-  /*
-   * Tapping Learn while on Learn scrolls back to the top: of the view that is
-   * showing, whichever of the three it is. Each has its own list; the others
-   * stay where they were left.
-   */
+  /* Tapping Learn while on Learn scrolls the visible view back to the top; the others stay where they were. */
   const lessonsRef = useRef<ScrollView>(null);
   const storiesRef = useRef<ScrollView>(null);
   const gamesRef = useRef<ScrollView>(null);
@@ -69,18 +55,14 @@ export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView
   );
   useScrollToTop(top);
 
-  // the streak the bar reads, for the lessons' own moments; pulled to refresh, the bar reads it again
+  // The streak the bar reads, for the lessons' own moments; pulled to refresh, the bar reads it again.
   const [streak, setStreak] = useState<Streak | null>(null);
   const [barKey, setBarKey] = useState(0);
   const reloadBar = useCallback(() => setBarKey((k) => k + 1), []);
 
   return (
     <GradientBackground>
-      {/*
-        Where today stands, at the reading edge where a tab's name is on the
-        others: the streak, the day's goal and the Zêr are what this tab is
-        opened to look at, and the bar of tabs already says "Learn" under it.
-      */}
+      {/* Today's status at the reading edge, where other tabs show their name: the tab bar already says "Learn". */}
       <TabHeader lead={<LearnBar reloadKey={barKey} onStreak={setStreak} />} />
       <View style={styles.head}>
         <Segmented options={VIEWS} value={view} onChange={setView} labelOf={(v) => t(VIEW_LABEL[v])} size="large" />

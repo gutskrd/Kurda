@@ -26,11 +26,7 @@ describe('How Hevalo teaches', () => {
     expect(screen.getByText(/at the end is what we do not claim/i)).toBeInTheDocument();
   });
 
-  /**
-   * Each principle is three parts that do not lean on each other: what the
-   * research found, what Hevalo does, and the studies. A section missing one
-   * of them is a claim without its evidence, or evidence without its claim.
-   */
+  // Each principle has its finding, what Hevalo does, and the studies; missing one is a claim without evidence or the reverse.
   it('gives every principle its finding, what Hevalo does, and its studies', () => {
     show();
     expect(PRINCIPLES.map((p) => p.id)).toEqual(['retrieval', 'spacing', 'again', 'feedback', 'voices', 'rewards', 'younger']);
@@ -94,12 +90,7 @@ describe('How Hevalo teaches', () => {
     expect(hrefs).toEqual([...PRINCIPLES.map((p) => `#${p.id}`), '#limits', '#sources']);
   });
 
-  /**
-   * Through the layout, as the route serves it: the layout decodes the anchor
-   * too, and a hand-typed or cut-short one does not decode. That used to throw
-   * from the layout's effect, with nothing above it to catch it, and the page
-   * went blank.
-   */
+  // Through the layout, which decodes the anchor too; a hand-typed or cut-short anchor must not blank the page.
   it('survives an anchor nobody wrote', () => {
     renderApp(
       <Routes>
@@ -129,11 +120,7 @@ describe('How Hevalo teaches', () => {
     }
   });
 
-  /**
-   * Where Hevalo does less than a study did, or what a study cautions about,
-   * the section says so, rather than set the two side by side as though one
-   * answered the other.
-   */
+  // Where Hevalo does less than a study did, or a study cautions, the section says so.
   it('says where Hevalo falls short of the research it cites', () => {
     show();
     const voices = section('voices');
@@ -147,10 +134,7 @@ describe('How Hevalo teaches', () => {
     expect(rewards.textContent).not.toMatch(/daily zêr is for learning/i);
   });
 
-  /**
-   * The words around the references are the reader's; a reference itself
-   * names a paper the way it was printed, so it stays English, and says so.
-   */
+  // The surrounding words are the reader's, but a reference names a paper as printed, in English, and says so.
   it('translates the page but not the titles of the papers', async () => {
     localStorage.setItem('hevalo_locale', 'de');
     show();

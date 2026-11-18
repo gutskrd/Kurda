@@ -3,14 +3,9 @@ import { GAME_DIALECTS, type GameDialect, type GameDifficulty, type GamesAvailab
 import { useAuth } from '../auth/AuthContext';
 
 /**
- * Where Impostor is offered now, on the phone: per variety, the
- * difficulties whose approved cards reach the game's minimum
- * (`GET /games/availability`, the answer Learn's list reads). A game is made
- * only where it is offered, so the start screen and the invite sheet choose
- * among these; nowhere says "coming soon".
- *
- * Read once while the app runs for both varieties and shared by every screen
- * that asks: it changes when an editor publishes cards.
+ * Where Impostor is offered: per variety, the difficulties whose approved cards reach the game's minimum (`GET
+ * /games/availability`, as Learn reads it). The start screen and invite sheet choose among these. Read once per
+ * app run and shared; it only changes when an editor publishes cards.
  */
 export type PartyGame = Extract<LearnGameId, 'impostor'>;
 
@@ -35,7 +30,7 @@ export function usePartyOffer(game: PartyGame, enabled = true): PartyOffer[] | n
     let alive = true;
     cached ??= Promise.all(GAME_DIALECTS.map((d) => client.get<GamesAvailability>(`/games/availability?dialect=${d}`))).then((all) => {
       const ok = all.flatMap((r) => (r.ok && r.data && Array.isArray(r.data.games) ? [r.data] : []));
-      // a failed read is not an answer: asked again next time
+      // A failed read is not an answer, so ask again next time.
       if (ok.length < all.length) cached = null;
       return ok;
     });

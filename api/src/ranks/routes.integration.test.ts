@@ -1,7 +1,6 @@
 /**
- * The Game Ranks routes over HTTP: what the apps call (`/ranks/*`, the lobby's
- * Rated/Friendly toggle, a frame on the profile) and what the admin panel
- * calls — staff only, behind the 2FA gate.
+ * The Game Ranks routes over HTTP: the app routes (`/ranks/*`, the lobby's Rated/Friendly toggle, a profile frame) and
+ * the staff-only admin routes behind the 2FA gate.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

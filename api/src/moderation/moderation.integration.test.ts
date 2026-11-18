@@ -1,4 +1,4 @@
-/** Chat moderation (KUR-086) against real Postgres. */
+/** Chat moderation against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -72,9 +72,8 @@ describe.skipIf(!DATABASE_URL)('chat moderation (integration)', () => {
   });
 
   /*
-   * Changed on purpose: a chat report is written through the one report
-   * service, so it lands in `reports` with an evidence snapshot (usernames
-   * included) rather than in `chat_reports`.
+   * A chat report goes through the single report service, so it lands in `reports` with an evidence snapshot (usernames
+   * included) rather than `chat_reports`.
    */
   it('report captures the message + surrounding context', async () => {
     await chat.send(id.a!, id.b!, 'first message');
@@ -109,8 +108,8 @@ describe.skipIf(!DATABASE_URL)('chat moderation (integration)', () => {
   });
 
   /*
-   * The old admin feed still resolves the old table's rows (its history);
-   * new reports are cases, so the row is put there directly here.
+   * The old admin feed still resolves rows of the old table (its history); new reports are cases, so the row is
+   * inserted directly here.
    */
   it('resolving a report as actioned records an offense against the author', async () => {
     const target = await chat.send(id.a!, id.b!, 'another one');

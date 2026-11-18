@@ -27,35 +27,23 @@ const TIER: Record<ChestTier, MessageKey> = {
   epic: 'quests.tier.epic',
 };
 
-/** The celebration's colours for each tier (ranks.css `tone-*`), all warm as the chests are: gold, the star's pale gold, copper. */
+/** The celebration's colours for each tier (ranks.css `tone-*`): gold, pale gold and copper. */
 const TONE: Record<ChestTier, string> = { common: 'zer', rare: 'sterk', epic: 'sifir' };
-/** How far the rays out of the open chest reach, against the drawing's own: across most of the screen. */
+/** How far the open chest's rays reach, as a multiple of the drawing's own, across most of the screen. */
 const RAYS_REACH = 2.4;
 /**
- * The celebration is timed from the chest's landing out of its hop (shared
- * CHEST_HOP, played by quests.css), not from its first frame: the flecks are
- * thrown and it is over as if it had begun this much later. The stylesheet
- * moves the ring and the words by the same amount.
+ * The celebration starts as the chest lands from its hop (shared CHEST_HOP, played by quests.css), not at its first
+ * frame; the stylesheet delays the ring and the words by the same amount.
  */
 const LAND_DELAY_MS = CHEST_HOP_MS * CHEST_HOP_LAND - celebrationPlan(false).hapticAtMs;
 
 type Phase = 'closed' | 'opening' | 'open' | 'gone';
 
 /**
- * A quest's chest, opened: the whole screen in its tier's colour, the tier's
- * name, the chest bobbing among a few sparkles, and "Tap to open". A tap asks
- * the server to open it (POST /me/quests/:id/claim, which decides what it
- * holds); the lid pops, a burst of the tier's colours is thrown out, "+N Zêr"
- * lands with the coin the app uses for Zêr, and the balance in the corner
- * counts up to what it is now. Then the next chest waiting, or on.
- *
- * A failure is said plainly and the chest stays shut and waiting: a tap tries
- * again, and nothing is lost. A chest already opened elsewhere (the phone,
- * another tab) says so and lets the learner go on. Nothing here asks for
- * anything, offers more for watching or paying, or counts down.
- *
- * A dialog over everything: focus goes to the chest and stays inside, Escape
- * or ✕ leaves it shut for later, and focus goes back where it was.
+ * Opening a quest's chest over the whole screen in its tier's colour. A tap claims it (POST /me/quests/:id/claim,
+ * where the server decides the reward); the lid pops, colours burst out, "+N Zêr" lands and the corner balance counts
+ * up. Then the next waiting chest, or onward. A failure leaves the chest shut for another tap; one opened elsewhere
+ * says so. As a dialog it traps focus, Escape or ✕ leaves it shut for later, and focus returns where it was.
  */
 export function ChestScreen({
   chests,
@@ -63,19 +51,19 @@ export function ChestScreen({
   onClose,
   doneLabel,
 }: {
-  /** the chests to open, in order */
+  /** The chests to open, in order. */
   chests: ChestToOpen[];
-  /** a chest was opened — with what it held, or null when it had been opened already */
+  /** A chest was opened, with what it held, or null when it had been opened already. */
   onOpened: (questId: string, opening: ChestOpening | null) => void;
   onClose: () => void;
-  /** the button's words once the last chest is open */
+  /** The button's label once the last chest is open. */
   doneLabel: string;
 }): React.JSX.Element | null {
   const t = useT();
   const { client } = useAuth();
   const { refresh } = useRail();
   const titleId = useId();
-  // the chests as they were when this opened: those opened since stay in the count
+  // The chests as they were on opening, so those opened since stay in the count.
   const [queue] = useState(chests);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('closed');
@@ -96,7 +84,7 @@ export function ChestScreen({
     const unlock = lockPageScroll();
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
-        // the lesson's own Escape leaves the lesson: this one only closes the chest
+        // The lesson's own Escape would leave the lesson; this one only closes the chest.
         e.preventDefault();
         if (!busy.current) close.current();
       } else if (box.current) wrapTab(e, box.current);
@@ -109,7 +97,7 @@ export function ChestScreen({
     };
   }, []);
 
-  // each chest takes the focus as it arrives, and the way on once it is open
+  // Each chest takes focus as it arrives, and the onward button once it is open.
   useEffect(() => {
     if (phase === 'closed') tap.current?.focus({ preventScroll: true });
     else if (phase === 'open' || phase === 'gone') go.current?.focus({ preventScroll: true });
@@ -129,7 +117,7 @@ export function ChestScreen({
       setPhase('open');
       onOpened(chest.id, res.data);
       playLessonSound('reward');
-      // the purse in the top bar shows the new balance too
+      // The purse in the top bar shows the new balance too.
       refresh();
       return;
     }
@@ -206,7 +194,7 @@ export function ChestScreen({
       </div>
       <div className="chest-foot">
         {(phase === 'open' || phase === 'gone') && (
-          // the Button's own look, as a plain button so the focus can be put on it
+          // Styled as a Button, but a plain button so focus can be put on it.
           <button type="button" ref={go} className="btn btn-primary btn-lg chest-go" onClick={onward}>
             {more ? t('quests.nextChest') : doneLabel}
           </button>
@@ -217,13 +205,7 @@ export function ChestScreen({
   );
 }
 
-/**
- * The chest hops — a crouch, a spring up with the lid bursting open at the
- * top, a landing — and as it lands light bursts out of it in rays that keep
- * turning, the tier's colours are thrown out, what it held rises out of it
- * as a tile with its count ("× 40") and "+N Zêr" lands: the app's one
- * celebration, felt once.
- */
+/** The opened chest: it hops, rays and the tier's colours burst out as it lands, its count rises and "+N Zêr" lands. */
 function Opened({ tier, amount }: { tier: ChestTier; amount: number }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -250,7 +232,7 @@ function Opened({ tier, amount }: { tier: ChestTier; amount: number }): React.JS
   );
 }
 
-/** The Zêr held now, in the corner, counting up from what it was by what the chest held. */
+/** The Zêr balance in the corner, counting up by what the chest held. */
 function Balance({ opening }: { opening: ChestOpening }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -260,7 +242,7 @@ function Balance({ opening }: { opening: ChestOpening }): React.JSX.Element {
     <p className="chest-balance">
       <CoinIcon size={20} weight="fill" />
       <span aria-hidden="true">{number(shown)}</span>
-      {/* said once, as it lands */}
+      {/* Announced once, as it lands. */}
       <span className="sr-only" role="status">
         {t('quests.got', { amount: number(opening.amount), balance: number(opening.balance) })}
       </span>

@@ -16,7 +16,7 @@ describe('the ribbons', () => {
     const fit = fitScene(1280, 860);
     expect(fit.scale * SCENE.width).toBeCloseTo(1280);
     expect(fit.top).toBeLessThan(0);
-    // the band the ribbons move in, a little over a third of the scene, stays in the window
+    // The band the ribbons move in, a little over a third of the scene, stays in the window.
     const band = [SCENE.height * 0.3, SCENE.height * 0.7].map((y) => fit.top + y * fit.scale);
     expect(band[0]).toBeGreaterThan(0);
     expect(band[1]).toBeLessThan(860);
@@ -25,10 +25,10 @@ describe('the ribbons', () => {
   it('are worked out for every ribbon, in words a graphics chip takes', () => {
     const shader = fragmentShader();
     expect(shader.match(/float mid = /g)).toHaveLength(RIBBONS.length);
-    // reserved in the shading language, so never a name (a comment may say them)
+    // Reserved in the shading language, so never a name (a comment may say them).
     const code = shader.replace(/\/\/[^\n]*/g, '');
     expect(code).not.toMatch(/\b(half|input|output|filter|sample)\b/);
-    // every number written as a float, as the language wants
+    // Every number written as a float, as the language wants.
     expect(code).not.toMatch(/[^\w.]\d+ \*/);
   });
 
@@ -40,7 +40,7 @@ describe('the ribbons', () => {
   });
 
   it('stay where they are when a phone keyboard opens, and fit again when the phone turns', () => {
-    // a graphics chip that takes every call and remembers where it was asked to draw
+    // A graphics chip that takes every call and remembers where it was asked to draw.
     const viewport = vi.fn();
     const gl = new Proxy({} as Record<string | symbol, unknown>, {
       get: (_, key) => {
@@ -59,7 +59,7 @@ describe('the ribbons', () => {
     const stop = startRibbons(canvas);
     expect(viewport).toHaveBeenCalledTimes(1);
 
-    // the keyboard takes half the window; the box, the screen at its largest, stays as it was
+    // The keyboard takes half the window; the box, the screen at its largest, stays as it was.
     vi.stubGlobal('innerHeight', 420);
     window.dispatchEvent(new Event('resize'));
     expect(viewport).toHaveBeenCalledTimes(1);
@@ -83,8 +83,8 @@ describe('the ribbons', () => {
 
 describe('the page over the ribbons', () => {
   it('keeps its own black on the root only: a body with a background of its own covers them', async () => {
-    // read from disk as written (the test runner hands stylesheet imports over empty); the admin's
-    // own types know nothing of the server's modules, so they are asked for by name
+    // Read from disk as written (the test runner hands stylesheet imports over empty); the admin's
+    // own types know nothing of the server's modules, so they are asked for by name.
     const fsName = 'node:fs';
     const fs = (await import(/* @vite-ignore */ fsName)) as { readFileSync: (path: string, encoding: 'utf8') => string };
     const cwd = (globalThis as unknown as { process: { cwd: () => string } }).process.cwd();

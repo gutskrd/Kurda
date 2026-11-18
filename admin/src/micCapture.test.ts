@@ -7,11 +7,11 @@ const ANDROID = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KH
 
 describe('the microphone, on the phones an editor holds', () => {
   it('asks each browser for a format it can write', () => {
-    // Chrome and Android: webm/opus
+    // Chrome and Android: webm/opus.
     expect(pickMimeType((t) => t.startsWith('audio/webm'))).toBe('audio/webm;codecs=opus');
-    // Safari: mp4
+    // Safari: mp4.
     expect(pickMimeType((t) => t === 'audio/mp4')).toBe('audio/mp4');
-    // a browser that cannot say: its own default
+    // A browser that cannot say: its own default.
     expect(pickMimeType(undefined)).toBeUndefined();
     expect(pickMimeType(() => false)).toBeUndefined();
     expect(
@@ -46,7 +46,7 @@ describe('the microphone, on the phones an editor holds', () => {
   });
 
   it('resumes the audio context inside the tap, before the permission prompt, and again after it', async () => {
-    // iOS Safari lets a suspended context run only from inside the tap; after the first await it is too late
+    // iOS Safari lets a suspended context run only from inside the tap; after the first await it is too late.
     const order: string[] = [];
     const node = { connect: vi.fn(), disconnect: vi.fn(), onaudioprocess: null };
     class FakeContext {
@@ -70,7 +70,7 @@ describe('the microphone, on the phones an editor holds', () => {
       }
     }
     vi.stubGlobal('AudioContext', FakeContext);
-    // the older-Safari path, where a context that never runs would mean an empty take
+    // The older-Safari path, where a context that never runs would mean an empty take.
     vi.stubGlobal('MediaRecorder', undefined);
     const track = { stop: vi.fn() };
     const getUserMedia = vi.fn(() => {
@@ -80,7 +80,7 @@ describe('the microphone, on the phones an editor holds', () => {
     Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia }, configurable: true });
     try {
       const capture = startCapture();
-      // before anything is awaited, the context has already been asked to run
+      // Before anything is awaited, the context has already been asked to run.
       expect(order).toEqual(['resume', 'ask']);
       (await capture).cancel();
       expect(order).toEqual(['resume', 'ask', 'resume']);

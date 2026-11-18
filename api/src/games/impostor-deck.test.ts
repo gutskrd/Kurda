@@ -1,9 +1,7 @@
 /**
- * Impostor's curated deck (api/content/games/impostor.json) as it ships:
- * every card passes the checks the admin panel applies, every round it can
- * deal is a fair one, and the clean-up the review asked for has happened.
- * The tests read the file itself, so a change to the deck is judged here
- * before it reaches a database.
+ * Impostor's curated deck (api/content/games/impostor.json) as shipped: every card passes the admin's checks, every
+ * dealable round is fair, and the requested review clean-up is done. Reads the file itself, so deck changes are judged
+ * before reaching a database.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

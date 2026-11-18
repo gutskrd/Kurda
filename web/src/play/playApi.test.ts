@@ -28,7 +28,7 @@ describe('joinLobby', () => {
     const c = client({ ok: true, data: {} });
     await joinLobby(c, 'stories', 's1');
     expect(c.post).toHaveBeenCalledWith('/story-games/join', { id: 's1', extraTime: false });
-    // a remembered Extra time comes along to a card's or a next round's join
+    // A remembered Extra time comes along to a card's or a next round's join.
     localStorage.setItem('hevalo.stories.extraTime', 'on');
     await joinLobby(c, 'stories', 's2');
     expect(c.post).toHaveBeenCalledWith('/story-games/join', { id: 's2', extraTime: true });
@@ -53,18 +53,18 @@ describe('playError', () => {
   });
 
   it('tells a route the API does not have from a game that is gone', () => {
-    // the API's not-found handler: this build is newer than the server
+    // The API's not-found handler: this build is newer than the server.
     expect(playError({ kind: 'client', code: 'NOT_FOUND', message: 'route not found', status: 404 }, t)).toBe(
       t('play.error.notOnServer'),
     );
-    // a battle or match the game's own route could not find is still "not available"
+    // A battle or match the game's own route could not find is still "not available".
     expect(playError({ kind: 'client', code: 'NOT_FOUND', message: 'no such battle', status: 404 }, t)).toBe(
       t('stories.error.notFound'),
     );
   });
 
   it('says what to do when the server refuses the page’s own choices, instead of the server’s English', () => {
-    // a server on other rules than the page: it answers 400 BAD_SETTINGS in its own words
+    // A server on other rules than the page: it answers 400 BAD_SETTINGS in its own words.
     const refused = { kind: 'client' as const, code: 'BAD_SETTINGS', message: 'these settings are not offered', status: 400 };
     expect(playError(refused, t)).toBe(t('play.error.serverBehind'));
     expect(playError(refused, t)).not.toContain('these settings are not offered');

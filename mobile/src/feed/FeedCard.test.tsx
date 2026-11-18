@@ -72,7 +72,7 @@ describe('your own post on the wall', () => {
     testAuth.client = client;
     renderWithProviders(<FeedCard item={item({ key: 'image:i1', id: 'i1', targetType: 'image', kind: 'meme', title: null })} />);
     await longPress(screen.getByRole('button', { name: /^Meme/ }));
-    // a picture's caption is not edited on the phone
+    // A picture's caption is not edited on the phone.
     expect(screen.queryByRole('button', { name: 'Edit post' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Delete post' }));
     expect(screen.getByText('This can’t be undone.')).toBeTruthy();
@@ -107,21 +107,21 @@ describe('a post in the chain', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'rojda' })).toBeTruthy();
-    // what kind of post and how long ago, beside the name
+    // What kind of post and how long ago, beside the name.
     expect(screen.getByText(/^Meme · /)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Like (9224)' })).toBeTruthy();
     expect(screen.getByText('9,224')).toBeTruthy();
     expect(screen.getByRole('button', { name: '36 comments (36)' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Repost (851)' })).toBeTruthy();
-    // what is saved is nobody else's business, so the bookmark has no number
+    // What is saved is nobody else's business, so the bookmark has no number.
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Share this post' })).toBeTruthy();
-    // the words first, then the picture, and no caption under it
+    // The words first, then the picture, and no caption under it.
     const words = screen.getByText('Newroz');
     const picture = screen.getByRole('button', { name: 'Picture 1 of 1' });
     expect(words.compareDocumentPosition(picture) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getAllByText('Newroz')).toHaveLength(1);
-    // the comments pill is the way into them; there is no line of its own for that, nor for the time
+    // The comments pill is the way into them; there is no line of its own for that, nor for the time.
     expect(screen.queryByRole('link', { name: /^View/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '36 comments (36)' }));
     expect(navigation.navigate).toHaveBeenCalledWith('MemeDetail', { postId: 'i1' });
@@ -150,15 +150,12 @@ describe('a post in the chain', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Like' }));
     });
     expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
-    // the count ticks up in the pill
+    // The count ticks up in the pill.
     expect(screen.getByText('1')).toBeTruthy();
     expect(client.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['POST /posts/library/p1/like']);
   });
 
-  /*
-   * A like, a repost and a save shared one lock: with a like on its way, a
-   * tap on Save was dropped without a word. Each now waits only on itself.
-   */
+  /* Like, repost and save each wait only on themselves: a pending like must not drop a tap on Save. */
   it('saves while a like is still on its way to the server, and keeps both when the answers come', async () => {
     const answers: Record<string, (r: unknown) => void> = {};
     const client = fakeClient({
@@ -169,11 +166,11 @@ describe('a post in the chain', () => {
     renderWithProviders(<FeedCard item={item()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Like' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    // both shown at once, and both asked for
+    // Both shown at once, and both asked for.
     expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Remove from saved' })).toBeTruthy();
     expect(client.calls.map((c) => c.path)).toEqual(['/posts/library/p1/like', '/posts/library/p1/bookmark']);
-    // the like's answer does not know about the save yet: the save stays as it was tapped
+    // The like's answer does not know about the save yet, so the save stays as tapped.
     await act(async () => answers.like!(ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })));
     expect(screen.getByRole('button', { name: 'Remove from saved' })).toBeTruthy();
     await act(async () => answers.bookmark!(ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: true, bookmarks: 1 } })));
@@ -191,7 +188,7 @@ describe('a post in the chain', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Like' }));
     expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
     expect(felt).toHaveBeenCalledTimes(1);
-    // tapped again before the server has answered
+    // Tapped again before the server has answered.
     fireEvent.click(screen.getByRole('button', { name: 'Unlike (1)' }));
     expect(client.calls).toHaveLength(1);
     expect(felt).toHaveBeenCalledTimes(1);
@@ -210,7 +207,7 @@ describe('a post in the chain', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Repost' }));
     expect(await screen.findByRole('button', { name: 'Undo repost (1)' })).toBeTruthy();
     await act(async () => answers.like!({ ok: false, error: { kind: 'server', message: 'no', status: 500 } }));
-    // the like went back; the repost, still on its way, stands
+    // The like went back; the repost, still on its way, stands.
     expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Undo repost (1)' })).toBeTruthy();
   });
@@ -226,7 +223,7 @@ describe('a post in the chain', () => {
     await act(() => new Promise((r) => setTimeout(r, DOUBLE_TAP_MS + 30)));
     expect(navigation.navigate).toHaveBeenCalledWith('LibraryPost', { postId: 'p1' });
     navigation.navigate.mockReset();
-    // two taps inside the window are a like, and open nothing
+    // Two taps inside the window are a like, and open nothing.
     fireEvent.click(words);
     fireEvent.click(words);
     expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
@@ -235,10 +232,8 @@ describe('a post in the chain', () => {
   });
 
   /*
-   * The head is a 32pt picture, a line of words and the ⋯, 8 apart; the
-   * pills under the post are 36 tall and 8 apart. Each reaches a fingertip
-   * up and down and half of the gap toward its neighbours, so a finger a
-   * little off any of them still lands on it and never on the one beside it.
+   * The head is a 32 pt picture, a line of text and the ⋯, 8 apart; the pills are 36 tall and 8 apart. Each
+   * reaches a fingertip up and down and half the gap toward its neighbours.
    */
   it('answers a finger a little off the head’s picture, name and ⋯, and off every pill', () => {
     renderWithProviders(<FeedCard item={item({ commentCount: 3 })} />);
@@ -279,6 +274,7 @@ describe('the wall', () => {
       'GET /friends/requests': ok({ requests: [] }),
       'GET /me/notifications/unread-count': ok({ count: 0 }),
       'GET /me/social': ok({ unread: { gifts: 0 } }),
+      'GET /me/gifts/unseen': ok({ unseen: 0 }),
     });
     renderWithProviders(
       <UnreadProvider>

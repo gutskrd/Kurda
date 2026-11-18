@@ -45,12 +45,7 @@ const show = (): void => {
   );
 };
 
-/**
- * `Loading` and `ErrorState` are leaf primitives on nearly every screen, and an
- * error boundary sitting above the provider renders an `ErrorState`. If reading
- * a message needed the provider, that boundary would crash for want of the very
- * context whose failure it was reporting.
- */
+/** Leaf primitives and an error boundary above the provider must be able to read messages without it. */
 describe('reading a message without a provider', () => {
   function Bare(): React.JSX.Element {
     const t = useT();
@@ -75,11 +70,7 @@ describe('reading a message without a provider', () => {
 });
 
 describe('the catalogues', () => {
-  /**
-   * English defines the key set and is what everything falls back to, so a key
-   * that exists nowhere else is fine — one that exists ONLY somewhere else is a
-   * typo that will never be shown.
-   */
+  /** English defines the key set, so a key found only in another catalogue is a typo that is never shown. */
   it('use no key English does not have', () => {
     const known = new Set(Object.keys(en));
     for (const [code, catalogue] of Object.entries(CATALOGUES)) {
@@ -97,11 +88,7 @@ describe('the catalogues', () => {
     }
   });
 
-  /**
-   * A placeholder that survives translation is a sentence with `{language}`
-   * printed in the middle of it. They are the one thing in these files that is
-   * not free text.
-   */
+  /** Placeholders must match the English string, or a literal `{language}` shows up in the sentence. */
   it('keep the placeholders the English string uses', () => {
     const holes = (s: string): string[] => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]!).sort();
     for (const [code, catalogue] of Object.entries(CATALOGUES)) {
@@ -111,13 +98,7 @@ describe('the catalogues', () => {
     }
   });
 
-  /**
-   * The two Kurdish catalogues are the reason this app exists, so the words in
-   * them are the product rather than a translation of it. These are the ones
-   * that were wrong, and the shape of the mistake in each case is easy to make
-   * again: a bare noun where a negation was needed, and two different words for
-   * one thing sitting next to each other in the same screen.
-   */
+  /** Kurdish wordings that are easy to get wrong: a bare noun where a negation is needed, and two words for one thing. */
   describe('Kurdish', () => {
     it('says nobody, not a person', () => {
       // "Kes" and "کەس" on their own are "a person" — in a list that also offers
@@ -148,11 +129,7 @@ describe('the catalogues', () => {
       }
     });
   });
-  /**
-   * The leaderboards rank Zêr and Gewher by the names the purse and the shop
-   * already give them in each language; a board that called the gem something
-   * else would read as a third currency.
-   */
+  /** The leaderboards name Zêr and Gewher as the purse and shop do, so they never read as a third currency. */
   it('name the currencies on the leaderboards as the shop does', () => {
     for (const [code, catalogue] of Object.entries({ en, ...CATALOGUES })) {
       expect(catalogue['rankings.board.gewher'], code).toBe(catalogue['shop.gems']);
@@ -164,11 +141,8 @@ describe('the catalogues', () => {
   });
 
   /**
-   * A level is shown by a plain name wherever it appears (`levelNameKey`):
-   * five different names, each with a line saying what reading at it is like,
-   * and never the bare CEFR letter, which says nothing to most learners. The
-   * phone's catalogue is held to the same names, so the two apps read as one
-   * ladder — the fourth level was spelled two ways in Kurmancî before.
+   * Levels have five distinct plain names (`levelNameKey`), each with a description and never a bare CEFR letter; the
+   * phone's catalogue uses the same names.
    */
   it('name the five levels plainly, each differently, and never by a CEFR letter', () => {
     for (const [code, catalogue] of Object.entries({ en, ...CATALOGUES })) {
@@ -235,10 +209,7 @@ describe('choosing a language', () => {
     expect(screen.getByTestId('games')).toHaveTextContent('Games');
   });
 
-  /**
-   * `lang` is what a screen reader picks a voice from and `dir` is what puts
-   * Arabic the right way round. Neither is cosmetic.
-   */
+  /** `lang` picks the screen reader voice and `dir` the script direction. */
   it('tells the document what it is showing', async () => {
     show();
     await userEvent.selectOptions(screen.getByRole('combobox'), 'ar');
@@ -250,19 +221,7 @@ describe('choosing a language', () => {
     expect(document.documentElement.dir).toBe('ltr');
   });
 
-  /**
-   * The title and the description live in `index.html`, one static file served
-   * to everybody — so they stayed English on every screen, in the browser tab,
-   * in the bookmark, and in whatever a search engine had cached. Found by
-   * looking at the running app rather than by any test.
-   */
-  /**
-   * The description follows the language; the title does not.
-   *
-   * A name has no language, and the tab used to read "Hevalo — Learn Kurdish",
-   * which put a tagline into every tab and every bookmark anybody made. So the
-   * interesting assertion is now that changing language leaves it alone.
-   */
+  /** The static `index.html` description follows the language, while the title stays the app’s name. */
   it('translates the description and leaves the name alone', async () => {
     const meta = document.createElement('meta');
     meta.setAttribute('name', 'description');
@@ -298,13 +257,7 @@ describe('choosing a language', () => {
     expect(screen.getByTestId('games')).toHaveTextContent('Spellen');
   });
 
-  /**
-   * Kurdish is offered twice, and it has to be: Kurmancî is written in Latin
-   * script and Soranî in Arabic, so a Soranî reader offered only Kurmancî is
-   * being offered a script they may not read at all. They sit together at the
-   * top of the list, and each says which variety it is — two rows both reading
-   * "Kurdî" would be the same choice twice.
-   */
+  /** Kurmancî (Latin script) and Soranî (Arabic script) are both offered, together at the top, each named by variety. */
   it('offers both Kurdish varieties, together, at the top', () => {
     show();
     const options = screen.getAllByRole('option') as HTMLOptionElement[];
@@ -347,10 +300,8 @@ describe('choosing a language', () => {
 });
 
 /**
- * A game has one name, and it is Kurmancî (shared: games/names.ts): "Peyvok"
- * was never translated, and neither is "Xapînok". Every language shows that
- * name and says what it means beside it; the Soranî interface, which is
- * Kurdish already, names the games in its own variety.
+ * Games keep their Kurmancî names (shared games/names.ts) with a meaning beside them in every language; the Soranî
+ * interface names them in its own variety.
  */
 describe('the games’ names', () => {
   const NAME_KEY = {

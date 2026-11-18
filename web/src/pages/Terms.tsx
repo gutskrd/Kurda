@@ -5,22 +5,12 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /*
- * The rules, in plain words.
- *
- * Registering already says "you agree to the Hevalo Terms", and until this page
- * there were no terms anywhere to read. These describe what the product
- * actually does — the moderation tools that can warn, mute and ban
- * (api/src/admin), currencies that only exist inside the app (api/src/wallet),
- * deletion from Settings, asking again when the rules change — rather than
- * borrowing somebody else's.
- *
- * They also say what the law asks a host of other people's posts to say
- * (contract-3 §C): who provides Hevalo and how to reach them (Art. 3:15d BW;
- * DSA Arts 11–12), the promise a poster makes and the narrow licence they
- * give, notices and counter-notices (DSA Arts 16–17, DMCA §512), the
- * repeat-infringer policy (§512(i)), how decisions are made (DSA Art. 14) and
- * the law the terms are under — and, first, the same rules in a few short
- * lines, since many of the people reading them are teenagers (Art. 14(3)).
+ * The rules in plain words, describing what the product does: moderation that can warn, mute and ban (api/src/admin),
+ * in-app-only currencies (api/src/wallet), deletion from Settings, and re-consent when rules change. They also say what
+ * the law asks of a host of others' posts: the provider and how to reach them (Art. 3:15d BW; DSA Arts 11–12), the
+ * poster's promise and licence, notices and counter-notices (DSA Arts 16–17, DMCA §512), the repeat-infringer policy
+ * (§512(i)), how decisions are made (DSA Art. 14) and the governing law, with a short summary first since many readers
+ * are teenagers (Art. 14(3)).
  */
 
 /** The rules in a few lines, for someone who will not read the rest. */
@@ -76,7 +66,7 @@ export function Terms(): React.JSX.Element {
     },
     { id: 'repeat-infringers', title: 'terms.repeat.title', body: 'terms.repeat.body' },
     { title: 'terms.currency.title', body: 'terms.currency.body' },
-    // what is bought stays bought: the shop and both apps say the same when an item is bought
+    // What is bought stays bought; the shop and both apps say the same.
     { id: 'purchases-final', title: 'terms.final.title', body: 'terms.final.body' },
     { id: 'shop-items', title: 'terms.shopArt.title', body: 'terms.shopArt.body' },
     {

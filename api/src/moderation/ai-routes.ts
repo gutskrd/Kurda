@@ -9,9 +9,8 @@ import type { AiModerationService } from './ai-service.js';
 import type { ImageModerationService } from './image-moderation-service.js';
 
 /**
- * Admin surface for the automated moderation tier (KUR-293): the pending-flags
- * feed (the automated half of the #102 queue) and the reversibility path so a
- * moderator can confirm or overturn (false-positive) any auto-action.
+ * Admin routes for the automated moderation tier: the pending-flags feed (the automated half of the queue) and the
+ * reversal path, so a moderator can confirm or overturn any auto-action.
  */
 export function registerAiModerationRoutes(app: FastifyInstance, ai: AiModerationService): void {
   app.get(
@@ -40,9 +39,8 @@ export function registerAiModerationRoutes(app: FastifyInstance, ai: AiModeratio
 }
 
 /**
- * Admin surface for the automatic image-scan tier (KUR-294): the pending
- * image-flag feed and the moderator reversal path (a false-positive `reversed`
- * re-clears the image; a preserved-evidence CSAM flag can only be actioned).
+ * Admin routes for the automatic image-scan tier: the pending image-flag feed and the reversal path (a false-positive
+ * `reversed` re-clears the image; a preserved-evidence CSAM flag can only be actioned).
  */
 export function registerImageModerationRoutes(app: FastifyInstance, images: ImageModerationService): void {
   app.get(

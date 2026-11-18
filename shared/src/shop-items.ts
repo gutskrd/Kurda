@@ -1,30 +1,18 @@
 /**
- * Shop items by kind, and finding a way through them.
- *
- * The shop, the inventory and the gift picker — in the browser and on the
- * phone alike — sort what they show into the same kinds, in the same order,
- * and search, filter and order it the same way, so that a background is
- * always found under Backgrounds, and "caydan" finds Çaydan wherever it is
- * typed. Only the words on the tabs and the buttons belong to each app.
+ * Shop items by kind, with search, filters and order shared by the shop, the inventory and the gift picker in both apps,
+ * so a background is always under Backgrounds and "caydan" finds Çaydan. Only the labels belong to each app.
  */
 
-/**
- * The kinds of item, in the order they are shown: what is worn on a profile
- * first (a background, an icon, a frame), then a tag, then anything an admin
- * has put on sale under a category of their own ('other').
- */
+/** The kinds of item in display order: what is worn on a profile (background, icon, frame), then tags, then an admin's own categories ('other'). */
 export const ITEM_CATEGORIES = ['background', 'icon', 'frame', 'tag', 'other'] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
-/** The kind a shop category belongs to; one that is none of the named kinds is 'other'. */
+/** The kind a shop category belongs to; anything not a named kind is 'other'. */
 export function itemCategory(raw: string): ItemCategory {
   return (ITEM_CATEGORIES as readonly string[]).includes(raw) && raw !== 'other' ? (raw as ItemCategory) : 'other';
 }
 
-/**
- * How a list can be put in order. 'featured' is the shop's own order, as the
- * API sends it; price runs within a currency, Zêr before gems.
- */
+/** How a list can be ordered. 'featured' is the shop's own order from the API; price sorts within a currency, Zêr before gems. */
 export const ITEM_SORTS = ['featured', 'price-asc', 'price-desc', 'name'] as const;
 export type ItemSort = (typeof ITEM_SORTS)[number];
 
@@ -46,11 +34,7 @@ export interface ItemFilter {
 
 export const DEFAULT_ITEM_FILTER: ItemFilter = { category: 'all', query: '', sort: 'featured' };
 
-/**
- * Text folded for searching: lower case, with the marks taken off its letters
- * — Kurdish ç, ê, î, ş, û and anything else accented — so that what is typed on
- * a keyboard without them still finds them.
- */
+/** Text folded for search: lower case without the marks on its letters (Kurdish ç ê î ş û and other accents), so a keyboard without them still finds them. */
 export function foldForSearch(text: string): string {
   return text
     .normalize('NFD')
@@ -60,7 +44,7 @@ export function foldForSearch(text: string): string {
     .trim();
 }
 
-/** Whether an item's name or description holds every word of `query` (an empty query holds for all). */
+/** Whether an item's name or description holds every word of `query`; an empty query matches all. */
 export function matchesQuery(item: Pick<FilterableItem, 'name' | 'description'>, query: string): boolean {
   const words = foldForSearch(query).split(/\s+/).filter(Boolean);
   if (words.length === 0) return true;
@@ -70,10 +54,7 @@ export function matchesQuery(item: Pick<FilterableItem, 'name' | 'description'>,
 
 const currencyRank = (item: FilterableItem): number => (item.currency === 'gems' ? 1 : 0);
 
-/**
- * The items in `sort`'s order (a new array; the input is left as it is). Ties
- * keep the order they came in, so items of one price stay in the shop's order.
- */
+/** The items in `sort`'s order, as a new array. Ties keep their incoming order, so items of one price stay in the shop's order. */
 export function sortItems<T extends FilterableItem>(items: readonly T[], sort: ItemSort, locale?: string): T[] {
   const out = [...items];
   if (sort === 'price-asc') out.sort((a, b) => currencyRank(a) - currencyRank(b) || (a.price ?? 0) - (b.price ?? 0));
@@ -89,28 +70,24 @@ export function countByCategory(items: readonly FilterableItem[]): Record<ItemCa
   return counts;
 }
 
-/** The kinds a list holds, in the shown order: the tabs worth offering for it. */
+/** The kinds a list holds, in display order: the tabs worth offering. */
 export function categoriesIn(items: readonly FilterableItem[]): ItemCategory[] {
   const counts = countByCategory(items);
   return ITEM_CATEGORIES.filter((c) => counts[c] > 0);
 }
 
-/**
- * The items a filter shows: of its kind, holding its words, in its order.
- * `keep` narrows further by whatever a screen offers besides (only what I can
- * afford, only what I own).
- */
+/** The items a filter shows: of its kind, holding its words, in its order; `keep` narrows by a screen's own options (affordable, owned). */
 export function applyItemFilter<T extends FilterableItem>(items: readonly T[], filter: ItemFilter, keep: (item: T) => boolean = () => true, locale?: string): T[] {
   const shown = items.filter((item) => (filter.category === 'all' || itemCategory(item.category) === filter.category) && matchesQuery(item, filter.query) && keep(item));
   return sortItems(shown, filter.sort, locale);
 }
 
-/** A list split by kind, in the shown order, each kind with its items in the order they came — for showing "all" in sections. */
+/** A list split by kind in display order, each kind's items in incoming order, for showing "all" in sections. */
 export function groupByCategory<T extends FilterableItem>(items: readonly T[]): { category: ItemCategory; items: T[] }[] {
   return ITEM_CATEGORIES.map((category) => ({ category, items: items.filter((item) => itemCategory(item.category) === category) })).filter((g) => g.items.length > 0);
 }
 
-/** A filter read back from where it was kept (the address bar's `?kind=&q=&sort=`), anything unknown left at its default. */
+/** A filter read back from the address bar's `?kind=&q=&sort=`, anything unknown left at its default. */
 export function readItemFilter(get: (key: 'kind' | 'q' | 'sort') => string | null | undefined): ItemFilter {
   const kind = get('kind');
   const sort = get('sort');
@@ -130,7 +107,7 @@ export function itemFilterParams(filter: ItemFilter): Partial<Record<'kind' | 'q
   return out;
 }
 
-/** Whether a filter narrows anything at all (so a screen knows to offer "Clear filters"). */
+/** Whether a filter narrows anything, so a screen knows to offer "Clear filters". */
 export function isFiltered(filter: ItemFilter): boolean {
   return filter.category !== 'all' || filter.query.trim() !== '' || filter.sort !== 'featured';
 }

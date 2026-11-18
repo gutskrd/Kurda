@@ -8,7 +8,11 @@ const CLUB = '3c8d5b20-0000-4000-8000-000000000003';
 
 function fakes(routes: Record<string, unknown> = {}) {
   const went: Array<[string, unknown]> = [];
-  const navigation = { navigate: (name: string, params?: unknown) => went.push([name, params]) } as unknown as RootNavigation;
+  // A tap on a streak reminder pops back to the tabs (a dispatched pop); anything else is navigated to.
+  const navigation = {
+    navigate: (name: string, params?: unknown) => went.push([name, params]),
+    dispatch: (action: { type: string; payload: { name: string; params?: unknown } }) => went.push([`${action.type}:${action.payload.name}`, action.payload.params]),
+  } as unknown as RootNavigation;
   const answer = async (path: string) =>
     path in routes ? { ok: true, data: routes[path] } : { ok: false, error: { kind: 'client', status: 404, message: 'no' } };
   const client = { get: answer, post: answer } as unknown as ApiClient;
@@ -19,7 +23,7 @@ function fakes(routes: Record<string, unknown> = {}) {
 async function landing(data: Record<string, unknown> | null, routes: Record<string, unknown> = {}) {
   const f = fakes(routes);
   openPushTarget(pushTarget(data), f.navigation, f.client);
-  // an invite is accepted on the way, which takes a round trip
+  // An invite is accepted on the way, which takes a round trip.
   await new Promise((resolve) => setTimeout(resolve, 0));
   return f.went;
 }
@@ -27,7 +31,7 @@ async function landing(data: Record<string, unknown> | null, routes: Record<stri
 describe('pushTarget: each push the API sends opens somewhere sensible', () => {
   it('a streak reminder (no kind, category streak) opens the lessons', async () => {
     expect(pushTarget({ category: 'streak' })).toEqual({ kind: 'learn' });
-    expect(await landing({ category: 'streak' })).toEqual([['Tabs', { screen: 'Learn' }]]);
+    expect(await landing({ category: 'streak' })).toEqual([['POP_TO:Tabs', { screen: 'Learn' }]]);
   });
 
   it('the day’s badges open Badges', async () => {
@@ -87,7 +91,7 @@ describe('pushTarget: each push the API sends opens somewhere sensible', () => {
   });
 
   it('a kind with its ids missing is not followed into a dead screen', () => {
-    // an invite without its lobby: nothing to open but the list
+    // An invite without its lobby: nothing to open but the list.
     expect(pushTarget({ kind: 'play_invite', inviteId: 'i1', category: 'games' })).toEqual({ kind: 'inbox' });
   });
 
@@ -120,11 +124,11 @@ describe('isConversationOnScreen', () => {
     expect(isConversationOnScreen(letter, { name: 'Letters' })).toBe(true);
     expect(isConversationOnScreen(letter, { name: 'Letters', params: { bird: CLUB } })).toBe(true);
     expect(isConversationOnScreen(letter, { name: 'LetterThread', params: { threadId: T } })).toBe(true);
-    // anywhere else it is news: another correspondence, Home, a chat
+    // Anywhere else it is news: another correspondence, Home, a chat.
     expect(isConversationOnScreen(letter, { name: 'LetterThread', params: { threadId: CLUB } })).toBe(false);
     expect(isConversationOnScreen(letter, { name: 'Tabs' })).toBe(false);
     expect(isConversationOnScreen(letter, { name: 'Chat', params: { userId: FRIEND } })).toBe(false);
-    // a letter naming no correspondence is still hidden over the window, and shown over every correspondence
+    // A letter naming no correspondence is still hidden over the window, and shown over every correspondence.
     expect(isConversationOnScreen({ kind: 'letter' }, { name: 'Letters' })).toBe(true);
     expect(isConversationOnScreen({ kind: 'letter' }, { name: 'LetterThread', params: { threadId: T } })).toBe(false);
   });

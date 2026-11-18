@@ -1,10 +1,6 @@
 /**
- * Mandatory admin 2FA, against real Postgres.
- *
- * The point of these tests is the thing that was broken: the TOTP guard existed
- * but almost no route used it, so a password alone reached the panel. They check
- * the gate from the outside — real requests, real tokens — rather than trusting
- * that every route remembered to opt in.
+ * Mandatory admin 2FA against real Postgres, checked from the outside with real requests and tokens rather than
+ * trusting every route to opt in.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -94,14 +90,8 @@ describe.skipIf(!DATABASE_URL)('admin 2FA gate (integration)', () => {
   });
 
   it('blocks the staff routes that do not live under /admin either', async () => {
-    // These six were the hole. Each asks for an admin role and none of their
-    // URLs starts with /admin, so the prefix gate never saw them: a stolen
-    // password could price the shop, mint real-money gem packs, and decide who
-    // won a tournament, with no second factor anywhere.
-    //
-    // Validation runs before preHandler hooks, so every payload here has to be
-    // valid — otherwise a 400 would answer first and the test would pass while
-    // proving nothing.
+    // Staff routes outside /admin: each asks for an admin role, so the gate must cover them by role, not by prefix.
+    // Validation runs before preHandler hooks, so every payload here must be valid or a 400 would pass the test vacuously.
     const uuid = '11111111-2222-4333-8444-555555555555';
     const cases: [ "GET" | "POST", string, unknown?][] = [
       ['POST', '/shop/items', { sku: 'gate-probe', name: 'Gate probe', currency: 'zer', price: 1 }],

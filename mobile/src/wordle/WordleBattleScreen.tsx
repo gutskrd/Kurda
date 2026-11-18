@@ -4,13 +4,13 @@ import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
-import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { useHardwareBack } from '../navigation/hardwareBack';
+import { useGameBack } from '../navigation/hardwareBack';
 import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
 import { LobbyRated, RatedChoice, RatedPill } from '../ranks/Rated';
@@ -23,7 +23,7 @@ import { JoinCodeCard } from '../play/JoinByCode';
 import { RematchPanel } from '../play/RematchPanel';
 import { Verdict } from '../play/Verdict';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
-import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
+import { backspace, buildBoard, DEL, DIFFICULTIES, DIFFICULTY_KEY, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
 import { WordMeaningLine } from './WordAnswer';
@@ -45,45 +45,27 @@ import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { useDirection } from '../reports/direction';
 
-const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
-
-const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
-  easy: 'games.difficulty.easy',
-  medium: 'games.difficulty.medium',
-  hard: 'games.difficulty.hard',
-};
-
 
 /**
- * Peyvok Battle on the phone (KUR-306): race a friend to the same word.
+ * Peyvok Battle: race a friend to the same word. Built on the poll-safe REST endpoints, so a realtime gateway can
+ * be layered on later without changing this screen.
  *
- * Built on the REST endpoints, which the API documents as poll-safe — "the
- * realtime gateway pushing opponent progress is an additive transport on top of
- * these same endpoints" — so the socket can be laid over this later without the
- * screen changing.
- *
- * `id` is optional so the screen is both halves of the feature: without one it
- * creates a room (or joins one by its code), with one it is that room. That is
- * what lets a code, an invite or an old invite link open straight into a match.
- *
- * Going back from the lobby leaves it (play/backOut), asked first; the host
- * can take a player out by seat; and Android's back in the middle of a race
- * asks before it leaves the board.
+ * Without `id` the screen creates a room or joins one by code; with one it is that room, so a code, an invite or
+ * an old invite link opens straight into a match. Backing out of the lobby leaves it after asking (play/backOut),
+ * the host can remove a player by seat, and Android's back mid-race asks before leaving the board.
  */
 export function WordleBattleScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const [id, setId] = useState<string | null>(initialId ?? null);
   /*
-   * Another battle opened while this screen is up — an invite's Join, a game
-   * card, "Invite someone else" — arrives as new params on this same screen
-   * (navigating to the screen you are on updates it rather than pushing a
-   * second one), so the room follows them.
+   * Another battle opened while this screen is up (an invite's Join, a game card, "Invite someone else") arrives
+   * as new params on this screen, so the room follows them.
    */
   useEffect(() => {
     if (initialId) setId(initialId);
   }, [initialId]);
-  // a game's results are left when another game opens here, or the screen closes:
-  // a rating box that came with them goes too (feedback/gameFinished)
+  // A game's results are left when another game opens here or the screen closes, and their rating box goes with
+  // them (feedback/gameFinished).
   useEffect(() => () => leftResults(), [id]);
 
   return (
@@ -116,7 +98,7 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
     <>
       <GlassCard>
         <View style={styles.card}>
-          {/* the game's own cover, as its stamp and the game alone show it: two people in the brand's violet said nothing of the game */}
+          {/* The game's own cover, as its stamp and the solo game show it. */}
           <GameArt game="peyvok" size={72} />
           <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.battle.intro')}</Text>
           <View style={styles.stretch}>
@@ -127,13 +109,13 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
               labelOf={(d) => t(DIFFICULTY_KEY[d])}
             />
           </View>
-          {/* Rated or Friendly, before the room exists: the host can still change it in the lobby */}
+          {/* Rated or Friendly, before the room exists: the host can still change it in the lobby. */}
           <View style={styles.stretch}>
             <RatedChoice value={rated} onChange={setRated} />
           </View>
           <ClayButton
             label={t('games.battle.create')}
-            // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
+            // Working: the button spins and ignores a second press, and screen readers are told what it is doing.
             accessibilityLabel={busy ? t('games.creating') : undefined}
             busy={busy}
             icon="play"
@@ -145,7 +127,7 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
         </View>
       </GlassCard>
 
-      {/* a battle somebody else made: its code opens it, whichever game it turns out to be */}
+      {/* A battle somebody else made: its code opens it, whichever game it turns out to be. */}
       <JoinCodeCard />
     </>
   );
@@ -159,10 +141,10 @@ function BattleRoom({
   onExit,
 }: {
   id: string;
-  /** to a new battle, in this screen */
+  /** To a new battle, in this screen. */
   onLeave: () => void;
   onOpen: (id: string) => void;
-  /** the screen's own back */
+  /** The screen's own back. */
   onExit: () => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -177,9 +159,9 @@ function BattleRoom({
   const [draft, setDraft] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const loadedOnce = useRef(false);
-  // results: "Invite someone else" opens the invite sheet for this game
+  // Results: "Invite someone else" opens the invite sheet for this game.
   const [inviting, setInviting] = useState(false);
-  // the server has no battle here for this viewer any more: never one, not theirs, or the host took them out
+  // The server has no battle here for this viewer: never one, not theirs, or the host removed them.
   const [gone, setGone] = useState(false);
 
   const load = useCallback(async () => {
@@ -190,35 +172,36 @@ function BattleRoom({
     } else if (res.error.status === 404) {
       setGone(true);
     } else if (!loadedOnce.current) {
-      // a later poll failing is a blip; the first one failing is the whole screen
+      // A later poll failing is a blip; the first one failing is the whole screen.
       setError(res.error.code === 'GAME_STARTED' ? t('stories.join.started') : describeError(res.error, t));
     }
   }, [client, id, t]);
 
   /*
-   * What changed is pushed as `play_changed` — somebody joined, the battle
-   * started, an opponent guessed, it ended — and the screen asks then, with a
-   * slow poll underneath in case an event was missed. It used to ask every
-   * 1.8 s from the moment the lobby opened.
+   * Changes (a join, the start, an opponent's guess, the end) are pushed as `play_changed` and the screen
+   * refetches then, with a slow poll underneath in case one is missed.
    */
   useEffect(() => {
     void load();
   }, [load]);
   useLobbyRefresh('wordle-battle', id, () => void load(), !gone && battle?.status !== 'finished' && battle?.status !== 'cancelled');
 
+  // Results are fetched once the battle is over and nothing polls; a failed fetch is shown with a retry, not an
+  // endless spinner.
+  const [resultsFailed, setResultsFailed] = useState(false);
+  const [resultsAsk, setResultsAsk] = useState(0);
   useEffect(() => {
     if (battle?.status !== 'finished' || results) return;
+    setResultsFailed(false);
     void getResults(client, id).then((r) => {
       if (r.ok) setResults(r.data);
+      else setResultsFailed(true);
     });
-  }, [battle?.status, results, client, id]);
+  }, [battle?.status, results, client, id, resultsAsk]);
 
   /*
-   * A battle played here to its end is a finished game for the rating box, as
-   * a rhyme match is, once its results are in; one opened already finished,
-   * from an old link, is not. It used to be told when the player's own board
-   * ended, and the box then sat over the board, the opponents' progress and
-   * "waiting for the others" while the battle was still being played.
+   * A battle played to its end here counts as a finished game for the rating box once its results are in, as a
+   * rhyme match does; one opened already finished does not.
    */
   const played = useRef(false);
   useEffect(() => {
@@ -233,12 +216,12 @@ function BattleRoom({
 
   const me = battle?.me ?? null;
   const active = battle?.status === 'active' && me != null && me.status === 'playing' && !me.solved;
-  // an invite waits while a battle is on (the banner would sit over the board)
+  // An invite waits while a battle is on (the banner would sit over the board).
   useQuietInvites(battle?.status === 'active');
   const isHost = battle ? (battle.isHost ?? battle.createdBy === user?.id) : false;
-  // backing out of the lobby leaves it, asked first; Android's back mid-race asks before it leaves the board
+  // Backing out of the lobby leaves it after asking; mid-race Android's back asks and the iOS swipe is off.
   useLeaveLobbyOnBack(!gone && battle?.status === 'lobby' && me != null, isHost, () => leaveBattle(client, id));
-  useHardwareBack(active ? () => askLeaveGame(t, onExit) : null);
+  useGameBack(active ? () => askLeaveGame(t, onExit) : null);
 
   const submit = useCallback(async () => {
     if (!battle || !me || !active || busy) return;
@@ -253,11 +236,11 @@ function BattleRoom({
     if (res.ok) {
       setBattle(res.data);
       setDraft([]);
-      // this guess finished your board (solved, or out of tries): felt now; the battle itself is over when everyone's board is
+      // This guess finished your board (solved or out of tries), so it is felt now; the battle ends when every board has.
       const after = res.data.me;
       if (after && (after.solved || after.status !== 'playing')) haptic(after.solved ? 'correct' : 'wrong');
     } else {
-      // a rejected guess costs no attempt — the draft stays put, with a reason
+      // A rejected guess costs no attempt — the draft stays put, with a reason.
       setNotice(guessMessage(res.error, t));
     }
   }, [client, id, battle, me, active, busy, draft, t]);
@@ -282,7 +265,7 @@ function BattleRoom({
     else setNotice(describeError(res.error, t));
   };
 
-  // called off by its host, or not here for this viewer any more: said plainly, with a battle of their own one tap away
+  // Cancelled by the host, or gone for this viewer: said plainly, with a new battle one tap away.
   if (gone || battle?.status === 'cancelled') {
     return (
       <GlassCard>
@@ -313,7 +296,7 @@ function BattleRoom({
   if (battle.status === 'lobby') {
     return (
       <>
-        {/* the code to tell people, with Invite friends beside it: for whoever is in the lobby */}
+        {/* The code to tell people, with Invite friends beside it: for whoever is in the lobby. */}
         {battle.me != null ? (
           <LobbyShare
             game="wordle-battle"
@@ -337,7 +320,7 @@ function BattleRoom({
                 onRemove={isHost ? (seat) => void act(() => removeFromBattle(client, id, seat)) : undefined}
               />
             ) : null}
-            {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+            {/* Rated or Friendly, said before anyone joins; the host may change it here and only here. */}
             {battle.me != null ? (
               <LobbyRated
                 game="wordle-battle"
@@ -378,7 +361,7 @@ function BattleRoom({
                 {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
               </Text>
             )}
-            {/* the lobby's own way out is the screen's back, which asks and then leaves (play/backOut) */}
+            {/* The lobby's own way out is the screen's back, which asks and then leaves (play/backOut). */}
             {battle.me != null ? (
               <ClayButton
                 label={isHost ? t('stories.lobby.cancelGame') : t('stories.lobby.leave')}
@@ -401,14 +384,14 @@ function BattleRoom({
       <GlassCard>
         <View style={styles.card}>
           <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}</Verdict>
-          {/* what this game did to your rank, with its one plain reason — before the table */}
+          {/* What this game did to your rank, with its one plain reason — before the table. */}
           {battle.rated?.rated ? <RankResultPanel game="wordle-battle" gameRef={id} /> : null}
           {results ? (
             <>
               <Text style={[styles.blurb, { color: colors.textSecondary }]}>
                 {t('games.wordle.theWordWas')} {results.target.toUpperCase()}
               </Text>
-              {/* the word everyone raced for, and what it means: the one thing a battle teaches */}
+              {/* The word everyone raced for, and what it means: the one thing a battle teaches. */}
               <WordMeaningLine word={results.target} meanings={results.meanings} />
               <View style={styles.stretch}>
                 {results.ranking.map((r) => (
@@ -423,7 +406,7 @@ function BattleRoom({
                         : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })}
                     </Text>
                     {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
-                    {/* anyone else in the game can be reported, by seat */}
+                    {/* Anyone else in the game can be reported, by seat. */}
                     {r.userId !== user?.id && r.seat !== undefined ? (
                       <PlayerReportButton game="wordle-battle" gameId={results.id} seat={r.seat} name={r.name ?? null} />
                     ) : null}
@@ -431,10 +414,12 @@ function BattleRoom({
                 ))}
               </View>
             </>
+          ) : resultsFailed ? (
+            <ErrorRetry onRetry={() => setResultsAsk((n) => n + 1)} />
           ) : (
             <Loading />
           )}
-          {/* play again with the same people: a rematch for two, the host's next round for more */}
+          {/* Play again with the same people: a rematch for two, the host's next round for more. */}
           <View style={styles.stretch}>
             <RematchPanel
               game="wordle-battle"
@@ -455,13 +440,13 @@ function BattleRoom({
   // ---- play ------------------------------------------------------------------
   return (
     <>
-      {/* the game's header says what it is playing for, decided at the start */}
+      {/* The game's header says what it is playing for, decided at the start. */}
       {battle.rated ? <RatedPill rated={battle.rated.counts ?? battle.rated.rated} small /> : null}
       {battle.opponents.length > 0 ? (
         <View style={styles.opponents}>
           {battle.opponents.map((o, i) => (
             <View key={o.userId} style={[styles.opponent, { flexDirection: dir.row }]}>
-              {/* one line: a long name is cut short rather than broken in the middle of a word */}
+              {/* One line: a long name is cut short rather than broken in the middle of a word. */}
               <Text style={[styles.opponentName, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
                 {o.name ?? (battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent'))}
               </Text>
@@ -514,10 +499,8 @@ function BattleRoom({
 }
 
 /**
- * Why a guess bounced.
- *
- * The two the server rejects on purpose get the catalogue's wording; anything
- * else is infrastructure and `describeError` already has the sentence for it.
+ * Why a guess was refused: the two deliberate server rejections get the catalogue's wording; anything else is
+ * infrastructure, which `describeError` covers.
  */
 function guessMessage(error: ApiError, t: (key: TranslationKey) => string): string {
   if (error.code === 'WRONG_LENGTH') return t('games.wordle.wrongLength');
@@ -525,8 +508,8 @@ function guessMessage(error: ApiError, t: (key: TranslationKey) => string): stri
   return describeError(error, t);
 }
 
-/** The screen's frame: back, title, and a scroller that clears the notch. */
-function Shell({
+/** A match screen's frame: back, title, and a scroller that clears the notch. Rhyme Match uses it too. */
+export function Shell({
   title,
   onExit,
   children,
@@ -551,12 +534,9 @@ function Shell({
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  // the keyboard reaches nearer the edges than the rest of the screen: wide keys
+  // The keyboard reaches nearer the edges than the rest of the screen: wide keys.
   keyboardBleed: { marginHorizontal: -spacing.md, width: 'auto' },
-  // flex + centre so a long translated name shares the row with the back
-  // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
-  // Battle" in some languages is three
-  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
+  // Lay out a card's contents on an inner View: a GlassCard's own style only dresses its outside.
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

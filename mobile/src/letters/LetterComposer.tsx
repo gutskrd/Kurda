@@ -75,29 +75,16 @@ import { draftOf, keepDraft } from './drafts';
 import { useAuth } from '../auth/AuthContext';
 
 /**
- * Writing a letter, on the phone: the letter is written on its own sheet of
- * paper, as the website's composer has it, and the paper is yours to make.
+ * Writing a letter on its own sheet of paper, as on the website. Four tools sit above the sheet, where a drawing hand
+ * does not cover them: Write (type on the rules), Draw (pen, brush or marker, with undo, redo and an undoable
+ * clear), Text (notes placed by a tap, dragged, and restyled), and Paper (lines, colour and ink).
  *
- * Four tools in a quiet bar over the sheet, where a hand drawing on the paper
- * does not cover them: Write, to type on the ruled lines in the paper's ink;
- * Draw, a pen, a brush or a marker in fourteen colours and three sizes, with
- * undo, redo and clear (which asks once, and can itself be undone); Text, to
- * stick short notes anywhere on the sheet — a tap on the paper puts one there,
- * a finger drags it, and its words, size, colour and a slight turn are changed
- * over the sheet; and Paper, its lines, its colour and its ink, each choice a
- * small picture of itself, the sheet under them changing as they are touched.
+ * Drawing holds the page still; two fingers scroll it instead, and a hand resting on the glass is ignored. On a first
+ * letter to a stranger Draw is locked and says why: drawings travel only between pen pals.
  *
- * Drawing holds the page still, so a finger draws rather than scrolls; two
- * fingers move the page instead, and a hand resting on the glass while a line
- * is drawn is ignored (a resting touch that came first is let go for the
- * finger that moves). On a first letter to a stranger Draw is in its place but
- * locked, and says in one line why: drawings travel only between pen pals.
- *
- * What the server would refuse is said under the sheet as it is written — a
- * link, a phone number, too long, in the letter or in a note — so nothing is
- * refused after the bird has left; that it is still empty is said only once
- * somebody tries to send it. A single word is a letter. The keyboard never
- * covers what is being typed: the page keeps it in sight (`host`).
+ * Problems the server would refuse (links, phone numbers, length) show under the sheet while writing, so nothing is
+ * refused after sending; emptiness is only reported on send. The page keeps what is being typed above the keyboard
+ * (`host`).
  */
 
 /** A letter as it is sent: its words, and its paper with what is drawn and stuck on it. */
@@ -115,9 +102,8 @@ const PROBLEM: Record<LetterProblem, TranslationKey> = {
 };
 
 /**
- * The paper last written on, for the next sheet taken out: the letters home
- * says which it is (shared LettersHome `paper`), and a letter sent says it
- * again, so a correspondence opened later starts on it too.
+ * The paper last written on, for the next sheet: set from the letters home (shared LettersHome `paper`) and again on
+ * each send, so a correspondence opened later starts on it too.
  */
 let lastPaper: LetterPaper | null = null;
 export function rememberPaper(paper: LetterPaper | null | undefined): void {
@@ -127,29 +113,29 @@ export function rememberedPaper(): LetterPaper | null {
   return lastPaper;
 }
 
-/** How far one press of a screen reader's move action takes a note, in page units: a line down, or a little along it. */
+/** How far a screen reader's move action takes a note, in page units: a line down, or a little along it. */
 const NUDGE = { x: 60, y: PAPER_RULE } as const;
-/** How far a finger may move on the glass and still be resting, in points. */
+/** How far a finger may move and still count as resting, in points. */
 const STILL = 2;
 
 type Touch = Pick<NativeTouchEvent, 'identifier' | 'pageX' | 'pageY'>;
-/** A touch's name, the same whichever way the platform writes it (a number on the phones, typed as a string). */
+/** A touch's id as a string, whichever type the platform reports. */
 const nameOf = (touch: Pick<Touch, 'identifier'>): string => String(touch.identifier ?? 0);
 
-/** The finger on the paper: the line it is drawing, where the sheet is on the screen, and the touches seen, for telling a resting hand from two fingers. */
+/** The finger on the paper: its line, the sheet's screen offset, and the touches seen, to tell a resting hand from two fingers. */
 interface Hand {
   line: PenLine | null;
   id: string;
   ox: number;
   oy: number;
-  /** two fingers are moving the page, and nothing is drawn by this touch */
+  /** Two fingers are moving the page, so this touch draws nothing. */
   page: boolean;
-  /** where the fingers were, between them, the last time the page moved */
+  /** The fingers' midpoint the last time the page moved. */
   y: number;
   seen: Map<string, { x: number; y: number }>;
 }
 
-/** The next frame, where there is one to wait for (a test's page may have none). */
+/** The next frame, falling back to a timer where there is none (tests). */
 const nextFrame = (run: () => void): unknown => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(run) : setTimeout(run, 16));
 const dropFrame = (frame: unknown): void => {
   if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame as number);
@@ -158,7 +144,7 @@ const dropFrame = (frame: unknown): void => {
 
 const between = (touches: readonly Touch[]): number => touches.reduce((s, t) => s + t.pageY, 0) / Math.max(1, touches.length);
 
-/** A note as the composer keeps it: with a key of its own, so it is the same note under a finger while others come and go. */
+/** A note with a stable key, so the same note stays under a finger while others come and go. */
 interface Placed {
   key: number;
   note: PaperNote;
@@ -181,27 +167,23 @@ export function LetterComposer({
   testID,
 }: {
   label: string;
-  /** what sending it is called, when it is not your own bird that takes it */
+  /** The send button's label, when it is not your own bird that carries the letter. */
   sendLabel?: string;
   busy: boolean;
   onSend: (letter: ComposedLetter) => void;
-  /** putting the paper away again, for a letter that was started by choice */
+  /** Puts the paper away, for a letter started by choice. */
   onCancel?: () => void;
-  /** what the server answered, when it refused */
+  /** The server's refusal, if any. */
   error?: string | null;
-  /** opened by asking to write: the pen goes straight to the paper */
+  /** Opened by asking to write, so the pen goes straight to the paper. */
   autoFocus?: boolean;
-  /** whether this letter may carry a drawing: not the first to a stranger */
+  /** Whether this letter may carry a drawing; not on a first letter to a stranger. */
   canDraw: boolean;
-  /** the paper it opens on */
+  /** The paper it opens on. */
   paper?: LetterPaper | null;
-  /** the page the sheet lies on, which it holds still while drawing and scrolls to keep the writing in sight */
+  /** The page the sheet lies on, held still while drawing and scrolled to keep the writing in sight. */
   host?: PaperHost;
-  /**
-   * Where this letter is written from (letters/drafts.ts): what is on the
-   * paper is kept there as it is written, and the paper opens on it again.
-   * The screen lets it go once the letter has been sent.
-   */
+  /** The draft key for where this letter is written from (letters/drafts.ts); the screen drops it once sent. */
   draft?: string;
   testID?: string;
 }): React.JSX.Element {
@@ -210,14 +192,14 @@ export function LetterComposer({
   const dir = useDirection();
   const id = (part: string): string | undefined => (testID ? `${testID}-${part}` : undefined);
 
-  // a letter left unsent here before opens as it was left: its words, its paper, and what was drawn and stuck on it
+  // A letter left unsent here reopens as it was left.
   const who = useAuth().user?.id ?? null;
   const [left] = useState(() => (place ? draftOf(who, place) : null));
   const [body, setBody] = useState(left?.body ?? '');
   const [tried, setTried] = useState(false);
   const [tool, setTool] = useState<PaperTool>('write');
   const [paper, setPaper] = useState<LetterPaper>(left?.paper ?? firstPaper ?? DEFAULT_PAPER);
-  // a drawing kept is drawn again stroke by stroke, so it can be undone as it was made
+  // A kept drawing is replayed stroke by stroke, so it can be undone as it was made.
   const [drawing, setDrawing] = useState<Drawing>(() => (left && canDraw ? left.strokes.reduce(addStroke, EMPTY_DRAWING) : EMPTY_DRAWING));
   const [pen, setPen] = useState<{ tool: DrawTool; size: PenSize; paint: Paint }>({ tool: 'pen', size: 'm', paint: (left?.paper ?? firstPaper ?? DEFAULT_PAPER).ink });
   const [placed, setPlaced] = useState<Placed[]>(() => (left ? left.notes.map((note, key) => ({ key, note })) : []));
@@ -225,7 +207,7 @@ export function LetterComposer({
   const [asking, setAsking] = useState(false);
   const [notesFull, setNotesFull] = useState(false);
   const [decorProblem, setDecorProblem] = useState<DecorProblem | null>(null);
-  // how far down the sheet the writing reaches, with the room kept under it, in points (measured by the writing's twin, below)
+  // How far down the sheet the writing reaches, plus the room under it, in points (measured by the writing's twin).
   const [written, setWritten] = useState(0);
   const [width, setWidth] = useSheetWidth();
   const sheet = useSheetColors(paper);
@@ -246,12 +228,12 @@ export function LetterComposer({
   const room = useMemo(() => canDrawMore(decor), [decor]);
   const drawingOn = tool === 'draw' && canDraw;
 
-  // what is on the paper is kept as it is written, so nothing that changes on the screen around it can lose it
+  // Saved as it is written, so nothing changing around the screen can lose it.
   useEffect(() => {
     if (place) keepDraft(who, place, { body, paper, strokes: canDraw ? [...drawing.strokes] : [], notes: kept });
   }, [who, place, body, paper, drawing.strokes, kept, canDraw]);
 
-  // a moment after it opens, so the keyboard rises once the paper is in its place — unless another tool was taken up meanwhile
+  // The keyboard rises a moment after opening, once the paper is in place, unless another tool was picked meanwhile.
   const toolNow = useRef(tool);
   toolNow.current = tool;
   useEffect(() => {
@@ -262,13 +244,13 @@ export function LetterComposer({
     return () => clearTimeout(soon);
   }, [autoFocus]);
 
-  // the page holds still while the pen is in hand, and is let go when the paper is put away
+  // The page holds still while the pen is in hand, and is released when the paper is put away.
   useEffect(() => {
     host?.lock(drawingOn);
     return () => host?.lock(false);
   }, [host, drawingOn]);
 
-  /** A note put away without words in it was never a note. */
+  /** Puts the current note down; a note left without words is removed. */
   const putDown = (): void => {
     setPlaced((list) => list.filter(hasWords));
     setChosen(null);
@@ -285,7 +267,7 @@ export function LetterComposer({
     }
     input.current?.blur();
     Keyboard.dismiss();
-    // the tools and the sheet under them are brought into sight together, to draw or to choose a paper
+    // Brings the tools and the sheet into sight together, to draw or choose a paper.
     if (next === 'draw' || next === 'paper') host?.reveal(canvas.current, { once: true });
   };
 
@@ -294,7 +276,7 @@ export function LetterComposer({
   const hand = useRef<Hand | null>(null);
   const [, setFrame] = useState(0);
   const frame = useRef<unknown>(null);
-  // a moving finger is drawn once a frame, however often the phone reports it
+  // A moving finger is drawn once a frame, however often the phone reports it.
   const redraw = (): void => {
     if (frame.current !== null) return;
     frame.current = nextFrame(() => {
@@ -309,7 +291,7 @@ export function LetterComposer({
     [],
   );
 
-  // the responder is made once; this keeps what it reads current
+  // The responder is created once; this keeps what it reads current.
   const now = useRef({ drawingOn, pen, scale, length, decor, host });
   now.current = { drawingOn, pen, scale, length, decor, host };
   const lift = useRef<() => void>(() => undefined);
@@ -337,7 +319,7 @@ export function LetterComposer({
         const line = left >= 2 ? new PenLine(n.pen.tool, n.pen.paint, widthFor(n.pen.tool, n.pen.size), ev.locationX / s, ev.locationY / s, n.length, left) : null;
         const seen = new Map<string, { x: number; y: number }>();
         for (const touch of (ev.touches ?? []) as Touch[]) seen.set(nameOf(touch), { x: touch.pageX, y: touch.pageY });
-        // where the sheet is on the screen, from where the finger landed on it: what every later point is measured from
+        // The sheet's screen offset, from where the finger landed; every later point is measured from it.
         hand.current = { line, id: nameOf(ev), ox: ev.pageX - ev.locationX, oy: ev.pageY - ev.locationY, page: false, y: 0, seen };
         redraw();
       },
@@ -360,7 +342,7 @@ export function LetterComposer({
           return;
         }
         if (touches.length >= 2 && !h.line?.moved) {
-          // two touches before anything is drawn: two fingers moving the page, or a resting hand and the finger that draws
+          // Two touches before anything is drawn: two fingers scrolling, or a resting hand and the drawing finger.
           const moved = (touch: Touch): boolean => {
             const was = h.seen.get(nameOf(touch));
             return was !== undefined && Math.hypot(touch.pageX - was.x, touch.pageY - was.y) > STILL;
@@ -376,16 +358,16 @@ export function LetterComposer({
             return;
           }
           if (other && h.line) {
-            // the first touch was a hand coming to rest: the pen is the finger that moves
+            // The first touch was a resting hand, so the pen is the finger that moves.
             h.id = nameOf(other);
             h.line = new PenLine(h.line.tool, h.line.color, h.line.width, (other.pageX - h.ox) / s, (other.pageY - h.oy) / s, n.length, pointsLeft(n.decor));
             remember();
             redraw();
             return;
           }
-          // only the pen's own finger moved, beside a resting hand: it draws on
+          // Only the pen's finger moved, beside a resting hand, so it draws on.
         }
-        // once a line is under way, any other touch is a hand resting on the glass, and is not followed
+        // Once a line is under way, other touches are a resting hand and are ignored.
         const own = touches.find((touch) => nameOf(touch) === h.id);
         if (own && h.line?.to((own.pageX - h.ox) / s, (own.pageY - h.oy) / s)) redraw();
         remember();
@@ -423,7 +405,7 @@ export function LetterComposer({
 
   const pickNote = (key: number): void => {
     if (chosen === key) return;
-    // the note being changed is put down first, and goes if it was left without words
+    // The note being edited is put down first, and removed if left without words.
     setPlaced((list) => list.filter((p) => p.key === key || hasWords(p)));
     setChosen(key);
   };
@@ -434,14 +416,14 @@ export function LetterComposer({
     setNotesFull(false);
   };
 
-  /** A tap on the paper with the Text tool: put a note there, or, with one being changed, put that one down. */
+  /** A tap on the paper with the Text tool: adds a note there, or puts down the one being edited. */
   const tapPaper = (x: number, y: number): void => {
     if (chosen !== null) {
       putDown();
       noteField.current?.blur();
       return;
     }
-    // a tap with no place on the paper (a screen reader's, a keyboard's) puts the note where a new one goes
+    // A tap without coordinates (screen reader, keyboard) puts the note in the default spot.
     addNote(Number.isFinite(x) && Number.isFinite(y) ? { x: x / (scale || 1), y: y / (scale || 1) } : undefined);
   };
 
@@ -451,15 +433,15 @@ export function LetterComposer({
   // ── the paper
 
   const changePaper = (next: LetterPaper): void => {
-    // a pen in the writing's ink keeps to the writing's colour when the ink changes
+    // A pen in the writing's ink follows the ink when it changes.
     if (next.ink !== paper.ink && pen.paint === paper.ink) setPen((p) => ({ ...p, paint: next.ink }));
     setPaper(next);
   };
 
   // ── sending
 
-  // the letter and its notes are read together too, as the server reads them: a number begun in the letter and ended on a note is still a number
-  // (a note that holds one on its own is said to be the one to change, by the note's own words)
+  // The letter and its notes are checked together, as the server does, so a number split between them is still caught;
+  // a note that holds one by itself is named as the one to change.
   const noteHoldsOne = kept.some((n) => ['contact', 'link'].includes(letterProblem(n.text) ?? ''));
   const together = kept.length > 0 && !noteHoldsOne ? letterProblem([body, ...kept.map((n) => n.text)].join(' ')) : null;
   const problem = letterProblem(body) ?? (together === 'contact' || together === 'link' ? together : null);
@@ -655,7 +637,7 @@ export function LetterComposer({
     );
   }
 
-  // the last line written, and the two under it, are what is kept above the keyboard
+  // The last written line and the two under it are kept above the keyboard.
   const caretTop = Math.max(0, written - (WRITING_FOOT + PAPER_RULE * 2) * scale);
 
   return (
@@ -675,7 +657,7 @@ export function LetterComposer({
           <PaperPicture paper={paper} length={length} width={width} />
           <StrokeLines strokes={drawing.strokes} live={liveLine} tone={paper.tone} length={length} width={width} />
 
-          {/* the writing, on the rules, in the paper's ink */}
+          {/* The writing, on the rules, in the paper's ink. */}
           <View pointerEvents={tool === 'write' ? 'box-none' : 'none'} style={StyleSheet.absoluteFill}>
             <TextInput
               ref={input}
@@ -711,9 +693,8 @@ export function LetterComposer({
             <View ref={caret} collapsable={false} pointerEvents="none" style={[styles.caret, { top: caretTop, height: PAPER_RULE * 3 * scale }]} />
           </View>
           {/*
-            The writing's unseen twin, set in the same type at the same width: how tall it is says how far down the
-            sheet the writing reaches. A field's own content size is not that on every platform (one counts the
-            field's least height in it), and the sheet's length and where a new note goes are measured from this.
+            The writing's hidden twin in the same type and width, measured to know how far down the writing reaches. A
+            field's content size is not reliable across platforms, and the sheet length and new-note placement use this.
           */}
           <Text
             accessibilityElementsHidden
@@ -729,7 +710,7 @@ export function LetterComposer({
             {body.endsWith('\n') || body.length === 0 ? `${body} ` : body}
           </Text>
 
-          {/* the paper with no pen in hand: a tap on it puts a note there (Text), or picks the pen up to write */}
+          {/* The paper without a pen in hand: a tap adds a note (Text) or picks up the pen to write. */}
           {tool === 'text' ? (
             <Pressable
               accessible={false}
@@ -782,14 +763,12 @@ export function LetterComposer({
   );
 }
 
-/** The "A" each note size shows itself as, in points. */
+/** The size of the "A" each note size shows as, in points. */
 const LETTER_A: Readonly<Record<PaperNote['size'], number>> = { s: 13, m: 17, l: 23 };
 
 /**
- * A note on the sheet being written: with the Text tool in hand, a touch
- * picks it up to change it, and a drag moves it, the page held still under
- * the finger meanwhile; a screen reader picks it up and moves it with its
- * actions instead, a line or a step at a time.
+ * A note on the sheet being written. With the Text tool, a touch selects it and a drag moves it while the page holds
+ * still; screen readers select and move it with actions instead, a step at a time.
  */
 function NoteOnSheet({
   note,
@@ -882,7 +861,7 @@ const styles = StyleSheet.create({
   tiltLeft: { transform: [{ rotate: '-15deg' }] },
   tiltRight: { transform: [{ rotate: '15deg' }] },
   noteField: { flex: 1, minWidth: 0, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md - 4, fontSize: typography.sizes.md },
-  // a sheet of paper: its corners barely rounded, a hairline where it meets the screen
+  // Barely rounded corners, and a hairline where the paper meets the screen.
   sheet: { alignSelf: 'stretch', overflow: 'hidden', borderRadius: radii.xs, borderWidth: StyleSheet.hairlineWidth },
   writing: { minHeight: MIN_TOUCH_TARGET, textAlignVertical: 'top', includeFontPadding: false },
   caret: { position: 'absolute', left: 0, right: 0 },

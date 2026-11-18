@@ -22,45 +22,34 @@ import {
 import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
- * A quest's chest, the drawing the website shows too (shared `art/chest.ts`):
- * amber wood in iron, in gold, or pomegranate lacquer in gold, seen from three
- * quarters, at every size from the end of a quest's bar to the chest's own
- * screen. `size` is how wide the shut chest is drawn; the height follows.
+ * A quest's chest, drawn as on the web (shared `art/chest.ts`): amber wood in iron, in gold, or pomegranate
+ * lacquer in gold, in three-quarter view, at any size. `size` is the shut chest's width; the height follows.
  *
- * Each of the drawing's layers is its own small picture laid over the same
- * frame, so the parts can move without anything being drawn again. A chest
- * opens with a hop (`motion.hop`, 0 → 1 straight through the shared
- * `CHEST_HOP`): everything but the shadow crouches, springs up about the
- * chest's foot and lands, the shadow shrinking under it while it is in the
- * air, and the lid, the light and the stars take their cue from the same
- * value — the shut lid swings up and away about its hinge and the open one
- * lands in its place at the top of the hop, rocking back as the chest lands,
- * the light inside blooms with it, and the stars burst on the landing. Each
- * of those can also be driven on its own (`lid`, `light`, `sparkle`). The fan
- * of rays behind it turns slowly (`rays: 'turning'`, a loop on the native
- * driver that runs only while the screen is in view and the phone has not
- * asked for less motion), and a glint passes over the lock plate now and
- * then (`shine`, for a chest that can be opened: six still frames faded in
- * and out in turn, as the badges' glint is). `open` draws it standing open,
- * with the gold out of it, for a chest whose Zêr has been taken. Decorative:
- * whatever holds it says what it is.
+ * Each layer is its own picture over the same frame, so parts move without redrawing. Opening is a hop
+ * (`motion.hop`, 0 → 1 through the shared `CHEST_HOP`): everything but the shadow crouches, springs about the
+ * chest's foot and lands while the shadow shrinks; the shut lid swings away about its hinge and the open lid
+ * lands at the top of the hop, rocking as the chest lands, the inner light blooms and the stars burst on landing.
+ * `lid`, `light` and `sparkle` can also be driven separately. The rays behind turn slowly (`rays: 'turning'`, a
+ * native-driver loop that runs only while the screen is focused and motion is allowed), and `shine` passes a
+ * glint over the lock plate now and then on an openable chest. `open` draws it standing open with the gold taken.
+ * Decorative: its container says what it is.
  */
 
-/** How the chest's moving parts stand, each 0 → 1; a part left out stands as drawn, or follows the hop when there is one. */
+/** How the chest's moving parts stand, each 0 → 1; an omitted part stands as drawn, or follows the hop when there is one. */
 export interface ChestMotion {
-  /** 0 → 1 through the hop it opens with (shared `CHEST_HOP`); the lid, the light and the stars follow it unless given */
+  /** 0 → 1 through the opening hop (shared `CHEST_HOP`); the lid, light and stars follow it unless given. */
   hop?: AnimatedNumber;
-  /** 0 shut → 1 open */
+  /** 0 shut → 1 open. */
   lid?: AnimatedNumber;
-  /** 0 → 1: the light inside, and the rays with it */
+  /** 0 → 1: the light inside, and the rays with it. */
   light?: AnimatedNumber;
-  /** 0 → 1: the stars round it bursting out and fading */
+  /** 0 → 1: the stars round it bursting out and fading. */
   sparkle?: AnimatedNumber;
 }
 
 type AnimatedNumber = Animated.Value | Animated.AnimatedInterpolation<number>;
 
-/** A shared hop curve read off a value: straight lines between its points, flat beyond them, as `chestHopAt` reads it. */
+/** Read a shared hop curve at a value: linear between its points, flat beyond them, as `chestHopAt` does. */
 const along = (value: AnimatedNumber, curve: ChestHopCurve): Animated.AnimatedInterpolation<number> =>
   value.interpolate({ inputRange: curve.map(([at]) => at), outputRange: curve.map(([v]) => v).map((_, i) => curve[i]?.[1] ?? 0), extrapolate: 'clamp' });
 
@@ -72,7 +61,7 @@ const RAYS_TURN_MS = 16000;
 /** Where the glint is drawn on its way over the plate; stepping through them is the pass. */
 const GLINT_PHASES = [0.1, 0.26, 0.42, 0.58, 0.74, 0.9] as const;
 const GLINT_STEP_MS = 80;
-/** A chest waiting glints this often: a gleam now and then, not a strobe. */
+/** How often a waiting chest glints: now and then, not a strobe. */
 const GLINT_REST_MS = 3200;
 
 export function ChestArt({
@@ -87,29 +76,29 @@ export function ChestArt({
   testID,
 }: {
   tier: ChestTier;
-  /** how wide the shut chest is drawn; the height follows */
+  /** How wide the shut chest is drawn; the height follows. */
   size: number;
-  /** drawn standing open, with the gold out of it */
+  /** Drawn standing open, with the gold out of it. */
   open?: boolean;
-  /** the parts moving, for a chest being opened */
+  /** The parts moving, for a chest being opened. */
   motion?: ChestMotion;
-  /** the fan of rays behind it: turning, or standing still; left out, there are none */
+  /** The fan of rays behind it: turning, or standing still; left out, there are none. */
   rays?: 'turning' | 'still';
-  /** how far the rays reach, as a multiple of the drawing's own */
+  /** How far the rays reach, as a multiple of the drawing's own. */
   reach?: number;
-  /** a glint over the lock plate now and then: a chest waiting to be opened */
+  /** A glint over the lock plate now and then, for a chest waiting to be opened. */
   shine?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }): React.JSX.Element {
-  // a screen still being laid out can ask for nothing wide: the drawing is made at its small size and takes no room until there is some
+  // A screen still being laid out may report no width: draw at the small size and take no room until there is some.
   const drawing = useMemo(() => chestDrawing(tier, { size: size > 0 ? size : CHEST_SMALL }), [tier, size]);
   const unit = size / drawing.box.w;
   const height = drawing.box.h * unit;
   const { layers } = drawing;
   const alive = useMotionAlive();
   const hop = motion?.hop;
-  // the lid, the light and the stars take their cue from the hop unless they are driven on their own
+  // The lid, the light and the stars take their cue from the hop unless they are driven on their own.
   const lid = motion?.lid ?? (hop ? along(hop, CHEST_HOP_LID) : undefined);
   const sparkle = motion?.sparkle ?? (hop ? along(hop, CHEST_HOP_SPARKLE) : undefined);
   const opening = lid !== undefined;
@@ -117,7 +106,7 @@ export function ChestArt({
   const light = motion?.light ?? (hop ? along(hop, CHEST_HOP_LIGHT) : open ? 1 : 0);
   const turning = rays === 'turning' && alive;
 
-  // the rays' turn, once round and round again, only while somebody is looking
+  // The rays' turn, once round and round again, only while somebody is looking.
   const turn = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!turning) {
@@ -129,7 +118,7 @@ export function ChestArt({
     return () => loop.stop();
   }, [turning, turn]);
 
-  // the shut lid: up and away about the hinge, gone by the time the open one has landed
+  // The shut lid: up and away about the hinge, gone by the time the open one has landed.
   const lidStyle: Animated.WithAnimatedObject<ViewStyle> | null = lid
     ? {
         opacity: lid.interpolate({ inputRange: [0, 0.35, 0.6, 1], outputRange: [1, 1, 0, 0], extrapolate: 'clamp' }),
@@ -139,7 +128,7 @@ export function ChestArt({
         ],
       }
     : null;
-  // the open lid: in from the hinge on the same value, which passes 1 and comes back, so it rocks as it lands
+  // The open lid comes in from the hinge on the same value, which overshoots 1 and returns, so it rocks as it lands.
   const openStyle: Animated.WithAnimatedObject<ViewStyle> | null = lid
     ? {
         opacity: lid.interpolate({ inputRange: [0, 0.4, 0.65, 1], outputRange: [0, 0, 1, 1], extrapolate: 'clamp' }),
@@ -155,7 +144,7 @@ export function ChestArt({
         transform: [{ scale: sparkle.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1.2], extrapolate: 'clamp' }) }],
       }
     : null;
-  // the hop: the chest's body crouches, springs and lands about its foot; the shadow stays on the ground and shrinks under it
+  // The hop: the body crouches, springs and lands about its foot; the shadow stays on the ground and shrinks under it.
   const ats = CHEST_HOP.map((f) => f.at);
   const hopStyle: Animated.WithAnimatedObject<ViewStyle> | null = hop
     ? {
@@ -220,11 +209,9 @@ function Part({
 }
 
 /**
- * The glint over the lock plate: six still frames of the band of light at
- * points across it, each faded in and out in turn on the native driver, so
- * the eye reads a pass and nothing is drawn while it plays. It rests between
- * passes, and altogether while the screen is not in view or the phone has
- * asked for less motion.
+ * The lock-plate glint: six still frames of the light band across it, each faded in and out in turn on the native
+ * driver, so it reads as a pass with nothing redrawn. It rests between passes, and entirely while the screen is
+ * not focused or motion is reduced.
  */
 function Glint({ drawing, unit }: { drawing: ChestDrawing; unit: number }): React.JSX.Element | null {
   const alive = useMotionAlive();

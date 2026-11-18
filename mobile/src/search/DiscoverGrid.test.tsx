@@ -48,7 +48,7 @@ function open(items: unknown[]) {
 describe('the pictures under Search', () => {
   it('shows whole rows of three, each opening its post', async () => {
     const onCount = open([1, 2, 3, 4].map((n) => picture(n)));
-    // four is a row and one over: the one over waits for a fuller row
+    // Four is a row and one over: the one over waits for a fuller row.
     await waitFor(() => expect(onCount).toHaveBeenCalledWith(3));
     expect(screen.queryByRole('button', { name: 'Picture 4' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Picture 2' }));

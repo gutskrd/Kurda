@@ -1,9 +1,6 @@
 /**
- * A signed-in session for component tests, in place of `auth/AuthContext`.
- *
- * `useAuth()` answers with whatever the test put in `testAuth`: a user, and a
- * client whose calls are answered from a route table and recorded, so a test
- * can say what the server replies and then check what was sent.
+ * A signed-in session for component tests, in place of `auth/AuthContext`: `useAuth()` answers with whatever the test
+ * put in `testAuth`, including a client answered from a route table that records its calls.
  */
 import type { ReactNode } from 'react';
 import { vi } from 'vitest';
@@ -19,9 +16,8 @@ export interface FakeCall {
 }
 
 /**
- * A client answering `"METHOD /path"` from `routes` (an exact path, query
- * included). A call with no route fails as a server error would, so a test
- * that forgot one finds out instead of hanging.
+ * A client answering `"METHOD /path"` from `routes` (an exact path, query included). A call with no route fails as a
+ * server error would, so a missing route shows up instead of hanging.
  */
 export function fakeClient(routes: Record<string, Handler | ApiResult<unknown>> = {}): ApiClient & { calls: FakeCall[] } {
   const calls: FakeCall[] = [];
@@ -51,10 +47,10 @@ export const fail = (error: Partial<ApiError> & { code?: string; details?: unkno
 
 export const testAuth: {
   client: ApiClient;
-  /** `guest: true` for a test of what a guest sees; the stand-in's `isGuest` follows it */
+  /** `guest: true` for a test of what a guest sees; the stand-in's `isGuest` follows it. */
   user: { id: string; username: string; email: string; displayName: string | null; profilePhotoUrl: string | null; emailVerified: boolean; guest?: boolean };
   baseUrl: string;
-  /** reading the account again after something about it changed; a test can ask whether it was */
+  /** Reading the account again after something changed; a test can ask whether it was. */
   refreshUser: () => Promise<void>;
 } = {
   client: fakeClient(),

@@ -9,10 +9,8 @@ import { PATTERNS, resetHaptics } from '../lib/haptics';
 import { soundPlayer } from '../lib/sound';
 
 /*
- * The lesson player against a fake API: each exercise type, the feedback, a
- * miss asked again through /retry, a resumed lesson, and the results. The
- * server's answers are scripted per exercise, so what is checked is what the
- * player sends and what it shows.
+ * The lesson player against a fake API scripted per exercise: each exercise type, feedback, retries through /retry, a
+ * resumed lesson and the results; what is checked is what the player sends and shows.
  */
 
 interface Call {
@@ -164,7 +162,7 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
 
     expect(await screen.findByText('Choose the answer')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveAttribute('aria-valuenow', '0');
-    // Check waits for an answer, and a key only chooses one: nothing is sent until it is checked
+    // Check waits for an answer, and a key only chooses one: nothing is sent until it is checked.
     expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
     await userEvent.keyboard('1');
     expect(screen.getByRole('button', { name: /Good night/ })).toHaveAttribute('aria-pressed', 'true');
@@ -176,21 +174,21 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     expect(within(feedback).getByText('Not yet')).toBeInTheDocument();
     expect(within(feedback).getByText('Good day')).toBeInTheDocument();
     expect(within(feedback).getByText('You will see this one again shortly.')).toBeInTheDocument();
-    // the chosen option and the right one are told apart by more than colour
+    // The chosen option and the right one are told apart by more than colour.
     expect(screen.getByText('your answer')).toBeInTheDocument();
     expect(screen.getByText('right answer')).toBeInTheDocument();
-    // the verdict is announced, and the focus is on Continue, where Check was
+    // The verdict is announced, and the focus is on Continue, where Check was.
     expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent('Not yet The answer: Good day');
     expect(within(feedback).getByRole('button', { name: 'Continue' })).toHaveFocus();
     expect(sent('answers', 'mc')[0]!.body).toEqual({ exerciseId: 'mc', answer: { choice: 0 } });
 
-    // the native recording plays by itself a moment after the verdict, and can be heard again
+    // The native recording plays by itself a moment after the verdict, and can be heard again.
     await waitFor(() => expect(played.at(-1)).toEqual({ src: 'https://cdn.test/rojbas.mp3', rate: 1 }));
     played = [];
     await userEvent.click(within(feedback).getByRole('button', { name: 'Hear it' }));
     expect(played.at(-1)).toEqual({ src: 'https://cdn.test/rojbas.mp3', rate: 1 });
 
-    // Enter goes on from the page as well as from Continue (the button just pressed would take it itself)
+    // Enter goes on from the page as well as from Continue (the button just pressed would take it itself).
     (document.activeElement as HTMLElement).blur();
     await userEvent.keyboard('{Enter}');
     for (const word of ['sêv', 'av', 'nan']) {
@@ -198,12 +196,12 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
       await next();
     }
 
-    // the miss comes back, marked as a second try, and goes to /retry
+    // The miss comes back, marked as a second try, and goes to /retry.
     expect(await screen.findByText('Second try')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Good day/ }));
     await check();
     const second = await screen.findByRole('region', { name: 'Feedback' });
-    // right, praised in Kurdish, and four right in a row now: the run is shown, though not yet named
+    // Right, praised in Kurdish, and four right in a row now: the run is shown, though not yet named.
     expect(within(second).getByText('Gelek baş!')).toBeInTheDocument();
     expect(within(second).getByText('4 in a row')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveClass('is-run');
@@ -212,12 +210,12 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     expect(sent('answers', 'mc')).toHaveLength(1);
     await next();
 
-    // the results: XP, first-try accuracy with a kind word, the time, and the mistake with its answer
+    // The results: XP, first-try accuracy with a kind word, the time, and the mistake with its answer.
     expect(await screen.findByRole('heading', { name: 'Great work!' })).toBeInTheDocument();
-    // the lesson's own header has gone: the results have the screen
+    // The lesson's own header has gone: the results have the screen.
     expect(screen.queryByRole('progressbar', { name: 'Progress' })).not.toBeInTheDocument();
     expect(screen.getByText('Solid')).toBeInTheDocument();
-    // the cards count up as the results arrive, and are read out as the numbers they end on
+    // The cards count up as the results arrive, and are read out as the numbers they end on.
     expect(screen.getByText(/^\+15 XP\. 75% right first time \(3 of 4\): Solid\. Time: \d+ min \d+ s\.$/)).toBeInTheDocument();
     expect(await screen.findByText('+15', undefined, { timeout: 3000 })).toBeInTheDocument();
     const mistakes = screen.getByRole('heading', { name: 'To go over' }).closest('details')!;
@@ -226,7 +224,7 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     expect(within(mistakes).getByText('Good day')).toBeInTheDocument();
     expect(calls.filter((c) => c.path === '/sessions/s1/complete')).toHaveLength(1);
 
-    // in the bar, where Check was: no next lesson known here, so practising the mistakes leads
+    // In the bar, where Check was: no next lesson known here, so practising the mistakes leads.
     await userEvent.click(screen.getByRole('button', { name: 'Practise these now' }));
     expect(onPractise).toHaveBeenCalledWith(['mc']);
   });
@@ -240,7 +238,7 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     });
     await userEvent.click(await screen.findByRole('button', { name: 'Hear “av”' }));
     expect(played.at(-1)?.src).toBe('https://cdn.test/av.mp3');
-    // only the option that has a recording has a button
+    // Only the option that has a recording has a button.
     expect(screen.queryByRole('button', { name: 'Hear “nan”' })).not.toBeInTheDocument();
     expect(sent('answers')).toHaveLength(0);
   });
@@ -252,7 +250,7 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
       'POST /sessions/s1/complete': results({ correct: 0, accuracy: 0 }),
     });
     play({ sessionId: 's1', exercises: [typed('a', 'one'), typed('b', 'two')], answered: {} });
-    // two first asks and two second tries, then the end
+    // Two first asks and two second tries, then the end.
     for (let i = 0; i < 4; i++) {
       await answerTyped('no');
       await next();
@@ -281,7 +279,7 @@ describe('a typed answer', () => {
     expect(field).toHaveFocus();
     expect(field.selectionStart).toBe(2);
 
-    // what was sent is a different spelling, so the panel has something to mark
+    // What was sent is a different spelling, so the panel has something to mark.
     await userEvent.clear(field);
     await userEvent.type(field, 'sev{Enter}');
     const feedback = await screen.findByRole('region', { name: 'Feedback' });
@@ -316,7 +314,7 @@ describe('listening', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Slower (0.75×)' }));
     expect(played.at(-1)).toEqual({ src: clip, rate: 0.75 });
     await answerTyped('av');
-    // a right answer is praised in Kurdish, with what the word means beside it
+    // A right answer is praised in Kurdish, with what the word means beside it.
     expect(await verdict('Aferîn!')).toHaveAttribute('lang', 'ku');
     expect(await verdict('Well done')).toBeInTheDocument();
     expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent('Correct Aferîn!');
@@ -329,13 +327,13 @@ describe('listening', () => {
     play({ sessionId: 's1', exercises, answered: {} });
 
     await userEvent.click(await screen.findByRole('button', { name: 'Can’t listen now' }));
-    // said as it happens, with the way to have it back
+    // Said as it happens, with the way to have it back.
     expect((await screen.findByText('No more listening in this lesson')).closest('[role="status"]')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(screen.queryByText('No more listening in this lesson')).not.toBeInTheDocument();
     await answerTyped('sêv');
     await next();
-    // the second listening item is back
+    // The second listening item is back.
     expect(await screen.findByText('Type what you hear')).toBeInTheDocument();
   });
 
@@ -350,7 +348,7 @@ describe('listening', () => {
     await screen.findByRole('heading', { name: 'Great work!' });
     expect(sent('answers').map((c) => (c.body as { exerciseId: string }).exerciseId)).toEqual(['t']);
     expect(sent('retry')).toHaveLength(0);
-    // not a mistake, and out of the score: the results say so beside it
+    // Not a mistake, and out of the score: the results say so beside it.
     expect(screen.getByText('Skipped this time: 1. Skipped exercises don’t count towards your score.')).toBeInTheDocument();
     expect(screen.getByText('No mistakes this time.')).toBeInTheDocument();
   });
@@ -416,7 +414,7 @@ describe('speaking', () => {
     now += 2000;
     await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
 
-    // the microphone is handed back, and the take stays in the browser
+    // The microphone is handed back, and the take stays in the browser.
     expect(track.stop).toHaveBeenCalled();
     expect(await screen.findByText('How did it sound to you?')).toBeInTheDocument();
     expect(calls.some((c) => c.path === '/media/uploads')).toBe(false);
@@ -424,7 +422,7 @@ describe('speaking', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Hear yourself' }));
     expect(played.at(-1)?.src).toBe('blob:take');
 
-    // a rating is chosen, and can be changed, until Check sends it
+    // A rating is chosen, and can be changed, until Check sends it.
     await userEvent.click(screen.getByRole('button', { name: 'Sounded right' }));
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.getByRole('button', { name: 'Close' })).toHaveAttribute('aria-pressed', 'true');
@@ -442,7 +440,7 @@ describe('speaking', () => {
     );
     play({ sessionId: 's1', exercises: [speaking], answered: {} });
 
-    // keys only: every button pressed here goes away when pressed
+    // Keys only: every button pressed here goes away when pressed.
     (await screen.findByRole('button', { name: 'Record' })).focus();
     await userEvent.keyboard('{Enter}');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Stop' })).toHaveFocus());
@@ -454,7 +452,7 @@ describe('speaking', () => {
     await userEvent.tab();
     await userEvent.tab();
     expect(screen.getByRole('button', { name: 'Sounded right' })).toHaveFocus();
-    // Enter chooses it, and Enter on the rating chosen checks it
+    // Enter chooses it, and Enter on the rating chosen checks it.
     await userEvent.keyboard('{Enter}');
     expect(screen.getByRole('button', { name: 'Sounded right' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.keyboard('{Enter}');
@@ -493,11 +491,11 @@ describe('speaking', () => {
     serve({ 'POST /sessions/s1/answers': right });
     play({ sessionId: 's1', exercises: [speaking, typed('t', 'apple')], answered: {} });
     await userEvent.click(await screen.findByRole('button', { name: 'Record' }));
-    // where things stand and where that is changed, without telling anybody to allow anything
+    // Where things stand and where that is changed, without telling anybody to allow anything.
     const said = await screen.findByRole('alert');
     expect(said).toHaveTextContent('The microphone is off for Hevalo. You can turn it on from the icon in your browser’s address bar');
     expect(said.textContent).not.toMatch(/allow/i);
-    // nothing is left waiting: the microphone can be tried again, or the exercise put off
+    // Nothing is left waiting: the microphone can be tried again, or the exercise put off.
     expect(screen.getByRole('button', { name: 'Try the microphone again' })).toBeEnabled();
     await userEvent.click(screen.getByRole('button', { name: 'Can’t speak now' }));
     expect(await screen.findByText('Write this in Kurdish')).toBeInTheDocument();
@@ -544,7 +542,7 @@ describe('match pairs', () => {
     await userEvent.click(screen.getByRole('button', { name: 'apple' }));
     expect(screen.getByRole('button', { name: /sêv.*paired with apple/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /apple.*paired with sêv/ })).toBeInTheDocument();
-    // a Kurdish card is marked as Kurdish for a screen reader
+    // A Kurdish card is marked as Kurdish for a screen reader.
     expect(screen.getByText('sêv')).toHaveAttribute('lang', 'ku');
 
     await userEvent.click(screen.getByRole('button', { name: 'av' }));
@@ -581,7 +579,7 @@ describe('a conversation', () => {
     ],
     prompt: 'What does Hamo want to drink?',
     options: ['Coffee', 'Tea', 'Water'],
-    // the third line is not recorded yet, and the first was saved under the deer's voice by mistake
+    // The third line is not recorded yet, and the first was saved under the deer's voice by mistake.
     lineAudio: [clip(0), clip(1), null, clip(3)],
     lineVoices: [{ speaker: 'hevalo' }, { speaker: 'hamo' }, null, null],
   };
@@ -618,10 +616,10 @@ describe('a conversation', () => {
     ]);
     expect(items.map((li) => li.classList.contains('is-end'))).toEqual([false, true, false, true]);
     expect(within(items[1]!).getByText('Ez baş im, spas.')).toHaveAttribute('lang', 'ku');
-    // a small button for each recorded line, and none for the one not recorded yet
+    // A small button for each recorded line, and none for the one not recorded yet.
     expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Xezo)' })).toBeInTheDocument();
     expect(within(items[2]!).queryByRole('button')).not.toBeInTheDocument();
-    // then the question, and its answers
+    // Then the question, and its answers.
     expect(screen.getByText('What does Hamo want to drink?')).toBeInTheDocument();
     expect(within(screen.getByRole('group', { name: 'Answers' })).getAllByRole('button')).toHaveLength(3);
   });
@@ -645,17 +643,17 @@ describe('a conversation', () => {
     play({ sessionId: 's1', exercises: [talk], answered: {} });
     await lines();
     const stage = screen.getByTestId('conversation-stage');
-    // decorative: the bubbles say who says what
+    // Decorative: the bubbles say who says what.
     expect(stage).toHaveAttribute('aria-hidden', 'true');
     const figures = [...stage.querySelectorAll<HTMLElement>('.speaking-character')];
     expect(figures.map((f) => f.getAttribute('data-speaker'))).toEqual(['xezo', 'hamo']);
-    // Xezo on the left looks right, at him; Hamo on the right looks left, at her
+    // Xezo on the left looks right, at him; Hamo on the right looks left, at her.
     const iris = (f: HTMLElement): string => f.querySelector<SVGGElement>('[data-iris="left"]')!.style.transform;
     expect(iris(figures[0]!)).toMatch(/^translate\(2\.\d+px, 0px\)$/);
     expect(iris(figures[1]!)).toMatch(/^translate\(-2\.\d+px, 0px\)$/);
     const left = (f: HTMLElement): number => parseFloat(f.parentElement!.style.left);
     expect(left(figures[0]!)).toBeLessThan(left(figures[1]!));
-    // nobody speaks before a line is heard
+    // Nobody speaks before a line is heard.
     expect(stage.querySelector('[data-saying]')).toBeNull();
   });
 
@@ -691,7 +689,7 @@ describe('a conversation', () => {
     const items = await lines();
     expect(items.map((li) => li.textContent)).toEqual(['Hamo: Bi xêr hatî!', 'You: Bi xêr bimînî!']);
     expect(items[1]).toHaveClass('is-you', 'is-end');
-    // the learner's name is in their own language, their line in Kurdish
+    // The learner's name is in their own language, their line in Kurdish.
     expect(within(items[1]!).getByText('You')).not.toHaveAttribute('lang');
     expect(within(items[1]!).getByText('Bi xêr bimînî!')).toHaveAttribute('lang', 'ku');
     expect(within(items[1]!).queryByRole('button')).not.toBeInTheDocument();
@@ -736,10 +734,10 @@ describe('a conversation', () => {
     expect(played.map((p) => p.src)).toEqual([clip(0)]);
     expect(current()).toEqual([0]);
     expect(items[0]).toHaveClass('is-heard');
-    // her own line, said by her though the recording was saved under the deer's voice: he is not even on the stage
+    // Her own line, said by her though the recording was saved under the deer's voice: he is not even on the stage.
     expect(speaker()).toBe('xezo');
     expect(document.querySelector('.speaking-character[data-speaker="hevalo"]')).toBeNull();
-    // the line's own button lights as it plays, and the button now stops it all
+    // The line's own button lights as it plays, and the button now stops it all.
     expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Xezo)' })).toHaveClass('is-on');
     expect(screen.queryByRole('button', { name: 'Play conversation' })).not.toBeInTheDocument();
 
@@ -747,7 +745,7 @@ describe('a conversation', () => {
     expect(current()).toEqual([1]);
     expect(speaker()).toBe('hamo');
     ended();
-    // the third line has no recording: on to the fourth, Hamo's, which was saved with no voice at all
+    // The third line has no recording: on to the fourth, Hamo's, which was saved with no voice at all.
     expect(current()).toEqual([3]);
     expect(speaker()).toBe('hamo');
     ended();
@@ -771,7 +769,7 @@ describe('a conversation', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
     await userEvent.click(within(items[3]!).getByRole('button', { name: 'Hear line 4 (Hamo)' }));
     expect(items.some((li) => li.hasAttribute('aria-current'))).toBe(false);
-    // the line asked for plays to its end, and nothing follows it
+    // The line asked for plays to its end, and nothing follows it.
     ended();
     expect(played.map((p) => p.src)).toEqual([clip(0), clip(0), clip(3)]);
     expect(screen.getByRole('button', { name: 'Play conversation' })).toBeInTheDocument();
@@ -780,7 +778,7 @@ describe('a conversation', () => {
 
 describe('the action bar and the verdict sheet', () => {
   const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => typed(id, `word ${id}`));
-  // his head and neck in at the window
+  // His head and neck in at the window.
   const hevalo = (): Element | null => document.querySelector('.lesson-feedback-face .hevalo-window [data-speaker="hevalo"][data-crop="head"]');
 
   it('names a run at a milestone, warms the bar through it, and has Hevalo cheer it and think a miss over', async () => {
@@ -790,32 +788,32 @@ describe('the action bar and the verdict sheet', () => {
     });
     play({ sessionId: 's1', exercises: six, answered: {} });
 
-    // the first answer of the lesson: Hevalo is there for it
+    // The first answer of the lesson: Hevalo is there for it.
     await answerTyped('x');
     await screen.findByRole('region', { name: 'Feedback' });
     expect(hevalo()).not.toBeNull();
     await next();
-    // not on every right answer, so his cheer keeps its worth
+    // Not on every right answer, so his cheer keeps its worth.
     await answerTyped('x');
     await screen.findByRole('region', { name: 'Feedback' });
     expect(hevalo()).toBeNull();
     expect(screen.queryByText(/in a row/)).not.toBeInTheDocument();
     await next();
-    // from three, the run is shown, and the bar warms
+    // From three, the run is shown, and the bar warms.
     await answerTyped('x');
     expect(await screen.findByText('3 in a row')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveClass('is-run');
     await next();
     await answerTyped('x');
     await next();
-    // five: named, and cheered
+    // Five: named, and cheered.
     await answerTyped('x');
     const sheet = await screen.findByRole('region', { name: 'Feedback' });
     expect(within(sheet).getByText('5 in a row!')).toBeInTheDocument();
     expect(within(sheet).getByText('5 in a row')).toHaveClass('is-milestone');
     expect(hevalo()).not.toBeNull();
     await next();
-    // a miss starts again, and Hevalo is curious, never sad
+    // A miss starts again, and Hevalo is curious, never sad.
     await answerTyped('sev');
     await verdict('Not yet');
     expect(hevalo()).not.toBeNull();
@@ -955,7 +953,7 @@ describe('the results', () => {
     expect(screen.getByRole('progressbar', { name: 'Today’s goal' })).toHaveAttribute('aria-valuenow', '75');
     expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
     expect(screen.getByText('Up to #4')).toBeInTheDocument();
-    // the next lesson in the course leads, with the way back to the path beside it
+    // The next lesson in the course leads, with the way back to the path beside it.
     expect(screen.queryByText('Today’s goal is done. A good place to stop, or keep going.')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to the path' })).toHaveAttribute('href', '/app/learn');
     await userEvent.click(await screen.findByRole('button', { name: 'Next lesson' }));
@@ -979,17 +977,17 @@ describe('the results', () => {
 
     expect(await screen.findByRole('heading', { name: 'Perfect lesson!' })).toBeInTheDocument();
     expect(await screen.findByText('Today’s goal is done')).toBeInTheDocument();
-    // no rank gained, so no "Up to"; the league row is still there
+    // No rank gained, so no "Up to"; the league row is still there.
     expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
     expect(screen.queryByText(/^Up to/)).not.toBeInTheDocument();
 
-    // the streak was kept today: Continue, never by itself, to its card
+    // The streak was kept today: Continue, never by itself, to its card.
     await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('heading', { name: '8-day streak' })).toBeInTheDocument();
     expect(await screen.findByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
     expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l1');
-    // and then: Done leads, the next lesson beside it
+    // And then: Done leads, the next lesson beside it.
     expect(screen.getByText('Today’s goal is done. A good place to stop, or keep going.')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Next lesson' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
@@ -1162,11 +1160,11 @@ describe('Tips', () => {
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Tips' }));
     const dialog = screen.getByRole('dialog', { name: 'Tips' });
-    // one level under the dialog's own "Tips" heading
+    // One level under the dialog's own "Tips" heading.
     expect(within(dialog).getByRole('heading', { level: 3, name: 'Silavkirin' })).toBeInTheDocument();
     expect(within(dialog).getByText('Silav').tagName).toBe('STRONG');
     expect(dialog.querySelector('img')).toBeNull();
-    // each line finds its own direction: a Soranî line after an English one is not set left to right
+    // Each line finds its own direction: a Soranî line after an English one is not set left to right.
     expect(within(dialog).getByText('Say it to anyone.').closest('p')).toHaveAttribute('dir', 'auto');
     expect(within(dialog).getByText('سڵاو بۆ هەمووان.').closest('p')).toHaveAttribute('dir', 'auto');
     expect(dialog.querySelector('.grammar-note')).not.toHaveAttribute('dir');
@@ -1194,7 +1192,7 @@ describe('Tips', () => {
     await screen.findByRole('region', { name: 'Feedback' });
     await userEvent.click(screen.getByRole('button', { name: 'Tips' }));
     await userEvent.keyboard('{Enter}');
-    // still on the feedback behind the dialog
+    // Still on the feedback behind the dialog.
     expect(screen.getByRole('region', { name: 'Feedback' })).toBeInTheDocument();
     expect(screen.queryByText('apple')).not.toBeInTheDocument();
   });
@@ -1217,14 +1215,13 @@ describe('how it feels on a touch screen', () => {
     await userEvent.click(await screen.findByRole('button', { name: /av/ }));
     await check();
     await verdict('Aferîn!');
-    // the buzz is paced to the answer's reveal, so it can land a moment after the words
+    // The buzz is paced to the answer's reveal, so it can land a moment after the words.
     await waitFor(() => expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.correct));
-    // the option chosen is the one that answers back (styles/motion.css)
+    // The option chosen is the one that answers back (styles/motion.css).
     expect(screen.getByRole('button', { name: /av/ })).toHaveClass('is-right', 'is-chosen');
     await next();
 
-    // a fast run can answer again within the pacer's 60 ms, which would
-    // (rightly) swallow the second buzz; start this answer from a still phone
+    // A fast run can answer within the pacer's 60 ms, which would swallow the second buzz, so start from a still phone.
     resetHaptics();
     await answerTyped('sev');
     await screen.findByRole('region', { name: 'Feedback' });
@@ -1232,7 +1229,7 @@ describe('how it feels on a touch screen', () => {
     expect(screen.getByRole('textbox')).toHaveClass('is-wrong');
     await next();
 
-    // the miss asked again, missed again; then the end, celebrated once
+    // The miss asked again, missed again; then the end, celebrated once.
     resetHaptics();
     await answerTyped('sev');
     await screen.findByRole('region', { name: 'Feedback' });

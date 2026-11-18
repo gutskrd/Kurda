@@ -10,9 +10,8 @@ import {
 } from '@kurda/shared';
 
 /**
- * The moderation rules that need no database: how urgent a report is, what a
- * case is called in the queue, when its SLA runs out, how a permanent ban is
- * confirmed, and the queue's cursor. Pure, so every branch is unit-tested.
+ * Moderation rules that need no database: report urgency, a case's queue name, its SLA deadline, permanent-ban
+ * confirmation, and the queue cursor. Pure, so every branch is unit-tested.
  */
 
 export interface PriorityInput {
@@ -26,16 +25,13 @@ export interface PriorityInput {
 }
 
 /**
- * A report's priority: its category's, then moved for the people involved.
- *
- * - An adult reaching a minor with sexual content, or a child-safety report by
- *   a minor about an adult, is P0 whatever else is true — grooming is the case
- *   this whole system exists to catch quickly.
+ * A report's priority: its category's, then adjusted for the people involved.
+ * - An adult reaching a minor with sexual content, or a minor's child-safety report about an adult, is P0 regardless:
+ *   grooming is the case this system exists to catch quickly.
  * - Any other report with a minor on either side moves up one level.
- * - A report from an account under a day old moves down one (never P0, never
- *   below P3): a brand-new account is the cheapest way to flood the queue. A
- *   P0 report — a child at risk, self-harm, a threat — is never demoted: a
- *   child making an account to ask for help is exactly who must not wait.
+ * - A report from an account under a day old moves down one (never to P0, never below P3), since new accounts are the
+ *   cheapest way to flood the queue. A P0 report (a child at risk, self-harm, a threat) is never demoted: a child
+ *   making an account to ask for help must not wait.
  */
 export function reportPriority(input: PriorityInput): ReportPriority {
   const base = categoryPriority(input.category);
@@ -75,9 +71,8 @@ export function targetTypeLabel(type: ReportTargetType): string {
 }
 
 /**
- * What the queue calls a report case. Built here, in code, from values that can
- * all be missing — a gotin has no title, a deleted account has no username —
- * so it never comes out NULL (the bug that once broke the whole queue).
+ * What the queue calls a report case, built in code from values that may all be missing (a gotin has no title, a
+ * deleted account no username), so it is never NULL.
  */
 export function reportCaseSummary(input: {
   reportCount: number;

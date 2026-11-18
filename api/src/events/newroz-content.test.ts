@@ -1,8 +1,6 @@
 /**
- * Guards the Newroz seed data (KUR-090) so a malformed template or lesson is
- * caught in CI, not at seed time. Validates the event template against the
- * seeder's schema and the mini-lesson against the real content-authoring
- * pipeline (KUR-041) — same schema + per-exercise checks `content:import` runs.
+ * Guards the Newroz seed data, so a malformed template or lesson fails in CI rather than at seed time: the template
+ * against the seeder's schema, the mini-lesson through the same checks `content:import` runs.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +14,7 @@ import { parseQuests } from './quest-logic.js';
 const read = (rel: string) =>
   JSON.parse(readFileSync(fileURLToPath(new URL(`../../content/events/${rel}`, import.meta.url)), 'utf8'));
 
-// Mirrors the seeder's template schema (KUR-090).
+// Mirrors the seeder's template schema.
 const templateSchema = z.object({
   key: z.string().regex(/^[a-z0-9][a-z0-9_-]*$/),
   name: z.string().min(1),
@@ -38,8 +36,7 @@ describe('newroz event template', () => {
     expect(template.day).toBe(21);
   });
 
-  // a quest of a type the engine does not know is silently left out of the
-  // event — which is what a template still asking for ranked-quiz wins would get
+  // A quest of a type the engine does not know is silently left out of the event.
   it('has only quests the quest engine can measure', () => {
     const quests = template.quests ?? [];
     expect(parseQuests(quests)).toHaveLength(quests.length);

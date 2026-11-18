@@ -1,11 +1,7 @@
 /**
- * The client's address as every route sees it, with the production
- * `TRUST_PROXY` (the private ranges and loopback), and the one log line that
- * shows how it was read.
- *
- * The first block goes over a real socket, because what is being relied on is
- * how Fastify reads the connection's own address and walks the header from it;
- * the rest use inject, which sets the socket address from an option.
+ * The client's address as every route sees it, with the production `TRUST_PROXY` (private ranges and loopback), and
+ * the log line showing how it was read. The first block uses a real socket, since how fastify reads the connection's
+ * own address is under test; the rest use inject.
  */
 import { Writable } from 'node:stream';
 import { afterAll, describe, expect, it } from 'vitest';

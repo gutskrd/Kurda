@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
+import { navigation } from '../play/testing/navigation';
 import { LastLetterScreen } from './LastLetterScreen';
 import { forgetLastLetterAvailability } from './availability';
 
@@ -106,6 +107,7 @@ const quiet = { 'GET /play/invites': ok({ incoming: [], outgoing: [] }) };
 describe('LastLetterScreen', () => {
   afterEach(() => {
     cleanup();
+    navigation.setOptions.mockClear();
     userEvents.listeners.clear();
     userEvents.state = 'open';
     forgetLastLetterAvailability();
@@ -163,6 +165,18 @@ describe('LastLetterScreen', () => {
     await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path.endsWith('/moves'))?.body).toEqual({ word: 'vexwarin' }));
   });
 
+  it('keeps a game under way from being swiped away, and lets the lobby be', async () => {
+    testAuth.client = fakeClient({ ...quiet, 'GET /mp/last-letter/g1': ok(room()) });
+    renderWithProviders(<LastLetterScreen id="g1" onExit={() => undefined} />);
+    await screen.findByRole('button', { name: 'Join code: L S T 2 3 4' });
+    expect(navigation.setOptions).not.toHaveBeenCalledWith({ gestureEnabled: false });
+    cleanup();
+    testAuth.client = fakeClient({ ...quiet, 'GET /mp/last-letter/g1': ok(active()) });
+    renderWithProviders(<LastLetterScreen id="g1" onExit={() => undefined} />);
+    await screen.findByText('Your turn');
+    expect(navigation.setOptions).toHaveBeenLastCalledWith({ gestureEnabled: false });
+  });
+
   it('writes a Soranî word right to left', async () => {
     testAuth.client = fakeClient({
       ...quiet,
@@ -182,7 +196,7 @@ describe('LastLetterScreen', () => {
           status: 'finished',
           code: null,
           players: [seat(1, { userId: 'me', isMe: true, isHost: true }), seat(2, { bot: 'hevalo' })],
-          // against Hevalo the game is played alone: the server pays nothing for it
+          // Against Hevalo the game is played alone: the server pays nothing for it.
           results: [
             { seat: 2, place: 1, score: 9, xpAwarded: null },
             { seat: 1, place: 2, score: 8, xpAwarded: 0 },
@@ -194,14 +208,14 @@ describe('LastLetterScreen', () => {
     renderWithProviders(<LastLetterScreen id="g1" onExit={() => undefined} />);
     expect(await screen.findByText('Game over')).toBeTruthy();
     expect(screen.getByText('Hevalo won this time.')).toBeTruthy();
-    // Hevalo in the places, and again beside the word it played in the game’s words
+    // Hevalo in the places, and again beside the word it played in the game’s words.
     expect(screen.getAllByText('Hevalo').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Words: 8')).toBeTruthy();
-    // the end reads the whole chain again, each word with what it means and who played it
+    // The end reads the whole chain again, each word with what it means and who played it.
     expect(screen.getByRole('heading', { name: 'The words of this game' })).toBeTruthy();
     expect(screen.getByLabelText('mal, house, You')).toBeTruthy();
     expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
-    // nothing earned is shown, not even a zero
+    // Nothing earned is shown, not even a zero.
     expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
   });
 
@@ -223,7 +237,7 @@ describe('LastLetterScreen', () => {
     renderWithProviders(<LastLetterScreen id="g1" onExit={() => undefined} />);
     expect(await screen.findByText('You won!')).toBeTruthy();
     expect(screen.getByText('+16 XP')).toBeTruthy();
-    // whoever earned none has no figure beside them: never "+0 XP"
+    // Whoever earned none has no figure beside them: never "+0 XP".
     expect(screen.getAllByText(/\+\d+ XP/)).toHaveLength(1);
     expect(screen.queryByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeNull();
   });

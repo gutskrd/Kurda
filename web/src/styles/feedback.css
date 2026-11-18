@@ -1,10 +1,7 @@
 /* ---- Hevalo the deer ------------------------------------------------------ */
 /*
- * Alive but calm: a slow bob, and the board tips with the stars, springing a
- * little as it goes. The board turns about a point in the drawing's own
- * coordinates (`view-box`), so the motion is the same at any size. Reduced
- * motion stops all of it; the board's angle still changes, only without
- * moving to get there.
+ * A slow bob, with the board tipping and springing with the stars, turned about a point in the drawing's own
+ * coordinates (`view-box`) so it is the same at any size. Under Reduce Motion the angle changes without movement.
  */
 .deer {
   display: block;
@@ -70,10 +67,8 @@
 }
 /* ---- the rating box ------------------------------------------------------- */
 /*
- * A card that rises over the bottom of the page, beside the results rather
- * than over them: on a phone across the width with a gutter, on a wide screen
- * at the bottom right of the page, clear of the social rail. Where a phone
- * has its bar of places it rises over that too (`--bottom-chrome`, shell.css).
+ * The rating box rises over the bottom of the page beside the results: full width with a gutter on a phone, bottom
+ * corner on a wide screen clear of the social rail, and above the phone's bar of places (`--bottom-chrome`, shell.css).
  */
 .rb-host {
   position: fixed;
@@ -140,11 +135,7 @@
   flex-direction: column;
   gap: 6px;
 }
-/*
- * On a phone the box after a game keeps to the bottom of the screen: the deer
- * beside the question rather than above it, so the results stay in view until
- * somebody chooses to answer.
- */
+/* On a phone the box sits low with the deer beside the question, so the results stay in view. */
 @media (max-width: 560px) {
   .rb-host {
     padding: 14px 16px 10px;

@@ -4,14 +4,12 @@ import type { Translate } from '../api/errors';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * The letters' own refusals in plain words (api/src/letters/service.ts), as
- * the website says them (web/src/letters/errors.ts). The screen checks a
- * letter before it is sent, its paper and drawing and notes too, so most of
- * these only come from another device or a pen pal who acted first; anything
- * else is said as every screen says it.
+ * The letters' own refusals in plain words (api/src/letters/service.ts), matching web/src/letters/errors.ts. The
+ * composer checks a letter before sending, so most of these only arise from another device or a pen pal acting
+ * first.
  */
 
-/** What to tell the writer about a paper, drawing or notes that cannot go as they are (the composer keeps most of these from happening at all). */
+/** Why a paper, drawing or notes cannot be sent as they are; the composer prevents most of these. */
 export const DECOR_PROBLEM: Record<DecorProblem, TranslationKey> = {
   shape: 'letters.paper.full',
   'too-big': 'letters.paper.full',
@@ -43,7 +41,7 @@ const TEXT: Readonly<Record<string, TranslationKey>> = {
   CALLS_TODAY: 'letters.callsDone',
   NO_VISITOR: 'letters.visitor.gone',
   BIRD_GONE: 'letters.visitor.gone',
-  // the decor's refusals, by the codes the server names them with (shared decorErrorCode)
+  // Decor refusals, by the codes the server uses (shared decorErrorCode).
   ...Object.fromEntries((Object.keys(DECOR_PROBLEM) as DecorProblem[]).map((problem) => [decorErrorCode(problem), DECOR_PROBLEM[problem]])),
 };
 

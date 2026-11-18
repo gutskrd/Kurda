@@ -21,39 +21,20 @@ import { DarkScheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ceremonyLine, leagueLabel, leagueMeaning, leagueName, moveUpRule, type Ceremony } from './format';
 
-/** The night the moment is staged on, whatever the scheme: the same one every celebration in the app stands on. */
+/** The night backdrop the moment is staged on in either scheme, as for every celebration in the app. */
 const STAGE = '#07080c';
-/** An emblem's drawn size before the strip scales it: the one in the middle grows past it, the two beside it shrink under it. */
+/** An emblem's drawn size before the strip scales it: the centre one grows past it, the two beside it shrink. */
 const BASE = 120;
 const SCALE = { middle: [0.82, 1.1], side: 0.72 } as const;
 /** When the strip has all but landed: the light knock, and the burst, come then. */
 const LAND_MS = 260;
 
 /**
- * The week's ceremony, in two beats with a Continue each.
- *
- * First the ladder moves: the three leagues round the learner stand in a row,
- * and the row slides so the league they are in now lands in the middle — the
- * one they came from drawn out to the side as it shrinks, and on the other
- * side the next one waiting, locked, or the one already behind them. It
- * lands on the bouncy spring with a light knock in the hand, and for a week
- * that moved them up (or won the trophy) the app's one burst goes off round
- * it. Under it, what happened: "You finished #15 last week and moved up to
- * Çem." A week that moved them down is a fresh start, said as one.
- *
- * Then the second beat, on the same stage: "You’re in the Çem League", what
- * the name means, and the one rule that matters now — how to move up from
- * here. Nothing counts down and nothing is asked for.
- *
- * Under Reduce Motion nothing travels: the emblems are simply there and the
- * words fade in. A screen reader hears each beat's line as it opens, and the
- * lines sit in the order they are read; the emblems beside the middle one
- * are decoration.
- *
- * A week that is good news to tell (shared `leagueWin`: moved up, or a place
- * in the first three) has a quiet Share under the first beat's Continue,
- * saying the league and the place and nothing of who else was in the group.
- * A week that moved the learner down, or simply stayed, has none.
+ * The week's ceremony in two beats, each with Continue. First the ladder slides until the current league is
+ * centred, landing on a spring with a light haptic (and the burst for a promotion or the trophy), with one line
+ * on what happened; a demotion reads as a fresh start. Then the league's name, its meaning and how to move up.
+ * Nothing counts down. Under Reduce Motion the text fades in and nothing travels. A week worth sharing (shared
+ * `leagueWin`) gets a quiet Share under the first Continue, naming only the league and place.
  */
 export function LeagueCeremony({
   week,
@@ -64,7 +45,7 @@ export function LeagueCeremony({
 }: {
   week: LeagueWeekResult;
   ceremony: Ceremony;
-  /** the learner's new group's promotion places and goal, for the rule the second beat ends on */
+  /** The learner's new group's promotion places and goal, for the rule the second beat ends on. */
   promoteCount: number;
   goalXp: number;
   onClose: () => void;
@@ -78,16 +59,16 @@ export function LeagueCeremony({
   const [light, strong] = leagueTint(now, 'dark');
   const plan = useMemo(() => celebrationPlan(reduce), [reduce]);
   const burstKind = kind === 'promoted' || kind === 'trophy';
-  // what of this week is worth telling somebody, if anything is
+  // What of this week is worth telling somebody, if anything is.
   const win = leagueWin(week);
 
   const stage = Math.min(width, 420);
   const slot = Math.floor(stage / 3);
   const glowSize = Math.min(stage, 300);
-  // lower leagues to the start side, as the ladder reads; the row is mirrored for a language read from the right
+  // Lower leagues toward the start side, as the ladder reads; the row mirrors for right-to-left languages.
   const mirrored = dir.row === 'row-reverse';
   const start = (kind === 'promoted' ? slot : kind === 'demoted' ? -slot : 0) * (mirrored ? -1 : 1);
-  // what stands either side of the league they are in now: the one they came from is always one of the two
+  // What stands either side of the current league; the previous league is always one of the two.
   const below: LeagueTier | null = kind === 'promoted' ? from : now === tierBelow(now) ? null : tierBelow(now);
   const above: LeagueTier | null = kind === 'demoted' ? from : now === tierAbove(now) ? null : tierAbove(now);
 
@@ -112,13 +93,13 @@ export function LeagueCeremony({
     parts.push(timing(words, 1, plan.detailsMs, { delay: plan.travel ? LAND_MS + 120 : 0 }));
     const run = Animated.parallel(parts);
     run.start();
-    // the knock of the emblem landing, only when it travelled to get there
+    // The knock of the emblem landing, only when it travelled to get there.
     const knock = plan.travel ? setTimeout(() => haptic('tap'), LAND_MS) : null;
     return () => {
       run.stop();
       if (knock) clearTimeout(knock);
     };
-    // plays as the stage opens; the Reduce Motion answer can arrive a moment late, and then it simply plays again that way
+    // Plays as the stage opens; the Reduce Motion answer can arrive a moment late, and then it replays that way.
   }, [plan, burstKind, slide, words, ring, burst]);
 
   const line = ceremonyLine(t, week, ceremony);
@@ -137,7 +118,7 @@ export function LeagueCeremony({
     .filter(Boolean)
     .join(' · ');
 
-  // the second beat's words take the first's place: the first fade out is the same fade, run again
+  // The second beat's words take the first's place: the first fade out is the same fade, run again.
   useEffect(() => {
     if (beat === 1) return;
     words.setValue(0);
@@ -146,14 +127,14 @@ export function LeagueCeremony({
     return () => run.stop();
   }, [beat, words]);
 
-  // said as each beat opens, in the order the lines are read
+  // Said as each beat opens, in the order the lines are read.
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(beat === 1 ? `${kicker}. ${line}` : [title, meaning, rule].filter(Boolean).join('. '));
   }, [beat, kicker, line, title, meaning, rule]);
 
   const translateX = slide.interpolate({ inputRange: [0, 1], outputRange: [start, 0] });
   const middleScale = slide.interpolate({ inputRange: [0, 1], outputRange: [SCALE.middle[0], SCALE.middle[1]] });
-  // the league they came from starts as large as the middle one and shrinks as it slides to its side
+  // The league they came from starts as large as the middle one and shrinks as it slides to its side.
   const fromScale = slide.interpolate({ inputRange: [0, 1], outputRange: [SCALE.middle[1], SCALE.side] });
   const farOpacity = slide.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 0.2, 1], extrapolate: 'clamp' });
   const lift = plan.travel ? words.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) : 0;
@@ -170,7 +151,7 @@ export function LeagueCeremony({
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      {/* drawn over the page, not beside its controls: their groups' caps stop here */}
+      {/* Drawn over the page, not beside its controls: their groups' caps stop here. */}
       <ReachReset>
         <DarkScheme>
           <View style={[styles.backdrop, { backgroundColor: STAGE }]} accessibilityViewIsModal>

@@ -33,10 +33,10 @@ import { MissedRhymes, type RhymeHint } from '../components/WordAnswer';
 type Dialect = 'kurmanci' | 'sorani';
 
 interface ScoreEntry {
-  /** yours on your own entry, `seat:N` on everyone else's */
+  /** Yours on your own entry, `seat:N` on everyone else's. */
   userId: string;
   seat: number;
-  /** only when this viewer may see it (a friend, or an open match) */
+  /** Only when this viewer may see it (a friend, or an open match). */
   name: string | null;
   avatarUrl: string | null;
   score: number;
@@ -53,13 +53,13 @@ interface MatchState {
   maxPlayers: number;
   createdBy: string;
   isHost: boolean;
-  /** who may join: the host's friends, or any adult with the code */
+  /** Who may join: the host's friends, or any adult with the code. */
   access?: GameAccess;
-  /** the code a friend types to join, while the lobby can still be joined; null after */
+  /** The code a friend types while the lobby can be joined; null after. */
   code?: string | null;
-  /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
+  /** Rated or Friendly, shown before anyone joins and decided at the start. */
   rated?: RatedState;
-  /** everyone in it, by seat, as this viewer may see them */
+  /** Everyone in it by seat, as this viewer may see them. */
   players: SeatPlayer[];
   me: { seat: number; score: number; accepted: number; usedWords: string[] } | null;
   scoreboard: ScoreEntry[];
@@ -78,7 +78,7 @@ interface MatchResults {
     accepted: number;
     xpAwarded: number | null;
   }>;
-  /** perfect rhymes nobody in the match found, with their meanings; absent from a server from before it */
+  /** Perfect rhymes nobody found, with their meanings; absent from older servers. */
   missed?: RhymeHint[];
 }
 
@@ -88,11 +88,11 @@ const REJECT_KEY: Record<string, MessageKey> = {
   'already-used': 'games.rhyme.reject.alreadyUsed',
   'no-rhyme': 'games.rhyme.reject.noRhyme',
   profane: 'games.rhyme.reject.profane',
-  // an ending doing all the rhyming (malan for baran) has no sentence of its own yet: the general one says it fairly
+  // An ending doing all the rhyming (malan for baran) has no sentence of its own yet; the general one is fair.
   inflected: 'games.rhyme.reject.other',
 };
 
-/** Rhyme Match (KUR-299): head-to-head timed rhyming. Create → invite, or hand out the code → play. */
+/** Rhyme Match: head-to-head timed rhyming. Create and invite, or hand out the code, then play. */
 export function RhymeMatch(): React.JSX.Element {
   const [params] = useSearchParams();
   const t = useT();
@@ -105,10 +105,7 @@ export function RhymeMatch(): React.JSX.Element {
   );
 }
 
-/**
- * A new match: its variety and the friends to ask, in one step — the invite
- * sheet's form, in place (play/InviteSheet).
- */
+/** A new match: its variety and friends to ask in one step, the invite sheet's form in place (play/InviteSheet). */
 function CreateMatch(): React.JSX.Element {
   const t = useT();
   return (
@@ -145,7 +142,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
       setGone(null);
       loadedOnce.current = true;
     } else if (res.error.code === 'GAME_STARTED') {
-      // a latecomer: the match is running without them — not "time's up"
+      // A latecomer: the match is running without them, which is not "time's up".
       setGone('started');
     } else if (res.error.status === 404) {
       setGone('gone');
@@ -158,7 +155,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     void load();
   }, [load]);
 
-  // `play_changed` brings the lobby and the scoreboard; a slow read covers a missed event
+  // `play_changed` brings the lobby and scoreboard; a slow read covers a missed event.
   const live = match?.status === 'lobby' || match?.status === 'active';
   useLobbyUpdates('rhyme-match', id, load, live && gone === null);
 
@@ -170,11 +167,11 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     }
   }, [match?.status, results, client, id]);
 
-  // local countdown between reads (resynced on each load/submit)
+  // Local countdown between reads, resynced on each load and submit.
   const active = match?.status === 'active' && match.me != null && remaining > 0;
-  // while matching, an invite to something else waits as a chip
+  // While matching, an invite to something else waits as a chip.
   useQuietInvites(active);
-  // the rating box hears of a match that ended while you played it (not one opened finished)
+  // The rating box hears of a match that ended while you played, not one opened finished.
   useGameFinished('rhyme-match', match?.me ? id : null, match?.status === 'finished');
   useEffect(() => {
     if (match?.status !== 'active') return;
@@ -183,8 +180,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     return () => clearTimeout(timer);
   }, [remaining, match?.status]);
 
-  // the window closed here: the server ends the match on its next read, and
-  // says so — ask once, rather than wait for the slow safety read
+  // Time ran out here: the server ends the match on its next read, so ask once rather than wait for the safety read.
   const timeUp = match?.status === 'active' && remaining <= 0;
   useEffect(() => {
     if (!timeUp) return;
@@ -219,7 +215,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     const res = await client.post<MatchState>(`/rhyme/matches/${id}/join`);
     setBusy(false);
     if (res.ok) setMatch(res.data);
-    // full, started, or not theirs to join: said as every game says it
+    // Full, started, or not theirs to join, said as every game says it.
     else setNotice(playError(res.error, t));
   }
   async function start(): Promise<void> {
@@ -251,13 +247,13 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   const playerCount = match.players.filter((p) => !p.gone).length;
   const room = Math.max(0, match.maxPlayers - playerCount);
   const seconds = Math.ceil(remaining / 1000);
-  // the prompt and the rhymes are in the match's own letters: a Soranî word reads right to left, whatever the page does
+  // The prompt and rhymes are in the match's own script, so a Soranî word reads right to left.
   const script = dialectDirection(match.dialect === 'sorani' ? 'ckb' : 'kmr');
 
   if (match.status === 'lobby') {
     return (
       <div className="match-lobby match-room">
-        {/* the code anyone can be told, and Invite friends for the friends already here */}
+        {/* The code anyone can be told, and Invite friends for friends on Hevalo. */}
         <CodeTicket
           game="rhyme-match"
           code={match.code}
@@ -265,7 +261,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           invite={match.isHost ? <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} /> : undefined}
         />
         <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} game="rhyme-match" gameId={id} />
-        {/* Rated or Friendly: everyone sees it before joining, the host changes it here */}
+        {/* Rated or Friendly: seen before joining, changed by the host here. */}
         <LobbyRated
           game="rhyme-match"
           lobbyId={id}
@@ -306,7 +302,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           {mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}
         </h2>
         {match.rated && <RatedBadge rated={shownRated(match.rated)} size="sm" className="match-rated" />}
-        {/* what the game did to your rank, then the badges it earned */}
+        {/* What the game did to your rank, then the badges it earned. */}
         {match.me != null && <RankResult game="rhyme-match" gameRef={id} />}
         {results && (
           <>
@@ -325,7 +321,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
                     trailing={
                       <>
                         {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
-                        {/* another player, reported by seat — the page never has their account */}
+                        {/* Another player, reported by seat; the page never has their account. */}
                         {!me && <PlayerReport game="rhyme-match" gameId={id} seat={r.seat} name={seatName(r, t)} />}
                       </>
                     }
@@ -333,7 +329,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
                 );
               })}
             </RankList>
-            {/* what nobody at the table found, each with its meaning: the next match goes better for it */}
+            {/* What nobody found, each with its meaning. */}
             <MissedRhymes hints={results.missed} dialect={results.dialect} />
           </>
         )}
@@ -350,7 +346,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     );
   }
 
-  // active
+  // Active.
   return (
     <div className="match-play">
       {match.rated && <RatedBadge rated={shownRated(match.rated)} size="sm" className="match-rated" />}
@@ -383,7 +379,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
 
       {active ? (
         <form className="rhyme-compose" onSubmit={submit}>
-          {/* against another person, a pasted rhyme is somebody else's point */}
+          {/* Against another person, a pasted rhyme is somebody else's point. */}
           <input
             ref={inputRef}
             className="input"
@@ -396,7 +392,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
             autoFocus
             {...typeOnly}
           />
-          {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+          {/* Busy, it keeps its word and width; an ellipsis shrank it and said nothing. */}
           <Button type="submit" disabled={busy || word.trim().length === 0} aria-busy={busy || undefined}>
             {t('games.submit')}
           </Button>
@@ -405,7 +401,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
         <p className="muted" style={{ textAlign: 'center' }}>{t('games.rhymeMatch.timeUpFinishing')}</p>
       )}
 
-      {/* one slot: a refused paste is the more urgent of the two to answer */}
+      {/* One slot; a refused paste is the more urgent message. */}
       {(pasteNotice ?? notice) && (
         <div className="wordle-notice" role="status">
           {pasteNotice ?? notice}

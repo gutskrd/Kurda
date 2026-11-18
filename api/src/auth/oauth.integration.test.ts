@@ -116,10 +116,8 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   /*
-   * Whoever registered an address first and never confirmed it must not end
-   * up holding the account of the person a provider says owns it: the
-   * sign-in is never linked to that account. Nor does that account stand in
-   * the owner's way: it is ended, and the sign-in makes a new one.
+   * An account that registered an address and never confirmed it must not capture the provider-confirmed owner's
+   * sign-in: it is never linked, it is ended, and the sign-in makes a new account.
    */
   it('never links to an account that did not confirm the address: that sign-up is ended and a new account made (takeover guard)', async () => {
     const email = `unverified_${suffix}@example.com`;
@@ -159,11 +157,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     expect(linked.rowCount).toBe(0);
   });
 
-  /*
-   * An address the provider has not confirmed is not the signer's to take: an
-   * account made under it would sit on somebody else's address, and would
-   * still open for whoever made it after its real owner claimed it.
-   */
+  /* An address the provider has not confirmed is not the signer's to take, so the new account is made without it. */
   it('makes the new account without an address the provider has not confirmed', async () => {
     const email = `notmine_${suffix}@example.com`;
     const token = await makeToken('google', { sub: `g-unconfirmed-${suffix}`, email, emailVerified: false });
@@ -202,8 +196,37 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   /*
-   * Changed on purpose: a banned account is answered ACCOUNT_SUSPENDED with the
-   * statement of reasons and an appeal token, like password sign-in (M1/M3).
+   * Signing in again before the deletion grace period ends keeps the account, however the person signs in.
+   */
+  it('signing in with Google or Apple during the deletion grace period keeps the account', async () => {
+    const pending = async (id: string) =>
+      (await pool.query<{ at: Date | null }>(`SELECT deletion_requested_at AS at FROM users WHERE id = $1`, [id])).rows[0]!.at;
+
+    // an identity already linked to the account
+    const google = await makeToken('google', { sub: `g-grace-${suffix}`, email: `grace_${suffix}@example.com`, emailVerified: true });
+    const first = await service.signIn('google', google);
+    await pool.query(`UPDATE users SET deletion_requested_at = now() WHERE id = $1`, [first.user.id]);
+    expect(await pending(first.user.id)).not.toBeNull();
+    const again = await service.signIn('google', google);
+    expect(again.user.id).toBe(first.user.id);
+    expect(await pending(first.user.id)).toBeNull();
+
+    // and an account a provider is linked to as it signs in for the first time
+    const email = `gracelink_${suffix}@example.com`;
+    const created = await pool.query<{ id: string }>(
+      `INSERT INTO users (email, username, password_hash, email_verified_at, deletion_requested_at)
+       VALUES ($1, $2, $3, now(), now()) RETURNING id`,
+      [email, `gracelink_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
+    );
+    const apple = await makeToken('apple', { sub: `a-grace-${suffix}`, email, emailVerified: 'true' });
+    const linked = await service.signIn('apple', apple);
+    expect(linked.user.id).toBe(created.rows[0]!.id);
+    expect(await pending(created.rows[0]!.id)).toBeNull();
+  });
+
+  /*
+   * A banned account is answered ACCOUNT_SUSPENDED with the statement of reasons and an appeal token, like password
+   * sign-in (M1/M3).
    */
   it('disabled linked accounts cannot sign in', async () => {
     const token = await makeToken('google', {

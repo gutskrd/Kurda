@@ -1,12 +1,7 @@
 /**
- * What never reaches log storage (KUR-009): credentials, and the addresses
- * that name a person.
- *
- * pino matches a redaction path against the logged object exactly, so
- * `*.email` covers `{ user: { email } }` and NOT `{ email }` — the field
- * logged at the top, which is how most calls write it. Each key is therefore
- * listed twice, at the top and one level down. Shared by the request logger
- * and the job worker's, which had none at all.
+ * What never reaches log storage: credentials and the addresses that name a person. pino matches redaction paths
+ * exactly, so `*.email` covers `{ user: { email } }` but not a top-level `{ email }`; each key is listed at the top
+ * and one level down. Shared by the request logger and the job worker's.
  */
 const SECRET_KEYS = [
   'password',
@@ -28,9 +23,8 @@ export const LOG_REDACT = {
 };
 
 /**
- * An address as a log line may show it: enough to tell a bounce at one
- * provider from a problem with all of them, not enough to name anyone.
- * `rojda@example.com` → `r***@example.com`.
+ * An address as a log line may show it: enough to tell one provider's bounce from a general problem, not enough to
+ * name anyone. `name@example.com` → `n***@example.com`.
  */
 export function maskEmail(address: string): string {
   const at = address.lastIndexOf('@');

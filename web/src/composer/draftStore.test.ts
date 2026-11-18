@@ -26,7 +26,7 @@ describe('the draft on this device', () => {
     saveDraft('u1', { ...emptyPostDraft(now), body: 'Old', pictures: [picture], meme: true });
     const back = loadDraft('u1', now + DRAFT_PICTURE_KEEP_MS + 1)!;
     expect(back.draft.pictures).toEqual([]);
-    // a meme is a post with pictures; without them it is not one
+    // A meme needs pictures.
     expect(back.draft.meme).toBe(false);
     expect(back.droppedPictures).toBe(1);
   });

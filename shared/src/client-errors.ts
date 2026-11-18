@@ -1,19 +1,9 @@
 /**
- * Crash reports from the apps: what one may carry, how long each part may be,
- * and how its text is cleaned before it leaves the phone and again before the
- * server writes it down.
- *
- * A report is for finding the bug, not the person. It says what went wrong (the
- * error's name, message and stack), where (the screen's route name), and on
- * what (the platform, the app's version and build, the system's version). It
- * carries no account, no device id, nothing typed and nothing a request sent:
- * the app posts it without signing in, and the server keeps it in its log
- * rather than in a table. The text an error happens to contain is cleaned of
- * anything that could name somebody — addresses, tokens, ids, the query of a
- * URL — because an error message can quote whatever the code was holding.
- *
- * Shared so the phone that trims a report and the server that refuses anything
- * larger agree on the numbers.
+ * Crash reports from the apps: what one may carry, the limits, and how its text is cleaned on the phone and again on the
+ * server. A report is for finding the bug, not the person: the error's name, message and stack, the screen's route name,
+ * and the platform and versions, but no account, device id, typed text or request data. It is posted without signing in
+ * and kept in the server log, not a table. Error text is cleaned of anything that could name somebody (addresses, tokens,
+ * ids, URL queries), since a message can quote whatever the code held.
  */
 import type { AppPlatform } from './feedback.js';
 
@@ -38,13 +28,13 @@ export const CLIENT_ERROR_LIMITS = {
   count: 1000,
 } as const;
 
-/** Frames of a stack worth keeping: the top of it, where the error was thrown. */
+/** Stack frames worth keeping: the top, where the error was thrown. */
 export const CLIENT_ERROR_STACK_LINES = 20;
 
 /** The largest request body the server reads; a full batch at every limit fits with room to spare. */
 export const CLIENT_ERROR_BODY_MAX = 40 * 1024;
 
-/** A route name or a version: letters, digits and a little punctuation, so nobody can put free text there. */
+/** A route name or a version: letters, digits and a little punctuation, so no free text fits. */
 export const CLIENT_ERROR_TOKEN = /^[\w.+-]+$/;
 
 export interface ClientErrorReport {
@@ -73,20 +63,16 @@ const JWT = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
 const BEARER = /\bBearer\s+[\w.~+/-]+=*/gi;
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 const URL_QUERY = /(\b[a-z][a-z\d+.-]*:\/\/[^\s?#'"()]+)[?#][^\s'"()]*/gi;
-// every control character but the tab and the line break, which a stack is made of
+// Every control character but the tab and the line break, which a stack is made of.
 const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f]/g;
 
 /**
- * An error's text as a report may carry it: without email addresses, tokens,
- * ids or the query part of a URL (where a link keeps its codes), without
- * control characters, and no longer than `max`.
- *
- * An email is told from a stack frame by what follows it: `render@main.js:1:20`
- * is a function and a place in the bundle, and is left alone. Cleaning twice
- * changes nothing, so the server can do it again without trusting the phone.
+ * An error's text as a report may carry it: without email addresses, tokens, ids, URL queries or control characters, and
+ * at most `max` long. An email is told from a stack frame by what follows it (`render@main.js:1:20` is left alone).
+ * Idempotent, so the server can clean again without trusting the phone.
  */
 export function scrubClientErrorText(text: string, max: number): string {
-  // the patterns are cheap, but an error message can be a whole response body; only the start of it is kept anyway
+  // The patterns are cheap, but a message can be a whole response body and only its start is kept.
   const cleaned = text
     .slice(0, max * 4)
     .replace(CONTROL, '')
@@ -110,7 +96,7 @@ export function scrubClientErrorStack(stack: string, max: number): string {
   return scrubClientErrorText(top, max);
 }
 
-/** At most `max` UTF-16 units, without leaving half of a surrogate pair at the end. */
+/** At most `max` UTF-16 units, without leaving half a surrogate pair at the end. */
 function cutAt(text: string, max: number): string {
   if (text.length <= max) return text;
   const cut = text.slice(0, max);

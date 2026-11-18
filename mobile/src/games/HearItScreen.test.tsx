@@ -35,7 +35,7 @@ patchReactNativeWeb({ reduceMotion: true });
 const ID = '00000000-0000-4000-8000-0000000000ff';
 const CLIP = 'cXV1eHF1dXhxdXV4cXV1eA';
 
-// stand-in words for the stage, never shown to a learner
+// stand-in words for the stage, never shown to a learner.
 const item = (over: Partial<HearItItemView> = {}): HearItItemView => ({
   index: 0,
   stage: 'word',
@@ -116,7 +116,7 @@ describe('HearItScreen', () => {
     renderWithProviders(<HearItScreen onExit={() => undefined} />);
     await start();
     expect(await screen.findByText('Replays left: 2')).toBeTruthy();
-    // played once loaded, from an address that names the round and the handle only
+    // Played once loaded, from an address that names only the round and the handle.
     expect(audio.played).toEqual([`http://api.test/games/solo/sessions/${ID}/clips/${CLIP}`]);
     for (const option of ['bar', 'dar', 'ber', 'bêr']) expect(audio.loaded[0]).not.toContain(option);
     fireEvent.click(await screen.findByRole('button', { name: 'Play it again' }));
@@ -192,10 +192,7 @@ describe('HearItScreen', () => {
   });
 });
 
-/*
- * Hear It, Find It was a game once. It is an exercise of the lessons'
- * practice now, listed there and never among the games.
- */
+/* Hear It, Find It is an exercise of the lessons' practice, listed there and never among the games. */
 describe('Hear It, Find It, as an exercise of the lessons', () => {
   it('is not among the games, even while it can be done', async () => {
     const client = fakeClient({
@@ -205,7 +202,7 @@ describe('Hear It, Find It, as an exercise of the lessons', () => {
     });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
-    // the game put forward is drawn with the list, whichever game it is today
+    // The featured game is drawn with the list, whichever game it is today.
     expect(await screen.findByTestId('game-featured')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));

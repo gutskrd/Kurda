@@ -1,13 +1,6 @@
 /*
- * Hear It, Find It (games/HearIt.tsx), an exercise of the lessons' practice:
- * its stage — a small radio with a speaker grille, one big play key and
- * sound-wave bars that move while a voice plays, a gentle counter of the
- * replays left, the choices that light up, the typed answer's marks, and
- * what was said.
- *
- * The exercise wears its tone (`lp-tone-meadow`, learn/path.css). Only transform
- * and opacity move; under prefers-reduced-motion the bars stand still at a
- * middle height and the colours alone say what is playing and what was taken.
+ * Hear It, Find It (games/HearIt.tsx): the radio, wave bars, replay counter, choices, typed marks and transcript, in
+ * `lp-tone-meadow`. Only transform and opacity animate; under Reduce Motion the bars rest at mid height.
  */
 
 /* ---- the intro: the ladder -------------------------------------------------------------- */

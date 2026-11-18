@@ -6,14 +6,14 @@ import type { MessageKey } from '../i18n/en';
 import { CATEGORY_LABEL, SANCTION_LABEL } from './labels';
 import { formatDay, formatUntil } from './restriction';
 
-/** The answer to a review, once there is one (an open one says when it was asked). */
+/** The answer to a review, once there is one; an open one says when it was asked. */
 const APPEAL_OUTCOME: Record<AppealOutcome, MessageKey> = {
   upheld: 'standing.appeal.upheld',
   overturned: 'standing.appeal.overturned',
   modified: 'standing.appeal.modified',
 };
 
-/** How a decision came about, as its statement of reasons has to say. */
+/** How a decision came about, as its statement of reasons must say. */
 function originKey(s: StandingSanction): MessageKey {
   if (s.origin === 'report') return 'standing.origin.report';
   if (s.origin === 'moderator') return 'standing.origin.moderator';
@@ -41,20 +41,16 @@ export function AppealState({ appeal }: { appeal: AppealView }): React.JSX.Eleme
 }
 
 /**
- * One decision about your account, with its statement of reasons: what it
- * is, the rule, what the reviewer wrote to you, from when until when, how it
- * came about, and the one review you may ask for.
- *
- * Shared by Account standing and the suspension screen; `appeal` is how the
- * request is sent, because the suspension screen has no session — only the
- * appeal token that sign-in handed it.
+ * One decision about the account with its statement of reasons: what it is, the rule, the reviewer's note, its dates,
+ * how it came about, and the one allowed review. Shared by Account standing and the suspension screen, which has no
+ * session, hence `appeal` for sending the request.
  */
 export function SanctionCard({
   sanction,
   appeal,
 }: {
   sanction: StandingSanction;
-  /** send the review request; resolves to the appeal, or a sentence saying why it did not go */
+  /** Sends the review request; resolves to the appeal, or a sentence saying why it failed. */
   appeal: (sanctionId: string, text: string) => Promise<AppealView | string>;
 }): React.JSX.Element {
   const t = useT();
@@ -102,7 +98,7 @@ export function SanctionCard({
       {sanction.statement && (
         <figure className="sanction-statement">
           <figcaption>{t('standing.statement')}</figcaption>
-          {/* what a person wrote, in whichever language and direction they wrote it */}
+          {/* What a person wrote, in its own language and direction. */}
           <blockquote dir="auto">{sanction.statement}</blockquote>
         </figure>
       )}

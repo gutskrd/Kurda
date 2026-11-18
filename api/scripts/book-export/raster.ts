@@ -1,20 +1,8 @@
 /**
- * The pages of the Hevalo book as pictures, for reading it page by page on a
- * screen: each page at 1440 pixels wide, sharp on a phone's dense screen or
- * zoomed in, and at 720 for a computer's spread, both WebP.
- *
- * The PDF is drawn by poppler's `pdftocairo`, the same renderer most PDF
- * viewers on Linux use, so the pictures look as the download does; the pages
- * are shared out over the machine's cores in runs of pages, one process
- * each. sharp then makes the two sizes (the smaller with lanczos3, which
- * keeps the type crisp), at the same quality every time: the same book gives
- * the same bytes on the same machine. Another version of poppler or of
- * sharp's WebP encoder draws and packs the pixels a little differently, so an
- * export made elsewhere can change every picture although nothing in the
- * book did.
- *
- * Poppler's `pdftotext` reads the PDF's words back as a PDF reader does,
- * which checks the words the export took from the press (`missingWords`).
+ * The Hevalo book's pages as WebP pictures, 1440 pixels wide for phones and zoom and 720 for a computer's spread.
+ * `pdftocairo` draws the PDF as common PDF viewers do, in page runs spread over the machine's cores; the two sizes
+ * are then made at a fixed quality, so the same book gives the same bytes on the same machine (other versions of the
+ * renderer or encoder change every picture). `pdftotext` reads the words back to check the press's (`missingWords`).
  */
 import { execFile, spawn, spawnSync } from 'node:child_process';
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -38,7 +26,7 @@ export interface PageImage {
   sha256: string;
 }
 
-/** Whether poppler's renderer is on this machine. */
+/** Whether the PDF renderer is on this machine. */
 export const hasPdftocairo = (): boolean => spawnSync('pdftocairo', ['-v'], { stdio: 'ignore' }).error === undefined;
 
 /** The file name a page's picture is published under: p001-720.webp. */
@@ -54,7 +42,7 @@ function run(command: string, args: readonly string[]): Promise<void> {
   });
 }
 
-/** Pages `from` to `to` of `pdf` (a file), drawn at 1440 pixels wide, as PNG files in `dir`, by page. */
+/** Pages `from` to `to` of the PDF file drawn 1440 pixels wide, as PNG files in `dir`, by page. */
 async function draw(pdf: string, dir: string, from: number, to: number): Promise<Map<number, string>> {
   const runs = Math.max(1, Math.min(availableParallelism(), to - from + 1));
   const per = Math.ceil((to - from + 1) / runs);
@@ -72,11 +60,7 @@ async function draw(pdf: string, dir: string, from: number, to: number): Promise
   return files;
 }
 
-/**
- * The book's pages `from` to `to` as WebP pictures in `out` (pages/ of an
- * edition), two sizes each. Returns every picture written, page by page and
- * smallest first.
- */
+/** Pages `from` to `to` as WebP pictures in `out`, two sizes each; returns every picture written, by page, smallest first. */
 export async function rasterize(pdfBytes: Buffer, out: string, from: number, to: number): Promise<PageImage[]> {
   const work = await mkdtemp(join(tmpdir(), 'book-pages-'));
   try {
@@ -114,11 +98,8 @@ export async function rasterize(pdfBytes: Buffer, out: string, from: number, to:
 }
 
 /**
- * The words a PDF reader finds on a page that are not among the words the
- * press set there ("page 12: sêv"), page by page. Spaced capitals come out of
- * a reader in pieces ("PA RT"), so each piece is looked for in the page's
- * letters run together. Text drawn inside a picture would show here; the
- * book's drawings carry none.
+ * Words a PDF reader finds on a page that the press did not set there ("page 12: sêv"). Spaced capitals come back in
+ * pieces ("PA RT"), so each piece is looked for in the page's letters run together.
  */
 export async function missingWords(pdfBytes: Buffer, runs: readonly TextRun[], pages: number): Promise<string[]> {
   const work = await mkdtemp(join(tmpdir(), 'book-words-'));

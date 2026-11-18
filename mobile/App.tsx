@@ -22,15 +22,19 @@ import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AccountGateProvider, GuestWall, useAccountGate } from './src/auth/AccountGate';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
-import { holdLink, takeHeldLink } from './src/navigation/heldLink';
+import { holdLink, launchLinkKeeper, linkHolding, takeHeldLink } from './src/navigation/heldLink';
+import { authRouter, rootRouter } from './src/navigation/returnTo';
+import { cardOptions, stackOptions } from './src/navigation/stackOptions';
 import { TabBar } from './src/navigation/TabBar';
 import { prepareAudioSession } from './src/recording/useMicRecorder';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
+import { useCloseOnBlur } from './src/navigation/edgePanel';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
 import {
   chatRouteId,
   groupThreadRouteId,
+  userProfileRouteId,
   type RootNavigation,
   type RootStackParamList,
   type TabParamList,
@@ -57,7 +61,6 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { PracticeHubScreen } from './src/practice/PracticeHubScreen';
-import { leaveExercise } from './src/practice/exercises';
 import { JumpTestScreen } from './src/coursemap/JumpTestScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
@@ -90,7 +93,7 @@ import { GroupBansScreen } from './src/groups/GroupBansScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { PushHost } from './src/push/PushHost';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
-import { EventThemeProvider } from './src/theme/EventThemeContext';
+import { EventThemeProvider, useEventTheme } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
@@ -137,7 +140,7 @@ import { RiddleAnswerScreen } from './src/lore/RiddleAnswerScreen';
 import { ProverbsScreen } from './src/lore/ProverbsScreen';
 import { ProverbScreen } from './src/lore/ProverbScreen';
 import { ProverbRoundScreen } from './src/lore/ProverbRoundScreen';
-import { leaveLore } from './src/lore/navigation';
+import { leaveLinked } from './src/navigation/leaveLinked';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
@@ -152,53 +155,41 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 /**
- * Where a link opened from outside the app lands.
+ * Where a link opened from outside the app lands. Game route paths come from `inviteRoutePath`, so they always match
+ * the invite links the apps share; a mismatch would only show on the recipient's phone. `?id=…` needs no
+ * `:param`, since React Navigation passes query parameters through as route params.
  *
- * The game routes are the ones somebody else sends you. Their paths come from
- * `inviteRoutePath` rather than being written here, because the string has to
- * be the same one `buildInviteUrl` puts in the message — a link the app sent
- * and then failed to recognise is the failure nobody tests, since it only
- * happens on the *other* person's phone.
- *
- * `?id=…` needs no `:param`: React Navigation passes query parameters through
- * as route params, which is why both screens take an optional `id`.
- *
- * hevalo.app is listed so the web invite URL matches, but a browser will not
- * hand it over until the two association files exist — apple-app-site-association
- * (needs the Apple team id) and assetlinks.json (needs the signing certificate's
- * SHA-256), both served from the site's /.well-known/. Until then a tapped link
- * opens the website and `hevalo://` still works.
+ * hevalo.app is listed so web invite URLs match, but phones only hand those links over once the association files
+ * exist (apple-app-site-association, needing the Apple team id, and assetlinks.json, needing the signing
+ * certificate's SHA-256, both under /.well-known/). Until then a tapped link opens the website and `hevalo://` still
+ * works.
  */
 const linking: LinkingOptions<RootStackParamList> = {
-  // `hevalo://` is the scheme app.json registers; this said `kurda://`, which
-  // no phone hands to the app
+  // `hevalo://` is the scheme app.json registers. Do not use `kurda://`: phones never hand it to the app.
   prefixes: [Linking.createURL('/'), 'hevalo://', 'https://hevalo.app'],
-  /*
-   * Addresses from before the tabs changed — `hevalo://play`, `hevalo://inbox`,
-   * the website's `/app/games` — are rewritten to where those things are now
-   * before they are read (navigation/tabs.ts, `legacyTabPath`).
-   */
+  // Old addresses (`hevalo://play`, `hevalo://inbox`, the website's `/app/games`) are rewritten to their current places
+  // first (navigation/tabs.ts, `legacyTabPath`).
   getStateFromPath: (path, options) => getStateFromPath(legacyTabPath(path), options),
   config: {
-    // a link that starts the app (a tap on the home-screen letter widget) opens its screen over the tabs, so back has somewhere to go
+    // A link that starts the app (a tap on the letter widget) opens its screen over the tabs, so back has somewhere to go.
     initialRouteName: 'Tabs',
     screens: {
-      // `?view=games` on Learn arrives as the tab's own param
+      // `?view=games` on Learn arrives as the tab's own param.
       Tabs: { screens: linkingScreens() },
-      // `hevalo://search` was the Search tab's address, and is the search page's now
+      // `hevalo://search` was the Search tab's address and is now the search page's.
       Search: 'search',
-      // a shared profile (Profile → Share) opens in the app for anyone who has it
+      // A shared profile (Profile → Share) opens in the app for anyone who has it.
       UserProfile: 'app/users/:userId',
       Lesson: 'lesson/:lessonId',
-      // practice opens on its hub, where every kind of it is one tap away
+      // Practice opens on its hub, where every kind is one tap away.
       PracticeHub: 'practice',
-      // the two exercises that were games once, at the lessons' own addresses (the website's too);
-      // their old `app/games/…` addresses are rewritten to these (navigation/tabs.ts)
+      // The two former games, at the lessons' own addresses (the website's too); their old `app/games/…` addresses are
+      // rewritten to these (navigation/tabs.ts).
       BuildSentence: 'app/learn/practice/build-sentence',
       HearIt: 'app/learn/practice/hear-it',
-      // the website's alphabet, `?script=ckb` and all, opens the phone's
+      // The website's alphabet, `?script=ckb` included, opens the phone's.
       Alphabet: 'app/alphabet',
-      // the colours, numbers, days and months, and one set by its name: `app/words/colours?script=ckb`
+      // The colours, numbers, days and months, and one set by name: `app/words/colours?script=ckb`.
       Words: 'app/words',
       WordSet: 'app/words/:set',
       WordleBattle: inviteRoutePath('wordle-battle'),
@@ -206,30 +197,37 @@ const linking: LinkingOptions<RootStackParamList> = {
       LastLetter: inviteRoutePath('last-letter'),
       Impostor: inviteRoutePath('impostor'),
       WhoAmI: inviteRoutePath('who-am-i'),
-      // `/app/games/stories?id=…` is a game to join; without an id it is the library
+      // `/app/games/stories?id=…` is a game to join; without an id it is the library.
       Stories: inviteRoutePath('stories'),
-      // a story's address; the website's `/app/learn/stories/:slug` is rewritten to it (navigation/tabs.ts)
+      // A story's address; the website's `/app/learn/stories/:slug` is rewritten to it (navigation/tabs.ts).
       StoryReader: 'app/games/stories/:slug',
-      // the riddles and the proverbs at the website's own addresses, so a riddle a friend shared opens here;
-      // a riddle's answer has none, so no link can open it
+      // Riddles and proverbs at the website's addresses, so a shared riddle opens here; a riddle's answer has no address,
+      // so no link can open it.
       Riddles: 'app/learn/riddles',
       Riddle: 'app/learn/riddles/:slug',
       Proverbs: 'app/learn/proverbs',
       Proverb: 'app/learn/proverbs/:slug',
-      // a shared post: the address the website gives a written one and a picture
+      // A shared post, at the address the website gives written and picture posts.
       LibraryPost: 'app/library/:postId',
       MemeDetail: 'app/dimen/:postId',
-      // the letters and one correspondence at the website's own addresses; the home-screen letter widget opens these,
-      // and a letter's notification names its bird on the window's (`app/letters?bird=…`, letters/links.ts)
+      // The letters and a correspondence at the website's addresses, which the letter widget opens; a notification names
+      // its bird on the window's (`app/letters?bird=…`, letters/links.ts).
       ...LETTER_LINKS,
     },
   },
 };
 
 /**
- * Opens a link that arrived before signing in (navigation/heldLink.ts), once
- * the signed-in screens it names are there to open. A path the app cannot
- * place is dropped; Home is where it would have landed anyway.
+ * Back from a screen, only while it is the one in front. A second tap during the transition, or an exit that
+ * arrives after a page was pushed over it, would otherwise close whichever screen is on top.
+ */
+const backFrom = (navigation: { isFocused(): boolean; goBack(): void }) => (): void => {
+  if (navigation.isFocused()) navigation.goBack();
+};
+
+/**
+ * Opens a link that arrived before sign-in (navigation/heldLink.ts) once the signed-in screens exist. An unplaceable
+ * path is dropped, landing on Home as it would anyway.
  */
 function OpenHeldLink(): null {
   const linkTo = useLinkTo();
@@ -239,31 +237,22 @@ function OpenHeldLink(): null {
     try {
       linkTo(legacyTabPath(path));
     } catch {
-      // not a screen this version of the app has
+      // Not a screen this version of the app has.
     }
   }, [linkTo]);
   return null;
 }
 
 /**
- * The profile's menu: everywhere the tab bar has no room for.
- *
- * Five tabs, and the app has more than thirty screens. The ones that are
- * places of your own or ways to look around — the shop, settings, what you
- * saved, the library, the memes, the league — are here, one tap from the
- * profile, which is where somebody looks for "my stuff".
- *
- * `giftBadge` is the count of gifts you have not opened, on the Shop row
- * where the gifts are: a gift that arrives silently may as well not have
- * arrived. The same count puts a dot on the Profile tab and on this menu's
- * button.
- *
- * The rows that need an account ask the gate first (auth/AccountGate): a
- * guest tapping Friends gets the offer to make one, not a screen that cannot
- * load. The badges, the library, the memes and the ranks are open to anyone.
+ * The profile menu: everywhere the five tabs have no room for, such as the shop, settings, saved items, the library,
+ * memes and the league, one tap from the profile where people look for their own things. `giftBadge` counts unopened
+ * gifts on the Shop row, as the dot on the Profile tab and the menu button does. Rows needing an account go through
+ * the gate (auth/AccountGate), so a guest gets the offer to make one rather than a screen that cannot load.
  */
 function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof useAccountGate>['require']): MenuGroup[] {
   const giftBadge = unreadBadge(useUnread().counts.gifts) ?? undefined;
+  // The events page only while one runs; between events it could only say "check back soon".
+  const { live: eventLive } = useEventTheme();
   return [
     {
       titleKey: null,
@@ -276,7 +265,7 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
       links: [
         { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
         { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
-        { key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') },
+        ...(eventLive ? [{ key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') } as const] : []),
         { key: 'league', labelKey: 'leagues.screenTitle', icon: 'trophy', onPress: () => require('league') && navigation.navigate('League') },
         { key: 'ranks', labelKey: 'ranks.title', icon: 'mountains', onPress: () => require('league') && navigation.navigate('Ranks') },
       ],
@@ -286,7 +275,7 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
       links: [
         { key: 'saved', labelKey: 'saved.title', icon: 'bookmark', onPress: () => require('save') && navigation.navigate('Saved') },
         { key: 'badges', labelKey: 'badges.title', icon: 'medal', onPress: () => navigation.navigate('Badges') },
-        // its own glyph: the star is the events row's, two rows up
+        // Its own glyph, since the star belongs to the events row.
         { key: 'tags', labelKey: 'tags.title', icon: 'tag', onPress: () => require('profile') && navigation.navigate('Tags') },
         { key: 'shop', labelKey: 'profile.shop', icon: 'cart', badge: giftBadge, onPress: () => require('shop') && navigation.navigate('Shop') },
         { key: 'settings', labelKey: 'settings.title', icon: 'gear', onPress: () => navigation.navigate('Settings') },
@@ -307,26 +296,25 @@ function SignedInTabs() {
   const [slideOpen, setSlideOpen] = useState(false);
   const openSlide = useCallback(() => setSlideOpen(true), []);
   const closeSlide = useCallback(() => setSlideOpen(false), []);
+  const closePanels = useCallback(() => {
+    setMenuOpen(false);
+    setSlideOpen(false);
+  }, []);
+  useCloseOnBlur(navigation, closePanels);
   return (
     <MenuProvider value={openMenu}>
     <SlideProvider value={openSlide}>
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        /*
-         * Tabs cross-fade; they do not cut. With no animation one screen is
-         * replaced by another between two frames, which reads as a flicker
-         * rather than as a move. As long as anything else arriving takes
-         * (`duration.base`), and nothing at all for somebody who has asked
-         * for less motion.
-         */
+        // Tabs cross-fade for `duration.base` rather than cutting, which reads as a flicker; no animation under Reduce Motion.
         animation: reduceMotion ? 'none' : 'fade',
         transitionSpec: { animation: 'timing', config: { duration: duration.base } },
       }}
-      // the four places in a bar that floats over the bottom of the page, with the badges
+      // The tabs in a bar floating over the page's bottom, with the badges.
       tabBar={(props) => <TabBar {...props} />}
     >
-      {/* in the order TABS gives, which is the order the tests hold it to */}
+      {/* In the order TABS gives, which the tests hold it to. */}
       {TABS.map((tab) =>
         tab.name === 'Learn' ? (
           <Tab.Screen key={tab.name} name="Learn">
@@ -349,9 +337,9 @@ function SignedInTabs() {
         ),
       )}
     </Tab.Navigator>
-      {/* the profile's menu comes in from the end, the side its button is on */}
+      {/* The profile menu comes in from the end, the side its button is on. */}
       <SideMenu open={menuOpen} onClose={closeMenu} groups={groups} side="end" />
-      {/* your people, opened by Messages' new-message button: tap a friend to write to them */}
+      {/* Your people, opened by Messages' new-message button: tap a friend to write to them. */}
       <SocialSlide open={slideOpen} onClose={closeSlide} />
     </SlideProvider>
     </MenuProvider>
@@ -362,35 +350,31 @@ function SignedInRoot() {
   const { colors } = useTheme();
   const reduceMotion = useReducedMotion();
   /*
-   * A pushed page. One that a press on a card, a tile or a header button
-   * opened fades in while it grows out of the thing pressed (theme/origin);
-   * any other slides in as a pushed page always has. Decided once per page,
-   * as it is first drawn, and kept: a page that faded in fades back out,
-   * over the card it came from.
+   * A pushed page. One opened by a press on a card, tile or header button fades in while growing out of what was
+   * pressed (theme/origin); any other slides in. Decided once per page when first drawn, so a page that faded in fades
+   * back out over its card.
    */
   const card = useCallback(
-    ({ route }: { route: { key: string } }): NativeStackNavigationOptions =>
-      !reduceMotion && originOf(route.key) ? { presentation: 'card', animation: 'fade' } : { presentation: 'card' },
+    ({ route }: { route: { key: string } }): NativeStackNavigationOptions => cardOptions(!reduceMotion && originOf(route.key) !== null),
     [reduceMotion],
   );
+  // A card whose swipe would leave a game or round under way, still growing out of what opened it.
+  const heldCard = useCallback((args: { route: { key: string } }): NativeStackNavigationOptions => ({ ...card(args), gestureEnabled: false }), [card]);
   return (
     <RealtimeProvider>
-      {/* the badges' counts, for the tab bar, the bell and the profile's menu */}
+      {/* Unread counts for the tab bar, the bell and the profile menu. */}
       <UnreadProvider>
       <PushRegistration />
-      {/* a badge just earned has its moment over whatever screen is up, once a game's own result has had its turn */}
+      {/* A just-earned badge gets its moment over whatever is on screen, after a game's own result. */}
       <BadgeCelebrationHost>
-      {/* one offer to create an account, for every screen that finds a guest at something only an account can do */}
+      {/* One account offer for every screen that finds a guest at something only an account can do. */}
       <AccountGateProvider>
       <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-          // scene paints the theme background during the push/pop so a transition
-          // never flashes a white frame; reduced-motion disables the slide entirely.
-          contentStyle: { backgroundColor: colors.background },
-          animation: reduceMotion ? 'none' : 'default',
-        }}
-        // every page stands in `Arrive`, which draws one a press opened (the ones that fade in) growing out of what was pressed
+        // The options every stack shares (navigation/stackOptions).
+        screenOptions={stackOptions(reduceMotion, colors.background)}
+        // A place already open is returned to, not stacked again (navigation/returnTo).
+        UNSTABLE_router={rootRouter}
+        // Every page is wrapped in `Arrive`, which grows a press-opened page out of what was pressed.
         screenLayout={({ children, route, options }) => (
           <Arrive routeKey={route.key} grows={options.animation === 'fade'}>
             {children}
@@ -398,20 +382,20 @@ function SignedInRoot() {
         )}
       >
         <RootStack.Screen name="Tabs" component={SignedInTabs} />
-      {/* search opens out of the magnifier that was tapped, as any page opens out of what opened it */}
+      {/* Search opens out of the tapped magnifier, as any page opens out of what opened it. */}
       <RootStack.Screen name="Search" options={card}>
-        {({ navigation }) => <SearchScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <SearchScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Lesson" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
-          // the results' ways on take the lesson's place, so Back from them is the path, not a finished lesson
+          // The results' ways on replace the lesson, so Back from them goes to the path, not a finished lesson.
           <LessonPlayerScreen
             lessonId={route.params.lessonId}
             courseId={route.params.courseId}
-            onExit={() => navigation.goBack()}
+            onExit={backFrom(navigation)}
             onNext={(lessonId) => navigation.replace('Lesson', { lessonId, courseId: route.params.courseId })}
             onPractise={(exerciseIds) => navigation.replace('Practice', { exerciseIds })}
-            onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+            onPath={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
           />
         )}
       </RootStack.Screen>
@@ -423,153 +407,151 @@ function SignedInRoot() {
             mode={route.params?.mode}
             unitId={route.params?.unitId}
             sessionId={route.params?.sessionId}
-            onExit={() => navigation.goBack()}
+            onExit={backFrom(navigation)}
           />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="PracticeHub" options={card}>
-        {({ navigation }) => <PracticeHubScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <PracticeHubScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="JumpTest" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
           <JumpTestScreen
             courseId={route.params.courseId}
             unitId={route.params.unitId}
-            onExit={() => navigation.goBack()}
-            onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+            onExit={backFrom(navigation)}
+            onPath={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
             onAgain={() => navigation.replace('JumpTest', route.params)}
           />
         )}
       </RootStack.Screen>
       {/*
-        The routes a guest may not use are behind the offer to create an account
-        (auth/AccountGate `GuestWall`): a tap or a link that reaches one lands on
-        the offer with a way back, never on a screen that cannot load. The
-        lessons, practice, the dictionary, the games played alone, the badges,
-        the library and anyone's profile stay open to everyone.
+        Guest-restricted routes sit behind the account offer (auth/AccountGate `GuestWall`), so a tap or link lands on the
+        offer with a way back. Lessons, practice, the dictionary, solo games, badges, the library and profiles stay open.
       */}
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
-          <GuestWall reason="shop" onBack={() => navigation.goBack()}>
-            {/* Zêr is earned by learning, so "earn more" opens the lessons */}
+          <GuestWall reason="shop" onBack={backFrom(navigation)}>
+            {/* Zêr is earned by learning, so "earn more" opens the lessons. */}
             <ShopScreen
-              onExit={() => navigation.goBack()}
-              onEarnMore={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+              onExit={backFrom(navigation)}
+              onEarnMore={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
             />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
-          <GuestWall reason="league" onBack={() => navigation.goBack()}>
-            <LeagueScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="league" onBack={backFrom(navigation)}>
+            <LeagueScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Ranks" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="league" onBack={() => navigation.goBack()}>
-            <RanksScreen game={route.params?.game} onExit={() => navigation.goBack()} />
+          <GuestWall reason="league" onBack={backFrom(navigation)}>
+            <RanksScreen game={route.params?.game} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Season" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="league" onBack={() => navigation.goBack()}>
-            <SeasonScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="league" onBack={backFrom(navigation)}>
+            <SeasonScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Badges" options={card}>
-        {({ navigation }) => <BadgesScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <BadgesScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Tree" options={card}>
-        {({ navigation }) => <TreeScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <TreeScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      <RootStack.Screen name="UserProfile" options={card}>
+      {/* One page per person, as per conversation (rootStack.userProfileRouteId). */}
+      <RootStack.Screen name="UserProfile" options={card} getId={userProfileRouteId}>
         {({ route, navigation }) => (
-          <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
+          <PublicProfileScreen userId={route.params.userId} onExit={backFrom(navigation)} />
         )}
       </RootStack.Screen>
-      {/* one route per person and per group (rootStack.chatRouteId) */}
+      {/* One route per person and per group (rootStack.chatRouteId). */}
       <RootStack.Screen name="Chat" options={card} getId={chatRouteId}>
         {({ route, navigation }) => (
-          <GuestWall reason="message" onBack={() => navigation.goBack()}>
+          <GuestWall reason="message" onBack={backFrom(navigation)}>
             <ChatScreen
               userId={route.params.userId}
               username={route.params.username}
               openGift={route.params.openGift}
-              onExit={() => navigation.goBack()}
+              onExit={backFrom(navigation)}
             />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="BlockedUsers" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <BlockedUsersScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <BlockedUsersScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="MyReports" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <MyReportsScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <MyReportsScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="AccountStanding" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <AccountStandingScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <AccountStandingScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      {/* leaving unwinds past the thread: the club is gone from under it */}
-      <RootStack.Screen name="GroupMembers" options={card}>
+      {/* Leaving unwinds past the thread, since the club is gone from under it. */}
+      <RootStack.Screen name="GroupMembers" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
             <GroupMembersScreen
               groupId={route.params.groupId}
-              onExit={() => navigation.goBack()}
-              onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+              onExit={backFrom(navigation)}
+              onLeft={() => navigation.popTo('Tabs', { screen: 'Messages' })}
               onEdit={() => navigation.navigate('GroupEdit', { groupId: route.params.groupId })}
             />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupEdit" options={card}>
+      <RootStack.Screen name="GroupEdit" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
-            <GroupEditScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
+            <GroupEditScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupRequests" options={card}>
+      <RootStack.Screen name="GroupRequests" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
-            <GroupRequestsScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
+            <GroupRequestsScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupBans" options={card}>
+      <RootStack.Screen name="GroupBans" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
-            <GroupBansScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
+            <GroupBansScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="GroupThread" options={card} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
+          <GuestWall reason="groups" onBack={backFrom(navigation)}>
             <GroupThreadScreen
               groupId={route.params.groupId}
               name={route.params.name}
               openGift={route.params.openGift}
               addFriends={route.params.addFriends}
               onFindPeople={() => navigation.navigate('Search')}
-              onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
-              onExit={() => navigation.goBack()}
+              onLeft={() => navigation.popTo('Tabs', { screen: 'Messages' })}
+              onExit={backFrom(navigation)}
               onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
             />
           </GuestWall>
@@ -577,282 +559,274 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="FriendRequests" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="friends" onBack={() => navigation.goBack()}>
-            <FriendRequestsScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="friends" onBack={backFrom(navigation)}>
+            <FriendRequestsScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      {/* letters by bird: a guest has no bird, and is shown the way to an account instead */}
+      {/* Letters by bird: a guest has no bird and sees the way to an account instead. */}
       <RootStack.Screen name="Letters" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="message" onBack={() => navigation.goBack()}>
-            {/* a notification's bird is let go once the window has acted on it, so coming back does not act on it again */}
-            <LettersScreen bird={route.params?.bird} onBirdUsed={() => navigation.setParams({ bird: undefined })} onExit={() => navigation.goBack()} />
+          <GuestWall reason="message" onBack={backFrom(navigation)}>
+            {/* A notification's bird is cleared once the window has acted on it, so returning does not act on it again. */}
+            <LettersScreen bird={route.params?.bird} onBirdUsed={() => navigation.setParams({ bird: undefined })} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="LetterThread" options={card} getId={({ params }) => params.threadId}>
         {({ route, navigation }) => (
-          <GuestWall reason="message" onBack={() => navigation.goBack()}>
-            <LetterThreadScreen threadId={route.params.threadId} onExit={() => navigation.goBack()} />
+          <GuestWall reason="message" onBack={backFrom(navigation)}>
+            <LetterThreadScreen threadId={route.params.threadId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="LetterWidget" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="message" onBack={() => navigation.goBack()}>
-            <LetterWidgetScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="message" onBack={backFrom(navigation)}>
+            <LetterWidgetScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="EventQuests" options={card}>
-        {({ navigation }) => <EventQuestsScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <EventQuestsScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Notifications" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <NotificationsScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <NotificationsScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="NotificationCenter" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <NotificationCenterScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <NotificationCenterScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Settings" options={card}>
-        {({ navigation }) => <SettingsScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <SettingsScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="SettingsPage" options={card}>
-        {({ route, navigation }) => <SettingsPageScreen page={route.params.page} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <SettingsPageScreen page={route.params.page} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Wordle" options={card}>
-        {({ navigation }) => <WordleScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <WordleScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="WordleBattle" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <WordleBattleScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <WordleBattleScreen id={route.params?.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Rhyme" options={card}>
-        {({ navigation }) => <RhymeTrainingScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <RhymeTrainingScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="RhymeMatch" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <RhymeMatchScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <RhymeMatchScreen id={route.params?.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="LastLetter" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <LastLetterScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <LastLetterScreen id={route.params?.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Impostor" options={card}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <ImpostorScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <ImpostorScreen id={route.params?.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      {/* Who Am I? on one phone reaches nobody else, so a guest may play it; its room with friends keeps the play wall inside (whoami/WhoAmIScreen) */}
+      {/* Who Am I? on one phone reaches nobody else, so guests may play; its room with friends keeps the guest wall inside (whoami/WhoAmIScreen). */}
       <RootStack.Screen name="WhoAmI" options={card}>
-        {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} way={route.params?.way} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} way={route.params?.way} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Race" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <RaceScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <RaceScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       {/*
-        The lessons' two exercises (practice/exercises.ts), opened from the practice hub or the Lessons half.
-        Leaving one goes back there; opened by a link, with nothing behind it, it leaves to the hub rather
-        than nowhere (`leaveExercise`). A guest does them too, as a guest does a lesson.
+        The lessons' two exercises (practice/exercises.ts), opened from the practice hub or Lessons. Leaving goes back
+        there, or to the hub when a link opened it (`leaveLinked`). Guests do them too.
       */}
       <RootStack.Screen name="BuildSentence" options={card}>
-        {({ navigation }) => <BuildSentenceScreen onExit={() => leaveExercise(navigation)} />}
+        {({ navigation }) => <BuildSentenceScreen onExit={() => leaveLinked(navigation, 'PracticeHub', ['Learn'])} />}
       </RootStack.Screen>
       <RootStack.Screen name="HearIt" options={card}>
-        {({ navigation }) => <HearItScreen onExit={() => leaveExercise(navigation)} />}
+        {({ navigation }) => <HearItScreen onExit={() => leaveLinked(navigation, 'PracticeHub', ['Learn'])} />}
       </RootStack.Screen>
-      {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
+      {/* A learning game is learning, like a lesson, so guests play it too (api/src/games). */}
       <RootStack.Screen name="MemoryThief" options={card}>
-        {({ navigation }) => <MemoryThiefScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <MemoryThiefScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Detective" options={card}>
-        {({ navigation }) => <DetectiveScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <DetectiveScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      {/* the library is reading, which a guest may do; the games behind it keep their own wall */}
+      {/* The library is reading, which guests may do; the games behind it keep their own wall. */}
       <RootStack.Screen name="Stories" options={card}>
-        {({ route, navigation }) => <StoriesScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <StoriesScreen id={route.params?.id} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="StoryReader" options={card}>
-        {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      {/* a game is not left by a swipe that was meant to scroll the story */}
-      <RootStack.Screen name="StoryGame" options={{ presentation: 'card', gestureEnabled: false }}>
+      {/* A game must not be left by a swipe meant to scroll the story. */}
+      <RootStack.Screen name="StoryGame" options={heldCard}>
         {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />
+          <GuestWall reason="play" onBack={backFrom(navigation)}>
+            <StoryGameScreen key={route.params.id} id={route.params.id} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      {/* the riddles and the proverbs are reading and thinking, which a guest may do; the proverbs' round counts a guest's day too */}
+      {/* Riddles and proverbs are open to guests; the proverbs' round counts a guest's day too. */}
       <RootStack.Screen name="Riddles" options={card}>
-        {({ route, navigation }) => <RiddlesScreen dialect={route.params?.dialect} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <RiddlesScreen dialect={route.params?.dialect} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Riddle" options={card} getId={({ params }) => params.slug}>
-        {({ route, navigation }) => <RiddleScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
+        {({ route, navigation }) => <RiddleScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLinked(navigation, 'Riddles')} />}
       </RootStack.Screen>
       <RootStack.Screen name="RiddleAnswer" options={card}>
-        {({ route, navigation }) => <RiddleAnswerScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
+        {({ route, navigation }) => <RiddleAnswerScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLinked(navigation, 'Riddles')} />}
       </RootStack.Screen>
       <RootStack.Screen name="Proverbs" options={card}>
-        {({ route, navigation }) => <ProverbsScreen dialect={route.params?.dialect} theme={route.params?.theme} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <ProverbsScreen dialect={route.params?.dialect} theme={route.params?.theme} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Proverb" options={card} getId={({ params }) => params.slug}>
-        {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Proverbs')} />}
+        {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLinked(navigation, 'Proverbs')} />}
       </RootStack.Screen>
-      {/* a round is not left by a swipe meant to scroll its choices */}
-      <RootStack.Screen name="ProverbRound" options={{ presentation: 'card', gestureEnabled: false }}>
-        {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={() => navigation.goBack()} />}
+      {/* A round must not be left by a swipe meant to scroll its choices. */}
+      <RootStack.Screen name="ProverbRound" options={heldCard}>
+        {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={card}>
-        {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <MemeFeedScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      {/*
-        Writing a post — words, pictures or both — and editing one. Full screen
-        and without the swipe-down: the composer asks before it lets go of
-        something written.
-      */}
+      {/* Writing or editing a post: full screen without swipe-down, since the composer asks before discarding text. */}
       <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
         {({ route, navigation }) => (
-          <GuestWall reason="post" onBack={() => navigation.goBack()}>
+          <GuestWall reason="post" onBack={backFrom(navigation)}>
             <ComposeScreen
               postId={route.params?.postId}
               startWithPictures={route.params?.pickPictures}
               asMeme={route.params?.meme}
-              onExit={() => navigation.goBack()}
+              onExit={backFrom(navigation)}
             />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="MemeDetail" options={card}>
-        {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="EditProfile" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="profile" onBack={() => navigation.goBack()}>
-            <EditProfileScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="profile" onBack={backFrom(navigation)}>
+            <EditProfileScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Friends" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="friends" onBack={() => navigation.goBack()}>
-            <SocialScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="friends" onBack={backFrom(navigation)}>
+            <SocialScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Dictionary" options={card}>
-        {({ navigation }) => <DictionaryScreen onBack={() => navigation.goBack()} />}
+        {({ navigation }) => <DictionaryScreen onBack={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Alphabet" options={card}>
-        {({ route, navigation }) => <AlphabetScreen script={route.params?.script} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <AlphabetScreen script={route.params?.script} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Words" options={card}>
-        {({ navigation }) => <WordsScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <WordsScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      {/* over Learn, as something looked at and closed: a chest opened in it takes the whole screen */}
+      {/* Over Learn, as something viewed and closed; a chest opened in it takes the whole screen. */}
       <RootStack.Screen name="Quests" options={{ presentation: 'fullScreenModal' }}>
-        {({ navigation }) => <QuestsScreen place="learn" onDone={() => navigation.goBack()} />}
+        {({ navigation }) => <QuestsScreen place="learn" onDone={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="WordSet" options={card}>
-        {/* a link to a set this version does not have opens the list of sets instead */}
+        {/* A link to a set this version lacks opens the list of sets instead. */}
         {({ route, navigation }) =>
           isWordSetId(route.params.set) ? (
-            <WordSetScreen set={route.params.set} script={route.params.script} onExit={() => navigation.goBack()} />
+            <WordSetScreen set={route.params.set} script={route.params.script} onExit={backFrom(navigation)} />
           ) : (
-            <WordsScreen onExit={() => navigation.goBack()} />
+            <WordsScreen onExit={backFrom(navigation)} />
           )
         }
       </RootStack.Screen>
       <RootStack.Screen name="Saved" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="save" onBack={() => navigation.goBack()}>
-            <SavedScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="save" onBack={backFrom(navigation)}>
+            <SavedScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Tags" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="profile" onBack={() => navigation.goBack()}>
-            <TagsScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="profile" onBack={backFrom(navigation)}>
+            <TagsScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="ChangeUsername" options={card}>
         {({ navigation }) => (
-          <GuestWall reason="profile" onBack={() => navigation.goBack()}>
-            <ChangeUsernameScreen onExit={() => navigation.goBack()} />
+          <GuestWall reason="profile" onBack={backFrom(navigation)}>
+            <ChangeUsernameScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="ChangePassword" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <ChangePasswordScreen onExit={() => navigation.goBack()} onSetPassword={(email) => navigation.navigate('ForgotPassword', { email })} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <ChangePasswordScreen onExit={backFrom(navigation)} onSetPassword={(email) => navigation.navigate('ForgotPassword', { email })} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Devices" options={card}>
         {({ navigation }) => (
-          <GuestWall onBack={() => navigation.goBack()}>
-            <DevicesScreen onExit={() => navigation.goBack()} />
+          <GuestWall onBack={backFrom(navigation)}>
+            <DevicesScreen onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
       <RootStack.Screen name="ForgotPassword" options={card}>
-        {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={() => navigation.goBack()} />}
+        {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Library" options={card}>
-        {({ navigation }) => <LibraryScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <LibraryScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="LibraryPost" options={card}>
-        {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      {/*
-        A guest's two ways to an account, over the app: the sign-up form that
-        makes this account theirs, and the sign-in form for one they already
-        have. Both close themselves once the session belongs to an account.
-      */}
+      {/* A guest's two ways to an account, over the app: claiming this one, or signing in to another. Both close once the session belongs to an account. */}
       <RootStack.Screen name="ClaimAccount" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
           <ClaimAccountScreen
-            onExit={() => navigation.goBack()}
+            presented
+            onExit={backFrom(navigation)}
             onSignIn={(email) => navigation.navigate('SignIn', email ? { email } : undefined)}
             onForgotPassword={(email) => navigation.navigate('ForgotPassword', { email })}
           />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="SignIn" options={{ presentation: 'fullScreenModal' }}>
-        {({ route, navigation }) => <SignInModal email={route.params?.email} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <SignInModal email={route.params?.email} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       </RootStack.Navigator>
-      {/* a push shown while the app is open, and a tapped one opened where it belongs */}
+      {/* Push notifications shown while the app is open, and tapped ones routed where they belong. */}
       <PushHost />
-      {/* over every screen: an invite to play waits here until it is answered */}
+      {/* Over every screen: an invite to play waits here until answered. */}
       <InviteBanner />
-      {/* over every screen: a gift that arrives, a warning to read once */}
+      {/* Over every screen: an arriving gift, a warning to read once. */}
       <SocialOverlays />
       </AccountGateProvider>
       </BadgeCelebrationHost>
@@ -865,21 +839,25 @@ function Root() {
   const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
   const reduceMotion = useReducedMotion();
+  const { colors } = useTheme();
 
-  // a link opened while signed out (the one that started the app, or one tapped since) waits for the sign-in
+  // A link opened before the signed-in screens exist waits for them; the launch link only for the first screens
+  // (navigation/heldLink).
+  const [keepLaunchLink] = useState(launchLinkKeeper);
+  const holding = linkHolding(status, user);
   useEffect(() => {
-    if (status !== 'signedOut') return;
-    void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    if (status === 'restoring') return;
+    if (keepLaunchLink(holding)) void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    if (holding === 'none') return;
     const sub = Linking.addEventListener('url', ({ url }) => holdLink(url, linking.prefixes));
     return () => sub.remove();
-  }, [status]);
+  }, [status, holding, keepLaunchLink]);
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
   }
 
-  // Refused at sign-in or refresh because the account is suspended: the reasons
-  // and a way to ask for a review, instead of a sign-in form that cannot work.
+  // Refused at sign-in or refresh because the account is suspended: show the reasons and how to request a review.
   if (status === 'signedOut' && suspension) {
     return (
       <Entrance>
@@ -888,9 +866,8 @@ function Root() {
     );
   }
 
-  // An answer that stopped at age — no account made, or one just closed —
-  // leaves only the explanation for as long as the app is open: no sign-up
-  // form to try a different year on.
+  // Stopped at age (no account made, or one just closed): only the explanation, for as long as the app is open, with
+  // no sign-up form to try a different year on.
   if (status === 'signedOut' && ageStop) {
     return (
       <Entrance>
@@ -900,7 +877,7 @@ function Root() {
   }
 
   if (status === 'signedOut') {
-    // first launch: show the intro before the auth screens (KUR-271/272/273)
+    // First launch shows the intro before the auth screens.
     if (onboarding.needsOnboarding) {
       return (
         <Entrance>
@@ -912,10 +889,12 @@ function Root() {
       <Entrance>
       <AuthStack.Navigator
         initialRouteName={AUTH_INITIAL_ROUTE}
-        // signing in slides between its screens as the app does, and does not slide for somebody who asked for less motion
-        screenOptions={{ headerShown: false, animation: reduceMotion ? 'none' : 'default' }}
+        // Sign-in screens slide like the rest of the app, except under Reduce Motion.
+        screenOptions={stackOptions(reduceMotion, colors.background)}
+        // Each form once: "Create account" and "Sign in" go back to the other form rather than stacking it again.
+        UNSTABLE_router={authRouter}
       >
-        {/* Welcome's back walks into the intro (KUR-271): choice → notifications → welcome → language */}
+        {/* Welcome's back walks into the intro: choice → notifications → welcome → language. */}
         <AuthStack.Screen name="Welcome">
           {(props) => <WelcomeScreen {...props} onBack={() => onboarding.reopen('notifications')} />}
         </AuthStack.Screen>
@@ -927,8 +906,7 @@ function Root() {
     );
   }
 
-  // Email-ownership gate (KUR-014): a signed-in but unverified account can't
-  // reach the app until it enters the emailed code.
+  // A signed-in but unverified account cannot reach the app until it enters the emailed code.
   if (user && !user.emailVerified) {
     return (
       <Entrance>
@@ -937,9 +915,8 @@ function Root() {
     );
   }
 
-  // Then the birth month, asked once of an account that has none (a Google or
-  // Apple sign-up, or one from before it was asked): what the app lets the
-  // account do depends on the answer.
+  // Then the birth month, asked once of an account without one (a Google or Apple sign-up, or an older account),
+  // since what the account may do depends on it.
   if (user?.birthDateRequired === true) {
     return (
       <Entrance>
@@ -952,25 +929,23 @@ function Root() {
     <Entrance>
       <SignedInRoot />
       <OpenHeldLink />
-      {/* the one-time rating box (and, rarely, the store's own prompt) after a finished game */}
+      {/* The one-time rating box (and rarely the store's prompt) after a finished game. */}
       <GameFeedbackHost />
-      {/* once: the shop's items you own have new art, and can be returned */}
+      {/* Shown once: owned shop items have new art and can be returned. */}
       <RefreshedNotice />
     </Entrance>
   );
 }
 
-/** NavigationContainer + StatusBar wired to the active palette (KUR-268). */
+/** NavigationContainer and StatusBar wired to the active palette. */
 function ThemedNavigation() {
   const { colors, scheme } = useTheme();
   const navigation = useNavigationContainerRef<RootStackParamList>();
   const offline = useMaintenance() !== null;
   /*
-   * Back from being offline (src/maintenance). Nothing on the phone keeps a
-   * cache to invalidate: each screen asks for what it shows as it opens, and
-   * the screens under the notice were left holding the refusal. So they open
-   * again, from the navigation state they had — the person is where they
-   * were, with everything asked for afresh.
+   * Back from maintenance (src/maintenance): screens fetch what they show as they open, and those under the notice
+   * kept the refusal, so they are remounted from their navigation state; the person stays where they were with
+   * everything fetched again.
    */
   const [opened, setOpened] = useState<{ round: number; state?: InitialState }>({ round: 0 });
   useEffect(
@@ -980,7 +955,7 @@ function ThemedNavigation() {
       ),
     [navigation],
   );
-  // which screen is open, for a crash report to say where it happened: the route's name only, never its params
+  // The open screen, for crash reports: the route name only, never its params.
   const onScreen = () => noteScreen(navigation.getCurrentRoute()?.name);
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
@@ -999,22 +974,19 @@ function ThemedNavigation() {
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <View style={{ flex: 1 }}>
         {/*
-          Inside the container, and around the screens only: the fallback needs
-          the palette and the translator, and recovering should re-enter the
-          navigator at its initial route rather than at the screen that threw.
-          The offline banner stays outside so it survives the crash screen.
-          While Hevalo is offline the notice is all there is, for a screen
-          reader too.
+          Inside the container and around the screens only: the fallback needs the palette and translator, and recovery
+          should re-enter the navigator at its initial route, not the screen that threw. The offline banner stays outside to
+          survive the crash screen. During maintenance the notice is all there is, for screen readers too.
         */}
         <View style={{ flex: 1 }} importantForAccessibility={offline ? 'no-hide-descendants' : 'auto'} accessibilityElementsHidden={offline}>
           <AppErrorBoundary>
             <Root />
           </AppErrorBoundary>
         </View>
-        {/* over every screen, the crash screen included: Hevalo is offline for a while */}
+        {/* Over every screen, the crash screen included: maintenance. */}
         <MaintenanceScreen />
         <OfflineBanner />
-        {/* what every "⋯" opens on Android and the web, listing all its actions (theme/actionSheet.ts) */}
+        {/* What every "⋯" opens on Android and the web (theme/actionSheet.ts). */}
         <ActionSheetHost />
       </View>
     </NavigationContainer>
@@ -1025,20 +997,20 @@ function ThemedNavigation() {
 const rootStyle = { flex: 1 } as const;
 
 export default function App() {
-  // lesson audio plays with the ring switch on, from the first word, not only after a first recording
+  // Lesson audio plays with the ring switch on, from the first word, not only after a first recording.
   useEffect(() => {
     void prepareAudioSession();
   }, []);
   return (
     <SafeAreaProvider>
-      {/* the characters' eyes follow a finger anywhere in the app; it only listens, so it takes no touch from anything */}
+      {/* The characters' eyes follow a finger anywhere in the app; it only listens, taking no touches. */}
       <GazeArea style={rootStyle}>
         <ThemeProvider>
           <I18nProvider>
             <AuthProvider>
-              {/* the pictures an admin put in place of the app's own art, from the first screen on */}
+              {/* Admin-replaced art, loaded from the first screen on. */}
               <ArtOverridesLoader />
-              {/* the home-screen letter widget's token, made at sign-in and taken away at any sign-out, outside the screens so none is missed */}
+              {/* The letter widget's token, made at sign-in and removed at any sign-out, outside the screens so none is missed. */}
               <LetterWidgetSync />
               <EventThemeProvider>
                 <ThemedNavigation />

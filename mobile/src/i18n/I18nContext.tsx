@@ -14,9 +14,8 @@ interface I18nValue {
 const I18nContext = createContext<I18nValue | null>(null);
 
 /**
- * App-wide language (KUR-093). Starts from the saved choice, else the device
- * locale mapped to a supported language, else English. `t` falls back through
- * English to the key, so a partially-translated catalog never shows blanks.
+ * App-wide language: the saved choice, else the device locale mapped to a supported language, else English. `t`
+ * falls back through English to the key, so a partly translated catalogue never shows blanks.
  */
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');

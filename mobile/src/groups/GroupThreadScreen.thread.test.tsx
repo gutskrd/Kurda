@@ -7,7 +7,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the room's live events, handed to the test to send
+// The room's live events, handed to the test to send.
 const room = vi.hoisted(() => ({ emit: (_event: Record<string, unknown>): void => undefined }));
 vi.mock('../realtime/useRoomEvents', () => ({
   useRoomEvents: (_name: string, handler: (event: Record<string, unknown>) => void) => {
@@ -71,11 +71,11 @@ describe('a group’s thread as it is read', () => {
       said('m4', 'me', 'rojda', 'Ez jî', 2),
     ]);
     await screen.findByText('Silav');
-    // twice he spoke, once he is named; your own messages carry no name at all
+    // He spoke twice and is named once; your own messages carry no name.
     expect(screen.getAllByText('azad')).toHaveLength(1);
     expect(screen.getAllByText('şêrîn')).toHaveLength(1);
     expect(screen.queryByText('rojda')).toBeNull();
-    // a face for each of the two runs of other people’s, none for yours
+    // A face for each of the two runs of other people's messages, none for yours.
     expect(screen.getAllByTestId('run-face')).toHaveLength(2);
     expect(screen.getAllByRole('heading', { name: 'Today' })).toHaveLength(1);
   });
@@ -93,7 +93,7 @@ describe('a group’s thread as it is read', () => {
     act(() => room.emit({ type: 'group_typing', groupId: 'g1', userId: 'u3', username: 'şêrîn' }));
     expect(screen.getByTestId('typing-bubble')).toBeTruthy();
     expect(screen.getByText('şêrîn is typing…')).toBeTruthy();
-    // your own pings come back from the room, and are not shown to you
+    // Your own typing pings come back from the room and are not shown to you.
     act(() => room.emit({ type: 'group_typing', groupId: 'g1', userId: 'me', username: 'rojda' }));
     expect(screen.queryByText(/rojda/)).toBeNull();
   });

@@ -1,7 +1,6 @@
 /**
- * Moderation cases for the admin's tests: a queue row, and a case in full —
- * a reported group message with the chat around it, two reporters (one of
- * them a child), a reported person with an earlier mute, and a picture.
+ * Moderation cases for the tests: a queue row, and a full case (a reported group message with its chat, two reporters
+ * one of them a child, a reported person with an earlier mute, and a picture).
  */
 import type { CaseDetail, CaseQueueItem, CaseReportView, CaseSanctionView, DecideResult } from '@kurda/shared';
 

@@ -89,7 +89,7 @@ describe('reasons', () => {
   it('says a reason that is the viewer’s own to them, with what they can do', () => {
     expect(friendlyReasonKey('unverified', true)).toBe('ranks.friendly.self.unverified');
     expect(friendlyReasonKey('unverified', false)).toBe('ranks.friendly.unverified');
-    // nothing personal about a choice or a lobby of one
+    // Nothing personal about a choice or a lobby of one.
     expect(friendlyReasonKey('chosen', true)).toBe('ranks.friendly.chosen');
   });
 });

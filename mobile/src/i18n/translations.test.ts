@@ -20,11 +20,9 @@ describe('translation catalogs', () => {
   });
 
   /**
-   * The dictionary is mostly imported from Wîkîferheng under CC BY-SA 4.0, and
-   * naming the source and the licence is the condition of using it. The
-   * sentence carries both as placeholders so each language keeps its own word
-   * order; a translation that drops one renders the attribution with a hole in
-   * it, in one language only, which is how a licence gets breached quietly.
+   * The dictionary is mostly from Wîkîferheng under CC BY-SA 4.0, which requires naming the source and the
+   * licence. The sentence carries both as placeholders so each language keeps its word order; a translation
+   * dropping one would silently breach the licence in that language.
    */
   it('keeps the source and the licence in the attribution, in every language', () => {
     for (const locale of LOCALES) {
@@ -38,11 +36,7 @@ describe('translation catalogs', () => {
     for (const locale of LOCALES) expect(LOCALE_LABEL[locale]).toBeTruthy();
   });
 
-  /**
-   * The phone offered eight languages while the browser offered nine, and
-   * nothing noticed, because each kept its own list. There is one list now:
-   * this asserts the phone has not started keeping a second.
-   */
+  /** The phone and the web app share one list of languages; this asserts the phone does not keep a second. */
   it('speaks every language the shared list declares, in its own native name', () => {
     expect([...LOCALES].sort()).toEqual(APP_LOCALES.map((l) => l.code).sort());
     expect(LOCALES).toContain('es');
@@ -50,35 +44,26 @@ describe('translation catalogs', () => {
   });
 
   /**
-   * Onboarding promised "a Kurdish story every day … one a day" and no job
-   * sends a story. What the server does send is a streak reminder, in the
-   * account's language, on a day the streak is still waiting
-   * (api/src/notifications/streak-reminder-service.ts) — so that is all the
-   * slide may say, in any language.
-   *
-   * And it says where the reminder lands: in the notifications inside the
-   * app. That stays true with push: the reminder reaches the phone only once
-   * the phone allows it, which the slide does not ask for (the app asks after
-   * a lesson, or from Settings). Reminders are on by default for adults and
-   * off for minors, so the slide says they can be turned on or off, not only
-   * on — and where: Settings → Notification settings, by the names those two
-   * screens have in each language. It said "in Profile", where there is no
-   * such switch.
+   * The onboarding notification slide may describe only what the server sends: a streak reminder, in the
+   * account's language, on a day the streak is still waiting (api/src/notifications/streak-reminder-service.ts),
+   * delivered to the in-app notifications. Reminders are on by default for adults and off for minors, so the
+   * slide says they can be turned on or off, and where: Settings → Notification settings, by those screens' names
+   * in each language.
    */
   it('promises no daily story in the notifications slide', () => {
     expect(TRANSLATIONS.en['onboarding.notify.title']).not.toMatch(/story/i);
-    expect(TRANSLATIONS.en['onboarding.notify.body']).toMatch(/streak/i);
+    // The slide says once, in Hevalo's bubble, what a reminder is.
+    expect(TRANSLATIONS.en['guide.intro.notify.says']).toMatch(/streak/i);
     for (const locale of LOCALES) {
-      const slide = `${TRANSLATIONS[locale]['onboarding.notify.title']} ${TRANSLATIONS[locale]['onboarding.notify.body']}`;
+      const slide = `${TRANSLATIONS[locale]['onboarding.notify.title']} ${TRANSLATIONS[locale]['guide.intro.notify.says']}`;
       expect(slide, locale).not.toMatch(/story|çîrok|Geschichte|relato|öykü|قصة|récit|verhaal|چیرۆک/i);
     }
   });
 
-  it('says the streak reminder is left in the app’s notifications, and can be turned on or off', () => {
-    expect(TRANSLATIONS.en['onboarding.notify.body']).toMatch(/leaves you a reminder in your notifications/i);
-    expect(TRANSLATIONS.en['onboarding.notify.body']).not.toMatch(/can remind you/i);
+  it('says the streak reminder is a note left only if wanted, turned on or off in the notifications’ own settings', () => {
+    expect(TRANSLATIONS.en['guide.intro.notify.says']).toMatch(/only if you want/i);
     expect(TRANSLATIONS.en['onboarding.notify.later']).toMatch(/on or off/i);
-    // every language names the place, in the word its Notifications screen uses
+    // Every language names the place, in the word its Notifications screen uses.
     const place: Record<(typeof LOCALES)[number], string> = {
       en: 'notifications',
       ku: 'agahdari',
@@ -92,7 +77,7 @@ describe('translation catalogs', () => {
     };
     for (const locale of LOCALES) {
       expect(TRANSLATIONS[locale]['notifications.title'], locale).toMatch(new RegExp(place[locale].slice(0, 5), 'i'));
-      expect(TRANSLATIONS[locale]['onboarding.notify.body'], locale).toContain(place[locale]);
+      expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toMatch(new RegExp(place[locale].slice(0, 5), 'i'));
       expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toContain(TRANSLATIONS[locale]['settings.title']);
       expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toContain(TRANSLATIONS[locale]['settings.notifications']);
     }
@@ -103,7 +88,7 @@ describe('translation catalogs', () => {
       const c = TRANSLATIONS[locale];
       expect(c['rankings.board.zer'], locale).toBe('Zêr');
       expect(c['rankings.board.zerBlurb'], locale).toContain('Zêr');
-      // the shop says where gems come from in the same word the board ranks them by
+      // The shop says where gems come from in the same word the board ranks them by.
       expect(c['shop.earnMoreGems'].toLocaleLowerCase(locale), locale).toContain(c['rankings.board.gewher'].toLocaleLowerCase(locale));
     }
     expect(TRANSLATIONS.ku['rankings.board.gewher']).toBe('Gewher');
@@ -111,11 +96,9 @@ describe('translation catalogs', () => {
   });
 
   /**
-   * A level is shown by a plain name wherever it appears (`levelNameKey`):
-   * five different names, each with a line saying what reading at it is like,
-   * and never the bare CEFR letter. The website's catalogue is held to the
-   * same names, so the two apps read as one ladder — the fourth level was
-   * spelled two ways in Kurmancî before.
+   * A level is always shown by its plain name (`levelNameKey`), five distinct names each with a line on what
+   * reading at it is like, never the bare CEFR letter. The web catalogue uses the same names, so both apps show
+   * one ladder.
    */
   it('names the five levels plainly, each differently, and never by a CEFR letter', () => {
     for (const locale of LOCALES) {
@@ -131,10 +114,8 @@ describe('translation catalogs', () => {
 });
 
 /**
- * A game has one name, and it is Kurmancî (shared: games/names.ts): "Peyvok"
- * was never translated, and neither is "Xapînok". Every language shows that
- * name and says what it means beside it; the Soranî interface, which is
- * Kurdish already, names the games in its own variety.
+ * A game has one name, in Kurmancî (shared games/names.ts): "Peyvok" and "Xapînok" are never translated. Every
+ * language shows the name with its meaning beside it; the Soranî interface names the games in its own variety.
  */
 describe('the games’ names', () => {
   const NAME_KEY = {
@@ -180,15 +161,10 @@ describe('the games’ names', () => {
 });
 
 /*
- * The words round the phone's own questions: whether Hevalo may notify, and
- * whether it may use the microphone.
- *
- * To allow or not is the phone's question and the phone's word. A screen of
- * the app's own that says "Allow" before that question is read at review as
- * steering the answer, and a line after a refusal that tells somebody to
- * allow is the same push made a second time. So the app says where things
- * stand and where that is changed, and what can be done instead, in every
- * language. And what it says Hevalo sends is what the server sends.
+ * The text around the phone's own permission questions (notifications, microphone). Allowing is the system
+ * prompt's choice: an app screen saying "Allow" before it is read at review as steering the answer, and a
+ * post-refusal line telling people to allow is the same pressure again. So the app says where things stand, where
+ * to change them and what else can be done, in every language, and describes only what the server actually sends.
  */
 describe('the words round the phone’s own questions', () => {
   /** "Allow", in the stem each language's own prompt and the app's older lines used. */
@@ -222,23 +198,21 @@ describe('the words round the phone’s own questions', () => {
   });
 
   /*
-   * What is pushed to a phone (api notifications/streak-reminder-service.ts,
-   * letters/service.ts, badges/service.ts): a reminder on a day the streak is
-   * still waiting, a letter, a badge. A message, a gift and an invite to play
-   * are written to the list inside the app and never pushed, so the screen
-   * before the question may not name them.
+   * What is pushed to a phone (api notifications/streak-reminder-service.ts, letters/service.ts,
+   * badges/service.ts): a streak reminder, a letter, a badge. Messages, gifts and game invites go only to the
+   * in-app list, so the pre-prompt screen may not name them.
    */
   it('say what Hevalo sends before the phone asks, and nothing the server does not push', () => {
     const body = TRANSLATIONS.en['lesson.reminder.body'];
     for (const sent of [/reminder/i, /streak/i, /letter/i, /badge/i]) expect(body).toMatch(sent);
     expect(body).not.toMatch(/message|gift|invit|story|offer|news/i);
-    // no reward for saying yes, and no pointing at the question's buttons
+    // No reward for saying yes, and no pointing at the question's buttons.
     for (const key of BEFORE) expect(TRANSLATIONS.en[key], key).not.toMatch(/tap|press|choose|free|bonus|xp|gem|unlock|don’t miss|never miss/i);
   });
 
   it('say, before the phone asks, that it can be changed in Settings, by the name Settings has in each language', () => {
     for (const locale of LOCALES) {
-      // the stem, since Kurmancî and Turkish put an ending on the word
+      // The stem, since Kurmancî and Turkish put an ending on the word.
       const settings = TRANSLATIONS[locale]['settings.title'].slice(0, 6);
       expect(TRANSLATIONS[locale]['lesson.reminder.note'], locale).toContain(settings);
     }

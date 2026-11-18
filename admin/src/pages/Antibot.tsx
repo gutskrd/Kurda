@@ -16,12 +16,7 @@ function short(id: string): string {
   return id.slice(0, 8);
 }
 
-/**
- * Behavioural bot detection (KUR-110): flagged accounts, confirmed as bots or
- * cleared. On the kit, like the pages around it: a flag is a card on a phone,
- * and confirming one asks in the admin's own dialog rather than the browser's,
- * which some phones block outright.
- */
+/** Behavioural bot detection: flagged accounts, confirmed as bots or cleared. */
 export function Antibot(): React.JSX.Element {
   const toast = useToast();
   const dialogs = useDialogs();

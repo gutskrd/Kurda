@@ -45,6 +45,7 @@ import { leftResults, reportGameFinished, useRatingBoxInset } from '../feedback/
 import { applyTypingChange, typeKey } from './input';
 import { RaceText } from './RaceText';
 import { finishRace, startRace, type RaceGame, type RaceResult } from './raceApi';
+import { dialectNameKey } from '../i18n/dialectName';
 
 const LENGTHS: readonly RaceLength[] = [1, 2, 3];
 
@@ -55,10 +56,6 @@ const LENGTH_KEY: Record<RaceLength, TranslationKey> = {
 };
 
 const DIALECTS: readonly TypingDialect[] = ['kurmanci', 'sorani'];
-const DIALECT_KEY: Record<TypingDialect, TranslationKey> = {
-  kurmanci: 'games.race.kurmanci',
-  sorani: 'games.race.sorani',
-};
 
 /** How often the on-screen clock ticks. The score is timed server-side. */
 const TICK_MS = 100;
@@ -67,25 +64,17 @@ const TICK_MS = 100;
 const API_MAX_TYPED = 4000;
 
 /**
- * Typing Race (KUR-307) on the phone: type a Kurdish text against the clock.
+ * Typing Race: type a Kurdish text against the clock. A solo time trial with no lobby or invite. The server
+ * measures speed from when it handed the text over, so the on-screen timer is never sent. It earns no XP; the
+ * result shows speed, accuracy and time, with one line on where XP comes from.
  *
- * The one game of the four with no lobby and no invite — it is a solo time
- * trial. Speed is the server's to decide (it timed the handover), so the timer
- * here is for the racer and is never sent. Raced alone, it earns no XP: the
- * result is its speed, its accuracy and its time, with one quiet line saying
- * where XP does come from.
+ * The text is drawn word by word and coloured as you type, under an invisible field the keyboard types into. The
+ * field's cursor is pinned to the end and every change is read as a keystroke at the end (input.ts), so taps, the
+ * iPhone's space-bar trackpad or a long press cannot insert a letter mid-text. It has no menu, autocorrect,
+ * suggestions or paste.
  *
- * What you read and what takes the keys are two things: the text, drawn word
- * by word and coloured as you go, and an invisible field over it that the
- * phone's keyboard types into. The field's cursor is pinned to the end and
- * every change to it is read as a keystroke at the end (input.ts), so a tap on
- * the text, the iPhone's space-bar trackpad or a long press can no longer put
- * a letter in the middle and turn the rest of the race red. It has no menu, no
- * autocorrect, no suggestions to accept and no paste.
- *
- * Typing is compared word by word with `@kurda/shared` compareTyping — one
- * missed letter costs that letter, not everything after it — in the accent
- * mode the racer chose, which the server stores with the race.
+ * Typing is compared word by word with `@kurda/shared` compareTyping, so a missed letter costs only that letter,
+ * in the accent mode the racer chose, which the server stores with the race.
  */
 export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -93,7 +82,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const { t, locale } = useI18n();
   const reduceMotion = useReducedMotion();
   const [prefs, setPrefs, prefsReady] = useKeyboardPrefs();
-  // room under the results for the rating box, so Race again and the keyboard nudge scroll clear of it
+  // Room under the results for the rating box, so Race again and the keyboard nudge scroll clear of it.
   const boxInset = useRatingBoxInset();
 
   const [game, setGame] = useState<RaceGame | null>(null);
@@ -104,7 +93,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const [notice, setNotice] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [finishing, setFinishing] = useState(false);
-  // the server says this race is already over: it cannot be finished again, only raced anew
+  // The server says this race is already over: it cannot be finished again, only raced anew.
   const [over, setOver] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -113,12 +102,12 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const inputRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
   const typeAreaY = useRef(0);
-  // a finish already on its way: auto-finish and "Give up" must not both send one
+  // A finish already on its way: auto-finish and "Give up" must not both send one.
   const finishingRef = useRef(false);
-  // set when the guide was opened by "Start", so closing it starts the race
+  // Set when "Start" opened the guide, so closing it starts the race.
   const startAfterGuide = useRef(false);
 
-  // the variety to race in: the last one chosen here, else the one the app is read in
+  // The variety to race in: the last one chosen here, else the one the app is read in.
   const dialect: TypingDialect = prefs.raceDialect ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
   const raceDialect = game?.dialect ?? dialect;
   const shown = useMemo(
@@ -141,8 +130,8 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
   const start = useCallback(async () => {
     if (starting) return;
-    // the first Kurmancî race on this phone begins with the keyboard guide —
-    // before the clock, which starts when the server hands the text over
+    // The first Kurmancî race on this device starts with the keyboard guide, before the clock (which starts when
+    // the server hands over the text).
     if (dialect === 'kurmanci' && prefsReady && !prefs.guideShown) {
       setPrefs({ guideShown: true });
       startAfterGuide.current = true;
@@ -153,10 +142,9 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     setStarting(true);
     setError(null);
     setNotice(null);
-    // the rating box belonged to the results this replaces
+    // The rating box belonged to the results this replaces.
     leftResults();
-    // everything from the race before goes first, so nothing typed while the
-    // next text loads lands in it, and its clock does not carry on (R7)
+    // Clear the previous race first, so nothing typed while the next text loads lands in it and its clock stops.
     setGame(null);
     setResult(null);
     setOver(false);
@@ -164,8 +152,8 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     setElapsed(0);
     startedAt.current = null;
     finishingRef.current = false;
-    // The mode as it is now, not as this render saw it: "Make accents
-    // forgiving" in the guide changes it and starts the race in one tap.
+    // The current mode, not this render's: "Make accents forgiving" in the guide changes it and starts the race
+    // in one tap.
     const res = await startRace(client, { length, dialect, accentMode: keyboardPrefs.current.accentMode });
     setStarting(false);
     if (res.ok) {
@@ -177,17 +165,14 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   }, [starting, dialect, prefsReady, prefs.guideShown, setPrefs, client, length, t]);
 
   /*
-   * Typing begins the moment the text appears, and the clock is already
-   * running — so the field takes focus as soon as it exists. On a phone this
-   * is also what opens the keyboard. It takes it back when a finish that
-   * failed lets the racer type again (the field was closed while it was sent).
+   * The clock is running when the text appears, so the field takes focus as soon as it exists, which also opens
+   * the keyboard; it refocuses when a failed finish lets the racer type again.
    */
   useEffect(() => {
     if (game && !result && !finishing) inputRef.current?.focus();
   }, [game, result, finishing]);
 
-  // A sheet over the race took the keyboard away while the clock runs: give it
-  // back as the sheet goes, once it has finished leaving.
+  // A sheet over the race took the keyboard while the clock runs: give it back once the sheet has finished leaving.
   const racing = !!game && !result;
   const refocus = () => {
     if (racing) setTimeout(() => inputRef.current?.focus(), 350);
@@ -201,7 +186,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     } else refocus();
   };
 
-  // a running clock, for the racer; the score is timed server-side
+  // A running clock, for the racer; the score is timed server-side.
   useEffect(() => {
     if (!game || result) return;
     const timer = setInterval(() => {
@@ -226,8 +211,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
           gaveUp: gaveUp || res.data.implausible,
         });
       } else {
-        // shown in the race itself, where the racer is looking, and the race
-        // can be finished again (R2)
+        // Shown in the race itself, where the racer is looking, and the race can be finished again.
         finishingRef.current = false;
         if (res.error.code === 'ALREADY_FINISHED') setOver(true);
         setError(
@@ -238,9 +222,8 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     [client, game, typed, result, t],
   );
 
-  // reaching the end ends the race; nobody should have to notice they are done
-  // and then reach for a button. Not while an accent is still being composed,
-  // and a last letter that a backtick may still accent waits a moment for it.
+  // Reaching the end finishes the race without a button. Not while an accent is being composed, and a last letter
+  // a backtick may still accent waits a moment.
   useEffect(() => {
     if (!game || result || !comparison) return;
     if (comparison.done) {
@@ -260,7 +243,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     setTyped(change.typed);
   };
 
-  // the cursor goes back to the end whenever anything moves it
+  // The cursor goes back to the end whenever anything moves it.
   const onSelectionChange = (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
     const { start: s, end } = e.nativeEvent.selection;
     if (s !== typed.length || end !== typed.length) inputRef.current?.setSelection?.(typed.length, typed.length);
@@ -272,7 +255,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     inputRef.current?.focus();
   };
 
-  // keep the line being typed in sight above the keyboard
+  // Keep the line being typed in sight above the keyboard.
   const onCaretLine = useCallback(
     (y: number) => {
       scrollRef.current?.scrollTo({ y: Math.max(0, typeAreaY.current + y - 48), animated: !reduceMotion });
@@ -295,13 +278,13 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
         {!game ? (
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            {/* the night every game opens on: the emblem acting the race out, and what the race is */}
+            {/* The night every game opens on: the emblem acting the race out, and what the race is. */}
             <Cloth style={styles.stage}>
               <GameArt game="race" size={132} moving />
               <Text style={styles.stageLine}>{t('games.race.intro')}</Text>
             </Cloth>
             <GlassCard>
-              {/* the card's style dresses its outside; what is in it is laid out here */}
+              {/* The card's style dresses its outside; what is in it is laid out here. */}
               <View style={styles.card}>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.textIn')}</Text>
                 <View style={styles.full}>
@@ -309,7 +292,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                     options={DIALECTS}
                     value={dialect}
                     onChange={(d) => setPrefs({ raceDialect: d })}
-                    labelOf={(d) => t(DIALECT_KEY[d])}
+                    labelOf={(d) => t(dialectNameKey(d))}
                   />
                 </View>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.length')}</Text>
@@ -330,7 +313,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               </View>
             </GlassCard>
             <GlassCard padding="tight">
-              {/* the accent mode under the name, not beside it: side by side, a phone cut both short */}
+              {/* The accent mode under the name, not beside it: side by side, a phone cut both short. */}
               <GlassRow
                 icon="keyboard"
                 title={t('keyboard.settings.title')}
@@ -361,7 +344,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              {/* the way back to typing when the keyboard went away — by touch and by a screen reader */}
+              {/* The way back to typing when the keyboard went away — by touch and by a screen reader. */}
               <Pressable
                 onPress={() => inputRef.current?.focus()}
                 onLayout={(e) => {
@@ -382,11 +365,8 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                 />
 
                 {/*
-                  The field is here, invisible, on purpose: the keyboard types
-                  into it, the words above are what you read. It takes no touches
-                  (the area does, and focuses it), so a tap cannot put its cursor
-                  anywhere; the cursor is pinned to the end besides, for the
-                  gestures that move it without a tap.
+                  The invisible field the keyboard types into. It takes no touches (the area does, and focuses
+                  it), and its cursor is pinned to the end for gestures that move it without a tap.
                 */}
                 <TextInput
                   ref={inputRef}
@@ -430,8 +410,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                   style={styles.stretch}
                 />
               ) : !result && comparison?.done ? (
-                // The text is all typed: scoring it, or — when that failed —
-                // trying again. Never "Give up" for a race that was finished.
+                // The text is all typed: scoring it, or retrying when that failed. Never "Give up" for a finished race.
                 <ClayButton
                   label={error ? t('common.retry') : t('games.race.scoring')}
                   tone="primary"
@@ -502,10 +481,10 @@ function Result({
   return (
     <>
       <GlassCard>
-        {/* the card's style dresses its outside; what is in it is laid out here */}
+        {/* The card's style dresses its outside; what is in it is laid out here. */}
         <View style={styles.card}>
           <Text
-            // the result's heading in the page's ink: violet is for what can be pressed, and this is the race's outcome
+            // The result heading uses the page's ink: violet is for what can be pressed.
             style={[styles.verdict, { color: result.implausible ? colors.danger : colors.textPrimary }]}
             accessibilityRole="header"
             accessibilityLiveRegion="polite"
@@ -516,11 +495,7 @@ function Result({
                 ? t('games.race.perfect')
                 : t('games.race.finished')}
           </Text>
-          {/*
-            Said out loud rather than shown as a silent zero. Somebody who hits
-            this has almost certainly found a way around the typing box, and a
-            result that just reads 0 looks like a broken game.
-          */}
+          {/* Said out loud rather than a silent zero: whoever hits this has probably bypassed the typing box, and a bare 0 looks broken. */}
           {result.implausible ? (
             <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.refused')}</Text>
           ) : null}
@@ -552,7 +527,7 @@ function Result({
           accessibilityLabel={`${t('games.race.accentNudge')} ${t('games.race.accentNudgeAction')}`}
           style={[styles.nudge, { backgroundColor: colors.glassFill }]}
         >
-          {/* the letters this race's variety is missed on: Kurmancî's ç ê î, Soranî's own letters */}
+          {/* The letters this race's variety is missed on: Kurmancî's ç ê î, Soranî's own letters. */}
           <HevaloDeer size={84} board={{ kind: 'letters', letters: tryLetters(dialect).slice(0, 3).join(' ') }} />
           <View style={styles.nudgeText}>
             <Text style={[styles.nudgeTitle, { color: colors.textPrimary }]}>{t('games.race.accentNudge')}</Text>
@@ -568,7 +543,7 @@ function Figure({ value, label }: { value: string; label: string }): React.JSX.E
   const { colors } = useTheme();
   return (
     <View style={styles.figure}>
-      {/* a figure, not something to press: in the page's ink */}
+      {/* A figure, not something to press: in the page's ink. */}
       <Text style={[styles.figureValue, { color: colors.textPrimary }]}>{value}</Text>
       <Text style={[styles.figureLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
@@ -594,7 +569,7 @@ const styles = StyleSheet.create({
   trackFill: { height: 6, borderRadius: radii.pill },
   textTitle: { fontSize: typography.sizes.sm, maxWidth: 120 },
   typeArea: { borderRadius: radii.md, padding: spacing.md, minHeight: 160 },
-  // full-bleed and invisible: it takes the keystrokes, the text above is read
+  // Full-bleed and invisible: it takes the keystrokes, the text above is read.
   capture: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, color: 'transparent', minHeight: MIN_TOUCH_TARGET },
   captureRtl: { writingDirection: 'rtl' },
   keyBarWrap: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
@@ -608,10 +583,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   bestText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  // three figures, two and one: centred, so the one under the two sits in the middle
+  // Three figures, two and one: centred, so the one under the two sits in the middle.
   figures: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignSelf: 'stretch', rowGap: spacing.md, marginTop: spacing.sm },
-  // two across, not three: "words per minute" is PEYV/XULEK in Kurmancî and
-  // Wörter/Minute in German, and three of those in a phone's width collide
+  // Two across, not three: labels like PEYV/XULEK or Wörter/Minute collide three to a phone's width.
   figure: { width: '50%', alignItems: 'center' },
   figureValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   figureLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },

@@ -1,45 +1,37 @@
 import { isSpeakerId, type RecordingVoice } from '@kurda/shared';
 
 /**
- * What a speaking character reads from the screen's own player, on every
- * frame while the recording plays. An expo-audio player is one as it is; a
- * browser's audio element is one through three getters (lesson/useAudio.ts).
+ * What a speaking character reads from the screen's player every frame while it plays. An expo-audio player is
+ * one as is; a browser audio element through three getters (lesson/useAudio.ts).
  */
 export interface PlaybackClock {
-  /** seconds into the recording */
+  /** Seconds into the recording. */
   readonly currentTime: number;
-  /** the recording's length in seconds: 0 (NaN in a browser) until it is known */
+  /** The recording's length in seconds: 0 (NaN in a browser) until it is known. */
   readonly duration: number;
   readonly playing: boolean;
 }
 
 /**
- * A recording's voice when it names a character this app can draw, else null:
- * a recording without one keeps the screen as it was, and so does one said by
- * somebody a newer server knows and this version of the app does not.
+ * A recording's voice when it names a character this app can draw, else null (no speaker, or one only a newer
+ * server knows), leaving the screen as it was.
  */
 export function knownVoice(voice: RecordingVoice | null | undefined): RecordingVoice | null {
   return voice && isSpeakerId(voice.speaker) ? voice : null;
 }
 
 /**
- * How big a character is drawn where it is not on a stage of its own: as tall
- * as `answer` above a lesson's answer, head to waist; as wide as `row` beside
- * a row's own play button, head and shoulders.
+ * A character's size where it has no stage of its own: `answer` tall above a lesson answer, head to waist; `row`
+ * wide beside a row's play button, head and shoulders.
  */
 export const CHARACTER_SIZE = { answer: 132, row: 72 } as const;
 
 /**
- * How tall a lesson's stage is in a window this tall: the character head to
- * waist, as large as the screen can spare once `reserve` points are left for
- * the rest of the exercise — the prompt, the answer, the Check button — and
- * never shorter than `min`, so every phone shows the same stage and a small
- * phone scrolls a little rather than shrinking the character; nor so large on
- * a tablet that it is all there is. With the keyboard up the stage steps back
- * to `compact`, so the field being typed in stays in view.
- *
- * A stage in a card with more on it than an exercise — a letter, a practice
- * question — is `card` tall on every phone: smaller than a lesson's.
+ * A lesson stage's height in a window of this height: the character head to waist, as large as fits once
+ * `reserve` points are left for the prompt, answer and Check button, never below `min` (a small phone scrolls
+ * rather than shrinking the character) nor so large on a tablet that nothing else fits. With the keyboard up it
+ * drops to `compact` so the field stays visible. A stage in a card with more than an exercise (a letter, a
+ * practice question) is `card` tall on every phone.
  */
 export const STAGE_HEIGHT = { reserve: 500, min: 300, max: 400, compact: 150, card: 260 } as const;
 

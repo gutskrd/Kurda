@@ -1,9 +1,10 @@
 import type pg from 'pg';
 import type { Cache } from '../cache/cache.js';
-import { activeEvents, cacheTtlSeconds, type EventDef } from './window.js';
+import { activeEvents, cacheTtlSeconds, nextBoundary, type EventDef } from './window.js';
 
 const CACHE_DOMAIN = 'events';
-const CACHE_ID = 'active';
+// Renamed whenever the cached shape changes, since old and new servers share Redis during a deploy.
+const CACHE_ID = 'active-next';
 
 interface EventRow {
   id: string;
@@ -17,6 +18,13 @@ interface EventRow {
   quests: unknown[];
   rewards: Record<string, unknown>;
   enabled: boolean;
+}
+
+/** The events live now, and when that set can next change. */
+export interface ActiveEvents {
+  events: EventDef[];
+  /** The soonest start or end still ahead among enabled events (ISO-8601 UTC), or null when none remain. */
+  nextChangeAt: string | null;
 }
 
 export interface UpsertEventInput {
@@ -49,12 +57,9 @@ function toDef(row: EventRow): EventDef {
 }
 
 /**
- * Config-driven events (KUR-089). Definitions are pure data (`upsert`), so
- * launching a holiday needs no deploy. `active` is derived from the window
- * bounds and cached with a TTL that expires exactly at the next boundary, so
- * activation/deactivation happens on time without a per-event scheduled job and
- * the cache invalidates itself. Admin writes also bust the cache immediately so
- * a correction isn't stuck behind the previous TTL.
+ * Config-driven events: definitions are data (`upsert`), so launching a holiday needs no deploy. `active` is
+ * derived from the window bounds and cached until exactly the next boundary, so events switch on and off on time
+ * with no scheduled job; admin writes also clear the cache at once.
  */
 export class EventService {
   constructor(
@@ -101,7 +106,7 @@ export class EventService {
     return (res.rowCount ?? 0) > 0;
   }
 
-  /** One definition by its stable key, or null. Used by quest claims (KUR-091). */
+  /** One definition by its stable key, or null. */
   async byKey(key: string): Promise<EventDef | null> {
     const res = await this.pool.query<EventRow>(`SELECT * FROM events WHERE key = $1`, [key]);
     return res.rows[0] ? toDef(res.rows[0]) : null;
@@ -114,27 +119,26 @@ export class EventService {
   }
 
   /**
-   * Events live right now, highest priority first. Cached until the next
-   * boundary. The TTL is computed from the enabled events whose boundary is
-   * still ahead, so the cache lapses exactly when the set could change.
+   * Events live now, highest priority first, and the next boundary among the enabled events still ahead, which is
+   * exactly when the set could change. Cached until that boundary.
    */
-  async active(now: Date = new Date()): Promise<EventDef[]> {
+  async active(now: Date = new Date()): Promise<ActiveEvents> {
     const nowMs = now.getTime();
-    const cached = await this.cache?.get<EventDef[]>(CACHE_DOMAIN, CACHE_ID);
-    if (cached) return cached;
+    const cached = await this.cache?.get<ActiveEvents>(CACHE_DOMAIN, CACHE_ID);
+    // The cache's TTL jitter can outlast the boundary; an entry from before it is read again.
+    if (cached && (cached.nextChangeAt === null || Date.parse(cached.nextChangeAt) > nowMs)) return cached;
 
-    // Candidates: enabled events whose window hasn't ended and whose boundary
-    // is within the cache horizon — enough to compute both the active set and
-    // when it next changes.
+    // Enabled events whose window has not ended and whose boundary is within the cache horizon: enough for both the
+    // active set and when it next changes.
     const res = await this.pool.query<EventRow>(
       `SELECT * FROM events WHERE enabled = true AND ends_at > $1 ORDER BY priority DESC, starts_at ASC`,
       [now],
     );
     const upcoming = res.rows.map(toDef);
-    const live = activeEvents(upcoming, nowMs);
-    const ttl = cacheTtlSeconds(upcoming, nowMs);
-    await this.cache?.set(CACHE_DOMAIN, CACHE_ID, live, ttl);
-    return live;
+    const boundary = nextBoundary(upcoming, nowMs);
+    const active = { events: activeEvents(upcoming, nowMs), nextChangeAt: boundary === null ? null : new Date(boundary).toISOString() };
+    await this.cache?.set(CACHE_DOMAIN, CACHE_ID, active, cacheTtlSeconds(upcoming, nowMs));
+    return active;
   }
 
   private async invalidate(): Promise<void> {

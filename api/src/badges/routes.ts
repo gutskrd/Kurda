@@ -14,19 +14,17 @@ const adminBody = z.object({
 });
 
 /**
- * Badges (contract 4 §B): the learner's badge page, the unlocks still to
- * celebrate, the three on their profile; and the admin's catalogue, a
- * learner's badges, award/revoke with a reason, and rarity. Shapes are
- * @kurda/shared's `BadgesResponse`, `UnseenBadge` and `ShowcaseBadge`.
+ * Badge routes: the learner's badge page, unlocks still to celebrate and profile showcase, and the admin's
+ * catalogue, award and revoke with a reason, and rarity. Shapes come from @kurda/shared.
  */
 export function registerBadgeRoutes(app: FastifyInstance, badges: BadgeService): void {
   /** Every badge with the caller's tier and progress, secrets as "???", rarity once there are enough people. */
   app.get('/me/badges', { preHandler: requireAuth }, async (req) => badges.list(req.user!.id));
 
-  /** Unlocks not yet celebrated (for an app that was closed when `badge_unlocked` was sent). */
+  /** Unlocks not yet celebrated, for an app that was closed when `badge_unlocked` was sent. */
   app.get('/me/badges/unseen', { preHandler: requireAuth }, async (req) => ({ unseen: await badges.unseen(req.user!.id) }));
 
-  /** The celebration was shown: these badges' (or every) unlocks are seen. */
+  /** Marks these badges' unlocks, or all of them, as seen. */
   app.post('/me/badges/seen', { schema: { body: seenBody }, preHandler: requireAuth }, async (req) => {
     await badges.markSeen(req.user!.id, (req.body as z.infer<typeof seenBody>)?.keys);
     return { seen: true };
@@ -40,7 +38,7 @@ export function registerBadgeRoutes(app: FastifyInstance, badges: BadgeService):
   /** Admin: the catalogue, holders per tier, and the rarity last computed. */
   app.get('/admin/badges', { preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () => badges.adminCatalogue());
 
-  /** Admin: compute rarity now (it also runs nightly). */
+  /** Admin: compute rarity now; it also runs nightly. */
   app.post('/admin/badges/rarity', { config: { skipValidation: true }, preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () =>
     badges.computeRarity(),
   );
@@ -52,10 +50,7 @@ export function registerBadgeRoutes(app: FastifyInstance, badges: BadgeService):
     async (req) => badges.adminUser((req.params as { id: string }).id),
   );
 
-  /**
-   * Admin: award a badge up to a tier, or revoke it down to one, with a reason
-   * (kept with the action; the audit log records the request as well).
-   */
+  /** Admin: award a badge up to a tier, or revoke it down to one, with a reason. */
   app.post(
     '/admin/users/:id/badges/:key',
     {

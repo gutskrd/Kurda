@@ -1,6 +1,5 @@
 /**
- * Reading stories — open to everyone, signed in or not (playing a quiz on one
- * needs an account; reading does not).
+ * Reading stories: open to everyone, signed in or not (playing a quiz needs an account; reading does not).
  *
  *   GET /stories/library?dialect          the library's front page: featured, the legends, recent, categories, and the caller's
  *                                         own rows; with a dialect, that variety's page alone (kurmanci or sorani), its legends on
@@ -14,19 +13,15 @@
  *   PUT /stories/:id/progress             where the caller is in the story (signed in)
  *   GET /me/stories                       the caller's shelves: continue, bookmarks, finished (signed in)
  *
- * None of these ever carries a story's questions. A story that is not
- * published — a draft, one in review, one a reviewer pulled or never approved
- * — is 404 here, the same as one that never existed.
+ * None of these carries a story's questions. An unpublished story (draft, in review, pulled or unapproved) is 404, like
+ * one that never existed.
  *
- * The public reads take an optional bearer: the auth hook sets `req.user`
- * when one is sent, and these routes add the caller's own record (`me`) to
- * what everyone sees. Lists and the library are cached on the server
- * (StoriesService) but not at the edge: an unpublished story must leave the
- * app at once, and an edge copy could not be told so.
+ * Public reads take an optional bearer: when sent, these routes add the caller's own record (`me`). Lists and the
+ * library are cached on the server (StoriesService) but not at the edge, since an unpublished story must leave the app
+ * at once.
  *
- * Progress writes are capped at sixty a minute per account: the clients
- * write once every ten seconds and on leaving, so a well-behaved reader never
- * comes near it, and a loop in a client cannot fill the table.
+ * Progress writes are capped at sixty a minute per account; clients write every ten seconds and on leaving, so only a
+ * looping client hits it.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';

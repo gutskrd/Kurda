@@ -28,10 +28,8 @@ export interface ReportRow {
 }
 
 /**
- * Chat moderation (KUR-086): profanity masking on delivery, message reporting
- * with captured context, and repeat-offender auto-mute escalation. The mute is
- * global (enforced by the DM + group chat send paths) so an escalating offender
- * is quieted everywhere.
+ * Chat moderation: profanity masking on delivery, message reporting with captured context, and repeat-offender
+ * auto-mute escalation. The mute is global (enforced by the DM and group send paths).
  */
 export class ModerationService {
   private readonly reports: ReportsService;
@@ -85,11 +83,9 @@ export class ModerationService {
   }
 
   /**
-   * Report a message. Written through the one report service every surface
-   * uses (reports-service.ts): only a participant can report it, the message is
-   * snapshotted with the ten before and five after it — with usernames, not just
-   * ids — and the report joins its case at once. `chat_reports` keeps its
-   * history and takes no new rows. Returns the new report's id.
+   * Report a message through the single report service (reports-service.ts): only a participant may report it, the
+   * message is snapshotted with the ten before and five after it (with usernames), and the report joins its case at
+   * once. `chat_reports` keeps its history and takes no new rows. Returns the new report's id.
    */
   async report(reporterId: string, messageType: MessageType, messageId: string, reason?: string): Promise<{ id: string }> {
     try {
@@ -107,9 +103,8 @@ export class ModerationService {
   }
 
   /**
-   * Open reports from the old table, oldest first (the old admin feed; new
-   * reports are cases). A moderator is not shown the ones about themselves:
-   * they name the reporter, as the case view does.
+   * Open reports from the old table, oldest first (the old admin feed; new reports are cases). A moderator is not shown
+   * reports about themselves, since they name the reporter.
    */
   async pendingReports(viewerId: string | null = null): Promise<ReportRow[]> {
     const rows = await this.pool.query<{

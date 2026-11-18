@@ -52,15 +52,12 @@ describe('Profile view (full, read-only)', () => {
     const edit = screen.getByRole('link', { name: /edit profile/i });
     expect(edit).toHaveAttribute('href', '/app/profile/edit');
 
-    // the edit form / avatar picker are NOT on the view
+    // The edit form / avatar picker are NOT on the view.
     expect(screen.queryByLabelText('Display name')).not.toBeInTheDocument();
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
   });
 
-  /**
-   * The streak is the one number a missed day takes to zero. Beside it, the
-   * two that a missed day never takes away, and the freezes learning earns.
-   */
+  // Beside the current streak, the two numbers a missed day never takes away, and the freezes.
   it('shows the longest streak and the days learned beside the current streak', async () => {
     vi.stubGlobal(
       'fetch',
@@ -87,11 +84,7 @@ describe('Profile view (full, read-only)', () => {
     expect(screen.getByText(en['profile.freezeHint'].replace('{count}', '5'))).toBeInTheDocument();
   });
 
-  /**
-   * The numbers about you used to be a card in a side column, which a phone
-   * has no room for: it fell to the bottom of the page, under every post. They
-   * are in the card with your name now, ahead of everything else in the page.
-   */
+  // The numbers sit in the card with your name, ahead of the activity, in one column on any screen.
   it('keeps the numbers with the name, ahead of the activity, in one column', async () => {
     vi.stubGlobal(
       'fetch',
@@ -110,14 +103,14 @@ describe('Profile view (full, read-only)', () => {
     const card = document.querySelector<HTMLElement>('.pc')!;
     const strip = card.querySelector<HTMLElement>('.mkp-facts')!;
     expect(within(strip).getAllByRole('listitem').map((li) => li.querySelector('.mkp-fact-label')?.textContent)).toEqual(['Streak', 'XP', 'Friends', 'Badges']);
-    // a number with a page of its own is the way into it; the others are only numbers
+    // A number with a page of its own is the way into it; the others are only numbers.
     expect(within(strip).getByRole('link', { name: /Friends/ })).toHaveAttribute('href', '/app/friends');
     expect(within(strip).getByRole('link', { name: /Badges/ })).toHaveAttribute('href', '/app/badges');
     expect(within(strip).queryByRole('link', { name: /XP/ })).toBeNull();
-    // read aloud, a streak is days
+    // Read aloud, a streak is days.
     expect(within(strip).getByText('5 days')).toHaveClass('sr-only');
 
-    // nothing is put beside the page any more, and the activity is the last thing in it
+    // Nothing is put beside the page any more, and the activity is the last thing in it.
     expect(document.querySelector('aside')).toBeNull();
     const tabs = await screen.findByRole('tablist');
     expect(card.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -178,7 +171,7 @@ describe('Profile view (full, read-only)', () => {
     expect(avatar?.src).toBe('https://cdn.test/a.png');
     expect(screen.getByText('Hevalo+')).toBeInTheDocument();
     expect(screen.getByText('River Song')).toBeInTheDocument();
-    // the level badge on the card says 3
+    // The level badge on the card says 3.
     expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 3');
   });
 
@@ -196,21 +189,21 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Ada Lovelace' })).toBeInTheDocument();
-    // the two things done to the page itself, and nothing else, in the row of actions
+    // The two things done to the page itself, and nothing else, in the row of actions.
     const actions = document.querySelector<HTMLElement>('.pc-aside .pc-acts')!;
     expect(within(actions).getByRole('link', { name: /edit profile/i })).toHaveAttribute('href', '/app/profile/edit');
     expect(within(actions).getByRole('button', { name: /share profile/i })).toBeInTheDocument();
     expect(within(actions).getAllByRole('button')).toHaveLength(1);
 
-    // the button says what it holds, in the items’ own words, rather than “Menu”
+    // The button says what it holds, in the items’ own words, rather than “Menu”.
     const menu = screen.getByRole('button', { name: 'Shop, Saved, Friends, Badges, Rankings, Settings' });
-    // and it is where the menu of a profile is looked for: the far corner of the banner
+    // And it is where the menu of a profile is looked for: the far corner of the banner.
     expect(document.querySelector('.pc-corner')).toContainElement(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'true');
     const list = document.querySelector<HTMLElement>('.profile-menu-list')!;
-    // six, and no more: reports and standing are in Settings, which is the last of these
+    // Six, and no more: reports and standing are in Settings, which is the last of these.
     expect(within(list).getAllByRole('link').map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
       ['Shop', '/app/shop'],
       ['Saved', '/app/saved'],
@@ -224,12 +217,7 @@ describe('Profile view (full, read-only)', () => {
     expect(menu).toHaveFocus();
   });
 
-  /**
-   * A profile is the most public thing an account has. Who can open it is
-   * said on the page itself, in the words Settings says it in, and it is one
-   * press from where it is changed; nobody has to go looking to learn who is
-   * reading theirs.
-   */
+  // Who can open your profile is said on it, in Settings' words, one press from changing it.
   it('says who can see your profile, with the way to change it, and the year you joined', async () => {
     vi.stubGlobal(
       'fetch',
@@ -264,7 +252,7 @@ describe('Profile view (full, read-only)', () => {
 
     const horizon = document.querySelector('.pc-banner .pc-horizon');
     expect(horizon?.querySelector('svg')).not.toBeNull();
-    // it is decoration: the page is about the person, not their weather
+    // It is decoration: the page is about the person, not their weather.
     expect(horizon).toHaveAttribute('aria-hidden', 'true');
     expect(document.querySelector('.pc-banner .pcard-bg-media')).toBeNull();
   });

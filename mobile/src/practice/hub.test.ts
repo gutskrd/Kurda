@@ -24,7 +24,7 @@ describe('the card at the top of the practice hub', () => {
     expect(heroOf(empty)).toEqual({ kind: 'none' });
   });
 
-  // half of a fresh lesson's 10–20, as the server pays a practice session
+  // Half of a fresh lesson's 10–20, as the server pays a practice session.
   it('promises a session half of what a fresh lesson pays', () => {
     expect(practiceXpRange()).toEqual({ min: 5, max: 10 });
   });
@@ -43,9 +43,8 @@ describe('the rows of the practice hub', () => {
   });
 
   /*
-   * Build a Sentence and Hear It, Find It were games once; they are
-   * practice. Each has a row beside the kind it is nearest to, only while it
-   * can be done, and its row opens its own screen rather than a session.
+   * Build a Sentence and Hear It, Find It each have a row beside their nearest kind only while available, and
+   * open their own screen rather than a session.
    */
   it('puts each exercise that can be done beside the kind it is nearest to', () => {
     const games = (ids: string[]) => exercisesOf({ dialect: 'kmr', games: ids.map((id) => ({ id, available: true, difficulties: ['beginner'] })) } as never);
@@ -53,9 +52,9 @@ describe('the rows of the practice hub', () => {
     expect(both.map((r) => r.key)).toEqual(['mistakes', 'words', 'sentence', 'listen', 'hear', 'speak', 'unit']);
     expect(both.find((r) => r.key === 'sentence')).toMatchObject({ title: 'games.sentence.name', detail: { key: 'learn.tools.sentenceHint' }, action: { kind: 'open', route: 'BuildSentence' } });
     expect(both.find((r) => r.key === 'hear')).toMatchObject({ title: 'games.hear.name', detail: { key: 'learn.tools.hearHint' }, action: { kind: 'open', route: 'HearIt' } });
-    // one that is short of content is not there at all, and nothing else moves
+    // One that is short of content is not there at all, and nothing else moves.
     expect(hubRows(empty, { micRefused: false, exercises: games(['hear-it']) }).map((r) => r.key)).toEqual(['mistakes', 'words', 'listen', 'hear', 'speak', 'unit']);
-    // an exercise does not wear the glyph of the kind beside it
+    // An exercise does not wear the glyph of the kind beside it.
     expect(both.find((r) => r.key === 'hear')!.icon).not.toBe(both.find((r) => r.key === 'listen')!.icon);
   });
 

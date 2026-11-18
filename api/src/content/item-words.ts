@@ -5,17 +5,12 @@ import type { ExerciseType } from './repository.js';
 /**
  * An exercise's texts as words, and which language each text is in.
  *
- * A word bank fills up with words from the session's other items, and they
- * have to be in the answer's language: an English tile among Kurdish ones
- * gives itself away. A prompt's words are looked up in the course's own pairs
- * and in the dictionary by the language they are in. No payload says which
- * language a text is in, so it is read off what there is. A course written in
- * Arabic script (Soranî) tells by script. One written in Latin script
- * (Kurmancî) tells by where a text sits in its payload — a match card is
- * Kurdish and its partner the meaning, a listening clip says Kurdish, a
- * translation's answer is the Kurdish unless its `say` names other Kurdish (the
- * audio studio's rule, `primaryAudioTarget`) — and a question, which may mix
- * the two, by the words in it (`leaning`).
+ * Word-bank tiles drawn from the session's other items must be in the answer's language (an English tile among Kurdish
+ * ones gives itself away), and prompt words are looked up by their language. Payloads do not record language, so it is
+ * inferred. Arabic-script courses (Soranî) tell by script. Latin-script courses (Kurmancî) tell by position in the
+ * payload: a match card is Kurdish and its partner the meaning, a listening clip is Kurdish, a translation's answer is
+ * Kurdish unless its `say` names other Kurdish (the audio studio's rule, `primaryAudioTarget`), and a question, which
+ * may mix the two, by its words (`leaning`).
  */
 
 /** An exercise of a session, as what it delivers beside its payload is worked out from. */
@@ -61,11 +56,9 @@ export function foldedKey(word: string): string {
 const LATIN_LETTER = /[A-Za-zÀ-ÖØ-öø-ɏ]/;
 
 /**
- * The language a text is in, given the one its place in the payload says
- * (`role`, null when its place does not say). In an Arabic-script course its
- * script decides and has to agree with `role`; a text in both scripts, or with
- * no letters, is in neither. In a Latin-script course `role` decides, and a
- * text in Arabic script is in neither.
+ * The language of a text given what its payload position says (`role`, null when it says nothing). In an Arabic-script
+ * course the script decides and must agree with `role`; mixed-script or letterless text is in neither. In a
+ * Latin-script course `role` decides, and Arabic-script text is in neither.
  */
 export function langOf(text: string, role: Lang | null, dialect: string | null | undefined): Lang | null {
   const arabic = isArabicScript(text);
@@ -97,10 +90,8 @@ export interface Lexicon {
 const NO_LEXICON: Lexicon = { ku: new Set(), meaning: new Set() };
 
 /**
- * Which way a Latin-script text's words lean: Kurdish when more of them look
- * Kurdish (ê î û ç ş, a short Kurmancî word, a word the session places as
- * Kurdish) than look English, the meaning the other way round, null when as
- * many do.
+ * Which way a Latin-script text's words lean: Kurdish when more look Kurdish (ê î û ç ş, a short Kurmancî word, a word
+ * the session places as Kurdish) than English, the meaning when the reverse, null when even.
  */
 export function leaning(words: readonly string[], lexicon: Lexicon = NO_LEXICON): Lang | null {
   let ku = 0;
@@ -158,11 +149,9 @@ function field(value: unknown, name: string): string | null {
 }
 
 /**
- * The language a translation is answered in. In a Latin-script course the
- * answer is the Kurdish unless `say` names Kurdish that is none of the answers
- * (the Kurdish is then in the prompt, and the answer is its meaning); when the
- * answer's words lean the other way and the prompt's lean this way, the item
- * reads backwards and is not told.
+ * The language a translation is answered in. In a Latin-script course the answer is Kurdish unless `say` names Kurdish
+ * that is none of the answers (the Kurdish is then the prompt); if the answer leans the other way and the prompt this
+ * way, the item reads backwards and is not told.
  */
 function translationLang(first: string, prompt: string, say: string | null, accepted: string[], dialect: string | null | undefined): Lang | null {
   if (varietyOf(dialect) === 'sorani') return langOf(first, null, dialect);
@@ -181,9 +170,8 @@ function kurdishOf(a: string, b: string): string | null {
 }
 
 /**
- * Read an exercise's payload for its words. Payloads are validated when they
- * are written, but this reads defensively all the same: delivery must never
- * fail over what is only an extra.
+ * Read an exercise payload for its words. Payloads are validated on write, but this reads defensively: delivery must
+ * never fail over an extra.
  */
 export function itemWords(type: ExerciseType, payload: unknown, dialect: string | null | undefined): ItemWords {
   const p = (payload && typeof payload === 'object' ? payload : {}) as Record<string, unknown>;

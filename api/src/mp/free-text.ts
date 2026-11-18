@@ -24,28 +24,20 @@ export interface FreeTextOptions {
 }
 
 /**
- * The one way free text a player types in a game — a clue, a guess, a made-up
- * definition — gets anywhere near another player: the same checks a direct
- * message passes, in the same order (chat/routes.ts), before the move is
- * judged by the game at all.
+ * The only path for free text a player types in a game (a clue, a guess, a definition) to reach other players. It runs
+ * the direct-message checks in the same order (chat/routes.ts) before the game judges the move:
+ * 1. Clean and cap: control characters out, spaces collapsed, at most `maxLength` characters (default 400).
+ * 2. Chat mutes apply: admin, queue or spam-engine restrictions (`assertUnrestricted`, 403 MUTED) and the offense
+ *    ladder (403 CHAT_MUTED).
+ * 3. The trust level's message velocity cap (429 TRUST_VELOCITY), and the duplicate and burst spam check, which can
+ *    restrict the account (403 AUTO_MODERATED).
+ * 4. The wordlist filter refuses a flagged text outright (422 TEXT_NOT_ALLOWED) instead of masking it, since a
+ *    starred-out clue is useless; it still counts as an offense.
+ * 5. The classifier refuses a high-confidence hit (422 CONTENT_BLOCKED) and flags lower ones for moderators, as chat
+ *    does.
  *
- * 1. Cleaned and capped: control characters out, spaces collapsed, at most
- *    `maxLength` characters (400 otherwise).
- * 2. Nobody muted from chat — by an admin, the queue or the spam engine
- *    (`assertUnrestricted`, 403 MUTED) or by the offense ladder (403
- *    CHAT_MUTED) — types to other players in a game either.
- * 3. The trust level's velocity cap for messages (429 TRUST_VELOCITY), and the
- *    duplicate and burst spam check, which can restrict the account (403
- *    AUTO_MODERATED).
- * 4. The wordlist filter: a flagged text is refused outright (422
- *    TEXT_NOT_ALLOWED) rather than masked as a chat message is, because a
- *    starred-out clue is no clue; it still counts as an offense on the ladder.
- * 5. The classifier: a high-confidence hit is refused (422 CONTENT_BLOCKED),
- *    lower ones are flagged for the moderators as chat ones are.
- *
- * What passes is returned as it will be stored with the move (for a report,
- * which judges what was written in the game) and shown — inside that game
- * only, to its players, never in a link or anywhere else.
+ * The returned text is what is stored with the move (reports judge it) and shown only to that game's players, never in
+ * a link or elsewhere.
  */
 export async function gateFreeText(deps: FreeTextDeps, userId: string, raw: string, opts: FreeTextOptions): Promise<string> {
   const clean = stripControlChars(String(raw ?? ''))

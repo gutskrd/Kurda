@@ -1,8 +1,7 @@
 /**
- * Build a Sentence's rounds without a database: the round is made of
- * the learner's variety and difficulty only, never hands over the answer in
- * order, keeps decoys off the sentence's own words, grades every accepted
- * order, nudges before it corrects, and moves the ladder.
+ * Build a Sentence rounds without a database: rounds use only the learner's variety and difficulty, never give the
+ * answer in order, keep decoys off the sentence's words, accept every valid order, nudge before correcting, and move
+ * the ladder.
  */
 import { describe, expect, it } from 'vitest';
 import { DIFFICULTY_RUNGS, SOLO_ROUND_ITEMS, STEP_UP_FIRST_TRY, gameWords, type GameDialect } from '@kurda/shared';

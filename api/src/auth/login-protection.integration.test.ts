@@ -1,11 +1,7 @@
 /**
- * Sign-in protection against real Postgres and Redis: known devices keep their
- * own budget, the CAPTCHA steps in before any wall, a network is locked only
- * when it sprays, a surge everywhere asks every new device for the challenge,
- * the owner hears about it, and passwords and sessions are looked after.
- *
- * The CAPTCHA and the breached-password corpus are stood in for at `fetch`:
- * nothing here reaches the internet.
+ * Sign-in protection against real Postgres and Redis: known devices keep their own budget, the CAPTCHA comes before any
+ * wall, a network is locked only when it sprays, a global surge asks every new device for the challenge, the owner is
+ * notified, and passwords and sessions are protected. The CAPTCHA and breached-password corpus are stubbed at `fetch`.
  */
 import { createHash, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';

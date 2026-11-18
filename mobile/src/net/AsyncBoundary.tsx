@@ -11,11 +11,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 
 /**
- * One place that renders a data screen's loading / offline / error+retry / empty /
- * ready state (KUR-278), so no screen shows an infinite spinner or a blank page.
- * Wrap the content; pass the request's `loading`/`error` and whether the result is
- * empty. Connectivity is read live; a network error or being offline both surface a
- * clear, retryable offline state.
+ * Renders a data screen's loading, offline, error-with-retry, empty or ready state, so no screen shows an endless
+ * spinner or a blank page. Connectivity is read live; a network error and being offline both show the offline
+ * state with a retry.
  */
 export function AsyncBoundary({
   loading,
@@ -35,11 +33,9 @@ export function AsyncBoundary({
   emptyText?: string;
   /** A whole empty state, for a screen that has a glyph and an action in mind. */
   empty?: ReactNode;
-  /** Loading placeholder. Defaults to a generic list skeleton; pass a screen-shaped
-   *  skeleton for a closer match to the content that's coming. */
+  /** Loading placeholder; defaults to a list skeleton. */
   skeleton?: ReactNode;
-  /** Content to show once ready. Pass a function when it dereferences loaded data —
-   *  it's only invoked in the ready state, so it never runs during loading/error. */
+  /** Content once ready. Pass a function when it reads loaded data, since it is only called in the ready state. */
   children: React.ReactNode | (() => React.ReactNode);
 }): React.JSX.Element {
   const online = useIsOnline();
@@ -52,12 +48,7 @@ export function AsyncBoundary({
       return <>{skeleton ?? <SkeletonList style={styles.skeleton} />}</>;
 
     case 'offline':
-      /*
-       * The fawn with the unplugged cable, which is the one picture in this
-       * app that is not about something being empty. A screen that could not
-       * load and a screen with nothing in it are different things and used
-       * to look the same: two centred grey sentences.
-       */
+      /* The fawn with the unplugged cable: a failed load looks different from an empty screen. */
       return (
         <EmptyState
           art="offline"
@@ -77,11 +68,7 @@ export function AsyncBoundary({
       );
 
     case 'empty':
-      /*
-       * The shared empty state, so a screen that says nothing about what is
-       * missing at least looks like a beginning rather than a failure. A
-       * screen with something better to say passes `empty` itself.
-       */
+      /* The shared empty state, unless the screen passes its own `empty`. */
       return <>{empty ?? <EmptyState title={emptyText ?? t('civak.empty')} />}</>;
 
     case 'ready':

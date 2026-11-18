@@ -1,4 +1,4 @@
-/** AI-assisted moderation orchestration vs real Postgres (CI job). KUR-293. */
+/** AI-assisted moderation orchestration vs real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { AiModerationService } from './ai-service.js';

@@ -3,7 +3,7 @@ import { LETTER_CLIPS } from '../alphabet-audio.js';
 import { APP_LOCALES } from '../locales.js';
 import { CLIPS } from './clips.js';
 import { LATIN, PAIRS, SORANI } from './letters.js';
-import { ROUND, again, makeRound, type Question } from './practice.js';
+import { again, makeRound, type Question } from './practice.js';
 import { alphabetSounds } from './sounds.js';
 
 /** A seeded generator, so a failing round can be replayed exactly. */
@@ -29,7 +29,7 @@ describe('check yourself', () => {
       for (const script of SCRIPTS) {
         for (let seed = 1; seed <= 40; seed++) {
           const round = makeRound(script, locale, null, seeded(seed));
-          expect(round, `${script} ${locale} ${seed}`).toHaveLength(ROUND);
+          expect(round, `${script} ${locale} ${seed}`).toHaveLength(8);
           for (const q of round) {
             const ids = q.options.map((o) => o.id);
             const texts = q.options.map((o) => o.text);

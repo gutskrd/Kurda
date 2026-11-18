@@ -17,12 +17,7 @@ describe('the art, inlined', () => {
     }
   });
 
-  /**
-   * A page draws itself again whenever anything on it changes (the season page
-   * does as the account arrives). A drawing that has not changed stays the
-   * node it was: put in again, its shine would start over, and whatever held
-   * on to it would be holding something no longer on the page.
-   */
+  /** An unchanged drawing keeps its DOM node across re-renders, so its shine does not restart. */
   it('leaves a drawing in place when the page around it is drawn again', () => {
     const page = (note: string): React.JSX.Element => (
       <>
@@ -41,7 +36,7 @@ describe('the art, inlined', () => {
     expect(screen.getByRole('img', { name: 'Çiya (Mountain), Havîn 2026' })).toBe(emblem);
     expect([...container.querySelectorAll('svg')]).toEqual(layers);
     for (const layer of layers) expect(layer.isConnected).toBe(true);
-    // and one that did change is drawn as what it now is
+    // One that did change is redrawn.
     rerender(
       <>
         <RankEmblem tier="ciya" season={{ name: 'payiz', year: 2026 }} size={84} title="Çiya (Mountain), Payîz 2026" />
@@ -65,7 +60,7 @@ describe('the art, inlined', () => {
       </>,
     );
     expect(container.querySelector('img, script, [onerror]')).toBeNull();
-    // the frame's shine is a layer of its own, hidden from screen readers; the four drawings carry the title
+    // The frame's shine is a hidden layer of its own; the four drawings carry the title.
     const titles = [...container.querySelectorAll('title')].filter((t) => !t.closest('[aria-hidden="true"]'));
     expect(titles).toHaveLength(4);
     for (const t of titles) {
@@ -139,9 +134,8 @@ describe('the art, inlined', () => {
 });
 
 /*
- * A frame from the shop is a picture with nothing in its middle (the profile
- * sends its address with the SKU), where a season frame is drawn from its SKU.
- * Both are laid round a face the same way, at the same size.
+ * A shop frame is a picture with an empty middle (its address comes with the SKU), while a season frame is drawn from
+ * its SKU; both sit round a face the same way.
  */
 describe('a frame from the shop', () => {
   const ART = '/cosmetics/frames/made-01-lale.png';
@@ -157,7 +151,7 @@ describe('a frame from the shop', () => {
     expect((frame.querySelector('.art-frame-face') as HTMLElement).style.width).toBe('60px');
     const ring = frame.querySelector('img.art-frame-ring')!;
     expect(ring).toHaveAttribute('src', ART);
-    // decoration: whatever it is on says what it is
+    // Decorative; the surrounding element names it.
     expect(ring).toHaveAttribute('alt', '');
   });
 
@@ -168,11 +162,11 @@ describe('a frame from the shop', () => {
     expect(ring).toHaveAttribute('src', ART);
     expect(worn.container.querySelector('svg')).toBeNull();
     worn.unmount();
-    // an older server sends the SKU alone: nothing is drawn rather than a wrong ring
+    // A SKU without a picture draws nothing rather than a wrong ring.
     const bare = render(<FrameOverlay sku="frame-made-lale" face={84} title={title} />);
     expect(bare.container.firstChild).toBeNull();
     bare.unmount();
-    // and a season frame is still drawn from its SKU, whatever picture comes with it
+    // A season frame is drawn from its SKU, whatever picture comes with it.
     const season = render(<FrameOverlay sku="frame_rank_gir" url={ART} face={84} title={title} />);
     expect(season.container.querySelector('.art-frame-overlay.is-gir svg')).not.toBeNull();
     expect(season.container.querySelector('img')).toBeNull();

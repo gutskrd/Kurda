@@ -1,6 +1,2 @@
-/**
- * Grammar-note markdown (KUR-038), parsed in @kurda/shared
- * (grammar-markdown.ts) so the browser reads a skill's notes the way the
- * phone does.
- */
+/** Grammar-note markdown, parsed in @kurda/shared (grammar-markdown.ts) so the web app renders notes the same way. */
 export { parseInline, parseMarkdown, type Block, type Span } from '@kurda/shared';

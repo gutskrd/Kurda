@@ -10,7 +10,7 @@ import { isBannedEmail } from '../moderation/ban-registry.js';
 import { suspensionError } from '../moderation/suspension.js';
 import { signupRejected } from './rejections.js';
 import type { AppleTokens } from './apple-tokens.js';
-import { GdprService } from '../gdpr/service.js';
+import { GdprService, cancelPendingDeletion } from '../gdpr/service.js';
 
 export type OAuthProvider = 'google' | 'apple';
 
@@ -108,12 +108,9 @@ export async function verifyProviderToken(
 }
 
 /**
- * A username for an account a sign-in through another service makes: one made
- * from the name it shares, or the start of the email address
- * (shared/src/username.ts `suggestUsername`: lowercase first, as every
- * username is), or the name numbered when that is taken. Every candidate is
- * one a person could have chosen, so a number never makes a reserved name or
- * two marks side by side.
+ * A username for an account made by a provider sign-in: from the shared name or the start of the email
+ * (shared/src/username.ts `suggestUsername`, lowercased), numbered when taken. Every candidate is one a person could
+ * have chosen, so a number never forms a reserved name or doubled marks.
  */
 async function uniqueUsername(pool: pg.Pool, base: string): Promise<string> {
   const fallback = () => `learner_${Date.now().toString(36)}`;
@@ -150,10 +147,8 @@ export class OAuthService {
     deviceId?: string | null,
     extras: AppleSignInExtras = {},
     /**
-     * The guest signed in while asking (auth/guest.ts): an identity nobody has
-     * claims that row rather than making a new one, so what was learned as a
-     * guest is kept. An identity that already has an account signs that
-     * account in as ever, and the guest row is simply left behind.
+     * The guest signed in while asking (auth/guest.ts): a new identity claims that row so guest progress is kept. An
+     * identity that already has an account signs that account in, leaving the guest row behind.
      */
     guestId: string | null = null,
   ): Promise<{ user: PublicUser; tokens: IssuedTokens; created: boolean }> {
@@ -182,14 +177,12 @@ export class OAuthService {
     if (known.rows[0]) {
       const user = await this.activeUser(known.rows[0].user_id);
       await this.refuseIfSuspended(user);
-      const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
+      const tokens = await this.session(user, deviceName, deviceId);
       return { user: toPublicUser(user), tokens, created: false };
     }
 
-    // 2) email matches an existing account → link, but only when
-    //    ownership is proven on BOTH sides (provider-verified email and
-    //    our own verification) — otherwise an attacker could pre-register
-    //    an unverified account with the victim's email and capture links
+    // 2) Email matches an existing account: link only when ownership is proven on BOTH sides (provider-verified email
+    //    and our own verification), or an attacker could pre-register the victim's email unverified and capture links.
     if (identity.email && identity.emailVerified) {
       const existing = await this.pool.query<UserRow & { email_verified_at: Date | null }>(
         `SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL`,
@@ -197,13 +190,9 @@ export class OAuthService {
       );
       let account = existing.rows[0];
       if (account && !account.email_verified_at) {
-        // The provider has confirmed this address is the signer's; the
-        // account here never confirmed it. It is not linked (that would hand
-        // the account to whoever registered the address first), and it does
-        // not stand in the way either: a sign-up that never confirmed is
-        // ended (auth/pending-signups.ts) and this sign-in makes the account.
-        // One that is more than that — staff, or already tied to a provider —
-        // is left as it was, and answered as before.
+        // The provider confirmed this address but the account here never did. Linking would hand the account to whoever
+        // registered the address first, so an unconfirmed sign-up is ended (auth/pending-signups.ts) and this sign-in
+        // makes the account. Anything more than that (staff, or already tied to a provider) is left alone and refused.
         const ended = await new GdprService(this.pool).endUnconfirmedSignup(account.id);
         if (ended === 'kept') {
           throw new AppError(
@@ -217,18 +206,14 @@ export class OAuthService {
       if (account) {
         await this.refuseIfSuspended(account);
         await this.link(account.id, identity);
-        const tokens = await issueTokenPair(this.config, this.pool, account, { deviceName, deviceId });
+        const tokens = await this.session(account, deviceName, deviceId);
         return { user: toPublicUser(account), tokens, created: false };
       }
     }
 
-    // 3) brand-new account (Apple relay emails land here naturally)
-    //
-    // An address the provider has not confirmed is not this person's to
-    // take: an account made under it would sit on somebody else's address,
-    // and when that person later claimed it by a password reset, the
-    // identity that made it would still sign in. So it is left out, as if
-    // the provider had sent none, and the account gets the placeholder.
+    // 3) Brand-new account (Apple relay emails land here).
+    // An address the provider has not confirmed is left out, as if none was sent, so the account gets the placeholder:
+    // otherwise its real owner could later claim it by password reset while this identity still signs in.
     const confirmedEmail = identity.emailVerified ? identity.email : null;
     // ...unless an account here already has that address: then this is most
     // likely its owner, and a second, empty account would only hide the first
@@ -251,15 +236,13 @@ export class OAuthService {
     // names a new account; an existing one keeps the name it has.
     const name = identity.name ?? (identity.provider === 'apple' ? displayNameFrom(extras.fullName) : null);
 
-    // 3a) a guest asked: their row becomes the account, keeping its username
-    //     and everything learned; `created` all the same, since to the app
-    //     this identity has just become an account and the sign-up steps that
-    //     follow one (the birth month question) are still to come
+    // 3a) A guest asked: their row becomes the account, keeping username and progress. Still `created`, since the
+    //     sign-up steps that follow (the birth month question) are still to come.
     if (guestId !== null) {
       const claimed = await this.claimGuest(guestId, email, name);
       if (claimed) {
         await this.link(claimed.id, identity);
-        const tokens = await issueTokenPair(this.config, this.pool, claimed, { deviceName, deviceId });
+        const tokens = await this.session(claimed, deviceName, deviceId);
         return { user: toPublicUser(claimed), tokens, created: true };
       }
       // not a guest any more (claimed elsewhere a moment ago): a new account, as for anyone
@@ -272,18 +255,13 @@ export class OAuthService {
         `INSERT INTO users (email, username, display_name, email_verified_at)
          VALUES ($1, $2, $3, $4)
          RETURNING *`,
-        // The provider vouches for who this is. With an address it confirmed,
-        // that is the address confirmed; with none, there is nothing to
-        // confirm, and an account left "unconfirmed" under the placeholder
-        // would be held at the gate (plugins/activation.ts) with no code it
-        // could ever be sent.
+        // The provider vouches for who this is: a confirmed address counts as confirmed, and with no address there is
+        // nothing to confirm (an "unconfirmed" placeholder account would be held at plugins/activation.ts forever).
         [email, username, name, new Date()],
       );
     } catch (err) {
-      // An address the provider has not confirmed, which an account here
-      // already has: never linked (2 above), and not a second account either.
-      // It used to reach the client as a 500; it is answered as sign-up
-      // answers an address in use, without saying whose it is.
+      // An unconfirmed provider address that an account here already has: never linked (2 above) and not a second
+      // account either. Answered as sign-up answers an address in use, without saying whose it is.
       if ((err as { constraint?: string }).constraint === 'users_email_active_uniq') {
         throw new AppError(
           'REGISTRATION_FAILED',
@@ -295,17 +273,23 @@ export class OAuthService {
     }
     const user = created.rows[0] as UserRow;
     await this.link(user.id, identity);
-    const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
+    const tokens = await this.session(user, deviceName, deviceId);
     return { user: toPublicUser(user), tokens, created: true };
   }
 
   /**
-   * The guest row takes the address the provider confirmed (or the
-   * placeholder when it confirmed none; either way there is nothing left for
-   * the account to confirm) and the shared name where it had none, and stops
-   * being a guest.
-   * Null when the row is no longer a guest. An address already on another
-   * account is answered as sign-up answers it, without saying whose it is.
+   * The session every provider sign-in path hands out. It cancels a deletion still in its grace period, as a password
+   * sign-in does, since the app and the deletion notice promise that signing in again keeps the account.
+   */
+  private async session(user: UserRow, deviceName: string | undefined, deviceId: string | null | undefined): Promise<IssuedTokens> {
+    await cancelPendingDeletion(this.pool, user.id);
+    return issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
+  }
+
+  /**
+   * The guest row takes the provider-confirmed address (or the placeholder, so nothing is left to confirm) and the
+   * shared name where it had none, and stops being a guest. Null when the row is no longer a guest. An address already
+   * on another account is answered as sign-up answers it.
    */
   private async claimGuest(guestId: string, email: string, name: string | null): Promise<UserRow | null> {
     try {
@@ -340,10 +324,8 @@ export class OAuthService {
   }
 
   /**
-   * The account behind a linked identity. A deleted one is disabled; a banned
-   * one is answered by `refuseIfSuspended` with its reasons. (This used to
-   * refuse any account with `banned_at` set, so a suspension that had already
-   * ended still locked the person out of social sign-in.)
+   * The account behind a linked identity. A deleted one is disabled; a banned one is answered by `refuseIfSuspended`
+   * with its reasons, so an ended suspension no longer blocks social sign-in.
    */
   private async activeUser(id: string): Promise<UserRow> {
     const result = await this.pool.query<UserRow>(`SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL`, [id]);

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
-import { letterNoticeOf } from '@kurda/shared';
+import type { Translate } from '../i18n/I18nProvider';
+import { LETTERS_CHANGED, letterNoticeOf } from '@kurda/shared';
+import { pageVisible } from '../lib/pollWhileVisible';
+import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
+import type { RealtimeEventEnvelope } from '../realtime/events';
 import { socialNotification } from '../reports/notifications';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 export interface LiveActivity {
   game: string;
@@ -27,7 +28,7 @@ export interface RailGroup {
   name: string;
   memberCount: number;
   unread: number;
-  /** the group's picture, when the server sends it; else its initials stand in */
+  /** The group's picture when the server sends one; otherwise its initials stand in. */
   photoUrl?: string | null;
 }
 
@@ -38,29 +39,29 @@ export interface RailNotification {
   body: string | null;
   createdAt: string;
   readAt: string | null;
-  /** what it is about (`kind` and its fields): the words and the link are made from it */
+  /** What it is about (`kind` and its fields), from which the words and link are made. */
   data?: Record<string, unknown> | null;
 }
 
-/** You, as the rail shows you: a face, a level ring, and what you can spend. */
-export interface RailSelf {
+/** The reader as the rail shows them: a face, a level ring and their balances. */
+interface RailSelf {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
-  /** derived server-side from XP; `progress` is 0..1 toward the next level */
+  /** Derived server-side from XP; `progress` runs from 0 to 1 toward the next level. */
   level: { level: number; progress: number; xp: number; currentLevelXp: number; nextLevelXp: number };
   balances: { zer: number; gems: number };
 }
 
 export interface SocialRailData {
-  /** null until the first read lands, and for a response from before this field */
+  /** Null until the first read lands, or when the response lacks it. */
   you: RailSelf | null;
   friends: RailFriend[];
   requests: RailFriend[];
   challenges: RailFriend[];
   groups: RailGroup[];
   notifications: RailNotification[];
-  /** `gifts`: unopened gifts — the Shop badge (folded in here so nothing polls for it alone) */
+  /** `gifts` counts unopened gifts for the Shop badge, so nothing polls for it separately. */
   unread: { notifications: number; groups: number; requests: number; challenges: number; gifts?: number };
 }
 
@@ -71,15 +72,11 @@ export interface Arrival {
   title: string;
   body: string;
   who: RailFriend | null;
-  /** a letter's notification: the correspondence it came in, or null when it names none */
+  /** For a letter's notification, its correspondence, or null when it names none. */
   letter?: { threadId: string | null };
 }
 
-/**
- * The arrivals worth a toast on the page at `pathname`. A letter is not
- * announced on the letters page, whose window lands its bird itself, nor in
- * the correspondence it came in, which shows it; anywhere else it is.
- */
+/** The arrivals worth a toast at `pathname`; a letter is not announced on the letters page or in its own correspondence. */
 export function toastsHere(arrivals: readonly Arrival[], pathname: string): Arrival[] {
   const path = pathname.replace(/\/+$/, '');
   return arrivals.filter((a) => !a.letter || (path !== '/app/letters' && (a.letter.threadId === null || path !== `/app/letters/${a.letter.threadId}`)));
@@ -95,50 +92,60 @@ const EMPTY: SocialRailData = {
   unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 },
 };
 
-/**
- * How often the rail asks what changed.
- *
- * A game invite expires in two minutes, so a slower poll would show invites that
- * are already dead. Realtime would be better and the gateway exists, but the web
- * client's socket is not merged yet — this is the honest interim, and the poll
- * stops entirely while the tab is hidden rather than billing a free-tier API for
- * a window nobody is looking at.
- */
+/** How often the rail polls `/me/social` while the realtime connection is down. */
 const POLL_MS = 20_000;
+/**
+ * With the connection up, the longest the rail goes without a read, for what no event reports: friends coming online
+ * (their heartbeat comes every two minutes) or starting a game, and purse or level changes from actions that do not
+ * call `refresh`.
+ */
+const FALLBACK_MS = 2 * 60_000;
+/** An event's read waits this long, so a burst is read once and the notification written just after its event is in it. */
+const EVENT_DELAY_MS = 1_000;
+/** Reads for events are at least this far apart, so a busy group chat costs no more than the old poll. */
+const EVENT_GAP_MS = POLL_MS;
+/** Writes that spend or earn zêr or gems, after which the purse in the top bar is read again at once. */
+const PURSE_WRITES = ['/shop/', '/me/tree/', '/letters/bird', '/me/streak/', '/rewards/', '/me/quests/'];
 
 /**
- * The rail's data, and what just arrived.
- *
- * Arrivals are computed by diffing against the previous answer rather than
- * trusting a flag from the server, because "new to this browser tab" is a client
- * question — the same invite is not new twice just because the poll ran again.
- * The first load never announces anything: everything is new on arrival, and a
- * burst of toasts for a backlog you already knew about is noise.
+ * The rail's data and what just arrived. With the realtime connection up it is read again when an event could change
+ * it, after a write that changes the purse, and otherwise every FALLBACK_MS; while the connection is down it polls every POLL_MS. Nothing is read while the
+ * tab is hidden, and coming back reads at once. Arrivals come from diffing against the previous answer, since "new to
+ * this tab" is a client question; the first load announces nothing.
  */
 export function useSocialRail(): {
   data: SocialRailData;
   loading: boolean;
-  /** nothing has arrived yet and the last ask failed: there is no list to show, only a way to ask again */
+  /** Nothing has arrived yet and the last request failed, so there is only a retry. */
   failed: boolean;
   arrivals: Arrival[];
   dismiss: (key: string) => void;
   refresh: () => void;
+  soon: () => void;
 } {
-  const { client, status } = useAuth();
+  const { client, status, user } = useAuth();
   const t = useT();
   const locale = useLocale();
   const signedIn = status === 'signedIn';
+  const live = useRealtime().state === 'open';
   const [data, setData] = useState<SocialRailData>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [arrivals, setArrivals] = useState<Arrival[]>([]);
-  /** ids already seen, so a toast fires once per thing rather than once per poll */
+  /** Ids already seen, so a toast fires once per thing rather than once per poll. */
   const seen = useRef<Set<string> | null>(null);
+  /** When the last read began, which spaces event reads and holds off the fallback. */
+  const lastRead = useRef(0);
+  /** A read an event asked for, waiting its turn. */
+  const eventRead = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Whether the connection was up when last looked at, to notice it coming back. */
+  const wasLive = useRef(live);
 
   const refresh = useCallback(() => {
     if (!signedIn) return;
+    lastRead.current = Date.now();
     void (async () => {
-      // asking again after a first answer that never came is loading again, not still failing
+      // Retrying after a first answer that never came is loading, not failing.
       if (seen.current === null) {
         setFailed(false);
         setLoading(true);
@@ -146,8 +153,7 @@ export function useSocialRail(): {
       const res = await client.get<SocialRailData>('/me/social');
       if (!res.ok) {
         setLoading(false);
-        // a failed poll after a good answer keeps the list it had; only a list
-        // that never arrived is a failure worth saying
+        // A failed poll after a good answer keeps the list; only a list that never arrived is a failure.
         setFailed(seen.current === null);
         return;
       }
@@ -158,7 +164,7 @@ export function useSocialRail(): {
 
       const keys = arrivalKeys(next, t, locale);
       if (seen.current === null) {
-        // first answer: adopt it silently
+        // The first answer is adopted silently.
         seen.current = new Set(keys.map((a) => a.key));
         return;
       }
@@ -168,6 +174,37 @@ export function useSocialRail(): {
     })();
   }, [client, signedIn, t, locale]);
 
+  /** Asks for a read soon: one per burst, a moment after its first event, and never within EVENT_GAP_MS of the last. */
+  const onEvent = useCallback(() => {
+    if (eventRead.current !== null) return;
+    const wait = Math.max(EVENT_DELAY_MS, lastRead.current + EVENT_GAP_MS - Date.now());
+    eventRead.current = setTimeout(() => {
+      eventRead.current = null;
+      // A hidden tab reads when it is shown again instead.
+      if (pageVisible()) refresh();
+    }, wait);
+  }, [refresh]);
+
+  const me = user?.id;
+  const onGroupMsg = useCallback(
+    (env: RealtimeEventEnvelope) => {
+      // Your own message, echoed back, changes none of your counts.
+      if ((env.event as { message?: { senderId?: string } }).message?.senderId !== me) onEvent();
+    },
+    [onEvent, me],
+  );
+
+  // What can change the rail: requests and friends, gifts, game invites, badges, letters, and the groups' unread counts.
+  useRealtimeEvent('friends_changed', onEvent);
+  useRealtimeEvent('gift_received', onEvent);
+  useRealtimeEvent('play_invite', onEvent);
+  useRealtimeEvent('badge_unlocked', onEvent);
+  useRealtimeEvent(LETTERS_CHANGED, onEvent);
+  useRealtimeEvent('group_msg', onGroupMsg);
+  useRealtimeEvent('group_msg_deleted', onEvent);
+  useRealtimeEvent('group_msgs_deleted', onEvent);
+  useRealtimeEvent('group_chat_cleared', onEvent);
+
   useEffect(() => {
     if (!signedIn) {
       setData(EMPTY);
@@ -175,25 +212,42 @@ export function useSocialRail(): {
       return;
     }
     refresh();
-    const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') refresh();
-    }, POLL_MS);
-    // coming back to the tab should show the truth immediately, not in 20s
+    // Returning to the tab refetches at once, since events that came while it was hidden were not read.
     const onVisible = (): void => {
-      if (document.visibilityState === 'visible') refresh();
+      if (pageVisible()) refresh();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
-      clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisible);
+      if (eventRead.current !== null) clearTimeout(eventRead.current);
+      eventRead.current = null;
     };
   }, [signedIn, refresh]);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    const timer = setInterval(() => {
+      if (!pageVisible()) return;
+      // With the connection up this is only the fallback, so any read in the meantime puts it off.
+      if (live && Date.now() - lastRead.current < FALLBACK_MS) return;
+      refresh();
+    }, POLL_MS);
+    return () => clearInterval(timer);
+  }, [signedIn, live, refresh]);
+
+  // Events sent while the connection was down are lost, so its return is read like an event.
+  useEffect(() => {
+    if (live && !wasLive.current) onEvent();
+    wasLive.current = live;
+  }, [live, onEvent]);
+
+  useEffect(() => client.onWrite((path) => PURSE_WRITES.some((p) => path.startsWith(p)) && refresh()), [client, refresh]);
 
   const dismiss = useCallback((key: string) => {
     setArrivals((prev) => prev.filter((a) => a.key !== key));
   }, []);
 
-  return { data, loading, failed, arrivals, dismiss, refresh };
+  return { data, loading, failed, arrivals, dismiss, refresh, soon: onEvent };
 }
 
 /** Everything in this answer that could be announced, with a stable key each. */
@@ -208,11 +262,10 @@ function arrivalKeys(data: SocialRailData, t: Translate, locale: string): Arriva
       who: r,
     })),
     ...data.notifications
-      // a gift arrives with its own banner, which opens it (gifts/GiftArrivals),
-      // and so does a game invite, which can be answered there (play/InviteBanner)
+      // Gifts and game invites have their own banners (gifts/GiftArrivals, play/InviteBanner).
       .filter((n) => n.readAt === null && n.data?.kind !== 'gift' && n.data?.kind !== 'play_invite')
       .map((n) => {
-        // in the reader's words where the notification's data says what it is
+        // In the reader's words where the notification's data says what it is.
         const view = socialNotification(n, t, locale);
         const letter = letterNoticeOf(n.data);
         return {

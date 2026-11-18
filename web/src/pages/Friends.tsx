@@ -35,17 +35,9 @@ function Row({ user, actions, meta }: { user: UserSummary; actions?: React.React
 }
 
 /**
- * Friends (/app/friends): the people you have, the requests waiting on you and
- * the ones you sent.
- *
- * Finding someone new is Search's job now — one field for people and words,
- * with the people you may know under it — so this page keeps to the people
- * already in your life, and a way across to Search at the top. Messages links
- * here from its "Friend requests" row, which is why requests come first.
- *
- * Each request waiting on you is a friendship ticket (social/FriendTickets.tsx):
- * Accept tears its stub and stamps it "Friends", Decline folds it away, and
- * then the lists catch up.
+ * Friends (/app/friends): your friends, requests waiting on you, and the ones you sent; finding new people is Search's
+ * job, linked at the top. Messages links here for requests, so they come first, each a friendship ticket
+ * (social/FriendTickets.tsx) that Accept stamps and Decline folds away.
  */
 export function Friends(): React.JSX.Element {
   const { client } = useAuth();
@@ -54,34 +46,27 @@ export function Friends(): React.JSX.Element {
   const friends = useApiGet<{ friends: UserSummary[] }>('/friends');
   const requests = useApiGet<{ requests: UserSummary[] }>('/friends/requests');
   const sent = useApiGet<{ requests: UserSummary[] }>('/friends/requests/outgoing');
-  // how many requests are waiting, as the social column already knows: their
-  // place is held while this page asks for them, rather than opening up above
-  // your friends once they arrive
+  // The waiting count the social column already knows, so their place is held while this page fetches them.
   const waiting = useRail().data.requests.length;
-  // why an answer did not go through: a friend list that is full (theirs or
-  // yours) says so, rather than the request just staying put
+  // Why an answer failed: a full friend list (theirs or yours) is said rather than the request just staying.
   const [err, setErr] = useState<string | null>(null);
 
-  /** Take back a request you sent — nothing tells the other person either way. */
+  /** Takes back a request you sent; the other person is not told either way. */
   async function cancelRequest(userId: string): Promise<void> {
     await client.delete(`/friends/requests/${userId}`);
     sent.reload();
   }
 
   /**
-   * Unfriending and blocking are different things and are offered as such:
-   * removing is mutual and reversible, blocking silent and absolute. Neither
-   * stands in the row any more. A row had three buttons, and two of them ended
-   * the friendship from one press beside the one that starts a game; both are
-   * in the row's ⋯ now (profile/UserActions.tsx), where removing is asked
-   * twice and a block says what it does before it is done.
+   * Removes a friend. Removing (mutual, reversible) and blocking (silent, absolute) both live in the row's ⋯
+   * (profile/UserActions.tsx), where removing is confirmed and a block says what it does first.
    */
   async function unfriend(userId: string): Promise<void> {
     await client.delete(`/friends/${userId}`);
     friends.reload();
   }
 
-  /** Answer a request; whether it went through, so its ticket is stamped or folded only when it did. */
+  /** Answers a request; returns whether it went through, so the ticket is stamped or folded only then. */
   async function respond(userId: string, accept: boolean): Promise<boolean> {
     setErr(null);
     const res = await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
@@ -92,7 +77,7 @@ export function Friends(): React.JSX.Element {
     return res.ok;
   }
 
-  /** Once a ticket has had its moment: the request leaves, and a new friend joins the list. */
+  /** After a ticket's moment the request leaves, and a new friend joins the list. */
   function settled(): void {
     requests.reload();
     friends.reload();
@@ -117,7 +102,7 @@ export function Friends(): React.JSX.Element {
         </div>
       )}
 
-      {/* incoming requests */}
+      {/* Incoming requests. */}
       {requests.loading && waiting > 0 && (
         <section className="friend-section">
           <h2 className="friend-heading">{t('friends.requests')}</h2>
@@ -141,7 +126,7 @@ export function Friends(): React.JSX.Element {
         </section>
       )}
 
-      {/* requests you sent — otherwise a misfire is invisible and permanent */}
+      {/* Requests you sent, so a misfire is visible and can be undone. */}
       {!sent.loading && (sent.data?.requests.length ?? 0) > 0 && (
         <section className="friend-section">
           <h2 className="friend-heading">{t('friends.sent')}</h2>
@@ -164,7 +149,7 @@ export function Friends(): React.JSX.Element {
         </section>
       )}
 
-      {/* friends */}
+      {/* Friends. */}
       <section className="friend-section">
         <h2 className="friend-heading">{t('friends.yours')}</h2>
         {friends.loading ? (
@@ -181,9 +166,9 @@ export function Friends(): React.JSX.Element {
                 user={u}
                 actions={
                   <>
-                    {/* a game with them: the invite sheet, with them already chosen */}
+                    {/* A game with them: the invite sheet with them chosen. */}
                     <PlayWithButton userId={u.userId} name={u.displayName || u.username} className="btn btn-secondary btn-sm friend-play" iconOnly />
-                    {/* everything else there is to do about them: off the list, a report, a block */}
+                    {/* Everything else about them: remove, report, block. */}
                     <UserActions
                       userId={u.userId}
                       name={u.displayName || u.username}

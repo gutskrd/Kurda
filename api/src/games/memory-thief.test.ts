@@ -1,8 +1,6 @@
 /**
- * Dizê Bîrê's rounds without a database: which words a passage can
- * lose and which it does, how the passage is laid out with its gaps, how
- * conversations are cut into passages, the round made at a difficulty, the
- * decoys, and how the words given back are graded, nudged and corrected.
+ * Dizê Bîrê rounds without a database: which words a passage can lose and does, its layout with gaps, how conversations
+ * are cut into passages, the round at a difficulty, decoys, and grading, nudging and correcting the words given back.
  */
 import { describe, expect, it } from 'vitest';
 import { DIFFICULTY_LEVELS, MEMORY_HIDDEN, MEMORY_ROUND_PASSAGES, textScript, type GameDialect, type MemoryPart } from '@kurda/shared';

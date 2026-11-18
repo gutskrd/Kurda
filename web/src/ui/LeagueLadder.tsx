@@ -4,16 +4,8 @@ import { LeagueEmblem } from '../ranks/art';
 import { leagueNamed, withMeaning } from '../ranks/names';
 
 /**
- * Where you are on the ladder: the tier you are in, the ones you climbed
- * through, and the one above — four of the six water tiers, a drop to the
- * ocean (contract 4 §L1).
- *
- * Four rungs rather than all six: the question somebody brings to a league is
- * "where am I, and what is next", and six names in a row do not fit a phone.
- * At the bottom and the top the window slides rather than shrinks.
- *
- * The current rung is marked in words for a screen reader (`aria-current`)
- * as well as by its light, so the answer is never carried by colour alone.
+ * Four of the six league tiers around the reader's own, with the next one above; six names do not fit a phone. At
+ * either end the window slides rather than shrinks. The current rung has `aria-current` as well as its highlight.
  */
 export function LeagueLadder({ tier }: { tier: LeagueTier }): React.JSX.Element {
   const t = useT();

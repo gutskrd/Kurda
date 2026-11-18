@@ -1,9 +1,7 @@
 /* ---- the alphabet ---------------------------------------------------------- */
 /*
- * One thing in focus at a time: a grid of letters to scan, and the letter you
- * picked open beside it. Gold is the colour this app keeps for "notice this",
- * so it marks exactly one thing everywhere — the sound inside a comparison
- * word, and the letter inside the Kurdish word.
+ * A letter grid with the chosen letter open beside it. Gold marks the one thing to notice: the sound in a comparison
+ * word and the letter in the Kurdish word.
  */
 
 /* Soranî letters in a face made for Arabic script, so the joined forms are the real ones */
@@ -485,11 +483,7 @@
   align-items: center;
   gap: 10px;
 }
-/*
- * Who says the letter's recordings stands whole on a stage at the head of the
- * card (characters/CharacterStage.tsx), the letter large beside them; and so
- * does whoever asks a practice question out loud, beside its button.
- */
+/* The speaker stands on a stage at the card's head (characters/CharacterStage.tsx) with the letter beside them. */
 .ab-stage-letter {
   display: grid;
   justify-items: center;

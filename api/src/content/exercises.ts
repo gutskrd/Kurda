@@ -20,38 +20,30 @@ import type { ExerciseType } from './repository.js';
 import { SELF_RATINGS, defaultScorer } from './speaking-scorer.js';
 
 /**
- * Exercise payload schemas + server-side answer checkers (KUR-027).
- *
- * The client NEVER decides correctness. Authoring validates the payload
- * against these schemas (KUR-026 authoring / KUR-041 import); grading
- * runs `checkAnswer` on the server (lesson submission, KUR-028).
+ * Exercise payload schemas and server-side answer checkers. The client never decides correctness: authoring and import
+ * validate payloads against these schemas, and lesson submission grades with `checkAnswer` on the server.
  */
 
 // ---------- payload schemas (authoring-time) ----------
 
 /**
- * The Kurdish a learner should hear for this item, where it cannot be read off
- * the payload — a multiple-choice item's Kurdish may be in its prompt or among
- * its options. Every type takes it; the audio studio asks for a recording of it
+ * The Kurdish a learner should hear for this item where the payload does not show it (a multiple-choice item's Kurdish
+ * may be in the prompt or the options). Every type takes it; the audio studio asks for a recording of it
  * (`lessonAudioTargets` in @kurda/shared).
  */
 const say = z.string().min(1).max(300).optional();
 
 /**
- * Who is to record this item's Kurdish: the character whose recording plays
- * (`SPEAKERS`). The audio studio lists the item for them (`plannedSpeaker`),
- * so the person who voices Hamo can sit down with Hamo's lines and say them
- * in a row. It is the plan, kept with the item; the recording itself says who
- * is heard, so nothing a learner is sent carries it. A conversation has no
- * `voice`: each of its lines is its part's character's.
+ * Who should record this item's Kurdish: the character whose recording plays (`SPEAKERS`). The audio studio lists the
+ * item for them (`plannedSpeaker`) so a voice actor can record a character's lines in a row. It is only the plan; the
+ * recording itself says who is heard, so nothing sent to learners carries it. A conversation has no `voice`: each line
+ * belongs to its part's character.
  */
 const voice = z.enum(SPEAKERS, { error: 'must be hevalo, hamo or xezo' }).optional();
 
 /**
- * What the item asks (`ExerciseAsk`), which names its headline in the apps.
- * An item that says it keeps its `prompt` to the line alone, the Kurdish (or,
- * to put into Kurdish, the English) the bubble holds; one without it is asked
- * the way its type always was, its prompt the whole question.
+ * What the item asks (`ExerciseAsk`), which sets its headline in the apps. With it, `prompt` holds only the line (the
+ * Kurdish, or the English to put into Kurdish); without it, the prompt is the whole question as for the type's default.
  */
 const askOf = (type: keyof typeof ASKS_BY_TYPE) => z.enum(ASKS_BY_TYPE[type] as [ExerciseAsk, ...ExerciseAsk[]]).optional();
 
@@ -103,10 +95,8 @@ export const multipleChoicePayloadSchema = z
   });
 
 /**
- * Strict spelling: a diacritic slip (e for ê, s for ş) is not accepted. Those
- * letters tell words apart, so a spelling or dictation item that forgave them
- * would count its target errors as successes. Off by default — beginners keep
- * the lenient "almost" (see `gradeText`).
+ * Strict spelling: a diacritic slip (e for ê, s for ş) is not accepted, since those letters tell words apart. Off by
+ * default, so beginners get the lenient "almost" (see `gradeText`).
  */
 const strictSchema = z.boolean().optional();
 
@@ -138,8 +128,8 @@ export const listeningPayloadSchema = z.object({
   cue,
   new: newWords,
   /**
-   * CDN URL of the audio clip to play (KUR-013). Optional: a studio recording
-   * of the first accepted transcription is played in its place when there is one.
+   * CDN URL of the clip to play. Optional: a studio recording of the first accepted transcription plays instead when
+   * there is one.
    */
   audioUrl: z.string().min(1).max(2000).optional(),
   /** optional on-screen hint shown alongside the audio */
@@ -157,7 +147,7 @@ export const speakingPayloadSchema = z.object({
   new: newWords,
   /** what the learner is asked to say aloud */
   prompt: z.string().min(1).max(500),
-  /** the target phrase, passed to the pronunciation scorer (KUR-120) */
+  /** the target phrase, passed to the pronunciation scorer */
   reference: z.string().min(1).max(300),
 });
 
@@ -178,18 +168,13 @@ export const writingPayloadSchema = z
   });
 
 /**
- * A conversation (@kurda/shared conversation.ts): who takes part, what each of
- * them says in turn, and then a question about it with one right answer, asked
- * and graded as a multiple-choice item is. `id` is what the lines' recordings
- * are filed under, and stays the same across versions of the lesson.
+ * A conversation (@kurda/shared conversation.ts): its parts, their lines in turn, then a question with one right
+ * answer, asked and graded as multiple choice. `id` files the lines' recordings and stays the same across lesson
+ * versions.
  *
- * Every line names someone who takes part, and everyone who takes part says
- * something — a part with no lines is a person nobody hears, and a part
- * nobody can record. Each part is one of the characters, called by its name,
- * and no character plays two: the one a learner sees say a line is always
- * that line's own. One part may instead be the learner's own (`learner:
- * true`), when a character talks with them: its lines are theirs to read and
- * say, and nobody records them, so at least one character takes part too.
+ * Every line names a part and every part has a line (a silent part could not be recorded). Each part is one character
+ * by name, and no character plays two parts. One part may be the learner's own (`learner: true`) when a character talks
+ * with them: those lines are theirs to read and are never recorded, so at least one character takes part too.
  */
 export const conversationPayloadSchema = z
   .object({
@@ -317,11 +302,9 @@ export const answerSchemas = {
   /** listening is transcription — same shape as translate */
   listening: z.object({ text: z.string().max(500) }),
   /**
-   * speaking submits how the learner judged their take after hearing it beside
-   * the native model. The take itself stays on their device: nothing on the
-   * server listens to it, and a stored copy of every learner's voice — minors'
-   * included — was data kept for no use. `audioKey` is still read from clients
-   * from before self-rating, which uploaded the take and sent no rating.
+   * Speaking submits the learner's own rating after hearing their take beside the native model. The take stays on their
+   * device: nothing on the server listens to it, and storing learners' voices (minors' included) would serve no
+   * purpose. `audioKey` is still read from older clients that uploaded the take and sent no rating.
    */
   speaking: z.object({
     audioKey: z.string().min(1).max(300).optional(),
@@ -339,13 +322,10 @@ import { createHmac } from 'node:crypto';
 import { DEV_JWT_SECRET } from '../config/env.js';
 
 /**
- * The key the per-session shuffle is made with. A plain hash of the seed was
- * not enough: the seed is a session id and an exercise id, both of which the
- * client is sent, so anyone could recompute the authored order — and with it
- * the right option — from the response alone.
- * Keyed with a server secret, the order is still the same every time a session
- * asks for it (resume and grading agree) and on every instance, but cannot be
- * reproduced outside the server. Set from the app's JWT secret at start-up.
+ * The key the per-session shuffle uses. The seed (session id and exercise id) is sent to the client, so a plain hash
+ * would let anyone recompute the authored order and the right option. Keyed with a server secret, the order is stable
+ * for a session (resume and grading agree) and across instances, but not reproducible outside the server. Set from the
+ * app's JWT secret at start-up.
  */
 let shuffleKey: string = DEV_JWT_SECRET;
 
@@ -354,18 +334,16 @@ export function setShuffleKey(key: string): void {
 }
 
 /**
- * A secret digest of a seed, under the same server key as the shuffles: what
- * a round's random draws start from (games/draw.ts), one hash per draw rather
- * than one per element. The label keeps it apart from every shuffle's.
+ * A secret digest of a seed under the same server key as the shuffles: what a round's random draws start from
+ * (games/draw.ts), one hash per draw. The label keeps it apart from shuffle digests.
  */
 export function keyedDigest(seed: string): Buffer {
   return createHmac('sha256', shuffleKey).update(`game-draw:${seed}`).digest();
 }
 
 /**
- * Deterministic shuffle by a seed, so a resumed session sees the same order.
- * Where an item lands depends on its place in `items` and the seed, never on
- * what it is: two lists as long as each other are shuffled alike.
+ * Deterministic shuffle by seed, so a resumed session sees the same order. Positions depend only on index and seed,
+ * never on the items, so equal-length lists shuffle alike.
  */
 export function seededShuffle<T>(items: readonly T[], seed: string): T[] {
   return items
@@ -378,15 +356,10 @@ export function seededShuffle<T>(items: readonly T[], seed: string): T[] {
 }
 
 /**
- * The order a multiple-choice item's options are shown in, for a seed:
- * `displayed[i] = options[order[i]]`.
- *
- * Authored order leaked the answer: every seeded item had it first, and a
- * learner who noticed stopped recalling and started tapping the top option.
- * The seed is `${sessionId}:${exerciseId}`, so the order differs between
- * sessions and between items but is the same every time one session asks for
- * it — a resumed lesson shows what it showed before, and grading
- * (`checkAnswer`, same seed) maps the tapped position back to the option.
+ * The order a multiple-choice item's options are shown in for a seed: `displayed[i] = options[order[i]]`. Authored
+ * order would leak the answer (seeded items had it first). The seed is `${sessionId}:${exerciseId}`, so the order
+ * varies by session and item but is stable within a session, and grading (`checkAnswer`, same seed) maps the tapped
+ * position back to the option.
  */
 export function optionOrder(count: number, seed: string): number[] {
   return seededShuffle(
@@ -410,15 +383,11 @@ function asked(p: { ask?: ExerciseAsk; cue?: string; new?: Array<{ ku: string; e
 }
 
 /**
- * Strips the correct answer from a stored exercise before it goes to the
- * client (KUR-028). The client never receives correctIndex / accepted, nor
- * `voice` — the recording plan, which no player needs: who is heard travels
- * with each recording (lessonaudio/delivery.ts), and a plan can differ from
- * the take that was made. Multiple-choice options and match-pairs sides are
- * shuffled per session with `seed` (`${sessionId}:${exerciseId}`). Match pairs
- * is the one exception: its pairs are answered as they are made, so it says
- * which meaning each card pairs with (`pairOf`); the matching is still graded
- * here when it is sent.
+ * Strip the answer from a stored exercise before it goes to the client: never correctIndex or accepted, nor `voice`
+ * (the recording plan; who is heard travels with each recording, lessonaudio/delivery.ts). Multiple-choice options and
+ * match-pairs sides are shuffled per session with `seed` (`${sessionId}:${exerciseId}`). Match pairs is the one
+ * exception: answered pair by pair, it says which meaning each card pairs with (`pairOf`); the full matching is still
+ * graded here when sent.
  */
 export function sanitizeExercise(
   type: ExerciseType,
@@ -487,8 +456,8 @@ export type Verdict = 'correct' | 'typo' | 'wrong';
 export interface CheckResult {
   verdict: Verdict;
   /**
-   * true for correct, and for a typo unless the item is strict (a typo then
-   * still counts as right, with a nudge). Never true for wrong.
+   * True when correct, and for a typo unless the item is strict (a typo counts as right with a nudge). Never true when
+   * wrong.
    */
   accepted: boolean;
   /** Canonical correct answer to show on reveal. */
@@ -496,8 +465,8 @@ export interface CheckResult {
 }
 
 /**
- * `choice` is a position in the order the learner saw (`optionOrder(…, seed)`).
- * A conversation's question is graded the same way.
+ * `choice` is a position in the order the learner saw (`optionOrder(…, seed)`). A conversation's question is graded the
+ * same way.
  */
 function checkMultipleChoice(payload: Pick<MultipleChoicePayload, 'options' | 'correctIndex'>, choice: number, seed: string): CheckResult {
   const picked = optionOrder(payload.options.length, seed)[choice];
@@ -510,30 +479,26 @@ function checkMultipleChoice(payload: Pick<MultipleChoicePayload, 'options' | 'c
 }
 
 /**
- * Punctuation, Latin and Arabic-script, as a regular expression's character
- * class: what grading reads as a space, and what a word tile is trimmed of.
+ * Latin and Arabic-script punctuation as a regex character class: what grading reads as a space and what a word tile is
+ * trimmed of.
  */
 export const PUNCTUATION = String.raw`[.,!?;:"'“”‘’()¡¿…—–\-؟،؛«»]`;
 
 const PUNCTUATION_ANYWHERE = new RegExp(PUNCTUATION, 'gu');
 
 /**
- * A typed answer as grading compares it: `answerKey` (NFC, lowercase, keyboard
- * variants), then punctuation stripped and spaces collapsed.
+ * A typed answer as grading compares it: `answerKey` (NFC, lowercase, keyboard variants), then punctuation stripped and
+ * spaces collapsed.
  */
 export function gradingKey(text: string): string {
   return answerKey(text).replace(PUNCTUATION_ANYWHERE, ' ').replace(/\s+/g, ' ').trim();
 }
 
 /**
- * Diacritic-tolerant text check. Answers are compared by `gradingKey`, so
- * case, punctuation, spacing, invisible formatting and the keyboard a Soranî
- * answer was typed on do not matter: an answer built from word tiles has no
- * commas or full stops, and is as right as the sentence it builds. An exact
- * match against any accepted answer → correct. A match only after folding
- * Kurdish diacritics (ê→e, ş→s, …) is a 'typo': accepted with a nudge
- * ("almost — watch the ê"), unless the item is strict, where the letter is the
- * point and the slip is not accepted. Otherwise wrong.
+ * Diacritic-tolerant text check. Answers compare by `gradingKey`, so case, punctuation, spacing, invisible formatting
+ * and the Soranî keyboard used do not matter (a tile-built answer has no punctuation and is as right as the sentence).
+ * An exact match with any accepted answer is correct. A match only after folding Kurdish diacritics (ê→e, ş→s, …) is a
+ * 'typo', accepted with a nudge unless the item is strict. Otherwise wrong.
  */
 function gradeText(acceptedAnswers: string[], text: string, strict = false): CheckResult {
   const answer = gradingKey(text);
@@ -559,10 +524,9 @@ function checkListening(payload: ListeningPayload, text: string): CheckResult {
 }
 
 /**
- * Speaking is graded by the pronunciation scorer (KUR-036): today the
- * learner's own judgement after hearing their recording beside the native
- * model (see speaking-scorer.ts). An answer with neither a rating nor (from an
- * older client) a recording is wrong, so a skipped take is never a pass.
+ * Speaking is graded by the pronunciation scorer, currently the learner's own rating after hearing their take beside
+ * the native model (speaking-scorer.ts). An answer with neither a rating nor (from older clients) a recording is wrong,
+ * so skipping is never a pass.
  */
 function checkSpeaking(payload: SpeakingPayload, answer: SpeakingAnswer): CheckResult {
   if (!answer.selfRating && !answer.audioKey) return { verdict: 'wrong', accepted: false };
@@ -578,9 +542,8 @@ function checkSpeaking(payload: SpeakingPayload, answer: SpeakingAnswer): CheckR
 }
 
 /**
- * Free-text writing (KUR-037): graded as translate is. Copying the prompt back
- * earns no credit (verdict 'wrong'), checked before the accepted answers so it
- * can't sneak a match.
+ * Free-text writing is graded like translate. Copying the prompt back is 'wrong', checked before the accepted answers
+ * so it cannot match one.
  */
 function checkWriting(payload: WritingPayload, text: string): CheckResult {
   const answer = gradingKey(text);
@@ -592,17 +555,12 @@ function checkWriting(payload: WritingPayload, text: string): CheckResult {
 }
 
 /**
- * Which of a match-pairs item's texts (one side of it) a submitted text is:
- * the one it is exactly, else the only one it is under `answerKey`. Null when
- * it is none of them, or could be more than one.
+ * Which of a match-pairs side's texts a submitted text is: the exact one, else the only one with the same `answerKey`;
+ * null when none or ambiguous.
  *
- * Clients send back the cards they were shown, so the exact text normally
- * decides. `answerKey` is the fallback for a client that re-typed or re-encoded
- * one (an Arabic kaf for a Kurdish one); it is only trusted when it points at a
- * single card, because two cards can share a key — "A" and "a" in an alphabet
- * lesson, or two words that differ only in a final ھ and ە — and a lookup keyed
- * on it alone let one of those cards overwrite the other, grading a right
- * matching wrong.
+ * Clients send back the cards they were shown, so the exact text usually decides. `answerKey` covers a client that
+ * re-encoded a card (an Arabic kaf for a Kurdish one) and is trusted only when it points to one card, because cards can
+ * share a key ("A" and "a", or words differing only in a final ھ and ە).
  */
 function resolveCard(sent: string, cards: string[]): string | null {
   const exact = normalizeKurdish(sent);
@@ -618,10 +576,8 @@ function pairsText(payload: MatchPairsPayload): string {
 }
 
 /**
- * Right only when every pair the learner made is one of the item's pairs, each
- * used once, and all of them are made. A wrong matching comes back with every
- * right pair, as a wrong typed answer comes back with the right text: "not
- * yet" alone tells the learner something is wrong and not what is right.
+ * Right only when every pair the learner made is one of the item's pairs, each used once, and all are made. A wrong
+ * matching returns every right pair, as a wrong typed answer returns the right text.
  */
 function checkMatchPairs(
   payload: MatchPairsPayload,
@@ -647,11 +603,9 @@ function checkMatchPairs(
 type SpeakingAnswer = z.infer<(typeof answerSchemas)['speaking']>;
 
 /**
- * Grades one answer server-side. `payload` and `answer` are the raw
- * stored/submitted JSON; both are validated here so a malformed answer
- * is simply 'wrong', never a crash. `seed` is the one the exercise was
- * delivered with (`${sessionId}:${exerciseId}`): a multiple-choice answer is a
- * position in the shuffled order that seed produced.
+ * Grade one answer server-side. `payload` and `answer` are raw stored and submitted JSON, validated here so a malformed
+ * answer is 'wrong', never a crash. `seed` is the one the exercise was delivered with (`${sessionId}:${exerciseId}`): a
+ * multiple-choice answer is a position in that shuffled order.
  */
 export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknown, seed: string): CheckResult {
   const validPayload = PAYLOAD_SCHEMAS[type].safeParse(payload);
@@ -694,21 +648,16 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
 }
 
 /**
- * The kinds of exercise a learner may put off without it counting against
- * them: listening ("Can't listen now", or a clip that will not play) and
- * speaking ("Can't speak now", or the course-wide "skip speaking" setting).
- * Both need something the learner may not have at that moment — sound, a
- * microphone, a quiet room — and not having it is not a wrong answer. One put
- * off and never answered is left out of the score rather than counted as
- * missed (`LessonSessionService.complete`, `PracticeService.complete`).
+ * Exercise kinds a learner may put off without penalty: listening ("Can't listen now", or a clip that will not play)
+ * and speaking ("Can't speak now", or the "skip speaking" setting), since lacking sound, a microphone or a quiet room
+ * is not a wrong answer. One put off and never answered is left out of the score (`LessonSessionService.complete`,
+ * `PracticeService.complete`).
  */
 export const SKIPPABLE_TYPES: readonly ExerciseType[] = ['listening', 'speaking'];
 
 /**
- * What a results screen shows for a missed exercise: the question as it was
- * asked, and the right answer. Read from the stored payload, so it is only
- * ever sent once the session is over. A match-pairs item has no prompt; its
- * answer is every pair.
+ * What a results screen shows for a missed exercise: the question as asked and the right answer, read from the stored
+ * payload, so only ever sent once the session is over. Match pairs has no prompt; its answer is every pair.
  */
 export function revealExercise(type: ExerciseType, payload: unknown): { prompt?: string; correction?: string } {
   const parsed = PAYLOAD_SCHEMAS[type]?.safeParse(payload);

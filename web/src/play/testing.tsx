@@ -1,8 +1,6 @@
 /**
- * Rendering the play layer in a test: the app's providers, a realtime
- * connection the test drives, and the address the screen went to. Not
- * shipped: only test files import it. The fake API is the Stories one
- * (stories/testing.ts `fakeApi`).
+ * Test rendering for the play layer: the app's providers, a test-driven realtime connection, and the current address.
+ * The fake API is stories/testing.ts `fakeApi`.
  */
 import type { ReactNode } from 'react';
 import { expect } from 'vitest';
@@ -40,7 +38,7 @@ export function fakeRealtime(): { client: RealtimeClient; emit: (event: Record<s
 /** Where the screen is now, for a test to read. */
 function Where(): React.JSX.Element {
   const { pathname, search } = useLocation();
-  // a span, not an <output>: that is a status region, and the banners are too
+  // A span, not an <output>, which is a status region like the banners.
   return <span data-testid="where">{pathname + search}</span>;
 }
 
@@ -73,10 +71,7 @@ export function renderPlay(
   return { ...result, realtime };
 }
 
-/**
- * Wait until the signed-in path has run (the invites were read), so an event
- * sent next has someone listening.
- */
+/** Waits until the signed-in path has read the invites, so an event sent next has a listener. */
 export async function signedInAndListening(calls: Array<{ path: string }>): Promise<void> {
   await waitFor(() => expect(calls.some((c) => c.path.startsWith('/play/invites'))).toBe(true));
 }

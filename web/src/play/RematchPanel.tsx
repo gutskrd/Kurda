@@ -12,33 +12,14 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { InviteSheet } from './InviteSheet';
 import { joinLobby, lobbyPath, playError } from './playApi';
 
-/**
- * Leaving the results takes a standing rematch offer back. The call waits a
- * moment so that React mounting the panel twice in development (unmount,
- * mount again at once) does not read as leaving.
- */
+/** Leaving the results withdraws a rematch offer, after a moment so development's double mount does not count as leaving. */
 const leaving = new Map<string, ReturnType<typeof setTimeout>>();
 
 /**
- * Playing again, the same way for every game (contract §B1).
- *
- * Two players: "Rematch" — both must ask (lichess). The other sees "Rojda
- * wants a rematch" with Accept and No thanks; once both have asked, the new
- * game starts at once and both are taken to it. A running score shows after
- * the first rematch.
- *
- * More players: the host's "Play again" opens the next round with only the
- * host in it (who goes there and can invite); everyone else gets "Join next
- * round", one tap, through the same join rule as any link. Nobody is put in a
- * game they did not choose.
- *
- * "Invite someone else" opens the invite sheet for a new game.
- *
- * In the same ticket language as every invite (ui/Ticket.tsx): an offer from
- * the other player is handed over as a ticket in the game's colour, with its
- * answers on it; your own offer waits as a ticket in outline, a faint light
- * crossing it while it is in front; inviting someone else carries the ticket
- * glyph.
+ * Playing again, the same for every game. Two players: both must ask for a "Rematch", then the new game starts and both
+ * go there, with a running score after the first. More players: the host's "Play again" opens the next round with only
+ * the host in it, and everyone else gets "Join next round" through the usual join rule, so nobody is put in a game they
+ * did not choose. "Invite someone else" opens the invite sheet. Offers are tickets as every invite is (ui/Ticket.tsx).
  */
 export function RematchPanel({
   game,
@@ -48,7 +29,7 @@ export function RematchPanel({
 }: {
   game: PlayGame;
   lobbyId: string;
-  /** a two-player game: the other player, as this screen names them */
+  /** In a two-player game, the other player as this screen names them. */
   otherName: string;
   isHost: boolean;
 }): React.JSX.Element {
@@ -101,7 +82,7 @@ export function RematchPanel({
     };
   }, [client, game, lobbyId, key]);
 
-  // a rematch both asked for has started: both go to it
+  // A rematch both asked for has started: both go to it.
   const next = state?.kind === 'pair' ? state.nextLobbyId : null;
   useEffect(() => {
     if (next) navigate(lobbyPath(game, next));
@@ -114,7 +95,7 @@ export function RematchPanel({
     setBusy(false);
     if (!res.ok) return setError(playError(res.error, t));
     setState(res.data);
-    // the host who opened the next round goes to it, to wait and invite
+    // The host who opened the next round goes there to wait and invite.
     if (res.data.kind === 'round' && res.data.nextLobbyId) navigate(lobbyPath(game, res.data.nextLobbyId));
   }
 
@@ -142,7 +123,7 @@ export function RematchPanel({
       {t('play.rematch.someoneElse')}
     </Button>
   );
-  /** An offer, as a ticket: the other player's handed over, or yours waiting for them. */
+  /** An offer as a ticket: the other player's handed over, or yours waiting. */
   const ticket = (content: React.ReactNode, waiting = false): React.ReactNode => (
     <div className={ticketClass(game, 'row', `rematch-ticket${waiting ? ' is-outlined' : ''}${waiting && inFront && !still ? ' is-awake' : ''}`)}>
       <TicketStub className="rematch-stub">

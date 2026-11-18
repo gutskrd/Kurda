@@ -5,20 +5,14 @@ import { badgeLabel } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import { useT } from '../i18n/I18nProvider';
 
-/**
- * The nav's way into the rail, and its badge.
- *
- * On a wide screen the rail is always open and this disappears (CSS); on a
- * narrow one it is the only way in, which is why it carries the count.
- */
+/** The nav button that opens the rail, with its badge; hidden on wide screens, where the rail is always open. */
 export function RailToggle(): React.JSX.Element | null {
   const { status } = useAuth();
   const t = useT();
   const present = useRailPresent();
   const { open, setOpen, total } = useRail();
 
-  // the pop should fire when the number goes up, not every time the poll
-  // returns the same number again
+  // Pop only when the number goes up, not on every poll.
   const [popKey, setPopKey] = useState(0);
   const previous = useRef(total);
   useEffect(() => {
@@ -36,7 +30,7 @@ export function RailToggle(): React.JSX.Element | null {
       aria-expanded={open}
       onClick={() => setOpen(!open)}
     >
-      {/* two people, not one — this is your friends, not your profile */}
+      {/* Two people, for friends rather than the profile. */}
       <UsersIcon size={19} />
       {total > 0 && (
         <span key={popKey} className="rail-badge rail-badge-pop">

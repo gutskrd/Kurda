@@ -1,45 +1,13 @@
 /**
- * The dictionary, as pages anyone can read without an account.
+ * Builds the public dictionary as static files (run by `npm run build` after vite: npx tsx scripts/build-ferheng.ts).
  *
- *   npx tsx scripts/build-ferheng.ts        (run by `npm run build`, after vite)
+ * Files, because static assets on the edge are free and unlimited while the API and the Worker are metered. The
+ * definitions are strangers' Wiktionary text: escaped on the way in (`escape`) and served under a policy that refuses
+ * inline script (web/public/_headers), two independent walls; the pages also work without JavaScript, as crawlers read
+ * them.
  *
- * ── why these are files and not an API ───────────────────────────────────
- *
- * Every other way of serving this is metered. A request that reaches Render is
- * billed per gigabyte; a request that invokes the Worker is billed per million.
- * Cloudflare's own documentation is unambiguous about the one path that is
- * neither: "Requests to static assets are free and unlimited. There is no
- * additional cost for storing Assets."
- *
- * So the dictionary is written out as ordinary files at build time. A reader —
- * or a crawler, or a million bots — gets a file off Cloudflare's edge. Render
- * never hears about it, the Worker is never invoked, and nothing counts. That
- * is the whole design, and everything below follows from it.
- *
- * ── why there is no JavaScript on these pages ────────────────────────────
- *
- * The definitions are Wiktionary text: written by strangers, and the one thing
- * on these pages that an attacker controls. It is escaped on the way in (see
- * `escape`), and then the page is served under a policy that forbids inline
- * script outright and allows only this origin's own files (`script-src 'self'`,
- * in web/public/_headers, for chrome.js). Two independent failures would have
- * to line up for anything an attacker wrote to execute, and the second one
- * does not depend on this file being right.
- *
- * It also means the pages work with JavaScript off, which is how a crawler
- * reads them.
- *
- * ── how they are split ───────────────────────────────────────────────────
- *
- * 447,139 words will not fit in one page, and Cloudflare caps a deployment at
- * 20,000 files on the free plan (100,000 on paid). Both ends matter, so the
- * words are grouped by their folded prefix and a group that grows past
- * `WORDS_PER_PAGE` is split by taking one more letter — "a" becomes "ab", "ac",
- * and "ser" keeps going until each page is a sensible size. Measured on the real
- * corpus: about 94 bytes of text per word, so a page of 150 is roughly 35 KB of
- * HTML and the whole set lands near 3,000 files.
- *
- * The prefix is in the URL, so the address of a page is predictable and stable:
+ * Words are grouped by folded prefix, splitting a group past `WORDS_PER_PAGE` by another letter, so a page is about
+ * 35 KB and the set stays near 3,000 files against the 20,000-file deployment limit. The prefix is the URL:
  * /ferheng/ab/ holds every word whose folded form begins "ab".
  */
 import fs from 'node:fs';
@@ -68,13 +36,13 @@ import {
   type Word,
 } from './ferheng-pages.js';
 
-/* each language writes to its own folder under here — see ferheng-copy.ts */
+/* Each language writes to its own folder under here; see ferheng-copy.ts. */
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Finding the font files where npm actually put them, hoisted or not. */
+/** Finds the font files wherever npm put them, hoisted or not. */
 const require_ = createRequire(import.meta.url);
 
-/** Which published set. Kurmancî is the one with 447,000 words in it. */
+/** Which published set; Kurmancî is the one with the words. */
 const LANG = 'ku';
 
 /** An escape hatch for an urgent deploy when the source is unreachable. */
@@ -101,14 +69,8 @@ async function main(): Promise<void> {
         continue;
       }
       /*
-       * Two writings of one key share a page entry rather than each claiming
-       * the same anchor: `Kurd` and `kurd`, or `كا` and `کا`, which are the
-       * same letters typed two ways.
-       *
-       * It used to catch far more than that, because the key folded the
-       * diacritics and `zabit` and `zabît` collided. They are separate words
-       * and have separate entries now — see `pageKey`. Senses are concatenated
-       * and regrouped when the page is rendered; the rest is a set union.
+       * Two writings of one key (`Kurd` and `kurd`, `كا` and `کا`) share a page entry rather than both claiming the
+       * anchor; senses are concatenated and regrouped at render, the rest is a set union.
        */
       existing.senses.push(...entry.senses);
       existing.synonyms = [...new Set([...existing.synonyms, ...entry.synonyms])];
@@ -126,15 +88,11 @@ async function main(): Promise<void> {
   const pages = paginate(words);
   console.log(`ferheng: ${words.length.toLocaleString('en')} words across ${pages.length} pages`);
 
-  /*
-   * Where every word lives, so a synonym can become a link. A page cannot
-   * work this out alone — the word it points at is almost always on a
-   * different page — so it is built once, for the whole dictionary, first.
-   */
+  /* Where every word lives, built once for the whole dictionary, so a synonym on another page can be a link. */
   const pageOf = new Map<string, string>();
   for (const page of pages) for (const w of page.words) pageOf.set(w.key, page.prefix);
 
-  // one page per letter, between the A–Z and the words
+  // One page per letter, between the A–Z and the words.
   const byLetter = new Map<string, typeof pages>();
   for (const page of pages) {
     const letter = letterOf(page.prefix);
@@ -146,16 +104,8 @@ async function main(): Promise<void> {
   const samples = featured(words, 8);
 
   /*
-   * Published once per language.
-   *
-   * The words are Kurdish in both; what differs is the bar, the footer and the
-   * labels, which belong to whoever is reading rather than to the dictionary.
-   * See ferheng-copy.ts for why there are two languages and not nine, and why
-   * they are sibling paths rather than one nested under the other.
-   *
-   * Everything above this loop — the corpus, the pagination, which word sits
-   * on which page — is worked out once and shared, so a second language costs
-   * the writing and not the thinking.
+   * Published once per language (ferheng-copy.ts says why two). The words are Kurdish in both; the bar, footer and labels
+   * differ. Everything above this loop is worked out once and shared.
    */
   let bytes = 0;
   let files = 0;
@@ -184,19 +134,12 @@ async function main(): Promise<void> {
     }
     write('index.html', indexPage(letters, words.length, pages.length, samples, pageOf, copy));
     write('ferheng.css', STYLE);
-    // the bar and footer in the reader's own language; see ferheng-chrome.ts
+    // The bar and footer in the reader's language; see ferheng-chrome.ts.
     write(CHROME_FILE, chromeScript());
-    // what the Worker serves for an address with no page behind it; see
-    // notFoundPage() for why the app's own 404 screen cannot do this job
+    // What the Worker serves for an address with no page; see notFoundPage() for why the app's 404 cannot.
     write('404.html', notFoundPage(copy));
 
-    /*
-     * The typefaces, out of node_modules and onto the edge.
-     *
-     * Copied rather than linked because these pages are served under
-     * `default-src 'none'` and a font from anywhere else would need a hole in
-     * it. Its `unicode-range` means a page of Kurmancî never fetches it.
-     */
+    /* The typefaces, copied onto the edge because the pages run under `default-src 'none'`. */
     const fonts = path.join(out, 'fonts');
     fs.mkdirSync(fonts, { recursive: true });
     for (const font of FONTS) {
@@ -206,7 +149,7 @@ async function main(): Promise<void> {
       files += 1;
     }
 
-    // its own sitemap, announced from robots.txt alongside the app’s
+    // Its own sitemap, announced from robots.txt alongside the app’s.
     const urls = ['', ...letters.map((l) => `${l.letter}/`), ...pages.map((q) => `${q.prefix}/`)]
       .map((u) => `<url><loc>${ORIGIN}/${copy.base}/${u}</loc></url>`)
       .join('');
@@ -218,11 +161,7 @@ async function main(): Promise<void> {
     console.log(`  /${copy.base}/ — ${pages.length} word pages, ${letters.length} letters`);
   }
 
-  /*
-   * The search box's files, once for both languages: a word's page has the
-   * same name in each, so /dictionary/ pages read them from /ferheng/s/ too.
-   * Written after the loop because each language's folder is cleared first.
-   */
+  /* The search files, once for both languages, since a word's page has the same name in each; written after the loop, which clears each folder first. */
   const shards = shard(pages);
   const dir = path.join(ROOT, 'dist', SEARCH_DIR);
   fs.mkdirSync(dir, { recursive: true });
@@ -243,13 +182,8 @@ async function main(): Promise<void> {
       `${files} files, ${(bytes / 1024 / 1024).toFixed(0)} MB  (free limit is 20,000 files)`,
   );
   /*
-   * The limit that actually binds is files, not bytes. Stopping well short
-   * of it leaves room for the app’s own assets and for the dictionary to
-   * grow, and a build that fails here is a far better outcome than a deploy
-   * Cloudflare refuses halfway through.
-   *
-   * It is also what decides how many languages this can be published in: a
-   * third would be another ~3,360 files.
+   * Files are the limit that binds. Stopping well short leaves room for the app's assets and growth, and failing here
+   * beats a deploy refused halfway; it is also why a third language (about 3,360 more files) does not fit.
    */
   if (files > 18_000) {
     throw new Error(`${files} files is too close to the 20,000 limit — raise WORDS_PER_PAGE`);

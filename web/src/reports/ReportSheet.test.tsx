@@ -55,7 +55,7 @@ describe('ReportSheet', () => {
     expect(buttons).toHaveLength(11);
     expect(buttons[0]).toHaveTextContent('A child is being put at risk');
     expect(buttons[1]).toHaveTextContent('Someone may hurt themselves');
-    // the copyright category from shared REPORT_CATEGORIES, with its own words
+    // The copyright category from shared REPORT_CATEGORIES, with its own words.
     expect(buttons[7]).toHaveTextContent('Copies someone else’s work');
     expect(buttons[7]).toHaveTextContent('Posting a picture or words someone else made as if they were their own.');
     expect(buttons[10]).toHaveTextContent('Something else');
@@ -76,7 +76,7 @@ describe('ReportSheet', () => {
     expect(sent.body).toEqual({ targetType: 'user', targetId: 'u-rojda', category: 'harassment' });
     expect(screen.getByText('What happens next')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'See my reports' })).toHaveAttribute('href', '/app/settings/reports');
-    // there is no personal mute in Hevalo, so none is offered
+    // There is no personal mute in Hevalo, so none is offered.
     expect(screen.queryByRole('button', { name: /mute/i })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Block Rojda' }));
@@ -92,7 +92,7 @@ describe('ReportSheet', () => {
 
     expect(screen.getByRole('heading', { name: 'If someone may hurt themselves' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Find a helpline/ })).toHaveAttribute('href', 'https://findahelpline.com');
-    // nothing has been sent yet: help comes before the report
+    // Nothing has been sent yet: help comes before the report.
     expect(calls.some((c) => c.url.endsWith('/reports'))).toBe(false);
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue with the report' }));

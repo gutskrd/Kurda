@@ -9,7 +9,7 @@ import { limitText } from '../lib/limits';
 import type { ApiError, Conversation, MyGroup, UserSummary } from '../lib/types';
 import { messagePreview } from '../chat/messagePreview';
 import { PreviewIcon } from '../chat/PreviewIcon';
-import { useLocale, useT } from '../i18n/I18nProvider';
+import { useLocale, useT, type Translate } from '../i18n/I18nProvider';
 import { DmThread } from '../chat/DmThread';
 import { GroupThread } from '../chat/GroupThread';
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
@@ -29,20 +29,17 @@ import { pollWhileVisible } from '../lib/pollWhileVisible';
 import { BirdBadge } from '../letters/LetterParts';
 import { LETTERS_HOME_PATH } from '../letters/useLettersHome';
 
-// When the realtime socket is live it carries every message instantly, so polling
-// is just a slow safety net. When it is NOT connected, we fall back to a brisk
-// poll so chat still feels live for everyone. Neither runs while the tab is hidden.
+// With the realtime socket live, polling is only a slow safety net; without it a brisk poll keeps chat live. Neither
+// runs while the tab is hidden.
 const CONVO_POLL_LIVE = 30000;
 const CONVO_POLL_FALLBACK = 5000;
-
-
 
 type Filter = 'all' | 'unread' | 'groups';
 
 /** A group's unread count, as GET /me/groups/unread gives it. */
 type GroupUnread = Record<string, number>;
 
-/** The list as it was last drawn, and what it is remembered under (lib/apiMemory.ts). */
+/** The list as last drawn, and its memory key (lib/apiMemory.ts). */
 interface KeptList {
   convos: Conversation[];
   groups: MyGroup[];
@@ -50,12 +47,8 @@ interface KeptList {
 }
 const LIST_MEMORY = 'messages:list';
 
-/**
- * When a conversation last moved, as short as it can be said: "now", "5m",
- * "3h", a weekday within the week, a date after that. A list of names needs
- * the time to scan, not to read.
- */
-function convoTime(iso: string, t: ReturnType<typeof useT>, locale: string, now = Date.now()): string {
+/** When a conversation last moved, as short as possible: "now", "5m", "3h", a weekday within the week, then a date. */
+function convoTime(iso: string, t: Translate, locale: string, now = Date.now()): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';
   const minutes = Math.max(0, Math.floor((now - then) / 60_000));
@@ -63,8 +56,7 @@ function convoTime(iso: string, t: ReturnType<typeof useT>, locale: string, now 
   if (minutes < 60) return t('time.minutes', { count: minutes });
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return t('time.hours', { count: hours });
-  // a browser that has no names for this language's days would print English
-  // ones; a count of days and a numeric date read the same in every language
+  // A browser without day names for this language would print English, so fall back to numbers.
   const named = Intl.DateTimeFormat.supportedLocalesOf([locale]).length > 0;
   const days = Math.floor(hours / 24);
   if (days < 7) return named ? new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(then) : t('time.daysAgo', { count: days });
@@ -72,22 +64,10 @@ function convoTime(iso: string, t: ReturnType<typeof useT>, locale: string, now 
 }
 
 /**
- * Messages (/app/messages): every conversation, with a person or a group, in
- * one list — and the friend requests waiting on you above them, because a
- * request is the one thing here that is waiting on you and must not sink
- * under the chatter.
- *
- * The list can be narrowed by name as you type (nothing is fetched for it:
- * it filters what is already here) and by All, Unread and Groups. A new
- * conversation starts from the button at the top, with a friend to choose.
- *
- * A group starts from "New group" beside it, in view whichever list is
- * showing: a name is all it asks. The group then opens with its add-friends
- * sheet up, because a group is private and adding friends is the only way
- * anyone else comes into it; closing the sheet leaves you in its chat.
- *
- * On a wide screen the open conversation sits beside the list; on a phone it
- * takes the whole screen, and the tab bar steps aside until you come back.
+ * Messages (/app/messages): every conversation, personal or group, in one list, with waiting friend requests above it.
+ * The list filters by name as you type (client-side) and by All, Unread and Groups. "New message" and "New group" sit at
+ * the top; a new group opens with its add-friends sheet up, since adding friends is the only way anyone joins. On a wide
+ * screen the open conversation sits beside the list; on a phone it takes the screen and the tab bar steps aside.
  */
 export function Messages(): React.JSX.Element {
   const t = useT();
@@ -95,7 +75,7 @@ export function Messages(): React.JSX.Element {
   const activeId = params.get('to');
   const activeName = params.get('name') ?? undefined;
   const activeGroup = params.get('group');
-  // the Groups filter is implied when a group is open, else it's a manual choice
+  // An open group implies the Groups filter; otherwise it is a manual choice.
   const [filter, setFilter] = useState<Filter>(activeGroup ? 'groups' : 'all');
   useEffect(() => {
     if (activeGroup) setFilter('groups');
@@ -103,17 +83,15 @@ export function Messages(): React.JSX.Element {
   const [query, setQuery] = useState('');
   const [composing, setComposing] = useState(false);
   const [creating, setCreating] = useState(false);
-  // the group made a moment ago: its thread opens with the add-friends sheet up, once
+  // The group just made: its thread opens once with the add-friends sheet up.
   const [created, setCreated] = useState<string | null>(null);
   useEffect(() => {
     if (created && created === activeGroup) setCreated(null);
   }, [created, activeGroup]);
   const newGroup = useCallback(() => setCreating(true), []);
-  // bump to refresh the direct list after the current user sends (their own send
-  // isn't pushed back to them over realtime, so the preview would otherwise lag)
+  // Bumped to refresh the list after you send, since your own sends are not pushed back over realtime.
   const [dmRefresh, setDmRefresh] = useState(0);
-  // stable identity: Thread depends on this inside an effect, so a new function
-  // on each render would reset the thread and wipe what is on screen
+  // Stable identity: Thread depends on it inside an effect, and a new function each render would reset the thread.
   const onDmSent = useCallback(() => setDmRefresh((n) => n + 1), []);
 
   const filters: Array<{ key: Filter; label: string }> = [
@@ -213,7 +191,7 @@ export function Messages(): React.JSX.Element {
           onCreated={(id) => {
             setCreating(false);
             setCreated(id);
-            // the lists of groups on the page gain this one
+            // The page's lists of groups gain this one.
             announceGroupsChanged();
           }}
         />
@@ -222,13 +200,7 @@ export function Messages(): React.JSX.Element {
   );
 }
 
-/**
- * "Friend requests (2)", above the conversations, while any are waiting.
- *
- * It opens Friends, where each can be accepted or declined with the person in
- * front of you. Nothing is drawn when there are none: an empty row is a row
- * that says nothing.
- */
+/** "Friend requests (2)" above the conversations while any wait, opening Friends; nothing when there are none. */
 function FriendRequestsRow(): React.JSX.Element | null {
   const t = useT();
   const { data } = useApiGet<{ requests: UserSummary[] }>('/friends/requests');
@@ -255,20 +227,18 @@ function FriendRequestsRow(): React.JSX.Element | null {
 }
 
 /**
- * The way into letters by bird (letters/LettersPage.tsx), at the top of the
- * conversations: your bird, and in a few words what is new — a letter waiting
- * to be answered, your bird out — or, with nothing yet, what letters are.
+ * The way into letters by bird (letters/LettersPage.tsx) atop the conversations: your bird and what is new (a letter to
+ * answer, your bird out), or what letters are.
  */
 function LettersRow(): React.JSX.Element | null {
   const t = useT();
-  // read as the window reads it, which leaves every letter to land there: a plain read is an old app's, which takes a
-  // letter it would show as landed, so opening the conversations would use up a bird before the window ever showed it
+  // Read as the window reads it: a plain read would mark letters as landed and use up a bird before the window shows it.
   const { data } = useApiGet<LettersHome>(LETTERS_HOME_PATH);
-  // an answer without the shape (a server from before letters) draws no row rather than breaking the list
+  // An answer without the shape (a server from before letters) draws no row.
   if (!data || !Array.isArray(data.penPals)) return null;
   const unread = data.penPals.reduce((n, p) => n + p.unread, 0);
   const waiting = data.penPals.find((p) => p.yourTurn);
-  // a bird at your window waits for you first, then a pen pal's letter, then your own bird out
+  // A bird at your window comes first, then a pen pal's letter, then your own bird out.
   const visitor = data.visitor ?? null;
   const line = visitor
     ? t('letters.visitor.title', { name: visitor.person.name })
@@ -278,7 +248,7 @@ function LettersRow(): React.JSX.Element | null {
         ? t('letters.out.title')
         : t('letters.row.invite');
   return (
-    // gold only while a letter or a bird waits on you, like the requests above; otherwise one quiet row among the conversations
+    // Gold only while a letter or bird waits on you; otherwise one quiet row.
     <Link to="/app/letters" className={`chat-requests chat-letters${visitor || waiting || unread > 0 ? ' is-waiting' : ''}`}>
       <BirdBadge bird={data.bird} size={48} />
       <span className="chat-convo-body">
@@ -315,7 +285,7 @@ function ConvoRow({
       {avatar}
       <span className="chat-convo-body">
         <span className="chat-convo-top">
-          {/* what people wrote and called themselves runs in its own direction */}
+          {/* Names people chose run in their own direction. */}
           <span className="chat-convo-name" dir="auto">{name}</span>
           {when && <span className="chat-convo-when">{when}</span>}
         </span>
@@ -336,7 +306,7 @@ function ConvoRow({
 const matches = (needle: string, ...names: Array<string | null | undefined>): boolean =>
   !needle || names.some((n) => (n ?? '').toLocaleLowerCase().includes(needle));
 
-/** People first, newest on top; your groups after them; narrowed by name and by unread. */
+/** People first, newest on top, then your groups; filtered by name and unread. */
 function Conversations({
   activeId,
   activeGroup,
@@ -350,14 +320,14 @@ function Conversations({
   refreshKey: number;
   unreadOnly: boolean;
   query: string;
-  /** start a group: offered where there is nothing yet, beside finding people */
+  /** Starts a group: offered where there is nothing yet, beside finding people. */
   onNewGroup: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const locale = useLocale();
   const { state } = useRealtime();
-  // the list as it was last drawn in this tab (lib/apiMemory.ts): shown at once on coming back, and asked for again behind it
+  // The list as last drawn in this tab (lib/apiMemory.ts), shown at once and refreshed behind.
   const who = useMemoryOwner();
   const [kept] = useState(() => (who ? (lastAnswer<KeptList>(who, LIST_MEMORY)?.data ?? null) : null));
   const [convos, setConvos] = useState<Conversation[] | null>(kept?.convos ?? null);
@@ -387,19 +357,19 @@ function Conversations({
     return pollWhileVisible(() => void loadConvos(), state === 'open' ? CONVO_POLL_LIVE : CONVO_POLL_FALLBACK);
   }, [loadConvos, refreshKey, state]);
 
-  // what the list holds now is what coming back to Messages shows
+  // What the list holds now is what returning to Messages shows.
   useEffect(() => {
     if (who && convos !== null) remember<KeptList>(who, LIST_MEMORY, { convos, groups, groupUnread });
   }, [who, convos, groups, groupUnread]);
 
   const onDm = useCallback(() => void loadConvos(), [loadConvos]);
   useGroupsChanged(onDm);
-  // only a list that arrives rises in, and only the first time in this tab: one drawn from memory is simply there
+  // Only a list that arrives rises in, once per tab; one from memory is simply there.
   const arriving = useArrival(convos !== null, 'messages');
   useRealtimeEvent('dm', onDm);
   useRealtimeEvent('dm_read', onDm);
   useRealtimeEvent('group_msg', onDm);
-  // a chat cleared for everyone has nothing unread left in it
+  // A chat cleared for everyone has nothing unread left.
   useRealtimeEvent('group_chat_cleared', onDm);
 
   if (error && convos === null) return <ErrorState message={error} onRetry={() => void loadConvos()} />;
@@ -430,7 +400,7 @@ function Conversations({
     return <p className="muted chat-list-none">{unreadOnly && !needle ? t('chat.allRead') : t('chat.noMatch')}</p>;
 
   return (
-    // the first screenful of conversations rises in once, as the list arrives (styles/motion.css)
+    // The first screenful rises in once as the list arrives (styles/motion.css).
     <div className={arriving ? 'list-arrival rise-in' : 'list-arrival'}>
       {people.map((c) => (
         <ConvoRow
@@ -442,9 +412,9 @@ function Conversations({
           preview={
             <>
               {c.lastFromMe && t('chat.youPrefix')}
-              {/* a gift or a game card wears the app's own icon before its words */}
+              {/* A gift or game card shows the app's icon before its words. */}
               <PreviewIcon kind={c.lastKind} />
-              {/* the message in its own direction, apart from "You:" in the page's */}
+              {/* The message in its own direction, apart from "You:" in the page's. */}
               <bdi>{messagePreview({ body: c.lastMessage, kind: c.lastKind }, t)}</bdi>
             </>
           }
@@ -467,12 +437,7 @@ function Conversations({
   );
 }
 
-/**
- * Starting a conversation: a friend to write to, found by name.
- *
- * Only friends, as everywhere else that reaches somebody — the server would
- * refuse anyone else. With nobody yet, the way to find people instead.
- */
+/** Starting a conversation with a friend found by name; only friends, as the server requires, else the way to find people. */
 function NewMessage({ onChosen }: { onChosen: () => void }): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
@@ -536,10 +501,7 @@ function NewMessage({ onChosen }: { onChosen: () => void }): React.JSX.Element {
   );
 }
 
-/**
- * The groups the caller is in, and nothing else: a group is private, so there
- * are none to find. With none yet, the way to start one.
- */
+/** The caller's groups only, since groups are private; with none, the way to start one. */
 function GroupsList({ activeGroup, query = '', onNew }: { activeGroup: string | null; query?: string; onNew: () => void }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
@@ -561,10 +523,10 @@ function GroupsList({ activeGroup, query = '', onNew }: { activeGroup: string | 
     void load();
   }, [load]);
 
-  // a new group message can change previews/unread — cheap to refresh the list
+  // A new group message can change previews and unread counts, so refresh.
   const onGroupMsg = useCallback(() => void load(), [load]);
   useRealtimeEvent('group_msg', onGroupMsg);
-  // a group made, renamed, given a picture or left somewhere on the page
+  // A group made, renamed, given a picture or left elsewhere on the page.
   useGroupsChanged(onGroupMsg);
 
   return (
@@ -605,12 +567,9 @@ function GroupsList({ activeGroup, query = '', onNew }: { activeGroup: string | 
 }
 
 /**
- * Start a group: a name is all it needs (what it is about can be said now or
- * later). Whoever makes it owns it, and goes on to its chat, where the caller
- * opens the add-friends sheet (`onCreated`). At a group limit the form says
- * which one and what makes room, and has nothing to send, rather than letting
- * the server refuse it: the limits are counted from the caller's own groups,
- * as the server counts them.
+ * Starts a group with just a name (a description now or later); its maker owns it and goes to its chat, where the
+ * caller opens the add-friends sheet (`onCreated`). At a group limit the form says which and what makes room instead of
+ * sending, counting the caller's groups as the server does.
  */
 function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): React.JSX.Element {
   const t = useT();

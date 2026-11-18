@@ -17,28 +17,21 @@ import type { CreateGameInput } from './api';
 import type { SoloQuizPrefs } from './prefs';
 
 /**
- * The setup sheet's rules, apart from the sheet (contract §A1 "Setup sheet"):
- * presets only, and only the ones that can be played.
- *
- * - A length is offered only when the variety has a published story of it.
- * - The question counts are the ones that length allows; a count the length
- *   does not allow is not offered at all rather than shown greyed out, and
- *   switching length moves an impossible count to that length's default.
- * - The timer starts on the mode's default — none alone, a minute together —
- *   until the host picks one.
- * - A chosen story fixes the length; otherwise the server picks one of that
- *   length ("Surprise me", preferring stories this player has not finished).
+ * The setup sheet's rules (contract §A1 "Setup sheet"): presets only, and only playable ones. Lengths are offered
+ * where the variety has a published story; question counts are those the length allows, and switching length moves
+ * an impossible count to its default. The timer follows the mode's default (none solo, a minute together) until
+ * picked. A chosen story fixes the length; otherwise the server picks one ("Surprise me", unfinished first).
  */
 
 export interface SetupState {
   mode: StoryGameMode;
   dialect: StoryDialect;
-  /** a story the host picked (or the one being read); null = "Surprise me" */
+  /** A story the host picked (or the one being read); null for "Surprise me". */
   storyId: string | null;
   length: StoryLength;
   questionCount: QuestionCount;
   timerSeconds: TimerSeconds;
-  /** the host changed the timer, so a change of mode no longer resets it */
+  /** The host changed the timer, so a mode change no longer resets it. */
   timerChosen: boolean;
   textDuring: TextDuring;
   access: GameAccess;
@@ -55,7 +48,7 @@ export function initialSetup(opts: {
   dialect: StoryDialect;
   story?: Pick<StoryListItem, 'id' | 'length'> | null;
   length?: StoryLength;
-  /** what "Quiz yourself" was last set to on this phone (solo only) */
+  /** What "Quiz yourself" was last set to on this phone (solo only). */
   solo?: SoloQuizPrefs;
 }): SetupState {
   const length = opts.story?.length ?? opts.length ?? 'short';
@@ -81,10 +74,10 @@ export function changeSetup(state: SetupState, patch: Partial<Omit<SetupState, '
   if (patch.mode !== undefined && patch.mode !== state.mode && !next.timerChosen) {
     next.timerSeconds = DEFAULT_TIMER[patch.mode];
   }
-  // a solo game has nobody to let in
+  // A solo game has nobody to let in.
   if (next.mode === 'solo') next.access = 'friends';
   if (patch.length !== undefined && patch.length !== state.length) {
-    // a story of the old length cannot be this length
+    // A story of the old length cannot be this length.
     if (patch.storyId === undefined) next.storyId = null;
     if (!isAllowedQuestionCount(next.length, next.questionCount)) next.questionCount = DEFAULT_QUESTION_COUNT[next.length];
   }

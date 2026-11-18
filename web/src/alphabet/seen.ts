@@ -2,12 +2,8 @@ import { useMemo, useState } from 'react';
 import { LATIN_LETTERS, SORANI_LETTERS, type AlphabetScript } from '@kurda/shared';
 
 /**
- * Which letters this reader has opened, per alphabet — in this browser only,
- * never sent anywhere. Seeing the ticks add up is the small, honest kind of
- * progress that keeps someone going (and storage that fails just means no ticks).
- *
- * The alphabet page marks them; Letters and words (pages/Words.tsx) counts
- * them on the alphabet's card, so both read the one record.
+ * Which letters this reader has opened, per alphabet, kept in this browser only. The alphabet page marks them and
+ * the Letters and words page (pages/Words.tsx) counts them.
  */
 const SEEN_KEY = 'hevalo_alphabet_seen';
 
@@ -30,14 +26,14 @@ export function useSeen(script: AlphabetScript): [Set<string>, (id: string) => v
       try {
         localStorage.setItem(SEEN_KEY, JSON.stringify(next));
       } catch {
-        // private mode or full storage: the ticks just do not persist
+        // Private mode or full storage: the ticks just do not persist.
       }
       return next;
     });
   return [useMemo(() => new Set(all[script]), [all, script]), mark];
 }
 
-/** How many of `script`'s letters have been opened here, out of how many: ids the alphabet no longer has do not count. */
+/** How many of `script`'s letters have been opened here, out of how many; ids the alphabet no longer has do not count. */
 export function lettersSeen(script: AlphabetScript): { seen: number; total: number } {
   const letters = script === 'ckb' ? SORANI_LETTERS : LATIN_LETTERS;
   const opened = new Set(readSeen()[script]);

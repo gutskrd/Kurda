@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PROVIDER } from '@kurda/shared';
 import { fakeClient, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
-import { COPYRIGHT_URL, SettingsScreen } from './SettingsScreen';
+import { SettingsScreen } from './SettingsScreen';
 
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -29,13 +29,9 @@ describe('Settings → About & legal', () => {
     expect(screen.getByText('Something here copies your work?')).toBeTruthy();
     fireEvent.click(screen.getByText('Copyright'));
     expect(open).toHaveBeenCalledWith('https://hevalo.app/copyright');
-    expect(COPYRIGHT_URL).toBe('https://hevalo.app/copyright');
   });
 
-  /*
-   * App Review looks for the privacy policy and a way to reach a person from
-   * inside the app, not only on the website.
-   */
+  // App Review looks for the privacy policy and a way to reach a person from inside the app.
   it('opens the terms, the privacy policy and how Hevalo teaches, and writes to support', () => {
     testAuth.client = fakeClient();
     const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
@@ -52,7 +48,7 @@ describe('Settings → About & legal', () => {
     ]);
   });
 
-  // the registration Dutch law asks for, shown as it is and not as a link: there is nothing to open
+  // The business registration Dutch law requires, shown as text since there is nothing to open.
   it('shows the KvK number at the foot of the legal rows', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);

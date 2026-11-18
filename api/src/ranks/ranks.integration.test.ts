@@ -1,10 +1,8 @@
 /**
- * Game Ranks against real Postgres, through the games that use it (Peyvok
- * Battle here; Pêşbaziya Serwayan and Stories in games.integration.test.ts): Rated or
- * Friendly and why, the decision at the start, the result and its reason,
- * repeat-opponent damping, the new-account limit, leaving and its cooldown,
- * placement and the shield, the lobby's expected gains, the boards' safety
- * rules, an admin's void (with replay) and reset, and the data export.
+ * Game Ranks against real Postgres through Peyvok Battle (Pêşbaziya Serwayan and Stories are in
+ * games.integration.test.ts): the Rated decision and its reason, results, repeat-opponent damping, the new-account
+ * limit, leaves and cooldowns, placement and the shield, expected gains, board rules, an admin's void and reset, and
+ * the data export.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
@@ -327,8 +325,7 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
     it('holds a tier just reached at its floor for three games', async () => {
       const a = await user();
       const weak = await user();
-      // a placed player just into Gir (328), shield fresh, loses to a much
-      // weaker one — a loss that would take them well below 300
+      // A placed player just into Gir (328), shield fresh, loses to a much weaker one: a loss that would take them well below 300.
       await pool.query(
         `INSERT INTO game_ratings (user_id, game, mu, sigma, points, rated_games, placement_done, shield_games, season_id, last_rated_at)
          VALUES ($1, 'wordle-battle', 20.2, 4, $2, 12, true, 3, $3, $4),

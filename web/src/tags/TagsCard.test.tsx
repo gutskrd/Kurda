@@ -36,9 +36,8 @@ const claimedTag = (over: Partial<ClaimedTag>): ClaimedTag => ({
 });
 
 /**
- * Three endpoints answer here, and the card loads all of them at once. Longest
- * key first: '/me/tags/claimed' contains '/me/tags', so a plain find() hands the
- * claimed list the profile fixture.
+ * Answers the card's three endpoints. Longest key first, since '/me/tags/claimed' contains '/me/tags' and a plain
+ * find() would hand the claimed list the profile fixture.
  */
 function tagServer(parts: { mine?: Partial<ProfileTags>; claimed?: ClaimedTag[]; catalog?: TagRow[] }) {
   const posts: Array<{ url: string; body: unknown }> = [];
@@ -97,11 +96,7 @@ describe('TagsCard', () => {
     expect(s.posts[0]!.body).toEqual({ key: 'age', displayed: false });
   });
 
-  /**
-   * Giving up a tag cannot be undone, so it asks — through `ConfirmButton`, which
-   * every destructive control in the browser uses, rather than `confirm()`. One
-   * press arms it and changes the label; a second press goes through.
-   */
+  /** Giving up a tag cannot be undone, so the first press arms `ConfirmButton` and only a second goes through. */
   it('arms rather than deleting on the first press', async () => {
     const s = tagServer({ claimed: [claimedTag({ value: '25–34' })] });
     vi.stubGlobal('fetch', s.fetch);
@@ -151,7 +146,7 @@ describe('TagsCard', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
       await waitFor(() => expect(s.posts).toHaveLength(1));
-      // trimmed, and the consent flag only because this tag needs one
+      // Trimmed, with the consent flag only because this tag needs one.
       expect(s.posts[0]!.body).toEqual({ key: 'ethnicity', value: 'Kurd', consent: true });
     });
   });
@@ -169,7 +164,7 @@ describe('TagsCard', () => {
     expect(s.posts[0]!.body).toEqual({ key: 'city' });
   });
 
-  /* auto-granted tags are shown so they are not a mystery, and carry no controls */
+  /* Automatic tags are shown, with no controls. */
   it('names the automatic tags without offering to change them', async () => {
     vi.stubGlobal(
       'fetch',
@@ -196,12 +191,7 @@ describe('TagsCard', () => {
     expect(screen.queryByRole('button', { name: 'Kurdish' })).not.toBeInTheDocument();
   });
 
-  /**
-   * The regression. A 200 whose body has no `tags` put `undefined` into a list
-   * and took the whole Edit Profile page down on the next render — this card
-   * sits below four others that were working fine. An absent list means no tags,
-   * which is something this pane can say.
-   */
+  /** A 200 with no `tags` in the body means no tags, and must not take the Edit Profile page down. */
   it('survives a response with no tags in it', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<TagsCard />);
@@ -215,7 +205,7 @@ describe('TagsCard', () => {
     vi.stubGlobal('fetch', tagServer({}).fetch);
     renderApp(<TagsCard />);
 
-    // the title is "Tags" in German too, so the lines under it show the language
+    // The title is "Tags" in German too, so the lines under it show the language.
     expect(await screen.findByRole('heading', { name: 'Tags' })).toBeInTheDocument();
     expect(await screen.findByText('Haupt-Tag')).toBeInTheDocument();
   });

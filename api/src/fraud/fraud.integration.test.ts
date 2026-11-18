@@ -1,4 +1,4 @@
-/** Payment fraud detection (KUR-073) against real Postgres. */
+/** Payment fraud detection against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

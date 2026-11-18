@@ -2,26 +2,16 @@ import { useEffect, useRef } from 'react';
 import { KURMANCI_ALPHABET, kurmanciLetter } from '@kurda/shared';
 import type { WordleLayout } from './prefs';
 
-/**
- * Peyvok's keys: the on-screen layouts, and which physical key presses count.
- *
- * Shared by solo Peyvok and Peyvok Battle, so both take the same keys the
- * same way.
- */
+/** Peyvok's keys, shared by solo Peyvok and Peyvok Battle: the on-screen layouts and which physical key presses count. */
 
 /** A key on the on-screen keyboard: a letter, or one of the two actions. */
-export type WordleKey = string;
+type WordleKey = string;
 export const ENTER = 'Enter';
 export const BACKSPACE = 'Backspace';
 
 /**
- * QWERTY as every Latin keyboard has it, and ç ê î ş û as a fourth row of
- * full-size keys.
- *
- * The old layout squeezed ê û î in beside e u i, which made a 13-key top row
- * that could not fit a phone at a tappable size — and put the pairs most
- * easily confused side by side. On their own row the Kurdish letters are the
- * biggest keys on the board, and the rest is where the hand expects it.
+ * QWERTY, with ç ê î ş û as a fourth row of full-size keys; squeezed in beside e u i they would not fit a phone at a
+ * tappable size.
  */
 export const QWERTY_ROWS: readonly (readonly WordleKey[])[] = [
   ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -30,10 +20,7 @@ export const QWERTY_ROWS: readonly (readonly WordleKey[])[] = [
   ['ç', 'ê', 'î', 'ş', 'û'],
 ];
 
-/**
- * The 31 letters in the order of the alphabet (Hawar), nine to a row — for
- * somebody who does not type on QWERTY, or is still learning the letters.
- */
+/** The 31 letters in alphabet order (Hawar), nine to a row, for readers who do not type on QWERTY. */
 export const ALPHABET_ROWS: readonly (readonly WordleKey[])[] = [
   KURMANCI_ALPHABET.slice(0, 9),
   KURMANCI_ALPHABET.slice(9, 18),
@@ -51,7 +38,7 @@ export type WordleKeyEvent = Pick<
   'key' | 'ctrlKey' | 'metaKey' | 'altKey' | 'isComposing' | 'repeat' | 'keyCode' | 'target'
 >;
 
-/** Whether the key was typed into something else on the page: a chat box, a search field. */
+/** Whether the key was typed into another field on the page, such as a chat box. */
 function typingElsewhere(target: EventTarget | null): boolean {
   if (!target || typeof (target as Element).closest !== 'function') return false;
   const el = target as HTMLElement;
@@ -59,25 +46,18 @@ function typingElsewhere(target: EventTarget | null): boolean {
 }
 
 /**
- * What a physical key press means to Peyvok: a letter, Enter, Backspace — or
- * nothing.
- *
- * The letter is read from the character the key produced, not from which
- * modifiers were down: Option+c on a Mac, AltGr on Windows (which the browser
- * reports as Ctrl+Alt), a dead key, Shift+Ş and a Turkish Q keyboard's ı all
- * give a letter of the alphabet once normalised (shared `kurmanciLetter`), and
- * used to be dropped. A shortcut (Ctrl or Cmd without Alt) is left to the
- * browser, and so is anything typed while an input method is composing, a key
- * held down and repeating, and typing into another field on the page.
+ * What a physical key press means to Peyvok: a letter, Enter, Backspace or nothing. The letter comes from the
+ * character produced, not the modifiers, so Option and AltGr letters (reported as Ctrl+Alt), dead keys and a Turkish
+ * Q keyboard's ı all count once normalised (shared `kurmanciLetter`). Shortcuts (Ctrl or Cmd without Alt),
+ * composition, key repeat and typing in other fields are left alone.
  */
 export function wordleKeyFrom(e: WordleKeyEvent): WordleKey | null {
   if (e.isComposing || e.keyCode === 229 || e.repeat) return null;
   if (typingElsewhere(e.target)) return null;
   if (e.metaKey || (e.ctrlKey && !e.altKey)) return null;
   if (e.key === 'Enter') {
-    // Enter on a focused link or button outside the game's keys is that
-    // control's (a keyboard user choosing Practice, say) — but on one of the
-    // game's own keys, last clicked, it is the guess
+    // Enter on a focused control outside the game's keys belongs to that control; on one of the game's keys it
+    // submits the guess.
     const el = e.target as Element | null;
     const control = typeof el?.closest === 'function' ? el.closest('a, button, summary, [role="button"]') : null;
     if (control && !control.closest('.wordle-keyboard')) return null;
@@ -88,10 +68,8 @@ export function wordleKeyFrom(e: WordleKeyEvent): WordleKey | null {
 }
 
 /**
- * Take Peyvok's keys from the physical keyboard while `active`. A key the game
- * uses is the game's: its default (Backspace navigating back in some
- * browsers, Enter pressing whatever button has the focus, a letter starting
- * the browser's find-as-you-type) is prevented.
+ * Takes Peyvok's keys from the physical keyboard while `active`, preventing their defaults, such as Enter pressing
+ * the focused button or a letter starting find-as-you-type.
  */
 export function useWordleKeys(active: boolean, press: (key: WordleKey) => void): void {
   const latest = useRef(press);

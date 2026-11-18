@@ -1,8 +1,4 @@
-/**
- * Stories for tests: whole ones (they pass `validateStory` at the publish
- * stage), so a suite can create, publish and read them through the real
- * routes and break one thing at a time.
- */
+/** Whole stories for tests that pass `validateStory` at the publish stage, so a suite can use the real routes and break one thing at a time. */
 import { MIN_QUESTION_BANK, type StoryDialect, type StoryLength, type StoryLibraryInput } from '@kurda/shared';
 
 /** Three paragraphs, 82 words: a short Kurmancî story. */
@@ -15,7 +11,7 @@ export const KURMANCI_PARAGRAPHS = [
 /** One paragraph of 65 words: a short Soranî story. */
 export const SORANI_PARAGRAPHS = ['ژیان لە گوندێکی بچووک دەژی. '.repeat(13).trim()];
 
-/** How many copies of the paragraphs make a text of each length (Kurmancî 82 / 164 / 328 / 656 words, Soranî 65 / 130 / 260 / 520). */
+/** Paragraph copies per length (Kurmancî 82 / 164 / 328 / 656 words, Soranî 65 / 130 / 260 / 520). */
 const COPIES: Record<StoryLength, number> = { short: 1, medium: 2, long: 4, saga: 8 };
 
 export interface TestQuestion {
@@ -78,7 +74,7 @@ export function testStory(
   const dialect = rest.dialect ?? 'kurmanci';
   const paragraphs = dialect === 'sorani' ? SORANI_PARAGRAPHS : KURMANCI_PARAGRAPHS;
   const copies = Array.from({ length: COPIES[length] }, () => paragraphs.join('\n\n'));
-  // a saga is told in sections: the first copy is its introduction, and each half of the rest opens with a heading
+  // A saga is told in sections: the first copy is its introduction, and each half of the rest opens with a heading.
   const [first, second] = SAGA_HEADINGS[dialect];
   const parts = length === 'saga' ? [copies[0]!, first, ...copies.slice(1, 4), second, ...copies.slice(4)] : copies;
   const body = parts.join('\n\n');

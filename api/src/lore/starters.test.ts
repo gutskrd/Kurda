@@ -1,11 +1,7 @@
 /**
- * The starter riddles and proverbs (api/content/games/riddles.json and
- * proverbs.json): every entry the files hold is checked here the way the
- * seeding checks it, so an entry a reviewer edits, or one added later, is
- * caught in CI rather than skipped with a warning at start-up. Each is held
- * to what the collections promise: its Kurdish in its variety, a source for
- * anything presented as traditional, and a translation into every other app
- * language.
+ * The starter riddles and proverbs (api/content/games/riddles.json and proverbs.json), each checked as seeding checks
+ * it, so a bad entry fails CI rather than being skipped at start-up: Kurdish in its variety, a source for anything
+ * called traditional, and a translation into every other app language.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

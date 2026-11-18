@@ -8,11 +8,9 @@ import { pressedDim } from '../../theme/motion';
 import { useValley } from '../ValleyScope';
 
 /**
- * The lesson's round play mark: the pomegranate's red with a play mark in
- * cream, which turns to a sounding speaker ringed in the sun's gold while it
- * plays — in a speech bubble, on a listening clip, and alone as the native
- * speaker's button. Only the look: whatever holds it is what is pressed and
- * what a screen reader names.
+ * The lesson's round play mark: red with a cream play icon, becoming a sounding speaker ringed in gold while it
+ * plays. Used in speech bubbles, listening clips and the native speaker's button. Only the look: whatever holds it
+ * handles the press and the label.
  */
 export function PlayDisc({ size, playing }: { size: number; playing: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -23,16 +21,15 @@ export function PlayDisc({ size, playing }: { size: number; playing: boolean }):
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      {/* a play mark, and the speaker sounding while it plays: both point the same way in every language */}
+      {/* The play and speaker icons point the same way in every language. */}
       <Icon name={playing ? 'speaker-high' : 'audio-play'} size={Math.round(size * (playing ? 0.5 : 0.42))} color={valley.onRed} />
     </View>
   );
 }
 
 /**
- * The native speaker's recording: the play mark alone in a round button, lit
- * while it plays, its name what it plays for anyone who cannot see it. For an
- * exercise whose recording has no character chosen to say it.
+ * The native speaker's recording as a round play button, lit while playing and labelled with what it plays. For an
+ * exercise whose recording has no character to say it.
  */
 export function ModelButton({ playing, onPress }: { playing: boolean; onPress: () => void }): React.JSX.Element {
   const { t } = useI18n();

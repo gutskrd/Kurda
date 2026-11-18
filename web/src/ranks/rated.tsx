@@ -6,28 +6,23 @@ import { useT } from '../i18n/I18nProvider';
 import { friendlyReason, rankLabel } from './names';
 
 /**
- * Rated or Friendly, chosen per game (contract 4 §R2).
- *
- * Everyone sees the badge before they join — in the invite, the card, the
- * lobby and the game's header — and only the host changes it, only in the
- * lobby. A setup sheet starts on the host's last choice for that game
- * (remembered on this device and on the server); with none, Friendly for a
- * game among friends and Rated for one opened to everyone, the server's own
- * default, so the sheet shows what the server would have picked.
+ * Rated or Friendly, chosen per game. Everyone sees the badge before joining (invite, card, lobby, header); only the
+ * host changes it, in the lobby. The setup sheet starts on the host's last choice for the game (kept on the device and
+ * server), else the server's default: Friendly among friends, Rated when open to everyone.
  */
 
-/** The badge itself: a word and an icon, so it never rests on colour. */
+/** The badge itself: a word and an icon, never colour alone. */
 export function RatedBadge({
   rated,
   size = 'md',
   className,
   iconOnly = false,
 }: {
-  /** what it would be or is: a game that was Rated but plays as friendly shows Friendly */
+  /** What it is or would be; a Rated game that plays as friendly shows Friendly. */
   rated: boolean;
   size?: 'sm' | 'md';
   className?: string;
-  /** a one-line chip with no room for the word: the icon, with the word for a screen reader and on hover */
+  /** A chip with no room for the word: the icon alone, with the word for screen readers and on hover. */
   iconOnly?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -43,13 +38,13 @@ export function RatedBadge({
   );
 }
 
-/** What the badge should say for a game's state: Rated until a start decided otherwise. */
+/** What the badge should say for a game's state: Rated until the start decided otherwise. */
 export function shownRated(state: RatedState | null | undefined): boolean {
   if (!state) return false;
   return state.counts === null ? state.rated : state.counts;
 }
 
-// ---- remembering the host's choice ---------------------------------------------------
+// ---- Remembering the host's choice ---------------------------------------------------
 
 const PREF_KEY = (game: RankedGame) => `hevalo.rated.${game}`;
 
@@ -66,14 +61,13 @@ function rememberLocally(game: RankedGame, rated: boolean): void {
   try {
     localStorage.setItem(PREF_KEY(game), rated ? '1' : '0');
   } catch {
-    // a device that will not remember starts from the server's memory next time
+    // Without storage, the next sheet starts from the server's memory.
   }
 }
 
 /**
- * The setup sheet's Rated/Friendly: the remembered choice, else the server's,
- * else the default for how the game is being opened. A change is remembered on
- * the device at once and on the server in the background.
+ * The setup sheet's Rated or Friendly: the device's remembered choice, else the server's, else the default for how
+ * the game opens. A change is stored on the device at once and on the server in the background.
  */
 export function useRatedChoice(game: PlayGame, open: boolean): [boolean, (rated: boolean) => void] {
   const { client } = useAuth();
@@ -81,8 +75,7 @@ export function useRatedChoice(game: PlayGame, open: boolean): [boolean, (rated:
   const [rated, setRated] = useState<boolean>(() => (ranked ? (rememberedRated(ranked) ?? open) : false));
   const touched = useRef(false);
 
-  // a game switched in the sheet starts on that game's own memory; a game
-  // opened to everyone defaults to Rated — unless the host has already chosen
+  // Switching game in the sheet uses that game's memory; a game opened to everyone defaults to Rated unless chosen.
   const shown = useRef(ranked);
   useEffect(() => {
     if (shown.current === ranked && touched.current) return;
@@ -117,13 +110,9 @@ export function useRatedChoice(game: PlayGame, open: boolean): [boolean, (rated:
   return [rated, choose];
 }
 
-// ---- the choice, as a control ----------------------------------------------------------
+// ---- The choice, as a control ----------------------------------------------------------
 
-/**
- * Two options side by side, each with the line that says what it means. Radio
- * buttons underneath, so arrow keys move between them and a screen reader
- * hears a group of two.
- */
+/** Two options side by side, each with a line on what it means, over real radio buttons. */
 export function RatedChoice({
   value,
   onChange,
@@ -135,7 +124,7 @@ export function RatedChoice({
   onChange: (rated: boolean) => void;
   disabled?: boolean;
   name?: string;
-  /** the panel around it already says "Match type": keep the legend for screen readers only */
+  /** The surrounding panel already says "Match type", so the legend is for screen readers only. */
   quietLegend?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -164,17 +153,15 @@ export function RatedChoice({
   );
 }
 
-// ---- the lobby ---------------------------------------------------------------------------
+// ---- The lobby ---------------------------------------------------------------------------
 
-/** A seat's name as the lobby shows it ("You", a friend, "Player 3"). */
-export type SeatNamer = (seat: number) => string;
+/** A seat's name as the lobby shows it, such as "You", a friend's name or "Player 3". */
+type SeatNamer = (seat: number) => string;
 
 /**
- * The lobby's Rated/Friendly panel: the badge for everyone; the switch for the
- * host; for each opponent, roughly what a win and a loss would do ("Win ≈ +24 ·
- * Lose ≈ −8"); and, when a Rated game would not count if it started now, why.
- * A joined player told the host changed it may leave — leaving a lobby never
- * costs anything.
+ * The lobby's Rated or Friendly panel: the badge for everyone, the switch for the host, each opponent's expected
+ * change ("Win ≈ +24 · Lose ≈ −8"), and why a Rated game would not count if started now. A player told the host
+ * changed it may leave at no cost.
  */
 export function LobbyRated({
   game,
@@ -187,10 +174,10 @@ export function LobbyRated({
 }: {
   game: PlayGame;
   lobbyId: string;
-  /** absent from an API older than Game Ranks: then there is no panel */
+  /** Absent when the API sends none, and then there is no panel. */
   state: RatedState | undefined;
   isHost: boolean;
-  /** in the lobby (the expected gains are a member's alone) */
+  /** In the lobby; the expected gains are a member's alone. */
   member: boolean;
   playerCount: number;
   seatName: SeatNamer;
@@ -202,7 +189,7 @@ export function LobbyRated({
   const [rated, setRated] = useState(chosen);
   const [busy, setBusy] = useState(false);
   const [gains, setGains] = useState<ExpectedGains | null>(null);
-  // what this player saw when they came in: a later change is said to them
+  // What this player saw on joining, so a later change is announced to them.
   const firstSeen = useRef(chosen);
   useEffect(() => setRated(chosen), [chosen]);
 
@@ -284,19 +271,19 @@ export function LobbyRated({
   );
 }
 
-/** "+24": a change with its sign; nothing is "+0" or "−0". */
+/** A change with its sign, such as "+24"; never "+0" or "−0". */
 export function signed(n: number): string {
   const r = Math.round(n);
   if (r === 0) return '0';
   return r < 0 ? `−${Math.abs(r)}` : `+${r}`;
 }
 
-/** What a win would add: never shown as a loss. */
+/** What a win would add, never shown as a loss. */
 export function gain(n: number): string {
   return signed(Math.abs(n));
 }
 
-/** What a loss would take: never shown as a gain, whichever sign the server sent it with. */
+/** What a loss would take, never shown as a gain whatever sign the server sent. */
 export function loss(n: number): string {
   return signed(-Math.abs(n));
 }

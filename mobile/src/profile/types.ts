@@ -1,10 +1,7 @@
 /**
- * What `/me` and `/users/:id` say about a profile beyond its name.
- *
- * The same shapes the browser declares in `web/src/lib/types.ts` — both read
- * the same two endpoints, so the two declarations are of one thing and are
- * written the same way on purpose. Everything is optional because an older
- * response, or one hidden by somebody's privacy setting, is still a valid one.
+ * What `/me` and `/users/:id` say about a profile beyond its name, in the same shapes as the browser's
+ * `web/src/lib/types.ts`. Everything is optional, since an older response, or one hidden by privacy settings, is still
+ * valid.
  */
 
 /** Whoever gave you what you are wearing. */
@@ -50,7 +47,7 @@ export interface ProfileCosmetics {
   icon?: ProfileIcon | null;
   level?: LevelInfo;
   premium?: boolean;
-  /** Presence — only sent for yourself or a friend. */
+  /** Presence, only sent for yourself or a friend. */
   online?: boolean;
   favoritePoem?: FavoriteRef | null;
   favoriteStory?: FavoriteRef | null;

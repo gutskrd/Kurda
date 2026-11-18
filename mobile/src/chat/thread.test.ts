@@ -32,7 +32,7 @@ describe('placing the messages of a thread', () => {
     expect(places.get('a')!.day).toBe('Yesterday');
     expect(places.get('b')!.day).toBe('Today');
     expect(places.get('c')!.day).toBeNull();
-    // two minutes apart, but midnight is between them
+    // Two minutes apart, but midnight is between them.
     expect(places.get('a')!.last).toBe(true);
     expect(places.get('b')!.first).toBe(true);
   });
@@ -43,12 +43,12 @@ describe('placing the messages of a thread', () => {
       NOW,
       WORDS,
     );
-    // a lively exchange: no column of the same minute down its side
+    // A lively exchange: no column of the same minute down its side.
     expect(places.get('a')!.timed).toBe(false);
     expect(places.get('b')!.timed).toBe(false);
-    // the talk paused here for most of an hour
+    // The talk paused here for most of an hour.
     expect(places.get('c')!.timed).toBe(true);
-    // the time belongs to the last message of the run, not to each of them
+    // The time belongs to the last message of the run, not to each of them.
     expect(places.get('d')!.timed).toBe(false);
     expect(places.get('e')!.timed).toBe(true);
   });
@@ -66,13 +66,13 @@ describe('what a day is called', () => {
     expect(dayLabel(new Date(2026, 9, 19, 23), NOW, WORDS)).toBe('Yesterday');
     expect(dayLabel(new Date(2026, 9, 16, 12), NOW, WORDS)).toBe('Friday');
     expect(dayLabel(new Date(2026, 9, 1, 12), NOW, WORDS)).toBe('1 October');
-    // another year says which
+    // Another year says which.
     expect(dayLabel(new Date(2025, 2, 3, 12), NOW, WORDS)).toBe('3 March 2025');
   });
 
   it('writes the time on the clock, and nothing for a time that will not parse', () => {
     expect(timeLabel(new Date(2026, 9, 20, 14, 5).toISOString(), 'en-GB')).toBe('14:05');
-    // the same hour the list of conversations writes, with no zero before it
+    // The same hour the list of conversations writes, with no zero before it.
     expect(timeLabel(new Date(2026, 9, 20, 19, 46).toISOString(), 'en-US')).toMatch(/^7:46\sPM$/);
     expect(timeLabel('not a date', 'en-GB')).toBe('');
   });
@@ -92,10 +92,10 @@ describe('a message that is only emoji', () => {
   });
 
   it('counts a joined emoji, a skin tone and a flag as one each', () => {
-    // a family is four people joined into one picture
+    // A family is four people joined into one picture.
     expect(isEmojiOnly('👨‍👩‍👧‍👦')).toBe(true);
     expect(isEmojiOnly('👍🏽👍🏽👍🏽')).toBe(true);
-    // two halves make one flag
+    // Two halves make one flag.
     expect(isEmojiOnly('🇩🇪🇳🇱🇫🇷')).toBe(true);
     expect(isEmojiOnly('🇩🇪🇳🇱🇫🇷🇪🇸')).toBe(false);
   });

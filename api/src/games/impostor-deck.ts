@@ -1,35 +1,24 @@
 /**
- * Impostor's curated deck (api/content/games/impostor.json): every word card
- * the game deals in each variety, chosen and checked by hand, with the
- * category it belongs in, the difficulty it is played at, what it means in
- * every interface language and, for the odd-word round, the word of its own
- * category it is paired with.
+ * Impostor's curated deck (api/content/games/impostor.json): every word card per variety, chosen and checked by hand,
+ * with its category, difficulty, meaning in every interface language and, for the odd-word round, its paired word of
+ * the same category.
  *
- * Why a file rather than the starter library's matcher (starter-library.ts):
- * the matcher sorted the course's words into categories by their English
- * meaning, so it filed a spring of water under the seasons and a fish's
- * scales under money, kept inflected forms (bizinek, aşxaneyê) beside their
- * words, and put every card at the first level. The deck replaces what it
- * made. A card's hint is built here from its category's name
- * (word-categories.ts), so renaming a category renames every hint.
+ * A file rather than the starter library's matcher (starter-library.ts), which sorted course words by English meaning
+ * and so misfiled words, kept inflected forms, and put every card at the first level. Each card's hint is built from
+ * its category's name (word-categories.ts), so renaming a category renames its hints.
  *
- * Seeding, once per variety (a row in `content_seeds` remembers it):
- *   1. archive what the deck supersedes: the starter rows of Impostor's two
- *      kinds that nobody has touched since they were made (`lock_version`
- *      0, no reviewer, no editor) and that did not come from the deck. A row
- *      a person has edited, reviewed or archived is theirs and stays;
- *   2. put the deck's categories and cards in, published as the starters are
- *      (`source = 'starter'`, approved with no reviewer named, which the admin
- *      panel shows as not yet read by a person). A word that a person's own
- *      row still holds is left to that row, so a word is never dealt twice;
- *   3. read every pool and count afresh.
- * Step 1 runs again on every start once the deck is in, so rows the starter
- * library makes after it (on a database where the deck came first) are
- * superseded too; it touches nothing a person has.
+ * Seeding, once per variety (remembered in `content_seeds`):
+ *   1. archive what the deck supersedes: Impostor starter rows untouched since creation (`lock_version` 0, no reviewer,
+ * no editor)
+ *      that did not come from the deck; person-touched rows stay;
+ *   2. insert the deck's categories and cards, published like the starters (`source = 'starter'`, approved with no
+ * named reviewer,
+ *      shown in the admin as unread). A word a person's row still holds is left to that row, so no word is dealt twice;
+ *   3. reread every pool and count afresh.
+ * Step 1 runs on every start once the deck is in, so starter rows made later are superseded too; it never touches
+ * anything a person has.
  *
- * A file that cannot be read, or a variety whose deck fails its checks, is
- * logged and skipped: nothing here throws, and a broken file never stops the
- * API starting.
+ * An unreadable file, or a variety whose deck fails its checks, is logged and skipped: nothing here throws.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -92,10 +81,8 @@ export function parseImpostorDeck(text: string): { ok: true; deck: ImpostorDeckF
 }
 
 /**
- * The rows one variety's deck makes, pure, or what is wrong with it: each card
- * checked as the admin panel checks one (its schema and its script), no word
- * twice, every category one of the starter categories, and every twin
- * another card of the same category.
+ * The rows one variety's deck makes, pure, or what is wrong: each card checked as the admin checks one (schema and
+ * script), no word twice, every category a starter category, and every twin another card of the same category.
  */
 export function impostorDeckRows(deck: ImpostorDeckFile, dialect: GameDialect): { rows: ImpostorDeckRow[]; issues: string[] } {
   const issues: string[] = [];
@@ -144,10 +131,7 @@ export function impostorDeckRows(deck: ImpostorDeckFile, dialect: GameDialect): 
   return { rows, issues };
 }
 
-/**
- * Archives, in one variety, the untouched starter rows of Impostor's kinds
- * that did not come from the deck: what the deck supersedes. Returns how many.
- */
+/** Archive, in one variety, the untouched Impostor starter rows not from the deck. Returns how many. */
 async function archiveSuperseded(db: Pick<pg.PoolClient, 'query'>, dialect: GameDialect): Promise<number> {
   const res = await db.query(
     `UPDATE game_content

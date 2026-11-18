@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -40,10 +40,7 @@ const active = ok({ events: [{ key: 'newroz', name: 'Newroz' }, { key: 'autumn',
 const serverDown: ApiResult<never> = { ok: false, error: { kind: 'server', message: 'internal server error', status: 500 } };
 
 describe('event quests', () => {
-  /*
-   * An event whose quests did not load is still running: the ones that did
-   * show, with a line about the rest and a way to ask again — never "No events".
-   */
+  /* An event whose quests partly failed to load still shows the ones that did, a note about the rest and a retry. */
   it('shows the events that loaded and says some did not, with a way to ask again', async () => {
     let autumn: ApiResult<unknown> = serverDown;
     testAuth.client = fakeClient({
@@ -53,7 +50,7 @@ describe('event quests', () => {
     });
     renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
     expect(await screen.findByText('Newroz')).toBeTruthy();
-    expect(screen.queryByText('No events are running right now. Check back soon!')).toBeNull();
+    expect(screen.queryByText('No events are running right now.')).toBeNull();
     expect(screen.getByText('Some events didn’t load.')).toBeTruthy();
     autumn = ok(view('autumn', 'Autumn'));
     await act(async () => {
@@ -67,14 +64,14 @@ describe('event quests', () => {
     testAuth.client = fakeClient({ 'GET /events/active': active, 'GET /events/newroz/quests': serverDown, 'GET /events/autumn/quests': serverDown });
     renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
     expect(await screen.findByText('Couldn’t load')).toBeTruthy();
-    expect(screen.queryByText('No events are running right now. Check back soon!')).toBeNull();
+    expect(screen.queryByText('No events are running right now.')).toBeNull();
   });
 
   it('says why a claim did not go through, in the reader’s words', async () => {
     testAuth.client = fakeClient({
       'GET /events/active': ok({ events: [{ key: 'newroz', name: 'Newroz' }] }),
       'GET /events/newroz/quests': ok(view('newroz', 'Newroz', true)),
-      // the claim route answers without a code the phone reads: never shown as "request failed (410)"
+      // The claim route answers without a code the phone reads: never shown as "request failed (410)".
       'POST /events/newroz/quests/newroz-q1/claim': { ok: false, error: { kind: 'client', message: 'request failed (410)', status: 410 } },
     });
     renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
@@ -86,11 +83,7 @@ describe('event quests', () => {
     expect(screen.queryByText(/request failed/)).toBeNull();
   });
 
-  /*
-   * The reward is drawn with the app's own coin and gem (no emoji) and read
-   * out in words; a claim that goes through is felt and heard as a reward,
-   * on a button a fingertip tall, and the quest says it was claimed.
-   */
+  /* Rewards use the app's coin and gem art and are read out in words; a claim gets the reward feedback on a full-height button. */
   it('shows the reward with the app’s coin and gem, and celebrates a claim that goes through', async () => {
     let claimed = false;
     const quests = (): EventQuestsView => {

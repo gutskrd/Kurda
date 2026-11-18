@@ -21,12 +21,8 @@ const DURATION_LABEL: Record<GroupBanDuration, TranslationKey> = {
 };
 
 /**
- * Banning someone from a group, from the ⋯ beside them in its member list.
- *
- * How long, as one clear choice of three; a reason if there is one to give,
- * which they will read; whether their messages here go too; and one line on
- * how this differs from removing them. The button says who, in red, and the
- * sheet stays until the server has answered.
+ * Banning someone from a group, from the ⋯ beside them in its member list: how long, an optional reason they will read,
+ * and whether their messages here go too. The sheet stays until the server has answered.
  */
 export function BanSheet({
   groupId,
@@ -35,7 +31,7 @@ export function BanSheet({
   onBanned,
 }: {
   groupId: string;
-  /** who is being banned; null when the sheet is shut */
+  /** Who is being banned; null when the sheet is shut. */
   member: { userId: string; username: string } | null;
   onClose: () => void;
   onBanned: (ban: GroupBan) => void;
@@ -51,7 +47,7 @@ export function BanSheet({
   const [error, setError] = useState<string | null>(null);
   const name = member?.username ?? '';
 
-  // each ban starts afresh: what was chosen for the last person is not this one's
+  // Each ban starts afresh, not with the last person's choices.
   useEffect(() => {
     if (!member) return;
     setDuration('1d');
@@ -68,7 +64,7 @@ export function BanSheet({
     setBusy(false);
     if (!res.ok) {
       haptic('wrong');
-      // someone the reader does not outrank (or no longer here to ban) is said plainly, not in the server's English
+      // Someone the reader does not outrank (or who has left) is said plainly, not in the server's English.
       const notThem = res.error.code === 'FORBIDDEN' || res.error.code === 'BAD_TARGET';
       setError(notThem ? t('groups.ban.notAllowed', { name }) : groupError(res.error, t));
       return;
@@ -108,14 +104,14 @@ export function BanSheet({
         />
         <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('groups.ban.reasonHint', { name })}</Text>
 
-        {/* a list row, so it runs edge to edge as one in Settings does */}
+        {/* A list row, edge to edge as in Settings. */}
         <View style={styles.edge}>
           <SettingsSwitch title={t('groups.ban.deleteMessages')} value={deleteMessages} onValueChange={setDeleteMessages} />
         </View>
 
         <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('groups.ban.difference')}</Text>
       </SheetScrollView>
-      {/* under the scroll, so the button is in reach however little of the sheet a short phone shows */}
+      {/* Under the scroll, so the button is in reach however little of the sheet a short phone shows. */}
       <View style={styles.foot}>
         {error ? (
           <Text style={[styles.hint, dir.text, { color: colors.danger }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
@@ -129,7 +125,7 @@ export function BanSheet({
 }
 
 const styles = StyleSheet.create({
-  // the gutter is the scroll view's own, so a row inside can run to the edges
+  // The scroll view keeps the gutter, so a row inside can run to the edges.
   sheet: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },

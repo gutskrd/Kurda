@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Alert } from 'react-native';
@@ -41,9 +41,8 @@ const item = (over: Partial<ShopItem> & Pick<ShopItem, 'sku' | 'name' | 'categor
 });
 
 /**
- * A slice of the real catalogue (api/content/cosmetics.json), in the order
- * GET /shop sends it, plus what it does not have yet: something priced in
- * gems, and an item filed under a category of an admin's own.
+ * A slice of the real catalogue (api/content/cosmetics.json) in the order GET /shop sends it, plus a gem-priced item
+ * and one filed under an admin's own category.
  */
 const CATALOGUE: ShopItem[] = [
   item({ sku: 'bg-made-hevalo', name: 'Hevalo', description: 'Hevalo violet', category: 'background', price: 0, premiumOnly: false, assetUrl: '/cosmetics/backgrounds/made-01-hevalo.webp' }),
@@ -58,7 +57,7 @@ const CATALOGUE: ShopItem[] = [
 ];
 
 function open(items: ShopItem[] = CATALOGUE, balances = { zer: 550, gems: 12 }) {
-  // the purse after something is bought: what the purchase says is left, and what the wallet then says too
+  // The purse after a purchase: what the purchase says is left, and what the wallet then says too.
   let spent = false;
   const client = fakeClient({
     'GET /shop': ok({ items }),
@@ -98,10 +97,10 @@ describe('the Shop, by kind', () => {
   it('files every item under its kind, in the shared order, with a translated title and a count', async () => {
     open();
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
-    // the screen's own title first, then a heading for each kind
+    // The screen's own title first, then a heading for each kind.
     const headings = screen.getAllByRole('heading').map((h) => h.getAttribute('aria-label') ?? h.textContent);
     expect(headings).toEqual(['Shop', 'Backgrounds, 4 items', 'Icons, 3 items', 'Tags, 1 item', 'More, 1 item']);
-    // the server's own words never reach the screen
+    // The server's own words never reach the screen.
     for (const raw of ['BACKGROUND', 'background', 'ICON', 'TAG', 'freeze', 'SHOP.CATEGORY.MISC']) {
       expect(screen.queryByText(raw)).toBeNull();
     }
@@ -111,28 +110,27 @@ describe('the Shop, by kind', () => {
   it('shows each item’s picture, shaped by its kind, and a glyph for the tag that has none', async () => {
     open();
     const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr$/ });
-    // the picture is drawn once it starts loading, an effect after the row
+    // The picture is drawn once it starts loading, an effect after the row.
     await waitFor(() => expect(glass.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/icons/made-08-caydan.png'));
     const lake = screen.getByRole('button', { name: /^Gola Şîn/ });
     await waitFor(() => expect(lake.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/backgrounds/made-06-gola-sin.webp'));
     const tag = screen.getByRole('button', { name: /^Kurdish Tag/ });
     expect(tag.querySelector('img')).toBeNull();
     expect(tag.querySelector('svg')).not.toBeNull();
-    // a free item says so, in words
+    // A free item says so, in words.
     expect(screen.getByRole('button', { name: 'Hevalo, Hevalo violet, Free' })).toBeTruthy();
   });
 
   /*
-   * Green is kept for a right answer, so "Free" is a price like any other;
-   * and a row's name and meaning may take a second line rather than leave
-   * "Ronahiy…" on a narrow phone.
+   * Green is for a right answer, so "Free" is a price like any other, and a row's name and meaning may take a second
+   * line.
    */
   it('prints Free as a price, not in green, and lets a name and its meaning take a second line', async () => {
     open();
     const free = await screen.findByRole('button', { name: 'Hevalo, Hevalo violet, Free' });
     const price = within(free).getByText('Free');
     const name = within(free).getByText('Hevalo');
-    // in the ink the name is in, as an affordable price is
+    // In the ink the name is in, as an affordable price is.
     expect(getComputedStyle(price).color).toBe(getComputedStyle(name).color);
     expect(getComputedStyle(name).whiteSpace).not.toBe('nowrap');
     expect(getComputedStyle(within(free).getByText('Hevalo violet')).whiteSpace).not.toBe('nowrap');
@@ -142,9 +140,9 @@ describe('the Shop, by kind', () => {
     open([...CATALOGUE, item({ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', price: 1400, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' })], { zer: 2000, gems: 0 });
     const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr$/ });
     await waitFor(() => expect(row.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/frames/made-01-lale.png'));
-    // your own picture inside it (here, with no photo, the letters of your name on their disc)
+    // Your own picture inside it (here with no photo, your initials on their disc).
     expect(row.querySelector('[role="img"][aria-label*="rojda"]')).not.toBeNull();
-    // and again, larger, in the sheet the row opens: the frame and your picture are each on screen twice
+    // And again, larger, in the sheet the row opens: the frame and your picture are each on screen twice.
     fireEvent.click(row);
     expect(await screen.findByRole('button', { name: 'Buy' })).toBeTruthy();
     await waitFor(() => expect(document.querySelectorAll('img[src="https://hevalo.app/cosmetics/frames/made-01-lale.png"]')).toHaveLength(2));
@@ -169,7 +167,7 @@ describe('the Shop, by kind', () => {
     search('istikan');
     expect(rowNames()).toEqual(['Îstîkan']);
     expect(screen.getByText('1 item')).toBeTruthy();
-    // the counts on the kinds follow the search
+    // The counts on the kinds follow the search.
     expect(screen.getByRole('radio', { name: 'Backgrounds, 0 items' })).toBeTruthy();
 
     search('tea');
@@ -200,13 +198,13 @@ describe('the Shop, by kind', () => {
   it('keeps what the balance covers, each item against its own currency', async () => {
     open(CATALOGUE, { zer: 550, gems: 12 });
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
-    // gems are on sale here, so it is the balance, not only the Zêr
+    // Gems are on sale here, so it is the balance, not only the Zêr.
     fireEvent.click(screen.getByRole('checkbox', { name: 'Within my balance' }));
     expect(screen.getByRole('checkbox', { name: 'Within my balance' }).getAttribute('aria-checked')).toBe('true');
     const names = rowNames();
-    // 10 gems is within 12 gems, though nothing compares it with the 550 Zêr
+    // 10 gems is within 12 gems, though nothing compares it with the 550 Zêr.
     expect(names).toContain('Berbang');
-    // 20 gems is not, however much Zêr there is
+    // 20 gems is not, however much Zêr there is.
     expect(names).not.toContain('Mohra Rojê');
     expect(names).toEqual(['Hevalo', 'Şeva Zozanan', 'Gola Şîn', 'Berbang', 'Kurdish Tag', 'Streak freeze']);
   });
@@ -221,13 +219,13 @@ describe('the Shop, by kind', () => {
     fireEvent.click(await screen.findByRole('button', { name: /^Hevalo,/ }));
     expect(screen.getByRole('button', { name: 'Get it free' })).toBeTruthy();
     expect(screen.queryByText('Send as a gift')).toBeNull();
-    // the sheet's ✕, after the dimmed page behind it
+    // The sheet's ✕, after the dimmed page behind it.
     fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
 
     fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
     expect(screen.getByText('Send as a gift')).toBeTruthy();
     expect(screen.getByText('400 Zêr')).toBeTruthy();
-    // beside Buy, before anything is spent: a purchase is final
+    // Beside Buy, before anything is spent: a purchase is final.
     expect(screen.getByText('Every purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.')).toBeTruthy();
     const felt: HapticEvent[] = [];
     resetHaptics();
@@ -235,17 +233,17 @@ describe('the Shop, by kind', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     await waitFor(() => expect(client.calls.some((c) => c.path === '/shop/purchase')).toBe(true));
     expect(client.calls.find((c) => c.path === '/shop/purchase')?.body).toMatchObject({ sku: 'bg-made-gola-sin', expectedPrice: 400 });
-    // bought: felt as it lands, as a purchase that failed would be
+    // Bought: felt as it lands, as a purchase that failed would be.
     await waitFor(() => expect(felt).toEqual(['tap']));
     stop();
-    // said in the sheet it was bought from, with what is left in the purse — and no system box to dismiss
+    // Said in the sheet it was bought from, with what is left in the purse, and no system box to dismiss.
     expect(await screen.findByTestId('shop-bought')).toBeTruthy();
     expect(screen.getByText('Gola Şîn is yours!')).toBeTruthy();
     expect(Alert.alert).not.toHaveBeenCalled();
-    // the server's new balance, in the purse at the top and in the sheet
+    // The server's new balance, in the purse at the top and in the sheet.
     expect(screen.getAllByText('150').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByRole('button', { name: 'Buy' })).toBeNull();
-    // one button, which closes the sheet
+    // One button, which closes the sheet.
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     await waitFor(() => expect(screen.queryByTestId('shop-bought')).toBeNull());
   });
@@ -324,7 +322,7 @@ describe('the Shop, by kind', () => {
     search('xyzzy');
     expect(screen.getByText('Nothing matches that')).toBeTruthy();
     expect(rowNames()).toEqual([]);
-    // one way back, in the empty state
+    // One way back, in the empty state.
     const clears = screen.getAllByRole('button', { name: 'Clear filters' });
     expect(clears).toHaveLength(1);
     fireEvent.click(clears[0]!);
@@ -339,8 +337,7 @@ describe('the Shop, by kind', () => {
 });
 
 /**
- * What of yours the Shop can change, over the search: your pen pal bird and
- * your tree, a row each that opens every choice there is.
+ * What of yours the Shop can change, over the search: your pen pal bird and your tree, each a row opening every choice.
  */
 describe('your bird and your tree, in the Shop', () => {
   /** GET /letters: a pen pal page with this bird, chosen or not, and this much Zêr. */
@@ -404,7 +401,7 @@ describe('your bird and your tree, in the Shop', () => {
       expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' }).getAttribute('aria-checked')).toBe('true');
       expect(within(group).getByRole('radio', { name: 'Brown bird' }).getAttribute('aria-checked')).toBe('false');
       expect(screen.getByText('A new bird costs 500 Zêr. You have 550 Zêr.')).toBeTruthy();
-      // the bird that is yours already cannot be bought again
+      // The bird that is yours already cannot be bought again.
       expect(disabled('shop-bird-get')).toBe(true);
     });
 
@@ -415,7 +412,7 @@ describe('your bird and your tree, in the Shop', () => {
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       fireEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
       await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
-      // free, so nothing was asked
+      // Free, so nothing was asked.
       expect(Alert.alert).not.toHaveBeenCalled();
       expect(await screen.findByText('Brown bird, your bird now')).toBeTruthy();
       fireEvent.click(screen.getByTestId('shop-bird-done'));
@@ -434,7 +431,7 @@ describe('your bird and your tree, in the Shop', () => {
         expect.any(Array),
       );
       expect(client.calls.some((c) => c.path === '/letters/bird')).toBe(false);
-      // yes: it is bought, and the purse at the top is what is left
+      // Yes: it is bought, and the purse at the top is what is left.
       const buttons = vi.mocked(Alert.alert).mock.calls[0]![2] as Array<{ text: string; onPress?: () => void }>;
       expect(buttons.map((b) => b.text)).toEqual(['Cancel', 'Buy']);
       buttons[1]!.onPress!();
@@ -455,7 +452,7 @@ describe('your bird and your tree, in the Shop', () => {
     });
 
     it('reads the balance again when the Zêr were spent meanwhile, and says what is now missing', async () => {
-      // spent on something else, in another place, between the Shop opening and the bird being bought
+      // Spent on something else, elsewhere, between the Shop opening and the bird being bought.
       let spent = false;
       openOwn({
         'GET /letters?landings=1': () => ok(letters(spent ? { zer: 100 } : {})),
@@ -483,7 +480,7 @@ describe('your bird and your tree, in the Shop', () => {
       expect(await screen.findByText('The nursery')).toBeTruthy();
       expect(screen.getByText('Planting another tree replaces the one you have. It starts again from a seed.')).toBeTruthy();
       for (const species of TREE_SPECIES) expect(kind(species)).toBeTruthy();
-      // the one that stands cannot be planted over itself
+      // The one that stands cannot be planted over itself.
       expect(within(kind('hinar')).getByText('Growing now')).toBeTruthy();
       expect(within(kind('hinar')).queryByRole('button')).toBeNull();
       expect(within(kind('beru')).getByText('Free')).toBeTruthy();
@@ -507,7 +504,7 @@ describe('your bird and your tree, in the Shop', () => {
       expect(client.calls.some((c) => c.path === '/me/tree/kinds/kaj/buy')).toBe(false);
       fireEvent.click(screen.getByTestId('shop-tree-confirm'));
       await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/tree/kinds/kaj/buy')).toBe(true));
-      // back at the kinds, where it is theirs to plant; nothing was planted
+      // Back at the kinds, where it is theirs to plant; nothing was planted.
       expect(await within(await screen.findByTestId('shop-tree-kaj')).findByRole('button', { name: 'Plant: Kaj (Pine)' })).toBeTruthy();
       expect(within(kind('kaj')).getByText('Yours')).toBeTruthy();
       expect(client.calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
@@ -529,7 +526,7 @@ describe('your bird and your tree, in the Shop', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Plant: Berû (Oak)' }));
       fireEvent.click(await screen.findByRole('button', { name: 'Plant it' }));
       await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'beru' }));
-      // the sheet closes on the Shop, whose row shows the new tree
+      // The sheet closes on the Shop, whose row shows the new tree.
       expect(await screen.findByRole('button', { name: 'Your tree, Berû · Growing now' })).toBeTruthy();
     });
   });

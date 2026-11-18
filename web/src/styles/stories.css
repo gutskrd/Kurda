@@ -1,10 +1,8 @@
 /* ---- Stories: the hub, the reader, setting up a quiz ------------------------- */
 /*
- * Reading comes first here: the text is large, calm and set in its own
- * script's face, with room between the lines; everything else is quiet around
- * it. Gold means "look at this" — a glossary word, the sentence being read, a
- * finished story — and nothing says anything by colour alone. Logical
- * properties throughout, so an Arabic or Soranî page mirrors by itself.
+ * Reading comes first: large, calm text in its script's own face with generous leading, and quiet surroundings. Gold
+ * marks what to look at (a glossary word, the sentence being read, a finished story), never colour alone. Logical
+ * properties throughout, so right-to-left pages mirror by themselves.
  */
 
 /* Soranî in a face made for Arabic script, wherever a story's words appear */
@@ -92,12 +90,7 @@
 }
 
 /* ---- the library (StoriesLibrary.tsx) ------------------------------------------ */
-/*
- * Shelves of covers: each row of the library scrolls sideways, as a shelf is
- * walked along, and a search or a filter lays its finds out as a grid. The
- * cover is the picture, the title the only large type; the facts under it are
- * small and quiet.
- */
+/* The library: shelves of covers that scroll sideways, and a grid for search or filter results; the facts are small and quiet. */
 .story-library .story-section-title {
   margin-bottom: 10px;
 }
@@ -231,11 +224,7 @@
   }
 }
 
-/*
- * The search field with the sort and filter funnel at its end (styles/filter.css
- * draws the funnel, its panel and the chips), and under them a chip for each
- * thing that is on.
- */
+/* The search field with the sort and filter funnel at its end (styles/filter.css), and a chip below for each active filter. */
 .story-filters {
   display: flex;
   flex-direction: column;
@@ -322,12 +311,7 @@
 .story-shelf {
   margin-bottom: 26px;
 }
-/*
- * A scrolling row cuts off whatever reaches past it, so the shelf keeps 8px
- * more above and below its cards than it shows, for the area that answers a
- * finger (reach.css), and the negative margin gives the 8px back: the cards
- * sit where they always did.
- */
+/* A scrolling row clips reaches (reach.css), so 8px of padding above and below is taken back by a negative margin. */
 .story-shelf-row {
   list-style: none;
   margin-block: -8px;
@@ -485,10 +469,8 @@
   color: var(--ink-3);
 }
 /*
- * A quiet dot between the facts, never read out. Every fact after the first
- * carries one in front, and the row starts a dot's width early with that
- * width cut off (the first fact steps in by as much), so a dot that a wrap
- * would put at the start of a line is never seen.
+ * A quiet dot between facts, hidden from screen readers. Each fact after the first has one in front, and the row
+ * starts a dot's width early with that width clipped, so a dot wrapped to a line's start is never seen.
  */
 .story-card-meta,
 .story-meta,
@@ -851,22 +833,15 @@
   box-decoration-break: clone;
 }
 /*
- * The sentence being read sits on the violet's wash, as everything that says
- * "here" does (gold is for what is earned), and says itself again when tapped.
- * The wash is the shared hue's own step, the phone's to the digit: the text
- * wears the violet (StoryText.tsx). Its words keep their ink on it, at 14:1
- * by day and 11:1 by night.
+ * The sentence being read sits on the violet wash (gold is for what is earned) and replays when tapped. The wash
+ * matches the phone's hue step (StoryText.tsx), and the words keep 14:1 by day and 11:1 by night.
  */
 .story-sentence.is-reading {
   background: var(--hue-wash);
   box-shadow: 0 0 0 2px var(--hue-wash);
   cursor: pointer;
 }
-.story-sentence.is-evidence,
-.story-para p.is-evidence {
-  background: color-mix(in srgb, var(--success) 18%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 18%, transparent);
-}
+
 /* the band's own wash, with the violet of what can be pressed on it: 4.6:1 by day, 5.4:1 by night */
 .story-replay {
   display: inline-grid;
@@ -1540,10 +1515,8 @@
 }
 
 /*
- * The player (ReaderControls.tsx): among a game's tools it is a quiet row of
- * buttons; docked under the reader it is one bar in ink — the primary colour,
- * as the app's one filled button is — held at the foot of the screen, with the
- * narrator, the buttons, the seek line and the clock on one row.
+ * The player (ReaderControls.tsx): a quiet row of buttons among a game's tools; docked under the reader, one primary
+ * bar at the screen's foot with the narrator, buttons, seek line and clock.
  */
 .story-player {
   --player-ink: var(--ink);
@@ -1716,14 +1689,9 @@
   background: linear-gradient(to left, var(--player-heard) var(--seek), var(--player-line) var(--seek));
 }
 /*
- * Where a finger is about, the line answers across the least area a finger is
- * given (tokens.css) rather than only its 28px: the input grows to that height
- * and the negative margins give the growth back, so the row keeps its height.
- * Its focus ring goes round the whole of that area, which is what answers.
- * The track and the dot are drawn on their own pseudo-elements, centred in the
- * input, so the line is drawn where it always was. The buttons are positioned
- * so that they lie over the line: where the row wraps and the line sits under
- * them, its taller area stops at their edge rather than taking their presses.
+ * On touch screens the seek line answers across the minimum touch height (tokens.css) rather than 28px: the input
+ * grows and negative margins keep the row's height, with the track and dot drawn centred on pseudo-elements and the
+ * focus ring round the whole area. The buttons lie over the line so a wrapped row keeps their presses.
  */
 @media (any-pointer: coarse) {
   .story-player-seek {

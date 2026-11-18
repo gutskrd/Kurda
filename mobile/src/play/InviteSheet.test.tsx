@@ -90,7 +90,7 @@ describe('recentPlayers and orderFriends', () => {
     expect(recentPlayers(lists)).toEqual(['u-sipan']);
     const { recent, rest } = orderFriends([ROJDA, AZAD, SIPAN], recentPlayers(lists), '');
     expect(recent.map((f) => f.userId)).toEqual(['u-sipan']);
-    // the rest: online first, then by name
+    // The rest: online first, then by name.
     expect(rest.map((f) => f.userId)).toEqual(['u-azad', 'u-rojda']);
   });
 
@@ -108,7 +108,7 @@ describe('sentText', () => {
   it('names the one friend a ticket went to, and counts them otherwise', () => {
     expect(sentText([friendTicket('Azad')], 1, t as never)).toBe('play.sheet.sentTo{"name":"Azad"}');
     expect(sentText([friendTicket('Azad'), friendTicket('Sipan')], 2, t as never)).toBe('play.sheet.sent{"count":2}');
-    // the server says how many it invited: a friend it skipped is not counted as sent
+    // The server says how many it invited, so a skipped friend is not counted as sent.
     expect(sentText([friendTicket('Azad'), friendTicket('Sipan')], 1, t as never)).toBe('play.sheet.sent{"count":1}');
   });
 
@@ -146,20 +146,20 @@ describe('InviteSheet', () => {
     const rojda = await screen.findByRole('radio', { name: 'Rojda' });
     expect(rojda.getAttribute('aria-checked')).toBe('true');
     expect(rojda.getAttribute('aria-disabled')).toBe('true');
-    // tapping the DM's friend does not take them out
+    // Tapping the DM's friend does not unpick them.
     fireEvent.click(rojda);
     expect(screen.getByRole('radio', { name: 'Rojda' }).getAttribute('aria-checked')).toBe('true');
-    // a duo from a DM is with that friend: no search, no other friends
+    // A duo from a DM is with that friend: no search, no other friends.
     expect(screen.queryByLabelText('Search friends')).toBeNull();
     expect(screen.queryByRole('radio', { name: 'Azad, online now' })).toBeNull();
 
-    // the button waits for the stories to arrive (a Stories game needs one); under a loaded run they can come last
+    // The button waits for the stories (a Stories game needs one), which can arrive last under load.
     await waitFor(() => expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true'));
     fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: 'g9' }));
     const sent = client.calls.find((c) => c.path === '/play/lobbies')?.body as { chat: unknown; invite?: string[]; game: string };
     expect(sent.game).toBe('stories');
-    // the DM's friend is invited by `chat`, which also puts the card in the DM
+    // The DM's friend is invited by `chat`, which also posts the card in the DM.
     expect(sent.chat).toEqual({ userId: 'u-rojda' });
     expect(sent.invite).toBeUndefined();
   });
@@ -181,7 +181,7 @@ describe('InviteSheet', () => {
   });
 
   it('says the server is not ready yet, rather than "route not found", when the API has no play routes', async () => {
-    // an API older than playing with friends answers with its not-found handler
+    // An API older than playing with friends answers with its not-found handler.
     testAuth.client = fakeClient(
       routes({ 'POST /play/lobbies': fail({ status: 404, code: 'NOT_FOUND', message: 'route not found' }) }),
     );
@@ -219,7 +219,7 @@ describe('InviteSheet', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    // the host's Rated/Friendly choice goes with the presets (Friendly when nothing was ever chosen)
+    // The host's Rated/Friendly choice goes with the presets (Friendly when never chosen).
     expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toEqual({
       game: 'wordle-battle',
       settings: { difficulty: 'hard', rated: false },
@@ -230,7 +230,7 @@ describe('InviteSheet', () => {
   });
 
   it('lets the host of Xapînok draw the word from one category and give a full minute for a clue', async () => {
-    // stand-in Kurdish for the fixtures, never shown to a learner
+    // Placeholder Kurdish for fixtures, never shown to a learner.
     const client = fakeClient(
       routes({
         'GET /games/availability?dialect=kmr': ok({ dialect: 'kmr', games: [{ id: 'impostor', available: true, difficulties: ['beginner'], levels: {}, levelled: true, minimum: 12 }] }),
@@ -257,7 +257,7 @@ describe('InviteSheet', () => {
     fireEvent.click(await screen.findByRole('radio', { name: 'Xapînok' }));
     const any = await screen.findByRole('radio', { name: 'Any' });
     expect(screen.getByRole('radiogroup', { name: 'Category' }).contains(any)).toBe(true);
-    // a category reads as its Kurdish name with the meaning in the reader's language
+    // A category reads as its Kurdish name with the meaning in the reader's language.
     fireEvent.click(screen.getByRole('radio', { name: 'heywan · animal' }));
     fireEvent.click(screen.getByRole('radio', { name: '60 s' }));
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
@@ -305,7 +305,7 @@ describe('InviteSheet', () => {
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
     fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Serwayan' }));
     await waitFor(() => expect(client.calls.some((c) => c.path === '/rhyme/availability')).toBe(true));
-    // one variety can make it: nothing to choose
+    // Only one variety can make it, so there is nothing to choose.
     await waitFor(() => expect(screen.queryByRole('radiogroup', { name: 'Variety' })).toBeNull());
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -349,7 +349,7 @@ describe('InviteSheet', () => {
     const client = fakeClient(routes({ 'POST /play/invites': ok({ ok: true, invited: 2 }) }));
     testAuth.client = client;
     renderWithProviders(<InviteSheet target={{ kind: 'lobby', game: 'rhyme-match', lobbyId: 'm1', mode: 'group' }} onClose={() => undefined} />);
-    // no game and no presets: the lobby has them already
+    // No game or presets: the lobby already has them.
     expect(screen.queryByRole('radiogroup', { name: 'Game' })).toBeNull();
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Azad, online now' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Sipan' }));
@@ -394,19 +394,19 @@ describe('InviteSheet, its tickets', () => {
     testAuth.client = client;
     renderWithProviders(<InviteSheet target={{ kind: 'lobby', game: 'wordle-battle', lobbyId: 'b1', mode: 'group' }} onClose={() => undefined} />);
     await screen.findByRole('checkbox', { name: 'Azad, online now' });
-    // the sheet asks the system about Reduce Motion as it opens: the answer is in before anybody taps
+    // The sheet queries Reduce Motion as it opens; let the answer arrive before tapping.
     await tick();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Azad, online now' }));
-    // the row says who is picked; the ticket written out for them is a picture of it
+    // The row says who is picked; their ticket is a picture of it.
     expect(screen.getAllByText('Azad')).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'Send invites (1)' }));
     await tick();
-    // the server has them, and the ticket is on its way: felt, but not yet said
+    // The server has them and the ticket is flying: a haptic, but no announcement yet.
     expect(felt).toEqual(['tap']);
     expect(screen.queryByText('Invite sent to Azad')).toBeNull();
     expect(await screen.findByText('Invite sent to Azad')).toBeTruthy();
     expect(client.calls.find((c) => c.method === 'POST' && c.path === '/play/invites')?.body).toEqual({ game: 'wordle-battle', lobbyId: 'b1', userIds: ['u-azad'] });
-    // the sheet stays for more, with nobody picked
+    // The sheet stays open for more, with nobody picked.
     expect(screen.getByRole('checkbox', { name: 'Azad, online now' }).getAttribute('aria-checked')).toBe('false');
   });
 
@@ -417,7 +417,7 @@ describe('InviteSheet, its tickets', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send invites (1)' }));
     expect(await screen.findByText('This part of Hevalo isn’t available yet. Please try again later.')).toBeTruthy();
     expect(felt).toEqual(['error']);
-    // still written out, still picked, ready to try again
+    // Still written out and picked, ready to retry.
     expect(screen.getAllByText('Sipan')).toHaveLength(2);
     expect(screen.getByRole('checkbox', { name: 'Sipan' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.queryByText(/Invites? sent/)).toBeNull();
@@ -428,7 +428,7 @@ describe('InviteSheet, its tickets', () => {
     testAuth.client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm7', invited: 0 }) }));
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
     fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Serwayan' }));
-    // the group's ticket carries the game it is for
+    // The group's ticket shows the game it is for.
     expect(screen.getAllByText('Pêşbaziya Serwayan').length).toBeGreaterThan(1);
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     expect(await screen.findByText('Posted in the group')).toBeTruthy();

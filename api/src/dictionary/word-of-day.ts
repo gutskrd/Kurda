@@ -1,11 +1,8 @@
 import { dayDiff } from '../streaks/streak-logic.js';
 
 /**
- * Deterministic word-of-the-day selection (KUR-046). Pure. The same local
- * calendar day maps to the same pool index for every user, and consecutive
- * days step through the curated pool in order — so a word can't repeat until
- * the whole pool has cycled. A pool of ≥90 curated words therefore never
- * repeats within 90 days.
+ * Deterministic word-of-the-day selection. Each local calendar day maps to the same pool index for everyone, and
+ * consecutive days step through the pool in order, so no word repeats before the pool has cycled.
  */
 
 const EPOCH = '1970-01-01';

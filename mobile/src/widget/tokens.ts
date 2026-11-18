@@ -6,29 +6,23 @@ import { reloadLetterWidget } from './reload';
 import { clearWidgetConfig, readWidgetConfig, widgetTokenRejected, writeWidgetConfig, writeWidgetLocale } from './storage';
 
 /**
- * This phone's widget token: made when somebody signs in, kept while they
- * are, and taken away again when they sign out.
+ * This device's widget token: created at sign-in, kept while signed in, and revoked at sign-out.
  *
- * The widget cannot use the account's session — it is another program on
- * iPhone, it runs when the app is closed, and a session that can do
- * everything has no business on a home screen. So the app asks the server
- * for a token that can read the widget's letter and nothing else
- * (`POST /letters/widget/tokens`), shown once, and leaves it where the widget
- * reads it (storage.ts). Signing out removes it from the server with the
- * token itself (`DELETE …/tokens/current`, which needs no session, so it
- * works after the session has ended) and from the phone.
+ * The widget cannot use the account session: on iPhone it is another program, it runs while the app is closed,
+ * and an all-powerful session does not belong on a home screen. So the app requests a token that can only read
+ * the widget's letter (`POST /letters/widget/tokens`, shown once) and stores it where the widget reads it
+ * (storage.ts). Signing out revokes it with the token itself (`DELETE …/tokens/current`, which needs no session)
+ * and removes it locally.
  *
- * The token is made afresh once each time the app starts and at each
- * sign-in, naming the one before as the one it replaces, so a phone never
- * holds two and a token lasts no longer than it must. Tokens also end with
- * the account's sessions (a new password, signing out everywhere): the
- * widget then hears 401, says so in storage, and shows "Open Hevalo"; the
- * next time the app is open it makes a new one.
+ * A fresh token is made on each app start and sign-in, naming its predecessor as replaced, so a device never
+ * holds two. The server also ends a token with the session it was made in, with all the account's sessions (a new
+ * password, signing out everywhere), and thirty days after creation. The widget then gets 401, records it in
+ * storage and shows "Open Hevalo", and the app makes a new one next time it opens.
  */
 
 export type TokenOutcome = 'kept' | 'made' | 'failed';
 
-/** After the server would not make a token, how long before asking again: each time the app comes to the front would be too often. */
+/** After the server refused to make a token, how long before retrying; every foregrounding would be too often. */
 const RETRY_AFTER_FAILURE_MS = 30 * 60_000;
 
 /** How long a token's removal may take before the phone forgets it anyway. */
@@ -37,24 +31,22 @@ const REVOKE_TIMEOUT_MS = 10_000;
 let making: Promise<TokenOutcome> | null = null;
 /** When the server last would not make a token, or null. */
 let failedAt: number | null = null;
-/** Whether the token was made in this run of the app (since it started, or since the last sign-out). */
+/** Whether the token was made in this app run (since startup or the last sign-out). */
 let madeThisRun = false;
 
-/** Remove a token from the server it belongs to, with the token itself. Best effort: the phone forgets it either way. */
+/** Revoke a token on its server with the token itself. Best effort: the device forgets it either way. */
 async function revoke(config: WidgetConfig, fetchFn: FetchLike): Promise<void> {
   try {
     await timedFetch(fetchFn, `${config.apiBase}${WIDGET_TOKEN_CURRENT_PATH}`, { method: 'DELETE', headers: { authorization: widgetAuthorization(config.token) } }, REVOKE_TIMEOUT_MS);
   } catch {
-    // offline: the token stays on the server unused until it is the oldest of five and is dropped
+    // Offline: the token stays on the server unused until it is the oldest of five and is dropped.
   }
 }
 
 /**
- * Make sure the widget has a token from this server, in the app's language.
- * One at a time: a call made while another is under way waits for it and
- * then only checks what it asked for — the app's language, say, which
- * arrives a moment after the session as the app starts — so signing in and
- * coming to the front together make one token.
+ * Ensure the widget has a token from this server, in the app's language. One at a time: a call made during
+ * another waits for it and then checks only what it asked for (such as the app language, which arrives just after
+ * the session at startup), so a sign-in and a foregrounding together make one token.
  */
 export function ensureWidgetToken(
   { client, apiBase, locale }: { client: ApiClient; apiBase: string; locale: string },
@@ -66,7 +58,7 @@ export function ensureWidgetToken(
     const config = await readWidgetConfig();
     const refused = await widgetTokenRejected();
     const usable = config !== null && config.apiBase === apiBase && !refused;
-    // the token the widget has stays while it works and a new one cannot be had
+    // The token the widget has stays while it works and a new one cannot be had.
     const keep = async (): Promise<TokenOutcome> => {
       if (!usable) return 'failed';
       if (config.locale !== locale) {
@@ -77,7 +69,8 @@ export function ensureWidgetToken(
     };
     if (usable && madeThisRun) return keep();
     if (failedAt !== null && now - failedAt < RETRY_AFTER_FAILURE_MS) return keep();
-    // one for another server (a build pointed elsewhere before) goes from there first; one from this server goes as the new one is made
+    // A token for another server (from a build pointed elsewhere) is revoked there first; one from this server is
+    // replaced as the new one is made.
     const sameServer = config?.apiBase === apiBase;
     if (config && !sameServer) await revoke(config, opts.fetchFn ?? fetch);
     const res = await client.post<WidgetTokenResult>(WIDGET_TOKENS_PATH, config && sameServer ? { replaces: config.token } : {});
@@ -97,14 +90,11 @@ export function ensureWidgetToken(
   return making;
 }
 
-/**
- * Take this phone's widget token away, from the server and the phone, and
- * show the widget signed out. Resolves to whether there was one.
- */
+/** Revoke this device's widget token on the server and locally, and show the widget signed out. Resolves to whether there was one. */
 export async function forgetWidgetToken(opts: { fetchFn?: FetchLike } = {}): Promise<boolean> {
-  // a token being made as somebody signs out is taken away with the rest, not left behind
+  // A token being made as somebody signs out is taken away with the rest, not left behind.
   if (making) await making.catch(() => undefined);
-  // the next sign-in makes its own
+  // The next sign-in makes its own.
   madeThisRun = false;
   const config = await readWidgetConfig();
   const refused = await widgetTokenRejected();
@@ -116,8 +106,8 @@ export async function forgetWidgetToken(opts: { fetchFn?: FetchLike } = {}): Pro
 }
 
 /**
- * Take the widget off every phone of the account (`DELETE …/tokens`, with the
- * session), then give this phone a new token so its own widget carries on.
+ * Remove the widget from every device of the account (`DELETE …/tokens`, with the session), then give this device
+ * a new token so its own widget continues.
  */
 export async function removeEveryWidget({ client, apiBase, locale }: { client: ApiClient; apiBase: string; locale: string }): Promise<boolean> {
   const res = await client.delete(WIDGET_TOKENS_PATH);

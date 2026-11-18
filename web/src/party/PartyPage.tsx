@@ -8,11 +8,8 @@ import { dialectName } from '../learn/map';
 import './party.css';
 
 /**
- * The frame of Impostor's page on the website (/app/games/impostor):
- * the back link and the title, and under them whatever the page is showing —
- * its start (impostor/Start.tsx), the game on one phone, or the room. The
- * pieces a room is built from are here too: the line that says what a lobby
- * is set to, and the turn's timer.
+ * The frame of Impostor's page (/app/games/impostor): the back link and title over the start, a one-phone game or a
+ * room. The lobby settings line and the turn timer live here too.
  */
 export function PartyPage({ titleKey, className, children }: { titleKey: MessageKey; className: string; children: ReactNode }): React.JSX.Element {
   const t = useT();
@@ -34,7 +31,7 @@ export function PartyPage({ titleKey, className, children }: { titleKey: Message
   );
 }
 
-/** "Kurmancî · Beginner · 30 s": what a lobby is set to, above its roster. */
+/** A lobby's settings above its roster, such as "Kurmancî · Beginner · 30 s". */
 export function PartyLobbyNote({
   dialect,
   difficulty,
@@ -43,7 +40,7 @@ export function PartyLobbyNote({
 }: {
   dialect: GameDialect;
   difficulty?: string;
-  /** what the lobby’s cards are about, in Kurdish (a category the host chose) */
+  /** The category the host chose, in Kurdish. */
   topic?: string;
   extra?: string;
 }): React.JSX.Element {
@@ -65,9 +62,8 @@ export function PartyLobbyNote({
 }
 
 /**
- * How much of the present wait is left, as a flat bar that empties (drawn
- * from the server's clock), with the seconds for a screen reader. Under five
- * seconds on the viewer's own turn it turns to the warning colour.
+ * A bar that empties as the current wait runs out on the server's clock, with the seconds for screen readers. It turns
+ * to the warning colour when `low`.
  */
 export function PartyTimer({ startedAt, endsAt, now, low, label }: { startedAt: string; endsAt: string; now: number; low: boolean; label: string }): React.JSX.Element {
   const total = Math.max(1, Date.parse(endsAt) - Date.parse(startedAt));

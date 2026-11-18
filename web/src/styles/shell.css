@@ -1,11 +1,7 @@
 /*
- * The shell's newer parts: the bell, search in the bar, the places' pages
- * (Learn's two halves, Search, Messages' list, your profile's menu), what
- * stays in place while a page scrolls, a phone's chrome inside the app (the
- * top of its screen and the bar of places along the bottom), and the small
- * shared pieces they are built from — an icon button, a list row, a two-way
- * switch. Everything here is written against the tokens, so it is right in
- * both schemes without knowing which one is on.
+ * The shell's parts: the bell, search in the bar, the places' pages (Learn, Search, Messages' list, the profile menu),
+ * sticky elements, the phone chrome inside the app (top bar and bar of places), and shared pieces such as icon
+ * buttons, list rows and two-way switches. Written against the tokens, so both schemes work.
  */
 
 /* ---- small shared pieces ----------------------------------------------- */
@@ -60,10 +56,7 @@
   }
 }
 
-/*
- * A person with buttons beside them, on a phone: the buttons go under the
- * name rather than off the edge of the card ("Decline" was cut in half).
- */
+/* On a phone a person's buttons go under the name rather than off the card's edge. */
 @media (max-width: 560px) {
   .friend-row {
     flex-wrap: wrap;
@@ -93,10 +86,7 @@
   margin-top: var(--space-4);
 }
 
-/*
- * A list of rows: a person, a word, a place to go. One look for every list on
- * the new pages, so a row reads the same in Search, a new message and Learn.
- */
+/* A list of rows (people, words, places) with one look across Search, a new message and Learn. */
 .list {
   display: flex;
   flex-direction: column;
@@ -218,15 +208,9 @@
 }
 
 /*
- * The panel the bell opens: hanging from the bell at the end of the bar (its
- * right, or in Arabic and Soranî its left), a little narrower than a phone, as
- * tall as its list up to most of the window, scrolling inside itself. Where
- * the bell is comes from the bell (`--bell-end`), so the panel's edge lines up
- * with it whatever else the bar holds.
- *
- * It hangs from the bar's own edge, with no strip of page between the two: the
- * bar's hairline is its top border, and it drops open from there rather than
- * sliding, so nothing of it ever shows above the bar.
+ * The bell's panel hangs from the bell at the bar's end (`--bell-end`, so it lines up whatever the bar holds), a little
+ * narrower than a phone and scrolling inside itself. The bar's hairline is its top border, and it drops open rather
+ * than sliding, so nothing shows above the bar.
  */
 .bell-panel {
   position: fixed;
@@ -355,21 +339,12 @@
   margin-top: var(--space-2);
 }
 
-/*
- * The list: a row of filters when there is more than one kind to choose
- * between, then Today, This week, Earlier. Each label stays at the top of the
- * panel while its notifications scroll under it.
- */
+/* The list: filters when there is more than one kind, then Today, This week and Earlier, each label sticky. */
 .note-groups {
   --note-ground: var(--panel-bg);
   padding-bottom: var(--space-2);
 }
-/*
- * A scrolling row cuts off whatever reaches past it, so the row keeps 8px
- * more above and below its filters than it shows, for the area that answers
- * a finger (reach.css), and the negative margin gives the 8px back: the
- * filters sit where they always did.
- */
+/* A scrolling row clips reaches (reach.css), so 8px of padding above and below is taken back by a negative margin. */
 .note-filters {
   display: flex;
   gap: 6px;
@@ -437,11 +412,8 @@
 }
 
 /*
- * One notification: who it is from, what happened and when, and what it is
- * about. New is said three ways, never by colour alone: a dot at its start, a
- * faint wash behind the row, and the words a weight heavier. The row itself
- * slides over what a finger finds under it (the settings, and taking it
- * away), so it is drawn on the panel's own ground.
+ * One notification: from whom, what and when, and about what. New is shown by a dot, a faint wash and heavier words,
+ * never colour alone. The row slides over its swipe actions, so it is drawn on the panel's ground.
  */
 .note-row {
   position: relative;
@@ -782,11 +754,7 @@
   }
 }
 
-/*
- * A phone: the whole screen under the bar, like the search results, with the
- * bar and its bell still there above it. The list has room to be read, and
- * the page behind it holds still (NotificationsBell).
- */
+/* On a phone the panel fills the screen under the bar, and the page behind holds still (NotificationsBell). */
 @media (max-width: 560px) {
   .bell-panel {
     top: var(--nav-bottom);
@@ -855,13 +823,7 @@
   background: var(--primary);
   box-shadow: 0 0 0 2px var(--nav-bg);
 }
-/*
- * On a phone the social column's parts all have a place of their own — the
- * requests and groups in Messages, notifications on the bell, your friends in
- * your profile's menu (and on the public pages in the bar's own) — so its
- * toggle leaves the bar, which keeps the brand, search and the bell and
- * nothing to mistake.
- */
+/* On a phone everything in the social column has another home, so its toggle leaves the bar. */
 @media (max-width: 768px) {
   .nav .rail-toggle {
     display: none;
@@ -876,11 +838,7 @@
 
 /* ---- search, in the bar ------------------------------------------------ */
 
-/*
- * A field on a wide screen, between the places and what is yours; its results
- * hang from it in a panel. The field keeps one width whatever is typed and
- * whatever arrives, so nothing in the bar moves while you search.
- */
+/* The search field on a wide screen, with results hanging below; its width is fixed so nothing in the bar moves. */
 .nav-search {
   position: relative;
   flex: 0 1 320px;
@@ -1090,11 +1048,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/*
- * The part of a result that is what was typed (search/Highlighted.tsx): the
- * same colour as the line it sits in, but in full ink and heavier, so a
- * secondary line's match reads as clearly as a title's.
- */
+/* The typed part of a result (search/Highlighted.tsx), in full ink and heavier than its line. */
 .search-match {
   background: none;
   color: var(--ink);
@@ -1104,11 +1058,7 @@
   flex: none;
   color: var(--ink-3);
 }
-/*
- * A name or a handle in Latin letters keeps its own direction, but on an
- * Arabic or Soranî page it still lines up on the right with everything else
- * rather than drifting to the far side of the row.
- */
+/* Latin names and handles keep their direction but still align right on Arabic and Soranî pages. */
 [dir='rtl'] .nav-search-title,
 [dir='rtl'] .nav-search-sub {
   text-align: right;
@@ -1126,12 +1076,7 @@
   }
 }
 
-/*
- * A phone: a search button in the bar, which turns the bar into the field —
- * a way back, the field across the width, and its clear button — with the
- * results filling the screen under it. Nothing else is on screen while you
- * search, which on a phone is what searching is.
- */
+/* On a phone a search button turns the bar into the field, with a back button and clear, and results filling the screen. */
 @media (max-width: 768px) {
   .nav-search {
     position: static;
@@ -1186,14 +1131,7 @@
     background: var(--app-bg);
     box-shadow: none;
   }
-  /*
-   * It opens out of the button that asked for it. The field and the results
-   * under it grow from where the button is and fade in, as one sheet, so the
-   * search is seen to come from the corner it was called from, as the
-   * notifications drop from the bell. Where the button is comes from the
-   * button (`--search-from-x` and `-y`, measured by NavSearch as it opens),
-   * so it is right in either direction and whatever else the bar holds.
-   */
+  /* The field and results grow out of the search button (`--search-from-x` and `-y`, measured by NavSearch) and fade in. */
   .nav-search.is-open .nav-search-bar,
   .nav-search-panel {
     animation: search-open var(--dur-slow) var(--ease-emphasis);
@@ -1258,17 +1196,9 @@
   color: var(--ink);
 }
 /*
- * "This one", drawn one way.
- *
- * Picking one of a few was drawn four ways: the page's ink as a pill here, a
- * raised grey card on League | Leaderboard one tap away, a grey pill on a
- * profile's tabs and the photo editor's tools, the gold tint on the editor's
- * second row. The same answer to the same question now looks the same
- * wherever it is asked: the chosen half of a switch, the chosen tab, the
- * chosen segment and the chosen option wear the page's ink, with the page's
- * ground for their words — as a chosen chip already did (`.chip.active`,
- * pages.css; the shop's tabs; the Games page's filter). It is said here, once,
- * after each control's own rules, and nowhere else.
+ * One look for "this one": the chosen half of a switch, the chosen tab, segment and option wear the page's ink with
+ * the page's ground for their words, like a chosen chip (`.chip.active`, pages.css). Set here, after each control's
+ * own rules.
  */
 .switch-btn.is-active,
 .rankings-tab.is-active,
@@ -1740,11 +1670,7 @@
   top: 10px;
   inset-inline-end: 10px;
 }
-/*
- * In the corner of your banner the menu's button is drawn as the "more" on
- * anybody else's profile is (product.css `.pc-corner`): one place and one
- * look for the menu of a profile, whoever's it is.
- */
+/* The profile banner's menu button looks like the "more" on others' profiles (product.css `.pc-corner`). */
 .pc-corner .profile-menu-btn .nav-bell-dot {
   top: 9px;
   inset-inline-end: 9px;
@@ -1776,25 +1702,12 @@
   flex: 1;
 }
 
-/*
- * Learn's two halves start at the same line.
- *
- * The Games half is drawn inside the frame every game sits in (`.game-page`),
- * which adds its own top margin for a board — so the heading and the Lessons |
- * Games switch dropped 40px when you pressed Games, and jumped back up on
- * Lessons. On the half that carries Learn's header the frame adds nothing.
- */
+/* Learn's Games half sits in `.game-page`, whose board margin is dropped so the header does not jump between halves. */
 .game-page:has(> .learn-head) {
   padding-top: 0;
 }
 
-/*
- * Messages on a wide screen: the list and the open conversation fill the
- * window under the bar, each scrolling inside itself, so the page does not
- * scroll and the field you type in stays at the bottom where you left it.
- * The fixed fraction of the window this used to be left a phone-sized box on
- * a tall screen and cut the composer off on a short one.
- */
+/* Messages on a wide screen fills the window under the bar, the list and conversation each scrolling, so the composer stays put. */
 @media (min-width: 821px) {
   .chat-page .chat-layout {
     height: max(420px, calc(100dvh - var(--nav-bottom) - var(--invite-banner-h, 0px) - 196px));
@@ -1803,17 +1716,10 @@
 
 /* ---- a phone's chrome, inside the app ----------------------------------- */
 /*
- * On a phone the app wears the phone app's chrome (components/TopNav.tsx
- * `PhoneBar`, layouts/PlacesBar.tsx): at the top the brand or the way back,
- * with search and the bell in one pill opposite it, and along the bottom, on
- * the root of each place, the places in a bar. Each is a solid shape in the
- * fill of what floats (`--surface-solid`, white by day), clear of the
- * window's edges and lifted off the page by a soft shadow, because on a
- * near-white page a white shape is told from the page by very little.
- *
- * None of it sits under a width of its own. The shell draws these parts only
- * at a phone's width (`PHONE_CHROME`, layouts/roots.ts), so their classes are
- * the condition.
+ * The phone chrome inside the app (components/TopNav.tsx `PhoneBar`, layouts/PlacesBar.tsx): the brand or back button
+ * at the top with search and the bell in a pill, and the bar of places on place roots. Each is a solid floating shape
+ * (`--surface-solid`) with a soft shadow, so it stands out on a near-white page. These parts only render at phone width
+ * (`PHONE_CHROME`, layouts/roots.ts), so no media query is needed.
  */
 :root {
   /* the bar of places: its height, and how far above the window's bottom edge it floats — just over the
@@ -1822,11 +1728,7 @@
   --places-lift: max(env(safe-area-inset-bottom, 0px) - 8px, 12px);
 }
 
-/*
- * The top is not a strip across the page here: it is the page's own ground
- * with shapes resting on it, so it takes the page's colour and loses its
- * line. It is solid and stays put as before, and the page passes under it.
- */
+/* The phone top takes the page's own colour, without a line, with shapes resting on it; it stays put as the page scrolls. */
 .nav-phone {
   border-bottom-color: transparent;
   background: var(--app-bg);
@@ -1857,11 +1759,7 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-/*
- * At the far end. Its two halves are 46 wide, so they fill it from end to end
- * and the glyphs stay clear of its curve; a press anywhere on the pill, its
- * very ends included, is a press on one of them (reach.css).
- */
+/* The pill's two 46px halves fill it end to end, so any press on it lands on one (reach.css). */
 .nav-pill {
   display: flex;
   align-items: center;
@@ -1888,11 +1786,7 @@
 .nav-pill:not(:has(.nav-bell)) .nav-search-open {
   width: 44px;
 }
-/*
- * Between a phone and the wide bar the notifications still open as a panel
- * from the bell. There is no strip above for it to hang from here, so it is
- * a card of its own under the pill, with a top edge and all four corners.
- */
+/* Between phone and wide bar, the notifications open as a card of their own under the pill. */
 @media (min-width: 561px) {
   :root:has(.nav-phone) .bell-panel {
     border-top: 1px solid var(--border);
@@ -1900,35 +1794,14 @@
   }
 }
 /*
- * One way back per page. Where a phone's top has the way back, a page does
- * not draw a bare arrow of its own under it: two arrows a thumb apart that do
- * one thing are one too many, and the one at the top is where the phone app
- * has it. That is the arrow at the head of a conversation, of Impostor's
- * page, of the ranks and of the season (`.chat-back`), and of every other
- * game (`.gs-back`). Each only led where the bar's way back leads: out of
- * the page, in one press (layouts/trail.ts keeps a game and the ranks one
- * page however their address moved), and the one game that asks before it
- * lets go is asked by the bar's as well (`useAsksBeforeLeaving`).
- *
- * Not drawn means not there: out of the Tab order and of what a screen
- * reader is told. A wide screen has no way back in its bar, so there each of
- * these is the page's own, as before; so is a conversation docked beside the
- * social column, which is outside the page and has a way to close instead.
- *
- * A way back that says where it leads stays, on every screen: "All stories",
- * "Letters", "Letters and words", "Settings", "Back to search". Each names a
- * place, which the bar's arrow cannot, and is not a second arrow.
+ * Where the phone top has a back button, the page's own bare back arrows (`.chat-back`, `.gs-back`) are not drawn,
+ * nor exposed to keyboards or screen readers; they led to the same place (layouts/trail.ts, `useAsksBeforeLeaving`).
+ * Wide screens and the docked conversation keep them. Back links that name a place stay everywhere.
  */
 .nav-phone:has(.nav-back) ~ .app-main :is(.chat-back, .gs-back) {
   display: none;
 }
-/*
- * Search, opened: the bar is the field, on the page's ground like the rest of
- * a phone's top, and its way back and the field itself are two more of the
- * same shapes. They stand at the page's own gutter, so the way back here is
- * exactly where the way back of a page is (the bar is already inside a
- * notch's safe area, as the page is).
- */
+/* Open search on a phone: the field and its back button are the same shapes, at the page's gutter where back always is. */
 .nav-phone .nav-search.is-open .nav-search-bar {
   gap: var(--space-2);
   padding-inline: var(--space-4);
@@ -1954,11 +1827,8 @@
 }
 
 /*
- * The bar of places. It floats: in from the window's sides by the page's own
- * gutter, so it lines up with the cards above it, and up from the bottom
- * edge. Above the page and anything the page raises, and under the top bar
- * and what hangs from it, so the search results and the notifications cover
- * it as a screen opened over the places would.
+ * The floating bar of places, inset by the page gutter and lifted from the bottom edge. It sits above the page but
+ * below the top bar, so search results and notifications cover it.
  */
 .places-bar {
   --places-side: var(--space-4);
@@ -1996,13 +1866,7 @@
   min-width: 0;
   display: flex;
 }
-/*
- * Behind the place you are on: one shape, a place wide and as tall as the
- * row, in the quiet tint a control's track has. It is moved along the bar on
- * a transform (`--at` places from the reading edge), so a change of place is
- * seen moving; it is only there once a place is chosen, so it arrives with no
- * slide.
- */
+/* The capsule behind the current place slides by transform (`--at`), and appears without sliding once a place is chosen. */
 .places-capsule {
   position: absolute;
   inset-block: 0;
@@ -2087,13 +1951,8 @@
 }
 
 /*
- * Room for the bar, on the pages that have it: the page's last row clears it
- * with a little air over it, and whatever the browser brings into view stops
- * above it. `--bottom-chrome` is the room the bar takes, and is there only
- * while the bar is: what else is fixed to the bottom of the window (the
- * rating box, the social column's toasts, the way back to your lesson) adds
- * it to its own place, and so sits above the bar where there is one and at
- * the bottom where there is none.
+ * Room for the bar on pages that have it. `--bottom-chrome` exists only while the bar does, and other bottom-fixed
+ * parts (the rating box, rail toasts, the way back to a lesson) add it so they sit above the bar.
  */
 :root:has(.places-bar) {
   --bottom-chrome: calc(var(--places-h) + var(--places-lift));
@@ -2135,12 +1994,8 @@
 
 /* ---- the light scheme's own corrections -------------------------------- */
 /*
- * A few drawings were made for the dark page only: a default banner lit from
- * the corner, the ring a face sits in, the empty part of the level ring, the
- * social column's glass over a photograph. And each rank and league has a
- * bright highlight colour that its name is written in — bright on black, and
- * all but invisible on white — so in the light scheme the name is written in
- * a deeper shade of the same colour instead (`--t-text`, ranks.css).
+ * Light-scheme corrections for art made for the dark page (default banner, avatar ring, level track, rail glass), and
+ * rank and league names written in a deeper shade of their colour (`--t-text`, ranks.css).
  */
 :root[data-theme='light']
   :is(
@@ -2190,11 +2045,7 @@
 }
 
 /* ---- a finger's worth of target, everywhere ----------------------------- */
-/*
- * Where the pointer is a finger, nothing that can be pressed is less than
- * 44px in either direction. These were sized for a mouse; on a touch screen
- * they grow — the look stays, the area under a thumb does not miss.
- */
+/* On touch screens every pressable is at least 44px each way; the look stays the same. */
 @media (pointer: coarse) {
   .brand {
     min-height: 44px;
@@ -2239,11 +2090,8 @@
     min-height: 44px;
   }
   /*
-   * Words that are pressed and the small round buttons in a line of text or
-   * inside a field keep their size, since growing them would push the lines
-   * round them apart; the area that answers a finger grows instead
-   * (reach.css). A story's replay is cut by hand: 24px, in the story's own
-   * line, it reaches 10px all round, which the words beside it allow.
+   * Pressable words and small buttons inside text or fields keep their size and grow their reach instead (reach.css).
+   * A story's 24px replay reaches 10px all round, which its line allows.
    */
   .story-replay::after {
     content: '';
@@ -2259,12 +2107,7 @@
     align-items: center;
     min-height: 44px;
   }
-  /*
-   * "Forgotten your password?" beside "Remember me": on a phone the two wrap
-   * onto lines 4px apart, and a line of text reaching up to a finger's 48 took
-   * the lower part of the box above. Drawn as tall as that box, it reaches only
-   * into the gap between them.
-   */
+  /* "Forgotten your password?" is drawn as tall as the box beside it, so its reach only fills the gap between lines. */
   .auth-row .link-btn {
     display: inline-flex;
     align-items: center;
@@ -2274,20 +2117,9 @@
 
 /* ---- and an answer to every press ---------------------------------------- */
 /*
- * A button gives under the finger (`.btn`, ui.css) and a lesson's tile sinks
- * (motion.css). These are the rest of what can be pressed, which answered a
- * mouse coming over them and nothing else — so on a phone, where there is no
- * hover, they did not answer at all. Two rules, by what the thing is.
- *
- * A pill — a like, a tab, a segment, the + — gives the way a button does: a
- * hair smaller under the finger, and it springs back when let go.
- *
- * A row and a bare icon are not scaled: a row a screen wide that shrank would
- * lurch, and an icon has no edge to give. They answer in their ground, a step
- * past the hover's, on the frame of the press rather than after a fade.
- *
- * Here, after every hover and every "this is the one you are on" these have to
- * outrank, and not in motion.css, which comes before this sheet.
+ * A pressed state for everything else, since hover never fires on touch. Pills (a like, a tab, the +) shrink slightly
+ * and spring back like buttons; rows and bare icons change their ground instead, on the press frame. Kept here, after
+ * every hover and active state, rather than in motion.css, which loads earlier.
  */
 .fcard-act,
 .seg-btn,
@@ -2317,11 +2149,7 @@
   background: var(--surface-3);
   transition-duration: 0s;
 }
-/*
- * For a reader who asked for less motion the pills stay their size and answer
- * as the rows do, in their ground — but for the one that is already chosen,
- * whose ground is its ink's opposite and has to stay that.
- */
+/* Under Reduce Motion pills keep their size and answer in their ground, except a chosen one, which keeps its ground. */
 @media (prefers-reduced-motion: reduce) {
   .fcard-act:active:not(:disabled),
   .switch-btn:active,
@@ -2346,11 +2174,7 @@
   }
 }
 
-/*
- * A handle is "@" and a username, and a username is written left to right
- * whatever the page is. On an Arabic or Soranî page the "@" ran to the far
- * end ("baran@"); each handle takes its direction from its own letters.
- */
+/* A handle ("@" and a username) takes its direction from its own letters, so "@" stays first on right-to-left pages. */
 .pc-handle,
 .friend-handle,
 .list-row-sub,

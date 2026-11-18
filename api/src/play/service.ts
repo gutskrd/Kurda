@@ -50,7 +50,7 @@ export interface PlayDeps {
   publicUrl?: PublicUrl;
 }
 
-/** How a game is named in the English fallback text of an inbox entry (clients write their own from `data`). */
+/** How a game is named in an inbox entry's English fallback text; clients write their own from `data`. */
 const INVITED_TO: Record<PlayGame, string> = {
   'wordle-battle': GAME_NAMES['wordle-battle'],
   'rhyme-match': GAME_NAMES['rhyme-match'],
@@ -58,12 +58,12 @@ const INVITED_TO: Record<PlayGame, string> = {
   ...MULTI_GAME_TITLES,
 };
 
-/** Every invite the host may have waiting is waiting: answers, or invites running out, make room. */
+/** Every invite the host may have waiting is waiting; answers or expiries make room. */
 function tooManyInvites(): AppError {
   return limitReached('play_invites_pending', `you have ${MAX_PENDING_PLAY_INVITES} invites waiting for an answer`);
 }
 
-/** Answered invites stay in the host's list this long, so "can't play right now" is seen. */
+/** How long answered invites stay in the host's list, so "can't play right now" is seen. */
 const OUTGOING_HOURS = 1;
 /** Answered invites are kept this long, then deleted by the sweep. */
 const KEEP_INVITE_DAYS = 30;
@@ -97,29 +97,22 @@ export interface CreateLobbyInput {
   game: PlayGame;
   settings: unknown;
   invite?: readonly string[];
-  /** where the host started it: a DM with this friend (who is invited), or a group chat (which gets the card) */
+  /** Where the host started it: a direct message with this friend (who is invited), or a group chat (which gets the card). */
   chat?: { userId: string } | { groupId: string };
 }
 
 /**
- * Starting a game with friends and playing again — the same for every online
- * game (contract §B, @kurda/shared `play`).
+ * Starting a game with friends and playing again, the same for every online game (@kurda/shared `play`).
  *
- * - An invite is a row (`play_invites`): one pending per host, friend and game,
- *   a newer one replacing the older, and at most MAX_PENDING_PLAY_INVITES
- *   waiting from one host at once; it lasts INVITE_TTL_MINUTES, or until the
- *   lobby starts, fills or is called off. It reaches the friend three ways at
- *   once: a game card in their DM with the host, a `play_invite` event (the
- *   banner) and an inbox entry. Only friends are ever invited; anybody else is
- *   skipped without a word, and the host is told only how many were invited.
- *   A friend the game would turn away is invited as far as the host can tell
- *   and held from the friend (see `inviteTo`), so the count never says who is
- *   a minor or who has blocked whom.
- * - Accepting is the game's own join (so the rule is checked once, under the
- *   game's lock), and saying yes twice is the same as once.
- * - Two players play again by both asking (a rematch starts at once, with both
- *   in it); more than two, the host opens the next round and the others join
- *   it with one tap. Nobody is ever put into a game they did not choose.
+ * - An invite is a `play_invites` row: one pending per host, friend and game (a newer replaces an older), at most
+ *   MAX_PENDING_PLAY_INVITES waiting per host, lasting INVITE_TTL_MINUTES or until the lobby starts, fills or is
+ *   called off. It reaches the friend as a card in their direct messages with the host, a `play_invite` banner event
+ *   and an inbox entry. Only friends are invited; others are skipped silently and the host hears only a count. A
+ *   friend the game would refuse is invited as far as the host can tell but held (`inviteTo`), so the count reveals
+ *   neither minors nor blocks.
+ * - Accepting is the game's own join, checked once under the game's lock; saying yes twice is the same as once.
+ * - Two players play again when both ask (the rematch starts at once with both); with more, the host opens the next
+ *   round and the others join with one tap. Nobody is put into a game they did not choose.
  */
 export class PlayService {
   private readonly adapters = new Map<PlayGame, PlayAdapter>();
@@ -151,10 +144,8 @@ export class PlayService {
   // ---- starting a game ------------------------------------------------------------
 
   /**
-   * `POST /play/lobbies`: a lobby with the host in it, its card posted where it
-   * was started, and the friends asked. A group card that cannot be posted
-   * (muted, no longer a member) calls the new lobby off again — it was made to
-   * be shared there.
+   * `POST /play/lobbies`: a lobby with the host in it, its card posted where it was started, and friends asked. If a
+   * group card cannot be posted (muted, no longer a member) the lobby is called off, since it was made for that group.
    */
   async createLobby(hostId: string, input: CreateLobbyInput): Promise<{ game: PlayGame; lobbyId: string; invited: number }> {
     const adapter = this.adapter(input.game);
@@ -182,11 +173,8 @@ export class PlayService {
   }
 
   /**
-   * `POST /play/invites`: the host asks friends into their lobby. Always "ok"
-   * with a count; who was skipped, and why, is never said. The one refusal is
-   * the host's own: every one of their MAX_PENDING_PLAY_INVITES is waiting for
-   * an answer, so not one more could go — said only when none went, since the
-   * ones that did are on their way.
+   * `POST /play/invites`: the host asks friends into their lobby. Always "ok" with a count, never who was skipped or why.
+   * The one refusal is the host's own limit (every MAX_PENDING_PLAY_INVITES waiting), said only when none went.
    */
   async invite(hostId: string, game: PlayGame, lobbyId: string, userIds: readonly string[]): Promise<{ invited: number }> {
     const { invited, limited } = await this.inviteTo(hostId, game, lobbyId, userIds);
@@ -217,9 +205,8 @@ export class PlayService {
     if (!facts.joinable) throw new AppError('GAME_STARTED', 409, 'this game has already started');
     if (facts.activeIds.length >= facts.maxPlayers) throw new AppError('GAME_FULL', 409, 'this game is full');
 
-    // who played the game this lobby followed: an invite to one of them says
-    // "again". Read once, out here, never inside an invite's transaction (see
-    // recordInvite)
+    // Who played the game this lobby followed, so an invite to one of them says "again"; read here, never inside an
+    // invite's transaction (see recordInvite).
     const before = facts.rematchOf ? await adapter.facts(facts.rematchOf) : null;
 
     const now = this.now();
@@ -233,14 +220,10 @@ export class PlayService {
     for (const inviteeId of wanted) {
       if (facts.memberIds.includes(inviteeId) || facts.removedIds.includes(inviteeId)) continue;
       if (statuses.get(inviteeId) !== 'friends') continue;
-      // A friend the game would turn away — a minor or an account of unknown
-      // age and an open game, a block either way with someone already in it —
-      // is invited exactly as far as the host can tell: counted, listed as
-      // pending, expiring when its time is up, and with a card in the DM like
-      // anyone's. Leaving them out would make `invited` a minor detector over
-      // any adult's friends list, and a block detector between third parties.
-      // The invite is held instead: the card reads 'unavailable' to them (as a
-      // game that does not exist), and no banner, inbox entry or event follows.
+      // A friend the game would refuse (a minor or unknown age in an open game, or a block with someone in it) is invited as
+      // far as the host can tell: counted, listed as pending, expiring on time and carded in the DM, or `invited` would
+      // detect minors and third-party blocks. The invite is held: the card reads 'unavailable' to them, and no banner,
+      // inbox entry or event follows.
       const held = !(await canJoin(this.pool, joinCheckFor(facts, inviteeId)));
       const rematchOf = before?.memberIds.includes(inviteeId) ? facts.rematchOf : null;
       const outcome = await this.recordInvite(hostId, inviteeId, facts, now, { held, rematchOf });
@@ -273,18 +256,11 @@ export class PlayService {
   }
 
   /**
-   * One invite, in one transaction under a lock on (host, friend, game): no
-   * new invite within DECLINE_COOLDOWN_MINUTES of a "not now" to this game; the
-   * same lobby's invite still pending is left as it is (asking twice notifies
-   * once); any other pending one is cancelled and replaced. One that would be
-   * a new invite waiting, beyond the host's MAX_PENDING_PLAY_INVITES, is not
-   * made ('limit'): that count is read under the host's own lock, taken before
-   * the pair's, so a burst of invites at once cannot all slip under it.
-   *
-   * Everything it needs is worked out before it takes its pool client, and
-   * it asks the pool for nothing else until that client is back: a request
-   * holding one connection while waiting for another is how a burst of
-   * invites takes every connection and then waits on itself.
+   * One invite in one transaction under a lock on (host, friend, game): no new invite within DECLINE_COOLDOWN_MINUTES of
+   * a "not now" to this game; the same lobby's pending invite is left as is (asking twice notifies once); any other
+   * pending one is replaced. A new invite past the host's MAX_PENDING_PLAY_INVITES is not made ('limit'), counted under
+   * the host's lock taken before the pair's, so a burst cannot slip under it. Everything is computed before taking the
+   * pool client, and nothing else is asked of the pool until it is returned, so a burst cannot deadlock the pool.
    */
   private async recordInvite(
     hostId: string,
@@ -351,14 +327,9 @@ export class PlayService {
   }
 
   /**
-   * The three ways an invite reaches the friend, none of which may fail it:
-   * a game card in the DM between them, the live banner, and the inbox (with
-   * English fallback text; the apps write their own from `data`).
-   *
-   * A held invite gets the card and nothing else. The card is in the host's
-   * copy of the conversation too, so leaving it out would show the host which
-   * friends were held; to the friend it reads 'unavailable', because a card is
-   * drawn for each viewer through the join rule.
+   * The three ways an invite reaches the friend, none of which may fail it: a card in their direct messages, the live
+   * banner, and the inbox (English fallback text; the apps write their own from `data`). A held invite gets only the
+   * card, because the host's copy of the conversation shows it too; to the friend it reads 'unavailable'.
    */
   private async deliver(row: InviteRow, host: { name: string; avatarUrl: string | null }, summary: InviteSummary): Promise<void> {
     const card: ChatGameRef = { game: row.game, lobbyId: row.lobby_id };
@@ -380,14 +351,13 @@ export class PlayService {
   // ---- answering an invite --------------------------------------------------------
 
   /**
-   * `POST /play/invites/:id/accept`: the game's own join. Saying yes again
-   * once in is the same yes. An invite whose lobby can no longer be joined
-   * expires, and the answer is the join's own (404, or 409 started / full).
+   * `POST /play/invites/:id/accept`: the game's own join; a second yes is the same yes. An invite whose lobby can no
+   * longer be joined expires, answered with the join's own error (404, or 409 started or full).
    */
   async accept(userId: string, inviteId: string): Promise<{ game: PlayGame; lobbyId: string }> {
     const row = await this.ownInvite(inviteId, userId, 'invitee_id');
     const answer = { game: row.game, lobbyId: row.lobby_id };
-    // an invite to a game that is no longer part of Hevalo leads nowhere: it ends here, as one to a lobby that closed does
+    // An invite to a retired game leads nowhere and ends here, like one to a closed lobby.
     if (isRetiredGame(row.game)) {
       if (row.status === 'pending') await this.closeInvite(row, 'expired');
       throw gameNotFound();
@@ -410,13 +380,10 @@ export class PlayService {
   }
 
   /**
-   * `POST /play/join {code}`: the code a friend was told, for any of the games.
-   * A code names one open lobby across all three (migration game-join-codes),
-   * and joining it is that game's own join, so the join rule decides exactly as
-   * for an invite: every refusal, and a code nobody is using, is the same 404,
-   * which says nothing about who is in the game. A code is cleared once its
-   * game starts, so a late code is a 404 too; 409 is only for a story game
-   * whose questions began while its code was still being read out, or a full one.
+   * `POST /play/join {code}`: a code names one open lobby across the games (migration game-join-codes), and joining is
+   * that game's own join, so the join rule decides as for an invite. Every refusal and an unused code are the same 404;
+   * a code is cleared when its game starts. 409 is only for a story game whose questions began while its code was being
+   * shared, or a full one.
    */
   async joinByCode(userId: string, input: string): Promise<JoinedByCode> {
     const code = normalizeJoinCode(input);
@@ -431,7 +398,7 @@ export class PlayService {
       [code],
     );
     const row = found.rows[0];
-    // a code left on a lobby of a game that is no longer played is nobody's code
+    // A code left on a lobby of a retired game is nobody's code.
     if (!row || isRetiredGame(row.game)) throw gameNotFound();
     const outcome = await this.adapter(row.game).join(userId, row.id);
     if (outcome === 'joined' || outcome === 'already') return { game: row.game, lobbyId: row.id };
@@ -508,7 +475,7 @@ export class PlayService {
     );
     const groups = new Map<string, { game: PlayGame; lobbyId: string; invitees: OutgoingInviteState[] }>();
     for (const r of outgoingRows.rows) {
-      // what was sent for a game that is no longer played is not something a host can still act on
+      // Invites for a retired game are nothing a host can still act on.
       if (isRetiredGame(r.game)) continue;
       const key = `${r.game}:${r.lobby_id}`;
       let group = groups.get(key);
@@ -532,9 +499,8 @@ export class PlayService {
   // ---- Rated or Friendly -----------------------------------------------------------
 
   /**
-   * `PUT /play/:game/:lobbyId/rated`: the host changes the badge, in the lobby
-   * only (contract-4 §R2). The game tells everyone in it (`play_changed`), and
-   * anyone who joined for the other kind may leave; a lobby costs nothing to leave.
+   * `PUT /play/:game/:lobbyId/rated`: the host changes the badge, in the lobby only. Everyone in it is told
+   * (`play_changed`), and anyone who joined for the other kind may leave freely.
    */
   async setRated(hostId: string, game: PlayGame, lobbyId: string, rated: boolean): Promise<void> {
     await this.adapter(game).setRated(hostId, lobbyId, rated);
@@ -560,9 +526,8 @@ export class PlayService {
   }
 
   /**
-   * `POST /play/:game/:lobbyId/rematch`. Two players: record the offer, and
-   * when both have offered, start the rematch. More than two: the host opens
-   * the next round (and only the host).
+   * `POST /play/:game/:lobbyId/rematch`. Two players: record the offer and start the rematch once both have offered.
+   * More: the host alone opens the next round.
    */
   async offerRematch(userId: string, game: PlayGame, lobbyId: string): Promise<RematchState> {
     const adapter = this.adapter(game);
@@ -581,8 +546,7 @@ export class PlayService {
         try {
           await adapter.startPairRematch(lobbyId);
         } catch (err) {
-          // the join rule said no (a block since, a group left): no rematch,
-          // and nothing said about why
+          // The join rule said no (a block since, a group left), so no rematch, and no reason given.
           if (!(err instanceof AppError && err.code === 'GAME_NOT_FOUND')) throw err;
         }
       }
@@ -592,7 +556,7 @@ export class PlayService {
     return this.stateFor(userId, facts);
   }
 
-  /** `DELETE /play/:game/:lobbyId/rematch`: "no thanks", or leaving the results — the offer is off. */
+  /** `DELETE /play/:game/:lobbyId/rematch`: "no thanks" or leaving the results withdraws the offer. */
   async declineRematch(userId: string, game: PlayGame, lobbyId: string): Promise<RematchState> {
     const facts = await this.memberFacts(userId, game, lobbyId);
     if (facts.rematchKind === 'pair' && !facts.nextLobbyId) {
@@ -612,8 +576,7 @@ export class PlayService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      // both offers are judged under one lock, so two players tapping at the
-      // same moment cannot each miss the other's offer
+      // Both offers are judged under one lock, so two players tapping at once cannot each miss the other's.
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended('play-rematch:' || $1 || ':' || $2, 0))`, [game, lobbyId]);
       await client.query(
         `INSERT INTO play_rematches (game, lobby_id, user_id, created_at) VALUES ($1, $2, $3, $4)
@@ -676,9 +639,8 @@ export class PlayService {
   // ---- housekeeping -----------------------------------------------------------------
 
   /**
-   * On a timer: the games close idle lobbies and end games that are over;
-   * invites past their time expire (both sides told); and, once an hour, old
-   * invites and rematch offers are deleted.
+   * On a timer: the games close idle lobbies and end finished games, expired invites expire (both sides told), and once
+   * an hour old invites and rematch offers are deleted.
    */
   async sweep(): Promise<void> {
     for (const a of this.adapters.values()) {
@@ -714,11 +676,7 @@ export class PlayService {
     return facts;
   }
 
-  /**
-   * An invite of this user's (as invitee or host); anyone else's is not found.
-   * Nor is one held from its invitee: they were never asked, so it is not
-   * theirs to answer.
-   */
+  /** An invite of this user's, as invitee or host; anyone else's, or one held from its invitee, is not found. */
   private async ownInvite(inviteId: string, userId: string, side: 'invitee_id' | 'host_id'): Promise<InviteRow> {
     const res = await this.pool.query<InviteRow>(
       `SELECT * FROM play_invites WHERE id = $1 AND ${side} = $2 ${side === 'invitee_id' ? 'AND NOT held' : ''}`,

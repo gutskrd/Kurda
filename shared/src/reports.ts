@@ -1,22 +1,9 @@
 /**
- * Reports, moderation cases, sanctions and appeals.
- *
- * The owner asked for a report button the admin "actually gets something" from:
- * the content and everything around it, the power to ban the reported person —
- * or the reporter — and to do it professionally. That means one way to report
- * anything (a person, a message, a post, a group, a game player), a case the
- * admin can act on with the evidence frozen at report time, sanctions that say
- * why and until when, and a way to ask for a review.
- *
- * Shared because four programs must agree on it: the API decides, the browser
- * and the phone ask and explain, and the admin panel triages. A category's
- * priority, a sanction's name or the shape of a case read differently in any one
- * of them would be a bug nobody could see from the others.
- *
- * The rules behind the numbers are in the research brief (research3-moderation):
- * EU DSA Art. 16/17/20 (notice, statement of reasons, complaints), the UK Online
- * Safety Act codes (appeals for every service), Santa Clara (appeals by someone
- * not involved), and how Discord, Instagram and Twitch tell people what happened.
+ * Reports, moderation cases, sanctions and appeals: one way to report anything (a person, a message, a post, a group, a
+ * game player), cases with the evidence frozen at report time, sanctions that say why and until when, and appeals.
+ * Shared because the API decides, the browser and the phone ask and explain, and the admin panel triages, and all must
+ * read categories, priorities and cases alike. The rules follow the EU DSA (Art. 16, 17 and 20: notice, statement of
+ * reasons, complaints) and the UK Online Safety Act codes (an appeal for every decision).
  */
 import { stripControlChars } from './sanitize.js';
 import type { CopyrightCaseInfo } from './copyright.js';
@@ -31,12 +18,7 @@ import type { LetterDecor } from './letter-paper.js';
 export type ReportPriority = 0 | 1 | 2 | 3;
 export const REPORT_PRIORITIES: readonly ReportPriority[] = [0, 1, 2, 3];
 
-/**
- * How soon a case of each priority should get a decision, in hours, counted from
- * the first report (never from when an admin happened to open the queue).
- * No published industry numbers exist; these are the targets the research
- * recommends for a small, staffed team.
- */
+/** How soon a case of each priority should be decided, in hours from the first report, not from when somebody opened the queue. */
 export const PRIORITY_SLA_HOURS: Readonly<Record<ReportPriority, number>> = {
   0: 1,
   1: 24,
@@ -62,22 +44,15 @@ export type ReportCategory = (typeof REPORT_CATEGORY_KEYS)[number];
 export interface ReportCategoryInfo {
   key: ReportCategory;
   priority: ReportPriority;
-  /** i18n key of the child-friendly label the report sheet shows */
+  /** i18n key of the child-friendly label on the report sheet */
   labelKey: string;
   /** the same label in plain English, for the admin panel and as a fallback */
   label: string;
-  /**
-   * Show help at once, before anything else, when this is picked ("Someone may
-   * hurt themselves" → a short message and a helpline link).
-   */
+  /** Shows help before anything else when picked: "Someone may hurt themselves" gets a short message and a helpline link. */
   showsHelp: boolean;
 }
 
-/**
- * Every category a report can carry, most urgent first. The order is the order
- * the report sheet lists them in, so the ones that matter most are never below
- * the fold.
- */
+/** Every category a report can carry, most urgent first, which is also the report sheet's order. */
 export const REPORT_CATEGORIES: readonly ReportCategoryInfo[] = [
   {
     key: 'child_safety',
@@ -99,9 +74,8 @@ export const REPORT_CATEGORIES: readonly ReportCategoryInfo[] = [
   { key: 'private_info', priority: 1, labelKey: 'report.category.privateInfo', label: 'Sharing private information', showsHelp: false },
   { key: 'harassment', priority: 2, labelKey: 'report.category.harassment', label: 'Bullying or harassment', showsHelp: false },
   /*
-   * Someone else's work posted as if it were theirs. A member's report waits
-   * like harassment; a formal notice from the rights holder (/copyright) is
-   * queued at P1, since hosts give a provider about two working days.
+   * A member's report waits like harassment; a formal notice from the rights holder (/copyright) is queued at P1, since
+   * hosts give a provider about two working days.
    */
   { key: 'copyright', priority: 2, labelKey: 'report.category.copyright', label: 'Copies someone else’s work', showsHelp: false },
   { key: 'spam', priority: 3, labelKey: 'report.category.spam', label: 'Scam or spam', showsHelp: false },
@@ -124,10 +98,7 @@ export function categoryPriority(category: ReportCategory): ReportPriority {
   return reportCategoryInfo(category).priority;
 }
 
-/**
- * The values older clients and the old report tables used, mapped onto the
- * categories above. The web app's catalogue keyed self-harm as `selfHarm`.
- */
+/** The values older clients and the old report tables used, mapped onto the categories above; the web once keyed self-harm `selfHarm`. */
 export const LEGACY_REPORT_CATEGORIES: Readonly<Record<string, ReportCategory>> = {
   harassment: 'harassment',
   spam: 'spam',
@@ -166,25 +137,17 @@ export const REPORT_TARGET_TYPES = [
 ] as const;
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
-export function isReportTargetType(value: unknown): value is ReportTargetType {
-  return typeof value === 'string' && (REPORT_TARGET_TYPES as readonly string[]).includes(value);
-}
-
 /** The games whose players can be reported by seat. */
 export type ReportableGame = PlayGame;
 
 /** Limits on a report. A note is optional and has no minimum length. */
 export const MAX_REPORT_NOTE_LEN = 1000;
-/** Reports one account may file in 24 hours (every surface counted together). */
+/** Reports one account may file in 24 hours, every surface counted together. */
 export const REPORTS_PER_DAY = 20;
 /** Reports from accounts younger than this weigh less when the queue is ordered. */
 export const NEW_ACCOUNT_HOURS = 24;
 
-/**
- * A note as it is stored: control characters stripped (invisible tricks, never
- * Kurdish diacritics), trimmed, at most `MAX_REPORT_NOTE_LEN` characters, and
- * null when nothing is left.
- */
+/** A note as stored: control characters stripped, trimmed, cut to `MAX_REPORT_NOTE_LEN`, and null when nothing is left. */
 export function normalizeReportNote(note: unknown): string | null {
   if (typeof note !== 'string') return null;
   const clean = [...stripControlChars(note).trim()].slice(0, MAX_REPORT_NOTE_LEN).join('').trim();
@@ -195,54 +158,42 @@ export function normalizeReportNote(note: unknown): string | null {
 export interface FileReportRequest {
   targetType: ReportTargetType;
   /**
-   * The id of the thing reported. For `game_player` it is the game's id, and
-   * `game` + `seat` say which player: the server maps the seat to the person,
-   * so a client never needs anyone's account id to report them.
+   * The id of the thing reported. For `game_player` it is the game's id and `game` plus `seat` name the player, which the
+   * server maps to the person, so a client never needs anyone's account id.
    */
   targetId: string;
   category: ReportCategory;
   note?: string;
   game?: ReportableGame;
-  /**
-   * The player's seat as the game's own view shows it (`seat`, 1-based, never
-   * reused within a game). Only someone who played in that game can report one
-   * of its players; the server answers 404 for anything else.
-   */
+  /** The player's 1-based seat as the game's view shows it, never reused in a game; only a player of that game may report one (else 404). */
   seat?: number;
 }
 
 export const REPORT_STATUSES = ['open', 'actioned', 'no_violation'] as const;
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
 
-/** One of your own reports, as "My reports" lists it. Never says what the sanction was. */
+/** One of your own reports, as "My reports" lists it; never says what the sanction was. */
 export interface MyReport {
   id: string;
   targetType: ReportTargetType;
   category: ReportCategory;
   status: ReportStatus;
-  /**
-   * A short label for what was reported: a username, or a post's title. Null
-   * when there is nothing the reporter may be shown — always for a game player
-   * (a game shows people who are not your friends as "Player N").
-   */
+  /** A short label for what was reported (a username, a post title), or null when the reporter may not see one, always for a game player. */
   targetLabel: string | null;
   createdAt: string;
   closedAt: string | null;
   /** you may ask for a second look at a "doesn't break our rules" answer */
   canAppeal: boolean;
-  /**
-   * The case the report was decided in — what `POST /me/appeals {caseId}`
-   * asks a second look at. Null while no case holds it.
-   */
+  /** The case that decided the report, which `POST /me/appeals {caseId}` asks to review; null while no case holds it. */
   caseId: string | null;
 }
 
-/** What `POST /reports` answers (201 new, 200 when the same open report already exists). */
+/** What `POST /reports` answers: 201 new, 200 when the same open report already exists. */
 export interface ReportReceipt {
   report: MyReport;
-  /** true when you had already reported this and that report is still open */
+  /** you had already reported this and that report is still open */
   deduped: boolean;
-  /** present for `self_harm`: shown at once, before anything else */
+  /** present for `self_harm`, shown before anything else */
   help?: { url: string };
 }
 
@@ -271,13 +222,9 @@ export function isSanctionKind(value: unknown): value is SanctionKind {
 }
 
 /**
- * What a sanction stops, while it lasts:
- * - `chat` — direct messages and group messages, and the gifts and game cards
- *   posted into them;
- * - `post` — library posts and comments, image posts and comments;
- * - `media` — uploading pictures and voice (feature limit);
- * - `account` — signing in at all (suspension, permanent ban).
- * A warning and a content removal stop nothing by themselves.
+ * What a sanction stops while it lasts: `chat`, direct and group messages with the gifts and game cards posted into them;
+ * `post`, library and image posts and comments; `media`, uploading pictures and voice; `account`, signing in at all. A
+ * warning or a content removal stops nothing by itself.
  */
 export type RestrictionScope = 'chat' | 'post' | 'media' | 'account';
 
@@ -291,36 +238,31 @@ export const SANCTION_SCOPE: Readonly<Record<SanctionKind, RestrictionScope | nu
   permanent_ban: 'account',
 };
 
-/** Kinds whose length matters (null hours = no end). The others are moments, not periods. */
+/** Kinds whose length matters (null hours: no end); the others are moments, not periods. */
 export function sanctionHasDuration(kind: SanctionKind): boolean {
   return SANCTION_SCOPE[kind] !== null && kind !== 'permanent_ban';
 }
 
-/** The length presets the action panel offers, in hours (null = permanent). */
+/** The length presets the action panel offers, in hours (null: permanent). */
 export const SANCTION_DURATION_PRESETS: readonly (number | null)[] = [24, 72, 168, 720, null];
 
 export const MAX_STATEMENT_LEN = 2000;
 
-/** How a sanction came about, as the statement of reasons has to say. */
+/** How a sanction came about, which the statement of reasons must say. */
 export type SanctionOrigin = 'report' | 'automatic' | 'moderator';
 
-/**
- * 403 `MUTED` details: the account may not do this until `until` (null = no end
- * set). Clients say "You can't send messages until …" in local time.
- */
+/** 403 `MUTED` details: not allowed until `until` (null: no end set); clients say "You can't send messages until …" in local time. */
 export interface MutedErrorDetails {
   until: string | null;
   scope: Exclude<RestrictionScope, 'account'>;
 }
 
 /**
- * 403 `ACCOUNT_SUSPENDED` details, from `POST /auth/login`, `/auth/refresh` and
- * `/auth/oauth`. `appealToken` is a short-lived token that can only read
- * `GET /me/standing` and file `POST /me/appeals` — the suspension screen sends it
- * as `Authorization: Bearer <appealToken>`.
+ * 403 `ACCOUNT_SUSPENDED` details from `POST /auth/login`, `/auth/refresh` and `/auth/oauth`. `appealToken` is a
+ * short-lived Bearer token that can only read `GET /me/standing` and file `POST /me/appeals`.
  */
 export interface SuspendedErrorDetails {
-  /** null = permanent */
+  /** null: permanent */
   until: string | null;
   policy: ReportCategory | null;
   statement: string;
@@ -328,7 +270,7 @@ export interface SuspendedErrorDetails {
   appealToken: string;
 }
 
-/** The appeal token's lifetime. Signing in again gives a fresh one. */
+/** The appeal token's lifetime; signing in again gives a fresh one. */
 export const APPEAL_TOKEN_TTL_SECONDS = 24 * 60 * 60;
 
 // ---------------------------------------------------------------------------
@@ -366,10 +308,10 @@ export interface StandingSanction {
   /** what the reviewer wrote to you */
   statement: string;
   startsAt: string;
-  /** null = no end (a permanent ban, or a warning, which has none) */
+  /** null: no end (a permanent ban, or a warning, which has none) */
   endsAt: string | null;
   origin: SanctionOrigin;
-  /** a person looked at it (always true unless it was automatic and nobody has yet) */
+  /** a person looked at it; always true unless it was automatic and nobody has yet */
   reviewedByPerson: boolean;
   active: boolean;
   revokedAt: string | null;
@@ -395,11 +337,11 @@ export interface AccountStanding {
   unacknowledgedWarnings: StandingSanction[];
   /** appeals about a report of yours that was found not to break the rules */
   reportAppeals: AppealView[];
-  /** what is currently restricted, and until when (null = no end) */
+  /** what is restricted now, and until when (null: no end) */
   restrictions: Partial<Record<RestrictionScope, { until: string | null }>>;
 }
 
-/** `POST /me/appeals` — about a sanction you received, or a report of yours that was closed. */
+/** `POST /me/appeals`: about a sanction you received, or a report of yours that was closed. */
 export interface FileAppealRequest {
   sanctionId?: string;
   caseId?: string;
@@ -410,10 +352,7 @@ export interface FileAppealRequest {
 // Inbox notifications
 // ---------------------------------------------------------------------------
 
-/**
- * `data` of the inbox notifications moderation sends. The title and body are
- * plain English; clients may render their own words from these fields.
- */
+/** `data` of moderation's inbox notifications; title and body are plain English, and clients may word their own from these fields. */
 export type ModerationNotificationData =
   | { kind: 'report_outcome'; reportIds: string[]; outcome: 'actioned' | 'no_violation' }
   | {
@@ -428,10 +367,7 @@ export type ModerationNotificationData =
   | {
       kind: 'caring_message';
       helplineUrl: string;
-      /**
-       * The moderator's own words, when they wrote some — the one part of the
-       * message a client cannot say for itself in the reader's language.
-       */
+      /** the moderator's own words, if any: the one part a client cannot say for itself in the reader's language */
       message?: string;
     };
 
@@ -447,11 +383,7 @@ export type CaseStatus = (typeof CASE_STATUSES)[number];
 /** The statuses of a case still on somebody's desk. */
 export const OPEN_CASE_STATUSES: readonly CaseStatus[] = ['open', 'in_review', 'needs_second_approval', 'escalated'];
 
-/**
- * Where a case came from. `report` is every user report; `copyright` a notice
- * from the public /copyright form (copyright.ts); the rest are older or
- * automated feeds.
- */
+/** Where a case came from: `report` for user reports, `copyright` for the public /copyright form (copyright.ts), the rest automated feeds. */
 export const CASE_SOURCES = [
   'report',
   'text_flag',
@@ -521,26 +453,22 @@ export interface CaseQueueItem {
   leaseUntil: string | null;
   /** the old 0–100 score, kept for the automated feeds */
   severity: number;
-  /** a row that could not be read in full; shown, never allowed to break the page */
+  /** a row that could not be read in full; shown, and never allowed to break the page */
   degraded?: boolean;
 }
 
-/**
- * `GET /admin/moderation/queue` query. Every field is optional; the default is
- * every open case, most urgent first, oldest first report first.
- */
+/** `GET /admin/moderation/queue` query; by default every open case, most urgent first, then oldest first report. */
 export interface CaseQueueQuery {
   /**
-   * A single status, or `open` (default: every status still on someone's desk —
-   * open, in review, waiting for a second admin, escalated), `closed` (actioned
-   * or no violation) or `all`.
+   * A status, or `open` (the default: open, in review, waiting for a second admin, escalated), `closed` (actioned or no
+   * violation) or `all`.
    */
   status?: CaseStatus | 'closed' | 'all';
   priority?: ReportPriority;
   category?: ReportCategory;
   /** a source, or a group of them as the queue filter shows them */
   source?: CaseSource | CaseSourceGroup;
-  /** words in the summary, a username, or an id (the case's, or the reported thing's) */
+  /** words in the summary, a username, or an id of the case or the reported thing */
   q?: string;
   /** `nextCursor` from the previous page */
   cursor?: string;
@@ -556,7 +484,7 @@ export interface CaseQueuePage {
   added?: number;
 }
 
-/** `GET /admin/moderation/summary` — feeds the dashboard and the nav badge. */
+/** `GET /admin/moderation/summary`, for the dashboard and the nav badge. */
 export interface ModerationSummary {
   open: number;
   byPriority: Record<ReportPriority, number>;
@@ -580,21 +508,18 @@ export interface EvidenceMessage {
   createdAt: string;
   /** the message that was reported */
   reported: boolean;
-  /** a letter's notes, stuck on its paper, as they were sent (letter-paper.ts) */
+  /** a letter's notes as they were sent (letter-paper.ts) */
   notes?: string[];
   /** a letter with something drawn on it */
   drawn?: boolean;
 }
 
-/**
- * What the server froze when the report was filed. Never edited afterwards: an
- * author deleting or changing the post changes nothing here.
- */
+/** What the server froze when the report was filed, never edited afterwards: editing or deleting the content changes nothing here. */
 export interface EvidenceSnapshot {
   targetType: ReportTargetType;
   targetId: string;
   capturedAt: string;
-  /** whose content it is (the reported person) */
+  /** whose content it is: the reported person */
   author: { id: string; username: string } | null;
   title?: string | null;
   text?: string | null;
@@ -603,22 +528,18 @@ export interface EvidenceSnapshot {
   editedAt?: string | null;
   /** the live status at capture (published, draft, removed …) */
   status?: string | null;
-  /** stored media, kept from cleanup while the evidence is */
+  /** stored media, kept from cleanup as long as the evidence is */
   mediaKeys: string[];
-  /**
-   * A written post's pictures, in order, with the alt text its author wrote
-   * for each (their keys are in `mediaKeys` too) — so the case still shows
-   * them after the author edits them off or deletes the post.
-   */
+  /** A written post's pictures in order with their alt text (keys also in `mediaKeys`), so the case shows them after edits or deletion. */
   pictures?: Array<{ mediaKey: string; altText: string | null }>;
-  /** chats: ~10 messages before and 5 after, from a conversation the reporter is in */
+  /** for chats: about 10 messages before and 5 after, from a conversation the reporter is in */
   context?: EvidenceMessage[];
   group?: {
     id: string;
     name: string;
-    /** only on evidence frozen while a group could still be open: whether it was 'open' or 'invite' then */
+    /** only on evidence frozen while a group could still be open: 'open' or 'invite' then */
     privacy?: string;
-    /** who last changed the name or description, and who put up the picture — they answer for them, not only the owner */
+    /** who last changed the name or description and who put up the picture, since they answer for them too */
     editedBy?: { id: string; username: string } | null;
     photoSetBy?: { id: string; username: string } | null;
   } | null;
@@ -629,18 +550,14 @@ export interface EvidenceSnapshot {
     seat: number;
     players: Array<{ seat: number; userId: string; username: string | null }>;
   } | null;
-  /**
-   * A reported letter's paper, the drawing on it and its notes, as it was
-   * sent (letter-paper.ts), so the case shows the whole letter; null for one
-   * on the default paper with nothing on it.
-   */
+  /** A reported letter's paper, drawing and notes as sent (letter-paper.ts); null for plain paper with nothing on it. */
   decor?: LetterDecor | null;
-  /** anything else a resolver knew (post type, language, a comment's post id) */
+  /** anything else a resolver knew, such as the post type, the language or a comment's post id */
   extra?: Record<string, unknown>;
 }
 
 export interface CaseReporter extends CasePerson {
-  /** of their reports that were decided, the share that led to action (null: none decided yet) */
+  /** the share of their decided reports that led to action; null before any was decided */
   accuracyPercent: number | null;
   reportsLast30Days: number;
 }
@@ -683,12 +600,10 @@ export interface CaseSubjectView extends CasePerson {
   pastSanctions: CaseSanctionView[];
   priorCases: Array<{ id: string; status: CaseStatus; category: ReportCategory | null; createdAt: string; resolvedAt: string | null }>;
   /**
-   * Accounts that shared a device or a network with this one, strongest first.
-   * A device is a device id both signed up or signed in with. A network counts
-   * only when both were seen on it within 48 hours of each other and few other
-   * established accounts used it then, so a carrier's NAT, a campus or a VPN
-   * does not link strangers. `days` is how many distinct days that evidence
-   * covers; `lastSeenTogether` the latest of them.
+   * Accounts that shared a device or a network with this one, strongest first. A device is a device id both signed up or
+   * in with. A network counts only when both used it within 48 hours of each other and few other established accounts
+   * did, so a carrier's NAT, a campus or a VPN does not link strangers. `days` counts distinct days of such evidence;
+   * `lastSeenTogether` is the latest.
    */
   linkedAccounts: Array<{
     id: string;
@@ -716,10 +631,8 @@ export interface CaseAuditEntry {
 }
 
 /**
- * Where a piece of evidence media is. null: on the public bucket as usual.
- * 'pending': being moved off it (the CSAM action, or a closed child's file a
- * report still holds). 'done': kept only in private storage — the public URL
- * no longer serves it.
+ * Where evidence media is. null: on the public bucket as usual. 'pending': being moved off it, by the CSAM action or for a
+ * closed child's file a report still holds. 'done': only in private storage, and the public URL no longer serves it.
  */
 export type QuarantineState = 'pending' | 'done';
 
@@ -729,7 +642,7 @@ export interface EscalationMedia {
   quarantine: QuarantineState | null;
   /** true: the CDN forgot the URL; false: the purge failed; null: no purge is configured */
   cdnPurged: boolean | null;
-  /** the address it was public at — purge it by hand in the CDN when `cdnPurged` is not true */
+  /** the address it was public at; purge it by hand in the CDN when `cdnPurged` is not true */
   publicUrl: string | null;
 }
 
@@ -742,7 +655,7 @@ export interface CaseEscalation {
   reference: string | null;
   createdAt: string;
   filedAt: string | null;
-  /** for 'csam': the files taken down (attach them to the hotline report from the case view) */
+  /** for 'csam': the files taken down, to attach to the hotline report from the case view */
   media: EscalationMedia[];
 }
 
@@ -764,7 +677,7 @@ export interface CaseDetail {
     resolutionNote: string | null;
     resolvedAt: string | null;
     resolvedBy: string | null;
-    /** what the automated feeds recorded (scores, flags) or the old reports' summary */
+    /** what the automated feeds recorded, or the old reports' summary */
     evidence: Record<string, unknown>;
     contentRemoved: boolean;
   };
@@ -776,32 +689,24 @@ export interface CaseDetail {
   audit: CaseAuditEntry[];
   sanctions: CaseSanctionView[];
   escalations: CaseEscalation[];
-  /**
-   * The copyright notices behind the case and the reported person's strikes,
-   * for a case about copyright; null for every other case (copyright.ts).
-   * The API always sends it; optional so a panel built before it still reads.
-   */
+  /** For a copyright case, its notices and the reported person's strikes (copyright.ts); null otherwise. Optional for older panels. */
   copyright?: CopyrightCaseInfo | null;
 }
 
 /** Who an action is for: the reported person, or one of the reporters (a false report). */
 export type DecisionTarget = 'subject' | `reporter:${string}`;
 
-/** `caring_message` is not a sanction: a kind note with helplines, for someone at risk. */
+/** `caring_message` is not a sanction but a kind note with helplines, for someone at risk. */
 export type DecisionActionKind = SanctionKind | 'caring_message';
 
 export interface DecisionAction {
   target: DecisionTarget;
   kind: DecisionActionKind;
-  /** null = no end; ignored for warnings, content removal and caring messages */
+  /** null: no end; ignored for warnings, content removal and caring messages */
   durationHours?: number | null;
   /** shown to the person; optional only for a caring message */
   statement?: string;
-  /**
-   * The rule for this action when it is not the decision's: a reporter is
-   * sanctioned for misusing reports ('spam' unless given), not under the rule
-   * they reported.
-   */
+  /** The rule for this action when it differs from the decision's: a reporter is sanctioned for misusing reports ('spam' unless given). */
   policy?: ReportCategory;
 }
 
@@ -815,14 +720,9 @@ export interface DecideRequest {
   notifyReporters: boolean;
   /** return the exact messages people would receive, and change nothing */
   preview?: boolean;
-  /** the only moderation admin typing the person's username to confirm a permanent ban */
+  /** the only moderating admin typing the person's username to confirm a permanent ban */
   confirmUsername?: string;
-  /**
-   * The same, for a decision that bans more than one person for good (the
-   * reported person and a reporter acting in bad faith): every username
-   * typed. A ban is confirmed when its person's name is here or is
-   * `confirmUsername`.
-   */
+  /** Every username typed, for a decision that bans more than one person for good; a ban is confirmed when its name is here or in `confirmUsername`. */
   confirmUsernames?: string[];
   /** a private note for the case record */
   note?: string;
@@ -837,27 +737,20 @@ export interface UserMessagePreview {
 }
 
 /**
- * How a permanent ban is confirmed:
- * - `zero_tolerance` (child safety): in force at once; a second admin, when
- *   there is one, confirms it afterwards;
- * - `second_approval`: two or more admins can moderate, so the ban waits for
- *   another one (72 hours) with an emergency suspension in force meanwhile;
- * - `single`: only one admin can moderate; they confirm by typing the person's
- *   username (`confirmUsername`), and the ban records that nobody else looked.
+ * How a permanent ban is confirmed: `zero_tolerance` (child safety) is in force at once and a second admin, if any,
+ * confirms it afterwards; `second_approval` waits up to 72 hours for another admin, with an emergency suspension
+ * meanwhile; `single`, when only one admin moderates, is confirmed by typing the username and records that nobody else
+ * looked.
  */
 export type PermanentBanMode = 'zero_tolerance' | 'second_approval' | 'single';
 
 export interface DecideResult {
   preview: boolean;
   status: CaseStatus;
-  /** the exact messages people receive (a removal comes with its own statement of reasons) */
+  /** the exact messages people receive; a removal comes with its own statement of reasons */
   messages: UserMessagePreview[];
   sanctions: CaseSanctionView[];
-  /**
-   * Every permanent ban in the decision and how it will be confirmed. A preview
-   * fills it without refusing, so the panel can ask for the typed username
-   * (`usernameRequired`) or warn that a second admin must approve.
-   */
+  /** Every permanent ban in the decision and how it is confirmed; a preview fills it without refusing, so the panel can ask or warn first. */
   permanentBans: Array<{
     target: DecisionTarget;
     userId: string;
@@ -872,9 +765,9 @@ export interface PendingApproval {
   sanction: CaseSanctionView;
   user: { id: string; username: string } | null;
   caseId: string | null;
-  /** when it stops waiting; after this it lapses */
+  /** when it stops waiting and lapses */
   expiresAt: string;
-  /** already in force (zero tolerance), confirmation is after the fact */
+  /** already in force (zero tolerance), so confirmation comes after the fact */
   inForce: boolean;
 }
 
@@ -888,11 +781,7 @@ export interface AdminUserReport {
   createdAt: string;
 }
 
-/**
- * What `GET /admin/users/:id` adds for moderation, next to the profile, wallet,
- * ledger and sessions it already sent — only for a reader with
- * `moderation.act` (support staff get the page without these fields).
- */
+/** What `GET /admin/users/:id` adds for moderation, only for a reader with `moderation.act`; support staff get the page without it. */
 export interface AdminUserModeration {
   reportsAgainst: AdminUserReport[];
   reportsFiled: AdminUserReport[];
@@ -900,9 +789,9 @@ export interface AdminUserModeration {
   appeals: AppealView[];
   cases: Array<{ id: string; status: CaseStatus; priority: ReportPriority; category: ReportCategory | null; summary: string; createdAt: string }>;
   linkedAccounts: CaseSubjectView['linkedAccounts'];
-  /** the automatic flagged-message ladder (lifted with `POST /admin/users/:id/chat-mute/lift`) */
+  /** the automatic flagged-message ladder, lifted with `POST /admin/users/:id/chat-mute/lift` */
   chatOffenses: { count: number; mutedUntil: string | null; permanent: boolean } | null;
-  /** a chat mute with no end (the `mutedUntil` field cannot say "permanent") */
+  /** a chat mute with no end, which `mutedUntil` cannot express */
   mutedPermanently: boolean;
 }
 
@@ -910,18 +799,14 @@ export interface AdminUserModeration {
 export interface AdminAppealItem extends AppealView {
   user: { id: string; username: string } | null;
   sanction: CaseSanctionView | null;
-  /** who made the decision being appealed (another admin should review it) */
+  /** who made the decision being appealed; another admin should review it */
   originalDeciderId: string | null;
 }
 
-/**
- * `POST /admin/users/:id/sanctions` — a sanction from the user page, under the
- * same rules as a case decision (a permanent ban waits for a second admin, or
- * needs `confirmUsername` from the only one).
- */
+/** `POST /admin/users/:id/sanctions`, under the same rules as a case decision: a permanent ban waits for a second admin or needs `confirmUsername`. */
 export interface ApplySanctionRequest {
   kind: SanctionKind;
-  /** null = no end; required for a suspension; ignored for a warning or removal */
+  /** null: no end; required for a suspension; ignored for a warning or removal */
   durationHours?: number | null;
   policy: ReportCategory;
   /** shown to the person */
@@ -933,7 +818,7 @@ export interface ApplySanctionRequest {
 
 /** What `POST /admin/users/:id/sanctions` answers (201). */
 export interface ApplySanctionResult {
-  /** a ban that waits for a second admin comes as two: the emergency suspension and the waiting ban */
+  /** a ban waiting for a second admin comes as two: the emergency suspension and the waiting ban */
   sanctions: CaseSanctionView[];
   pendingApproval: boolean;
 }
@@ -943,14 +828,14 @@ export interface DecideAppealRequest {
   outcome: AppealOutcome;
   /** the person reads this */
   note: string;
-  /** for `modified`: what the sanction becomes (never a permanent ban) */
+  /** for `modified`: what the sanction becomes, never a permanent ban */
   modifiedSanction?: { kind: SanctionKind; durationHours?: number | null; statement: string };
 }
 
 /** What `POST /admin/moderation/cases/:id/csam` answers. */
 export interface CsamActionResult {
   status: CaseStatus;
-  /** the filing task, with the hotlines' links; close it with the reference they gave */
+  /** the filing task with the hotlines' links; close it with the reference they give */
   escalation: CaseEscalation;
   sanctions: CaseSanctionView[];
 }
@@ -968,12 +853,10 @@ export interface CsamActionResult {
  *   403 MUTED (MutedErrorDetails) from any route that creates text or media while restricted;
  *   403 ACCOUNT_SUSPENDED (SuspendedErrorDetails) from sign-in, refresh and social sign-in.
  *
- * Admins with `moderation.act` (moderator, superadmin, legacy admin; 2FA verified).
- * A moderator who is a case's reported person or one of its reporters gets 403
- * CONFLICT_OF_INTEREST from every route about that case (detail, claim, note,
- * decide, escalate, reopen, CSAM, approving or rejecting its ban) and does not see
- * it in the queue; nobody sanctions themselves or someone with an open report about
- * them, lifts their own sanction, or reviews their own appeal (same 403):
+ * Admins with `moderation.act` (moderator, superadmin, legacy admin; 2FA verified). Every route about a case answers 403
+ * CONFLICT_OF_INTEREST to a moderator who is its reported person or one of its reporters, and the queue hides it from
+ * them; nobody sanctions themselves or someone with an open report about them, lifts their own sanction or reviews their
+ * own appeal (same 403):
  *   GET  /admin/moderation/queue      CaseQueueQuery → CaseQueuePage
  *   GET  /admin/moderation/summary    → ModerationSummary
  *   GET  /admin/moderation/sla        → { medianSeconds: number | null; resolved: number }
@@ -1002,10 +885,7 @@ export interface CsamActionResult {
  *   POST /admin/appeals/:id/decide    DecideAppealRequest → { appeal: AppealView }
  */
 
-/**
- * Where child sexual abuse material is reported. Hevalo files these by hand:
- * the CSAM action creates a task with these links, never sends anything itself.
- */
+/** Where child sexual abuse material is reported. Hevalo files these by hand: the CSAM action creates a task with these links and sends nothing. */
 export const CSAM_REPORTING_LINKS: ReadonlyArray<{ label: string; url: string }> = [
   { label: 'NCMEC CyberTipline (US)', url: 'https://report.cybertip.org/' },
   { label: 'IWF (UK)', url: 'https://report.iwf.org.uk/' },

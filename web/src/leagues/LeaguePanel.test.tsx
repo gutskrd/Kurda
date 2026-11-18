@@ -14,11 +14,7 @@ afterEach(() => {
 
 const GOAL = 150;
 
-/**
- * A group of `size` in `tier`, XP falling down the table, the reader at
- * `selfRank` with `selfXp`; zones worked out by the shared rules, exactly as
- * the server does.
- */
+/** A group of `size` in `tier` with the reader at `selfRank`, zones worked out by the shared rules as on the server. */
 function league(tier: LeagueTier, size: number, selfRank: number, over: Partial<LeagueView> = {}): LeagueView {
   const members = Array.from({ length: size }, (_, i) => ({ userId: `u${i + 1}`, tier, weeklyXp: (size - i) * 20 }));
   const standings = resolveGroup(members, GOAL);
@@ -66,7 +62,7 @@ describe('LeaguePanel', () => {
     expect(screen.getByText('3 days left')).toBeInTheDocument();
     expect(screen.queryByText(/Ends in|hours|minutes/)).not.toBeInTheDocument();
     expect(screen.getByText('18 learners in your group')).toBeInTheDocument();
-    // the emblem is labelled, not decoration
+    // The emblem is labelled, not decoration.
     expect(screen.getByRole('img', { name: 'Çem (River), your league' })).toBeInTheDocument();
   });
 
@@ -91,16 +87,13 @@ describe('LeaguePanel', () => {
     expect(ladder.querySelector('[aria-current="true"]')).toHaveClass('is-here');
   });
 
-  /**
-   * The zones are said in words and arrows, never by a colour alone: every row
-   * moving says "Up" or "Down", and a line across the table names where.
-   */
+  /** Zones show in words and arrows, never colour alone, with a line across the table naming where each leads. */
   it('marks the zones in words, with lines naming the league each leads to', async () => {
     vi.stubGlobal('fetch', answer(league('cem', 20, 12)));
     renderApp(<LeaguePanel />);
     await screen.findByRole('heading', { name: 'Çem League' });
 
-    // the top quarter of twenty move up, the bottom 15% (who missed the goal) move down
+    // The top quarter of twenty move up; the bottom 15% who missed the goal move down.
     expect(screen.getAllByText(en['leagues.zone.up'])).toHaveLength(5);
     expect(screen.getAllByText(en['leagues.zone.down'])).toHaveLength(3);
     expect(screen.getByText('The top 5 move up to Gol League, with the weekly goal met')).toBeInTheDocument();
@@ -154,11 +147,7 @@ describe('LeaguePanel', () => {
     expect(screen.getByRole('link', { name: 'player1' })).toHaveAttribute('href', '/app/users/u1');
   });
 
-  /**
-   * A minor who chose to take part is a place in the table with no name for
-   * anyone but their friends: the server sends no id or username, the row
-   * says "A learner", and it is not a link.
-   */
+  /** A minor in the league is named only to friends: the server sends no id or username, so the row says "A learner". */
   it('shows a member the server does not name as a learner, keeping their place', async () => {
     const view = league('cem', 8, 1);
     for (const i of [2, 4]) Object.assign(view.standings[i]!, { userId: null, username: null });
@@ -181,7 +170,7 @@ describe('LeaguePanel', () => {
     expect(screen.getByText(en['leagues.joinHint'])).toBeInTheDocument();
     expect(screen.getByRole('link', { name: en['leagues.notJoined.start'] })).toHaveAttribute('href', '/app/learn');
     expect(container.querySelector('.rank-list')).toBeNull();
-    // no goal ring to fill yet, and nothing that says time is running out
+    // No goal ring yet, and nothing about time running out.
     expect(screen.queryByRole('img', { name: /Weekly goal/ })).toBeNull();
   });
 
@@ -202,7 +191,7 @@ describe('LeaguePanel', () => {
     await userEvent.click(screen.getByRole('button', { name: en['leagues.leave'] }));
     const dialog = screen.getByRole('dialog', { name: en['leagues.leave.title'] });
     expect(within(dialog).getByText(en['leagues.leave.body'])).toBeInTheDocument();
-    // asking is not leaving: Cancel changes nothing
+    // Cancel changes nothing.
     await userEvent.click(within(dialog).getByRole('button', { name: en['common.cancel'] }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(fetchMock.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH')).toBe(false);
@@ -213,7 +202,7 @@ describe('LeaguePanel', () => {
     const patch = fetchMock.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH');
     expect(JSON.parse(String((patch![1] as RequestInit).body))).toEqual({ leaguesEnabled: false });
     expect(screen.queryByRole('dialog')).toBeNull();
-    // and the way back in is right there
+    // The button to rejoin is right there.
     expect(screen.getByRole('button', { name: en['leagues.optedOut.join'] })).toBeInTheDocument();
   });
 
@@ -268,13 +257,13 @@ describe('LeaguePanel', () => {
       ),
     );
     renderApp(<LeaguePanel />);
-    // celebrated once, as the league is first opened after the week that moved you up
+    // Celebrated once, when the league is first opened after a week that moved the reader up.
     const moment = await screen.findByRole('dialog', { name: en['leagues.celebrate.up'] });
     expect(within(moment).getByRole('heading', { name: 'Çem League' })).toBeInTheDocument();
     await userEvent.click(within(moment).getByRole('button', { name: en['lesson.continue'] }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(localStorage.getItem('hevalo_league_celebrated')).toBe('2026-10-05');
-    // and said on the card, where it stays
+    // The card says it too, and keeps saying it.
     expect(screen.getByText('You moved up to Çem League.')).toBeInTheDocument();
     expect(screen.getByText('+10 Gems')).toBeInTheDocument();
     expect(screen.getByText(en['leagues.result.goalMet'])).toBeInTheDocument();
@@ -309,11 +298,7 @@ describe('LeaguePanel', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  /**
-   * Kurmancî puts the tier after the word for league — "Lîga Çem" — which is
-   * why the whole phrase is one key, and the meaning is not repeated to a
-   * reader who already reads the name.
-   */
+  /** Kurmancî puts the tier after the word for league ("Lîga Çem"), so the phrase is one key. */
   it('reads in the chosen language, in that language’s word order', async () => {
     localStorage.setItem('hevalo_locale', 'ku');
     vi.stubGlobal('fetch', answer(league('cem', 20, 12)));
@@ -323,11 +308,7 @@ describe('LeaguePanel', () => {
     expect(screen.queryByText('River')).not.toBeInTheDocument();
   });
 
-  /**
-   * Personal mode — out of the leagues by choice, or a teen who has not
-   * chosen: no group and no table, the same ring, this week against the last
-   * ones, and the way in once, without anything that reads as missing out.
-   */
+  /** Personal mode has no group or table: the same ring, this week against recent ones, and one way to join. */
   it('shows personal mode with the goal ring and recent weeks, and lets them join in one tap', async () => {
     let joined = false;
     const personal: LeagueView = {
@@ -381,10 +362,7 @@ describe('LeaguePanel', () => {
     expect(weekLeft(t, 'soon', 'en')).toBe('');
   });
 
-  /*
-   * It is the League tab's whole page, so a failure is said, with the way to
-   * try again — not a blank tab.
-   */
+  /* The panel is the League tab's whole page, so a failure shows a retry rather than a blank tab. */
   it('says when the week cannot be read, and reads it again on Try again', async () => {
     let up = false;
     vi.stubGlobal(
@@ -417,13 +395,13 @@ describe('LeaguePanel', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, league('cem', 18, 12))));
     const { container } = renderApp(<LeaguePanel />);
     const leave = await screen.findByRole('button', { name: en['leagues.leave'] });
-    // words, not a button's weight: leaving is a setting (Settings → Weekly leagues), only findable here
+    // A text link, not a button: leaving is mainly a setting (Settings → Weekly leagues).
     expect(leave).toHaveClass('link-btn');
     expect(leave).not.toHaveClass('btn');
-    // and the last thing on the page
+    // It is the last thing on the page.
     const page = container.querySelector('.league-page')!;
     expect(page.lastElementChild).toContainElement(leave);
-    // it still asks once before anything happens
+    // It still asks once before anything happens.
     await userEvent.click(leave);
     expect(await screen.findByRole('dialog', { name: en['leagues.leave.title'] })).toBeInTheDocument();
   });

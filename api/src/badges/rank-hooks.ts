@@ -3,23 +3,11 @@ import { RANK_TIER_KEYS, isRankTier, tierIndex, type RankedGame } from '@kurda/s
 import type { RankEvents, RatedGameFinished as RanksGameFinished, SeasonClosed as RanksSeasonClosed } from '../ranks/events.js';
 
 /**
- * How the ranked family of badges — the tier emblems, Hilkişer, Cîhgirtî,
- * Dilpak and the secret Kewê çiyê — hears from Game Ranks (contract 4 §R →
- * §B2). There is one mechanism: the badges subscribe to `ranks.events`
- * (ranks/events.ts), which tells a rated game once its rating changes are
- * committed and a season once it is closed and rewarded (`listenToRanks`,
- * called by `createProgression` in every process that rates games).
- *
- * The badges count tiers as indices — 0 Deşt, 1 Gir, 2 Zozan, 3 Çiya,
- * 4 Lûtke, 5 Stêrk, null while placing — so their measures can compare them
- * in SQL. The ranks module speaks in tier keys. This file is the one place
- * one becomes the other (`rankTierIndex`, and `rankTierIndexSql` for the
- * measures that read the ranks module's season results directly; both from
- * the shared tier order), so the two modules cannot disagree about a spelling
- * or an order.
- *
- * Both listeners are idempotent (one row per player and game; peaks only go
- * up), so a retry is safe; neither throws for a badge that could not be counted.
+ * How the ranked badges hear from Game Ranks: they subscribe to `ranks.events`, which reports a rated game once
+ * its rating changes commit and a season once it closes. The badges count tiers as indices (0 Deşt … 5 Stêrk,
+ * null while placing) so measures can compare them in SQL; this file is the one place tier keys become indices,
+ * so the two modules cannot disagree. Both listeners are idempotent and never throw for a badge they could not
+ * count.
  */
 
 export interface RatedGamePlayer {
@@ -35,9 +23,8 @@ export interface RatedGamePlayer {
   /** this game finished their placement games, or they had finished them before */
   placementDone: boolean;
   /**
-   * how many tiers above them the strongest player they finished ahead of was
-   * (the ranks engine's `beatTierGap`: 0 while placing, and nobody who walked
-   * out counts) — Kewê çiyê at 2
+   * How many tiers above the player the strongest one they finished ahead of was (the engine's `beatTierGap`; 0
+   * while placing, and leavers do not count). Kewê çiyê takes 2.
    */
   beatTierGap: number;
 }
@@ -101,11 +88,7 @@ export function ratedGameForBadges(e: RanksGameFinished): RatedGameFinished {
   };
 }
 
-/**
- * A closed season with each player's final peak per game, read from the ranks
- * module's own results (`rank_season_results`, where the close also marked the
- * season's Stêrk players).
- */
+/** A closed season with each player's final peak per game, from `rank_season_results`. */
 export async function seasonForBadges(db: Executor, e: Pick<RanksSeasonClosed, 'seasonId'>): Promise<SeasonClosed> {
   const rows = await db.query<{ user_id: string; game: RankedGame; peak_tier: string | null; rated_games: number }>(
     `SELECT user_id, game, peak_tier, rated_games FROM rank_season_results WHERE season_id = $1 ORDER BY user_id, game`,
@@ -123,9 +106,8 @@ export async function seasonForBadges(db: Executor, e: Pick<RanksSeasonClosed, '
 }
 
 /**
- * Subscribe the badges to Game Ranks' events. Returns a function that stops
- * listening. A listener's failure is logged by `RankEvents` and never reaches
- * the game or the season close.
+ * Subscribes the badges to Game Ranks' events and returns the unsubscribe. `RankEvents` logs a listener's failure,
+ * which never reaches the game or the season close.
  */
 export function listenToRanks(events: RankEvents, badges: RankEventsListener, db: Executor): () => void {
   const stopGames = events.onRatedGameFinished((e) => badges.onRatedGameFinished(ratedGameForBadges(e)));

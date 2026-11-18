@@ -20,15 +20,13 @@ function namesDays(locale: string): boolean {
 }
 
 /**
- * When Hevalo expects to be back, as the reader would say it and on their own
- * clock: the time alone today ("6:00 PM"), the weekday and the time within the
- * week ("Thursday 6:00 PM"), and the date with the time beyond that.
+ * When Hevalo expects to be back, on the reader's clock: the time alone today ("6:00 PM"), the weekday within the
+ * week ("Thursday 6:00 PM"), and the date beyond that.
  */
 export function formatBackBy(iso: string, locale: string, now: Date = new Date()): string {
   const when = new Date(iso);
   if (Number.isNaN(when.getTime())) return '';
-  // a browser with no names for this language's days would print English
-  // ones; a date in numbers reads the same in every language
+  // A browser with no day names for this language would print English ones, so a numeric date is used instead.
   const named = namesDays(locale);
   const time: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
   const days = dayOf(when) - dayOf(now);

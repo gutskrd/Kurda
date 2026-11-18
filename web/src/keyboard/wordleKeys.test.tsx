@@ -24,10 +24,10 @@ describe('which physical keys Peyvok takes', () => {
   it('takes plain letters, and the Kurdish ones however they were typed', () => {
     expect(wordleKeyFrom(press('a'))).toBe('a');
     expect(wordleKeyFrom(press('Ş'))).toBe('ş');
-    // a Mac's Option+c, AltGr on Windows (Ctrl+Alt to the browser)
+    // Option+c on a Mac, or AltGr on Windows (Ctrl+Alt to the browser).
     expect(wordleKeyFrom(press('ç', { altKey: true }))).toBe('ç');
     expect(wordleKeyFrom(press('ê', { ctrlKey: true, altKey: true }))).toBe('ê');
-    // a Turkish Q keyboard's i keys, and a dead key's decomposed letter
+    // A Turkish Q keyboard's i keys, and a dead key's decomposed letter.
     expect(wordleKeyFrom(press('ı'))).toBe('i');
     expect(wordleKeyFrom(press('İ'))).toBe('i');
     expect(wordleKeyFrom(press('ê'))).toBe('ê');
@@ -86,7 +86,7 @@ describe('useWordleKeys', () => {
     const ignored = fireEvent.keyDown(window, { key: 'Tab' });
 
     expect(onKey.mock.calls).toEqual([['ê']]);
-    expect(handled).toBe(false); // default prevented
+    expect(handled).toBe(false); // Default prevented.
     expect(ignored).toBe(true);
   });
 

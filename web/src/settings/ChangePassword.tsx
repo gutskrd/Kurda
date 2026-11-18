@@ -14,16 +14,14 @@ const FIELD_ID: Record<Field, string> = { current: 'pw-current', next: 'pw-new',
 /** POST /me/password's answer (api/src/auth/service.ts `changePassword`). */
 interface Changed {
   changed: true;
-  /** this session's new access token: every older one has just stopped working */
+  /** This session's new access token; every older one has stopped working. */
   accessToken: string | null;
   accessExpiresInSeconds: number;
 }
 
 /**
- * The password policy (api/src/auth/password-policy.ts), checked here first.
- * The route allows five tries in fifteen minutes, and a password the server
- * would refuse for its shape should not spend one of them. The server still
- * decides; the reason it gives reads the same either way.
+ * The password policy (api/src/auth/password-policy.ts), checked here first so a password the server would refuse
+ * does not spend one of the route's five tries in fifteen minutes. The server still decides.
  */
 function policyReason(password: string): string | null {
   if (password.length < 8) return 'too-short';
@@ -34,12 +32,9 @@ function policyReason(password: string): string | null {
 }
 
 /**
- * Change the password while signed in: the current one, then the new one
- * twice. The server ends every other session when it changes, which the card
- * says before you start and again when it is done.
- *
- * A refusal is said under the field it is about. An account made with Google
- * or Apple has no password to change, so it is offered the way to set one.
+ * Changes the password while signed in: the current one, then the new one twice. The server ends every other session,
+ * which the card says before and after. A refusal shows under its field; an account made with Google or Apple has no
+ * password, so it is offered a way to set one.
  */
 export function ChangePassword({ onChanged }: { onChanged?: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -53,7 +48,7 @@ export function ChangePassword({ onChanged }: { onChanged?: () => void }): React
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-  // the first field with something to fix takes the focus, once it is drawn
+  // The first field with a problem takes focus once drawn.
   useEffect(() => {
     if (!focus) return;
     document.getElementById(FIELD_ID[focus])?.focus();
@@ -71,7 +66,7 @@ export function ChangePassword({ onChanged }: { onChanged?: () => void }): React
   function edit(field: Field): (value: string) => void {
     return (value) => {
       setValues((v) => ({ ...v, [field]: value }));
-      // the moment it is touched, the old complaint no longer applies
+      // Editing the field clears its old problem.
       setProblems((p) => ({ ...p, [field]: undefined }));
     };
   }
@@ -97,7 +92,7 @@ export function ChangePassword({ onChanged }: { onChanged?: () => void }): React
     const res = await client.post<Changed>('/me/password', { currentPassword: values.current, newPassword: values.next });
     setBusy(false);
     if (res.ok) {
-      // the old access token ended with the old password; the refresh token stays
+      // The old access token ended with the old password; the refresh token stays.
       if (res.data.accessToken) client.replaceAccessToken(res.data.accessToken);
       close();
       setDone(true);

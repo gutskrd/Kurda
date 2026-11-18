@@ -36,7 +36,7 @@ describe('InvitedList', () => {
     expect(row('Berfin')).toHaveTextContent('Can’t play right now');
     expect(row('Hevi')).toHaveTextContent('Would rather play something else');
     expect(row('Baran')).toHaveTextContent('The invite ran out');
-    // the list follows the answers as they come, and says each one politely
+    // The list follows the answers as they come, and says each one politely.
     expect(list).toHaveAttribute('aria-live', 'polite');
   });
 

@@ -3,21 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <!--
-      viewport-fit=cover lets the page reach the edges of a phone with a notch or
-      a home indicator, so the tab bar can sit just above the indicator rather
-      than above a strip of empty browser; base.css keeps the content itself out
-      of the notch, and the bar and the chat's composer leave room for the
-      indicator with env(safe-area-inset-bottom).
+      viewport-fit=cover lets the page reach a phone's edges so the tab bar sits just above the home indicator; base.css
+      keeps content out of the notch, and the bar and chat composer pad with env(safe-area-inset-bottom).
     -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <!--
-      The tab icon carries its own field, because a tab strip is light in one
-      browser and dark in the next. The mark is one colour now, so the cut-out
-      version disappears into one of them.
-    -->
+    <!-- The tab icon carries its own background, since tab strips are light in some browsers and dark in others. -->
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/logo.png" />
-    <!-- the page's own black, so a phone's browser chrome runs into it rather than framing it -->
+    <!-- The page's own black, so a phone's browser chrome runs into it rather than framing it. -->
     <meta name="theme-color" content="#100e1d" />
     <title>Hevalo</title>
     <meta
@@ -25,17 +18,9 @@
       content="Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser."
     />
     <!--
-      What a crawler and a link preview see.
-
-      This file is the only HTML the site has: React fills the page in afterwards,
-      and nothing that unfurls a link runs React. The worker rewrites these tags
-      for a post's own URL (see src/worker.ts); everything else — the landing
-      page, the feed, the games — is served exactly this, so it has to stand on
-      its own.
-
-      The title is the name and nothing else. The description carries what the
-      site is, because that is the line a search result shows, and it is rewritten
-      per language once the app knows which one to use.
+      What crawlers and link previews see: this is the site's only HTML, filled in by React, which they do not run.
+      src/worker.ts rewrites these tags for posts and listed pages. The title is the name alone; the description, shown in
+      search results, is rewritten per language once the app starts.
     -->
     <link rel="canonical" href="https://hevalo.app/" />
     <meta property="og:site_name" content="Hevalo" />
@@ -46,11 +31,7 @@
       property="og:description"
       content="Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser."
     />
-    <!--
-      A card, not the bare mark. Whatever unfurls this flattens a transparent
-      PNG onto a background of its choosing — usually white, which is exactly
-      where a white mark stops existing.
-    -->
+    <!-- A card, not the bare mark: previews flatten transparency onto a background of their choosing, usually white. -->
     <meta property="og:image" content="https://hevalo.app/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -63,12 +44,8 @@
     <meta name="twitter:image" content="https://hevalo.app/og.png" />
     <meta property="og:image:alt" content="Hevalo — Learn Kurdish. Play together." />
     <!--
-      What the site is, for a search engine that reads structured data: a web
-      app for learning Kurdish, published by Zagrosian. Only what is true of the
-      product today — no ratings, no prices, no user counts.
-
-      A data block, not a script: it is never executed, so the CSP's
-      `script-src 'self'` does not apply to it and it needs no exception.
+      Structured data for search engines: a web app for learning Kurdish, published by Zagrosian, and only what is true
+      today (no ratings, prices or user counts). A data block is never executed, so `script-src 'self'` does not apply.
     -->
     <script type="application/ld+json">
       {

@@ -88,18 +88,12 @@ const PRIORITY_OF: Readonly<Record<ReportCategory, ReportPriority>> = {
 };
 
 /**
- * The moderation queue (KUR-102, rebuilt).
+ * The moderation queue. User reports reach it when filed (reports-service.ts). Automated feeds (AI text flags, image
+ * scans, bot scores, anti-cheat reviews) and rows still open in the old report tables are synced in on every queue read
+ * and every five minutes. Each row is ingested in its own try/catch, so one bad row is logged and skipped instead of
+ * failing the sync.
  *
- * User reports reach it the moment they are filed (reports-service.ts). The
- * automated feeds — AI text flags, image scans, bot scores, anti-cheat reviews —
- * and the rows still open in the old report tables are synced in: on every
- * queue read and every five minutes. Each row is ingested on its own, in its
- * own try/catch, so one bad row is logged and skipped instead of failing the
- * whole sync (one gotin with no title used to take the queue down for good).
- *
- * Sync also reconciles: a flag decided on another page (the AI Mod page) closes
- * its case here instead of leaving it open forever, and claims whose lease ran
- * out go back to the queue.
+ * Sync also reconciles: a flag decided on another page closes its case here, and expired claims return to the queue.
  */
 export class ModerationQueueService {
   readonly cases: CasesService;
@@ -188,7 +182,7 @@ export class ModerationQueueService {
 
   // ---- the feeds ---------------------------------------------------------------
 
-  /** AI text flags (#293), now with the flagged text itself where it can still be read. */
+  /** AI text flags, now with the flagged text itself where it can still be read. */
   private async textFlags(): Promise<IngestRow[]> {
     const r = await this.pool.query<{
       id: string; author_id: string | null; action: string; top_category: string | null; top_score: string;
@@ -238,9 +232,8 @@ export class ModerationQueueService {
   }
 
   /**
-   * Image scans (#294). Whoever the image is in use by, or else whoever
-   * uploaded it, is the subject (it used to be NULL): a picture for a post is
-   * scanned when it is uploaded, before any post has it.
+   * Image scans. The subject is whoever uses the image, else whoever uploaded it, since a post's picture is scanned at
+   * upload before any post has it.
    */
   private async imageFlags(): Promise<IngestRow[]> {
     const r = await this.pool.query<{
@@ -286,7 +279,7 @@ export class ModerationQueueService {
     });
   }
 
-  /** Anti-cheat reviews (#058): not a safety matter, so P3 (P2 when shadow-flagged). */
+  /** Anti-cheat reviews: not a safety matter, so P3 (P2 when shadow-flagged). */
   private async cheatReviews(): Promise<IngestRow[]> {
     const r = await this.pool.query<{
       id: string; user_id: string | null; room_id: string; flags: unknown; confidence: string; shadow_flagged: boolean; created_at: Date;
@@ -315,7 +308,7 @@ export class ModerationQueueService {
     }));
   }
 
-  /** Accounts the bot scorer flagged (#110), awaiting a human. */
+  /** Accounts the bot scorer flagged, awaiting a human. */
   private async botFlags(): Promise<IngestRow[]> {
     const r = await this.pool.query<{ user_id: string; score: string; tier: string; signals: unknown; computed_at: Date; username: string | null }>(
       `SELECT b.user_id, b.score, b.tier, b.signals, b.computed_at, u.username
@@ -341,7 +334,7 @@ export class ModerationQueueService {
     }));
   }
 
-  /** Chat reports still open in the old table (#086). */
+  /** Chat reports still open in the old table. */
   private async legacyChatReports(): Promise<IngestRow[]> {
     const r = await this.pool.query<{
       id: string; reported_user_id: string | null; message_type: string; message_id: string; context: unknown; reason: string | null;
@@ -372,9 +365,8 @@ export class ModerationQueueService {
   }
 
   /**
-   * Library and image reports still open in the old tables. The content is
-   * LEFT-joined: an author deleting the post no longer drops the report, and a
-   * gotin's missing title can no longer make the summary NULL.
+   * Library and image reports still open in the old tables. The content is LEFT-joined, so a deleted post does not drop
+   * its report and a missing title cannot make the summary NULL.
    */
   private async legacyTargetReports(kind: 'library' | 'image'): Promise<IngestRow[]> {
     const reports = kind === 'library' ? 'library_reports' : 'image_reports';
@@ -469,10 +461,7 @@ export class ModerationQueueService {
     return new Set(r.rows.map((x) => x.id));
   }
 
-  /**
-   * Close open cases whose source was decided somewhere else, and hand back
-   * claims whose lease ran out.
-   */
+  /** Close open cases whose source was decided elsewhere, and release claims whose lease expired. */
   async reconcile(): Promise<void> {
     const elsewhere = `resolution_note = 'Decided outside the queue', claimed_by = NULL, lease_until = NULL, updated_at = now()`;
     await this.pool.query(
@@ -553,10 +542,8 @@ export class ModerationQueueService {
     }
     const limit = Math.min(Math.max(filters.limit ?? QUEUE_PAGE_SIZE, 1), 200);
     params.push(limit + 1);
-    // The cursor carries the time as Postgres has it, to the microsecond: a
-    // JavaScript Date keeps milliseconds only, and a case reported in the same
-    // millisecond as the last row (or migrated with microseconds) would then
-    // come round again on the next page.
+    // The cursor carries Postgres's microsecond time: a JavaScript Date keeps only milliseconds, so a case in the same
+    // millisecond as the last row would come round again on the next page.
     const res = await this.pool.query<CaseRow & CasePersonColumns & { cursor_at: string }>(
       `SELECT c.*, ${CASE_PERSON_SELECT},
               to_char(c.first_reported_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_at
@@ -630,9 +617,8 @@ export class ModerationQueueService {
   }
 
   /**
-   * Median time from the first report to the decision, over decided cases. It
-   * used to count from when the case row was made — that is, from when an admin
-   * first opened the page — which made every case look decided in a second.
+   * Median time from first report to decision over decided cases (counting from the report, not from when the case row
+   * was made).
    */
   async sla(): Promise<{ medianSeconds: number | null; resolved: number }> {
     const res = await this.pool.query<{ median: string | null; n: number }>(
@@ -658,12 +644,9 @@ export class ModerationQueueService {
   }
 
   /**
-   * The old one-click resolve, kept for the admin page until the new case view
-   * replaces it: each button maps onto a full decision under the case's own
-   * category, with a stated reason instead of the old hard-coded "moderation
-   * queue", the claim respected, and `remove` working. False when the case is
-   * already decided. A permanent ban by the only moderator needs the username
-   * typed here as everywhere (409 CONFIRM_USERNAME_REQUIRED without it).
+   * The one-click resolve, kept until the case view replaces it: each button maps to a full decision under the case's
+   * category, with a stated reason, respecting the claim. False when already decided. A permanent ban by the only
+   * moderator needs the username typed (409 CONFIRM_USERNAME_REQUIRED without it).
    */
   async resolve(caseId: string, moderatorId: string, resolution: CaseResolution, confirmUsername?: string): Promise<boolean> {
     const c = await this.cases.find(this.pool, caseId);
@@ -681,15 +664,11 @@ export class ModerationQueueService {
   // ---- retention -------------------------------------------------------------------
 
   /**
-   * Evidence is kept while a case is open and for a year after it is decided
-   * (CSAM evidence too — the US REPORT Act's year). Past that the snapshot is
-   * replaced by a stub that still says what was reported, and its media — the
-   * reports' snapshots, the case's own (a flagged picture), the files a CSAM
-   * action took down — lose their protection from cleanup unless another live
-   * snapshot holds them. A released file that was quarantined (its public
-   * copy is gone) or that nothing uses any more becomes an orphan, so the
-   * orphan sweep deletes it, and its private copy with it; one still in use
-   * stays where it is.
+   * Evidence is kept while a case is open and for a year after its decision (CSAM evidence too, per the US REPORT Act).
+   * After that the snapshot becomes a stub that still says what was reported, and its media (report snapshots, the
+   * case's own, files a CSAM action took down) lose cleanup protection unless another live snapshot holds them. A
+   * released file that was quarantined (public copy gone) or is unused becomes an orphan, which the orphan sweep
+   * deletes with its private copy; one still in use stays.
    */
   async pruneEvidence(): Promise<number> {
     const pruned = await this.pool.query<{ k: string }>(
@@ -738,9 +717,8 @@ export class ModerationQueueService {
 }
 
 /**
- * Let go of evidence files no live snapshot holds any more (a report's, an
- * unpruned case's, or a CSAM filing task's); then make orphans of the released
- * files that were quarantined or that nothing uses, for the orphan sweep.
+ * Release evidence files no live snapshot holds (a report's, an unpruned case's, a CSAM filing task's), then orphan the
+ * released files that were quarantined or unused, for the orphan sweep.
  */
 async function releaseEvidenceMedia(db: Executor, keys: string[]): Promise<void> {
   const released = await db.query<{ key: string }>(

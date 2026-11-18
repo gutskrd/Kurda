@@ -1,74 +1,42 @@
 /**
- * Motion tokens — how long things take and how they move, decided once.
+ * Motion tokens: durations and easings, matching the website's `--dur-*` and `--ease-*` (120, 200, 280, 400 and
+ * 1600 ms) so lessons feel the same on both. Pure numbers, so the choreography built on them is testable;
+ * `animate.ts` turns them into easings, springs and shared animations.
  *
- * The same numbers the website keeps as `--dur-*` and `--ease-*` in
- * tokens.css (120, 200, 280, 400 and 1600 ms), so a lesson feels the same on
- * a phone and in a browser. Pure numbers, with no React Native in this file,
- * so the choreography built on them can be tested without a screen;
- * `animate.ts` turns them into easings, springs and the few small animations
- * every screen shares.
- *
- * The rules they serve:
- *   - quick for a state change (a press, a switch), a little longer for
- *     something arriving, longest for a value moving to where it now is
- *   - the interface itself is done inside 300 ms: a tab, a switch, a menu, a
- *     sheet, a row arriving. Only a bar filling and a celebration take longer,
- *     and they have tokens of their own
- *   - what is used many times a day moves least: it arrives and stops, with
- *     no bounce. Bounce is kept for what a finger has thrown and for moments
- *   - out-curves: things arrive fast and settle, they never ease in
- *   - only transform and opacity move, on the native driver, so a busy JS
- *     thread cannot make a moment stutter
- *   - under Reduce Motion nothing travels: a fade, or simply the end state
- *   - a control never loops. What may go round is art and waiting: a
- *     character breathing, the path's world, a chest that is ready, a
- *     skeleton's light, a caret — and only while it is watched: every loop
- *     stops when its screen is not the one in front or the app is in the
- *     background (`useMotionAlive`), and under Reduce Motion
- *   - nothing moves while somebody is reading
+ * The rules: interface motion finishes within 300 ms, with only bar fills and celebrations taking longer. Frequent
+ * things arrive and stop without bounce; bounce is for thrown things and moments. Out-curves only. Only transform and
+ * opacity animate, on the native driver. Under Reduce Motion nothing travels. Controls never loop; only art and
+ * waiting states may, and only while their screen is in front (`useMotionAlive`) and not under Reduce Motion.
+ * Nothing moves while someone is reading.
  */
 
 import { APPLE_SPRINGS, springFor } from '@kurda/shared';
 
 export const duration = {
-  /** a press, a tick, a colour settling */
+  /** Presses and small state changes. */
   quick: 120,
-  /** something arriving or leaving: a banner, a menu, a row */
+  /** Something arriving or leaving: a banner, a menu, a row. */
   base: 200,
-  /** something bigger arriving: a sheet, a card's details. Under the 300 ms a piece of interface may take */
+  /** Something bigger arriving: a sheet, a card's details; still under the interface's 300 ms. */
   slow: 280,
-  /** a bar or a ring moving to its new value */
+  /** A bar or ring moving to its new value. */
   progress: 400,
-  /** the whole of a celebration, from the first frame to the last fleck */
+  /** A whole celebration, first frame to last fleck. */
   celebrate: 1600,
 } as const;
 
-/**
- * Cubic-bezier control points. `out` is the website's `--ease-out`; `emphasis`
- * starts faster still, for a value that has somewhere to go (a bar, a count).
- */
+/** Cubic-bezier control points. `out` is the website's `--ease-out`; `emphasis` starts faster, for a value with somewhere to go (a bar, a count). */
 export const curve = {
   out: [0.2, 0.8, 0.2, 1],
   emphasis: [0.16, 1, 0.3, 1],
 } as const;
 
 /**
- * The springs, as Apple tunes them (`motion-physics.ts` in shared turns
- * Apple's duration and bounce into stiffness and damping).
- *
- * `chrome` is the interface's own: no bounce, and there in a quarter of a
- * second (99% of the way at 300 ms), for what is used all day — the capsule
- * behind a tab or a segment, a step turning, the menu and a sheet opening.
- * `standard` is Apple's smooth spring: half a second, no bounce, so a thing
- * that arrives looks placed rather than thrown; it is for a moment's own
- * parts, not for the interface. `release` is the snappy one, with a touch of
- * bounce, for something a finger has just let go of with momentum — a sheet,
- * the menu — which is the one time Apple adds bounce to a control. `bouncy`
- * is for the moments that are allowed a little joy — an emblem landing, a
- * heart filling — at Apple's own bouncy, short of the exaggerated. `arrive`
- * is a whole page growing out of the card that opened it (theme/origin): no
- * bounce, and as long as the stack takes to fade a page in, so the growing
- * and the fading are one movement rather than one finishing inside the other.
+ * The springs, as Apple tunes them (shared `motion-physics.ts` converts duration and bounce to stiffness and
+ * damping). `chrome` is the interface's own: no bounce, 99% there at 300 ms, for tab and segment capsules, steps,
+ * menus and sheets. `standard` is Apple's smooth half-second spring, for a moment's own parts. `release` has a touch
+ * of bounce, for something just let go with momentum. `bouncy` is for joyful moments (an emblem landing). `arrive`
+ * grows a page out of the card that opened it (theme/origin), as long as the stack's fade so the two read as one.
  */
 export const spring = {
   chrome: springFor({ duration: 0.25, bounce: 0 }),
@@ -78,33 +46,25 @@ export const spring = {
   bouncy: springFor(APPLE_SPRINGS.bouncy),
 } as const;
 
-/** How far a finger moves before it is a drag rather than a tap: iOS's 10 points. */
+/** How far a finger moves before a tap becomes a drag: iOS's 10 points. */
 export const DRAG_SLOP = 10;
 
-/** How far a pressed button, card or tile gives under a finger. */
+/** How far a pressed button, card or tile shrinks under a finger. */
 export const PRESS_SCALE = 0.97;
 
 /**
- * How faint a text link or an icon button goes while it is held: the one dim
- * for everything that answers a finger by fading. There were seven (0.5, 0.6,
- * 0.7, 0.75, 0.8, 0.85 and 0.92), each screen's own guess, and over a hundred
- * things that did not answer at all. A card or a row gives or fills instead
- * (`PressableScale`, `heldRow`).
+ * How faint a held text link or icon button goes, the one dim for everything that answers by fading. Cards and rows
+ * shrink or fill instead (`PressableScale`, `heldRow`).
  */
 export const pressedDim = 0.6;
 
-/**
- * A wrong answer's shake: side to side three times, smaller each time, in
- * about 300 ms. Points from rest, then back to rest.
- */
+/** A wrong answer's shake: three diminishing swings in about 300 ms, as offsets from rest. */
 export const SHAKE_STEPS: readonly number[] = [0, -7, 6, -5, 4, -2, 0];
 export const SHAKE_MS = 300;
 
 /**
- * A bell that has just been rung: it swings from where it hangs, one way
- * and the other, less each time, and is still again in half a second.
- * Degrees from rest, then back to rest. Once, as something arrives: a bell
- * that keeps swinging is an alarm, and nothing here is one.
+ * A bell just rung: diminishing swings from its hanging point, still within half a second, in degrees from rest. Played
+ * once on arrival, since a bell that keeps swinging is an alarm.
  */
 export const RING_STEPS: readonly number[] = [0, -16, 12, -8, 4, 0];
 export const RING_MS = 500;
@@ -113,44 +73,33 @@ export const RING_MS = 500;
 export const POP_SCALE = 1.05;
 
 /**
- * A card turned over in a game — who the impostor was, who you are: how long
- * the turn takes, the same for every card, and how far past flat it comes
- * before it settles back (an out-back curve's overshoot; this much is about
- * two hundredths of the turn). A moment, so it may take longer than the
- * interface does. There were three such turns, at 520 and 480 ms, each easing
- * in and out and stopping dead.
+ * A game card turning over (who the impostor was, who you are): the turn's duration, the same for every card, and
+ * its out-back overshoot past flat (about two hundredths of the turn). A moment, so it may exceed the interface's
+ * 300 ms.
  */
 export const CARD_TURN_MS = 480;
 export const CARD_TURN_SETTLE = 0.8;
 
-/**
- * A slow pulse on something that waits to be noticed — never on a control —
- * one way, there or back: `turn` for the mark on whose turn it is at a game's
- * table, `breath` for a hero glyph breathing over a form. They were 900 and
- * 1700 written where they were used.
- */
+/** A slow pulse on something waiting to be noticed, never on a control, one way: `turn` for whose turn it is at a game's table, `breath` for a hero glyph. */
 export const PULSE_MS = { turn: 900, breath: 1700 } as const;
 
-/** New content in a list: how far it rises, how the rows follow each other, and how many are greeted. */
+/** New content in a list: how far it rises, the stagger between rows, and how many rows animate. */
 export const ENTRANCE = {
   distance: 8,
   staggerMs: 40,
-  /** about a screenful; rows further down arrive as they are scrolled to, with no motion */
+  /** About a screenful; rows further down appear without motion as they are scrolled to. */
   maxItems: 8,
-  /** after this long the list has arrived, and rows mounted later (scrolling back up) just appear */
+  /** After this long the list has arrived, and rows mounted later (scrolling back up) just appear. */
   windowMs: 900,
 } as const;
 
-/** When row `index` of a list that just arrived starts to rise, or null when it should simply be there. */
+/** When row `index` of a newly arrived list starts to rise, or null when it should simply appear. */
 export function entranceDelay(index: number): number | null {
   if (index < 0 || index >= ENTRANCE.maxItems) return null;
   return index * ENTRANCE.staggerMs;
 }
 
-/**
- * How long a number takes to count up, by how far it moves: short moves are
- * quick, long ones never drag; nothing under Reduce Motion.
- */
+/** How long a number counts up, by how far it moves: short moves are quick, long ones never drag; none under Reduce Motion. */
 export function countUpMs(delta: number, reduce: boolean): number {
   if (reduce) return 0;
   const d = Math.abs(Math.round(delta));
@@ -158,13 +107,13 @@ export function countUpMs(delta: number, reduce: boolean): number {
   return Math.round(Math.min(1000, 350 + d * 12));
 }
 
-/** The number to show `t` (0…1) of the way through a count from `from` to `to`, as a whole number. */
+/** The whole number to show `t` (0…1) of the way through a count from `from` to `to`. */
 export function countAt(from: number, to: number, t: number): number {
   const k = Math.max(0, Math.min(1, t));
   return Math.round(from + (to - from) * k);
 }
 
-/** A cubic ease-out at `t` (close to `curve.out`), for a count that moves by frames rather than by the native driver. */
+/** A cubic ease-out at `t` (close to `curve.out`), for counts animated by frames rather than the native driver. */
 export function easeOut(t: number): number {
   const k = Math.max(0, Math.min(1, t));
   return 1 - Math.pow(1 - k, 3);

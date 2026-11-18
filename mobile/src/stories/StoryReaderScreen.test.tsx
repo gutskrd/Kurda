@@ -10,8 +10,7 @@ import { NANE_GERM, gameView } from './testing/views';
 import { StoryReaderScreen, minutesLeft, readingPosition, translationFor } from './StoryReaderScreen';
 import { forgetReach, reachOf } from '../testing/reach';
 
-// jsdom has no matchMedia, and react-native-web reads the colour scheme and
-// Reduce Motion through it
+// jsdom has no matchMedia, which react-native-web uses for the colour scheme and Reduce Motion.
 vi.hoisted(() => {
   window.matchMedia ??= ((media: string) => ({
     matches: false,
@@ -30,9 +29,9 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// every control noted as it is drawn, so its reach can be read
+// Records each control as it is drawn, so its reach can be read.
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
-// nothing is played in these tests; the narrator only needs a player to exist
+// Nothing plays here; the narrator only needs a player to exist.
 vi.mock('expo-audio', () => ({
   createAudioPlayer: () => ({
     addListener: () => ({ remove: () => undefined }),
@@ -68,7 +67,7 @@ const routes = (extra: Parameters<typeof fakeClient>[0] = {}, story: StoryDetail
     ...extra,
   });
 
-/** The text, scrolled: jsdom lays nothing out, so the scroller's sizes are given to it. */
+/** Scrolls the text; jsdom lays nothing out, so the scroller's sizes are given. */
 function scrollText(scrollTop: number, scrollHeight: number, offsetHeight: number): void {
   const el = screen.getByTestId('story-text');
   Object.defineProperty(el, 'scrollHeight', { value: scrollHeight, configurable: true });
@@ -86,7 +85,7 @@ describe('the reader’s arithmetic', () => {
     expect(readingPosition(0, 800, 2000, 100, tops, 3)).toEqual({ paragraph: 1, share: 2 / 3, finished: false });
     expect(readingPosition(0, 400, 2000, 100, tops, 3)).toEqual({ paragraph: 0, share: 1 / 3, finished: false });
     expect(readingPosition(1200, 800, 2000, 100, tops, 3)).toEqual({ paragraph: 2, share: 1, finished: true });
-    // nothing measured yet: the first paragraph, honestly
+    // Nothing measured yet: the first paragraph.
     expect(readingPosition(0, 0, 0, 0, new Map(), 3)).toEqual({ paragraph: 0, share: 1 / 3, finished: false });
     expect(readingPosition(0, 0, 0, 0, new Map(), 0)).toEqual({ paragraph: 0, share: 0, finished: false });
   });
@@ -124,12 +123,12 @@ describe('StoryReaderScreen', () => {
     );
     renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
     await screen.findByRole('button', { name: 'germ' });
-    // drawn at 40 in a row of 44, the rows 8 apart and the play button 8 away: 4 every way reaches 48 and meets nobody else's
+    // Drawn at 40 in a 44 row, rows 8 apart and play 8 away: 4 every way reaches 48 and meets no other.
     expect(reachOf('Save word')).toEqual({ top: 4, bottom: 4, left: 4, right: 4 });
-    // on the overview the bookmark stands alone in the header
+    // On the overview the bookmark stands alone in the header.
     expect(reachOf('Bookmark')).toEqual({ top: 2, bottom: 2, left: 2, right: 2 });
     fireEvent.click(screen.getByRole('button', { name: 'Read' }));
-    // while reading it stands with the two text sizes and no gap between them: up and down, never into the next
+    // While reading it stands with the two text sizes and no gap: reaching up and down, never into the next.
     for (const name of ['Smaller text', 'Larger text', 'Bookmark']) expect(reachOf(name)).toEqual({ top: 2, bottom: 2, left: 0, right: 0 });
   });
 
@@ -137,7 +136,7 @@ describe('StoryReaderScreen', () => {
     testAuth.client = routes({}, { ...NANE_GERM, author: 'Hevalo', source: 'Written for Hevalo', audioCoverage: 'partial' });
     renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Nanê Germ' })).toBeTruthy();
-    // the level by its plain name, with no CEFR letter beside it
+    // The level by its plain name, with no CEFR letter.
     expect(screen.getByText('Starter')).toBeTruthy();
     expect(screen.queryByText(/\bA1\b/)).toBeNull();
     expect(await screen.findByText('Everyday life')).toBeTruthy();
@@ -146,13 +145,13 @@ describe('StoryReaderScreen', () => {
     expect(screen.getByText('Dayik nan dipêje.')).toBeTruthy();
     expect(screen.getByText('By Hevalo · Written for learners')).toBeTruthy();
     expect(screen.getByText('Source: Written for Hevalo')).toBeTruthy();
-    // told in one variety only: which one is a fact among the others, and there is no switch
+    // Told in one variety only: it is listed among the facts, and there is no switch.
     expect(screen.getByText('Kurmancî')).toBeTruthy();
     expect(screen.queryByRole('radiogroup', { name: 'Variety' })).toBeNull();
-    // the check waits for the story to be read
+    // The check waits for the story to be read.
     expect(screen.getByText('Finish the story first.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Start the check' }).getAttribute('aria-disabled')).toBe('true');
-    // Read opens the text, in the story's language
+    // Read opens the text, in the story's language.
     fireEvent.click(screen.getByRole('button', { name: 'Read' }));
     const text = await screen.findByText(/Dayika min nan dipêje/);
     expect(text.closest('[lang]')?.getAttribute('lang')).toBe('ku');
@@ -176,8 +175,8 @@ describe('StoryReaderScreen', () => {
     await waitFor(() => expect(client.calls.some((c) => c.method === 'PUT' && c.path === '/stories/s1/progress')).toBe(true));
     expect(client.calls.find((c) => c.path === '/stories/s1/progress')?.body).toEqual({ paragraph: 0, share: 0.5, finished: false });
 
-    // the foot of the text: finished, and the check opens (an enabled button carries no aria-disabled at all).
-    // The scroller reports at most one scroll a tenth of a second, so the second comes after that.
+    // The foot of the text: finished, so the check opens (an enabled button has no aria-disabled). The scroller reports
+    // at most one scroll per 100 ms, so the second comes after that.
     await new Promise((resolve) => setTimeout(resolve, 150));
     scrollText(900, 1300, 400);
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Start the check' })[0]!.getAttribute('aria-disabled')).toBeNull());
@@ -219,9 +218,9 @@ describe('StoryReaderScreen', () => {
     fireEvent.click(word);
     expect(screen.getByText('Meaning')).toBeTruthy();
     expect(screen.getByText('adjective')).toBeTruthy();
-    // the sheet's button comes after the list's
+    // The sheet's button comes after the list's.
     fireEvent.click(screen.getAllByRole('button', { name: 'Save word' }).at(-1)!);
-    // at once Saved; the server's refusal takes it back and says the limit
+    // Saved at once; the server's refusal reverts it and states the limit.
     await waitFor(() => expect(client.calls.some((c) => c.method === 'PUT' && c.path === '/dictionary/entries/e1/save')).toBe(true));
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Save word' })).toHaveLength(2));
     expect(screen.getByText(/500/)).toBeTruthy();
@@ -246,7 +245,7 @@ describe('StoryReaderScreen', () => {
     testAuth.client = client;
     renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
     await screen.findByRole('button', { name: 'germ' });
-    // one Save per dictionary word, and the one already saved says so
+    // One Save per dictionary word, and the one already saved says so.
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Saved' })).toHaveLength(1));
     expect(screen.getAllByRole('button', { name: 'Save word' })).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Save word' }));
@@ -254,7 +253,7 @@ describe('StoryReaderScreen', () => {
     await waitFor(() => expect(client.calls.some((c) => c.method === 'PUT' && c.path === '/dictionary/entries/e1/save')).toBe(true));
     fireEvent.click(screen.getByRole('button', { name: 'germ' }));
     expect(screen.getAllByRole('button', { name: 'Saved' })).toHaveLength(3);
-    // and taken out again from the list
+    // And removed again from the list.
     fireEvent.click(screen.getAllByRole('button', { name: 'Saved' })[1]!);
     await waitFor(() => expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/dictionary/entries/e2/save')).toBe(true));
   });
@@ -331,7 +330,7 @@ describe('StoryReaderScreen', () => {
       const sides = within(screen.getByRole('radiogroup', { name: 'Variety' })).getAllByRole('radio');
       expect(sides.map((r) => r.getAttribute('aria-label'))).toEqual(['Kurmancî', 'Soranî']);
       expect(chosen()).toEqual(['Kurmancî']);
-      // the switch says which Kurdish this is: no pill says it a second time, and no link offers the other telling
+      // The switch says which Kurdish this is, so no pill repeats it and no link offers the other telling.
       expect(screen.getAllByText('Kurmancî')).toHaveLength(1);
       expect(screen.queryByText(/Read in/)).toBeNull();
     });
@@ -340,30 +339,30 @@ describe('StoryReaderScreen', () => {
       const client = both();
       testAuth.client = client;
       renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
-      // part-way through the Kurmancî one, and reading it
+      // Part-way through the Kurmancî telling, and reading it.
       fireEvent.click(await screen.findByRole('button', { name: 'Continue · 1 min left' }));
       await screen.findByText(/Dayika min nan dipêje/);
       fireEvent.click(screen.getByRole('button', { name: 'Back' }));
       expect(kept()).toBeUndefined();
 
       fireEvent.click(await screen.findByRole('radio', { name: 'Soranî' }));
-      // the switch moves at once; the telling follows
+      // The switch moves at once; the telling follows.
       expect(chosen()).toEqual(['Soranî']);
       const title = await screen.findByRole('heading', { name: 'نانی گەرم' });
       expect(title.getAttribute('lang')).toBe('ckb');
       expect(screen.queryByRole('heading', { name: 'Nanê Germ' })).toBeNull();
       expect(chosen()).toEqual(['Soranî']);
-      // its own cover page, and its own place in it: unread, so Read and no place to go on from
+      // Its own cover page and place: unread, so Read and no place to continue from.
       expect(screen.getByRole('button', { name: 'Read' })).toBeTruthy();
       expect(screen.queryByRole('button', { name: /Continue/ })).toBeNull();
       expect(screen.queryByRole('button', { name: 'germ' })).toBeNull();
-      // the choice is the reader’s own now, and the address is the telling on show — which is not asked for a second time
+      // The choice is now the reader's, and the address names the telling on show, which is not fetched twice.
       expect(kept()).toBe('sorani');
       expect(navigation.setParams).toHaveBeenCalledWith({ slug: 'nani-germ' });
       expect(navigation.navigate).not.toHaveBeenCalled();
       expect(client.calls.filter((c) => c.path === '/stories/nani-germ')).toHaveLength(1);
 
-      // and back, the same way
+      // And back, the same way.
       fireEvent.click(screen.getByRole('radio', { name: 'Kurmancî' }));
       expect(await screen.findByRole('heading', { name: 'Nanê Germ' })).toBeTruthy();
       expect(kept()).toBe('kurmanci');

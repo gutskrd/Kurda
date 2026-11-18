@@ -14,54 +14,33 @@ import { RatedBadge } from '../ranks/rated';
 import { usePlayInvites } from './PlayProvider';
 import { useInvitesQuiet } from './quietInvites';
 
-/**
- * Banners shown at once; the rest wait behind them, counted. One on a phone,
- * where a second would cover a third of the screen until it is answered.
- */
+/** Banners shown at once, the rest counted behind them; one on a phone. */
 const MAX_BANNERS = 2;
 const MAX_BANNERS_NARROW = 1;
 
 /**
- * The room the banners take under the navigation, kept on the root as a CSS
- * variable: the page's top padding, a full-screen chat and the games' sticky
- * panes add it, so a banner sits above the page instead of over it.
+ * The banners' height, as a CSS variable on the root that the page's top padding, a full-screen chat and the games'
+ * sticky panes add, so a banner sits above the page rather than over it.
  */
 const SPACE_VAR = '--invite-banner-h';
-/** between the banners and what comes under them */
+/** The gap between the banners and what comes under them. */
 const SPACE_BELOW = 8;
 
-/** How long Join's tear and Not now's fold take (motion.css), before the lobby opens or the ticket goes. */
+/** How long Join's tear and Not now's fold take (motion.css) before the lobby opens or the ticket goes. */
 export const TEAR_MS = 440;
 export const FOLD_MS = 300;
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 /**
- * The invites waiting for you (contract §B1): "Rojda invited you to Peyvok
- * Battle · Hard", with Join and "Not now ▾" (Later, or Not this game — the
- * host is told softly, and never in your words).
+ * Invites waiting for you ("Rojda invited you to Peyvok Battle · Hard") with Join and "Not now ▾" (Later, or Not this
+ * game, told to the host softly). `role=status`, so it is announced without taking focus, and it stays until answered or
+ * expired. Its room is reserved above the page (`--invite-banner-h`); on a phone or during a game it is a one-line chip
+ * that opens on a tap, and during a lesson or review it waits for the next page (`isFocusedPath`).
  *
- * `role=status`: a screen reader hears it arrive, and the focus stays where
- * you were — an invite never takes over what you are doing. It stays until you
- * answer it or it runs out; it does not slip away after a few seconds, so an
- * invite is never missed because you looked away.
- *
- * It never covers the page either: the room it takes is reserved above the
- * page (`--invite-banner-h`). On a phone, and while a game is being played,
- * it is a one-line chip — who asked, to what, and Join — that opens on a tap,
- * so waiting for an answer costs one line rather than a third of the screen.
- *
- * During a lesson or a review it is held altogether (`isFocusedPath`): the
- * invite waits, and its banner shows on whatever page the learner goes to
- * next.
- *
- * Each invite is a ticket (ui/Ticket.tsx) in its game's colour, the game's
- * mark on its stub. It swings in as it arrives, hung from its top edge; Join
- * tears the stub off along the perforation and then opens the lobby; Not now
- * folds it away. Invites waiting behind the ones shown sit under the last as
- * the edges of a small stack, each in its own game's colour, with the count.
- * Under Reduce Motion it simply appears and goes, and Join opens the lobby at
- * once.
+ * Each invite is a ticket (ui/Ticket.tsx) in its game's colour that swings in; Join tears off its stub, Not now folds
+ * it away, and invites beyond those shown show as a small stack with the count. Under reduced motion it simply appears
+ * and goes.
  */
 export function InviteBanner(): React.JSX.Element | null {
   const t = useT();
@@ -69,7 +48,7 @@ export function InviteBanner(): React.JSX.Element | null {
   const { lists } = usePlayInvites();
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const now = useNow(lists?.incoming ?? []);
-  // a phone, or a game being played: one invite, as a one-line chip until opened
+  // A phone, or a game being played: a one-line chip until opened.
   const narrow = useMediaQuery('(max-width: 560px)');
   const playing = useInvitesQuiet();
   const compact = narrow || playing;
@@ -85,7 +64,7 @@ export function InviteBanner(): React.JSX.Element | null {
     <div className="invite-banners" ref={reserve} role="region" aria-label={t('play.banner.region')}>
       {waiting.slice(0, max).map((invite, i, shown) => {
         const last = i === shown.length - 1;
-        // the next ones in line, as the edges of a stack under the last ticket
+        // The next in line, as the edges of a stack under the last ticket.
         const behind = last ? waiting.slice(max, max + 2) : [];
         return (
           <div key={invite.id} className={`invite-slot${behind.length > 0 ? ' has-stack' : ''}`}>
@@ -96,7 +75,7 @@ export function InviteBanner(): React.JSX.Element | null {
               invite={invite}
               compact={compact}
               onDone={() => done(invite.id)}
-              // the rest are counted inside the last banner, not over the page
+              // The rest are counted inside the last banner.
               more={last ? more : 0}
             />
           </div>
@@ -107,11 +86,8 @@ export function InviteBanner(): React.JSX.Element | null {
 }
 
 /**
- * Measures the banners and writes the room they take to `--invite-banner-h`
- * on the root, again whenever they change size (one opened, one answered),
- * and takes it away when the last one goes. The layout's own position is read
- * (offsetTop, offsetHeight), not the drawn one, so a banner sliding in is
- * measured where it will rest.
+ * Writes the banners' height to `--invite-banner-h` whenever they change size, and removes it with the last one.
+ * Layout size (offsetTop, offsetHeight) is read, so a banner sliding in is measured where it will rest.
  */
 function useReservedSpace(): (el: HTMLDivElement | null) => void {
   const observer = useRef<ResizeObserver | null>(null);
@@ -143,7 +119,7 @@ function useReservedSpace(): (el: HTMLDivElement | null) => void {
   }, []);
 }
 
-/** The time, ticking over when the soonest invite runs out, so an expired one goes on its own. */
+/** The time, ticking over when the soonest invite expires, so an expired one goes on its own. */
 function useNow(invites: readonly IncomingInvite[]): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -162,13 +138,13 @@ function Banner({
   more,
 }: {
   invite: IncomingInvite;
-  /** a phone or a game in play: a one-line chip, opened on request */
+  /** A phone or a game in play: a one-line chip, opened on request. */
   compact: boolean;
   onDone: () => void;
   more: number;
 }): React.JSX.Element {
   const t = useT();
-  // null: as the screen has it (a chip when compact); then as the reader chose
+  // Null follows the screen (a chip when compact); then as the reader chose.
   const [opened, setOpened] = useState<boolean | null>(null);
   const full = opened ?? !compact;
   const { client } = useAuth();
@@ -176,7 +152,7 @@ function Banner({
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // how the ticket leaves: its stub torn off for Join, folded away for Not now
+  // How the ticket leaves: stub torn for Join, folded for Not now.
   const [going, setGoing] = useState<'torn' | 'leaving' | null>(null);
   const [still] = useState(prefersReducedMotion);
   const game = t(GAME_NAME_KEY[invite.game]);
@@ -189,11 +165,11 @@ function Banner({
     if (!res.ok) {
       setBusy(false);
       setError(playError(res.error, t));
-      // the reason needs the whole banner to be read
+      // The reason needs the whole banner.
       setOpened(true);
       return;
     }
-    // in: the stub tears off, and then the lobby opens
+    // In: the stub tears off, then the lobby opens.
     if (!still) {
       setGoing('torn');
       await wait(TEAR_MS);
@@ -207,7 +183,7 @@ function Banner({
   async function decline(reason: DeclineReason): Promise<void> {
     setBusy(true);
     if (!still) setGoing('leaving');
-    // the banner goes either way: a "not now" that failed to send is still not now
+    // The banner goes either way: a "not now" that failed to send is still not now.
     await Promise.all([client.post(`/play/invites/${encodeURIComponent(invite.id)}/decline`, { reason }), still ? null : wait(FOLD_MS)]);
     setBusy(false);
     onDone();
@@ -232,7 +208,7 @@ function Banner({
   );
 
   if (!full) {
-    // the chip: who asked and to what, Join, and the rest one tap away
+    // The chip: who asked and to what, Join, and the rest one tap away.
     return (
       <div className={ticket(true)} role="status">
         {stub}
@@ -268,7 +244,7 @@ function Banner({
         <Avatar url={invite.from.avatarUrl} glyphSize={18} />
         <p className="invite-banner-text">
           <span className="invite-banner-title">{title}</span>
-          {/* Rated or Friendly, before anyone joins (Game Ranks) */}
+          {/* Rated or Friendly, before anyone joins. */}
           {typeof invite.summary.rated === 'boolean' && <RatedBadge rated={invite.summary.rated} size="sm" className="invite-rated" />}
           {parts.length > 0 && (
             <span className="invite-banner-summary">
@@ -312,10 +288,7 @@ function Banner({
   );
 }
 
-/**
- * "Not now ▾": a small menu of the two answers. Arrow keys move between them,
- * Escape closes it and gives the focus back to its button.
- */
+/** "Not now ▾": a menu of the two answers; arrow keys move between them, and Escape closes it and returns focus. */
 function NotNow({ onPick, disabled }: { onPick: (reason: DeclineReason) => void; disabled: boolean }): React.JSX.Element {
   const t = useT();
   const [open, setOpen] = useState(false);

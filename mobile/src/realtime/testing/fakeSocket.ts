@@ -1,8 +1,6 @@
 /**
- * A WebSocket for tests of anything on the shared connection: install it as
- * `globalThis.WebSocket`, render under RealtimeProvider, then say `hello`
- * (the connection is ready, onOpen fires) and `push` events into a room as
- * the gateway would.
+ * A WebSocket for tests of the shared connection: install it as `globalThis.WebSocket`, render under
+ * RealtimeProvider, then send `hello` (ready, onOpen fires) and `push` events into a room as the gateway would.
  */
 export class FakeSocket {
   static all: FakeSocket[] = [];

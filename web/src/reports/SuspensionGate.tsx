@@ -12,17 +12,12 @@ import { CATEGORY_LABEL } from './labels';
 import { formatUntil } from './restriction';
 import { SanctionCard } from './SanctionCard';
 
-/** Pages a suspended person can still read: the rules they are told they broke, among them. */
+/** Pages a suspended person can still read, including the rules. */
 const OPEN_PATHS: ReadonlySet<string> = new Set(['/terms', '/privacy', '/faq', '/about']);
 
 /**
- * In place of the app while the account is suspended.
- *
- * A suspended account used to sign in, get tokens, and meet a bare "This
- * account is disabled" on the next screen — no reason, no end date, no way to
- * object. Sign-in now answers ACCOUNT_SUSPENDED with all three (and so does
- * the refresh, for a ban that lands mid-session), and this shows them until
- * the person closes it.
+ * Replaces the app while the account is suspended. Sign-in, or a refresh mid-session, answers ACCOUNT_SUSPENDED with
+ * the reasons, end date and appeal token, which this shows until closed.
  */
 export function SuspensionGate({ children }: { children: ReactNode }): React.JSX.Element {
   const { suspension, dismissSuspension } = useAuth();
@@ -41,10 +36,8 @@ export function SuspensionGate({ children }: { children: ReactNode }): React.JSX
 }
 
 /**
- * The suspension screen: calm, and complete. What happened and until when;
- * then each decision with its reasons, read with the appeal token (which can
- * read the standing and file the one appeal, and nothing else), and "Ask for
- * a review" on any that can still be reviewed.
+ * The suspension screen: what happened and until when, then each decision with its reasons, read with the appeal token
+ * (which can only read the standing and file the appeal), and "Ask for a review" where still possible.
  */
 export function SuspensionScreen({
   details,
@@ -105,7 +98,7 @@ export function SuspensionScreen({
           <p className="suspension-until">
             {permanent ? t('suspension.noEnd') : t('suspension.until', { time: formatUntil(details.until!, locale) })}
           </p>
-          {/* the reasons, here when the decisions below could not be read */}
+          {/* The reasons, shown here when the decisions below could not be read. */}
           {(standing === 'failed' || (standing !== null && decisions.length === 0)) && (
             <>
               {details.policy && (

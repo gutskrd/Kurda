@@ -1,10 +1,9 @@
 import type { FireLevel } from '@kurda/shared';
 
 /**
- * The fire as the props it was given, for a test that asks how big it burns
- * and what it grows from rather than how it is drawn:
- * `vi.mock('../theme/Fire', () => import('../theme/testing/fireProbe'))`.
- * Tests render through react-native-web, so this is a plain element.
+ * The fire as the props it was given, for tests that ask how big it burns and what it grows from rather than how it
+ * is drawn: `vi.mock('../theme/Fire', () => import('../theme/testing/fireProbe'))`. A plain element, since tests
+ * render through react-native-web.
  */
 export function Fire({
   level,

@@ -1,10 +1,7 @@
 /**
- * Stories that hold a legend, against real Postgres: a saga told in sections
- * with its title and summary in other languages, questions to think about,
- * notes, sources and translated questions, as the reader, the library filter
- * and the after-reading check get it; and one language of a published story
- * corrected and reviewed on its own, without the story going offline or
- * losing its approval.
+ * Legend stories against real Postgres: a saga in sections with per-language title and summary, reflection questions,
+ * notes, sources and translated questions, as the reader, library filter and after-reading check get them; and one
+ * language of a published story corrected and reviewed on its own without going offline or losing approval.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -124,6 +121,24 @@ describe.skipIf(!DATABASE_URL)('stories that hold a legend (integration)', () =>
   });
 
   describe('a saga as the reader gets it', () => {
+    /*
+     * The app opens a source's address in the browser, so only https may be saved; an older stored one still reads, and
+     * the app shows it as plain text.
+     */
+    it('takes a source’s address over https only, and still reads one stored before', async () => {
+      for (const [i, url] of ['http://example.org/tale', 'javascript:alert(1)', 'example.org/tale'].entries()) {
+        const res = await call('POST', '/admin/stories', legend(`srcurl${i}`, { sources: [{ title: 'Kitêb', type: 'literary', url }] }));
+        expect(res.statusCode, url).toBe(422);
+        expect(res.json().details.errors.map((e: { code: string }) => e.code), url).toContain('SOURCE_ENTRY_URL');
+      }
+      const { id } = await published('oldsource');
+      const older = [{ title: 'Kitêb', type: 'literary', url: 'http://example.org/tale' }];
+      await pool.query(`UPDATE stories SET sources = $2 WHERE id = $1`, [id, JSON.stringify(older)]);
+      const read = await call('GET', `/stories/${slug('oldsource')}`, undefined, null);
+      expect(read.statusCode, read.body).toBe(200);
+      expect((read.json() as StoryDetail).sources).toEqual(older);
+    });
+
     it('sends its sections, reflections, notes, sources and translated title, and never who reviewed what', async () => {
       const { id } = await published('read');
       const res = await call('GET', `/stories/${slug('read')}`, undefined, null);

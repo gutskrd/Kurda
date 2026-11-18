@@ -1,23 +1,12 @@
 /**
- * The emails' pictures as images.
- *
- * Email programs do not draw SVG, so each picture the emails use
- * (shared/src/art/email.ts, where they are drawn) is written out here on its
- * tile, into the website's public folder, twice:
- *
- *   <picture>.gif   its loop, which is what an email shows (email/layout.ts)
- *   <picture>.png   the moment it rests on, for a reader who has asked their
- *                   device for less motion, where a program lets an email know
+ * Writes the emails' pictures (shared/src/art/email.ts) as images into the website's public folder, since email
+ * programs do not draw SVG: a looping GIF, and a PNG of the resting moment for readers who asked for less motion.
+ * Each is 336 pixels square, twice its shown size, on a full tile because a looping image cannot have soft
+ * transparent corners; a loop starts on the resting moment, which is all a program that plays no loops shows.
  *
  * Run after a picture is added or changed, and commit what it writes:
  *
  *   npm run email:art --workspace api
- *
- * Each is 336 pixels square, twice the 168 it is shown at, so it is sharp on
- * a phone's screen. The tile fills the square: the email rounds its corners,
- * since a looping image cannot have soft see-through ones. A loop starts on
- * the moment the picture rests on, which is all a program that plays no
- * loops shows of it.
  */
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -52,7 +41,7 @@ for (const picture of EMAIL_PICTURES) {
   const frames = Math.round(emailPictureLoopMs(picture) / FRAME_MS);
   const drawn = await Promise.all(Array.from({ length: frames }, (_, i) => sharp(tile(picture, still + i / frames)).png().toBuffer()));
   const gif = await sharp(drawn, { join: { animated: true } })
-    // flat colours need no dither, and without it the still parts of the tile cost nothing from frame to frame
+        // Flat colours need no dither, and without it the still parts of the tile cost nothing from frame to frame.
     .gif({ delay: FRAME_MS, loop: 0, effort: 10, colours: 64, dither: 0, interFrameMaxError: 4, interPaletteMaxError: 3 })
     .toFile(join(out, `${picture}.gif`));
 

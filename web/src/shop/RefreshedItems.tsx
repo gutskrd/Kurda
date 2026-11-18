@@ -8,14 +8,8 @@ import { useT } from '../i18n/I18nProvider';
 import './refreshed.css';
 
 /**
- * Backgrounds and icons whose art was replaced, from their owner's side
- * (shared/src/cosmetics.ts has the whole flow).
- *
- * The owner is told once that their items have new art, and that they are
- * still theirs. That is all there is to it: a purchase is final, so nothing
- * here offers anything back. The notice stays until it is dismissed — "once"
- * means once read, not once rendered on a page scrolled past — and dismissing
- * it is what tells the server.
+ * Telling owners once that their backgrounds or icons have new art and are still theirs (flow in
+ * shared/src/cosmetics.ts). The notice stays until dismissed, which is what tells the server.
  */
 
 /** `GET /me/inventory` as this needs it. */
@@ -33,8 +27,7 @@ export function RefreshedNotice({ inventory }: { inventory: InventoryWithNotice 
 
   function dismiss(): void {
     setDismissed(true);
-    // fire and forget: if it fails, the notice comes back next time, which is
-    // the better way round for something about a person's own things
+    // Fire and forget: if it fails, the notice simply comes back next time.
     void client.post('/me/inventory/refreshed/seen');
   }
 

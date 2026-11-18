@@ -33,15 +33,9 @@ const RENEW_BEFORE_MS = 2 * 60_000;
 const ACTIVE_WITHIN_MS = 10 * 60_000;
 
 /**
- * One case (#/moderation/<caseId>): what was reported, who it is about and
- * who reported it, what was done before, notes and history — and the
- * decision. On a wide screen the decision sits beside the case and stays in
- * view; on a phone the case reads top to bottom (content, then the people)
- * and the decision is a bar at the bottom that opens as a sheet, where a
- * thumb reaches it.
- *
- * j and k go to the next and previous case in the queue as it was last
- * listed, c claims this one — the shortcuts moderation tools share.
+ * One case (#/moderation/<caseId>): what was reported, the people, earlier actions, notes, history and the decision,
+ * which sits beside the case on a wide screen and opens as a bottom sheet on a phone. j and k go to the next and
+ * previous case as the queue was last listed; c claims this one.
  */
 export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
   const loaded = useLoad(() => api<CaseDetail>(`/admin/moderation/cases/${caseId}`), [caseId]);
@@ -54,7 +48,7 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
   const [claiming, setClaiming] = useState(false);
   const aside = useRef<HTMLElement>(null);
 
-  // a fresh draft for each case, from its own rule; kept while the same case reloads
+  // A fresh draft for each case, from its own rule; kept while the same case reloads.
   const draftFor = useRef<string | null>(null);
   useEffect(() => {
     if (detail && draftFor.current !== detail.case.id) {
@@ -99,11 +93,8 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
     }
   }
 
-  // A claim lasts 15 minutes. While the moderator who holds it is still at
-  // work on the case (they clicked or typed in the last few minutes), it is
-  // renewed shortly before it runs out, so a long read or a careful statement
-  // never loses the case to someone else. A tab left open and untouched lets
-  // it lapse, so nobody holds a case they walked away from.
+  // A claim lasts 15 minutes and is renewed shortly before it runs out while the moderator is active (a click or key
+  // in the last few minutes), so a long read keeps the case while an untouched tab lets it lapse.
   const lastActive = useRef(Date.now());
   useEffect(() => {
     const touch = (): void => {
@@ -119,19 +110,19 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
   const leaseUntil = detail?.case.leaseUntil ?? null;
   const reload = loaded.reload;
   useEffect(() => {
-    // a claim that already ran out is the queue's again: claiming it is a choice, not a renewal
+    // A claim that already ran out is the queue's again: claiming it is a choice, not a renewal.
     if (!mine || !open || !leaseUntil || Date.parse(leaseUntil) <= Date.now()) return;
     const renewIn = Math.max(0, Date.parse(leaseUntil) - Date.now() - RENEW_BEFORE_MS);
     const timer = window.setTimeout(() => {
       if (Date.now() - lastActive.current > ACTIVE_WITHIN_MS) return;
       api(`/admin/moderation/cases/${caseId}/claim`, { method: 'POST' })
-        .catch(() => undefined) // the reload below shows who holds it now
+        .catch(() => undefined) // The reload below shows who holds it now.
         .finally(() => void reload());
     }, renewIn);
     return () => window.clearTimeout(timer);
   }, [mine, open, leaseUntil, caseId, reload]);
 
-  // j / k / c, never while typing or with a dialog open
+  // J / k / c, never while typing or with a dialog open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;

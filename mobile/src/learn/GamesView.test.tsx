@@ -9,7 +9,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -40,11 +40,7 @@ async function settled(client: ReturnType<typeof fakeClient>): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 20));
 }
 
-/**
- * The game put forward changes with the day. Every test here is held on a day
- * when it is the third card, the race, whether three games can be played or
- * six, so the cards the tests look at are cards and not the featured one.
- */
+/** The featured game changes daily. Each test is pinned to a day when the race is featured, so the cards tested are regular cards. */
 const A_DAY_THE_RACE_IS_FEATURED = 2 * 86_400_000;
 
 beforeEach(() => {
@@ -60,11 +56,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/*
- * Join on an invite used to take the row away, wait for the server to accept
- * it, and only then open the lobby. The lobby opens at once now, and its own
- * first read waits for the accept already on its way (play/joining.ts).
- */
+/* Joining from an invite opens the lobby at once, and its first read waits for the accept already under way (play/joining.ts). */
 describe('an invite on the Games screen', () => {
   const invite = {
     id: 'inv1',
@@ -88,10 +80,10 @@ describe('an invite on the Games screen', () => {
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     fireEvent.click(await screen.findByRole('button', { name: /azad/ }));
-    // the lobby is asked for in the same breath as the accept is sent
+    // The lobby is asked for in the same breath as the accept is sent.
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'b7' });
     expect(client.calls.some((c) => c.path === '/play/invites/inv1/accept')).toBe(true);
-    // somebody not in it yet would be refused the lobby: its read waits
+    // Somebody not in it yet would be refused the lobby: its read waits.
     let read = false;
     void joined('b7').then(() => (read = true));
     await Promise.resolve();
@@ -103,10 +95,7 @@ describe('an invite on the Games screen', () => {
 });
 
 describe('the games list', () => {
-  /*
-   * Lessons and Stories, a swipe to either side, read again when pulled down;
-   * Games did not, so an invite sent a moment ago waited for a change of tab.
-   */
+  /* Games reloads on pull to refresh, as Lessons and Stories do, so a fresh invite does not wait for a tab change. */
   it('reads the rank and the invites again when pulled down, and shows an invite that has come since', async () => {
     let incoming: unknown[] = [];
     const client = fakeClient({ ...base, 'GET /play/invites': () => ok({ incoming, outgoing: [] }) } as never);
@@ -158,7 +147,7 @@ describe('the games list', () => {
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     expect(await screen.findByTestId('card-wordle')).toBeTruthy();
-    // named under the stamps, and nothing to press
+    // Named under the stamps, and nothing to press.
     const card = await screen.findByTestId('game-memory-thief');
     expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Coming soon');
     expect(card.getAttribute('role')).not.toBe('button');
@@ -190,9 +179,8 @@ describe('the games list', () => {
   });
 
   /*
-   * Don't Say the Word!, Kurdish Bluff, The Village and What Would You Say?
-   * are no longer part of Hevalo. Whatever a server still says about them,
-   * and with coming-soon cards switched on, none of them has a card.
+   * Retired games (Don't Say the Word!, Kurdish Bluff, The Village, What Would You Say?) get no card, whatever
+   * the server says and even with coming-soon cards on.
    */
   it('has no card for a game that was retired, whatever the server says of it', async () => {
     setListsUpcomingGames(true);
@@ -214,7 +202,7 @@ describe('the games list', () => {
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
-    // the card, and perhaps the featured game above it, each say both
+    // The card, and perhaps the featured game above it, each say both.
     expect(screen.getAllByText('Pêşbaziya Nivîsandinê').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Typing race').length).toBe(screen.getAllByText('Pêşbaziya Nivîsandinê').length);
     expect(screen.getAllByText('Rhyming words').length).toBe(screen.getAllByText('Peyvên Hevserwa').length);
@@ -226,7 +214,7 @@ describe('the games list', () => {
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
-    // one stamp for the game, not one for each way to play it, and nothing offered until it is pressed
+    // One stamp for the game, not one for each way to play it, and nothing offered until it is pressed.
     expect(screen.getAllByText('Peyvok')).toHaveLength(1);
     expect(screen.queryByText('Pêşbaziya Peyvan')).toBeNull();
     expect(screen.queryByTestId('game-wordle')).toBeNull();
@@ -237,7 +225,7 @@ describe('the games list', () => {
     const solo = await screen.findByTestId('game-wordle');
     expect(solo.getAttribute('aria-label')).toBe('Peyvok, Solo');
     expect(screen.getByTestId('game-battle').getAttribute('aria-label')).toBe('Peyvok, With friends');
-    // the sheet says what the game is, which the stamp has no room for
+    // The sheet says what the game is, which the stamp has no room for.
     expect(screen.getByText('Guess the Kurdish word in six tries.')).toBeTruthy();
     fireEvent.click(solo);
     expect(navigation.navigate).toHaveBeenCalledWith('Wordle');
@@ -251,7 +239,7 @@ describe('the games list', () => {
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
-    // one stamp for the game, no way to play it alone, and its ways offered once it is pressed
+    // One stamp for the game, no way to play it alone, and its ways offered once it is pressed.
     const stamp = await screen.findByTestId('card-who-am-i');
     expect(screen.getAllByText('Ez kî me?')).toHaveLength(1);
     expect(screen.queryByTestId('game-who-am-i')).toBeNull();
@@ -266,7 +254,7 @@ describe('the games list', () => {
     expect(friends.getAttribute('aria-label')).toBe('Ez kî me?, With friends');
     fireEvent.click(friends);
     expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'friends' });
-    // Xapînok's own screen asks how to play: its stamp is the one way in
+    // Xapînok's own screen asks how to play: its stamp is the one way in.
     fireEvent.click(screen.getByTestId('game-impostor'));
     expect(navigation.navigate).toHaveBeenCalledWith('Impostor');
   });
@@ -287,11 +275,7 @@ describe('the games list', () => {
     expect(featuredCard([{ ...card('b'), soon: true }], 0)).toBeNull();
   });
 
-  /**
-   * Deliberately changed. A game was a card on its side with its buttons in
-   * it; it is a stamp now, pressed to open the game or to be offered its
-   * ways, and there is still no filter to work.
-   */
+  /** Each game is a stamp, pressed to open the game or offered its ways, with no filter to use. */
   it('lists every game whoever it is played with, with no filter to work', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('memory-thief'), game('impostor')]) });
     testAuth.client = client;
@@ -300,11 +284,11 @@ describe('the games list', () => {
     expect(await screen.findByTestId('game-impostor')).toBeTruthy();
     expect(screen.queryByTestId('games-filter-all')).toBeNull();
     expect(screen.queryByTestId('games-filter-friends')).toBeNull();
-    // every game is listed whoever it is played with
+    // Every game is listed whoever it is played with.
     for (const id of ['game-impostor', 'game-memory-thief']) expect(screen.getByTestId(id)).toBeTruthy();
   });
 
-  // Build a Sentence and Hear It, Find It are practice now (practice/exercises.ts), listed with the lessons
+  // Build a Sentence and Hear It, Find It are practice (practice/exercises.ts), listed with the lessons.
   it('does not list the lessons’ two exercises, ready or coming soon', async () => {
     setListsUpcomingGames(true);
     const client = fakeClient({

@@ -1,4 +1,4 @@
-/** Config-driven events (KUR-089) against real Postgres. */
+/** Config-driven events against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { EventService } from './service.js';
@@ -73,7 +73,7 @@ describe.skipIf(!DATABASE_URL)('events (integration)', () => {
       priority: 99,
     });
 
-    const live = (await svc.active(now)).filter((e) => e.key.endsWith(suffix));
+    const live = (await svc.active(now)).events.filter((e) => e.key.endsWith(suffix));
     const keys = live.map((e) => e.key);
     expect(keys).toContain(key('live-hi'));
     expect(keys).toContain(key('live-lo'));
@@ -92,10 +92,10 @@ describe.skipIf(!DATABASE_URL)('events (integration)', () => {
       startsAt: '2026-06-01T00:00:00.000Z',
       endsAt: '2026-07-01T00:00:00.000Z',
     });
-    expect((await svc.active(now)).map((e) => e.key)).toContain(k);
+    expect((await svc.active(now)).events.map((e) => e.key)).toContain(k);
 
     expect(await svc.setEnabled(k, false)).toBe(true);
-    expect((await svc.active(now)).map((e) => e.key)).not.toContain(k);
+    expect((await svc.active(now)).events.map((e) => e.key)).not.toContain(k);
     expect(await svc.setEnabled('no-such-key', false)).toBe(false);
   });
 });

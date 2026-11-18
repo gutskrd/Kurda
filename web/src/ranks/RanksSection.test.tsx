@@ -107,7 +107,7 @@ describe('RanksSection', () => {
     signIn(mine({ ranks: [card(), card({ game: 'rhyme-match', ...untouched }), card({ game: 'stories', ...untouched })] }));
     renderApp(<RanksSection />);
     expect(await screen.findByRole('heading', { name: en['ranks.title'] })).toBeInTheDocument();
-    // only the game begun has its card
+    // Only the game begun has its card.
     expect(screen.getAllByRole('article')).toHaveLength(1);
     expect(screen.getByText(en['ranks.unplaced'])).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Stories' })).toHaveAttribute('href', '/app/ranks/stories');

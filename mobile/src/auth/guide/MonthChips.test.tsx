@@ -11,9 +11,8 @@ import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { MonthChips, monthColumns } from './MonthChips';
 
 /*
- * The months a new account is asked for its birth month by: three to a row
- * where every month's longest word fits, two where one does not, and a name
- * of two words on two lines rather than cut to its first.
+ * The birth month chips: three to a row where every month's longest word fits, two where one does not, and a two-word
+ * name on two lines rather than cut.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -29,7 +28,7 @@ describe('how many months to a row', () => {
   it('keeps three to a row where the longest word fits, and three before the grid is laid out', () => {
     expect(monthColumns(342, 1, GERMAN)).toBe(3);
     expect(monthColumns(0, 1, GERMAN)).toBe(3);
-    // Soranî's two-word months take two lines in a third of a 390-point phone
+    // Soranî's two-word months take two lines in a third of a 390-point phone.
     expect(monthColumns(342, 1, SORANI)).toBe(3);
   });
 

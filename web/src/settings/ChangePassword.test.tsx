@@ -71,7 +71,7 @@ describe('changing the password in Settings', () => {
     expect(sentTo(fetchMock)).toEqual([{ currentPassword: 'old-password1', newPassword: 'a-new-password2' }]);
     expect(createTokenStorage().get()).toEqual({ accessToken: 'new-access', refreshToken: 'the-refresh' });
     expect(onChanged).toHaveBeenCalledTimes(1);
-    // the form closes, and nothing typed is left in the page
+    // The form closes, and nothing typed is left in the page.
     expect(screen.queryByLabelText(en['settings.password.current'])).not.toBeInTheDocument();
   });
 
@@ -93,7 +93,7 @@ describe('changing the password in Settings', () => {
     await waitFor(() => expect(current).toHaveAttribute('aria-invalid', 'true'));
     expect(document.getElementById(current.getAttribute('aria-describedby')!)).toHaveTextContent(en['error.code.wrongPassword']);
     expect(current).toHaveFocus();
-    // and the complaint goes the moment the field is touched
+    // The message clears as soon as the field is edited.
     await userEvent.type(current, 'x');
     expect(screen.queryByText(en['error.code.wrongPassword'])).not.toBeInTheDocument();
   });
@@ -112,7 +112,7 @@ describe('changing the password in Settings', () => {
   it('says which rule a weak new password missed, under it', async () => {
     stubApi(() => jsonResponse(400, { code: 'WEAK_PASSWORD', message: 'x', details: { reason: 'needs-letter' } }));
     renderApp(<ChangePassword />);
-    // passes the check here (a letter and a number), so the server's reason is the one shown
+    // It passes the local check (a letter and a number), so the server's reason is shown.
     await submit(await fill('old-password1', 'abcdefg1'));
     expect(await screen.findByText(en['error.code.passwordNeedsLetter'])).toHaveAttribute('id', 'pw-new-error');
   });

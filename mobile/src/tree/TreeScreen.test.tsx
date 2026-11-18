@@ -19,7 +19,7 @@ import { ProfileTree } from './ProfileTree';
 import { TreeCard } from './TreeCard';
 import { TreeScreen } from './TreeScreen';
 
-// straight to how things stand after a pour, as for a reader who asked for less motion
+// Straight to how things stand after a pour, as for a reader who asked for less motion.
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
 afterEach(cleanup);
@@ -44,22 +44,22 @@ describe('the tree’s screen', () => {
     testAuth.client = client;
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Plant your tree' })).toBeTruthy();
-    // the four starters, each a seed to pick; nothing that has to be bought
+    // The four starters, each a seed to pick; nothing that has to be bought.
     expect(screen.getAllByRole('radio')).toHaveLength(4);
     for (const name of ['Berû', 'Hinar', 'Behîv', 'Bî']) expect(screen.getByText(name)).toBeTruthy();
     expect(screen.queryByText('Dara Şevê')).toBeNull();
-    // the first is picked to begin with, and what stands in the scene is the tree it will be
+    // The first is picked to begin with, and what stands in the scene is the tree it will be.
     expect(screen.getByRole('radio', { name: 'Berû (Oak)' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('img', { name: 'Berû (Oak)' })).toBeTruthy();
     expect(screen.getByText('The oak of the Zagros: slow to grow, and it outlasts everything.')).toBeTruthy();
-    // picking another changes the tree shown, and plants nothing
+    // Picking another changes the tree shown, and plants nothing.
     fireEvent.click(screen.getByRole('radio', { name: 'Hinar (Pomegranate)' }));
     expect(screen.getByRole('radio', { name: 'Hinar (Pomegranate)' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('img', { name: 'Hinar (Pomegranate)' })).toBeTruthy();
     expect(client.calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' }));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'hinar' }));
-    // the seed, with the water to bring it up
+    // The seed, with the water to bring it up.
     expect(await screen.findByRole('heading', { name: 'Hinar' })).toBeTruthy();
     expect(screen.getByText('Pomegranate · Seed · Day 1')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Give it its first water' })).toBeTruthy();
@@ -76,7 +76,7 @@ describe('the tree’s screen', () => {
     expect(screen.getByText('Water: 3')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Water the tree' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pour all 3' })).toBeTruthy();
-    // it is well: nothing is said about how it fares
+    // It is well: nothing is said about how it fares.
     expect(screen.queryByTestId('tree-health')).toBeNull();
   });
 
@@ -125,10 +125,10 @@ describe('the tree’s screen', () => {
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view())) });
     const { unmount } = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     const stage = await screen.findByTestId('tree-stage');
-    // spring's blush is under the picture until it is drawn
+    // Spring's blush is under the picture until it is drawn.
     expect(stage.style.backgroundColor).toBe('rgb(251, 224, 234)');
     expect(within(stage).getByTestId('tree-scene')).toBeTruthy();
-    // the tree is what is named; its weather is not
+    // The tree is what is named; its weather is not.
     expect(within(stage).getByRole('img', { name: 'Berû, Seedling' })).toBeTruthy();
     unmount();
     month.mockReturnValue(0);
@@ -154,10 +154,10 @@ describe('the tree’s screen', () => {
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 9, water: 3 }))) });
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     await screen.findByRole('progressbar', { name: 'Next: Young tree' });
-    // two of the seven waterings to the next stage
+    // Two of the seven waterings to the next stage.
     const fill = screen.getByTestId('tree-goal-fill');
     expect(Number(fill.getAttribute('stroke-dashoffset')) / Number(fill.getAttribute('stroke-dasharray'))).toBeCloseTo(1 - 2 / 7, 4);
-    // the tree itself, and the stage after it in the ring
+    // The tree itself, and the stage after it in the ring.
     expect(screen.getAllByTestId('tree-art')).toHaveLength(2);
   });
 
@@ -186,7 +186,7 @@ describe('the tree’s screen', () => {
       expect(await screen.findByText('The nursery')).toBeTruthy();
       for (const species of TREE_SPECIES) expect(screen.getByTestId(`tree-kind-${species}`)).toBeTruthy();
       expect(within(screen.getByTestId('tree-kind-beru')).getByText('Growing now')).toBeTruthy();
-      // the oak stands: it cannot be planted over itself
+      // The oak stands: it cannot be planted over itself.
       expect(screen.queryByRole('button', { name: 'Plant: Berû (Oak)' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Buy: Tû (Mulberry)' })).toBeTruthy();
@@ -202,7 +202,7 @@ describe('the tree’s screen', () => {
       expect(await screen.findByText('Your Berû will be gone, with everything it has grown. The water you hold stays with you.')).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: 'Keep my tree' }));
       expect(client.calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
-      // back at the kinds; this time it is planted
+      // Back at the kinds; this time it is planted.
       fireEvent.click(await screen.findByRole('button', { name: 'Plant: Bî (Willow)' }));
       fireEvent.click(await screen.findByRole('button', { name: 'Plant it' }));
       await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'bi' }));
@@ -214,7 +214,7 @@ describe('the tree’s screen', () => {
       testAuth.client = client;
       renderWithProviders(<TreeScreen onExit={() => undefined} />);
       fireEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
-      // too dear: no press is offered that would be refused
+      // Too dear: no press is offered that would be refused.
       fireEvent.click(await screen.findByRole('button', { name: 'Buy: Dara Şevê (Night tree)' }));
       expect(await screen.findByText('You need 1,300 more Zêr.')).toBeTruthy();
       expect(screen.getByTestId('tree-ask-confirm').getAttribute('aria-disabled')).toBe('true');
@@ -224,7 +224,7 @@ describe('the tree’s screen', () => {
       expect(await screen.findByText('It costs 800 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
       fireEvent.click(screen.getByTestId('tree-ask-confirm'));
       await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/tree/kinds/tu/buy')).toBe(true));
-      // theirs to plant now; the oak still stands
+      // Theirs to plant now; the oak still stands.
       expect(await screen.findByRole('button', { name: 'Plant: Tû (Mulberry)' })).toBeTruthy();
       expect(within(screen.getByTestId('tree-kind-tu')).getByText('Yours')).toBeTruthy();
       expect(screen.getByRole('heading', { name: 'Berû' })).toBeTruthy();
@@ -276,7 +276,7 @@ describe('the tree on a profile', () => {
     expect(screen.getByRole('img', { name: 'Hinar, Great tree' })).toBeTruthy();
     expect(screen.getByText('Pomegranate')).toBeTruthy();
     expect(screen.getByText('Great tree · Day 61 · Harvests: 2')).toBeTruthy();
-    // somebody else's: no way to a tree that is not theirs
+    // Somebody else's: no way to a tree that is not theirs.
     expect(screen.queryByRole('button')).toBeNull();
   });
 

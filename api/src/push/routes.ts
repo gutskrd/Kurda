@@ -7,8 +7,7 @@ import type { PushService } from './service.js';
 import { isExpoPushToken, type DeviceTokenService } from './tokens-service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
 
-// an Expo push token, the only kind the phone registers; junk is a 400 here
-// rather than a row that Expo refuses on every send
+// An Expo push token is the only kind phones register; junk is a 400 here rather than a row refused on every send.
 const pushToken = z.string().min(1).max(4096).refine(isExpoPushToken, 'must be an Expo push token');
 const registerBody = z.object({
   platform: z.enum(['ios', 'android']),
@@ -24,10 +23,8 @@ const testBody = z.object({
 });
 
 /**
- * Device token lifecycle + a staging test-send (KUR-094). Registration is an
- * idempotent upsert (also serves as refresh); the test endpoint routes through
- * the same queued pipeline real notifications use, or delivers inline when the
- * queue isn't configured (single-node dev).
+ * Device token lifecycle and a staging test send. Registration is an idempotent upsert that also refreshes; the test
+ * send goes through the same queued pipeline as real notifications, or inline without a queue.
  */
 export function registerPushRoutes(
   app: FastifyInstance,
@@ -40,7 +37,7 @@ export function registerPushRoutes(
     { schema: { body: registerBody }, preHandler: requireAuth },
     async (req, reply) => {
       const { platform, token } = req.body as z.infer<typeof registerBody>;
-      // under the session it was registered from, so it ends when that session does
+      // Under the session it was registered from, so it ends when that session does.
       await tokens.register(req.user!.id, platform, token, req.user!.familyId ?? null);
       return reply.code(201).send({ ok: true });
     },
@@ -51,7 +48,7 @@ export function registerPushRoutes(
     { schema: { body: tokenBody }, preHandler: requireAuth },
     async (req, reply) => {
       const found = await tokens.touch(req.user!.id, (req.body as z.infer<typeof tokenBody>).token);
-      if (!found) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'no such device' } });
+      if (!found) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such device' });
       return { ok: true };
     },
   );
@@ -61,7 +58,7 @@ export function registerPushRoutes(
     { schema: { body: tokenBody }, preHandler: requireAuth },
     async (req, reply) => {
       const found = await tokens.remove(req.user!.id, (req.body as z.infer<typeof tokenBody>).token);
-      if (!found) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'no such device' } });
+      if (!found) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such device' });
       return { ok: true };
     },
   );
@@ -75,7 +72,7 @@ export function registerPushRoutes(
       const target = userId ?? req.user!.id;
       const notification = { category, title, body };
       if (app.jobs) {
-        // the worker's job handler records to the inbox (KUR-097) + delivers
+        // The worker's job handler records to the inbox and delivers.
         await app.jobs.enqueue(makePushSendJob(push), { userId: target, notification });
         return { queued: true };
       }

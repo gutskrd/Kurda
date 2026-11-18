@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
 /**
- * Where a slot has an uploaded picture it is drawn from that picture, in the
- * same box and under the same name; where it has none, the art drawn by code
- * is drawn exactly as before. A secret badge not yet found keeps its own art
- * whatever was uploaded, and what is not reached yet is greyed.
+ * A slot with an uploaded picture draws it in the same box with the same name; without one, the built-in art is
+ * unchanged. An undiscovered secret badge keeps its own art, and anything not yet reached is greyed.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -13,7 +11,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the event look, as the provider would work it out: the test says which pack is live and whether it was turned off
+// The event look as the provider computes it: the test sets which pack is live and whether looks are turned off.
 const eventTheme = vi.hoisted(() => ({ value: { pack: null as unknown, optedOut: false } }));
 vi.mock('../theme/EventThemeContext', () => ({ useEventTheme: () => eventTheme.value }));
 import { act, cleanup, screen, waitFor } from '@testing-library/react';
@@ -158,7 +156,7 @@ describe('a season frame', () => {
         {avatar}
       </SeasonFramed>,
     );
-    // the ring, and the glint that travels round it
+    // The ring, and the glint that travels round it.
     expect(drawings(container)).toBe(2);
     expect(screen.getByText('RJ')).toBeTruthy();
   });
@@ -173,16 +171,12 @@ describe('a season frame', () => {
     expect(await picture(container)).toBe(`${CDN}/lutke-ring.png`);
     expect(drawings(container)).toBe(0);
     expect(screen.getByRole('img', { name: 'Lûtke season frame' }).getAttribute('style')).toContain('width: 96px');
-    // the avatar is still there, in the middle
+    // The avatar is still there, in the middle.
     expect(screen.getByText('RJ')).toBeTruthy();
   });
 });
 
-/*
- * A profile says which frame is worn by its SKU, and for a frame bought in the
- * shop it sends the picture too. One component takes both and draws whichever
- * it is, so no screen has to ask.
- */
+/* A profile names its worn frame by SKU, and for a shop frame sends the picture too; one component draws either. */
 describe('whatever frame is worn', () => {
   const avatar = <Text>RJ</Text>;
   const label = (tier: string): string => `${tier} season frame`;
@@ -196,7 +190,7 @@ describe('whatever frame is worn', () => {
     );
     expect(await picture(container)).toBe(`https://hevalo.app${ART}`);
     expect(drawings(container)).toBe(0);
-    // decoration: the profile around it already names the person
+    // Decoration: the profile around it already names the person.
     expect(screen.queryByRole('img', { name: /frame/ })).toBeNull();
     expect(screen.getByText('RJ')).toBeTruthy();
   });
@@ -242,6 +236,12 @@ describe('a default profile picture', () => {
     await waitFor(() => expect(container.querySelector('img')?.getAttribute('src')).toBe(`${CDN}/avatar-03.png`));
   });
 
+  it('shows a person, not letters, for a picture with no name that will not load', () => {
+    const { container } = renderWithProviders(<InitialsAvatar name="" id="default-03" photoUrl={null} />);
+    expect(container.textContent).toBe('');
+    expect(container.querySelector('svg')).not.toBeNull();
+  });
+
   it('leaves a photo of somebody’s own alone', async () => {
     await overrides({ 'avatar:default-03': `${CDN}/avatar-03.png` });
     const { container } = renderWithProviders(<InitialsAvatar name="Rojda" id="u1" photoUrl="https://media.hevalo.app/profile/rojda.webp" />);
@@ -259,7 +259,7 @@ describe('an event banner', () => {
     eventTheme.value = { pack: EVENT_THEME_PACKS.newroz, optedOut: false };
     const { container } = renderWithProviders(<EventBanner />);
     expect(await screen.findByRole('button', { name: 'Newroz — event quests' })).toBeTruthy();
-    // the flame, drawn from the app's icons in the ink that reads on Newroz's gold
+    // The flame, drawn from the app's icons in the ink that reads on Newroz's gold.
     const glyph = container.querySelector('svg path');
     expect(glyph?.getAttribute('d')).toBe(ICON_PATHS.flame[0]);
     expect(glyph?.getAttribute('fill')).toBe('#3A2A00');
@@ -274,7 +274,7 @@ describe('an event banner', () => {
     const { container } = renderWithProviders(<EventBanner />);
     expect(await screen.findByRole('button', { name: 'Newroz — event quests' })).toBeTruthy();
     expect(await picture(container)).toBe(`${CDN}/newroz.webp`);
-    // the picture stands where the glyph did; the chevron is the one glyph left, in white
+    // The picture stands where the glyph did; the chevron is the one glyph left, in white.
     expect(container.querySelectorAll('svg')).toHaveLength(1);
     expect(container.querySelector('svg path')?.getAttribute('fill')).toBe('#FFFFFF');
     expect(screen.getByText('Newroz').getAttribute('style')).toContain('color: rgb(255, 255, 255)');

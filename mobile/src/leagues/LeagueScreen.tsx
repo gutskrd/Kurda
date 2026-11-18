@@ -7,6 +7,7 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { useAuth } from '../auth/AuthContext';
+import { describeError, isMaintenance } from '../api/errors';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -41,28 +42,23 @@ type Tab = 'league' | 'board';
 const TABS: readonly Tab[] = ['league', 'board'];
 
 /**
- * Learning Leagues, rebuilt (contract 4 §L, §U).
+ * Learning Leagues.
  *
- * The league's name and how many days the week has left, then the whole
- * ladder from a drop to the ocean — the leagues behind you in colour, yours
- * large, the ones ahead a quiet outline with a keyhole — so where you are is
- * seen as a place on a journey, not only a rank. Under it the week's group
- * of about twenty, with the zones written out — "Moving up" and "Moving
- * down" as headings in the table, with their icons, so nothing is told by
- * colour alone — the weekly goal as a ring, and "Safe this week" once it is
- * met. Before the week's first lesson, Hevalo is resting, and the first
- * lesson is what starts the week. Last week's result is one kind sentence.
+ * The league's name and the days left, then the whole ladder from a drop to the ocean (past leagues in colour,
+ * yours large, those ahead as outlines with a keyhole), so your place reads as a journey, not only a rank. Below,
+ * the week's group of about twenty with the zones as headings in the table ("Moving up", "Moving down", with
+ * icons, not colour alone), the weekly goal ring, and "Safe this week" once met. Before the week's first lesson
+ * Hevalo rests, and that lesson starts the week. Last week's result is one kind sentence.
  *
- * Leaving is a button at the end of the page, asked once in plain words and
- * with no pull to stay. Somebody out of the leagues (their choice, or a teen
- * by default) gets their own week instead: the same ring, and how it
- * compares with the weeks before, with nobody else in it.
+ * Leaving is a quiet control at the end of the page, confirmed once in plain words with no pressure to stay.
+ * Someone out of the leagues (by choice, or a teen by default) gets a personal week: the same ring compared with
+ * their past weeks, with nobody else in it.
  */
 export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('league');
-  // what the leaderboard ranks and who it compares you with, kept here so the League tab and back finds them as they were
+  // What the leaderboard ranks and who it compares you with, kept here so leaving the tab and returning keeps them.
   const [boardType, setBoardType] = useState<BoardType>('weekly_xp');
   const [scope, setScope] = useState<Scope>('global');
   const [league, setLeague] = useState<LeagueView | null>(null);
@@ -84,7 +80,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
       void loadLeague();
     }, [loadLeague]),
   );
-  // pulled down, the week's table is read again
+  // Pulled down, the week's table is read again.
   const pull = usePullRefresh(loadLeague);
 
   /** In or out, one tap from where the table is or would be (Settings has the other). */
@@ -94,8 +90,9 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
       setJoining(true);
       const res = await client.patch('/me', { leaguesEnabled: on });
       setJoining(false);
+      // Refused as the Settings switch is: the reason is shown, and nothing over the maintenance notice.
       if (res.ok) void loadLeague();
-      else Alert.alert(t('error.generic'), t('common.tryAgain'));
+      else if (!isMaintenance(res.error)) Alert.alert(t('settings.leagues.title'), describeError(res.error, t));
     },
     [client, loadLeague, t],
   );
@@ -113,9 +110,9 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
             wrap
           />
         </View>
-        {/* the week that closed: its ceremony, once, the first time the league is opened after */}
+        {/* The week that closed: its ceremony, once, the first time the league is opened after. */}
         <LeagueMoment league={league} />
-        {/* the two lie side by side, so a swipe turns from the league to the leaderboard as well as a tap on its name */}
+        {/* Side by side, so a swipe turns between league and leaderboard as well as a tap. */}
         <SwipePager<Tab>
           pages={TABS}
           value={tab}
@@ -155,12 +152,12 @@ function LeagueTab({
   joining: boolean;
   onJoin: () => void;
   onLeave: () => void;
-  /** pull down to read the week again */
+  /** Pull down to read the week again. */
   refreshControl: React.JSX.Element;
 }): React.JSX.Element {
   if (league.mode === 'personal') return <PersonalWeek league={league} joining={joining} onJoin={onJoin} refreshControl={refreshControl} />;
   const items = league.joined ? tableItems(league.standings) : [];
-  // the first screenful of the table rises in once, as it arrives
+  // The first screenful of the table rises in once, as it arrives.
   const entering = useListEntrance(items.length > 0);
   return (
     <FlatList
@@ -180,9 +177,8 @@ function LeagueTab({
 }
 
 /**
- * The week at the top: the league and the days it has left, the ladder, and
- * under a line either the goal ring with the group's rules or, before the
- * week's first lesson, Hevalo resting; last week's result after either.
+ * The week at the top: the league and days left, the ladder, then the goal ring with the group's rules or, before
+ * the first lesson, Hevalo resting; last week's result after either.
  */
 function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
   const { colors, scheme } = useTheme();
@@ -199,7 +195,7 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
           {t('leagues.leagueName', { tier: leagueName(t, tier) })}
         </Text>
         {meaning ? <Text style={[styles.heroMeaning, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
-        {/* how long the week has left, as a quiet pill: whole days, never a clock running down */}
+        {/* How long the week has left, as a quiet pill: whole days, never a clock running down. */}
         <View style={[styles.ends, styles.daysPill, { flexDirection: dir.row, backgroundColor: colors.controlTrack, alignSelf: dir.rtl ? 'flex-end' : 'flex-start' }]}>
           <Icon name="timer" size={16} color={colors.textSecondary} />
           <Text style={[styles.left, dir.text, { color: colors.textSecondary }]}>{weekLeftText(t, league.endsAt, locale)}</Text>
@@ -276,16 +272,14 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
   );
 }
 
-/** the gap between two emblems on the ladder */
+/** The gap between two emblems on the ladder. */
 const LADDER_GAP = spacing.sm + 2;
-/** yours, and the others at most and at least */
+/** Yours, and the others at most and at least. */
 const LADDER_SIZE = { here: 88, max: 60, min: 36 } as const;
 
 /**
- * All six leagues in a row, a drop to the ocean: the ones behind you in
- * their colours, yours larger, the ones still ahead as their outline with a
- * keyhole. Sized so all six fit across a phone; on one too narrow for that
- * the row scrolls, and starts where yours is.
+ * All six leagues in a row, a drop to the ocean: past ones in colour, yours larger, those ahead as keyhole
+ * outlines. Sized to fit a phone; where it cannot, the row scrolls and starts at yours.
  */
 function Ladder({ tier }: { tier: LeagueTier }): React.JSX.Element {
   const { t } = useI18n();
@@ -332,11 +326,9 @@ function Ladder({ tier }: { tier: LeagueTier }): React.JSX.Element {
 const BOB = { distance: 3, ms: 2600 } as const;
 
 /**
- * The learner's own emblem on the ladder, afloat: it rises and settles a few
- * points every couple of seconds, on the native driver, so the one league
- * that is theirs is the one thing on the row that is alive. It holds still
- * while the page is not in front or the app is in the background, and under
- * Reduce Motion, where it is simply there (`useMotionAlive`).
+ * The learner's own emblem on the ladder, floating: it rises and settles a few points every couple of seconds on
+ * the native driver, the one live thing in the row. Still while the page is unfocused, backgrounded or under
+ * Reduce Motion (`useMotionAlive`).
  */
 function Bobbing({ children }: { children: ReactNode }): React.JSX.Element {
   const alive = useMotionAlive();
@@ -359,10 +351,8 @@ function Bobbing({ children }: { children: ReactNode }): React.JSX.Element {
 }
 
 /**
- * Before the week's first lesson: Hevalo asleep, a line in his own words
- * about the lesson that wakes him and puts the two of you on the table, and
- * the lesson itself. Nothing about falling behind — there is nothing to be
- * behind yet.
+ * Before the week's first lesson: Hevalo asleep, a line in his words about the lesson that wakes him and puts you
+ * both on the table, and the lesson itself. Nothing about falling behind.
  */
 function Resting(): React.JSX.Element {
   const { colors } = useTheme();
@@ -372,7 +362,7 @@ function Resting(): React.JSX.Element {
   return (
     <View style={styles.resting}>
       <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={RESTING_HEIGHT} resting />
-      {/* what he would say, were he awake: his words in a bubble, read as his */}
+      {/* What he would say if awake: his words in a bubble, read as his. */}
       <View style={[styles.bubble, { backgroundColor: colors.glassFill }]} accessibilityRole="text">
         <Text style={[styles.bubbleText, dir.text, { color: colors.textPrimary }]}>{t('leagues.resting.hevalo')}</Text>
       </View>
@@ -382,24 +372,20 @@ function Resting(): React.JSX.Element {
         label={t('leagues.notJoined.start')}
         icon="book"
         tone="primary"
-        onPress={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+        onPress={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
         style={styles.stretch}
       />
     </View>
   );
 }
 
-/** how tall Hevalo is drawn while resting */
+/** How tall Hevalo is drawn while resting. */
 const RESTING_HEIGHT = 170;
 
 /**
- * The way out, at the end of the page: asked once, in plain words — what
- * changes and that it can be undone — with Leave and Cancel side by side and
- * neither one dressed up to be chosen.
- *
- * It is a line of quiet words and not a button. A button under the week's
- * one action read as the second thing to do on this page, and it is the
- * thing almost nobody here came to do; it is in Settings too.
+ * Leaving, at the end of the page: confirmed once in plain words (what changes, and that it can be undone), with
+ * Leave and Cancel side by side and neither favoured. A quiet text control rather than a button, since almost
+ * nobody comes here to leave; it is in Settings too.
  */
 function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -425,10 +411,8 @@ function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => void })
 }
 
 /**
- * The week while it loads, in the page's own layout: the league's name and
- * the days left, the ladder's six, the line, the goal ring and its lines,
- * the group's rules, and the table's first rows — what the screen is about
- * to be, in grey.
+ * The loading placeholder in the page's own layout: name and days left, the ladder's six, the goal ring and its
+ * lines, the rules and the table's first rows.
  */
 function LeagueSkeleton(): React.JSX.Element {
   const { t } = useI18n();
@@ -472,7 +456,7 @@ function LeagueSkeleton(): React.JSX.Element {
 function TableSkeleton({ rows, zone = false }: { rows: number; zone?: boolean }): React.JSX.Element {
   return (
     <>
-      {/* the "Moving up" heading the group's table opens with */}
+      {/* The "Moving up" heading the group's table opens with. */}
       {zone ? <SkeletonText size={typography.sizes.xs} width={96} style={styles.zoneSkeleton} /> : null}
       {Array.from({ length: rows }, (_, i) => (
         <View key={i} style={styles.row}>
@@ -486,21 +470,19 @@ function TableSkeleton({ rows, zone = false }: { rows: number; zone?: boolean })
   );
 }
 
-/** a table row: a fingertip and 4, with the 4 between rows */
+/** A table row: a fingertip and 4, with the 4 between rows. */
 const ROW = MIN_TOUCH_TARGET + 4 + spacing.xs;
-/** display(34) sets 1.12 */
+/** display(34) sets 1.12. */
 const LEAGUE_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
 
 /**
- * One row of the group's table, drawn once per row and not again when the
- * list re-renders round it. `delay` is the row's place in the entrance, for
- * the learner's own row, which swells once as it arrives so the eye finds
- * it without looking for it.
+ * One group table row, memoised against list re-renders. `delay` is the row's place in the entrance, for the
+ * learner's row, which swells once on arrival.
  */
 const TableRow = memo(function TableRow({ item, delay }: { item: TableItem; delay: number | null }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  // a row starts where its language reads from: in Soranî and Arabic the place is on the right and the XP on the left
+  // A row starts from the reading side: in Soranî and Arabic the place is on the right and the XP on the left.
   const dir = useDirection();
   if (item.kind === 'gap') return <View style={styles.gap} />;
   if (item.kind === 'zone') {
@@ -524,7 +506,7 @@ const TableRow = memo(function TableRow({ item, delay }: { item: TableItem; dela
       {row.username ? (
         <InitialsAvatar name={row.username} id={row.userId ?? `row-${row.rank}`} size={32} />
       ) : (
-        // somebody the viewer may not be shown by name: a quiet face, not initials made up from "A learner"
+        // Somebody the viewer may not be shown by name: a quiet face, not initials made up from "A learner".
         <View style={[styles.anon, { backgroundColor: colors.controlTrack }]}>
           <Icon name="person" size={16} color={colors.textSecondary} />
         </View>
@@ -556,10 +538,8 @@ const TableRow = memo(function TableRow({ item, delay }: { item: TableItem; dela
 const OWN_ROW_SWELL = 1.03;
 
 /**
- * The learner's own row: once it has risen into place it swells a little and
- * settles on the bouncy spring, so it is found at a glance in a table of
- * twenty. Once, as it arrives, and not under Reduce Motion, where its colour
- * and its edge mark it alone. Everything else is a plain View's.
+ * The learner's own row swells slightly and settles on the bouncy spring once it has risen into place, so it is
+ * found at a glance. Once, on arrival, and not under Reduce Motion, where its colour and edge mark it.
  */
 function OwnRow({ delay, style, children, ...rest }: React.ComponentProps<typeof View> & { delay: number | null }): React.JSX.Element {
   const reduce = useReducedMotion();
@@ -569,7 +549,7 @@ function OwnRow({ delay, style, children, ...rest }: React.ComponentProps<typeof
     const run = Animated.sequence([timing(scale, OWN_ROW_SWELL, duration.quick + 40, { delay: delay + duration.slow }), springTo(scale, 1, 'bouncy')]);
     run.start();
     return () => run.stop();
-    // once, as the row arrives
+    // Once, as the row arrives.
   }, []);
   return (
     <Animated.View {...rest} style={[style, { transform: [{ scale }] }]}>
@@ -579,9 +559,8 @@ function OwnRow({ delay, style, children, ...rest }: React.ComponentProps<typeof
 }
 
 /**
- * Out of the leagues: no group and no table, and nothing that reads as
- * missing out — the week's own goal ring, and this week beside the ones
- * before it, against nobody but yourself.
+ * Out of the leagues: no group or table, and nothing that reads as missing out; just the week's goal ring and
+ * this week beside past weeks.
  */
 function PersonalWeek({
   league,
@@ -692,17 +671,17 @@ const styles = StyleSheet.create({
   titleBlock: { gap: 2, paddingTop: spacing.xs },
   leagueTitle: { ...display(typography.sizes.xxl) },
   left: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
-  // the ladder runs from one edge of the phone to the other, past the list's gutter
+  // The ladder runs from one edge of the phone to the other, past the list's gutter.
   ladderScroll: { marginHorizontal: -layout.gutter },
   ladder: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: LADDER_GAP, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
   divider: { height: StyleSheet.hairlineWidth, marginHorizontal: -layout.gutter },
   resting: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.sm },
-  // his words, in a bubble under him: filled, not framed, like every surface here
+  // His words, in a bubble under him: filled, not framed, like every surface here.
   bubble: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2, maxWidth: 320 },
   bubbleText: { fontSize: typography.sizes.md, lineHeight: 22, fontStyle: 'italic', textAlign: 'center' },
   daysPill: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, marginTop: spacing.sm },
   leave: { alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.md },
-  // a fingertip tall, however few its words
+  // A fingertip tall, however few its words.
   leaveLink: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
   leaveText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

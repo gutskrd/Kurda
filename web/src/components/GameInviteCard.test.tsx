@@ -20,7 +20,7 @@ describe('MessageBody', () => {
     for (const game of ['dont-say', 'bluff']) {
       const shown = show(<MessageBody body={`come and play https://hevalo.app/app/games/${game}?id=${id}`} />);
       expect(screen.getByText('This game is no longer played.')).toBeInTheDocument();
-      // what was written round the link stays; the address that leads nowhere does not
+      // The words written around the link stay; the dead address does not.
       expect(screen.getByText('come and play')).toBeInTheDocument();
       expect(screen.queryByRole('link')).toBeNull();
       expect(screen.queryByText(new RegExp(id))).toBeNull();

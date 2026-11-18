@@ -1,10 +1,7 @@
 /*
- * Playing with friends, the same way in every online game (play/): the
- * invite sheet and its friend picker, the invite banner, a lobby's join code
- * and the boxes a code is typed into, a lobby's "Invited" list, playing
- * again, a game's card in a chat, and the game button in the composer. Built
- * on the lobby and setup styles a story game already has (stories.css), so
- * the three games read as one family.
+ * Playing with friends in every online game (play/): the invite sheet and friend picker, the invite banner, join codes
+ * and their entry boxes, the Invited list, playing again, game cards in chat and the composer's game button. Built on
+ * the story game's lobby and setup styles (stories.css), so the games read as one family.
  */
 
 /* ---- the invite sheet ----------------------------------------------------------- */
@@ -134,11 +131,8 @@
 
 /* ---- the tickets being handed over (play/InviteTickets.tsx) ----------------------- */
 /*
- * A hand of tickets above Send, one per friend picked: side by side while
- * they fit, and overlapping like a fanned hand of cards once they do not, so
- * seven still sit on one line of a phone. The newest is on top. Each tilts a
- * little more the further it is from the middle (`--tilt`, set by the
- * component). How they are written out, fly and come back is in motion.css.
+ * The hand of tickets above Send, one per friend: side by side while they fit, fanned and overlapping once they do not,
+ * newest on top, each tilted by its distance from the middle (`--tilt`). Their motion is in motion.css.
  */
 .admit-tray {
   container-type: inline-size;
@@ -256,11 +250,8 @@
 
 /* ---- the invite banner ------------------------------------------------------------ */
 /*
- * Under the navigation, in the middle: where an invite is seen without taking
- * over the page. It stays until it is answered or runs out (contract §B1), so
- * it is sized to sit there — a strip, not a dialog — and the page moves down
- * by the room it takes (`--invite-banner-h`, measured by the banner), so it
- * is above the page's first line rather than over it.
+ * The invite banner under the navigation, staying until answered or expired, so it is a strip rather than a dialog.
+ * The page moves down by its measured height (`--invite-banner-h`) instead of being covered.
  */
 .invite-banners {
   position: fixed;
@@ -276,11 +267,8 @@
   pointer-events: none;
 }
 /*
- * Each invite is a ticket on its side (ui/Ticket.tsx): the game's mark on the
- * stub, who asked and the answers on the body. Each sits in a slot of its
- * own, so the ticket's shadow and the stack behind the last one are one
- * layer: the open "Not now" menu lifts its slot above the next one, or the
- * menu would open underneath it.
+ * Each invite is a ticket on its side (ui/Ticket.tsx), in its own slot so its shadow and the stack behind are one
+ * layer; an open "Not now" menu lifts its slot above the next.
  */
 .invite-slot {
   position: relative;
@@ -592,9 +580,8 @@
 }
 
 /* ---- a game's card in a chat ---------------------------------------------------- */
-/* the card is the whole message: no bubble around it (social.css's .bubble.is-card) */
-/* two cards in a row are two things, not one block — also when each sits in
-   the line that carries its ⋯ (reports/MessageMenu.tsx) */
+/* The card is the whole message, with no bubble around it (social.css's .bubble.is-card). */
+/* Two cards in a row stay two things, also when each sits in the line with its ⋯ (reports/MessageMenu.tsx). */
 .bubble.is-card + .bubble.is-card,
 .bubble-line:has(> .bubble.is-card) + .bubble-line:has(> .bubble.is-card) {
   margin-top: 6px;
@@ -671,21 +658,12 @@
   min-height: 44px;
   justify-content: center;
 }
-/*
- * A friend's row carries two things beside the name: a game with them, and
- * the ⋯ that holds the rest (pages/Friends.tsx). Its menu opens under the row,
- * over the friends below, where a profile's opens above its card.
- */
+/* A friend row has a game button and a ⋯ (pages/Friends.tsx), whose menu opens below the row rather than above. */
 .friend-row .user-menu {
   top: calc(100% + 8px);
   bottom: auto;
 }
-/*
- * A phone. When the row had three worded buttons they took a line of their
- * own under the name; a game and a ⋯ fit beside it, so the row is one line
- * again (a row of worded buttons still wraps: shell.css), and what gives is
- * the handle, which goes under the name rather than squeezing it.
- */
+/* On a phone the game button and ⋯ fit beside the name, and the handle moves under the name. */
 @media (max-width: 560px) {
   .friend-row:has(.friend-play) {
     flex-wrap: nowrap;
@@ -723,10 +701,8 @@
 
 /* ---- a lobby's join code, as a ticket (play/CodeTicket.tsx) --------------------- */
 /*
- * The ticket stood on end (ui/Ticket.tsx, styles/ticket.css): the stub with
- * the code on top, the body with what to do with it below the tear, in the
- * game's own colour. The tiles stand on a lip like the course's answer
- * tiles. How it moves is in motion.css.
+ * The join-code ticket on end (ui/Ticket.tsx, styles/ticket.css): the code on the stub, instructions below the tear,
+ * in the game's colour, with tiles on a lip like answer tiles. Its motion is in motion.css.
  */
 .code-ticket {
   --code-accent: var(--t-accent);
@@ -909,11 +885,7 @@
 }
 
 /* ---- typing a code in (play/JoinCode.tsx) ---------------------------------------- */
-/*
- * Six boxes drawn over one real field: the field is there, the size of the
- * boxes, but unseen, so a tap anywhere on them is a tap in it. The box being
- * filled wears the gold the app keeps for the thing you are on.
- */
+/* Six boxes drawn over one invisible real field of the same size, so a tap anywhere lands in it; the active box is gold. */
 .code-entry {
   --box: clamp(40px, 11vw, 52px);
   display: grid;

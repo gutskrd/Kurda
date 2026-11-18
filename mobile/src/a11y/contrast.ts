@@ -1,10 +1,4 @@
-/**
- * WCAG colour-contrast checking (KUR-266). Pure functions to compute the
- * contrast ratio between two colours and test it against WCAG AA / AAA, so the
- * design-token palette can be audited (in light and dark mode) and so we never
- * rely on colour alone to convey state. Follows the WCAG 2.x relative-luminance
- * definition. No React / RN imports — plain values in, verdict out.
- */
+/** WCAG 2.x contrast ratios between colours, used to audit the palette in light and dark mode. No React imports. */
 
 export interface Rgb {
   r: number;
@@ -46,10 +40,7 @@ export function relativeLuminance(color: string | Rgb): number {
   return 0.2126 * R + 0.7152 * G + 0.0722 * B;
 }
 
-/**
- * Contrast ratio between two colours, from 1:1 (identical) to 21:1 (black on
- * white). Order-independent.
- */
+/** Contrast ratio between two colours, from 1 (identical) to 21 (black on white). Order-independent. */
 export function contrastRatio(a: string | Rgb, b: string | Rgb): number {
   const la = relativeLuminance(a);
   const lb = relativeLuminance(b);
@@ -62,39 +53,3 @@ export function contrastRatio(a: string | Rgb, b: string | Rgb): number {
 export const AA_NORMAL = 4.5;
 export const AA_LARGE = 3;
 export const AAA_NORMAL = 7;
-export const AAA_LARGE = 4.5;
-
-export interface ContrastOptions {
-  /** the text is "large" (relaxed threshold) */
-  largeText?: boolean;
-  /** require AAA instead of AA */
-  level?: 'AA' | 'AAA';
-}
-
-/** The required ratio for the given level + text size. */
-export function requiredRatio({ largeText = false, level = 'AA' }: ContrastOptions = {}): number {
-  if (level === 'AAA') return largeText ? AAA_LARGE : AAA_NORMAL;
-  return largeText ? AA_LARGE : AA_NORMAL;
-}
-
-export interface ContrastResult {
-  ratio: number;
-  required: number;
-  passes: boolean;
-}
-
-/**
- * Check a foreground/background pair against WCAG. Defaults to AA for normal
- * text. Returns the measured ratio, the threshold, and whether it passes.
- */
-export function checkContrast(
-  foreground: string | Rgb,
-  background: string | Rgb,
-  options: ContrastOptions = {},
-): ContrastResult {
-  const ratio = contrastRatio(foreground, background);
-  const required = requiredRatio(options);
-  // round to 2dp so a value like 4.4999 doesn't spuriously pass/fail on noise
-  const rounded = Math.round(ratio * 100) / 100;
-  return { ratio: rounded, required, passes: rounded >= required };
-}

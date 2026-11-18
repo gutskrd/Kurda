@@ -1,9 +1,7 @@
 /**
- * Guest accounts against real Postgres: a phone gets a guest and, for a day,
- * the same guest back; a guest learns exactly as a signed-in learner does and
- * is refused everything social; nobody else can find the guest; claiming
- * upgrades the same row with the progress on it; leaving and the idle purge
- * close the row at once.
+ * Guest accounts against real Postgres: a phone gets a guest and the same one back for a day; guests learn like members
+ * but are refused everything social; nobody else can find them; claiming upgrades the same row with its progress;
+ * leaving and the idle purge close the row at once.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -219,6 +217,16 @@ describe.skipIf(!DATABASE_URL)('guest accounts (integration)', () => {
       const res = await startGuest(null, { locale: 'xx' });
       expect(res.statusCode).toBe(400);
       expect(res.json().code).toBe('VALIDATION_ERROR');
+    });
+
+    it('keeps the time zone the app sends, and gives UTC for one the database does not know', async () => {
+      const kept = await startGuest(`dev-tz-a-${suffix}`, { timezone: 'Asia/Baghdad' });
+      const odd = await startGuest(`dev-tz-b-${suffix}`, { timezone: 'BET' });
+      expect([kept.statusCode, odd.statusCode]).toEqual([201, 201]);
+      made.push(kept.json().user.id, odd.json().user.id);
+      const zone = async (id: string) => (await pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [id])).rows[0]!.timezone;
+      expect(await zone(kept.json().user.id)).toBe('Asia/Baghdad');
+      expect(await zone(odd.json().user.id)).toBe('UTC');
     });
   });
 

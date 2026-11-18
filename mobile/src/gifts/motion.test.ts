@@ -18,7 +18,7 @@ describe('unwrapPlan', () => {
     ]);
     expect(common.particles.length).toBeLessThan(rare.particles.length);
     expect(rare.particles.length).toBeLessThan(legendary.particles.length);
-    // only the Newroz gifts get the flame
+    // Only the Newroz gifts get the flame.
     expect([common.flame, rare.flame, legendary.flame]).toEqual([false, false, true]);
   });
 
@@ -50,7 +50,7 @@ describe('messagePreview', () => {
     expect(messagePreview({ lastMessage: 'Sent a gift', lastKind: 'gift' }, t)).toBe('Diyarî');
     expect(messagePreview({ lastMessage: 'Pêşbaziya Peyvan', lastKind: 'game' }, t)).toBe(TRANSLATIONS.ku['play.chat.preview']);
     expect(messagePreview({ lastMessage: 'silav', lastKind: 'text' }, t)).toBe('silav');
-    // an older server sends no kind
+    // An older server sends no kind.
     expect(messagePreview({ lastMessage: 'silav' }, t)).toBe('silav');
   });
 

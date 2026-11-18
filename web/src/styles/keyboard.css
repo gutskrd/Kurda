@@ -92,14 +92,9 @@
   white-space: nowrap;
 }
 /*
- * The text and the field are one box.
- *
- * The visible layer is the text, coloured as it is typed; the field that takes
- * the keystrokes is an invisible textarea stretched over it. Two separate boxes
- * put the text on screen as ordinary prose next to an input — select, copy,
- * paste, race over. Here there is nothing to select: `user-select: none` on the
- * text, and the only thing under the pointer is the capture layer, whose own
- * caret is kept at its end (race/useRaceCapture).
+ * The text and the field are one box: the coloured text is visible, and an invisible textarea over it takes the
+ * keystrokes. The text cannot be selected (`user-select: none`), and the capture's caret stays at its end
+ * (race/useRaceCapture).
  */
 .race-type {
   position: relative;
@@ -138,11 +133,7 @@
   letter-spacing: 0;
   line-height: 2.1;
 }
-/*
- * The keystroke sink. Invisible rather than absent: it has to be a real,
- * focusable field or a phone will never open its keyboard. Sized to the whole
- * box so a tap anywhere on the text lands on it.
- */
+/* The keystroke capture: invisible but focusable so phones open the keyboard, and covering the whole box. */
 .race-capture {
   position: absolute;
   inset: 0;
@@ -353,23 +344,14 @@
   opacity: 0.45;
   cursor: default;
 }
-/*
- * Under a username field the same keys sit smaller and quieter: the field is
- * one of several on a form, not the thing the page is for, and the five
- * letters are there for a keyboard without them rather than to be pressed.
- */
+/* Under a username field the keys are smaller and quieter, there for keyboards without those letters. */
 .username-keys .key-bar {
   gap: 6px;
   margin: 0;
   /*
-   * The keys are 36px tall, so where a finger is about each reaches 6px up
-   * and down (reach.css). The field above has no reach of its own, so a key
-   * may take the whole 7px gap to it (the field's gap, ui.css) but never
-   * reach into the field. Side by side each key reaches 3px, half its own
-   * 6px gap, so the keys meet in the middle and a press between two of them
-   * always lands on one. A reach is measured from inside a key's 1px border,
-   * so each of these is a pixel more than the gap it fills. The five keys fit
-   * on one line on any phone, so no row of keys stands under another.
+   * The keys are 36px tall, so each reaches 6px up and down (reach.css), up to the whole 7px gap to the field above but
+   * never into it. Side by side each reaches 3px, half the gap, so a press between two lands on one. Reaches are measured
+   * inside the 1px border, so each is a pixel more than the gap it fills.
    */
   --reach-open: 4px;
   --reach-room-x: 8px;

@@ -1,7 +1,4 @@
-/**
- * Fixtures and a fake API for the Stories and play tests. Not shipped: only
- * test files import it.
- */
+/** Fixtures and a fake API for the Stories and play tests. */
 import { vi } from 'vitest';
 import type { StoryDetail, StoryGameView, StoryLibrary, StoryListItem } from '@kurda/shared';
 import { jsonResponse } from '../test/utils';
@@ -103,10 +100,7 @@ export interface Call {
 
 type Answer = unknown | Response | ((call: Call) => unknown | Response | Promise<unknown>);
 
-/**
- * A fetch that answers by "METHOD /path" (the longest matching prefix wins),
- * records every call, and is signed in as `me` unless told otherwise.
- */
+/** A fetch answering by "METHOD /path" (longest matching prefix wins), recording every call, signed in as `me` unless told otherwise. */
 export function fakeApi(routes: Record<string, Answer>, opts: { signedIn?: boolean } = {}): { calls: Call[] } {
   const signedIn = opts.signedIn ?? true;
   if (signedIn) localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
@@ -126,7 +120,7 @@ export function fakeApi(routes: Record<string, Answer>, opts: { signedIn?: boole
       };
       calls.push(call);
       const key = `${call.method} ${call.path}`;
-      // "GET /stories" answers "GET /stories?dialect=…" too; "GET /x/*" answers anything under /x/
+      // "GET /stories" answers "GET /stories?dialect=…" too; "GET /x/*" answers anything under /x/.
       const matches = (k: string): boolean =>
         k.endsWith('*') ? key.startsWith(k.slice(0, -1)) : key === k || key.startsWith(`${k}?`);
       const match = Object.keys(all)
@@ -144,7 +138,7 @@ export function fakeApi(routes: Record<string, Answer>, opts: { signedIn?: boole
 export const notFound = (): Response => jsonResponse(404, { code: 'NOT_FOUND', message: 'not found' });
 export const refused = (status: number, code: string): Response => jsonResponse(status, { code, message: code });
 
-/** A long-poll that waits until the test says so (or for ever). */
+/** A long-poll that waits until the test releases it, or forever. */
 export function heldPoll(): { answer: (call: Call) => Promise<unknown>; release: (view: unknown) => void } {
   const waiting: Array<(v: unknown) => void> = [];
   return {
@@ -153,7 +147,7 @@ export function heldPoll(): { answer: (call: Call) => Promise<unknown>; release:
   };
 }
 
-/** The library's front page as the server answers it, for a signed-in reader unless `me` is taken away. */
+/** The library's front page as the server answers it, for a signed-in reader unless `me` is removed. */
 export function libraryFixture(over: Partial<StoryLibrary> = {}): StoryLibrary {
   const fable = listItem({ id: 'f1', slug: 'senge-u-penge', title: 'Şengê û Pengê', level: 2, cefr: 'A2', category: 'fable', readingMinutes: 4, audioCoverage: 'full', fullyNarrated: true, featured: true, me: { bookmarked: false, paragraph: 0, share: 0, finishedAt: null, bestCorrect: null, total: null, attemptsToday: 0 } });
   const started = listItem({ id: 'c1', slug: 'bazar', title: 'Bazar', level: 1, cefr: 'A1', category: 'everyday', readingMinutes: 4, me: { bookmarked: false, paragraph: 2, share: 0.5, finishedAt: null, bestCorrect: null, total: null, attemptsToday: 0 } });
@@ -163,7 +157,7 @@ export function libraryFixture(over: Partial<StoryLibrary> = {}): StoryLibrary {
     recent: [kept, fable, started],
     continue: [started],
     bookmarks: [kept],
-    // the list's own names: the page names a category it knows from the catalogue instead ("Animal fables", not "Fables")
+    // The list's own names; the page uses the catalogue's for categories it knows ("Animal fables", not "Fables").
     categories: [
       { slug: 'fable', name: { en: 'Fables', ku: 'Çîrokên ajalan' }, position: 1, count: 1 },
       { slug: 'everyday', name: { en: 'Everyday' }, position: 6, count: 1 },

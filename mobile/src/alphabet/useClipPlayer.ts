@@ -3,23 +3,19 @@ import type { PlaybackClock } from '../characters/voice';
 import { canPlayAudio, useAudio } from '../lesson/useAudio';
 
 export interface ClipPlayer {
-  /** this phone can play a recording at all */
+  /** This phone can play a recording at all. */
   supported: boolean;
   play: (src: string) => void;
-  /** whether `src` is what is sounding now */
+  /** Whether `src` is sounding now. */
   isPlaying: (src: string | null) => boolean;
-  /** the player a speaking character follows for `src`, while `src` is the one loaded */
+  /** The player a speaking character follows for `src`, while `src` is the one loaded. */
   clockFor: (src: string | null) => PlaybackClock | null;
 }
 
 /**
- * One player for the whole alphabet screen, as the website has: a new sound
- * stops the last one rather than talking over it, which is what a tap on a
- * second letter — or on the word after its letter — means.
- *
- * The lessons' player underneath (lesson/useAudio.ts): asking for another
- * recording loads it in place of the last and plays it once it has loaded;
- * asking for the one already loaded plays it again from the start.
+ * One player for the whole alphabet screen, as on the web: a new sound stops the last instead of talking over it.
+ * Built on the lessons' player (lesson/useAudio.ts): another recording loads in place of the last and plays once
+ * loaded, and the loaded one replays from the start.
  */
 export function useClipPlayer(): ClipPlayer {
   const [asked, setAsked] = useState<{ src: string; n: number } | null>(null);

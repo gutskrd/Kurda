@@ -14,14 +14,8 @@ import { LobbyRated } from '../ranks/rated';
 import { CodeTicket } from '../play/CodeTicket';
 
 /**
- * The lobby of a duo or group game: the code to hand out (the play layer's
- * ticket, as in every game's lobby), who is in, and — for the host — the
- * settings, removing a player and Start (contract §A1). Everyone else waits
- * for the host and can leave.
- *
- * `invite` is the "Invite friends" button and `invited` the list of friends
- * asked, both from the play layer, so every game's lobby asks friends the
- * same way.
+ * The lobby of a duo or group game: the code ticket, who is in, and for the host the settings, Remove and Start; everyone
+ * else waits and can leave. `invite` and `invited` are the play layer's button and list, as in every game's lobby.
  */
 export function GameLobby({
   view,
@@ -42,11 +36,8 @@ export function GameLobby({
   const need = MIN_PLAYERS_TO_START[view.mode];
   const canStart = view.activeCount >= need;
 
-  // An invite's Join, and a code typed in Games, get you in without your
-  // settings (the play layer's accept or join, not this game's own join), so
-  // a remembered Extra time is put on here, once, before the first timed
-  // question. Turning it off in the lobby forgets it, so this never undoes a
-  // choice made here.
+  // Joining through an invite or a typed code skips this game's own join and its settings, so a remembered Extra time
+  // is applied here once, before the first timed question; turning it off in the lobby forgets it.
   const extraBrought = useRef(false);
   useEffect(() => {
     if (extraBrought.current) return;
@@ -71,7 +62,7 @@ export function GameLobby({
 
       <FromMemoryNote view={view} />
 
-      {/* Rated or Friendly (Game Ranks): seen before joining, changed by the host here */}
+      {/* Rated or Friendly: seen before joining, changed by the host here. */}
       {view.mode !== 'solo' && view.rated && (
         <LobbyRated
           game="stories"
@@ -119,7 +110,7 @@ export function GameLobby({
                 )}
                 {p.away && <span className="sg-away">{t('stories.game.away')}</span>}
               </span>
-              {/* anyone else in the lobby can be reported, by seat (reports/PlayerReport) */}
+              {/* Anyone else can be reported by seat (reports/PlayerReport). */}
               {!p.isMe && <PlayerReport game="stories" gameId={view.id} seat={p.seat} name={playerName(p, t)} />}
               {view.isHost && !p.isMe && (
                 <ConfirmButton
@@ -137,7 +128,7 @@ export function GameLobby({
         </ul>
       </div>
 
-      {/* who is in first, then who was asked */}
+      {/* Who is in first, then who was asked. */}
       {invited}
 
       <ExtraTimeToggle view={view} act={act} />
@@ -150,7 +141,7 @@ export function GameLobby({
             </Button>
             {!canStart && (
               <p className="muted sg-wait">
-                {/* enough people, but someone has stepped away from the page */}
+                {/* Enough people, but someone has stepped away from the page. */}
                 {present.length >= need ? t('stories.game.waitAway') : t('stories.game.needMore')}
               </p>
             )}

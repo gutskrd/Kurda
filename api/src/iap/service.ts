@@ -7,9 +7,9 @@ import type { IapPlatform, ReceiptVerifier } from './verifier.js';
 
 export interface RedeemResult {
   granted: boolean;
-  /** true when this receipt was already processed (restore / retry). */
+  /** True when this receipt was already processed (restore or retry). */
   duplicate: boolean;
-  /** true when fraud rules held the purchase for review (KUR-073). */
+  /** True when fraud rules held the purchase for review. */
   held: boolean;
   gems: number;
   balance: number;
@@ -30,11 +30,9 @@ interface ReceiptRow {
 }
 
 /**
- * In-app purchase redemption (KUR-072). A receipt is validated server-to-server,
- * stored (unique per store transaction), and the Gems granted atomically with
- * the receipt record. Duplicate transactions are rejected/ignored idempotently
- * so restore-purchases and dropped responses reconcile safely; refund webhooks
- * claw back the Gems still available.
+ * In-app purchase redemption. A receipt is validated server to server and stored (unique per store transaction),
+ * with the Gems granted in the same transaction. Duplicates are answered idempotently, so restores and dropped
+ * responses reconcile; refund webhooks claw back the Gems still available.
  */
 export class IapService {
   constructor(
@@ -116,9 +114,8 @@ export class IapService {
           return { granted: false, duplicate: true, held: true, gems, balance: (await this.wallet.balances(userId)).gems };
         }
         await client.query('COMMIT');
-        // family-shared replay by another member: legitimate, but nothing is
-        // granted here (the original account owns it). Same-account retry/
-        // restore reconciles to whatever the receipt's real state is.
+        // A family member replaying a shared purchase is legitimate but granted nothing, since the original account owns
+        // it; a same-account retry or restore reconciles to the receipt's real state.
         return {
           granted: otherAccount ? false : prior?.status === 'granted',
           duplicate: true,
@@ -165,9 +162,8 @@ export class IapService {
   }
 
   /**
-   * Refund clawback (webhook). Marks the receipt refunded and debits the Gems
-   * still in the wallet — capped at the balance, since the user may have spent
-   * some (the shortfall is recorded in `clawed_back`). Idempotent per receipt.
+   * Refund clawback from the webhook: marks the receipt refunded and debits the Gems still in the wallet, capped at the
+   * balance (the shortfall is recorded in `clawed_back`). Idempotent per receipt.
    */
   async refund(platform: IapPlatform, transactionId: string): Promise<{ found: boolean; clawedBack: number }> {
     const client = await this.pool.connect();
@@ -188,7 +184,7 @@ export class IapService {
         return { found: true, clawedBack: 0 };
       }
 
-      // a receipt that was held never paid anything out: it is marked refunded, and nothing is taken back for it
+      // A held receipt never paid out, so it is marked refunded and nothing is taken back.
       if (receipt.status !== 'granted') {
         await client.query(`UPDATE iap_receipts SET status = 'refunded', refunded_at = now(), clawed_back = 0 WHERE id = $1`, [receipt.id]);
         await client.query('COMMIT');

@@ -1,17 +1,8 @@
 /**
- * What each game is called.
- *
- * A game has one name, and it is Kurmancî: "Peyvok" was never translated,
- * and neither is "Xapînok" or "Ez kî me?". The apps show that name in every
- * language they speak and put what it means beside it in the reader's own
- * (their catalogues' `games.*.meaning`); only the Soranî interface, which is
- * Kurdish already, names the games in its own variety.
- *
- * The names are here, once, for whatever has to name a game without a
- * catalogue to ask: the server's own words about a game (an inbox entry's
- * fallback text, the list of games someone played), the card a link to an
- * invitation unfurls into, and the admin panel. The apps' catalogues carry
- * the same names, and their tests hold them to this list.
+ * What each game is called: one Kurmancî name, never translated ("Peyvok", "Xapînok", "Ez kî me?"), shown in every
+ * interface language with its meaning beside it (catalogues' `games.*.meaning`); only the Soranî interface names games in
+ * its own variety. Here for whatever names a game without a catalogue: the server's own texts, invitation link cards and
+ * the admin. The apps' catalogues carry the same names, and their tests hold them to this list.
  */
 export const GAME_NAMES = {
   peyvok: 'Peyvok',
@@ -25,5 +16,3 @@ export const GAME_NAMES = {
   impostor: 'Xapînok',
   'who-am-i': 'Ez kî me?',
 } as const;
-
-export type NamedGame = keyof typeof GAME_NAMES;

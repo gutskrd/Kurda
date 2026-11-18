@@ -22,16 +22,9 @@ interface Arrival {
 const MAX = 3;
 
 /**
- * "Rojda sent you a gift — Open", wherever you are in the app.
- *
- * A gift used to land silently in the Shop. Now each recipient hears
- * `gift_received` on their own channel; this shows it as a banner that stays
- * until it is opened or put away (no countdown — a present is not a toast to
- * miss), and Open goes to the chat it is in and unwraps it there. Nothing is
- * shown for the chat you are already reading: the bubble is in front of you.
- *
- * `role="status"`: announced politely, never taking focus from what you were
- * doing.
+ * A banner such as "Rojda sent you a gift — Open" anywhere in the app, from `gift_received` on the recipient's
+ * channel. It stays until opened or dismissed, and Open unwraps it in its chat; nothing shows for the chat being read.
+ * Announced politely (`role="status"`) without taking focus.
  */
 export function GiftArrivals(): React.JSX.Element | null {
   const { status } = useAuth();
@@ -44,7 +37,7 @@ export function GiftArrivals(): React.JSX.Element | null {
     (env: RealtimeEventEnvelope) => {
       const ev = env.event as Partial<Extract<GiftUserEvent, { type: 'gift_received' }>>;
       if (!ev.giftId || !ev.chat || !ev.from) return;
-      giftsWereOpened(); // the badge counts it now
+      giftsWereOpened(); // Any shown gift count refreshes.
       const params = new URLSearchParams(location.search);
       const reading =
         location.pathname.startsWith('/app/messages') &&

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-// the module's hook listens for its screen's focus; the merging under test is plain data
+// The module's hook listens for its screen's focus; the merging under test is plain data.
 vi.mock('@react-navigation/native', () => ({ useFocusEffect: () => undefined }));
 import { mergeFresh, withOnTop } from './keep';
 

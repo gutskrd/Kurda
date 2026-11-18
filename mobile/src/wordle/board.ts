@@ -1,19 +1,30 @@
 /**
- * Pure board + keyboard view-model for the Peyvok screen (KUR-305). The screen
- * stays server-authoritative — it never holds the answer — so everything here is
- * derived from the guesses the server has already scored plus the row the player
- * is currently typing. Kept pure so the fiddly grid/keyboard logic is unit-tested
- * without a renderer.
+ * Pure board and keyboard view model for the Peyvok screen. The screen never holds the answer, so everything here
+ * derives from the server-scored guesses plus the row being typed. Pure so the grid and keyboard logic is
+ * unit-tested without a renderer.
  */
 
 import type { LetterFeedback } from '@kurda/shared';
+import type { TranslationKey } from '../i18n/translations';
 
-/** How the server scored a letter: the same three marks the shared grid a result is shared as is drawn from (shared `win-share.ts`). */
+/** How the server scored a letter: the same three marks the shared result grid uses (shared `win-share.ts`). */
 export type Feedback = LetterFeedback;
+
+/** A Peyvok word's difficulty, as the solo game and the battle offer it. */
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
+
+/** Each difficulty's catalogue label. */
+export const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
+  easy: 'games.difficulty.easy',
+  medium: 'games.difficulty.medium',
+  hard: 'games.difficulty.hard',
+};
 
 export const MAX_ATTEMPTS = 6;
 
-/** A scored guess as returned by the server (KUR-304 `GuessRow`). */
+/** A scored guess as the server returns it (`GuessRow`). */
 export interface ScoredGuess {
   letters: string[];
   feedback: Feedback[];
@@ -23,7 +34,7 @@ export type CellState = 'done' | 'active' | 'empty';
 
 export interface BoardCell {
   letter: string;
-  /** null while the cell is unrevealed (active/empty rows) */
+  /** Null while the cell is unrevealed (active/empty rows). */
   feedback: Feedback | null;
 }
 
@@ -33,10 +44,9 @@ export interface BoardRow {
 }
 
 /**
- * Build the full grid: one row per past guess (revealed), then the active row
- * showing the current draft, then empty rows up to `maxAttempts`. Once the game
- * is over there is no active row. `targetLength` sizes every row so long words
- * still render a complete grid.
+ * Build the full grid: one revealed row per past guess, then the active row with the current draft, then empty
+ * rows up to `maxAttempts`. A finished game has no active row. `targetLength` sizes every row, so long words get
+ * a complete grid.
  */
 export function buildBoard(
   guesses: readonly ScoredGuess[],
@@ -75,22 +85,13 @@ export function buildBoard(
   return rows;
 }
 
-/**
- * On-screen Kurdish (Kurmancî Latin) keyboard: all 31 letters, with Enter and
- * Delete. `ENTER` and `DEL` are control keys the screen handles specially.
- */
+/** The on-screen Kurmancî keyboard: all 31 letters plus Enter and Delete, the control keys the screen handles specially. */
 export const ENTER = 'ENTER';
 export const DEL = 'DEL';
 
 /**
- * QWERTY as every phone has it, and ç ê î ş û as a row of their own beneath —
- * the same layout the browser's Peyvok draws (contract §K3).
- *
- * The phone used to put ê, û and î inside the top row next to e, u and i, which
- * made it thirteen keys wide: about 20pt a key on a small phone, and the three
- * pairs most easily confused were the three pressed most by mistake. A row of
- * their own gives the five letters a Latin keyboard lacks full-size keys, and
- * leaves the other three rows where a thumb expects them.
+ * Standard QWERTY with ç ê î ş û as their own row beneath, as the web's Peyvok draws it. Giving the five letters
+ * a Latin keyboard lacks full-size keys of their own keeps the other rows where a thumb expects them.
  */
 export const QWERTY_ROWS: readonly (readonly string[])[] = [
   ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -99,20 +100,13 @@ export const QWERTY_ROWS: readonly (readonly string[])[] = [
   ['ç', 'ê', 'î', 'ş', 'û'],
 ];
 
-/**
- * The 31 letters in the order of the alphabet, for whoever finds a letter
- * faster that way — a learner who knows the alphabet better than a keyboard.
- * A setting on the device (Settings → Keyboard and accents).
- */
+/** The 31 letters in alphabetical order, for learners who know the alphabet better than a keyboard (Settings → Keyboard and accents). */
 export const ALPHABET_ROWS: readonly (readonly string[])[] = [
   ['a', 'b', 'c', 'ç', 'd', 'e', 'ê', 'f'],
   ['g', 'h', 'i', 'î', 'j', 'k', 'l', 'm'],
   ['n', 'o', 'p', 'q', 'r', 's', 'ş', 't'],
   [ENTER, 'u', 'û', 'v', 'w', 'x', 'y', 'z', DEL],
 ];
-
-/** The QWERTY rows, under the name the screens and tests have always used. */
-export const KEYBOARD_ROWS = QWERTY_ROWS;
 
 export function keyboardRows(layout: 'qwerty' | 'alphabet'): readonly (readonly string[])[] {
   return layout === 'alphabet' ? ALPHABET_ROWS : QWERTY_ROWS;

@@ -11,13 +11,9 @@ import type {
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * The words for reports and standing, by value.
- *
- * Typed maps rather than keys built from strings: a category or a sanction the
- * shared module adds fails the typecheck here until it has words, instead of
- * rendering as its own key on someone's screen. The category keys are the ones
- * shared `REPORT_CATEGORIES` names (`labelKey`), so the browser and the phone
- * agree on which sentence belongs to which category.
+ * The words for reports and standing, by value. Typed maps rather than keys built from strings, so a category or
+ * sanction the shared module adds fails the typecheck until it has words. The category keys are shared
+ * `REPORT_CATEGORIES`'s `labelKey`, so the browser and the phone agree.
  */
 export const CATEGORY_LABEL: Record<ReportCategory, TranslationKey> = {
   child_safety: 'report.category.childSafety',

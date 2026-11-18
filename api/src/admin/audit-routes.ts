@@ -16,10 +16,8 @@ const searchQuery = z.object({
 });
 
 /**
- * Wires automatic audit logging (KUR-104): an onResponse hook records every
- * successful admin mutation — no per-route opt-in, so nothing can be exempt —
- * plus a superadmin-only search endpoint. The append-only DB trigger guarantees
- * the trail can't be altered afterward.
+ * Automatic audit logging: an onResponse hook records every successful admin mutation (no per-route opt-in), plus a
+ * superadmin-only search endpoint. An append-only DB trigger keeps the trail unalterable.
  */
 export function registerAuditLog(app: FastifyInstance, audit: AuditService, totp: AdminTotpService): void {
   app.addHook('onResponse', async (req, reply) => {

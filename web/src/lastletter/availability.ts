@@ -3,13 +3,9 @@ import type { LastLetterAvailability, LastLetterAvailabilityAnswer, LetterDialec
 import { useAuth } from '../auth/AuthProvider';
 
 /**
- * Where The Last Letter is offered now (`GET /mp/last-letter/availability`):
- * per dialect, with friends once the dictionary can check players' words, and
- * against Hevalo once admins have curated enough of its words. Learn's list
- * opens it only where it is offered, and shows it as coming soon elsewhere.
- *
- * Read once per page load and shared: the answer changes when an import or an
- * admin's curation lands, not while somebody is choosing a game.
+ * Where The Last Letter is offered (`GET /mp/last-letter/availability`), per dialect: with friends once the dictionary
+ * can check words, against Hevalo once enough of its words are curated. Read once per page load, since it changes
+ * only with imports and curation.
  */
 let cached: Promise<LastLetterAvailability[]> | null = null;
 
@@ -27,7 +23,7 @@ export function useLastLetterAvailability(enabled = true): LastLetterAvailabilit
     let alive = true;
     cached ??= client.get<LastLetterAvailabilityAnswer>('/mp/last-letter/availability').then((r) => {
       if (r.ok && Array.isArray(r.data?.dialects)) return r.data.dialects;
-      // asked again next time: a failed read is not an answer
+      // A failed read is not cached, so the next caller asks again.
       cached = null;
       return [];
     });

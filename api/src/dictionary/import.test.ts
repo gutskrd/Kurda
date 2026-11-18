@@ -59,10 +59,8 @@ describe('reconcile', () => {
   });
 
   /**
-   * The case the whole thing exists for. Wîkîferheng explains Kurmancî in
-   * Kurmancî and English Wiktionary explains it in English, so importing one
-   * after the other must complete the entry rather than report a conflict for
-   * every word in the language.
+   * One source explains Kurmancî in Kurmancî and another in English, so importing one after the other must complete
+   * each entry rather than report a conflict for every word.
    */
   it('fills in the side an entry is missing rather than colliding with it', () => {
     expect(reconcile(stored(null, 'fêkî'), { definitionEn: 'apple' })).toEqual({

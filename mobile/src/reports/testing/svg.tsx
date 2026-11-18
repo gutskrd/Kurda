@@ -1,11 +1,7 @@
 /**
- * react-native-svg for component tests.
- *
- * The real package requires React Native's own sources, which are Flow and do
- * not load under Node; the tests render the phone's components through
- * react-native-web instead (see `rnWeb.ts`), and SVG in a browser is just SVG.
- * So each element is the DOM element of the same name with its props passed
- * through — enough to assert what was drawn, which is all a test needs.
+ * react-native-svg for component tests: the real package needs React Native's Flow sources, which do not load under
+ * Node, and SVG in a browser is just SVG. Each element is the DOM element of the same name with its props passed
+ * through.
  */
 import { createElement, type ReactNode } from 'react';
 
@@ -13,7 +9,7 @@ type Props = Record<string, unknown> & { children?: ReactNode };
 
 function element(tag: string) {
   return function SvgElement({ children, ...props }: Props) {
-    // testID is React Native's; the DOM's is data-testid
+    // testID is React Native's; the DOM's is data-testid.
     const { testID, accessibilityLabel, ...rest } = props as Props & { testID?: string; accessibilityLabel?: string };
     return createElement(
       tag,

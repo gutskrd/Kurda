@@ -6,21 +6,10 @@ import { Faq } from '../pages/Faq';
 import { en } from '../i18n/en';
 
 /**
- * What the front page and the FAQ promise, held to what the product does.
- *
- * Each of these was a line the research report found untrue (docs/research,
- * "some copy is untrue"): six kinds of exercise when the published course has
- * four, words brought back "just before you would forget them" by a schedule
- * that follows fixed rules, Zêr for coming back when it is paid for learning,
- * a streak for every day you return when it counts a finished lesson or
- * review or a daily Peyvok solved (api/src/game/wordle-service.ts: `daily &&
- * won`), and a league everyone is in when it is a choice. Listening and
- * speaking exercises exist in the player, but the first course has none yet,
- * so every line that names them says "in lessons that have them".
- *
- * And one that stopped being true when the rule changed: "games earn XP".
- * XP comes from lessons, stories and games played online with other people;
- * a game played alone, against Hevalo or on one phone earns none.
+ * The front page's and the FAQ's promises, held to what the product does: four exercise kinds, a fixed-rule review
+ * schedule, Zêr paid for learning, a streak for a finished lesson, review or solved daily Peyvok
+ * (api/src/game/wordle-service.ts), an optional league, listening and speaking only "in lessons that have them", and
+ * XP only from lessons, stories and online games with other people.
  */
 describe('what the front page promises', () => {
   it('promises listening and speaking only in the lessons that have them', () => {
@@ -39,7 +28,7 @@ describe('what the front page promises', () => {
   it('says what keeps a streak and what pays Zêr', () => {
     const { container } = renderApp(<Landing />);
     expect(screen.getByText(/a streak for each day you finish a lesson or a review, or solve the daily peyvok/i)).toBeInTheDocument();
-    // a daily Peyvok played and lost keeps no streak, so finishing one is not enough
+    // A lost daily Peyvok keeps no streak, so finishing one is not enough.
     expect(container.textContent).not.toMatch(/a review or the daily peyvok/i);
     expect(screen.getByText(/finish a lesson or a review each day for zêr/i)).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/come back each day for zêr|show up every day for zêr/i);
@@ -50,7 +39,7 @@ describe('what the front page promises', () => {
     expect(container.textContent).not.toMatch(/games and lessons earn xp/i);
     expect(screen.getByText(/^Lessons, stories and games played online with friends earn XP, and a weekly league ranks it/)).toBeInTheDocument();
     expect(screen.getByText('Lessons, stories and games with friends online earn XP.')).toBeInTheDocument();
-    // an account keeps the scores of the games; it is not said to keep XP they no longer all earn
+    // An account keeps game scores; it is not said to keep XP, which not all games earn.
     expect(screen.getByText('The games need a free account, which keeps your scores.')).toBeInTheDocument();
   });
 
@@ -61,13 +50,7 @@ describe('what the front page promises', () => {
     ).toBeInTheDocument();
   });
 
-  /**
-   * The front page once had a section of its own for hearing and saying
-   * Kurdish, whose footnote carried the hedge for the whole of it; a footnote
-   * can be rewritten without anyone rereading the lines above it. Those lines
-   * now sit with the lessons, and each one that names listening or speaking
-   * carries its own hedge.
-   */
+  /** Each line that names listening or speaking carries its own hedge, rather than relying on a footnote. */
   it('promises listening and speaking only in the lessons that have them, line by line', () => {
     renderApp(<Landing />);
     const learn = document.getElementById('learn')!;

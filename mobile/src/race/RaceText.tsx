@@ -7,14 +7,10 @@ import type { Palette } from '../theme/palette';
 import { caretWord, splitWords, wordView, type WordView } from './words';
 
 /**
- * The race text, coloured as it is typed: right, an accent left out (and
- * forgiven), wrong, or still to come — with the caret on the next character
- * and anything typed that the text does not have shown, struck through, where
- * it was typed.
- *
- * Drawn a word at a time (see words.ts), and `onCaretLine` says where the
- * caret's line is whenever it moves to another one, so the screen can keep it
- * in sight above the phone's keyboard.
+ * The race text, coloured as typed: right, an accent left out (and forgiven), wrong, or still to come, with the
+ * caret on the next character and extra typed characters struck through where they were typed. Drawn a word at a
+ * time (words.ts); `onCaretLine` reports when the caret moves to another line, so the screen keeps it above the
+ * keyboard.
  */
 export function RaceText({
   text,
@@ -23,12 +19,12 @@ export function RaceText({
   finished,
   onCaretLine,
 }: {
-  /** the text as shown (`displayTarget`), one character per `comparison.chars` entry */
+  /** The text as shown (`displayTarget`), one character per `comparison.chars` entry. */
   text: string;
   dialect: TypingDialect;
   comparison: TypingComparison | null;
   finished: boolean;
-  /** the caret's line, as a distance from the top of this view */
+  /** The caret's line, as a distance from the top of this view. */
   onCaretLine?: (y: number) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -38,7 +34,7 @@ export function RaceText({
   const caretAt = caretWord(words, comparison?.caret ?? 0);
   const lastY = useRef<number | null>(null);
 
-  // tell the screen when the caret reaches another line, not on every key
+  // Tell the screen when the caret reaches another line, not on every key.
   useEffect(() => {
     const y = lineOf.current.get(caretAt);
     if (y === undefined || y === lastY.current) return;
@@ -120,7 +116,7 @@ const Word = memo(
     JSON.stringify(a.view.extra) === JSON.stringify(b.view.extra),
 );
 
-/** right, an accent forgiven, wrong, still to come */
+/** Right, an accent forgiven, wrong, still to come. */
 function charColor(state: string | undefined, c: Palette): string {
   return state === 'o' ? c.success : state === 'a' ? c.gold : state === 'w' ? c.danger : c.textSecondary;
 }
@@ -130,7 +126,7 @@ const styles = StyleSheet.create({
   rtl: { flexDirection: 'row-reverse' },
   word: { fontSize: typography.sizes.lg, lineHeight: 32, letterSpacing: 0.2 },
   wordRtl: { writingDirection: 'rtl' },
-  // forgiven, not wrong: underlined in the gold the app uses for "nearly"
+  // Forgiven, not wrong: underlined in the gold the app uses for "nearly".
   accent: { textDecorationLine: 'underline' },
   caret: { borderRadius: radii.xs },
   extra: { fontSize: typography.sizes.md, textDecorationLine: 'line-through' },

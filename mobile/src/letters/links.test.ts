@@ -4,7 +4,7 @@ import { LETTER_LINKS } from './links';
 
 const T = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
 
-/** The screen and its params an address opens, with the letters’ part of the app’s linking. */
+/** The screen and params an address opens, through the letters' part of the app's linking. */
 function opens(path: string): { name: string; params?: object } | undefined {
   const route = getStateFromPath(path, { screens: LETTER_LINKS })?.routes.at(-1);
   return route ? { name: route.name, ...(route.params ? { params: route.params } : {}) } : undefined;

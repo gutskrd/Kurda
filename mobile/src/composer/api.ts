@@ -3,18 +3,18 @@ import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
 /**
- * The composer's calls: a written post with words, pictures or both
- * (`@kurda/shared` post-composer has the request shapes and the rules).
+ * The composer's calls: a written post with words, pictures or both (`@kurda/shared` post-composer has the request
+ * shapes and rules).
  */
 
-/** A written post as the API answers it — the fields the composer and the post screen read. */
+/** A written post as the API answers it: the fields the composer and the post screen read. */
 export interface ComposerPost {
   id: string;
   authorId: string;
   type: WrittenPostType;
-  /** null on a gotin */
+  /** Null on a gotin. */
   title: string | null;
-  /** '' on a post that is only its pictures */
+  /** '' on a post that is only its pictures. */
   body: string;
   status: 'draft' | 'published' | 'removed';
   media: PostMediaView[];

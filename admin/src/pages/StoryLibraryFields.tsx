@@ -27,7 +27,6 @@ import {
   type AppLocale,
   type StoryCategory,
   type StoryProblem,
-  type StoryTradition,
   type StoryTranslationReviewStatus,
 } from '@kurda/shared';
 import { artSrc } from '../shop/art';
@@ -39,7 +38,6 @@ import {
   TRANSLATION_REVIEW_NAME,
   fieldId,
   localeCoverage,
-  localeName,
   localeProblems,
   localeReview,
   translationChecks,
@@ -49,19 +47,15 @@ import {
   type StoryForm,
   type TextFacts,
 } from '../stories';
+import { localeName } from '../format';
 import { Badge, Button, Checkbox, Icon, Note, Time, type Loaded } from '../ui';
 import { CATEGORIES_HREF } from './StoryList';
 import { EditorSection, Field, ProblemList, ReadOnly, described, type ProblemsAt } from './StoryEditorFields';
 
 /**
- * How a story is filed and shown in the library (its category, where it comes
- * from, its cover, its reading time, whether it is featured), who it is
- * attributed to and its sources, what is offered after reading (questions to
- * think about, notes), and its translations: the editor's library sections.
- * The text itself, the glossary and the questions stay in StoryEditor.tsx.
- *
- * The translations are per language: each language can be saved on its own,
- * on a published story too, and marked reviewed by a native speaker of it.
+ * The editor's library sections: filing and display (category, origin, cover, reading time, featured), attribution and
+ * sources, what comes after reading, and the translations, each language saved and reviewed on its own. The text,
+ * glossary and questions stay in StoryEditor.tsx.
  */
 
 /** The library's fields of the About section: category, tradition, cover, reading time, featured. */
@@ -81,7 +75,7 @@ export function LibraryFields({
   facts: TextFacts;
   categories: Loaded<StoryCategory[]>;
   story: AdminStory | null;
-  /** a feature request is out */
+  /** A feature request is out. */
   featuring: boolean;
   onFeature: (featured: boolean) => void;
 }): React.JSX.Element {
@@ -118,7 +112,7 @@ export function LibraryFields({
                 {c.name.en}
               </option>
             ))}
-            {/* a category deleted since the story was filed stays on the story until the editor chooses another */}
+            {/* A category deleted since the story was filed stays on the story until the editor chooses another. */}
             {unknownCategory && <option value={category}>{category} (no longer a category)</option>}
           </select>
         </Field>
@@ -182,11 +176,11 @@ export function LibraryFields({
   );
 }
 
-/** The cover: one of the shared backgrounds, or none (the apps then lay the story on one of the seven kilims, always the same one: shared `storyCoverFor`). */
+/** The cover: a shared background, or none, when the apps give the story one of the seven kilims (`storyCoverFor`). */
 function CoverPicker({ value, onChange, problems }: { value: string | null; onChange: (cover: string | null) => void; problems: ProblemsAt }): React.JSX.Element {
   const ro = useContext(ReadOnly);
   const current = storyCover(value);
-  // a key the catalogue no longer has is kept and shown, so a save does not quietly drop it
+  // A key the catalogue no longer has is kept and shown, so a save does not quietly drop it.
   const unknown = value && !current ? value : null;
   const tile = (key: string | null, label: string, sub: string | undefined, picture: string | null): React.JSX.Element => {
     const on = (value ?? null) === key;
@@ -380,10 +374,8 @@ function SourcesList({ form, dispatch, at }: { form: StoryForm; dispatch: (a: Ed
 }
 
 /**
- * What the reader is offered once the story is read: open questions to think
- * about (nothing is scored), and notes on what is history and what is
- * legend, how the tellings differ, or what a custom in it means. Written in
- * the story's variety; their translations are under Translations.
+ * What the reader is offered after the story: unscored questions to think about, and notes on history and legend,
+ * tellings or customs, in the story's variety (their translations are under Translations).
  */
 export function AfterReadingSection({ form, dispatch, at }: { form: StoryForm; dispatch: (a: EditorAction) => void; at: ProblemsAt }): React.JSX.Element {
   const ro = useContext(ReadOnly);
@@ -500,29 +492,25 @@ export function AfterReadingSection({ form, dispatch, at }: { form: StoryForm; d
 
 /** What the Translations section needs to save or review one language on its own. */
 export interface LocaleActions {
-  /** the languages whose translation has unsaved edits */
+  /** The languages whose translation has unsaved edits. */
   changed: readonly string[];
-  /** the languages the story has a saved translation in, of any part */
+  /** The languages the story has a saved translation in, of any part. */
   saved: readonly string[];
-  /** why no language can be saved on its own right now, or null when one can */
+  /** Why no language can be saved on its own right now, or null when one can. */
   blocked: string | null;
-  /** the language a request is out for */
+  /** The language a request is out for. */
   busy: string | null;
-  /** the problems the editor finds as it is typed, to hold a save of a language with its own */
+  /** The problems the editor finds as it is typed, to hold a save of a language with its own. */
   blocking: readonly StoryProblem[];
   onSave: (locale: string) => void;
   onReview: (locale: string, status: StoryTranslationReviewStatus) => void;
 }
 
 /**
- * Everything of the story per interface language: the whole text, paragraph
- * for paragraph with the Kurdish beside it so the editor can align them (the
- * reader shows a paragraph's translation under it, so the counts have to
- * match, headings included), the title and summary, each question with its
- * options in the same order, and the reflections and notes. Each language is
- * saved on its own ("Save this language") — on a published story too, which
- * stays online and approved — and marked reviewed once a native speaker of it
- * has read it.
+ * Everything of the story per interface language: the text paragraph by paragraph beside the Kurdish (the reader shows
+ * each translation under its paragraph, so the counts must match), the title and summary, questions, reflections and
+ * notes. Each language is saved on its own, keeping a published story online and approved, and reviewed by a native
+ * speaker.
  */
 export function TranslationsSection({
   form,
@@ -538,7 +526,7 @@ export function TranslationsSection({
   at: ProblemsAt;
   facts: TextFacts;
   story: AdminStory | null;
-  /** the translations can be edited while the rest of a published story cannot: only an archived story or a request out stops them */
+  /** The translations can be edited while the rest of a published story cannot: only an archived story or a request out stops them. */
   readOnly: boolean;
   locales: LocaleActions;
 }): React.JSX.Element {
@@ -858,9 +846,4 @@ function LocaleFooter({ locale, story, locales }: { locale: string; story: Admin
       )}
     </div>
   );
-}
-
-/** The tradition a story claims, as a type the names know; anything else reads as original. */
-export function traditionOf(value: string): StoryTradition {
-  return (STORY_TRADITIONS as readonly string[]).includes(value) ? (value as StoryTradition) : 'original';
 }

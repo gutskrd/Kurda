@@ -19,7 +19,7 @@ import { onHaptic, setHapticDriver } from '../feedback/haptics';
 import { WordSetScreen } from './WordSetScreen';
 import { WordsScreen } from './WordsScreen';
 
-/** Where the phone plays a word's synthesised clip from: the website, under the file the manifest names. */
+/** Where the phone plays a word's synthesised clip from: the website, at the file the manifest names. */
 const synthesised = (key: string) => `https://hevalo.app/audio/words/${SYNTHESISED_WORD_CLIPS[key]}`;
 
 function serve(answer: AlphabetAudioResponse = { clips: {} }): void {
@@ -28,7 +28,7 @@ function serve(answer: AlphabetAudioResponse = { clips: {} }): void {
 
 async function show(set: WordSetId, script?: AlphabetScript): Promise<void> {
   renderWithProviders(<WordSetScreen set={set} script={script} onExit={() => undefined} />);
-  // the recordings' answer, and the stored ticks, arrive on later turns
+  // The recordings' answer, and the stored ticks, arrive on later turns.
   await act(async () => undefined);
 }
 
@@ -74,7 +74,7 @@ describe('letters and words', () => {
     localStorage.setItem('hevalo_alphabet_seen_v1', JSON.stringify({ kmr: ['a', 'b', 'c', 'gone'], ckb: ['alif'] }));
     renderWithProviders(<WordsScreen onExit={() => undefined} />);
     const letters = await screen.findByRole('button', { name: 'Alphabet, 3 of 31 explored' });
-    // first in the list, before the word sets
+    // First in the list, before the word sets.
     const cards = screen.getAllByRole('button', { name: / explored$/ });
     expect(cards[0]).toBe(letters);
     expect(cards).toHaveLength(5);
@@ -111,7 +111,7 @@ describe('a word set', () => {
     expect(within(card).getByText('Computer voice — a guide, not a native speaker.')).toBeTruthy();
     await waitFor(() => expect(FakeAudio.of(synthesised('words:colours:kmr:red'))?.paused).toBe(false));
 
-    // stepping on is a tick, as moving through a picker is, and the next word says itself
+    // Stepping on is a tick, as moving through a picker is, and the next word says itself.
     const felt: string[] = [];
     const stop = onHaptic((e) => felt.push(e));
     await press('Next word', { inside: card });
@@ -120,7 +120,7 @@ describe('a word set', () => {
     await waitFor(() => expect(FakeAudio.of(synthesised('words:colours:kmr:blue'))?.paused).toBe(false));
     stop();
 
-    // both are ticked, and kept on this phone
+    // Both are ticked, and kept on this phone.
     await waitFor(() => expect(JSON.parse(localStorage.getItem('hevalo_words_colours_seen_v1')!)).toEqual({ kmr: ['red', 'blue'], ckb: [] }));
     expect(screen.getByText('2 of 11 explored')).toBeTruthy();
   });
@@ -136,7 +136,7 @@ describe('a word set', () => {
     expect(within(card).getByRole('button', { name: 'Listen' })).toBeTruthy();
     await press('Close', { inside: card });
 
-    // grey's dark ł has no synthesised voice: nothing to press until it is recorded
+    // Grey's dark ł has no synthesised voice: nothing to press until it is recorded.
     await press('خۆڵەمێشی, grey');
     card = await sheet();
     expect(within(card).getByText('xołemêşî')).toBeTruthy();
@@ -188,7 +188,7 @@ describe('a word set', () => {
       'Pêncşem, Thursday',
       'În, Friday',
     ]);
-    // the number inside the name, picked out on its own
+    // The number inside the name, picked out on its own.
     expect(within(tiles[1]!).getByText('Yek')).toBeTruthy();
     expect(within(tiles[2]!).getByText('îro')).toBeTruthy();
 
@@ -214,7 +214,7 @@ describe('a word set', () => {
     expect(within(card).getByText('bihar')).toBeTruthy();
     expect(within(card).getByText('Newroz, the Kurdish new year, is on 21 March.')).toBeTruthy();
     await press('Next word', { inside: card });
-    // and the other name Kurmancî has for some of them
+    // And the other name Kurmancî has for some of them.
     await press('Previous word', { inside: card });
     await press('Previous word', { inside: card });
     expect(within(card).getByText('Also called')).toBeTruthy();
@@ -230,7 +230,7 @@ describe('check yourself, with words', () => {
     await show('numbers');
     await press('Start');
     expect(await screen.findByLabelText('Question 1 of 8')).toBeTruthy();
-    // a number heard is answered with its digits, and the word plays by itself
+    // A number heard is answered with its digits, and the word plays by itself.
     expect(screen.getByText('Listen. Which number is it?')).toBeTruthy();
     await waitFor(() => expect(FakeAudio.made.some((a) => !a.paused)).toBe(true));
 

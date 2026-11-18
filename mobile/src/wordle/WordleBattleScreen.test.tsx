@@ -7,7 +7,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import type { BattleState } from './battleApi';
 import { WordleBattleScreen } from './WordleBattleScreen';
 import { backOut, navigation } from '../play/testing/navigation';
-import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
+import { pressBack, resetHardwareBack, swipeHeld } from '../navigation/testing/hardwareBack';
 import { reportGameFinished } from '../feedback/gameFinished';
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -29,7 +29,7 @@ vi.mock('../realtime/useUserEvents', () => ({
 }));
 const changed = (): void => userEvents.listeners.forEach((h) => h({ type: 'play_changed', game: 'wordle-battle', lobbyId: 'b1' }));
 
-/** Answers every dialog with the button that has this style (the one that acts, or the one that stays). */
+/** Answers every dialog with the button of this style (the one that acts, or the one that stays). */
 function answerAlerts(style: AlertButton['style']) {
   return vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
     buttons?.find((b) => b.style === style)?.onPress?.();
@@ -46,7 +46,7 @@ describe('WordleBattleScreen', () => {
   });
 
   it('follows a new battle opened while it is on screen (an invite’s Join, a card, a new game)', async () => {
-    // neither battle exists here; what matters is which one the screen asks for
+    // Neither battle exists here; what matters is which one the screen asks for.
     const client = fakeClient({
       'GET /wordle/battles/battle-a': fail({ status: 404, code: 'GAME_NOT_FOUND' }),
       'GET /wordle/battles/battle-b': fail({ status: 404, code: 'GAME_NOT_FOUND' }),
@@ -56,7 +56,7 @@ describe('WordleBattleScreen', () => {
     await act(async () => undefined);
     expect(client.calls.some((c) => c.path === '/wordle/battles/battle-a')).toBe(true);
 
-    // the same screen, given new params (render's wrapper is kept on a rerender)
+    // The same screen, given new params (render's wrapper is kept on a rerender).
     view.rerender(<WordleBattleScreen id="battle-b" onExit={() => undefined} />);
     await act(async () => undefined);
     expect(client.calls.some((c) => c.path === '/wordle/battles/battle-b')).toBe(true);
@@ -110,9 +110,8 @@ describe('WordleBattleScreen', () => {
   });
 
   /*
-   * Backing out of the lobby leaves it, asked first as a story game's lobby
-   * asks: the others stop waiting for a seat nobody is in. The header's back
-   * and the lobby's own Leave are the same way out.
+   * Backing out of the lobby leaves it after asking, as a story game's lobby does, so others stop waiting for an
+   * empty seat. The header's back and the lobby's Leave are the same exit.
    */
   describe('leaving the lobby', () => {
     const guestLobby = () =>
@@ -133,6 +132,8 @@ describe('WordleBattleScreen', () => {
       const alert = answerAlerts('destructive');
       renderWithProviders(<WordleBattleScreen id="b1" onExit={backOut} />);
       await screen.findByRole('button', { name: 'Leave game' });
+      // The lobby asks through the stack itself, so its swipe is left to it.
+      expect(swipeHeld()).toBe(false);
       fireEvent.click(screen.getByRole('button', { name: 'Back' }));
       expect(alert.mock.calls[0]?.[0]).toBe('Leave this game?');
       await waitFor(() => expect(navigation.dispatch).toHaveBeenCalledWith({ type: 'GO_BACK' }));
@@ -196,7 +197,7 @@ describe('WordleBattleScreen', () => {
       fireEvent.click(screen.getByRole('button', { name: 'New battle' }));
       expect(await screen.findByRole('button', { name: 'Create battle' })).toBeTruthy();
       cleanup();
-      // taken out by the host: to them the battle no longer exists
+      // Removed by the host: to them the battle no longer exists.
       testAuth.client = fakeClient({ 'GET /wordle/battles/b1': fail({ status: 404, code: 'NOT_FOUND' }) });
       renderWithProviders(<WordleBattleScreen id="b1" onExit={backOut} />);
       expect(await screen.findByText('This game isn’t available.')).toBeTruthy();
@@ -204,25 +205,23 @@ describe('WordleBattleScreen', () => {
       expect(navigation.goBack).toHaveBeenCalledTimes(1);
     });
 
-    // Android's back mid-race asks; the header's back still just goes, as it always has
+    // Android's back mid-race asks; the header's back still just goes, as it always has.
     it('asks before Android’s back leaves a race under way', async () => {
       testAuth.client = fakeClient({ 'GET /wordle/battles/b1': ok(lobby({ status: 'active', code: null })) });
       const alert = answerAlerts('destructive');
       const onExit = vi.fn();
       renderWithProviders(<WordleBattleScreen id="b1" onExit={onExit} />);
-      // the race is on once the battle has come: back is the screen's to answer from then
+      // The race is on once the battle has come: back is the screen's to answer from then.
       await waitFor(() => expect(pressBack()).toBe(true));
       expect(alert.mock.calls[0]?.[0]).toBe('Leave this game?');
       expect(alert.mock.calls[0]?.[1]).toBe('The game carries on without you.');
       expect(onExit).toHaveBeenCalledTimes(1);
+      // And the iOS edge swipe cannot leave it without asking either.
+      expect(swipeHeld()).toBe(true);
     });
   });
 
-  /*
-   * The rating box comes with the results, as a rhyme match's does: it used to
-   * be asked for when the player's own board ended, and sat over the board and
-   * the opponents' progress while the battle was still being played.
-   */
+  /* The rating box comes with the results, as a rhyme match's does, not when the player's own board ends while the battle is still on. */
   it('reports a battle played here as finished once its results are in, not when the player’s own board ends', async () => {
     vi.mocked(reportGameFinished).mockClear();
     const solvedNow = lobby({ status: 'active', code: null, me: { guesses: [], keyboard: {}, status: 'done', solved: true, remainingAttempts: 4 } });
@@ -236,12 +235,12 @@ describe('WordleBattleScreen', () => {
     testAuth.client = client;
     renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
     expect(await screen.findByLabelText('Kurdish keyboard')).toBeTruthy();
-    // the player's own board is done while the others play on: nothing is reported yet
+    // The player's own board is done while the others play on: nothing is reported yet.
     state = solvedNow;
     await act(async () => changed());
     expect(await screen.findByText(/You solved it/)).toBeTruthy();
     expect(reportGameFinished).not.toHaveBeenCalled();
-    // the battle ends, and its results arrive
+    // The battle ends, and its results arrive.
     state = { ...solvedNow, status: 'finished' };
     await act(async () => changed());
     expect(await screen.findByText('You won!')).toBeTruthy();

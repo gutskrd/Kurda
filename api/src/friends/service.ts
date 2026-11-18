@@ -51,20 +51,15 @@ export interface SuggestedFriend extends FriendSummary {
 }
 
 /**
- * Someone you have blocked.
- *
- * Deliberately not a `FriendSummary`: presence is the one field a blocked user
- * would not want the person who blocked them to have. A block is meant to end
- * the relationship in both directions, and "online now" is a live signal about
- * somebody's whereabouts. Enough to recognise who you blocked and when, and
- * nothing beyond that.
+ * Someone you have blocked. Not a `FriendSummary`, because presence is a live signal of whereabouts the blocked
+ * person would not want shared; enough to recognise who and when.
  */
 export interface BlockedUser {
   userId: string;
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
-  /** when the block was placed, so an old one can be told from a new one */
+  /** When the block was placed. */
   blockedAt: string;
 }
 
@@ -73,13 +68,8 @@ export const BLOCKS_PAGE_SIZE = 25;
 export const BLOCKS_PAGE_MAX = 100;
 
 /**
- * The most friends one request will answer with.
- *
- * `FRIEND_CAP` rather than something smaller on purpose: 500 is already the
- * most friends anyone can have, so asking for that many is asking for all of
- * them, and no caller is ever silently cut short — not the friends page, not
- * a picker, not a copy of the phone app that shipped before this did. What
- * changes is that a caller drawing eight avatars can now say eight.
+ * The most friends one request returns. Equal to the cap on friends, so asking for that many returns all of them
+ * and no caller, older phone apps included, is silently cut short.
  */
 export const FRIENDS_PAGE_MAX = FRIEND_CAP;
 
@@ -89,28 +79,17 @@ interface EdgeRow {
 }
 
 /**
- * Friend system (KUR-081). Request → accept/decline over a single canonical
- * friendship row, with an absolute, silent block: a block cancels any pending
- * request in either direction and hides both users from each other everywhere
- * (searches, lists, friends boards) via `areBlocked`. Friends are capped at 500;
- * pending requests expire after 30 days. Nobody has more than
- * MAX_FRIEND_REQUESTS_SENT requests out or MAX_FRIEND_REQUESTS_RECEIVED waiting,
- * or more than MAX_BLOCKS accounts blocked (@kurda/shared limits).
+ * Friend system: request and accept or decline over one canonical friendship row, with an absolute, silent block
+ * that cancels pending requests both ways and hides the two from each other everywhere. Friends are capped at 500,
+ * pending requests expire after 30 days, and requests out, requests waiting and blocks are capped by the shared
+ * limits.
  *
- * A minor (13–17, worked out from age when asked) can send requests but never
- * receives one, so every friendship a minor has is one they started. Nobody is
- * suggested a minor either. The same holds for an account whose age is not on
- * record yet, until it answers (users/age.ts `notKnownAdultSql`).
- *
- * The sender is never told. A request to a minor is stored and answered
- * exactly like a request to an adult who has not responded — 'requested', and
- * listed among the sender's outgoing requests until it expires — but it never
- * reaches the minor: it is not in their incoming list, not offered on the
- * sender's profile, and cannot be accepted. A refusal that only minors gave
- * would tell any adult which accounts belong to children. Only the minor's own
- * request back to that person turns it into a friendship (the mutual
- * auto-accept below), because then the minor chose it. When an account turns
- * out to be a minor's, the requests waiting for it are removed.
+ * A minor, or an account whose age is not on record yet (users/age.ts `notKnownAdultSql`), can send requests but
+ * never receives one and is never suggested, so every friendship a minor has is one they started. The sender is
+ * never told: a request to a minor is stored and answered like one to an adult who has not responded, but never
+ * reaches the minor, since a refusal only minors gave would reveal which accounts are children's. Only the minor's
+ * own request back makes the friendship (the mutual auto-accept). When an account turns out to be a minor's, its
+ * waiting requests are removed.
  */
 export class FriendService {
   private readonly blockListeners: Array<(blocker: string, blocked: string) => Promise<void> | void> = [];
@@ -118,11 +97,8 @@ export class FriendService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Run `listener` after every block has committed — for what a block undoes
-   * elsewhere (the story games part a blocked pair in the lobbies they
-   * share). After the commit and outside it, so a game's own locks are never
-   * taken inside this transaction; a listener that fails does not undo the
-   * block.
+   * Runs `listener` after every block commits, for what a block undoes elsewhere (story-game lobbies a pair shares).
+   * Outside the transaction, so no game lock is taken inside it; a failing listener does not undo the block.
    */
   onBlocked(listener: (blocker: string, blocked: string) => Promise<void> | void): void {
     this.blockListeners.push(listener);
@@ -158,16 +134,10 @@ export class FriendService {
   }
 
   /**
-   * Send a friend request (or auto-accept if they already requested you).
-   *
-   * Both people's friend locks are taken first, in one order (`lockPeopleFor`),
-   * so the counts below are the ones the insert lands on: two requests, or a
-   * request and an answer, at once cannot both slip under a limit.
-   *
-   * A new request is held to the sender's friends and sent requests and the
-   * other person's waiting ones, and all three are checked before anything is
-   * said about a block. Checked after, as they used to be, a sender at a limit
-   * was refused by everyone except the people who had blocked them.
+   * Sends a friend request, or accepts if they already asked you. Both people's locks are taken first in one order
+   * (`lockPeopleFor`), so concurrent requests cannot both slip under a limit. The sender's friends and sent requests
+   * and the recipient's waiting ones are all checked before anything about a block, so a sender at a limit is refused
+   * by everyone alike.
    */
   async request(from: string, to: string): Promise<RequestOutcome> {
     if (from === to) throw new AppError('SELF_FRIEND', 400, 'you cannot friend yourself');
@@ -201,9 +171,8 @@ export class FriendService {
         await client.query('COMMIT');
         return 'already_friends';
       }
-      // No check of the recipient's age here, on purpose: a request to a minor
-      // is made and answered like any other and simply never reaches them (see
-      // the class note), so the reply cannot tell an adult who is a child.
+      // No age check on the recipient here: a request to a minor is answered like any other and simply never reaches
+      // them, so the reply reveals nothing.
       if (edge?.status === 'pending') {
         if (edge.requested_by === from) {
           await client.query('COMMIT');
@@ -241,10 +210,7 @@ export class FriendService {
     }
   }
 
-  /**
-   * `theirs` when the full list is the other person's: the requester whose
-   * request is being accepted, or who is accepted by a request back.
-   */
+  /** `theirs` when the full list is the other person's: the requester being accepted, or accepted by a request back. */
   private async assertUnderCap(executor: Pick<pg.Pool, 'query'>, userId: string, theirs = false): Promise<void> {
     if ((await this.friendCount(executor, userId)) >= FRIEND_CAP) {
       const message = theirs ? `their friend list is full (max ${FRIEND_CAP})` : `friend list is full (max ${FRIEND_CAP})`;
@@ -253,10 +219,8 @@ export class FriendService {
   }
 
   /**
-   * Room for one more unanswered request: under the sender's MAX_FRIEND_REQUESTS_SENT
-   * and the recipient's MAX_FRIEND_REQUESTS_RECEIVED. Expired requests, which
-   * the sweep has not deleted yet, count for neither. A request to a minor is
-   * counted like any other, as it is listed like any other (class note).
+   * Room for one more unanswered request under the sender's and recipient's limits. Expired requests not yet swept
+   * count for neither; a request to a minor counts like any other, as it is listed like any other.
    */
   private async assertRequestRoom(executor: Pick<pg.Pool, 'query'>, from: string, to: string): Promise<void> {
     const r = await executor.query<{ sent: number; waiting: number }>(
@@ -293,9 +257,7 @@ export class FriendService {
         throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
       }
       if (accept) {
-        // a request to someone not known to be an adult never reached them
-        // (incomingRequests does not list it): accepting it would be a
-        // friendship they did not start, so it answers as absent
+        // A request to someone not known to be an adult never reached them, so accepting it answers as absent.
         if (await isNotKnownAdultUser(client, user)) {
           throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
         }
@@ -329,12 +291,9 @@ export class FriendService {
   }
 
   /**
-   * Block a user: silent + absolute. Cancels any friendship/pending request in
-   * either direction; the blocked user is never notified.
-   *
-   * At most MAX_BLOCKS live accounts, counted the way the blocklist counts them
-   * (`blocked`), under the blocker's lock. Blocking someone already blocked is
-   * never refused.
+   * Blocks a user, silently and absolutely: cancels any friendship or pending request both ways, and the blocked user
+   * is never told. At most MAX_BLOCKS live accounts, counted as the blocklist counts them, under the blocker's lock;
+   * blocking someone already blocked is never refused.
    */
   async block(blocker: string, blocked: string): Promise<void> {
     if (blocker === blocked) throw new AppError('SELF_BLOCK', 400, 'you cannot block yourself');
@@ -376,21 +335,9 @@ export class FriendService {
   }
 
   /**
-   * Who this user has blocked, newest first.
-   *
-   * The list has to exist for the block to be reversible at all: blocking hides
-   * the other person everywhere at once — out of search, off your friends list,
-   * and their profile answers 404 — so once it is done there is no surface left
-   * that could offer you an unblock. Without this, a block placed by accident
-   * or in a moment is permanent in practice.
-   *
-   * Strictly one-directional: `blocker_id = $1` and nothing else. Who has
-   * blocked *you* is not in here and must never be, or the silent block stops
-   * being silent — see `block`.
-   *
-   * Soft-deleted accounts drop out, as they do from every other list. The row
-   * in `blocks` stays: if that account ever comes back the block is still in
-   * force, which is the safe direction to fail in.
+   * Who this user has blocked, newest first. Blocking hides the other person everywhere, so this list is the only
+   * place left to unblock them. Strictly `blocker_id = $1`: who blocked you must never appear, or the block stops
+   * being silent. Soft-deleted accounts drop out, but their block rows stay in force if they come back.
    */
   async blocked(
     user: string,
@@ -417,9 +364,7 @@ export class FriendService {
       [user, Math.min(Math.max(limit, 1), BLOCKS_PAGE_MAX), Math.max(offset, 0)],
     );
 
-    // count(*) OVER () rides along with the page, so the heading costs no second
-    // query — except on an empty page past the end, where there is no row to
-    // carry it and a bare 0 would understate the list.
+    // count(*) OVER () rides along with the page, except on an empty page past the end, where 0 would understate it.
     const total = rows.rows[0]?.total ?? (offset > 0 ? await this.blockedCount(user) : 0);
 
     return {
@@ -445,30 +390,11 @@ export class FriendService {
   }
 
   /**
-   * One page of `user`'s accepted friends, by username. Blocked users cannot
-   * be friends, so there is nothing to filter out here.
-   *
-   * Paged because all but one caller draws a handful and was being sent the
-   * lot: a profile puts eight avatars in a stack, the list on somebody else's
-   * profile shows twelve. Up to five hundred rows of username, display name,
-   * avatar key and presence crossed the wire to do that, on the most-visited
-   * screen there is.
-   *
-   * `total` rides along on the page through `count(*) OVER ()`, so "and 328
-   * more" costs no second query and is the true number rather than the length
-   * of whatever happened to arrive.
-   *
-   * `viewer` is who is looking — the owner (the default) or, on somebody's
-   * profile, anyone at all, null when signed out. Someone else's list leaves
-   * out every friend who is a minor or whose age is not on record yet, unless
-   * the viewer is that friend or one of their friends (users/age.ts
-   * `shownToSql`): a list of an adult's friends was a way to find the minors
-   * among them, signed in or not. The count leaves them out too, so it never
-   * says that somebody is missing.
-   *
-   * Nor does it name, to the viewer, anyone with a block between the two of
-   * them (friends/blocked.ts), and the count agrees. On your own list there is
-   * nobody to leave out: a block ends the friendship.
+   * One page of `user`'s friends by username, with `total` from `count(*) OVER ()` so the true count costs no second
+   * query. Paged because most callers draw a handful of avatars. `viewer` is who is looking (the owner by default,
+   * null when signed out): someone else's list leaves out friends who are minors or have no age on record, unless the
+   * viewer is that friend or one of their friends (users/age.ts `shownToSql`), and anyone with a block between them
+   * and the viewer; the count agrees. A block ends a friendship, so your own list has nobody to leave out.
    */
   async list(
     user: string,
@@ -489,19 +415,14 @@ export class FriendService {
       [user, Math.min(Math.max(limit, 1), FRIENDS_PAGE_MAX), Math.max(offset, 0), viewer],
     );
     const now = new Date();
-    // a page past the end carries no row to hold the count, and a bare 0 there
-    // would say the list is empty when it is only finished
+    // A page past the end has no row to carry the count, and 0 would say the list is empty rather than finished.
     const total = rows.rows[0]?.total ?? (offset > 0 ? await this.activeFriendCount(user, viewer) : 0);
     return { total, friends: rows.rows.map((r) => toFriendSummary(r, publicUrl, now)) };
   }
 
   /**
-   * Friends who still have an account — exactly the set `list` pages over.
-   *
-   * Not `friendCount`, which counts friendship rows without joining `users`:
-   * that one guards the 500 cap, where an account that has since been deleted
-   * still occupying a slot is the answer you want. This one has to agree with
-   * a page, or the heading contradicts the list underneath it.
+   * Friends who still have an account, exactly the set `list` pages over, so the heading agrees with the list. Not
+   * `friendCount`, which guards the 500 cap and rightly counts deleted accounts' rows too.
    */
   private async activeFriendCount(user: string, viewer: string | null): Promise<number> {
     const r = await this.pool.query<{ n: number }>(
@@ -516,9 +437,8 @@ export class FriendService {
   }
 
   /**
-   * Incoming pending requests (not expired, requester not since blocked).
-   * None for a minor, or for an account whose age is not on record yet: a
-   * request to one is held where they never see it (see the class note).
+   * Incoming pending requests, not expired and not from someone since blocked. None for a minor or an account with no
+   * age on record, since requests to them are held where they never see them.
    */
   async incomingRequests(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
     const rows = await this.pool.query<FriendRow>(
@@ -540,14 +460,7 @@ export class FriendService {
     return rows.rows.map((r) => toFriendSummary(r, publicUrl, now));
   }
 
-  /**
-   * Requests this user has sent and nobody has answered yet.
-   *
-   * The mirror of `incomingRequests`, and the reason it exists: a request you
-   * sent is invisible to you otherwise, so a misfire — the wrong name in a
-   * search, a tap on the wrong row — leaves a standing invitation you cannot
-   * see and cannot take back.
-   */
+  /** Requests this user sent that nobody has answered, so a misfired one can be seen and withdrawn. */
   async outgoingRequests(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
     const rows = await this.pool.query<FriendRow>(
       `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at FROM friendships f
@@ -567,26 +480,22 @@ export class FriendService {
   }
 
   /**
-   * Withdraw a request you sent.
-   *
-   * Scoped to `requested_by = user` so this can never be used to delete a
-   * request someone sent *to* you — declining is `respond`, and it is the other
-   * person's business who knows about it.
+   * Withdraws a request you sent; scoped to `requested_by = user`, so it can never delete one sent to you. False when
+   * there was none.
    */
-  async cancelRequest(user: string, other: string): Promise<void> {
+  async cancelRequest(user: string, other: string): Promise<boolean> {
     const { lo, hi } = canonicalPair(user, other);
-    await this.pool.query(
+    const r = await this.pool.query(
       `DELETE FROM friendships WHERE user_lo = $1 AND user_hi = $2 AND status = 'pending' AND requested_by = $3`,
       [lo, hi, user],
     );
+    return (r.rowCount ?? 0) > 0;
   }
 
   /**
-   * People-you-may-know: friends-of-friends the user isn't already connected to,
-   * ranked by number of mutual friends. Excludes self, existing friends, anyone
-   * with a pending request either way, blocked users, profiles hidden from
-   * discovery, and anyone not known to be an adult, whom a request would never
-   * reach. Returns [] for a user with no friends yet.
+   * Friends of friends the user is not connected to, ranked by mutual friends. Excludes self, friends, pending
+   * requests either way, blocks, profiles hidden from discovery, and anyone not known to be an adult. Empty for a user
+   * with no friends.
    */
   async suggestions(user: string, publicUrl: PublicUrl = () => null, limit = 10): Promise<SuggestedFriend[]> {
     const rows = await this.pool.query<FriendRow & { mutual: number }>(
@@ -628,22 +537,16 @@ export class FriendService {
   }
 
   /**
-   * Relationship of `viewer` to `target` — powers friend buttons (KUR-082).
-   *
-   * A request held for a viewer not known to be an adult reads as 'none': it
-   * never reached them, so their button offers a request of their own (which,
-   * being mutual, then makes the friendship) rather than an accept.
+   * The relationship of `viewer` to `target`, for friend buttons. A request held for a viewer not known to be an adult
+   * reads as 'none', so their button offers a request of their own, which then makes the friendship.
    */
   async statusBetween(viewer: string, target: string): Promise<FriendEdgeStatus> {
     return (await this.statusesBetween(viewer, [target])).get(target)!;
   }
 
   /**
-   * `statusBetween` for each of `targets`, in one query however many there are
-   * (a gift to seven friends, an invite to a handful): whether either side has
-   * blocked the other, the pair's friendship row, and — for a request the
-   * viewer received — whether the viewer may be offered it (a minor, or an
-   * account whose age is not on record, never is: see the class note).
+   * `statusBetween` for each of `targets` in one query: blocks either way, the pair's row, and, for a request the
+   * viewer received, whether they may be offered it (never a minor or an account with no age on record).
    */
   async statusesBetween(viewer: string, targets: readonly string[]): Promise<Map<string, FriendEdgeStatus>> {
     const out = new Map<string, FriendEdgeStatus>();
@@ -672,7 +575,7 @@ export class FriendService {
     return out;
   }
 
-  /** Accepted friend ids — for the friends leaderboard (KUR-063 follow-on). */
+  /** Accepted friend ids. */
   async friendIds(user: string): Promise<string[]> {
     const rows = await this.pool.query<{ id: string }>(
       `SELECT CASE WHEN user_lo = $1 THEN user_hi ELSE user_lo END AS id

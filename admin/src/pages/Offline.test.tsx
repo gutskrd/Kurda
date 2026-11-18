@@ -58,7 +58,7 @@ describe('offline mode', () => {
     expect(within(preview).getByText(APP_MESSAGE)).toBeInTheDocument();
     await user.type(screen.getByLabelText('Title'), 'Back after the update');
     expect(within(preview).getByText('Back after the update')).toBeInTheDocument();
-    // a time back shows as a pill
+    // A time back shows as a pill.
     expect(within(preview).queryByText(/^Back by/)).toBeNull();
     fireEvent.change(screen.getByLabelText(/Back by/), { target: { value: '2099-01-02T10:30' } });
     expect(within(preview).getByText(/^Back by/)).toBeInTheDocument();

@@ -20,7 +20,7 @@ describe('normalizeContent', () => {
 describe('countNearIdentical', () => {
   it('counts equal-after-normalization messages, including the candidate', () => {
     const recent = ['buy now', 'BUY  now', 'hello', 'buy now!'];
-    // 'buy now' matches 'buy now' and 'BUY  now' (normalized) → 2 + the candidate = 3
+    // 'buy now' matches 'buy now' and 'BUY  now' after normalizing: 2 plus the candidate is 3.
     expect(countNearIdentical(recent, 'buy now')).toBe(3);
   });
 

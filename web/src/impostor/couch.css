@@ -1,19 +1,7 @@
 /*
- * Impostor on one phone (impostor/Couch.tsx).
- *
- * The setup is three numbered steps a room can answer without reading
- * anything twice (who is playing, which game, what about), the rules folded
- * under them with the answers they already have, and Deal the cards always in
- * reach at the foot of the screen. Then one thing at a time, large, for a
- * screen held at arm's length and passed round a room.
- *
- * The round is played at the game's own table (start.css): night blue with
- * gold on it. The card is a card: face down it wears the mask; turned up it
- * is paper, in both themes, with the category's picture in its corner; the
- * impostor's is the colour of the mask's own night. It is face up only while
- * its holder presses.
- *
- * Under Reduce Motion nothing turns, pulses or lifts; things are simply there.
+ * Impostor on one phone (impostor/Couch.tsx): three numbered setup steps with Deal the cards fixed at the foot, then
+ * one large thing at a time. Rounds use the game's night-blue table (start.css); cards show the mask face down and
+ * paper face up in both themes, the impostor's in the mask's night colour. Nothing moves under Reduce Motion.
  */
 .couch,
 .couch-setup,

@@ -15,18 +15,12 @@ import { RequestTicket } from './FriendTickets';
 import { useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from '../groups/GroupAvatar';
 
-/**
- * What the dock beside the rail is showing.
- *
- * One slot, not two: opening a group while a person's chat is docked should
- * replace it, the way clicking another conversation does. Two docks would
- * overlap, since both are anchored to the same edge.
- */
-export type DockTarget =
+/** What the dock beside the rail shows: one slot, so opening another conversation replaces it. */
+type DockTarget =
   | { kind: 'dm'; id: string; name: string }
   | { kind: 'group'; id: string; name: string };
 
-/** Friends split the way you actually look for them. */
+/** Friends split by what they are doing. */
 interface Buckets {
   playing: RailFriend[];
   online: RailFriend[];
@@ -42,29 +36,24 @@ function bucket(friends: RailFriend[]): Buckets {
     else if (f.online) online.push(f);
     else offline.push(f);
   }
-  // the longest-running game first among players; most recently around first
-  // among the rest, so the top of each list is the person most worth a message
+  // Players by longest-running game; the rest by most recently around.
   playing.sort((a, b) => new Date(a.activity!.since).getTime() - new Date(b.activity!.since).getTime());
   offline.sort((a, b) => (b.lastSeenAt ?? '').localeCompare(a.lastSeenAt ?? ''));
   return { playing, online, offline };
 }
 
 /**
- * The social rail: your people, down the side of the app.
- *
- * Modelled on the one every game client has, because it solves a real problem —
- * an invite that expires in two minutes is useless on a page you have to
- * navigate to. It is a fixed column on a wide screen and a drawer on a narrow
- * one, and the same component is both: one set of behaviour to get right.
+ * The social rail: friends and groups down the side of the app, so short-lived invites are seen from any page. A fixed
+ * column on a wide screen and a drawer on a narrow one, from the same component.
  */
 export function SocialRail(): React.JSX.Element | null {
   const { status } = useAuth();
   const t = useT();
   const present = useRailPresent();
   const { data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed } = useRail();
-  /** the conversation docked beside the rail — a person or a group, if any */
+  /** The conversation docked beside the rail, a person or a group, if any. */
   const [dock, setDock] = useState<DockTarget | null>(null);
-  // a letter is not announced where it is already being shown: its window, or its correspondence
+  // A letter is not announced where it is already shown.
   const { pathname } = useLocation();
   const toasts = useMemo(() => toastsHere(arrivals, pathname), [arrivals, pathname]);
 
@@ -72,7 +61,7 @@ export function SocialRail(): React.JSX.Element | null {
 
   return (
     <>
-      {/* the scrim only exists on narrow screens, where the rail is a drawer */}
+      {/* The scrim exists only on narrow screens, where the rail is a drawer. */}
       {open && <div className="rail-scrim" onClick={() => setOpen(false)} aria-hidden />}
 
       <aside
@@ -80,8 +69,7 @@ export function SocialRail(): React.JSX.Element | null {
         aria-label={t('rail.title')}
       >
         <div className="rail-head">
-          {/* on a wide screen this collapses the column to the strip; the drawer
-              has no room for it and hides it in CSS */}
+          {/* Collapses the column to the strip on a wide screen; the drawer hides it in CSS. */}
           <button
             type="button"
             className="rail-fold"
@@ -96,28 +84,14 @@ export function SocialRail(): React.JSX.Element | null {
           <CloseButton className="rail-close is-inline" label={t('rail.closePanel')} onClick={() => setOpen(false)} />
         </div>
 
-        {/*
-          * Both are rendered and CSS picks one. The folded state belongs to the
-          * fixed column; a drawer that opened to a strip of icons would be a
-          * narrow screen giving up its width for nothing. Choosing in JS would
-          * mean a media query in two places that could disagree.
-          */}
+        {/* Both render and CSS picks one, so the breakpoint lives in one place; the drawer never folds. */}
         <RailStrip data={data} onExpand={() => setCollapsed(false)} />
         <div className="rail-body">
           {loading ? <p className="rail-empty">{t('common.loading')}</p> : <RailContent data={data} onActed={refresh} onChat={setDock} />}
         </div>
       </aside>
 
-      {/*
-        A conversation docked beside the rail, on a wide screen only.
-
-        The whole point of the rail is that reaching someone should not cost you
-        the page you are on. Sending "good luck" should not mean leaving the wall
-        you were reading, and on a narrow screen there is no room for two columns
-        — so there it stays a link to the messages page.
-      */}
-      {/* the dock is anchored to the rail's edge, so it has to know which width
-          the rail is currently at */}
+      {/* A conversation docked beside the rail on a wide screen, anchored to the rail's current edge. */}
       {dock?.kind === 'dm' && (
         <DmThread
           key={dock.id}
@@ -145,8 +119,7 @@ export function SocialRail(): React.JSX.Element | null {
 function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed: () => void; onChat?: (target: DockTarget) => void }): React.JSX.Element {
   const t = useT();
   const buckets = useMemo(() => bucket(data.friends), [data.friends]);
-  // Game invites used to wait here as quiz challenges; they arrive as their
-  // own banner now (play/InviteBanner.tsx), and `challenges` is always empty
+  // Game invites have their own banner (play/InviteBanner.tsx), so `challenges` is not drawn.
   const hasWaiting = data.requests.length > 0;
 
   return (
@@ -182,8 +155,7 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
       <Section title={t('rail.groups')} count={data.groups.length} hideWhenEmpty>
         {data.groups.map((g) => (
           <div key={g.id} className="rail-row rail-group">
-            {/* the name goes to the page, for when you want the whole roster and
-                the members panel; the bubble docks it, like a friend's does */}
+            {/* The name opens the full page; the bubble docks the conversation. */}
             <Link to={`/app/messages?group=${g.id}`} className="rail-row-link">
               <GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={28} />
               <span className="rail-row-text">
@@ -256,10 +228,9 @@ function Section({
   );
 }
 
-/** One friend: who they are, and what they are doing about it. */
+/** One friend: who they are and what they are doing. */
 function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: DockTarget) => void }): React.JSX.Element {
-  // a live game needs a clock that moves; a static "4m" that never changes reads
-  // as stale within a minute of looking at it
+  // A live game's elapsed time must keep ticking.
   const t = useT();
   const [, tick] = useState(0);
   useEffect(() => {
@@ -293,11 +264,7 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: D
         </span>
       </Link>
 
-      {/*
-        On a wide screen this docks the conversation beside the rail; on a narrow
-        one there is no room for a second column, so it is a link to the messages
-        page. Same button, two behaviours, chosen by whether a dock is offered.
-      */}
+      {/* Docks the conversation when a dock is offered (wide screens); otherwise links to the messages page. */}
       {onChat ? (
         <button
           type="button"

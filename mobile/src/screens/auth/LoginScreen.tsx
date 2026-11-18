@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { radii, spacing, typography } from '../../theme/tokens';
@@ -12,30 +12,29 @@ import type { AuthStackParamList } from '../../navigation/authStack';
 import { LinkText } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+/** `presented`: the first screen of the sign-in a guest opens over the app, whose way out is ✕. */
+type Props = NativeStackScreenProps<AuthStackParamList, 'Login'> & { presented?: boolean };
 
-/**
- * Refusals that are not a wrong password: sign-in is held back for a while
- * after several failed attempts. Nothing was typed wrong just now, and a
- * reset is the way in that does not wait, so they get the notice with it.
- */
+/** Sign-in held back after several failed attempts: nothing was mistyped, so they get the notice with a reset link. */
 const HELD_BACK = new Set(['CAPTCHA_REQUIRED', 'LOCKED']);
 
 /**
- * Signing in, in two questions: the email, then the password with the way
- * to a reset under it, Hevalo asking (auth/guide). A wrong password gets his
- * tilt of the head and the server's words under the field; a sign-in held
- * back after several attempts gets the calm notice with Reset password. The
- * ways to a reset and to signing up are where they were on the form. The
- * address a screen sent along is already filled in.
+ * Signing in, in two steps (auth/guide): email, then password with a reset link. A wrong password shows the
+ * server's message under the field; a held-back sign-in shows the notice with Reset password. An address passed in
+ * is prefilled.
  */
-export function LoginScreen({ navigation, route }: Props) {
+export function LoginScreen({ navigation, route, presented = false }: Props) {
   const { login } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const [email, setEmail] = useState(route.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [heldBack, setHeldBack] = useState<string | null>(null);
+  // Returned to with another address (sign-up's "you have an account", the reset's "back to sign in"), the field takes it.
+  const sentEmail = route.params?.email;
+  useEffect(() => {
+    if (sentEmail) setEmail(sentEmail);
+  }, [sentEmail]);
 
   const steps: FlowStep[] = [
     {
@@ -58,7 +57,7 @@ export function LoginScreen({ navigation, route }: Props) {
           testID="email"
         />
       ),
-      // one sentence with the action in it, the way the browser asks
+      // One sentence with the action in it, as on the website.
       footer: <LinkText label={`${t('auth.login.noAccount')} ${t('auth.login.createAccount')}`} onPress={() => navigation.navigate('Register')} />,
     },
     {
@@ -91,12 +90,12 @@ export function LoginScreen({ navigation, route }: Props) {
     </View>
   ) : null;
 
-  // on success the session is applied and the app root shows the signed-in screens: nothing to do here
-  return <StepFlow steps={steps} onFinish={() => undefined} onExit={navigation.canGoBack() ? () => navigation.goBack() : undefined} notice={notice} testID="login-flow" />;
+  // On success the app root shows the signed-in screens.
+  return <StepFlow steps={steps} onFinish={() => undefined} onExit={navigation.canGoBack() ? () => navigation.goBack() : undefined} presented={presented} notice={notice} testID="login-flow" />;
 }
 
 const styles = StyleSheet.create({
-  // the sign-up notice's calm panel (RegisterScreen.tsx): a pause, not a mistake
+  // The sign-up notice's calm panel (RegisterScreen.tsx).
   notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
   noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },
 });

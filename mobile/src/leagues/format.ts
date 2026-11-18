@@ -1,12 +1,7 @@
 /**
- * Pure Learning League view helpers (contract 4 §L, §U) — no React Native.
- *
- * The ten gem-named tiers this file used to carry are gone, and with them
- * their colours, emoji and the countdown: the six water tiers live in the
- * shared catalogue, their names in the catalogue of each language, and the
- * week's end is said as a calm local time ("Mon 01:00"), never as a clock
- * running down. A tier the app does not know is shown as no tier at all —
- * never the made-up "bronze" an empty profile used to wear.
+ * Pure Learning League view helpers. The six water tiers live in the shared catalogue and their names in each
+ * language's catalogue. The week's end is a calm local time ("Mon 01:00"), never a countdown. An unknown tier is
+ * shown as no tier at all.
  */
 import { isLeagueTier, type LeagueStandingRow, type LeagueTier, type LeagueWeekResult, type LeagueZone } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
@@ -55,8 +50,7 @@ export function leagueLabel(t: Translate, tier: LeagueTier): string {
 }
 
 /**
- * When the week closes, in the reader's own time: the weekday and the hour
- * ("Mon 01:00"), without a countdown. The close is Monday 00:00 UTC, which is
+ * When the week closes in the reader's time: weekday and hour ("Mon 01:00"), no countdown. Monday 00:00 UTC is
  * Sunday evening in the Americas and Monday morning further east.
  */
 export function weekEndText(endsAt: string, locale: string, timeZone?: string): string {
@@ -72,17 +66,15 @@ export function weekEndText(endsAt: string, locale: string, timeZone?: string): 
 const DAY = 86_400_000;
 
 /**
- * How long the week has left, in whole days and said calmly — "3 days left",
- * "1 day left" — and on its last day the local time it closes ("Week ends
- * Mon 01:00"). Never hours and minutes running down: a week is something to
- * plan, not to race.
+ * The week's time left in whole days ("3 days left", "1 day left"), and on its last day the local closing time
+ * ("Week ends Mon 01:00"). Never hours and minutes.
  */
 export function weekLeftText(t: Translate, endsAt: string, locale: string, now: number = Date.now(), timeZone?: string): string {
   const at = new Date(endsAt).getTime();
   if (Number.isNaN(at)) return '';
   const left = at - now;
   if (left < DAY) return t('leagues.endsAt', { time: weekEndText(endsAt, locale, timeZone) });
-  // a day begun is a day there is still time in: 2 days and an hour is "3 days left"
+  // A day begun is a day there is still time in: 2 days and an hour is "3 days left".
   const days = Math.ceil(left / DAY);
   return days === 1 ? t('leagues.dayLeft') : t('leagues.daysLeft', { count: days });
 }
@@ -93,7 +85,7 @@ export function goalFraction(xp: number, goal: number): number {
   return Math.max(0, Math.min(1, xp / goal));
 }
 
-/** The table, with a heading where each zone begins, so the zones are read in words and not only seen. */
+/** The table with a heading where each zone begins, so zones are read in words and not only seen. */
 export type TableItem = { kind: 'zone'; zone: Exclude<LeagueZone, 'stay'> } | { kind: 'row'; row: LeagueStandingRow } | { kind: 'gap' };
 
 export function tableItems(rows: readonly LeagueStandingRow[]): TableItem[] {
@@ -136,10 +128,8 @@ export function lastWeekLine(t: Translate, result: LeagueWeekResult): string {
 }
 
 /**
- * A closed week worth a moment on its own stage: which way it went, the tier
- * raced in and the tier it left the learner in. Null when there is nothing to
- * stage — a personal week, a week not taken part in, or a tier the app does
- * not know.
+ * A closed week worth its own stage: the direction, the tier raced in and the tier the learner is in now. Null
+ * for a personal week, one not taken part in, or an unknown tier.
  */
 export interface Ceremony {
   kind: 'promoted' | 'demoted' | 'stayed' | 'trophy';
@@ -160,10 +150,8 @@ export function ceremonyFor(week: LeagueWeekResult | null | undefined): Ceremony
 }
 
 /**
- * The ceremony's first line: where the learner finished and what it meant
- * ("You finished #15 last week and moved up to Çem."). A move down is said
- * as the fresh start it is, never as a fall. Without a place to name it is
- * last week's plain line.
+ * The ceremony's first line: where the learner finished and what it meant ("You finished #15 last week and moved
+ * up to Çem."). A demotion is a fresh start; without a place it is last week's plain line.
  */
 export function ceremonyLine(t: Translate, week: LeagueWeekResult, ceremony: Ceremony): string {
   if (week.rank == null) return lastWeekLine(t, week);
@@ -181,9 +169,8 @@ export function ceremonyLine(t: Translate, week: LeagueWeekResult, ceremony: Cer
 }
 
 /**
- * The one rule the ceremony ends on: how to move up from the league the
- * learner is in now, as the group's own numbers put it, or at the top what
- * the trophy takes. Null while the group has no promotion places yet.
+ * The one rule the ceremony ends on: how to move up from the current league in the group's own numbers, or at the
+ * top what the trophy takes. Null while the group has no promotion places.
  */
 export function moveUpRule(t: Translate, view: { tier: LeagueTier; promoteCount: number; goalXp: number }): string | null {
   if (view.tier === 'okyanus') return t('leagues.rules.trophy');

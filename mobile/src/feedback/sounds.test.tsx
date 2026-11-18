@@ -4,7 +4,7 @@ vi.mock('react-native', () => import('../play/testing/native'));
 import { soundFile } from './sounds';
 
 describe('which chime a moment plays', () => {
-  // a run of right answers climbs a step each time, and stays at the top
+  // A run of right answers climbs a step each time, and stays at the top.
   it('climbs with a run of right answers, up to the fourth', () => {
     expect([0, 1, 2, 3, 4, 9].map((step) => soundFile('correct', step))).toEqual([
       'correct-1',

@@ -1,11 +1,8 @@
 /**
- * Ez kî me? with friends on the multiplayer engine, through the routes,
- * against real Postgres: what each player's payload holds (everybody's card
- * but their own), a turn in which the others answer and the card decides,
- * a table of four answers ("could be" and "not sure" beside yes and no) and
- * the fields apps from before the four still read, a wrong card reported by
- * a player who reads it, the clocks, scoring and placement XP, where the
- * game is offered, and what a view costs to read.
+ * Ez kî me? with friends on the multiplayer engine, through the routes against real Postgres: each player's payload
+ * (everyone's card but their own), a turn where the others answer and the card decides, four-answer tables and the
+ * fields older apps still read, a wrong card reported by a player, the clocks, scoring and placement XP, where the game
+ * is offered, and the query cost of a view.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';

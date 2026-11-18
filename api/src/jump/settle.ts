@@ -3,7 +3,7 @@ import type pg from 'pg';
 /** Executor: a pool or a client, so the decision joins the session's completion. */
 type Executor = Pick<pg.Pool, 'query'>;
 
-/** What a test to jump ahead opens: the unit, in its course, and the skill's place in the course it opens up to. */
+/** What a jump-ahead test opens: the unit in its course, and the place of the skill it opens up to. */
 export interface JumpTarget {
   courseId: string;
   unitId: string;
@@ -21,13 +21,9 @@ export interface JumpOutcome {
 }
 
 /**
- * Note how a finished test came out and, when it was passed, open the course
- * up to the unit it jumps to — in one statement, inside the transaction that
- * closes the session, so it happens once.
- *
- * How far a course is open only ever rises: a test for a unit behind one
- * already opened (by an earlier jump, or the placement test) leaves it where it
- * is. Nothing is opened on a fail.
+ * Records how a finished test came out and, if passed, opens the course up to its unit, in one statement inside the
+ * transaction closing the session. How far a course is open only rises, so a test for a unit behind one already open
+ * changes nothing; a fail opens nothing.
  */
 export async function settleJump(db: Executor, userId: string, jump: JumpTarget & { sessionId: string }, passed: boolean): Promise<void> {
   await db.query(

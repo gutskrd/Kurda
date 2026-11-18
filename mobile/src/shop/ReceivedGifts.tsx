@@ -12,24 +12,14 @@ import { giftsWereOpened } from './useUnseenGifts';
 import { useDirection } from '../reports/direction';
 
 /**
- * What people have sent you, at the top of the shop (KUR-087).
- *
- * A gift used to arrive and be owned and that was all: the notification said
- * somebody had sent you something and the shop it dropped you into looked
- * exactly as it had a moment earlier. This is the place that acknowledges it.
- *
- * Reading the list *is* opening them, so it marks them seen — anything else
- * leaves a badge that never clears no matter what you do.
- *
- * Renders nothing at all when nobody has sent you anything, rather than an
- * empty heading: a shop with a bare "Your gifts" over a gap reads as something
- * broken rather than as something that has not happened yet.
+ * What people have sent you, at the top of the shop. Reading the list is opening them, so it marks them seen (otherwise
+ * the badge would never clear). Renders nothing when nobody has sent anything, rather than an empty heading.
  */
 export function ReceivedGifts(): React.JSX.Element | null {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  // the picture on the side the language starts from; an item's name read in its own direction
+  // The picture on the side the language starts from; an item's name read in its own direction.
   const dir = useDirection();
   const [gifts, setGifts] = useState<ReceivedGift[] | null>(null);
 
@@ -64,7 +54,8 @@ export function ReceivedGifts(): React.JSX.Element | null {
               {
                 flexDirection: dir.row,
                 backgroundColor: colors.glassFill,
-                // an unopened one is worth pointing at, once: in violet, as anything new is (gold is for what is earned)
+                // An unopened one is worth pointing at, once: in violet, as anything new is (gold is for what is
+                // earned).
                 borderColor: g.seenAt ? colors.glassBorder : colors.primary,
               },
             ]}
@@ -92,7 +83,7 @@ export function ReceivedGifts(): React.JSX.Element | null {
 }
 
 const styles = StyleSheet.create({
-  // the Shop's inbox already sits inside the screen's margins: a second inset put this 48pt in, under a card at 24
+  // The Shop's inbox already sits inside the screen's margins, so no second inset.
   wrap: { paddingTop: spacing.md, paddingBottom: spacing.sm, gap: spacing.xs },
   heading: { ...sectionLabel },
   row: {

@@ -9,10 +9,8 @@ import { forgetImpostorCategories } from './categories';
 import { ImpostorScreen } from './ImpostorScreen';
 
 /**
- * Xapînok on the phone, phase by phase: the start where it is
- * offered and where not, the lobby, a clue turn with the slips the box sees,
- * the impostor's card without the word, the vote (a "not sure" among it),
- * the caught impostor's guess, the reveal and why an impostor got away, and
+ * Xapînok on the phone, phase by phase: the start where it is offered and where not, the lobby, a clue turn, the
+ * impostor's card without the word, the vote, the caught impostor's guess, the reveal and why an impostor got away, and
  * the start in the learner's own Kurdish.
  */
 
@@ -31,7 +29,7 @@ vi.mock('../realtime/RealtimeProvider', () => ({
   useRealtimeListener: () => undefined,
 }));
 
-// stand-in Kurdish for the fixtures, never shown to a learner
+// Stand-in Kurdish for the fixtures, never shown to a learner.
 const seat = (n: number, extra: Record<string, unknown> = {}) => ({
   seat: n,
   userId: `seat:${n}`,
@@ -270,7 +268,7 @@ describe('ImpostorScreen', () => {
     expect(screen.getByText('The impostor slipped away.')).toBeTruthy();
     expect(screen.getByLabelText('Rojda: Impostor')).toBeTruthy();
     expect(screen.getByLabelText('Baran: pisîk')).toBeTruthy();
-    // the viewer's own vote reads with their name, as everyone else's does
+    // The viewer's own vote reads with their name, as everyone else's does.
     expect(screen.getByText('rojda voted for Baran')).toBeTruthy();
     expect(screen.getByText('Points: 3')).toBeTruthy();
   });
@@ -297,7 +295,7 @@ describe('ImpostorScreen', () => {
     renderWithProviders(<ImpostorScreen id="g1" onExit={() => undefined} />);
     expect(await screen.findByText('The players voted out Baran, but they weren’t the impostor.')).toBeTruthy();
     expect(screen.getByText('The impostor slipped away.')).toBeTruthy();
-    // a vote of "not sure" is said as one, and a vote never cast as that
+    // A vote of "not sure" is said as one, and a vote never cast as that.
     expect(screen.getByText('Baran wasn’t sure')).toBeTruthy();
     expect(screen.getByText('Player 4 didn’t vote')).toBeTruthy();
     cleanup();

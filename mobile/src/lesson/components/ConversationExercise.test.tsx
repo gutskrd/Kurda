@@ -28,7 +28,7 @@ const XEZO: RecordingVoice = {
   }),
 };
 
-/** Xezo greets Hamo; the middle line is not recorded yet, and only the first has a timeline for the mouth. */
+/** Xezo greets Hamo; the middle line has no recording yet, and only the first has a mouth timeline. */
 function conversation(extra: Partial<Exercise> = {}): Exercise {
   return {
     id: 'c1',
@@ -77,20 +77,20 @@ function markups(): string[] {
   return [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup') ?? '');
 }
 
-/** the shape of the mouth `who` shows now, on the stage */
+/** The mouth shape `who` shows now on the stage. */
 function mouth(who: SpeakerId): string | undefined {
   const drawn = markups();
   return Object.entries(characterLayers(who, 'full').mouths).find(([, xml]) => drawn.includes(xml))?.[0];
 }
 
-/** how far across a person's left iris is moved on the stage, in the drawing's own units: 0 where it is drawn */
+/** How far a person's left iris is moved on the stage, in drawing units; 0 where drawn. */
 function irisShift(who: 'xezo' | 'hamo'): number {
   const open = characterLayers(who, 'full').eyes.open;
   const eyes = markups().find((xml) => xml.replace(/ transform="translate\([^)]*\)"/g, '') === open);
   return Number(/data-iris="left" transform="translate\((-?[\d.]+) /.exec(eyes ?? '')?.[1] ?? 0);
 }
 
-/** whether `who` is drawn the other way round on the stage */
+/** Whether `who` is drawn mirrored on the stage. */
 function turnedRound(who: SpeakerId): boolean {
   const body = characterLayers(who, 'full').body;
   const drawn = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === body);
@@ -105,13 +105,13 @@ describe('a conversation in a lesson', () => {
     expect(screen.getByText('Listen to the conversation, then answer')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Li kafeyê' })).toBeTruthy();
     const said = ['Silav, tu çawa yî?', 'Ez baş im, spas.', 'Ez jî baş im.'].map((text) => screen.getByText(text));
-    // in the order they are said
+    // In the order they are said.
     expect(said[0]!.compareDocumentPosition(said[1]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(said[1]!.compareDocumentPosition(said[2]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getAllByText('Xezo')).toHaveLength(2);
     expect(screen.getAllByText('Hamo')).toHaveLength(1);
     expect(screen.getByText('Xezo çawa ye?')).toBeTruthy();
-    // a play button for each recorded line, and none for the one not recorded yet
+    // A play button per recorded line, and none for the unrecorded one.
     expect(screen.getByRole('button', { name: 'Play line 1, said by Xezo' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Play line 3, said by Xezo' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Play line 2, said by Hamo' })).toBeNull();
@@ -137,7 +137,7 @@ describe('a conversation in a lesson', () => {
     expect(screen.getByText('Bi xêr bimînî!')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Play line 1, said by Hamo' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Play line 2/ })).toBeNull();
-    // Hamo alone stands on the stage: the learner is the one he faces
+    // Hamo alone stands on the stage, facing the learner.
     const bodies = markups().filter((xml) => xml === characterLayers('hamo', 'full').body);
     expect(bodies).toHaveLength(1);
   });
@@ -177,7 +177,7 @@ describe('a conversation in a lesson', () => {
     await settle();
     expect(FakeAudio.of(BAS)!.paused).toBe(false);
     expect(within(screen.getByTestId('conversation-heard')).getByText('Ez jî baş im.')).toBeTruthy();
-    // one sound at a time
+    // One sound at a time.
     expect(FakeAudio.made.filter((a) => !a.paused)).toHaveLength(1);
 
     act(() => FakeAudio.of(BAS)!.finish());
@@ -209,12 +209,12 @@ describe('a conversation in a lesson', () => {
     const stage = screen.getByTestId('conversation-stage');
     const figures = within(stage).getAllByRole('img', { hidden: true });
     expect(figures.map((el) => el.getAttribute('aria-label'))).toEqual(['Said by Xezo', 'Said by Hamo']);
-    // the lines below already say who says what
+    // The lines below already say who says what.
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
     expect(stage.compareDocumentPosition(screen.getByText('Silav, tu çawa yî?')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // each drawn whole, for the stage's foot to cut off at the waist
+    // Each drawn whole, for the stage's foot to cut at the waist.
     for (const who of ['xezo', 'hamo'] as const) expect(markups()).toContain(characterLayers(who, 'full').body);
-    // the initials stay beside the lines
+    // The initials stay beside the lines.
     expect(screen.getAllByText('X')).toHaveLength(2);
     expect(screen.getAllByText('H')).toHaveLength(1);
   });
@@ -237,7 +237,7 @@ describe('a conversation in a lesson', () => {
   });
 
   it('has the line’s own character say it, whoever its recording was saved under', async () => {
-    // Xezo's line, recorded with the timeline saved under Hamo
+    // Xezo's line, recorded with the timeline saved under Hamo.
     show(conversation({ lineVoices: [{ ...XEZO, speaker: 'hamo' }, null, null] }));
     await settle();
     fireEvent.click(screen.getByRole('button', { name: 'Play line 1, said by Xezo' }));
@@ -254,25 +254,25 @@ describe('a conversation in a lesson', () => {
   it('has them look at each other, the way round the screen reads', async () => {
     const view = show(conversation());
     await settle();
-    // Xezo on the left looks right, at Hamo; Hamo, his face drawn turned a little to the left already, looks left at her
+    // Xezo on the left looks right at Hamo; Hamo, drawn already turned a little left, looks left at her.
     expect(irisShift('xezo')).toBeCloseTo(characterArt('xezo').irisReach!);
     expect(irisShift('hamo')).toBeCloseTo(-characterArt('hamo').irisReach!);
     expect(turnedRound('hamo')).toBe(false);
     view.unmount();
 
-    // a Soranî course on an English screen: the lines start on the left, and so does Xezo
+    // A Soranî course on an English screen: the lines start on the left, and so does Xezo.
     const sorani = show(conversation({ dialect: 'ckb' }));
     await settle();
     expect(turnedRound('hamo')).toBe(false);
     sorani.unmount();
 
-    // a screen read right to left: Xezo stands on the right, where her lines start; Hamo, on the left, is turned round to face her
+    // A right-to-left screen: Xezo stands on the right where her lines start, and Hamo on the left is mirrored to face her.
     localStorage.setItem('kurda_locale_v1', 'ckb');
     show(conversation({ dialect: 'ckb' }));
     await waitFor(() => expect(turnedRound('hamo')).toBe(true));
     expect(turnedRound('xezo')).toBe(false);
     expect(irisShift('xezo')).toBeCloseTo(-characterArt('xezo').irisReach!);
-    // looking right as seen, which turned round is to his own left
+    // Looking right as seen, which is his own left when mirrored.
     expect(irisShift('hamo')).toBeCloseTo(-characterArt('hamo').irisReach!);
   });
 
@@ -296,24 +296,24 @@ describe('a conversation in a lesson', () => {
     );
     await settle();
     expect(within(screen.getByTestId('conversation-stage')).getAllByRole('img', { hidden: true })).toHaveLength(3);
-    // before anyone speaks, Xezo and Hamo, in the first two places, look at each other
+    // Before anyone speaks, Xezo and Hamo, in the first two places, look at each other.
     expect(irisShift('xezo')).toBeGreaterThan(0);
     expect(irisShift('hamo')).toBeLessThan(0);
 
-    // the deer, on the right, says his line: they both look his way
+    // Hevalo, on the right, says his line, and both look his way.
     fireEvent.click(screen.getByRole('button', { name: 'Play line 3, said by Hevalo' }));
     await settle();
     expect(FakeAudio.of(deer)!.paused).toBe(false);
     expect(irisShift('xezo')).toBeGreaterThan(0);
     expect(irisShift('hamo')).toBeGreaterThan(0);
-    // and keep looking at him once he has said it
+    // And keep looking at him once he has said it.
     act(() => FakeAudio.of(deer)!.finish());
     await settle();
     expect(irisShift('hamo')).toBeGreaterThan(0);
   });
 
   it('reads as before, with no stage, when a part has no character to play it', async () => {
-    // stored before every part had to have one
+    // Stored before every part had to have a character.
     const speakers = [{ name: 'Xezo', character: 'xezo' }, { name: 'Hamo' }] as unknown as Exercise['speakers'];
     show(conversation({ speakers }));
     await settle();

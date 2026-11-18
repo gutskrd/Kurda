@@ -1,16 +1,12 @@
 /*
- * Daily quests: the rows with their thick bars and chests (QuestList.tsx),
- * the slim card on Learn and its sheet (QuestsCard.tsx), and a chest opened
- * over the whole screen (ChestScreen.tsx). Phone first; transform and opacity
- * only, and under prefers-reduced-motion everything lands where it ends.
+ * Daily quests: the rows (QuestList.tsx), the card on Learn and its sheet (QuestsCard.tsx), and the chest screen
+ * (ChestScreen.tsx). Phone first; motion uses transform and opacity only, and lands at its end under Reduce Motion.
  */
 
-/* ---- a chest ---------------------------------------------------------------------- */
+/* ---- A chest ---------------------------------------------------------------------- */
 /*
- * The drawing's layers (shared art/chest.ts) are groups named by part
- * (Chest.tsx); all its motion is transforms and opacity on those groups, in
- * the drawing's own units: the lid turns about its hinge (66 54) and the rays
- * about the chest's mouth (61 54), where the drawing says they are.
+ * The drawing's layers (shared art/chest.ts) are groups named by part (Chest.tsx), moved in the drawing's units: the
+ * lid turns about its hinge (66 54) and the rays about the chest's mouth (61 54).
  */
 .chest {
   display: block;
@@ -27,11 +23,11 @@
 .chest [data-part='sparkle'] {
   transform-origin: 60px 60px;
 }
-/* the parts of an open chest, and the glint, show only when called for */
+/* The open chest's parts and the glint show only when called for. */
 .chest :is([data-part='lidOpen'], [data-part='light'], [data-part='rays'], [data-part='sparkle'], [data-part='glint']) {
   opacity: 0;
 }
-/* open: the lid thrown back and the light out of it */
+/* Open: the lid thrown back and the light out. */
 .chest.is-open [data-part='lid'] {
   opacity: 0;
 }
@@ -39,17 +35,10 @@
   opacity: 1;
 }
 /*
- * Opened just now: the chest hops. It is the shared choreography (art/chest.ts,
- * CHEST_HOP: one second, frames at shares of it) in the stylesheet's own words,
- * every part on the same second with its keyframes at the same shares, so the
- * phone and the page play the same hop. Everything but the shadow (the
- * `chest-hop` group) crouches with a shiver, springs up stretching tall about
- * the chest's foot (60 104), lands wide and short and settles; the shadow
- * stays on the ground and shrinks under the chest in the air. The shut lid
- * swings up and away about its hinge on the way up and the open one lands in
- * its place at the top of the hop, rocking back as the chest lands; the light
- * inside blooms with the lid; the rays come up with it and keep turning; and
- * the stars burst as it lands.
+ * Opened just now, the chest hops. This is the shared CHEST_HOP choreography (art/chest.ts: one second, keyframes at
+ * fractions of it), so the phone and the page play the same hop. The `chest-hop` group crouches, springs up about the
+ * chest's foot (60 104), lands and settles while the shadow shrinks; the shut lid swings away and the open one lands
+ * at the top, the light blooms, the rays turn and the stars burst on landing.
  */
 .chest.is-popping .chest-hop {
   transform-origin: 60px 104px;
@@ -135,7 +124,7 @@
     transform: none;
   }
 }
-/* the lid, 0 shut → 1 open, is read as the phone reads it: shut to 30%, open at 50%, past open (1.18) at 62%, back (0.94) at 74%, settled by 86% */
+/* The lid from 0 (shut) to 1 (open), as on the phone: shut to 30%, open at 50%, past open (1.18) at 62%, back (0.94) at 74%, settled by 86%. */
 @keyframes chest-lid-away {
   0%,
   30% {
@@ -220,7 +209,7 @@
     transform: scale(1.2);
   }
 }
-/* a chest waiting to be opened: a glint passes over its lock now and then, then rests off the plate, clipped away */
+/* A chest waiting to be opened: a glint passes over its lock now and then, then rests off the plate, clipped away. */
 .chest.is-shining [data-part='glint'],
 .quest-row.is-claimable .chest [data-part='glint'] {
   opacity: 1;
@@ -239,7 +228,7 @@
   }
 }
 
-/* ---- the rows ---------------------------------------------------------------------- */
+/* ---- The rows ---------------------------------------------------------------------- */
 .quest-list {
   display: grid;
   margin: 0;
@@ -258,9 +247,9 @@
 .quest-row + .quest-row {
   border-top: 2px solid var(--separator);
 }
-/* a quest done stands on a ground of its own, so it can lift over its neighbours' lines */
+/* A done quest has its own background, so it can lift over its neighbours' lines. */
 .quest-row.is-done {
-  /* the list's corner, less the list's edge it sits inside */
+  /* The list's corner, less the list's edge it sits inside. */
   border-radius: calc(var(--r-xl) - 2px);
   background: linear-gradient(color-mix(in srgb, var(--gold) 7%, transparent), color-mix(in srgb, var(--gold) 7%, transparent)), var(--panel-bg);
 }
@@ -285,7 +274,7 @@
   display: flex;
   align-items: center;
 }
-/* a thick bar with a sheen along its top, "x / y" across its middle, the chest over its end */
+/* A thick bar with a sheen along its top, "x / y" across its middle, and the chest over its end. */
 .quest-bar {
   position: relative;
   flex: 1;
@@ -296,10 +285,8 @@
   background: var(--surface-3);
 }
 /*
- * The gold is the whole bar's width slid along its track, so its round end
- * keeps its shape at any value. The count over the gold rides inside it, slid
- * back by as much as the gold is slid on, so it stays put while the gold
- * clips it: light words over the track, dark ones over the gold.
+ * The gold is the bar's full width slid along its track, so its round end keeps its shape. The count inside it is slid
+ * back by the same amount, so it stays put while the gold clips it.
  */
 .quest-fill {
   position: absolute;
@@ -361,11 +348,7 @@
   margin-block: -16px;
 }
 
-/*
- * A quest done: framed in gold with a soft glow. Done just now, on the
- * results, it lifts as its bar fills, the frame and glow fade in, and a light
- * sweeps across it once.
- */
+/* A done quest is framed in gold with a soft glow; one done just now lifts as its bar fills, and a light sweeps once. */
 .quest-row.is-done::before {
   content: '';
   position: absolute;
@@ -382,7 +365,7 @@
 .quest-row.is-fresh::before {
   animation: quest-glow 520ms var(--ease-out) calc(var(--fill-delay) + var(--fill-ms)) both;
 }
-/* the light runs along the full gold bar, inside it */
+/* The light runs along the full gold bar, inside it. */
 .quest-row.is-fresh .quest-fill::after {
   content: '';
   position: absolute;
@@ -412,7 +395,7 @@
     transform: translateX(340%);
   }
 }
-/* a chest waiting to be opened gives two small nudges once its quest is shown done */
+/* A chest waiting to be opened nudges twice once its quest shows as done. */
 .quest-row.is-claimable .chest {
   animation: chest-nudge 700ms ease-in-out calc(var(--fill-delay, 0ms) + var(--fill-ms, 0ms) + 300ms) 2;
 }
@@ -431,7 +414,7 @@
   text-align: center;
 }
 
-/* ---- the card on Learn -------------------------------------------------------------- */
+/* ---- The card on Learn -------------------------------------------------------------- */
 .quests-card {
   display: flex;
   align-items: center;
@@ -468,7 +451,7 @@ button.quests-card:active {
   flex: none;
   line-height: 0;
 }
-/* a chest is waiting: a gold dot, ringed in the page's colour */
+/* A chest is waiting: a gold dot, ringed in the page's colour. */
 .quests-card-dot {
   position: absolute;
   top: -1px;
@@ -547,7 +530,7 @@ button.quests-card:active {
   margin: 0;
   font-size: var(--text-section);
 }
-/* the quests of earlier days whose chests are still shut, under today's */
+/* Earlier days' quests whose chests are still shut, under today's. */
 .quests-earlier {
   display: grid;
   gap: 8px;
@@ -562,7 +545,7 @@ button.quests-card:active {
   font-size: var(--text-secondary);
 }
 
-/* ---- a chest, opened over the whole screen ------------------------------------------ */
+/* ---- The chest screen ------------------------------------------------------------- */
 .chest-screen {
   position: fixed;
   inset: 0;
@@ -575,7 +558,7 @@ button.quests-card:active {
   color: #ffffff;
   animation: chest-arrive var(--dur-slow) var(--ease-out) both;
 }
-/* each tier its own colour, deep enough for white words on it: the warm tones the phone's chest screens wear (coursemap/path.ts), amber, saffron and rose */
+/* Each tier's colour, deep enough for white text: amber, saffron and rose, as on the phone (coursemap/path.ts). */
 .chest-screen.tier-common {
   --chest-bg: radial-gradient(90% 60% at 50% 45%, #d98a36, #a95a1c);
 }
@@ -648,7 +631,7 @@ button.quests-card:active {
 [dir='rtl'] .chest-tier {
   letter-spacing: 0;
 }
-/* the chest and its words are one big button: anywhere on it opens it */
+/* The chest and its words are one big button. */
 .chest-tap {
   display: grid;
   justify-items: center;
@@ -675,7 +658,7 @@ button.quests-card:active {
   filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.22));
   animation: chest-bob 2.4s ease-in-out infinite;
 }
-/* the server is asked: the chest strains, pressed a little flat on its foot and shivering, as if what is inside wanted out — the crouch its hop then springs from */
+/* While the server is asked, the chest squashes slightly and shivers: the crouch its hop springs from. */
 .is-opening .chest-float {
   transform-origin: 50% 88%;
   animation: chest-strain 440ms ease-in-out infinite;
@@ -737,7 +720,7 @@ button.quests-card:active {
     transform: scale(1.1);
   }
 }
-/* the words under the chest, shut ("Tap to open") and open ("+40 Zêr"), take the same room: the taller of the two */
+/* The words under the chest, shut ("Tap to open") or open ("+40 Zêr"), take the same space: the taller of the two. */
 .chest-hint,
 .chest-reward {
   min-height: 3.4rem;
@@ -749,11 +732,8 @@ button.quests-card:active {
   font-weight: 800;
 }
 /*
- * Opened: the same skeleton as the shut chest's button (the chest, then the
- * words under it, with the same room round them), so the chest hops from
- * where it stood and nothing jumps as one replaces the other. The count rises
- * out of the chest as a tile and settles over the lid, where the tier's name
- * was, and the reward lands under the chest, big, with the Zêr coin.
+ * Opened: the same layout as the shut chest's button, so nothing jumps as one replaces the other. The count rises out
+ * as a tile and settles over the lid where the tier's name was, and the reward lands below with the Zêr coin.
  */
 .chest-screen.is-open .chest-tier {
   opacity: 0;
@@ -794,7 +774,7 @@ button.quests-card:active {
     transform: translateY(44px);
   }
 }
-/* the celebration goes off as the chest lands out of its hop (600ms in), not as it appears: the hop is its arrival */
+/* The celebration starts as the chest lands from its hop (600ms in), not as it appears. */
 .chest-opened {
   --t-mid: #ffd24a;
   --celebrate-ring-delay: 560ms;
@@ -863,7 +843,7 @@ button.quests-card:active {
 .chest-go {
   width: 100%;
 }
-/* white on the tier's colour, dark words on it, as the main button on a coloured screen */
+/* White with dark text on the tier's colour, as the main button on a coloured screen. */
 .chest-screen .chest-go {
   border-color: #ffffff;
   background: #ffffff;
@@ -871,7 +851,7 @@ button.quests-card:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* no bobbing, twinkling or nudging: the chest simply stands there */
+  /* No bobbing, twinkling or nudging. */
   .chest-float,
   .chest-sparkle,
   .quest-row.is-claimable .chest {
@@ -880,7 +860,7 @@ button.quests-card:active {
   .chest-opened :is(.celebrate-ring, .celebrate-burst) {
     display: none;
   }
-  /* opened, it simply stands open and the gold fades in: no lid swinging, no rays turning, no stars; the glint stands still on the plate */
+  /* Opened, it stands open and the gold fades in, with no lid swing, turning rays or stars; the glint stays put. */
   .chest.is-popping :is([data-part='lid'], [data-part='lidOpen'], [data-part='rays'], [data-part='sparkle']),
   .chest.is-shining [data-part='glint'] g[clip-path] > g,
   .quest-row.is-claimable .chest [data-part='glint'] g[clip-path] > g {

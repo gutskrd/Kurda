@@ -26,19 +26,13 @@ import {
 import { inTransaction } from './tx.js';
 
 /**
- * Asking for a review, and answering.
- *
- * Anyone sanctioned can ask once per decision, for six months (DSA Art. 20,
- * UK OSA appeals), and so can a reporter whose report was found not to break
- * the rules. The review is done by a different admin from the one who decided,
- * whenever there is one (Santa Clara: someone not involved); a lone admin may
- * review their own decision, and must say why.
- *
+ * Appeals and their decisions. Anyone sanctioned may appeal once per decision within six months (DSA Art. 20, UK OSA),
+ * as may a reporter whose report was found not to break the rules. A different admin from the decider reviews whenever
+ * possible; a lone admin may review their own decision and must give a reason.
  * - upheld: nothing changes; the person is told.
- * - overturned: the sanction is lifted (an overturned removal puts the content
- *   back), the person is told; for a reporter's appeal the case goes back to
- *   the queue.
- * - modified: the sanction is replaced by a lighter (or different) one.
+ * - overturned: the sanction is lifted (an overturned removal restores the content) and the person told; a reporter's
+ *   appeal sends the case back to the queue.
+ * - modified: the sanction is replaced by a lighter or different one.
  */
 
 export type DecideAppealInput = DecideAppealRequest;
@@ -177,10 +171,8 @@ export class AppealsService {
         await this.sanctions.revoke(client, sanction.id, adminId, `appeal ${input.outcome}: ${note}`, { notify: false });
       }
       if (input.outcome === 'overturned' && sanction?.kind === 'content_removal' && sanction.case_id) {
-        // the removal was wrong: the content comes back. Only for the removal
-        // itself — overturning a mute that came with it lifts the mute and
-        // leaves the removal standing, and a CSAM ban (which has no removal of
-        // its own) never brings its content back by itself.
+        // The removal was wrong, so the content comes back. Only for the removal itself: overturning a mute that came
+        // with it leaves the removal standing, and a CSAM ban (no removal of its own) never restores content by itself.
         const c = await client.query<{ removed_content: RemovalRecord | null }>(
           `SELECT removed_content FROM moderation_cases WHERE id = $1 FOR UPDATE`,
           [sanction.case_id],

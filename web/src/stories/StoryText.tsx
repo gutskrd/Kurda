@@ -17,31 +17,19 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { TEXT_SIZES } from './prefs';
 import type { StoryAudio } from './useStoryAudio';
 
-/** Where an answer is in the text, to show it marked. */
-export interface Evidence {
-  paragraph: number;
-  sentence: number | null;
-}
-
-/**
- * One run of a paragraph: plain text, or a word from the glossary — with the
- * quote or comma that touches it, so a line never breaks between “ and the
- * word (a button is laid out as a block of its own, and would let it).
- */
+/** One run of a paragraph: plain text, or a glossary word with the quote or comma touching it, so a line never breaks between them. */
 type Piece = { text: string; gloss?: StoryGlossEntry; lead?: string; trail?: string };
 
 interface Sentence {
   index: number;
-  /** the whitespace before it, kept so the paragraph reads as written */
+  /** The whitespace before it, kept so the paragraph reads as written. */
   lead: string;
   pieces: Piece[];
 }
 
 /**
- * A paragraph cut into its sentences (the cuts the studio records by, so a
- * sentence and its recording line up), each with its glossary words marked —
- * the first time each word appears in the paragraph (`glossSpans`), and only
- * where it sits inside one sentence.
+ * A paragraph cut into sentences (the cuts recordings are made by, so they line up), with glossary words marked the
+ * first time each appears (`glossSpans`), and only within one sentence.
  */
 export function paragraphSentences(paragraph: string, glossary: readonly StoryGlossEntry[]): Sentence[] {
   const text = paragraph.normalize('NFC');
@@ -61,7 +49,7 @@ export function paragraphSentences(paragraph: string, glossary: readonly StoryGl
       at = span.end;
     }
     if (at < end) pieces.push({ text: text.slice(at, end) });
-    // the characters glued to a glossary word go with it
+    // The characters glued to a glossary word go with it.
     pieces.forEach((piece, i) => {
       if (!piece.gloss) return;
       const before = pieces[i - 1];
@@ -83,29 +71,15 @@ export function paragraphSentences(paragraph: string, glossary: readonly StoryGl
   return out;
 }
 
-/** How much of the screen's top (the app's bar) and foot (the docked player) a sentence must clear to count as in sight. */
+/** How much of the screen's top bar and docked player a sentence must clear to count as in sight. */
 const IN_SIGHT = { top: 96, bottom: 168 } as const;
 
 /**
- * A story's text, as the reader and the game show it.
- *
- * Every string from the story carries the story's own `lang` and `dir` — a
- * Soranî story reads right to left inside an English page, in a face made for
- * Arabic script, and a screen reader speaks it as Kurdish. Words from the
- * glossary are marked with a dotted violet line, the violet of what can be
- * pressed, and open their meaning (in the reader's language, else English,
- * marked as English), the part of speech and a pronunciation when the
- * dictionary has them, and Save word when the term is a dictionary headword.
- *
- * Nothing plays by touching the text, with one exception: the sentence being
- * read aloud, on the violet's wash, says itself again when tapped (the
- * player's replay), and carries a small button for the same so a keyboard
- * can ask too. The text wears the shared violet's steps (`hue-violet`), so
- * that wash is the phone's to the digit. A paragraph with recordings has its own Listen button, and under it,
- * when the story has a translation in the reader's language, a Translation
- * toggle that shows the paragraph's own translation in secondary ink.
- *
- * `observe` hands each paragraph's element to the reading-progress watcher.
+ * A story's text as the reader and the game show it. Every string carries the story's `lang` and `dir`, so a Soranî
+ * story reads right to left in an Arabic-script face inside any page. Glossary words have a dotted violet line and open
+ * their meaning, part of speech, pronunciation and Save word. Only the sentence being read aloud responds to a tap (and
+ * a small button), replaying itself. Paragraphs with recordings have a Listen button, and a Translation toggle when the
+ * reader's language has one. `observe` hands each paragraph's element to the reading-progress watcher.
  */
 export function StoryText({
   paragraphs,
@@ -113,7 +87,6 @@ export function StoryText({
   dialect,
   textSize,
   audio,
-  evidence,
   translations,
   observe,
   className,
@@ -121,15 +94,13 @@ export function StoryText({
   paragraphs: readonly string[];
   glossary: readonly StoryGlossEntry[];
   dialect: StoryDialect;
-  /** a step of TEXT_SIZES */
+  /** A step of TEXT_SIZES. */
   textSize: number;
-  /** read aloud; leave out where the text is only to look back at */
+  /** Read aloud; leave out where the text is only for looking back. */
   audio?: StoryAudio;
-  /** the sentence (or paragraph) an answer comes from, marked */
-  evidence?: Evidence | null;
-  /** the story's translation into the reader's language (or English), one entry per paragraph; none shows no toggle */
+  /** The translation into the reader's language (or English), one entry per paragraph; none shows no toggle. */
   translations?: { lang: string; paragraphs: readonly string[] } | null;
-  /** a ref for each paragraph, for the reading-progress watcher */
+  /** A ref for each paragraph, for the reading-progress watcher. */
   observe?: (index: number) => (el: HTMLElement | null) => void;
   className?: string;
 }): React.JSX.Element {
@@ -140,17 +111,12 @@ export function StoryText({
   const [open, setOpen] = useState<{ key: string; entry: StoryGlossEntry; anchor: HTMLElement } | null>(null);
   const [shownTranslations, setShownTranslations] = useState<ReadonlySet<number>>(() => new Set());
   const reading = useRef<HTMLSpanElement | null>(null);
-  const marked = useRef<HTMLElement | null>(null);
   const calm = useMediaQuery('(prefers-reduced-motion: reduce)');
   const current = audio?.current ?? null;
 
   /*
-   * The sentence being read stays in view. While it is already in sight —
-   * clear of the bar at the top and the player docked at the foot — the page
-   * stays where the reader put it; once it leaves, it is brought to the middle
-   * of the screen, where the next few lines are in sight too, rather than to
-   * an edge the player would cover. Under reduced motion it jumps rather than
-   * glides.
+   * Keeps the sentence being read in view: untouched while it is clear of the top bar and the docked player, otherwise
+   * scrolled to the middle of the screen. It jumps under reduced motion.
    */
   useEffect(() => {
     const el = reading.current;
@@ -162,12 +128,7 @@ export function StoryText({
     el.scrollIntoView?.({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
   }, [current?.paragraph, current?.sentence, calm]);
 
-  // the evidence for an answer is brought into view when it changes
-  useEffect(() => {
-    if (evidence && marked.current) marked.current.scrollIntoView?.({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
-  }, [evidence?.paragraph, evidence?.sentence, calm]);
-
-  // a legend's chapters: each heading's place and number, and where the introduction before the first one ends
+  // A legend's chapters: each heading's place and number, and where the introduction ends.
   const chapters = useMemo(() => {
     const at = new Map<number, number>();
     paragraphs.forEach((paragraph, i) => {
@@ -193,8 +154,8 @@ export function StoryText({
       {cut.map((sentences, p) => {
         const heading = storyHeadingTitle(paragraphs[p] ?? '');
         if (heading !== null) {
-          // a chapter title: never a sentence to tap, gloss or hear, and its translation beside it as headings line up —
-          // where the reader's language is not the story's own (a Soranî reader of a Soranî legend reads it as it is)
+          // A chapter title is never tapped, glossed or heard, and its translation sits beside it, except when the
+          // reader's language is the story's own.
           const translated = locale === lang ? null : storyHeadingTitle(translations?.paragraphs[p] ?? '');
           return (
             <div className="story-para story-chapter" key={p} dir={dir} ref={observe?.(p)} data-paragraph={p} data-chapter={chapters.at.get(p)}>
@@ -213,34 +174,27 @@ export function StoryText({
         const intro = p < chapters.introEnd;
         const hasAudio = audio?.paragraphsWithAudio.has(p) ?? false;
         const thisPlaying = audio?.playing && audio.scope?.kind === 'paragraph' && audio.scope.paragraph === p;
-        const wholeParagraph = evidence?.paragraph === p && evidence.sentence === null;
         const translation = translations?.paragraphs[p];
         const translated = translation !== undefined && translation.trim() !== '';
         const showTranslation = translated && shownTranslations.has(p);
         return (
           <div className={`story-para${intro ? ' is-intro' : ''}`} key={p} dir={dir} ref={observe?.(p)} data-paragraph={p}>
             {intro && p === 0 && <p className="story-intro-label">{t('stories.chapters.intro')}</p>}
-            <p
-              lang={lang}
-              className={wholeParagraph ? 'is-evidence' : undefined}
-              ref={wholeParagraph ? (el) => void (marked.current = el) : undefined}
-            >
+            <p lang={lang}>
               {sentences.map((s) => {
                 const isReading = current?.paragraph === p && current.sentence === s.index;
-                const isEvidence = evidence?.paragraph === p && evidence.sentence === s.index;
                 return (
                   <span key={s.index}>
                     {s.lead}
                     <span
-                      className={`story-sentence${isReading ? ' is-reading' : ''}${isEvidence ? ' is-evidence' : ''}`}
+                      className={`story-sentence${isReading ? ' is-reading' : ''}`}
                       ref={(el) => {
                         if (isReading) reading.current = el;
-                        if (isEvidence) marked.current = el;
                       }}
                       onClick={
                         isReading && audio
                           ? (e) => {
-                              // a tap on the band says the sentence again; a tap on a word in it opens the word
+                              // A tap on the band replays the sentence; a tap on a word in it opens the word.
                               if ((e.target as HTMLElement).closest('.story-gloss')) return;
                               audio.replay();
                             }
@@ -327,7 +281,7 @@ function GlossWord({
     <button
       type="button"
       className="story-gloss"
-      // the word itself is the label; "has popup, collapsed" says what pressing it does
+      // The word is the label; "has popup, collapsed" says what pressing it does.
       aria-expanded={expanded}
       aria-haspopup="dialog"
       data-term={entry.term}
@@ -339,10 +293,8 @@ function GlossWord({
 }
 
 /**
- * Save word / Saved for a glossary term that is a dictionary headword, from
- * the popover and from the key vocabulary alike. The mark fills at once; a
- * refusal turns it back and says why — a full vocabulary names its limit.
- * Only for a signed-in reader: a visitor has no vocabulary to save into.
+ * Save word / Saved for a glossary term that is a dictionary headword. It fills at once and reverts with the reason on
+ * a refusal (a full vocabulary names its limit). Signed-in readers only.
  */
 export function SaveWordButton({ entryId, className }: { entryId: string; className?: string }): React.JSX.Element | null {
   const t = useT();
@@ -389,11 +341,8 @@ export function PlayWordButton({ url }: { url: string }): React.JSX.Element {
 }
 
 /**
- * The meaning of a glossary word, beside the word (design notes §3): the
- * word, its part of speech when the dictionary knows it, the meaning, a
- * play button when the dictionary has a recording, and Save word when the
- * term is a headword. Escape, a click elsewhere or the close button shuts it
- * and hands focus back to the word.
+ * A glossary word's meaning beside it: the word, its part of speech, the meaning, a play button and Save word where the
+ * dictionary has them. Escape, an outside click or close shuts it and returns focus to the word.
  */
 function GlossPopover({
   entry,

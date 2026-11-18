@@ -108,7 +108,7 @@ describe('the setup sheet’s choice', () => {
     await userEvent.click(screen.getByRole('radio', { name: /Rated/ }));
     await userEvent.click(screen.getByRole('button', { name: 'switch who may join' }));
     await userEvent.click(screen.getByRole('button', { name: 'switch who may join' }));
-    // back among friends, where the default is Friendly: the host chose Rated, and it stays
+    // Back among friends, where the default is Friendly, the host's Rated choice stays.
     expect(screen.getByRole('radio', { name: /Rated/ })).toBeChecked();
   });
 
@@ -165,7 +165,7 @@ describe('the lobby’s panel', () => {
     expect(screen.getByText('baran')).toBeInTheDocument();
     expect(screen.getByText('Çiya II')).toBeInTheDocument();
     expect(screen.getByText(en['ranks.placingShort'])).toBeInTheDocument();
-    // no switch for a guest: the badge
+    // A guest gets the badge, not the switch.
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
     expect(screen.getByText('Rated')).toBeInTheDocument();
   });
@@ -194,7 +194,7 @@ describe('the lobby’s panel', () => {
   it('tells a joined player when the host changes it, and that leaving costs nothing', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, gains())));
     function Lobby(): React.JSX.Element {
-      // the lobby's next read, after the host changed it
+      // The lobby's next read, after the host changed it.
       const [rated, setRated] = useState(false);
       return (
         <>

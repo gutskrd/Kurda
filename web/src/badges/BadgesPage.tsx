@@ -22,16 +22,9 @@ import { FAMILY_KEY, badgeDesc, badgeHint, badgeNamed, badgeTierNamed, unitWord 
 import { Medal, TierPips, badgeWash, progressFraction, progressText, tierClass } from './parts';
 
 /**
- * Badges (contract 4 §B, §U): every badge in its family, what each tier
- * needs, how far along you are, the secrets as "???" until found, and the
- * three you show on your profile.
- *
- * A badge not earned yet is drawn in quiet grey with its progress — never
- * hidden, so there is always a next thing in reach, and never styled as
- * missing. The few nearest their next tier come first ("Almost there"):
- * people try hardest when a goal is close. Rarity appears only once enough
- * people are active for a percentage to mean something (the server decides;
- * it sends null before).
+ * The badges page: every badge by family with each tier's requirement and the reader's progress, secrets as "???"
+ * until found, and the three shown on the profile. Unearned badges are grey with their progress, never hidden, and
+ * the few nearest their next tier come first. Rarity shows only when the server sends it.
  */
 export function BadgesPage(): React.JSX.Element {
   const { client } = useAuth();
@@ -59,7 +52,7 @@ export function BadgesPage(): React.JSX.Element {
     return groups;
   }, [data]);
 
-  // the heading is the page's own from the first frame; only what is yours waits
+  // The heading shows from the first frame; only the reader's data waits.
   const header = (
     <div className="page-header">
       <span className="eyebrow">{t('badges.eyebrow')}</span>
@@ -236,14 +229,8 @@ function BadgeTile({ view, onOpen }: { view: BadgeView; onOpen: () => void }): R
 }
 
 /**
- * A badge up close, in a sheet that rises from the foot of a phone: the badge
- * on a soft wash of its own colour, when it was earned (or how far there is
- * to go), its name, a short rule, what it is for, each tier and what it
- * needs, and one button to put it away.
- *
- * The wash is the badge's colour and nothing else is: the words under it are
- * the page's own ink on the page's own surface, so sixty sheets are sixty
- * colours and one layout.
+ * A badge up close in a bottom sheet: the badge on a wash of its own colour, when it was earned or how far is left,
+ * its description, each tier's requirement, and a close button. Only the wash takes the badge's colour.
  */
 function BadgeDetail({ view, onClose }: { view: BadgeView; onClose: () => void }): React.JSX.Element {
   const t = useT();
@@ -254,7 +241,7 @@ function BadgeDetail({ view, onClose }: { view: BadgeView; onClose: () => void }
   const hint = view.hidden ? badgeHint(t, view.hintKey) : null;
   const date = (iso: string | undefined | null) => (iso ? new Date(iso).toLocaleDateString(locale, { dateStyle: 'medium' }) : null);
   const progress = progressText(t, view);
-  // when the tier it shows was earned; a badge not yet earned says how far there is to go instead
+  // When the shown tier was earned; an unearned badge shows its progress instead.
   const earned = view.tier > 0 ? date(view.tierEarnedAt[view.tier - 1] ?? view.earnedAt) : null;
   const kicker = view.hidden ? t('badges.secret') : earned ? t('badges.earnedOn', { date: earned }) : view.tier > 0 ? t('badges.earned') : progress;
   return (
@@ -302,7 +289,7 @@ function BadgeDetail({ view, onClose }: { view: BadgeView; onClose: () => void }
               <span className="badge-bar" aria-hidden="true">
                 <span style={{ width: `${Math.max(4, progressFraction(view) * 100)}%` }} />
               </span>
-              {/* said once: the line over the name already says it for a badge not yet earned */}
+              {/* For an unearned badge the line above the name already shows this. */}
               {view.tier > 0 && <span>{progress}</span>}
             </div>
           )}
@@ -325,11 +312,7 @@ function formatRarity(percent: number): string {
   return percent < 1 ? '<1' : String(Math.round(percent));
 }
 
-/**
- * Choosing the profile's three: tap to add, tap again to take off, in the
- * order chosen. A fourth is refused with a line saying why rather than
- * silently replacing one.
- */
+/** Picks the profile's three badges in the order tapped; a fourth is refused with a message rather than replacing one. */
 function ShowcasePicker({
   badges,
   initial,

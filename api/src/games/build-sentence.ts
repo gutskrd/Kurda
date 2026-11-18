@@ -1,38 +1,24 @@
 /**
- * Build a Sentence: a round of approved sentences to put in order
- * from word tiles.
+ * Build a Sentence: a round of approved sentences to put in order from word tiles.
  *
- * The sentences are published lessons' (translations into Kurdish with the
- * English they ask for, conversation lines with theirs) and published
- * `sentence` rows, of 3–10 words, in the learner's variety only. A round is
- * eight of them on one rung of the ladder (shared build-sentence/ladder.ts)
- * — the highest the learner has opened at the difficulty they chose — with a
- * few from the rungs below to warm up, never-met sentences first. Each comes
- * with its words and a few decoys from other approved sentences, shuffled.
+ * Sentences come from published lessons (translations into Kurdish with their English, conversation lines with theirs)
+ * and published `sentence` rows, 3–10 words, in the learner's variety only. A round is eight on one ladder rung (shared
+ * build-sentence/ladder.ts), the highest the learner has opened at the chosen difficulty, with a few warm-ups from
+ * lower rungs, unseen sentences first. Each comes with its words and a few decoys from other approved sentences,
+ * shuffled.
  *
- * A line is graded with `checkAnswer`, as a translation is, against every
- * accepted answer — every word order the lessons accept is right. A wrong
- * first try is answered with where the line first goes astray, never the
- * answer; once an item is done, the sentence the right way round with what
- * each word means where the sentence's own source attests it: a row's own
- * glosses, or the meanings the lesson that teaches the sentence gives those
- * very words (`LessonSentence.glosses`). A word is matched exactly as written
- * — its marks and its capital kept — and never through a folded spelling or
- * another lesson's word list: tê is not te ("you"), xwe is not xwê ("salt"),
- * Baran is not baran ("rain"), and the ne of "xemlandî ne" is not the ne a
- * lesson elsewhere teaches as "not". A word nothing attests has no meaning
- * shown.
+ * A line is graded with `checkAnswer` against every accepted answer, so every order the lessons accept is right. A
+ * wrong first try is told where the line first goes astray, never the answer. Once done, the sentence is shown with
+ * each word's meaning only where its own source attests it (a row's glosses, or the teaching lesson's
+ * `LessonSentence.glosses`), matched exactly as written: tê is not te, xwe is not xwê, Baran is not baran. Unattested
+ * words show no meaning.
  *
- * A round with six or more right on the first try on the learner's own rung
- * opens the next rung (`game_progress`): a round holds six of the rung's own
- * sentences, and the warm-ups below it do not count towards it.
+ * Six or more right on the first try on the learner's own rung opens the next rung (`game_progress`); warm-ups do not
+ * count.
  *
- * The item a player is sent carries the meaning and the tiles, never anything
- * worked out from the sentence (a key hashed from it would let the tiles be
- * tried in every order until one hashed the same). The pool is worked out
- * once per variety and kept (`TrustedSources.derived`), and an item's decoys
- * are drawn one at a time from one seeded generator (games/draw.ts), so
- * making a round does not shuffle every word the variety has.
+ * The item sent carries the meaning and tiles, never anything derived from the sentence (a hash of it would let tiles
+ * be tried in every order). The pool is built once per variety and cached (`TrustedSources.derived`), and decoys are
+ * drawn one at a time from one seeded generator (games/draw.ts).
  */
 import type pg from 'pg';
 import { z } from 'zod';
@@ -115,9 +101,8 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
   constructor(private readonly sources: TrustedSources) {}
 
   /**
-   * Every approved sentence of a variety, on its rung: the lessons' first,
-   * then published rows (a row with the same Kurdish as a lesson sentence adds
-   * its orders, meanings and glosses to it rather than being a second item).
+   * Every approved sentence of a variety with its rung: lesson sentences first, then published rows (a row with the
+   * same Kurdish as a lesson sentence merges its orders, meanings and glosses into it).
    */
   async pool(dialect: GameDialect): Promise<PoolSentence[]> {
     return (await this.read(dialect)).sentences;
@@ -267,10 +252,9 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
   }
 
   /**
-   * Every word of the variety's approved sentences, one spelling each: the
-   * lower-case one wherever the word is also written so, so the capital a
-   * sentence starts with does not say which tile goes first (a name, never
-   * written in lower case, keeps its capital).
+   * Every word of the variety's approved sentences with one spelling each: lower case wherever the word also appears
+   * so, so a sentence's initial capital does not reveal the first tile (a name, never written lower case, keeps its
+   * capital).
    */
   private spellings(pool: readonly PoolSentence[], dialect: GameDialect): Map<string, string> {
     const byKey = new Map<string, string>();

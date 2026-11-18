@@ -98,11 +98,7 @@ describe('a Hevalo+ member’s gems with the day’s Zêr', () => {
 });
 
 describe('the day’s Zêr while it loads', () => {
-  /*
-   * The card used to appear only once its answer came, pushing the word of
-   * the day and the course down the page under the reader's thumb. Its place
-   * is held in grey until then — and given up if the answer never comes.
-   */
+  /* The card's place is held in grey until its answer arrives, so the content below does not jump, and is given up if no answer comes. */
   it('holds its place in grey until the answer, then draws the week', async () => {
     let answer: (v: unknown) => void = () => undefined;
     testAuth.client = fakeClient({ 'GET /rewards/daily': () => new Promise((go) => (answer = go)) as never });
@@ -122,7 +118,7 @@ describe('the day’s Zêr while it loads', () => {
 });
 
 describe('the week of the day’s Zêr', () => {
-  /* a day taken lost its name to its check, so a screen reader heard only its amount */
+  /* A day taken lost its name to its check, so a screen reader heard only its amount. */
   it('says each day whole: its name, its Zêr, and whether it was taken', async () => {
     testAuth.client = fakeClient({ 'GET /rewards/daily': () => ok(status(false)) });
     renderWithProviders(<DailyRewardCard />);

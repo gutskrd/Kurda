@@ -4,10 +4,9 @@ import { SEASON_FRAME_INNER } from '@kurda/shared';
 import { BadgeMedal, FrameOverlay, LeagueEmblem, PlacementEmblem, RankEmblem, SeasonFrame } from './art';
 import { ART_OVERRIDES_KEY, resetArtOverridesForTests } from '../art/overrides';
 
-/**
- * Pictures an admin uploaded in place of the art (art/overrides.ts): drawn in
- * the drawing's wrapper, at its size and under its name, wherever the slot is
- * replaced — and the art itself, exactly as before, wherever it is not.
+/*
+ * Admin-uploaded replacements (art/overrides.ts) draw in the art's wrapper at its size and name wherever a slot is
+ * replaced, and the built-in art draws everywhere else.
  */
 
 const AGIR = 'https://cdn.test/art/badge-agir.png';
@@ -17,7 +16,7 @@ const GIR = 'https://cdn.test/art/rank-gir.png';
 const KANI = 'https://cdn.test/art/league-kani.png';
 const LUTKE_RING = 'https://cdn.test/art/frame-lutke.png';
 
-/** The list as this browser kept it from an earlier visit, read afresh as on a reload. */
+/** The list as cached by an earlier visit, read afresh as on a reload. */
 function replaced(overrides: Record<string, string>): void {
   localStorage.setItem(ART_OVERRIDES_KEY, JSON.stringify({ version: 'v1', overrides }));
   resetArtOverridesForTests();
@@ -105,7 +104,7 @@ describe('a rank emblem with an uploaded picture', () => {
     expect(divided!.closest('.art.art-rank.is-gir')).not.toBeNull();
     expect(seasonal).toHaveAttribute('src', GIR);
     expect(seasonal!.closest('.art-rank.extra')).not.toBeNull();
-    // a tier nobody replaced is still drawn
+    // A tier nobody replaced is still drawn.
     expect(screen.getByRole('img', { name: 'Çiya I' }).tagName.toLowerCase()).toBe('svg');
     expect(container.querySelectorAll('img')).toHaveLength(2);
   });

@@ -1,36 +1,28 @@
 import { useCallback, useRef, useState } from 'react';
 
 /**
- * Messages on their way: written and sent, and not yet answered by the server.
+ * Messages sent and not yet answered by the server. A message appears in the thread as pending the moment it is
+ * sent and gives way to the server's copy when that arrives; a refused one is removed, so nothing unaccepted
+ * looks sent, and the screen restores the words to the field with the reason.
  *
- * A message used to leave the field and be nowhere at all until the server
- * had answered — a second on a slow connection, in which the thread looked as
- * though the send had not taken. Now it is in the thread the moment it is
- * sent, drawn as one still on its way, and gives its place to the server's
- * copy when that arrives. One that is refused is taken out again, so nothing
- * the server did not take is ever left looking sent; the screen puts the
- * words back in the field and says why, as it always did.
- *
- * Kept apart from the thread's own messages rather than among them, because
- * those are replaced whole when the thread catches up after a dropped
- * connection (`mergeLatest`), and a message still on its way would go with
- * them. The same in a chat with one friend and in a group's thread.
+ * Kept apart from the thread's own messages because those are replaced wholesale when the thread catches up after
+ * a dropped connection (`mergeLatest`), which would drop a pending one. Shared by DMs and group threads.
  */
 export interface Outgoing {
-  /** its own, on this phone only: never one of the server's ids */
+  /** Its own, on this phone only: never one of the server's ids. */
   id: string;
   body: string;
-  /** when it was sent from here, so it sorts and reads as the newest */
+  /** When it was sent from here, so it sorts and reads as the newest. */
   createdAt: string;
 }
 
 export function useOutgoing(): {
   outgoing: Outgoing[];
-  /** `body` is on its way: shown at once, and named by what this returns */
+  /** `body` is on its way: shown at once, and named by what this returns. */
   begin: (body: string) => string;
-  /** the server answered for it, either way: it is no longer on its way */
+  /** The server answered for it, either way, so it is no longer pending. */
   settle: (id: string) => void;
-  /** the server's copy of these words arrived by another road (a room's echo) before the send was answered */
+  /** The server's copy of these words arrived another way (a room's echo) before the send was answered. */
   echoed: (body: string) => void;
 } {
   const [outgoing, setOutgoing] = useState<Outgoing[]>([]);
@@ -52,11 +44,7 @@ export function withoutFirst(list: readonly Outgoing[], body: string): Outgoing[
   return at < 0 ? [...list] : [...list.slice(0, at), ...list.slice(at + 1)];
 }
 
-/**
- * What the field holds after a send was refused: the words that did not go,
- * and after them whatever was typed while they were on their way — so neither
- * is lost.
- */
+/** What the field holds after a refused send: the words that did not go, then whatever was typed meanwhile, so neither is lost. */
 export function restoredDraft(refused: string, now: string): string {
   return now.trim() ? `${refused}\n${now}` : refused;
 }

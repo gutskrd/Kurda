@@ -10,37 +10,32 @@ import { SpeakingCharacter, type SpeakingCharacterProps } from './SpeakingCharac
 import { stageHeight } from './voice';
 
 export interface CharacterStageProps extends Omit<SpeakingCharacterProps, 'crop' | 'size' | 'height' | 'style'> {
-  /** the buttons that play what the character says, standing beside it */
+  /** The buttons that play what the character says, standing beside it. */
   children?: ReactNode;
-  /** how much of the window the rest of the screen needs; the stage takes what is left (`stageHeight`) */
+  /** How much of the window the rest of the screen needs; the stage takes what is left (`stageHeight`). */
   reserve?: number;
-  /** a stage this tall whatever the window, for a place with more to show than a lesson's exercise (`STAGE_HEIGHT.card`) */
+  /** A fixed stage height whatever the window, for places with more to show than a lesson exercise (`STAGE_HEIGHT.card`). */
   height?: number;
 }
 
 /** Room left above the head on the stage, so it never touches the top edge. */
 const HEADROOM = spacing.md;
 
-/** How far over the stage's top edge a hop may carry the head, as a share of the stage's height, before anything cuts it off. */
+/** How far above the stage's top a hop may carry the head, as a share of the stage's height, before it is clipped. */
 const HOP_ROOM = 0.3;
 
-/** The least share of the stage's width the character's side of it takes, from the start: the buttons have the rest. */
+/** The minimum share of the stage's width for the character's side, from the start; the buttons get the rest. */
 const STAND_AT = 0.27;
 
 /**
- * Where a lesson's character stands to say what it says: head to waist, as
- * large as the screen can spare, in nothing but its own light (shared
- * `stageBackdrop`), and the buttons that play it standing beside it on the far
- * side — or, with no buttons (a speech bubble beside the stage says it), in
- * the middle of a stage of its own.
+ * Where a lesson's character stands to speak: head to waist, as large as the screen allows, in its own light
+ * (shared `stageBackdrop`), with its play buttons beside it on the far side, or centred when there are no buttons
+ * (a speech bubble says the line).
  *
- * The whole figure is drawn, its head just below the stage's top edge, and
- * the stage's bottom edge cuts off the rest: at the waist, or a little below
- * it for a character too wide to be shown so tall. A hop lifts the legs into
- * view rather than a cut edge, and the head may hop out over the top edge. The character can be
- * tapped: it greets you and says it again, the same as the play button. When
- * the keyboard comes up for an answer the stage grows shorter, so the field
- * stays in view, and taller again when the keyboard goes.
+ * The whole figure is drawn with its head just below the stage's top, and the bottom edge cuts it at the waist (a
+ * little lower for a wide character). A hop shows the legs rather than a cut edge, and the head may hop above the
+ * top. Tapping the character greets and replays, like the play button. When the keyboard opens the stage shrinks
+ * so the field stays visible, and grows back when it closes.
  */
 export function CharacterStage({ children, reserve, height: fixed, flip, speaker, ...character }: CharacterStageProps): React.JSX.Element {
   const { colors } = useTheme();
@@ -51,7 +46,7 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
   const height = fixed ?? stageHeight(screen.height, keyboard, reserve);
   const [width, setWidth] = useState(0);
 
-  // the stage eases between its sizes as the keyboard comes and goes, rather than jumping, unless motion is turned down
+  // The stage eases between sizes as the keyboard opens and closes, unless motion is reduced.
   const reduced = useRef(reduce);
   reduced.current = reduce;
   useEffect(() => {
@@ -68,17 +63,17 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
     };
   }, []);
 
-  // until the stage has been laid out, the window's width less the screen's margins stands in for its own
+  // Until the stage is laid out, the window width minus the screen margins stands in for its own.
   const across = width > 0 ? width : screen.width - spacing.lg * 2;
   const shown = stageFigure(speaker, across, height, HEADROOM);
   const art = characterArt(speaker);
   const unit = shown.height / art.half.h;
   const flipped = flip ?? dir.rtl;
-  // the whole figure in points, and how far its top and its start lie beyond the head-to-waist box shown
+  // The whole figure in points, and how far its top and start extend beyond the visible head-to-waist box.
   const whole = { width: art.viewBox.w * unit, height: art.viewBox.h * unit };
   const above = (art.half.y - art.viewBox.y) * unit;
   const aside = (flipped ? art.viewBox.x + art.viewBox.w - (art.half.x + art.half.w) : art.half.x - art.viewBox.x) * unit;
-  // with no buttons to stand beside, the character has the whole stage, in the middle of it
+  // With no buttons to stand beside, the character has the whole stage, in the middle of it.
   const spot = children ? Math.max(shown.width, across * STAND_AT * 2) : across;
   const hop = Math.round(height * HOP_ROOM);
   const standAt = (dir.rtl ? across - spot / 2 : spot / 2) / across;
@@ -86,7 +81,7 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
     () => (width > 0 ? stageBackdrop(speaker, width, height, standAt, { dark: colors.scheme === 'dark' }) : null),
     [speaker, width, height, standAt, colors.scheme],
   );
-  // the side the character stands on keeps the card's rounded corner at its foot
+  // The side the character stands on keeps the card's rounded corner at its foot.
   const corner = dir.row === 'row-reverse' ? { borderBottomRightRadius: radii.xl } : { borderBottomStartRadius: radii.xl };
 
   return (

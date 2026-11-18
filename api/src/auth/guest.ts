@@ -7,31 +7,22 @@ import { issueTokenPair, type IssuedTokens } from './tokens.js';
 import { toPublicUser, type PublicUser } from './service.js';
 
 /**
- * Guest accounts: "Try Hevalo without an account".
+ * Guest accounts ("Try Hevalo without an account").
  *
- * A guest is a real user row with everything a learner has — XP, streak,
- * lessons, practice, badges, daily goal — and none of what an account has: no
- * email, no password, no birth month, no consent record. The flag `users.guest`
- * is what tells the two apart, and it is read with the account on every request
- * (plugins/auth.ts), where `requireAccount` refuses a guest anything social,
- * public or purchasable, and the public listings leave guests out.
+ * A guest is a real user row with everything a learner has (XP, streak, lessons, practice, badges, daily goal) and
+ * nothing an account has (no email, password, birth month or consent record). `users.guest` tells them apart; it is
+ * read with the account on every request (plugins/auth.ts), where `requireAccount` refuses guests anything social,
+ * public or purchasable, and public listings leave them out.
  *
- * The row is the same one the person keeps when they claim the account (POST
- * /auth/claim, or a Google or Apple sign-in while a guest: auth/service.ts
- * `claim`, auth/oauth.ts), so the progress made as a guest is never copied or
- * lost: the row simply gains an address and stops being a guest.
+ * Claiming the account (POST /auth/claim, or a Google or Apple sign-in as a guest: auth/service.ts `claim`,
+ * auth/oauth.ts) upgrades the same row, so guest progress is never copied or lost.
  *
- * Two things keep guests from piling up. A phone that asks again within a day
- * — the app crashed, or was reopened before anything was saved — is handed its
- * own guest back, found by a keyed hash of its device id, rather than a new
- * row each time. And a guest nobody has touched for GUEST_IDLE_DAYS is closed
- * by the housekeeping job (gdpr/service.ts `purgeIdleGuests`): there is no
- * address to warn, and nothing of a person's in the row to keep.
+ * Two things stop guests piling up: a phone asking again within a day gets its own guest back, found by a keyed hash of
+ * its device id; and a guest untouched for GUEST_IDLE_DAYS is closed by housekeeping (gdpr/service.ts
+ * `purgeIdleGuests`).
  *
- * The address is verified in the sense the activation gate asks about: there
- * is no email to confirm, and a guest's lessons must save, so `email_verified_at`
- * is set at creation. Claiming clears it, and the claimed account confirms its
- * new address as a sign-up does.
+ * `email_verified_at` is set at creation, since there is no email to confirm and a guest's lessons must save. Claiming
+ * clears it, and the claimed account confirms its new address like a sign-up.
  */
 
 /** How long a device is handed the same guest back instead of a new one. */
@@ -50,12 +41,10 @@ const USERNAME_TRIES = 5;
 const PG_UNIQUE_VIOLATION = '23505';
 
 /**
- * A fresh guest username: the stem and USERNAME_DIGITS random digits, checked
- * against the full username policy (users/username.ts) so a generated name is
- * never one a person could not have chosen — reserved names included, since
- * the reserved check folds digits to the letters they resemble, and a suffix
- * that happened to fold to a reserved word would otherwise slip through.
- * `random` is a seam for the tests; production draws from the system's CSPRNG.
+ * A fresh guest username: the stem plus USERNAME_DIGITS random digits, checked against the full username policy
+ * (users/username.ts) so a generated name could have been chosen by a person. The reserved-name check folds digits to
+ * look-alike letters, so a suffix could otherwise form a reserved word. `random` is a test seam; production uses the
+ * system CSPRNG.
  */
 export function generateGuestUsername(random: (max: number) => number = (max) => randomInt(max)): string {
   for (;;) {
@@ -68,11 +57,9 @@ export function generateGuestUsername(random: (max: number) => number = (max) =>
 }
 
 /**
- * What a guest's device id is stored as: a keyed hash, so the table never
- * holds the id itself and the hash is unlinkable to anything else kept about
- * the device (known_devices and refresh_tokens hash it per account, with a
- * different label). One label for all guests, because the lookup is by
- * device alone, before there is an account to key it to.
+ * A guest's device id as stored: a keyed hash, unlinkable to other device records (known_devices and refresh_tokens
+ * hash per account with a different label). One label for all guests, since the lookup happens before there is an
+ * account.
  */
 export function guestDeviceHash(secret: string, deviceId: string): string {
   return createHmac('sha256', secret).update(`hevalo-guest-device-v1:${deviceId}`).digest('hex');
@@ -100,10 +87,8 @@ export class GuestService {
   ) {}
 
   /**
-   * The guest this device made within GUEST_REUSE_HOURS, if it is still a
-   * guest, signed in again with fresh tokens; null when there is none. Asked
-   * before the anti-abuse checks a new account goes through, since nothing is
-   * created: a phone reopening the app is not a sign-up.
+   * The guest this device made within GUEST_REUSE_HOURS, if still a guest, signed in again with fresh tokens; null
+   * otherwise. Checked before the new-account anti-abuse checks, since reopening the app creates nothing.
    */
   async resume(deviceId: string | null | undefined, deviceName?: string): Promise<GuestStarted | null> {
     if (!deviceId) return null;
@@ -122,10 +107,8 @@ export class GuestService {
   }
 
   /**
-   * A new guest, signed in. The username is generated and retried on a clash
-   * (the unique index is the authority, as at sign-up); the locale and time
-   * zone are the app's, as a sign-up's would be, so the streak day and the
-   * interface language are right from the first lesson.
+   * A new guest, signed in. The username is generated and retried on a clash (the unique index decides, as at sign-up);
+   * locale and time zone come from the app so the streak day and language are right from the first lesson.
    */
   async start(input: GuestStartInput): Promise<GuestStarted> {
     const deviceHash = input.deviceId ? guestDeviceHash(this.config.JWT_SECRET, input.deviceId) : null;

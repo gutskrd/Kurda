@@ -157,10 +157,8 @@ describe('kurmanji seed', () => {
 });
 
 /**
- * A multiple-choice item's Kurdish may be quoted in its prompt or be its
- * options, so the audio studio cannot find it unless the item says which:
- * the quoted word, or else the right option (its Kurdish, where the option
- * carries a gloss: "Agir (fire)").
+ * A multiple-choice item's Kurdish may be quoted in the prompt or be the options, so the item must name it for the
+ * audio studio: the quoted word, else the right option (its Kurdish where it carries a gloss: "Agir (fire)").
  */
 describe('multiple-choice items in the shipped content', () => {
   const seeds: Array<[string, string]> = [

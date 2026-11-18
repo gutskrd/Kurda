@@ -21,7 +21,7 @@ describe('deviceId', () => {
     expect(first).toMatch(V4);
     expect(localStorage.getItem('kurda_admin_device_id')).toBe(first);
     expect(document.cookie).toContain(`kurda_admin_device_id=${first}`);
-    // a new page load reads the same one back
+    // A new page load reads the same one back.
     expect((await fresh()).deviceId()).toBe(first);
   });
 
@@ -33,7 +33,7 @@ describe('deviceId', () => {
   /** Safari drops script-written storage it thinks idle; the cookie copy keeps the device recognised. */
   it('falls back to the cookie copy when localStorage is purged, and puts the id back', async () => {
     const first = (await fresh()).deviceId();
-    localStorage.clear(); // the browser purged it; the cookie survived
+    localStorage.clear(); // The browser purged it; the cookie survived.
     expect((await fresh()).deviceId()).toBe(first);
     expect(localStorage.getItem('kurda_admin_device_id')).toBe(first);
   });

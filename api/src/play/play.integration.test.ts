@@ -1,8 +1,4 @@
-/**
- * Invites, game cards and playing again, through the routes (contract §B3),
- * against real Postgres. Stories goes through the same layer with its own
- * adapter (play/adapters/stories.ts) — the last two cases.
- */
+/** Invites, game cards and playing again through the routes, against real Postgres; Stories uses its own adapter in the last two cases. */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -239,7 +235,7 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     const again = await lobby(host, [friend.id]);
     expect(again.invited).toBe(0);
     expect(await inviteOf(again.lobbyId, friend.id)).toBeUndefined();
-    // a different game is a different question — and "not now" needs no reason
+    // A different game is a different question, and "not now" needs no reason.
     const rhyme = await call(host, 'POST', '/play/lobbies', { game: 'rhyme-match', settings: { dialect: 'kurmanci' }, invite: [friend.id] });
     expect(rhyme).toMatchObject({ status: 201, body: { invited: 1 } });
     const rhymeInvite = (await inviteOf(rhyme.body.lobbyId, friend.id))!;
@@ -334,8 +330,8 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     for (const u of [adult, minor, member, blockedByMember]) await befriend(pool, host.id, u.id);
     const typesFor = (userId: string) => told.filter((t) => t.userId === userId).map((t) => t.event.type);
 
-    // an open game and a minor friend: counted, listed and carded exactly like an adult friend,
-    // so `invited` tells an adult nothing about which of their friends are children
+    // An open game and a minor friend: counted, listed and carded like an adult friend, so `invited` reveals nothing about
+    // which friends are children.
     const open = await lobby(host, [adult.id, minor.id], { settings: { access: 'open' } });
     expect(open.invited).toBe(2);
     const outgoing = (await call(host, 'GET', '/play/invites')).body.outgoing.find(
@@ -357,8 +353,7 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     expect((await call(minor, 'POST', `/play/invites/${held.id}/decline`)).status).toBe(404);
     expect((await inviteOf(open.lobbyId, minor.id))!.status).toBe('pending');
 
-    // a friend with a block against someone already in the game: the same, so
-    // the count says nothing about who has blocked whom
+    // A friend with a block against someone in the game is counted the same, so the count reveals nothing about blocks.
     const made = await lobby(host, [member.id]);
     await call(member, 'POST', `/play/invites/${(await inviteOf(made.lobbyId, member.id))!.id}/accept`);
     await block(pool, member.id, blockedByMember.id);
@@ -509,11 +504,11 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     expect(next).toBeTruthy();
     expect(eventsFor(a.id, 'rematch_update').length).toBeGreaterThan(0);
     expect((await call(a, 'GET', url)).body.nextLobbyId).toBe(next);
-    // nobody was put in it: the host alone, until the others choose to join
+    // Nobody was put in it: the host alone until others choose to join.
     expect((await call(a, 'GET', `/play/cards/wordle-battle/${next}`)).body).toMatchObject({ players: 1, isMember: false, canJoin: true });
     expect((await call(a, 'POST', `/wordle/battles/${next}/join`)).status).toBe(200);
 
-    // inviting an earlier player to the next round says it is a rematch
+    // Inviting an earlier player to the next round says it is a rematch.
     const inv = await call(host, 'POST', '/play/invites', { game: 'wordle-battle', lobbyId: next, userIds: [b.id] });
     expect(inv.body.invited).toBe(1);
     const banner = (await call(b, 'GET', '/play/invites')).body.incoming.find((i: { lobbyId: string }) => i.lobbyId === next);
@@ -549,8 +544,7 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     return res.body as { game: string; lobbyId: string; invited: number };
   };
-  // Playing a story game to its end is the story games' own suite; here the
-  // play layer only needs one that has ended.
+  // Playing a story game to its end belongs to the story games' suite; here it only needs to have ended.
   const endStoryGame = (id: string) =>
     pool.query(`UPDATE story_games SET status = 'finished', finished_at = now() WHERE id = $1`, [id]);
 

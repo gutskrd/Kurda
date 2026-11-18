@@ -34,13 +34,13 @@ describe('Terms', () => {
       expect(within(provider).getByText(value)).toBeInTheDocument();
     }
     expect(within(provider).getByText(`trading as ${PROVIDER.tradingName}`)).toBeInTheDocument();
-    // the registered email and telephone, each as a link that opens it
+    // The registered email and telephone, each as a link that opens it.
     expect(within(provider).getByRole('link', { name: PROVIDER.email })).toHaveAttribute('href', `mailto:${PROVIDER.email}`);
     expect(within(provider).getByRole('link', { name: PROVIDER.phone })).toHaveAttribute('href', 'tel:+31638066158');
-    // the VAT line only once the btw-id is issued, never an empty one
+    // The VAT line only once the btw-id is issued, never an empty one.
     if (PROVIDER.vat) expect(within(provider).getByText(PROVIDER.vat)).toBeInTheDocument();
     else expect(within(provider).queryByText('VAT number')).toBeNull();
-    // nothing still waiting to be filled in
+    // Nothing still waiting to be filled in.
     expect(provider.querySelector('[data-placeholder]')).toBeNull();
   });
 
@@ -52,7 +52,7 @@ describe('Terms', () => {
     expect(within(section('Copyright notices')).getByRole('link', { name: 'Go to the Copyright page' })).toHaveAttribute('href', '/copyright');
     expect(within(section('Repeated copying')).getByText(/three copyright notices/)).toBeInTheDocument();
     expect(within(section('Shop items')).getByText(/Items you own stay yours/)).toBeInTheDocument();
-    // nothing bought with Zêr or gems can be handed back, and the Terms say so
+    // Nothing bought with Zêr or gems can be handed back, and the Terms say so.
     expect(within(section('Purchases are final')).getByText(/can’t be returned or turned back into Zêr or gems/)).toBeInTheDocument();
     const contact = section('How to reach us');
     expect(within(contact).getByText('For members')).toBeInTheDocument();

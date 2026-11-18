@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import type { MultiGame, MultiSeat, UnitTone } from '@kurda/shared';
@@ -15,32 +15,25 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { multiSeatName } from './GameRoom';
 
-/**
- * Each team's colour, one of the path's tones (the same as the website's,
- * play/TeamPicker.tsx there), and its name: a team is always named as well as
- * coloured, so the colour is never the only way to tell them apart.
- */
-export const TEAM_TONE: Readonly<Record<number, UnitTone>> = { 1: 'saffron', 2: 'river', 3: 'rose', 4: 'pine' };
+/** Each team's colour (a path tone, as on the website) and name; teams are always named too, so colour is never the only cue. */
+const TEAM_TONE: Readonly<Record<number, UnitTone>> = { 1: 'saffron', 2: 'river', 3: 'rose', 4: 'pine' };
 const TEAM_KEY: Readonly<Record<number, TranslationKey>> = { 1: 'play.teams.team1', 2: 'play.teams.team2' };
 
-export function teamName(team: number, t: Translate): string {
+function teamName(team: number, t: Translate): string {
   const key = TEAM_KEY[team];
   return key ? t(key) : t('play.teams.teamN', { team });
 }
 
 /** A team's colours in the current scheme. */
-export function useTeamTone(): (team: number | null | undefined) => ToneColors {
+function useTeamTone(): (team: number | null | undefined) => ToneColors {
   const { scheme } = useTheme();
   return (team) => TONES[scheme][TEAM_TONE[team ?? 1] ?? 'saffron'];
 }
 
 /**
- * The teams of a team game's lobby, on the phone: one block per team in its
- * colour and name, each player by seat (a friend by name, anyone else as
- * "Player N") with a flag to report them, the host marked. A player moves
- * themselves with "Join" on the other team; the host can move anyone. It
- * stands where the lobby's list of people stands in a game without teams
- * (play/GameRoom.tsx).
+ * A team game's lobby teams: one block per team in its colour and name, each player by seat with a report flag and
+ * the host marked. Players switch themselves with "Join"; the host can move anyone. It stands where a game without
+ * teams lists its players (play/GameRoom.tsx).
  */
 export function TeamPicker({
   players,
@@ -48,7 +41,6 @@ export function TeamPicker({
   isHost,
   game,
   lobbyId,
-  note,
   onTeam,
 }: {
   players: readonly MultiSeat[];
@@ -56,7 +48,6 @@ export function TeamPicker({
   isHost: boolean;
   game: MultiGame;
   lobbyId: string;
-  note?: ReactNode;
   onTeam: (seat: number, team: number) => Promise<void>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -82,7 +73,6 @@ export function TeamPicker({
       <Text accessibilityRole="header" style={[styles.heading, { color: colors.textPrimary }]}>
         {t('play.teams.title')}
       </Text>
-      {note}
       {numbers.map((team) => {
         const tone = toneOf(team);
         const members = present.filter((p) => (p.team ?? 1) === team);

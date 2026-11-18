@@ -14,24 +14,13 @@ import { BuyConfirm } from './BuyConfirm';
 import './yours.css';
 
 /**
- * Your pen pal bird, in the Shop: the bird that carries your letters, and the
- * others it could be.
- *
- * The same choice the letters page offers under its window (letters/BirdPicker),
- * with the same words, laid out as the Shop lays out what it sells. The eight
- * birds are a row of radio buttons, the one that is yours marked with a tick;
- * picking another shows what it would cost against the Zêr there are, and
- * getting it asks first in the Shop's own dialog (BuyConfirm), which says the
- * price, the balance and, when the balance falls short, how much is missing,
- * and will not go on until there is enough. The first bird is chosen for free
- * and is simply taken, as anything free in the Shop is.
- *
- * Nothing is shown to somebody letters are not for (no account, no birth
- * month, a limit on writing), nor on a server without letters.
+ * The pen pal bird in the Shop, the same choice as letters/BirdPicker laid out like the catalogue. The birds are
+ * radios with a tick on the reader's own; picking another shows its price, and getting it confirms in BuyConfirm. The
+ * first bird is free and taken at once. Nothing shows for readers who cannot use letters, or on a server without them.
  */
 
-/** What `GET /letters` holds, and the way to read it again or put a newer answer in its place. */
-export interface LettersHomeState {
+/** What `GET /letters` holds, with ways to reload it or replace it with a newer answer. */
+interface LettersHomeState {
   data: LettersHome | null;
   loading: boolean;
   error: string | null;
@@ -39,17 +28,15 @@ export interface LettersHomeState {
   set: (next: LettersHome) => void;
 }
 
-/** Whether an answer is the letters page at all, rather than something an older server sent. */
+/** Whether an answer is the letters page at all. */
 function isLettersHome(value: unknown): value is LettersHome {
   const home = value as Partial<LettersHome> | null;
   return typeof home === 'object' && home !== null && isLetterBird(home.bird) && typeof home.birdChosen === 'boolean' && typeof home.zer === 'number';
 }
 
 /**
- * The letters page as the Shop needs it, asked for as the Shop opens so that
- * it arrives with the catalogue rather than after it. Only somebody signed in
- * is asked about; a server that has no letters (404), or an account that may
- * not have them (403), leaves nothing to show and nothing wrong.
+ * The letters page as the Shop needs it, fetched as the Shop opens so it arrives with the catalogue. Only when signed
+ * in; a 404 or 403 just means nothing to show.
  */
 export function useLettersHome(): LettersHomeState {
   const { client, status } = useAuth();
@@ -68,7 +55,7 @@ export function useLettersHome(): LettersHomeState {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    // read as the window reads it: a plain read is an old app's, which takes the letter it would show as landed
+    // Read with the window's path, since a plain read counts the letter it would show as landed.
     void client.get<LettersHome>(LETTERS_HOME_PATH).then((res) => {
       if (cancelled) return;
       setLoading(false);
@@ -85,7 +72,7 @@ export function useLettersHome(): LettersHomeState {
   return { data, loading, error, reload, set: setData };
 }
 
-/** The section's heading, with the way to the letters themselves at its end. */
+/** The section's heading, with a link to the letters at its end. */
 function Heading({ id }: { id: string }): React.JSX.Element {
   const t = useT();
   return (
@@ -110,7 +97,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-  // the bird just made yours here, which takes a small bow
+  // The bird just got here, which takes a small bow.
   const [won, setWon] = useState<number | null>(null);
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
   const data = home.data;
@@ -148,11 +135,11 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
       );
     return null;
   }
-  // somebody who cannot write letters yet is told why on the letters page, where it can be put right
+  // Somebody who cannot write letters yet is told why on the letters page.
   if (data.refusal !== null) return null;
 
   const first = !data.birdChosen;
-  // the Shop's own balance when it has one: it has seen whatever was bought here since the letters were read
+  // The Shop's own balance when it has one, since it reflects purchases made after the letters were read.
   const purse = zer ?? data.zer;
   const pick = picked ?? data.bird;
   const same = !first && pick === data.bird;
@@ -173,8 +160,8 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
       setWon(res.data.bird);
       return;
     }
-    // spent meanwhile, somewhere else: the Zêr there are now say how many are missing, and the dialog waits
-    // for them; the same bird again is no change, and there is nothing to pay or to say
+    // Spent elsewhere meanwhile: the new balance shows the shortfall and the dialog waits. The same bird again is no
+    // change, with nothing to pay.
     if (res.error.code === 'INSUFFICIENT_FUNDS' || res.error.code === 'LETTER_BIRD_SAME') {
       const again = await client.get<LettersHome>(LETTERS_HOME_PATH);
       setBusy(false);
@@ -192,7 +179,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
     setFailed(describeError(res.error, t));
   }
 
-  /** The first bird is free and simply taken; another asks first. */
+  /** The first bird is free and taken at once; another confirms first. */
   function get(): void {
     if (first) void choose();
     else {
@@ -220,7 +207,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
             ? t('letters.bird.chooseLead', { price: number(LETTER_BIRD_PRICE) })
             : t('letters.bird.changeLead', { price: number(LETTER_BIRD_PRICE), zer: number(purse) })}
         </p>
-        {/* native radios under one name: the arrow keys move through them, and a screen reader says each by its colour */}
+        {/* Native radios under one name, so arrow keys work and screen readers name each by its colour. */}
         <div className="yours-birds" role="radiogroup" aria-labelledby={titleId}>
           {LETTER_BIRD_ORDER.map((bird) => {
             const mine = !first && bird === data.bird;
@@ -250,7 +237,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
           })}
         </div>
         <div className="yours-foot">
-          {/* polite, so a bird just made yours is said once it is, and not while the page is read */}
+          {/* Polite, so a new bird is announced without interrupting. */}
           <p className="yours-picked" aria-live="polite">
             {same && <CheckIcon size={15} className="yours-picked-tick" />}
             <span>{same ? t('letters.bird.yours', { name: name(pick) }) : name(pick)}</span>

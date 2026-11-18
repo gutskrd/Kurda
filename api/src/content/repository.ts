@@ -23,11 +23,11 @@ export interface LessonRow {
   title_en: string;
 }
 
-/** A stored lesson version with its content, as import compares it (KUR-041). */
+/** A stored lesson version with its content, as import compares it. */
 export interface StoredLessonVersion {
   id: string;
   version: number;
-  /** includes 'in_review' (KUR-100), which `LessonStatus` predates */
+  /** includes 'in_review', which `LessonStatus` predates */
   status: string;
   titleKu: string;
   titleEn: string;
@@ -35,9 +35,8 @@ export interface StoredLessonVersion {
 }
 
 /**
- * Authoring-side content operations (KUR-026). The import pipeline
- * (#41) and admin CMS (#100) sit on top of this; learner-facing reads
- * live with lesson delivery (#28).
+ * Authoring-side content operations. Import and the admin CMS sit on top of this; learner-facing reads live with lesson
+ * delivery.
  */
 export class ContentRepository {
   constructor(private readonly pool: pg.Pool) {}
@@ -84,10 +83,9 @@ export class ContentRepository {
   }
 
   /**
-   * Create the next draft version at (skill, position) with NO exercises —
-   * used by import (KUR-041). First import makes v1; a re-import of changed
-   * content makes v2+ as a fresh draft, leaving any published version
-   * untouched (unchanged content makes none: see `lessonVersions`).
+   * Create the next draft version at (skill, position) with NO exercises, for import. The first import makes v1;
+   * changed content makes v2+ as a fresh draft, leaving published versions untouched (unchanged content makes none: see
+   * `lessonVersions`).
    */
   async createLessonVersion(skillId: string, position: number, titleKu: string, titleEn: string): Promise<string> {
     const result = await this.pool.query<{ id: string }>(
@@ -102,9 +100,8 @@ export class ContentRepository {
   }
 
   /**
-   * Every version at a (skill, position) slot that is not archived, newest
-   * first, each with its exercises — what import compares incoming content
-   * against so an unchanged lesson is not versioned again.
+   * Every non-archived version at a (skill, position) slot, newest first, with its exercises, for import to compare
+   * against.
    */
   async lessonVersions(skillId: string, position: number): Promise<StoredLessonVersion[]> {
     const lessons = await this.pool.query<{ id: string; version: number; status: string; title_ku: string; title_en: string }>(
@@ -152,7 +149,7 @@ export class ContentRepository {
     return r.rows[0]?.id ?? null;
   }
 
-  /** Attach (or clear) a markdown grammar note on a skill (KUR-038). */
+  /** Attach (or clear) a markdown grammar note on a skill. */
   async setGrammarNote(skillId: string, grammarMd: string | null): Promise<void> {
     await this.pool.query(`UPDATE skills SET grammar_md = $2 WHERE id = $1`, [skillId, grammarMd]);
   }
@@ -166,9 +163,8 @@ export class ContentRepository {
   }
 
   /**
-   * The words a skill's published lessons bring in, in the order a learner
-   * meets them, each once: what its items mark new. The skill's guide lists
-   * them beside its tips, so a learner can look back at what the skill taught.
+   * The words a skill's published lessons introduce, in the order a learner meets them, each once: shown in the skill's
+   * guide beside its tips.
    */
   async newWordsForSkill(skillId: string): Promise<NewWord[]> {
     const res = await this.pool.query<{ words: unknown }>(
@@ -200,7 +196,7 @@ export class ContentRepository {
     type: ExerciseType,
     payload: Record<string, unknown>,
   ): Promise<string> {
-    // reject malformed exercises at authoring time (KUR-027)
+    // reject malformed exercises at authoring time
     const validated = validateExercisePayload(type, payload);
     const result = await this.pool.query<{ id: string }>(
       `INSERT INTO exercises (lesson_id, position, type, payload)
@@ -211,10 +207,8 @@ export class ContentRepository {
   }
 
   /**
-   * The listening items among `exercises` that would have nothing to play
-   * once published (lessonaudio/publish-guard.ts). `publishLesson` does not
-   * check: whoever publishes authored content asks this first, as the import
-   * and the admin's approve do.
+   * The listening items among `exercises` that would have nothing to play once published
+   * (lessonaudio/publish-guard.ts). `publishLesson` does not check; import and the admin's approve ask this first.
    */
   silentListening(exercises: ReadonlyArray<{ type: string; payload: unknown }>): Promise<SilentListening[]> {
     return silentListening(this.pool, exercises);
@@ -229,9 +223,8 @@ export class ContentRepository {
   }
 
   /**
-   * Editing published content: clone the lesson (+exercises) as a new
-   * draft version at the same (skill, position). The old version stays
-   * untouched — sessions pinned to it are unaffected.
+   * Editing published content: clone the lesson and its exercises as a new draft version at the same (skill, position).
+   * The old version stays as is, so sessions pinned to it are unaffected.
    */
   async newLessonVersion(lessonId: string): Promise<string> {
     const client = await this.pool.connect();

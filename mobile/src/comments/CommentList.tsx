@@ -23,15 +23,9 @@ import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 
 /**
- * A post's comments, one level of replies under each, and the composer that
- * writes both — the half of the website's thread (web/src/library/Comments)
- * the phone was missing: who wrote each comment, when, and a way to answer
- * it or take your own back.
- *
- * Replies are drawn one step in, however deep they go: on a phone a second
- * and third indent leave a column too narrow to read. Each branch loads when
- * it is opened, as on the website, so a long thread is not fetched whole to
- * show its first few lines.
+ * A post's comments with one level of replies and the composer for both, matching the web thread
+ * (web/src/library/Comments): author, time, reply and delete-your-own. Replies are indented one step however deep
+ * they go, since deeper indents are unreadable on a phone. Each branch loads when opened.
  */
 export function CommentList({
   thread,
@@ -39,18 +33,18 @@ export function CommentList({
   renderAudio,
 }: {
   thread: CommentThread;
-  /** somebody else's comment, to the page's own report sheet */
+  /** Somebody else's comment, to the page's own report sheet. */
   onReport: (c: ThreadComment) => void;
-  /** a voice comment's player (library comments only, so pictures need not load the audio module) */
+  /** A voice comment's player (library comments only, so pictures need not load the audio module). */
   renderAudio?: (url: string) => ReactNode;
 }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   const { top, replies } = thread.state;
   if (top === null) return <CommentsSkeleton />;
-  if (top.length === 0) return <EmptyState title={t('comments.empty')} />;
+  if (top.length === 0) return <EmptyState title={t('comments.empty')} body={t('comments.emptyBody')} />;
 
-  // a reply's own replies sit beside it, under the same comment, one step in
+  // A reply's own replies sit beside it, under the same comment, one step in.
   const branch = (id: string): React.JSX.Element[] =>
     (replies[id] ?? []).flatMap((r) => [
       <CommentRow key={r.id} comment={r} nested thread={thread} onReport={onReport} renderAudio={renderAudio} />,
@@ -86,11 +80,11 @@ function CommentRow({
   renderAudio?: (url: string) => ReactNode;
 }): React.JSX.Element {
   const { user } = useAuth();
-  // a guest may read a thread; answering in it is the account's
+  // A guest may read a thread; answering in it is the account's.
   const { require } = useAccountGate();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  // in Soranî and Arabic a comment starts on the right; what somebody wrote keeps its own direction
+  // In Soranî and Arabic a comment starts on the right; what somebody wrote keeps its own direction.
   const dir = useDirection();
   const edge = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
   const navigation = useNavigation<RootNavigation>();
@@ -100,30 +94,27 @@ function CommentRow({
   const size = nested ? REPLY_AVATAR : AVATAR;
   const loading = thread.loadingReplies.includes(c.id);
   /*
-   * The picture and the words beside it share the gap between them, half
-   * each. The picture's other sides reach to a fingertip; a reply's picture
-   * sits just under the line of the comment it answers, whose Reply reaches
-   * down to meet it, so it reaches up only its half of that gap too. Reply
-   * is first on its line, so its own reach toward the picture is the other
-   * half. hitSlop is the physical left and right, so the sides follow the row.
+   * The picture and the text beside it split the gap between them. A reply's picture sits just under its parent's
+   * line, whose Reply reaches down to meet it, so it reaches up only half that gap. hitSlop uses physical left
+   * and right, so the sides follow the row direction.
    */
   const mirrored = dir.row === 'row-reverse';
   const faceTop = nested ? SEAM : undefined;
   const faceSlop = reachSlop(size, size, { limit: mirrored ? { left: SEAM, top: faceTop } : { right: SEAM, top: faceTop } });
   const replySlop = mirrored ? { ...ACTION_SLOP, right: SEAM } : { ...ACTION_SLOP, left: SEAM };
 
-  // your own name opens your own profile tab, not the page others see you on
+  // Your own name opens your own profile tab, not the page others see you on.
   const openProfile = () =>
-    mine ? navigation.navigate('Tabs', { screen: 'Profile' }) : navigation.navigate('UserProfile', { userId: author.id });
+    mine ? navigation.popTo('Tabs', { screen: 'Profile' }) : navigation.navigate('UserProfile', { userId: author.id });
 
   const audio = !removed && c.audioUrl && renderAudio ? renderAudio(c.audioUrl) : null;
   const text = removed ? t('comments.removed') : (c.body ?? (c.audioMediaId || c.audioUrl ? t('comments.voice') : ''));
-  // only a recording, and nothing here to play it with: the words say so, with the speaker beside them
+  // A voice-only comment cannot be played here, so the text says so with the speaker icon.
   const voiceOnly = !removed && !c.body && Boolean(c.audioMediaId || c.audioUrl);
 
   return (
     <View style={[styles.comment, { flexDirection: dir.row }, c.pending ? styles.pending : null]}>
-      {/* the picture opens them too, for a thumb; a screen reader is offered the name alone, not the same button twice */}
+      {/* The picture also opens the profile, for a thumb; screen readers get the name alone, not the same button twice. */}
       <Pressable
         onPress={openProfile}
         disabled={c.pending}
@@ -164,7 +155,7 @@ function CommentRow({
           )
         ) : null}
 
-        {/* nothing to answer or take back until the server has it */}
+        {/* Nothing to answer or take back until the server has it. */}
         {!c.pending && !removed ? (
           <View style={[styles.actions, { flexDirection: dir.row }]}>
             <Pressable
@@ -177,7 +168,7 @@ function CommentRow({
               <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('comments.reply')}</Text>
             </Pressable>
             {mine ? (
-              // at the far end of the line from Reply: the two were a thumb's slip apart, their reaches touching
+              // At the far end of the line from Reply, so their reaches do not touch.
               <Pressable
                 onPress={() => thread.confirmDelete(c)}
                 hitSlop={ACTION_SLOP}
@@ -229,10 +220,9 @@ function CommentRow({
 }
 
 /**
- * Where a comment or a reply is written, kept above the keyboard by the
- * page's KeyboardAvoidingView and above the home indicator when it is down.
- * While replying it says to whom, with an ✕ to go back to commenting on the
- * post. `children` sits above the field (the library's voice recorder).
+ * The comment composer, kept above the keyboard by the page's KeyboardAvoidingView and above the home indicator.
+ * While replying it names the person, with an ✕ to go back to commenting on the post. `children` sits above the
+ * field (the library's voice recorder).
  */
 export function CommentComposer({
   thread,
@@ -248,7 +238,7 @@ export function CommentComposer({
   value: string;
   onChangeText: (text: string) => void;
   onSubmit: () => void;
-  /** there is something to send */
+  /** There is something to send. */
   ready: boolean;
   placeholder: string;
   maxLength: number;
@@ -256,15 +246,12 @@ export function CommentComposer({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  // in Soranî and Arabic the words start on the right and Send sits on the left, as in a chat
+  // In Soranî and Arabic the words start on the right and Send sits on the left, as in a chat.
   const dir = useDirection();
   const bottom = useScreenBottomInset(spacing.md);
   const { isGuest, require } = useAccountGate();
   const target = thread.replyingTo;
-  /*
-   * A guest sees where a comment would go and, tapping it, the offer of an
-   * account — not a field to type a comment into and then be refused it.
-   */
+  /* A guest sees where a comment would go, and tapping it offers an account rather than a field that would be refused. */
   if (isGuest) {
     return (
       <View style={[styles.composerWrap, { paddingBottom: bottom }]}>
@@ -316,14 +303,14 @@ export function CommentComposer({
           multiline
           maxLength={maxLength}
         />
-        {/* the one send control every field in the app has */}
+        {/* The one send control every field in the app has. */}
         <SendButton ready={ready} onPress={onSubmit} label={t('comments.post')} />
       </View>
     </View>
   );
 }
 
-/** Three comments in grey, laid out as the real ones are: the picture, who and when, what they said. */
+/** The loading placeholder: three grey comments laid out like real ones. */
 export function CommentsSkeleton(): React.JSX.Element {
   return (
     <View>
@@ -341,24 +328,16 @@ export function CommentsSkeleton(): React.JSX.Element {
 }
 
 /*
- * A thread is the most crowded stack of controls in the app: a name, a line
- * of Reply and Report, and "Show replies", over and over, a few points apart.
- * No two reaches overlap, because where two do the later one takes the tap
- * even from the control the finger was nearer; so each reaches into a gap
- * only as far as its neighbour leaves it, and where there is room, to a
- * fingertip's 44:
+ * A thread is the app's densest stack of controls, so no two reaches overlap (where they do, the later one takes
+ * the tap): each reaches into a gap only as far as its neighbour leaves, and up to 44 where there is room.
  *
- * - Reply and Report are 24 tall (a 16pt line and 4 above and below) and 16
- *   apart; they reach 12 up into the words and 8 down, so 44, and 8 toward
- *   each other, meeting in the middle.
- * - The next comment starts 12 below the last line; that line reaches 8 of it
- *   and the next name the other 4. The name reaches 12 down into the words
- *   under it, which are not a control, and 4 to either side; the picture
- *   beside it opens the same profile.
- * - "Show replies" stands 18 below Reply (2 and its own 16), each reaching 8
- *   toward the other, so 40 tall.
+ * - Reply and Report are 24 tall and 16 apart; they reach 12 up and 8 down (44), and 8 toward each other.
+ * - The next comment starts 12 below the last line: that line reaches 8 of it and the next name 4. The name
+ *   reaches
+ *   12 down into the text below it and 4 to either side.
+ * - "Show replies" is 18 below Reply; each reaches 8 toward the other, so 40 tall.
  */
-/** half the 8 between a picture and the words beside it */
+/** Half the 8 between a picture and the text beside it. */
 const SEAM = spacing.sm / 2;
 const ACTION_SLOP = { top: 12, bottom: 8, left: 8, right: 8 };
 const BYLINE_SLOP = { top: SEAM, bottom: 12, left: SEAM, right: SEAM };
@@ -382,7 +361,7 @@ const styles = StyleSheet.create({
   actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   more: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md, paddingVertical: spacing.xs, alignSelf: 'flex-start' },
   moreRule: { width: 24, height: StyleSheet.hairlineWidth },
-  // under the words of the comment they answer, not under its picture
+  // Under the words of the comment they answer, not under its picture.
   replies: { marginLeft: AVATAR + spacing.sm },
   repliesRight: { marginRight: AVATAR + spacing.sm },
   composerWrap: { gap: spacing.sm, paddingTop: spacing.sm },
@@ -390,7 +369,7 @@ const styles = StyleSheet.create({
   replyingText: { flex: 1, fontSize: typography.sizes.sm },
   cancel: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderRadius: radii.lg, paddingLeft: spacing.md, paddingRight: spacing.xs, paddingVertical: 2 },
-  // the words' room on the right, Send's on the left
+  // The words' room on the right, Send's on the left.
   composerRtl: { paddingLeft: spacing.xs, paddingRight: spacing.md },
   input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.md, maxHeight: 120, paddingVertical: spacing.sm },
   send: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },

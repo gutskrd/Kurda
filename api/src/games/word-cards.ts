@@ -1,21 +1,14 @@
 /**
- * Cards made from approved words, for the admin's Game content page (shared
- * games/word-cards.ts): Who Am I?'s identities.
+ * Cards made from approved words for the admin's Game content page (shared games/word-cards.ts): Who Am I?'s identities.
  *
  *   GET  /admin/game-content/words?dialect&q&from&limit   words to pick from, with their approved meanings and an example
  *   POST /admin/game-content/from-word                    { kind, dialect, ref, level, category?, facts? }: a draft made of one
  *
- * The words are only ever ones a person approved: those published lessons
- * teach (with the English the lesson pairs them with, and a published
- * lesson's sentence that uses them as the example), and dictionary entries an
- * admin curated for the games (`in_games`), with their first sense and its
- * example. The picker lists both; an identity is always a word the lessons
- * teach. The Kurdish is copied from there into the draft by the server —
- * the word, its Kurdish definition where the dictionary has one, the example
- * — so nobody types it again; the editor adds what is not Kurdish. Each row
- * remembers the word it was made of (`origin`), so a word is one card of a
- * kind per variety, and the draft still goes through review before any game
- * shows it.
+ * Words are only ones a person approved: those published lessons teach (with the lesson's English and an example from a
+ * published lesson sentence), and dictionary entries curated for the games (`in_games`), with their first sense and
+ * example. An identity is always a word the lessons teach. The server copies the Kurdish (the word, its dictionary
+ * definition if any, the example) into the draft, so nobody retypes it; the editor adds the rest. Each row remembers
+ * its word (`origin`), so a word is one card per kind and variety, and the draft still goes through review.
  */
 import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';

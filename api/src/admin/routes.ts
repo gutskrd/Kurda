@@ -17,21 +17,16 @@ function codeLocked(retryAfterSec: number): AppError {
 }
 
 /**
- * Refuse, and wait until the refusal has gone out. A guard that only sent it
- * let the route's handler run as well: the app's onSend hooks are async, so
- * the reply is not finished when the guard returns, and Fastify goes on to the
- * handler unless the hook waits for the reply (or returns it). A moderator
- * asking to change a balance was told 403 — and the balance changed.
+ * Refuse and wait until the refusal has gone out. The app's onSend hooks are async, so the reply is not finished when a
+ * guard returns, and Fastify runs the handler unless the hook awaits (or returns) the reply.
  */
 async function forbid(reply: FastifyReply, req: FastifyRequest, code: string, message: string): Promise<void> {
   await reply.code(403).send({ code, message, requestId: req.id });
 }
 
 /**
- * Guard for admin routes (KUR-099): an admin role (optionally a specific one)
- * AND a confirmed TOTP enrollment — 2FA is mandatory. Roles are re-read from the
- * DB on every request by `setupAuth`, so an admin demoted mid-session loses
- * access on their very next call (no cached authority).
+ * Guard for admin routes: an admin role (optionally a specific one) AND a confirmed TOTP enrollment. Roles are re-read
+ * from the DB on every request by `setupAuth`, so a demotion takes effect on the next call.
  */
 export function requireAdmin(totp: AdminTotpService, ...roles: AdminRole[]) {
   return markPrivileged(async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
@@ -48,10 +43,8 @@ export function requireAdmin(totp: AdminTotpService, ...roles: AdminRole[]) {
 }
 
 /**
- * Guard for a capability rather than a role list, so the role table in
- * `roles.ts` is the one place that says who may do what. Marked privileged, so
- * the 2FA gate covers every route using it. Put `requireAuth` before it: a
- * signed-out caller gets 401 there, not a 403 here.
+ * Guard for a capability rather than a role list, so `roles.ts` alone says who may do what. Marked privileged so the
+ * 2FA gate covers it. Put `requireAuth` before it so a signed-out caller gets 401, not 403.
  */
 export function requireCapability(capability: Capability) {
   return markPrivileged(async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
@@ -61,12 +54,10 @@ export function requireCapability(capability: Capability) {
   });
 }
 
-/** Admin auth: TOTP enrollment + login 2FA + an identity probe (KUR-099). */
+/** Admin auth: TOTP enrollment + login 2FA + an identity probe. */
 export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService): void {
-  // The legacy 'admin' role is included on purpose. Most admin routes are still
-  // guarded by requireRoles('admin'), so an account holding only that role can
-  // reach the panel — and without this it could never enroll in the 2FA the gate
-  // now demands, locking it out of everything with no way back.
+  // The legacy 'admin' role is included on purpose: an account holding only it reaches the panel, and must be able to
+  // enroll in the 2FA the gate demands.
   const adminOnly = [requireAuth, requireRoles(...PRIVILEGED_ROLES)];
 
   /** A wrong code goes in the security log; a wrong code that locks the codes is critical there. */
@@ -78,14 +69,11 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
     });
 
   /**
-   * Start 2FA enrollment: returns the secret + otpauth URI (show once as QR).
+   * Start 2FA enrollment: returns the secret and otpauth URI (shown once as a QR code).
    *
-   * Refused once a secret is confirmed, unless this session has already passed
-   * 2FA. Enrolling regenerates the secret and clears confirmation, so leaving it
-   * open would have made the whole gate pointless: anyone with the password
-   * could re-enroll to a secret they control and walk straight in. Recovering a
-   * lost device is deliberately an out-of-band action (another admin, or
-   * clearing the row) rather than something a password alone can do.
+   * Refused once a secret is confirmed unless this session already passed 2FA, because enrolling regenerates the secret
+   * and anyone with the password could otherwise re-enroll to a secret they control. Recovering a lost device is
+   * deliberately out of band (another admin, or clearing the row).
    */
   app.post('/admin/2fa/enroll', { config: { skipValidation: true }, preHandler: adminOnly }, async (req, reply) => {
     const state = await totp.state(req.user!.id, req.user!.familyId);
@@ -104,9 +92,8 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
   });
 
   /**
-   * What the admin panel needs before showing anything: whether this account has
-   * 2FA set up, and whether THIS session has cleared it. Exempt from the gate —
-   * it is how the panel knows which screen to show.
+   * What the admin panel needs first: whether this account has 2FA set up and whether THIS session cleared it. Exempt
+   * from the gate, since it decides which screen to show.
    */
   app.get('/admin/session', { config: { skipValidation: true }, preHandler: adminOnly }, async (req) => {
     const state = await totp.state(req.user!.id, req.user!.familyId);
@@ -117,17 +104,13 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
       needsVerification: state.enrolled && !state.verified,
       capabilities: cleared ? capabilitiesFor(req.user!.roles) : [],
       /**
-       * Every staff role the account holds, the legacy `admin` and `founder`
-       * included, which `roles` leaves out. Many routes are still guarded by a
-       * role list rather than a capability (analytics, the economy, the shop,
-       * tags…), so the panel needs these to show only the pages it can open.
-       * Empty until 2FA is done, like the capabilities.
+       * Every staff role the account holds, including the legacy `admin` and `founder` that `roles` leaves out, because
+       * many routes are still guarded by role lists. Empty until 2FA is done, like the capabilities.
        */
       staffRoles: cleared ? req.user!.roles.filter((r) => PRIVILEGED_ROLES.includes(r)) : [],
       /**
-       * The voices this account records (recording/links.ts), so the console
-       * opens on that person's own lines. A read that fails leaves none: the
-       * console must still open without them.
+       * The voices this account records (recording/links.ts), so the console opens on that person's lines. A failed
+       * read leaves none; the console must still open.
        */
       voices: cleared
         ? await voicesOf(app.db, req.user!.id).catch((err: unknown) => {
@@ -139,11 +122,8 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
   });
 
   /**
-   * Confirm enrollment by entering a live code.
-   *
-   * Both code routes are limited per person on top of the count of wrong codes
-   * the service keeps (AdminTotpService.checkCode): a burst is stopped here,
-   * and guessing over a longer time is stopped there.
+   * Confirm enrollment with a live code. Both code routes are rate-limited per person on top of the service's
+   * wrong-code count (AdminTotpService.checkCode): bursts stop here, slow guessing stops there.
    */
   app.post(
     '/admin/2fa/confirm',
@@ -184,9 +164,8 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
   );
 
   /**
-   * Sign out of the admin panel: forget this login's 2FA so the next visit has
-   * to enter a code again. Exempt from the gate, so signing out still works once
-   * the window has expired.
+   * Sign out of the admin panel: forget this login's 2FA so the next visit needs a code. Exempt from the gate so
+   * sign-out works after the window expires.
    */
   app.post('/admin/session/end', { config: { skipValidation: true }, preHandler: adminOnly }, async (req) => {
     await totp.clearVerification(req.user!.id, req.user!.familyId);
