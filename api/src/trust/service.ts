@@ -77,7 +77,7 @@ export class TrustService {
     return getTrustLevel({
       accountAgeMs: Math.max(0, this.now().getTime() - row.created_at.getTime()),
       emailVerified: row.email_verified_at !== null,
-      phoneVerified: row.phone_verified_at !== null, // fast-tracks trust (#297)
+      phoneVerified: row.phone_verified_at !== null, // A verified phone fast-tracks trust.
       priorViolations: Number(row.violations),
     });
   }
