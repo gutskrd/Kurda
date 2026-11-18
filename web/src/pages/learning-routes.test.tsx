@@ -10,6 +10,7 @@ import { CourseMap } from './CourseMap';
 import { Lesson } from './Lesson';
 import { Review } from './Review';
 import { NextLesson } from './NextLesson';
+import { onNotice } from '../lib/notice';
 
 /* The learning routes as a learner moves through them (Learn, a course map, a lesson, a review, the next lesson after sign-up), against a scripted API. */
 
@@ -226,9 +227,8 @@ describe('Learn', () => {
     );
     routes('/app/learn');
     const today = await screen.findByRole('region', { name: 'Today' });
-    const goal = await within(today).findByRole('progressbar', { name: 'Today’s goal' });
-    expect(goal).toHaveAttribute('aria-valuenow', '60');
-    expect(goal).toHaveAttribute('aria-valuetext', '12 of 20 XP today');
+    const goal = await within(today).findByRole('button', { name: 'Today’s goal, 12 of 20 XP today' });
+    expect(goal).toHaveAttribute('aria-haspopup', 'dialog');
     expect(within(today).getByText('12/20 XP')).toBeInTheDocument();
     expect(within(today).getByText('5-day streak')).toBeInTheDocument();
     expect(within(today).getByRole('link', { name: '7 due' })).toHaveAttribute('href', '/app/learn/review');
@@ -248,8 +248,7 @@ describe('Learn', () => {
     );
     routes('/app/learn');
     const today = await screen.findByRole('region', { name: 'Today' });
-    const goal = await within(today).findByRole('progressbar', { name: 'Today’s goal' });
-    expect(goal).toHaveAttribute('aria-valuetext', 'Today’s goal is done');
+    expect(await within(today).findByRole('button', { name: 'Today’s goal is done' })).toBeInTheDocument();
     expect(within(today).getByText('130 XP')).toBeInTheDocument();
     expect(within(today).queryByText('130/20 XP')).not.toBeInTheDocument();
     expect(today.querySelector('.learn-strip-done')).not.toBeNull();
@@ -279,6 +278,89 @@ describe('Learn', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(button).toHaveFocus();
+  });
+
+  it('changes the daily goal from its ring, at once, and shows what the server then counts today', async () => {
+    const sent: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const path = new URL(url).pathname;
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true, streak: { current: 2, longest: 2, freezes: 0, lastActiveOn: null } } });
+        if (path === '/me/daily-goal' && init?.method === 'PUT') {
+          sent.push(JSON.parse(init.body as string));
+          return jsonResponse(200, { goal: 10, effectiveGoal: 10, earnedXp: 12, progress: 1, completed: true });
+        }
+        if (path === '/me/daily-goal') return jsonResponse(200, { goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false });
+        if (path === '/courses') return jsonResponse(200, { courses: [] });
+        return jsonResponse(200, { due: 0, available: 0 });
+      }),
+    );
+    routes('/app/learn');
+    const today = await screen.findByRole('region', { name: 'Today' });
+    await userEvent.click(await within(today).findByRole('button', { name: 'Today’s goal, 12 of 20 XP today' }));
+    const sheet = screen.getByRole('dialog', { name: 'Today' });
+    const goals = within(sheet).getByRole('group', { name: 'Goal: 20 XP' });
+    expect(within(goals).getByRole('radio', { name: '20 XP a day' })).toBeChecked();
+    expect(within(goals).getAllByRole('radio')).toHaveLength(4);
+
+    await userEvent.click(within(goals).getByRole('radio', { name: '10 XP a day' }));
+    expect(within(sheet).getByRole('radio', { name: '10 XP a day' })).toBeChecked();
+    await waitFor(() => expect(sent).toEqual([{ goal: 10 }]));
+    // A lower goal counts from today, so the strip's ring is met at once.
+    expect(await within(today).findByRole('button', { name: 'Today’s goal is done' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('puts the saved goal back, with a notice, when the change is refused', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const path = new URL(url).pathname;
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true } });
+        if (path === '/me/daily-goal' && init?.method === 'PUT') return jsonResponse(503, { code: 'UNAVAILABLE', message: 'down' });
+        if (path === '/me/daily-goal') return jsonResponse(200, { goal: 20, effectiveGoal: 20, earnedXp: 0, progress: 0, completed: false });
+        if (path === '/courses') return jsonResponse(200, { courses: [] });
+        return jsonResponse(200, { due: 0, available: 0 });
+      }),
+    );
+    const said: string[] = [];
+    const stop = onNotice((text) => said.push(text));
+    routes('/app/learn');
+    await userEvent.click(await screen.findByRole('button', { name: 'Today’s goal, 0 of 20 XP today' }));
+    const sheet = screen.getByRole('dialog', { name: 'Today' });
+    await userEvent.click(within(sheet).getByRole('radio', { name: '50 XP a day' }));
+    await waitFor(() => expect(within(sheet).getByRole('radio', { name: '20 XP a day' })).toBeChecked());
+    expect(said).toHaveLength(1);
+    stop();
+  });
+
+  it('offers today’s word among the practice tools, opening its dictionary entry', async () => {
+    serve({
+      'GET /courses': { courses: [] },
+      'GET /practice/due': { due: 0, available: 0 },
+      'GET /dictionary/word-of-day': { word: { entryId: 'e42', headword: 'hêvî', pos: 'n', definitionEn: 'hope', definitionKu: null } },
+    });
+    routes('/app/learn');
+    const tools = await screen.findByRole('region', { name: 'Practice' });
+    const word = await within(tools).findByRole('link', { name: /Word of the day/ });
+    expect(word).toHaveTextContent('hêvî');
+    expect(word).toHaveTextContent('n · hope');
+    expect(word).toHaveAttribute('href', '/app/dictionary?entry=e42');
+  });
+
+  it('leaves no gap among the tools on a day without a word', async () => {
+    serve({
+      'GET /courses': { courses: [] },
+      'GET /practice/due': { due: 0, available: 0 },
+      'GET /dictionary/word-of-day': { word: null },
+    });
+    routes('/app/learn');
+    const tools = await screen.findByRole('region', { name: 'Practice' });
+    await waitFor(() => expect(calls.some((c) => c.path === '/dictionary/word-of-day')).toBe(true));
+    await waitFor(() => expect(within(tools).queryByText('Word of the day')).toBeNull());
+    expect(tools.querySelector('.skeleton-late')).toBeNull();
   });
 
   it('says what review is before there is anything in it, and keeps a course whose map failed', async () => {
