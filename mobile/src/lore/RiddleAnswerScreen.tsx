@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COLUMN, Note } from '../stories/ui';
@@ -31,6 +32,7 @@ import { dialectNameKey } from '../i18n/dialectName';
  * which changes nothing for a riddle already solved or revealed.
  */
 export function RiddleAnswerScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
+  useHardwareBack(onExit);
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();

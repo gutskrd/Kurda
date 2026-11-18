@@ -61,7 +61,6 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { PracticeHubScreen } from './src/practice/PracticeHubScreen';
-import { leaveExercise } from './src/practice/exercises';
 import { JumpTestScreen } from './src/coursemap/JumpTestScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
@@ -141,7 +140,7 @@ import { RiddleAnswerScreen } from './src/lore/RiddleAnswerScreen';
 import { ProverbsScreen } from './src/lore/ProverbsScreen';
 import { ProverbScreen } from './src/lore/ProverbScreen';
 import { ProverbRoundScreen } from './src/lore/ProverbRoundScreen';
-import { leaveLore } from './src/lore/navigation';
+import { leaveLinked } from './src/navigation/leaveLinked';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
@@ -658,13 +657,13 @@ function SignedInRoot() {
       </RootStack.Screen>
       {/*
         The lessons' two exercises (practice/exercises.ts), opened from the practice hub or Lessons. Leaving goes back
-        there, or to the hub when opened by a link with nothing behind it (`leaveExercise`). Guests do them too.
+        there, or to the hub when a link opened it (`leaveLinked`). Guests do them too.
       */}
       <RootStack.Screen name="BuildSentence" options={card}>
-        {({ navigation }) => <BuildSentenceScreen onExit={() => leaveExercise(navigation)} />}
+        {({ navigation }) => <BuildSentenceScreen onExit={() => leaveLinked(navigation, 'PracticeHub', ['Learn'])} />}
       </RootStack.Screen>
       <RootStack.Screen name="HearIt" options={card}>
-        {({ navigation }) => <HearItScreen onExit={() => leaveExercise(navigation)} />}
+        {({ navigation }) => <HearItScreen onExit={() => leaveLinked(navigation, 'PracticeHub', ['Learn'])} />}
       </RootStack.Screen>
       {/* A learning game is learning, like a lesson, so guests play it too (api/src/games). */}
       <RootStack.Screen name="MemoryThief" options={card}>
@@ -693,16 +692,16 @@ function SignedInRoot() {
         {({ route, navigation }) => <RiddlesScreen dialect={route.params?.dialect} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Riddle" options={card} getId={({ params }) => params.slug}>
-        {({ route, navigation }) => <RiddleScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
+        {({ route, navigation }) => <RiddleScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLinked(navigation, 'Riddles')} />}
       </RootStack.Screen>
       <RootStack.Screen name="RiddleAnswer" options={card}>
-        {({ route, navigation }) => <RiddleAnswerScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
+        {({ route, navigation }) => <RiddleAnswerScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLinked(navigation, 'Riddles')} />}
       </RootStack.Screen>
       <RootStack.Screen name="Proverbs" options={card}>
         {({ route, navigation }) => <ProverbsScreen dialect={route.params?.dialect} theme={route.params?.theme} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="Proverb" options={card} getId={({ params }) => params.slug}>
-        {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Proverbs')} />}
+        {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLinked(navigation, 'Proverbs')} />}
       </RootStack.Screen>
       {/* A round must not be left by a swipe meant to scroll its choices. */}
       <RootStack.Screen name="ProverbRound" options={heldCard}>

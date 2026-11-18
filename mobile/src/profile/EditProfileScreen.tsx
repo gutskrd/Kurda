@@ -328,7 +328,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               </PressableScale>
               {/* Only avatars this account can wear: Hevalo+ cannot be had in the app, so a members-only avatar is
                  not shown to anybody else. Each is named by its place ("Avatar 3"), since its key is not a word to
-                 read out. */}
+                 read out, and one that fails to load shows a person, not letters of its key. */}
               {shownAvatars.map((a, i) => {
                 return (
                   <PressableScale
@@ -343,7 +343,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                       { borderColor: selected === a.key ? colors.primary : colors.glassBorder },
                     ]}
                   >
-                    <InitialsAvatar name={a.key} id={a.key} size={44} photoUrl={avatarAssetUrl(a.key)} />
+                    <InitialsAvatar name="" id={a.key} size={44} photoUrl={avatarAssetUrl(a.key)} />
                   </PressableScale>
                 );
               })}

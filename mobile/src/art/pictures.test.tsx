@@ -236,6 +236,12 @@ describe('a default profile picture', () => {
     await waitFor(() => expect(container.querySelector('img')?.getAttribute('src')).toBe(`${CDN}/avatar-03.png`));
   });
 
+  it('shows a person, not letters, for a picture with no name that will not load', () => {
+    const { container } = renderWithProviders(<InitialsAvatar name="" id="default-03" photoUrl={null} />);
+    expect(container.textContent).toBe('');
+    expect(container.querySelector('svg')).not.toBeNull();
+  });
+
   it('leaves a photo of somebody’s own alone', async () => {
     await overrides({ 'avatar:default-03': `${CDN}/avatar-03.png` });
     const { container } = renderWithProviders(<InitialsAvatar name="Rojda" id="u1" photoUrl="https://media.hevalo.app/profile/rojda.webp" />);
