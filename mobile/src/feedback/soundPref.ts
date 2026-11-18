@@ -2,12 +2,9 @@ import { useEffect, useState } from 'react';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * Settings → Sounds: whether the app's own chimes play (a right answer, a
- * lesson finished, something earned). The lesson's spoken Kurdish is not one
- * of them and always plays.
- *
- * On by default and kept on the device, as Vibration is (vibrationPref.ts),
- * and for the same reason: it is about where the phone is, not who holds it.
+ * Settings → Sounds: whether the app's chimes play (a right answer, a finished lesson, something earned). Spoken
+ * Kurdish in lessons is not one of them and always plays. On by default and kept per device, like Vibration
+ * (vibrationPref.ts), since it is about where the phone is, not who holds it.
  */
 const KEY = 'hevalo_sounds';
 

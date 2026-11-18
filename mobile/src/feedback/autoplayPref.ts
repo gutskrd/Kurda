@@ -2,15 +2,10 @@ import { useEffect, useState } from 'react';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * Settings → Sounds: whether a lesson says its Kurdish by itself after each
- * answer — the native recording, a moment after the verdict. Off, it waits for
- * a tap on "Hear it", as it always could. (A listening exercise's clip plays
- * as it opens either way: there, the sound is the question.)
- *
- * Hearing the sentence right after answering it, while the answer is still on
- * screen, is the cheapest way to tie the sound to the spelling; but a phone on
- * a bus may not want to speak up unasked, so it can be turned off. On by
- * default and kept on the device, as Sounds is (soundPref.ts).
+ * Settings → Sounds: whether a lesson plays its Kurdish recording by itself a moment after each answer; off, it
+ * waits for "Hear it". Listening exercises play their clip on open either way. Hearing the sentence while the
+ * answer is on screen ties sound to spelling, but a phone on a bus may not want to speak unasked. On by default
+ * and kept per device, like Sounds (soundPref.ts).
  */
 const KEY = 'hevalo_autoplay_audio';
 

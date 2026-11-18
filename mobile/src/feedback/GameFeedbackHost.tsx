@@ -20,20 +20,16 @@ import { requestStoreReview } from './storeReview';
 export const STORE_PROMPT_DELAY_MS = 1800;
 
 /**
- * Where the rating box appears, over whichever game has just finished.
+ * Shows the rating box over whichever game just finished. Mounted once beside the screens. Each game calls
+ * `reportGameFinished` on entering its finished state; this asks the API whether the account is due and decides
+ * once per session (session.ts):
  *
- * Mounted once, beside the screens. Every game calls `reportGameFinished` on
- * the transition into finished; this asks the API whether the account is due
- * and decides, once per session (session.ts):
- *
- * - the box: after the first finished game of the account's life, ~1.2 s into
- *   the results, as a small card over the bottom of the screen — the results
- *   stay on screen and usable above it, and "Not now" is one tap. It belongs
- *   to those results: leaving them (Back, another tab, a new game on the same
- *   screen) closes it, and it does not open once the player has left them;
- * - or the system's own store prompt: after a game won or a personal best,
- *   when the API says this phone may (a few games over more than one day, an
- *   adult, once per version, months apart), a moment into the results;
+ * - the box: after the account's first finished game, about 1.2 s into the results, as a small card at the bottom
+ *   with the results still usable above it and "Not now" one tap away. Leaving those results closes it, and it does
+ *   not open once they are left;
+ * - or the system store prompt: after a win or personal best, when the API allows it for this phone (a few games
+ *   over
+ *   more than a day, an adult, once per version, months apart);
  * - or, nearly always, nothing.
  */
 export function GameFeedbackHost({ session = feedbackSession }: { session?: FeedbackSession }): React.JSX.Element | null {
@@ -41,8 +37,8 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
-  // the app's navigation, to know which screen the results were on; null
-  // outside a NavigationContainer (a test, a screen shown on its own)
+  // The app's navigation, to know which screen the results were on; null outside a NavigationContainer (tests, a
+  // standalone screen).
   const nav = useContext(NavigationContainerRefContext);
   const [open, setOpen] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -73,8 +69,7 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
         session.boxShown = true;
         later(APP_FEEDBACK_DELAY_MS, () => {
           if (currentRoute() !== finishedOn || visit.current !== thisVisit) {
-            // gone from the results before it could appear: it was never
-            // seen, so a later game this session may still offer it
+            // Left the results before it appeared: it was never seen, so a later game this session may still offer it.
             session.boxShown = false;
             return;
           }
@@ -86,7 +81,7 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
         later(STORE_PROMPT_DELAY_MS, () => {
           void requestStoreReview().then((asked) => {
             if (asked) void storeReviewPrompted(client, APP_VERSION);
-            // not there after all (an old build, TestFlight): this session may still show the box
+            // Not there after all (an old build, TestFlight): this session may still show the box.
             else session.storeAsked = false;
           });
         });
@@ -95,9 +90,8 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
     [client, user?.minor, session, currentRoute],
   );
 
-  // Leaving the results closes the box. It is not answered, so the server is
-  // not told it was shown and another session may offer it again; this one
-  // will not (session.boxShown stays true).
+  // Leaving the results closes the box unanswered, so the server is not told it was shown and another session may
+  // offer it again; this one will not (session.boxShown stays true).
   useEffect(() => {
     if (!open || !nav) return;
     return nav.addListener('state', () => {
@@ -106,7 +100,7 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
   }, [open, nav, currentRoute]);
 
   useEffect(() => onGameFinished((finish) => void handle(finish)), [handle]);
-  // a game that plays again on the same screen (Race again) leaves its results too
+  // A game that plays again on the same screen (Race again) leaves its results too.
   useEffect(
     () =>
       onResultsLeft(() => {
@@ -132,7 +126,7 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
     timing(enter, 1, duration.slow).start();
   }, [open, reduceMotion, enter]);
 
-  // nothing covers the results once it has gone
+  // Nothing covers the results once it has gone.
   useEffect(() => {
     if (!open) setRatingBoxInset(0);
   }, [open]);
@@ -154,7 +148,7 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
             {
               backgroundColor: colors.background,
               shadowColor: colors.softShadow,
-              // a shadow does not show on a dark screen: the edge does it there
+              // A shadow does not show on a dark screen: the edge does it there.
               borderColor: scheme === 'dark' ? colors.glassBorder : colors.separator,
               marginBottom: Math.max(insets.bottom, spacing.md),
               opacity: enter,
@@ -162,7 +156,7 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
             },
           ]}
         >
-          {/* lifted a step above the screen behind it, as a raised surface is in the dark theme */}
+          {/* Lifted a step above the screen behind it, as a raised surface is in the dark theme. */}
           <View style={[styles.lift, scheme === 'dark' ? { backgroundColor: colors.glassFill } : null]}>
             <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" bounces={false}>
               <RatingBox source="first_game" onClose={() => setOpen(false)} />
@@ -187,7 +181,7 @@ const styles = StyleSheet.create({
     shadowRadius: 28,
     elevation: 12,
   },
-  // the clipping sits inside, so iOS still draws the card's shadow
+  // The clipping sits inside, so iOS still draws the card's shadow.
   lift: { flexShrink: 1, borderRadius: radii.xl, overflow: 'hidden' },
   scroll: { padding: spacing.md },
 });

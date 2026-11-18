@@ -5,44 +5,25 @@ import { loadVibrationPref, vibrationOn } from './vibrationPref';
 export type { HapticEvent } from './hapticPacing';
 
 /**
- * The phone's buzzes, by what they mean.
+ * The phone's haptics, by meaning. Screens say what happened (`haptic('correct')`, `haptic('celebrate')`), and
+ * the feel is decided here by what each system generator means:
  *
- * Screens say what happened — `haptic('correct')`, `haptic('celebrate')` — and
- * never how it should feel; the feel of each is decided here, once, by what
- * Apple's generators mean rather than by how they happen to feel:
+ *   select     selection tick: a choice changing (segmented control, chip, radio, picker, stepper, switch, tab)
+ *   tap        light impact: something landing or sent (a sheet settling, a hold that took, a refresh pulled on
+ *              Android, a bird landing on the letters sill when its flight was shown, a message, post, like, reaction,
+ *              friend request, game started, purchase, the day's Zêr claimed)
+ *   correct    system "success": a right answer, an outcome
+ *   wrong      system "warning": a wrong answer; never the harsh error pattern, since learners, often children, miss
+ *              as part of learning
+ *   celebrate  system "success", once: a lesson finished, a goal met, a streak kept, a new level, rank, league or
+ *              badge, a gift opened
+ *   error      system "error": something the person asked for failed and is in their way (a purchase, an unsent
+ *              message or post); not for a field still being typed in
  *
- *   select     the selection tick: a choice among options changing — a
- *              segmented control, a filter chip, a radio list, a picker, a
- *              stepper, a switch, another tab
- *   tap        a light impact, the knock of something landing: a sheet
- *              settling at another height, a hold that took, a refresh
- *              pulled (on Android; iOS's own control already knocks), a bird
- *              touching down on the letters window's sill with a letter, seen
- *              flying in (never for a reader who asked for less motion, who
- *              sees no flight), and something sent, given or taken — a
- *              message, a post, a like, a reaction, a friend request, a game
- *              started, something bought in the shop, the day's Zêr claimed
- *   correct    the system's "success": a right answer, an outcome
- *   wrong      the system's "warning": a wrong answer. Never the harsh error
- *              pattern — the person getting it wrong is often a child
- *              learning, and a miss is part of learning
- *   celebrate  the system's "success", once: a lesson finished, a goal met, a
- *              streak kept, a new level, rank, league or badge, a gift opened
- *   error      the system's "error": something the person asked for failed
- *              and is in their way (a purchase, a message or a post that did
- *              not send). Not for a field that is still being typed in
- *
- * Each is felt with something seen changing. Nothing else buzzes: not
- * scrolling, typing, a button that only opens something, opening a screen, a
- * message or notification arriving, a timer, or anything that happens by
- * itself. A buzz that nobody caused is a buzz pulling at them.
- *
- * And a buzz is dropped when it would come too soon after another, or too
- * many together (`hapticPacing.ts`), while the app is in the background, or
- * when Settings → Vibration is off.
- *
- * Where the native module is not there — the web build, a test, a binary built
- * before it was added — every call is a quiet no-op.
+ * Each accompanies a visible change. Nothing else buzzes: scrolling, typing, opening something, arrivals, timers,
+ * or anything that happens by itself. A buzz is also dropped when too soon after another or too many at once
+ * (`hapticPacing.ts`), while backgrounded, or when Settings → Vibration is off. Without the native module (web,
+ * tests, an older binary) every call is a no-op.
  */
 
 type Driver = (event: HapticEvent) => void;
@@ -60,8 +41,8 @@ function expoHaptics(): ExpoHaptics | null {
   module = null;
   if (Platform.OS !== 'ios' && Platform.OS !== 'android') return module;
   try {
-    // required here rather than imported: the web bundle and the tests must
-    // never evaluate a native module, and an old binary simply has none
+    // Required rather than imported: the web bundle and tests must never evaluate a native module, and an old
+    // binary has none.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     module = require('expo-haptics') as ExpoHaptics;
   } catch {
@@ -70,7 +51,7 @@ function expoHaptics(): ExpoHaptics | null {
   return module;
 }
 
-/** A promise from the native side that may reject (no module in this binary, a type this Android lacks). */
+/** A native promise that may reject (no module in this binary, or a type this Android lacks). */
 function quietly(run: () => Promise<void> | undefined, fallback?: () => Promise<void> | undefined): void {
   try {
     const p = run();
@@ -78,7 +59,7 @@ function quietly(run: () => Promise<void> | undefined, fallback?: () => Promise<
       try {
         fallback?.()?.catch(() => undefined);
       } catch {
-        // nothing to feel, and nothing worth saying about it
+        // Nothing to feel, and nothing worth saying about it.
       }
     });
   } catch {
@@ -87,10 +68,9 @@ function quietly(run: () => Promise<void> | undefined, fallback?: () => Promise<
 }
 
 /**
- * On Android the light ones go through the view's own haptic feedback rather
- * than the vibration motor: it is crisper, it is what the system's own
- * controls use, and it follows the phone's "touch feedback" setting. The
- * notification patterns are the same on both platforms.
+ * On Android the light ones use the view's haptic feedback rather than the vibration motor: it is crisper,
+ * matches the system controls and follows the "touch feedback" setting. Notification patterns are the same on
+ * both platforms.
  */
 const nativeDriver: Driver = (event) => {
   const h = expoHaptics();
@@ -102,7 +82,7 @@ const nativeDriver: Driver = (event) => {
     case 'tap':
       return android ? quietly(() => h.performAndroidHapticsAsync('virtual-key')) : quietly(() => h.impactAsync('light'));
     case 'correct':
-      // "confirm" is Android 11 and later; before that, the plain key click
+      // "confirm" is Android 11 and later; before that, the plain key click.
       return android
         ? quietly(() => h.performAndroidHapticsAsync('confirm'), () => h.performAndroidHapticsAsync('virtual-key'))
         : quietly(() => h.notificationAsync('success'));
@@ -127,13 +107,12 @@ function start(): void {
 }
 
 function inForeground(): boolean {
-  // unknown (very early, or a platform that does not say) counts as in front
+  // Unknown (very early, or a platform that does not say) counts as in front.
   const state = AppState.currentState as string | null | undefined;
   return state == null || state === 'active' || state === 'unknown';
 }
 
-// read the stored switch as the app starts (any screen that can buzz imports this),
-// so the first buzz of the day already knows whether it is wanted
+// Read the stored switch at startup (any screen that can buzz imports this), so the first buzz already knows.
 start();
 
 /** Feel `event`, if it may be felt now. */
@@ -145,7 +124,7 @@ export function haptic(event: HapticEvent): void {
   driver(event);
 }
 
-/** Told of every buzz that was felt (after the rules above) — for tests, and nothing else. */
+/** Notified of every buzz that was felt, after the rules above; for tests only. */
 export function onHaptic(listener: (event: HapticEvent) => void): () => void {
   listeners.add(listener);
   return () => {
@@ -153,7 +132,7 @@ export function onHaptic(listener: (event: HapticEvent) => void): () => void {
   };
 }
 
-/** Swap what a buzz does, and forget the pacing so far; returns a function that puts it back. For tests. */
+/** Replace what a buzz does and reset the pacing; returns a function that restores it. For tests. */
 export function setHapticDriver(next: Driver | null): () => void {
   const before = driver;
   driver = next ?? nativeDriver;
@@ -170,12 +149,8 @@ export function resetHaptics(): void {
 }
 
 /**
- * A pull-to-refresh's `onRefresh`, felt: the list was pulled past the point
- * where it lets go and reloads — the person's own gesture, answered once.
- *
- * Once means not on iOS, where the system's refresh control already ticks at
- * exactly that point; a second buzz of our own on top of it was the same
- * moment felt twice. Android's says nothing, so there it is ours to give.
+ * A pull-to-refresh `onRefresh` with a haptic when the list is pulled past its release point. Not on iOS, whose
+ * refresh control already ticks there; Android's is silent, so the tick is ours.
  */
 export function refreshFelt(refresh: () => void): () => void {
   return () => {

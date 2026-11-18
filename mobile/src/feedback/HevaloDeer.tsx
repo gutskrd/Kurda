@@ -7,20 +7,13 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
- * Hevalo the deer — the mascot from the app icon — holding up a wooden board.
+ * Hevalo the deer from the app icon, holding up a wooden board: the rating board with five stars, or a sign with
+ * letters. The deer is the icon's picture, with the board and forelegs drawn over it (`@kurda/shared` deer.ts),
+ * as on the web.
  *
- * The deer is the icon's own picture, so it is exactly the mascot; the board
- * and the forelegs that hold it are drawn over it (`@kurda/shared` deer.ts),
- * the same as in the browser. It holds the rating board with its five stars,
- * or a sign with the letters it wants you to be able to type.
- *
- * Alive but calm: it bobs a little, and as stars are chosen the board tips up
- * with a small hop — down a little with few, held up high with five, never a
- * frown. With Reduce Motion on, it simply stands still.
- *
- * The board is its own drawing over the picture, in its own Animated.View,
- * because React Native animates views, not the shapes inside an SVG. Both use
- * one frame, so they line up.
+ * It bobs a little, and as stars are chosen the board tips up with a small hop, low with few and high with five,
+ * never a frown. Still under Reduce Motion. The board is a separate drawing in its own Animated.View, because
+ * React Native animates views, not shapes inside an SVG; both share one frame so they line up.
  */
 
 /** The drawing's own coordinates; the layers all use these. */
@@ -37,10 +30,10 @@ export function HevaloDeer({
   board,
   cheer = false,
 }: {
-  /** width in points; the drawing is a little taller than it is wide */
+  /** Width in points; the drawing is a little taller than it is wide. */
   size?: number;
   board: DeerBoard;
-  /** a little hop of joy (the keyboard try-it box, when all five letters are in) */
+  /** A little hop of joy (the keyboard try-it box, when all five letters are in). */
   cheer?: boolean;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
@@ -54,7 +47,7 @@ export function HevaloDeer({
   const hop = useRef(new Animated.Value(0)).current;
   const native = Platform.OS !== 'web';
 
-  // the idle loop: a slow bob, only while the screen is in front and motion is wanted
+  // The idle loop: a slow bob, only while the screen is in front and motion is wanted.
   useEffect(() => {
     if (!alive) {
       bob.setValue(0);
@@ -70,7 +63,7 @@ export function HevaloDeer({
     return () => bobLoop.stop();
   }, [alive, bob, native]);
 
-  // more stars, the board tips up a little further, with a small hop each time
+  // More stars, the board tips up a little further, with a small hop each time.
   useEffect(() => {
     const to = tiltFor(stars);
     if (reduce) {
@@ -110,7 +103,7 @@ export function HevaloDeer({
       importantForAccessibility="no-hide-descendants"
       accessibilityElementsHidden
     >
-      {/* the lilac card the logo's deer sits on, as a soft disc that does not move */}
+      {/* The lilac card the logo's deer sits on, as a soft disc that does not move. */}
       <View style={StyleSheet.absoluteFill}>{layer(deerCard())}</View>
 
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: lift }] }]}>
@@ -135,11 +128,7 @@ export function HevaloDeer({
           ]}
         >
           {layer(deerBoard(id, board.kind === 'stars' ? { kind: 'stars', stars } : { kind: 'letters' }))}
-          {/*
-            The letters are the system font's, not the SVG's: ç ê î ş û (and
-            the Soranî letters) are exactly what an SVG text element in an
-            unknown font gets wrong.
-          */}
+          {/* The letters use the system font, not SVG text: ç ê î ş û and the Soranî letters are what SVG text in an unknown font gets wrong. */}
           {board.kind === 'letters' ? (
             <View
               style={{
@@ -163,8 +152,5 @@ export function HevaloDeer({
   );
 }
 
-/**
- * The board's angle for a number of stars: tipped down and to one side with
- * none chosen, level at three, held up at a jaunty angle at five.
- */
+/** The board's angle for a star count: tipped down to one side with none, level at three, raised jauntily at five. */
 export const tiltFor = deerTiltFor;

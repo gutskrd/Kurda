@@ -61,7 +61,7 @@ describe('haptic()', () => {
   it('a missing native module is a quiet no-op', () => {
     restore();
     restore = setHapticDriver(null);
-    // the web build: no module, nothing thrown
+    // The web build: no module, nothing thrown.
     expect(() => haptic('error')).not.toThrow();
   });
 });

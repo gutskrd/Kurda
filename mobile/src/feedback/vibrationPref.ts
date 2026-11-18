@@ -2,13 +2,9 @@ import { useEffect, useState } from 'react';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * Settings → Vibration: whether this phone buzzes at all.
- *
- * On by default, and kept on the device rather than the account: it is about
- * where the phone is (a classroom, a bus, a sleeping baby in the next room),
- * not about who is holding it. Read once as the app starts and held in memory,
- * so asking whether to buzz never waits for storage — before the stored
- * answer arrives, the default stands, and the default is on.
+ * Settings → Vibration: whether this phone buzzes at all. On by default and kept per device, since it is about
+ * where the phone is, not who holds it. Read once at startup and held in memory, so deciding to buzz never waits
+ * on storage; until it loads, the default (on) stands.
  */
 const KEY = 'hevalo_vibration';
 
@@ -32,7 +28,7 @@ export function loadVibrationPref(store: DeviceStore = deviceStore): Promise<voi
 export async function setVibration(next: boolean, store: DeviceStore = deviceStore): Promise<void> {
   on = next;
   for (const l of listeners) l(on);
-  // stored as the exception only: a phone that never touched the switch has nothing saved
+  // Stored as the exception only: a phone that never touched the switch has nothing saved.
   if (next) await store.remove(KEY);
   else await store.set(KEY, 'off');
 }
