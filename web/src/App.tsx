@@ -70,6 +70,8 @@ const BadgesPage = lazy(() => import('./badges/BadgesPage').then((m) => ({ defau
 const TreePage = lazy(() => import('./tree/TreePage').then((m) => ({ default: m.TreePage })));
 const SeasonPage = lazy(() => import('./ranks/SeasonPage').then((m) => ({ default: m.SeasonPage })));
 const RanksPage = lazy(() => import('./ranks/RanksPage').then((m) => ({ default: m.RanksPage })));
+// The events running now, with their quests and rewards.
+const EventsPage = lazy(() => import('./events/EventsPage').then((m) => ({ default: m.EventsPage })));
 const Friends = lazy(() => import('./pages/Friends').then((m) => ({ default: m.Friends })));
 const Search = lazy(() => import('./pages/Search').then((m) => ({ default: m.Search })));
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
@@ -315,6 +317,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />
         <Route path="badges" element={<RequireAccount what="gate.what.profile"><BadgesPage /></RequireAccount>} />
         <Route path="tree" element={<RequireAccount what="gate.what.profile"><TreePage /></RequireAccount>} />
+        {/* The events running now and their quests, reached from Learn while one runs (events/EventsPage.tsx). */}
+        <Route path="events" element={<RequireAccount what="gate.what.play"><EventsPage /></RequireAccount>} />
         <Route path="season" element={<RequireAccount what="gate.what.play"><SeasonPage /></RequireAccount>} />
         <Route path="ranks" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />
         <Route path="ranks/:game" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />

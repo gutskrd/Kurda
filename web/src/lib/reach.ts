@@ -116,6 +116,8 @@ export const LARGE_ENOUGH = [
   '.wa-answer-btn',
   // Learn's practice tools, cards at least 64px tall in a row of two or three (styles/shell.css).
   '.learn-tool-link',
+  // The event card on Learn, 64px tall across the column (events/events.css).
+  '.event-card',
 ] as const;
 
 /** Sideways-scrolling rows of controls, padded above and below for their reach. */

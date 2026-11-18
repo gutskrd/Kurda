@@ -22,6 +22,7 @@ import { StreakSheet } from '../learn/StreakSheet';
 import { GoalRing, GoalSheet } from '../learn/GoalSheet';
 import { WordOfDayTool } from '../learn/WordOfDayTool';
 import { QuestsCard } from '../quests/QuestsCard';
+import { EventCard } from '../events/EventCard';
 import { TreeCard } from '../tree/TreeCard';
 import { BookCard } from '../learn/BookCard';
 import { publishedDictionary } from '../layouts/navLinks';
@@ -302,6 +303,7 @@ function Lessons(): React.JSX.Element {
     <>
       <TodayStrip due={due} />
       <QuestsCard />
+      <EventCard />
       <TreeCard />
       <BookCard />
       {entries && entries.length > 1 && (
@@ -357,8 +359,9 @@ function Lessons(): React.JSX.Element {
 }
 
 /**
- * Learn (/app/learn), Lessons half: today's row and quests card (quests/QuestsCard.tsx), the current course's path, the
- * practice tools, and every course with its progress. The Games half is pages/Games.tsx, under the same header.
+ * Learn (/app/learn), Lessons half: today's row, the quests card (quests/QuestsCard.tsx) and an event's while one runs
+ * (events/EventCard.tsx), the current course's path, the practice tools, and every course with its progress. The Games
+ * half is pages/Games.tsx, under the same header.
  */
 export function Learn(): React.JSX.Element {
   const { status } = useAuth();
