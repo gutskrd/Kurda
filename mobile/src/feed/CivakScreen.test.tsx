@@ -41,7 +41,12 @@ const post = (id: string) => ({
   engagement: { liked: false, likes: 0, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 },
 });
 
-function open({ unread = 0, items = [] as unknown[], extra = {} as Record<string, ReturnType<typeof ok>> } = {}) {
+function open({
+  unread = 0,
+  items = [] as unknown[],
+  extra = {} as Record<string, ReturnType<typeof ok>>,
+  props = {} as React.ComponentProps<typeof CivakScreen>,
+} = {}) {
   const client = fakeClient({
     'GET /feed?section=all&limit=20&offset=0': ok({ items }),
     ...extra,
@@ -55,7 +60,7 @@ function open({ unread = 0, items = [] as unknown[], extra = {} as Record<string
   testAuth.client = client;
   renderWithProviders(
     <UnreadProvider>
-      <CivakScreen />
+      <CivakScreen {...props} />
     </UnreadProvider>,
   );
   return client;
@@ -75,6 +80,37 @@ describe('Home', () => {
     open({ unread: 0 });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Notifications' })).toBeTruthy());
     expect(screen.queryByTestId('top-bell-dot')).toBeNull();
+  });
+
+  /* Laid out as the website's Home: the page's name and line, today's Zêr, the week, then the wall. */
+  it('leads with its name and line, today’s Zêr and the week’s league, as the website does', async () => {
+    open({
+      extra: {
+        'GET /rewards/daily': ok({ canClaim: false, claimableDay: 1, reward: 10, schedule: [10, 10, 15, 15, 20, 20, 30], alreadyClaimedToday: false, cycleDay: 1, learnedToday: false }),
+        'GET /me/league': ok({ mode: 'personal', optedOut: false, joined: false, tier: null, weeklyXp: 40, goalXp: 200, goalMet: false, safe: false, rank: 0, groupSize: 0 }),
+      },
+    });
+    expect(screen.getByRole('heading', { name: 'Community' })).toBeTruthy();
+    expect(screen.getByText('Stories, poems and pictures from everyone.')).toBeTruthy();
+    expect(await screen.findByText('Daily Zêr')).toBeTruthy();
+    // Nothing learned yet today: the card says so and offers the way to Learn.
+    fireEvent.click(screen.getByRole('button', { name: 'Go to Learn' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Learn', { view: 'lessons' });
+    fireEvent.click(await screen.findByRole('button', { name: /^Your week/ }));
+    expect(navigation.navigate).toHaveBeenCalledWith('League');
+  });
+
+  /* The old Library and Memes pages are Home's two halves now: a link or the menu opens the wall on one. */
+  it('opens on the half of the wall a link or the menu asks for, once', async () => {
+    const shown = vi.fn();
+    const client = open({
+      extra: { 'GET /feed?section=gotin&kind=cirok&limit=20&offset=0': ok({ items: [post('s1')] }) },
+      props: { section: 'gotin', kind: 'cirok', onFilterShown: shown },
+    });
+    expect(await screen.findByText('Post s1')).toBeTruthy();
+    expect(shown).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: /Writing · Story/ })).toBeTruthy();
+    expect(client.calls.filter((c) => c.path.startsWith('/feed?section=gotin&kind=cirok'))).toHaveLength(1);
   });
 
   it('posts from the "+" at the start of its header', async () => {

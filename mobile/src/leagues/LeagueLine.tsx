@@ -20,7 +20,7 @@ import { knownTier, leagueLabel, leagueName } from './format';
 import { useDirection } from '../reports/direction';
 
 /**
- * The week in one line on Learn: the league and your place, or your own week when out of the leagues, and the
+ * The week in one line at the top of Home: the league and your place, or your own week when out of the leagues, and the
  * weekly goal as a small ring with a check once safe. One tap opens the league. Nothing counts down.
  */
 export function LeagueLine(): React.JSX.Element | null {

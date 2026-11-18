@@ -628,6 +628,7 @@ export type TranslationKey =
   | 'error.code.visibilityNotAllowed'
   | 'error.code.learnFirst'
   | 'daily.learnFirst'
+  | 'daily.goLearn'
   | 'profile.stat.longestStreak'
   | 'profile.stat.daysLearned'
   | 'profile.stat.freezes'
@@ -1505,7 +1506,6 @@ export type TranslationKey =
   | 'dictionary.wordOfDay'
   | 'grammar.closeTips'
   | 'library.optionalNarration'
-  | 'library.empty'
   | 'comments.post'
   | 'comments.showOneReply'
   | 'comments.showReplies'
@@ -1513,7 +1513,6 @@ export type TranslationKey =
   | 'moderation.reportPost'
   | 'moderation.reportComment'
   | 'recorder.remove'
-  | 'memes.empty'
   | 'notifications.markAllRead'
   | 'notifications.quietHours'
   | 'notifications.enableQuietHours'
@@ -1941,10 +1940,8 @@ export type TranslationKey =
   | 'grammar.title'
   | 'lesson.answer'
   | 'lesson.review'
-  | 'library.title'
   | 'library.write'
   | 'memes.post'
-  | 'memes.title'
   | 'notifications.title'
   | 'notifications.categories'
   | 'notifications.device.title'
@@ -2003,7 +2000,6 @@ export type TranslationKey =
   | 'coursemap.state.decayed'
   | 'events.bannerLabel'
   | 'lesson.write.insertKey'
-  | 'library.readLabel'
   | 'practice.startLabel'
   | 'daily.claimLabel'
   | 'dictionary.removeSaved'
@@ -2014,7 +2010,6 @@ export type TranslationKey =
   | 'memes.reaction.sad'
   | 'memes.reaction.angry'
   | 'memes.openPost'
-  | 'memes.openPostCaption'
   | 'friends.openProfile'
   | 'friends.openProfileNamed'
   | 'friends.acceptFrom'
@@ -2033,7 +2028,6 @@ export type TranslationKey =
   | 'appearance.currentlyScheme'
   | 'appearance.scheme.light'
   | 'appearance.scheme.dark'
-  | 'memes.imageUnavailable'
   | 'appearance.preference.system'
   | 'appearance.preference.light'
   | 'appearance.preference.dark'
@@ -2069,9 +2063,6 @@ export type TranslationKey =
   | 'picture.postFailed'
   | 'picture.noIdReturned'
   | 'picture.storageOff'
-  | 'memes.images'
-  | 'memes.sortNewest'
-  | 'memes.sortPopular'
   | 'post.open'
   | 'post.button'
   | 'post.what'
@@ -2673,10 +2664,6 @@ export type TranslationKey =
   | 'username.rules'
   | 'library.kind.story'
   | 'library.kind.poem'
-  | 'library.kind.stories'
-  | 'library.kind.poems'
-  | 'library.sort.newest'
-  | 'library.sort.popular'
   | 'notifications.unreadLabel'
   | 'nav.menu'
   | 'nav.menu.discover'
@@ -2762,7 +2749,6 @@ export type TranslationKey =
   | 'time.minutesAgo'
   | 'time.hoursAgo'
   | 'time.daysAgo'
-  | 'library.emptyAction'
   | 'lesson.secondTry'
   | 'lesson.inARow'
   | 'lesson.comesBack'
@@ -4849,7 +4835,6 @@ const en: Catalog = {
   'dictionary.wordOfDay': 'Word of the day',
   'grammar.closeTips': 'Close tips',
   'library.optionalNarration': 'Optional narration',
-  'library.empty': 'Nothing here yet — write the first!',
   'comments.post': 'Post comment',
   'comments.showOneReply': 'View 1 reply',
   'comments.showReplies': 'View {count} replies',
@@ -4857,7 +4842,6 @@ const en: Catalog = {
   'moderation.reportPost': 'Report this post',
   'moderation.reportComment': 'Report this comment',
   'recorder.remove': 'Remove recording',
-  'memes.empty': 'No posts yet — be the first!',
   'notifications.markAllRead': 'Mark all as read',
   'notifications.quietHours': 'Quiet hours',
   'notifications.enableQuietHours': 'Enable quiet hours',
@@ -5152,10 +5136,6 @@ const en: Catalog = {
   'nav.menu.yours': 'Yours',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'Dictionary',
-  'library.kind.stories': 'Stories',
-  'library.kind.poems': 'Poems',
-  'library.sort.newest': 'Newest',
-  'library.sort.popular': 'Popular',
   'notifications.unreadLabel': 'Notifications, {count} unread',
   'library.kind.story': 'Story',
   'library.kind.poem': 'Poem',
@@ -5309,10 +5289,8 @@ const en: Catalog = {
   'grammar.title': 'Tips',
   'lesson.answer': 'Answer:',
   'lesson.review': 'Review',
-  'library.title': 'Library',
   'library.write': 'Write',
   'memes.post': 'Post',
-  'memes.title': 'Memes',
   'notifications.title': 'Notifications',
   'notifications.categories': 'Categories',
   'notifications.device.title': 'This phone',
@@ -5371,7 +5349,6 @@ const en: Catalog = {
   'coursemap.state.decayed': 'rusty',
   'events.bannerLabel': '{name} — event quests',
   'lesson.write.insertKey': 'Insert {letter}',
-  'library.readLabel': 'Read {title}',
   'practice.startLabel': 'Start: {title}',
   'daily.claimLabel': 'Claim {amount} Zêr daily reward',
   'dictionary.removeSaved': 'Remove {word}',
@@ -5382,7 +5359,6 @@ const en: Catalog = {
   'memes.reaction.sad': 'Sad',
   'memes.reaction.angry': 'Angry',
   'memes.openPost': 'Open post',
-  'memes.openPostCaption': 'Open post: {caption}',
   'friends.openProfile': '{username} — open profile',
   'friends.openProfileNamed': '{username}, {name} — open profile',
   'friends.acceptFrom': 'Accept friend request from {username}',
@@ -5401,7 +5377,6 @@ const en: Catalog = {
   'appearance.currentlyScheme': 'Currently showing the {scheme} theme.',
   'appearance.scheme.light': 'light',
   'appearance.scheme.dark': 'dark',
-  'memes.imageUnavailable': 'Image unavailable',
   'appearance.preference.system': 'System',
   'appearance.preference.light': 'Light',
   'appearance.preference.dark': 'Dark',
@@ -5437,9 +5412,6 @@ const en: Catalog = {
   'picture.postFailed': 'The picture was uploaded, but the post could not be created.',
   'picture.noIdReturned': 'The picture didn’t finish uploading. Please try again.',
   'picture.storageOff': 'Pictures can’t be uploaded right now. Try again later.',
-  'memes.images': 'Images',
-  'memes.sortNewest': 'Newest',
-  'memes.sortPopular': 'Popular',
   'post.open': 'Post something',
   'post.button': 'Post',
   'post.what': 'What are you posting?',
@@ -6085,7 +6057,6 @@ const en: Catalog = {
   'civak.empty.body': 'Stories, poems and pictures from everyone show up here.',
   'inbox.empty.body': 'Friend requests, messages and notifications arrive here.',
   'profile.nothingHere.body': 'What you post and play shows up here.',
-  'library.emptyAction': 'Write something',
   'friends.sent': 'Sent',
   'friends.cancel': 'Cancel',
   'friends.cancelRequest': 'Cancel your request to {name}',
@@ -6128,6 +6099,7 @@ const en: Catalog = {
   'error.code.visibilityNotAllowed': 'Under 18, a profile can’t be open to everyone on the web.',
   'error.code.learnFirst': 'Finish a lesson or a practice session first, then claim today’s reward.',
   'daily.learnFirst': 'Finish a lesson or a practice session to claim today’s +{amount} Zêr.',
+  'daily.goLearn': 'Go to Learn',
   'profile.stat.longestStreak': 'Longest streak',
   'profile.stat.daysLearned': 'Days learned',
   'profile.stat.freezes': 'Streak freezes',
@@ -8745,7 +8717,6 @@ const ku: Catalog = {
   'dictionary.wordOfDay': 'Peyva rojê',
   'grammar.closeTips': 'Şîretan bigire',
   'library.optionalNarration': 'Vegotin, vebijarkî',
-  'library.empty': 'Hê tiştek li vir tune — ya yekem binivîse!',
   'comments.post': 'Şîroveyê bişîne',
   'comments.showOneReply': '1 bersivê nîşan bide',
   'comments.showReplies': '{count} bersivan nîşan bide',
@@ -8753,7 +8724,6 @@ const ku: Catalog = {
   'moderation.reportPost': 'Vê şandiyê ragihîne',
   'moderation.reportComment': 'Vê şîroveyê ragihîne',
   'recorder.remove': 'Tomarê rake',
-  'memes.empty': 'Hê şandî tune — bibe yê yekem!',
   'notifications.markAllRead': 'Hemûyan wek xwendî nîşan bide',
   'notifications.quietHours': 'Demên bêdeng',
   'notifications.enableQuietHours': 'Demên bêdeng veke',
@@ -9048,10 +9018,6 @@ const ku: Catalog = {
   'nav.menu.yours': 'Yên te',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'Ferheng',
-  'library.kind.stories': 'Çîrok',
-  'library.kind.poems': 'Helbest',
-  'library.sort.newest': 'Nûtirîn',
-  'library.sort.popular': 'Populer',
   'notifications.unreadLabel': 'Agahdarî, {count} nexwendî',
   'library.kind.story': 'Çîrok',
   'library.kind.poem': 'Helbest',
@@ -9205,10 +9171,8 @@ const ku: Catalog = {
   'grammar.title': 'Serişte',
   'lesson.answer': 'Bersiv:',
   'lesson.review': 'Dubare',
-  'library.title': 'Pirtûkxane',
   'library.write': 'Binivîse',
   'memes.post': 'Şandî',
-  'memes.title': 'Mîm',
   'notifications.title': 'Agahdarî',
   'notifications.categories': 'Kategorî',
   'notifications.device.title': 'Ev telefon',
@@ -9267,7 +9231,6 @@ const ku: Catalog = {
   'coursemap.state.decayed': 'zengarî',
   'events.bannerLabel': '{name} — erkên bûyerê',
   'lesson.write.insertKey': 'Tîpa {letter} têxe',
-  'library.readLabel': '{title} bixwîne',
   'practice.startLabel': 'Dest pê bike: {title}',
   'daily.claimLabel': 'Xelata rojane ya {amount} Zêr bistîne',
   'dictionary.removeSaved': '{word} rake',
@@ -9278,7 +9241,6 @@ const ku: Catalog = {
   'memes.reaction.sad': 'Xemgîn',
   'memes.reaction.angry': 'Hêrs',
   'memes.openPost': 'Şandiyê veke',
-  'memes.openPostCaption': 'Şandiyê veke: {caption}',
   'friends.openProfile': '{username} — profîlê veke',
   'friends.openProfileNamed': '{username}, {name} — profîlê veke',
   'friends.acceptFrom': 'Daxwaza hevaltiyê ya {username} bipejirîne',
@@ -9297,7 +9259,6 @@ const ku: Catalog = {
   'appearance.currentlyScheme': 'Niha tema {scheme} tê nîşandan.',
   'appearance.scheme.light': 'ronahî',
   'appearance.scheme.dark': 'tarî',
-  'memes.imageUnavailable': 'Wêne tune ye',
   'appearance.preference.system': 'Pergal',
   'appearance.preference.light': 'Ronahî',
   'appearance.preference.dark': 'Tarî',
@@ -9333,9 +9294,6 @@ const ku: Catalog = {
   'picture.postFailed': 'Wêne hate barkirin, lê şandî nehate çêkirin.',
   'picture.noIdReturned': 'Barkirina wêneyê neqediya. Ji kerema xwe dîsa biceribîne.',
   'picture.storageOff': 'Niha wêne nayên barkirin. Paşê dîsa biceribîne.',
-  'memes.images': 'Wêne',
-  'memes.sortNewest': 'Nûtirîn',
-  'memes.sortPopular': 'Populer',
   'post.open': 'Tiştekî biweşîne',
   'post.button': 'Biweşîne',
   'post.what': 'Tu çi diweşînî?',
@@ -9980,7 +9938,6 @@ const ku: Catalog = {
   'civak.empty.body': 'Çîrok, helbest û wêneyên ji her kesî li vir xuya dibin.',
   'inbox.empty.body': 'Daxwazên hevaltiyê, peyam û agahdarî li vir tên.',
   'profile.nothingHere.body': 'Tiştên ku tu diweşînî û dilîzî li vir xuya dibin.',
-  'library.emptyAction': 'Tiştekî binivîse',
   'friends.sent': 'Şandin',
   'friends.cancel': 'Betal bike',
   'friends.cancelRequest': 'Daxwaza xwe ya ji {name} betal bike',
@@ -10023,6 +9980,7 @@ const ku: Catalog = {
   'error.code.visibilityNotAllowed': 'Di bin 18 salî de, profîl nikare ji her kesî re li ser înternetê vekirî be.',
   'error.code.learnFirst': 'Pêşî waneyekê an rahênanekê biqedîne, paşê xelata îro bistîne.',
   'daily.learnFirst': 'Waneyekê an rahênanekê biqedîne da ku +{amount} Zêrê îro bistînî.',
+  'daily.goLearn': 'Biçe Fêrbûnê',
   'profile.stat.longestStreak': 'Rêzeya herî dirêj',
   'profile.stat.daysLearned': 'Rojên fêrbûnê',
   'profile.stat.freezes': 'Cemidandina rêzeyê',
@@ -12640,7 +12598,6 @@ const de: Catalog = {
   'dictionary.wordOfDay': 'Wort des Tages',
   'grammar.closeTips': 'Tipps schließen',
   'library.optionalNarration': 'Aufnahme, optional',
-  'library.empty': 'Noch nichts hier – mach den Anfang!',
   'comments.post': 'Kommentar senden',
   'comments.showOneReply': '1 Antwort anzeigen',
   'comments.showReplies': '{count} Antworten anzeigen',
@@ -12648,7 +12605,6 @@ const de: Catalog = {
   'moderation.reportPost': 'Diesen Beitrag melden',
   'moderation.reportComment': 'Diesen Kommentar melden',
   'recorder.remove': 'Aufnahme entfernen',
-  'memes.empty': 'Noch keine Beiträge – mach den Anfang!',
   'notifications.markAllRead': 'Alle als gelesen markieren',
   'notifications.quietHours': 'Ruhezeiten',
   'notifications.enableQuietHours': 'Ruhezeiten einschalten',
@@ -12943,10 +12899,6 @@ const de: Catalog = {
   'nav.menu.yours': 'Deins',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'Wörter',
-  'library.kind.stories': 'Geschichten',
-  'library.kind.poems': 'Gedichte',
-  'library.sort.newest': 'Neueste',
-  'library.sort.popular': 'Beliebt',
   'notifications.unreadLabel': 'Mitteilungen, {count} ungelesen',
   'library.kind.story': 'Geschichte',
   'library.kind.poem': 'Gedicht',
@@ -13100,10 +13052,8 @@ const de: Catalog = {
   'grammar.title': 'Tipps',
   'lesson.answer': 'Antwort:',
   'lesson.review': 'Wiederholen',
-  'library.title': 'Bibliothek',
   'library.write': 'Schreiben',
   'memes.post': 'Beitrag',
-  'memes.title': 'Memes',
   'notifications.title': 'Mitteilungen',
   'notifications.categories': 'Kategorien',
   'notifications.device.title': 'Dieses Handy',
@@ -13162,7 +13112,6 @@ const de: Catalog = {
   'coursemap.state.decayed': 'eingerostet',
   'events.bannerLabel': '{name} – Event-Aufgaben',
   'lesson.write.insertKey': '{letter} einfügen',
-  'library.readLabel': '{title} lesen',
   'practice.startLabel': 'Starten: {title}',
   'daily.claimLabel': 'Tägliche Belohnung von {amount} Zêr abholen',
   'dictionary.removeSaved': '{word} entfernen',
@@ -13173,7 +13122,6 @@ const de: Catalog = {
   'memes.reaction.sad': 'Traurig',
   'memes.reaction.angry': 'Wütend',
   'memes.openPost': 'Beitrag öffnen',
-  'memes.openPostCaption': 'Beitrag öffnen: {caption}',
   'friends.openProfile': '{username} – Profil öffnen',
   'friends.openProfileNamed': '{username}, {name} – Profil öffnen',
   'friends.acceptFrom': 'Freundschaftsanfrage von {username} annehmen',
@@ -13192,7 +13140,6 @@ const de: Catalog = {
   'appearance.currentlyScheme': 'Aktuell wird das {scheme} Design angezeigt.',
   'appearance.scheme.light': 'helle',
   'appearance.scheme.dark': 'dunkle',
-  'memes.imageUnavailable': 'Bild nicht verfügbar',
   'appearance.preference.system': 'System',
   'appearance.preference.light': 'Hell',
   'appearance.preference.dark': 'Dunkel',
@@ -13228,9 +13175,6 @@ const de: Catalog = {
   'picture.postFailed': 'Das Bild wurde hochgeladen, aber der Beitrag konnte nicht erstellt werden.',
   'picture.noIdReturned': 'Das Bild wurde nicht vollständig hochgeladen. Bitte versuche es erneut.',
   'picture.storageOff': 'Bilder lassen sich gerade nicht hochladen. Versuch es später noch einmal.',
-  'memes.images': 'Bilder',
-  'memes.sortNewest': 'Neueste',
-  'memes.sortPopular': 'Beliebt',
   'post.open': 'Etwas veröffentlichen',
   'post.button': 'Posten',
   'post.what': 'Was möchtest du posten?',
@@ -13875,7 +13819,6 @@ const de: Catalog = {
   'civak.empty.body': 'Geschichten, Gedichte und Bilder von allen erscheinen hier.',
   'inbox.empty.body': 'Freundschaftsanfragen, Nachrichten und Mitteilungen landen hier.',
   'profile.nothingHere.body': 'Was du veröffentlichst und spielst, erscheint hier.',
-  'library.emptyAction': 'Schreib etwas',
   'friends.sent': 'Gesendet',
   'friends.cancel': 'Abbrechen',
   'friends.cancelRequest': 'Deine Anfrage an {name} zurückziehen',
@@ -13918,6 +13861,7 @@ const de: Catalog = {
   'error.code.visibilityNotAllowed': 'Unter 18 kann ein Profil nicht für alle im Netz sichtbar sein.',
   'error.code.learnFirst': 'Schließ zuerst eine Lektion oder eine Übung ab, dann hol dir die Belohnung von heute.',
   'daily.learnFirst': 'Schließ eine Lektion oder eine Übung ab, um die +{amount} Zêr von heute abzuholen.',
+  'daily.goLearn': 'Zum Lernen',
   'profile.stat.longestStreak': 'Längste Serie',
   'profile.stat.daysLearned': 'Lerntage',
   'profile.stat.freezes': 'Serien-Einfrierungen',
@@ -16535,7 +16479,6 @@ const es: Catalog = {
   'dictionary.wordOfDay': 'Palabra del día',
   'grammar.closeTips': 'Cerrar los consejos',
   'library.optionalNarration': 'Narración opcional',
-  'library.empty': 'Aquí no hay nada aún — ¡escribe lo primero!',
   'comments.post': 'Publicar el comentario',
   'comments.showOneReply': 'Ver 1 respuesta',
   'comments.showReplies': 'Ver {count} respuestas',
@@ -16543,7 +16486,6 @@ const es: Catalog = {
   'moderation.reportPost': 'Denunciar esta publicación',
   'moderation.reportComment': 'Denunciar este comentario',
   'recorder.remove': 'Quitar la grabación',
-  'memes.empty': 'Aún no hay publicaciones — ¡sé el primero!',
   'notifications.markAllRead': 'Marcar todo como leído',
   'notifications.quietHours': 'Horas de silencio',
   'notifications.enableQuietHours': 'Activar las horas de silencio',
@@ -16838,10 +16780,6 @@ const es: Catalog = {
   'nav.menu.yours': 'Lo tuyo',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'Palabras',
-  'library.kind.stories': 'Relatos',
-  'library.kind.poems': 'Poemas',
-  'library.sort.newest': 'Recientes',
-  'library.sort.popular': 'Populares',
   'notifications.unreadLabel': 'Notificaciones, {count} sin leer',
   'library.kind.story': 'Relato',
   'library.kind.poem': 'Poema',
@@ -16995,10 +16933,8 @@ const es: Catalog = {
   'grammar.title': 'Consejos',
   'lesson.answer': 'Respuesta:',
   'lesson.review': 'Repasar',
-  'library.title': 'Biblioteca',
   'library.write': 'Escribir',
   'memes.post': 'Publicación',
-  'memes.title': 'Memes',
   'notifications.title': 'Notificaciones',
   'notifications.categories': 'Categorías',
   'notifications.device.title': 'Este teléfono',
@@ -17057,7 +16993,6 @@ const es: Catalog = {
   'coursemap.state.decayed': 'oxidado',
   'events.bannerLabel': '{name} — misiones del evento',
   'lesson.write.insertKey': 'Insertar {letter}',
-  'library.readLabel': 'Leer {title}',
   'practice.startLabel': 'Empezar: {title}',
   'daily.claimLabel': 'Reclamar la recompensa diaria de {amount} Zêr',
   'dictionary.removeSaved': 'Quitar {word}',
@@ -17068,7 +17003,6 @@ const es: Catalog = {
   'memes.reaction.sad': 'Triste',
   'memes.reaction.angry': 'Enfadado',
   'memes.openPost': 'Abrir publicación',
-  'memes.openPostCaption': 'Abrir publicación: {caption}',
   'friends.openProfile': '{username} — abrir perfil',
   'friends.openProfileNamed': '{username}, {name} — abrir perfil',
   'friends.acceptFrom': 'Aceptar la solicitud de amistad de {username}',
@@ -17087,7 +17021,6 @@ const es: Catalog = {
   'appearance.currentlyScheme': 'Ahora se muestra el tema {scheme}.',
   'appearance.scheme.light': 'claro',
   'appearance.scheme.dark': 'oscuro',
-  'memes.imageUnavailable': 'Imagen no disponible',
   'appearance.preference.system': 'Sistema',
   'appearance.preference.light': 'Claro',
   'appearance.preference.dark': 'Oscuro',
@@ -17123,9 +17056,6 @@ const es: Catalog = {
   'picture.postFailed': 'La foto se ha subido, pero no se ha podido crear la publicación.',
   'picture.noIdReturned': 'La foto no terminó de subirse. Inténtalo de nuevo.',
   'picture.storageOff': 'Ahora no se pueden subir imágenes. Inténtalo más tarde.',
-  'memes.images': 'Imágenes',
-  'memes.sortNewest': 'Recientes',
-  'memes.sortPopular': 'Populares',
   'post.open': 'Publicar algo',
   'post.button': 'Publicar',
   'post.what': '¿Qué vas a publicar?',
@@ -17770,7 +17700,6 @@ const es: Catalog = {
   'civak.empty.body': 'Aquí aparecen relatos, poemas e imágenes de todos.',
   'inbox.empty.body': 'Aquí llegan las solicitudes de amistad, los mensajes y las notificaciones.',
   'profile.nothingHere.body': 'Lo que publicas y juegas aparece aquí.',
-  'library.emptyAction': 'Escribe algo',
   'friends.sent': 'Enviadas',
   'friends.cancel': 'Cancelar',
   'friends.cancelRequest': 'Cancelar tu solicitud a {name}',
@@ -17813,6 +17742,7 @@ const es: Catalog = {
   'error.code.visibilityNotAllowed': 'Con menos de 18 años, un perfil no puede estar abierto a cualquiera en la web.',
   'error.code.learnFirst': 'Termina primero una lección o una práctica y luego reclama la recompensa de hoy.',
   'daily.learnFirst': 'Termina una lección o una práctica para reclamar los +{amount} Zêr de hoy.',
+  'daily.goLearn': 'Ir a Aprender',
   'profile.stat.longestStreak': 'Racha más larga',
   'profile.stat.daysLearned': 'Días de aprendizaje',
   'profile.stat.freezes': 'Protectores de racha',
@@ -20430,7 +20360,6 @@ const tr: Catalog = {
   'dictionary.wordOfDay': 'Günün kelimesi',
   'grammar.closeTips': 'İpuçlarını kapat',
   'library.optionalNarration': 'İsteğe bağlı seslendirme',
-  'library.empty': 'Burada henüz bir şey yok — ilkini sen yaz!',
   'comments.post': 'Yorumu gönder',
   'comments.showOneReply': '1 yanıtı göster',
   'comments.showReplies': '{count} yanıtı göster',
@@ -20438,7 +20367,6 @@ const tr: Catalog = {
   'moderation.reportPost': 'Bu gönderiyi bildir',
   'moderation.reportComment': 'Bu yorumu bildir',
   'recorder.remove': 'Kaydı kaldır',
-  'memes.empty': 'Henüz gönderi yok — ilk sen ol!',
   'notifications.markAllRead': 'Tümünü okundu işaretle',
   'notifications.quietHours': 'Sessiz saatler',
   'notifications.enableQuietHours': 'Sessiz saatleri aç',
@@ -20733,10 +20661,6 @@ const tr: Catalog = {
   'nav.menu.yours': 'Seninkiler',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'Sözlük',
-  'library.kind.stories': 'Hikâyeler',
-  'library.kind.poems': 'Şiirler',
-  'library.sort.newest': 'En yeni',
-  'library.sort.popular': 'Popüler',
   'notifications.unreadLabel': 'Bildirimler, {count} okunmamış',
   'library.kind.story': 'Hikâye',
   'library.kind.poem': 'Şiir',
@@ -20890,10 +20814,8 @@ const tr: Catalog = {
   'grammar.title': 'İpuçları',
   'lesson.answer': 'Cevap:',
   'lesson.review': 'Gözden geçir',
-  'library.title': 'Kütüphane',
   'library.write': 'Yaz',
   'memes.post': 'Gönderi',
-  'memes.title': 'Mimler',
   'notifications.title': 'Bildirimler',
   'notifications.categories': 'Kategoriler',
   'notifications.device.title': 'Bu telefon',
@@ -20952,7 +20874,6 @@ const tr: Catalog = {
   'coursemap.state.decayed': 'paslanmış',
   'events.bannerLabel': '{name} — etkinlik görevleri',
   'lesson.write.insertKey': '{letter} ekle',
-  'library.readLabel': 'Oku: {title}',
   'practice.startLabel': 'Başla: {title}',
   'daily.claimLabel': 'Günlük {amount} Zêr ödülünü al',
   'dictionary.removeSaved': '{word} kelimesini kaldır',
@@ -20963,7 +20884,6 @@ const tr: Catalog = {
   'memes.reaction.sad': 'Üzgün',
   'memes.reaction.angry': 'Kızgın',
   'memes.openPost': 'Gönderiyi aç',
-  'memes.openPostCaption': 'Gönderiyi aç: {caption}',
   'friends.openProfile': '{username} — profili aç',
   'friends.openProfileNamed': '{username}, {name} — profili aç',
   'friends.acceptFrom': '{username} kullanıcısının arkadaşlık isteğini kabul et',
@@ -20982,7 +20902,6 @@ const tr: Catalog = {
   'appearance.currentlyScheme': 'Şu anda {scheme} tema gösteriliyor.',
   'appearance.scheme.light': 'açık',
   'appearance.scheme.dark': 'koyu',
-  'memes.imageUnavailable': 'Görsel kullanılamıyor',
   'appearance.preference.system': 'Sistem',
   'appearance.preference.light': 'Açık',
   'appearance.preference.dark': 'Koyu',
@@ -21018,9 +20937,6 @@ const tr: Catalog = {
   'picture.postFailed': 'Görsel yüklendi ama gönderi oluşturulamadı.',
   'picture.noIdReturned': 'Görselin yüklenmesi tamamlanmadı. Lütfen tekrar dene.',
   'picture.storageOff': 'Şu anda görsel yüklenemiyor. Daha sonra tekrar dene.',
-  'memes.images': 'Görseller',
-  'memes.sortNewest': 'En yeni',
-  'memes.sortPopular': 'Popüler',
   'post.open': 'Bir şey paylaş',
   'post.button': 'Paylaş',
   'post.what': 'Ne paylaşıyorsun?',
@@ -21665,7 +21581,6 @@ const tr: Catalog = {
   'civak.empty.body': 'Herkesin hikâyeleri, şiirleri ve resimleri burada görünür.',
   'inbox.empty.body': 'Arkadaşlık istekleri, mesajlar ve bildirimler buraya gelir.',
   'profile.nothingHere.body': 'Paylaştıkların ve oynadıkların burada görünür.',
-  'library.emptyAction': 'Bir şeyler yaz',
   'friends.sent': 'Gönderilen',
   'friends.cancel': 'Vazgeç',
   'friends.cancelRequest': '{name} kişisine gönderdiğin isteği geri al',
@@ -21708,6 +21623,7 @@ const tr: Catalog = {
   'error.code.visibilityNotAllowed': '18 yaşın altında profil internetteki herkese açık olamaz.',
   'error.code.learnFirst': 'Önce bir dersi ya da alıştırmayı bitir, sonra bugünün ödülünü al.',
   'daily.learnFirst': 'Bugünün +{amount} Zêr’ini almak için bir dersi ya da alıştırmayı bitir.',
+  'daily.goLearn': 'Öğren’e git',
   'profile.stat.longestStreak': 'En uzun seri',
   'profile.stat.daysLearned': 'Öğrenme günleri',
   'profile.stat.freezes': 'Seri dondurucular',
@@ -24325,7 +24241,6 @@ const ar: Catalog = {
   'dictionary.wordOfDay': 'كلمة اليوم',
   'grammar.closeTips': 'إغلاق النصائح',
   'library.optionalNarration': 'سرد اختياري',
-  'library.empty': 'لا شيء هنا بعد — كن أول من يكتب!',
   'comments.post': 'نشر التعليق',
   'comments.showOneReply': 'عرض رد واحد',
   'comments.showReplies': 'عرض الردود ({count})',
@@ -24333,7 +24248,6 @@ const ar: Catalog = {
   'moderation.reportPost': 'الإبلاغ عن هذا المنشور',
   'moderation.reportComment': 'الإبلاغ عن هذا التعليق',
   'recorder.remove': 'إزالة التسجيل',
-  'memes.empty': 'لا منشورات بعد — كن أول من ينشر!',
   'notifications.markAllRead': 'تحديد الكل كمقروء',
   'notifications.quietHours': 'ساعات الهدوء',
   'notifications.enableQuietHours': 'تفعيل ساعات الهدوء',
@@ -24628,10 +24542,6 @@ const ar: Catalog = {
   'nav.menu.yours': 'لك',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'القاموس',
-  'library.kind.stories': 'قصص',
-  'library.kind.poems': 'قصائد',
-  'library.sort.newest': 'الأحدث',
-  'library.sort.popular': 'الرائج',
   'notifications.unreadLabel': 'الإشعارات، {count} غير مقروءة',
   'library.kind.story': 'قصة',
   'library.kind.poem': 'قصيدة',
@@ -24785,10 +24695,8 @@ const ar: Catalog = {
   'grammar.title': 'نصائح',
   'lesson.answer': 'الإجابة:',
   'lesson.review': 'مراجعة',
-  'library.title': 'المكتبة',
   'library.write': 'اكتب',
   'memes.post': 'انشر',
-  'memes.title': 'ميمز',
   'notifications.title': 'الإشعارات',
   'notifications.categories': 'الفئات',
   'notifications.device.title': 'هذا الهاتف',
@@ -24847,7 +24755,6 @@ const ar: Catalog = {
   'coursemap.state.decayed': 'صدئ',
   'events.bannerLabel': '{name} — مهام الفعالية',
   'lesson.write.insertKey': 'إدراج {letter}',
-  'library.readLabel': 'اقرأ {title}',
   'practice.startLabel': 'ابدأ: {title}',
   'daily.claimLabel': 'استلم مكافأة {amount} Zêr اليومية',
   'dictionary.removeSaved': 'أزل {word}',
@@ -24858,7 +24765,6 @@ const ar: Catalog = {
   'memes.reaction.sad': 'حزين',
   'memes.reaction.angry': 'غاضب',
   'memes.openPost': 'افتح المنشور',
-  'memes.openPostCaption': 'افتح المنشور: {caption}',
   'friends.openProfile': '{username} — افتح الملف الشخصي',
   'friends.openProfileNamed': '{username}، {name} — افتح الملف الشخصي',
   'friends.acceptFrom': 'اقبل طلب الصداقة من {username}',
@@ -24877,7 +24783,6 @@ const ar: Catalog = {
   'appearance.currentlyScheme': 'يتم عرض السمة {scheme} حاليًا.',
   'appearance.scheme.light': 'الفاتحة',
   'appearance.scheme.dark': 'الداكنة',
-  'memes.imageUnavailable': 'الصورة غير متاحة',
   'appearance.preference.system': 'النظام',
   'appearance.preference.light': 'فاتح',
   'appearance.preference.dark': 'داكن',
@@ -24913,9 +24818,6 @@ const ar: Catalog = {
   'picture.postFailed': 'تم رفع الصورة، لكن تعذّر إنشاء المنشور.',
   'picture.noIdReturned': 'لم يكتمل رفع الصورة. يُرجى المحاولة مرة أخرى.',
   'picture.storageOff': 'لا يمكن رفع الصور الآن. حاول لاحقًا.',
-  'memes.images': 'الصور',
-  'memes.sortNewest': 'الأحدث',
-  'memes.sortPopular': 'الأكثر رواجًا',
   'post.open': 'انشر شيئًا',
   'post.button': 'نشر',
   'post.what': 'ماذا تريد أن تنشر؟',
@@ -25560,7 +25462,6 @@ const ar: Catalog = {
   'civak.empty.body': 'تظهر هنا القصص والقصائد والصور من الجميع.',
   'inbox.empty.body': 'تصل هنا طلبات الصداقة والرسائل والإشعارات.',
   'profile.nothingHere.body': 'يظهر هنا ما تنشره وما تلعبه.',
-  'library.emptyAction': 'اكتب شيئًا',
   'friends.sent': 'المُرسَلة',
   'friends.cancel': 'إلغاء',
   'friends.cancelRequest': 'إلغاء طلبك إلى {name}',
@@ -25603,6 +25504,7 @@ const ar: Catalog = {
   'error.code.visibilityNotAllowed': 'لمن هم دون 18 عامًا، لا يمكن أن يكون الملف الشخصي مفتوحًا للجميع على الويب.',
   'error.code.learnFirst': 'أكمل درسًا أو جلسة تدريب أولًا، ثم استلم مكافأة اليوم.',
   'daily.learnFirst': 'أكمل درسًا أو جلسة تدريب لتستلم +{amount} Zêr اليوم.',
+  'daily.goLearn': 'اذهب إلى التعلّم',
   'profile.stat.longestStreak': 'أطول سلسلة',
   'profile.stat.daysLearned': 'أيام التعلّم',
   'profile.stat.freezes': 'تجميدات السلسلة',
@@ -28220,7 +28122,6 @@ const fr: Catalog = {
   'dictionary.wordOfDay': 'Mot du jour',
   'grammar.closeTips': 'Fermer les conseils',
   'library.optionalNarration': 'Narration facultative',
-  'library.empty': 'Rien ici pour l’instant — écris le premier !',
   'comments.post': 'Publier le commentaire',
   'comments.showOneReply': 'Afficher 1 réponse',
   'comments.showReplies': 'Afficher {count} réponses',
@@ -28228,7 +28129,6 @@ const fr: Catalog = {
   'moderation.reportPost': 'Signaler cette publication',
   'moderation.reportComment': 'Signaler ce commentaire',
   'recorder.remove': 'Supprimer l’enregistrement',
-  'memes.empty': 'Aucune publication pour l’instant — sois le premier !',
   'notifications.markAllRead': 'Tout marquer comme lu',
   'notifications.quietHours': 'Heures silencieuses',
   'notifications.enableQuietHours': 'Activer les heures silencieuses',
@@ -28523,10 +28423,6 @@ const fr: Catalog = {
   'nav.menu.yours': 'À toi',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'Mots',
-  'library.kind.stories': 'Récits',
-  'library.kind.poems': 'Poèmes',
-  'library.sort.newest': 'Récents',
-  'library.sort.popular': 'Populaires',
   'notifications.unreadLabel': 'Notifications, {count} non lues',
   'library.kind.story': 'Récit',
   'library.kind.poem': 'Poème',
@@ -28680,10 +28576,8 @@ const fr: Catalog = {
   'grammar.title': 'Astuces',
   'lesson.answer': 'Réponse :',
   'lesson.review': 'Réviser',
-  'library.title': 'Bibliothèque',
   'library.write': 'Écrire',
   'memes.post': 'Publication',
-  'memes.title': 'Mèmes',
   'notifications.title': 'Notifications',
   'notifications.categories': 'Catégories',
   'notifications.device.title': 'Ce téléphone',
@@ -28742,7 +28636,6 @@ const fr: Catalog = {
   'coursemap.state.decayed': 'rouillé',
   'events.bannerLabel': '{name} — quêtes de l’événement',
   'lesson.write.insertKey': 'Insérer {letter}',
-  'library.readLabel': 'Lire {title}',
   'practice.startLabel': 'Commencer : {title}',
   'daily.claimLabel': 'Récupérer la récompense quotidienne de {amount} Zêr',
   'dictionary.removeSaved': 'Retirer {word}',
@@ -28753,7 +28646,6 @@ const fr: Catalog = {
   'memes.reaction.sad': 'Triste',
   'memes.reaction.angry': 'En colère',
   'memes.openPost': 'Ouvrir la publication',
-  'memes.openPostCaption': 'Ouvrir la publication : {caption}',
   'friends.openProfile': '{username} — ouvrir le profil',
   'friends.openProfileNamed': '{username}, {name} — ouvrir le profil',
   'friends.acceptFrom': 'Accepter la demande d’ami de {username}',
@@ -28772,7 +28664,6 @@ const fr: Catalog = {
   'appearance.currentlyScheme': 'Le thème {scheme} est actuellement affiché.',
   'appearance.scheme.light': 'clair',
   'appearance.scheme.dark': 'sombre',
-  'memes.imageUnavailable': 'Image indisponible',
   'appearance.preference.system': 'Système',
   'appearance.preference.light': 'Clair',
   'appearance.preference.dark': 'Sombre',
@@ -28808,9 +28699,6 @@ const fr: Catalog = {
   'picture.postFailed': 'La photo a été envoyée, mais la publication n’a pas pu être créée.',
   'picture.noIdReturned': 'La photo n’a pas fini d’être envoyée. Réessaie.',
   'picture.storageOff': 'Impossible d’envoyer des images pour le moment. Réessaie plus tard.',
-  'memes.images': 'Images',
-  'memes.sortNewest': 'Plus récents',
-  'memes.sortPopular': 'Populaires',
   'post.open': 'Publier quelque chose',
   'post.button': 'Publier',
   'post.what': 'Que veux-tu publier ?',
@@ -29455,7 +29343,6 @@ const fr: Catalog = {
   'civak.empty.body': 'Les récits, poèmes et images de tout le monde apparaissent ici.',
   'inbox.empty.body': 'Les demandes d’ami, les messages et les notifications arrivent ici.',
   'profile.nothingHere.body': 'Tes publications et tes parties apparaissent ici.',
-  'library.emptyAction': 'Écrire quelque chose',
   'friends.sent': 'Envoyées',
   'friends.cancel': 'Annuler',
   'friends.cancelRequest': 'Annuler ta demande à {name}',
@@ -29498,6 +29385,7 @@ const fr: Catalog = {
   'error.code.visibilityNotAllowed': 'Avant 18 ans, un profil ne peut pas être visible par n’importe qui sur le web.',
   'error.code.learnFirst': 'Termine d’abord une leçon ou un entraînement, puis récupère la récompense du jour.',
   'daily.learnFirst': 'Termine une leçon ou un entraînement pour récupérer les +{amount} Zêr du jour.',
+  'daily.goLearn': 'Aller à Apprendre',
   'profile.stat.longestStreak': 'Plus longue série',
   'profile.stat.daysLearned': 'Jours d’apprentissage',
   'profile.stat.freezes': 'Gels de série',
@@ -32115,7 +32003,6 @@ const nl: Catalog = {
   'dictionary.wordOfDay': 'Woord van de dag',
   'grammar.closeTips': 'Tips sluiten',
   'library.optionalNarration': 'Optionele vertelling',
-  'library.empty': 'Nog niets hier — schrijf de eerste!',
   'comments.post': 'Reactie plaatsen',
   'comments.showOneReply': 'Toon 1 reactie',
   'comments.showReplies': 'Toon {count} reacties',
@@ -32123,7 +32010,6 @@ const nl: Catalog = {
   'moderation.reportPost': 'Dit bericht melden',
   'moderation.reportComment': 'Deze reactie melden',
   'recorder.remove': 'Opname verwijderen',
-  'memes.empty': 'Nog geen berichten — wees de eerste!',
   'notifications.markAllRead': 'Alles als gelezen markeren',
   'notifications.quietHours': 'Stille uren',
   'notifications.enableQuietHours': 'Stille uren inschakelen',
@@ -32418,10 +32304,6 @@ const nl: Catalog = {
   'nav.menu.yours': 'Van jou',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'Woorden',
-  'library.kind.stories': 'Verhalen',
-  'library.kind.poems': 'Gedichten',
-  'library.sort.newest': 'Nieuwste',
-  'library.sort.popular': 'Populair',
   'notifications.unreadLabel': 'Meldingen, {count} ongelezen',
   'library.kind.story': 'Verhaal',
   'library.kind.poem': 'Gedicht',
@@ -32575,10 +32457,8 @@ const nl: Catalog = {
   'grammar.title': 'Tips',
   'lesson.answer': 'Antwoord:',
   'lesson.review': 'Herhalen',
-  'library.title': 'Bibliotheek',
   'library.write': 'Schrijven',
   'memes.post': 'Bericht',
-  'memes.title': 'Memes',
   'notifications.title': 'Meldingen',
   'notifications.categories': 'Categorieën',
   'notifications.device.title': 'Deze telefoon',
@@ -32637,7 +32517,6 @@ const nl: Catalog = {
   'coursemap.state.decayed': 'verroest',
   'events.bannerLabel': '{name} — evenementopdrachten',
   'lesson.write.insertKey': '{letter} invoegen',
-  'library.readLabel': '{title} lezen',
   'practice.startLabel': 'Starten: {title}',
   'daily.claimLabel': 'Dagelijkse beloning van {amount} Zêr ophalen',
   'dictionary.removeSaved': '{word} verwijderen',
@@ -32648,7 +32527,6 @@ const nl: Catalog = {
   'memes.reaction.sad': 'Verdrietig',
   'memes.reaction.angry': 'Boos',
   'memes.openPost': 'Bericht openen',
-  'memes.openPostCaption': 'Bericht openen: {caption}',
   'friends.openProfile': '{username} — profiel openen',
   'friends.openProfileNamed': '{username}, {name} — profiel openen',
   'friends.acceptFrom': 'Vriendschapsverzoek van {username} accepteren',
@@ -32667,7 +32545,6 @@ const nl: Catalog = {
   'appearance.currentlyScheme': 'Op dit moment wordt het {scheme} thema getoond.',
   'appearance.scheme.light': 'lichte',
   'appearance.scheme.dark': 'donkere',
-  'memes.imageUnavailable': 'Afbeelding niet beschikbaar',
   'appearance.preference.system': 'Systeem',
   'appearance.preference.light': 'Licht',
   'appearance.preference.dark': 'Donker',
@@ -32703,9 +32580,6 @@ const nl: Catalog = {
   'picture.postFailed': 'De afbeelding is geüpload, maar het bericht kon niet worden aangemaakt.',
   'picture.noIdReturned': 'De afbeelding is niet helemaal geüpload. Probeer het opnieuw.',
   'picture.storageOff': 'Foto’s uploaden lukt nu niet. Probeer het later opnieuw.',
-  'memes.images': 'Afbeeldingen',
-  'memes.sortNewest': 'Nieuwste',
-  'memes.sortPopular': 'Populair',
   'post.open': 'Iets plaatsen',
   'post.button': 'Plaatsen',
   'post.what': 'Wat ga je plaatsen?',
@@ -33350,7 +33224,6 @@ const nl: Catalog = {
   'civak.empty.body': 'Verhalen, gedichten en afbeeldingen van iedereen verschijnen hier.',
   'inbox.empty.body': 'Vriendschapsverzoeken, berichten en meldingen komen hier binnen.',
   'profile.nothingHere.body': 'Wat je plaatst en speelt verschijnt hier.',
-  'library.emptyAction': 'Schrijf iets',
   'friends.sent': 'Verzonden',
   'friends.cancel': 'Annuleren',
   'friends.cancelRequest': 'Je verzoek aan {name} annuleren',
@@ -33393,6 +33266,7 @@ const nl: Catalog = {
   'error.code.visibilityNotAllowed': 'Onder de 18 kan een profiel niet voor iedereen op het web zichtbaar zijn.',
   'error.code.learnFirst': 'Rond eerst een les of een oefensessie af en haal dan de beloning van vandaag op.',
   'daily.learnFirst': 'Rond een les of een oefensessie af om de +{amount} Zêr van vandaag op te halen.',
+  'daily.goLearn': 'Naar Leren',
   'profile.stat.longestStreak': 'Langste reeks',
   'profile.stat.daysLearned': 'Leerdagen',
   'profile.stat.freezes': 'Reeksbevriezingen',
@@ -36011,7 +35885,6 @@ const ckb: Catalog = {
   'dictionary.wordOfDay': 'وشەی ڕۆژ',
   'grammar.closeTips': 'ئامۆژگارییەکان دابخە',
   'library.optionalNarration': 'گێڕانەوە، ئارەزوومەندانە',
-  'library.empty': 'هێشتا هیچ لێرە نییە — یەکەمیان بنووسە!',
   'comments.post': 'لێدوان بنێرە',
   'comments.showOneReply': '1 وەڵام پیشان بدە',
   'comments.showReplies': '{count} وەڵام پیشان بدە',
@@ -36019,7 +35892,6 @@ const ckb: Catalog = {
   'moderation.reportPost': 'ئەم پۆستە ڕاپۆرت بکە',
   'moderation.reportComment': 'ئەم لێدوانە ڕاپۆرت بکە',
   'recorder.remove': 'تۆمارەکە لابە',
-  'memes.empty': 'هێشتا هیچ پۆستێک نییە — یەکەم کەس بە!',
   'notifications.markAllRead': 'هەمووی وەک خوێندراوە دیاری بکە',
   'notifications.quietHours': 'کاتژمێرە بێدەنگەکان',
   'notifications.enableQuietHours': 'کاتژمێرە بێدەنگەکان چالاک بکە',
@@ -36314,10 +36186,6 @@ const ckb: Catalog = {
   'nav.menu.yours': 'هی تۆ',
   'nav.short.civak': 'Civak',
   'nav.short.dictionary': 'فەرهەنگ',
-  'library.kind.stories': 'چیرۆکەکان',
-  'library.kind.poems': 'هۆنراوەکان',
-  'library.sort.newest': 'نوێترین',
-  'library.sort.popular': 'بەناوبانگ',
   'notifications.unreadLabel': 'ئاگادارکردنەوەکان، {count} نەخوێندراو',
   'library.kind.story': 'چیرۆک',
   'library.kind.poem': 'هۆنراوە',
@@ -36471,10 +36339,8 @@ const ckb: Catalog = {
   'grammar.title': 'ئامۆژگاری',
   'lesson.answer': 'وەڵام:',
   'lesson.review': 'پێداچوونەوە',
-  'library.title': 'پەرتووکخانە',
   'library.write': 'بنووسە',
   'memes.post': 'پۆست',
-  'memes.title': 'میم',
   'notifications.title': 'ئاگادارکردنەوەکان',
   'notifications.categories': 'پۆلەکان',
   'notifications.device.title': 'ئەم مۆبایلە',
@@ -36533,7 +36399,6 @@ const ckb: Catalog = {
   'coursemap.state.decayed': 'ژەنگاوی',
   'events.bannerLabel': '{name} — ئەرکەکانی بۆنە',
   'lesson.write.insertKey': '{letter} دابنێ',
-  'library.readLabel': '{title} بخوێنەوە',
   'practice.startLabel': 'دەستپێبکە: {title}',
   'daily.claimLabel': 'خەڵاتی ڕۆژانەی {amount} Zêr وەربگرە',
   'dictionary.removeSaved': '{word} لابە',
@@ -36544,7 +36409,6 @@ const ckb: Catalog = {
   'memes.reaction.sad': 'خەمگین',
   'memes.reaction.angry': 'تووڕە',
   'memes.openPost': 'پۆستەکە بکەرەوە',
-  'memes.openPostCaption': 'پۆستەکە بکەرەوە: {caption}',
   'friends.openProfile': '{username} — پرۆفایل بکەرەوە',
   'friends.openProfileNamed': '{username}، {name} — پرۆفایل بکەرەوە',
   'friends.acceptFrom': 'داواکاری هاوڕێیەتی {username} پەسەند بکە',
@@ -36563,7 +36427,6 @@ const ckb: Catalog = {
   'appearance.currentlyScheme': 'ئێستا ڕووکاری {scheme} پیشان دەدرێت.',
   'appearance.scheme.light': 'ڕووناک',
   'appearance.scheme.dark': 'تاریک',
-  'memes.imageUnavailable': 'وێنە بەردەست نییە',
   'appearance.preference.system': 'سیستەم',
   'appearance.preference.light': 'ڕووناک',
   'appearance.preference.dark': 'تاریک',
@@ -36599,9 +36462,6 @@ const ckb: Catalog = {
   'picture.postFailed': 'وێنەکە بارکرا، بەڵام نەتوانرا پۆستەکە دروست بکرێت.',
   'picture.noIdReturned': 'بارکردنی وێنەکە تەواو نەبوو. تکایە دووبارە هەوڵ بدەرەوە.',
   'picture.storageOff': 'ئێستا ناتوانرێت وێنە باربکرێت. دواتر دووبارە هەوڵ بدەرەوە.',
-  'memes.images': 'وێنەکان',
-  'memes.sortNewest': 'نوێترین',
-  'memes.sortPopular': 'بەناوبانگ',
   'post.open': 'شتێک بڵاو بکەرەوە',
   'post.button': 'بڵاوکردنەوە',
   'post.what': 'چی بڵاو دەکەیتەوە؟',
@@ -37246,7 +37106,6 @@ const ckb: Catalog = {
   'civak.empty.body': 'چیرۆک و هۆنراوە و وێنەی هەمووان لێرە دەردەکەون.',
   'inbox.empty.body': 'داواکاری هاوڕێیەتی و نامە و ئاگادارکردنەوەکان لێرە دەگەن.',
   'profile.nothingHere.body': 'ئەوەی بڵاوی دەکەیتەوە و یاری دەکەیت لێرە دەردەکەوێت.',
-  'library.emptyAction': 'شتێک بنووسە',
   'friends.sent': 'نێردراو',
   'friends.cancel': 'پاشگەزبوونەوە',
   'friends.cancelRequest': 'داواکارییەکەت بۆ {name} هەڵبوەشێنەوە',
@@ -37289,6 +37148,7 @@ const ckb: Catalog = {
   'error.code.visibilityNotAllowed': 'لە خوار تەمەنی 18 ساڵ، پرۆفایل ناتوانێت بۆ هەموو کەس لە ئینتەرنێتدا کراوە بێت.',
   'error.code.learnFirst': 'سەرەتا وانەیەک یان ڕاهێنانێک تەواو بکە، پاشان خەڵاتی ئەمڕۆ وەربگرە.',
   'daily.learnFirst': 'وانەیەک یان ڕاهێنانێک تەواو بکە بۆ وەرگرتنی +{amount} Zêrی ئەمڕۆ.',
+  'daily.goLearn': 'بڕۆ بۆ فێربوون',
   'profile.stat.longestStreak': 'درێژترین زنجیرە',
   'profile.stat.daysLearned': 'ڕۆژانی فێربوون',
   'profile.stat.freezes': 'بەستنی زنجیرە',

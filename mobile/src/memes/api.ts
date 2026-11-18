@@ -2,26 +2,6 @@ import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import type { Category, Comment, ImagePost } from './types';
 
-export interface FeedFilters {
-  category?: Category;
-  sort?: 'newest' | 'popular';
-  limit?: number;
-  offset?: number;
-}
-
-function query(filters: FeedFilters): string {
-  const p = new URLSearchParams();
-  if (filters.category) p.set('category', filters.category);
-  if (filters.sort) p.set('sort', filters.sort);
-  if (filters.limit != null) p.set('limit', String(filters.limit));
-  if (filters.offset != null) p.set('offset', String(filters.offset));
-  const s = p.toString();
-  return s ? `?${s}` : '';
-}
-
-export const listPosts = (client: ApiClient, filters: FeedFilters = {}): Promise<ApiResult<{ posts: ImagePost[] }>> =>
-  client.get(`/images${query(filters)}`);
-
 export const getPost = (client: ApiClient, id: string): Promise<ApiResult<ImagePost>> => client.get(`/images/${encodeURIComponent(id)}`);
 
 export const createPost = (

@@ -122,13 +122,11 @@ import { WhoAmIScreen } from './src/whoami/WhoAmIScreen';
 import { MemoryThiefScreen } from './src/games/MemoryThiefScreen';
 import { HearItScreen } from './src/games/HearItScreen';
 import { DetectiveScreen } from './src/games/DetectiveScreen';
-import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
 import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
 import { ChangePasswordScreen } from './src/security/ChangePasswordScreen';
 import { DevicesScreen } from './src/security/DevicesScreen';
-import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { ComposeScreen } from './src/composer/ComposeScreen';
 import { StoriesScreen } from './src/stories/StoriesScreen';
@@ -244,8 +242,9 @@ function OpenHeldLink(): null {
 }
 
 /**
- * The profile menu: everywhere the five tabs have no room for, such as the shop, settings, saved items, the library,
- * memes and the league, one tap from the profile where people look for their own things. `giftBadge` counts unopened
+ * The profile menu: everywhere the five tabs have no room for, such as the shop, settings, saved items and the league,
+ * one tap from the profile where people look for their own things. Writing and Pictures open Home on that half of the
+ * wall. `giftBadge` counts unopened
  * gifts on the Shop row, as the dot on the Profile tab and the menu button does. Rows needing an account go through
  * the gate (auth/AccountGate), so a guest gets the offer to make one rather than a screen that cannot load.
  */
@@ -263,8 +262,8 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
     {
       titleKey: 'nav.menu.discover',
       links: [
-        { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
-        { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
+        { key: 'writing', labelKey: 'civak.section.writing', icon: 'book', onPress: () => navigation.navigate('Tabs', { screen: 'Home', params: { section: 'gotin' } }) },
+        { key: 'pictures', labelKey: 'civak.section.pictures', icon: 'image', onPress: () => navigation.navigate('Tabs', { screen: 'Home', params: { section: 'dimen' } }) },
         ...(eventLive ? [{ key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') } as const] : []),
         { key: 'league', labelKey: 'leagues.screenTitle', icon: 'trophy', onPress: () => require('league') && navigation.navigate('League') },
         { key: 'ranks', labelKey: 'ranks.title', icon: 'mountains', onPress: () => require('league') && navigation.navigate('Ranks') },
@@ -319,20 +318,27 @@ function SignedInTabs() {
         tab.name === 'Learn' ? (
           <Tab.Screen key={tab.name} name="Learn">
             {({ route, navigation: tabs }) => (
-              <LearnScreen view={route.params?.view} onViewShown={() => tabs.setParams({ view: undefined })} />
+              <LearnScreen
+                view={route.params?.view}
+                onViewShown={() => tabs.setParams({ view: undefined })}
+                code={route.params?.code}
+                onCodeShown={() => tabs.setParams({ code: undefined })}
+              />
+            )}
+          </Tab.Screen>
+        ) : tab.name === 'Home' ? (
+          <Tab.Screen key={tab.name} name="Home">
+            {({ route, navigation: tabs }) => (
+              <CivakScreen
+                section={route.params?.section}
+                kind={route.params?.kind}
+                onFilterShown={() => tabs.setParams({ section: undefined, kind: undefined })}
+              />
             )}
           </Tab.Screen>
         ) : (
           <Tab.Screen key={tab.name} name={tab.name}>
-            {() =>
-              tab.name === 'Home' ? (
-                <CivakScreen />
-              ) : tab.name === 'Messages' ? (
-                <MessagesScreen />
-              ) : (
-                <ProfileScreen />
-              )
-            }
+            {() => (tab.name === 'Messages' ? <MessagesScreen /> : <ProfileScreen />)}
           </Tab.Screen>
         ),
       )}
@@ -427,7 +433,7 @@ function SignedInRoot() {
       </RootStack.Screen>
       {/*
         Guest-restricted routes sit behind the account offer (auth/AccountGate `GuestWall`), so a tap or link lands on the
-        offer with a way back. Lessons, practice, the dictionary, solo games, badges, the library and profiles stay open.
+        offer with a way back. Lessons, practice, the dictionary, solo games, badges, posts and profiles stay open.
       */}
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
@@ -707,9 +713,6 @@ function SignedInRoot() {
       <RootStack.Screen name="ProverbRound" options={heldCard}>
         {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Memes" options={card}>
-        {({ navigation }) => <MemeFeedScreen onExit={backFrom(navigation)} />}
-      </RootStack.Screen>
       {/* Writing or editing a post: full screen without swipe-down, since the composer asks before discarding text. */}
       <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
         {({ route, navigation }) => (
@@ -800,9 +803,6 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="ForgotPassword" options={card}>
         {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={backFrom(navigation)} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="Library" options={card}>
-        {({ navigation }) => <LibraryScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="LibraryPost" options={card}>
         {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={backFrom(navigation)} />}

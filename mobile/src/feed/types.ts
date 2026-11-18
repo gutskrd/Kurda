@@ -48,6 +48,11 @@ export const SECTIONS: ReadonlyArray<{
   { key: 'dimen', labelKey: 'civak.section.pictures', kinds: DIMEN_KINDS },
 ];
 
+/** A half of the wall named by a link or the menu; anything else is the whole wall. */
+export function asSection(value: unknown): FeedSection {
+  return value === 'gotin' || value === 'dimen' ? value : 'all';
+}
+
 /**
  * What a card's badge says, keyed by the API's kind. Deliberately open: an unknown kind has no entry and the card
  * prints the raw kind instead of an empty chip.

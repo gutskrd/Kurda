@@ -28,12 +28,10 @@ import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
 import { UnitRailSheet, type RailSection } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
-import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { QuestsCard } from '../quests/QuestsCard';
 import { TreeCard } from '../tree/TreeCard';
 import { BookCard } from './BookCard';
 import { EventBanner } from '../events/EventBanner';
-import { LeagueLine } from '../leagues/LeagueLine';
 import type { CourseEntry } from '../coursemap/node';
 import type { CourseMap, CourseSummary } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -52,11 +50,10 @@ import { PressableScale } from '../theme/MotionParts';
 
 /**
  * Learn's first half, top to bottom: the next step (one card, one button, with a part-finished review offered
- * under it), the practice tools with today's quests, the course as a lesson path, then the league and the day's
- * extras under "More for today". The path shows one course and one section at a time and draws only the units
- * near the screen; it scrolls to the current skill on first show. Learn's one-at-a-time moments (a kept streak,
- * the reminder banner) show here. Pull to refresh reloads the course and, via `onRefresh`, the bar, which a daily
- * reward claimed here reloads too.
+ * under it), the practice tools with today's quests, the course as a lesson path, then the day's extras under "More
+ * for today". The path shows one course and one section at a time and draws only the units near the screen; it
+ * scrolls to the current skill on first show. Learn's one-at-a-time moments (a kept streak, the reminder banner) show
+ * here. Pull to refresh reloads the course and, via `onRefresh`, the bar.
  */
 export function LessonsView({
   scrollRef,
@@ -406,15 +403,12 @@ export function LessonsView({
           <EmptyState title={t('learn.noCourses')} />
         )}
 
-        {/* After the path: the week's league and your place in it (or your own week), and the day's extras. */}
+        {/* After the path, the day's extras; today's Zêr and the week's league are at the top of Home, as on the website. */}
         <View style={styles.more}>
           <Text style={[styles.mapLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
             {t('learn.more.title')}
           </Text>
-          <LeagueLine />
           <EventBanner />
-          {/* A claim pays Zêr, which the bar shows. */}
-          <DailyRewardCard onClaimed={onRefresh} />
           <WordOfDayCard />
         </View>
       </ScrollView>

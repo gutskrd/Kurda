@@ -26,6 +26,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { backFromPage, navigation, refocus } from '../play/testing/navigation';
 import { TAB_REUSE_MS } from '../navigation/tabFocusLoad';
 import { LearnScreen } from './LearnScreen';
+import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { LEARN_VIEW_KEY } from './useLearnView';
 import { onHaptic } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
@@ -417,7 +418,7 @@ describe('Learn', () => {
     await waitFor(() => expect(asked()).toEqual([3, 3, 3, 3, 3, 3]));
   });
 
-  it('shows the Zêr a daily reward claimed here brings, in the corner at once', async () => {
+  it('shows the Zêr a daily reward claimed on Home brings, in the corner at once', async () => {
     let zer = 1240;
     client(STREAK, undefined, {
       'GET /me/wallet': () => ok({ balances: { zer, gems: 3 } }),
@@ -427,7 +428,12 @@ describe('Learn', () => {
         return ok({ reward: 15 });
       },
     });
-    renderWithProviders(<LearnScreen />);
+    renderWithProviders(
+      <>
+        <LearnScreen />
+        <DailyRewardCard />
+      </>,
+    );
     expect(await screen.findByRole('button', { name: '1,240 Zêr. Open the shop' })).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: 'Claim 15 Zêr' }));
     expect(await screen.findByRole('button', { name: '1,255 Zêr. Open the shop' })).toBeTruthy();

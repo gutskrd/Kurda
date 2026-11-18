@@ -48,8 +48,8 @@ export function isLearnView(v: unknown): v is LearnView {
  * An address from an older layout, as the address it is now: links in old notifications, chats and emails still say
  * where things were. `hevalo://play` and `/app/games` open Learn's Games view, `hevalo://inbox` opens Messages, and the
  * battle's old `app/games/wordle-battle?id=…` opens the battle. The website's `/app/learn…` addresses are read too,
- * since story links are often copied from a browser; `/app/stories` is left alone, being the website's old wall
- * address.
+ * since story links are often copied from a browser, and its wall at `/app` opens Home with the same filter, its old
+ * `/app/stories`, `/app/poems` and `/app/dimen` walls on their kinds.
  *
  * Games that became practice exercises open the exercise; retired games open Learn's games. Only the exact old
  * addresses are rewritten, with their query kept; App.tsx runs every incoming path through this.
@@ -61,9 +61,20 @@ export function legacyTabPath(path: string): string {
   const rest = query ? `&${query}` : '';
   const story = /^app\/learn\/stories\/([^/]+)$/.exec(bare);
   if (story) return `${lead}app/games/stories/${story[1]}${query ? `?${query}` : ''}`;
-  // A game's invite link (shared join-link.ts) lands on Games, where Join with a code takes the code.
-  if (/^join\/[a-z-]+\/[A-Za-z0-9]+$/.test(bare)) return `${lead}learn?view=games`;
+  // A game's invite link (shared join-link.ts) opens Join with a code on Games, the code filled in.
+  const invite = /^join\/[a-z-]+\/([A-Za-z0-9]+)$/.exec(bare);
+  if (invite) return `${lead}learn?view=games&code=${invite[1]!.toUpperCase()}`;
   switch (bare) {
+    // The website's wall and its filter, and the walls it replaced.
+    case 'app':
+    case 'app/civak':
+      return `${lead}home${query ? `?${query}` : ''}`;
+    case 'app/stories':
+      return `${lead}home?section=gotin&kind=cirok`;
+    case 'app/poems':
+      return `${lead}home?section=gotin&kind=helbest`;
+    case 'app/dimen':
+      return `${lead}home?section=dimen`;
     case 'app/learn':
       return `${lead}learn${query ? `?${query}` : ''}`;
     case 'app/learn/stories':

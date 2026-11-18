@@ -63,7 +63,16 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
  * handful of games reads faster than a sort control. Games still short of approved content are only named, under
  * the stamps.
  */
-export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
+export function GamesView({
+  scrollRef,
+  code,
+  onCodeShown,
+}: {
+  scrollRef?: Ref<ScrollView>;
+  /** An invite link's join code, opened in Join with a code (play/JoinByCode). */
+  code?: string;
+  onCodeShown?: () => void;
+}): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { client, isGuest } = useAuth();
   const { colors } = useTheme();
@@ -296,7 +305,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       ) : null}
 
       {/* A code a friend read out or sent opens their game, whichever of the games it is. */}
-      <JoinCodeCard />
+      <JoinCodeCard code={code} onCodeShown={onCodeShown} />
 
       <View style={styles.section}>
         <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
