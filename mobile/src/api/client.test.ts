@@ -237,7 +237,7 @@ describe('ApiClient', () => {
     expect(fetchFn.mock.calls[1]![1].headers['idempotency-key']).toBeDefined();
   });
 
-  it("keeps a refusal's details, which say until when", async () => {
+  it('keeps a refusal’s details, which say until when', async () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValue(

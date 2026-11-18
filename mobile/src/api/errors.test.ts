@@ -123,7 +123,7 @@ describe('isOffline / isRetryable', () => {
 
 describe('CODE_COPY', () => {
   /** Codes that are answered in the reader's own language instead of the server's English message. */
-  it('answers every mapped code in both languages, and never with the server\'s English', () => {
+  it('answers every mapped code in both languages, and never with the server’s English', () => {
     for (const [code, key] of Object.entries(CODE_COPY)) {
       for (const locale of ['en', 'ku'] as const) {
         const said = describeError(err({ kind: 'client', code, status: 400 }), translator(locale));
@@ -133,7 +133,7 @@ describe('CODE_COPY', () => {
     }
   });
 
-  it('says a wrong password in Kurmancî, not in the API\'s English', () => {
+  it('says a wrong password in Kurmancî, not in the API’s English', () => {
     const wrong = err({ kind: 'unauthorized', code: 'INVALID_CREDENTIALS', message: 'invalid email or password', status: 401 });
     expect(describeError(wrong, translator('ku'))).toBe(TRANSLATIONS.ku['error.code.invalidCredentials']);
   });
@@ -142,7 +142,7 @@ describe('CODE_COPY', () => {
    * Every refusal the sign-up, sign-in and email-check routes can give (api/src/auth/routes.ts and service.ts),
    * with their details: none may show as the server's English or "Something went wrong".
    */
-  it('answers every sign-up, sign-in and verification refusal in the reader\'s words', () => {
+  it('answers every sign-up, sign-in and verification refusal in the reader’s words', () => {
     const refusals: ApiError[] = [
       err({ kind: 'client', status: 409, code: 'REGISTRATION_FAILED' }),
       err({ kind: 'client', status: 409, code: 'USERNAME_TAKEN' }),
