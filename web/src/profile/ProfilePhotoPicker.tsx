@@ -13,25 +13,13 @@ import { useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
 import { useAvatarSrc } from '../art/overrides';
 
-/**
- * An avatar is never shown larger than a hero portrait, and usually at 32px in
- * a nav bar. Exporting it at the feed's ceiling would be a megabyte spent on
- * detail nobody will see.
- */
+/** An avatar never shows larger than a hero portrait, so it is exported smaller than feed pictures. */
 const AVATAR_MAX_EDGE = 768;
 
 /**
- * Your profile picture, and which part of it is your face.
- *
- * A profile picture is shown in a circle at every size the app uses it, so
- * uploading one used to be a gamble: whatever the middle of the file happened
- * to be was what everybody saw. This is the same framing the composer uses,
- * locked to a square and shown through a circle, so the crop on screen is the
- * crop that is stored.
- *
- * A file the browser cannot decode — a HEIC straight off a phone — still
- * uploads as it is, because the server may well be able to read what this
- * browser cannot, and refusing outright would be worse than framing it blind.
+ * The profile picture and its framing: the composer's cropper locked to a square and shown through a circle, so the
+ * stored crop matches the screen. A file the browser cannot decode, such as HEIC, uploads unframed for the server to
+ * read.
  */
 export function ProfilePhotoPicker({
   me,
@@ -69,8 +57,7 @@ export function ProfilePhotoPicker({
 
     void decodePicture(file).then((result) => {
       decoded = result;
-      // the effect runs twice under StrictMode; a result from a torn-down run
-      // is released rather than rendered
+      // The effect runs twice under StrictMode, so a torn-down run’s result is released rather than rendered.
       if (cancelled) {
         result?.release();
         return;
@@ -89,11 +76,7 @@ export function ProfilePhotoPicker({
     };
   }, [file]);
 
-  /**
-   * Whatever was chosen goes to the decoder, not to a check on `file.type`:
-   * that is whatever the operating system said when it handed the file over,
-   * and for plenty of real photographs it is an empty string.
-   */
+  /** The choice goes to the decoder rather than a `file.type` check, which is often empty for real photographs. */
   function choose(e: React.ChangeEvent<HTMLInputElement>): void {
     const picked = e.target.files?.[0];
     e.target.value = '';

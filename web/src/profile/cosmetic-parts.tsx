@@ -3,9 +3,8 @@ import { GiftIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Shared cosmetic render parts used by both the profile popup and the full
- * profile page, so equipped cosmetics look identical in both. Presentation only —
- * access/ownership is resolved server-side before these ever receive a value.
+ * Cosmetic render parts shared by the profile popup and the full profile, so both look the same. Presentation only;
+ * the server resolves ownership.
  */
 
 /** Renders an equipped background as the right element for its media type. */
@@ -29,14 +28,7 @@ export function CosmeticBackground({ background, className }: { background: Prof
   return <img className={cls} src={background.url} alt="" aria-hidden="true" />;
 }
 
-/**
- * Level, a bar toward the next one, and what is left to earn (all derived
- * server-side).
- *
- * The distance to the next level used to live in a tooltip, which a phone never
- * shows; it is the most motivating number on the card, so it is now a line of
- * its own under the bar — the way the front page draws it.
- */
+/** The level, a bar toward the next one, and a line saying what is left to earn, all from the server. */
 export function LevelBar({ level }: { level: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'> }): React.JSX.Element {
   const t = useT();
   const pct = Math.round(Math.min(1, Math.max(0, level.progress)) * 100);
@@ -65,11 +57,8 @@ export function PremiumPill(): React.JSX.Element {
 }
 
 /**
- * The equipped premium icon, rendered as a decorative overlay that straddles the
- * avatar boundary (partly inside, partly outside). Place it inside a
- * position:relative avatar container; sizing/offset come from that container's
- * CSS so the icon scales with the avatar. It is a separate layer over the
- * avatar — never baked into the avatar image.
+ * The equipped icon as a decorative layer straddling the avatar's edge, inside a position:relative avatar container
+ * whose CSS sizes it; never baked into the avatar image.
  */
 export function IconOverlay({ icon }: { icon: ProfileIcon }): React.JSX.Element {
   const t = useT();
@@ -84,17 +73,7 @@ export function IconOverlay({ icon }: { icon: ProfileIcon }): React.JSX.Element 
   );
 }
 
-/**
- * Who gave them what they are wearing.
- *
- * Half the point of a gift is that it is seen to be from someone. Without this
- * a gifted background is indistinguishable from a bought one the moment it is
- * equipped, which is a present with the card thrown away.
- *
- * Shown on both profile surfaces from one component, so the two cannot drift.
- * Nothing is rendered when nothing was gifted — an empty line saying so would
- * only be noise on the great majority of profiles.
- */
+/** Who gave the equipped cosmetics, on both profile surfaces; nothing when nothing was gifted. */
 export function GiftedNote({
   background,
   icon,
@@ -103,8 +82,7 @@ export function GiftedNote({
   icon?: ProfileIcon | null;
 }): React.JSX.Element | null {
   const t = useT();
-  // whole sentences rather than a noun plus " gifted by ": which word order
-  // that takes, and whether the noun changes shape, is not the same everywhere
+  // Whole sentences per kind, since word order and noun forms differ between languages.
   const notes: Array<{ key: string; text: string }> = [];
   if (background?.giftedBy)
     notes.push({ key: 'background', text: t('profile.backgroundGiftedBy', { name: background.giftedBy.username }) });

@@ -5,10 +5,8 @@ import type { FavoriteRef, LibraryPost, MeProfile } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Favorite poem/story picker: browse the published library and pin one of each to
- * your profile. Wires the phase-3b PUT/DELETE /me/favorites/{poem,story}
- * endpoints — the server verifies the post exists, is the right type, and is
- * published, so the client only sends a post id.
+ * Picks a favourite poem and story from the published library to pin on the profile, through PUT and DELETE
+ * /me/favorites/{poem,story}; the server checks the post, so the client sends only its id.
  */
 export function FavoritesPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
   const t = useT();

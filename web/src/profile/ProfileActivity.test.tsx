@@ -23,13 +23,7 @@ const entry = (id: string, kind: string, title: string, extra: Record<string, un
   ...extra,
 });
 
-/**
- * A post, as the wall draws it.
- *
- * Posts, likes and saved come back as whole posts now — they used to be a line
- * of text with a 40px thumbnail, which turned a picture into a stamp and a poem
- * into an icon.
- */
+/** A whole post, as posts, likes and saved return them. */
 const post = (id: string, title: string, extra: Record<string, unknown> = {}) => ({
   key: `library:${id}`,
   targetType: 'library',
@@ -48,11 +42,8 @@ const post = (id: string, title: string, extra: Record<string, unknown> = {}) =>
 });
 
 /**
- * Answer /users/:id/activity per `kind`, and record which kinds were asked for.
- *
- * The route returns both keys and leaves the unused one empty — games are rows
- * under `entries`, everything else is whole posts under `items` — so the stub
- * answers the same way.
+ * Answers /users/:id/activity per `kind` and records the kinds asked for. Like the route, it returns both `entries`
+ * (game rows) and `items` (posts), leaving the unused one empty.
  */
 function activityFetch(byKind: Record<string, unknown[]>): { fetch: ReturnType<typeof vi.fn>; asked: string[] } {
   const asked: string[] = [];
@@ -163,8 +154,7 @@ describe('ProfileActivity', () => {
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
 
-    // stories, poems and Dîmen were three tabs for one thing, the same split
-    // the community wall stopped making
+    // Stories, poems and Dîmen share the Posts tab, as on the community wall.
     const tabs = (await screen.findAllByRole('tab')).map((t) => t.textContent?.replace('Hidden', '').trim());
     expect(tabs).toEqual(['Posts', 'Games', 'Likes', 'Reposts', 'Saved']);
   });
@@ -176,8 +166,7 @@ describe('ProfileActivity', () => {
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
 
-    // the picture belongs to the card now — the 40px .mkp-activity-shot square
-    // is what this replaced
+    // The picture is drawn in the post card.
     await screen.findByText('Çiya');
     expect(document.querySelector('.fcard-pics img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
     expect(document.querySelector('.mkp-activity-shot')).toBeNull();

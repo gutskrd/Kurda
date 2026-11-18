@@ -38,16 +38,8 @@ function when(iso: string): string {
 }
 
 /**
- * What someone has posted and played, under their profile.
- *
- * Tabs come from `sections` — the profile itself says which ones it shows, so a
- * hidden section never even appears as an empty tab to be clicked. Each tab
- * fetches only when it is first opened: most visitors read one of them, and
- * loading four lists to show one would cost four queries per profile view.
- *
- * On your own profile every tab stays, with the hidden ones marked: turning a
- * section off should not make your own work vanish on you, and seeing the
- * hidden ones is how you remember they are there to turn back on.
+ * What someone has posted and played. Tabs come from the profile's `sections`, so hidden ones never appear, and each
+ * tab fetches when first opened. The owner sees every tab, with hidden ones marked.
  */
 export function ProfileActivity({
   userId,
@@ -63,8 +55,7 @@ export function ProfileActivity({
   const shown = PROFILE_SECTIONS.filter((s) => own || sections?.[s] !== false);
   const [tab, setTab] = useState<ProfileSection | null>(null);
 
-  // the first visible section is the open one; recomputed if the owner turns
-  // the current tab off while the page is up
+  // The first visible section is open, recomputed if the owner hides the current tab.
   const active = tab && shown.includes(tab) ? tab : (shown[0] ?? null);
 
   if (!sections || shown.length === 0 || !active) return null;
@@ -92,23 +83,14 @@ export function ProfileActivity({
           ))}
         </div>
 
-        {/* keyed so switching tabs starts a fresh list rather than showing the
-            previous tab's entries under the new heading */}
+        {/* Keyed so a tab switch starts a fresh list rather than showing the previous tab’s entries. */}
         <ActivityPanel key={active} userId={userId} kind={active} />
       </div>
     </div>
   );
 }
 
-/**
- * One tab's list, paged with a Show more button.
- *
- * Posts, likes and saved come back as whole posts and are drawn as the card the
- * wall draws. They used to be a line of text with a 40px thumbnail beside it,
- * which turned a picture into a stamp and a poem into an icon — a list *about*
- * what somebody posted rather than the posts. Games stay a row, because a game
- * result is a line in a history and there is no card for it.
- */
+/** One tab's list, paged with Show more: posts as feed cards, games as history rows. */
 function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();

@@ -54,8 +54,7 @@ export function ProfileModalProvider({ children }: { children: ReactNode }): Rea
   return (
     <ProfileCtx.Provider value={{ openProfile, closeProfile: close }}>
       {children}
-      {/* put away while Hevalo is offline, rather than failing over the offline
-          screen; it opens again, and loads again, once Hevalo is back */}
+      {/* Hidden while Hevalo is offline rather than failing over the offline screen; it reopens and reloads after. */}
       <Modal open={target !== null && !maintenance} onClose={close} label={t('profile.title')}>
         {target && <ProfileContent target={target} />}
       </Modal>
@@ -64,9 +63,8 @@ export function ProfileModalProvider({ children }: { children: ReactNode }): Rea
 }
 
 /**
- * Turn a failed (or unusably-empty) profile response into user-facing copy, and
- * log the technical detail for debugging. Never logs the auth token or any
- * response body — only the transport-level error metadata.
+ * Turns a failed or empty profile response into user-facing text and logs the transport error details; never the
+ * auth token or a response body.
  */
 function failureReason(path: string, res: ApiResult<unknown>, t: (key: MessageKey) => string): string {
   if (res.ok) {
@@ -79,16 +77,9 @@ function failureReason(path: string, res: ApiResult<unknown>, t: (key: MessageKe
 }
 
 /**
- * The popup's card: who this is at a glance, and what you can do with them.
- *
- * It is a small profile, not a second full one. Their banner and face, their
- * name, where they are from and their own words; four numbers; then the one
- * thing most people opened it for — write to them, play with them, ask to be
- * friends — as a filled button, and the way to the whole profile under it.
- * The menu about them is in the banner's corner, beside the popup's close
- * button: sharing, and the report and the block, each one press from it.
- *
- * Fetches /me for your own profile, /users/:id for others.
+ * The popup's small profile: banner, face, name, origin, bio, four figures, the main action as a filled button and a
+ * link to the full profile. The banner's corner menu offers share, report and block. Fetches /me for the reader's own
+ * profile and /users/:id for others.
  */
 function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const { client } = useAuth();
@@ -101,11 +92,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0); // bump to retry
-  /**
-   * Held here rather than inside the actions, because blocking changes the
-   * whole card: once it lands this profile answers 404 to you, so this is the
-   * last time you will see it and it has to say so.
-   */
+  /** Held here because blocking replaces the whole card: afterwards the profile answers 404, so the card says so. */
   const [blocked, setBlocked] = useState(false);
   // what the two of you are to each other: the buttons change it, and the menu in the corner reads it
   const [status, setStatus] = useState<FriendStatus>('none');
@@ -121,8 +108,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
       if (target.kind === 'me') {
         const r = await client.get<{ user: MeProfile }>('/me');
         if (cancelled) return;
-        // A successful response with no usable user is still a failure — never
-        // fall through to a blank card. (Guards a shape mismatch / empty body.)
+        // A successful response with no usable user is still a failure, never a blank card.
         if (r.ok && r.data?.user?.username) setMe(r.data.user);
         else setError(failureReason('/me', r, t));
       } else {
@@ -174,8 +160,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     id = me.id;
     name = me.displayName || me.username;
     username = me.username;
-    // avatarUrl already resolves photo → default avatar server-side; fall back to
-    // the legacy photo field for older responses.
+    // The server resolves avatarUrl from the photo or default; older responses only have the photo field.
     photo = me.avatarUrl ?? me.profilePhotoUrl;
     bio = me.bio;
     background = me.background ?? null;
@@ -242,15 +227,8 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   }
 
   /*
-   * Block and Report live in the menu rather than on the card itself. Block
-   * used to be a button in the open, a thumb-width from "Message", and it is
-   * the one action on this card that cannot be undone from it — the moment it
-   * lands the profile answers 404 to you.
-   *
-   * `target.kind` alone is not enough to offer them: your own profile can be
-   * opened by id — from your own post, or your own name in a list — and that
-   * is still kind 'user'. The server refuses to block or report yourself
-   * either way, but offering it at all is the wrong answer.
+   * Block and Report sit in the menu, since Block cannot be undone from the card. The reader's own profile can be
+   * opened by id as kind 'user', so `target.kind` alone does not decide whether to offer them.
    */
   const corner =
     other && status !== 'self' && !blocked ? (
@@ -348,11 +326,7 @@ function OwnActions({ userId, name, onGo }: { userId: string; name: string; onGo
   );
 }
 
-/**
- * What you can do with another person, driven by what the two of you are:
- * the one thing most people opened the card for is the filled button, and
- * what stands beside it is quieter.
- */
+/** Actions for another person, by relationship: the most likely one as the filled button, the rest quieter. */
 function OtherActions({
   userId,
   name,
@@ -392,7 +366,7 @@ function OtherActions({
       {status === 'friends' && message(true)}
       {/* a game with this friend: the invite sheet, with them already chosen */}
       {status === 'friends' && <PlayWithButton userId={userId} name={name} />}
-      {/* asking is handing over a ticket, and the same button takes it back; a full list, or too many out, says why (lib/limits.ts) */}
+      {/* The same button sends and withdraws a request; a full list or too many pending requests says why (lib/limits.ts). */}
       {(status === 'none' || status === 'pending_out') && <AddFriendButton userId={userId} name={name} status={status} onError={setErr} />}
       {status === 'pending_in' && (
         <>

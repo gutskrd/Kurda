@@ -13,30 +13,10 @@ import { shareProfileLink } from './share';
 type Panel = null | 'menu' | 'report' | 'block';
 
 /**
- * What you can do about another person, tucked behind a ⋯.
- *
- * Block used to be a button sitting in the open on the profile card. It is the
- * one action there that cannot be undone from that screen — the moment it lands
- * the profile answers 404 to you — and it sat one thumb-width from "Message".
- * Behind a menu it takes an extra, deliberate press.
- *
- * Reporting lives here too, because the two are what you reach for at the same
- * moment and they do different halves of the job: a block ends it for you and
- * tells nobody; a report tells a moderator and changes nothing you can see.
- * Most people want both, so neither is offered as a substitute for the other —
- * and the report sheet, once sent, offers the block in one tap.
- *
- * A row of your friends list has the same ⋯ (pages/Friends.tsx), where
- * taking somebody off the list (`remove`) comes first in it: the row keeps
- * the one thing done often, a game with them, and what ends a friendship is
- * a press further away, asked twice.
- *
- * On a profile and on its popup the ⋯ is in the far corner of the banner, and
- * sending the profile to somebody (`share`) leads the menu: it is the one
- * thing in it that is not about ending something. Report and Block stay two
- * separate, plainly named items, one press from the menu, wherever a person
- * is shown: that is what the app stores ask of anything people post to, and
- * what a notice of illegal content has to be within reach of.
+ * The ⋯ menu about another person. Block cannot be undone from the card, so it takes a deliberate press. Report and
+ * Block stay separate, plainly named items one press from the menu wherever a person is shown, as store policies and
+ * illegal-content notices require; a sent report offers the block in one tap. On a friends list row
+ * (pages/Friends.tsx) `remove` comes first and is confirmed; on a profile `share` leads.
  */
 export function UserActions({
   userId,
@@ -51,7 +31,7 @@ export function UserActions({
   name: string;
   /** called once the block has actually landed */
   onBlocked?: () => void;
-  /** a friend, who can be taken off the list from here: the item's word, what it means in full, and the doing */
+  /** For a friend: the item’s label, its full meaning, and the removal. */
   remove?: { label: string; title: string; onConfirm: () => void | Promise<void> };
   /** on a profile: the menu also sends that profile's address to somebody */
   share?: boolean;
@@ -62,24 +42,18 @@ export function UserActions({
   const [panel, setPanel] = useState<Panel>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // the link was copied (no share sheet on this device): said in the item itself, for a moment, and then the menu goes
+  // Without a share sheet the link is copied, said briefly in the item before the menu closes.
   const [copied, setCopied] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
 
-  // on a phone the ⋯ sits at the left of the profile card and the menu,
-  // anchored to its right, ran under the card's edge: keep all of it in view
+  // On a phone the ⋯ is at the card’s left, where the right-anchored menu would run off the edge, so it is kept in view.
   useLayoutEffect(() => {
     if ((panel === 'menu' || panel === 'block') && popRef.current) keepInView(popRef.current);
   }, [panel]);
 
-  /**
-   * Escape closes, and so does a click anywhere else.
-   *
-   * Bound on the document rather than the wrapper: a menu that only closes when
-   * you find its own button again is a menu that stays open.
-   */
+  /** Escape or a click anywhere closes it, so the listeners are on the document rather than the wrapper. */
   useEffect(() => {
     // the report sheet is its own dialog, with its own Escape and backdrop
     if (!panel || panel === 'report') return;
