@@ -32,7 +32,12 @@ export interface ThreadComment {
   createdAt: string;
   /** Written on this phone and not yet taken by the server. */
   pending?: boolean;
+  /** The id it had while pending, kept once the server's copy replaces it so its row keeps its key and place. */
+  localId?: string;
 }
+
+/** The key a comment's row is drawn under: the same before and after the server takes it. */
+export const rowKey = (c: ThreadComment): string => c.localId ?? c.id;
 
 /**
  * The loaded thread: the top level, newest first, and each opened branch, oldest first so a conversation reads

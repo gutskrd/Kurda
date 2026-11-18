@@ -173,9 +173,11 @@ describe('posting a comment', () => {
     expect(await screen.findByText('Pir xweş e')).toBeTruthy();
     expect(screen.getByText('Posting…')).toBeTruthy();
     expect(screen.getByText('4 comments')).toBeTruthy();
+    const row = screen.getByText('Pir xweş e');
     await act(async () => reply.resolve(ok(comment('c9', { authorId: 'me', author: me, body: 'Pir xweş e', createdAt: new Date().toISOString() }))));
     await waitFor(() => expect(screen.queryByText('Posting…')).toBeNull());
-    expect(screen.getByText('Pir xweş e')).toBeTruthy();
+    // The server's copy takes the same row, which is never drawn afresh.
+    expect(screen.getByText('Pir xweş e')).toBe(row);
   });
 
   it('takes it back off and says why when the server refuses it, keeping what was written', async () => {

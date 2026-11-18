@@ -20,22 +20,37 @@ export function useOutgoing(): {
   outgoing: Outgoing[];
   /** `body` is on its way: shown at once, and named by what this returns. */
   begin: (body: string) => string;
-  /** The server answered for it, either way, so it is no longer pending. */
-  settle: (id: string) => void;
-  /** The server's copy of these words arrived another way (a room's echo) before the send was answered. */
-  echoed: (body: string) => void;
+  /** The server answered for it, either way, so it is no longer pending; `as` is its id in the server's copy. */
+  settle: (id: string, as?: string) => void;
+  /** The server's copy of these words, `as`, arrived another way (a room's echo) before the send was answered. */
+  echoed: (body: string, as: string) => void;
+  /** The key a message's row is drawn under: one sent from here keeps the key it had on its way, so it is not redrawn. */
+  keyOf: (id: string) => string;
 } {
   const [outgoing, setOutgoing] = useState<Outgoing[]>([]);
   const count = useRef(0);
+  const keys = useRef(new Map<string, string>());
   const begin = useCallback((body: string): string => {
     count.current += 1;
     const id = `sending-${count.current}`;
     setOutgoing((list) => [...list, { id, body, createdAt: new Date().toISOString() }]);
     return id;
   }, []);
-  const settle = useCallback((id: string): void => setOutgoing((list) => list.filter((m) => m.id !== id)), []);
-  const echoed = useCallback((body: string): void => setOutgoing((list) => withoutFirst(list, body)), []);
-  return { outgoing, begin, settle, echoed };
+  const settle = useCallback((id: string, as?: string): void => {
+    if (as) keys.current.set(as, id);
+    setOutgoing((list) => list.filter((m) => m.id !== id));
+  }, []);
+  const echoed = useCallback(
+    (body: string, as: string): void =>
+      setOutgoing((list) => {
+        const first = list.find((m) => m.body === body);
+        if (first) keys.current.set(as, first.id);
+        return withoutFirst(list, body);
+      }),
+    [],
+  );
+  const keyOf = useCallback((id: string): string => keys.current.get(id) ?? id, []);
+  return { outgoing, begin, settle, echoed, keyOf };
 }
 
 /** The list without the oldest message saying `body`: one echo answers one send, however many said the same. */

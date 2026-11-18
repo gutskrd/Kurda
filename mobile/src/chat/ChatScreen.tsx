@@ -108,7 +108,7 @@ export function ChatScreen({
   // The gift picker's one friend, the same array until the friend changes.
   const giftFriends = useMemo(() => [{ userId, name }], [userId, name]);
   // The messages sent from here that the server has not answered for yet.
-  const { outgoing, begin, settle } = useOutgoing();
+  const { outgoing, begin, settle, keyOf } = useOutgoing();
   // The thread as it is read, oldest first, with what is still on its way after what the server has.
   const thread = useMemo<ShownMessage[]>(
     () => [...messages, ...outgoing.map((m): ShownMessage => ({ ...m, senderId: me, kind: 'text', gift: null, game: null, pending: true }))],
@@ -235,7 +235,7 @@ export function ChatScreen({
       // In the thread at once, as one on its way; the server's copy takes its place, or it is taken out.
       const sending = begin(body);
       const res = await client.post<ChatMessage>(`/chat/${userId}/messages`, { body });
-      settle(sending);
+      settle(sending, res.ok ? res.data.id : undefined);
       if (!res.ok) return res.error;
       setMessages((prev) => appendOnce(prev, res.data));
       return null;
@@ -345,7 +345,7 @@ export function ChatScreen({
               ref={list}
               data={newestFirst}
               inverted
-              keyExtractor={(m) => m.id}
+              keyExtractor={(m) => keyOf(m.id)}
               contentContainerStyle={styles.list}
               onScroll={onScroll}
               scrollEventThrottle={64}

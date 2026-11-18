@@ -113,7 +113,7 @@ export function GroupThreadScreen({
   const held = useRef<Message[]>([]);
   held.current = messages;
   // Messages sent from here that the server has not answered for yet, drawn after the ones it has.
-  const { outgoing, begin, settle, echoed } = useOutgoing();
+  const { outgoing, begin, settle, echoed, keyOf } = useOutgoing();
   const thread = useMemo<Message[]>(
     () => [
       ...messages,
@@ -319,7 +319,7 @@ export function GroupThreadScreen({
           const shown = own ? { ...message, gift: own } : message;
           // Our own words echoed by the room before the send was answered: the copy drawn as on its way gives them its
           // place.
-          if (message.senderId === me && message.body && !held.current.some((m) => m.id === message.id)) echoed(message.body);
+          if (message.senderId === me && message.body && !held.current.some((m) => m.id === message.id)) echoed(message.body, message.id);
           setMessages((prev) => (prev.some((m) => m.id === shown.id) ? prev : [...prev, shown]));
           // It is on screen, so it counts as read.
           void markGroupRead(client, groupId);
@@ -398,7 +398,7 @@ export function GroupThreadScreen({
       // In the thread at once as on its way; the server's copy takes its place, or it is taken out.
       const sending = begin(body);
       const res = await sendToGroup(client, groupId, body);
-      settle(sending);
+      settle(sending, res.ok ? res.data.id : undefined);
       if (!res.ok) return res.error;
       // Once: the room may have echoed it already.
       setMessages((prev) => appendOnce(prev, res.data as Message));
@@ -559,7 +559,7 @@ export function GroupThreadScreen({
               ref={list}
               data={newestFirst}
               inverted
-              keyExtractor={(m) => m.id}
+              keyExtractor={(m) => keyOf(m.id)}
               contentContainerStyle={styles.list}
               onScroll={onScroll}
               scrollEventThrottle={64}

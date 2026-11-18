@@ -82,8 +82,12 @@ export function useCommentThread(
   const load = useCallback(async () => {
     const res = await calls.list(client, postId);
     if (!res.ok) return;
-    // Anything still on its way stays on top of what the server knows so far.
-    setState((prev) => ({ top: [...(prev.top ?? []).filter((c) => c.pending), ...res.data.comments], replies: {} }));
+    // Anything still on its way stays on top of what the server knows so far; one sent from here keeps its row.
+    setState((prev) => {
+      const local = new Map((prev.top ?? []).filter((c) => c.localId).map((c) => [c.id, c.localId]));
+      const fresh = res.data.comments.map((c) => (local.has(c.id) ? { ...c, localId: local.get(c.id) } : c));
+      return { top: [...(prev.top ?? []).filter((c) => c.pending), ...fresh], replies: {} };
+    });
   }, [calls, client, postId]);
 
   const showReplies = useCallback(
@@ -148,7 +152,7 @@ export function useCommentThread(
         return false;
       }
       // The library's answer has no author on it; it is you.
-      const taken = { ...res.comment, author: res.comment.author ?? pending.author };
+      const taken = { ...res.comment, author: res.comment.author ?? pending.author, localId: pending.id };
       setState((prev) => updateComment(prev, pending.id, () => taken));
       return true;
     },

@@ -72,9 +72,12 @@ describe('a message being sent', () => {
     expect(sending.textContent).toContain('Silav');
     expect(sending.getAttribute('aria-busy')).toBe('true');
     expect((field as HTMLTextAreaElement).value).toBe('');
+    const bubble = screen.getByText('Silav');
     await answer(ok(sent));
     expect(screen.queryByTestId('message-sending')).toBeNull();
+    // The server's copy takes the same row, which is never drawn afresh.
     expect(screen.getAllByText('Silav')).toHaveLength(1);
+    expect(screen.getByText('Silav')).toBe(bubble);
   });
 
   it('is taken out again when the server refuses it, with the words back in the field and the reason said', async () => {

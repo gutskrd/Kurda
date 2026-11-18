@@ -16,7 +16,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { authorOf, type ThreadComment } from './thread';
+import { authorOf, rowKey, type ThreadComment } from './thread';
 import type { CommentThread } from './useCommentThread';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
@@ -47,14 +47,14 @@ export function CommentList({
   // A reply's own replies sit beside it, under the same comment, one step in.
   const branch = (id: string): React.JSX.Element[] =>
     (replies[id] ?? []).flatMap((r) => [
-      <CommentRow key={r.id} comment={r} nested thread={thread} onReport={onReport} renderAudio={renderAudio} />,
+      <CommentRow key={rowKey(r)} comment={r} nested thread={thread} onReport={onReport} renderAudio={renderAudio} />,
       ...branch(r.id),
     ]);
 
   return (
     <View>
       {top.map((c) => (
-        <View key={c.id}>
+        <View key={rowKey(c)}>
           <CommentRow comment={c} thread={thread} onReport={onReport} renderAudio={renderAudio} />
           {replies[c.id] ? <View style={dir.row === 'row-reverse' ? styles.repliesRight : styles.replies}>{branch(c.id)}</View> : null}
         </View>

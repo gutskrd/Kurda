@@ -94,9 +94,12 @@ describe('an empty group chat', () => {
     const sending = await screen.findByTestId('message-sending');
     expect(sending.textContent).toContain('Rojbaş!');
     expect(screen.queryByText('Say hello')).toBeNull();
+    const bubble = screen.getByText('Rojbaş!');
     await act(async () => answer(ok(sent('Rojbaş!'))));
     expect(screen.queryByTestId('message-sending')).toBeNull();
     expect(screen.getAllByText('Rojbaş!')).toHaveLength(1);
+    // The server's copy takes the same row, which is never drawn afresh.
+    expect(screen.getByText('Rojbaş!')).toBe(bubble);
   });
 
   it('takes a greeting the server refuses out of the thread again', async () => {
