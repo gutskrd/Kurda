@@ -32,10 +32,8 @@ export interface PlannedQuestion {
   evidenceParagraph: number | null;
   evidenceSentence: number | null;
   /**
-   * By interface language, the options in this game's order like `options`.
-   * Copied with the rest of the question, so a translation corrected during a
-   * game does not change the question being asked; absent from a plan made
-   * before translations existed.
+   * Translations by interface language, options in this game's order like `options`. Copied with the question so a
+   * mid-game correction does not change it; absent from plans made before translations existed.
    */
   translations?: Record<string, StoryQuestionTranslation>;
 }
@@ -63,26 +61,19 @@ function byTextPosition(a: BankQuestion, b: BankQuestion): number {
 }
 
 /**
- * Which questions a game asks, in which order, with each question's options
- * shuffled for this game.
+ * Which questions a game asks, in which order, with options shuffled per game.
  *
- * The choice is random but cannot be reproduced outside the server: it is the
- * HMAC-keyed order the lessons shuffle with (`optionOrder`), seeded with the
- * game id, so a player who knows the game id still cannot work out which
- * questions are coming or where the right option sits.
+ * The order is the HMAC-keyed shuffle the lessons use (`optionOrder`) seeded with the game id, so knowing the game id
+ * does not reveal the questions or where the right option sits.
  *
- * Within that randomness the research behind Stories shapes the set:
- * - one overall ("gist") question when the bank has one, asked last, after the
- *   details have been met;
- * - the rest spread across the text rather than bunched in one paragraph: the
- *   bank in text order is cut into as many stretches as there are questions,
- *   and each stretch gives its first question in the random order;
- * - no one kind more than half the questions, and at least one detail question
- *   when the bank has one, so a game is not four vocabulary items;
- * - asked in the order of the text, the overall question last;
- * - the questions the game's players answered in their last few games of the
- *   same story (`recent`) ranked after every other, so a second game asks
- *   what the first did not wherever the bank allows, and only then repeats.
+ * Within that, the set is shaped by the research behind Stories:
+ * - one overall ("gist") question when the bank has one, asked last;
+ * - the rest spread across the text: the bank in text order is cut into one stretch per question, each giving its first
+ *   question in the random order;
+ * - no kind more than half the questions, and at least one detail question when the bank has one;
+ * - asked in text order, the overall question last;
+ * - questions the players answered in their last few games of this story (`recent`) ranked after all others, so repeats
+ *   come only when the bank runs out.
  *
  * The caller has already checked the bank holds `count` questions.
  */
@@ -141,11 +132,9 @@ export function buildPlan(gameId: string, bank: readonly BankQuestion[], count: 
 }
 
 /**
- * One question with its options in this game's order: `shown[i] = options[order[i]]`,
- * and each translation's options in that same order, so the right answer is
- * the same index in every language. A translation that does not have as many
- * options as the question (none is saved that way) is left out rather than
- * shuffled wrong.
+ * One question with options in this game's order (`shown[i] = options[order[i]]`), each translation's options in the
+ * same order so the right answer has the same index in every language. A translation with a different option count is
+ * left out rather than shuffled wrong.
  */
 export function planQuestion(gameId: string, q: BankQuestion): PlannedQuestion {
   const order = optionOrder(q.options.length, `${gameId}:${q.id}`);

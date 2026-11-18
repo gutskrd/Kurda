@@ -1,9 +1,7 @@
 /**
- * The story games as the job worker runs them, against real Postgres and
- * Redis: a closing account that was the last player a game's last question
- * waited for finishes it for the others — paid as the API pays (the weekly
- * league, the streak milestone) and told to the API instances over Redis, so
- * a player's waiting poll on another process wakes at once.
+ * The story games as the job worker runs them, against real Postgres and Redis: a closing account that was the last
+ * player a final question waited for finishes the game for the others, paid as the API pays (weekly league, streak
+ * milestone) and announced over Redis so a poll on another process wakes at once.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import pg from 'pg';

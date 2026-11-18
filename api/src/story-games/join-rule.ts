@@ -20,30 +20,20 @@ export interface JoinFacts {
 }
 
 /**
- * Who may join a game: the rule every online game shares (contract §B2; the
- * play module's `canJoin` is its twin for Peyvok Battle and Rhyme Match).
+ * Who may join a game: the rule every online game shares (contract §B2; the play module's `canJoin` draws the same
+ * lines).
  *
- * Never anyone the host removed, and never anyone with a block either way
- * against anyone in the game — a block is checked against the whole roster,
- * not just the host, so blocking someone also keeps them out of every lobby
- * you are in. Then:
- * - an 'open' game takes any known adult, and only known adults: a minor or
- *   an account of unknown age never joins one, even a friend of the host's,
- *   so every member of an open game is an adult and a child is never in a game
- *   strangers could walk into;
- * - a 'friends' game takes the host's accepted friends, and the members of a
- *   group chat the host shared it into. Every group is private: everyone in
- *   one was put there by somebody they chose (an owner or admin adds only
- *   their own friends), so that brings in nobody new to a child.
+ * Never anyone the host removed, nor anyone with a block either way against anyone in the game (checked against the
+ * whole roster, so a block keeps someone out of every lobby you are in). Then:
+ * - an 'open' game takes known adults only: a minor or an account of unknown age never joins, even as the host's
+ *   friend, so a child is never in a game strangers can enter;
+ * - a 'friends' game takes the host's accepted friends and the members of a group chat it was shared into. Groups are
+ *   private (owners and admins add only their own friends), so that brings nobody new to a child.
  *
- * A game shared into a group that was OPEN before every group became private
- * (`groups.privacy` still says so) lets nobody in on that account: its
- * members walked in, nobody chose them, and a friends game can hold the
- * host's friend who is fifteen. The play module's `canJoin` draws the same
- * lines.
+ * A group still marked OPEN from before all groups became private (`groups.privacy`) admits nobody on that basis: its
+ * members were not chosen, and a friends game may hold the host's fifteen-year-old friend.
  *
- * A refusal is never explained to the joiner: it looks exactly like a game
- * that does not exist.
+ * A refusal is never explained: it looks exactly like a game that does not exist.
  */
 export function canJoin(f: JoinFacts): boolean {
   if (f.removed || f.blocked) return false;
