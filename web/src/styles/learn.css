@@ -1,10 +1,7 @@
 /* ---- learning: the Learn page, a course's map, the lesson player ------------- */
 /*
- * The lesson is the one screen here meant to be used rather than read, so it
- * is narrow, calm and large where the learner acts: answers are big targets,
- * the field is big type, and everything that says how an answer went says it
- * in words and a mark as well as a colour. Gold stays "notice this": the
- * letters that differ, the second try.
+ * The lesson is narrow and calm with large answers and type, and every result is said in words and a mark as well as
+ * colour. Gold marks what to notice: the differing letters, the second try.
  */
 
 /* ---- Learn: review, then the courses ------------------------------------------ */
@@ -133,17 +130,10 @@
 
 /* ---- the lesson player -------------------------------------------------------- */
 /*
- * The painted valley: a lesson sits on warm paper with a low line of pale
- * hills behind its top, the country the road runs through seen from the gate.
- * What can be pressed is a cream card standing on a darker edge; what is
- * chosen is the pomegranate red, what is right the valley's green, and a miss
- * a warm red rather than a grey. The dark scheme is the same valley at dusk.
- *
- * The colours are written on the root, though only a lesson uses them, so
- * that the page under a phone's overscroll and the Tips dialog (drawn at the
- * end of the page, outside the lesson) are on the same paper. Every text
- * colour was checked against each ground it sits on: 4.5:1 or more, the
- * closest noted beside it. Fills behind words name the words' colour too.
+ * The painted valley: lessons sit on warm paper with pale hills behind the top. Pressable things are cream cards on a
+ * darker edge; chosen is pomegranate red, right is the valley green, and a miss is warm red. The dark scheme is the
+ * valley at dusk. The colours sit on the root so overscroll and the Tips dialog share the paper. Every text colour
+ * meets 4.5:1 on its grounds, the closest noted beside it.
  */
 :root {
   --vale-paper: #1f1a16;
@@ -276,11 +266,7 @@
   --vale-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23edf2e0'/%3E%3Cstop offset='1' stop-color='%23fbf6ec'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23e6e8ee'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23e3ecd2'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/*
- * Inside a lesson, and its Tips, the app's own names mean the valley's
- * colours, so every part drawn from them — a button, a field, a note, a
- * placeholder — is on the paper without a rule of its own.
- */
+/* Inside a lesson and its Tips the app's colour names map to the valley's, so every part follows without its own rule. */
 .lesson,
 .modal-panel:has(> .lesson-tips) {
   --app-bg: var(--vale-paper);
@@ -317,11 +303,8 @@ body:has(.lesson) {
 }
 
 /*
- * Alone on the screen (layouts/FocusLayout.tsx), so its top clears only a
- * phone's notch. A column the height of the screen: the lesson, then the
- * action bar at its foot (ActionBar.tsx) — at the bottom of the screen
- * however short the exercise, and stuck there while a long one scrolls. The
- * hills are only a picture on the paper, so nothing reads them out.
+ * Alone on the screen (layouts/FocusLayout.tsx), clearing only the notch: a screen-high column with the action bar
+ * (ActionBar.tsx) at its foot, stuck there while a long exercise scrolls. The hills are decorative.
  */
 .lesson {
   display: flex;
@@ -464,11 +447,7 @@ html:has(.lesson-bar) {
   font-size: 0.8rem;
   font-weight: 650;
 }
-/*
- * Over an item that brings in new words, in the kicker's place: a small pill
- * in the pomegranate's soft fill, its words in the red as the kicker's are,
- * and a gold sparkle — gold is "notice this" (5:1 and more, both schemes).
- */
+/* The new-words pill in the kicker's place: soft pomegranate with red words and a gold sparkle (5:1 or more). */
 .lesson-new {
   justify-self: start;
   display: inline-flex;
@@ -579,11 +558,8 @@ html:has(.lesson-bar) {
 }
 
 /*
- * The lesson's one pressable tile (Tile.tsx) — an option, a card to pair, a
- * word to lay on the line: a 2px edge and a darker lip under it, onto which
- * it sinks while pressed. Its state sets four colours, and nothing else
- * changes, so a tile never moves anything around it: the lip's room is kept
- * under every tile (`margin-bottom`), even a spent one standing on it.
+ * The pressable tile (Tile.tsx): a 2px edge on a darker lip it sinks onto when pressed. States change only colours,
+ * and the lip's room is kept under every tile, so nothing around it moves.
  */
 .tile {
   --lip: 4px;
@@ -678,12 +654,7 @@ html:has(.lesson-bar) {
 .tile.is-flying {
   z-index: 2;
 }
-/*
- * In a lesson, a tile is a cream card: a fine edge, and under it a deeper
- * edge of the same paper, 3.5px in all, that it is pressed onto. Chosen is
- * the red, right the green, a miss a warm red; spent and dimmed stay quiet.
- * (A game's tiles keep the app's own look.)
- */
+/* A lesson tile is a cream card on a 3.5px edge of the same paper; chosen is red, right green, a miss warm red. */
 .lesson .tile {
   --lip: 2px;
   --tile-edge: var(--vale-line);
@@ -758,11 +729,7 @@ html:has(.lesson-bar) {
   padding: 12px 14px;
   text-align: start;
 }
-/*
- * The chip at the start: the key that chooses the option, and once it is
- * graded the tick or the cross in its place (the mark lies over the chip,
- * which then shows only its colour). Chosen, it fills with the red.
- */
+/* The option's key chip, covered by the tick or cross once graded; filled red when chosen. */
 .lesson-option-key {
   grid-column: 1;
   grid-row: 1;
@@ -848,12 +815,10 @@ html:has(.lesson-bar) {
 }
 
 /*
- * Which picture: square cream cards, each a word's picture and the number
- * that chooses it in the corner, where the tick or the cross goes once it is
- * graded (as an option's chip). Three or four in a row while they keep a
- * picture large enough to read at a glance; four go two by two on a phone.
+ * Picture choices: square cream cards with the choosing number in the corner, where the tick or cross goes once graded.
+ * Three or four to a row while the pictures stay large, two by two on a phone.
  */
-/* never wider than a picture needs: on a wide screen a row of them stands in the middle, as the word tiles do */
+/* Never wider than the pictures need, so a row centres on a wide screen like the word tiles. */
 .lesson-pictures {
   display: grid;
   grid-template-columns: repeat(var(--cols, 3), minmax(0, 176px));
@@ -1057,11 +1022,7 @@ html:has(.lesson-bar) {
   }
 }
 
-/*
- * A speech bubble (Bubble.tsx): what the character beside it says, a cream
- * card whose one sharp corner, at the foot of the start side, is the side
- * they stand on. Opaque, so it reads over a stage.
- */
+/* A speech bubble (Bubble.tsx): an opaque cream card with one sharp corner at the foot of the speaker's side. */
 .lesson-bubble {
   position: relative;
   justify-self: start;
@@ -1113,10 +1074,8 @@ html:has(.lesson-bar) {
   }
 }
 /*
- * An asked item's line, alone in its bubble: larger than a whole question
- * was, the recording's two buttons in a column at its start, level with the
- * middle of the line however many rows it takes. A picture item's word is
- * larger still; an English line is in the plain face.
+ * A line alone in its bubble: larger, with the recording's two buttons in a column at its start, centred on the
+ * line. A picture item's word is larger still; an English line uses the plain face.
  */
 .lesson-bubble.is-line {
   align-items: center;
@@ -1255,12 +1214,7 @@ html:has(.lesson-bar) {
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-/*
- * Whoever says it stands on warm paper beside the bubble, a pale sun behind
- * their head (CharacterStage draws them; only its ground changes here): the
- * stage grows with what is said beside them rather than letting a long
- * prompt run out over the answers.
- */
+/* The speaker stands on warm paper with a pale sun behind; the stage grows with the line so it never overruns the answers. */
 .lesson .character-stage {
   --sun-x: calc(var(--stage-spot, 45%) / 2);
   height: auto;
@@ -1446,11 +1400,7 @@ html:has(.lesson-bar) {
   color: var(--gold-ink);
 }
 
-/*
- * An answer built from word tiles (WordTiles.tsx): two ruled lines the tiles
- * are laid on, a row of tiles to the line, and the bank under them, which
- * keeps a grey ghost where each laid tile was.
- */
+/* An answer built from word tiles (WordTiles.tsx): two ruled lines to lay them on, and a bank keeping a ghost for each. */
 .lesson-built {
   display: grid;
   gap: 8px;
@@ -1563,11 +1513,8 @@ html:has(.lesson-bar) {
 }
 
 /*
- * a conversation (Conversation.tsx): the lines as speech bubbles, the first
- * speaker's on the start side and everyone else's across from them, each
- * speaker in a tint of the accents the app already has. The line being heard
- * is ringed in ink, which stands out on every tint, and its own button lights
- * as any playing button does.
+ * A conversation (Conversation.tsx): bubbles with the first speaker on the start side and others opposite, each
+ * speaker tinted with an app accent. The line being heard is ringed in ink and its button lights.
  */
 .lesson-conversation-title {
   margin: 0;
@@ -1733,10 +1680,8 @@ html:has(.lesson-bar) {
 }
 
 /*
- * The action bar (ActionBar.tsx): across the foot of the screen, under a
- * hairline, holding Check — and, once an answer is graded, the verdict sheet,
- * risen into the same place in the verdict's colour (opaque, since it sits
- * over the lesson), with Continue exactly where Check was.
+ * The action bar (ActionBar.tsx) at the screen's foot: Check, then the opaque verdict sheet in the verdict's colour,
+ * with Continue where Check was.
  */
 .lesson-bar {
   /* the one button's colours (`.lesson-bar-go`), which a verdict sheet changes for its own */
@@ -1773,11 +1718,7 @@ html:has(.lesson-bar) {
 .lesson-bar-start:empty {
   display: none;
 }
-/*
- * Check, Continue, the results' next step: one size, one place, and pressed
- * as a tile is — standing on a deeper edge it sinks onto (`.tile`). Dark ink
- * with cream words on the paper; the verdict's own colour once it is graded.
- */
+/* Check, Continue and the results' next step: one size and place, pressed like a tile, in the verdict's colour once graded. */
 .lesson-bar-go {
   min-width: 180px;
   height: 54px;
@@ -1843,11 +1784,7 @@ html:has(.lesson-bar) {
     margin-inline-start: 0;
   }
 }
-/*
- * A lesson before it is here (learn/LessonPlaceholder.tsx): the frame above is
- * the lesson's own, so only what stands in for the answers and for the bar's
- * one button is said here — the button where Check will be, at its width.
- */
+/* The lesson placeholder (learn/LessonPlaceholder.tsx): stand-ins for the answers and for Check, at its width. */
 .lesson-placeholder-options {
   display: grid;
   gap: 12px;
@@ -1865,11 +1802,8 @@ html:has(.lesson-bar) {
   }
 }
 /*
- * The verdict's colour, and what is written on it: the sheet a pale wash of
- * the valley's green, of gold or of a warm red, the verdict's words in its
- * deep shade, and Continue filled with it on a darker edge — cream words on
- * the light page's deep fills, the paper's dark on dusk's light ones, and a
- * dark brown on gold, which is light in both.
+ * The verdict colours: a pale wash of green, gold or warm red with the words in its deep shade, and Continue filled
+ * with it on a darker edge; dark brown on gold, which is light in both schemes.
  */
 .lesson-bar.is-right {
   --verdict: var(--vale-green);
@@ -1932,11 +1866,8 @@ html:has(.lesson-bar) {
   min-height: 44px;
 }
 /*
- * On a phone the character stands beside the verdict alone, and what follows
- * it — the two answers set against each other, the notes — takes the sheet's
- * whole width, rather than a column beside him too narrow for a sentence.
- * Hevalo's round portrait (below) sits beside the verdict that way on every
- * screen, level with its words.
+ * On a phone the character stands beside the verdict only, and the comparison and notes take the full width. Hevalo's
+ * round portrait sits beside the verdict this way on every screen.
  */
 @media (max-width: 480px) {
   .lesson-sheet.has-face {
@@ -1977,12 +1908,7 @@ html:has(.lesson-bar) {
 .lesson-sheet:has(> .lesson-feedback-face > .hevalo-window) .lesson-sheet-text > :not(.lesson-verdict) {
   grid-column: 1 / -1;
 }
-/*
- * Hevalo, when he stands in beside the verdict, looks in at a small round
- * window: the frame's paper and its rim, he alone in it, rising into it from
- * below as he rises over his sill (HevaloWindow.tsx), the room around him
- * left out.
- */
+/* Hevalo beside the verdict, in a small round window, rising into it as over his sill (HevaloWindow.tsx). */
 .lesson-feedback-face:has(> .hevalo-window) {
   position: relative;
   align-self: center;
@@ -2257,12 +2183,7 @@ html:has(.lesson-bar) {
   background: var(--vale-card);
 }
 
-/*
- * Soranî in a face made for Arabic script, so the joined forms are the real
- * ones — last of the lesson's rules, so it wins over the display face set on
- * a card, a field or a line above, and reaches the word tiles laid under a
- * line marked as Soranî.
- */
+/* Soranî in an Arabic-script face, last so it beats display faces set above, including word tiles under a Soranî line. */
 .lesson [lang='ckb'],
 .lesson [lang='ckb'] :is(.tile, .tile-ghost) {
   font-family: 'Vazirmatn Variable', var(--font-sans);

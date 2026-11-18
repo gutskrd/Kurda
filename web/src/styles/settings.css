@@ -1,11 +1,7 @@
 /*
- * Settings (pages/Settings.tsx, settings/SettingsList.tsx): a list of rows in
- * named groups, as a phone's own settings are, and a page for each.
- *
- * No boxes. A row runs the width of the column and is told from the next by
- * its own height, a group from the next by a band of a slightly different
- * surface, the way the eye already reads a system settings screen. A row's
- * icon and title are in ink; what it is set to, and the way to it, in grey.
+ * Settings (pages/Settings.tsx, settings/SettingsList.tsx): rows in named groups, like a phone's settings, each leading
+ * to a page. No boxes: rows are full width, groups separated by a band of a slightly different surface. Icons and
+ * titles are ink; values and chevrons grey.
  */
 
 /* how far a row reaches past the column, so its press and hover run edge to edge */
@@ -367,12 +363,7 @@
   padding-top: var(--space-2);
 }
 
-/*
- * What a page holds was drawn as a card for the long Settings page of before;
- * on a page of its own the card's edge and its heading would only repeat the
- * page, so here they are not drawn. (The two halves of the sounds page keep
- * their headings, as its two parts.)
- */
+/* On a settings subpage a card's edge and heading would repeat the page, so they are not drawn (the sounds page keeps its two headings). */
 .settings-page-body > .card {
   margin-top: 0 !important;
   padding: 0;

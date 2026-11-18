@@ -1,26 +1,12 @@
 /*
- * Hevalo web — design tokens, in two schemes.
+ * Hevalo's design tokens in two schemes, matching the phone (mobile/src/theme/palette.ts, shared/src/hues.ts). The page
+ * is white with a breath of the icon's violet (by night a near-black indigo), with deep indigo ink; violet marks what
+ * is pressable or chosen, gold (the Kurdish sun) what is earned, and green and red say right and wrong, sparingly and
+ * never alone. Other colours come from the shared hues (`--hue-*`).
  *
- * Hevalo's own colour is the violet of its icon. The page is a white with a
- * breath of that violet in it (by night the same indigo taken almost to
- * black, never a neutral grey), the words are written in a deep indigo ink,
- * and the violet itself is kept for what can be pressed or is chosen: a
- * button, a link, the place you are on. Gold — the Kurdish sun — is for what
- * is earned: XP, Zêr, the streak, a medal. Green and red say right and wrong
- * and are used sparingly, and never alone. Anything else that needs a colour
- * of its own takes one of the shared hues (`--hue-*`, below), which are cut
- * to sit beside the violet. The phone app keeps the same values
- * (mobile/src/theme/palette.ts, shared/src/hues.ts).
- *
- * Dark is the default and is written on :root. Light is the same set of names
- * with different values, switched by `data-theme="light"` on <html>, which
- * theme/theme.ts sets from the choice in Settings. Nothing outside this file
- * should need to know which scheme is on: a colour that has to differ between
- * them belongs here, under a name that says what it is for.
- *
- * Every text colour below was checked against the surfaces it sits on (WCAG AA:
- * 4.5:1 for text, 3:1 for large text and the edges of controls). The numbers
- * are noted beside the ones that were close.
+ * Dark is the default on :root; light redefines the same names under `data-theme="light"`, set by theme/theme.ts.
+ * Colours that differ by scheme belong here. Text colours meet WCAG AA (4.5:1, or 3:1 for large text and control
+ * edges), with close ones noted.
  */
 :root {
   /* the single, consistent page background behind every surface */
@@ -54,11 +40,7 @@
   --input-border: rgba(255, 255, 255, 0.36);
   --input-bg: rgba(255, 255, 255, 0.07);
 
-  /*
-   * The top bar is solid, and so are the panels that float: words on them
-   * must never have other words showing through. The footer is the one piece
-   * of chrome still frosted (`--chrome-bg`).
-   */
+  /* The top bar and floating panels are solid so no words show through; only the footer stays frosted (`--chrome-bg`). */
   --nav-bg: #100e1d;
   --chrome-bg: rgba(16, 14, 29, 0.78);
   --scrim: rgba(4, 2, 12, 0.6);
@@ -75,19 +57,13 @@
   /* gold used as text */
   --gold-ink: #f6d68b;
   --gold-soft: rgba(240, 194, 74, 0.16);
-  /*
-   * The gold of the game stage (games/game-stage.css): a place lit by its own
-   * lamp, the same in the light scheme and the dark, so it is not `--gold` —
-   * but it is said once, here, and not typed again wherever a game needs it.
-   */
+  /* The game stage's lamp gold (games/game-stage.css), the same in both schemes, so it is not `--gold`. */
   --stage-gold: #f2b632;
   --stage-gold-lip: #a8791a;
   --stage-gold-ink: #2a1d05;
   /*
-   * A conversation's bubbles (chat): the reader's own words on the app's
-   * violet (a step deeper by night, so white reads on it at 6.7:1), the other
-   * person's a step off the page. Said here once, with the ink each is read
-   * in, so a thread, its typing bubble and its send button agree.
+   * Chat bubbles: the reader's on violet (deeper by night, so white reads at 6.7:1), the other person's a step off the
+   * page, each with its ink, so the thread, typing bubble and send button agree.
    */
   --bubble-mine: #7935c6;
   --bubble-mine-ink: #ffffff;
@@ -104,21 +80,14 @@
   --success: #86e2a4;
   --success-soft: rgba(87, 185, 107, 0.18);
   /*
-   * A switch, in the app's violet rather than green (green is a right answer):
-   * on is the violet track with a dark knob, off a mid grey with a white one,
-   * and the knob's side says it as well. Each track is 3:1 or more against
-   * every surface it sits on, and each knob 3.3:1 or more against its track.
+   * A switch in violet rather than green, which means right: on is the violet track with a dark knob, off a mid grey with
+   * a white one. Tracks are 3:1 or more on every surface, knobs 3.3:1 or more on their track.
    */
   --switch-on: #bf9bfe;
   --switch-on-thumb: #14112e;
   --switch-off: #716e85;
   --switch-off-thumb: #ffffff;
-  /*
-   * Something not reached yet, a league above yours: its shape in a quiet grey
-   * and the keyhole on it a step lighter. Seen, so it is something to look
-   * forward to, but nothing like the colour of what has been earned. Not a
-   * control, so not held to 3:1.
-   */
+  /* Something not reached yet, such as a higher league: a quiet grey shape with a lighter keyhole; not a control, so not held to 3:1. */
   --locked: #2d2b3e;
   --locked-mark: #55526a;
   /* someone online: a dot, never the only sign of it */
@@ -134,11 +103,7 @@
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', 'Georgia', 'Times New Roman', serif;
 
-  /*
-   * One type scale for every screen: large titles, a section title, rows and
-   * body, secondary lines, captions, and the smallest labels — nothing
-   * smaller than that last one.
-   */
+  /* One type scale for every screen, from large titles down to the smallest labels. */
   --text-title-lg: 2.125rem; /* 34 */
   --text-title: 1.75rem; /* 28 */
   --text-section: 1.375rem; /* 22 */
@@ -165,14 +130,9 @@
   --r-pill: 999px;
 
   /*
-   * Motion, decided once — the same numbers the phone keeps in
-   * mobile/src/theme/motion.ts. Quick for a state change, a little longer for
-   * something arriving, longest for a value moving to where it now is; out-
-   * curves only (things arrive fast and settle). `--ease-spring` overshoots a
-   * hair, for the few things allowed a little joy: an emblem landing, a heart
-   * filling, a right answer. A celebration is over inside `--dur-celebrate`.
-   * Only transform and opacity move, and base.css stills all of it under
-   * prefers-reduced-motion.
+   * Motion tokens, shared with mobile/src/theme/motion.ts: quick for state changes, longer for arrivals, longest for
+   * moving values, out-curves only. `--ease-spring` overshoots slightly for the few joyful moments, and a celebration
+   * ends within `--dur-celebrate`. base.css stills it all under Reduce Motion.
    */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
@@ -187,13 +147,8 @@
   --press-scale: 0.97;
 
   /*
-   * How much of the page answers a press on a control, past what is drawn
-   * (styles/reach.css, lib/reach.ts). The least area that answers is 44px
-   * with a mouse and 48px where any pointer is a finger (below), the size a
-   * fingertip covers; the phone app uses the same 48 (mobile/src/a11y/a11y.ts).
-   * `--reach-open` is the extra past every edge for a control with nothing
-   * near it, such as the way back or a close button; it is nothing until a
-   * finger is about, and nothing for a control that does not ask for it.
+   * The minimum pressable area past what is drawn (styles/reach.css, lib/reach.ts): 44px with a mouse and 48px for
+   * touch, as on the phone (mobile/src/a11y/a11y.ts). `--reach-open` is extra reach for isolated controls on touch only.
    */
   --reach-min: 44px;
   --reach-open: 0px;
@@ -203,12 +158,8 @@
   --shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.5);
   /*
-   * How a phone's chrome is lifted off the page (shell.css): wide, faint and
-   * low, enough to say "this is over the page" and no more. Two weights, by
-   * how far off the page the thing is: a control at a page's top (the way
-   * back, the pill of search and the bell) rests on it, and the bar of places
-   * rides over whatever scrolls beneath. The phone app lifts its own by the
-   * same two (mobile/src/navigation/floating.ts).
+   * Phone chrome shadows (shell.css), wide, faint and low: a lighter one for controls at the page's top and a heavier one
+   * for the bar of places, as on the phone (mobile/src/navigation/floating.ts).
    */
   --shadow-control: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-raised: 0 6px 16px rgba(0, 0, 0, 0.12);
@@ -231,13 +182,8 @@
 }
 
 /*
- * Light.
- *
- * A white page with a breath of violet, white cards, deep indigo ink, and the
- * violet deep enough for white words on a button (6.1:1). Gold as a fill is
- * the sun's own #EBA905; gold as text is darker (#805C00: 6.1:1 on white),
- * because the fill colour as words on white would be unreadable. The same
- * goes for green, red and the heart's pink: the light scheme's are deep
+ * Light: a white page with a breath of violet, white cards, deep indigo ink, and violet deep enough for white button
+ * text (6.1:1). Gold fills use #EBA905 and gold text #805C00 (6.1:1 on white); green, red and pink are likewise deep
  * enough to read as text.
  */
 :root[data-theme='light'] {
@@ -315,20 +261,10 @@
 }
 
 /*
- * The shared hues.
- *
- * Whatever needs a colour of its own wears one of these nine classes — a
- * game's stamp does (games/GameStamp.tsx) — and reads its hue in four steps
- * without knowing which hue it is or which scheme is on: `--hue-tint` the
- * palest, a paper or a ground; `--hue-wash` a step deeper; `--hue-base` the
- * hue itself, for shapes and for light, never for words; `--hue-deep` the
- * shade words are written in on the tint or the wash (7:1 or better on both,
- * in both schemes).
- *
- * The values are the shared module's, digit for digit (shared/src/hues.ts,
- * which the phone app reads directly), and tokens.test.ts holds the two
- * together: a hue is changed there and copied here, never mixed on the spot.
- * Dark first, as everywhere in this file, then light.
+ * The shared hues: nine classes (used by games/GameStamp.tsx and others) each giving four steps: `--hue-tint` for paper
+ * or ground, `--hue-wash` a step deeper, `--hue-base` for shapes and light but never words, and `--hue-deep` for words
+ * on the tint or wash (7:1 or better in both schemes). The values copy shared/src/hues.ts exactly, checked by
+ * tokens.test.ts. Dark first, then light.
  */
 .hue-violet { --hue-tint: #2b203a; --hue-wash: #3d2c53; --hue-base: #c39afa; --hue-deep: #e3d1fe; }
 .hue-indigo { --hue-tint: #1f243f; --hue-wash: #2b3259; --hue-base: #9baafe; --hue-deep: #d0d9fe; }

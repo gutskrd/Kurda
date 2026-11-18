@@ -1,11 +1,6 @@
 /*
- * The product's own parts, drawn once.
- *
- * The front page shows pictures of Hevalo — a profile, a league, a leaderboard,
- * a battle, an invite — and the app now draws those same things the same way,
- * from the same components in `src/ui/` and the same rules here. When the
- * picture and the product disagree, one of them is lying; keeping them in one
- * file is how neither gets to.
+ * The product's shared parts (`src/ui/` and these rules), drawn the same on the front page's pictures of Hevalo and
+ * in the app, so the two never disagree.
  */
 
 /* ---- a person: banner, face, name, level --------------------------------- */
@@ -37,11 +32,7 @@
   image-rendering: auto;
   pointer-events: none;
 }
-/*
- * The horizon is a square picture composed about its middle line: laid across
- * the banner's width and centred on it, the banner shows the band where the
- * sun and the first ridge are, whatever its shape.
- */
+/* The square horizon picture is centred across the banner, so the sun and first ridge show at any banner shape. */
 .pc-horizon {
   position: absolute;
   inset-inline: 0;
@@ -55,11 +46,7 @@
   width: 100%;
   height: 100%;
 }
-/*
- * The far corner of the banner: the menu about this person, where such a menu
- * is looked for. Its buttons are a fingertip across and drawn on the app's own
- * solid surface, so they read the same over any sky and any background.
- */
+/* The banner's far corner holds the menu about this person, with fingertip buttons on the solid surface over any sky. */
 .pc-corner {
   position: absolute;
   top: 10px;
@@ -213,11 +200,7 @@
   border-radius: 50%;
   background: var(--ink-3);
 }
-/*
- * What can be done, in a row of its own under their words. On a narrow card
- * the buttons share the row evenly, each a fingertip tall; beside the face on
- * a wide one they are as wide as their words.
- */
+/* The actions on their own row: shared evenly on a narrow card, as wide as their labels beside the face on a wide one. */
 .pc-aside {
   justify-self: stretch;
   margin-top: 16px;
@@ -399,11 +382,7 @@
   font-size: 1.65rem;
 }
 @container pc (min-width: 600px) {
-  /*
-   * The face over the banner's edge at the start, what can be done at the end
-   * of the same line, and the name under them with the whole width to itself:
-   * a long name never has to share its line with three buttons.
-   */
+  /* The face and actions share a line over the banner's edge, leaving the name the full width below. */
   .pc--wide .pc-id {
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
@@ -499,12 +478,8 @@
   box-shadow: var(--glass-rim);
 }
 /*
- * A row whose name is a link answers across the whole row, not only on the
- * words: a finger that lands on the place, the face or the score still opens
- * the profile. The link's own `::after` is stretched over the row, which is
- * why the row is positioned and the name is not (the name clips its own
- * overflow for the ellipsis, and would clip the stretch with it). Any other
- * control in the row lies over the stretch and keeps its own presses.
+ * A row whose name is a link is pressable across the whole row via the link's stretched `::after`; the row is
+ * positioned rather than the name, which clips for its ellipsis. Other controls lie above and keep their presses.
  */
 .rank-row {
   position: relative;
@@ -719,11 +694,7 @@ a.rank-name:hover {
 }
 
 /* ---- a game invite --------------------------------------------------------- */
-/*
- * A ticket on its side (ui/Ticket.tsx, styles/ticket.css): the game's mark on
- * the stub, the words and the way in on the body. Its paper is its own
- * surface, so it reads the same in your white bubble and in theirs.
- */
+/* A game invite as a ticket on its side (ui/Ticket.tsx, styles/ticket.css), on its own paper so it reads in any bubble. */
 .invite-card {
   --stub-w: 52px;
   width: min(100%, 300px);
@@ -798,11 +769,7 @@ a.invite-card:hover {
   .game-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
-  /*
-   * Every tile after the first three is half a row, two to a row, so the
-   * grid holds together however many games are listed and in whatever order
-   * they come. `:where` keeps this at no weight, so a game's own span wins.
-   */
+  /* Tiles after the first three are half a row each, so the grid holds for any list; `:where` lets a game's own span win. */
   :where(.game-grid) > :where(.game-tile) {
     grid-column: span 6;
   }
@@ -919,11 +886,7 @@ a.invite-card:hover {
   color: var(--ink-3);
   border-style: dashed;
 }
-/*
- * On the Games page a mode with a page of its own is a way straight in, so the
- * chip is a link: the same pill, a firmer edge, and a finger's height on a
- * touch screen.
- */
+/* On the Games page a mode with its own page is a link chip: the same pill, a firmer edge, a finger's height on touch. */
 .game-tags li.is-link {
   padding: 0;
   border-color: var(--border-strong);

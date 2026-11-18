@@ -1,12 +1,7 @@
 /*
- * Game Ranks, Learning Leagues, badges and seasons (contract 4).
- *
- * The art (shared/src/art) brings its own light; these rules give it a stage:
- * each tier lends its colour to the card it sits on as a soft glow and to its
- * progress bar, and nothing else on the page competes with it. Losing has no
- * colour of its own — a loss is drawn in the same calm ink as a win — and
- * nothing here blinks, shakes or counts down. Motion is for arriving (a bar
- * filling, an emblem rising) and is still under `prefers-reduced-motion`.
+ * Game ranks, learning leagues, badges and seasons. The shared art brings its own light; each tier tints its card's
+ * glow and progress bar. A loss uses the same calm ink as a win, and nothing blinks, shakes or counts down. Motion is
+ * only for arriving, and stops under Reduce Motion.
  */
 
 /* ---- tier colours -------------------------------------------------------------- */
@@ -145,13 +140,7 @@
 .pc-face .cosmetic-icon-overlay {
   z-index: 2;
 }
-/*
- * Lûtke and Stêrk: a soft gleam travels round the ring — once, as the face
- * arrives, and then it rests where it started. It used to turn for ever
- * wherever that face was drawn: down a leaderboard, beside every message in a
- * conversation, behind a tab nobody was looking at. A frame is seen to be a
- * frame that gleams from the one turn; the rest was a loop for its own sake.
- */
+/* Lûtke and Stêrk: a gleam travels round the ring once as the face arrives, then rests. */
 .art-frame-shine {
   animation: frame-turn var(--dur-celebrate) var(--ease-out) 1 both;
 }
@@ -941,11 +930,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-/*
- * A tile is the page's own surface with the badge's colour as a soft light
- * under the badge (`--badge`, badges/parts.tsx): no edge of its own, since a
- * grid of sixty framed boxes is sixty frames before it is a single badge.
- */
+/* A badge tile is the page surface with the badge's colour as a soft light under it (`--badge`, badges/parts.tsx), unframed. */
 .badge-tile {
   position: relative;
   display: grid;
@@ -1047,11 +1032,7 @@
   color: var(--ink-2);
 }
 
-/*
- * A badge's sheet (badges/BadgesPage.tsx): the badge on a wash of its own
- * colour that fades down into the sheet's surface, which rises under it in a
- * shallow curve; then the words, on the surface alone.
- */
+/* A badge sheet (badges/BadgesPage.tsx): the badge on a wash of its colour fading into the curved surface, then the words. */
 .sheet-panel.badge-sheet {
   padding: 0;
   overflow-x: hidden;
@@ -1362,11 +1343,7 @@
   font-size: 0.9rem;
 }
 
-/*
- * The week, in the order it is read (LeaguePanel): the league's name and the
- * days left, the six leagues in a row, a line across, then the week itself.
- * No boxes inside the card: the line is what separates the league from the week.
- */
+/* The week in reading order (LeaguePanel): name and days left, the six leagues, a line, then the week; no inner boxes. */
 .league-week-head {
   display: grid;
   gap: 4px;
@@ -1397,10 +1374,8 @@
   flex: none;
 }
 /*
- * The ladder: to the card's edges, sideways on a phone, spread out where there
- * is room. A scrolling row cuts off whatever reaches past it (reach.css), so
- * it keeps 8px more above and below than it shows, and the negative margin
- * gives the 8px back: the leagues sit where they always did.
+ * The ladder runs to the card's edges, scrolling sideways on a phone. A scrolling row clips reaches (reach.css), so
+ * 8px of padding above and below is taken back by a negative margin.
  */
 .league-ladder {
   display: flex;
@@ -1504,11 +1479,7 @@
   max-width: 420px;
 }
 
-/*
- * Rankings, as the phone has it: two tabs, then the league as the page itself
- * — no card round it, the ladder and the line under it running to the page's
- * edges — or the leaderboard of everyone.
- */
+/* Rankings as on the phone: two tabs, then the league as the page itself with no card, or the everyone leaderboard. */
 .rankings-page {
   padding-top: 4px;
 }
@@ -1548,11 +1519,8 @@
   }
 }
 /*
- * What the leaderboard ranks — Weekly XP, Zêr, Gewher — drawn as the tabs
- * above it are, a size down, since it changes what the whole board is. Real
- * radios under the segments (ui/BoardSwitch), stretched over each one, so the
- * arrow keys move the choice and the whole segment is the target. Nothing in
- * it moves: the chosen segment is simply drawn chosen.
+ * What the leaderboard ranks (Weekly XP, Zêr, Gewher), drawn like the tabs a size down. Real radios stretched over the
+ * segments (ui/BoardSwitch) make the arrow keys work and the whole segment the target. Nothing moves.
  */
 .rank-by {
   display: grid;
@@ -1588,15 +1556,9 @@
   white-space: nowrap;
 }
 /*
- * On a phone, three equal thirds left a label 63 to 73px between its icon and
- * the segment's edge, and the weekly board's name is longer than that in
- * every language but English at 390px, and in all nine at 360px ("XP-ya
- * heftane" was cut to "XP-ya h…"); the gems were cut in three. So down here
- * each segment takes the room its own words need, the short Zêr giving the
- * long weekly board what it does not use, with the padding and the gap a
- * step tighter; and a label that still does not fit goes onto a second line
- * rather than losing its end. The floor is the longest word, so a word is
- * never cut; at 360px every one of the nine fits on one line.
+ * On a phone each segment takes the room its own label needs rather than an equal third, with tighter padding, and a
+ * label that still does not fit wraps rather than being cut. The floor is the longest word, so every label fits at
+ * 360px in all nine languages.
  */
 @media (max-width: 560px) {
   .rank-by {

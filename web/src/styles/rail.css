@@ -1,7 +1,4 @@
-/*
- * The social rail: a fixed column beside the app on a wide screen, a drawer on a
- * narrow one. Same markup, same behaviour, one media query between them.
- */
+/* The social rail: a fixed column beside the app on wide screens and a drawer on narrow ones, from the same markup. */
 :root {
   --rail-w: 296px;
   /* wide enough for a 20px glyph, its badge, and air on both sides */
@@ -30,10 +27,7 @@
   color: var(--ink);
   border-color: var(--gold-ink);
 }
-/*
- * A slow breath, not a flash: it should catch the eye on a glance across the
- * screen without competing with whatever the page is actually for.
- */
+/* A slow breath rather than a flash, noticeable without competing with the page. */
 .rail-toggle.has-unread::after {
   content: "";
   position: absolute;
@@ -80,18 +74,7 @@
 }
 
 /* ---- the panel ---------------------------------------------------------- */
-/*
- * Glass, not a wall.
- *
- * The rail floats over the page rather than pushing it, and on a profile the
- * page is a full-bleed photograph. At 0.92 alpha this panel was opaque enough
- * to read as a black column bolted to the right of the screen — the background
- * looked like it stopped short, when in fact it runs the full width underneath.
- *
- * Lowering it costs nothing anywhere else: every other page has the flat app
- * colour behind this, and a blur of a flat colour is that colour. Only a
- * profile's artwork is actually there to come through.
- */
+/* Translucent glass over the page, so a profile's full-width photograph shows through; other pages are flat colour behind it. */
 .social-rail {
   position: fixed;
   top: var(--nav-h);
@@ -101,7 +84,7 @@
   display: flex;
   flex-direction: column;
   background: var(--panel-glass);
-  /* more blur than before: it is now doing the legibility work the alpha was */
+  /* A strong blur keeps text legible over a photograph at this alpha. */
   -webkit-backdrop-filter: blur(26px) saturate(1.25);
   backdrop-filter: blur(26px) saturate(1.25);
   border-left: 1px solid var(--border);
@@ -109,43 +92,12 @@
 }
 
 /*
- * Over a profile's artwork, the rail all but disappears.
- *
- * A profile background is fixed to the viewport and runs the full width
- * underneath everything — but the rail sat on top of it as a 296px panel, and
- * at any alpha dark enough to read comfortably that panel is a black column
- * bolted to the right of somebody's photograph. Lowering it everywhere is not
- * the answer either: on every other page there is nothing behind the rail but
- * the flat app colour, and a rail that reads as a faint smear there is worse
- * than one that reads as a panel.
- *
- * So it is scoped to the page that actually has a picture behind it. `:has()`
- * on `.app-main` with a sibling combinator, because the rail is a sibling of
- * `<main>` rather than inside it.
- *
- * A very heavy blur is what keeps the text legible: blurred at 44px a
- * photograph becomes a smooth wash of its own colours rather than detail, so
- * near-white text on it holds up while the colour still clearly comes through.
- * The profile's own scrim is already darkening what is underneath, which is the
- * other half of the contrast.
- */
-/*
- * Wide screens only. Down there the rail is a drawer you deliberately opened
- * over the page, not chrome standing beside it — something you asked to see
- * should be solid enough to read without the page showing through it.
+ * Over a profile's artwork, and only there, the rail is lighter glass with a heavy blur that turns the photograph into
+ * a wash, so text stays legible. `:has()` on `.app-main` with a sibling combinator, since the rail is beside `<main>`.
+ * Wide screens only; the narrow drawer stays solid.
  */
 @media (min-width: 1180px) {
-  /*
-   * 0.58, not the 0.4 this started at.
-   *
-   * 0.4 was chosen while the artwork stopped short of the right-hand edge, so
-   * the rail was in practice always sitting over the app's own near-black
-   * background and light text was safe on it. Now that the picture runs the
-   * full width, the rail can land on a bright photograph — and against the
-   * brightest background in the set, the rail's muted text measured 2.83:1 at
-   * 0.4, which is below AA for any size of text. 0.58 measures 5:1 there and
-   * still lets the picture through: it reads as glass, not as a slab.
-   */
+  /* 0.58 alpha keeps the muted text at 5:1 on the brightest background while the picture still shows through. */
   .app-main:has(.mkp-has-bg) ~ .social-rail {
     background: rgba(12, 14, 19, 0.58);
     -webkit-backdrop-filter: blur(44px) saturate(1.35);
@@ -153,10 +105,7 @@
     border-left-color: rgba(255, 255, 255, 0.14);
   }
 
-  /*
-   * Without blur the wash never happens, and 0.4 alpha would leave the rail's
-   * text sitting on raw photograph. Undone rather than half-applied.
-   */
+  /* Without backdrop blur the lighter rail would put text on raw photograph, so it is undone entirely. */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .app-main:has(.mkp-has-bg) ~ .social-rail {
       background: rgba(12, 14, 19, 0.9);
@@ -510,28 +459,9 @@
     display: block;
   }
   /*
-   * The page reserves the strip's width on BOTH sides, and the open column's
-   * width at its end.
-   *
-   * The strip is always there, so its gutter is a constant. Reserving it only
-   * on the right is what made the app look untucked: the page was then centred
-   * inside `window - 76px` while the navigation bar above it was centred inside
-   * the whole window, so the two sat on axes 38px apart at 1440px. Padding
-   * both sides costs nothing and puts the column on the window's centre line.
-   *
-   * The open column used to float over the page, so that opening it reflowed
-   * nothing. But it is open by default, and floating only worked for the pages
-   * narrow enough to stop short of it, the feed and the 720px column. Every
-   * page laid out in the full container ran on underneath it: the Games grid,
-   * a game's board and its question card, the switches in Settings, the open
-   * conversation in Messages; at 1280px even a 760px page lost its edge.
-   * Capping each page would be one fix per page, and another for the next wide
-   * one. So while the column is open the page is laid out in the room beside
-   * it, the width a page already gets in a window that much narrower, and the
-   * room is taken at the page's end: the left in a right-to-left language,
-   * where the column docks. Folding the column gives the room back at once:
-   * easing it would set the whole page sliding on every load, as the column
-   * arrives with the account.
+   * The page reserves the strip's width on both sides, so it centres on the window like the navigation bar, and the
+   * open column's width at its end (the left in right-to-left languages), so no page runs underneath it. Folding the
+   * column returns the room at once, since easing it would slide the page on every load.
    */
   .app-main,
   .site-main.has-rail {
@@ -606,10 +536,7 @@
   }
 }
 
-/*
- * Motion is decoration here: every one of these is a nicety on top of a state
- * that is already legible without it.
- */
+/* The motion here is decoration on states that read without it. */
 @media (prefers-reduced-motion: reduce) {
   .rail-toggle.has-unread::after,
   .rail-badge-pop,
@@ -631,23 +558,8 @@
 
 /* ---- a conversation docked beside the rail ------------------------------ */
 /*
- * Reaching someone should not cost you the page you are on — that is the whole
- * point of the rail. A docked conversation sits to the LEFT of the column, so
- * the rail stays where it is and the page keeps its own scroll position.
- *
- * Wide screens only. Below the rail's own breakpoint there is no room for two
- * columns, so the friend row falls back to a link to the messages page and this
- * never renders.
- */
-/*
- * The conversation you opened from the rail.
- *
- * Below the two-column breakpoint this used to be `display: none` — so the
- * chat bubble on a phone was a button that did nothing at all. It was not a
- * dead link or a slow one; it opened a panel the stylesheet then refused to
- * draw. A narrow screen has no room for a floating dock beside anything, so
- * here the conversation takes the whole screen, which is what a phone does
- * with a conversation everywhere else.
+ * A conversation opened from the rail: docked beside the column on wide screens, so the page keeps its place, and
+ * full screen on narrow ones.
  */
 .rail-chat {
   position: fixed;
@@ -677,13 +589,7 @@
   }
 }
 @media (min-width: 1180px) {
-  /*
-   * The dock is anchored to the rail's edge, not to a fixed distance from the
-   * window. `right` was a constant, so folding the rail to its strip left the
-   * chat stranded 236px out with a gap behind it. It now reads the same width
-   * the rail is currently using, and shares the rail's easing so the two move as
-   * one thing rather than one chasing the other.
-   */
+  /* The dock follows the rail's current width with the rail's easing, so folding the rail moves both together. */
   .rail-chat {
     position: fixed;
     /* the base rule is a full-screen `inset: 0`; these two release the corners
@@ -758,23 +664,12 @@
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
-/*
- * Any row, not just a friend's.
- *
- * This was `.rail-friend:hover`, and a group's row is `.rail-group` — so the
- * chat button on every group was in the page, took up space, and could be
- * tabbed to, while being invisible to everyone who uses a mouse. It was not a
- * missing button; it was a button nothing could ever reveal.
- */
+/* Any row's chat button is revealed on hover, a group's as well as a friend's. */
 .rail-row:hover .rail-friend-chat,
 .rail-friend-chat:focus-visible {
   opacity: 1;
 }
-/*
- * A finger cannot hover. On a touch screen the reveal-on-hover rule above never
- * fires at all, so every one of these buttons was invisible on every phone and
- * tablet — the exact devices where the list is most likely to be tapped.
- */
+/* Touch screens cannot hover, so the buttons are always shown there. */
 @media (hover: none) {
   .rail-friend-chat {
     opacity: 1;
@@ -803,13 +698,7 @@
 }
 
 /* ---- right to left ------------------------------------------------------ */
-/*
- * In Arabic and Soranî the page runs from the right, so its end — where the
- * column docks, and where its drawer, its toasts and the chat beside it come
- * from — is the left. The rules above were written for a page that ends on
- * the right; these turn the same pieces round, in one place, rather than
- * leaving a right-to-left reader a column on the side they start reading from.
- */
+/* In Arabic and Soranî the page's end, where the column docks and its drawer, toasts and chat come from, is the left. */
 [dir='rtl'] .social-rail {
   right: auto;
   left: 0;

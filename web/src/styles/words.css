@@ -1,12 +1,8 @@
 /* ---- words to know: the colours, the numbers, the days and the months ------- */
 /*
- * The words after the letters, taught the alphabet's way (alphabet.css): a
- * grid of tiles to scan, the word you picked open beside it, and a round to
- * check yourself with. Each set's tile is drawn to fit what it holds — a
- * colour fills its tile, a number shows its digits, a day its meaning, a
- * month its season's tint — and the sound sits in the tile's corner as a
- * button of its own, so a word can be heard without being opened. Gold stays
- * "notice this": the number inside a day's name, and today.
+ * Words after the letters, taught the alphabet's way (alphabet.css): a tile grid, the picked word open beside it, and a
+ * practice round. Each set's tile fits its content (a colour fills it, a number shows digits, a day its meaning, a
+ * month its season's tint), with a sound button in the corner. Gold marks the number in a day's name, and today.
  */
 
 /* ---- the sets, each a card -------------------------------------------------- */

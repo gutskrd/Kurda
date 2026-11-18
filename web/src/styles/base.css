@@ -12,25 +12,13 @@ html {
   scroll-behavior: smooth;
   /* the app draws its own pressed look, only for a real press (lib/press.ts), so the browser's grey tap flash is not wanted over it */
   -webkit-tap-highlight-color: transparent;
-  /*
-   * The top bar stays over the page, so anything the browser brings into view
-   * — a link to a section, the next field on Tab, the previous one on
-   * Shift+Tab — has to stop below it, not under it. Said once here for every
-   * page, rather than as a margin on each thing somebody might jump to.
-   */
+  /* The top bar is sticky, so anything scrolled into view (an anchor, the next field on Tab) stops below it. */
   scroll-padding-top: calc(var(--nav-bottom) + var(--space-4));
 }
 
 /*
- * Nothing may be dragged sideways.
- *
- * A page that scrolls horizontally on a phone feels broken even when the
- * overflow is a single stray pixel, and the causes are easy to reintroduce —
- * one 100vw, one unwrapped wide element. This is the backstop.
- *
- * `clip` rather than `hidden` on purpose: `overflow: hidden` turns the element
- * into a scroll container, which breaks `position: sticky` inside it, and the
- * top navigation is sticky. `clip` refuses the scroll without becoming one.
+ * No horizontal scrolling. `clip` rather than `hidden`, since `hidden` makes a scroll container and breaks the sticky
+ * top navigation.
  */
 html,
 body {
@@ -56,7 +44,7 @@ body {
   html {
     scroll-behavior: auto;
   }
-  /* every movement lands where it ends, at once — and a loop runs once, not a thousand times a second */
+  /* Every animation jumps to its end, and a loop runs once. */
   *,
   *::before,
   *::after {
@@ -92,12 +80,7 @@ img {
 button {
   font-family: inherit;
 }
-/*
- * One colour for every control that is on — a ticked box, a chosen option, a
- * slider's filled side: the scheme's primary, as on a chosen chip. Gold is
- * kept for what is earned, so a settings page full of ticks does not read as
- * a page full of rewards.
- */
+/* One colour for every control that is on: the scheme's primary, since gold is kept for what is earned. */
 input[type='checkbox'],
 input[type='radio'],
 input[type='range'] {
@@ -110,12 +93,7 @@ input[type='range'] {
   border-radius: var(--r-xs);
 }
 
-/*
- * Parked above the top edge, not off to the side. It used to sit at
- * `left: -9999px`, which on an Arabic or Soranî page — right to left — is the
- * direction a page overflows into, and made those pages ten thousand pixels
- * wide to anything measuring them.
- */
+/* Parked above the top edge rather than to the side, which would widen right-to-left pages. */
 .skip-link {
   position: absolute;
   inset-inline-start: 0;
