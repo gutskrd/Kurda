@@ -35,23 +35,11 @@ import { OPEN_CASE_PREDICATE } from '../moderation/reports-service.js';
 import { inTransaction, type Executor } from '../moderation/tx.js';
 
 /**
- * Copyright notices from the public /copyright page, counter-notices, and
- * strikes (contract-3 §C; the shapes are in @kurda/shared copyright.ts).
- *
- * A notice becomes a moderation case the way a report does — the same queue,
- * the same case view, the same decision with its statement of reasons to the
- * uploader — under the case source `copyright`, queued at P1 because a host
- * that is told is expected to act within a couple of working days. Several
- * notices about one post join its one open case.
- *
- * The form never says whether the link it was given leads anywhere: the
- * answer is the same receipt either way, so it cannot be used to find out
- * whether a draft, a removed post or a friends-only post exists. A link that
- * matches nothing still opens a case, for an admin to look into by hand.
- *
- * Email is the only way to reach most notifiers, so the receipt goes at once
- * and the decision goes from a sweep that claims each notice before sending
- * (at most once each; a failed send is released for the next round).
+ * Copyright notices from the public /copyright page, counter-notices and strikes. A notice becomes a moderation
+ * case like a report, under the source `copyright` at P1, and several notices about one post join its open case.
+ * The form answers with the same receipt whatever the link points at, so it cannot reveal whether a draft,
+ * removed or friends-only post exists; a link matching nothing still opens a case for an admin. The receipt is
+ * emailed at once; the decision goes from a sweep that claims each notice before sending, so it goes at most once.
  */
 
 export type CopyrightTemplate =
@@ -131,7 +119,7 @@ const TARGET_WORDS: Readonly<Record<CopyrightTargetType, string>> = {
   user: 'profile',
 };
 
-/** The one-line summary the queue shows. Built in code from values that may be missing, so never empty. */
+/** The one-line queue summary, built from values that may be missing, so never empty. */
 export function copyrightCaseSummary(count: number, target: CopyrightTargetType | null, username: string | null): string {
   const what = count === 1 ? '1 copyright notice' : `${count} copyright notices`;
   const where = target ? TARGET_WORDS[target] : 'a link that matched nothing';
@@ -141,10 +129,8 @@ export function copyrightCaseSummary(count: number, target: CopyrightTargetType 
 const optional = (value: unknown): string | null => cleanCopyrightText(value) || null;
 
 /**
- * A person's confirmed copyright strikes: copyright decisions against them in
- * the window that still stand — an unrevoked, confirmed sanction under the
- * copyright rule, counted once per case. An overturned appeal or a restored
- * post revokes the sanction, and the strike goes with it.
+ * A person's copyright strikes: unrevoked, confirmed copyright sanctions within the window, one per case. An
+ * overturned appeal or restored post revokes the sanction and the strike with it.
  */
 export async function copyrightStrikes(db: Executor, userId: string, now: Date = new Date()): Promise<CopyrightStrikes> {
   const r = await db.query<{ ref: string }>(
@@ -214,10 +200,7 @@ function toNoticeView(n: NoticeRow, counter: CounterRow | undefined): CopyrightN
   };
 }
 
-/**
- * What the case view shows about copyright: the notices behind the case and
- * the reported person's strikes. Null for a case that is not about copyright.
- */
+/** The notices behind a copyright case and the reported person's strikes; null for any other case. */
 export async function copyrightCaseInfo(
   db: Executor,
   c: { id: string; source: string; category: string | null; policy: string | null; subject_user_id: string | null },
@@ -250,9 +233,8 @@ export class CopyrightService {
   }
 
   /**
-   * Take a notice: check it, find what it points at, open or join that
-   * target's case, and email the receipt. Answers the same receipt whatever
-   * the link turned out to be.
+   * Takes a notice: checks it, finds its target, opens or joins that target's case and emails the receipt. The
+   * receipt is the same whatever the link turned out to be.
    */
   async fileNotice(input: Partial<Record<keyof CopyrightNoticeRequest, unknown>>, ip: string): Promise<CopyrightNoticeReceipt> {
     const problems = copyrightNoticeProblems(input);
@@ -331,11 +313,7 @@ export class CopyrightService {
     return { reference, receivedAt: notice.created_at.toISOString() };
   }
 
-  /**
-   * Open the target's copyright case, or join the open one, and bring its
-   * counts and summary up to date. A notice whose link matched nothing gets a
-   * case of its own.
-   */
+  /** Opens or joins the target's copyright case and updates its counts and summary; an unmatched link gets its own. */
   private async attachToCase(client: pg.PoolClient, n: NoticeRow, evidence: object | null, at: Date): Promise<string> {
     const ref = n.target_found && n.target_type ? `${n.target_type}:${n.target_id}` : `notice:${n.id}`;
     const find = () =>
@@ -410,20 +388,14 @@ export class CopyrightService {
   }
 
   /**
-   * A counter-notice from the person whose post a notice took down.
-   *
-   * It is recorded on the notice, shown in the case view, and becomes a review
-   * request on the removal (the admin's Appeals page has it, and overturning it
-   * puts the post back and takes the strike away). The notifier gets a copy,
-   * as the DMCA asks, with the earliest day the post may come back.
+   * A counter-notice from the person whose post was taken down. It is shown in the case view and becomes a review
+   * request on the removal, whose overturn restores the post and removes the strike. The notifier gets a copy with
+   * the earliest day the post may come back, as the DMCA requires.
    */
   async counter(userId: string, noticeId: string, input: Partial<Record<keyof CounterNoticeRequest, unknown>>): Promise<CounterNoticeReceipt> {
-    // The copy the DMCA asks us to forward carries the sender's name, home address
-    // and phone to the notifier — anyone who filled in the public form, unverified.
-    // A child's are never sent there: a parent or guardian answers by email instead,
-    // and the removal's review request (Account standing) needs no address at all.
-    // Checked first, so nothing a minor typed is stored; an account with no birth
-    // month on record is held back the same way.
+    // The forwarded copy carries the sender's name, address and phone to an unverified notifier, so it is never sent
+    // for a minor or an account with no birth month: a parent answers by email instead. Checked first, so nothing a
+    // minor typed is stored.
     if (await isNotKnownAdultUser(this.pool, userId)) {
       throw new AppError('COUNTER_NOTICE_ADULT_REQUIRED', 403, 'a counter-notice from an account under 18 is sent by a parent or guardian, by email');
     }
@@ -527,9 +499,8 @@ export class CopyrightService {
   }
 
   /**
-   * Email notifiers the decision on their notice (DSA Art. 16(5)). Each notice
-   * is claimed before its email goes, so it goes once; one that fails is
-   * released for the next round. Returns how many went.
+   * Emails notifiers the decision on their notice (DSA Art. 16(5)). Each notice is claimed before sending, so it goes
+   * once; a failed send is released for the next round. Returns how many went.
    */
   async sendOutcomes(limit = 50): Promise<number> {
     const due = await this.pool.query<NoticeRow>(
