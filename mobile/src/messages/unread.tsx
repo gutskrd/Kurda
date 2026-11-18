@@ -43,12 +43,15 @@ const UnreadContext = createContext<UnreadValue>({
 const SETTLE_MS = 600;
 /** A nudge within this long of the last answer is ignored: the counts are fresh. */
 const FRESH_MS = 15_000;
+/** How long the counts wait for the realtime connection, which asks for them as it opens, before asking anyway. */
+export const OPEN_WAIT_MS = 3_000;
 
 /**
  * The tab shell's badge counts: unread direct messages, unread group messages, friend requests and unopened
- * notifications. Read when the shell appears, on returning from the background (net/backFromBackground.ts), on
- * realtime reconnect, when a direct message or gift arrives on your channel, and when a screen reports it has
- * read something. No polling timer.
+ * notifications. Read on realtime reconnect, when a direct message or gift arrives on your channel, and when a
+ * screen reports it has read something. When the shell appears and on returning from the background
+ * (net/backFromBackground.ts) they are read once, as the connection opens, or after OPEN_WAIT_MS without one. No
+ * polling timer.
  *
  * The gift count is the shop badge's own (useUnseenGifts), so the two agree. A guest's counts are zero without
  * asking, since all four routes refuse guests.
@@ -60,8 +63,11 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
   const [counts, setCounts] = useState<Omit<UnreadCounts, 'gifts'>>(EMPTY);
   const lastAnswer = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set while the counts wait for the connection to open; a read as it opens also covers anything sent before.
+  const awaitingOpen = useRef(false);
 
   const load = useCallback(() => {
+    awaitingOpen.current = false;
     if (!signedIn) return;
     void Promise.all([
       client.get<{ conversations: { unread: number }[] }>('/chat/conversations'),
@@ -79,14 +85,27 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
     });
   }, [client, signedIn]);
 
-  const refresh = useCallback(
-    (opts?: { soon?: boolean }) => {
-      if (opts?.soon && Date.now() - lastAnswer.current < FRESH_MS) return;
+  const schedule = useCallback(
+    (ms: number) => {
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(load, SETTLE_MS);
+      timer.current = setTimeout(load, ms);
     },
     [load],
   );
+
+  const refresh = useCallback(
+    (opts?: { soon?: boolean }) => {
+      // A nudge is answered by a recent read, or by the one coming when the connection opens.
+      if (opts?.soon && (awaitingOpen.current || Date.now() - lastAnswer.current < FRESH_MS)) return;
+      schedule(SETTLE_MS);
+    },
+    [schedule],
+  );
+
+  const awaitOpen = useCallback(() => {
+    awaitingOpen.current = true;
+    schedule(OPEN_WAIT_MS);
+  }, [schedule]);
 
   const report = useCallback((patch: Partial<Omit<UnreadCounts, 'gifts'>>) => {
     setCounts((prev) => ({ ...prev, ...patch }));
@@ -97,15 +116,20 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
       setCounts(EMPTY);
       return;
     }
-    load();
-    const stopListening = onBackFromBackground(AppState, () => refresh());
+    awaitOpen();
+    const stopListening = onBackFromBackground(AppState, awaitOpen);
     return () => {
       stopListening();
+      awaitingOpen.current = false;
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [signedIn, load, refresh]);
+  }, [signedIn, awaitOpen]);
 
-  useRealtimeReconnect(refresh);
+  // The read that was waiting goes at once; a later reconnect is settled like any nudge.
+  useRealtimeReconnect(() => {
+    if (awaitingOpen.current) schedule(0);
+    else refresh();
+  });
   useRealtimeListener(
     useCallback(
       (event, room) => {
