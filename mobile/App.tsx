@@ -62,6 +62,8 @@ import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { PracticeHubScreen } from './src/practice/PracticeHubScreen';
 import { JumpTestScreen } from './src/coursemap/JumpTestScreen';
+import { NextLessonScreen } from './src/learn/NextLessonScreen';
+import { takeFirstLesson } from './src/learn/firstLesson';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
 import { ActionSheetHost } from './src/theme/ActionSheetHost';
@@ -179,6 +181,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       // A shared profile (Profile → Share) opens in the app for anyone who has it.
       UserProfile: 'app/users/:userId',
       Lesson: 'lesson/:lessonId',
+      // The website's "your next lesson", where a new account lands.
+      NextLesson: 'app/learn/next',
       // Practice opens on its hub, where every kind is one tap away.
       PracticeHub: 'practice',
       // The two former games, at the lessons' own addresses (the website's too); their old `app/games/…` addresses are
@@ -224,16 +228,21 @@ const backFrom = (navigation: { isFocused(): boolean; goBack(): void }) => (): v
 };
 
 /**
- * Opens a link that arrived before sign-in (navigation/heldLink.ts) once the signed-in screens exist. An unplaceable
- * path is dropped, landing on Home as it would anyway.
+ * Opens a link that arrived before sign-in (navigation/heldLink.ts) once the signed-in screens exist; an unplaceable
+ * path is dropped, landing on Home as it would anyway. Without one, a new account opens its first lesson over Learn
+ * (learn/firstLesson.ts), as on the website.
  */
 function OpenHeldLink(): null {
   const linkTo = useLinkTo();
   useEffect(() => {
     const path = takeHeldLink();
-    if (!path) return;
+    const firstLesson = takeFirstLesson();
     try {
-      linkTo(legacyTabPath(path));
+      if (path) linkTo(legacyTabPath(path));
+      else if (firstLesson) {
+        linkTo('/learn?view=lessons');
+        linkTo('/app/learn/next');
+      }
     } catch {
       // Not a screen this version of the app has.
     }
@@ -402,6 +411,14 @@ function SignedInRoot() {
             onNext={(lessonId) => navigation.replace('Lesson', { lessonId, courseId: route.params.courseId })}
             onPractise={(exerciseIds) => navigation.replace('Practice', { exerciseIds })}
             onPath={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+          />
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="NextLesson" options={{ presentation: 'fullScreenModal' }}>
+        {({ navigation }) => (
+          <NextLessonScreen
+            onLesson={(lessonId, courseId) => navigation.replace('Lesson', { lessonId, courseId })}
+            onLearn={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
           />
         )}
       </RootStack.Screen>

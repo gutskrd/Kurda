@@ -30,6 +30,8 @@ export type RootStackParamList = {
    * course, and its results offer none.
    */
   Lesson: { lessonId: string; courseId?: string };
+  /** Finds the lesson Learn would start and opens it in its place (learn/NextLessonScreen): a new account's first. */
+  NextLesson: undefined;
   /**
    * A practice session, started at once. `exerciseIds`: practise these rather than what is due; `mode`: another kind of
    * practice from the hub, with `unitId` for a unit's review; `sessionId`: a review left part-way through, resumed.

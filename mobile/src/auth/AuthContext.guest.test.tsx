@@ -11,6 +11,7 @@ import { I18nProvider } from '../i18n/I18nContext';
 import { AuthProvider, useAuth } from './AuthContext';
 import { forgetDeviceId } from './deviceId';
 import { onGuestRefused } from './guestRefused';
+import { takeFirstLesson } from '../learn/firstLesson';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
@@ -78,6 +79,24 @@ describe('trying Hevalo as a guest', () => {
     expect(result.current.status).toBe('signedIn');
     expect(result.current.isGuest).toBe(true);
     expect(result.current.user?.username).toBe('mevan_4821');
+  });
+
+  /* Start learning means a lesson: the app root opens the first one (learn/firstLesson.ts), as the website does. */
+  it('asks for the first lesson once the guest session has started, and not after a refusal', async () => {
+    takeFirstLesson();
+    stubFetch((url) => (url.endsWith('/auth/guest') ? json(201, GUEST) : json(200, { user: GUEST.user })));
+    await startAsGuest([]);
+    expect(takeFirstLesson()).toBe(true);
+    expect(takeFirstLesson()).toBe(false);
+
+    cleanup();
+    stubFetch(() => json(503, { code: 'SERVICE_UNAVAILABLE', message: 'try later' }));
+    const { result } = renderHook(() => useAuth(), { wrapper: wrapperWith(new MemoryTokenStorage()) });
+    await waitFor(() => expect(result.current.status).toBe('signedOut'));
+    await act(async () => {
+      await result.current.continueAsGuest();
+    });
+    expect(takeFirstLesson()).toBe(false);
   });
 
   it('hands the sign-in screen the refusal, with its code, and stays signed out', async () => {
@@ -167,6 +186,27 @@ describe('trying Hevalo as a guest', () => {
     expect(at('/auth/refresh')).toBeLessThan(at('/auth/oauth'));
     expect(seen[at('/auth/oauth')]?.token).toBe('guest-acc-2');
     expect(result.current.isGuest).toBe(false);
+  });
+
+  it('asks for the first lesson after a sign-in with Google or Apple that made a new account, and not otherwise', async () => {
+    let created = true;
+    stubFetch((url) =>
+      url.endsWith('/auth/oauth')
+        ? json(created ? 201 : 200, { user: CLAIMED.user, tokens: { accessToken: 'acc', refreshToken: 'ref' }, created })
+        : json(200, { user: CLAIMED.user }),
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper: wrapperWith(new MemoryTokenStorage()) });
+    await waitFor(() => expect(result.current.status).toBe('signedOut'));
+    takeFirstLesson();
+    await act(async () => {
+      await result.current.oauthSignIn('google', 'google-id-token');
+    });
+    expect(takeFirstLesson()).toBe(true);
+    created = false;
+    await act(async () => {
+      await result.current.oauthSignIn('google', 'google-id-token');
+    });
+    expect(takeFirstLesson()).toBe(false);
   });
 
   it('tells the account gate when the server refuses the guest something only an account may do', async () => {
