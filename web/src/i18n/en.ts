@@ -794,10 +794,8 @@ export const en = {
   'profile.favoriteStory': 'Favourite story',
   'profile.message': 'Message',
   'profile.addFriend': 'Add friend',
-  'profile.sending': 'Sending…',
   'profile.requestSent': 'Request sent',
   'profile.acceptRequest': 'Accept request',
-  'profile.accepting': 'Accepting…',
   'profile.blockedNote': 'Blocked. They can no longer find you, message you or add you — and they are not told.',
   'profile.undoInSettings': 'Undo this in Settings',
 

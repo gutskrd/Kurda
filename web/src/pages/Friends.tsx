@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { useApiGet } from '../lib/useApi';
-import { describeError } from '../lib/api';
 import { useProfileModal } from '../profile/ProfileModal';
 import { UserActions } from '../profile/UserActions';
 import { ErrorState, EmptyState } from '../components/states';
@@ -15,6 +14,8 @@ import { LinkButton } from '../components/Button';
 import { SearchIcon } from '../components/icons';
 import { useRail } from '../social/RailProvider';
 import { RequestTicket } from '../social/FriendTickets';
+import { railEdits } from '../social/useSocialRail';
+import { failureText, useOptimisticSend } from '../lib/optimistic';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
@@ -50,11 +51,23 @@ export function Friends(): React.JSX.Element {
   const waiting = useRail().data.requests.length;
   // Why an answer failed: a full friend list (theirs or yours) is said rather than the request just staying.
   const [err, setErr] = useState<string | null>(null);
+  const { adjust } = useRail();
+  const sendShown = useOptimisticSend();
+  /** Sent requests taken back here, gone from the list before the server answers. */
+  const [withdrawn, setWithdrawn] = useState<ReadonlySet<string>>(() => new Set());
 
   /** Takes back a request you sent; the other person is not told either way. */
   async function cancelRequest(userId: string): Promise<void> {
-    await client.delete(`/friends/requests/${userId}`);
-    sent.reload();
+    setWithdrawn((s) => new Set(s).add(userId));
+    const res = await sendShown(() => client.delete(`/friends/requests/${userId}`), {
+      undo: () =>
+        setWithdrawn((s) => {
+          const next = new Set(s);
+          next.delete(userId);
+          return next;
+        }),
+    });
+    if (res.ok) sent.reload();
   }
 
   /**
@@ -66,14 +79,15 @@ export function Friends(): React.JSX.Element {
     friends.reload();
   }
 
-  /** Answers a request; returns whether it went through, so the ticket is stamped or folded only then. */
+  /** Answers a request, counted at once everywhere; returns whether it went through, so a refused ticket opens again. */
   async function respond(userId: string, accept: boolean): Promise<boolean> {
     setErr(null);
-    const res = await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
-    if (!res.ok) {
-      setErr(describeError(res.error, t));
-      requests.reload();
-    }
+    const res = await sendShown(
+      () => client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`),
+      adjust(railEdits.requestAnswered(userId)),
+      { onFailed: (error) => setErr(failureText(error, t)) },
+    );
+    if (!res.ok) requests.reload();
     return res.ok;
   }
 
@@ -82,6 +96,8 @@ export function Friends(): React.JSX.Element {
     requests.reload();
     friends.reload();
   }
+
+  const outgoing = (sent.data?.requests ?? []).filter((u) => !withdrawn.has(u.userId));
 
   return (
     <div className="container container-narrow">
@@ -127,11 +143,11 @@ export function Friends(): React.JSX.Element {
       )}
 
       {/* Requests you sent, so a misfire is visible and can be undone. */}
-      {!sent.loading && (sent.data?.requests.length ?? 0) > 0 && (
+      {!sent.loading && outgoing.length > 0 && (
         <section className="friend-section">
           <h2 className="friend-heading">{t('friends.sent')}</h2>
           <div className="post-list">
-            {sent.data!.requests.map((u) => (
+            {outgoing.map((u) => (
               <Row
                 key={u.userId}
                 user={u}

@@ -11,6 +11,9 @@ import { ProfileProgress } from '../profile/ProfileProgress';
 import { ProfileTree } from '../tree/ProfileTree';
 import { PlayWithButton } from '../play/PlayButtons';
 import { AddFriendButton } from '../social/FriendTickets';
+import { useRail } from '../social/RailProvider';
+import { railEdits } from '../social/useSocialRail';
+import { useOptimisticSend } from '../lib/optimistic';
 import { countryName } from '../lib/countries';
 import { ErrorState } from '../components/states';
 import { LockIcon, SendIcon } from '../components/icons';
@@ -177,17 +180,23 @@ function FriendActions({
   const { client } = useAuth();
   const t = useT();
   const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
+  const { adjust } = useRail();
+  const sendShown = useOptimisticSend();
   // Why a request or answer failed; a full friend list says so (lib/limits.ts).
   const [err, setErr] = useState<string | null>(null);
 
+  /** Friends at once; a refusal brings the request back with a notice, since this card is drawn afresh for each status. */
   async function accept(): Promise<void> {
-    setBusy(true);
     setErr(null);
-    const res = await client.post(`/friends/requests/${userId}/accept`);
-    setBusy(false);
-    if (res.ok) onStatus('friends');
-    else setErr(describeError(res.error, t));
+    onStatus('friends');
+    const change = adjust(railEdits.requestAnswered(userId));
+    await sendShown(() => client.post(`/friends/requests/${userId}/accept`), {
+      keep: change.keep,
+      undo: () => {
+        change.undo();
+        onStatus('pending_in');
+      },
+    });
   }
 
   const message = (primary: boolean): React.JSX.Element => (
@@ -210,8 +219,8 @@ function FriendActions({
       {(status === 'none' || status === 'pending_out') && <AddFriendButton userId={userId} name={name} status={status} onError={setErr} />}
       {status === 'pending_in' && (
         <>
-          <Button size="sm" onClick={() => void accept()} disabled={busy}>
-            {busy ? t('profile.accepting') : t('profile.acceptRequest')}
+          <Button size="sm" onClick={() => void accept()}>
+            {t('profile.acceptRequest')}
           </Button>
           {message(false)}
         </>

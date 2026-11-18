@@ -5,15 +5,16 @@ import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { TicketIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
-import { describeError } from '../lib/api';
 import { prefersReducedMotion } from '../lib/motion';
+import { showNotice } from '../lib/notice';
+import { failureText, useOptimistic } from '../lib/optimistic';
 import { Ticket, TicketBody, TicketStamp, TicketStub, ticketClass } from '../ui/Ticket';
 
 /**
  * Friend requests as tickets (ui/Ticket.tsx) in the heart colour. Sending: Add sends a small ticket away and becomes
  * "Requested"; pressing that twice takes the request back. Receiving: each request is a ticket with the sender's face
- * on the stub; Accept tears the stub off and stamps it "Friends", Decline folds it away. Under Reduce Motion only the
- * button and stamp change.
+ * on the stub; Accept tears the stub off and stamps it "Friends", Decline folds it away. Every answer shows at once and
+ * goes back if the server refuses it (lib/optimistic.ts). Under Reduce Motion only the button and stamp change.
  */
 
 /** How long a new friendship's stamp stays before the lists move on, and how long a decline takes to fold. */
@@ -22,7 +23,10 @@ const FOLD_MS = 300;
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-/** "Add friend" for someone not yet asked (`none`) or already asked (`pending_out`); it sends or withdraws the request. */
+/**
+ * "Add friend" for someone not yet asked (`none`) or already asked (`pending_out`); it sends or withdraws the request,
+ * showing the change at once. Quick presses end in the last one (both requests set a state, so repeats are harmless).
+ */
 export function AddFriendButton({
   userId,
   name,
@@ -47,33 +51,28 @@ export function AddFriendButton({
 }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  const [state, setState] = useState(status);
-  const [busy, setBusy] = useState(false);
   // The ticket sent away or brought back, counted so each one animates again.
   const [moment, setMoment] = useState<{ way: 'away' | 'back'; n: number } | null>(null);
   const [said, setSaid] = useState('');
   const [still] = useState(prefersReducedMotion);
+  const [state, want] = useOptimistic<'none' | 'pending_out'>(
+    status,
+    (next) => (next === 'pending_out' ? client.post('/friends/requests', { userId }) : client.delete(`/friends/requests/${userId}`)),
+    {
+      onSaved: (_, sent) => onStatus?.(sent),
+      onFailed: (error) => {
+        setSaid('');
+        if (onError) onError(failureText(error, t));
+        else showNotice(failureText(error, t));
+      },
+    },
+  );
 
-  async function add(): Promise<void> {
-    setBusy(true);
+  function ask(next: 'none' | 'pending_out'): void {
     onError?.(null);
-    const res = await client.post('/friends/requests', { userId });
-    setBusy(false);
-    if (!res.ok) return onError?.(describeError(res.error, t));
-    setState('pending_out');
-    onStatus?.('pending_out');
-    setMoment((m) => ({ way: 'away', n: (m?.n ?? 0) + 1 }));
-    setSaid(t('profile.requestSent'));
-  }
-
-  async function cancel(): Promise<void> {
-    onError?.(null);
-    const res = await client.delete(`/friends/requests/${userId}`);
-    if (!res.ok) return onError?.(describeError(res.error, t));
-    setState('none');
-    onStatus?.('none');
-    setMoment((m) => ({ way: 'back', n: (m?.n ?? 0) + 1 }));
-    setSaid('');
+    want(next);
+    setMoment((m) => ({ way: next === 'pending_out' ? 'away' : 'back', n: (m?.n ?? 0) + 1 }));
+    setSaid(next === 'pending_out' ? t('profile.requestSent') : '');
   }
 
   return (
@@ -88,11 +87,11 @@ export function AddFriendButton({
             </>
           }
           title={t('friends.cancelRequest', { name })}
-          onConfirm={cancel}
+          onConfirm={() => ask('none')}
         />
       ) : (
-        <Button size="sm" variant={variant} block={block} onClick={() => void add()} disabled={busy}>
-          {busy ? t('profile.sending') : (label ?? t('profile.addFriend'))}
+        <Button size="sm" variant={variant} block={block} onClick={() => ask('pending_out')}>
+          {label ?? t('profile.addFriend')}
         </Button>
       )}
       {moment && !still && (

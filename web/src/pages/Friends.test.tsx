@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Friends } from './Friends';
 import { renderApp, jsonResponse } from '../test/utils';
+import { onNotice } from '../lib/notice';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -308,5 +309,53 @@ describe('Friends', () => {
     await waitFor(() =>
       expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes('/friends/requests/u3/decline') && init?.method === 'POST')).toBe(true),
     );
+  });
+
+  it('stamps an accepted ticket before the server answers', async () => {
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'POST') return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/friends/requests/outgoing')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [{ userId: 'u3', username: 'rojda' }] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    const ticket = await screen.findByRole('group', { name: 'rojda wants to be friends' });
+    await userEvent.click(within(ticket).getByRole('button', { name: 'Accept' }));
+    expect(within(ticket).getByText('Friends')).toHaveClass('ticket-stamp');
+    answer(jsonResponse(500, {}));
+    // Refused: the ticket opens again, and the page says why.
+    expect(await within(ticket).findByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong on our end. Please try again shortly.');
+  });
+
+  it('takes a sent request off the list at once, and puts it back when the server keeps it', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'DELETE') return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/friends/requests/outgoing')) return jsonResponse(200, { requests: [{ userId: 'u7', username: 'hevi' }] });
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /cancel your request to hevi/i }));
+    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    expect(screen.queryByText('hevi')).not.toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByText('hevi')).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
   });
 });

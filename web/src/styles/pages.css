@@ -3185,12 +3185,13 @@ a.mkp-activity-row:hover {
   color: var(--ink-3);
 }
 
-/* ---- new-message banners (app-wide) ------------------------------------ */
+/* ---- new-message banners and notices (app-wide) ------------------------ */
+/* Above modals and sheets, since a notice often answers something done inside one. */
 .msg-toasts {
   position: fixed;
   right: 16px;
   bottom: 16px;
-  z-index: 80;
+  z-index: 112;
   display: flex;
   flex-direction: column;
   gap: 8px;
