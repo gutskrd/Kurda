@@ -4,8 +4,10 @@ import { Alert, Image, ScrollView, Share, StyleSheet, Text, View, useWindowDimen
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
-import type { ApiError, ApiResult } from '../api/types';
+import type { ApiError } from '../api/types';
 import { describeError, isMaintenance } from '../api/errors';
+import { useIntents, useSayNotSaved } from '../api/optimistic';
+import { useUnread } from '../messages/unread';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -33,7 +35,7 @@ import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends } from '../profile/ProfileFriends';
 import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
-import { blockUser } from './blocks';
+import { useBlock } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { PlayWithButton } from '../play/PlayWithButton';
@@ -109,18 +111,9 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const [reporting, setReporting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const { announce, region } = useAnnouncer();
-
-  /*
-   * A sent request is announced as the button hands its ticket over (TicketSlip), not on arriving at a profile already
-   * requested.
-   */
-  const status = profile?.friendStatus ?? null;
-  const lastStatus = useRef(status);
-  useEffect(() => {
-    const before = lastStatus.current;
-    lastStatus.current = status;
-    if (before === 'none' && status === 'pending_out') announce(t('friends.requestSent'));
-  }, [status, announce, t]);
+  const { report } = useUnread();
+  const say = useSayNotSaved();
+  const blockNow = useBlock();
 
   const load = useCallback(() => {
     void client.get<Profile>(`/users/${encodeURIComponent(userId)}`).then((res) => {
@@ -137,22 +130,67 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
   useFocusEffect(useCallback(() => load(), [load]));
 
+  /*
+   * Asking, accepting and withdrawing show at once and are sent after, the last tap winning; the answer's status is kept
+   * and the profile read again. A refusal (a full friend list, too many outgoing: limits/limitCopy.ts) goes back and
+   * says why.
+   */
+  const befriending = useIntents<string, FriendStatus, { outcome?: string } | null>(
+    async (id, wanted, confirmed) => {
+      const at = encodeURIComponent(id);
+      const res =
+        wanted === 'pending_out'
+          ? await client.post<{ outcome?: string }>('/friends/requests', { userId: id })
+          : wanted === 'friends'
+            ? await client.post<null>(`/friends/requests/${at}/accept`)
+            : await client.delete<null>(confirmed === 'pending_out' ? `/friends/requests/${at}` : `/friends/${at}`);
+      if (res.ok) {
+        const now = friendStatusAfter(res.data, wanted);
+        setProfile((p) => p && { ...p, friendStatus: now });
+        load();
+      }
+      return res;
+    },
+    {
+      answered: friendStatusAfter,
+      failed: (error, _id, confirmed) => {
+        // An accept that did not take leaves their request waiting, and counted.
+        if (confirmed === 'pending_in') report((now) => ({ requests: now.requests + 1 }));
+        say(error);
+      },
+    },
+  );
+  const status = profile ? befriending.shown(profile.userId, profile.friendStatus) : null;
+
+  /*
+   * A sent request is announced as the button hands its ticket over (TicketSlip), not on arriving at a profile already
+   * requested.
+   */
+  const lastStatus = useRef(status);
+  useEffect(() => {
+    const before = lastStatus.current;
+    lastStatus.current = status;
+    if (before === 'none' && status === 'pending_out') announce(t('friends.requestSent'));
+  }, [status, announce, t]);
+
   const perform = useCallback(
-    async (status: FriendStatus) => {
-      setBusy(true);
+    async (from: FriendStatus) => {
+      if (!profile) return;
       // An offer made (a request sent, or accepted) is felt; taking one back is quiet.
-      if (status === 'none' || status === 'pending_in') haptic('tap');
-      let res: ApiResult<unknown> | null = null;
-      if (status === 'none') res = await client.post('/friends/requests', { userId });
-      else if (status === 'pending_in') res = await client.post(`/friends/requests/${encodeURIComponent(userId)}/accept`);
-      else if (status === 'pending_out') res = await client.delete(`/friends/requests/${encodeURIComponent(userId)}`);
-      else if (status === 'friends') res = await client.delete(`/friends/${encodeURIComponent(userId)}`);
+      if (from === 'none' || from === 'pending_in') haptic('tap');
+      if (from === 'pending_in') report((now) => ({ requests: Math.max(0, now.requests - 1) }));
+      if (from !== 'friends') {
+        befriending.want(profile.userId, from === 'none' ? 'pending_out' : from === 'pending_in' ? 'friends' : 'none', profile.friendStatus);
+        return;
+      }
+      // Ending a friendship waits for the server: only the other person could make it again.
+      setBusy(true);
+      const res = await client.delete(`/friends/${encodeURIComponent(userId)}`);
       setBusy(false);
-      // A request that did not go (a full friend list, too many outgoing) says why (limits/limitCopy.ts).
-      if (res && !res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
+      if (!res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
       load();
     },
-    [client, userId, load, t],
+    [client, userId, load, t, profile, befriending, report],
   );
 
   /**
@@ -184,15 +222,13 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         text: t('moderation.block'),
         style: 'destructive',
         onPress: () => {
-          // Blocked: their profile is gone for you; not blocked (at the block limit): say why.
-          void blockUser(client, userId).then((res) => {
-            if (res.ok) onExit();
-            else if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
-          });
+          // Blocked: their profile is gone for you at once; a refusal (at the block limit) is said wherever you are.
+          blockNow(userId);
+          onExit();
         },
       },
     ]);
-  }, [client, userId, onExit, t]);
+  }, [blockNow, userId, onExit, t]);
 
   const name = profile?.displayName ?? profile?.username ?? '';
   /** Their profile's address, as anybody can open it: the same link the website shares. */
@@ -210,7 +246,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       actions: [
         { label: t('profile.share'), onPress: share },
         // A friendship is ended from here, confirmed first (act), not by a button beside "Message".
-        ...(profile.friendStatus === 'friends' ? [{ label: t('friends.removeFriend'), destructive: true, onPress: () => act('friends') }] : []),
+        ...(status === 'friends' ? [{ label: t('friends.removeFriend'), destructive: true, onPress: () => act('friends') }] : []),
         { label: t('moderation.report'), onPress: () => setReporting(true) },
         { label: t('moderation.block'), destructive: true, onPress: block },
       ],
@@ -249,7 +285,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             if (!profile) return null;
             // A friend's button would only say so: ending it is in the menu, and what you do with a friend is write and
             // play.
-            const labelKey = profile.friendStatus === 'friends' ? null : friendActionLabel(profile.friendStatus);
+            const shown = status ?? profile.friendStatus;
+            const labelKey = shown === 'friends' ? null : friendActionLabel(shown);
             const cardWidth = windowWidth - layout.gutter * 2;
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
@@ -283,7 +320,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           {/* What you can do sits with who they are, above the numbers, within thumb reach without scrolling. */}
           {profile.friendStatus !== 'self' ? (
             <View style={styles.actions}>
-              {profile.friendStatus === 'friends' ? (
+              {shown === 'friends' ? (
                 <>
                   <ClayButton
                     label={t('profile.message')}
@@ -297,16 +334,16 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
               ) : null}
               {labelKey ? (
                 // A request is a ticket handed over: it slips away from the button, and home again when taken back.
-                <TicketSlip sent={profile.friendStatus === 'pending_out'}>
+                <TicketSlip sent={shown === 'pending_out'}>
                   <ClayButton
                     label={t(labelKey)}
-                    icon={profile.friendStatus === 'pending_out' ? 'ticket' : profile.friendStatus === 'none' ? 'user-plus' : undefined}
+                    icon={shown === 'pending_out' ? 'ticket' : shown === 'none' ? 'user-plus' : undefined}
                     // An undo is pressable but not an invitation, so it stays neutral.
-                    tone={isActionable(profile.friendStatus) && !isUndo(profile.friendStatus) ? 'primary' : 'neutral'}
+                    tone={isActionable(shown) && !isUndo(shown) ? 'primary' : 'neutral'}
                     size="large"
                     busy={busy}
-                    disabled={!isActionable(profile.friendStatus)}
-                    onPress={() => require('friends') && act(profile.friendStatus)}
+                    disabled={!isActionable(shown)}
+                    onPress={() => require('friends') && act(shown)}
                   />
                 </TicketSlip>
               ) : null}
@@ -445,3 +482,9 @@ const styles = StyleSheet.create({
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   dim: { textAlign: 'center', marginTop: spacing.md },
 });
+
+/** Where the two of you stand once the server has answered: a request to someone who had asked you makes you friends. */
+function friendStatusAfter(answer: { outcome?: string } | null, sent: FriendStatus): FriendStatus {
+  if (sent !== 'pending_out') return sent;
+  return answer?.outcome === 'accepted' || answer?.outcome === 'already_friends' ? 'friends' : 'pending_out';
+}

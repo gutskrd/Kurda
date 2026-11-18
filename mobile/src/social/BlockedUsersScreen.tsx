@@ -12,7 +12,7 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
-import { blockedUsers, unblockUser, type BlockedUser } from './blocks';
+import { blockedUsers, unblockUser, unhideBlocked, type BlockedUser } from './blocks';
 import { EmptyState } from '../theme/EmptyState';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { Loading } from '../theme/Loading';
@@ -96,6 +96,8 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
               return;
             }
             setError(null);
+            // Blocked earlier from this phone: back in the lists that left them out.
+            unhideBlocked(user.userId);
             setList((prev) => (prev ?? []).filter((b) => b.userId !== user.userId));
             setTotal((n) => Math.max(0, n - 1));
           });

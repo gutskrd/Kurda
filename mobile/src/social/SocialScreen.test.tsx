@@ -11,12 +11,14 @@ vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 // The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { Alert } from 'react-native';
 import { forgetReach, reachOf } from '../testing/reach';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { SocialScreen } from './SocialScreen';
+import { hideBlocked, unhideBlocked } from './blocks';
 
 /* Friends: incoming requests are friendship tickets, and asking somebody you may know hands them one. */
 
@@ -77,6 +79,45 @@ describe('Friends', () => {
     expect(screen.getByText('Request sent')).toBeTruthy();
     await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/friends/requests')?.body).toEqual({ userId: 'u7' }));
     await waitFor(() => expect(screen.queryByText('3 mutual friends')).toBeNull());
+  });
+
+  it('takes a withdrawn request away at once, once confirmed, and brings it back with the reason when refused', async () => {
+    const said = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.at(-1)?.onPress?.());
+    let answer: (r: unknown) => void = () => undefined;
+    let outgoing = [{ userId: 'u9', username: 'baran', displayName: null }];
+    open({
+      'GET /friends/requests/outgoing': () => ok({ requests: outgoing }),
+      'DELETE /friends/requests/u9': () => new Promise((resolve) => (answer = resolve)),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel your request to baran' }));
+    expect(screen.queryByRole('button', { name: 'Cancel your request to baran' })).toBeNull();
+    // Still there on the server, and read again after the refusal.
+    outgoing = [{ userId: 'u9', username: 'baran', displayName: null }];
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(await screen.findByRole('button', { name: 'Cancel your request to baran' })).toBeTruthy();
+    expect(said).toHaveBeenLastCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    said.mockRestore();
+  });
+
+  it('brings a declined request back with the reason when the answer did not get through', async () => {
+    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    let answer: (r: unknown) => void = () => undefined;
+    open({ 'POST /friends/requests/u3/decline': () => new Promise((resolve) => (answer = resolve)) });
+    fireEvent.click(await screen.findByRole('button', { name: 'Decline friend request from rojin' }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Decline friend request from rojin' })).toBeNull());
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(await screen.findByRole('button', { name: 'Decline friend request from rojin' })).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    said.mockRestore();
+  });
+
+  it('leaves somebody just blocked out of every list at once, and brings them back if the block was refused', async () => {
+    open({ 'GET /friends': ok({ friends: [{ userId: 'u5', username: 'dilan', displayName: null }] }) });
+    expect(await screen.findByText('dilan')).toBeTruthy();
+    act(() => hideBlocked('u5'));
+    expect(screen.queryByText('dilan')).toBeNull();
+    act(() => unhideBlocked('u5'));
+    expect(screen.getByText('dilan')).toBeTruthy();
   });
 
   it('reads the three lists again when pulled down', async () => {

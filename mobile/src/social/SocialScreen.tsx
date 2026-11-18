@@ -16,6 +16,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { describeError, isMaintenance } from '../api/errors';
+import { useIntents, useSayNotSaved } from '../api/optimistic';
+import type { ApiError } from '../api/types';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -29,6 +31,8 @@ import { SearchField } from '../theme/SearchField';
 import { useAnnouncer } from '../stories/ui';
 import { ACCEPTED_HOLD_MS, DECLINE_FOLD_MS, FriendRequestTicket, TicketSlip, type RequestAnswer } from './FriendTicket';
 import { usePullRefresh } from '../net/usePullRefresh';
+import { useUnread } from '../messages/unread';
+import { useHiddenByBlock } from './blocks';
 
 interface UserRow {
   userId: string;
@@ -54,6 +58,7 @@ interface Suggestion extends UserRow {
  */
 export function SocialScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
+  const { report } = useUnread();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
 
@@ -89,13 +94,18 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
         setFailed(true);
       }
     });
-    const incoming = client.get<{ requests: UserRow[] }>('/friends/requests').then((r) => r.ok && setRequests(r.data.requests));
+    const incoming = client.get<{ requests: UserRow[] }>('/friends/requests').then((r) => {
+      if (!r.ok) return;
+      setRequests(r.data.requests);
+      // The badge counts the same list, so it is told rather than asked again.
+      report({ requests: r.data.requests.length });
+    });
     /* Requests you sent, so you can see and withdraw them. */
     const outgoing = client
       .get<{ requests: UserRow[] }>('/friends/requests/outgoing')
       .then((r) => r.ok && setSent(r.data.requests));
     return Promise.all([lists, incoming, outgoing]);
-  }, [client]);
+  }, [client, report]);
 
   useFocusEffect(
     useCallback(() => {
@@ -131,27 +141,53 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     [client],
   );
 
-  /**
-   * Answer a request on its ticket (stamped "Friends" for a moment, or folded away), then read the lists again, which
-   * also brings back one whose answer did not get through.
+  /*
+   * Answering and withdrawing show at once, and the request count with them; the server is told after. A refusal says
+   * why and reads the lists again, which brings back what did not get through.
    */
+  const say = useSayNotSaved();
+  const refused = (error: ApiError): void => {
+    haptic('error');
+    say(error);
+    report((now) => ({ requests: now.requests + 1 }));
+    void loadLists();
+  };
+  const answering = useIntents<string, RequestAnswer | null>(
+    async (userId, answer) => {
+      const res = await client.post(`/friends/requests/${userId}/${answer === 'accepted' ? 'accept' : 'decline'}`);
+      // A new friend joins the list as the server has it.
+      if (res.ok && answer === 'accepted') void loadLists();
+      return res;
+    },
+    { failed: refused },
+  );
+  const withdrawing = useIntents<string, boolean>((userId) => client.delete(`/friends/requests/${userId}`), {
+    failed: (error) => {
+      haptic('error');
+      say(error);
+      void loadLists();
+    },
+  });
+
+  /** Answer a request on its ticket: stamped "Friends" for a moment, or folded away, then gone. */
   const respond = useCallback(
     (u: UserRow, accept: boolean) => {
       if (accept) haptic('tap');
       if (accept) announce(t('friends.nowFriends', { name: u.displayName ?? u.username }));
       setAnswers((a) => ({ ...a, [u.userId]: accept ? 'accepted' : 'declined' }));
+      report((now) => ({ requests: Math.max(0, now.requests - 1) }));
+      answering.want(u.userId, accept ? 'accepted' : 'declined', null);
       const hold = accept ? ACCEPTED_HOLD_MS : reduce ? 0 : DECLINE_FOLD_MS;
-      void Promise.all([client.post(`/friends/requests/${u.userId}/${accept ? 'accept' : 'decline'}`), wait(hold)]).then(() => {
+      void wait(hold).then(() => {
         setRequests((list) => list.filter((r) => r.userId !== u.userId));
         setAnswers((a) => {
           const rest = { ...a };
           delete rest[u.userId];
           return rest;
         });
-        loadLists();
       });
     },
-    [client, loadLists, reduce, announce, t],
+    [reduce, announce, t, report, answering],
   );
 
   /* The same words the profile uses to withdraw the same request. */
@@ -164,12 +200,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           text: t(undo.label),
           style: 'destructive',
           onPress: () => {
-            void client.delete(`/friends/requests/${u.userId}`).then(loadLists);
+            setSent((list) => list.filter((r) => r.userId !== u.userId));
+            withdrawing.want(u.userId, true, false);
           },
         },
       ]);
     },
-    [client, loadLists, t],
+    [t, withdrawing],
   );
 
   /**
@@ -229,6 +266,9 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     <Text style={[styles.section, dir.text, { color: colors.textSecondary }]}>{t(key)}</Text>
   );
 
+  // Somebody just blocked from another screen leaves these lists at once (social/blocks.ts).
+  const gone = useHiddenByBlock();
+  const without = <T extends { userId: string }>(list: T[]): T[] => (gone.size === 0 ? list : list.filter((u) => !gone.has(u.userId)));
   const showingSearch = results !== null;
 
   return (
@@ -255,7 +295,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
 
         {showingSearch ? (
           <FlatList
-            data={results}
+            data={without(results ?? [])}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             // The keyboard is up while results come in: a tap on one opens it, rather than only dismissing the
@@ -274,17 +314,17 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           <ErrorRetry onRetry={() => void loadLists()} />
         ) : (
           <FlatList
-            data={friends}
+            data={without(friends)}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             keyboardShouldPersistTaps="handled"
             refreshControl={pull}
             ListHeaderComponent={
               <View>
-                {requests.length > 0 ? (
+                {without(requests).length > 0 ? (
                   <View style={styles.tickets}>
                     {section('friends.requests')}
-                    {requests.map((u) => (
+                    {without(requests).map((u) => (
                       <FriendRequestTicket
                         key={u.userId}
                         compact
@@ -299,10 +339,10 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                     ))}
                   </View>
                 ) : null}
-                {sent.length > 0 ? (
+                {without(sent).length > 0 ? (
                   <View>
                     {section('friends.sent')}
-                    {sent.map((u) =>
+                    {without(sent).map((u) =>
                       row(
                         u,
                         <Pressable
@@ -327,10 +367,10 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
               settled ? <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text> : <PeopleSkeleton />
             }
             ListFooterComponent={
-              suggestions.length > 0 ? (
+              without(suggestions).length > 0 ? (
                 <View>
                   {section('friends.suggestions')}
-                  {suggestions.map((s) => {
+                  {without(suggestions).map((s) => {
                     const requested = asked.has(s.userId);
                     return row(
                       s,

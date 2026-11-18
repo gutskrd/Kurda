@@ -8,6 +8,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { describeError } from '../api/errors';
+import { useIntents, useSayNotSaved } from '../api/optimistic';
 import { limitErrorText } from '../limits/limitCopy';
 import type { ApiError } from '../api/types';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -38,7 +39,7 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { t } = useI18n();
-  const { refresh } = useUnread();
+  const { refresh, report } = useUnread();
   const [requests, setRequests] = useState<RequestRow[] | null>(null);
   // A list that could not be loaded says so, rather than passing for an empty one.
   const [error, setError] = useState<ApiError | null>(null);
@@ -50,20 +51,24 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
       setError(null);
       void client.get<{ requests: RequestRow[] }>('/friends/requests').then((r) => {
         if (!live) return;
-        if (r.ok) setRequests(r.data.requests);
-        else setError(r.error);
+        if (r.ok) {
+          setRequests(r.data.requests);
+          // The badge counts the same list, so it is told rather than asked again.
+          report({ requests: r.data.requests.length });
+        } else setError(r.error);
       });
       return () => {
         live = false;
       };
       // A retry asks again.
-    }, [client, attempt]),
+    }, [client, attempt, report]),
   );
   // Pulled down, the requests are read again; a failure keeps the list that is there.
   const pull = usePullRefresh(() =>
     client.get<{ requests: RequestRow[] }>('/friends/requests').then((r) => {
       if (r.ok) {
         setRequests(r.data.requests);
+        report({ requests: r.data.requests.length });
         setError(null);
       }
     }),
@@ -82,16 +87,50 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
       return rest;
     });
 
+  /*
+   * The answer shows at once and the request count with it; the server is told after. A refusal brings the request back
+   * to its place to be answered again, counted again, and says why: a full friend list (theirs or yours) will not clear
+   * on retry (limits/limitCopy.ts).
+   */
+  const say = useSayNotSaved();
+  const asked = useRef(new Map<string, { row: RequestRow; at: number }>());
+  const answering = useIntents<string, RequestAnswer | null>(
+    async (userId, answer) => {
+      const res = await client.post(`/friends/requests/${userId}/${answer === 'accepted' ? 'accept' : 'decline'}`);
+      if (res.ok) refresh();
+      return res;
+    },
+    {
+      failed: (error, userId) => {
+        haptic('error');
+        const limit = limitErrorText(error, t);
+        if (limit) Alert.alert(limit);
+        else say(error);
+        clearTimeout(leaving.current.get(userId));
+        leaving.current.delete(userId);
+        unanswer(userId);
+        report((now) => ({ requests: now.requests + 1 }));
+        const was = asked.current.get(userId);
+        if (!was) return;
+        setRequests((list) => {
+          if ((list ?? []).some((r) => r.userId === userId)) return list;
+          const next = [...(list ?? [])];
+          next.splice(was.at < 0 ? next.length : Math.min(was.at, next.length), 0, was.row);
+          return next;
+        });
+      },
+    },
+  );
+
   const respond = useCallback(
     (row: RequestRow, accept: boolean) => {
       if (accept) haptic('tap');
       if (accept) announce(t('friends.nowFriends', { name: row.displayName ?? row.username }));
-      const at = (requests ?? []).findIndex((r) => r.userId === row.userId);
+      asked.current.set(row.userId, { row, at: (requests ?? []).findIndex((r) => r.userId === row.userId) });
       setAnswers((a) => ({ ...a, [row.userId]: accept ? 'accepted' : 'declined' }));
+      report((now) => ({ requests: Math.max(0, now.requests - 1) }));
       // Stamped for a moment, or folded away, and then out of the list.
-      let gone = false;
       const drop = (): void => {
-        gone = true;
         leaving.current.delete(row.userId);
         setRequests((list) => (list ?? []).filter((r) => r.userId !== row.userId));
         unanswer(row.userId);
@@ -99,28 +138,9 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
       const hold = accept ? ACCEPTED_HOLD_MS : reduce ? 0 : DECLINE_FOLD_MS;
       if (hold === 0) drop();
       else leaving.current.set(row.userId, setTimeout(drop, hold));
-      void client.post(`/friends/requests/${row.userId}/${accept ? 'accept' : 'decline'}`).then((res) => {
-        if (res.ok) {
-          refresh();
-          return;
-        }
-        // The answer did not get through, so the request returns to be answered again.
-        haptic('error');
-        // A full friend list (theirs or yours) will not clear on retry, so say so (limits/limitCopy.ts).
-        const limit = limitErrorText(res.error, t);
-        if (limit) Alert.alert(limit);
-        clearTimeout(leaving.current.get(row.userId));
-        leaving.current.delete(row.userId);
-        unanswer(row.userId);
-        if (!gone) return;
-        setRequests((list) => {
-          const next = [...(list ?? [])];
-          next.splice(at < 0 ? next.length : Math.min(at, next.length), 0, row);
-          return next;
-        });
-      });
+      answering.want(row.userId, accept ? 'accepted' : 'declined', null);
     },
-    [client, refresh, requests, t, reduce, announce],
+    [requests, t, reduce, announce, report, answering],
   );
 
   return (

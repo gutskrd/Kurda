@@ -17,7 +17,7 @@ import { Skeleton, lineOf } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { showActions } from '../theme/actionSheet';
-import { blockUser } from '../social/blocks';
+import { useBlock } from '../social/blocks';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { MessageField } from './SendButton';
@@ -72,6 +72,7 @@ export function ChatScreen({
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const reduce = useReducedMotion();
+  const blockNow = useBlock();
   // In Soranî and Arabic the thread is mirrored: your words on the left, and the composer's Send too.
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
@@ -259,18 +260,17 @@ export function ChatScreen({
               {
                 text: t('moderation.block'),
                 style: 'destructive',
-                // Blocked: the conversation is over for you.
-                onPress: () =>
-                  void blockUser(client, userId).then((res) => {
-                    if (res.ok) onExit();
-                    else if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
-                  }),
+                // Blocked: the conversation is over for you at once; a refusal is said wherever you are.
+                onPress: () => {
+                  blockNow(userId);
+                  onExit();
+                },
               },
             ]),
         },
       ],
     });
-  }, [client, name, navigation, onExit, t, userId]);
+  }, [blockNow, name, navigation, onExit, t, userId]);
 
   const send = useCallback(async () => {
     const body = draft.trim();

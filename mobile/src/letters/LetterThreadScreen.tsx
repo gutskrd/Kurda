@@ -17,7 +17,7 @@ import { useDirection } from '../reports/direction';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
-import { blockUser } from '../social/blocks';
+import { useBlock } from '../social/blocks';
 import { haptic } from '../feedback/haptics';
 import { BirdBadge, LetterSheet } from './LetterParts';
 import { LetterComposer, rememberedPaper, type ComposedLetter } from './LetterComposer';
@@ -56,6 +56,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   const [paperKey, setPaperKey] = useState(0);
   // The page the paper lies on: held still while drawing, with the writing kept above the keyboard.
   const page = usePaperScroll();
+  const blockNow = useBlock();
 
   const load = useCallback(async (): Promise<void> => {
     const res = await client.get<LetterThread>(`/letters/threads/${encodeURIComponent(threadId)}`);
@@ -126,14 +127,12 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
         text: t('moderation.block'),
         style: 'destructive',
         onPress: () => {
-          void blockUser(client, thread.person.id).then((res) => {
-            if (res.ok) onExit();
-            else Alert.alert(describeError(res.error, t));
-          });
+          blockNow(thread.person.id);
+          onExit();
         },
       },
     ]);
-  }, [client, thread, name, onExit, t]);
+  }, [blockNow, thread, name, onExit, t]);
 
   const goodbye = useCallback(() => {
     Alert.alert(t('letters.goodbye.title', { name }), undefined, [
