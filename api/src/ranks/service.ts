@@ -535,12 +535,16 @@ export class RankService {
   /** `GET /ranks/me`: your rank in every game, your cooldown, the season. */
   async myRanks(userId: string): Promise<MyRanks> {
     const at = this.now();
-    const ranks: RankCard[] = [];
-    for (const game of RANKED_GAMES) ranks.push(await this.card(userId, game));
-    const cd = await this.pool.query<{ until: Date | null }>(
-      `SELECT max(cooldown_until) AS until FROM rated_leaves WHERE user_id = $1`,
-      [userId],
-    );
+    const [rows, cd] = await Promise.all([
+      this.pool.query<RatingRow>(`SELECT * FROM game_ratings WHERE user_id = $1 AND game = ANY($2::text[])`, [userId, RANKED_GAMES]),
+      this.pool.query<{ until: Date | null }>(`SELECT max(cooldown_until) AS until FROM rated_leaves WHERE user_id = $1`, [userId]),
+    ]);
+    const seasonId = seasonOf(at).id;
+    const asked = RANKED_GAMES.map((game) => ({ game, state: standingOf(rows.rows.find((r) => r.game === game), seasonId) }));
+    // Stêrk is asked only of placed standings, as for one card, and for every game in one query.
+    const placed = asked.filter((a) => a.state.placementDone);
+    const sterk = await this.sterkAmong(this.pool, placed, at);
+    const ranks = asked.map((a) => rankCard(a.game, a.state, sterk[placed.indexOf(a)] === true, at));
     const until = cd.rows[0]?.until ?? null;
     const season = seasonOf(at);
     return {
@@ -553,58 +557,16 @@ export class RankService {
   /** Your rank in one game (a fresh one before your first rated game). */
   async card(userId: string, game: RankedGame): Promise<RankCard> {
     const at = this.now();
-    const state = await this.currentState(this.pool, userId, game, at);
-    const points = pointsOf(state.mu, state.sigma);
-    const placing = !state.placementDone;
-    const tier: RankTier | null = placing ? null : (await this.isSterk(this.pool, game, state, at)) ? 'sterk' : tierOf(points);
-    return {
-      game,
-      points,
-      tier,
-      division: tier === null || tier === 'sterk' ? null : divisionOf(points),
-      placement: placing ? { played: state.ratedGames, of: PLACEMENT_GAMES } : null,
-      provisional: !placing && state.sigma > PROVISIONAL_SIGMA,
-      shieldGames: state.shieldGames,
-      progress: placing ? null : progressToNext(points),
-      ratedGames: state.ratedGames,
-      wins: state.wins,
-      season: {
-        id: state.seasonId,
-        ratedGames: state.seasonGames,
-        wins: state.seasonWins,
-        peakPoints: state.peakPoints,
-        peakTier: placing || state.seasonGames === 0 ? null : tierOf(state.peakPoints),
-      },
-      bestPoints: state.bestPoints,
-      resting: isResting(state, at),
-      lastRatedAt: state.lastRatedAt ? state.lastRatedAt.toISOString() : null,
-    };
+    const state = (await this.currentStates(this.pool, [userId], game, at)).get(userId)!;
+    return rankCard(game, state, state.placementDone && (await this.isSterk(this.pool, game, state, at)), at);
   }
 
-  /**
-   * A standing as of now, without writing: fresh before the first game, and rolled forward as the season job would for
-   * one still in an earlier season.
-   */
-  private async currentState(db: Executor, userId: string, game: RankedGame, at: Date): Promise<PlayerState> {
-    return (await this.currentStates(db, [userId], game, at)).get(userId)!;
-  }
-
-  /** `currentState` for each of these players, in one query. */
+  /** Each of these players' standing as of now, without writing (`standingOf`), in one query. */
   private async currentStates(db: Executor, userIds: readonly string[], game: RankedGame, at: Date): Promise<Map<string, PlayerState>> {
     const rows = await db.query<RatingRow>(`SELECT * FROM game_ratings WHERE user_id = ANY($1::uuid[]) AND game = $2`, [[...userIds], game]);
     const byId = new Map(rows.rows.map((r) => [r.user_id, r]));
     const seasonId = seasonOf(at).id;
-    const out = new Map<string, PlayerState>();
-    for (const userId of userIds) {
-      const row = byId.get(userId);
-      if (!row) {
-        out.set(userId, freshState(seasonId));
-        continue;
-      }
-      const state = stateOf(row);
-      out.set(userId, state.seasonId < seasonId ? seasonReset(state, seasonId) : state);
-    }
-    return out;
+    return new Map(userIds.map((userId) => [userId, standingOf(byId.get(userId), seasonId)]));
   }
 
   /**
@@ -612,42 +574,43 @@ export class RankService {
    * active rated players, judged only once the game has FEW_PLAYERS of them.
    */
   private async isSterk(db: Executor, game: RankedGame, state: PlayerState, at: Date): Promise<boolean> {
-    return (await this.sterkAmong(db, game, [state], at))[0]!;
+    return (await this.sterkAmong(db, [{ game, state }], at))[0]!;
   }
 
   /**
-   * `isSterk` for each standing in one game, in order, with one query for the active-player counts (skipped when nobody
-   * passes the other rules).
+   * `isSterk` for each standing, in order, with one query for the active-player counts of all their games (skipped when
+   * nobody passes the other rules).
    */
-  private async sterkAmong(db: Executor, game: RankedGame, states: readonly PlayerState[], at: Date): Promise<boolean[]> {
-    const points = states.map((s) => pointsOf(s.mu, s.sigma));
-    const eligible = states.map(
-      (s, i) =>
+  private async sterkAmong(db: Executor, standings: ReadonlyArray<{ game: RankedGame; state: PlayerState }>, at: Date): Promise<boolean[]> {
+    const points = standings.map(({ state: s }) => pointsOf(s.mu, s.sigma));
+    const eligible = standings.map(
+      ({ state: s }, i) =>
         points[i]! >= STERK_RULE.minPoints &&
         s.ratedGames >= STERK_RULE.minGames &&
         s.lastRatedAt !== null &&
         at.getTime() - s.lastRatedAt.getTime() <= STERK_RULE.activeDays * DAY,
     );
-    const asked = points.filter((_, i) => eligible[i]);
-    if (asked.length === 0) return states.map(() => false);
-    const standing = await db.query<{ active: number; above: number[] }>(
+    const asked = standings.flatMap((s, i) => (eligible[i] ? [{ game: s.game, points: points[i]! }] : []));
+    if (asked.length === 0) return standings.map(() => false);
+    const standing = await db.query<{ active: number; above: number }>(
       `WITH active AS (
-         SELECT r.points FROM game_ratings r JOIN users u ON u.id = r.user_id
-          WHERE r.game = $1 AND r.placement_done AND r.last_rated_at > $2::timestamptz - make_interval(days => $3)
+         SELECT r.game, r.points FROM game_ratings r JOIN users u ON u.id = r.user_id
+          WHERE r.game = ANY($1::text[]) AND r.placement_done AND r.last_rated_at > $3::timestamptz - make_interval(days => $4)
             AND NOT ${RESTRICTED_SQL('u')}
-       )
-       SELECT (SELECT count(*)::int FROM active) AS active,
-              ARRAY(SELECT (SELECT count(*)::int FROM active a WHERE a.points > c.points)
-                      FROM unnest($4::int[]) WITH ORDINALITY AS c(points, n) ORDER BY c.n) AS above`,
-      [game, at, RESTING_DAYS, asked],
+       ),
+       counts AS (SELECT game, count(*)::int AS n FROM active GROUP BY game)
+       SELECT COALESCE((SELECT n FROM counts WHERE counts.game = c.game), 0) AS active,
+              (SELECT count(*)::int FROM active a WHERE a.game = c.game AND a.points > c.points) AS above
+         FROM unnest($1::text[], $2::int[]) WITH ORDINALITY AS c(game, points, n)
+        ORDER BY c.n`,
+      [asked.map((a) => a.game), asked.map((a) => a.points), at, RESTING_DAYS],
     );
-    const { active, above } = standing.rows[0]!;
     let k = 0;
-    return states.map((_, i) => {
+    return standings.map((_, i) => {
       if (!eligible[i]) return false;
-      const over = above[k++]!;
+      const { active, above } = standing.rows[k++]!;
       if (active < FEW_PLAYERS) return false;
-      return over + 1 <= Math.max(STERK_RULE.minTop, Math.ceil(active * STERK_RULE.topShare));
+      return above + 1 <= Math.max(STERK_RULE.minTop, Math.ceil(active * STERK_RULE.topShare));
     });
   }
 
@@ -861,13 +824,10 @@ export class RankService {
       prev = r.points;
       out.push({ position, name: r.user_id === viewerId ? null : r.name, isMe: r.user_id === viewerId, points: r.points, tier: null, division: null, placing: !r.placement_done, resting: false });
     });
-    const states = rows.map((r) => {
-      const state = stateOf(r);
-      return state.seasonId < seasonOf(at).id ? seasonReset(state, seasonOf(at).id) : state;
-    });
+    const states = rows.map((r) => standingOf(r, seasonOf(at).id));
     // whether each placed row is Stêrk, for the whole board in one query
     const placed = rows.flatMap((_, i) => (out[i]!.placing ? [] : [i]));
-    const sterk = await this.sterkAmong(this.pool, game, placed.map((i) => states[i]!), at);
+    const sterk = await this.sterkAmong(this.pool, placed.map((i) => ({ game, state: states[i]! })), at);
     const sterkAt = new Map(placed.map((i, k) => [i, sterk[k]!]));
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i]!;
@@ -895,17 +855,23 @@ export class RankService {
       `SELECT * FROM game_ratings WHERE user_id = $1 AND (rated_games > 0 OR placement_done) ORDER BY game`,
       [userId],
     );
+    const standings = rows.rows.map((row) => {
+      const state = standingOf(row, seasonOf(at).id);
+      const hidden = !state.placementDone || (isResting(state, at) && !viewerIsOwner);
+      return { game: row.game, state, hidden };
+    });
+    // Stêrk is asked only where a tier is shown, for every game in one query.
+    const shown = standings.filter((s) => !s.hidden);
+    const sterk = await this.sterkAmong(this.pool, shown, at);
     const out: ProfileRank[] = [];
-    for (const row of rows.rows) {
-      let state = stateOf(row);
-      if (state.seasonId < seasonOf(at).id) state = seasonReset(state, seasonOf(at).id);
+    for (const standing of standings) {
+      const { game, state, hidden } = standing;
       const points = pointsOf(state.mu, state.sigma);
       const placing = !state.placementDone;
       const resting = isResting(state, at) && !viewerIsOwner;
-      const hidden = placing || resting;
-      const tier: RankTier | null = hidden ? null : (await this.isSterk(this.pool, row.game, state, at)) ? 'sterk' : tierOf(points);
+      const tier: RankTier | null = hidden ? null : sterk[shown.indexOf(standing)] ? 'sterk' : tierOf(points);
       out.push({
-        game: row.game,
+        game,
         tier,
         division: tier === null || tier === 'sterk' ? null : divisionOf(points),
         points: hidden ? null : points,
@@ -918,6 +884,45 @@ export class RankService {
     }
     return out;
   }
+}
+
+/**
+ * A standing as of now, without writing: fresh before the first game, and rolled forward as the season job would for
+ * one still in an earlier season.
+ */
+function standingOf(row: RatingRow | undefined, seasonId: string): PlayerState {
+  if (!row) return freshState(seasonId);
+  const state = stateOf(row);
+  return state.seasonId < seasonId ? seasonReset(state, seasonId) : state;
+}
+
+/** Your rank in one game, from your standing and whether it is Stêrk. */
+function rankCard(game: RankedGame, state: PlayerState, sterk: boolean, at: Date): RankCard {
+  const points = pointsOf(state.mu, state.sigma);
+  const placing = !state.placementDone;
+  const tier: RankTier | null = placing ? null : sterk ? 'sterk' : tierOf(points);
+  return {
+    game,
+    points,
+    tier,
+    division: tier === null || tier === 'sterk' ? null : divisionOf(points),
+    placement: placing ? { played: state.ratedGames, of: PLACEMENT_GAMES } : null,
+    provisional: !placing && state.sigma > PROVISIONAL_SIGMA,
+    shieldGames: state.shieldGames,
+    progress: placing ? null : progressToNext(points),
+    ratedGames: state.ratedGames,
+    wins: state.wins,
+    season: {
+      id: state.seasonId,
+      ratedGames: state.seasonGames,
+      wins: state.seasonWins,
+      peakPoints: state.peakPoints,
+      peakTier: placing || state.seasonGames === 0 ? null : tierOf(state.peakPoints),
+    },
+    bestPoints: state.bestPoints,
+    resting: isResting(state, at),
+    lastRatedAt: state.lastRatedAt ? state.lastRatedAt.toISOString() : null,
+  };
 }
 
 function isResting(state: PlayerState, at: Date): boolean {
