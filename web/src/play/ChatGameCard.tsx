@@ -8,7 +8,7 @@ import type { ChatExtras } from '../lib/types';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { TicketBody, TicketGlyph, TicketStamp, TicketStub, ticketClass, useFreshStamp } from '../ui/Ticket';
-import { GAME_NAME_KEY, joinLobby, lobbyPath, playError, summaryParts } from './playApi';
+import { GAME_NAME_KEY, joinLobby, lobbyPath, playError, readCard, summaryParts } from './playApi';
 import { RatedBadge } from '../ranks/rated';
 import { RetiredGameNote } from '../components/GameInviteCard';
 
@@ -23,7 +23,8 @@ const STATUS_KEY: Record<Exclude<LobbyCard['status'], 'open'>, MessageKey> = {
 /**
  * A game shared in a chat, read live so the card follows the game: its settings, where it stands ("2 of 4 joined",
  * started, finished), Join while it can be joined and Open once you are in. A game this reader may not see reads as no
- * longer available. It refreshes when shown, on the server's change events and when the tab returns, never by polling.
+ * longer available. It refreshes when shown, on the server's change events and when the tab returns, never by polling;
+ * the cards of a thread asking at once are read in one request (playApi `readCard`).
  * It is a ticket (ui/Ticket.tsx), stamped "Joined" or with its outcome, and greyed and punched once over or gone.
  */
 export function ChatGameCard({
@@ -43,7 +44,7 @@ export function ChatGameCard({
   const name = t(GAME_NAME_KEY[game]);
 
   const read = useCallback(async () => {
-    const res = await client.get<LobbyCard>(`/play/cards/${game}/${encodeURIComponent(lobbyId)}`);
+    const res = await readCard(client, { game, lobbyId });
     if (res.ok) setCard(res.data);
   }, [client, game, lobbyId]);
 

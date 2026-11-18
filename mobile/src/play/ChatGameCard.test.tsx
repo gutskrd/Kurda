@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LobbyCard } from '@kurda/shared';
+import { playCardsPath, type LobbyCard } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from './testing/navigation';
@@ -25,6 +25,9 @@ const card = (over: Partial<LobbyCard>): LobbyCard => ({
   isMember: false,
   ...over,
 });
+
+/** The read of one card, as the chat's cards are read together. */
+const read = (c: LobbyCard) => ({ [`GET ${playCardsPath([{ game: c.game, lobbyId: c.lobbyId }])}`]: ok({ cards: [c] }) });
 
 describe('cardAction', () => {
   it('gives the strong button only to a game still gathering players', () => {
@@ -104,7 +107,7 @@ describe('ChatGameCard', () => {
   afterEach(cleanup);
 
   it('shows the lobby as it is now, and joins it through the game’s own screen', async () => {
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({})) });
+    testAuth.client = fakeClient(read(card({})));
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
     expect(await screen.findByText('Open · 2 of 8 joined')).toBeTruthy();
     expect(screen.getByText('“Nanê Germ” · 5 questions')).toBeTruthy();
@@ -113,7 +116,7 @@ describe('ChatGameCard', () => {
   });
 
   it('offers nothing to press on a game that cannot be joined, and says so in words', async () => {
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({ status: 'started', canJoin: false })) });
+    testAuth.client = fakeClient(read(card({ status: 'started', canJoin: false })));
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
     expect(await screen.findByText('Under way')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
@@ -121,14 +124,14 @@ describe('ChatGameCard', () => {
 
   it('looks the same for a game the viewer may not see as for one that is gone', async () => {
     testAuth.client = fakeClient({
-      [`GET /play/cards/wordle-battle/${LOBBY}`]: ok(card({ game: 'wordle-battle', status: 'unavailable', canJoin: false, summary: {} })),
+      ...read(card({ game: 'wordle-battle', status: 'unavailable', canJoin: false, summary: {} })),
     });
     renderWithProviders(<ChatGameCard game="wordle-battle" lobbyId={LOBBY} />);
     expect(await screen.findByText('This game isn’t available.')).toBeTruthy();
   });
 
   it('reports the message it came in on a long press, without joining (someone else’s card)', async () => {
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({})) });
+    testAuth.client = fakeClient(read(card({})));
     const onReport = vi.fn();
     navigation.navigate.mockClear();
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} onReport={onReport} />);
@@ -139,7 +142,7 @@ describe('ChatGameCard', () => {
   });
 
   it('lets a player already in it open it', async () => {
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({ isMember: true, canJoin: false, status: 'full' })) });
+    testAuth.client = fakeClient(read(card({ isMember: true, canJoin: false, status: 'full' })));
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Open: Stories' }));
     expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: LOBBY });
@@ -151,7 +154,7 @@ describe('ChatGameCard, as a ticket', () => {
   afterEach(cleanup);
 
   it('stamps "You’re in" on a game the viewer has joined, and keeps the way back in', async () => {
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({ isMember: true, canJoin: false })) });
+    testAuth.client = fakeClient(read(card({ isMember: true, canJoin: false })));
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
     expect(await screen.findByText('You’re in')).toBeTruthy();
     expect(screen.getByText('Open · 2 of 8 joined')).toBeTruthy();
@@ -160,20 +163,20 @@ describe('ChatGameCard, as a ticket', () => {
   });
 
   it('stamps a game that is over with how it ended, once, rather than saying it twice', async () => {
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({ status: 'finished', isMember: true, canJoin: false })) });
+    testAuth.client = fakeClient(read(card({ status: 'finished', isMember: true, canJoin: false })));
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
     expect(await screen.findByText('Finished')).toBeTruthy();
     expect(screen.getAllByText('Finished')).toHaveLength(1);
     expect(screen.queryByText('You’re in')).toBeNull();
     cleanup();
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({ status: 'cancelled', canJoin: false })) });
+    testAuth.client = fakeClient(read(card({ status: 'cancelled', canJoin: false })));
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
     expect(await screen.findByText('Called off')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('wears no stamp while it is simply open to join', async () => {
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({})) });
+    testAuth.client = fakeClient(read(card({})));
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
     expect(await screen.findByRole('button', { name: 'Join: Stories' })).toBeTruthy();
     expect(screen.queryByText('You’re in')).toBeNull();
@@ -181,7 +184,7 @@ describe('ChatGameCard, as a ticket', () => {
   });
 
   it('says who posted it, on the ticket and to a screen reader', async () => {
-    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({ status: 'started', canJoin: false })) });
+    testAuth.client = fakeClient(read(card({ status: 'started', canJoin: false })));
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} from="rojin" />);
     expect(await screen.findByText('Under way')).toBeTruthy();
     expect(screen.getByText('From rojin')).toBeTruthy();
