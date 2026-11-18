@@ -40,7 +40,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { activeGames, createGame, getCategories, getStory, saveProgress, saveWord, savedWords, setBookmark, type ProgressInput } from './api';
 import { StoryCover } from './covers';
-import { DIALECT_NAME, TRADITION_KEY, categoryLabel, levelName, narrationLabel } from './labels';
+import { TRADITION_KEY, categoryLabel, levelName, narrationLabel } from './labels';
 import { narrationItems, narrationLine, narrationTrack } from './narration';
 import { TEXT_SCALES, useStoryPrefs, type TextScale } from './prefs';
 import { createErrorMessage, SetupSheet } from './SetupSheet';
@@ -55,6 +55,7 @@ import { textIn } from '../lore/labels';
 import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { pressedDim } from '../theme/motion';
 import { useDirection } from '../reports/direction';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /** A reading position is sent to the server at most this often; also on leaving the text. */
 export const PROGRESS_EVERY_MS = 10_000;
@@ -443,7 +444,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       show(res.data);
       overview.current?.scrollTo({ y: 0, animated: false });
       navigation.setParams({ slug: res.data.slug });
-      announce(`${DIALECT_NAME[dialect]}: ${res.data.title}`);
+      announce(`${t(dialectNameKey(dialect))}: ${res.data.title}`);
     });
   };
 
@@ -654,7 +655,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                 options={STORY_DIALECTS}
                 value={switching ?? story.dialect}
                 onChange={switchTo}
-                labelOf={(d) => DIALECT_NAME[d]}
+                labelOf={(d) => t(dialectNameKey(d))}
                 groupLabel={t('stories.variety')}
               />
               {switchError ? <Note tone="danger" icon="alert">{switchError}</Note> : null}
@@ -673,7 +674,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
               <Pill label={levelName(story.level, t)} />
               {category ? <Pill icon="tag" label={category} /> : null}
               {/* which Kurdish it is: said by the switch when there is one */}
-              {otherTelling ? null : <Pill label={DIALECT_NAME[story.dialect]} />}
+              {otherTelling ? null : <Pill label={t(dialectNameKey(story.dialect))} />}
               <Pill label={t('stories.aboutMinutes', { count: story.readingMinutes })} />
               <Pill label={t('stories.overview.words', { count: formatNumber(story.wordCount, locale) })} />
               {narrated ? <Pill icon="headphones" label={narrated} tone="primary" /> : null}

@@ -20,10 +20,12 @@ import { clearWidgetConfig, readWidgetConfig, widgetTokenRejected, writeWidgetCo
  *
  * The token is made afresh once each time the app starts and at each
  * sign-in, naming the one before as the one it replaces, so a phone never
- * holds two and a token lasts no longer than it must. Tokens also end with
- * the account's sessions (a new password, signing out everywhere): the
- * widget then hears 401, says so in storage, and shows "Open Hevalo"; the
- * next time the app is open it makes a new one.
+ * holds two and a token lasts no longer than it must. The server ends a token
+ * with the session it was made in (this phone signed out from the list of
+ * devices, or its session running out), with all of the account's sessions (a
+ * new password, signing out everywhere), and thirty days after it was made
+ * whatever else happens. The widget then hears 401, says so in storage, and
+ * shows "Open Hevalo"; the next time the app is open it makes a new one.
  */
 
 export type TokenOutcome = 'kept' | 'made' | 'failed';

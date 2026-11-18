@@ -34,7 +34,7 @@ async function main(): Promise<void> {
   // a private bucket this process cannot write to is not used by its jobs
   // either (media/storage.ts); the API moves the older private files, not this
   const privateCheck = await storage?.checkPrivateBucket();
-  if (privateCheck && !privateCheck.ok) log.error({ error: privateCheck.error }, 'private storage refused a write: data exports stay in the public bucket under unguessable keys');
+  if (privateCheck && !privateCheck.ok) log.error({ error: privateCheck.error }, 'private storage refused a write: data exports are refused until it takes one');
   if (config.DATABASE_URL) {
     const pool = createPool(config);
     const queue = JobQueue.create(config);

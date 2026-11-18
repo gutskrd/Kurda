@@ -1,29 +1,19 @@
 /**
- * One celebration, the same everywhere something is earned — a lesson
- * finished, a goal met, a new level, rank, league or badge.
- *
- * The thing earned arrives on a spring, a soft ring of its colour widens once
- * behind it, a light handful of flecks in its colours is thrown out and falls
- * away, and then the words fade in. All of it is over inside
- * `CELEBRATE_MS` (1.6 s), a tap anywhere skips to the end, and nothing
- * keeps moving afterwards: once the words are there, the screen is still.
- *
- * Under Reduce Motion it is a fade and nothing travels. The buzz is not motion
- * and has its own switch (Settings → Vibration), so it is felt either way.
- *
- * Pure numbers, so the choreography is tested without a screen — and shared,
- * so the phone (theme/CelebrationParts.tsx) and the website
- * (ranks/Celebration.tsx) play the same moment the same way.
+ * One celebration for everything earned: a lesson, a goal, a level, a rank, a league or a badge. The earned thing springs
+ * in, a ring of its colour widens once behind it, a handful of flecks is thrown out and falls, then the words fade in; it
+ * is all over within `CELEBRATE_MS`, a tap skips to the end, and the screen is still afterwards. Under Reduce Motion it is
+ * a fade; the buzz has its own setting, so it is felt either way. Pure numbers, so the choreography is tested without a
+ * screen and both apps (theme/CelebrationParts.tsx, ranks/Celebration.tsx) play it the same.
  */
 
-/** The whole of it, from the first frame to the last fleck. */
+/** All of it, from the first frame to the last fleck. */
 export const CELEBRATE_MS = 1600;
 /** A fade (Reduce Motion), and the words arriving. */
 const FADE_MS = 200;
 const WORDS_MS = 320;
 
 export interface CelebrationPlan {
-  /** the art's arrival (a spring, or a fade) */
+  /** the art's arrival, a spring or a fade */
   artMs: number;
   /** the ring widening once behind the art; 0 for none */
   ringDelayMs: number;
@@ -62,16 +52,16 @@ export function celebrationEndMs(plan: CelebrationPlan): number {
   return Math.max(plan.artMs, plan.ringDelayMs + plan.ringMs, plan.burstDelayMs + plan.burstMs, plan.detailsDelayMs + plan.detailsMs);
 }
 
-/** How many flecks each kind of moment gets: a lesson or a division is a nod, a new tier a little more. */
+/** Flecks per kind of moment: a lesson or a division is a nod, a new tier a little more. */
 export const BURST = { lesson: 14, division: 14, badge: 16, placed: 18, league: 18, tier: 22 } as const;
 
 export interface Fleck {
-  /** where it is thrown to, from the middle of the art, in points */
+  /** where it is thrown to from the art's middle, in points */
   dx: number;
   dy: number;
   /** how far it then falls, in points */
   fall: number;
-  /** when it is thrown and when it is gone, as shares (0…1) of the burst */
+  /** when it is thrown and gone, as shares (0…1) of the burst */
   start: number;
   end: number;
   /** how far it turns, in degrees */
@@ -79,11 +69,11 @@ export interface Fleck {
   /** a sliver, not a square */
   w: number;
   h: number;
-  /** which of the moment's colours (an index into the palette given) */
+  /** which of the moment's colours, as an index into the palette given */
   colour: number;
 }
 
-/** A small deterministic generator, so a moment looks the same each time it plays (and in a test). */
+/** A small deterministic generator, so a moment looks the same each time it plays and in tests. */
 function seeded(seed: number): () => number {
   let s = seed >>> 0 || 1;
   return () => {
@@ -92,11 +82,7 @@ function seeded(seed: number): () => number {
   };
 }
 
-/**
- * The flecks, thrown out in a ring from the art and falling away: spread
- * evenly round the circle with a little jitter (so no clump and no gap), a
- * little more upwards than down, each gone before the burst ends.
- */
+/** The flecks, thrown out in a ring evenly with a little jitter (no clump, no gap), slightly more upward, each gone before the burst ends. */
 export function burstPlan(count: number, seed: number, colours: number, reach: number): Fleck[] {
   const rnd = seeded(seed);
   return Array.from({ length: Math.max(0, count) }, (_, i) => {

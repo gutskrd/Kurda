@@ -28,7 +28,7 @@ describe('the stamp', () => {
     const odd = stampPerforations(140, 13.5);
     expect(odd.count).toBe(10);
     expect(odd.step).toBe(14);
-    // a very short edge still has two, or it would not read as a stamp
+    // A very short edge still has two, or it would not read as a stamp.
     expect(stampPerforations(10, 13.5).count).toBe(2);
   });
 
@@ -44,7 +44,7 @@ describe('the stamp', () => {
   });
 
   it('bites each edge once per perforation, and rounds the four corners', () => {
-    // a whole number of steps each way, so the corner teeth are wide enough for their full rounding
+    // A whole number of steps each way, so the corner teeth are wide enough for their full rounding.
     const d = stampOutline(162, 216);
     const across = stampPerforations(162, STAMP_SHAPE.pitch).count;
     const down = stampPerforations(216, STAMP_SHAPE.pitch).count;
@@ -60,7 +60,7 @@ describe('the stamp', () => {
 
   it('keeps a tooth between two bites however large a bite is asked for', () => {
     const d = stampOutline(60, 60, { bite: 40, pitch: 20 });
-    // three perforations of step 20: a bite is held to 8, leaving a tooth of 4
+    // Three perforations of step 20: a bite is held to 8, leaving a tooth of 4.
     expect(d).toContain('A8 8 0 0 0 ');
   });
 
@@ -89,9 +89,9 @@ describe('the stamp', () => {
   it('reaches as far as half its widest stroke, and is brightest at the paper’s edge', () => {
     const widths = STAMP_GLOW.map((ring) => ring.width);
     expect(Math.max(...widths) / 2).toBe(STAMP_GLOW_REACH);
-    // widest first, so each narrower stroke is laid over the wider ones
+    // Widest first, so each narrower stroke lies over the wider ones.
     expect([...widths].sort((a, b) => b - a)).toEqual(widths);
-    // all of them overlap at the edge: together a little over half the colour, never the whole of it
+    // All of them overlap at the edge: together a little over half the colour, never all of it.
     const atEdge = 1 - STAMP_GLOW.reduce((left, ring) => left * (1 - ring.opacity), 1);
     expect(atEdge).toBeGreaterThan(0.5);
     expect(atEdge).toBeLessThan(0.65);
@@ -100,13 +100,13 @@ describe('the stamp', () => {
   it('gives off exactly the share of its light it is asked for, however faint', () => {
     const shown = (strength: number): number[] =>
       [...stampSvg({ width: 160, height: 200, paper: '#e8f2ff', glow: '#007df2', strength }).matchAll(/stroke-opacity="([\d.]+)"/g)].map((m) => Number(m[1]));
-    // a stroke shows a few hundredths of the colour: written to the hundredth, a quiet stamp's light would be out by a quarter
+    // A stroke shows a few hundredths of the colour; written to the hundredth, a quiet stamp's glow would be off by a quarter.
     for (const strength of [1, STAMP_SHELF_GLOW, STAMP_NIGHT_GLOW, STAMP_SHELF_GLOW * STAMP_NIGHT_GLOW]) {
       const rings = shown(strength);
       expect(rings).toHaveLength(STAMP_GLOW.length);
       rings.forEach((opacity, i) => expect(Math.abs(opacity - STAMP_GLOW[i]!.opacity * strength), `strength ${strength}`).toBeLessThanOrEqual(0.0005));
     }
-    // quieter among others than put forward, and quieter again by night, and never gone
+    // Quieter on a shelf than put forward, quieter again by night, and never gone.
     expect(STAMP_SHELF_GLOW).toBeLessThan(1);
     expect(STAMP_NIGHT_GLOW).toBeLessThan(1);
     expect(shown(STAMP_SHELF_GLOW * STAMP_NIGHT_GLOW).every((opacity) => opacity > 0)).toBe(true);
@@ -125,7 +125,7 @@ describe('the stamp', () => {
 
 describe('a stamp that carries a picture over a name', () => {
   it('has a margin inside the perforations, a square picture, and a height that holds the words', () => {
-    // a stamp on a phone's shelf, the stamp put forward, and the narrowest one drawn
+    // A phone shelf stamp, the stamp put forward, and the narrowest one drawn.
     expect(stampSize(169)).toEqual({ pad: 18, art: 133, height: 225 });
     expect(stampSize(228, true)).toEqual({ pad: 24, art: 180, height: 296 });
     expect(stampSize(130)).toEqual({ pad: 14, art: 102, height: 190 });
@@ -140,7 +140,7 @@ describe('a stamp that carries a picture over a name', () => {
   it('grows its room for the words with the reader’s text size, and never below the usual', () => {
     expect(stampSize(170, false, 1.3).height).toBeGreaterThan(stampSize(170).height);
     expect(stampSize(170, false, 0.8).height).toBe(stampSize(170).height);
-    // the picture stays as it is: only the words asked for more
+    // The picture stays as it is: only the words need more room.
     expect(stampSize(170, false, 1.3).art).toBe(stampSize(170).art);
   });
 
@@ -155,7 +155,7 @@ describe('a stamp’s light at a shorter reach', () => {
     const rings = stampGlow(STAMP_NIGHT_REACH);
     expect(rings).toHaveLength(STAMP_GLOW.length);
     expect(Math.max(...rings.map((ring) => ring.width)) / 2).toBe(STAMP_NIGHT_REACH);
-    // the same light, drawn over a shorter distance: as strong at the edge, gone sooner
+    // The same glow over a shorter distance: as strong at the edge, gone sooner.
     rings.forEach((ring, i) => expect(ring.opacity).toBe(STAMP_GLOW[i]!.opacity));
     expect(stampBox(160, 200, 1, STAMP_NIGHT_REACH).inset).toBe(STAMP_NIGHT_REACH);
     const svg = stampSvg({ width: 160, height: 200, paper: '#e8f2ff', glow: '#7ab4fe', reach: STAMP_NIGHT_REACH });
@@ -179,18 +179,14 @@ describe('what a game’s stamp is printed in', () => {
     }
   });
 
-  /*
-   * A stamp is paper, and paper on a dark table stays light. It used to take
-   * the night's own ground for its paper, a dark fill in its hue that the
-   * perforations were lost against.
-   */
+  /* A stamp is paper, and paper on a dark table stays light; a dark ground loses the perforations. */
   it('stays light paper by night: between the day’s tint and its wash, never the night’s dark ground', () => {
     for (const hue of HUE_NAMES) {
       const day = hueSteps('light', hue);
       const { paper } = stampLook('dark', hue);
       expect(luminance(paper), hue).toBeLessThan(luminance(day.tint));
       expect(luminance(paper), hue).toBeGreaterThan(luminance(day.wash));
-      // as far from the night's own ground as the day's paper is from the day's page, near enough
+      // As far from the night's ground as the day's paper is from the day's page, near enough.
       expect(contrastRatio(paper, hueSteps('dark', hue).tint), hue).toBeGreaterThan(8);
     }
   });
@@ -201,7 +197,7 @@ describe('what a game’s stamp is printed in', () => {
         const look = stampLook(scheme, hue);
         expect(contrastRatio(look.ink, look.paper), `${scheme} ${hue} name`).toBeGreaterThanOrEqual(7);
         expect(contrastRatio(look.inkSoft, look.paper), `${scheme} ${hue} meaning`).toBeGreaterThanOrEqual(4.5);
-        // a step quieter than the name, and still the name's own colour
+        // A step quieter than the name, and still the name's own colour.
         expect(contrastRatio(look.inkSoft, look.paper)).toBeLessThan(contrastRatio(look.ink, look.paper));
         expect(STAMP_MEANING_INK).toBeGreaterThan(0.5);
       }

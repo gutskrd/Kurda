@@ -1,16 +1,9 @@
 /**
- * Taking Hevalo offline for a while, from the admin console.
- *
- * A superadmin turns it on now or from a set time, and says what people see
- * meanwhile: a title, a message, a picture, and when Hevalo is expected back.
- * While it is on, the API answers the apps with 503 MAINTENANCE and the
- * notice below, and the apps put up a screen with it in place of whatever
- * was open, asking `GET /status` every half minute until it is over. Staff
- * carry on as normal, so the app can be checked before it opens again, and
- * the admin console itself is never closed.
- *
- * A title or message left empty is the apps' own, in each reader's language;
- * one written is shown as written.
+ * Taking Hevalo offline for a while from the admin console. A superadmin turns it on now or from a set time, with a title,
+ * a message, a picture and an expected return. Meanwhile the API answers the apps with 503 MAINTENANCE and the notice,
+ * and the apps show it in place of whatever was open, asking `GET /status` every half minute. Staff carry on as normal, so
+ * the app can be checked before reopening, and the admin console never closes. An empty title or message is the apps'
+ * own, translated.
  */
 
 export const MAINTENANCE_CODE = 'MAINTENANCE';
@@ -53,14 +46,11 @@ export interface MaintenanceSettings {
   startsAt: string | null;
   /** when Hevalo is expected back; null: not said */
   endsAt: string | null;
-  /** at `endsAt` Hevalo opens again by itself; otherwise `endsAt` is only shown */
+  /** Hevalo reopens by itself at `endsAt`; otherwise `endsAt` is only shown */
   reopenAtEnd: boolean;
 }
 
-/**
- * Where a setting stands: off, waiting for its start, on, or over because
- * its end came and it reopens by itself.
- */
+/** Where a setting stands: off, waiting for its start, on, or over because its end came and it reopened by itself. */
 export type MaintenancePhase = 'off' | 'scheduled' | 'on' | 'ended';
 
 export function maintenancePhase(s: Pick<MaintenanceSettings, 'enabled' | 'startsAt' | 'endsAt' | 'reopenAtEnd'>, now: Date): MaintenancePhase {
@@ -71,7 +61,7 @@ export function maintenancePhase(s: Pick<MaintenanceSettings, 'enabled' | 'start
   return 'on';
 }
 
-/** The notice in an API answer, when the answer is "Hevalo is offline" (a 503 body, or `GET /status`). */
+/** The notice in an API answer saying Hevalo is offline (a 503 body, or `GET /status`). */
 export function maintenanceNoticeOf(body: unknown): MaintenanceNotice | null {
   if (typeof body !== 'object' || body === null) return null;
   const b = body as { code?: unknown; maintenance?: unknown };

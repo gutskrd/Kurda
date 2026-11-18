@@ -37,6 +37,7 @@ import { scriptRow, scriptText } from './parts';
 import { Practice } from './Practice';
 import { useSeen } from './seen';
 import { useClipPlayer } from './useClipPlayer';
+import { dialectNameKey } from '../i18n/dialectName';
 
 const SCRIPTS: readonly AlphabetScript[] = ['kmr', 'ckb'];
 
@@ -186,7 +187,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
             options={SCRIPTS}
             value={script}
             onChange={setChosen}
-            labelOf={(s) => t(s === 'kmr' ? 'games.race.kurmanci' : 'games.race.sorani')}
+            labelOf={(s) => t(dialectNameKey(s))}
             groupLabel={t('alphabet.script.label')}
           />
           <View style={styles.intro}>
@@ -233,7 +234,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
             <View style={[styles.links, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
               <ClayButton label={t('alphabet.next.dictionary')} icon="text" onPress={() => navigation.navigate('Dictionary')} />
               <ClayButton label={t('alphabet.next.wordle')} icon="grid" onPress={() => navigation.navigate('Wordle')} />
-              <ClayButton label={t('words.fromAlphabet')} icon="palette" onPress={() => navigation.navigate('Words')} />
+              <ClayButton label={t('words.fromAlphabet')} icon="palette" onPress={() => navigation.popTo('Words')} />
             </View>
           </View>
         </ScrollView>

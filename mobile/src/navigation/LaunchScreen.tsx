@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import { PEEK_VIEW } from '@kurda/shared';
 import SPLASH from '../../assets/splash-icon.png';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { characterLayers } from '../characters/layers';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloPeek } from '../characters/HevaloPeek';
 import { springTo, timing } from '../theme/animate';
 import { GradientBackground } from '../theme/glass';
 import { duration } from '../theme/motion';
@@ -13,8 +14,27 @@ import { spacing, typography } from '../theme/tokens';
 import { LightWash } from './launch/LightWash';
 import { LAUNCH, SPLASH_BACKGROUND, SPLASH_IMAGE_WIDTH, heroPlace } from './launch/splash';
 
-/** Hevalo's drawing head to the tops of his legs, and where its eyes are in it: how the launch draws him. */
+/** Hevalo's drawing head to the tops of his legs, and where its eyes are in it: what the launch lines him up with the splash by. */
 const HERO = characterLayers('hevalo', 'half');
+
+/**
+ * Where the tear he looks through goes so that he is the size and in the
+ * place the splash drew him: his eyes where its deer's eyes were, and as many
+ * points to his unit as the drawing head to legs would have had (`heroPlace`).
+ * He pokes his head through the page (characters/HevaloPeek) rather than
+ * standing cut off at the legs.
+ */
+function peekPlace(box: number): { width: number; height: number; left: number; top: number } {
+  const half = heroPlace(box, HERO.frame, HERO.eyesAt);
+  // the tear is drawn in his own units, so one scale and the offset of its corner from his frame's place it
+  const scale = half.width / HERO.frame.w;
+  return {
+    width: PEEK_VIEW.w * scale,
+    height: PEEK_VIEW.h * scale,
+    left: half.left + (PEEK_VIEW.x - HERO.frame.x) * scale,
+    top: half.top + (PEEK_VIEW.y - HERO.frame.y) * scale,
+  };
+}
 
 /**
  * What you see while the app finds out who you are.
@@ -57,7 +77,7 @@ export function LaunchScreen(): React.JSX.Element {
     return () => run.stop();
   }, [reduce, ground, picture, hero, words]);
 
-  const place = useMemo(() => heroPlace(SPLASH_IMAGE_WIDTH, HERO.frame, HERO.eyesAt), []);
+  const place = useMemo(() => peekPlace(SPLASH_IMAGE_WIDTH), []);
   const arrival = reduce
     ? { opacity: hero }
     : {
@@ -81,7 +101,7 @@ export function LaunchScreen(): React.JSX.Element {
           {/* sized in so many words: a picture given no size takes its own, which is the whole file, not the box */}
           <Animated.Image source={SPLASH} resizeMode="contain" style={[styles.picture, { opacity: picture }]} testID="launch-picture" />
           <Animated.View style={[styles.hero, { left: place.left, top: place.top, width: place.width, height: place.height }, arrival]} testID="launch-hero">
-            <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="half" height={place.height} />
+            <HevaloPeek size={place.height} pop={false} />
           </Animated.View>
           <Animated.View style={[styles.words, { top: place.top + place.height + spacing.md }, rising]}>
             <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>

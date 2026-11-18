@@ -1,20 +1,13 @@
 /**
- * Where the Wîkîferheng extraction is published, and how to read it.
- *
- * The Ferheng project ships the Kurdish Wiktionary extraction as ~105
- * letter-bucketed JSON files plus an `index.json` manifest. This is the only
- * place that knows that, so the command line and the admin panel read it the
- * same way rather than each keeping its own copy of the URL and the shape.
- *
- * Licence: the data is Wiktionary's, CC BY-SA 4.0 + GFDL. Attribution belongs
- * wherever the dictionary is shown — see docs/admin/dictionary-import.md.
+ * Where the Kurdish Wiktionary extraction is published (about 105 letter-bucketed JSON files and an `index.json` manifest)
+ * and how to read it, so the command line and the admin read it alike. The data is licensed CC BY-SA 4.0 and GFDL, and
+ * needs attribution wherever the dictionary is shown (docs/admin/dictionary-import.md).
  */
 import type { Chunk, SourceEntry } from './ferheng.js';
 
-// The Ferheng project moved into a repository of its own; the layout under public/data is unchanged.
 const BASE = 'https://raw.githubusercontent.com/kurdish-tech/ferheng/main/public/data';
 
-/** Their directory → the dialect we store. */
+/** Their directory to the dialect we store. */
 export const FERHENG_LANGS: Record<string, string> = { ku: 'kurmanji', sor: 'sorani', zza: 'zazaki' };
 
 export interface Manifest {
@@ -28,10 +21,7 @@ interface RawManifest {
   letters: Record<string, Chunk[]>;
 }
 
-/**
- * Reading one file at a time, injectable so a test does not reach the network
- * and the runner can be exercised against a handful of words.
- */
+/** Reads one file at a time; injectable so tests stay off the network and can run against a handful of words. */
 export interface FerhengSource {
   manifest(lang: string): Promise<Manifest>;
   chunk(lang: string, file: string): Promise<SourceEntry[]>;
@@ -48,7 +38,7 @@ export const publishedFerheng: FerhengSource = {
     const raw = await getJson<RawManifest>(`${BASE}/${lang}/index.json`);
     return {
       totalWords: raw.total_words ?? null,
-      // the manifest groups files by letter; the import cares only about the order
+      // The manifest groups files by letter; the import cares only about the order.
       files: Object.values(raw.letters).flat(),
     };
   },

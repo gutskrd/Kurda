@@ -21,6 +21,8 @@ import { assertUnrestricted, requireUnrestricted } from '../moderation/restricti
 import { birthDateRequired, isBelowConsentAgeRow, isKnownAdultRow, isMinorRow } from './age.js';
 import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
 import { leaveThisWeek, returnThisWeek } from '../leagues/service.js';
+import { TIME_ZONE_MESSAGE, storableTimeZone } from '../streaks/time-zones.js';
+import { RequestValidationError } from '../plugins/validation.js';
 
 export { USERNAME_CHANGE_COOLDOWN_DAYS };
 /** Profile photos are small; cap tighter than the global media limit (KUR-177). */
@@ -42,6 +44,7 @@ export function sanitizeBio(raw: string): string {
   ).slice(0, 300);
 }
 
+// the shape only; whether the database knows the zone is asked in the route (streaks/time-zones.ts)
 const timezoneSchema = z
   .string()
   .max(50)
@@ -54,7 +57,7 @@ const timezoneSchema = z
         return false;
       }
     },
-    { message: 'must be a valid IANA timezone (e.g. Europe/Berlin)' },
+    { message: TIME_ZONE_MESSAGE },
   );
 
 export const consentBodySchema = z
@@ -571,6 +574,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       if (body.leaguesEnabled !== undefined) add('leagues_enabled', body.leaguesEnabled);
 
       if (body.timezone !== undefined) {
+        // a zone the app's date code takes but the database does not would fail every query of the account's day
+        if (!(await storableTimeZone(app.db, body.timezone))) throw new RequestValidationError('body', [{ path: 'timezone', message: TIME_ZONE_MESSAGE }]);
         const cur = await app.db.query<{ timezone: string; timezone_changed_at: Date | null }>(
           `SELECT timezone, timezone_changed_at FROM users WHERE id = $1`,
           [userId],

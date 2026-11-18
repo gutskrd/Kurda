@@ -35,6 +35,9 @@ vi.mock('../realtime/RealtimeProvider', () => ({
   useRealtimeListener: () => undefined,
 }));
 
+// Several tests here play a whole game through, screen by screen; on a busy machine that can take longer than the default five seconds.
+vi.setConfig({ testTimeout: 20_000 });
+
 beforeEach(() => {
   // the renderer these tests run in answers that a screen reader is always on; on a phone it usually is not
   vi.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(false);

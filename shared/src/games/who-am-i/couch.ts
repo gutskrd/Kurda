@@ -1,28 +1,11 @@
 /**
- * Who Am I? on one phone, passed round a room.
- *
- * The game online (rules.ts) is played apart, each on their own screen: a
- * player's card is on everyone's screen but their own. This one is for people
- * sitting together, and nobody has to remember anything. Whoever holds the
- * phone picks a question, one of the few it suggests or any on their list,
- * and reads it out, then turns the phone to the room: there the friends see
- * the card and the question together and tap their answer themselves (yes,
- * could be, no, or not sure). The phone hides the card again and says what
- * the card's own answer is. A player may also ask the room a question of
- * their own; the friends answer that one out loud, looking at the card, and
- * the phone only counts it. There are no tiles to guess from: a player who
- * thinks they know says who they are, the phone is turned to the room once
- * more, and the friends say whether that is right, or close.
- *
- * It is the same game by the same rules: this module only starts a table
- * from the cards the server dealt for the room (api/src/games/who-am-i.ts),
- * as an open one (a question may be asked out loud), and gives the room's one
- * answer for everybody who would have answered on a screen of their own.
- * Nothing here keeps a clock; the phone waits for the room.
- *
- * Nothing is paid for a game played this way. The phone holds every card, so
- * it cannot be the judge of who won: a game here earns no XP and moves no
- * rating. The players' names never leave the phone.
+ * Who Am I? on one phone passed round a room. Whoever holds the phone picks a question (a suggested one or any on their
+ * list) and reads it out, then turns the phone to the room, where the friends see the card and the question and tap the
+ * answer; the phone hides the card again and says the card's own answer. A player may also ask the room a question of
+ * their own, answered aloud and only counted. Without tiles, a player who thinks they know says who they are and the room
+ * says right or close. The same rules (rules.ts) on an open table started from the server's deal
+ * (api/src/games/who-am-i.ts), with the room's one answer standing for everyone's. No clock is kept, and nothing pays: the
+ * phone holds every card, so it cannot judge who won. Players' names never leave the phone.
  */
 import type { GameDialect } from '../dialect.js';
 import type { GameDifficulty } from '../solo.js';
@@ -40,14 +23,14 @@ export interface WhoAmICouchOffer {
   difficulties: GameDifficulty[];
 }
 
-/** A room's cards, as the server deals them: one for each player, in the order they sit. */
+/** A room's cards as the server deals them: one per player, in seat order. */
 export interface WhoAmICouchDeals {
   dialect: GameDialect;
   difficulty: GameDifficulty;
   deals: WhoAmIDeal[];
   /**
-   * The answers the friends are offered, as the server dealt the cards for: 4 when the app asked for them, else 2 (and
-   * then the cards came without their "sometimes" rows). A server from before the four sends none, which is 2.
+   * The answers offered, as the server dealt the cards for: 4 when the app asked, else 2 (cards without "sometimes" rows);
+   * older servers send none, meaning 2.
    */
   answers?: WhoAmIAnswerCount;
 }
@@ -56,13 +39,13 @@ export interface WhoAmICouchDeals {
 export function startCouchTable(dealt: WhoAmICouchDeals, now: number, seed: string): WhoAmITableState {
   const seats = dealt.deals.map((_, seat) => ({ seat, team: null, bot: null }));
   return whoAmITableRules.init(
-    // the longest a table runs; nothing on one phone reads this clock
+    // The longest a table runs; nothing on one phone reads this clock.
     {
       dialect: dealt.dialect,
       difficulty: dealt.difficulty,
       minutes: WHO_AM_I_TABLE_MINUTES[WHO_AM_I_TABLE_MINUTES.length - 1]!,
       deals: dealt.deals.map((deal, seat) => ({ seat, deal })),
-      // the room is together: a player may ask it a question of their own
+      // The room is together, so a player may ask it a question of their own.
       open: true,
       answers: dealt.answers,
     },
@@ -72,12 +55,9 @@ export function startCouchTable(dealt: WhoAmICouchDeals, now: number, seed: stri
 }
 
 /**
- * What the room said to the question on the table, tapped by the friends
- * while they read the card, and given for everyone who was still to answer
- * it: yes, could be, no or not sure (or, from a screen of two keys, true for
- * yes and false for no). The state comes back with the card's own answer on
- * it (`told`); unchanged when no question is being answered, or when the
- * table does not offer that answer.
+ * The room's answer to the question on the table, tapped while reading the card and given for everyone still to answer:
+ * yes, could be, no or not sure (or true and false from a two-key screen). Returns the state with the card's answer
+ * (`told`), unchanged when no question is open or the table does not offer that answer.
  */
 export function roomAnswers(state: WhoAmITableState, says: WhoAmISays | boolean, now: number): WhoAmITableState {
   const answer = typeof says === 'boolean' ? ({ kind: 'answer', yes: says } as const) : ({ kind: 'answer', says } as const);

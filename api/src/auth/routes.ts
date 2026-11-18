@@ -18,6 +18,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { sessionName } from './session-name.js';
 import { APP_LOCALE_CODES } from '@kurda/shared';
 import { safeTimeZone } from '../streaks/streak-logic.js';
+import { storableTimeZone } from '../streaks/time-zones.js';
 import { assertOldEnough, birthMonthSchema, birthYearSchema } from '../users/birth-month.js';
 import { createMeReader } from '../users/routes.js';
 import type { AdminAccess } from '../admin/owner-access.js';
@@ -37,8 +38,8 @@ function deviceIdOf(headers: Record<string, unknown>): string | null {
   return null;
 }
 
-// an unknown zone is dropped (the account gets UTC) rather than stored:
-// see safeTimeZone in streaks/streak-logic.ts for what one used to break
+// An unknown zone is dropped (the account gets UTC) rather than stored; see safeTimeZone in streaks/streak-logic.ts.
+// One the database does not know is dropped in the route (`knownTimeZone`), since that needs the database's own list.
 const timezoneField = z
   .string()
   .max(50)
@@ -162,6 +163,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   // provider is configured (graceful degradation).
   const risk = new RiskService(app.db, { redis: app.redis });
   const guests = new GuestService(config, app.db);
+  // a zone the database does not know is dropped, as one Intl does not know already was: the account gets UTC
+  const knownTimeZone = async (tz: string | undefined): Promise<string | undefined> => (tz ? ((await storableTimeZone(app.db, tz)) ?? undefined) : undefined);
   const me = createMeReader(app);
 
   app.post(
@@ -201,6 +204,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
 
       const result = await service.register({
         ...body,
+        timezone: await knownTimeZone(body.timezone),
         // the name as the rule wrote it (lowercase, trimmed), not as it was typed
         username: uname.value,
         deviceName: sessionName(body.deviceName, req.headers['user-agent']),
@@ -237,7 +241,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       }
       const { assessment, decisionId } = await risk.assessSignup({ ip: req.ip, deviceId });
       if (assessment.hardBlock) throw await rejected('too many accounts from this device or network');
-      const result = await guests.start({ deviceName, deviceId, locale: body.locale, timezone: body.timezone });
+      const result = await guests.start({ deviceName, deviceId, locale: body.locale, timezone: await knownTimeZone(body.timezone) });
       await risk.attachUser(decisionId, result.user.id).catch((err) => {
         app.log.warn({ err }, 'failed to attach user to risk decision');
       });

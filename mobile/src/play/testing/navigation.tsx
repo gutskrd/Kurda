@@ -19,6 +19,7 @@ export const navigation = {
   popTo: vi.fn(),
   goBack: vi.fn(),
   setParams: vi.fn(),
+  setOptions: vi.fn(),
   dispatch: vi.fn(),
 };
 

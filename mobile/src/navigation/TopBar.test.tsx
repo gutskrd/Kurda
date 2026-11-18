@@ -35,7 +35,7 @@ function show(ui: React.JSX.Element, { unread = 0 } = {}) {
     'GET /me/groups/unread': ok({ unread: [] }),
     'GET /friends/requests': ok({ requests: [] }),
     'GET /me/notifications/unread-count': ok({ count: unread }),
-    'GET /me/social': ok({ unread: {} }),
+    'GET /me/gifts/unseen': ok({ unseen: 0 }),
   });
   const shown = renderWithProviders(<UnreadProvider>{ui}</UnreadProvider>);
   return { again: (next: React.JSX.Element) => shown.rerender(<UnreadProvider>{next}</UnreadProvider>) };
@@ -131,7 +131,7 @@ describe('the bar over a pushed page', () => {
 
   it('closes, in words, a page that was presented over what you were doing', () => {
     show(<ScreenHeader title="Shop" onBack={() => undefined} leading="close" />);
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
   });
 
   /*

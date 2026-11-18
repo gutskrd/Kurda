@@ -129,6 +129,24 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
     expect((await me('PATCH', {})).statusCode).toBe(400);
   });
 
+  /*
+   * Intl takes some names Postgres has never heard of, and a stored one made
+   * every query of the account's day fail — the hourly reminders for everyone
+   * among them. Those are refused as an unknown zone is, and nothing changes.
+   */
+  it('refuses a zone the app’s date code takes but the database does not know', async () => {
+    const before = (await pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [userId])).rows[0]!.timezone;
+    for (const timezone of ['BET', 'AET', 'SystemV/EST5', 'US/Pacific-New']) {
+      // the premise: the date code would take it
+      expect(() => new Intl.DateTimeFormat('en', { timeZone: timezone }), timezone).not.toThrow();
+      const res = await me('PATCH', { timezone });
+      expect(res.statusCode, timezone).toBe(400);
+      expect(res.json()).toMatchObject({ code: 'VALIDATION_ERROR', details: [{ path: 'timezone' }] });
+    }
+    const after = (await pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [userId])).rows[0]!.timezone;
+    expect(after).toBe(before);
+  });
+
   it('timezone change hits the 1/week cooldown (anti streak time-travel)', async () => {
     // the profile test above already moved this user to Europe/Berlin
     const again = await me('PATCH', { timezone: 'Asia/Tokyo' });

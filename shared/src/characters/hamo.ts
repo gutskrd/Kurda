@@ -1,28 +1,13 @@
 /**
- * Hamo: a man in a traditional Kurdish suit — a dark brown jacket crossed
- * over a white shirt, a plain green pştên at the waist, wide trousers
- * gathered at the ankle, and brown shoes — standing with his hands on his
- * hips, his head turned a little to one side, smiling under a full black
- * moustache, his hair black like the reference’s.
+ * Hamo: a man in a traditional Kurdish suit (a dark brown jacket over a white shirt, a plain green pştên at the waist, wide
+ * trousers gathered at the ankle, brown shoes), hands on hips, head turned a little, smiling under a full black moustache,
+ * traced from the reference. Drawn flat, one tone per part, with shade shapes only where the form turns; the pştên is one
+ * flat green. His head runs down over his neck to just above the collar in the neck's skin tone, so a nod shows no seam,
+ * and his moustache is the overlay, so every mouth shape tucks under it.
  *
- * Drawn flat, each part one tone, with a few shade shapes where the form
- * turns: his jaw, under his nose, inside his ear, the folds of the jacket
- * and trousers. That is all the shading the suit has, so it is all the
- * drawing has; the pştên is one flat tone of green, as he asked for it.
- *
- * His head reaches down over his neck to just above the collar, the same
- * skin tone as the neck drawn beneath it, so the head can nod without a seam
- * showing where the two meet. His moustache is the overlay: it lies over the
- * mouth, so every mouth shape tucks its top under it, as a real mouth does.
- *
- * Who he is. Hamo, from Kobanî and at home in Sêvan, is the village's warm
- * heart, the one the children call Xalo Hamo: steady, patient and easily pleased,
- * the one who laughs at his own stories. He chuckles with his whole face,
- * brows up and eyes shut, shoulders going; proud of his moustache, he gives
- * the near end of it a small lift when he is pleased with you. Puzzled, he
- * raises one brow and waits rather than frowning; a miss gets that brow and
- * a thoughtful look, never a cross word. His brows are straight bars, so his
- * feelings show in how high they sit and how they slant, not in any arch.
+ * Character: Xalo Hamo from Kobanî, at home in Sêvan, steady, patient and easily pleased. He chuckles with his whole face,
+ * lifts the near end of his moustache when pleased, and when puzzled raises one brow and waits; a miss gets that brow and a
+ * thoughtful look, never a cross word. His brows are straight bars, so feeling shows in their height and slant.
  */
 import type { Pt } from '../art/svg.js';
 import { n } from '../art/svg.js';
@@ -83,11 +68,7 @@ const GAP_RIGHT: Knot[] = [
   [243.1, 262], [243.7, 258],
 ];
 
-/**
- * The shirt, its V-neck open at the throat, seen down the jacket's opening
- * to the sash. Only its neckline is its own edge: its sides run on under the
- * jacket, so no sliver can open where the two meet.
- */
+/** The shirt's V-neck seen down the jacket's opening to the sash. Only the neckline is its own edge; its sides run under the jacket, so no sliver opens. */
 const SHIRT: Knot[] = [
   [165.8, 171], [167, 170.9], [170.2, 172.2], [172.4, 174.2], [174, 176.6], [178.3, 186.1], [181.9, 191.2],
   [182.6, 193.8], [183.6, 194.3], [184.9, 193.3], [186.1, 189.7], [191.6, 179], [194.8, 170.4], [199, 166.4],
@@ -95,11 +76,7 @@ const SHIRT: Knot[] = [
   [173, 236], [162.6, 190], [162.6, 172.4],
 ]
 
-/**
- * Wide trousers, full to the knee and gathered in at each ankle, the space
- * between the legs left open. Their hips begin under his hands, as the
- * reference’s do, so the background shows in the notch under each cuff.
- */
+/** Wide trousers, full to the knee and gathered at each ankle, the space between the legs open; their hips start under his hands, as in the reference. */
 const TROUSERS: Knot[] = [
   [110.1, 350.3], [106.3, 359.4], [102.3, 373.9], [98.4, 393.3], [94.5, 422.6], [90.7, 468.6], [87.3, 533.6],
   [86.9, 565.9], [92, 604.8], [97.5, 624.6], [101.5, 636], [107, 644], [114.5, 650.6], [120.5, 658.5],
@@ -112,11 +89,7 @@ const TROUSERS: Knot[] = [
   [243.4, 351.2], [243, 350, 0], [110.5, 350, 0],
 ];
 
-/**
- * The jacket's own folds: the seam where each sleeve meets the body and the
- * long crease down each forearm from the inside of the elbow to under the
- * hand. The cuffs carry no mark of their own, as the reference’s do not.
- */
+/** The jacket's folds: each sleeve's seam and the crease down each forearm from the elbow to under the hand. The cuffs carry none, as in the reference. */
 const FOLDS: readonly (readonly Pt[])[] = [
   [
     [117.8, 221.9],
@@ -147,7 +120,7 @@ const FOLDS: readonly (readonly Pt[])[] = [
   ],
 ];
 
-/** The pleats that fall from the sash, two to each leg: pressed tucks, the inner pair longer. */
+/** The pleats falling from the sash, two per leg, the inner pair longer. */
 const PLEATS: readonly (readonly Pt[])[] = [
   [
     [126.8, 346],
@@ -175,39 +148,27 @@ const PLEATS: readonly (readonly Pt[])[] = [
   ],
 ];
 
-/** Where the pştên's top edge is at his sides, and how far it and every band in it bow down at the front: a little, as cloth round a waist does. */
+/** Where the pştên's top edge is at his sides; it and every band in it bow down a little at the front, as cloth round a waist does. */
 const SASH_TOP = 314.5;
 
-/**
- * How far each edge of the band bows down at the front, measured from the
- * reference: the top edge sags a little, the bottom edge twice as deep, so
- * the band curves full over the middle rather than lying as a flat ribbon.
- */
+/** How far each edge of the band bows down at the front, from the reference: the bottom twice the top, so the band curves full over the middle. */
 const SASH_BOW_TOP = 2.5;
 const SASH_BOW_BOTTOM = 3;
 
-/** How deep the wound cloth reaches below its top edge, measured between the reference’s hands: a thin band worn up at the waist, his fingers curling over its top edge. */
+/** How deep the band reaches below its top edge, from the reference: a thin band worn high, his fingers curling over its top. */
 const SASH_DEPTH = 33;
 
-/**
- * The pştên, wound round his waist from hip to hip in one flat green: its top
- * and bottom edges bow down together at the front, its ends run under his
- * hands and round his sides, where they follow the line of his hips.
- */
+/** The pştên in one flat green: its edges bow down together at the front, and its ends run under his hands and round his sides. */
 function sashOutline(bottom: number): string {
   const [t, b] = [SASH_TOP, bottom];
-  // its ends keep inside the jacket's hem corners, which wrap round them
+  // Its ends stay inside the jacket's hem corners, which wrap round them.
   return (
     `M112.4,${n(t + 2.5)}L116,${t}Q180,${n(t + SASH_BOW_TOP * 2)} 244,${t}H244.6L244,330L241,341.5L241,${n(b)}` +
     `Q180,${n(b + SASH_BOW_BOTTOM * 2)} 116,${n(b)}H111L112.4,338Z`
   );
 }
 
-/**
- * His left hand (on the viewer's left), the fingers lying forward over the
- * sash. Its outer edge is the reference’s: the wrist inside the cuff, the
- * heel receding under the cuff rather than reaching past it.
- */
+/** His left hand (on the viewer's left), fingers forward over the sash; its outer edge follows the reference, the heel receding under the cuff. */
 const HAND_LEFT: Knot[] = [
   [108.8, 313.2], [114, 309.6], [120.4, 307], [128, 306.6], [136.1, 307.5], [143, 310.2], [149.4, 311.7],
   [151.6, 314.6, 0.4], [148.6, 317.3], [141, 317.7], [136.4, 318.4, 0.4], [136.6, 321.8], [140.7, 326.0],
@@ -217,7 +178,7 @@ const HAND_LEFT: Knot[] = [
   [116.2, 336.4], [113.2, 332.6], [110.4, 328.6], [107.6, 324.6], [104.8, 320.2], [104.6, 316.6], [106.8, 314.6],
 ];
 
-/** His right hand, foreshortened as the reference’s is: the thumb along the top of the sash, the wrist kept within the cuff. */
+/** His right hand, foreshortened as in the reference: the thumb along the top of the sash, the wrist within the cuff. */
 const HAND_RIGHT: Knot[] = [
   [247.1, 304.5], [253.5, 308.5], [256.8, 313.5], [256.6, 318.5], [254.4, 322.5], [250.6, 326.5], [247.2, 330], [243.6, 333.5],
   [239.2, 337.5], [234.4, 340.8], [229.8, 343.3], [226.4, 344.8, 0.4], [223.2, 344.4], [218.2, 345.2], [214.6, 344.6],
@@ -226,7 +187,7 @@ const HAND_RIGHT: Knot[] = [
   [212.2, 311.4], [211.4, 309.7], [212.7, 307.1], [218, 305.2], [226, 303.8], [232, 302.8], [236, 301.4], [238.4, 300.6], [240.2, 302.4], [243, 303.8],
 ];
 
-/** The lines between his fingers, where one lies against the next. */
+/** The lines between his fingers. */
 const CREASES: readonly (readonly Pt[])[] = [
   [
     [139.6, 334],
@@ -260,10 +221,7 @@ const CREASES: readonly (readonly Pt[])[] = [
   ],
 ];
 
-/**
- * His shoes: soft and low, cut down at the inner side where the ankle shows,
- * the toe of each turned out.
- */
+/** His shoes: soft and low, cut down at the inner side where the ankle shows, each toe turned out. */
 const SHOE_LEFT: Knot[] = [
   [159.4, 677], [160, 688.1], [159.2, 695.8], [158.1, 697.7], [155, 698.9], [142.9, 699.4], [104.6, 699.2],
   [98.3, 697.9], [96.4, 695.5], [95.9, 690], [97.2, 686.5], [104, 678.7], [110.5, 672.5], [115.5, 669.5],
@@ -277,19 +235,11 @@ const SHOE_RIGHT: Knot[] = [
 ];
 
 /**
- * His neck: the same tone as his face, running on down under the collar.
- * The head covers all of it but the band in the collar's opening; it is
- * here so that band, and whatever a turn of the head uncovers, is skin.
- * Above the lapels it keeps well inside the jaw on both sides: the head
- * turns and the body does not, and a neck drawn out to the jaw line stood
- * proud of the cheek as a step whenever the head was tilted. The acts tilt
- * the head up to eight degrees one way and four the other, with a degree of
- * sway on top, so each side is set from where the jaw's edge lands at the
- * far end of that, a unit and a half inside it: on the right (which a dip
- * toward the near side uncovers) that is three units in from the jaw at
- * rest, on the left (uncovered by a tilt the other way, below the ear's
- * lobe) two. From the lapels down it follows them, so the opening between a
- * lapel and the jaw that a turn reveals is neck and not the page.
+ * His neck, in his face's tone, running down under the collar so the collar's opening and whatever a head turn uncovers
+ * is skin. Above the lapels it stays well inside the jaw, since the head turns and the body does not: the acts tilt up to
+ * eight degrees one way and four the other plus a degree of sway, and each side is set a unit and a half inside where the
+ * jaw's edge lands at that extreme (three units inside the jaw at rest on the right, two on the left). From the lapels
+ * down it follows them.
  */
 const NECK: Knot[] = [
   [152, 118],
@@ -321,7 +271,7 @@ function body(): string {
   return part(
     [],
     [
-      // the ankles, between cuff and shoe
+      // The ankles, between cuff and shoe.
       fill('M125,660h35v18h-35zM204.6,660h36.9v17.6h-36.9z', C.skin),
       fill(curve(SHOE_LEFT) + curve(SHOE_RIGHT), C.shoe),
       fill(curve(TROUSERS), C.suit),
@@ -329,10 +279,10 @@ function body(): string {
       fill(curve(SHIRT), C.shirt),
       `<path d="${curve(JACKET)}${curve(GAP_LEFT)}${curve(GAP_RIGHT)}" fill="${C.suit}" fill-rule="evenodd"/>`,
       fill(FOLDS.map((s) => taper(s, s.map((_, i) => (i === 0 || i === s.length - 1 ? 0.3 : 2.4)))).join(''), C.fold),
-      // drawn over the jacket's hem, so they fall straight from the sash
+      // Over the jacket's hem, so they fall straight from the sash.
       line(strokes(PLEATS), C.fold, 3.4),
       fill(sash, C.sash),
-      // the hands lie over the pştên in the skin of his face, the fingers forward and the thumbs back
+      // The hands lie over the pştên in his face's skin, fingers forward and thumbs back.
       fill(curve(HAND_LEFT) + curve(HAND_RIGHT), C.skin),
       fill(CREASES.map((s) => taper(s, [0.2, 0.8, 0.25])).join(''), C.shade),
     ],
@@ -341,7 +291,7 @@ function body(): string {
 
 // ─────────────────────────────────────────────────────────────── the head
 
-/** His hair: full on top, a little wavy along the hairline, the temples filled in as the reference’s are, down to a short sideburn in front of his ear. */
+/** His hair: full on top, a little wavy at the hairline, the temples filled in as in the reference, down to a short sideburn. */
 const HAIR: Knot[] = [
   [176.6, 50.0], [186.1, 50.0], [200.6, 53.3], [205.3, 55.8], [210.9, 57.9], [215.0, 61.6], [216.6, 64.3],
   [217.5, 67.6], [218.1, 73.6], [219.7, 79.9], [219.8, 84], [219.6, 87], [219.1, 90], [218.5, 92], [217.9, 94],
@@ -353,11 +303,8 @@ const HAIR: Knot[] = [
 ];
 
 /**
- * His near ear, in the skin of his face (its shape is the shade inside it,
- * not a tone of its own). Its inner edge runs a little way under the face,
- * which is drawn over it: an edge that only met the face's outline left a
- * sliver of nothing between the lobe and the jaw wherever the two curves
- * disagreed by half a unit, and a turn of the head opened it wide.
+ * His near ear, in his face's skin, its shape given by the shade inside it. Its inner edge runs a little under the face,
+ * since an edge that only met the face's outline left a sliver between lobe and jaw that a head turn opened wide.
  */
 const EAR: Knot[] = [
   [150.6, 132.6, 0.15], [148.4, 131.9], [147.7, 130.2], [144.5, 128.9], [141.0, 125.4], [137.5, 116.1],
@@ -377,7 +324,7 @@ const EAR_SHADE2: Knot[] = [
   [149.6, 103.5], [150.0, 104.9],
 ];
 
-/** The shade along his jaw and under his chin, one band from below his ear round to the other side. */
+/** The shade along his jaw and under his chin, one band from below one ear round to the other side. */
 const JAW: Knot[] = [
   [200.4, 163.3], [199.1, 164.5], [197.8, 167.7], [195.8, 168.9], [191.9, 168.7], [185.1, 169.5], [181.0, 168.9],
   [176.0, 167.1], [167.0, 159.6], [156.0, 147.6], [152.5, 141.6], [151.7, 138.5], [150.1, 136.0], [149.6, 133.4],
@@ -387,10 +334,8 @@ const JAW: Knot[] = [
 ];
 
 /**
- * His nose, as the reference draws it: no line down the ridge and no edge
- * drawn round it, only a soft, broad shade on the far side of its lower half
- * where it rounds toward the tip, and a soft shadow under the tip that tucks
- * under the moustache, so the base is hidden the way the reference’s is.
+ * His nose as the reference draws it: no ridge line or outline, only a soft shade on the far side of its lower half and a
+ * shadow under the tip tucking under the moustache.
  */
 const NOSE_SIDE: Knot[] = [
   [196.8, 112.5, 0.5], [198.8, 115.5], [200.6, 119.5], [202.0, 123.5], [202.4, 126.6], [201.0, 128.0, 0.5], [199.0, 127.6],
@@ -403,11 +348,8 @@ const NOSE_BASE: Knot[] = [
 ];
 
 /**
- * His brows, set straight as the owner asked: each a level bar the thickness
- * of a finger, blunt and a touch heavier at its inner end and tapering to a
- * point at the temple, its outer end a hair higher than its inner one, so
- * he looks steady rather than surprised. The far brow is the same bar
- * foreshortened, its tail running out toward the far temple.
+ * His brows: straight bars a finger thick, blunt and a touch heavier inside, tapering to the temple with the outer end a
+ * hair higher, so he looks steady rather than surprised. The far brow is the same bar foreshortened.
  */
 const BROW_LEFT: Knot[] = [
   [164.2, 99.2, 0.15], [165.0, 98.6], [170.0, 98.0], [176.0, 97.5], [182.0, 97.3], [188.6, 97.4],
@@ -419,11 +361,7 @@ const BROW_RIGHT: Knot[] = [
   [214.6, 100.0], [210.0, 100.6], [205.0, 101.0], [200.8, 101.6],
 ];
 
-/**
- * His face and neck down to just above the collar, in one flat tone. Its top
- * runs hidden under his hair, a little inside the hair's outer edge, so no
- * skin shows round the hair; its bottom follows the collar.
- */
+/** His face and neck to just above the collar, one flat tone; its top runs hidden under his hair, inside its edge, so no skin shows round it. */
 const FACE: Knot[] = [
   [150.4, 64],
   [160, 56],
@@ -479,22 +417,19 @@ const FACE: Knot[] = [
 ];
 
 /**
- * How the brows sit for each state: each bar carried `dy` up or down (and
- * `dx` toward the nose), and its inner end a further `slant` beyond that,
- * fading to nothing at the temple, so a raised brow lifts most where a brow
- * does. The near brow (on the left as seen) moves the more, as the near
- * side of a turned face does.
+ * How the brows sit per state: each bar moved `dy` (and `dx` toward the nose), its inner end a further `slant` fading to
+ * nothing at the temple. The near brow (left as seen) moves more, as the near side of a turned face does.
  */
 const BROW_MOVES: Readonly<Record<BrowState, { near: readonly [number, number, number]; far: readonly [number, number, number] }>> = {
   neutral: { near: [0, 0, 0], far: [0, 0, 0] },
   raised: { near: [0, -2.6, -0.5], far: [0, -2.2, -0.4] },
-  // one brow up, most at its inner end, the other left where it is: the look that asks "really?"
+  // One brow up, most at its inner end, the other still: "really?"
   one: { near: [0, -1.3, -2.2], far: [0, 0, 0] },
-  // both drawn down and in toward the nose, the inner ends lowest
+  // Both drawn down and in toward the nose, inner ends lowest.
   knit: { near: [0.9, 1.0, 1.3], far: [-0.8, 0.9, 1.1] },
 };
 
-/** The brows as they sit for `state`; at rest they are exactly as traced. */
+/** The brows for `state`; at rest exactly as traced. */
 function brows(state: BrowState): string {
   const moved = (knots: readonly Knot[], [dx, dy, slant]: readonly [number, number, number], inner: number, outer: number): Knot[] =>
     knots.map(([x, y, r]) => [x + dx, y + dy + slant * ((x - outer) / (inner - outer)), r ?? 1] as const);
@@ -502,7 +437,7 @@ function brows(state: BrowState): string {
   return fill(curve(moved(BROW_LEFT, m.near, 189.4, 164.2)) + curve(moved(BROW_RIGHT, m.far, 198.9, 216.9)), C.brow);
 }
 
-/** His head; without its brows (`withBrows` false), for a player that draws them as a layer of their own. */
+/** His head; without its brows (`withBrows` false) for a player that draws them as their own layer. */
 function head(withBrows = true): string {
   return part(
     [],
@@ -521,7 +456,7 @@ function head(withBrows = true): string {
 
 // ─────────────────────────────────────────────────────────────── the eyes
 
-/** Each eye's opening, from its outer corner round to its inner one; the head is turned, so the far eye is a little smaller. */
+/** Each eye's opening from its outer corner round to its inner one; with the head turned, the far eye is a little smaller. */
 const EYE_LEFT: Knot[] = [
   [167.8, 109.4, 0.2],
   [170.6, 106.8],
@@ -544,7 +479,7 @@ const EYE_RIGHT: Knot[] = [
   [202.2, 112],
 ];
 
-/** Where each iris sits and how big it is; the far eye is a little smaller, the head being turned. */
+/** Where each iris sits and its size; the far eye is a little smaller, the head being turned. */
 const IRIS: readonly (readonly [number, number, number])[] = [
   [175, 108.6, 4],
   [205.4, 108.9, 3.6],
@@ -559,7 +494,7 @@ function lid(eye: readonly Knot[], weight: number): string {
 type Side = 'left' | 'right';
 const SIDES: readonly Side[] = ['left', 'right'];
 
-/** An eye's opening made `tall` times taller about its middle, the lids lifting and dropping as a startled eye's do. */
+/** An eye's opening `tall` times taller about its middle, the lids lifting and dropping as a startled eye's do. */
 function opened(eye: readonly Knot[], tall: number): Knot[] {
   const ys = eye.map((k) => k[1]);
   const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
@@ -567,10 +502,8 @@ function opened(eye: readonly Knot[], tall: number): Knot[] {
 }
 
 /**
- * The open eyes asked for: each its white, its iris in a clip of its own,
- * and the lash line of its upper lid. `tag` names the clips, so a part drawn
- * for one state never defines another's; `tall` opens them wider and `pupil`
- * shrinks the pupils, for a startled look.
+ * The open eyes asked for: each white, its iris in its own clip, and the upper lid's lash line. `tag` names the clips so
+ * one state's parts never define another's; `tall` opens them wider and `pupil` shrinks the pupils, for a startled look.
  */
 function eyesDrawn(p: string, tag: string, sides: readonly Side[], tall = 1, pupil = 0.48): string {
   const id = (side: Side): string => `${p}${tag}${side === 'left' ? 'L' : 'R'}`;
@@ -581,7 +514,7 @@ function eyesDrawn(p: string, tag: string, sides: readonly Side[], tall = 1, pup
     sides.map((side) => clipDef(id(side), curve(eye(side)))),
     [
       fill(sides.map((side) => curve(eye(side))).join(''), C.white),
-      // each iris in a group of its own, so it can look aside within its eye (`irisReach`)
+      // Each iris in its own group, so it can look aside within its eye (`irisReach`).
       ...sides.map((side) => clipped(id(side), `<g data-iris="${side}">${iris(IRIS[side === 'left' ? 0 : 1] as readonly [number, number, number])}</g>`)),
       fill(sides.map((side) => lid(eye(side), side === 'left' ? 1 : 0.95)).join(''), C.lash),
     ],
@@ -597,7 +530,7 @@ function eyesWide(p: string): string {
   return eyesDrawn(p, 'wide', SIDES, 1.4, 0.4);
 }
 
-/** A blink: the eyes shut along a dark lash line, the crease of each lid above it. */
+/** A blink: the eyes shut along a dark lash line, each lid's crease above it. */
 function eyesClosed(): string {
   const shut = (eye: readonly Knot[]): Pt[] => [eye[0], eye[7], eye[6], eye[5], eye[4]].map((k) => [(k as Knot)[0], (k as Knot)[1] - 0.6] as Pt);
   const left = shut(EYE_LEFT);
@@ -611,7 +544,7 @@ function eyesClosed(): string {
   );
 }
 
-/** A smiling eye: shut, the lash line along where the upper lid was, curved up, the way eyes close when someone beams. */
+/** A smiling eye: shut, its lash line curved up where the upper lid was, as eyes close when someone beams. */
 function smilingEye(eye: readonly Knot[], weight: number): string {
   return taper(
     [eye[0], eye[1], eye[2], eye[3], eye[4]].map((k) => [(k as Knot)[0], (k as Knot)[1] + 1.8] as Pt),
@@ -628,7 +561,7 @@ function eyesWink(p: string): string {
   return eyesDrawn(p, 'wink', ['right']) + part([], [fill(smilingEye(EYE_LEFT, 1), C.lash)]);
 }
 
-/** His moustache: full and thick across his lip, tapering to points that turn down past the corners of his mouth. */
+/** His moustache: full across the lip, tapering to points that turn down past the corners of his mouth. */
 const MOUSTACHE: Knot[] = [
   [171, 137.9, 0.15],
   [174.6, 136.4],
@@ -648,12 +581,9 @@ const MOUSTACHE: Knot[] = [
 ];
 
 /**
- * Where the near end of the moustache parts from the rest, for the lift he
- * gives it: an upright cut just inside the near lobe's root, and how far the
- * two pieces overlap there. Each piece is the whole moustache's own outline
- * inside a clip, so drawn together at rest they are the moustache to the
- * pixel, and the end can turn a little about its root with nothing opening
- * between them.
+ * Where the moustache's near end parts from the rest, for the lift he gives it: an upright cut just inside the near lobe's
+ * root, and how far the two pieces overlap there. Each piece is the whole outline inside a clip, so together at rest they
+ * match the moustache exactly and the end can turn about its root without a gap.
  */
 const MOUSTACHE_CUT = 178.4;
 const MOUSTACHE_LAP = 0.6;
@@ -677,7 +607,7 @@ export function drawHamo(p: string): CharacterArt {
     name: 'Hamo',
     viewBox: { x: 34, y: 42, w: 278, h: 664 },
     bust: { x: 118, y: 44, w: 134, h: 134 },
-    // head to hips: his hands on his sash, and the top of his trousers
+    // Head to hips: his hands on his sash, and the top of his trousers.
     half: { x: 34, y: 42, w: 278, h: 360 },
     headPivot: { x: 181, y: 160 },
     body: body(),
@@ -698,7 +628,7 @@ export function drawHamo(p: string): CharacterArt {
     ),
     overlay: fill(curve(MOUSTACHE), C.moustache),
     irisReach: 2.4,
-    // his far eye, on the right, is the smaller: his face is turned a little to the left
+    // His far eye, on the right, is smaller: his face is turned a little to the left.
     turned: 'left',
   };
 }

@@ -132,7 +132,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
             {error ? <Text style={[styles.error, dir.text, { color: colors.danger }]}>{error}</Text> : null}
 
             {list.length === 0 ? (
-              <EmptyState title={t('settings.blocked.none')} />
+              <EmptyState title={t('settings.blocked.none')} body={t('settings.blocked.noneBody')} />
             ) : (
               <>
                 {list.map((u) => (

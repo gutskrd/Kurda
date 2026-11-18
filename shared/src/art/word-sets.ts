@@ -1,28 +1,9 @@
 /**
- * The pictures on the cards of Letters and words: three toy blocks with the
- * first letters for the alphabet, a paint palette for the colours, an abacus
- * for the numbers, the sun for the days of the week (in Kurdish one word, roj,
- * is both the day and the sun) and a wall calendar for the months. Each is an
- * object a child would know, drawn the same way so the five read as one
- * family: flat cut-outs lit from the upper left, every form with a lit rim
- * along its upper edge and its thickness showing as a darker band below it,
- * as the coin stands forward on its edge.
- *
- * The blocks are the one picture that carries letters, drawn as strokes of a
- * round pen rather than set in a font (a drawing holds no text): A, B and C
- * for the Latin alphabet, and ا, ب and پ for a reader who learns Soranî in its
- * own script, so the first card shows the letters that reader will meet.
- *
- * They replaced a grid of four dots that served for both the colours and the
- * months, so the two cards looked alike, a "123" in the display font and a
- * calendar glyph for the days. A picture holds no text, so the numbers are
- * counted rather than written: the abacus shows one bead, then two, then
- * three, which reads the same in every script.
- *
- * The two apps draw these on their own tile, which is light or dark with the
- * theme; each picture carries its own colours, and the pale ones (the
- * calendar's page, the palette's wood) have their darker edge below them so
- * they hold on a light tile too.
+ * The pictures on the Letters and words cards: toy blocks for the alphabet, a paint palette for colours, an abacus for
+ * numbers, the sun for weekdays (roj is both day and sun) and a wall calendar for months, all in the cut-out style
+ * (cutout.ts). Only the blocks carry letters, drawn as round-pen strokes since drawings hold no text: A, B, C for Latin
+ * and ا, ب, پ for Soranî in Arabic script. Numbers are counted on the abacus rather than written, so they read in every
+ * script. The apps' tiles are light or dark with the theme, so pale pieces keep a darker edge below them.
  */
 import type { WordSetId } from '../word-sets/words.js';
 import { COLOURS } from '../word-sets/words.js';
@@ -34,11 +15,11 @@ export type WordsCardId = 'letters' | WordSetId;
 
 export interface WordSetArtOptions {
   set: WordsCardId;
-  /** the alphabet's blocks only: Latin letters, or the Arabic script Soranî is written in */
+  /** For the alphabet's blocks: Latin letters, or the Arabic script Soranî is written in. */
   script?: 'latin' | 'arabic';
-  /** how big it is drawn, in pixels (it is square) */
+  /** Size in pixels; the drawing is square. */
   size?: number;
-  /** its text label; the cards say the set's name beside it and hide the picture from screen readers */
+  /** The accessible label; the cards print the set's name beside it and hide the picture from screen readers. */
   title?: string;
   idPrefix?: string;
 }
@@ -60,17 +41,15 @@ const BLOCK = 40;
 const LATIN_GLYPHS: readonly string[] = [
   // A
   'M-9 11L0 -11L9 11M-5.4 3H5.4',
-  // B: its stem, the smaller bowl above and the fuller one below
+  // B: its stem, the smaller bowl above and the fuller one below.
   'M-7 11V-11H0.5C8.5 -11 8.5 -0.5 0.5 -0.5H-7M0.5 -0.5H1.5C10.5 -0.5 10.5 11 1.5 11H-7',
-  // C: most of a ring, open to the right
+  // C: most of a ring, open to the right.
   'M8 -7.5A11 11 0 1 0 8 7.5',
 ];
 
 /**
- * Alif, be and pe, as the pen writes them: a stroke straight down, and a flat
- * boat with a small tooth at its right end and its left end turned up, its
- * dots below it. Each is lifted by half of what hangs below its line, so the
- * letter and its dots sit in the middle of the face together.
+ * Alif, be and pe as pen strokes: a vertical stroke, and a flat boat with a tooth at its right end, its left end
+ * turned up and its dots below. Each is raised by half its descent so letter and dots sit centred on the face.
  */
 const BOAT = 'M12 -5V0Q12 3 8 3H-7Q-12 3 -12 -2';
 const ARABIC_GLYPHS: readonly { d: string; dots: readonly [number, number][]; lift: number }[] = [
@@ -81,7 +60,7 @@ const ARABIC_GLYPHS: readonly { d: string; dots: readonly [number, number][]; li
 
 /** Three toy blocks, two on the ground and one on top, each with a letter on its face. */
 function blocks(dr: Drawing, script: 'latin' | 'arabic'): void {
-  // read in the script's own direction: the first letter where the eye starts, on the ground
+  // In the script's reading order: the first letter where the eye starts, on the ground.
   const order = script === 'arabic' ? [1, 0, 2] : [0, 1, 2];
   BLOCKS.forEach((b, i) => {
     form(dr, rr(b.x, b.y, BLOCK, BLOCK, 9), { light: tint(b.hex, 0.32), base: b.hex, shade: tint(b.hex, -0.32) }, 5, 2.4);
@@ -104,7 +83,7 @@ function blocks(dr: Drawing, script: 'latin' | 'arabic'): void {
 
 const WOOD_PALE: Tones = { light: '#fde8c4', base: '#f0d09e', shade: '#c4935a' };
 
-/** A painter's palette, its thumb hole at the lower right, with four blobs of the set's first colours round its top. */
+/** A painter's palette, thumb hole at the lower right, with four blobs of the set's first colours round its top. */
 function palette(dr: Drawing): void {
   const d = `M60 24C86 24 106 38 106 58C106 72 98 80 88 86C78 92 72 96 58 96C34 96 14 82 14 60C14 38 34 24 60 24Z${ring(80, 74, 7.5)}`;
   form(dr, d, WOOD_PALE, 5, 2.4, true);
@@ -121,14 +100,14 @@ function palette(dr: Drawing): void {
 
 const WOOD_DARK: Tones = { light: '#e9b37a', base: '#cf8c4c', shade: '#91592b' };
 const ROD = '#9aa0ad';
-/** One bead, then two, then three: the numbers counted, in the warm palette's pomegranate, saffron and meadow. */
+/** One bead, then two, then three, in pomegranate, saffron and meadow. */
 const BEAD_ROWS: readonly [string, number][] = [
   ['#d8493b', 1],
   ['#f2b632', 2],
   ['#3fa45b', 3],
 ];
 
-/** An abacus: a wooden frame round three rods, one bead slid along the first, two along the second, three along the third. */
+/** An abacus: a wooden frame round three rods holding one, two and three beads. */
 function abacus(dr: Drawing): void {
   form(dr, `${rr(16, 22, 88, 78, 12)}${rr(27, 33, 66, 56, 5)}`, WOOD_DARK, 5, 2.4, true);
   BEAD_ROWS.forEach(([hex, count], row) => {
@@ -151,7 +130,7 @@ function sun(dr: Drawing): void {
   for (let i = 0; i < 8; i++) {
     const a = (i * Math.PI) / 4;
     const p = (r: number, da: number): string => `${n(cx + r * Math.cos(a + da))} ${n(cy + r * Math.sin(a + da))}`;
-    // a blunt tooth from the face out, its tip rounded off
+    // A blunt ray from the face out, its tip rounded off.
     rays.push(`M${p(30, -0.26)}L${p(46, -0.09)}Q${p(50, 0)} ${p(46, 0.09)}L${p(30, 0.26)}Z`);
   }
   const d = rays.join('');
@@ -169,26 +148,26 @@ const TODAY = '#f2b632';
 const RINGS = { front: '#aab0bc', back: '#7c8392' };
 const RING_XS = [33, 54.5, 76];
 
-/** A wall calendar: a page with a pomegranate band across its top, hung by three rings, and a grid of days with one marked. */
+/** A wall calendar: a page with a pomegranate band, hung by three rings, with a grid of days and one marked. */
 function calendar(dr: Drawing): void {
   const page = rr(18, 28, 84, 76, 14);
-  // the rings' far legs go down behind the page
+  // The rings' far legs go down behind the page.
   for (const x of RING_XS) dr.add(`<path d="M${n(x + 11)} 21V34" stroke="${RINGS.back}" stroke-width="5" stroke-linecap="round"/>`);
   form(dr, page, PAGE, 5, 2.4);
-  // the band across the top, lit along its upper edge, its lower edge in shadow
+  // The band across the top, lit along its upper edge and shaded along its lower.
   const band = dr.clip(page);
   dr.add(
     `<g clip-path="url(#${band})"><path d="M18 28H102V54H18Z" fill="${HEADER.edge}"/><path d="M18 28H102V51H18Z" fill="${HEADER.face}"/>` +
       `<path d="M18 28H102V31.5H18Z" fill="${HEADER.light}"/></g>`,
   );
-  // the days: two weeks of cells, today's marked
+  // Two weeks of day cells, today's marked.
   for (let row = 0; row < 2; row++) {
     for (let col = 0; col < 4; col++) {
       const fill = row === 0 && col === 2 ? TODAY : CELL;
       dr.add(`<path d="${rr(27 + col * 17, 62 + row * 17, 13, 12, 3.5)}" fill="${fill}"/>`);
     }
   }
-  // the rings' near legs, from a hole in the band up and over
+  // The rings' near legs, from a hole in the band up and over.
   for (const x of RING_XS) {
     dr.add(`<ellipse cx="${n(x)}" cy="39" rx="3.6" ry="3" fill="${HEADER.hole}"/>`);
     dr.add(`<path d="M${n(x)} 38V21A5.5 5.5 0 0 1 ${n(x + 11)} 21" fill="none" stroke="${RINGS.front}" stroke-width="5" stroke-linecap="round"/>`);
@@ -198,7 +177,7 @@ function calendar(dr: Drawing): void {
 const DRAW: Record<WordSetId, (dr: Drawing) => void> = { colours: palette, numbers: abacus, days: sun, months: calendar };
 const TITLE: Record<WordsCardId, string> = { letters: 'Alphabet', colours: 'Colours', numbers: 'Numbers', days: 'Days of the week', months: 'Months' };
 
-/** The picture on a card of Letters and words. */
+/** The picture on a Letters and words card. */
 export function wordSetSvg(opts: WordSetArtOptions): string {
   const size = checkSize(opts.size, 44);
   const script = opts.script ?? 'latin';

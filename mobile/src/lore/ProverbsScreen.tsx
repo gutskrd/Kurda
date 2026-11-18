@@ -26,8 +26,9 @@ import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { getProverbs } from './api';
-import { PROVERBS_NAME, THEME_KEY, defaultLoreDialect, kurdishIn, proverbTranslation, textIn, traditionMark, varietyName } from './labels';
+import { PROVERBS_NAME, THEME_KEY, defaultLoreDialect, kurdishIn, proverbTranslation, textIn, traditionMark } from './labels';
 import { CollectionTitle, VarietySwitch } from './parts';
+import { dialectNameKey } from '../i18n/dialectName';
 
 type Filter = 'all' | ProverbTheme;
 
@@ -96,7 +97,7 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
       </View>
     );
   } else if (list.proverbs.length === 0) {
-    body = <Note icon="quotes">{t('lore.proverbs.empty', { variety: varietyName(dialect) })}</Note>;
+    body = <Note icon="quotes">{t('lore.proverbs.empty', { variety: t(dialectNameKey(dialect)) })}</Note>;
   } else {
     // a round is offered only when the server can build one: five proverbs, as the website asks
     const roundable = list.proverbs.length >= PROVERB_ROUND_ITEMS;

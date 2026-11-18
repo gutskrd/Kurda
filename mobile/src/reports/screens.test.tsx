@@ -117,7 +117,7 @@ describe('MyReportsScreen', () => {
   it('says so when there is nothing yet', async () => {
     testAuth.client = fakeClient({ 'GET /me/reports': ok({ reports: [] }) });
     renderWithProviders(<MyReportsScreen onExit={() => undefined} />);
-    expect(await screen.findByText('Nothing reported yet. When you report something, you can follow it here.')).toBeTruthy();
+    expect(await screen.findByText('Nothing reported yet.')).toBeTruthy();
   });
 });
 

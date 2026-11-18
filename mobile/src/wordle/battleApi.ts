@@ -95,29 +95,29 @@ export const createBattle = (client: ApiClient, difficulty: Difficulty, rated?: 
   client.post('/wordle/battles', rated === undefined ? { difficulty } : { difficulty, rated });
 
 export const joinBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
-  client.post(`/wordle/battles/${id}/join`);
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/join`);
 
 export const startBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
-  client.post(`/wordle/battles/${id}/start`);
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/start`);
 
 /**
  * Leave: out of the lobby (the host leaving calls it off for everyone), or
  * out of a battle under way, finished where you stand so nobody waits for you.
  */
 export const leaveBattle = (client: ApiClient, id: string): Promise<ApiResult<{ ok: true }>> =>
-  client.post(`/wordle/battles/${id}/leave`);
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/leave`);
 
 /** The host takes a player out of the lobby, by seat; they cannot join it again. */
 export const removeFromBattle = (client: ApiClient, id: string, seat: number): Promise<ApiResult<BattleState>> =>
-  client.post(`/wordle/battles/${id}/remove`, { seat });
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/remove`, { seat });
 
 export const guessInBattle = (client: ApiClient, id: string, word: string): Promise<ApiResult<BattleState>> =>
-  client.post(`/wordle/battles/${id}/guesses`, { word });
+  client.post(`/wordle/battles/${encodeURIComponent(id)}/guesses`, { word });
 
 export const getBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
   // an invite to it accepted a moment ago is let land first: until it has, this is nobody's battle (play/joining.ts)
-  joined(id).then(() => client.get(`/wordle/battles/${id}`));
+  joined(id).then(() => client.get(`/wordle/battles/${encodeURIComponent(id)}`));
 
 /** 409s until the match is over — the word is in here, so it cannot come sooner. */
 export const getResults = (client: ApiClient, id: string): Promise<ApiResult<BattleResults>> =>
-  client.get(`/wordle/battles/${id}/results`);
+  client.get(`/wordle/battles/${encodeURIComponent(id)}/results`);

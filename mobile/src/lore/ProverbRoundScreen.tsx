@@ -31,7 +31,8 @@ import { Tile, TileButton, type TileState } from '../theme/Tile';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { answerProverbRound, finishProverbRound, getProverbRound, openProverbRound, startProverbRound, type ProverbRoundResult, type ProverbRoundView } from './api';
-import { PROVERBS_NAME, centred, kurdishIn, textIn, varietyName } from './labels';
+import { PROVERBS_NAME, centred, kurdishIn, textIn } from './labels';
+import { dialectNameKey } from '../i18n/dialectName';
 
 const MODE_KEY: Record<ProverbRoundMode, { name: TranslationKey; line: TranslationKey; ask: TranslationKey }> = {
   meaning: { name: 'lore.round.meaning', line: 'lore.round.meaningLine', ask: 'lore.round.askMeaning' },
@@ -188,7 +189,7 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
 
   const text = [dir.text, { color: colors.textPrimary }];
   const muted = [dir.text, styles.muted, { color: colors.textSecondary }];
-  const variety = t('games.solo.variety', { variety: varietyName(dialect) });
+  const variety = t('games.solo.variety', { variety: t(dialectNameKey(dialect)) });
 
   let body: ReactNode;
   if (phase === 'results' && results && session) {

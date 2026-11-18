@@ -1,13 +1,6 @@
 /**
- * The mouth shapes a speaking character is drawn with.
- *
- * A mouth seen from the front only shows a handful of shapes, whatever the
- * language: lips pressed, lip on teeth, the tongue at the teeth, teeth with the
- * lips apart, and the vowels from wide open to rounded. Kurdish letters map onto
- * these closely (lipsync/letters.ts), so the characters' mouths are drawn once
- * per shape and the recording's timeline says which one shows when.
- *
- * The order is the order a character sheet shows them in.
+ * The mouth shapes a speaking character is drawn with: the handful a mouth shows from the front, in any language. Kurdish
+ * letters map onto them (letters.ts), so each mouth is drawn once per shape. Ordered as a character sheet shows them.
  */
 export const VISEMES = [
   /** at rest: lips together and relaxed — silence, and the end of every line */
@@ -33,7 +26,3 @@ export const VISEMES = [
 ] as const;
 
 export type Viseme = (typeof VISEMES)[number];
-
-export function isViseme(value: unknown): value is Viseme {
-  return typeof value === 'string' && (VISEMES as readonly string[]).includes(value);
-}

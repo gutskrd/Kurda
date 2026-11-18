@@ -20,12 +20,9 @@ import {
 } from './fire-sprites.js';
 
 /*
- * The fire's painted flame: a sheet of frames for every stage that burns,
- * painted by scripts/generate-fire-sprites.mjs and shipped in both apps. What
- * the apps read about the sheets, and the sheets themselves: where each
- * flame stands, that it is drawn in a few flat tones, that its loop plays
- * round with no seam, that no frame bleeds into its neighbour, that they stay
- * light, and that what ships is what the script paints.
+ * The painted flame sheets (painted by scripts/generate-fire-sprites.mjs and shipped in both apps): their layout data,
+ * and the sheets themselves: where each flame stands, few flat tones, a seamless loop, no frame bleeding into the next,
+ * small files, and that what ships matches what the script paints.
  */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -33,7 +30,7 @@ const LIT = FIRE_STAGES.filter((s) => s !== 'cold');
 const SHEETS = Object.values(FIRE_SPRITES);
 const committed = (dir: string, sprite: FireSprite): Buffer => readFileSync(join(ROOT, dir, sprite.file));
 
-/** A sheet's frames, each its alpha alone (how much flame there is at every pixel), in order. */
+/** A sheet's frames in order, each as its alpha channel alone. */
 async function frames(sprite: FireSprite, file = join(ROOT, 'web/public/fire', sprite.file)): Promise<Uint8Array[]> {
   const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { w, h } = sprite.frame;
@@ -45,11 +42,7 @@ async function frames(sprite: FireSprite, file = join(ROOT, 'web/public/fire', s
   });
 }
 
-/**
- * How much of a sheet's solid flame lies in its `count` largest tones: its
- * colours grouped as one tone when no channel is more than a few steps apart
- * (the encoder's own rounding), largest first.
- */
+/** The share of a sheet's solid flame in its `count` largest tones, grouping colours within a few steps per channel (the encoder's rounding). */
 async function toneShare(file: string, count: number): Promise<number> {
   const { data } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const counts = new Map<number, number>();
@@ -93,7 +86,7 @@ describe('the painted flame', () => {
       const tag = sprite.stage;
       expect(sprite.sheet, tag).toEqual({ w: sprite.frame.w * FIRE_SPRITE_COLS, h: sprite.frame.h * FIRE_SPRITE_ROWS });
       expect(Math.max(sprite.sheet.w, sprite.sheet.h), tag).toBeLessThanOrEqual(4096);
-      // a frame is its box, at one sharpness both ways: about twice a fire drawn 190 high
+      // A frame is its box at one sharpness both ways: about twice a fire drawn 190 high.
       expect(sprite.frame.w / sprite.box.w, tag).toBeCloseTo(sprite.frame.h / sprite.box.h, 1);
       expect(sprite.frame.h / sprite.box.h, tag).toBeGreaterThanOrEqual(1.25);
     }
@@ -118,10 +111,10 @@ describe('the painted flame', () => {
       expect(box.y, stage).toBeLessThanOrEqual(FIRE_ROOT[1] - to.h);
       expect(box.w, stage).toBeGreaterThan(to.w);
       expect(box.y + box.h, stage).toBeGreaterThan(FIRE_ROOT[1]);
-      // each a step up from the one before: wider, and taller as far as the box goes
+      // Each a step up from the one before: wider, and taller as far as the box allows.
       if (i > 0) expect([box.w > SHEETS[i - 1]!.box.w, box.y <= SHEETS[i - 1]!.box.y], stage).toEqual([true, true]);
     }
-    // the heights every screen was laid out round, from the day a stage is reached to the day before the next
+    // The heights every screen was laid out round, from the day a stage is reached to the day before the next.
     expect(LIT.map((s) => [FIRE_FLAME_REACH[s].from.h, FIRE_FLAME_REACH[s].to.h])).toEqual([
       [46, 51],
       [80, 90],
@@ -158,12 +151,12 @@ describe('the sheets that ship', () => {
   });
 
   it('draws the flame in a few flat tones nested one in another: no gradients, no grain', async () => {
-    // a rim, a body, an inner flame, a core, the spot (and the blaze its blue): all but the thin edges between them
+    // Rim, body, inner flame, core and spot (and the blaze's blue) cover all but the thin edges between them.
     for (const sprite of SHEETS) expect(await toneShare(join(ROOT, 'web/public/fire', sprite.file), 7), sprite.stage).toBeGreaterThan(0.92);
   });
 
   it('is one flame at every stage, with no smaller flames beside it', async () => {
-    // across any row of any frame: the flame, and at most a drop rising off its tip
+    // Across any row of any frame: the flame, and at most one drop rising off its tip.
     for (const sprite of SHEETS) {
       const { w, h } = sprite.frame;
       let most = 0;
@@ -194,7 +187,7 @@ describe('the sheets that ship', () => {
       const all = await frames(sprite);
       const steps = all.slice(1).map((f, i) => change(all[i]!, f));
       const seam = change(all.at(-1)!, all[0]!);
-      // never two frames alike, and the step round the loop no bigger than the steps along it
+      // No two frames alike, and the step round the loop no bigger than the steps along it.
       expect(Math.min(...steps), sprite.stage).toBeGreaterThan(0.5);
       expect(seam, sprite.stage).toBeGreaterThan(0.5);
       expect(seam, sprite.stage).toBeLessThanOrEqual(Math.max(...steps) * 1.1);
@@ -209,7 +202,7 @@ describe('the sheets that ship', () => {
       const [again, shipped] = await Promise.all([sharp(join(out, sprite.file)).raw().toBuffer(), sharp(committed('web/public/fire', sprite)).raw().toBuffer()]);
       let worst = 0;
       for (let i = 0; i < again.length; i++) worst = Math.max(worst, Math.abs(again[i]! - shipped[i]!));
-      // byte for byte with the same encoder; a hair apart with another build of it
+      // Byte for byte with the same encoder; within a hair with another build of it.
       expect(worst).toBeLessThanOrEqual(2);
     } finally {
       rmSync(out, { recursive: true, force: true });

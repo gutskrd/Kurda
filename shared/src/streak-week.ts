@@ -1,9 +1,7 @@
 /**
- * The week a kept streak is shown in: seven days, from the day the learner's
- * week starts on to the last, each marked by what happened on it — learned, kept
- * by a freeze, today, missed, or still ahead. The server says which days were
- * learned or frozen (`recent`) and what today is in the learner's own timezone;
- * this lays them out, the same on the phone and the website.
+ * The week a kept streak is shown in: seven days from the learner's week start, each learned, frozen, today, missed or
+ * ahead. The server says which days were learned or frozen (`recent`) and what today is in the learner's timezone; this
+ * lays them out alike on both apps.
  */
 
 export type WeekDayState = 'learned' | 'frozen' | 'today' | 'missed' | 'ahead';
@@ -11,7 +9,7 @@ export type WeekDayState = 'learned' | 'frozen' | 'today' | 'missed' | 'ahead';
 export interface WeekDay {
   /** YYYY-MM-DD */
   date: string;
-  /** 0 = Sunday … 6 = Saturday, for its name in the reader's language */
+  /** 0 Sunday to 6 Saturday, for its name in the reader's language */
   weekday: number;
   state: WeekDayState;
   /** the learner's today, whatever its state (learned once today's lesson is done) */
@@ -24,11 +22,7 @@ export interface RecentDay {
   kind: 'learned' | 'frozen';
 }
 
-/**
- * The day a week starts on in the reader's language: Saturday where the
- * calendar on the wall starts there (Kurdish, Arabic, Persian), Monday
- * elsewhere — as the days of the week are taught.
- */
+/** The day a week starts on in the reader's language: Saturday where wall calendars start there (Kurdish, Arabic, Persian), Monday elsewhere. */
 export function weekStartsOn(language: string): number {
   const lang = language.toLowerCase().split(/[-_]/)[0];
   return lang === 'ku' || lang === 'ckb' || lang === 'kmr' || lang === 'ar' || lang === 'fa' ? 6 : 1;
@@ -44,10 +38,7 @@ function fromDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
-/**
- * The seven days of the week `today` falls in, starting on `startsOn`
- * (0 = Sunday … 6 = Saturday). A day both learned and frozen counts as learned.
- */
+/** The seven days of the week `today` falls in, from `startsOn` (0 Sunday to 6 Saturday); a day both learned and frozen counts as learned. */
 export function streakWeek({ today, recent, startsOn }: { today: string; recent: readonly RecentDay[]; startsOn: number }): WeekDay[] {
   const now = toDay(today);
   const intoWeek = (new Date(now).getUTCDay() - startsOn + 7) % 7;

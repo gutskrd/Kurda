@@ -54,7 +54,8 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
   const { announce, region } = useAnnouncer();
   const [gloss, setGloss] = useState<StoryGlossEntry | null>(null);
 
-  const toStories = (): void => navigation.navigate('Stories');
+  // back to the library it was started from, or in its place: never a second library over the game
+  const toStories = (): void => navigation.popTo('Stories');
 
   let body: React.ReactNode;
   if (game.gone) {

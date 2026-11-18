@@ -1,8 +1,4 @@
-/**
- * The growing fire (fire-stages.ts) where it is a moment of its own, the same
- * on both apps: the streak kept, lighting up and on the day its fire grew, a
- * run's milestone in a lesson, and the ladder of stages a streak climbs.
- */
+/** The growing fire (fire-stages.ts) as a moment of its own: a kept streak lighting up and growing, a run's milestone, the stage ladder. */
 
 import { CELEBRATE_MS } from './celebration.js';
 import { FIRE_GROW, FIRE_STAGES, FIRE_STAGE_DAYS, fireGrewToday, fireLevel, fireStageIndex, runFireLevel, type FireLevel, type FireStage } from './fire-stages.js';
@@ -10,29 +6,22 @@ import { FIRE_GROW, FIRE_STAGES, FIRE_STAGE_DAYS, fireGrewToday, fireLevel, fire
 /** A stage the fire burns at: every one but the cold logs. */
 export type LitFireStage = Exclude<FireStage, 'cold'>;
 
-/** When the fire's growth lands, from when it appears: the growth's delay and its length. */
+/** When the fire's growth lands, from when it appears: the growth's delay plus its length. */
 const LANDS_AT_MS = FIRE_GROW.delayMs + FIRE_GROW.ms;
 
-/** How long the line saying what the fire grew into is left to be read once it is there. */
+/** How long the line saying what the fire grew into stays to be read. */
 export const FIRE_GREW_READ_MS = 2600;
 
 const POP_MS = 540;
-/** When the pop is at its height, as a share of it. */
+/** The pop's peak, as a share of its length. */
 const POP_PEAK = 0.55;
 
 /**
- * The kept streak's moment lighting up as it opens. It opens dim and cool on
- * yesterday: the fire faint and the number at yesterday's, both at `dim` of
- * their strength. At `atMs` the fire ignites: it squashes down, pops up past
- * its size and settles (`pop`, over `popMs`: at each share of it, how wide
- * and how tall, about its foot), brightening as it squashes; the warm light
- * floods out from it over the screen (`floodMs`); and the app's one
- * celebration plays from then — the ring of gold bursting out from its
- * middle, the sparks, the number rolling on to today. The pop is at its
- * height as the growth starts (`FIRE_GROW.delayMs` after the fire appears),
- * so on the day the fire grew it leaps straight on up into its new stage: one
- * motion, not two. Under Reduce Motion nothing squashes, rings or travels:
- * the dim screen cross-fades to the warm one.
+ * The kept streak's moment lighting up. It opens dim on yesterday, the fire and the number at `dim` strength. At `atMs`
+ * the fire ignites: it squashes, pops past its size and settles (`pop` over `popMs`: width and height at each share,
+ * about its foot), the warm light floods out (`floodMs`), and the app's celebration plays as the number rolls on to today.
+ * The pop peaks as the growth starts (`FIRE_GROW.delayMs` after the fire appears), so on a growth day it rises into its new
+ * stage in one motion. Under Reduce Motion the dim screen cross-fades to the warm one.
  */
 export const FLAME_IGNITE = {
   atMs: FIRE_GROW.delayMs - Math.round(POP_MS * POP_PEAK),
@@ -51,36 +40,31 @@ export const FLAME_IGNITE = {
 export interface FlameMoment {
   /** today's fire */
   level: FireLevel;
-  /** on the day it grew, yesterday's fire, which it grows from as it appears; null on any other day */
+  /** on the day it grew, yesterday's fire, which it grows from; null on any other day */
   from: FireLevel | null;
   /** the stage it grew into today, or null */
   grew: LitFireStage | null;
-  /** when the growth lands and the line saying what it grew into appears, from when the fire appears */
+  /** when the growth lands and the line about it appears, from when the fire appears */
   landsAtMs: number;
   /** when the moment moves on by itself */
   overMs: number;
-  /** how much closer than the rest its screen draws this fire: a young one, so the first days are a moment too */
+  /** how much closer its screen draws this fire: young ones are drawn closer so the first days are a moment too */
   zoom: number;
 }
 
 /**
- * How much closer the flame's screen draws the young fires than the rest
- * (which it draws all alike, the longer streak's the bigger fire): a spark
- * would be a speck under the day's big number. Back to the same by the
- * campfire, and never so close that a day's fire stands shorter than the
- * day before's.
+ * How much closer the flame's screen draws the young fires, which would otherwise be a speck under the day's number. Back
+ * to normal by the campfire, and never so close that a day's fire stands shorter than the day before's.
  */
 const ZOOM: Readonly<Partial<Record<FireStage, number>>> = { spark: 1.4, kindling: 1.15 };
 
 /**
- * The flame's moment after a lesson that kept a streak of `days`. On the day
- * the fire grew (`fireGrewToday`: the 1st, the 3rd, the 7th...) it appears as
- * it was yesterday and grows into today's stage, and the moment stays until
- * the line saying so has been read; on any other day it is today's fire, for
- * the app's one celebration once it has lit (`FLAME_IGNITE`).
+ * The flame's moment after a lesson that kept a streak of `days`. On a growth day (`fireGrewToday`) it appears as
+ * yesterday's and grows into today's stage, staying until the line about it is read; otherwise it is today's fire, for the
+ * celebration once lit (`FLAME_IGNITE`).
  */
 export function flameMoment(days: number): FlameMoment {
-  // a fire only grows into a stage that burns
+  // A fire only grows into a stage that burns.
   const grew = fireGrewToday(days) as LitFireStage | null;
   return {
     level: fireLevel(days),
@@ -92,16 +76,14 @@ export function flameMoment(days: number): FlameMoment {
   };
 }
 
-/** How long a run's milestone has the screen, unless a tap or a key goes on sooner. */
+/** How long a run's milestone holds the screen unless a tap or key moves on sooner. */
 export const RUN_MOMENT_MS = 1000;
-/** Once a milestone's fire has grown, how long the new fire is left to be seen. */
+/** Once a milestone's fire has grown, how long the new fire stays to be seen. */
 const RUN_GREW_HOLD_MS = 500;
 
 /**
- * A run's milestone (`runMilestone`) as a moment: the run's fire, grown from
- * the one before when the milestone is where it reached a new stage (5, 10, 15
- * and 20 in a row), and how long it holds the screen — about a second, or
- * until that growth has landed and been seen.
+ * A run's milestone (`runMilestone`) as a moment: the run's fire, grown from the previous one when the milestone reached a
+ * new stage (5, 10, 15 and 20 in a row), and how long it holds: about a second, or until that growth has landed.
  */
 export function runMoment(count: number): { level: FireLevel; from: FireLevel | null; ms: number } {
   const level = runFireLevel(count);
@@ -118,15 +100,11 @@ export interface FireLadderStep {
   /** the day of the streak it is reached on */
   day: number;
   place: FireLadderPlace;
-  /** the fire drawn for it: as the stage begins, or for the one it is now, today's */
+  /** the fire drawn for it: as the stage begins, or today's for the current one */
   level: FireLevel;
 }
 
-/**
- * The seven lit stages from the spark to the Newroz fire, for a streak of
- * `days`: the ones reached, the one its fire is now (none while the logs are
- * cold), and the ones ahead, something to look forward to.
- */
+/** The seven lit stages from the spark to the Newroz fire for a streak of `days`: reached, current (none while cold), and ahead. */
 export function fireLadder(days: number): FireLadderStep[] {
   const today = fireLevel(days);
   const at = fireStageIndex(today.stage);

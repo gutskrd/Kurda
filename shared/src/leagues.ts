@@ -1,28 +1,19 @@
 /**
- * Learning Leagues: the weekly table that rewards effort (contract 4 §L).
+ * Learning Leagues: the weekly table that rewards effort. Six tiers named after water, from a drop to the ocean, as
+ * knowledge gathers. Groups of about twenty form only from people who earned learning XP that week; promotion needs the
+ * weekly goal as well as a place near the top, only someone who missed the goal is ever demoted, and the two lowest tiers
+ * never demote. Shared so the API, both apps and the admin agree on tier keys, the week, the goal and the zones.
  *
- * Six tiers named after water — a drop becomes a spring, a river, a lake, the
- * sea, the ocean — because knowledge gathers the same way, and because ten
- * gem-named tiers copied Duolingo's identity and were too many for the number
- * of people learning here. Groups of about twenty, formed only from people who
- * earned learning XP that week; promotion needs the weekly goal as well as a
- * place near the top, demotion only ever happens to someone who missed the goal,
- * and the two lowest tiers never demote at all.
- *
- * Shared so the API, the browser, the phone and the admin panel agree on the
- * tier keys, the week, the goal and the zones — and so the three copies of the
- * tier table the old leagues had are one.
- *
- * All Kurdish names are for a native speaker to check: [review].
+ * Kurdish names marked [review] await a native speaker's check.
  */
 
-/** Low to high. Stable keys: the API stores and sends these, clients translate them. */
+/** Low to high. Stable keys: the API stores and sends these and clients translate them. */
 export const LEAGUE_TIERS = ['dilop', 'kani', 'cem', 'gol', 'derya', 'okyanus'] as const;
 export type LeagueTier = (typeof LEAGUE_TIERS)[number];
 
 export interface LeagueTierMeta {
   key: LeagueTier;
-  /** the Kurmancî name, as it is written [review] */
+  /** the Kurmancî name as written [review] */
   nameKu: string;
   /** what the name means, in English */
   meaningEn: string;
@@ -39,11 +30,7 @@ export const LEAGUE_TIER_META: Readonly<Record<LeagueTier, LeagueTierMeta>> = {
   okyanus: { key: 'okyanus', nameKu: 'Okyanûs', meaningEn: 'Ocean', nameKey: 'leagues.tier.okyanus' }, // [review]
 };
 
-/**
- * The ten tiers the leagues had before, and where each lands. Two old tiers to
- * one new one, the top tier on its own, so nobody moves down and Okyanûs is
- * still somewhere only the old Diamond had reached.
- */
+/** The ten old tiers and where each lands: two to one, the top one alone, so nobody moves down and Okyanûs stays where only the old top tier reached. */
 export const LEGACY_LEAGUE_TIERS: Readonly<Record<string, LeagueTier>> = {
   bronze: 'dilop',
   silver: 'dilop',
@@ -62,38 +49,30 @@ export const FIRST_LEAGUE_TIER: LeagueTier = 'dilop';
 
 /** A group fills to this many and then locks. */
 export const LEAGUE_GROUP_TARGET = 20;
-/**
- * Below this a group is too small to be a fair race: it never demotes, and on
- * Wednesday it is merged into the nearest open group (see `MERGE_WEEKDAY`).
- */
+/** Below this a group is too small for a fair race: it never demotes, and on `MERGE_WEEKDAY` it merges into the nearest open group. */
 export const LEAGUE_GROUP_MIN = 8;
 /** The top quarter of a group moves up… */
 export const PROMOTE_SHARE = 0.25;
 /** …and the bottom 15% of those who missed their goal move down. */
 export const DEMOTE_SHARE = 0.15;
-/** Tiers nobody is ever demoted from: a beginner is never pushed back for trying. */
+/** Tiers nobody is ever demoted from, so a beginner is never pushed back for trying. */
 export const NO_DEMOTION_TIERS: readonly LeagueTier[] = ['dilop', 'kani'];
 /** In the top tier nobody moves up; the top three of a group get the Pêla (wave) trophy instead [review]. */
 export const TROPHY_PLACES = 3;
-/**
- * XP that week, by default, for a promotion to count and for nobody to be
- * demoted: met it, and you are safe. The API's own setting can change it.
- */
+/** The default weekly XP goal: meet it and a promotion counts and demotion cannot happen. The API's setting can change it. */
 export const DEFAULT_WEEKLY_GOAL_XP = 150;
-/** Gems for moving up, once per tier per season (no farming by going down and up again). */
-export const PROMOTION_GEMS = 10;
-/** At each new season everyone moves down this many tiers (never below Dilop), so the top stays reachable. */
+/** At each new season everyone drops this many tiers (never below Dilop), so the top stays reachable. */
 export const SEASON_TIER_DROP = 2;
-/** Groups still under `LEAGUE_GROUP_MIN` at this UTC weekday (3 = Wednesday), 00:00, are merged. */
+/** Groups still under `LEAGUE_GROUP_MIN` at 00:00 on this UTC weekday (3: Wednesday) are merged. */
 export const MERGE_WEEKDAY = 3;
-/** Groups are formed from people within this many minutes of each other's clock. */
+/** Groups form from people whose clocks are within this many minutes. */
 export const TIMEZONE_WINDOW_MIN = 6 * 60;
 
 export function isLeagueTier(value: unknown): value is LeagueTier {
   return typeof value === 'string' && (LEAGUE_TIERS as readonly string[]).includes(value);
 }
 
-/** 0 for Dilop … 5 for Okyanûs. */
+/** 0 for Dilop to 5 for Okyanûs. */
 export function leagueTierIndex(tier: LeagueTier): number {
   return LEAGUE_TIERS.indexOf(tier);
 }
@@ -114,7 +93,7 @@ export function seasonDrop(tier: LeagueTier, seasons = 1): LeagueTier {
   return LEAGUE_TIERS[Math.max(leagueTierIndex(tier) - steps, 0)]!;
 }
 
-/** A stored tier that may still be an old one (or junk), read as a current key. */
+/** A stored tier that may be an old key or junk, read as a current key. */
 export function toLeagueTier(value: string | null | undefined): LeagueTier | null {
   if (value == null) return null;
   if (isLeagueTier(value)) return value;
@@ -128,7 +107,7 @@ const DAY_MS = 86_400_000;
 /** The Monday-00:00-UTC date ('YYYY-MM-DD') of the week containing `now`. */
 export function weekStart(now: Date): string {
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  // getUTCDay: 0=Sun..6=Sat → days since Monday
+  // getUTCDay counts from Sunday; this counts days since Monday.
   const sinceMonday = (d.getUTCDay() + 6) % 7;
   d.setUTCDate(d.getUTCDate() - sinceMonday);
   return d.toISOString().slice(0, 10);
@@ -154,10 +133,7 @@ export function weekMergeAt(weekKey: string): Date {
   return new Date(Date.parse(`${weekKey}T00:00:00Z`) + (MERGE_WEEKDAY - 1) * DAY_MS);
 }
 
-/**
- * The season a moment belongs to: calendar quarters in UTC, '2026-Q4'. The
- * leagues reset by `SEASON_TIER_DROP` when the week's Monday falls in a new one.
- */
+/** The season a moment belongs to, calendar quarters in UTC ('2026-Q4'); leagues drop tiers when a week's Monday is in a new one. */
 export function seasonKeyFor(at: Date): string {
   return `${at.getUTCFullYear()}-Q${Math.floor(at.getUTCMonth() / 3) + 1}`;
 }
@@ -167,7 +143,7 @@ export function weekSeason(weekKey: string): string {
   return seasonKeyFor(new Date(`${weekKey}T00:00:00Z`));
 }
 
-/** How many seasons lie between two season keys (0 when `to` is not later). */
+/** How many seasons lie between two season keys; 0 when `to` is not later. */
 export function seasonsBetween(from: string, to: string): number {
   const parse = (k: string): number | null => {
     const m = /^(\d{4})-Q([1-4])$/.exec(k);
@@ -182,14 +158,13 @@ export function seasonsBetween(from: string, to: string): number {
 // ---- the weekly result -----------------------------------------------------------
 
 export type LeagueOutcome = 'promoted' | 'demoted' | 'stayed';
-/** Where a row sits right now: moving up, moving down, or staying (and safe when the goal is met). */
+/** Where a row sits now: moving up, moving down or staying (and safe once the goal is met). */
 export type LeagueZone = 'promotion' | 'demotion' | 'stay';
 
 /**
- * Promotion places for one tier's share of a group. A merged group can hold two
- * tiers, each scored on its own (`resolveGroup`), so the share is of the tier's
- * own members; a group of at least `LEAGUE_GROUP_MIN` gives each tier in it at
- * least one place, so somebody merged in from a near-empty tier can still move up.
+ * Promotion places for one tier's share of a group. A merged group can hold two tiers, each scored on its own
+ * (`resolveGroup`); a group of at least `LEAGUE_GROUP_MIN` gives each tier at least one place, so someone merged in from
+ * a near-empty tier can still move up.
  */
 export function promotionPlaces(tierMembers: number, groupSize: number, tier: LeagueTier): number {
   if (tier === LEAGUE_TIERS[LEAGUE_TIERS.length - 1]) return 0;
@@ -206,13 +181,13 @@ export function demotionPlaces(tierMembers: number, groupSize: number, tier: Lea
 
 export interface GroupMember {
   userId: string;
-  /** the tier they are racing in this week (a merged group can hold two) */
+  /** the tier they race in this week; a merged group can hold two */
   tier: LeagueTier;
   weeklyXp: number;
 }
 
 export interface LeagueStanding extends GroupMember {
-  /** place in the whole group's table, 1-based (ties broken by id, so stable) */
+  /** place in the whole group's table, 1-based, ties broken by id so it is stable */
   rank: number;
   /** place among the members of their own tier */
   tierRank: number;
@@ -221,20 +196,15 @@ export interface LeagueStanding extends GroupMember {
   /** what the week means for them if it ended now */
   outcome: LeagueOutcome;
   tierAfter: LeagueTier;
-  /** top of an Okyanûs group, with the goal met: the Pêla trophy [review] */
+  /** top of an Okyanûs group with the goal met: the Pêla trophy [review] */
   trophy: boolean;
 }
 
 /**
- * The week's table and what it means for each member (contract 4 §L3).
- *
- * The whole group is one table, ordered by weekly XP. Each tier in it is scored
- * on its own: the top quarter of that tier's members move up — but only with
- * the weekly goal met — and the bottom 15% move down — but only those who
- * missed it, never from Dilop or Kanî, and never in a group under eight. Since
- * the goal is measured in the same XP the table is ordered by, nobody below a
- * member who missed the goal can have met it, so a promotion place is never
- * passed down to someone further back.
+ * The week's table and what it means for each member. The group is one table ordered by weekly XP, and each tier in it is
+ * scored on its own: the top quarter of that tier move up if they met the goal, and the bottom 15% move down if they
+ * missed it, never from Dilop or Kanî and never in a group under eight. Since the goal is in the same XP the table is
+ * ordered by, a promotion place is never passed down to someone further back.
  */
 export function resolveGroup(members: readonly GroupMember[], goalXp: number): LeagueStanding[] {
   const ordered = [...members].sort((a, b) => b.weeklyXp - a.weeklyXp || (a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : 0));
@@ -271,9 +241,8 @@ export function resolveGroup(members: readonly GroupMember[], goalXp: number): L
 }
 
 /**
- * The band of the last four weeks' XP a learner is grouped by, so a newcomer
- * races other newcomers rather than someone who does an hour a day. 0 is the
- * lightest. Bands next to each other may share a group.
+ * The bands of the last four weeks' XP learners are grouped by, so a newcomer races other newcomers; 0 is the lightest,
+ * and neighbouring bands may share a group.
  */
 export const XP_BANDS = [150, 600, 1500, 3000] as const;
 export function xpBand(lastFourWeeksXp: number): number {
@@ -292,17 +261,15 @@ export function timezoneDistance(aMin: number, bMin: number): number {
 
 export interface LeagueStandingRow {
   /**
-   * null for somebody the viewer may not be shown by name: a minor who chose to
-   * take part, or an account whose age is not on record yet, unless they are
-   * the viewer's friend. Their place and XP stay — the table decides who moves
-   * up, so it cannot have holes — but nothing that identifies them.
+   * null for someone the viewer may not see by name (a minor taking part, or an account without a recorded age) unless they
+   * are friends. Their place and XP stay, since the table decides who moves up, but nothing identifies them.
    */
   userId: string | null;
   username: string | null;
   weeklyXp: number;
   rank: number;
   isSelf: boolean;
-  /** the tier this row races in (a merged group can hold two, each scored on its own) */
+  /** the tier this row races in; a merged group can hold two, each scored on its own */
   tier: LeagueTier;
   zone: LeagueZone;
 }
@@ -321,7 +288,7 @@ export interface LeagueWeekResult {
   goalXp: number;
   goalMet: boolean;
   trophy: boolean;
-  /** Gems paid for the promotion (0 when it was this tier's second promotion this season) */
+  /** Gems paid for the promotion; 0 for the tier's second promotion this season */
   gems: number;
 }
 
@@ -333,28 +300,25 @@ export interface LeagueWeekXp {
 }
 
 /**
- * `GET /me/league`. One shape for every state:
- *  - `mode: 'personal'` — not taking part (their choice, or a teen who has not
- *    chosen): no group, the same weekly goal ring, and their own recent weeks.
- *  - `mode: 'league'`, `joined: false` — taking part, but no learning XP yet
- *    this week; a lesson, practice or story joins (opening the page never does).
- *  - `mode: 'league'`, `joined: true` — in a group: the table, the zones, safe.
+ * `GET /me/league`, one shape for every state: `mode: 'personal'`, not taking part (by choice, or a teen who has not
+ * chosen), with the goal ring and recent weeks; `mode: 'league'` with `joined: false`, taking part but without learning XP
+ * yet this week (a lesson, practice or story joins; opening the page never does); `joined: true`, in a group.
  */
 export interface LeagueView {
   mode: 'league' | 'personal';
-  /** `mode === 'personal'`, kept for the apps that read it before modes existed */
+  /** `mode === 'personal'`, for apps from before modes */
   optedOut: boolean;
   joined: boolean;
-  /** the learner's tier; null for someone who has never been in a league */
+  /** the learner's tier; null for someone never in a league */
   tier: LeagueTier | null;
   weekKey: string;
-  /** ISO time the week closes (Monday 00:00 UTC); shown in local time, without urgency */
+  /** ISO time the week closes (Monday 00:00 UTC), shown in local time without urgency */
   endsAt: string;
   /** XP that counts for the league this week (see the XP rules) */
   weeklyXp: number;
   goalXp: number;
   goalMet: boolean;
-  /** met the goal in a league: demotion is no longer possible this week */
+  /** met the goal in a league, so demotion is off this week */
   safe: boolean;
   rank: number;
   groupSize: number;
@@ -366,7 +330,7 @@ export interface LeagueView {
   recentWeeks: LeagueWeekXp[];
 }
 
-/** What a profile shows of someone's league: only while they take part, and only once they have a tier. */
+/** What a profile shows of someone's league: only while they take part and once they have a tier. */
 export interface ProfileLeague {
   tier: LeagueTier;
 }

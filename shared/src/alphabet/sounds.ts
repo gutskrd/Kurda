@@ -3,18 +3,10 @@ import { CLIPS } from './clips.js';
 import type { SoraniLetter } from './letters.js';
 
 /**
- * Where each sound on the alphabet pages plays from, the same on the website
- * and the phone.
- *
- * Every sound ships with a synthesised clip (`clips.ts`, made by
- * web/scripts/alphabet-audio/generate.py): a small MP3 the website serves from
- * `/audio/alphabet/`. A recording made in the admin panel takes its place for
- * its key — GET /alphabet/audio lists them — and removing the recording brings
- * the synthesised clip back. The website plays the clips from its own origin;
- * the phone plays them from the website's.
- *
- * A key with no clip answers null, and the page shows no play button there:
- * a sound that could not be made accurately is left out rather than guessed.
+ * Where each sound on the alphabet pages plays from, on the website and the phone. Every sound has a synthesised MP3
+ * (`clips.ts`, served from `/audio/alphabet/` on the website's origin) until a recording made in the admin panel replaces
+ * it for its key (GET /alphabet/audio lists them). A key with no clip answers null and gets no play button: a sound that
+ * could not be made accurately is left out rather than guessed.
  */
 
 /** Where the synthesised clips are on the website. */
@@ -46,9 +38,8 @@ export interface AlphabetSounds {
 }
 
 /**
- * The sounds, with `recorded` (from `alphabetRecordings`) in place of their
- * synthesised clips, and the synthesised clips found under `base`: the
- * website's own path, or that path on the website's address for the phone.
+ * The sounds, with `recorded` (from `alphabetRecordings`) in place of their synthesised clips, and those clips found under
+ * `base`: the website's own path, or the same path on the website's address for the phone.
  */
 export function alphabetSounds(
   recorded: Readonly<Record<string, string>> = {},
@@ -70,10 +61,7 @@ export function alphabetSounds(
   };
 }
 
-/**
- * The recordings in a GET /alphabet/audio answer that are worth playing:
- * https URLs under keys the pages know. Anything else is not ours to play.
- */
+/** The recordings in a GET /alphabet/audio answer worth playing: https URLs under keys the pages know. */
 export function alphabetRecordings(clips: unknown): Record<string, string> {
   if (!clips || typeof clips !== 'object') return {};
   return Object.fromEntries(
@@ -85,11 +73,7 @@ export function alphabetRecordings(clips: unknown): Record<string, string> {
 
 const SAID = new Map(ALPHABET_CLIPS.map((clip) => [clip.key, clip.say]));
 
-/**
- * What the recording under `key` says, exactly as it was read into the
- * microphone ("ba" for b, the whole word for a word): what a speaking
- * character's mouth follows when no timeline came with the recording.
- */
+/** What the recording under `key` says as read into the microphone ("ba" for b, a word for a word), for the mouth to follow without a timeline. */
 export function alphabetClipText(key: string): string | null {
   return SAID.get(key) ?? null;
 }

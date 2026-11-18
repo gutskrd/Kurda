@@ -20,9 +20,10 @@ const FILL_MS = 700;
 const CHARACTER_HEIGHT = 108;
 
 /**
- * The month's quests, as a card: how many are done this month, counting up
- * as the screen opens, over a bar of how much of the month's possible that
- * is so far (model.ts `monthProgress`) — in the saffron of a rare
+ * The month's quests, as a card: how many are done of the month's possible so
+ * far, counting up as the screen opens, over a bar of the same (model.ts
+ * `monthProgress`), said once: "this month" in the corner, not again in the
+ * count and under the bar — in the saffron of a rare
  * chest, with Xezal at its end, cheering when a chest waits to be opened and
  * otherwise just glad to see you. The bar fills as the count climbs (a
  * translate on the native driver; the count by frames, as `useCountUp`
@@ -57,7 +58,7 @@ export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean })
       <View style={styles.words}>
         <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{t('quests.monthly.title')}</Text>
         <Text style={[styles.title, dir.text, { color: tone.ink }]} accessibilityRole="header">
-          {t('quests.month', { count: formatNumber(count, locale) })}
+          {t('quests.month', { count: formatNumber(count, locale), possible: formatNumber(possible, locale) })}
         </Text>
         <View
           style={[styles.track, { backgroundColor: `${tone.lip}80` }]}
@@ -69,7 +70,6 @@ export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean })
         >
           <Animated.View style={[styles.fill, { backgroundColor: colors.gold, opacity: width > 0 ? 1 : 0, transform: [{ translateX }] }]} />
         </View>
-        <Text style={[styles.soFar, dir.text, { color: tone.ink }]}>{soFar}</Text>
       </View>
       <View style={styles.character} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <SpeakingCharacter speaker="xezo" player={null} playing={false} crop="half" height={CHARACTER_HEIGHT} flip={!dir.rtl} reaction={cheer ? 'cheer' : null} />
@@ -85,7 +85,6 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.md), fontVariant: ['tabular-nums'] },
   track: { height: 10, borderRadius: radii.pill, overflow: 'hidden', marginTop: spacing.xs },
   fill: { ...StyleSheet.absoluteFill, borderRadius: radii.pill },
-  soFar: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, opacity: 0.9, fontVariant: ['tabular-nums'] },
   // she stands on the card's foot, her waist at its edge
   character: { marginBottom: 0 },
 });

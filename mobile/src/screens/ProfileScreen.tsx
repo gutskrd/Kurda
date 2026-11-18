@@ -9,7 +9,7 @@ import { refreshFelt } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { ClayButton, ErrorRetry, GlassCard, GradientBackground } from '../theme/glass';
 import { display, statValue, statCaption } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -47,6 +47,7 @@ import { formatNumber } from '../i18n/format';
 import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /** How big the face is: the largest thing on the screen, in the middle, over the numbers. */
 const AVATAR = 96;
@@ -360,7 +361,7 @@ function AccountProfile() {
       {
         key: 'course',
         art: <CourseFlag />,
-        value: t(course === 'ckb' ? 'games.race.sorani' : 'games.race.kurmanci'),
+        value: t(dialectNameKey(course)),
         label: t('profile.stat.course'),
         onPress: () => navigation.navigate('Tabs', { screen: 'Learn' }),
       },
@@ -543,7 +544,8 @@ function AccountProfile() {
         <GiftedNote background={me?.background} icon={me?.icon} />
 
         {/* the four at a glance, once the first answers are in; the league's tile fills in as the showcase arrives */}
-        {settled && me ? <OverviewGrid tiles={tiles} /> : <OverviewSkeleton />}
+        {/* the account could not be read: said, with the way to ask again, rather than a shimmer that never ends */}
+        {settled && me ? <OverviewGrid tiles={tiles} /> : settled ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : <OverviewSkeleton />}
 
         {/* the three badges chosen for the profile, each game's rank and the league */}
         {!progress && !progressSettled ? (

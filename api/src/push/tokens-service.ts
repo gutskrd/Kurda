@@ -82,10 +82,25 @@ export class DeviceTokenService {
     return (res.rowCount ?? 0) > 0;
   }
 
-  /** Every registered device for a user. */
+  /**
+   * The devices a notification for this user goes to: each phone whose
+   * session is still live.
+   *
+   * The database drops a token when its session is revoked (migration
+   * `push-ends-with-its-session`), but a session can also simply run out — a
+   * phone put away for a month, its refresh token expired — and nothing is
+   * revoked then. So the session is asked about here too, on every send: a
+   * phone that is no longer signed in is not told what the account receives.
+   * A token with no session at all (none is registered without one; the
+   * migration removed the older ones) is never sent to either.
+   */
   async forUser(userId: string): Promise<DeviceToken[]> {
     const res = await this.pool.query<{ token: string; platform: PushPlatform }>(
-      `SELECT token, platform FROM device_tokens WHERE user_id = $1 ORDER BY last_seen_at DESC`,
+      `SELECT d.token, d.platform FROM device_tokens d
+        WHERE d.user_id = $1
+          AND EXISTS (SELECT 1 FROM refresh_tokens rt
+                       WHERE rt.family_id = d.family_id AND rt.user_id = d.user_id AND rt.revoked_at IS NULL AND rt.expires_at > now())
+        ORDER BY d.last_seen_at DESC`,
       [userId],
     );
     return res.rows;

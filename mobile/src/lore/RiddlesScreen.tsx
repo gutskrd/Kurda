@@ -29,8 +29,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { getRiddles } from './api';
 import { rememberList } from './store';
-import { DIFFICULTY_KEY, RIDDLES_NAME, STATE_KEY, defaultLoreDialect, inReaderLanguage, kurdishIn, textIn, varietyName } from './labels';
+import { DIFFICULTY_KEY, RIDDLES_NAME, STATE_KEY, defaultLoreDialect, inReaderLanguage, kurdishIn, textIn } from './labels';
 import { CollectionTitle, VarietySwitch } from './parts';
+import { dialectNameKey } from '../i18n/dialectName';
 
 type Filter = 'all' | RiddleDifficulty;
 
@@ -128,7 +129,7 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
   } else if (!list) {
     body = <ListSkeleton />;
   } else if (list.total === 0) {
-    body = <Note icon="question">{t('lore.riddles.empty', { variety: varietyName(dialect) })}</Note>;
+    body = <Note icon="question">{t('lore.riddles.empty', { variety: t(dialectNameKey(dialect)) })}</Note>;
   } else {
     let shown = 0;
     body = (

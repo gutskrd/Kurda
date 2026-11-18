@@ -22,7 +22,7 @@ function query(filters: BrowseFilters): string {
 export const listPosts = (client: ApiClient, filters: BrowseFilters = {}): Promise<ApiResult<{ posts: LibraryPost[] }>> =>
   client.get(`/library/posts${query(filters)}`);
 
-export const getPost = (client: ApiClient, id: string): Promise<ApiResult<LibraryPost>> => client.get(`/library/posts/${id}`);
+export const getPost = (client: ApiClient, id: string): Promise<ApiResult<LibraryPost>> => client.get(`/library/posts/${encodeURIComponent(id)}`);
 
 export const createPost = (
   client: ApiClient,
@@ -39,7 +39,7 @@ export const listComments = (
   if (page.offset != null) p.set('offset', String(page.offset));
   if (page.sort) p.set('sort', page.sort);
   const s = p.toString();
-  return client.get(`/library/posts/${postId}/comments${s ? `?${s}` : ''}`);
+  return client.get(`/library/posts/${encodeURIComponent(postId)}/comments${s ? `?${s}` : ''}`);
 };
 
 export const addComment = (
@@ -47,7 +47,7 @@ export const addComment = (
   postId: string,
   input: { body?: string; audioMediaId?: string; parentId?: string },
 ): Promise<ApiResult<LibraryComment>> =>
-  client.post(`/library/posts/${postId}/comments`, {
+  client.post(`/library/posts/${encodeURIComponent(postId)}/comments`, {
     ...(input.body ? { body: input.body } : {}),
     ...(input.audioMediaId ? { audioMediaId: input.audioMediaId } : {}),
     ...(input.parentId ? { parentId: input.parentId } : {}),
@@ -55,8 +55,8 @@ export const addComment = (
 
 /** Direct replies to a comment, oldest first: one branch, loaded when it is opened. */
 export const listReplies = (client: ApiClient, commentId: string): Promise<ApiResult<{ comments: LibraryComment[] }>> =>
-  client.get(`/library/comments/${commentId}/replies?limit=50`);
+  client.get(`/library/comments/${encodeURIComponent(commentId)}/replies?limit=50`);
 
 /** Delete your own comment; the server keeps a placeholder where it had replies. */
 export const deleteComment = (client: ApiClient, commentId: string): Promise<ApiResult<LibraryComment>> =>
-  client.delete(`/library/comments/${commentId}`);
+  client.delete(`/library/comments/${encodeURIComponent(commentId)}`);

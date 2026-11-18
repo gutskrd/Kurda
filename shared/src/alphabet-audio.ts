@@ -2,25 +2,17 @@ import type { WordSetId } from './word-sets/words.js';
 import { WORD_SET_CLIPS } from './word-sets/sounds.js';
 
 /**
- * Every sound on the alphabet page, and every word in the word sets (colours,
- * numbers, days, months), by key — one list for the three places that need
- * it: the apps play them, the admin panel records them, and the API refuses
- * to store a recording under any key not on it.
- *
- * Each letter's sound ships with a synthesised clip (web/scripts/alphabet-audio),
- * and so does each word that could be synthesised accurately. A recording made
- * in the admin panel takes its place for that key, and removing the recording
- * brings the synthesised clip back.
- *
- * `say` is exactly what to say into the microphone; `hint` is how, where the
- * text alone could be read two ways.
+ * Every sound on the alphabet page and every word in the word sets, by key: the apps play them, the admin records them,
+ * and the API refuses a recording under any other key. Each ships with a synthesised clip where one is accurate
+ * (web/scripts/alphabet-audio); a recording made in the admin replaces it, and removing the recording restores it. `say`
+ * is exactly what to say into the microphone; `hint` says how, where the text could be read two ways.
  */
 export type AlphabetClipGroup = 'kmr-sound' | 'kmr-word' | 'ckb-sound' | 'ckb-word' | 'pair' | WordSetId;
 
 export interface AlphabetClip {
   key: string;
   group: AlphabetClipGroup;
-  /** the letter (or word) the clip belongs to, as the page shows it */
+  /** the letter or word the clip belongs to, as the page shows it */
   letter: string;
   say: string;
   script: 'kmr' | 'ckb';
@@ -161,5 +153,5 @@ export function isAlphabetClipKey(key: string): boolean {
   return KEYS.has(key);
 }
 
-/** The longest recording worth keeping: a letter or a word, with a breath either side. */
+/** The longest recording worth keeping: a letter or a word with a breath either side. */
 export const ALPHABET_CLIP_MAX_SECONDS = 4;

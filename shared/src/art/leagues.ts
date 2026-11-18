@@ -1,20 +1,8 @@
 /**
- * Learning-league emblems (contract 4, L1/B3): six water tiers, each a crest
- * (see crest.ts) — a stone the colour of its water, set in a precious rim that
- * climbs with it: pearl, silver, gold, rose gold, platinum, and for the ocean
- * mother-of-pearl.
- *
- *   Dilop, the drop      a drop-cut stone on its own, a drop cut into it
- *   Kanî, the spring     a shield with a first pair of wings, the spring welling up
- *   Çem, the river       a hexagon, fuller wings, beads round its bezel, running water
- *   Gol, the lake        an octagon on a laurel, a peak and its reflection
- *   Derya, the sea       a round brilliant under a crown of pearls, glowing, the sun on the horizon
- *   Okyanûs, the ocean   the full crest: a star on its crown, a hanging stone, the sun's rays, a whale's tail
- *
- * The drop rounds into the ocean as the water does, and the setting grows
- * round it, so the ladder reads by its outline first and its colour second —
- * which is also how a league not reached yet is drawn: its own outline, flat,
- * with a keyhole.
+ * Learning-league emblems: six water tiers, each a crest (crest.ts) whose stone is the colour of its water, set in a
+ * rim that climbs from pearl through silver, gold, rose gold and platinum to mother-of-pearl. The setting grows with
+ * each tier (drop, shield with wings, hexagon with beads, octagon on a laurel, brilliant under a crown, full crest), so
+ * the ladder reads by outline first; a league not reached yet is its own outline, flat, with a keyhole.
  */
 import type { Crest } from './crest.js';
 import { crestMarkup, crestSilhouette } from './crest.js';
@@ -41,20 +29,16 @@ export function leagueCrest(tier: LeagueTier): Crest {
 
 export interface LeagueEmblemOptions {
   tier: LeagueTier;
-  /** pixels; default 128 */
+  /** Size in pixels; defaults to 128. */
   size?: number;
-  /** the accessible label; defaults to "Çem (River)" */
+  /** The accessible label; defaults to "Çem (River)". */
   title?: string;
   idPrefix?: string;
-  /**
-   * A league not reached yet: the tier's own outline, flat in `body`, with a
-   * keyhole in `mark` — its shape says which one it is, its stone waits.
-   * The colours are the screen's, so it sits quietly in light and dark.
-   */
+  /** A league not reached yet: its outline flat in `body` with a keyhole in `mark`, both in the screen's colours. */
   locked?: { body: string; mark: string };
 }
 
-/** Under this many pixels an emblem is drawn in its small version: filling its square, bolder. */
+/** Below this many pixels the small version is drawn: filling its square, bolder. */
 export const SMALL_LEAGUE = 56;
 
 /** A learning league's emblem as an SVG string. */

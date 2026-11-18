@@ -1,34 +1,18 @@
 /**
- * What the learning games' own content is made of: one schema per kind of
- * `game_content` row, the shared rules every row keeps, and the shapes the
- * apps are sent when a game is played.
+ * The learning games' own content: one schema per kind of `game_content` row, the rules every row keeps, and the shapes
+ * the apps are sent in play. Games show only Kurdish a person approved: mostly from published lessons, stories and human
+ * recordings, otherwise a `game_content` row a reviewer approved and an editor published (api/src/games); anything new goes
+ * in as a draft for review. Every row has one variety, and `checkGameContent` refuses Kurdish in the other variety's
+ * script.
  *
- * A game shows learners only Kurdish a person approved. Most of it is read
- * from what is already approved — published lessons, published stories, human
- * recordings — and the rest is a `game_content` row a reviewer approved and
- * an editor published (api/src/games). The Kurdish a game needs that nothing
- * approved holds yet goes in as a draft for review, never straight to
- * learners. Every row has exactly one variety, and `checkGameContent` refuses
- * a row whose Kurdish is written in the other variety's script.
- *
- * The schemas are built on first use rather than when this module loads: the
- * API and the admin validate with them, and an app that only reads the types
- * and the shapes below never builds them (nor pulls the validator into its
- * page bundle).
- *
- * The view types at the end are the contract between the server and both apps
- * for each game: what one round's item carries, without its answer. A game's
- * own track fills in the behaviour; the shapes are fixed here so the browser
- * and the phone cannot drift apart.
- *
- * Two kinds belong to no game: `riddle` and `proverb` are the Stories
- * section's collections (lore.ts), kept here so they share the one review
- * workflow every row goes through. What a learner is sent of them, and their
- * translations, are in lore.ts.
+ * Schemas are built on first use, so an app that only reads the types never builds them or bundles the validator. The view
+ * types at the end fix each game's server-to-app contract: one item, without its answer. `riddle` and `proverb` belong to
+ * no game; they are the Stories collections (lore.ts), kept here to share the review workflow.
  */
 import { z } from 'zod';
 import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
 import { SPEAKERS, type RecordingVoice, type SpeakerId } from '../lipsync/speakers.js';
+import { isHttpsUrl } from '../sanitize.js';
 import { GAME_DIALECTS, fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
 import type { GamesAvailability } from './solo.js';
 import { WHO_AM_I_MAX_SOMETIMES } from './who-am-i/game.js';
@@ -46,20 +30,18 @@ import {
 
 /**
  * The kinds of row, one per thing a game needs written:
- *   sentence          — Build a Sentence: a sentence, its meaning, the word orders it accepts
- *   passage           — The Memory Thief: a passage and the key words that vanish from it
- *   case_file         — Detective: suspects, evidence lines, deduction steps, the solution
- *   word_category     — Impostor: a category's Kurdish name and its meaning
- *   word_card         — Impostor: a word, its category, the impostor's hint and the twin an odd-word round deals
- *   identity          — Who Am I?: an identity and its facts (yes, no or sometimes)
- *   question_template — Who Am I?: a question and the fact that answers it
- *   riddle            — the Stories' riddles: a question, its hints, its answer and the forms it accepts
- *   proverb           — the Stories' proverbs: a saying, its themes, its variants and a scene it is said in
+ *   sentence          Build a Sentence: a sentence, its meaning, the word orders it accepts
+ *   passage           The Memory Thief: a passage and the key words that vanish from it
+ *   case_file         Detective: suspects, evidence lines, deduction steps, the solution
+ *   word_category     Impostor: a category's Kurdish name and meaning
+ *   word_card         Impostor: a word, its category, the impostor's hint and the twin an odd-word round deals
+ *   identity          Who Am I?: an identity and its facts (yes, no or sometimes)
+ *   question_template Who Am I?: a question and the fact that answers it
+ *   riddle            the Stories' riddles: a question, hints, the answer and the forms it accepts
+ *   proverb           the Stories' proverbs: a saying, its themes, variants and a scene it is said in
  *
- * The database knows four kinds more (`taboo_card`, `bluff_card`,
- * `building_name`, `scenario`), written for games that are no longer part of
- * Hevalo. Their rows stay where they are and nothing reads them: every query
- * that lists or deals content names the kinds it wants from this list.
+ * The database also holds `taboo_card`, `bluff_card`, `building_name` and `scenario` rows from retired games; nothing reads
+ * them, since every query names the kinds it wants from this list.
  */
 export const GAME_CONTENT_KINDS = [
   'sentence',
@@ -74,18 +56,14 @@ export const GAME_CONTENT_KINDS = [
 ] as const;
 export type GameContentKind = (typeof GAME_CONTENT_KINDS)[number];
 
-export function isGameContentKind(v: unknown): v is GameContentKind {
-  return (GAME_CONTENT_KINDS as readonly unknown[]).includes(v);
-}
-
 /**
  * The stories' workflow, for game content:
  *
  *   draft ──submit──▶ in_review ──publish──▶ published ──unpublish──▶ draft
  *     └──────────────publish──────────────────▲      any ──archive──▶ archived
  *
- * Publishing needs a reviewer's approval first (the table checks it too), and
- * a change to an approved row's content takes the approval away.
+ * Publishing needs a reviewer's approval first (the table checks it too), and changing an approved row's content removes
+ * the approval.
  */
 export const GAME_CONTENT_STATUSES = ['draft', 'in_review', 'published', 'archived'] as const;
 export type GameContentStatus = (typeof GAME_CONTENT_STATUSES)[number];
@@ -93,36 +71,32 @@ export type GameContentStatus = (typeof GAME_CONTENT_STATUSES)[number];
 export const GAME_CONTENT_REVIEW = ['unreviewed', 'approved'] as const;
 export type GameContentReview = (typeof GAME_CONTENT_REVIEW)[number];
 
-/** Which door a row came in by: written or imported in the panel, or seeded as a starter for review. */
+/** How a row came in: written or imported in the panel, or seeded as a starter for review. */
 export const GAME_CONTENT_SOURCES = ['admin', 'starter'] as const;
 export type GameContentSource = (typeof GAME_CONTENT_SOURCES)[number];
 
 export const GAME_CONTENT_REVIEW_NOTE_MAX = 600;
 
-/** A content level, 1 to 5, in the shared plain-name order (1 is the first). */
+/** A content level, 1 to 5, in the shared plain-name order. */
 export const GAME_LEVELS = [1, 2, 3, 4, 5] as const;
 export type GameLevel = (typeof GAME_LEVELS)[number];
 
-export function isGameLevel(v: unknown): v is GameLevel {
-  return (GAME_LEVELS as readonly unknown[]).includes(v);
-}
-
 // ---------- the parts the schemas share ----------
 
-/** What something means, by interface language: English always, the others when someone wrote them. */
+/** What something means by interface language: English always, the others where written. */
 export type Meanings = { en: string } & Partial<Record<AppLocale, string>>;
 
 /** A short slug: lower-case letters, digits and dashes. */
 export const GAME_SLUG_PATTERN = /^[a-z0-9-]{2,40}$/;
 
-/** What a detective's evidence card is: a written message, a statement, talk overheard (with its recording), a note. */
+/** A detective evidence card's kind: a written message, a statement, overheard talk (with its recording), a note. */
 export const EVIDENCE_KINDS = ['message', 'statement', 'overheard', 'note'] as const;
 export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
 
-/** Where a row was taken from, when an importer made it: the lesson exercise or story it reuses. */
+/** Where an importer took a row from: the lesson exercise or story it reuses. */
 export interface ContentOrigin {
   type: 'lesson' | 'conversation' | 'story';
-  /** the exercise or story id, and for a story the paragraph (`<storyId>:<paragraph>`) */
+  /** the exercise or story id, and for a story its paragraph (`<storyId>:<paragraph>`) */
   ref: string;
 }
 
@@ -131,24 +105,14 @@ export const SENTENCE_WORDS = { min: 3, max: 10 } as const;
 /** Words that vanish from a memory passage. */
 export const PASSAGE_HIDDEN = { min: 2, max: 6 } as const;
 
-/** A web address a browser would open over https: parsed, as a story's source is, so "https://" alone is refused too. */
-function isHttpsUrl(v: string): boolean {
-  try {
-    const url = new URL(v);
-    return url.protocol === 'https:' && url.hostname !== '';
-  } catch {
-    return false;
-  }
-}
-
 function build() {
   const kurdish = (max: number) => z.string().trim().min(1, 'write the Kurdish here').max(max, `keep it to ${max} characters`);
   const plain = (max: number) => z.string().trim().min(1, 'fill this in').max(max, `keep it to ${max} characters`);
   const slug = z.string().regex(GAME_SLUG_PATTERN, 'use 2–40 lower-case letters, digits and dashes');
   const locales = Object.fromEntries(APP_LOCALE_CODES.map((code) => [code, plain(400).optional()])) as Record<AppLocale, z.ZodOptional<z.ZodString>>;
-  // English required: it is what every other language falls back to
+  // English is required, since every other language falls back to it.
   const meanings = z.strictObject({ ...locales, en: plain(400) }) as unknown as z.ZodType<Meanings>;
-  // a translation that may be missing altogether, but never empty when there
+  // A translation that may be missing altogether, but is never empty when present.
   const someMeanings = z.strictObject(locales).refine((m) => Object.values(m).some((v) => typeof v === 'string' && v !== ''), {
     message: 'give at least one language',
   }) as unknown as z.ZodType<Partial<Record<AppLocale, string>>>;
@@ -157,7 +121,7 @@ function build() {
   const sentence = z.strictObject({
     ku: kurdish(240),
     meanings,
-    /** every other word order the sentence is right in, each the same words as `ku` */
+    /** every other word order the sentence is right in, each with the same words as `ku` */
     orders: z.array(kurdish(240)).max(11).default([]),
     /** what single words of it mean, for the correction after a round */
     glosses: z.array(z.strictObject({ word: kurdish(60), meanings })).max(SENTENCE_WORDS.max).default([]),
@@ -169,7 +133,7 @@ function build() {
     text: kurdish(2400),
     /** the whole passage in other languages, for after the round */
     translation: someMeanings.optional(),
-    /** the words that dissolve, each as it is written in the text */
+    /** the words that dissolve, each as written in the text */
     hidden: z.array(z.strictObject({ term: kurdish(60), meanings })).min(PASSAGE_HIDDEN.min).max(PASSAGE_HIDDEN.max),
     origin: origin.optional(),
   });
@@ -203,7 +167,7 @@ function build() {
             prompt: meanings,
             options: z.array(meanings).min(2).max(4),
             correctIndex: z.number().int().min(0),
-            /** the evidence that proves the answer, shown when the solution walks back */
+            /** the evidence that proves the answer, shown when the solution is walked back */
             evidence: z.array(slug).min(1).max(6),
           }),
         )
@@ -237,9 +201,9 @@ function build() {
     category: slug,
     /** what the impostor is told instead of the word: the category in Kurdish, with its meaning */
     hint: z.strictObject({ ku: kurdish(80), meanings }),
-    /** other forms of the word a clue may not say either (plurals, the ezafe); the game hears common endings by itself */
+    /** other forms of the word a clue may not say either (plurals, the ezafe); common endings are caught anyway */
     forms: z.array(kurdish(60)).max(12).default([]),
-    /** a word close to this one but not it (a cat for a dog), dealt to the odd one out in a round where they get a word of their own */
+    /** a word close to this one but not it (a cat for a dog), dealt to the odd one out in a round where they get their own word */
     twin: kurdish(60).optional(),
   });
   const identity = z.strictObject({
@@ -247,8 +211,8 @@ function build() {
     meanings,
     category: slug,
     /**
-     * Facts by key ("four-legs": true), which the question templates ask: yes, no, or "sometimes" where honest people
-     * would answer either way. A fact left out is a question never asked of this card.
+     * Facts by key ("four-legs": true) for the question templates: yes, no, or "sometimes" where either is honest; a
+     * missing fact is never asked of this card.
      */
     facts: z
       .record(slug, z.union([z.boolean(), z.literal('sometimes')]))
@@ -259,7 +223,7 @@ function build() {
   });
   const questionTemplate = z.strictObject({ ku: kurdish(160), meanings, fact: slug });
 
-  // the collections' rows (lore.ts): where each was found, and what a reviewer should know
+  // The collections' rows (lore.ts): where each was found, and what a reviewer should know.
   const source = z.strictObject({
     title: plain(LORE_LIMITS.sourceTitle),
     author: plain(LORE_LIMITS.sourceAuthor).optional(),
@@ -267,7 +231,7 @@ function build() {
     note: plain(LORE_LIMITS.note).optional(),
   });
   const sources = z.array(source).max(LORE_COUNTS.sources.max).default([]);
-  /** for the people who review the row: never sent to a learner */
+  /** for the row's reviewers; never sent to a learner */
   const notes = plain(LORE_LIMITS.notes).optional();
   const region = plain(LORE_LIMITS.region).optional();
   const riddle = z.strictObject({
@@ -282,7 +246,7 @@ function build() {
     answer: kurdish(LORE_LIMITS.answer),
     /** what else a learner may type and be right: with and without an ending, synonyms, both spellings */
     accepted: z.array(kurdish(LORE_LIMITS.answer)).min(LORE_COUNTS.accepted.min).max(LORE_COUNTS.accepted.max),
-    /** related words a reasoning player might give, told they are close rather than wrong (never a spelling of the answer) */
+    /** related words a reasoning player might give, called close rather than wrong (never a spelling of the answer) */
     near: z.array(kurdish(LORE_LIMITS.answer)).max(LORE_COUNTS.accepted.max).optional(),
     explanation: kurdish(LORE_LIMITS.explanation),
     sources,
@@ -303,7 +267,7 @@ function build() {
       .array(z.strictObject({ text: plain(LORE_LIMITS.proverb), dialect: z.enum(GAME_DIALECTS), region, note: plain(LORE_LIMITS.note).optional() }))
       .max(LORE_COUNTS.variants.max)
       .default([]),
-    /** a little scene in the row's variety with the proverb said in it */
+    /** a short scene in the row's variety with the proverb said in it */
     exampleKu: kurdish(LORE_LIMITS.example),
     sources,
     notes,
@@ -325,7 +289,7 @@ function build() {
 type Schemas = ReturnType<typeof build>;
 let schemas: Schemas | null = null;
 
-/** The schema of one kind's payload (zod), built the first time any is asked for. */
+/** One kind's payload schema (zod), built on first use. */
 export function gameContentSchema<K extends GameContentKind>(kind: K): Schemas[K] {
   schemas ??= build();
   return schemas[kind];
@@ -364,9 +328,8 @@ export interface GameContentIssue {
 }
 
 /**
- * Every Kurdish text a payload holds, with its path: what has to be in the
- * row's script — or, for a proverb's variant in the other variety, in that
- * variety's script (`dialect`).
+ * Every Kurdish text in a payload with its path: what must be in the row's script, or for a proverb's other-variety
+ * variant, in that variety's script (`dialect`).
  */
 export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload): Array<{ path: string; text: string; dialect?: GameDialect }> {
   const out: Array<{ path: string; text: string; dialect?: GameDialect }> = [];
@@ -429,7 +392,7 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
   return out;
 }
 
-/** The same words, in any order: what makes another order of a sentence an order and not another sentence. */
+/** The same words in any order: what makes another order of a sentence an order rather than another sentence. */
 export function sameWords(a: string, b: string, dialect: GameDialect): boolean {
   const key = (s: string) =>
     gameWords(s)
@@ -440,11 +403,9 @@ export function sameWords(a: string, b: string, dialect: GameDialect): boolean {
 }
 
 /**
- * Whether a payload may be stored for a kind and a variety: the kind's schema,
- * then the rules a schema cannot see — every Kurdish text in the row's own
- * script, a sentence's other orders made of its own words, a passage's hidden
- * words found in its text. Returns the payload as it will be stored (trimmed,
- * defaults filled) or every issue at once.
+ * Whether a payload may be stored for a kind and variety: the kind's schema, then the rules a schema cannot see (every
+ * Kurdish text in the row's script, a sentence's other orders made of its own words, a passage's hidden words in its text).
+ * Returns the payload as stored (trimmed, defaults filled) or every issue at once.
  */
 export function checkGameContent<K extends GameContentKind>(
   kind: K,
@@ -465,9 +426,9 @@ export function checkGameContent<K extends GameContentKind>(
   }
   if (kind === 'riddle' || kind === 'proverb') {
     const p = data as RiddleContent | ProverbContent;
-    // the slug names it in the learner routes, beside words of their own (/riddles/daily, /proverbs/rounds): the variety first keeps them apart
+    // The slug names it in learner routes beside fixed words (/riddles/daily, /proverbs/rounds), so the variety prefix keeps them apart.
     if (!p.slug.startsWith(`${dialect}-`)) issues.push({ path: 'slug', message: `start the slug with its variety: ${dialect}-…` });
-    // nothing is presented as old without saying where it was found, and a local form says where it is said
+    // Nothing is presented as old without saying where it was found, and a regional form says where it is said.
     if (p.tradition !== 'new' && p.sources.length === 0) issues.push({ path: 'sources', message: 'a traditional or regional one names at least one source' });
     if (p.tradition === 'regional' && !p.region) issues.push({ path: 'region', message: 'a regional form names its region' });
   }
@@ -529,13 +490,12 @@ export function meaningIn(meanings: Partial<Meanings> | null | undefined, locale
 
 // ---------- what the apps are sent, game by game ----------
 
-/** An opaque handle to a recording for one round: the address it plays from never says what it says. */
+/** An opaque handle to a recording for one round; its address never says what it says. */
 export type ClipHandle = string;
 
 /**
- * Hear It, Find It: one clip, and what is asked about it (games/hear-it). The
- * text behind the clip is never sent: the clip is a handle for this round
- * only, played from `hearItClipPath`.
+ * Hear It, Find It: one clip and what is asked about it (games/hear-it). The text behind the clip is never sent; the clip
+ * is a one-round handle played from `hearItClipPath`.
  */
 export interface HearItItemView {
   index: number;
@@ -555,11 +515,9 @@ export interface HearItItemView {
 }
 
 /**
- * The Memory Thief: the passage to study, then the same passage with its key
- * words gone (games/memory-thief). A passage is sent one way or the other,
- * never both: whole while it is studied, and with its gaps once the player has
- * asked for them (`POST /games/solo/sessions/:id/begin`), which is for good —
- * a round come back to after that is not shown the passage again.
+ * The Memory Thief: the passage to study, then the same passage with its key words gone (games/memory-thief). It is sent
+ * whole while studied and with gaps once the player asks for them (`POST /games/solo/sessions/:id/begin`), for good: a
+ * round revisited after that never shows the passage again.
  */
 export interface MemoryThiefItemView {
   index: number;
@@ -568,27 +526,24 @@ export interface MemoryThiefItemView {
   /** a story's paragraph, or lines of a lesson's conversation */
   kind: 'story' | 'conversation';
   title: string | null;
-  /** the passage whole while it is studied (a conversation's lines one per line of text); null once its words have vanished */
+  /** the whole passage while studied (a conversation one line per line); null once its words have vanished */
   text: string | null;
-  /** once its words have vanished, the passage in parts: text, a gap numbered from 0, or where a conversation's next line starts; null while it is studied */
+  /** once its words have vanished, the passage in parts: text, a gap numbered from 0, or a conversation line's start; null while studied */
   parts: Array<{ text: string } | { gap: number } | { line: number }> | null;
   /** who says each line (a story's one line: null) */
   speakers: Array<SpeakerId | null>;
   /** how many words vanish */
   gaps: number;
   studySeconds: number;
-  /** once its words have vanished, tiles to pick them from (beginner, intermediate); null to type them (advanced), and while it is studied */
+  /** once its words have vanished, tiles to pick them from (beginner, intermediate); null to type them (advanced), and while studied */
   tiles: string[] | null;
   level: GameLevel;
 }
 
 /**
- * A recording played beside the Kurdish it says, and who says it (with the
- * mouth's timeline, as lessons send it). Detective sends the
- * recording's own address rather than a handle: the words are on screen
- * beside it — an overheard remark pinned to the board — exactly as a lesson
- * sends a conversation's lines with theirs, so there is nothing behind it to
- * give away.
+ * A recording played beside the Kurdish it says, and who says it (with the mouth's timeline, as lessons send it).
+ * Detective sends the recording's address rather than a handle: the words are on screen beside it, as a lesson sends a
+ * conversation's lines, so nothing behind it can give anything away.
  */
 export interface SpokenAudio {
   src: string;
@@ -596,9 +551,8 @@ export interface SpokenAudio {
 }
 
 /**
- * Detective: the case board as the player opens it (games/detective).
- * The solution stays on the server, and so does what a card means until the
- * player has found it — by a deduction it proves, or by spending a hint on it.
+ * Detective: the case board as opened (games/detective). The solution stays on the server, and so does a card's meaning
+ * until found by a deduction or translated with a hint.
  */
 export interface DetectiveBoardView {
   title: Meanings;
@@ -620,23 +574,17 @@ export interface DetectiveBoardView {
   hintsUsed: number;
   /** the written hints read so far, in order */
   hints: Meanings[];
-  /** a written hint is still there to read (when none is, a hint can only translate a card) */
+  /** a written hint is left to read; when none is, a hint can only translate a card */
   moreHints: boolean;
-  /** the notebook: each deduction made, with its answer and the evidence that proves it */
+  /** the notebook: each deduction made, with its answer and the evidence proving it */
   notebook: Array<{ step: number; prompt: Meanings; answer: Meanings; evidence: string[] }>;
   level: GameLevel;
 }
 
-/** One item of a case: a deduction step, or at the end the accusation (suspects by id, in the board's order). */
+/** One case item: a deduction step, or at the end the accusation (suspects by id, in board order). */
 export type DetectiveItemView =
   | { index: number; kind: 'step'; prompt: Meanings; options: Meanings[] }
   | { index: number; kind: 'accuse'; suspects: string[] };
-
-/** Who Am I?: the questions that can be asked, and the guesses to pick from. */
-export interface WhoAmIRoundView {
-  questions: Array<{ id: string; ku: string; meanings: Meanings }>;
-  guesses: string[];
-}
 
 // ---------- what the admin panel is sent ----------
 
@@ -663,12 +611,9 @@ export interface AdminGameContent {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  /** what would stop it being stored as it is now (a row saved before a rule tightened) */
+  /** what would stop it being stored now, such as a row saved before a rule tightened */
   issues: GameContentIssue[];
-  /**
-   * A riddle's or a proverb's translations, one per language, each with its
-   * own review (lore.ts); sent when one row is opened, not in a list.
-   */
+  /** A riddle's or proverb's translations, one per language with its own review (lore.ts); sent when one row is opened, not in lists. */
   translations?: Partial<Record<AppLocale, AdminContentTranslation>>;
 }
 

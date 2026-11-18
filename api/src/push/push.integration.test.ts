@@ -7,6 +7,7 @@ import { loadConfig } from '../config/env.js';
 import { DeviceTokenService } from './tokens-service.js';
 import { PushService } from './service.js';
 import { StubPushProvider } from './provider.js';
+import { issueTokenPair } from '../auth/tokens.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -19,6 +20,9 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
   let userA = '';
   let userB = '';
   let accessA = '';
+  // the session each signed up with: a phone is registered under one, as the app registers it
+  let familyA = '';
+  let familyB = '';
 
   async function register(name: string, ip: string): Promise<{ id: string; token: string }> {
     const res = await app.inject({
@@ -46,6 +50,11 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
     userA = a.id;
     accessA = a.token;
     userB = (await register('pushB', '10.94.0.2')).id;
+    const family = async (userId: string) =>
+      (await pool.query<{ family_id: string }>(`SELECT family_id FROM refresh_tokens WHERE user_id = $1 AND revoked_at IS NULL LIMIT 1`, [userId])).rows[0]!
+        .family_id;
+    familyA = await family(userA);
+    familyB = await family(userB);
   });
 
   afterAll(async () => {
@@ -55,16 +64,16 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
   });
 
   it('registers multiple devices per user and lists them', async () => {
-    await tokens.register(userA, 'ios', `tok-a-ios-${suffix}`);
-    await tokens.register(userA, 'android', `tok-a-and-${suffix}`);
+    await tokens.register(userA, 'ios', `tok-a-ios-${suffix}`, familyA);
+    await tokens.register(userA, 'android', `tok-a-and-${suffix}`, familyA);
     const list = await tokens.forUser(userA);
     expect(list.map((d) => d.token).sort()).toEqual([`tok-a-and-${suffix}`, `tok-a-ios-${suffix}`].sort());
   });
 
   it('re-registering a token reassigns it to the new owner (OS restore)', async () => {
     const shared = `tok-shared-${suffix}`;
-    await tokens.register(userA, 'ios', shared);
-    await tokens.register(userB, 'ios', shared); // same token, new user
+    await tokens.register(userA, 'ios', shared, familyA);
+    await tokens.register(userB, 'ios', shared, familyB); // same token, new user
     expect((await tokens.forUser(userA)).some((d) => d.token === shared)).toBe(false);
     expect((await tokens.forUser(userB)).some((d) => d.token === shared)).toBe(true);
   });
@@ -140,8 +149,8 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
   it('delivery sends to devices and prunes provider-rejected tokens', async () => {
     const good = `tok-b-good-${suffix}`;
     const bad = `tok-b-bad-${suffix}`;
-    await tokens.register(userB, 'android', good);
-    await tokens.register(userB, 'android', bad);
+    await tokens.register(userB, 'android', good, familyB);
+    await tokens.register(userB, 'android', bad, familyB);
 
     const provider = new StubPushProvider(new Set([bad]));
     const push = new PushService(tokens, provider);
@@ -153,5 +162,29 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
     const remaining = (await tokens.forUser(userB)).map((d) => d.token);
     expect(remaining).toContain(good);
     expect(remaining).not.toContain(bad);
+  });
+
+  /*
+   * A session can end without being revoked: its refresh token simply runs
+   * out on a phone left in a drawer. That phone is not signed in any more and
+   * must not be told what the account receives either.
+   */
+  it('sends only to phones whose session is still live, not to one whose session ran out or one with none', async () => {
+    const lapsedFamily = (await issueTokenPair(config, pool, { id: userB })).familyId;
+    await pool.query(`UPDATE refresh_tokens SET expires_at = now() - interval '1 minute' WHERE family_id = $1`, [lapsedFamily]);
+    const live = `tok-b-live-${suffix}`;
+    const lapsed = `tok-b-lapsed-${suffix}`;
+    const sessionless = `tok-b-none-${suffix}`;
+    await tokens.register(userB, 'ios', live, familyB);
+    await tokens.register(userB, 'ios', lapsed, lapsedFamily);
+    await tokens.register(userB, 'ios', sessionless);
+    const listed = (await tokens.forUser(userB)).map((d) => d.token);
+    expect(listed).toContain(live);
+    expect(listed).not.toContain(lapsed);
+    expect(listed).not.toContain(sessionless);
+
+    const provider = new StubPushProvider();
+    const report = await new PushService(tokens, provider).deliver(userB, { category: 'events', title: 'Newroz', body: 'Bi xêr hatî!' });
+    expect(report.sent).toBe(listed.length);
   });
 });
