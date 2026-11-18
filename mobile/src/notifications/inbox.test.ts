@@ -19,7 +19,7 @@ describe('resolveDeepLink', () => {
       screen: 'PlayInvite',
       params: { inviteId: 'i1', game: 'stories', lobbyId: 'g1' },
     });
-    // a gift opens its chat with the gift to unwrap (reports/deepLinks.ts, ahead of everything else)
+    // A gift opens its chat with the gift to unwrap (reports/deepLinks.ts, ahead of everything else).
     const dm = '2b7c4a10-0000-4000-8000-000000000001';
     const group = '3c8d5b20-0000-4000-8000-000000000007';
     expect(resolveDeepLink({ kind: 'gift', giftId: 'x', batchId: 'b', chat: `dm:${dm}` })).toEqual({
@@ -40,7 +40,7 @@ describe('resolveDeepLink', () => {
   });
 
   it('returns null for missing params or unknown screens (friendly fallback)', () => {
-    // the quiz's game rooms are gone, and with them the screen they opened
+    // The quiz's game rooms are gone, and with them the screen they opened.
     expect(resolveDeepLink({ screen: 'Game', roomId: 'r1' })).toBeNull();
     expect(resolveDeepLink({ screen: 'Profile' })).toBeNull();
     expect(resolveDeepLink({ screen: 'Nope' })).toBeNull();
@@ -54,7 +54,7 @@ describe('a letter’s notification', () => {
   it('opens the window with its bird named, so the bird lands before the letter is read', () => {
     expect(resolveDeepLink({ kind: 'letter', threadId: T, how: 'window' })).toEqual({ screen: 'Letters', params: { bird: T } });
     expect(resolveDeepLink({ kind: 'letter', threadId: T, how: 'home', letterId: T })).toEqual({ screen: 'Letters', params: { bird: T } });
-    // from before `how`, a pen pal’s letter all the same
+    // From before `how`, a pen pal’s letter all the same.
     expect(resolveDeepLink({ kind: 'letter', threadId: T })).toEqual({ screen: 'Letters', params: { bird: T } });
   });
 
@@ -69,7 +69,7 @@ describe('a group’s notices about one’s place in it', () => {
   const group = '3c8d5b20-0000-4000-8000-000000000007';
 
   it('opens the group for someone it is still shown to, and a request to come back on the requests themselves', () => {
-    // banned, or back in: the group's screen has something to say to them
+    // Banned, or back in: the group's screen has something to say to them.
     for (const kind of ['group_banned', 'group_request_declined']) {
       expect(resolveDeepLink({ kind, groupId: group })).toEqual({ screen: 'GroupThread', params: { groupId: group, name: '' } });
     }
@@ -116,13 +116,13 @@ describe('progress notifications (contract 4)', () => {
 });
 
 describe('the notification list, cut into stretches of time', () => {
-  // a Tuesday afternoon, local time
+  // A Tuesday afternoon, local time.
   const now = new Date(2026, 9, 20, 15, 0).getTime();
   const at = (days: number, hours = 0) => new Date(now - days * 86_400_000 - hours * 3_600_000).toISOString();
 
   it('puts this morning under Today, last night under This week, and last month under Earlier', () => {
     expect(noticeGroup(at(0, 6), now)).toBe('today');
-    // the evening before is yesterday by the calendar, even though it is under 24 hours ago
+    // The evening before is yesterday by the calendar, even though it is under 24 hours ago.
     expect(noticeGroup(new Date(2026, 9, 19, 22, 0).toISOString(), now)).toBe('week');
     expect(noticeGroup(at(6), now)).toBe('week');
     expect(noticeGroup(at(8), now)).toBe('earlier');
@@ -156,7 +156,7 @@ describe('when a notification came, in the reader\'s words', () => {
 });
 
 describe('when a notification came, after its words on the same line', () => {
-  // a Tuesday afternoon, local time
+  // A Tuesday afternoon, local time.
   const now = new Date(2026, 9, 20, 15, 0).getTime();
   const ago = (minutes: number) => new Date(now - minutes * 60_000).toISOString();
   const say = (locale: 'en' | 'de') => (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS[locale][key], vars);
@@ -185,7 +185,7 @@ describe('what a notification is, and who it is from', () => {
   });
 
   it('draws each kind the server sends with its own glyph, a reward in gold', () => {
-    // an invite is a ticket, in its game's colour when the data names the game
+    // An invite is a ticket, in its game's colour when the data names the game.
     expect(noticeKind({ category: 'games', data: { kind: 'play_invite' } })).toEqual({ icon: 'ticket', reward: false });
     expect(noticeKind({ category: 'games', data: { kind: 'play_invite', game: 'rhyme-match' } })).toEqual({ icon: 'ticket', reward: false, game: 'rhyme-match' });
     expect(noticeKind({ category: 'games', data: { kind: 'play_invite', game: 'chess' } })).toEqual({ icon: 'ticket', reward: false });
@@ -193,7 +193,7 @@ describe('what a notification is, and who it is from', () => {
     expect(noticeKind({ category: 'progress', data: { kind: 'badge' } })).toEqual({ icon: 'medal', reward: true });
     expect(noticeKind({ category: 'moderation', data: { kind: 'caring_message' } })).toEqual({ icon: 'lifebuoy', reward: false });
     expect(noticeKind({ category: 'friends', data: { screen: 'Chat' } }).icon).toBe('chat');
-    // a kind the app has not met yet still gets its category's picture
+    // A kind the app has not met yet still gets its category's picture.
     expect(noticeKind({ category: 'streak', data: { kind: 'something_new' } })).toEqual({ icon: 'flame', reward: true });
     expect(noticeKind({ category: 'unheard_of', data: {} }).icon).toBe('bell');
   });
@@ -220,16 +220,15 @@ describe('what a notification is, and who it is from', () => {
 
 describe('a notification row and its skeleton', () => {
   /*
-   * The skeleton promises the row's height: a picture with its padding. That
-   * only holds while the two lines of text beside the picture are exactly as
-   * tall as it — change one and the rows jump when they arrive.
+   * The skeleton promises the row's height (a picture with its padding), which holds only while the two text lines are
+   * exactly as tall as the picture.
    */
   it('has text as tall as its picture, so the grey rows are the real rows\' height', () => {
     expect(NOTICE.titleLine + NOTICE.lineGap + NOTICE.bodyLine).toBe(NOTICE.avatar);
-    // the picture at the row's end is the face's size, so neither makes the row taller
+    // The picture at the row's end is the face's size, so neither makes the row taller.
     expect(NOTICE.picture).toBe(NOTICE.avatar);
     expect(NOTICE_ROW_HEIGHT).toBe(NOTICE.avatar + 2 * NOTICE.padV);
-    // on the 4/8 rhythm, with a heading a fingertip tall
+    // On the 4/8 rhythm, with a heading a fingertip tall.
     expect(NOTICE_ROW_HEIGHT % 4).toBe(0);
     expect(NOTICE.heading).toBeGreaterThanOrEqual(44);
   });

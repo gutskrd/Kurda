@@ -23,7 +23,8 @@ export type SocialDeepLink =
 
 const UUIDISH = /^[0-9a-f-]{8,64}$/i;
 
-function str(v: unknown): string | null {
+/** A notification data field as a non-empty string, or null. */
+export function str(v: unknown): string | null {
   return typeof v === 'string' && v.length > 0 ? v : null;
 }
 

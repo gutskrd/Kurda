@@ -68,8 +68,8 @@ describe('notification settings', () => {
   });
 
   /*
-   * A switch left where it was moved would claim a setting the server does
-   * not have: it goes back, and why is said above the list.
+   * A switch left where it was moved would claim a setting the server does not have: it goes back, and why is said
+   * above the list.
    */
   it('puts a switch back and says why when the change did not save', async () => {
     testAuth.client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS), 'PUT /me/notification-prefs': offline });
@@ -82,7 +82,7 @@ describe('notification settings', () => {
     expect(screen.getByRole('alert').textContent).toContain('Can’t reach Hevalo right now. Check your connection and try again.');
   });
 
-  // "−" and "+" read aloud say nothing: each step is named for what it does
+  // "−" and "+" read aloud say nothing: each step is named for what it does.
   it('names each quiet-hours step for what it does, and moves the time by half an hour', async () => {
     const client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS), 'PUT /me/notification-prefs': (body) => ok({ ...PREFS, ...(body as object) }) });
     testAuth.client = client;
@@ -95,11 +95,12 @@ describe('notification settings', () => {
       fireEvent.click(earlier);
     });
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ quietStartMin: 21 * 60 + 30 });
-    // in the reader's own way of writing the time: English counts twelve hours
+    // In the reader's own way of writing the time: English counts twelve hours.
     expect(screen.getByText(/^9:30\sPM$/)).toBeTruthy();
   });
 
-  // each step is drawn 36 across with the time between the two: nothing close, so it reaches a fingertip past every edge
+  // Each step is drawn 36pt across with the time between the two: nothing close, so it reaches a fingertip past every
+  // edge.
   it('answers a finger a little off a quiet-hours step', async () => {
     testAuth.client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS) });
     renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
@@ -109,7 +110,7 @@ describe('notification settings', () => {
     }
   });
 
-  // the list it is opened from is "Notifications": this page is named as the gear that opens it
+  // It is opened from the "Notifications" list, so this page is named as the gear that opens it.
   it('is called by the name of the gear that opens it, not by the list’s', async () => {
     testAuth.client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS) });
     renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
