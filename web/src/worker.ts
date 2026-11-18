@@ -560,7 +560,7 @@ function notFound(): Response {
 const SITE_HEADERS: ReadonlyArray<readonly [string, string]> = [
   [
     'content-security-policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com wss://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com wss://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests",
   ],
   ['x-frame-options', 'DENY'],
   ['x-content-type-options', 'nosniff'],
