@@ -124,6 +124,8 @@ describe('Learn', () => {
 
     expect(await screen.findByText('Due now: 4')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/app/learn/review');
+    // And beside it, the other kinds of practice.
+    expect(screen.getByRole('link', { name: 'More ways to practise' })).toHaveAttribute('href', '/app/learn/practice');
 
     const first = (await screen.findByRole('heading', { name: 'Kurmanji for Beginners' })).closest('article')!;
     expect(within(first).getByText('Kurmancî')).toBeInTheDocument();
@@ -862,6 +864,29 @@ describe('review', () => {
     expect(await screen.findByText('Nothing to review yet')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Take a lesson' })).toHaveAttribute('href', '/app/learn/lesson/l1');
     expect(calls.filter((c) => c.path === '/practice/session')[0]!.body).toBeUndefined();
+  });
+
+  it('starts the kind of practice its address asks for, and ends it on the practice page', async () => {
+    serve({ 'POST /practice/session': session });
+    routes('/app/learn/review?mode=listen');
+    expect(await screen.findByText('apple')).toBeInTheDocument();
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/review/p1');
+    expect(calls.filter((c) => c.path === '/practice/session').map((c) => c.body)).toEqual([{ mode: 'listen' }]);
+    expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn/practice');
+  });
+
+  it('reviews the chapter its address names', async () => {
+    serve({ 'POST /practice/session': session });
+    routes('/app/learn/review?mode=unit&unit=u2');
+    expect(await screen.findByText('apple')).toBeInTheDocument();
+    expect(calls.filter((c) => c.path === '/practice/session').map((c) => c.body)).toEqual([{ mode: 'unit', unitId: 'u2' }]);
+  });
+
+  it('with nothing of a kind to practise, leads back to the other kinds', async () => {
+    serve({ 'POST /practice/session': { empty: true, suggestion: { lessonId: 'l1', title: 'Hello' } } });
+    routes('/app/learn/review?mode=mistakes');
+    expect(await screen.findByText('Nothing to practise here right now')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to practice' })).toHaveAttribute('href', '/app/learn/practice');
   });
 });
 

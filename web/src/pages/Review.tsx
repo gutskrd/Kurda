@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { PRACTICE_MODES, type PracticeMode } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { LinkButton } from '../components/Button';
@@ -8,12 +9,22 @@ import { useT } from '../i18n/I18nProvider';
 import { LessonPlaceholder } from '../learn/LessonPlaceholder';
 import { PRACTICE_PATHS, SessionPlayer } from '../learn/SessionPlayer';
 import type { EmptyPractice, PracticeSessionView } from '../learn/types';
+import { practiceHref } from '../practice/hub';
+
+/** The practice page, where a session of another kind than review starts and ends. */
+const PRACTICE_PAGE = '/app/learn/practice';
 
 interface Passed {
   /** "Practise these now": the exercises to practise, from a results screen. */
   exerciseIds?: string[];
   /** The session just started, handed to its own address so it is not fetched twice. */
   session?: PracticeSessionView;
+  /** The kind the session is, when the practice page started it, so it ends there. */
+  mode?: PracticeMode;
+}
+
+function isMode(value: unknown): value is PracticeMode {
+  return (PRACTICE_MODES as readonly unknown[]).includes(value);
 }
 
 function passedState(state: unknown): Passed {
@@ -21,15 +32,27 @@ function passedState(state: unknown): Passed {
   const s = state as Record<string, unknown>;
   const ids = Array.isArray(s.exerciseIds) ? s.exerciseIds.filter((x): x is string => typeof x === 'string') : undefined;
   const session = s.session && typeof s.session === 'object' ? (s.session as PracticeSessionView) : undefined;
-  return { exerciseIds: ids && ids.length > 0 ? ids : undefined, session };
+  return { exerciseIds: ids && ids.length > 0 ? ids : undefined, session, mode: isMode(s.mode) ? s.mode : undefined };
+}
+
+/**
+ * The kind of session an address asks for (`?mode=listen`, a chapter's `?mode=unit&unit=…`), or null for review. A
+ * chapter's review without its chapter is review.
+ */
+function askedKind(params: URLSearchParams): { mode: PracticeMode; unitId?: string } | null {
+  const mode = params.get('mode');
+  if (!isMode(mode) || mode === 'review') return null;
+  if (mode !== 'unit') return { mode };
+  const unitId = params.get('unit');
+  return unitId ? { mode, unitId } : null;
 }
 
 /**
  * Review (/app/learn/review): a practice session in the lesson player over what is due (padded with the weakest
- * items), or from a results screen exactly the mistakes just made. The session then gets its own address
- * (/app/learn/review/:sessionId), so leaving or reloading resumes it. Both addresses render this element, keyed by
- * session (or by visit before one exists), so a new session is not fetched again and "practise these now" starts a new
- * review.
+ * items), from a results screen exactly the mistakes just made, or another kind the practice page asked for
+ * (`?mode=`). The session then gets its own address (/app/learn/review/:sessionId), so leaving or reloading resumes it.
+ * Both addresses render this element, keyed by session (or by visit before one exists), so a new session is not fetched
+ * again and "practise these now" starts a new review.
  */
 export function Review(): React.JSX.Element {
   const { sessionId } = useParams();
@@ -42,6 +65,7 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
   const navigate = useNavigate();
   const { client } = useAuth();
   const { state } = useLocation();
+  const [params] = useSearchParams();
   const passed = passedState(state);
   const [view, setView] = useState<PracticeSessionView | null>(
     sessionId && passed.session?.sessionId === sessionId ? passed.session : null,
@@ -52,6 +76,11 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
   // One start per attempt, even when an effect runs twice.
   const started = useRef<number | null>(null);
   const exerciseIds = passed.exerciseIds;
+  const asked = exerciseIds ? null : askedKind(params);
+  // A session the practice page started goes back there; review goes back to Learn.
+  const kind = asked?.mode ?? passed.mode ?? null;
+  const exitTo = kind ? PRACTICE_PAGE : '/app/learn';
+  const exitLabel = kind ? t('practice.back') : t('review.backToLearn');
 
   useEffect(() => {
     let live = true;
@@ -70,21 +99,20 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
     if (started.current === attempt) return;
     started.current = attempt;
     setError(null);
-    void client
-      .post<PracticeSessionView | EmptyPractice>('/practice/session', exerciseIds ? { exerciseIds } : undefined)
-      .then((res) => {
-        if (!res.ok) {
-          setError(describeError(res.error, t));
-          return;
-        }
-        if ('empty' in res.data) {
-          setEmpty(res.data);
-          return;
-        }
-        navigate(`/app/learn/review/${res.data.sessionId}`, { replace: true, state: { session: res.data } });
-      });
-    // `view` and the passed ids are read, not followed: having the session is no reason to refetch, and a start happens
-    // once per attempt.
+    const body = exerciseIds ? { exerciseIds } : asked ? { mode: asked.mode, ...(asked.unitId ? { unitId: asked.unitId } : {}) } : undefined;
+    void client.post<PracticeSessionView | EmptyPractice>('/practice/session', body).then((res) => {
+      if (!res.ok) {
+        setError(describeError(res.error, t));
+        return;
+      }
+      if ('empty' in res.data) {
+        setEmpty(res.data);
+        return;
+      }
+      navigate(`/app/learn/review/${res.data.sessionId}`, { replace: true, state: { session: res.data, mode: asked?.mode } });
+    });
+    // `view`, the passed ids and the asked kind are read, not followed: having the session is no reason to refetch, and
+    // a start happens once per attempt.
   }, [sessionId, attempt, client, navigate, t]);
 
   if (error) {
@@ -95,6 +123,22 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
     );
   }
   if (empty) {
+    // Nothing of another kind: back to the other kinds. Nothing to review: the next lesson.
+    if (asked) {
+      return (
+        <div className="container">
+          <EmptyState
+            title={t('practice.emptyKind.title')}
+            message={t('practice.emptyKind.body')}
+            action={
+              <div className="learn-empty-action">
+                <LinkButton to={PRACTICE_PAGE}>{t('practice.back')}</LinkButton>
+              </div>
+            }
+          />
+        </div>
+      );
+    }
     return (
       <div className="container">
         <EmptyState
@@ -121,10 +165,11 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
       session={view}
       kind="practice"
       paths={PRACTICE_PATHS}
-      exitTo="/app/learn"
-      exitLabel={t('review.backToLearn')}
-      onPractise={(ids) => navigate('/app/learn/review', { state: { exerciseIds: ids } })}
-      onRestart={() => navigate('/app/learn/review')}
+      exitTo={exitTo}
+      exitLabel={exitLabel}
+      onPractise={(ids) => navigate('/app/learn/review', { state: { exerciseIds: ids, mode: kind ?? undefined } })}
+      // A closed session starts afresh as the same kind; a chapter's review, which needs its chapter, starts from the list.
+      onRestart={() => navigate(kind && kind !== 'unit' ? practiceHref(kind) : kind ? PRACTICE_PAGE : '/app/learn/review')}
     />
   );
 }

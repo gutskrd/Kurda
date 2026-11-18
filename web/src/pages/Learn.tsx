@@ -14,6 +14,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { courseProgress, dialectName } from '../learn/map';
 import { CoursePath } from '../learn/CoursePath';
 import { ExerciseTools } from '../learn/practiceTools';
+import { ReviewEntry } from '../learn/ReviewEntry';
 import type { PracticeDue } from '../learn/types';
 import type { MeProfile, StreakSummary } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
@@ -29,50 +30,6 @@ import { publishedDictionary } from '../layouts/navLinks';
 
 /** Three letters a beginner meets first: a familiar one, one with a cedilla, one with a circumflex. */
 const ALPHABET_TEASER = 'Aa Çç Êê';
-
-/**
- * Review among the practice tools: what is due and the way in. The count matches what a session will find
- * (GET /practice/due), and a review left part-way is offered first at its own address. Its button stays secondary, since
- * the path's "Start" or "Continue" is the page's one primary action.
- */
-function ReviewEntry({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element {
-  const t = useT();
-  const { data, error, loading } = due;
-  let body: React.ReactNode;
-  let action: React.ReactNode = null;
-  if (loading && !data) {
-    body = <Skeleton line w="60%" />;
-  } else if (error || !data) {
-    body = t('review.dueFailed');
-    action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.start')}</LinkButton>;
-  } else if (data.open) {
-    body = t('review.open');
-    action = (
-      <LinkButton to={`/app/learn/review/${encodeURIComponent(data.open)}`} variant="secondary" size="sm">
-        {t('review.continue')}
-      </LinkButton>
-    );
-  } else if (data.available === 0) {
-    body = t('review.none');
-  } else if (data.due > 0) {
-    body = t('review.due', { count: data.due });
-    action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.start')}</LinkButton>;
-  } else {
-    body = t('review.notDue');
-    action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.practise')}</LinkButton>;
-  }
-  return (
-    <section className="learn-tool learn-review" aria-labelledby="learn-review-title">
-      <div className="learn-review-text">
-        <h3 className="learn-tool-title" id="learn-review-title">
-          {t('review.title')}
-        </h3>
-        <p className="learn-review-body">{body}</p>
-      </div>
-      {action}
-    </section>
-  );
-}
 
 /**
  * Today in one row above the path: the streak (opening `StreakSheet`), today's goal as a ring with its XP (opening
@@ -152,9 +109,10 @@ function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element 
 }
 
 /**
- * Practice tools in one row: review, the alphabet, the words to know, the dictionary and today's word, then the two
- * lesson exercises where the variety has enough content (learn/practiceTools.tsx). Visitors get the published dictionary
- * but not review, today's word or the exercises, which are the learner's own.
+ * Practice tools in one row: review with the way to every other kind of practice, the alphabet, the words to know, the
+ * dictionary and today's word, then the two lesson exercises where the variety has enough content
+ * (learn/practiceTools.tsx). Visitors get the published dictionary but not review, today's word or the exercises, which
+ * are the learner's own.
  */
 function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Element {
   const t = useT();
@@ -183,7 +141,7 @@ function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Elemen
         {t('learn.tools.title')}
       </h2>
       <div className={`learn-tools${signedIn ? '' : ' is-guest'}`}>
-        {due && <ReviewEntry due={due} />}
+        {due && <ReviewEntry due={due} toPractice />}
         {/* The letters every course is written in, then the first words: one way in (pages/Words.tsx). */}
         <Link ref={wordsCard} to="/app/learn/words" className="learn-tool learn-tool-link">
           <span className="learn-tool-letters" lang="ku" aria-hidden="true">

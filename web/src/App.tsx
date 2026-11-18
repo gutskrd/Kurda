@@ -35,6 +35,7 @@ const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })
 const BuildSentence = lazy(() => import('./games/BuildSentence').then((m) => ({ default: m.BuildSentence })));
 const MemoryThief = lazy(() => import('./games/MemoryThief').then((m) => ({ default: m.MemoryThief })));
 const HearIt = lazy(() => import('./games/HearIt').then((m) => ({ default: m.HearIt })));
+const PracticeHub = lazy(() => import('./practice/PracticeHub').then((m) => ({ default: m.PracticeHub })));
 const Detective = lazy(() => import('./games/Detective').then((m) => ({ default: m.Detective })));
 const WhoAmI = lazy(() => import('./whoami/WhoAmI').then((m) => ({ default: m.WhoAmI })));
 const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
@@ -251,6 +252,8 @@ export function AppRoutes(): React.JSX.Element {
         {/* The first thing a beginner needs, open to everyone; see pages/Alphabet.tsx. */}
         <Route path="alphabet" element={<Alphabet />} />
         {/* The words after the letters (colours, numbers, days, months), open to everyone (pages/Words.tsx, WordSet.tsx). */}
+        {/* Every kind of practice, each a session of the review player (practice/PracticeHub.tsx). */}
+        <Route path="learn/practice" element={<RequireAccount what="gate.what.course"><PracticeHub /></RequireAccount>} />
         {/* The two lesson exercises that were games: rounds checked against the learner, so they need an account; their old addresses lead here. */}
         <Route path="learn/practice/build-sentence" element={<RequireAccount what="gate.what.course"><BuildSentence /></RequireAccount>} />
         <Route path="learn/practice/hear-it" element={<RequireAccount what="gate.what.course"><HearIt /></RequireAccount>} />
