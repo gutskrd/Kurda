@@ -315,6 +315,13 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     return unlocks;
   }
 
+  /** Whether this learner was counted against the current catalogue, which leaves a count with no trigger nothing to do. */
+  private async counted(userId: string): Promise<boolean> {
+    const r = await this.pool.query<{ catalogue: number | null }>(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [userId]);
+    const row = r.rows[0];
+    return row !== undefined && (row.catalogue ?? CATALOGUE_VERSION) >= CATALOGUE_VERSION;
+  }
+
   /** Quietly counts the badges added to the catalogue since this learner was last counted. */
   private async catchUp(client: Executor, userId: string, catalogue: number | null): Promise<void> {
     const from = catalogue ?? CATALOGUE_VERSION;
@@ -448,8 +455,8 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
 
   /** `GET /me/badges`: every badge, the learner's progress on it, the showcase, secrets and rarity. */
   async list(userId: string): Promise<BadgesResponse> {
-    // make sure what they have done is counted (quietly, the first time)
-    await this.evaluate(userId, []);
+    // make sure what they have done is counted (quietly, the first time); once counted there is nothing to count here
+    if (!(await this.counted(userId))) await this.evaluate(userId, []);
     // The learner's own single values ride one statement together.
     const ctx = new MeasureContext(this.pool, userId);
     const [rows, rarity, days, units, showcase, legacyWin] = await Promise.all([

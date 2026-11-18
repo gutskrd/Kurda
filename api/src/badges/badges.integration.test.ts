@@ -6,12 +6,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { badgeDef, type BadgeUnlockedEvent } from '@kurda/shared';
-import { BadgeService, profileShowcase, type BadgeNotices } from './service.js';
+import { BadgeService, CATALOGUE_VERSION, profileShowcase, type BadgeNotices } from './service.js';
 import { addXp, makeLearner, removeLearners, type LearnerOptions, type TestLearner } from '../test/progress.js';
 import { befriend } from '../test/social.js';
 import type { Notification } from '../push/service.js';
 import { DictionaryRepository } from '../dictionary/repository.js';
 import { PRACTICE_TARGET } from '../practice/practice-select.js';
+import { queriesDuring } from '../test/query-count.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const DAY = 86_400_000;
@@ -950,6 +951,21 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       expect(page.badges.find((b) => b.key === 'tire-rast')).toMatchObject({ hidden: true, hintKey: 'badges.tire-rast.hint' });
       expect(page.badges).toHaveLength(62);
       expect(page.monthlyChallenge.goal).toBeGreaterThanOrEqual(8);
+    });
+
+    it('counts a learner seen for the first time or on an older catalogue, and otherwise only reads', async () => {
+      const p = await learner();
+      await addXp(pool, p.id, 50, new Date());
+      const first = await queriesDuring(pool, () => badges.list(p.id));
+      expect(first.statements.some((s) => s.includes('pg_advisory_xact_lock'))).toBe(true);
+      const again = await queriesDuring(pool, () => badges.list(p.id));
+      expect(again.result).toEqual(first.result);
+      // whether they are counted, then their badges, the rarity and their own figures
+      expect(again.count, again.statements.join('\n')).toBe(4);
+      await pool.query(`UPDATE badge_users SET catalogue = 1 WHERE user_id = $1`, [p.id]);
+      const older = await queriesDuring(pool, () => badges.list(p.id));
+      expect(older.statements.some((s) => s.includes('UPDATE badge_users SET catalogue'))).toBe(true);
+      expect((await pool.query(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [p.id])).rows[0]!.catalogue).toBe(CATALOGUE_VERSION);
     });
 
     it('shows rarity only once 500 are active', async () => {
