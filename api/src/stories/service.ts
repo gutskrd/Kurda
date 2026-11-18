@@ -1,26 +1,16 @@
 /**
- * Stories as learners and games see them: the library's front page (GET
- * /stories/library), the filtered list (GET /stories), one story to read
- * (GET /stories/:idOrSlug), a reader's bookmarks and reading position, and —
- * for the story games — a published story with its question bank.
+ * Stories as learners and games see them: the library front page (GET /stories/library), the filtered list (GET
+ * /stories), one story to read (GET /stories/:idOrSlug), bookmarks and reading position, and for the story games a
+ * published story with its question bank.
  *
- * Only published, approved stories ever leave here. A draft, a story in
- * review, an unpublished, unapproved or archived one is "not found" to every
- * caller in this file: nothing unreviewed reaches learners, and a story a
- * reviewer pulled stops being playable the moment it is pulled.
+ * Only published, approved stories ever leave here; anything else is "not found" to every caller, so a pulled story
+ * stops being playable at once.
  *
- * Questions never leave through the reading API. The games read them through
- * `getPublishedForGame` / `pickRandomPublished` and keep them server-side.
+ * Questions never leave through the reading API; games read them through `getPublishedForGame` / `pickRandomPublished`
+ * and keep them server-side. Which translations a native speaker reviewed is editors' business and never leaves here.
  *
- * Besides its text a story may carry its title and summary per language, its
- * sections (headings in the text), questions to think about, notes and
- * sources; all of them reach the reader. Which translations a native speaker
- * has reviewed is the editors' business and never leaves here.
- *
- * A signed-in reader gets their own record beside each story (`me`): the
- * bookmark, where they got to, their best quiz, how often they played it
- * today. Those rows are read per request and never cached; the shared shape
- * of a list or the library is cached for everyone.
+ * A signed-in reader's own record (`me`: bookmark, position, best quiz, plays today) is read per request and never
+ * cached; the shared shape of lists and the library is cached for everyone.
  */
 import { randomBytes } from 'node:crypto';
 import type pg from 'pg';
@@ -70,9 +60,8 @@ import { localDate, safeTimeZone } from '../streaks/streak-logic.js';
 export type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * The studio's recordings of a story's sentences by recording key, how long
- * each runs, and who says each that has a character, by the same key. One
- * query, for the reader and for a game's copy of a story alike.
+ * A story's studio sentence recordings by recording key, with durations and, for character lines, who speaks them. One
+ * query, for the reader and for a game's copy alike.
  */
 export async function sentenceRecordings(
   db: Executor,
@@ -107,10 +96,8 @@ export const LENGTH_ORDER_SQL = `ARRAY[${STORY_LENGTHS.map((l) => `'${l}'`).join
 export const STORY_ORDER_SQL = `s.level, array_position(${LENGTH_ORDER_SQL}, s.length), s.title`;
 
 /**
- * True when every sentence the reader can play has a studio recording — one
- * comparison of the story's stored keys with `lesson_audio`, so a list of a
- * hundred stories costs no text splitting at all. A story with no recordable
- * sentence is not "narrated".
+ * True when every sentence the reader can play has a studio recording: one comparison of the stored keys with
+ * `lesson_audio`, so lists cost no text splitting. A story with no recordable sentence is not "narrated".
  */
 export const FULLY_NARRATED_SQL = `(cardinality(s.sentence_keys) > 0 AND NOT EXISTS (
     SELECT 1 FROM unnest(s.sentence_keys) AS k(key)
@@ -125,9 +112,8 @@ export const LIST_COLUMNS = `s.id, s.slug, s.title, s.summary, s.dialect, s.lang
   s.category, s.tradition, s.author, s.featured, s.cover, s.published_at, s.meta_translations, ${AUDIO_COUNT_SQL}`;
 
 /**
- * How the dictionary spells a story's variety. Its entries were imported
- * under the course spelling ('kurmanji'); the language codes are accepted
- * beside it so an entry filed under either is found.
+ * How the dictionary spells a story's variety. Entries were imported under the course spelling ('kurmanji'); the
+ * language codes are accepted too so an entry filed under either is found.
  */
 export function dictionaryDialectsOf(dialect: StoryDialect): string[] {
   return dialect === 'sorani' ? ['sorani', 'ckb'] : ['kurmanji', 'kurmanci', 'ku'];
@@ -181,31 +167,24 @@ export const LIST_MAX_LIMIT = 50;
 /** The library's rows (featured, legends, recent, continue, bookmarks) each show this many at most. */
 const LIBRARY_ROW = 8;
 /**
- * The category whose stories have a shelf of their own on a variety's front page. The legends are what a reader comes
- * to the library looking for, and the newest-first row is where a newer story pushed one off the page (Kawa, published
- * first, was the one gone).
+ * The category with its own shelf on a variety's front page, so a newer story can never push a legend off the
+ * newest-first row.
  */
 const LEGEND_CATEGORY = 'legend';
 /** GET /me/stories lists this many per shelf. */
 const MY_STORIES_MAX = 50;
 
 /**
- * The published list and the library's shared shape are cached for a few
- * minutes, one entry per filter — the hub asks the same few questions over
- * and over, and the answer only changes when a story is published,
- * unpublished, archived, featured or deleted, a category changes, or a
- * sentence is recorded (fully narrated).
+ * The published list and the library's shared shape are cached for a few minutes, one entry per filter. They change
+ * only when a story is published, unpublished, archived, featured or deleted, a category changes, or a sentence is
+ * recorded (fully narrated).
  *
- * Each of those starts a new generation of the list rather than deleting the
- * entries, and every entry's key names the generation it was loaded in.
- * Deleting would race: a request that missed just before an unpublish
- * committed reads the old list (its query's snapshot still has the story) and
- * writes it back after the deletes, so a story a reviewer pulled would stay
- * in the hub for the whole five minutes — and every request after the delete
- * would join that load while it is in flight. A load from an older
- * generation now writes under a key nobody reads any more.
+ * Each such change starts a new generation instead of deleting entries, and every key names its generation. Deleting
+ * would race: a request that missed just before an unpublish committed would write the old list back after the deletes,
+ * keeping a pulled story in the hub for five minutes. A load from an older generation now writes under a key nobody
+ * reads.
  *
- * A search (`q`) is never cached: every typed prefix would be its own entry.
+ * Searches (`q`) are never cached.
  */
 const LIST_CACHE_DOMAIN = 'stories';
 const LIST_CACHE_TTL_SECONDS = 300;
@@ -219,9 +198,8 @@ function listCacheId(generation: string, f: StoryListFilter): string {
 }
 
 /**
- * Make every cached list stale at once by starting a new generation. One
- * write, best-effort like every cache write: with Redis down it is lost, and
- * so is everything it would have made stale.
+ * Make every cached list stale by starting a new generation. One best-effort write: with Redis down it is lost, along
+ * with everything it would have made stale.
  */
 export async function bustStoryLists(cache: Cache | null | undefined): Promise<void> {
   if (!cache) return;
@@ -266,9 +244,8 @@ export interface PickRandomOptions {
   length: StoryLength;
   level?: StoryLevel | null;
   /**
-   * Who will play it: stories any of them has already finished come last
-   * ("Surprise me" offers something new). One id for a solo game, every
-   * player's for a duo or group rematch; ids that are not uuids are ignored.
+   * Who will play: stories any of them has finished come last. One id for solo, every player's for a duo or group
+   * rematch; non-uuid ids are ignored.
    */
   preferNotCompletedBy?: string | readonly string[] | null;
 }
@@ -357,9 +334,8 @@ export function questionFromRow(r: QuestionRow): PublishedStoryQuestion {
 }
 
 /**
- * A map by interface language as a reader is sent it: only languages the app
- * is offered in (the saves check it; this keeps a hand-written row from
- * reaching the apps). Shared by the reader's lists and detail and the games.
+ * A per-language map as readers get it: only languages the app is offered in (saves check this; it keeps a hand-written
+ * row from reaching the apps). Shared by the reader's lists, detail and the games.
  */
 export function byAppLocale<T>(map: Record<string, T> | null | undefined): Partial<Record<AppLocale, T>> {
   const out: Partial<Record<AppLocale, T>> = {};
@@ -420,11 +396,9 @@ export function listItem(r: ListRow): StoryListItem {
 }
 
 /**
- * The glossary as the reader gets it: each term's dictionary link checked
- * (an entry deleted since the save is no link), with the entry's part of
- * speech and a pronunciation in the story's variety when one is recorded.
- * Looked up when the story is read rather than stored, so a clip recorded
- * after the save is heard the next time the story is opened.
+ * The glossary as the reader gets it: each dictionary link checked (an entry deleted since the save is no link), with
+ * the entry's part of speech and a pronunciation in the story's variety when recorded. Looked up on read, so a clip
+ * recorded after the save is heard next time.
  */
 export async function glossaryForReader(db: Executor, dialect: StoryDialect, glossary: readonly StoryGlossEntry[]): Promise<StoryGlossEntry[]> {
   const ids = [...new Set(glossary.map((g) => g.entryId).filter((id): id is string => typeof id === 'string' && UUID_RE.test(id)))];
@@ -446,11 +420,9 @@ export async function glossaryForReader(db: Executor, dialect: StoryDialect, glo
 }
 
 /**
- * The recorded sentences of a text played back to back, in reading order,
- * each knowing where it starts on that one timeline. The sentence index is
- * into `storySentences(paragraph)` — what the reader highlights — while only
- * the sentences the reader can play (`storyAudioSentences`: with a letter
- * and a key) are counted as recordable. Null when nothing is recorded.
+ * A text's recorded sentences played back to back in reading order, each with its start on that one timeline. The
+ * sentence index is into `storySentences(paragraph)` (what the reader highlights); only playable sentences
+ * (`storyAudioSentences`: with a letter and a key) count as recordable. Null when nothing is recorded.
  */
 export function narrationOf(
   paragraphs: readonly string[],
@@ -490,34 +462,15 @@ interface MeRow {
 }
 
 /**
- * Published stories, for the reading API and for the story games.
+ * Published stories for the reading API and the story games.
  *
- * The story games use two methods, by these names:
+ * The story games use `getPublishedForGame(storyId, executor?)` (the story and its whole bank, or null unless published
+ * now) and `pickRandomPublished(options, executor?)` ("Surprise me": a random published story of a variety and length,
+ * and level, with its bank, preferring ones the players have not finished). Both take an optional executor so a game
+ * can read inside its own transaction; the story row is then share-locked until it ends, so an unpublish waits for a
+ * game starting on it. Neither caches: a game must see an unpublish at once.
  *
- *   getPublishedForGame(storyId, executor?)  the story and its whole bank, or
- *                                            null unless it is published now
- *   pickRandomPublished(options, executor?)  "Surprise me": a random published
- *                                            story of a variety and length
- *                                            (and level), with its bank,
- *                                            preferring ones the players have
- *                                            not finished; null if there is
- *                                            none
- *
- * The games' own reader (story-games/stories-source.ts, `StoryCatalog`) asks
- * for the picked story's id and names its players `preferUnseenBy`; it maps
- * onto this service with `preferNotCompletedBy: opts.preferUnseenBy` and
- * `(await pickRandomPublished(…))?.id ?? null`. Its `minQuestions` needs no
- * filter: every published story carries MIN_QUESTION_BANK questions for its
- * length, more than any count that length offers (publishing checks it).
- *
- * Both take an optional executor so a game can read inside its own
- * transaction; the story row is then share-locked until that transaction
- * ends, so an unpublish waits for a game that is starting on the story
- * rather than slipping in between its check and its plan. Neither caches:
- * a game must see an unpublish at once.
- *
- * And `audioFor(paragraphs)` resolves recordings for any text — a game's
- * snapshot of a story, which may since have changed, reads its audio here.
+ * `audioFor(paragraphs)` resolves recordings for any text, such as a game's snapshot of a story that has since changed.
  */
 export class StoriesService {
   /** whether story_completions exists yet (the games' migration adds it); asked once per process */
@@ -584,25 +537,16 @@ export class StoriesService {
   }
 
   /**
-   * The library's front page. The rows everyone sees (featured, recent, the
-   * categories with their counts, the total) are cached by the list
-   * generation; a signed-in reader's own rows (continue, bookmarks, their
-   * tally) are read for them each time, and their record is added to every
-   * story on the page.
+   * The library's front page. The shared rows (featured, recent, categories with counts, the total) are cached by list
+   * generation; a signed-in reader's own rows (continue, bookmarks, tally) are read each time and their record added to
+   * every story on the page.
    *
-   * With a `dialect` the page is that variety's alone: its featured and
-   * recent stories, its counts by category and by level, its total, and the
-   * reader's tally and average on its stories — the apps show one variety at
-   * a time, and a legend told in both would otherwise stand on the shelf
-   * twice. The reader's own shelves (continue, bookmarks) hold what they hold
-   * whatever its variety. Without one it is the whole library, as an app from
-   * before the switch asks for it.
+   * With a `dialect` the page is that variety's alone (featured, recent, counts by category and level, total, and the
+   * reader's tally and average), since apps show one variety at a time. The reader's shelves hold every variety.
+   * Without one it is the whole library, as older apps request it.
    *
-   * The legends have a shelf of their own (`legends`, easiest first), so a
-   * newer story can never push one off the front page. A variety's page then
-   * leaves them out of the newest row, where each would otherwise show twice.
-   * The whole library, asked for by an app that knows no such shelf, keeps
-   * them among the newest as it always has.
+   * The legends have their own shelf (`legends`, easiest first), and a variety's page leaves them out of the newest row
+   * so none shows twice. The whole library keeps them among the newest for apps without that shelf.
    */
   async library(viewer: string | null = null, dialect: StoryDialect | null = null): Promise<StoryLibrary> {
     const load = async (): Promise<Pick<StoryLibrary, 'featured' | 'recent' | 'categories' | 'levels' | 'total'> & { legends: StoryListItem[] }> => {
@@ -711,13 +655,11 @@ export class StoriesService {
   }
 
   /**
-   * One published story to read, by id or by slug, with the reader's own
-   * record when they are signed in. The two are told apart before the query:
-   * a slug compared with a uuid column would be a cast error, not a miss.
+   * One published story by id or slug, with the reader's record when signed in. Slug and uuid are told apart before the
+   * query, since comparing a slug with a uuid column is a cast error.
    *
-   * Its recordings are looked up from the sentences as the reader cuts them
-   * now, not from the keys stored at its last save: the reader matches audio
-   * to the sentences it shows, so this is the set that has to be right.
+   * Recordings are looked up from the sentences as the reader cuts them now, not from the keys stored at save, because
+   * the reader matches audio to the sentences it shows.
    */
   async detail(idOrSlug: string, viewer: string | null = null): Promise<StoryDetail | null> {
     const byId = UUID_RE.test(idOrSlug);
@@ -771,9 +713,8 @@ export class StoriesService {
   }
 
   /**
-   * The studio recordings of a text's sentences, by recording key, and whether
-   * every sentence has one — for a story as it was when a game copied it —
-   * with who says the ones that have a character, when any has.
+   * A text's studio recordings by recording key and whether every sentence has one, for a story as a game copied it,
+   * with the speaker of character lines when any has one.
    */
   async audioFor(
     paragraphs: readonly string[],
@@ -810,10 +751,8 @@ export class StoriesService {
   }
 
   /**
-   * Where the reader is in a story. The position moves with every write (a
-   * reader starting over is at the start again); finishing is remembered once,
-   * when the client says so or the reader has passed 95 percent of the text,
-   * and never forgotten.
+   * Where the reader is in a story. The position follows every write (starting over moves it back); finishing is
+   * recorded once, when the client says so or past 95 percent of the text, and never forgotten.
    */
   async saveProgress(userId: string, storyId: string, input: { paragraph: number; share: number; finished?: boolean }): Promise<StoryMe> {
     const id = await this.readableId(storyId);
@@ -863,10 +802,9 @@ export class StoriesService {
   }
 
   /**
-   * A reader's record on each of these stories, in one query: the bookmark,
-   * the reading row, their best finished game (the games' own "best per story"
-   * rule), and the games they finished today — their own today, as the
-   * rewards count it, so the client can say when a quiz will pay no more.
+   * A reader's record on each of these stories in one query: bookmark, reading row, best finished game (the games'
+   * "best per story" rule), and games finished on their own local today, as rewards count it, so the client can say
+   * when a quiz stops paying.
    */
   async meFor(userId: string, storyIds: readonly string[]): Promise<Map<string, StoryMe>> {
     const out = new Map<string, StoryMe>();
@@ -943,13 +881,10 @@ export class StoriesService {
   }
 
   /**
-   * "Surprise me": a random published story of this variety and length (and
-   * level, when given). With `preferNotCompletedBy`, stories any of those
-   * players has already finished come last, so the surprise is a new story
-   * while there is one. Published stories always carry at least
-   * MIN_QUESTION_BANK questions (publishing checks it), so any of them can be
-   * played at any count its length offers. Null when there is none — or, rarely, when the one picked
-   * was unpublished in the same instant; the caller treats both as no story.
+   * "Surprise me": a random published story of this variety and length (and level, when given). With
+   * `preferNotCompletedBy`, stories any of those players finished come last. Published stories always carry at least
+   * MIN_QUESTION_BANK questions, so any can be played at any count its length offers. Null when there is none, or
+   * rarely when the pick was unpublished in the same instant; callers treat both as no story.
    */
   async pickRandomPublished(options: PickRandomOptions, executor: Executor = this.pool): Promise<PublishedStory | null> {
     const params: unknown[] = [options.dialect, options.length, options.level ?? null];
@@ -973,10 +908,8 @@ export class StoriesService {
   }
 
   /**
-   * The completions table belongs to the story games and arrives with their
-   * migration; until it exists there is nothing to prefer by, and the pick
-   * is simply random. Asked once per process: migrations run before the
-   * server starts, so a running process never sees it appear.
+   * The completions table arrives with the story games' migration; without it the pick is simply random. Checked once
+   * per process, since migrations run before the server starts.
    */
   private hasCompletions(): Promise<boolean> {
     this.completions ??= this.pool

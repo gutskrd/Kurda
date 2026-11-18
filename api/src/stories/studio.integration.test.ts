@@ -1,11 +1,7 @@
 /**
- * Story sentences in the audio studio, against real Postgres: listed like a
- * lesson's (a course per variety, the story as its unit and lesson), after
- * the lessons, archived stories left out — and a recording made there
- * reaching the story's "fully narrated" badge in the cached public list.
- *
- * Runs on DATABASE_URL alone; the storage PUT is stubbed, as in the lesson
- * audio suite, since what is under test is the listing and the cache.
+ * Story sentences in the audio studio against real Postgres: listed like a lesson's (a course per variety, the story as
+ * unit and lesson), after the lessons, without archived stories, and a recording there reaching the "fully narrated"
+ * badge in the cached public list. Needs only DATABASE_URL; the storage PUT is stubbed.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

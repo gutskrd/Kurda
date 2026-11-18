@@ -1,10 +1,7 @@
 /**
- * The story library against real Postgres: the front page for everyone and
- * for a signed-in reader, the same page in one variety at a time, the
- * reader's shelf and reading position, their shelves at /me/stories, the
- * other versions of a story, the glossary's dictionary links as the reader
- * gets them, and the categories, with the fables' Kurmancî name as its
- * migration leaves it.
+ * The story library against real Postgres: the front page for everyone and for a signed-in reader, one variety at a
+ * time, the reader's shelf and position, /me/stories, a story's other versions, glossary dictionary links, and the
+ * categories (with the fables' Kurmancî name as its migration sets it).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

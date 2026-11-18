@@ -1,8 +1,7 @@
 /**
- * Reading stories and the story games' way in, against real Postgres: only
- * published stories, in the hub's order, never their questions; the cached
- * list and what empties it; one story by slug or id with its recordings; and
- * the published story with its bank that a game builds its plan from.
+ * Reading stories and the story games' way in against real Postgres: only published stories, in the hub's order, never
+ * their questions; the cached list and what empties it; one story by slug or id with recordings; and the published
+ * story with its bank that a game plans from.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
