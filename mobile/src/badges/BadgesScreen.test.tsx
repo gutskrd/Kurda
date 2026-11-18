@@ -43,7 +43,14 @@ const LESSONS: BadgeView = {
   hintKey: null,
   rarity: null,
 };
-const BADGES: BadgesResponse = { badges: [LESSONS], showcase: [], secretsFound: 0, secretsTotal: 0, legacy: [], monthlyChallenge: { month: '2026-11', days: 2, goal: 20 } };
+const BADGES: BadgesResponse = {
+  badges: [LESSONS],
+  showcase: [],
+  secretsFound: 0,
+  secretsTotal: 0,
+  legacy: [],
+  monthlyChallenge: { month: '2026-11', days: 2, goal: 20 },
+};
 
 describe('the badges on show', () => {
   it('puts a badge on show before the server answers, and takes it off again with the reason when refused', async () => {

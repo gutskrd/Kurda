@@ -88,7 +88,13 @@ export function StandingCard({
       {banned?.reason ? <Text style={[styles.line, { color: colors.textSecondary }]}>{t('groups.standing.reason', { reason: banned.reason })}</Text> : null}
 
       {banned ? (
-        <RequestPart request={banned.request} onAsk={() => setAsking(true)} onWithdraw={withdraw} when={(iso) => noticeTime(iso, t, locale)} day={(iso) => formatDay(iso, locale)} />
+        <RequestPart
+          request={banned.request}
+          onAsk={() => setAsking(true)}
+          onWithdraw={withdraw}
+          when={(iso) => noticeTime(iso, t, locale)}
+          day={(iso) => formatDay(iso, locale)}
+        />
       ) : (
         <Text style={[styles.line, { color: colors.textSecondary }]}>{t('groups.standing.canBeAdded')}</Text>
       )}

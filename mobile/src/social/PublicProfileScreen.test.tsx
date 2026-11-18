@@ -160,6 +160,9 @@ describe('the menu about somebody', () => {
   });
 });
 
+/** Baran's profile, as a stranger sees it, without their friendship. */
+const BARAN = { userId: 'u2', username: 'baran', displayName: 'Baran', private: false, xp: 10, streak: 0, achievements: 0 };
+
 describe('asking to be friends', () => {
   it('hands the request over from the button, which then says Requested, and takes it back through the same routes', async () => {
     resetHaptics();
@@ -169,7 +172,7 @@ describe('asking to be friends', () => {
     vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
     let status = 'none';
     const client = fakeClient({
-      'GET /users/u2': () => ok({ userId: 'u2', username: 'baran', displayName: 'Baran', friendStatus: status, private: false, xp: 10, streak: 0, achievements: 0 }),
+      'GET /users/u2': () => ok({ ...BARAN, friendStatus: status }),
       'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
       'POST /friends/requests': () => {
         status = 'pending_out';
@@ -199,7 +202,7 @@ describe('asking to be friends', () => {
     const answers: ((r: unknown) => void)[] = [];
     let status = 'none';
     const client = fakeClient({
-      'GET /users/u2': () => ok({ userId: 'u2', username: 'baran', displayName: 'Baran', friendStatus: status, private: false, xp: 10, streak: 0, achievements: 0 }),
+      'GET /users/u2': () => ok({ ...BARAN, friendStatus: status }),
       'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
       'POST /friends/requests': () =>
         new Promise((resolve) =>
@@ -233,7 +236,7 @@ describe('blocking somebody', () => {
     const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.text === 'Block')?.onPress?.());
     let answer: (r: unknown) => void = () => undefined;
     testAuth.client = fakeClient({
-      'GET /users/u2': ok({ userId: 'u2', username: 'baran', displayName: 'Baran', friendStatus: 'friends', private: false, xp: 10, streak: 0, achievements: 0 }),
+      'GET /users/u2': ok({ ...BARAN, friendStatus: 'friends' }),
       'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
       'POST /friends/u2/block': () => new Promise((resolve) => (answer = resolve)),
     } as never);

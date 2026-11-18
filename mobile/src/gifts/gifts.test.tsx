@@ -414,7 +414,12 @@ describe('GiftUnwrap', () => {
       'PUT /me/cosmetics/background': () => new Promise((resolve) => (answer = resolve)),
     } as never);
     renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+      <GiftUnwrap
+        target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }}
+        onClose={() => undefined}
+        onOpened={() => undefined}
+        onThanks={async () => null}
+      />,
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Wear it' }));

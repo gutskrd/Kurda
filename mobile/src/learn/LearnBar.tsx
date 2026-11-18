@@ -164,7 +164,9 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
               <GoalRing xp={goal.earnedXp} goal={goal.effectiveGoal} size={56} tint={[colors.gold, colors.goldText]} showNumbers={false} />
               <Text style={[styles.goalWords, dir.text, { color: colors.textPrimary }]}>{goalWords}</Text>
             </View>
-            <Text style={[styles.caption, dir.text, { color: colors.textSecondary }]}>{t('learn.today.goalSetting', { xp: formatNumber(chosen ?? goal.goal, locale) })}</Text>
+            <Text style={[styles.caption, dir.text, { color: colors.textSecondary }]}>
+              {t('learn.today.goalSetting', { xp: formatNumber(chosen ?? goal.goal, locale) })}
+            </Text>
             <GoalPicker value={chosen ?? goal.goal} onChange={changeGoal} />
           </View>
         ) : null}

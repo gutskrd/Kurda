@@ -467,7 +467,8 @@ describe('a letter on your widget', () => {
     expect(reloadLetterWidget).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText(/On your widget\.$/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Take off my widget, Letter from Baran' }));
-    await waitFor(() => expect(client.calls.filter((c) => c.method === 'PUT').map((c) => c.body)).toEqual([{ pinnedLetterId: 'l2' }, { pinnedLetterId: null }]));
+    const puts = () => client.calls.filter((c) => c.method === 'PUT').map((c) => c.body);
+    await waitFor(() => expect(puts()).toEqual([{ pinnedLetterId: 'l2' }, { pinnedLetterId: null }]));
     expect(await screen.findByRole('button', { name: 'Show on my widget, Letter from Baran' })).toBeTruthy();
     expect(reloadLetterWidget).toHaveBeenCalledTimes(2);
   });

@@ -177,7 +177,8 @@ export function CosmeticPicker({
   const searchable = ofKind.length > SEARCH_FROM;
   const shown = searchable ? ofKind.filter((i) => matchesQuery({ name: nameOf(i) }, query)) : ofKind;
 
-  const equippedSku = current === 'frame' || current === 'background' || current === 'icon' ? dressing.shown(current, current === 'frame' ? wearing : worn[current]) : null;
+  const equippedSku =
+    current === 'frame' ? dressing.shown('frame', wearing) : current === 'background' || current === 'icon' ? dressing.shown(current, worn[current]) : null;
   const wide = current === 'background';
   const room = width || 327; // Before the first layout, the width of a small phone.
   const columns = Math.max(2, Math.floor((room + GAP) / (MIN_TILE[wide ? 'wide' : 'square'] + GAP)));

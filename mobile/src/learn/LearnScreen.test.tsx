@@ -217,7 +217,8 @@ describe('Learn', () => {
     fireEvent.click(goal(50));
     expect(goal(50).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByText('Goal: 50 XP')).toBeTruthy();
-    const puts = () => (testAuth.client as unknown as { calls: { method: string; body: unknown }[] }).calls.filter((c) => c.method === 'PUT').map((c) => c.body);
+    const calls = () => (testAuth.client as unknown as { calls: { method: string; body: unknown }[] }).calls;
+    const puts = () => calls().filter((c) => c.method === 'PUT').map((c) => c.body);
     expect(puts()).toEqual([{ goal: 30 }]);
     await act(async () => answers[0]!(ok({ goal: 30, effectiveGoal: 30, earnedXp: 12, progress: 0.4, completed: false })));
     expect(puts()).toEqual([{ goal: 30 }, { goal: 50 }]);

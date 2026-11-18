@@ -46,7 +46,10 @@ export function useWidgetPin(
       // Only the pin: the words choice is the widget settings page's, and is left as the server has it.
       const res = await client.put<unknown>(WIDGET_PREFS_PATH, { pinnedLetterId });
       if (res.ok) {
-        setPrefs((was) => (isPrefs(res.data) ? { pinnedLetterId: res.data.pinnedLetterId, showWords: res.data.showWords } : { showWords: was?.showWords ?? true, pinnedLetterId }));
+        const answer = res.data;
+        setPrefs((was) =>
+          isPrefs(answer) ? { pinnedLetterId: answer.pinnedLetterId, showWords: answer.showWords } : { showWords: was?.showWords ?? true, pinnedLetterId },
+        );
         // Reload this phone's widget now rather than at its next refresh.
         reloadLetterWidget();
       }
