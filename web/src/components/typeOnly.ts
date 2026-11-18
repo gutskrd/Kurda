@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
-/** How long the refusal note stays up before it stops being useful. */
+/** How long the refusal note stays up. */
 const NOTICE_MS = 2600;
 
 /**
- * Attributes that stop a keyboard from answering for you.
- *
- * Mostly a phone problem. Predictive text and autocorrect post whole words
- * nobody typed — which in a word game is the answer arriving by itself, and in
- * a Kurdish one is also a keyboard that has never heard of "xweş" rewriting it
- * into something else. `autoComplete` off keeps the browser from offering the
- * last thing you typed into a box with the same name.
+ * Stops phone keyboards answering for the player: predictive text and autocorrect insert whole words (and rewrite
+ * Kurdish ones), and autocomplete offers earlier entries.
  */
 export const TYPE_ONLY_ATTRS = {
   autoComplete: 'off',
@@ -20,34 +15,19 @@ export const TYPE_ONLY_ATTRS = {
 } as const;
 
 /**
- * A field that only accepts typing.
- *
- * Paste, drag-and-drop and middle-click paste all put text in a box without
- * anyone having typed it, and in these games the answer is often one tab away —
- * a dictionary, or in the race, the text itself on the same screen. Refusing
- * them silently reads as a broken box, so this hands back a note to show.
- *
- * A courtesy, not a boundary: the browser is not where cheating has to be
- * stopped, because the endpoints take whatever they are posted. It sits
- * alongside the server-side rules, it does not replace them.
- */
-/**
- * `message` is required rather than defaulted. A default would be one English
- * sentence with no catalogue behind it, waiting for the first caller who
- * forgets — and all three callers already pass a translated one.
+ * A field that only accepts typing: paste, drop and middle-click paste are refused with a note to show, since the
+ * answer is often a tab away. A courtesy only; the server's rules are what count. `message` is required so no caller
+ * falls back to untranslated English.
  */
 export function useTypeOnly(message: string): {
-  /** spread onto the input or textarea */
+  /** Spread onto the input or textarea. */
   handlers: {
     onPaste: (e: React.ClipboardEvent) => void;
     onDrop: (e: React.DragEvent) => void;
   } & typeof TYPE_ONLY_ATTRS;
-  /** what to show when something was refused, or null */
+  /** What to show when something was refused, or null. */
   notice: string | null;
-  /**
-   * Show the note for text refused some other way: the race also refuses a
-   * paste that arrives as an edit (`beforeinput`) with no paste event first.
-   */
+  /** Shows the note for text refused another way, such as a paste arriving only as `beforeinput`. */
   refuse: () => void;
 } {
   const [notice, setNotice] = useState<string | null>(null);

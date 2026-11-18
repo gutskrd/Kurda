@@ -6,18 +6,9 @@ import { VERIFY_PATH } from './ProtectedRoute';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * The door to the app, which is open.
- *
- * Anyone can walk in and read: the wall, the posts, the rankings, the games you
- * play alone. What needs an account is wrapped in `RequireAccount` page by page,
- * so the decision lives next to the thing being protected rather than in one
- * list somewhere else that drifts.
- *
- * The two things this still enforces, in order: email verification — an
- * account that has not confirmed its address is held at the verify screen —
- * and then a birth month, asked once of any account that has none (Google and
- * Apple sign-ups, and accounts from before it was asked), because what the app
- * lets the account do depends on the answer.
+ * The door to the app, which is open to read; pages that need an account wrap themselves in `RequireAccount`. This still
+ * holds an unverified account at the verify screen, then asks once for a birth month where none is on record, since what
+ * the account may do depends on it.
  */
 export function AppGate({ children }: { children: React.ReactNode }): React.JSX.Element {
   const t = useT();

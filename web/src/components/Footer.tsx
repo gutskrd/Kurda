@@ -6,19 +6,9 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { publishedDictionary } from '../layouts/navLinks';
 
 /**
- * The foot of the public pages.
- *
- * Two of its links used to go nowhere: `/learn` and `/rankings` are not routes,
- * only `/app/learn` and `/app/rankings` are, so both drew "Page not found". And
- * the two store links opened the App Store's and Google Play's front pages under
- * the words "coming soon" — a link that promises an app and delivers a
- * storefront. Until the apps are in the stores, the column says so in plain
- * text and links nowhere.
- *
- * The bottom bar carries the registered business and its KvK number on every
- * public page, as Dutch law asks of a site that offers a service, and links to
- * the full details (address, email, phone) on the About page, where they are
- * shown once rather than repeated in every footer.
+ * The foot of the public pages. Store links stay plain text until the apps are published. The bottom bar shows the
+ * registered business and its KvK number on every public page, as Dutch law requires, and links to the full details on
+ * the About page.
  */
 export function Footer(): React.JSX.Element {
   const t = useT();
@@ -33,11 +23,7 @@ export function Footer(): React.JSX.Element {
             <p className="muted" style={{ marginTop: 12, fontSize: '0.92rem' }}>
               {t('footer.tagline')}
             </p>
-            {/*
-              Left in Kurmancî in every language on purpose: it is the app's own
-              line, the way a masthead keeps its motto. Translating it would
-              turn the one Kurdish sentence on a German screen into German.
-            */}
+            {/* Kurmancî in every language on purpose: it is the app's own motto line. */}
             <p className="kurdish" lang="ku" style={{ marginTop: 10 }}>
               Jiyan bi kurdî xweştire.
             </p>
@@ -50,13 +36,7 @@ export function Footer(): React.JSX.Element {
             <Link to="/#learn">{t('nav.learn')}</Link>
             <Link to="/app/games">{t('nav.games')}</Link>
             <Link to="/app">{t('nav.community')}</Link>
-            {/*
-              A real anchor, not a <Link>: the published dictionary is thousands
-              of generated files served straight off the edge, outside this app
-              entirely. A client-side transition would hand the path to a router
-              that has no route for it and show "Page not found" over a page
-              that exists.
-            */}
+            {/* A plain anchor: the published dictionary is static files outside this app, so the router has no route for it. */}
             <a href={publishedDictionary(locale)}>{t('nav.dictionary')}</a>
             <Link to="/app/alphabet">{t('footer.alphabet')}</Link>
             <Link to="/app/rankings">{t('nav.rankings')}</Link>
@@ -67,7 +47,7 @@ export function Footer(): React.JSX.Element {
               {t('footer.company')}
             </h2>
             <Link to="/about">{t('nav.about')}</Link>
-            {/* also in the published dictionary's footer (web/scripts/ferheng-pages.ts) */}
+            {/* Also in the published dictionary's footer (web/scripts/ferheng-pages.ts). */}
             <Link to="/how-hevalo-teaches">{t('footer.teach')}</Link>
             <Link to="/faq">{t('footer.faq')}</Link>
             <Link to="/privacy">{t('footer.privacy')}</Link>
@@ -83,8 +63,7 @@ export function Footer(): React.JSX.Element {
         </div>
 
         <div className="footer-bottom">
-          {/* the two quiet lines travel together on the left, so the imprint
-              has the right-hand end of the bar to itself */}
+          {/* The two quiet lines stay together on the left, leaving the right end to the imprint. */}
           <span className="footer-bottom-left">
             <span>© {year} Hevalo</span>
             <span className="muted">{t('footer.madeWithCare')}</span>

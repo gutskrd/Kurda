@@ -2,14 +2,10 @@ import { forwardRef, useImperativeHandle, useRef, type InputHTMLAttributes } fro
 import { CloseIcon, SearchIcon } from './icons';
 import { useT } from '../i18n/I18nProvider';
 
-/**
- * Marks a field that empties itself on Escape. A sheet or dialog it sits in
- * leaves that Escape to the field (`escapeClearsField`), so the first Escape
- * takes back what was typed and only the next one closes.
- */
+/** Marks a field that empties on Escape; a sheet around it leaves that Escape to the field (`escapeClearsField`). */
 const CLEARS_ON_ESCAPE = 'data-clears-on-escape';
 
-/** Whether this Escape belongs to a search field with words in it, rather than to the sheet around it. */
+/** Whether this Escape belongs to a search field with words in it rather than to the sheet around it. */
 export function escapeClearsField(e: KeyboardEvent): boolean {
   const target = e.target;
   return target instanceof HTMLInputElement && target.hasAttribute(CLEARS_ON_ESCAPE) && target.value.length > 0;
@@ -20,24 +16,17 @@ type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChang
 export interface SearchFieldProps extends InputProps {
   value: string;
   onValueChange: (next: string) => void;
-  /** a magnifier at the start of the field */
+  /** A magnifier at the start of the field. */
   icon?: boolean;
-  /** on the wrapper, which places the magnifier and the clear button */
+  /** On the wrapper, which places the magnifier and the clear button. */
   className?: string;
-  /** on the input itself, for its height, its corners and its type size */
+  /** On the input, for its height, corners and type size. */
   inputClassName?: string;
 }
 
 /**
- * A search field: the words, and a clear button at the end once there are
- * words to clear.
- *
- * The button empties the field and leaves the cursor in it, ready for the next
- * search: pressing it does not take the focus first (`onMouseDown`), so a
- * phone's keyboard stays up rather than dropping and rising again. Escape does
- * the same while there is something to clear. The browser's own clear button
- * is hidden (ui.css): it is drawn differently in each browser, and not at
- * all in some, and two crosses would be one too many.
+ * A search field with a clear button once there are words. Clearing keeps focus in the field (`onMouseDown`) so a
+ * phone's keyboard stays up; Escape does the same. The browser's own clear button is hidden (ui.css).
  */
 export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(function SearchField(
   { value, onValueChange, icon = false, className, inputClassName, onKeyDown, ...input },
@@ -66,7 +55,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
         onKeyDown={(e) => {
           onKeyDown?.(e);
           if (e.defaultPrevented || e.key !== 'Escape' || !value) return;
-          // ours, not the browser's (which some do and some do not) nor the sheet's
+          // Ours, not the browser's nor the sheet's.
           e.preventDefault();
           e.stopPropagation();
           clear();

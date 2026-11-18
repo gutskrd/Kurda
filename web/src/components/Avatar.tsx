@@ -3,11 +3,8 @@ import { useT } from '../i18n/I18nProvider';
 import { useAvatarSrc } from '../art/overrides';
 
 /**
- * A small circular user avatar: shows the resolved image when present, otherwise
- * a person silhouette. The URL is already resolved server-side (uploaded photo →
- * default avatar → null), so this is presentation only — but for a default
- * avatar an admin has replaced, whose new picture is drawn instead
- * (art/overrides.ts). When `online` is true a green presence dot is shown.
+ * A small round avatar: the server-resolved image, or a silhouette. An admin's replacement for a default avatar is drawn
+ * instead (art/overrides.ts). `online` adds a green presence dot.
  */
 export function Avatar({
   url,

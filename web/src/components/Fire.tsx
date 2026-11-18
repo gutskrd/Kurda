@@ -29,31 +29,14 @@ import { prefersReducedMotion } from '../lib/motion';
 import './fire.css';
 
 /**
- * The streak's fire (shared `art/fire.ts`), the same drawing the phone shows,
- * at its stage (`level`): cold logs with a curl of smoke, a spark caught,
- * on up to the Newroz fire with the sun behind it. Its flame is painted
- * (`public/fire/`, made by `scripts/generate-fire-sprites.mjs`) and plays
- * frame by frame, breathing and swaying as a cartoon flame does; the glow
- * breathes round it and pools on the ground and sparks drift up. Each moving
- * part runs one CSS keyframe with its own poses, period and phase, and the
- * flame two stepped ones, along its sheet's rows and down them.
+ * The streak's fire (shared `art/fire.ts`), as on the phone, at its stage `level`, from cold logs up to the Newroz fire
+ * with the sun behind it. The flame is a painted sprite sheet (`public/fire/`, from `scripts/generate-fire-sprites.mjs`)
+ * stepped by CSS keyframes; glow, smoke and sparks each run one keyframe of their own.
  *
- * Given `from`, a smaller fire, it is drawn as that first and grows into
- * `level` as it appears (shared `fireGrowth`, after `FIRE_GROW.delayMs`), the
- * day it grew: the old flame stretches up and fades into the new one. `size`
- * is its height; at `FIRE_SMALL` and under it is the light version (a bold
- * round flame alone, drawn, breathing gently) for a row of text. `framed`, it
- * takes up only its stage's part of the box (shared `fireFrame`), still drawn
- * as big as `size` makes the whole, for a screen that shows it big without
- * the empty air above a young fire. Under reduced motion, or `still`, it is
- * the fire at `level` standing still, its flame one frame. `accent` tints its
- * light, never the painted flame. Decorative: the words beside it say the
- * streak.
- *
- * Each colour is written for both schemes (`light-dark()`), so the fire
- * follows the page's scheme with nothing here knowing which is on; a browser
- * that cannot read that keeps the attribute, the dark scheme's colour, the
- * app's default.
+ * `from` draws a smaller fire first and grows it into `level` (shared `fireGrowth`). At `FIRE_SMALL` and under, a light
+ * drawn version is used for rows of text. `framed` lays out only the stage's part of the box (shared `fireFrame`).
+ * `still` or reduced motion shows one frame. `accent` tints the light, never the flame. Colours use `light-dark()`,
+ * with the dark colour as the attribute fallback. Decorative: the words beside it say the streak.
  */
 export function Fire({
   size,
@@ -64,15 +47,15 @@ export function Fire({
   accent,
   className,
 }: {
-  /** how tall the whole fire's box is drawn, framed or not */
+  /** The height of the whole fire's box, framed or not. */
   size: number;
-  /** how big it burns (shared `fireLevel`, `runFireLevel`); cold is the fire not burning */
+  /** How big it burns (shared `fireLevel`, `runFireLevel`). */
   level: FireLevel;
-  /** grows from this level into `level` as it appears: the day the fire grew */
+  /** Grows from this level into `level` as it appears. */
   from?: FireLevel | null;
-  /** drawn standing still, as under reduced motion */
+  /** Drawn still, as under reduced motion. */
   still?: boolean;
-  /** only its stage's frame laid out, the rest drawn over its edges */
+  /** Lays out only its stage's frame, the rest drawn over its edges. */
   framed?: boolean;
   accent?: string | null;
   className?: string;
@@ -85,7 +68,7 @@ export function Fire({
     () => (reduce || held || !from ? null : fireGrowth(from, level, size)),
     [reduce, held, from?.stage, from?.growth, level.stage, level.growth, size],
   );
-  // the growth seen through once, the old fire is let go
+  // Once the growth has played, the old fire is let go.
   const [grownFrom, setGrownFrom] = useState<FireGrowth | null>(null);
   const growing = growth && grownFrom !== growth ? growth : null;
   const now = paint(`${id}a`, drawing, accent, still);
@@ -118,7 +101,7 @@ export function Fire({
           <Burning paint={before} drawing={growing.from} />
         </Grow>
       )}
-      {/* the flash behind the new flame, so the flame itself is never washed out */}
+      {/* The flash behind the new flame, so the flame itself is never washed out. */}
       {growing?.flash && (
         <Grow motion={growing.flash.motion} origin={[growing.flash.cx, growing.flash.cy]} gone>
           <ellipse cx={growing.flash.cx} cy={growing.flash.cy} rx={growing.flash.rx} ry={growing.flash.ry} fill={`url(#${id}-flash)`} />
@@ -144,7 +127,7 @@ export function Fire({
   );
 }
 
-/** The colours of one drawing in both schemes, the prefix its gradients are named by, and whether it stands still. */
+/** One drawing's colours in both schemes, its gradient id prefix, and whether it stands still. */
 interface Paint {
   id: string;
   light: FireColours;
@@ -198,7 +181,7 @@ function Defs({ paint: p, drawing }: { paint: Paint; drawing: FireDrawing }): Re
   );
 }
 
-/** A colour at its strength, fading by `fade` (an offset, and the share of its strength there): out from the middle, or (`linear`) from the top down. */
+/** A colour fading by `fade` (offset and strength there): outwards from the middle, or from the top down when `linear`. */
 function Fade({
   id,
   light,
@@ -236,11 +219,7 @@ function GlowGradient({ id, colours, strength }: { id: string; colours: Pick<Pai
   return <Fade id={id} light={light} dark={dark} fade={FIRE_GLOW_FADE} strength={strength} />;
 }
 
-/**
- * What burns: the glow, the sun in front of it (opening as it grows, given
- * `halo`), the light pooled on the ground, smoke rising, the sparks from
- * behind the flame, and the flame: painted, or the light version's tongues.
- */
+/** What burns: glow, the sun (opening as it grows, given `halo`), the pooled light, smoke, sparks and the flame. */
 function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawing; halo?: FireMotion | null }): React.JSX.Element {
   return (
     <>
@@ -263,7 +242,7 @@ function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawi
           />
         );
       })}
-      {/* the sparks rise from behind the flame, so they are only seen once clear of it */}
+      {/* Sparks rise from behind the flame, so they show only once clear of it. */}
       {!p.still &&
         drawing.embers.map((e, i) => <circle key={`e${i}`} className="fire-part fire-rise" cx={e.cx} cy={e.cy} r={e.r} {...fill(p, e.gold ? 'gold' : 'ember', moving(e.motion, [e.cx, e.cy]))} />)}
       {drawing.painted && <Painted flame={drawing.painted} still={p.still} />}
@@ -274,12 +253,7 @@ function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawi
   );
 }
 
-/**
- * The painted flame: a window as big as the flame, onto its sheet, showing
- * one frame at a time. The sheet steps along a row, frame by frame, and the
- * row it shows steps down the sheet each time it reaches the end of one, so
- * the frames play in order and loop; standing still, it shows the first.
- */
+/** The painted flame: a window onto its sheet stepping along each row and down the rows, so frames loop in order. */
 function Painted({ flame, still }: { flame: FireFlame; still: boolean }): React.JSX.Element {
   const { sheet, box } = flame;
   const steps = (count: number, ms: number, shift: number): React.CSSProperties =>
@@ -300,12 +274,12 @@ function Painted({ flame, still }: { flame: FireFlame; still: boolean }): React.
   );
 }
 
-/** A glow (round the fire, or pooled under it), breathing about its middle; both are lit by the one glow gradient. */
+/** A glow round the fire or pooled under it, breathing about its middle. */
 function Glow({ paint: p, glow }: { paint: Paint; glow: FireGlow }): React.JSX.Element {
   return <ellipse className="fire-part fire-loop" cx={glow.cx} cy={glow.cy} rx={glow.rx} ry={glow.ry} fill={`url(#${p.id}-glow)`} style={moving(glow.motion, [glow.cx, glow.cy])} />;
 }
 
-/** The sun behind the Newroz fire: its disc, and its rays turning slowly. */
+/** The sun behind the Newroz fire: its disc and slowly turning rays. */
 function Halo({ paint: p, drawing }: { paint: Paint; drawing: FireDrawing }): React.JSX.Element | null {
   const halo = drawing.halo;
   if (!halo) return null;
@@ -325,9 +299,9 @@ function Cinder({ paint: p, drawing }: { paint: Paint; drawing: FireDrawing }): 
   return <circle className="fire-part fire-loop" cx={c.cx} cy={c.cy} r={c.r} fill={`url(#${p.id}-cinder)`} style={moving(c.motion, [c.cx, c.cy])} />;
 }
 
-/** Pieces of the hearth, still; a group the fire did not have before it grew arrives as it grows. */
+/** The hearth's pieces, still; a group new to the grown fire arrives as it grows. */
 function Hearth({ paint: p, pieces, arrive }: { paint: Paint; pieces: readonly FireBasePiece[]; arrive?: Readonly<Partial<Record<FireBaseGroup, FireMotion>>> }): React.JSX.Element {
-  // consecutive pieces of one group, so an arriving group moves as one
+  // Consecutive pieces of one group, so an arriving group moves as one.
   const runs: { group: FireBaseGroup; pieces: FireBasePiece[] }[] = [];
   for (const piece of pieces) {
     const last = runs.at(-1);
@@ -357,7 +331,7 @@ function Grow({
 }: {
   motion?: FireMotion | null;
   origin: readonly [number, number];
-  /** gone by its end, and gone at once if motion is turned down while it plays */
+  /** Gone by its end, and at once if reduced motion turns on while it plays. */
   gone?: boolean;
   onEnd?: () => void;
   children: React.ReactNode;
@@ -374,7 +348,7 @@ function Grow({
   );
 }
 
-/** A tongue's (or a log's) colour from its tip to its root, in both schemes. */
+/** A tongue's or log's colour from tip to root, in both schemes. */
 function Gradient({ id, light, dark }: { id: string; light: FireStops; dark: FireStops }): React.JSX.Element {
   return (
     <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
@@ -389,18 +363,18 @@ function Stop({ offset, light, dark }: { offset: number; light: string; dark: st
   return <stop offset={offset} stopColor={dark} style={both(light, dark)} />;
 }
 
-/** A spark's colour, in both schemes, with its motion: the Newroz fire's gold for a gold one, the fire's own for the rest. */
+/** A spark's colour in both schemes with its motion: gold for the Newroz fire's gold sparks, the fire's own otherwise. */
 function fill(p: Paint, which: 'ember' | 'gold', style?: React.CSSProperties): { fill: string; style: React.CSSProperties } {
   const [light, dark] = [p.light[which] ?? p.light.ember ?? 'none', p.dark[which] ?? p.dark.ember ?? 'none'];
   return { fill: dark, style: { ...both(light, dark, 'fill'), ...style } };
 }
 
-/** A colour for the page's scheme, as a style that wins over the dark-scheme attribute where it is understood. */
+/** A colour for the page's scheme, as a style that overrides the dark-scheme attribute where understood. */
 function both(light: string, dark: string, property: 'stopColor' | 'fill' = 'stopColor'): React.CSSProperties {
   return { [property]: `light-dark(${light}, ${dark})` };
 }
 
-/** `#rrggbb` at `alpha`: a colour's strength in the colour itself, the same in either scheme's spelling. */
+/** `#rrggbb` at `alpha`, the same in either scheme's spelling. */
 function rgba(hex: string, alpha: number): string {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
   return `rgba(${r}, ${g}, ${b}, ${Math.round(alpha * 1000) / 1000})`;
@@ -411,12 +385,12 @@ function transformOf(p: FirePose): string {
   return `translate(${p.x ?? 0}px, ${p.y ?? 0}px) rotate(${p.r ?? 0}deg) scale(${p.sx ?? 1}, ${p.sy ?? 1}) skewX(${p.skew ?? 0}deg)`;
 }
 
-/** A part held at one pose: where a rising part is drawn when the fire stands still. */
+/** A part held at one pose, for a still fire. */
 function resting(p: FirePose, origin: readonly [number, number]): React.CSSProperties {
   return { transformOrigin: `${origin[0]}px ${origin[1]}px`, transform: transformOf(p), opacity: p.o ?? 1 };
 }
 
-/** A part's keyframe values, period and phase, and the point it moves about, for fire.css's keyframes. */
+/** A part's keyframe values, period, phase and origin, for fire.css. */
 function moving(m: FireMotion, origin: readonly [number, number]): React.CSSProperties {
   const style: Record<string, string> = {
     transformOrigin: `${origin[0]}px ${origin[1]}px`,

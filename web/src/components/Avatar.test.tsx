@@ -7,11 +7,7 @@ import { I18nProvider } from '../i18n/I18nProvider';
 import { avatarAssetUrl, avatarSrc, defaultAvatarKey } from '../lib/cosmetics';
 import { ART_OVERRIDES_KEY, resetArtOverridesForTests } from '../art/overrides';
 
-/**
- * Default profile pictures an admin replaced (the `avatar:<key>` slots): every
- * default avatar the site draws goes through one function, so the new picture
- * shows wherever the old one did, and a photo somebody uploaded is never touched.
- */
+/** Default avatars an admin replaced (`avatar:<key>`) show the new picture everywhere; uploaded photos are never touched. */
 
 const DEER_03 = 'https://cdn.test/art/avatar-03.png';
 const PHOTO = 'https://cdn.test/users/u1/photo.webp';

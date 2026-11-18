@@ -1,27 +1,14 @@
 import { Fragment, type CSSProperties, type InputHTMLAttributes, type ReactNode, type Ref } from 'react';
 
 /**
- * A code typed a character to a box: the code that joins a game
- * (play/JoinCode.tsx) and the one that confirms an email address
- * (pages/VerifyEmail.tsx). A code looks and moves the same wherever Hevalo
- * asks for one.
+ * A code typed one character per box, for joining a game (play/JoinCode.tsx) and confirming an email
+ * (pages/VerifyEmail.tsx). One real text field behind the boxes does the work, so paste, autofill, input methods and
+ * screen readers all meet an ordinary input; the boxes only draw it and are hidden from assistive technology. Codes read
+ * left to right in every language.
  *
- * Behind the boxes is ONE real text field that does the work: paste, a
- * browser's offer of the code from the mail, an input method, a screen reader
- * and an Arabic-script keyboard all meet an ordinary input, and the boxes
- * only draw what it holds (they are hidden from assistive technology). The
- * boxes fill from the left, so the caret is kept after the last character. A
- * code reads left to right in every language; the words around it follow the
- * page.
- *
- * This is only the field and its drawing. What may be in a code, what
- * happens when the last box fills and what is said about it belong to
- * whoever asks for the code, and so does the `.code-entry` around this, whose
- * classes are what the boxes show (styles/play.css, styles/motion.css):
- * `is-focused` lights the box being filled, `is-joining` runs a wave along
- * them while the code is checked, `is-joined` turns them green one after
- * another, `is-error` shakes them once in red, and `is-still` leaves the
- * movement out for a device that asked for less of it.
+ * What a code may contain and what happens when it is full belong to the caller, as does the `.code-entry` around this,
+ * whose classes drive the boxes (styles/play.css, styles/motion.css): `is-focused`, `is-joining`, `is-joined`, `is-error`
+ * and `is-still`.
  */
 export function CodeBoxes({
   value,
@@ -32,18 +19,18 @@ export function CodeBoxes({
   children,
   ...field
 }: {
-  /** what the field holds: only the characters of the code, already read from what was typed */
+  /** The code's characters, already filtered from what was typed. */
   value: string;
   length: number;
-  /** the box from which the characters are new: those pop in, one after another */
+  /** The first new box; boxes from here pop in one after another. */
   fresh: number;
-  /** how many times a code has been refused: each refusal shakes the boxes anew */
+  /** How many codes have been refused; each refusal shakes the boxes anew. */
   shakes: number;
   inputRef?: Ref<HTMLInputElement>;
-  /** drawn over the boxes, such as the flecks thrown when a code gets you in */
+  /** Drawn over the boxes, such as the flecks when a code gets you in. */
   children?: ReactNode;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'className' | 'children'>): React.JSX.Element {
-  // the box being filled (the last one once all are), which shows where the focus is; the caret only while there is room
+  // The box being filled (the last once all are) shows focus; the caret shows only while there is room.
   const active = Math.min(value.length, length - 1);
   const caret = value.length < length;
   return (

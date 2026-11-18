@@ -26,7 +26,7 @@ describe('ProtectedRoute', () => {
       ['/app'],
     );
 
-    // starts by restoring, then resolves to signed-out and redirects
+    // Starts by restoring, then resolves to signed out and redirects.
     await waitFor(() => expect(screen.getByText('login page')).toBeInTheDocument());
     expect(screen.queryByText('secret')).not.toBeInTheDocument();
   });

@@ -48,7 +48,7 @@ export function LinkButton({
   children,
 }: BaseProps & {
   to: string;
-  /** handed to the page it opens, as a Link's `state` */
+  /** Passed to the page it opens, as a Link's `state`. */
   state?: unknown;
 }): React.JSX.Element {
   return (

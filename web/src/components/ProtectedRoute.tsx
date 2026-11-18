@@ -7,15 +7,9 @@ import { useT } from '../i18n/I18nProvider';
 export const VERIFY_PATH = '/verify-email';
 
 /**
- * Gate for signed-in-only routes. While the session is being restored we show a
- * spinner; if signed out we redirect to /login, preserving the intended
- * destination so the user lands back here after signing in.
- *
- * A signed-in account that hasn't confirmed its email is held at the verify
- * screen: registering creates the session, but the app stays closed until the
- * emailed code is entered. The server is the authority on `emailVerified` (it
- * comes from /me), so this can't be skipped by editing client state — and the
- * API independently treats unverified accounts as low-trust.
+ * Gate for signed-in-only routes: a spinner while the session is restored, else a redirect to /login that remembers the
+ * destination. An unverified account is held at the verify screen; `emailVerified` comes from /me and the API treats
+ * unverified accounts as low-trust anyway.
  */
 export function ProtectedRoute({ children }: { children: React.ReactNode }): React.JSX.Element {
   const t = useT();

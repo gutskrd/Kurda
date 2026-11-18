@@ -22,10 +22,7 @@ const account = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-/**
- * A signed-in account, and a server that answers /me with `me()` and
- * POST /me/birth-date with `answer`.
- */
+/** A signed-in account, with /me answered by `me()` and POST /me/birth-date by `answer`. */
 function signedIn(me: () => Record<string, unknown>, answer: () => Response): ReturnType<typeof vi.fn> {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   const fetchMock = vi.fn(async (url: string) => {
@@ -61,10 +58,7 @@ describe('AppGate and the one-time birth month question', () => {
     expect(await screen.findByText('the app')).toBeInTheDocument();
   });
 
-  /**
-   * An account from before the question was asked (or a Google or Apple
-   * sign-up) is asked once, and nothing else is offered until it answers.
-   */
+  // An account without a birth month is asked once, and nothing else is offered until it answers.
   it('asks an account without one before anything else, and lets it in once answered', async () => {
     let answered = false;
     const fetchMock = signedIn(
@@ -100,10 +94,7 @@ describe('AppGate and the one-time birth month question', () => {
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/me/birth-date'))).toBe(false);
   });
 
-  /**
-   * Under 13 the server closes the account. The session goes with it and the
-   * explanation is what is left, not an empty sign-up form.
-   */
+  // Under 13 the server closes the account; the session ends and the explanation stays.
   it('signs out and explains when the account has been closed for age', async () => {
     signedIn(
       () => account({ birthDateRequired: true }),
@@ -126,7 +117,7 @@ describe('AppGate and the one-time birth month question', () => {
     await screen.findByRole('heading', { name: en['age.prompt.title'] });
     await userEvent.click(screen.getByRole('button', { name: en['settings.sessions.signOut'] }));
 
-    // signed out, the app is open to read as a guest again
+    // Signed out, the app is open to read as a guest again.
     await waitFor(() => expect(screen.getByText('the app')).toBeInTheDocument());
     expect(localStorage.getItem('hevalo_tokens')).toBeNull();
   });

@@ -8,18 +8,10 @@ import { BACKSPACE, ENTER, wordleRows } from '../keyboard/wordleKeys';
 import { useKeyboardPrefs, type WordleLayout } from '../keyboard/prefs';
 import { useKeyboardKind } from '../keyboard/device';
 
-/**
- * How wide the board is allowed to get is a CSS question, not a JS one.
- *
- * It used to be a number here, written straight into an inline `max-width` —
- * which no media query can reach, so a phone got the same 54px cells as a
- * desktop and six rows of them pushed the keyboard below the fold. The row
- * publishes its column count instead and the stylesheet does the arithmetic,
- * which lets `--wordle-cell-max` shrink on a small screen.
- */
+/** The row publishes its column count and the stylesheet sizes the cells, so media queries can shrink them on a phone. */
 const COLS_VAR = '--wordle-cols';
 
-/** What a colour means, said in words for whoever cannot see it. */
+/** What each colour means, in words for screen readers. */
 const STATE_KEY: Record<LetterFeedback, MessageKey> = {
   green: 'games.wordle.state.green',
   yellow: 'games.wordle.state.yellow',
@@ -31,26 +23,18 @@ interface Row {
   feedback: LetterFeedback[];
 }
 
-/**
- * How a judged row turns over, in the stylesheet's numbers (styles/motion.css,
- * `.wordle-row.is-judged`): each tile a beat after the one before, turning
- * edge-on and back with its colour changed while it is edge-on; and on the
- * word found, a pop along the row once the last tile is down.
- */
+/** How a judged row turns over, matching `.wordle-row.is-judged` in styles/motion.css: a staggered flip, then a pop on a win. */
 const REVEAL = { stepMs: 75, flipMs: 440, popStepMs: 40, popMs: 280 };
 
-/** How long a row of `cols` tiles takes to turn over — and, when it is the word, to pop after that. */
+/** How long a row of `cols` tiles takes to turn over, plus the pop on a win. */
 export function revealMs(cols: number, won: boolean): number {
   const turned = (cols - 1) * REVEAL.stepMs + REVEAL.flipMs;
   return won ? turned + (cols - 1) * REVEAL.popStepMs + REVEAL.popMs : turned;
 }
 
 /**
- * Holding back what follows a guess until its row has turned over: the result
- * of a game is said after the tiles have said it, not over them. `hold` starts
- * the wait for a row of that length; `revealing` is true while it lasts. For a
- * reader who asked for less motion, and wherever motion cannot be played, the
- * row is simply judged and nothing waits.
+ * Holds back a guess's result until its row has turned over. `hold` starts the wait for a row; `revealing` is true
+ * while it lasts. Nothing waits where motion is off.
  */
 export function useReveal(): { revealing: boolean; hold: (cols: number, won: boolean) => void } {
   const [revealing, setRevealing] = useState(false);
@@ -71,15 +55,9 @@ export function useReveal(): { revealing: boolean; hold: (cols: number, won: boo
 }
 
 /**
- * The guess grid: scored rows, then the in-progress row, then blanks.
- *
- * What a guess does is shown on the row it was typed in, the way the answers
- * of a lesson are. A guess the game will not take — too short, not a word —
- * shakes its row once (`refusals` counts them; the words under the board say
- * why). A guess that is judged turns its tiles over one after another, each
- * taking its colour while it is edge-on; only a row judged while the board is
- * on the screen does, so a game opened again part-way is simply drawn. And
- * the word found pops along its row after the last tile has turned.
+ * The guess grid: scored rows, the row being typed, then blanks. A refused guess shakes its row (`refusals` counts
+ * them). A row judged while the board is on screen turns its tiles over in turn, and the found word pops; a game
+ * reopened part-way is simply drawn.
  */
 export function WordleBoard({
   targetLength,
@@ -93,13 +71,13 @@ export function WordleBoard({
   guesses: Row[];
   current: string;
   totalRows: number;
-  /** whether to render the typed-but-unsubmitted row */
+  /** Whether to draw the typed but unsubmitted row. */
   showCurrent: boolean;
-  /** how many guesses have been turned away so far: each one shakes the row being typed */
+  /** How many guesses have been refused; each shakes the row being typed. */
   refusals?: number;
 }): React.JSX.Element {
   const t = useT();
-  // the row judged since the board was last drawn, if exactly one was: that one turns over
+  // The row judged since the last draw, if exactly one was; only that one turns over.
   const [seen, setSeen] = useState(guesses.length);
   const [judged, setJudged] = useState<number | null>(null);
   if (seen !== guesses.length) {
@@ -122,7 +100,7 @@ export function WordleBoard({
         letter = currentLetters[c] ?? '';
         fb = letter ? 'typing' : 'empty';
       }
-      // a scored letter says how it scored, not only which letter it is
+      // A scored letter says how it scored, not only which letter it is.
       const label =
         fb === 'green' || fb === 'yellow' || fb === 'gray'
           ? t('games.wordle.letterState', { letter, state: t(STATE_KEY[fb]) })
@@ -135,12 +113,11 @@ export function WordleBoard({
     }
     const fresh = r === judged && !!done;
     const found = fresh && done.feedback.length > 0 && done.feedback.every((f) => f === 'green');
-    // a refusal shakes the row being typed. The row has to stay the same element (its tiles turn over where they
-    // stand when the guess is taken), so each refusal shakes it anew by taking the other of two names for one shake
+    // The row must stay the same element (its tiles turn over in place), so each refusal alternates between two
+    // class names for the same shake to restart it.
     const refused = isCurrent && refusals > 0 ? ` is-refused ${refusals % 2 === 1 ? 'is-shake-a' : 'is-shake-b'}` : '';
     rows.push(
-      // the row fills the width available and caps at its natural size, so an
-      // 8-letter target shrinks to fit a phone instead of running off both edges
+      // Fills the width and caps at its natural size, so an 8-letter word shrinks to fit a phone.
       <div
         className={`wordle-row${fresh ? ' is-judged' : ''}${found ? ' is-found' : ''}${refused}`}
         key={r}
@@ -170,19 +147,9 @@ const LAYOUT_LABEL: Record<WordleLayout, MessageKey> = {
 };
 
 /**
- * The on-screen Kurmancî keyboard, each letter tinted by the best that is
- * known of it, in the layout this device chose (QWERTY or alphabet order).
- *
- * Every key is a real button with a name that says its colour in words. The
- * rows stretch to the full width the screen has: on a phone the ten-key
- * QWERTY row is the widest, and ç ê î ş û get a row of their own, as the
- * biggest keys on the board.
- *
- * Beside a real keyboard (keyboard/device.ts) the same keys are drawn the way
- * a desk keyboard is: a row no wider than the board needs, keys of one size,
- * ç ê î ş û as ordinary keys under the rest, and a line saying the keyboard
- * in front of you works — the on-screen one is there for the colours and the
- * five letters a Latin keyboard may not have.
+ * The on-screen Kurmancî keyboard, each key tinted by what is known of its letter and named in words, in this device's
+ * layout (QWERTY or alphabetical). On a phone the rows stretch to the screen and ç ê î ş û get their own row. Beside a
+ * physical keyboard (keyboard/device.ts) it is drawn compact, with a line saying the physical keyboard works.
  */
 export function WordleKeyboard({
   keyboard,
@@ -198,10 +165,8 @@ export function WordleKeyboard({
   const desktop = useKeyboardKind() === 'desktop';
   const rows = wordleRows(prefs.wordleLayout);
   /*
-   * A click or tap does not move the focus onto the key. Left there, the next
-   * Space on the physical keyboard pressed that key again — a second "e" after
-   * a clicked one. Tab still reaches every key, and Space and Enter still press
-   * the one it is on.
+   * A click does not move focus onto the key; otherwise the next Space on a physical keyboard pressed it again. Tab
+   * still reaches every key.
    */
   const keepFocus = (e: React.MouseEvent): void => e.preventDefault();
   return (

@@ -15,90 +15,46 @@ import { BackButton } from '../layouts/BackButton';
 import { PHONE_CHROME, isPlaceRoot } from '../layouts/roots';
 
 export interface NavItem {
-  /** which place this is — tests and the menu find a place by it */
+  /** Identifies the place for tests and the menu. */
   key?: string;
   label: string;
   to: string;
-  /** shown before the label; the nav reads faster as glyph + word than as words */
+  /** Shown before the label. */
   icon?: React.ReactNode;
-  /** the glyph while this is the page you are on: the same shape, filled in */
+  /** The glyph on the current page: the same shape, filled. */
   activeIcon?: React.ReactNode;
-  /**
-   * Whether a page belongs to this place. A place stays lit on the pages
-   * inside it — Rankings is part of Learn, Settings part of your profile —
-   * which a plain prefix match on `to` cannot say.
-   */
+  /** Whether a page belongs to this place (Rankings to Learn, Settings to your profile), beyond a prefix match on `to`. */
   owns?: (pathname: string) => boolean;
-  /** a count waiting here (unread messages); nothing is drawn at zero */
+  /** A waiting count (unread messages); nothing is drawn at zero. */
   badge?: number;
-  /** something waiting that has no number worth saying (a gift to open) */
+  /** Something waiting without a number worth showing (a gift to open). */
   dot?: boolean;
-  /**
-   * A path this app does not route — the published dictionary under /ferheng/,
-   * which is files on the edge rather than a screen in here.
-   *
-   * It has to be a plain anchor. A client-side navigation would hand the
-   * router a path it has no route for and draw a 404 over a page that exists.
-   */
+  /** A path outside the router (the published dictionary under /ferheng/), so a plain anchor rather than a client-side 404. */
   external?: boolean;
 }
 
-/** A count as a badge shows it: the number up to nine, then "9+". */
+/** A count as a badge shows it: up to nine, then "9+". */
 export function countLabel(n: number): string {
   return n > 9 ? '9+' : String(n);
 }
 
-/** Where the shop lives: the purse opens it. */
+/** The purse opens the shop. */
 const SHOP = '/app/shop';
 
 /**
- * Whether a link should only light up on an exact match.
- *
- * `/app` is the parent of every other route, so without this Home stayed lit on
- * every page. The rule is derived rather than hardcoded: a link that another
- * link is nested under has to match exactly, which stays true as links are
- * added. A place that says which pages it owns does not need it.
+ * Whether a link lights up only on an exact match: true for any link another link is nested under (`/app` would
+ * otherwise light on every page), unless the place says which pages it owns.
  */
 function matchesExactly(to: string, all: readonly NavItem[]): boolean {
   return all.some((other) => other.to !== to && other.to.startsWith(`${to}/`));
 }
 
 /**
- * The top bar: the same bar on every screen, made smaller rather than made
- * into something else.
- *
- * On a wide screen it holds the brand, the places, the search field and what
- * is yours — the purse and the bell (and, until the social column has room to
- * stand beside the page, the way into it). It stays at the top of the window
- * while the page scrolls under it, on a solid ground with a hairline, so no
- * line of the page ever shows through a label.
- *
- * On a phone the bar keeps the brand, a search button and the bell. On the
- * public pages the places fold into a menu under a button at its end: one
- * press opens it, a second goes anywhere. The menu is a list down the screen
- * with each place's word beside its glyph, and it has room for what the wide
- * bar shows elsewhere — your Zêr and gems with the shop, your friends,
- * Settings, or for a visitor, the way in. Something waiting in it (an unread
- * message, a gift) shows on the button, so it is not hidden by being folded
- * away. Inside the app a phone has the places along the bottom of the window
- * instead, and no menu (`placesBelow`).
- *
- * In Arabic and Soranî the bar runs right to left with the page: the brand at
- * the right, the bell and the menu at the left, as a reader of those scripts
- * expects to find them.
- *
- * Signing out is not here. It belongs in Settings, with the other things you
- * do to your account rather than in the app.
- *
- * `joinOnPhone` keeps "Get started" on a phone's bar for a visitor. Inside the
- * app it is the only invitation on most pages; the front page has its own, a
- * screen tall, and a second one in the bar would only compete with it.
- *
- * `placesBelow` is the app's shell saying that on a phone the places are in a
- * bar of their own along the bottom of the window (layouts/PlacesBar.tsx).
- * There this bar folds nothing away: it is drawn as the phone app's top is
- * (`PhoneBar`, below). The public pages have no bar of places, and keep the
- * menu.
+ * The top bar on every screen. On a wide screen it holds the brand, the places, search, the purse and the bell, and
+ * stays at the top on a solid ground. On a phone the public pages fold the places (plus purse, friends, Settings or the
+ * way in) into a menu whose button shows anything waiting; inside the app, `placesBelow` says the places are in the
+ * bottom bar (layouts/PlacesBar.tsx), so `PhoneBar` is drawn instead. In Arabic and Soranî the bar runs right to left.
+ * Signing out lives in Settings. `joinOnPhone` keeps "Get started" on a phone for a visitor.
  */
 export function TopNav({
   links,
@@ -121,15 +77,14 @@ export function TopNav({
 
   const close = (): void => setOpen(false);
 
-  // moving to another page puts the menu away
+  // Changing page closes the menu.
   useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
     if (!open) return;
-    // the first place takes the focus, so a keyboard is already inside what it opened; the bar and
-    // what hangs from it are always in sight, so a focus here never scrolls the page under them
+    // Focus the first place so the keyboard is inside the menu; the bar is always in sight, so focus never scrolls.
     listRef.current?.querySelector<HTMLElement>('a[href]')?.focus({ preventScroll: true });
-    // Escape closes the open menu, as it closes every other thing that opens
+    // Escape closes the menu, as it closes everything else that opens.
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== 'Escape') return;
       setOpen(false);
@@ -140,17 +95,15 @@ export function TopNav({
   }, [open]);
 
   /*
-   * A keyboard that Tabs on past the end of the open menu has left it, so the
-   * menu goes away, rather than leaving the focus to walk through a page that
-   * is covered by its scrim. Only a move to somewhere else counts: a press on
-   * an empty part of the menu sends the focus nowhere, and keeps it open.
+   * Tabbing past the end of the menu closes it rather than walking through the covered page. A press on an empty part
+   * of the menu moves focus nowhere and keeps it open.
    */
   const onBlur = (e: React.FocusEvent<HTMLElement>): void => {
     const next = e.relatedTarget;
     if (open && next instanceof Node && !e.currentTarget.contains(next)) setOpen(false);
   };
 
-  // what is waiting behind the folded menu, so the button can say so
+  // What waits behind the folded menu, so its button can show it.
   const unread = links.reduce((n, l) => n + (l.badge ?? 0), 0);
   const waiting = links.some((l) => l.dot);
   const menuName = open
@@ -166,8 +119,7 @@ export function TopNav({
   return (
     <header className={`nav${open ? ' is-menu-open' : ''}`} onBlur={onBlur}>
       <div className="container nav-inner">
-        {/* signed-in users stay inside the app shell instead of
-            landing on the marketing site (which has its own nav) */}
+        {/* Signed-in users stay in the app instead of the marketing site. */}
         <Brand to={signedIn ? '/app' : '/'} />
 
         <nav aria-label={t('nav.primary')} className="nav-primary">
@@ -182,12 +134,9 @@ export function TopNav({
                       {l.dot && !l.badge && <span className="nav-dot" />}
                     </span>
                   )}
-                  {/* wrapped so the middle widths can hide the word and keep the
-                      glyph — hidden by clipping, never display:none, or the link
-                      would lose its accessible name along with its label */}
+                  {/* Wrapped so middle widths can hide the word by clipping; display:none would drop the link's accessible name. */}
                   <span className="nav-link-label" dir="auto">{l.label}</span>
-                  {/* a link carries its own waiting count, so something arriving is
-                      visible from anywhere without opening the page to check */}
+                  {/* Each link carries its waiting count, visible from anywhere. */}
                   {(l.badge ?? 0) > 0 && (
                     <span className="nav-badge" aria-label={t('nav.unreadCount', { count: l.badge! })}>
                       {countLabel(l.badge!)}
@@ -224,7 +173,7 @@ export function TopNav({
               );
             })}
 
-            {/* the rest of the menu, which only a phone has: what the wide bar keeps elsewhere */}
+            {/* The rest of the menu, only on a phone: what the wide bar keeps elsewhere. */}
             <li className="nav-mobile-actions">
               {signedIn ? (
                 <>
@@ -271,7 +220,7 @@ export function TopNav({
           {signedIn ? (
             <>
               <Purse />
-              {/* likes, comments, gifts, game invites and notices from Hevalo */}
+              {/* Likes, comments, gifts, game invites and notices from Hevalo. */}
               <NotificationsBell />
               <RailToggle />
             </>
@@ -299,36 +248,17 @@ export function TopNav({
           </button>
         </div>
       </div>
-      {/* the page under an open menu steps back, and a press on it closes the menu */}
+      {/* The page under an open menu steps back, and a press on it closes the menu. */}
       {open && <div className="nav-scrim" onClick={close} aria-hidden="true" />}
     </header>
   );
 }
 
 /**
- * The top of a phone's screen, inside the app: what the phone app has there
- * (mobile/src/navigation/TopBar.tsx and ScreenHeader.tsx).
- *
- * At the reading edge, where you are: the brand on the root of a place, and
- * on a page you went into, the way back in its place (`BackButton`). At the
- * far end, the two things done from anywhere, looking for something and
- * seeing what is new: search and the bell in one pill. One shape with two
- * glyphs in it is read as one thing in the corner, where two discs side by
- * side are two things to choose between, and it is in the same corner of
- * every page, so neither has to be found twice.
- *
- * Nothing else. The places are in their own bar along the bottom
- * (layouts/PlacesBar.tsx), and what the folded menu held besides them is in
- * the place it belongs to: your friends, the shop and Settings in your
- * profile's own menu (profile/ProfileMenu.tsx), and the requests waiting on
- * you above your conversations. A visitor keeps "Get started" here on every
- * page, and has Sign in beside the places.
- *
- * The shapes are solid, in the fill of what floats, and the bar behind them
- * is the page's own ground with no line under it, so they read as shapes
- * resting on the page and not as a strip across it (shell.css). In Arabic
- * and Soranî the bar runs with the page: the way back on the right, the pill
- * on the left.
+ * The top of a phone's screen inside the app, as on the phone app (mobile/src/navigation/TopBar.tsx): the brand, or
+ * the way back on an inner page, and one pill with search and the bell at the far end. The places are in the bottom bar,
+ * and friends, the shop and Settings are in the profile's menu (profile/ProfileMenu.tsx). A visitor keeps
+ * "Get started" here.
  */
 function PhoneBar({ links }: { links: NavItem[] }): React.JSX.Element {
   const { status } = useAuth();
@@ -341,7 +271,7 @@ function PhoneBar({ links }: { links: NavItem[] }): React.JSX.Element {
         {isPlaceRoot(pathname, search) ? <Brand to={signedIn ? '/app' : '/'} /> : <BackButton links={links} />}
         <div className="nav-pill">
           <NavSearch />
-          {/* nothing for a visitor, whose pill is then the search alone */}
+          {/* Nothing for a visitor, whose pill is then search alone. */}
           <NotificationsBell />
         </div>
         {!signedIn && (
@@ -355,17 +285,8 @@ function PhoneBar({ links }: { links: NavItem[] }): React.JSX.Element {
 }
 
 /**
- * What you have to spend, stacked — and the way into the shop.
- *
- * Two currencies one above the other rather than side by side: they are read as
- * a pair — "can I afford this" — and stacking keeps both under one glance
- * without stealing the width the places need.
- *
- * The numbers ride on the rail's poll, so they are already fresh and cost no
- * request of their own. No number is shown until they arrive; a zero that
- * later turns into 13,880 is worse than a moment of nothing. Until then the
- * purse is two grey bars of its own size, so the bar does not open up a gap
- * for it when the numbers land.
+ * Zêr and gems stacked, linking to the shop. The numbers come from the rail's poll; until they arrive, two grey bars of
+ * the same size hold the place, since a zero that turns into 13,880 is worse than a moment of nothing.
  */
 function Purse(): React.JSX.Element | null {
   const t = useT();

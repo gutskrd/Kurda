@@ -5,10 +5,7 @@ import { Link, Route, Routes } from 'react-router-dom';
 import { ErrorBoundary } from './ErrorBoundary';
 import { renderApp } from '../test/utils';
 
-/**
- * React logs a caught render error itself, and componentDidCatch logs the
- * component stack on top. Both are noise here, and only here.
- */
+/** React and componentDidCatch both log a caught render error; that is noise in these tests. */
 afterEach(() => vi.restoreAllMocks());
 
 function Boom(): React.JSX.Element {
@@ -17,8 +14,7 @@ function Boom(): React.JSX.Element {
 
 function renderWithBoundary(broken: () => React.JSX.Element) {
   vi.spyOn(console, 'error').mockImplementation(() => {});
-  // the link sits outside the boundary, as the real navigation does: it is
-  // what survives the crash, and what the reader uses to get out of it
+  // The link sits outside the boundary, as the real navigation does, so it survives the crash.
   return renderApp(
     <>
       <Link to="/fine">go elsewhere</Link>
@@ -52,11 +48,7 @@ describe('ErrorBoundary', () => {
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
 
-  /**
-   * The point of resetting on the path rather than on a button alone: a page
-   * that throws deterministically throws again the moment you retry, and the
-   * reader is stuck for the session. Navigating away has to clear it.
-   */
+  // A deterministically broken page throws again on retry, so navigating away must clear it.
   it('clears the error when the path changes', async () => {
     const user = userEvent.setup();
     renderWithBoundary(() => <Boom />);
