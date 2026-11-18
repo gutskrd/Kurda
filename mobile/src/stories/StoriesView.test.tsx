@@ -581,6 +581,27 @@ describe('StoriesView', () => {
     stop();
   });
 
+  it('ends rapid bookmark taps on the last one, sending one request at a time', async () => {
+    const answers: ((r: unknown) => void)[] = [];
+    const later = () => new Promise((resolve) => answers.push(resolve));
+    const c = client({ 'PUT /stories/s1/bookmark': later, 'DELETE /stories/s1/bookmark': later } as never);
+    testAuth.client = c;
+    renderWithProviders(<StoriesView />);
+    await screen.findByRole('heading', { name: 'Featured' });
+    const featured = () => screen.getByRole('heading', { name: 'Featured' }).parentElement!;
+    fireEvent.click(within(featured()).getByRole('button', { name: 'Bookmark' }));
+    fireEvent.click(within(featured()).getByRole('button', { name: 'Bookmarked' }));
+    fireEvent.click(within(featured()).getByRole('button', { name: 'Bookmark' }));
+    // On the shelves at once, before any answer, and only the first tap has gone.
+    expect(within(featured()).getByRole('button', { name: 'Bookmarked' })).toBeTruthy();
+    const writes = () => c.calls.filter((call) => call.method !== 'GET').map((call) => `${call.method} ${call.path}`);
+    expect(writes()).toEqual(['PUT /stories/s1/bookmark']);
+    await act(async () => answers[0]!(ok({ bookmarked: true })));
+    // The server holds what the last tap wanted, so nothing more is sent.
+    expect(writes()).toEqual(['PUT /stories/s1/bookmark']);
+    expect(within(featured()).getByRole('button', { name: 'Bookmarked' })).toBeTruthy();
+  });
+
   it('names a story’s level in the quiet pill, not in the gold of what is earned', async () => {
     testAuth.client = client();
     renderWithProviders(<StoriesView />);

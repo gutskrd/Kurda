@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { Alert } from 'react-native';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StoryDetail, StoryMe } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -258,6 +259,28 @@ describe('StoryReaderScreen', () => {
     await waitFor(() => expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/dictionary/entries/e2/save')).toBe(true));
   });
 
+  it('ends rapid taps on a word’s Save on the last one, one request at a time', async () => {
+    const answers: ((r: unknown) => void)[] = [];
+    const later = () => new Promise((resolve) => answers.push(resolve));
+    const client = routes(
+      { 'GET /me/saved-words': ok({ words: [] }), 'PUT /dictionary/entries/e1/save': later, 'DELETE /dictionary/entries/e1/save': later } as never,
+      { ...NANE_GERM, glossary: [{ term: 'germ', meanings: { en: 'warm' }, entryId: 'e1' }] },
+    );
+    testAuth.client = client;
+    renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Save word' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Saved' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save word' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Saved' }));
+    expect(screen.getByRole('button', { name: 'Save word' })).toBeTruthy();
+    const writes = () => client.calls.filter((c) => c.path === '/dictionary/entries/e1/save').map((c) => c.method);
+    expect(writes()).toEqual(['PUT']);
+    await act(async () => answers[0]!(ok({ saved: true })));
+    expect(writes()).toEqual(['PUT', 'DELETE']);
+    await act(async () => answers[1]!(ok({ saved: false })));
+    expect(screen.getByRole('button', { name: 'Save word' })).toBeTruthy();
+  });
+
   it('shows a paragraph’s translation on request, in the reader’s language or English', async () => {
     testAuth.client = routes({}, { ...NANE_GERM, translations: { en: ['My mother bakes bread. The bread is warm.', 'We sit by the stove.'] } });
     renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
@@ -293,6 +316,19 @@ describe('StoryReaderScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'With a friend' }));
     const mode = await screen.findByRole('radiogroup', { name: 'Who’s playing' });
     expect(within(mode).getByRole('radio', { name: 'With a friend' }).getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('puts a refused bookmark back and says why', async () => {
+    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = routes({ 'PUT /stories/s1/bookmark': () => new Promise((resolve) => (answer = resolve)) } as never);
+    renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Bookmark' }));
+    expect(screen.getByRole('button', { name: 'Bookmarked' })).toBeTruthy();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByRole('button', { name: 'Bookmark' })).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    said.mockRestore();
   });
 
   describe('a story told in both varieties', () => {

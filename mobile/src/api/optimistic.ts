@@ -10,8 +10,10 @@ import type { ApiError, ApiResult } from './types';
  * change what is wanted, which is sent when the answer comes if it still differs, so rapid taps end on the last one.
  * A refusal goes back to the confirmed value, unless a newer tap has asked for something else, and is said once.
  *
- * The screen keeps the server's data as it is and draws `shown(key, fromServer)` over it; its `send` writes the
- * server's answer into that data, so dropping the wanted value on success or refusal leaves the truth in place.
+ * Usually the screen keeps the server's data as it is and draws `shown(key, fromServer)` over it; its `send` writes
+ * the server's answer into that data, so dropping the wanted value on success or refusal leaves the truth in place.
+ * Where a change moves things between lists, the screen may instead write each wish into its data and put the
+ * confirmed value back in `failed`.
  */
 
 export interface IntentsOptions<K, S, T> {
@@ -19,8 +21,11 @@ export interface IntentsOptions<K, S, T> {
   send: (key: K, wanted: S, confirmed: S) => Promise<ApiResult<T>>;
   /** The value the server holds after a success, read from its answer (a total, a list it reordered); else the one sent. */
   answered?: (data: T, sent: S) => S;
-  /** The server refused or could not be reached; the key already shows its confirmed value again. */
-  failed: (error: ApiError, key: K) => void;
+  /**
+   * The server refused or could not be reached, and `shown` is back on `confirmed`. A screen that writes each wish
+   * into its own data rather than drawing `shown` puts `confirmed` back there.
+   */
+  failed: (error: ApiError, key: K, confirmed: S) => void;
   /** What `shown` or `busy` answers has changed. */
   changed: () => void;
   same?: (a: S, b: S) => boolean;
@@ -57,7 +62,7 @@ export function createIntents<K, S, T = unknown>({ send, answered, failed, chang
       if (!same(entry.wanted, sending)) continue;
       entries.delete(key);
       changed();
-      failed(res.error, key);
+      failed(res.error, key, entry.confirmed);
       return;
     }
     entries.delete(key);
@@ -130,7 +135,7 @@ export function useIntents<K, S, T = unknown>(
     createIntents<K, S, T>({
       send: (key, wanted, confirmed) => latest.current.send(key, wanted, confirmed),
       answered: (data, sent) => (latest.current.answered ? latest.current.answered(data, sent) : sent),
-      failed: (error, key) => latest.current.failed(error, key),
+      failed: (error, key, confirmed) => latest.current.failed(error, key, confirmed),
       changed: () => {
         if (alive.current) setVersion((v) => v + 1);
       },
