@@ -64,7 +64,7 @@ describe('a change shown before the server has it', () => {
     expect(like.shown('p1', false)).toBe(false);
     expect(like.busy('p1')).toBe(false);
     expect(failed).toHaveBeenCalledTimes(1);
-    expect(failed).toHaveBeenCalledWith(refused, 'p1');
+    expect(failed).toHaveBeenCalledWith(refused, 'p1', false);
   });
 
   it('sends nothing for a tap that asks for what the server already holds', () => {
@@ -186,10 +186,8 @@ describe('saying a change did not save', () => {
     expect(Alert.alert).toHaveBeenCalledWith('no such post');
   });
 
-  it('says a burst of the same refusal once', () => {
+  it('says a lost connection plainly, without blaming anybody', () => {
     sayNotSaved(refused, t as never);
-    sayNotSaved(refused, t as never);
-    expect(Alert.alert).toHaveBeenCalledTimes(1);
     expect(Alert.alert).toHaveBeenCalledWith('Can’t reach Hevalo right now.');
   });
 

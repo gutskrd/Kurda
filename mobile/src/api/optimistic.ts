@@ -8,7 +8,7 @@ import type { ApiError, ApiResult } from './types';
  * Changes shown before the server has them, so a tap answers at once. Each key (one post's like, one setting) keeps
  * the value the server last confirmed and the value last wanted, with one request out at a time: taps meanwhile only
  * change what is wanted, which is sent when the answer comes if it still differs, so rapid taps end on the last one.
- * A refusal goes back to the confirmed value, unless a newer tap has asked for something else, and is said once.
+ * A refusal goes back to the confirmed value, unless a newer tap has asked for something else, and says why.
  *
  * Usually the screen keeps the server's data as it is and draws `shown(key, fromServer)` over it; its `send` writes
  * the server's answer into that data, so dropping the wanted value on success or refusal leaves the truth in place.
@@ -91,18 +91,9 @@ export function createIntents<K, S, T = unknown>({ send, answered, failed, chang
   };
 }
 
-/** How long the same refusal is not said again: a burst of taps that all failed together is one alert. */
-const SAID_FOR_MS = 1500;
-let lastSaid = { text: '', at: 0 };
-
 /** Say that a change did not save, in the app's words; maintenance has its own screen, so it is not said twice. */
 export function sayNotSaved(error: ApiError, t: Translate): void {
-  if (isMaintenance(error)) return;
-  const text = describeError(error, t);
-  const now = Date.now();
-  if (text === lastSaid.text && now - lastSaid.at < SAID_FOR_MS) return;
-  lastSaid = { text, at: now };
-  Alert.alert(text);
+  if (!isMaintenance(error)) Alert.alert(describeError(error, t));
 }
 
 /** `sayNotSaved` for a screen, in its reader's language. */
