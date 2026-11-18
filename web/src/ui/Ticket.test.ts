@@ -3,10 +3,8 @@ import { PLAY_GAMES, playGameHue } from '@kurda/shared';
 import { ticketClass, ticketToneClass } from './Ticket';
 
 /*
- * A ticket's colour says what it is for: a game in the hue of its stamp on
- * the games page, so an invite looks like the game it asks you into. The
- * stylesheet is read from the disk, as stories/colours.test.ts reads its own,
- * since a stylesheet a test imports arrives empty.
+ * A game ticket takes the hue of the game's stamp on the games page. The stylesheet is read from disk, since an
+ * imported stylesheet arrives empty in tests.
  */
 interface FileSystem {
   readFileSync(file: URL, encoding: 'utf8'): string;
@@ -31,7 +29,7 @@ describe('a ticket’s colour', () => {
   });
 
   it('never colours a ticket in the green of a right answer or the gold of something earned', () => {
-    // the tone rules alone: a stamp that lands to say "Joined" may say it in the green of a thing done
+    // Only the tone rules; a "Joined" stamp may use the done green.
     const tones = [...tickets.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => /\.ticket(--|-hued)/.test(m[1]!));
     expect(tones.length).toBeGreaterThan(0);
     for (const [, selector, body] of tones) expect(body, selector!.trim()).not.toMatch(/var\(--(success|gold|gold-ink)\)/);

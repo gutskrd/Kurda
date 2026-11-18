@@ -3,11 +3,8 @@ import { PersonGlyph } from '../components/icons';
 import { useAvatarSrc } from '../art/overrides';
 
 /**
- * One player in a head-to-head game: face, name, how they are doing, and — for
- * an opponent whose board you cannot see — a thin bar of how close they are.
- *
- * The same chip the front page draws above its Peyvok Battle, and the one the
- * real battle draws, so the picture is the product.
+ * One player in a head-to-head game: face, name, status and, for an opponent whose board is hidden, a progress bar.
+ * The front page's picture of a battle uses the same chip.
  */
 export function PlayerChip({
   name,
@@ -20,14 +17,14 @@ export function PlayerChip({
 }: {
   name: string;
   status: string;
-  /** `null` draws the silhouette — an opponent's face is not something a battle shares */
+  /** `null` draws the silhouette, since a battle does not share an opponent's face. */
   avatarUrl?: string | null;
-  /** 0..1 */
+  /** From 0 to 1. */
   progress?: number;
-  /** solved: the chip takes the success colour */
+  /** Solved, so the chip takes the success colour. */
   done?: boolean;
   lazy?: boolean;
-  /** something to do about this player, at the chip's end (the ⋯ that reports them) */
+  /** An action at the chip's end, such as the ⋯ that reports the player. */
   action?: ReactNode;
 }): React.JSX.Element {
   const face = useAvatarSrc(avatarUrl);
@@ -47,7 +44,7 @@ export function PlayerChip({
       {action}
       {progress !== undefined && (
         <span className="player-meter" aria-hidden="true">
-          {/* a full-width fill moved along its track by `--p` (styles/motion.css), as the lesson's bar is */}
+          {/* A full-width fill moved along its track by `--p` (styles/motion.css). */}
           <span style={{ '--p': Math.max(0, Math.min(1, progress)) } as React.CSSProperties} />
         </span>
       )}

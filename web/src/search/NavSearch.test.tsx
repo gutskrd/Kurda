@@ -26,7 +26,7 @@ const WORDS = {
   ],
 };
 
-/** Answer by path, and keep every URL asked for so a test can count the searches. */
+/** Answers by path and records every URL asked for, so a test can count the searches. */
 function serve(map: Record<string, unknown> = { '/users/search': PEOPLE, '/dictionary/search': WORDS }) {
   const asked: string[] = [];
   vi.stubGlobal(
@@ -41,7 +41,7 @@ function serve(map: Record<string, unknown> = { '/users/search': PEOPLE, '/dicti
   return asked;
 }
 
-/** A phone: the bar is too narrow for a field, so a button opens one. */
+/** A phone, where the bar is too narrow for a field and a button opens one. */
 function narrow(on: boolean): void {
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: on && query.includes('max-width: 768px'), media: query, addEventListener() {}, removeEventListener() {} }));
 }
@@ -80,7 +80,7 @@ describe('NavSearch', () => {
     const list = screen.getByRole('listbox');
     expect(input).toHaveAttribute('aria-expanded', 'true');
     expect(input).toHaveAttribute('aria-controls', list.id);
-    // people and words, each a named group of options, and the way to everything
+    // People and words, each a named group of options, then the link to all results.
     expect(within(list).getByRole('group', { name: 'People' })).toBeInTheDocument();
     expect(within(list).getByRole('group', { name: 'Words' })).toBeInTheDocument();
     const options = within(list).getAllByRole('option');
@@ -99,11 +99,11 @@ describe('NavSearch', () => {
 
     await userEvent.type(field(), 'roj');
     await screen.findByRole('option', { name: /Rojda/ });
-    // one pair of requests for the word, not one per letter
+    // One pair of requests for the word, not one per letter.
     expect(searches(asked, '/users/search')).toEqual(['/users/search?q=roj']);
     expect(searches(asked, '/dictionary/search')).toEqual(['/dictionary/search?q=roj&limit=5']);
 
-    // a letter taken back and typed again is answered from what was already found
+    // A letter deleted and typed again is answered from the cache.
     await userEvent.type(field(), '{Backspace}');
     await screen.findByRole('option', { name: 'See all results for “ro”' });
     await waitFor(() => expect(searches(asked, '/users/search')).toHaveLength(2));
@@ -151,7 +151,7 @@ describe('NavSearch', () => {
     expect(options[0]).toHaveAttribute('aria-selected', 'false');
     await userEvent.keyboard('{ArrowUp}{ArrowUp}');
     expect(input).toHaveAttribute('aria-activedescendant', options[3]!.id);
-    // the focus never leaves the field
+    // The focus never leaves the field.
     expect(input).toHaveFocus();
   });
 
@@ -200,7 +200,7 @@ describe('NavSearch', () => {
     expect(input).toHaveFocus();
     await userEvent.keyboard('{Escape}');
     expect(input).toHaveValue('');
-    // and the arrow key brings the panel back
+    // The arrow key brings the panel back.
     await userEvent.keyboard('{ArrowDown}');
     expect(screen.getByText('Find friends by name or username, or look up a word in Kurdish or English.')).toBeInTheDocument();
   });
@@ -209,14 +209,14 @@ describe('NavSearch', () => {
     signIn();
     serve();
     const { container } = show();
-    // the shortcut works without being drawn in the field: nothing sits where the cursor goes
+    // The shortcut works without a key cap drawn in the field.
     expect(container.querySelector('.nav-search-field kbd')).toBeNull();
     expect(field()).not.toHaveAttribute('aria-describedby');
     const elsewhere = screen.getByRole('button', { name: 'Somewhere on the page' });
     elsewhere.focus();
     await userEvent.keyboard('/');
     expect(field()).toHaveFocus();
-    // the slash is the shortcut, not the first letter of a search
+    // The slash is the shortcut, not the first character of a search.
     expect(field()).toHaveValue('');
     await userEvent.keyboard('{Escape}{Escape}');
     expect(elsewhere).toHaveFocus();
@@ -248,7 +248,7 @@ describe('NavSearch', () => {
       'fetch',
       vi.fn((url: string) => {
         if (new URL(url).pathname === '/me') return Promise.resolve(jsonResponse(200, { user: { id: 'me', emailVerified: true } }));
-        // the people search answers when the test says so; words answer at once
+        // The people search answers when the test says so; words answer at once.
         if (url.includes('/users/search')) return new Promise<Response>((r) => (answer = r));
         return Promise.resolve(jsonResponse(200, { query: 'zzz', fuzzy: false, results: [] }));
       }),
@@ -259,7 +259,7 @@ describe('NavSearch', () => {
     answer(jsonResponse(200, { results: [] }));
     expect(await screen.findByText('No results for “zzz”.')).toBeInTheDocument();
     expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
-    // all the results are still a press away, for the page's own search
+    // The link to all results is still there.
     expect(screen.getByRole('option', { name: 'See all results for “zzz”' })).toBeInTheDocument();
   });
 
@@ -271,7 +271,7 @@ describe('NavSearch', () => {
     await userEvent.click(field());
     const list = screen.getByRole('listbox');
     expect(within(list).getAllByRole('option').map((o) => o.textContent)).toEqual(['rojda', 'baran']);
-    // pressing one searches for it again
+    // Pressing one searches for it again.
     await userEvent.click(within(list).getByRole('option', { name: 'baran' }));
     expect(field()).toHaveValue('baran');
     await userEvent.clear(field());
@@ -310,7 +310,7 @@ describe('NavSearch', () => {
     expect(container.querySelector('.nav-search')).not.toHaveClass('is-open');
     expect(opener).toHaveFocus();
 
-    // the way back in the bar does the same
+    // The button in the bar does the same.
     await userEvent.click(opener);
     await userEvent.click(screen.getByRole('button', { name: 'Close search' }));
     expect(container.querySelector('.nav-search')).not.toHaveClass('is-open');
