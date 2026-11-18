@@ -4,6 +4,7 @@ import { localeDir } from '@kurda/shared';
 import { BookmarkIcon, GearIcon, MedalIcon, MoreIcon, ShareIcon, ShopIcon, TrophyIcon, UsersIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
+import { useUnseenGifts } from '../shop/useUnseenGifts';
 import { keepInView } from '../reports/keepInView';
 import { shareProfileLink } from './share';
 
@@ -20,7 +21,7 @@ export function ProfileMenu(): React.JSX.Element {
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const pop = useRef<HTMLDivElement>(null);
-  const gifts = data.unread.gifts ?? 0;
+  const gifts = useUnseenGifts();
   const requests = data.unread.requests;
 
   useLayoutEffect(() => {

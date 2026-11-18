@@ -6,6 +6,7 @@ import { LevelRing } from '../profile/LevelRing';
 import { BookIcon, HomeIcon, SendIcon, UserIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
+import { useUnseenGifts } from '../shop/useUnseenGifts';
 import { learnPath } from '../learn/learnView';
 import { under } from './roots';
 import type { AppLocale } from '@kurda/shared';
@@ -45,6 +46,7 @@ export function useNavLinks(): NavItem[] {
   const t = useT();
   const { unreadTotal } = useMessages();
   const { data } = useRail();
+  const gifts = useUnseenGifts();
   // Read on every render, since the nav re-renders on each navigation, when the remembered Learn view may change.
   useLocation();
   const signedIn = status === 'signedIn';
@@ -54,7 +56,7 @@ export function useNavLinks(): NavItem[] {
   if (!signedIn) return [home, learn];
 
   // something waiting that is yours to open: a gift, or somebody asking to be friends
-  const waiting = (data.unread.gifts ?? 0) > 0 || data.unread.requests > 0;
+  const waiting = gifts > 0 || data.unread.requests > 0;
   const avatar = data.you?.avatarUrl ?? user?.avatarUrl ?? null;
   // your face with your level drawn round it, as the bar has always shown you
   const face = (active: boolean): React.ReactNode =>
