@@ -17,10 +17,7 @@ export function scrubEvent<T>(value: T): T {
   return value;
 }
 
-/**
- * Error tracking is optional: without SENTRY_DSN nothing initializes and
- * captureError is a no-op, so dev/test never need a Sentry account.
- */
+/** Error tracking is optional: without SENTRY_DSN nothing initializes and captureError is a no-op. */
 let enabled = false;
 
 export function initSentry(config: AppConfig): boolean {
