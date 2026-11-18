@@ -57,7 +57,7 @@ const MAP: CourseMap = {
   ],
 };
 
-/** A course in three sections, as the road is: the first finished, the learner in the second, the third still shut. */
+/** A course in three sections: the first finished, the learner in the second, the third shut. */
 function levelled(id = 'c2'): CourseMap {
   const done = (key: string, times: number[]) =>
     skill({ skillId: key, title: `Topic ${key}`, state: 'gold', strength: 90, firstLessonId: `${key}1`, lessons: times.map((t, i) => lesson(`${key}${i + 1}`, `Lesson ${key}${i + 1}`, true, t)) });
@@ -92,27 +92,22 @@ describe('the lesson path', () => {
   it('draws every skill as a stop that says what it is, its round once it has a star, with review and each unit’s end', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={3} onFocus={() => undefined} />);
-    // a course without levels is one section: no section is named, and the first unit opens under its heading
+    // A course without levels is one unnamed section, and its first unit opens under its heading.
     expect(screen.getByRole('heading', { name: 'Chapter 1, Basics' })).toBeTruthy();
     expect(screen.queryByText(/Section/)).toBeNull();
     expect(button('Greetings, done, and strong, round 2 of 3, 0 of 2 lessons')).toBeTruthy();
     expect(button('Numbers, done, ready for a refresh, round 2 of 3, 0 of 1 lessons')).toBeTruthy();
     expect(button('Chapter 1 trophy, earned')).toBeTruthy();
-    // review sits just before the skill to do now
+    // Review sits just before the current skill.
     expect(button('Review, words ready: 3')).toBeTruthy();
     expect(button('Family, you are here, 1 of 3 lessons done')).toBeTruthy();
     expect(button('Food, locked, 0 of 1 lessons done')).toBeTruthy();
     expect(button('Chapter 2 trophy, not earned yet')).toBeTruthy();
-    // between the units, a quiet divider with the next one's number and name
+    // A divider with the next unit's number and name sits between units.
     expect(screen.getAllByTestId('lp-unit-divider')).toHaveLength(1);
     expect(screen.getByRole('heading', { name: 'Chapter 2, Family & Food' })).toBeTruthy();
   });
 
-  /*
-   * "Start" bobs over the current skill for as long as the path is in front
-   * of somebody who has not asked for less motion, and says so while it does.
-   * Under Reduce Motion it stands still from the first frame.
-   */
   it('bobs the Start pill while the path is in view, and holds it still under Reduce Motion', async () => {
     client();
     patchReactNativeWeb({ reduceMotion: false });
@@ -139,9 +134,9 @@ describe('the lesson path', () => {
     fireEvent.click(button('Family, you are here, 1 of 3 lessons done'));
     expect(screen.getByText('Chapter 2 · Family & Food')).toBeTruthy();
     expect(screen.getByText('1 of 3 lessons done')).toBeTruthy();
-    // what the lesson it opens pays, in the server's own numbers
+    // The XP its lesson pays, in the server's numbers.
     expect(screen.getByText('+10–20 XP')).toBeTruthy();
-    // a finished lesson can be played again on its own; one not open yet is not a way in
+    // A finished lesson can be replayed on its own; a locked one cannot be opened.
     fireEvent.click(button('Dê û bav, done'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'f1', courseId: 'c1' });
     fireEvent.click(button('Family, you are here, 1 of 3 lessons done'));
@@ -161,9 +156,9 @@ describe('the lesson path', () => {
       upcoming: { number: 3, title: 'House and village', recordedBy: 'hamo' },
     };
     renderWithProviders(<LessonPath map={road} due={0} onFocus={() => undefined} />);
-    // the story takes the trophy's place: a chapter is its topics, then its story
+    // The story takes the trophy's place at the end of a chapter.
     expect(screen.queryByRole('button', { name: /trophy/ })).toBeNull();
-    // chapter 1 is done: the chapter is complete, its story opens in the reader, and its own review is a tap away
+    // Chapter 1 is done: complete, its story opens in the reader, and its review is a tap away.
     fireEvent.click(button('Hamo’s story: Mêvan, çay û sêv'));
     expect(screen.getByTestId('lp-chapter-complete')).toBeTruthy();
     expect(screen.getByText('The chapter ends with a tale Hamo tells, in the words you have learned. Read it and hear him tell it.')).toBeTruthy();
@@ -172,12 +167,12 @@ describe('the lesson path', () => {
     fireEvent.click(button('Hamo’s story: Mêvan, çay û sêv'));
     fireEvent.click(button('Read the story'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('StoryReader', { slug: 'road-01-mevan-cay-u-sev' });
-    // chapter 2 is not: its story waits, rolled up, with nothing to open, and says how far the chapter is
+    // Chapter 2 is not: its story is locked and says how far the chapter is.
     fireEvent.click(button('Hamo’s story: Mêvanê bê simbêl, opens when the chapter is done'));
     expect(screen.getByText('Finish the chapter, and Hamo tells you how it ends.')).toBeTruthy();
     expect(screen.getByText('0 of 2 done')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Read the story' })).toBeNull();
-    // the path stops at the last chapter online, and says the next is on its way, Hamo recording it
+    // The path ends at the last published chapter and says the next is being recorded.
     expect(screen.getByTestId('lp-upcoming').getAttribute('aria-label')).toBe('Chapter 3, House and village. On its way: Hamo is recording it now.');
   });
 
@@ -188,7 +183,6 @@ describe('the lesson path', () => {
     expect(screen.getByText('+3–5 XP')).toBeTruthy();
   });
 
-  // Hevalo stands by the skill to do now, and a tap on him opens it as the stop itself does
   it('has Hevalo beside the current skill, opening its sheet when he is tapped', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
@@ -203,14 +197,13 @@ describe('the lesson path', () => {
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     fireEvent.click(button('Food, locked, 0 of 1 lessons done'));
     expect(screen.getByText('Finish “Family” to open this one.')).toBeTruthy();
-    // the sheet's ✕, after the dimmed page behind it
+    // The sheet's close button, after the dimmed backdrop's.
     fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
     fireEvent.click(button('Numbers, done, ready for a refresh, round 2 of 3, 0 of 1 lessons'));
     fireEvent.click(button('Start a review'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Practice');
   });
 
-  // the guide is the book on the unit's heading, no longer a stop on the road
   it('opens a unit’s guide from the book on its heading, fetching each note once', async () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
@@ -223,11 +216,8 @@ describe('the lesson path', () => {
   });
 
   /*
-   * Each unit's stops stand on its own land in the painted valley: the first
-   * unit's has Sêvan's gate beside its road, and the learner stands on the
-   * stop to do now — once, whatever the path holds. No figure of the course's
-   * people stands on the map: they are in the lessons. The pictures are
-   * decorative: a screen reader hears the stops, not them.
+   * Each unit stands on its own land: the first has its landmark beside the road, and the learner stands once on the
+   * current stop. No course characters stand on the map, and the pictures are hidden from screen readers.
    */
   it('stands each unit on its own land, with its landmark and the learner on today’s stop, and no figures pasted on the map', () => {
     client();
@@ -245,7 +235,7 @@ describe('the lesson path', () => {
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} near={new Set(['u2'])} />);
     expect(screen.queryByTestId('lp-landmark-gate')).toBeNull();
     expect(screen.getByTestId('lp-landmark-teahouse')).toBeTruthy();
-    // every stop is still a button that says what it is
+    // Every stop is still a labelled button.
     expect(button('Greetings, done, and strong, round 2 of 3, 0 of 2 lessons')).toBeTruthy();
   });
 
@@ -271,11 +261,6 @@ describe('the lesson path', () => {
     expect(pick).toHaveBeenCalledWith('u1');
   });
 
-  /*
-   * A later unit whose first skill is closed offers a test to jump to it: its
-   * first stop in the unit's colour with "Jump here?" over it, and a sheet
-   * that says what jumping does before it starts.
-   */
   it('offers to jump ahead to a later unit, and starts its test from a sheet that explains it', () => {
     client();
     const later: CourseMap = {
@@ -286,10 +271,10 @@ describe('the lesson path', () => {
       ],
     };
     renderWithProviders(<LessonPath map={later} due={0} onFocus={() => undefined} />);
-    // never the unit the learner is in
+    // Never the learner's own unit.
     expect(screen.getAllByTestId('lp-node-jump')).toHaveLength(1);
     expect(screen.getByText('Jump here?')).toBeTruthy();
-    // the stop and the bubble over it both say what they offer, and both open it
+    // Both the stop and its bubble offer the jump, and both open it.
     const offers = screen.getAllByRole('button', { name: 'Jump ahead to Chapter 3: a short test opens it' });
     expect(offers).toHaveLength(2);
     fireEvent.click(offers[1]!);
@@ -302,23 +287,17 @@ describe('the lesson path', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('JumpTest', { courseId: 'c1', unitId: 'u3' });
   });
 
-  /*
-   * Scrolled into the next unit, the pinned header turns into it: the new
-   * colour and name fade in over the old (opacity alone), which goes once they
-   * have — or, for anyone who asked for less motion, it simply changes.
-   * Animations finish at once in tests, so what is checked is the fade asked
-   * for, and where it ends.
-   */
+  // Animations finish at once in tests, so this checks the fade requested and its end state.
   it('cross-fades the pinned header into the next unit, and changes it at once under Reduce Motion', async () => {
     const first: UnitPlace = { unitId: 'u1', top: 0, bannerBottom: 120, bottom: 600, number: 1, title: 'Basics', tone: TONES.dark.meadow, section: null, done: 2, total: 2, here: false };
     const second: UnitPlace = { ...first, unitId: 'u2', number: 2, title: 'Family & Food', tone: TONES.dark.river };
     const fades = vi.spyOn(Animated, 'timing');
     const turn = async () => {
       const view = renderWithProviders(<PinnedUnit unit={first} />);
-      // the number over the name, said as one heading
+      // Number and name, read as one heading.
       expect(screen.getByRole('heading', { name: 'Chapter 1, Basics' })).toBeTruthy();
       await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
-      // the header's own arrival is not what is counted here: only what the change of unit asks for
+      // Count only what the unit change requests, not the header's own arrival.
       fades.mockClear();
       view.rerender(<PinnedUnit unit={second} />);
       expect(screen.getByRole('heading', { name: 'Chapter 2, Family & Food' })).toBeTruthy();
@@ -348,17 +327,17 @@ describe('the path’s sections', () => {
   it('opens the section the learner is in, with a card for the one finished before it and the one still shut after it', () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
-    // the section open: its first unit under a heading that names the section
+    // The open section's first unit sits under a heading naming the section.
     expect(screen.getByText('Section 2 · Chapter 2')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Section 2, Chapter 2, Family' })).toBeTruthy();
     expect(button('Topic d, you are here, 1 of 3 lessons done')).toBeTruthy();
-    // and each unit after it at a divider with its name
+    // Each later unit starts at a divider with its name.
     expect(screen.getByRole('heading', { name: 'Chapter 3, House' })).toBeTruthy();
-    // the finished one before it, folded into a card by the app's plain name for its level, never its CEFR letter
+    // The finished section before it is a card named by its level, never its CEFR letter.
     const done = button('Section 1, Starter, First words and short sentences, Section complete, One chapter');
     expect(within(done).queryByText(/A1/)).toBeNull();
     expect(screen.queryByRole('button', { name: /^Topic a/ })).toBeNull();
-    // the one after it shut: what it is, how many chapters, what opens it, and the test to jump to it
+    // The section after it is shut: what it is, how many chapters, what opens it, and the jump test.
     const shut = screen.getByTestId('lp-section-3');
     expect(within(shut).getByText('Intermediate')).toBeTruthy();
     expect(within(shut).getByText('One chapter')).toBeTruthy();
@@ -374,15 +353,15 @@ describe('the path’s sections', () => {
     fireEvent.click(button('Section 1, Starter, First words and short sentences, Section complete, One chapter'));
     expect(button('Topic a, done, and strong, round 2 of 3, 0 of 2 lessons')).toBeTruthy();
     expect(screen.getByText('Section 1 · Chapter 1')).toBeTruthy();
-    // the learner's section is a card now, which takes them back
+    // The learner's own section is now a card that takes them back.
     const here = button('Section 2, Beginner, Everyday sentences and short stories, You are here, 0 of 2 chapters done');
-    // the stop to open on is folded away: the screen is told there is nothing to scroll to
+    // The focus stop is folded away, so the screen gets nothing to scroll to.
     expect(focus).toHaveBeenLastCalledWith(null);
     fireEvent.click(here);
     expect(button('Topic d, you are here, 1 of 3 lessons done')).toBeTruthy();
   });
 
-  // where the unit then is comes from its layout, which a page without one (this test's) never measures
+  // The unit's position comes from layout, which this test never measures.
   it('opens the section of a unit picked on the map, and leaves a shut section shut', () => {
     client();
     const view = renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} onReveal={() => undefined} />);
@@ -398,13 +377,13 @@ describe('the path’s sections', () => {
     const view = renderWithProviders(<LessonPath map={levelled('c-replay')} due={0} onFocus={() => undefined} />);
     await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
     expect(screen.getByTestId('lp-section-1')).toBeTruthy();
-    // a lesson of Topic a, in the finished first section, played a second time
+    // A lesson of Topic a, in the finished first section, played again.
     const replayed = levelled('c-replay');
     replayed.units[0]!.skills[0] = { ...replayed.units[0]!.skills[0]!, lessons: [lesson('a1', 'Lesson a1', true, 2), lesson('a2', 'Lesson a2', true, 1)] };
     view.rerender(<LessonPath map={replayed} due={0} onFocus={() => undefined} />);
     expect(button('Topic a, done, and strong, round 2 of 3, 1 of 2 lessons')).toBeTruthy();
     expect(screen.getByTestId('lp-ring-gold')).toBeTruthy();
-    // and the learner's own section waits folded, to go back to
+    // The learner's own section stays folded, to go back to.
     expect(screen.getByTestId('lp-section-2')).toBeTruthy();
     cleanup();
     patchReactNativeWeb({ reduceMotion: true });
@@ -428,11 +407,11 @@ describe('a topic’s ring and stars', () => {
   it('rings every topic with a piece for each lesson, and stands a star on a finished one’s coin for each round', () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
-    // Topic c has three rounds, d none yet, e is shut; the review and the story wear no ring
+    // Topic c has three rounds, d none yet, e is locked; review and the story have no ring.
     expect(screen.getAllByTestId('lp-ring')).toHaveLength(3);
     expect(screen.getByTestId('lp-stars-3')).toBeTruthy();
     expect(button('Topic c, done, and strong, all 3 rounds done')).toBeTruthy();
-    // its sheet: its stars, and that all three rounds are played
+    // Its sheet shows its stars and that all three rounds are played.
     fireEvent.click(button('Topic c, done, and strong, all 3 rounds done'));
     expect(screen.getByTestId('lp-sheet-stars-3')).toBeTruthy();
     expect(screen.getByText('All 3 rounds done')).toBeTruthy();
@@ -443,7 +422,7 @@ describe('a topic’s ring and stars', () => {
     client();
     renderWithProviders(<LessonPath map={levelled()} due={0} onFocus={() => undefined} />);
     fireEvent.click(button('Section 1, Starter, First words and short sentences, Section complete, One chapter'));
-    // both its topics have their first star
+    // Both its topics have their first star.
     expect(screen.getAllByTestId('lp-stars-1')).toHaveLength(2);
     fireEvent.click(button('Topic b, done, and strong, round 2 of 3, 1 of 2 lessons'));
     expect(screen.getByText('Round 2 of 3 · 1 of 2 lessons')).toBeTruthy();
@@ -452,17 +431,12 @@ describe('a topic’s ring and stars', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'b2', courseId: 'c2' });
   });
 
-  /*
-   * Coming back from a lesson that finished a topic's last lesson of a round,
-   * the ring fills to whole and goes gold, and the star it earned drops in on
-   * the coin; under Reduce Motion the path is drawn as it now is.
-   */
   it('fills the ring and drops the star in on coming back from a lesson that made a round whole', async () => {
     client();
     patchReactNativeWeb({ reduceMotion: false });
     const before = levelled('c-return');
     const after = levelled('c-return');
-    // Topic d's first round made whole: d2 and d3 finished since
+    // Topic d's first round is completed: d2 and d3 finished since.
     after.units[1]!.skills[1] = { ...after.units[1]!.skills[1]!, state: 'completed', lessons: [lesson('d1', 'Lesson d1', true, 1), lesson('d2', 'Lesson d2', true, 1), lesson('d3', 'Lesson d3', true, 1)] };
     after.units[2]!.skills[0] = { ...after.units[2]!.skills[0]!, state: 'unlocked' };
     const view = renderWithProviders(<LessonPath map={before} due={0} onFocus={() => undefined} />);
@@ -471,7 +445,7 @@ describe('a topic’s ring and stars', () => {
     view.rerender(<LessonPath map={after} due={0} onFocus={() => undefined} />);
     expect(screen.getByTestId('lp-ring-gold')).toBeTruthy();
     expect(screen.getByTestId('lp-star-earned')).toBeTruthy();
-    // and the chapter's story, its prize, is won with it
+    // The chapter's story is won with it.
     expect(button('Hamo’s story: Malbat')).toBeTruthy();
     cleanup();
     patchReactNativeWeb({ reduceMotion: true });

@@ -13,11 +13,7 @@ import { forgetReach, reachOf } from '../testing/reach';
 import { EmptyState } from './EmptyState';
 import { ErrorRetry } from './glass';
 
-/*
- * What a screen says when it has nothing to show (theme/EmptyState.tsx): its
- * ways out stand alone on an empty screen, so they reach past their edges,
- * and the two of them share the gap between them.
- */
+// The ways out stand alone on an empty screen, so they reach past their edges, and share the gap between them.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {

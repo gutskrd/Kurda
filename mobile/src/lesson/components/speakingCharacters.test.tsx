@@ -46,10 +46,10 @@ async function settle(): Promise<void> {
   await act(async () => undefined);
 }
 
-/** the shape of the mouth Xezo shows now */
+/** The mouth shape Xezo shows now. */
 function mouth(): string | undefined {
   const drawn = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
-  // a lesson's stage shows as much of the figure as there is room for; the dictionary and the stories, the bust
+  // A lesson's stage shows as much of the figure as fits; the dictionary and stories show the bust.
   for (const crop of ['full', 'half', 'bust'] as const) {
     const found = Object.entries(characterLayers('xezo', crop).mouths).find(([, xml]) => drawn.includes(xml))?.[0];
     if (found) return found;
@@ -83,14 +83,13 @@ describe('the lesson’s speaking characters', () => {
     act(() => clip.finish());
     await settle();
     expect(mouth()).toBe('rest');
-    // the speaking loop must stop with the clip. The animated values may still
-    // have a flush frame or two queued (they run once and stop); a loop that
-    // leaked reschedules itself every frame, so it alone survives the draining.
+    // The speaking loop must stop with the clip. A few flush frames may still be queued, but a leaked loop reschedules
+    // itself every frame, so it alone survives the draining.
     for (let i = 0; i < 5 && frames.pending > 0; i++) act(() => frames.step());
     expect(frames.pending).toBe(0);
   });
 
-  // the clip plays once by itself a moment after the exercise appears; one the learner has already played is that once
+  // The clip autoplays once shortly after the exercise appears, and a clip the learner already played counts as that once.
   it('does not play a clip again by itself once the learner has played it', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {
@@ -103,7 +102,7 @@ describe('the lesson’s speaking characters', () => {
       const clip = FakeAudio.of(CLIP)!;
       act(() => clip.finish());
       await settle();
-      // past the moment the exercise would have played it by itself
+      // Past the moment the exercise would have autoplayed it.
       act(() => vi.advanceTimersByTime(1000));
       await settle();
       expect(clip.paused).toBe(true);
@@ -113,7 +112,6 @@ describe('the lesson’s speaking characters', () => {
     }
   });
 
-  // he puts his head in at the window beside the bubble, listening, and says nothing, so a screen reader is not told he said it
   it('brings Hevalo in to listen, his head in at the window, when nobody has been chosen to say the clip', async () => {
     renderWithProviders(<ListeningExercise exercise={listening()} text="" onChangeText={noop} onSkip={noop} disabled={false} />);
     await settle();
@@ -122,7 +120,7 @@ describe('the lesson’s speaking characters', () => {
     const scene = screen.getByTestId('prompt-scene');
     expect(within(scene).getByTestId('hevalo-window')).toBeTruthy();
     expect(within(scene).queryByTestId('character-stage')).toBeNull();
-    // his head and neck, never the whole figure
+    // His head and neck, never the whole figure.
     const neck = characterLayers('hevalo', 'head').body;
     expect([...scene.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === neck)).toBe(true);
   });
@@ -191,7 +189,7 @@ describe('the lesson’s speaking characters', () => {
     renderWithProviders(<ListeningExercise exercise={listening({ audioVoice: SAID })} text="" onChangeText={noop} onSkip={noop} disabled={false} />);
     await settle();
     expect(within(screen.getByTestId('prompt-scene')).getByTestId('character-stage')).toBeTruthy();
-    // drawn whole, for the stage's bottom edge to cut off at the waist: never only the head
+    // Drawn whole, for the stage's bottom edge to cut at the waist, never only the head.
     const body = characterLayers('xezo', 'full').body;
     expect([...document.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === body)).toBe(true);
     fireEvent.click(screen.getByRole('img', { name: 'Said by Xezo' }));

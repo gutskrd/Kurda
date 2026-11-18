@@ -51,40 +51,36 @@ import { CARD } from '../valley';
 interface Props {
   results: SessionResults;
   exercises: Exercise[];
-  /** exercises put off ("can't listen now") and never answered this time */
+  /** Exercises put off ("can't listen now") and never answered this time. */
   skipped?: number;
-  /**
-   * The lesson these results are of, for the quiet Share beside the ways on:
-   * its own name, where the player was told it. Absent for a review, which
-   * is practice and not a lesson finished, and has no Share.
-   */
+  /** The lesson these results are for, named for its Share; absent for a review, which has no Share. */
   lesson?: { title: string | null } | null;
-  /** what else the lesson did: today's goal, the streak, a new level, the league */
+  /** What else the lesson did: today's goal, the streak, a new level, the league. */
   moments?: LessonMoments;
-  /** a lesson (not practice) may be followed, last of all, by the screen that comes before the phone's question about notifications (push/ReminderOffer.tsx) */
+  /** A lesson (not practice) may end with the screen before the phone's notification question (push/ReminderOffer.tsx). */
   offerReminders?: boolean;
-  /** the course's next lesson, when there is one to offer */
+  /** The course's next lesson, when there is one to offer. */
   next?: { lessonId: string; title: string } | null;
-  /** today's goal is met: the results say this is a good place to stop, and "Done" leads */
+  /** Today's goal is met, so the results suggest stopping and "Done" leads. */
   goalDone?: boolean;
-  /** the mistakes practice can take ("Practise these now"); empty for none */
+  /** The mistakes practice can take ("Practise these now"); empty for none. */
   practise?: string[];
-  /** the course's variety of Kurdish, for the line under the title; absent on a practice session */
+  /** The course's variety of Kurdish, for the line under the title; absent on a practice session. */
   dialect?: string | null;
-  /** this sitting: how long it took from the first exercise shown to the last answer, and how many answers it took; null when not measured */
+  /** This sitting: time from the first exercise shown to the last answer, and the answer count; null when not measured. */
   sitting?: { ms: number; answers: number } | null;
   onDone: () => void;
   onNext?: (lessonId: string) => void;
   onPractise?: (exerciseIds: string[]) => void;
-  /** to the lesson path, wherever the lesson was opened from */
+  /** To the lesson path, wherever the lesson was opened from. */
   onPath?: () => void;
 }
 
-/** How big the stage Hevalo arrives on is, and how tall his window stands on it. */
+/** The stage Hevalo arrives on, and his window's height on it. */
 const STAGE = { width: 280, height: 232 };
 const WINDOW = 224;
 
-/** A list of mistakes this long or shorter is open; a longer one starts folded, so the results still fit one screen. */
+/** Mistake lists up to this long start open; longer ones start folded so the results fit one screen. */
 const MISTAKES_OPEN = 3;
 
 const ACTION_WORDS: Record<ResultsAction, TranslationKey> = {
@@ -94,49 +90,22 @@ const ACTION_WORDS: Record<ResultsAction, TranslationKey> = {
 };
 
 /**
- * End of a lesson: what changed, and what comes next, on one screen.
+ * The end of a lesson on one screen. It opens as the app's one celebration (theme/celebration.ts): Hevalo's window
+ * springs in and he cheers as the haptic lands, however many things the lesson did. The title says how it went, then
+ * three cards count up the XP (gold), first-time right answers (green, always with a kind word) and the sitting's
+ * time (blue). Under them today's goal moves to its new place and the league place and any new level arrive. A tap
+ * on Hevalo skips to the end, and a badge earned waits its turn.
  *
- * It opens as the app's one celebration (theme/celebration.ts): Hevalo's
- * window springs in on a stage of light, his head pops up out of it and he
- * cheers as the buzz lands, a ring widens once, a light handful of gold flecks — however many
- * things this lesson did at once, it is one moment, felt once. The title says
- * how it went (a perfect lesson, great work, or a lesson done), with a warm
- * line about the course's Kurdish under it. Then three framed cards side by
- * side, one after another, each a band of colour naming what it counts over
- * an icon and the number counting up: the XP in gold, how many were right
- * first time in green under a kind word for it (never a negative one), and
- * how long this sitting took in blue — "Quick" when it was. Under them
- * today's goal moves from where it stood to where it is, and the week's
- * league place and a new level arrive. A tap on Hevalo skips to the end, and
- * while it plays a badge the lesson earned waits its turn.
+ * The ways on sit at the foot where Check was: the next lesson, or "Done" once today's goal is met, plus practising
+ * the mistakes. Before the first of them come the after-results moments (shared `afterResults`), each once: the
+ * streak (StreakMoment), today's quests (QuestsScreen), and on a phone never asked, the screen before the
+ * notification question (push/ReminderOffer.tsx), which is a screen of its own so the ways on cannot sit beside it.
+ * Nothing moves on by itself, and nothing asks for money. A lesson's results have a quiet Share (share/ShareWin.tsx)
+ * over the buttons.
  *
- * The ways on sit at the foot, where Check was: the next lesson while today's
- * goal is still to meet, or "Done" once it is met — with a line saying it is a
- * good place to stop — and practising the mistakes now when there are any.
- * On the way to the first of them come the moments that follow the results
- * (shared `afterResults`), each once: the streak's when this lesson kept it
- * (StreakMoment), then today's quests when it moved any (QuestsScreen), and
- * last, after a lesson on a phone that has never been asked, the screen that
- * says what Hevalo would send before the phone asks whether it may
- * (push/ReminderOffer.tsx). That one is a screen of its own and never a card
- * among the results: on the results it would stand beside the ways on, which
- * are ways round the phone's question, and a screen in front of that
- * question may have one button and no way past it.
- * Nothing moves on by itself, and nothing here ever asks for money.
- *
- * A lesson's results have a quiet Share in the same bar (share/ShareWin.tsx),
- * over the buttons and beside "Back to the path" where that is: the lesson by
- * its name, a square for each exercise as it went, and the site's address.
- * The main way on keeps the foot of the screen to itself, where the thumb
- * expects it, and Share takes nobody through the moments after the results.
- *
- * Every mistake is listed with the question and its right answer, folded away
- * when there are more than three. A listening item's question was a sound,
- * with no words to list: its clip stands beside the answer instead, to be
- * heard again, where the answer used to stand alone with nothing to say what
- * it answered. An exercise put off is neither a mistake
- * nor a right answer: the server leaves it out of the score, and the note
- * says how many were put off, as the web's does.
+ * Every mistake is listed with its question and right answer, folded when there are more than three; a listening
+ * mistake shows its clip to replay. Put-off exercises are left out of the score and counted in a note, as on the
+ * website.
  */
 export function LessonResults({
   results,
@@ -157,7 +126,7 @@ export function LessonResults({
 }: Props) {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
-  // in Soranî and Arabic the cards and the lines under them read from the right
+  // In right-to-left languages the cards and the lines under them start from the right.
   const dir = useDirection();
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
@@ -167,17 +136,17 @@ export function LessonResults({
   const pct = Math.round(results.accuracy * 100);
   const mistakes = results.mistakes ?? [];
   const promptFor = (id: string, prompt?: string) => prompt ?? exercises.find((e) => e.id === id)?.prompt ?? '';
-  // a picture item's answer is a picture, which the server names by its catalogue id: said by what it shows instead
+  // A picture answer is named by its catalogue id, so say what it shows instead.
   const answerFor = (id: string, correction: string): string =>
     exercises.find((e) => e.id === id)?.ask === 'picture' && Object.prototype.hasOwnProperty.call(WORD_PICTURES, correction)
       ? WORD_PICTURES[correction as WordPictureId].en
       : correction;
   const [folded, setFolded] = useState(mistakes.length > MISTAKES_OPEN);
-  // the cards' bands as tall as the tallest, so the three numbers stand level when one band's word takes two lines
+  // Every band as tall as the tallest, so the numbers stay level when one band's label wraps.
   const [band, setBand] = useState(0);
   const fitBand = useCallback((height: number) => setBand((was) => Math.max(was, Math.ceil(height))), []);
 
-  // Hevalo cheers as the buzz lands (`hapticAtMs`), or at once when the moment is skipped
+  // Hevalo cheers as the haptic lands (`hapticAtMs`), or at once when the moment is skipped.
   const [cheer, setCheer] = useState(false);
   useEffect(() => {
     if (!moment.playing) {
@@ -188,9 +157,9 @@ export function LessonResults({
     return () => clearTimeout(id);
   }, [moment.playing, plan.hapticAtMs]);
 
-  // whether the phone's question about notifications is due, found out while the results are read (null until it is known)
+  // Whether the notification question is due, found out while the results are read (null until known).
   const remindersDue = useReminderOffer(offerReminders);
-  // the moments after the results, opened on the way to whichever way on is chosen first
+  // The after-results moments, opened on the way to whichever way on is chosen first.
   const [after, setAfter] = useState<{ steps: AfterResults[]; then: () => void } | null>(null);
   const afterShown = useRef(false);
   const go = (then: () => void) => () => {
@@ -210,7 +179,7 @@ export function LessonResults({
   const scale = plan.travel ? moment.art.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) : 1;
   const opacity = moment.art.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
   const lift = plan.travel ? moment.details.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) : 0;
-  // the sun's golds (the website's tone-zer), and a little of the green a right answer wears
+  // The sun's golds (the website's tone-zer), and a little of the right-answer green.
   const flecks = [colors.gold, '#FFE16A', '#FFBD1F', colors.success];
 
   if (after?.steps[0] === 'streak') return <StreakMoment streak={results.streak} goalDone={goalDone} onContinue={onward} />;
@@ -219,7 +188,7 @@ export function LessonResults({
 
   const canPractise = practise.length > 0 && !!onPractise;
   const actions = resultsActions({ next: next !== null && !!onNext, practise: canPractise, goalDone });
-  // "Back to the path", where the results offer it and there is a path to go back to
+  // "Back to the path", where the results offer it and there is a path.
   const backLink = actions.backLink && onPath ? onPath : null;
   const run = (action: ResultsAction): (() => void) =>
     go(() => {
@@ -343,7 +312,7 @@ export function LessonResults({
                           <View style={[styles.answerLine, { flexDirection: dir.row }]}>
                             {clip ? <HearAgain url={clip} /> : null}
                             <Text style={[styles.mistakeAnswer, styles.answerWords, dir.text, { color: colors.textPrimary }]}>
-                              {/* the answer set apart from the words round it, so an English answer in a Soranî line keeps its full stop at its own end */}
+                              {/* The answer is isolated from the words round it, so an English answer in a Soranî line keeps its full stop at its end. */}
                               {t('lesson.answer')} <Text style={styles.mistakeAnswerValue}>{`⁨${answerFor(m.exerciseId, m.correction)}⁩`}</Text>
                             </Text>
                           </View>
@@ -356,9 +325,9 @@ export function LessonResults({
         </Animated.View>
       </ScrollView>
 
-      {/* where Check was: the main way on at the foot, under the other */}
+      {/* Where Check was: the main way on at the foot, under the other. */}
       <View style={[styles.bar, { paddingBottom: bottom, backgroundColor: colors.barFill, borderTopColor: colors.separator }]}>
-        {/* the quiet things, on one line over the buttons: the way back to the path, and a lesson's Share */}
+        {/* The quiet actions on one line over the buttons: back to the path, and a lesson's Share. */}
         {backLink || lesson ? (
           <View style={[styles.quiet, { flexDirection: dir.row }]}>
             {backLink ? (
@@ -376,7 +345,7 @@ export function LessonResults({
   );
 }
 
-/** Whole seconds as a clock, m:ss, in the reader's own digits. */
+/** Whole seconds as m:ss, in the reader's own digits. */
 function clockWords(totalSeconds: number, locale: Locale): string {
   const { minutes, seconds } = sittingClock(totalSeconds * 1000);
   let ss: string;
@@ -388,17 +357,13 @@ function clockWords(totalSeconds: number, locale: Locale): string {
   return `${formatNumber(minutes, locale)}:${ss}`;
 }
 
-/** The narrowest phone whose results cards each have room for an icon beside a number as wide as "100%". */
+/** The narrowest phone whose cards have room for an icon beside a number as wide as "100%". */
 const ICON_ROOM = 360;
 
-/** The play mark beside a listening mistake's answer, drawn smaller than a fingertip and reaching one. */
+/** The play mark beside a listening mistake's answer, drawn smaller than a fingertip but reaching one. */
 const HEAR = 32;
 
-/**
- * A listening mistake's clip, the lesson's round play mark beside its right
- * answer, said again when tapped. Nothing where this host cannot play it, or
- * the clip will not load: the answer then stands alone, as it did.
- */
+/** A listening mistake's clip as a play mark beside its answer. Nothing where this host cannot play it or it fails to load. */
 function HearAgain({ url }: { url: string }): React.JSX.Element | null {
   const { t } = useI18n();
   const audio = useAudio(url);
@@ -418,18 +383,10 @@ function HearAgain({ url }: { url: string }): React.JSX.Element | null {
 }
 
 /**
- * One of the three cards: a band of its colour naming what it counts, and
- * under it, framed in the same colour, an icon and the number counting up to
- * where it ends. They rise in one after another as the words land; under
- * Reduce Motion they are simply there, with the final number.
- *
- * A third of a narrow phone is not much: a band's word takes a second line
- * rather than losing its end ("Good practi…", "XP دەستهات…"), with every band
- * as tall as the tallest so the three numbers still stand level; and on a
- * phone narrower than `ICON_ROOM` the icon steps aside for the number, which
- * the band names anyway, so "100%" is never cut to "1…". A number still too
- * wide for its card (much larger text) is set a little smaller where the
- * phone can.
+ * One of the three cards: a coloured band naming what it counts, over a framed icon and number counting up. They
+ * rise in one after another; under Reduce Motion they show the final number at once. A long band label wraps (every
+ * band matching the tallest), below `ICON_ROOM` the icon steps aside so "100%" is never cut, and a number still too
+ * wide is set a little smaller.
  */
 function StatCard({
   index,
@@ -445,21 +402,21 @@ function StatCard({
   a11yValue,
 }: {
   index: number;
-  /** the height every band is given: the tallest one's */
+  /** The height every band is given: the tallest one's. */
   band: number;
-  /** each band's own height, once it is laid out */
+  /** Reports each band's own height once laid out. */
   onBand: (height: number) => void;
   travel: boolean;
   tone: ToneColors;
   icon: IconName;
   label: string;
-  /** the number it counts up to */
+  /** The number it counts up to. */
   to: number;
-  /** how a number on the way is written */
+  /** How a number in progress is written. */
   show: (n: number) => string;
-  /** what a screen reader calls it, where the band's word is not enough */
+  /** The screen-reader name, where the band's label is not enough. */
   a11yLabel?: string;
-  /** read as the final number, not the one it is counting through */
+  /** Read as the final number, not the one it is counting through. */
   a11yValue: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -469,7 +426,7 @@ function StatCard({
   const shown = useCountUp(to, { delayMs: travel ? delayMs : 0 });
   const rise = useRef(new Animated.Value(travel ? 0 : 1)).current;
   useEffect(() => {
-    // under Reduce Motion — an answer that may arrive a moment after the results open — simply there
+    // Under Reduce Motion (the answer may arrive just after the results open) it is simply there.
     if (!travel) {
       rise.setValue(1);
       return;
@@ -501,13 +458,12 @@ function StatCard({
 }
 
 /**
- * What else the lesson moved: today's goal from where it stood to where it is
- * now (at `goalAtMs`), and the week's league place and a new level fading in
- * after it. A row whose numbers could not be read is left out, never guessed.
+ * What else the lesson moved: today's goal from its old to its new place (at `goalAtMs`), then the league place and a
+ * new level fading in. A row whose numbers could not be read is left out, never guessed.
  */
 function Rows({ moments, travel, water }: { moments: LessonMoments; travel: boolean; water: number }): React.JSX.Element | null {
   const { colors, scheme } = useTheme();
-  // a goal met is something earned, in the gold of everything earned: it was the green of a right answer
+  // A goal met is earned, so it is gold.
   const gold = hueSteps(scheme, 'gold');
   const { t, locale } = useI18n();
   const dir = useDirection();
@@ -518,7 +474,7 @@ function Rows({ moments, travel, water }: { moments: LessonMoments; travel: bool
   const [goalXp, setGoalXp] = useState<number | null>(goal ? (travel ? goal.from : goal.to) : null);
   const rows = useRef(new Animated.Value(travel ? 0 : 1)).current;
 
-  // the goal ring moves on from where it stood, once the tiles are in (or as soon as the numbers arrive after that)
+  // The goal ring moves on once the tiles are in, or as soon as the numbers arrive after that.
   const from = goal?.from ?? null;
   const to = goal?.to ?? null;
   useEffect(() => {
@@ -532,7 +488,7 @@ function Rows({ moments, travel, water }: { moments: LessonMoments; travel: bool
     return () => clearTimeout(id);
   }, [from, to, travel]);
 
-  // the league and the level fade in after the goal, whenever their numbers arrive
+  // The league and the level fade in after the goal, whenever their numbers arrive.
   const later = league !== null || moments.level !== null;
   useEffect(() => {
     if (!later) return;
@@ -577,7 +533,7 @@ function Rows({ moments, travel, water }: { moments: LessonMoments; travel: bool
           <Icon name="trophy" size={18} color={colors.goldText} />
           <Text style={[styles.rowText, dir.text, { color: colors.textPrimary }]}>{leagueWords}</Text>
           {league.toRank < league.fromRank ? (
-            // a place won is earned, in the trophy's gold beside it
+            // A place won is earned, in the trophy's gold beside it.
             <Text style={[styles.rowUp, { color: colors.goldText }]}>{t('lesson.results.leagueUp', { rank: formatNumber(league.toRank, locale) })}</Text>
           ) : null}
         </Animated.View>
@@ -588,7 +544,7 @@ function Rows({ moments, travel, water }: { moments: LessonMoments; travel: bool
           <Text style={[styles.rowText, dir.text, { color: colors.textPrimary }]}>{t('lesson.levelUp', { level: formatNumber(moments.level, locale) })}</Text>
         </Animated.View>
       ) : null}
-      {/* the water this session earned the learner's tree */}
+      {/* The water this session earned the learner's tree. */}
       {water > 0 ? (
         <Animated.View style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack, opacity: rows }]} testID="lesson-water">
           <WaterDrop size={18} />
@@ -616,7 +572,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, textAlign: 'center' },
   cards: { alignSelf: 'stretch', gap: spacing.sm + 2, marginTop: spacing.xs },
-  // a band of colour, and the framed body under it: the band's fill is the frame
+  // A coloured band over the framed body; the band's fill is the frame.
   card: { flex: 1, minWidth: 0, borderRadius: radii.lg, padding: 3, paddingTop: 0 },
   cardBand: { justifyContent: 'center', paddingVertical: 5, paddingHorizontal: 4 },
   cardLabel: { fontSize: 12, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase', textAlign: 'center' },
@@ -633,14 +589,14 @@ const styles = StyleSheet.create({
   mistakeRow: { gap: spacing.xs },
   mistakePrompt: { fontSize: typography.sizes.sm },
   mistakeAnswer: { fontSize: typography.sizes.md },
-  // a listening mistake's play mark at the start of its answer, the words wrapping beside it
+  // A listening mistake's play mark at the start of its answer, the words wrapping beside it.
   answerLine: { alignItems: 'center', gap: spacing.sm },
   answerWords: { flex: 1 },
   mistakeAnswerValue: { fontWeight: typography.weights.bold },
   pressed: { opacity: pressedDim },
-  // the lesson's bar at the foot, under its hairline, where Check was
+  // The lesson's bar at the foot, under its hairline, where Check was.
   bar: { paddingHorizontal: spacing.md, paddingTop: spacing.md - 2, gap: spacing.sm, borderTopWidth: CARD.edge },
-  // side by side in the middle, and one under the other when the reader's text size leaves no room for both
+  // Side by side and centred, or stacked when the text size leaves no room.
   quiet: { alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', columnGap: spacing.md, rowGap: spacing.xs },
   back: { alignSelf: 'center', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
   backText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },

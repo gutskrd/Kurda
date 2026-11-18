@@ -1,34 +1,19 @@
 /**
- * The lesson's look: the painted valley.
+ * The lesson's look, the painted valley: warm paper with pale hills along the top, answers on cream cards with a
+ * darker edge, pomegranate red for what is chosen and green for what is right, by day and at dusk.
  *
- * A lesson is set on warm paper with a low line of pale hills behind the top
- * of the screen, its answers on cream cards standing on a darker edge, the
- * pomegranate's red for what is chosen and the valley's green for what is
- * right. By day and at dusk, in the scheme the reader has the app in.
- *
- * Pure data, with no React Native in it, so that every pair of words and the
- * ground they are written on can be held to 4.5:1 by its test (valley.test.ts).
- * Where the owner's colour is too pale to write in (the red on the paper, the
- * green behind cream words), the words take a step darker one and the fill
- * keeps the colour.
- *
- * The lesson player lays it over the app's own palette for as long as it is
- * open (`ValleyScope`), so whatever else is drawn inside the lesson — a sheet,
- * the key bar, a button from elsewhere in the app — is on the same paper in the
- * same ink, and its tiles take the valley's colours (`valleyTile`).
+ * Pure data, so valley.test.ts can hold every text and ground pair to 4.5:1. Where a design colour is too pale for
+ * text, the text takes a step darker and the fill keeps the colour. The player lays it over the app's palette while
+ * open (`ValleyScope`), so anything drawn inside a lesson uses the same paper and ink, and tiles use `valleyTile`.
  */
 import type { ColorScheme } from '../theme/appearance';
 import { DARK, LIGHT, type Palette } from '../theme/palette';
 import type { TileButtonTone, TileState, TileTone } from '../theme/tileTones';
 
-/**
- * The shape of the lesson's cards, beside their colours: 16 round, the
- * approved look's corner, between the app's 12 and 18, on a 1.5-point
- * hairline — an answer, the speech bubble, a field, the bars' top edges.
- */
+/** The lesson cards' shape: radius 16 (between the app's 12 and 18) on a 1.5-point hairline, for answers, bubbles, fields and bar edges. */
 export const CARD = { radius: 16, edge: 1.5 } as const;
 
-/** A button's face, the darker edge it stands on, and its words. */
+/** A button's face, the darker edge it stands on, and its text. */
 interface Fill {
   face: string;
   lip: string;
@@ -36,50 +21,50 @@ interface Fill {
 }
 
 export interface Valley {
-  /** the page */
+  /** The page. */
   paper: string;
-  /** a card on it: an answer, the speech bubble, a field to type in */
+  /** A card on it: an answer, the speech bubble, a field. */
   card: string;
-  /** a card's edge all round, and the darker one along its foot that it stands on */
+  /** A card's edge all round, and the darker one along its foot. */
   line: string;
   foot: string;
   ink: string;
-  /** what is secondary: a hint, a meaning, a label */
+  /** Secondary text: a hint, a meaning, a label. */
   muted: string;
-  /** the pomegranate, as a fill: the bar, a play button, what is chosen; and what is drawn on it */
+  /** The pomegranate red as a fill (the bar, a play button, the chosen answer), and what is drawn on it. */
   red: string;
   onRed: string;
-  /** red words, a step darker than the fill where the fill would not read on the paper */
+  /** Red text, a step darker where the fill would not read on the paper. */
   redText: string;
-  /** behind an answer that is chosen */
+  /** Behind a chosen answer. */
   redWash: string;
-  /** right: its edge and mark, its words on a card, the verdict's words, the wash behind both, and the bar's top line */
+  /** Right: its edge and mark, its text on a card, the verdict's text, their wash, and the bar's top line. */
   green: string;
   onGreen: string;
   greenInk: string;
   greenText: string;
   greenWash: string;
   greenLine: string;
-  /** wrong, in the red family rather than in grey: the same five */
+  /** Wrong, in the red family rather than grey: the same five. */
   wrong: string;
   onWrong: string;
   wrongInk: string;
   wrongText: string;
   wrongWash: string;
   wrongLine: string;
-  /** the progress bar's track, and the shade along its top */
+  /** The progress bar's track, and the shade along its top. */
   track: string;
   trackShade: string;
-  /** an answer's round number */
+  /** An answer's round number. */
   chip: string;
   chipInk: string;
-  /** the bar at the foot, under the answers */
+  /** The bar at the foot, under the answers. */
   bar: string;
-  /** the hills, far to near: the nearest fades into the paper at its foot */
+  /** The hills, far to near; the nearest fades into the paper. */
   hills: readonly [string, string, string];
-  /** behind Hevalo in his round portrait: light enough at dusk for his antlers to stand out against */
+  /** Behind Hevalo's round portrait: light enough at dusk for his antlers to stand out. */
   portrait: string;
-  /** the main button (Check), the verdicts' Continue, and Check while there is nothing to check */
+  /** The main button (Check), the verdicts' Continue, and Check while there is nothing to check. */
   buttons: Record<TileButtonTone, Fill>;
   off: { face: string; ink: string };
 }
@@ -91,11 +76,11 @@ export const VALLEY: Record<ColorScheme, Valley> = {
     line: '#e7dcc6',
     foot: '#dccdb0',
     ink: '#3d2a1f',
-    // the owner's #7b6a58 a shade deeper, so it also clears 4.5:1 on the sandy track (an offline note, the results' mistakes)
+    // The design's #7b6a58 a shade deeper, so it also clears 4.5:1 on the sandy track.
     muted: '#74624f',
     red: '#c8483a',
     onRed: '#fffdf8',
-    // the red itself is 4.4:1 on the paper; this is 5.2:1, and 4.6:1 on the farthest hill
+    // The red itself is 4.4:1 on the paper; this is 5.2:1, and 4.6:1 on the farthest hill.
     redText: '#b63f31',
     redWash: '#fdf1ec',
     green: '#4f8a3c',
@@ -112,7 +97,7 @@ export const VALLEY: Record<ColorScheme, Valley> = {
     wrongLine: '#f0d2c8',
     track: '#efe5d2',
     trackShade: '#e3d6bd',
-    // the owner's #9a8a72 is 2.8:1 on the chip; the muted brown reads on it at 4.9:1
+    // The design's #9a8a72 is 2.8:1 on the chip; the muted brown reads at 4.9:1.
     chip: '#f3ead8',
     chipInk: '#74624f',
     bar: '#fffaf1',
@@ -120,14 +105,14 @@ export const VALLEY: Record<ColorScheme, Valley> = {
     portrait: '#fffaf0',
     buttons: {
       primary: { face: '#3d2a1f', lip: '#24170f', ink: '#fff8ef' },
-      // a little deeper than the right answer's green, which cream words on it would not clear 4.5:1 on
+      // A little deeper than the right-answer green, on which cream text would not clear 4.5:1.
       success: { face: '#467f35', lip: '#2f5a23', ink: '#fff8ef' },
       danger: { face: '#b63f31', lip: '#86291e', ink: '#fff8ef' },
     },
-    // flat, and its word still readable: 4.9:1
+    // Flat, with its text still readable at 4.9:1.
     off: { face: '#efe5d2', ink: '#6f5f50' },
   },
-  // the same valley at dusk: night paper, the cards a step up from it, the red and the green lit to read on the dark
+  // The valley at dusk: night paper, cards a step up, and red and green lifted to read on the dark.
   dark: {
     paper: '#1f1a16',
     card: '#2a231d',
@@ -167,14 +152,14 @@ export const VALLEY: Record<ColorScheme, Valley> = {
   },
 };
 
-/** The app's palette with the valley laid over it: what everything inside a lesson reads its colours from. */
+/** The app's palette with the valley laid over it, which everything inside a lesson reads its colours from. */
 function over(base: Palette, v: Valley): Palette {
   return {
     ...base,
     primary: v.buttons.primary.face,
     accent: v.buttons.primary.face,
     textOnPrimary: v.buttons.primary.ink,
-    // the verdicts' words, and what a button from elsewhere in the app is filled with when it says one
+    // The verdicts' text, and the fill of a button from elsewhere in the app that shows one.
     success: v.greenText,
     successFill: v.greenWash,
     danger: v.wrongText,
@@ -196,21 +181,13 @@ function over(base: Palette, v: Valley): Palette {
 
 export const VALLEY_PALETTES: Record<ColorScheme, Palette> = { light: over(LIGHT, VALLEY.light), dark: over(DARK, VALLEY.dark) };
 
-/**
- * The palette Hevalo's round portrait is drawn in: a head-and-shoulders
- * picture stands on the palette's track, and in the portrait that ground is
- * its own cream, or by night a lit sand his dark antlers show against.
- */
+/** The palette Hevalo's round portrait is drawn in: its ground is the portrait's cream, or a lit sand at night for his dark antlers. */
 export const PORTRAIT_PALETTES: Record<ColorScheme, Palette> = {
   light: { ...VALLEY_PALETTES.light, controlTrack: VALLEY.light.portrait },
   dark: { ...VALLEY_PALETTES.dark, controlTrack: VALLEY.dark.portrait },
 };
 
-/**
- * A tile's colours in the valley, by its state: cream on its sandy edge while
- * it waits, the pomegranate's red round it when chosen, green when right, and
- * a deeper red, never grey, when wrong.
- */
+/** A tile's colours in the valley by state: cream on its sandy edge, ringed red when chosen, green when right, a deeper red (never grey) when wrong. */
 export function valleyTile(v: Valley, state: TileState): TileTone {
   switch (state) {
     case 'picked':
@@ -227,7 +204,7 @@ export function valleyTile(v: Valley, state: TileState): TileTone {
   }
 }
 
-/** Check and Continue in the valley: dark ink, or the verdict's green or red, on a darker edge; flat while there is nothing to press. */
+/** Check and Continue in the valley: dark ink or the verdict's green or red on a darker edge; flat while there is nothing to press. */
 export function valleyButton(v: Valley, tone: TileButtonTone, enabled: boolean): TileTone {
   if (!enabled) return { face: v.off.face, edge: v.off.face, lip: null, ink: v.off.ink };
   const { face, lip, ink } = v.buttons[tone];

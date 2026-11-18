@@ -22,32 +22,16 @@ import { AgreeLine } from '../../legal/links';
 import { useDirection } from '../../reports/direction';
 
 /**
- * A guest making the account their own, one question at a time.
+ * A guest claiming their account: the sign-up steps (RegisterScreen) over the app, posting `claimAccount`, so the
+ * same account and its progress gain an email, password and birth month. The name step starts with the guest's
+ * generated name and sends it only if changed.
  *
- * The sign-up steps (RegisterScreen), over the app, posting through
- * `claimAccount` instead of `register`: the same account, with everything
- * learned on it, gets an email, a password and a birth month. The name comes
- * first, filled in with the one the guest was given, so Continue keeps it
- * with no typing; it is sent only when it changed. Hevalo cheers at the end.
+ * On success the app root swaps in the verify-email gate, which removes this screen; if an account ever comes back
+ * already verified, the effect below closes the flow. Where Apple or Google is offered, the flow opens on that
+ * choice (SocialSignIn), which also claims the guest account (api/src/auth/oauth.ts).
  *
- * On success the screen does nothing of its own. The server answers with the
- * account unverified and a code on its way, and the app's root replaces the
- * whole signed-in tree with the verify-email gate — this screen is gone with
- * it. Should an account ever come back already verified, the effect below
- * closes the flow, so a finished claim never leaves it standing.
- *
- * Where the phone offers Apple or Google, the flow opens on the choice the
- * sign-in screen gives (SocialSignIn): either one makes this same account
- * the guest's, keeping what was learned (the server claims the guest on a
- * provider sign-in, api/src/auth/oauth.ts), and Continue with email goes on
- * to the questions below. The birth month a provider does not give is asked
- * for afterwards, as after any sign-up through one.
- *
- * Refusals are the sign-up's: an address that may already have an account
- * gets the calm notice with Sign in and Reset password; a leaked password is
- * said on the password step; under 13 the account cannot be claimed, and
- * since a guest that age may not keep learning on it either, the session
- * ends and the explanation takes the screen, as a refused sign-up's does.
+ * Refusals match sign-up's. Under 13 the account cannot be claimed and the guest cannot keep using it either, so
+ * the session ends and the explanation takes over.
  */
 export function ClaimAccountScreen({
   onExit,
@@ -56,9 +40,9 @@ export function ClaimAccountScreen({
   presented = false,
 }: {
   onExit: () => void;
-  /** opened over the app (✕ on the first step) rather than pushed within a flow */
+  /** Opened over the app (✕ on the first step) rather than pushed within a flow. */
   presented?: boolean;
-  /** "I already have an account": the sign-in flow, which replaces the guest session */
+  /** "I already have an account": the sign-in flow, which replaces the guest session. */
   onSignIn: (email?: string) => void;
   onForgotPassword: (email: string) => void;
 }): React.JSX.Element {
@@ -69,19 +53,19 @@ export function ClaimAccountScreen({
   const [username, setUsername] = useState(user?.username ?? '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // unchosen until the ruler is moved, as on the sign-up: an age set for them would be the answer of whoever only taps on
+  // Unset until the ruler moves, so an age is never chosen for someone who only taps on.
   const [age, setAge] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [mayHaveAccount, setMayHaveAccount] = useState(false);
-  // Apple's button where the phone has it, and both sheets with their answers, as on the sign-in screen
+  // Apple's button where available, and both sign-in sheets, as on the sign-in screen.
   const { appleAvailable, onApple, onGoogle } = useSocialSignIn();
-  // every iOS the app runs on has Sign in with Apple, so the choice is known before Apple's own answer arrives
+  // Every iOS version the app supports has Sign in with Apple, so this is known before Apple answers.
   const offersProvider = Platform.OS === 'ios' || isGoogleConfigured;
   const haveAccount = <LinkText label={t('welcome.haveAccount')} onPress={() => onSignIn()} />;
 
-  // a claim that came back already verified, or an account signed in to meanwhile: the flow has nothing left to do
+  // Claimed and already verified, or signed in to another account meanwhile.
   const claimed = user !== null && user.guest !== true;
-  // once: the route hands a fresh `onExit` on every render, and closing is not a thing to do twice
+  // The route passes a new `onExit` on every render, and it must close only once.
   const closed = useRef(false);
   useEffect(() => {
     if (!claimed || closed.current) return;
@@ -89,7 +73,7 @@ export function ClaimAccountScreen({
     onExit();
   }, [claimed, onExit]);
 
-  // the name as the rule writes it (lowercase, trimmed): the step went on only once it passed
+  // The name normalised by the rule (lowercase, trimmed); the step only continues once it passes.
   const named = checkUsername(username);
   const chosenName = named.ok ? named.value : username.trim();
 
@@ -97,7 +81,7 @@ export function ClaimAccountScreen({
     key: 'method',
     question: t('guide.claim.method.question'),
     says: t('guide.claim.method.says'),
-    // the flow's own button goes on with the email questions; the provider buttons sign in as they are pressed
+    // The flow's own button continues with email; the provider buttons sign in directly.
     action: t('welcome.email'),
     render: () => (
       <View style={styles.methods}>
@@ -128,7 +112,7 @@ export function ClaimAccountScreen({
           testID="username"
         />
       ),
-      // the way to an account they already have sits on the first step, whichever that is
+      // The way to an existing account sits on the first step, whichever that is.
       footer: offersProvider ? undefined : haveAccount,
     },
     {
@@ -211,7 +195,7 @@ export function ClaimAccountScreen({
           ]}
         />
       ),
-      // the rules and the privacy policy, each a link: the guest agreed as a guest, and agrees again as the account's owner
+      // Terms and privacy links: agreed as a guest, and again as the account's owner.
       footer: <AgreeLine style={styles.terms} />,
       commit: async () => {
         if (age === null) return { ok: false, error: t('guide.register.age.required'), at: 'age' };
@@ -219,7 +203,7 @@ export function ClaimAccountScreen({
         setMayHaveAccount(false);
         const error = await claimAccount({
           email: cleanEmail(email),
-          // the generated name kept is not a change to send
+          // Keeping the generated name is not a change to send.
           ...(chosenName !== user?.username ? { username: chosenName } : {}),
           password,
           locale,
@@ -248,7 +232,7 @@ export function ClaimAccountScreen({
   const notice = mayHaveAccount ? (
     <View style={[styles.notice, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite" testID="claim-may-have-account">
       <Text style={[styles.noticeText, dir.text, { color: colors.textPrimary }]}>{t('error.code.registrationFailed')}</Text>
-      {/* the two ways on, the first of them on the side the language starts from */}
+      {/* The two ways on, the first on the side the language starts from. */}
       <View style={[styles.noticeActions, { flexDirection: dir.row }]}>
         <ClayButton label={t('auth.login.submit')} tone="primary" onPress={() => onSignIn(cleanEmail(email))} style={styles.noticeAction} />
         <ClayButton label={t('auth.reset.title')} variant="outline" tone="primary" onPress={() => onForgotPassword(cleanEmail(email))} style={styles.noticeAction} />
@@ -261,7 +245,7 @@ export function ClaimAccountScreen({
 
 const styles = StyleSheet.create({
   methods: { gap: spacing.md },
-  // the sign-up notice's calm panel (RegisterScreen.tsx): a pause, not a mistake
+  // The sign-up notice's calm panel (RegisterScreen.tsx).
   notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
   noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },
   noticeActions: { flexWrap: 'wrap', gap: spacing.sm },

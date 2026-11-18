@@ -63,31 +63,20 @@ function attemptKey(sku: string): string {
 }
 
 /**
- * The screen's side margin, which the edge-to-edge chip rows inset their first
- * chip by: the app's own gutter, so the list lines up with the close button
- * and the purse above it (it was 24, eight in from the bar's edges, and took
- * those sixteen points from every name at 320).
+ * The screen's side margin, which the edge-to-edge chip rows inset their first chip by: the app's gutter, so the list
+ * lines up with the close button and the purse above it.
  */
 const GUTTER = layout.gutter;
 
 /**
- * The shop, sorted by kind (KUR-070).
+ * The shop, sorted by kind: every item under its kind (Backgrounds, Icons, Frames, Tags, and "More" for an admin's own
+ * categories) in the browser's order, each with a count and picture. Above the list, a search over names and meanings
+ * ("cay" and "tea" both find Çay), one kind at a time, an order and "Within my Zêr"; received gifts sit above the
+ * catalogue, and the search and kinds stick at the top once scrolled past. Over the search, rows for your pen pal bird
+ * and your tree (YourBird, YourTree), read with the catalogue.
  *
- * Every item sits under its kind — Backgrounds, Icons, Frames, Tags, and "More" for
- * anything an admin files under a category of their own — in the order the
- * browser shows them, each with a count and its picture. Above the list, a
- * search over names and meanings ("cay" finds Çay, "tea" finds it
- * too), one kind at a time, an order, and "Within my Zêr". What arrived for you
- * (gifts) stays above the catalogue; the search and the kinds stay at the top
- * of the screen once you scroll past it.
- *
- * Every purchase is final, and the item's sheet says so beside Buy; the dear
- * ones, and anything bought with gems, ask once more, saying it again.
- *
- * Over the search, what of yours the Shop can change: your pen pal bird and
- * your tree (YourBird, YourTree), a row each that opens every choice there
- * is. They are read with the catalogue, and the purse at the top follows
- * whatever is spent on either.
+ * Every purchase is final and the item's sheet says so beside Buy; dear items and anything bought with gems ask once
+ * more.
  */
 export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnMore: () => void }) {
   const { client } = useAuth();
@@ -95,7 +84,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const { t, locale } = useI18n();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
-  // whether the purse has been read: until it has, the bird and the tree go by the Zêr their own reads say
+  // Whether the purse has been read: until it has, the bird and the tree go by the Zêr their own reads report.
   const [purseRead, setPurseRead] = useState(false);
   const letters = useLettersHome();
   const tree = useShopTree();
@@ -103,16 +92,15 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const [error, setError] = useState<ApiError | null>(null);
   const [selected, setSelected] = useState<ShopItem | null>(null);
   const [busy, setBusy] = useState(false);
-  // the item just bought, while its sheet is still up saying so
+  // The item just bought, while its sheet is still up saying so.
   const [bought, setBought] = useState<string | null>(null);
   const [gifting, setGifting] = useState<ShopItem | null>(null);
-  // a gift from the shop goes into your chat with that friend: fly it there, then say where it is
+  // A gift from the shop goes into your chat with that friend: fly it there, then say where it is.
   const [sentGift, setSentGift] = useState<{ item: ShopItem; to: { userId: string; username: string; name: string }; flying: boolean } | null>(null);
   const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
   const [affordableOnly, setAffordableOnly] = useState(false);
-  // the search and the kinds are pinned once what arrived for you has scrolled
-  // away; pinned, they (and the bar above) take a fill and a hairline, as a
-  // navigation bar does when content runs under it
+  // The search and the kinds are pinned once the received gifts have scrolled away; pinned, they (and the bar above)
+  // take a fill and a hairline, as a navigation bar does over scrolled content.
   const [inboxHeight, setInboxHeight] = useState(0);
   const [stuck, setStuck] = useState(false);
   const scroller = useRef<ScrollView>(null);
@@ -131,7 +119,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         setBalances(wallet.data.balances);
         setPurseRead(true);
       }
-      setError(cat.ok ? null : cat.error); // the catalog is the screen's core data
+      setError(cat.ok ? null : cat.error); // The catalogue is the screen's core data.
       setLoading(false);
     });
   }, [client, letters.reload, tree.reload]);
@@ -144,7 +132,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       void load();
     }, [load]),
   );
-  // pulled down, the catalogue and the purse are read again
+  // Pulled down, the catalogue and the purse are read again.
   const pull = usePullRefresh(load);
 
   const buy = useCallback(
@@ -157,20 +145,20 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       });
       setBusy(false);
       if (res.ok) {
-        // it is yours: felt as it lands, as a failure to buy it is
+        // It is yours: felt as it lands, as a failed purchase is.
         haptic('tap');
-        // said in the sheet it was bought from, where its picture pops and the purse counts down to what is left
-        // (a system box saying "Purchased" over the shop was a second thing to dismiss, with nothing in it to see)
+        // Said in the sheet it was bought from, where its picture pops and the purse counts down; a system alert would
+        // be a second thing to dismiss.
         setBought(item.sku);
         if (typeof res.data.balance === 'number') setBalances((b) => ({ ...b, [item.currency]: res.data.balance }));
         void load();
       } else if (res.error.code === 'PRICE_CHANGED') {
         setSelected(null);
-        void load(); // pull fresh prices
+        void load(); // Pull fresh prices.
         Alert.alert(t('shop.priceChanged'), t('shop.priceChangedBody'));
       } else if (!isMaintenance(res.error)) {
-        // the purchase did not happen and nothing else will make it: felt as an error
-        // (Hevalo offline for a while is said by the screen over the app instead)
+        // The purchase did not happen and nothing else will make it: felt as an error. Hevalo being offline is shown by
+        // the screen over the app instead.
         haptic('error');
         Alert.alert(t('shop.purchaseFailed'), describeError(res.error, t));
       }
@@ -202,12 +190,12 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     [buy, t, locale],
   );
 
-  // the kinds on offer — fixed by the catalogue, not by what is typed, so a
-  // chip never vanishes from under a finger; a kind with no matches says 0
+  // The kinds on offer come from the catalogue, not the search, so a chip never vanishes from under a finger; a kind
+  // with no matches says 0.
   const kinds = useMemo(() => categoriesIn(items), [items]);
-  // a kind that has gone (the one tag, bought) falls back to all of them
+  // A kind that has gone (the one tag, bought) falls back to all of them.
   const category: ItemCategory | 'all' = filter.category === 'all' || kinds.includes(filter.category) ? filter.category : 'all';
-  // what each currency covers: a gem item against the gems, never against the Zêr
+  // What each currency covers: a gem item against the gems, never the Zêr.
   const keep = useCallback((item: ShopItem) => !affordableOnly || canAfford(item, balances), [affordableOnly, balances]);
   const counts = useMemo(() => countByCategory(applyItemFilter(items, { ...filter, category: 'all' }, keep)), [items, filter, keep]);
   const shown = useMemo(() => applyItemFilter(items, { ...filter, category }, keep, locale), [items, filter, category, keep, locale]);
@@ -217,8 +205,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     setFilter(DEFAULT_ITEM_FILTER);
     setAffordableOnly(false);
   }, []);
-  // a new filter shows its results from the top, under the pinned search,
-  // rather than wherever the old, longer list had been scrolled to
+  // A new filter shows its results from the top, under the pinned search, not at the old list's scroll position.
   const filterKey = JSON.stringify([filter, affordableOnly]);
   const lastFilterKey = useRef(filterKey);
   useEffect(() => {
@@ -227,7 +214,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     if (scrollY.current > inboxHeight) scroller.current?.scrollTo({ y: inboxHeight, animated: false });
   }, [filterKey, inboxHeight]);
 
-  // "Within my Zêr" while everything is priced in Zêr; "my balance" once gems are on sale too
+  // "Within my Zêr" while everything is priced in Zêr; "my balance" once gems are on sale too.
   const withinLabel = items.some((i) => i.currency === 'gems') ? t('shop.filter.withinBalance') : t('shop.filter.withinZer');
 
   const kindOptions = useMemo(
@@ -272,13 +259,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         />
 
         <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load} skeleton={<ShopSkeleton />}>
-          {/*
-            One scroll, three parts, and the second sticks: what arrived for
-            you, then the search and the kinds (which stay at the top once the
-            first has scrolled away), then the catalogue. Both of the first two
-            are always there, empty or not — the sticky index counts children,
-            and a missing one would pin the wrong thing.
-          */}
+          {/* One scroll in three parts, the second sticky: received gifts, then the search and kinds, then the
+             catalogue. The first two are always rendered, empty or not, since the sticky index counts children. */}
           <ScrollView
             ref={scroller}
             stickyHeaderIndices={[1]}
@@ -335,7 +317,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                   <ToggleChip label={withinLabel} value={affordableOnly} onChange={setAffordableOnly} />
                 </OptionRow>
                 <View style={styles.gutter}>
-                  {/* with nothing to show, the empty state below carries the one Clear filters */}
+                  {/* With nothing to show, the empty state below carries the one Clear filters. */}
                   <ResultsLine count={shown.length} onClear={filtered && shown.length > 0 ? clear : undefined} />
                 </View>
 
@@ -362,7 +344,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           </ScrollView>
         </AsyncBoundary>
 
-        {/* no title in the header: the item's own name heads the sheet, under its picture */}
+        {/* No title in the header: the item's own name heads the sheet, under its picture. */}
         <BottomSheet visible={selected !== null} onClose={closeItem}>
           {selected ? (
             <ItemDetail
@@ -388,7 +370,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             onSent={(balance, to) => {
               const item = gifting;
               setGifting(null);
-              // the balance that moved is the item's currency, which is not always Zêr
+              // The balance that moved is the item's currency, which is not always Zêr.
               setBalances((b) => ({ ...b, [item.currency]: balance }));
               setSentGift({ item, to, flying: true });
             }}
@@ -397,8 +379,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
 
         {sentGift?.flying ? (
           <GiftSendAnimation
-            // the shop's list does not say which items are limited, so a Newroz
-            // item flies as a rare one here; the recipient's unwrap has its real tier
+            // The shop's list does not say which items are limited, so a gift flies as a rare one here; the recipient's
+            // unwrap shows its real tier.
             tier={giftTierFor({ currency: sentGift.item.currency, price: sentGift.item.price, limited: false })}
             announce={t('gift.sent', { name: sentGift.to.name })}
             onDone={() => setSentGift((g) => (g ? { ...g, flying: false } : g))}
@@ -420,17 +402,13 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   );
 }
 
-/**
- * The shop while it loads, laid out by its own styles: the search, the kinds,
- * the order and the filter, the count, and two kinds of rows — a background's
- * wide picture and an icon's square one — so the catalogue lands in place.
- */
+/** The shop while it loads, laid out by its own styles, with both a background's wide row and an icon's square one. */
 function ShopSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const { height } = useWindowDimensions();
-  // rows enough to reach the foot of the screen, shared between the two kinds shown
+  // Rows enough to reach the foot of the screen, shared between the two kinds shown.
   const perKind = Math.max(3, Math.ceil((height - 300) / (64 + spacing.sm) / 2));
   const chips = (widths: number[]) => (
     <View style={[styles.skeletonChips, { flexDirection: dir.row }]}>
@@ -486,10 +464,8 @@ function priceWords(item: ShopItem, t: (key: 'shop.free' | 'gift.picker.gems') =
 }
 
 /**
- * A number in the purse, moving to its new value when it changes: bought
- * something, and the Zêr are seen to go down to what is left (straight there
- * under Reduce Motion). Grouped and in the reader's own digits, as every
- * number in the app is.
+ * A number in the purse, moving to its new value when it changes (straight there under Reduce Motion), grouped and in
+ * the reader's own digits.
  */
 function Counted({ value, style }: { value: number; style: StyleProp<TextStyle> }): React.JSX.Element {
   const { locale } = useI18n();
@@ -517,7 +493,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
       accessibilityLabel={[item.name, item.description, priceWords(item, t, locale)].filter(Boolean).join(', ')}
       style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
     >
-      {/* one column wide enough for a background, so every name starts at the same place */}
+      {/* One column wide enough for a background, so every name starts at the same place. */}
       <View style={styles.thumb}>
         {itemCategory(item.category) === 'frame' && item.assetUrl ? (
           <FrameArt path={item.assetUrl} width={FRAME_THUMB} />
@@ -526,18 +502,9 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
         )}
       </View>
       <View style={styles.rowMain}>
-        {/*
-          The names are Kurmancî and the meanings English whatever the app is
-          in, so they read in their own direction (`free`), lined up with the
-          screen.
-
-          No Premium crown: Premium cannot be had in the app, and a mark for
-          something nobody can get is an advert for nothing.
-
-          A name or a meaning too long for its line takes a second one: at 320
-          points one line had left "Ronahiy…" and "Kilîma K…", the very words
-          the row is there to show.
-        */}
+        {/* The names are Kurmancî and the meanings English whatever the app language, so they read in their own
+           direction (`free`). No Premium crown, since Premium cannot be had in the app. A long name or meaning takes
+           a second line rather than being cut. */}
         <View style={[styles.nameRow, { flexDirection: dir.row }]}>
           <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
             {item.name}
@@ -551,7 +518,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
       </View>
       <View style={[styles.priceRow, { flexDirection: dir.row }]}>
         {item.price === 0 ? (
-          // a price like any other: green is kept for a right answer
+          // A price like any other: green is for a right answer.
           <Text style={[styles.price, { color: colors.textPrimary }]}>{t('shop.free')}</Text>
         ) : (
           <>
@@ -565,12 +532,9 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
 }
 
 /**
- * One item, in its sheet: what it is, what it costs, and Buy.
- *
- * Bought, the sheet stays and says so itself: the picture pops, as anything
- * just earned does, "… is yours!" takes the price's place, and the purse
- * counts down to what is left, with one button to close. Still under Reduce
- * Motion, where the words and the new number say it.
+ * One item in its sheet: what it is, what it costs, and Buy. Once bought, the sheet stays and says so: the picture
+ * pops, "… is yours!" replaces the price, and the purse counts down, with one button to close (still under Reduce
+ * Motion).
  */
 function ItemDetail({
   item,
@@ -585,7 +549,7 @@ function ItemDetail({
   item: ShopItem;
   balances: Balances;
   busy: boolean;
-  /** just bought, from this sheet */
+  /** Just bought, from this sheet. */
   bought: boolean;
   onDone: () => void;
   onBuy: (item: ShopItem) => void;
@@ -598,7 +562,7 @@ function ItemDetail({
   const { width } = useWindowDimensions();
   const affordable = canAfford(item, balances);
   const wide = itemCategory(item.category) === 'background';
-  // a background as wide as the sheet allows (it is what you would be buying); a square item at a fixed size
+  // A background as wide as the sheet allows; a square item at a fixed size.
   const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - layout.gutter * 2, 400) : 128;
   return (
     <View style={styles.detail}>
@@ -619,13 +583,13 @@ function ItemDetail({
 
       {bought ? (
         <>
-          {/* yours now: ticked in the violet of what is yours and chosen, not the green of a right answer */}
+          {/* Yours now: ticked in the violet of what is yours and chosen, not the green of a right answer. */}
           <View style={[styles.yours, { flexDirection: dir.row }]} accessibilityLiveRegion="polite" testID="shop-bought">
             <Icon name="check" size={20} color={colors.primary} />
             <Text style={[styles.yoursText, { color: colors.textPrimary }]}>{t('shop.itemIsYours', { name: item.name })}</Text>
           </View>
           {item.price > 0 ? (
-            // what is left in the purse, counting down from what was there
+            // What is left in the purse, counting down from what was there.
             <View style={[styles.left, { flexDirection: dir.row }]}>
               <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={18} color={item.currency === 'zer' ? colors.gold : colors.primary} />
               <Counted value={balances[item.currency]} style={[styles.leftText, { color: colors.textPrimary }]} />
@@ -643,14 +607,10 @@ function ItemDetail({
             onPress={() => onBuy(item)}
             style={styles.stretch}
           />
-          {/* said where the money is spent: nothing bought can be handed back */}
+          {/* Said where the money is spent: nothing bought can be handed back. */}
           {item.price > 0 ? <Text style={[styles.finalNote, { color: colors.textSecondary }]}>{t('shop.finalNote')}</Text> : null}
-          {/*
-           * Buying it for somebody else costs the same and lands the same, so
-           * it sits beside Buy rather than behind a menu — quieter, because
-           * most people are buying for themselves. Not for something free: a
-           * gift is something paid for, and the server refuses a free one.
-           */}
+          {/* Buying it for somebody else costs the same, so it sits beside Buy (quieter, since most people buy for
+             themselves). Not for a free item: the server refuses a free gift. */}
           {canGift(item) ? (
             <PressableScale
               style={[styles.gift, { backgroundColor: colors.controlTrack }]}
@@ -678,7 +638,7 @@ function ItemDetail({
   );
 }
 
-/** A background's thumbnail (16:9) and an icon's (square) — the column is the wider of the two. */
+/** A background's thumbnail (16:9) and an icon's (square); the column is the wider of the two. */
 const THUMB = 72;
 const ICON_THUMB = 52;
 /** A frame is shown round a face, which needs more room than an icon: as wide as its column allows. */
@@ -686,7 +646,7 @@ const FRAME_THUMB = 68;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // bought: the words, and what is left in the purse under them
+  // Bought: the words, and what is left in the purse under them.
   yours: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm },
   yoursText: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
   left: { alignItems: 'center', justifyContent: 'center', gap: spacing.xs, marginBottom: spacing.sm },
@@ -695,11 +655,11 @@ const styles = StyleSheet.create({
   balanceChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   content: { paddingBottom: spacing.xxl },
-  // on a tablet the list is a column in the middle, as the Season screen's is, not a band across the screen
+  // On a tablet the list is a centred column, as the Season screen's is.
   column: { width: '100%', maxWidth: 680, alignSelf: 'center' },
   gutter: { marginHorizontal: GUTTER },
   inbox: { paddingHorizontal: GUTTER },
-  // your bird and your tree, under what arrived for you and over the search
+  // Your bird and your tree, under the received gifts and over the search.
   ownRows: { gap: spacing.sm, paddingTop: spacing.sm, paddingBottom: spacing.xs },
   toolbar: { paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'transparent' },
   toolbarInner: { gap: spacing.sm },

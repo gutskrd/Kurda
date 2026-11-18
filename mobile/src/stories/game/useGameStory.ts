@@ -4,10 +4,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { getGameStory } from '../api';
 
 /**
- * The text a game is played on — the game's own copy, which stays the same
- * whatever happens to the story meanwhile (an editor pulling it to fix a typo
- * must not take it away mid-game). Fetched once the game has left its lobby,
- * where the host can still pick another story.
+ * The game's own copy of its text, which stays fixed even if the story is edited mid-game. Fetched once the game
+ * has left its lobby, where the host can still pick another story.
  */
 export function useGameStory(gameId: string, enabled: boolean): StoryDetail | null {
   const { client } = useAuth();

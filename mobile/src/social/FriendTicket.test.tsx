@@ -50,7 +50,7 @@ function ticket(onAccept = vi.fn(), onDecline = vi.fn()) {
 describe('a friend request in the Friends list', () => {
   it('answers a finger a little above or below Accept, which is drawn under a fingertip', () => {
     ticket();
-    // 36 drawn, so 6 each way up and down to 48; nothing across, where its width is the words'
+    // Drawn 36pt, so 6pt each way up and down to 48pt; nothing across, where its width is the words'.
     expect(slop('Accept roj')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
     expect(slop('Decline roj')).toEqual({ top: 2, bottom: 2, left: 2, right: 2 });
   });

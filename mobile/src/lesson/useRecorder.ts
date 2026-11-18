@@ -3,18 +3,12 @@ import { AppState } from 'react-native';
 import { MAX_TAKE_MS, type MicPermission, type RecorderState, type Take } from './recording';
 
 /**
- * Mic recording for speaking exercises (KUR-036) in a browser (Expo web):
- * MediaRecorder + getUserMedia. Where they are absent, `supported` is false
- * and the exercise offers only the skip. A phone records through expo-audio
- * instead (useRecorder.native.ts, which Metro picks there); the exercise sees
- * the same `RecorderState` from both.
- *
- * The take stays in memory, played back from a blob URL that is let go when
- * the take is.
+ * Speaking-exercise recording in a browser (Expo web) via MediaRecorder and getUserMedia; without them `supported`
+ * is false and the exercise offers only the skip. Phones use useRecorder.native.ts, with the same `RecorderState`.
+ * The take stays in memory, played from a blob URL released with it.
  */
 
-// DOM types exist in the tsconfig lib; these globals are simply absent where
-// there is no browser, which the `supported` guard handles.
+// The DOM types are in the tsconfig lib, but the globals are absent outside a browser, which `supported` handles.
 function webApis() {
   const g = globalThis as typeof globalThis & {
     MediaRecorder?: typeof MediaRecorder;
@@ -27,7 +21,7 @@ function webApis() {
 type BlobUrls = { createObjectURL?: (b: Blob) => string; revokeObjectURL?: (url: string) => void };
 const blobUrls = (): BlobUrls | undefined => (globalThis as { URL?: BlobUrls }).URL;
 
-/** A take as something to play back: a blob URL where the platform has them, nothing to play where it has not. */
+/** A take's playback URL: a blob URL where the platform supports them, else nothing to play. */
 function blobUrl(blob: Blob): string {
   const urls = blobUrls();
   return typeof urls?.createObjectURL === 'function' ? urls.createObjectURL(blob) : '';
@@ -50,7 +44,7 @@ export function useRecorder(): RecorderState {
   const startedAtRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const capRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // the blob URL of the take on screen, let go when the take is
+  // The blob URL of the take on screen, released with the take.
   const shownRef = useRef<string | null>(null);
   const live = useRef(true);
 
@@ -85,7 +79,7 @@ export function useRecorder(): RecorderState {
     };
   }, [cleanup]);
 
-  // leaving the tab ends the take, as leaving the app does on a phone
+  // Leaving the tab ends the take, as leaving the app does on a phone.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
       if (next !== 'active') stop();
@@ -96,7 +90,7 @@ export function useRecorder(): RecorderState {
   const start = useCallback(async () => {
     if (!Recorder || !getUserMedia || recRef.current) return;
     setFailed(null);
-    // a new take replaces the last one, whatever becomes of it
+    // A new take replaces the last one, whatever becomes of it.
     show(null);
     setBusy(true);
     let stream: MediaStream;

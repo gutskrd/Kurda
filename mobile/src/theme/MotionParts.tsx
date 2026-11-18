@@ -9,21 +9,15 @@ import { Icon } from './Icon';
 import { radii, spacing } from './tokens';
 
 /**
- * The shared moving parts: a row rising into a list, a card that gives under
- * a finger, a check drawn in, a menu arriving, an answer popping or shaking,
- * a heart filling with a tiny burst. Each one honours Reduce Motion by itself
- * (see animate.ts), and moves only transform and opacity. A bottom sheet's
- * arrival is BottomSheet's own.
- *
- * Not `Motion.tsx`: beside `motion.ts` (the tokens) that name differs only in
- * case, which a case-insensitive disk — a Mac's, by default — cannot tell apart.
+ * Shared moving parts: list rows rising in, pressable cards, a drawn check, menus arriving, answers popping or
+ * shaking, and a liked heart's burst. Each honours Reduce Motion itself (animate.ts) and moves only transform and
+ * opacity; a bottom sheet's arrival is BottomSheet's own. Not named `Motion.tsx`, which a case-insensitive disk
+ * could not tell from `motion.ts`.
  */
 
 /**
- * One row of a list that has just arrived: it fades in and rises 8 points,
- * a beat after the row above it. `delay` comes from `useListEntrance`; null
- * means "just be there", which is every row after the first screenful and
- * every row on a later visit.
+ * One row of a newly arrived list, fading in and rising 8 points a beat after the row above. `delay` comes from
+ * `useListEntrance`; null means simply appear.
  */
 export function Rise({ delay, children, style }: { delay: number | null; children: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const p = useEnter(delay !== null, delay ?? 0, duration.slow);
@@ -34,14 +28,9 @@ export function Rise({ delay, children, style }: { delay: number | null; childre
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * A card or a tile that can be pressed: it gives a little under the finger
- * (to 0.97) and springs back. Everything else — the press, the role, the
- * label, the style and its layout — is exactly a Pressable's, so a card can
- * swap one for the other. Under Reduce Motion it does not move, and dims a
- * little while held instead.
- *
- * As it is pressed it says where it is (`usePressOrigin`), so a page it
- * opens can grow out of it.
+ * A pressable card or tile that shrinks slightly (to 0.97) under the finger and springs back; otherwise exactly a
+ * Pressable, so either can replace the other. Under Reduce Motion it dims while held instead. On press it records
+ * its position (`usePressOrigin`), so a page it opens can grow out of it.
  */
 export function PressableScale({
   style,
@@ -57,7 +46,7 @@ export function PressableScale({
   const press = usePressScale(!disabled);
   const [held, setHeld] = useState(false);
   const origin = usePressOrigin();
-  // one view, two holders: the caller's ref if it gave one, and the one a page grows from
+  // One view, two refs: the caller's if given, and the one a page grows from.
   const hold = (node: View | null): void => {
     origin.ref.current = node;
     if (typeof ref === 'function') ref(node);
@@ -87,26 +76,20 @@ export function PressableScale({
 }
 
 /**
- * A list row held down, as iOS highlights one, for a row drawn with no side
- * padding of its own: a fill in `color` that reaches a little past the row's
- * edges, rounded, with the row's content exactly where it was. For a
- * Pressable's style: `({ pressed }) => [styles.row, pressed && heldRow(colors.controlTrack)]`.
+ * A held list row, highlighted as iOS does, for rows drawn without side padding: a rounded fill in `color` reaching
+ * slightly past the edges, content unmoved. For a Pressable style:
+ * `({ pressed }) => [styles.row, pressed && heldRow(colors.controlTrack)]`.
  */
 export function heldRow(color: string): ViewStyle {
   return { backgroundColor: color, marginHorizontal: -spacing.sm, paddingHorizontal: spacing.sm, borderRadius: radii.sm };
 }
 
-/**
- * A text link or an icon button held down: it fades to the one dim they all
- * share (`pressedDim`). For a Pressable's style:
- * `({ pressed }) => [styles.link, pressed && heldDim]`.
- */
+/** A held text link or icon button, faded to the shared `pressedDim`. For a Pressable style: `({ pressed }) => [styles.link, pressed && heldDim]`. */
 export const heldDim: ViewStyle = { opacity: pressedDim };
 
 /**
- * A check mark that draws in, left to right, as an answer is accepted — a
- * window over the glyph that opens, both halves on the native driver. Under
- * Reduce Motion it is simply there.
+ * A check mark that draws in left to right as an answer is accepted, via a window opening over the glyph on the native
+ * driver. Under Reduce Motion it is simply there.
  */
 export function DrawnCheck({ size, color, delayMs = 60 }: { size: number; color: string; delayMs?: number }): React.JSX.Element {
   const reduce = useReducedMotion();
@@ -120,7 +103,7 @@ export function DrawnCheck({ size, color, delayMs = 60 }: { size: number; color:
     run.start();
     return () => run.stop();
   }, [p, reduce, delayMs]);
-  // the window slides in from the left while the glyph inside it slides the other way, so the glyph stays put
+  // The window slides in from the left while the glyph inside slides the other way, so the glyph stays put.
   const open = p.interpolate({ inputRange: [0, 1], outputRange: [-size, 0] });
   const hold = p.interpolate({ inputRange: [0, 1], outputRange: [size, 0] });
   return (
@@ -135,12 +118,9 @@ export function DrawnCheck({ size, color, delayMs = 60 }: { size: number; color:
 }
 
 /**
- * A menu, a small dialog or a banner's arrival: it grows from just under full
- * size and fades in, on the interface's own spring (there within 300 ms). A
- * fade alone under Reduce Motion.
- *
- * It is the view it stands in for, so it takes what that view was told about
- * itself (a role, a live region) along with its style.
+ * A menu, small dialog or banner arriving: it grows from just under full size and fades in on the interface spring
+ * (within 300 ms); only fades under Reduce Motion. It replaces the view it wraps, so it takes that view's props (a
+ * role, a live region) along with its style.
  */
 export function MenuIn({
   children,
@@ -164,10 +144,8 @@ export function MenuIn({
 }
 
 /**
- * Something an answer was given with — an option, a field, a set of cards —
- * that answers back once it is graded: a gentle pop when it was right, a short
- * shake when it was not. It plays as the verdict arrives and never again;
- * under Reduce Motion it stays still and the colour says it alone.
+ * Something an answer was given with (an option, a field, a set of cards) that reacts once graded: a gentle pop when
+ * right, a short shake when wrong, played once as the verdict arrives. Under Reduce Motion the colour says it alone.
  */
 export function AnswerMotion({
   verdict,
@@ -176,7 +154,7 @@ export function AnswerMotion({
   style,
 }: {
   verdict: 'right' | 'wrong' | null;
-  /** play for the verdict it is first shown with, too (a verdict that arrives as its own screen) */
+  /** Also plays for the verdict it is first shown with (a verdict arriving as its own screen). */
   onMount?: boolean;
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -193,10 +171,7 @@ export function AnswerMotion({
   return <Animated.View style={[style, { transform: [{ translateX: shake.translateX }, { scale: pop.scale }] }]}>{children}</Animated.View>;
 }
 
-/**
- * A pop, once each time `when` turns true after mounting: a reaction chosen,
- * a pair made. Nothing on the first render and nothing under Reduce Motion.
- */
+/** A pop each time `when` turns true after mounting (a reaction chosen, a pair made); nothing on first render or under Reduce Motion. */
 export function Pop({ when, children, style }: { when: boolean; children: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const pop = usePop();
   const last = useRef(when);
@@ -207,18 +182,16 @@ export function Pop({ when, children, style }: { when: boolean; children: ReactN
   return <Animated.View style={[style, { transform: [{ scale: pop.scale }] }]}>{children}</Animated.View>;
 }
 
-/** Where the six sparks of a like fly to, round the heart. */
+/** Where a like's six sparks fly to, round the heart. */
 const SPARKS = Array.from({ length: 6 }, (_, i) => {
   const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
   return { x: Math.cos(a), y: Math.sin(a) };
 });
 
 /**
- * A heart that pops with a tiny burst when it is liked: the glyph squashes and
- * springs back larger than it was for an instant, and six small sparks in its
- * colour fly a few points out and fade. Played each time `fired` goes up —
- * the press itself, so it answers the finger before the server does. Still
- * under Reduce Motion, where the fill changing colour is the answer.
+ * A heart that pops with a tiny burst when liked: it squashes and springs back briefly larger while six sparks in its
+ * colour fly out and fade. Plays each time `fired` increases, on the press itself, ahead of the server. Under Reduce
+ * Motion the fill colour change is the feedback.
  */
 export function HeartBurst({ fired, color, size, children }: { fired: number; color: string; size: number; children: ReactNode }): React.JSX.Element {
   const reduce = useReducedMotion();

@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the room, as the screen hears it: a test says what arrives
+// The room as the screen hears it: a test says what arrives.
 const room = vi.hoisted(() => ({ emit: (_event: Record<string, unknown>) => undefined as void }));
 vi.mock('../realtime/useRoomEvents', () => ({
   useRoomEvents: (_name: string, handler: (event: Record<string, unknown>) => void) => {
@@ -93,7 +93,7 @@ describe('clearing a group chat', () => {
     await press(shown[0]!.buttons, 'Clear chat for me');
     expect(shown[1]!.title).toBe('Clear this chat for you?');
     expect(shown[1]!.message).toBe('The messages so far disappear from your view only; everyone else still sees them.');
-    // the one that cannot be taken back is in red, and Cancel is there
+    // The irreversible one is in red, and Cancel is there.
     expect(shown[1]!.buttons.map((b) => [b.text, b.style])).toEqual([
       ['Cancel', 'cancel'],
       ['Clear chat for me', 'destructive'],
@@ -142,7 +142,7 @@ describe('clearing a group chat', () => {
     expect(await screen.findByText('azad cleared the chat · just now')).toBeTruthy();
     expect(screen.queryByText('Spas')).toBeNull();
     expect(screen.getByText('Say hello')).toBeTruthy();
-    // and what is said afterwards appears under the line
+    // And what is said afterwards appears under the line.
     act(() => room.emit({ type: 'group_msg', groupId: 'g1', message: message('m3', 'u2', 'azad', 'Dîsa silav', new Date().toISOString()) }));
     expect(await screen.findByText('Dîsa silav')).toBeTruthy();
     expect(screen.getByText('azad cleared the chat · just now')).toBeTruthy();

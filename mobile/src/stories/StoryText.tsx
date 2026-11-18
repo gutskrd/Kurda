@@ -15,75 +15,44 @@ import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextPro
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 
-/** The reader's body size before the text-size control and the system's Dynamic Type. */
+/** The reader's body size before the text-size control and Dynamic Type. */
 export const STORY_BODY_SIZE = 18;
 
-/**
- * The spacing between lines for a body size: generous, for reading — the
- * design's 1.65. The system's text size is not in it: React Native applies
- * that to the line height itself, as it does to the letters.
- */
+/** Line height for a body size: the design's generous 1.65. React Native applies the system text size to it already. */
 export function storyLineHeight(fontSize: number): number {
   return Math.round(fontSize * 1.65);
 }
 
-/**
- * The band behind the sentence being read: the violet's wash, as everything
- * that says "here" is (gold is for what is earned). The words keep their ink
- * on it, at 14:1 in the light and 11:1 in the dark.
- */
-export function readingTint(scheme: HueScheme): string {
+/** The band behind the sentence being read: the violet wash, as for everything that says "here". Text keeps 14:1 by day and 11:1 by night. */
+function readingTint(scheme: HueScheme): string {
   return hueSteps(scheme, 'violet').wash;
 }
 
-export interface TextPoint {
+interface TextPoint {
   paragraph: number;
   sentence: number | null;
 }
 
 /**
- * A story's paragraphs, as the reader and the game's "Story" sheet show them.
+ * A story's paragraphs, as the reader and the game's Story sheet show them, in the display serif with generous
+ * leading. Text follows Dynamic Type on top of the reader's own control; line height is given for the reader's size
+ * only, since React Native scales it by the system factor itself.
  *
- * Set in the display serif — the face the headings use, which renders ê î û
- * ç ş — at the reader's size with generous leading, the way a page of a book
- * is set rather than a page of an app. Body text follows the system text
- * size (Dynamic Type) on top of the reader's own control. React Native
- * scales the line height by the system factor together with the letters
- * (iOS multiplies it, Android reads it in sp), so the spacing is given here
- * for the reader's size only: scaling it again by the system factor spread
- * large text out to twice its spacing.
+ * Glossary words have a dotted violet underline and open their meaning when tapped. Screen readers cannot reach a
+ * word inside a paragraph, which is why the reader also lists them under "Key vocabulary". A paragraph with a
+ * translation gets a small "Translation" toggle.
  *
- * Glossary words carry a dotted violet underline (not bold, which fights the
- * serif), the violet of what can be pressed, and open their meaning when
- * tapped. A word inside a paragraph cannot be reached on its own with
- * VoiceOver or TalkBack, which is why the reader also lists them under "Key
- * vocabulary" — that list is the accessible way to the same meanings, not a
- * duplicate.
+ * A paragraph starting "## " is a legend's chapter heading, set as a heading and never glossed, read aloud or
+ * translated by toggle. Paragraphs before the first heading are the introduction, closed by a short rule.
  *
- * Under a paragraph, when the story has a translation in the reader's
- * language (or in English), a small "Translation" toggle shows that
- * paragraph's translation in secondary ink.
- *
- * A legend is told in sections. A paragraph that starts with "## " is a
- * chapter's heading, set as one — its number, its title in the display face,
- * centred between the paragraphs, the title's translation under it where the
- * story has one — and never as a sentence: it is not glossed, not read
- * aloud, has no Listen and no Translation toggle of its own. The paragraphs
- * before the first heading are the introduction, under a word that says so
- * and closed by a short rule, so the first chapter visibly begins after it.
- *
- * Tapping text never plays sound; a paragraph with recordings has its own
- * Listen button, and the sentence being read sits on the violet's wash —
- * tapping that band plays the sentence again. While a sentence an editor has
- * given a character to is read, that character says it beside its
- * paragraph's Listen; a paragraph with such a sentence keeps the room for it,
- * so nothing moves when it appears.
+ * Tapping text never plays sound: a paragraph with recordings has its own Listen, and tapping the highlighted
+ * sentence replays it. A character speaking a sentence appears beside its paragraph's Listen, whose row keeps room
+ * for it so nothing moves.
  */
 export function StoryText({
   story,
   fontSize = STORY_BODY_SIZE,
   current = null,
-  evidence = null,
   onGloss,
   onReplay,
   listenable,
@@ -99,26 +68,24 @@ export function StoryText({
 }: {
   story: Pick<StoryDetail, 'dialect' | 'paragraphs' | 'glossary'>;
   fontSize?: number;
-  /** the sentence being read aloud */
+  /** The sentence being read aloud. */
   current?: TextPoint | null;
-  /** the passage a reveal points at */
-  evidence?: TextPoint | null;
   onGloss?: (entry: StoryGlossEntry) => void;
-  /** a tap on the sentence being read: say it again */
+  /** A tap on the sentence being read replays it. */
   onReplay?: () => void;
-  /** paragraphs that have recordings */
+  /** Paragraphs with recordings. */
   listenable?: ReadonlySet<number>;
-  /** the paragraph whose Listen is active */
+  /** The paragraph whose Listen is active. */
   listening?: number | null;
   playing?: boolean;
   onListen?: (paragraph: number) => void;
-  /** paragraphs with a sentence a character says */
+  /** Paragraphs with a sentence a character says. */
   voiced?: ReadonlySet<number>;
-  /** the character saying the sentence being read, and the paragraph it is in */
+  /** The character saying the current sentence, and its paragraph. */
   speaker?: { paragraph: number; view: ReactNode } | null;
-  /** the paragraphs' translation, aligned with them, and the language it is in */
+  /** The paragraphs' translation, aligned with them, and its language. */
   translation?: { paragraphs: readonly string[]; lang: string } | null;
-  /** the paragraphs whose translation is open */
+  /** Paragraphs whose translation is open. */
   translated?: ReadonlySet<number>;
   onToggleTranslation?: (paragraph: number) => void;
   onParagraphLayout?: (paragraph: number, y: number) => void;
@@ -130,7 +97,7 @@ export function StoryText({
   const textProps = storyTextProps(story.dialect);
   const tint = readingTint(scheme);
   const translationEnglish = translation?.lang === 'en' && locale !== 'en';
-  // each heading's chapter number, and where the introduction ends (the first heading), when the story has any
+  // Each heading's chapter number, and where the introduction ends (the first heading).
   const chapterOf = new Map<number, number>();
   story.paragraphs.forEach((p, i) => {
     if (storyHeadingTitle(p) !== null) chapterOf.set(i, chapterOf.size + 1);
@@ -151,7 +118,7 @@ export function StoryText({
               style={[styles.chapter, pi > 0 && styles.chapterAfter]}
               testID={`story-chapter-${n}`}
             >
-              {/* where the introduction ends: a quiet line, and the chapter's number in the page's own quiet ink */}
+              {/* The end of the introduction: a quiet rule, and the chapter number in the page's quiet ink. */}
               {pi === firstHeading && firstHeading > 0 ? <View style={[styles.rule, { backgroundColor: colors.textSecondary }]} /> : null}
               <Text style={[sectionLabel, styles.centred, { color: colors.textSecondary }]}>{t('stories.reader.chapterN', { n })}</Text>
               <Text
@@ -173,7 +140,6 @@ export function StoryText({
           );
         }
         const segments = paragraphSegments(paragraph, onGloss ? story.glossary : []);
-        const isEvidence = evidence?.paragraph === pi;
         const active = listening === pi;
         const translatedText = translation?.paragraphs[pi];
         const showTranslation = !!translatedText && !!translated?.has(pi);
@@ -181,7 +147,7 @@ export function StoryText({
           <View
             key={pi}
             onLayout={onParagraphLayout ? (e) => onParagraphLayout(pi, e.nativeEvent.layout.y) : undefined}
-            style={[styles.paragraph, isEvidence && evidence?.sentence === null ? { backgroundColor: colors.successFill } : null]}
+            style={styles.paragraph}
           >
             {pi === 0 && firstHeading > 0 ? (
               <Text style={[sectionLabel, { color: colors.textSecondary }, textStyle]} accessibilityRole="header">
@@ -189,7 +155,7 @@ export function StoryText({
               </Text>
             ) : null}
             {onListen && listenable?.has(pi) ? (
-              // on the side the paragraph starts from, the character (when one says it) after the button
+              // On the paragraph's starting side: the button, then the speaking character.
               <View style={[styles.listenRow, { flexDirection: storyRowDirection(story.dialect) }, voiced?.has(pi) && styles.voicedRow]}>
                 <Pressable
                   onPress={() => onListen(pi)}
@@ -213,15 +179,14 @@ export function StoryText({
             <Text {...textProps} style={[styles.body, { fontSize, lineHeight, color: colors.textPrimary }, textStyle]}>
               {segments.map((seg, si) => {
                 const reading = seg.sentence !== null && current?.paragraph === pi && current.sentence === seg.sentence;
-                const lit = reading || (seg.sentence !== null && isEvidence && evidence?.sentence === seg.sentence);
-                const bg = lit ? { backgroundColor: reading ? tint : colors.successFill } : null;
+                const bg = reading ? { backgroundColor: tint } : null;
                 if (seg.gloss && onGloss) {
                   const entry = seg.gloss;
                   return (
                     <Text
                       key={si}
                       onPress={() => onGloss(entry)}
-                      // a word that opens its meaning is tappable, so its dotted underline is the violet of what can be pressed
+                      // A tappable word's dotted underline is the violet of what can be pressed.
                       style={[styles.gloss, { textDecorationColor: colors.primary, color: colors.textPrimary }, bg]}
                       suppressHighlighting={false}
                     >
@@ -229,7 +194,7 @@ export function StoryText({
                     </Text>
                   );
                 }
-                // the sentence keeps its own words for a screen reader; what a tap on it does is the hint
+                // The sentence keeps its own words for screen readers; the hint says what a tap does.
                 return (
                   <Text
                     key={si}
@@ -274,22 +239,20 @@ export function StoryText({
   );
 }
 
-/** The translation's toggle is a small line under its paragraph, drawn this tall. */
+/** The translation toggle's drawn height. */
 const TRANSLATION_TOGGLE_HEIGHT = 32;
 
 /**
- * The toggle stands alone on its line, so it reaches 8 past its sides and its
- * foot, where the next paragraph is a whole gap away. Above it, though, is the
- * paragraph's last line (or its translation) only the paragraph's gap away,
- * and a word there that opens its meaning cannot take a reach of its own: the
- * toggle takes that gap and no more, so the word keeps its own taps.
+ * The toggle reaches 8 past its sides and foot, where the next paragraph is a whole gap away. Above it the
+ * paragraph's last line is only the paragraph gap away and its glossary words have no reach of their own, so the
+ * toggle takes that gap and no more.
  */
 const TRANSLATION_TOGGLE_REACH = reachSlop(null, TRANSLATION_TOGGLE_HEIGHT, { edge: REACH_OPEN, limit: { top: spacing.xs } });
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
   paragraph: { gap: spacing.xs, borderRadius: radii.sm },
-  // the serif at book weight: the headings' face, without the headings' heaviness
+  // The serif at book weight: the headings' face without their heaviness.
   body: { fontFamily: displayFont, fontWeight: typography.weights.regular },
   listenRow: { alignItems: 'center', gap: spacing.sm },
   voicedRow: { minHeight: CHARACTER_SIZE.row },
@@ -306,9 +269,9 @@ const styles = StyleSheet.create({
   translationRow: { gap: spacing.xs },
   translation: { fontFamily: displayFont, fontStyle: 'italic' },
   chapter: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md },
-  // a chapter starts a little further from what came before it than a paragraph does
+  // A chapter starts a little further from what precedes it than a paragraph does.
   chapterAfter: { marginTop: spacing.md },
-  // the page's quiet ink, softened: about 2:1 on the paper by day and by night, seen without being a mark of its own (the separator's 7% was all but lost)
+  // The page's quiet ink, softened to about 2:1 on the paper in both schemes; the separator colour was too faint.
   rule: { width: 32, height: 2, borderRadius: radii.pill, marginBottom: spacing.lg, opacity: 0.4 },
   chapterTranslation: { fontFamily: displayFont },
   centred: { textAlign: 'center' },

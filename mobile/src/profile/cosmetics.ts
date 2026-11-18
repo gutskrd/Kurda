@@ -22,40 +22,22 @@ export function inventory(client: ApiClient): Promise<ApiResult<{ items: Invento
 }
 
 /**
- * Put something on, or take it off with `null`.
- *
- * The client sends a SKU and nothing else: whether you own it, and whether a
- * premium-only item is yours to wear today, is the server's to decide. A client
- * that decided would be a client that could be argued with.
+ * Put something on, or take it off with `null`. The client sends only a SKU; ownership and whether a premium item may
+ * be worn today are the server's to decide.
  */
 export function equip(client: ApiClient, slot: CosmeticSlot, sku: string | null): Promise<ApiResult<unknown>> {
   return client.put(`/me/cosmetics/${slot}`, { sku });
 }
 
-/**
- * Show or hide the premium icon without giving it up.
- *
- * Separate from equipping because they are different questions: which icon is
- * mine, and do I want it on show today. Turning it off keeps the selection.
- */
+/** Show or hide the premium icon without giving it up; turning it off keeps the selection. */
 export function setIconVisibility(client: ApiClient, enabled: boolean): Promise<ApiResult<unknown>> {
   return client.put('/me/cosmetics/icon/visibility', { enabled });
 }
 
 /**
- * The picture for a default-avatar key, ready to load.
- *
- * GET /cosmetics/avatars answers with keys and nothing else — there is no url
- * on an AvatarEntry and never was. The browser builds the path the same way
- * (web/src/lib/cosmetics.ts) from the same rule; the phone additionally has to
- * make it absolute, because a site-relative path means nothing on a device.
- *
- * The avatar picker had been reading a field that does not exist, so every
- * option in it fell back to a monogram of its own key — a grid of identical
- * coloured circles reading DE.
- *
- * Where an admin has replaced the picture with an uploaded one, it is that
- * one's address (`profilePictureUrl`, below).
+ * The picture for a default-avatar key, ready to load. GET /cosmetics/avatars answers with keys only, so the path is
+ * built from the same rule as the browser's (web/src/lib/cosmetics.ts), made absolute for the device. Where an admin
+ * replaced the picture, it is that one's address (`profilePictureUrl`, below).
  */
 export function avatarAssetUrl(key: string, overrides: ArtOverrides = artOverrides()): string | null {
   return profilePictureUrl(`/cosmetics/avatars/${key}.png`, overrides);
@@ -65,9 +47,8 @@ export function avatarAssetUrl(key: string, overrides: ArtOverrides = artOverrid
 const shippedAvatar = (key: string): string | null => assetUrl(`/cosmetics/avatars/${key}.png`);
 
 /**
- * The default avatar a picture's address is (`/cosmetics/avatars/default-03.png`,
- * as the API sends it for everyone without a photo, or the same file as a
- * whole address on the site), or null for any other picture.
+ * The default avatar a picture's address is (`/cosmetics/avatars/default-03.png` as the API sends it for everyone
+ * without a photo, or the same file as a whole site address), or null for any other picture.
  */
 export function defaultAvatarKey(url: string | null | undefined): string | null {
   const m = /\/cosmetics\/avatars\/(default-\d{2})\.png$/.exec(url ?? '');
@@ -75,10 +56,8 @@ export function defaultAvatarKey(url: string | null | undefined): string | null 
 }
 
 /**
- * A profile picture ready to load. Every address for one goes through here:
- * a default avatar an admin has replaced with an uploaded picture (the
- * `avatar:<key>` slot, art/overrides.ts) is that picture's address; anything
- * else — a photo, a default avatar nobody replaced — is `assetUrl`'s.
+ * A profile picture ready to load. Every one goes through here: a default avatar replaced in the admin (the
+ * `avatar:<key>` slot, art/overrides.ts) is that picture's address; anything else is `assetUrl`'s.
  */
 export function profilePictureUrl(url: string | null | undefined, overrides: ArtOverrides = artOverrides()): string | null {
   const key = defaultAvatarKey(url);

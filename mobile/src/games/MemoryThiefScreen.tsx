@@ -37,23 +37,12 @@ import { useAvailability, useOpenRound } from './learnGames';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * The Memory Thief on the phone.
+ * The Memory Thief on the phone: a page on a desk with a ribbon along its top that runs down while the passage is
+ * studied. Then the words to vanish lift off like wet ink, leaving glowing gaps; the player fills them from a tray of
+ * tiles (choose a gap, then a word) or, at the advanced difficulty, types each with the key bar.
  *
- * The stage is a page on a desk. While the passage is studied a ribbon along
- * the page's top edge runs down with the time; then the thief comes: the
- * words that will vanish lift off the paper like wet ink, one after another,
- * and soft glowing gaps are left where they stood. The player gives them back
- * from a tray of tiles (a gap is chosen, then a word; a filled gap empties when
- * tapped) or, at the advanced difficulty, types each one with the key bar,
- * choosing the gap from the numbered chips above the field.
- *
- * A wrong first try empties the wrong gaps, which glow again, and keeps the
- * right ones. Once a passage is done the words settle back into the page, and
- * the reveal lists each with what it means and anything given wrongly.
- *
- * The passage is laid out a word at a time, so each word can move on its
- * own; Soranî lines run from the right. Under Reduce Motion nothing lifts,
- * glows or runs: the words are simply gone and the gaps plain. The website's
+ * A wrong first try empties the wrong gaps and keeps the right ones. The passage is laid out a word at a time so each
+ * can move on its own; Soranî lines run from the right. Under Reduce Motion nothing lifts, glows or runs. The website's
  * games/MemoryThief.tsx stages the same round.
  */
 
@@ -75,9 +64,8 @@ const WHY_KEY: Record<MemoryWhy, TranslationKey> = {
 export type MemoryToken = { word: string } | { gap: number; word: string; before: string; after: string };
 
 /**
- * A study line's pieces as word-sized boxes: text cut at its spaces, and the
- * punctuation that touches a gap (an opening quote, a closing comma) kept on
- * the gap's box so a line never breaks between them (pure, for the tests).
+ * A study line's pieces as word-sized boxes: text cut at its spaces, with punctuation touching a gap kept on the gap's
+ * box so a line never breaks between them.
  */
 export function memoryTokens(pieces: readonly MemoryStudyPiece[]): MemoryToken[] {
   const out: MemoryToken[] = [];
@@ -98,7 +86,7 @@ export function memoryTokens(pieces: readonly MemoryStudyPiece[]): MemoryToken[]
       else if (touchesAfter) pending = chunk;
       else out.push({ word: chunk });
     });
-    // text that runs straight into the next gap waits for it; text before a space stands alone
+    // Text that runs straight into the next gap waits for it; text before a space stands alone.
     if (pending !== '' && /\s$/u.test(p.text)) {
       out.push({ word: pending });
       pending = '';
@@ -133,7 +121,10 @@ function InkWord({ text, lifting, order, style }: { text: string; lifting: boole
   );
 }
 
-/** A gap's soft glow, breathing while it waits for its word (still under Reduce Motion, and while the game is not the screen in front). */
+/**
+ * A gap's soft glow, breathing while it waits for its word (still under Reduce Motion, and while the game is not in
+ * front).
+ */
 function useGlow(on: boolean): Animated.Value {
   const alive = useMotionAlive();
   const glow = useRef(new Animated.Value(0.45)).current;
@@ -155,7 +146,7 @@ function StudyRibbon({ seconds, color, rtl }: { seconds: number; color: string; 
   const left = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (reduce) return;
-    // a clock runs at one speed: left to the default curve it ran slow, then fast, then slow, and said there was more time than there was
+    // Linear, since a clock runs at one speed; the default curve would misstate the time left.
     const run = timing(left, 0, seconds * 1000, { easing: Easing.linear });
     run.start();
     return () => run.stop();
@@ -256,15 +247,15 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
   const rtl = dialect === 'ckb';
   const flow = rtl ? 'row-reverse' : 'row';
   const typed = item.phase === 'restore' && item.tiles === null;
-  // the passage as it was studied, kept for the ink to lift off once the gaps have come (the server never sends both)
+  // The passage as studied, kept for the ink to lift off once the gaps arrive (the server never sends both).
   const studied = useRef<{ index: number; text: string } | null>(null);
   if (item.text !== null) studied.current = { index: item.index, text: item.text };
   const passage = item.text ?? (studied.current?.index === item.index ? studied.current.text : null);
   const lines = useMemo(() => (item.parts ? memoryStudyLines(passage, item.parts) : memoryTextLines(passage ?? '')), [passage, item.parts]);
-  // an item already begun or tried (a round come back to) starts with its gaps
+  // An item already begun or tried (a resumed round) starts with its gaps.
   const [phase, setPhase] = useState<Phase>(state.attempts > 0 || item.phase === 'restore' ? 'restore' : 'study');
   const [leaving, setLeaving] = useState(false);
-  // the clock asks for the gaps once; after a failed ask it is the button's to try again
+  // The clock asks for the gaps once; after a failed ask the button retries.
   const timeUp = useRef(false);
   const [left, setLeft] = useState(item.studySeconds);
   const [given, setGiven] = useState<string[]>(() => Array.from({ length: item.gaps }, () => ''));
@@ -275,7 +266,7 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
   const locked = done || busy || phase !== 'restore';
   const wrong = useMemo(() => new Set(!done && result && !result.correct ? (result.hint?.wrong ?? []) : []), [done, result]);
 
-  // a new passage starts with the study (one already begun or tried, in a round come back to, with its gaps)
+  // A new passage starts with the study (or with its gaps, if already begun in a resumed round).
   useEffect(() => {
     setPhase(state.attempts > 0 || item.phase === 'restore' ? 'restore' : 'study');
     setLeaving(false);
@@ -285,10 +276,10 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
     setUsed(Array.from({ length: item.gaps }, () => null));
     setSelected(0);
     setTried(null);
-    // only when the passage changes, not when its tries do
+    // Only when the passage changes, not when its tries do.
   }, [item.index]);
 
-  // the study is over: the gaps are asked for, and once they are here the thief comes
+  // The study is over: ask for the gaps, and once they are here the thief comes.
   const endStudy = useCallback(async () => {
     if (phase !== 'study' || leaving) return;
     setLeaving(true);
@@ -582,7 +573,7 @@ const styles = StyleSheet.create({
   desk: { borderRadius: radii.xl, padding: spacing.md },
   page: { borderRadius: radii.md, borderWidth: 1, paddingHorizontal: spacing.md, paddingTop: spacing.lg, paddingBottom: spacing.md, gap: spacing.xs, overflow: 'hidden' },
   ribbon: { position: 'absolute', top: 0, left: 0, right: 0, height: 5 },
-  // the ribbon runs down toward the side the line starts from
+  // The ribbon runs down toward the side the line starts from.
   fromLeft: { transformOrigin: 'left center' },
   fromRight: { transformOrigin: 'right center' },
   kicker: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },

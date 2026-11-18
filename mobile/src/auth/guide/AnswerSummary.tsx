@@ -4,10 +4,8 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 
 /**
- * The answers given so far, on the last step of a guided sign-up, so they
- * can be read over once before the account is made: each a small label and
- * the answer under it, in one quiet panel. Going back to change one is the
- * chevron at the top, as on every step.
+ * The answers so far, on the last step of a guided sign-up, to read over before the account is made: a small label and
+ * the answer under it, in one quiet panel. The chevron at the top goes back to change one.
  */
 export function AnswerSummary({ rows, testID = 'answer-summary' }: { rows: ReadonlyArray<{ label: string; value: string }>; testID?: string }): React.JSX.Element {
   const { colors } = useTheme();

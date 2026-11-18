@@ -12,15 +12,13 @@ import { clockText, trackAt, trackLength, type NarrationItem, type NarrationStat
 import { nextRate, type NarrationRate } from './prefs';
 import { useNarrationPosition } from './useNarration';
 
-/** How far a screen reader's step along the line moves the sound. */
-export const SEEK_STEP_MS = 10_000;
+/** How far a screen reader's step along the line seeks. */
+const SEEK_STEP_MS = 10_000;
 
 /**
- * The point on the track a tap on the line names: how far along the line the
- * finger is, as a share of the whole story, kept within it. Read from where
- * the tap is on the screen and where the line is, never from the touched
- * view's own coordinates: a tap on the knob would measure from the knob, and
- * the browser build has lost the line by the time the press ends.
+ * The track time a tap on the line names, as a share of the whole story, clamped. Computed from page coordinates,
+ * not the touched view's own: a tap on the knob would measure from the knob, and the web build has lost the line
+ * by the time the press ends.
  */
 export function lineTime(pageX: number, lineLeft: number, lineWidth: number, total: number): number | null {
   if (!Number.isFinite(pageX) || lineWidth <= 0 || total <= 0) return null;
@@ -28,23 +26,16 @@ export function lineTime(pageX: number, lineLeft: number, lineWidth: number, tot
   return share * total;
 }
 
-/** What the speed chip says: the number as spoken of a speed, with the times sign. */
+/** The speed chip's label: the spoken number with a times sign. */
 export function rateLabel(rate: NarrationRate): string {
   return `${rate}×`;
 }
 
 /**
- * The player (design notes §4): one bar in ink at the foot of the reader, for
- * a story with recordings. A seek line over the whole story as one stitched
- * track, with the time elapsed and the total; the sentence before and after;
- * play and pause, which carries on from inside the sentence it paused in
- * (or stopped in, when a paragraph's Listen or leaving the text cut it
- * short), with a quiet spinner while the sound is awaited; a speed chip that cycles
- * 0.75× → 1× → 1.25×; the name of the character reading the sentence, when
- * the recording has one; "n of m sentences recorded" when not every sentence
- * is; and, when a recording would not play, one line that says so while the
- * text stays readable. The sentence being read is lit up in the text, and a
- * tap on it says it again.
+ * The player bar at the foot of the reader, for a story with recordings (design notes §4): a seek line over the
+ * whole story as one stitched track with elapsed and total time, previous and next sentence, play and pause
+ * (resuming inside the sentence it stopped in), a speed chip, the speaking character's name, "n of m sentences
+ * recorded" when incomplete, and one line when playback fails. The sentence being read is highlighted in the text.
  */
 export function NarrationBar({
   narrator,
@@ -57,13 +48,13 @@ export function NarrationBar({
 }: {
   narrator: Narrator;
   state: NarrationState;
-  /** the whole story's queue, in reading order, with each sentence's place on the track */
+  /** The whole story's queue in reading order, with each sentence's place on the track. */
   items: readonly NarrationItem[];
   rate: NarrationRate;
   onRate: (rate: NarrationRate) => void;
-  /** who reads the sentence being read, when the recording has a character */
+  /** Who reads the current sentence, when the recording has a character. */
   speaker?: string | null;
-  /** how many of the story's sentences have a recording, when not all of them do */
+  /** How many sentences have recordings, when not all do. */
   recorded?: { recorded: number; total: number } | null;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -72,10 +63,10 @@ export function NarrationBar({
   const playing = mine && state.playing;
   const total = trackLength(items);
   const position = useNarrationPosition(narrator, state);
-  // stopped part-way, the line stays where the story will go on from
+  // Stopped part-way, the line stays where the story will resume.
   const resumeAt = mine ? null : narrator.resumeMs;
   const elapsed = Math.min(mine ? position : (resumeAt ?? 0), total);
-  // where the line is on the screen, measured when it is laid out and again as a finger lands on it
+  // The line's screen position, measured on layout and again as a finger lands.
   const line = useRef<View>(null);
   const lineBox = useRef({ left: 0, width: 0 });
   const measureLine = (): void => {
@@ -83,21 +74,20 @@ export function NarrationBar({
       lineBox.current = { left, width };
     });
   };
-  // In the light the bar is the app's ink. In the dark that ink is white, and a white panel at
-  // the foot of a dark page pulls the eye off the text, so there it is the raised surface with
-  // its edge drawn, and the controls are drawn in the text's colour.
+  // In light mode the bar is the app's ink; in dark mode that ink is white and would pull the eye off the text, so
+  // there it is the raised surface with its edge drawn and controls in the text colour.
   const dark = colors.scheme === 'dark';
   const ink = dark ? colors.surfaceRaised : colors.primary;
   const onInk = dark ? colors.textPrimary : colors.textOnPrimary;
 
-  /** Pause or carry on; a story stopped part-way goes on from inside the sentence it stopped in. */
+  /** Pauses or resumes; a story stopped part-way resumes inside the sentence it stopped in. */
   const toggle = (): void => {
     if (mine) narrator.toggle();
     else if (resumeAt !== null && resumeAt > 0 && resumeAt < total) seekTo(resumeAt);
     else narrator.play(items, 'story');
   };
 
-  /** To a point on the track: into the story that is playing, or the start of one that is not yet. */
+  /** Seeks to a track time: in the playing story, or as the start point of one not yet playing. */
   const seekTo = (ms: number): void => {
     const target = Math.max(0, Math.min(total, ms));
     if (!mine) narrator.play(items, 'story', Math.max(0, trackAt(items, target).index));
@@ -133,7 +123,7 @@ export function NarrationBar({
         onLayout={measureLine}
         accessibilityRole="adjustable"
         accessibilityLabel={t('stories.player.seek')}
-        // the aria form, which both the phone's screen readers and the browser build read (as the age ruler's)
+        // The aria form, which both phone screen readers and the web build read (as the age ruler does).
         aria-valuemin={0}
         aria-valuemax={Math.round(total)}
         aria-valuenow={Math.round(elapsed)}
@@ -145,7 +135,7 @@ export function NarrationBar({
         onAccessibilityAction={(e) => seekTo(elapsed + (e.nativeEvent.actionName === 'increment' ? SEEK_STEP_MS : -SEEK_STEP_MS))}
         style={styles.line}
       >
-        {/* the line in the bar's own ink, faint ahead and whole behind: gold is for what is earned, and a place in a story is not */}
+        {/* The line in the bar's ink, faint ahead and solid behind: gold is for what is earned, and a place in a story is not. */}
         <View pointerEvents="none" style={[styles.track, { backgroundColor: onInk }]} />
         <View pointerEvents="none" style={[styles.fill, { backgroundColor: onInk, width: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
         <View pointerEvents="none" style={[styles.knob, { backgroundColor: onInk, left: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
@@ -203,20 +193,13 @@ export function NarrationBar({
   );
 }
 
-/**
- * The speed is a small outlined pill beside controls a fingertip tall. The
- * Pressable reaches past the outline by itself, 8 above and below it, which
- * is as tall as the play button and so as the row it stands in.
- */
+/** The speed pill's height; its Pressable reaches 8 above and below, as tall as the play button and the row. */
 const RATE_HEIGHT = 32;
 
 /**
- * The line is drawn four points tall in a band of 32, and answers a finger
- * 8 past the band's top and bottom, to `MIN_REACH`. Above it that reach is
- * the bar's padding and the player's, and ends where the story's text does.
- * Below it the times stand 8 further off than the bar's other rows, so the
- * reach lies over empty bar: over the clock it would turn a tap meant for
- * nothing into a jump in the story.
+ * The line is 4 points tall in a 32-point band and answers taps 8 beyond it, to `MIN_REACH`. Above, that reach is
+ * the bar's padding; below, the times stand 8 further off than other rows, so the reach covers empty bar rather
+ * than turning a tap on the clock into a seek.
  */
 const LINE_HEIGHT = MIN_TOUCH_TARGET - 12;
 const LINE_REACH = (MIN_REACH - LINE_HEIGHT) / 2;

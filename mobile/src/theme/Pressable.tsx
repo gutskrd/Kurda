@@ -13,47 +13,33 @@ import {
 import { REACH_OPEN, reachSlop, type HitSlop } from '../a11y/a11y';
 
 /**
- * The app's Pressable: React Native's own, with the moment a press shows
- * held back a little after the finger lands, a reach that answers a finger a
- * little off the mark, and a press that is always seen.
+ * The app's Pressable: React Native's own, with a short press delay, a reach that forgives a slightly missed tap,
+ * and a press that is always visible.
  *
- * A finger that lands on a button to scroll the list it sits in used to
- * light the button up at once, so every scroll flickered the rows and
- * buttons under it. The systems' own lists wait a beat before they show a
- * press (a scroll view on iOS delays its content's touches; Android has its
- * tap timeout), and in that beat a finger that is scrolling has moved and
- * the press is called off. This does the same: a touch shows as pressed only
- * once it has stayed put for `PRESS_DELAY_MS`, and a quick tap still shows,
- * for an instant, as it lands. A press that has to answer the moment the
- * finger is down, outside anything that scrolls (the tab bar, a card held to
- * be read), passes `pressDelay={0}`.
+ * Like system lists, a touch shows as pressed only after staying put for `PRESS_DELAY_MS`, so scrolling does not
+ * flicker the controls under the finger; a quick tap still flashes as it lands. Controls outside anything that
+ * scrolls (the tab bar) that must answer at once pass `pressDelay={0}`.
  *
- * A fingertip lands a few points from where the eye aimed, so every control
- * answers over at least `MIN_REACH` (a11y.ts), worked out here from the size
- * its style already declares (`resolveReach`). It is fixed from the first
- * render: React Native counts a child's hitSlop into its parent's bounds only
- * when the parent lays out, so a reach that arrived later (from a
- * measurement, or with `disabled`) would be cut off at the parent's edge.
- * Neighbours closer than that share the gap between them through a
- * `ReachGroup`, because where two reaches overlap the later one takes the tap.
+ * Every control answers over at least `MIN_REACH` (a11y.ts), computed from the size its style declares
+ * (`resolveReach`) and fixed from the first render, since React Native counts a child's hitSlop into its parent's
+ * bounds only at the parent's layout. Neighbours closer than that share the gap through a `ReachGroup`, because
+ * where reaches overlap the later one takes the tap.
  */
 export const PRESS_DELAY_MS = 110;
 
-/** How long a tap too quick to see stays lit: the website's own (web/src/lib/press.ts `TAP_FLASH_MS`). */
+/** How long a tap too quick to see stays lit, as on the website (web/src/lib/press.ts `TAP_FLASH_MS`). */
 export const TAP_FLASH_MS = 120;
 
 /**
- * A release this soon after the press showed means the press was never seen.
- * React Native's own Pressable holds a press for at least 130 ms on a phone,
- * so there this only catches what lets go at once (the browser build).
+ * A release this soon after the press showed means it was never seen. React Native's Pressable holds a press for at
+ * least 130 ms on a phone, so this only catches instant releases (the web build).
  */
 export const QUICK_RELEASE_MS = 50;
 
 /**
- * How far a control answers past what it draws. `auto` (the default) pads
- * each side up to `MIN_REACH`; `open` also reaches `REACH_OPEN` past every
- * edge, for a control with nothing near it (back, close, an empty state's
- * action); `none` answers only over what is drawn.
+ * How far a control answers past what it draws. `auto` (the default) pads each side up to `MIN_REACH`; `open` also
+ * reaches `REACH_OPEN` past every edge, for controls with nothing near (back, close, an empty state's action); `none`
+ * answers only over what is drawn.
  */
 export type Reach = 'auto' | 'open' | 'none';
 
@@ -89,13 +75,9 @@ function tighter(outer: ReachLimit, inner: ReachLimit): ReachLimit {
 }
 
 /**
- * Controls that stand closer together than their reach: each one reaches at
- * most half of the gap toward its neighbours, so two reaches meet in the
- * middle of the gap and never overlap. `gap` is the space between them side
- * by side and `rowGap` the space between rows; a side left undefined is not
- * capped here. It draws nothing of its own, so it changes no layout. Inside
- * another group the tighter cap of the two holds on each side, because the
- * controls at the edge of the inner group are still near the outer one's.
+ * Controls closer together than their reach: each reaches at most half the gap toward its neighbours, so reaches
+ * meet in the middle and never overlap. `gap` is the horizontal space and `rowGap` the vertical; an undefined side is
+ * not capped. It draws nothing, so layout is unchanged. Nested groups apply the tighter cap on each side.
  */
 export function ReachGroup({ gap, rowGap, children }: { gap?: number; rowGap?: number; children: ReactNode }): React.JSX.Element {
   const outer = useContext(ReachContext);
@@ -107,11 +89,7 @@ export function ReachGroup({ gap, rowGap, children }: { gap?: number; rowGap?: n
   return <ReachContext.Provider value={limit}>{children}</ReachContext.Provider>;
 }
 
-/**
- * A fresh start for what is drawn somewhere else: a Modal's content is not
- * beside the controls of the screen it was opened from, so their group's caps
- * do not reach into it.
- */
+/** A fresh start for content drawn elsewhere: a Modal's content is not beside its opener's controls, so their caps do not apply. */
 export function ReachReset({ children }: { children: ReactNode }): React.JSX.Element {
   return <ReachContext.Provider value={null}>{children}</ReachContext.Provider>;
 }
@@ -121,30 +99,22 @@ export function useReachLimit(): ReachLimit {
   return useContext(ReachContext);
 }
 
-/** The state a style is read in for its size: at rest, as it is first drawn. */
+/** The state a style is read in for its size: at rest, as first drawn. */
 const RESTING = { pressed: false, hovered: false, focused: false };
 
 const numeric = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
-/** What a style says the control is drawn at: its width or minWidth, its height or minHeight, when they are numbers. */
+/** A control's drawn size from its style: width or minWidth, height or minHeight, when they are numbers. */
 function drawnSize(style: PressableProps['style']): { width: number | null; height: number | null } {
   const flat: ViewStyle = StyleSheet.flatten(typeof style === 'function' ? style(RESTING) : style) ?? {};
   return { width: numeric(flat.width) ?? numeric(flat.minWidth), height: numeric(flat.height) ?? numeric(flat.minHeight) };
 }
 
 /**
- * The hitSlop a Pressable gets, worked out once from what it already says:
- *
- * 1. a `hitSlop` the caller wrote wins as it is, uncapped;
- * 2. `reach="none"` gets none;
- * 3. by default, a press that answers at once (`pressDelay={0}`, which sets
- *    its own) or a control with no `onPress` (a long-press-only row, often
- *    2pt from the next) gets none;
- * 4. otherwise the size is `reachSize`, or the numbers its style declares,
- *    and the reach is `reachSlop` of it, capped by the group.
- *
- * `disabled` changes nothing: a reach that came and went with it would be
- * cut off at the parent's edge (see the header).
+ * The hitSlop a Pressable gets, computed once: a caller's own `hitSlop` wins uncapped; `reach="none"` gets none; by
+ * default a press that answers at once (`pressDelay={0}`) or a control without `onPress` gets none; otherwise the
+ * size (`reachSize` or the style's numbers) gives `reachSlop`, capped by the group. `disabled` changes nothing,
+ * since a reach that came and went with it would be clipped at the parent's edge.
  */
 export function resolveReach(
   props: Pick<AppPressableProps, 'hitSlop' | 'reach' | 'reachSize' | 'pressDelay' | 'onPress' | 'style'>,
@@ -169,11 +139,7 @@ function sides(slop: Insets | number | undefined): [number, number, number, numb
   return [slop.top ?? 0, slop.bottom ?? 0, slop.left ?? 0, slop.right ?? 0];
 }
 
-/**
- * A development aid: with `EXPO_PUBLIC_SHOW_REACH=1` every reach is tinted.
- * Read as it renders rather than once, so a test can turn it on; a build
- * inlines the variable, so the check costs nothing there.
- */
+/** A development aid: with `EXPO_PUBLIC_SHOW_REACH=1` every reach is tinted. Read per render so tests can enable it; builds inline the variable. */
 function showReach(): boolean {
   return process.env.EXPO_PUBLIC_SHOW_REACH === '1';
 }
@@ -193,16 +159,14 @@ export function Pressable({
   const limit = useReachLimit();
   const resolved = resolveReach({ hitSlop, reach, reachSize, pressDelay, onPress: props.onPress, style }, limit);
   const [top, bottom, left, right] = sides(resolved);
-  // the same four numbers keep the same object, so the reach is not re-sent to the native view every render
+  // The same four numbers keep the same object, so the reach is not re-sent to the native view every render.
   const slop = useMemo(() => resolved, [typeof resolved, top, bottom, left, right]);
 
   /*
-   * A tap whose press would otherwise never be seen. The press shows only
-   * after `pressDelay`, so a quicker tap shows it as it lets go, and where
-   * the release follows at once (the browser build) the press would last no
-   * frame at all. It stays lit for `TAP_FLASH_MS`, the website's flash. Only
-   * a style or children that read `pressed` can show it, so only those wait.
-   * A scroll still calls the press off before it shows, so nothing lights.
+   * A tap whose press would otherwise never show. The press shows only after `pressDelay`, so a quicker tap shows it
+   * on release, and where release is instant (the web build) it would last no frame, so it stays lit for
+   * `TAP_FLASH_MS`. Only styles or children that read `pressed` can show it, so only those wait. A scroll still cancels
+   * the press before it shows.
    */
   const readsPressed = typeof style === 'function' || typeof children === 'function';
   const [flash, setFlash] = useState(false);
@@ -256,7 +220,7 @@ export function Pressable({
           )
         : children;
 
-  // the browser build's Pressable takes the same wait under its own name
+  // The web build's Pressable takes the same delay under its own name.
   const web = Platform.OS === 'web' ? ({ delayPressIn: pressDelay } as Record<string, number>) : null;
   return (
     <NativePressable
@@ -274,11 +238,9 @@ export function Pressable({
 }
 
 /**
- * The reach, drawn: a tinted, dashed box out to the edges of the hitSlop,
- * behind the control's own content and always its last child (tests read a
- * control's first). The browser build ignores hitSlop, so there the box also
- * takes touches, and the page answers as a phone would and can be probed; on
- * a phone it is only an outline.
+ * The reach, drawn: a tinted dashed box out to the hitSlop's edges, behind the control's content and always its last
+ * child (tests read the first). The web build ignores hitSlop, so there the box also takes touches and the page
+ * answers as a phone would; on a phone it is only an outline.
  */
 function ReachShim({ top, bottom, left, right }: { top: number; bottom: number; left: number; right: number }): React.JSX.Element {
   return (

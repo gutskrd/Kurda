@@ -4,14 +4,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 
 /**
- * How a game ended for you, at the top of its scoreboard: the words, and a
- * trophy over them when you won.
- *
- * The trophy was an emoji at the front of the catalogue's "You won!". So it
- * came in the platform's colours rather than the app's, a screen reader read
- * it out before the words, and it went along wherever the words were
- * announced. It is drawn here from the app's own icons, in the gold made for
- * the page, and the words are the heading a screen reader hears.
+ * How a game ended for you, at the top of its scoreboard: the words as a heading, with a gold trophy icon above
+ * them when you won. The icon is drawn rather than an emoji in the text, so it uses the app's colours and screen
+ * readers hear only the words.
  */
 export function Verdict({ won, children }: { won: boolean; children: string }): React.JSX.Element {
   const { colors } = useTheme();

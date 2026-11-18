@@ -7,8 +7,8 @@ import { checkInstall, type InstallKeychain, type InstallLocalStore } from './in
 const KEY = 'kurda_tokens_v1';
 const DEVICE_KEY = 'kurda_device_id_v1';
 
-// Loaded lazily, as onboarding/storage.ts does: the web bundle must never
-// evaluate the native module, whose web entry throws when it is imported.
+// Loaded lazily, as onboarding/storage.ts does: the web bundle must never evaluate the native module, whose web entry
+// throws on import.
 let localStore: InstallLocalStore | null = null;
 function appStorage(): InstallLocalStore {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -25,13 +25,11 @@ const keychain: InstallKeychain = {
 let installChecked: Promise<unknown> | null = null;
 
 /**
- * Once per start, before the session or the device id is first read or
- * written on a phone: the ones an earlier install of the app left in the
- * Keychain are forgotten (install.ts), so a reinstalled phone does not open
- * the account of whoever had it before.
+ * Once per start, before the session or device id is first read or written on a phone: those an earlier install left in
+ * the Keychain are forgotten (install.ts).
  */
 function afterInstallCheck(): Promise<unknown> {
-  // a missing native module is a check that could not be made, not a session that cannot be read
+  // A missing native module is a check that could not be made, not a session that cannot be read.
   installChecked ??= Promise.resolve()
     .then(() => checkInstall({ local: appStorage(), keychain }, [KEY, DEVICE_KEY], newDeviceId))
     .catch(() => 'unknown');
@@ -39,9 +37,8 @@ function afterInstallCheck(): Promise<unknown> {
 }
 
 /**
- * Persists the token pair in the platform keystore (iOS Keychain /
- * Android Keystore via expo-secure-store) so sessions survive app
- * restarts without ever touching plain AsyncStorage.
+ * Keeps the token pair in the platform keystore (iOS Keychain, Android Keystore via expo-secure-store), never in plain
+ * AsyncStorage.
  */
 export class SecureTokenStorage implements TokenStorage {
   async get(): Promise<TokenPair | null> {
@@ -68,10 +65,8 @@ export class SecureTokenStorage implements TokenStorage {
 }
 
 /**
- * Web fallback: browsers have no Keychain, and expo-secure-store throws
- * on web. localStorage is acceptable for the secondary web target (same
- * threat model as any web app's session token); mobile remains the
- * primary, keystore-backed platform.
+ * Web fallback: browsers have no Keychain and expo-secure-store throws on web; localStorage carries the usual web
+ * session-token threat model for this secondary target.
  */
 export class WebTokenStorage implements TokenStorage {
   async get(): Promise<TokenPair | null> {
@@ -97,9 +92,8 @@ export function createTokenStorage(): TokenStorage {
 }
 
 /**
- * Where this install's device id is kept (auth/deviceId.ts): in the keystore
- * beside the tokens on a phone, in localStorage on the web. Either may throw;
- * the caller falls back to an id held in memory.
+ * Where this install's device id is kept (auth/deviceId.ts): the keystore on a phone, localStorage on the web. Either
+ * may throw; the caller falls back to an id held in memory.
  */
 export function createDeviceIdStore(): DeviceIdStore {
   if (Platform.OS === 'web') {

@@ -2,32 +2,23 @@ import { useMemo, useRef, useState } from 'react';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, View } from 'react-native';
 
 /**
- * What a sheet of letter paper asks of the screen it lies on, and the hook
- * that gives it (LettersScreen and LetterThreadScreen, whose page scrolls).
- *
- * A finger drawing on the sheet must not move the page, so while the pen is
- * in hand the page is held still (`lock`), and two fingers on the sheet move
- * it instead (`by`), as they would a real sheet on a table. And whatever is
- * being typed is kept above the keyboard (`reveal`): the end of the letter as
- * it grows line by line, or a note's field. The keyboard takes its room by
- * shrinking the page (a keyboard-avoiding view on iOS, the window itself on
- * Android), so what was asked for is looked for again each time the page
- * grows shorter.
+ * What a sheet of letter paper needs from the scrolling page it lies on (LettersScreen, LetterThreadScreen). While
+ * drawing, the page is held still (`lock`) and two fingers move it instead (`by`). Whatever is being typed stays
+ * above the keyboard (`reveal`); since the keyboard shrinks the page, the target is re-checked each time it does.
  */
 export interface PaperHost {
-  /** hold the page still while the pen is in hand (true), or let it scroll again */
+  /** Holds the page still while drawing (true), or lets it scroll again. */
   lock: (still: boolean) => void;
-  /** move the page by `dy` points, as two fingers on the sheet do while drawing */
+  /** Scrolls the page by `dy` points, as a two-finger drag on the sheet does. */
   by: (dy: number) => void;
   /**
-   * Keep `view` in sight: all of it, or only its last `tail` points, with
-   * `room` points to spare under it — until it is asked again, or forgotten
-   * with null; or `once`, brought into sight now and not looked for again.
+   * Keeps `view` in sight, whole or only its last `tail` points with `room` to spare below, until asked again or
+   * cleared with null; with `once`, scrolls it into sight now only.
    */
   reveal: (view: View | null, options?: { tail?: number; room?: number; once?: boolean }) => void;
 }
 
-/** The room left under what is being typed, so the line after it shows too. */
+/** Room kept under what is being typed, so the next line shows too. */
 const ROOM = 24;
 
 interface Ask {
@@ -49,7 +40,7 @@ export function usePaperScroll(): {
 } {
   const ref = useRef<ScrollView | null>(null);
   const [locked, setLocked] = useState(false);
-  // where the page is, how tall the part of it in sight is, and how tall it is in all: read as they change
+  // Scroll offset, visible height and content height, tracked as they change.
   const at = useRef({ y: 0, seen: 0, content: 0 });
   const wanted = useRef<Ask | null>(null);
 
@@ -60,7 +51,7 @@ export function usePaperScroll(): {
       at.current.y = to;
       ref.current?.scrollTo({ y: to, animated: false });
     };
-    /** Where `ask` is against the part of the page in sight, and the page moved just enough to show it. */
+    /** Scrolls just enough to bring `ask` into sight. */
     const show = (ask: Ask): void => {
       const page = ref.current as unknown as View | null;
       if (!page || typeof ask.view.measureInWindow !== 'function' || typeof page.measureInWindow !== 'function') return;
@@ -71,7 +62,7 @@ export function usePaperScroll(): {
           const from = ask.tail !== undefined ? top + Math.max(0, height - ask.tail) : top;
           const to = top + height + room;
           const bottom = pageTop + pageHeight;
-          // down far enough for its foot to show, but never so far that its head goes out of sight above
+          // Far enough down for its foot to show, never so far its head goes above the top.
           if (to > bottom) scrollTo(at.current.y + Math.min(to - bottom, Math.max(0, from - pageTop)));
           else if (from < pageTop) scrollTo(at.current.y - (pageTop - from) - room);
         });
@@ -106,7 +97,7 @@ export function usePaperScroll(): {
         const seen = e.nativeEvent.layout.height;
         const shrank = seen < at.current.seen;
         at.current.seen = seen;
-        // the keyboard has come up and taken its room: what is being typed is looked for again
+        // The keyboard came up and shrank the page, so look again.
         if (shrank) look();
       },
       onContentSizeChange: (_w, h) => {

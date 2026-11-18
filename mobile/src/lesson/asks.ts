@@ -1,23 +1,16 @@
 /**
- * What an item asks (`ExerciseAsk`), and what that changes on the screen.
- *
- * The road's items name what they ask, so the bubble can hold the line alone
- * and the headline say, in a few words, what to do with it: "What does this
- * mean?", "Fill in the missing word", "Repeat after Hamo". This module is the
- * part of that with no React in it: which headline an item gets, which of its
- * lines and options are Kurdish (and so set in the display face), and the
- * line's words with what each means, new words first.
- *
- * An item without an ask gets null from `askHeadline`, and its exercise keeps
- * the headline it always had.
+ * What an item asks (`ExerciseAsk`) and how that changes the screen, without React: the headline ("What does this
+ * mean?", "Repeat after Hamo"), which lines and options are Kurdish (set in the display face), and the line's words
+ * with their meanings, new words first. An item without an ask gets null from `askHeadline` and keeps its
+ * exercise's usual headline.
  */
 import { CHARACTER_NAMES, GAP, isSoraniDialect, type ExerciseAsk, type NewWord, type PromptToken } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { Exercise } from './types';
 import { knownVoice } from '../characters/voice';
 
-/** A headline: its key, and what goes into it. */
-export interface Headline {
+/** A headline's key and parameters. */
+interface Headline {
   key: TranslationKey;
   params?: Record<string, string>;
 }
@@ -32,10 +25,8 @@ const PLAIN: Partial<Record<ExerciseAsk, TranslationKey>> = {
 };
 
 /**
- * The headline an item's ask gives it; null for an item with none, which
- * keeps its exercise's own. `dialect` is the course's variety, for "Write this
- * in Kurmancî" or "… in Soranî"; `tiles` says a listening item is answered
- * from word tiles ("Tap what you hear") rather than typed.
+ * The headline an item's ask gives it, or null to keep the exercise's own. `dialect` is the course's variety ("Write
+ * this in Kurmancî"); `tiles` says a listening item is answered from word tiles ("Tap what you hear").
  */
 export function askHeadline(exercise: Exercise, { dialect, tiles = false }: { dialect?: string | null; tiles?: boolean } = {}): Headline | null {
   const ask = exercise.ask;
@@ -48,7 +39,7 @@ export function askHeadline(exercise: Exercise, { dialect, tiles = false }: { di
     case 'hear':
       return { key: tiles ? 'lesson.listen.tapPrompt' : 'lesson.listen.prompt' };
     case 'repeat': {
-      // after somebody only when there is somebody to hear: a recording, said by a character the app can draw
+      // "After someone" only when there is someone to hear: a recording by a character the app can draw.
       const voice = exercise.modelAudioUrl ? knownVoice(exercise.modelAudioVoice) : null;
       return voice ? { key: 'lesson.ask.repeatAfter', params: { name: CHARACTER_NAMES[voice.speaker] } } : { key: 'lesson.speak.prompt' };
     }
@@ -57,22 +48,22 @@ export function askHeadline(exercise: Exercise, { dialect, tiles = false }: { di
   }
 }
 
-/** The line in the bubble is English — the learner puts it into Kurdish — rather than Kurdish to hear and read. */
+/** The bubble's line is English for the learner to put into Kurdish, rather than Kurdish to hear and read. */
 export function lineIsEnglish(ask: ExerciseAsk | undefined): boolean {
   return ask === 'to-kurdish' || ask === 'choose-kurdish';
 }
 
-/** The options are Kurdish, set in the display face as the lesson's Kurdish is everywhere else. */
+/** The options are Kurdish, set in the display face like the lesson's other Kurdish. */
 export function optionsAreKurdish(ask: ExerciseAsk | undefined): boolean {
   return ask === 'reply' || ask === 'missing' || ask === 'choose-kurdish';
 }
 
-/** A word of the line with what it means, and whether this item brings it in for the first time. */
+/** A word of the line with its meaning, and whether this item introduces it. */
 export interface GlossToken extends PromptToken {
   fresh?: boolean;
 }
 
-/** A word, for comparing a token with a new word: lower case, without the punctuation around it. */
+/** A word normalised for comparison: lower case, surrounding punctuation stripped. */
 function bare(text: string): string {
   return text
     .toLowerCase()
@@ -80,7 +71,7 @@ function bare(text: string): string {
     .trim();
 }
 
-/** The new word a token is, when it is one. */
+/** The new word a token is, if any. */
 export function freshWord(text: string, newWords: readonly NewWord[] | undefined): NewWord | null {
   if (!newWords || newWords.length === 0) return null;
   const word = bare(text);
@@ -88,7 +79,7 @@ export function freshWord(text: string, newWords: readonly NewWord[] | undefined
   return newWords.find((w) => bare(w.ku) === word) ?? null;
 }
 
-/** A line cut into its words and what lies between them, for a line that came without tokens. */
+/** Splits a line into words and what lies between them, for a line without tokens. */
 function tokenize(line: string): PromptToken[] {
   return line
     .split(/([\p{L}\p{M}\p{N}'’-]+)/u)
@@ -97,12 +88,9 @@ function tokenize(line: string): PromptToken[] {
 }
 
 /**
- * The line's words with their meanings. A new word (`newWords`) leads with the
- * meaning the item gives it — "am (after a vowel)" says more about "me" here
- * than a dictionary's first sense — and is marked `fresh`, so it can be drawn
- * a little more strongly than the words already met; one the course does not
- * know at all still gets the item's meaning. A line that came without tokens
- * is cut into words here, so its new words can still be tapped.
+ * The line's words with their meanings. A new word (`newWords`) takes the item's own meaning, which suits the
+ * context better than a dictionary's first sense, and is marked `fresh` so it can be drawn more strongly. A line
+ * without tokens is split here, so its new words can still be tapped.
  */
 export function glossTokens(line: string, tokens: readonly PromptToken[] | undefined, newWords: readonly NewWord[] | undefined): GlossToken[] {
   const base: readonly PromptToken[] = tokens && tokens.length > 0 ? tokens : tokenize(line);
@@ -116,10 +104,8 @@ export function glossTokens(line: string, tokens: readonly PromptToken[] | undef
 }
 
 /**
- * The line's words either side of its gap (`GAP`), for a 'missing' item: a
- * token holding the gap among other letters ("___." as one) is cut there, and
- * what is left either side keeps no meaning — it is punctuation, or part of a
- * word the gap splits. Null when the line has no single gap.
+ * The words either side of a 'missing' item's gap (`GAP`). A token holding the gap among other characters ("___.")
+ * is split there, and its remainders carry no meaning. Null when the line has no single gap.
  */
 export function aroundGap(tokens: readonly GlossToken[]): { before: GlossToken[]; after: GlossToken[] } | null {
   const joined = tokens.map((t) => t.text).join('');
@@ -133,7 +119,7 @@ export function aroundGap(tokens: readonly GlossToken[]): { before: GlossToken[]
     if (end <= at) before.push(token);
     else if (start >= at + GAP.length) after.push(token);
     else {
-      // the token the gap is in: what lies before the gap and after it, as plain text
+      // The token holding the gap: what lies before and after it, as plain text.
       const head = token.text.slice(0, Math.max(0, at - start));
       const tail = token.text.slice(Math.max(0, at + GAP.length - start));
       if (head) before.push({ text: head });

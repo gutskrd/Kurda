@@ -44,7 +44,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** The exercise as the lesson holds it: the answer text kept above it, and shown so a test can read it. */
+/** The exercise as the lesson holds it, with the answer text kept above it and shown for the test to read. */
 function Held({ exercise }: { exercise: Exercise }): React.JSX.Element {
   const [text, setText] = useState('');
   const props = { exercise, text, onChangeText: setText, disabled: false, dialect: exercise.dialect };
@@ -69,7 +69,7 @@ describe('an answer built from word tiles', () => {
     fireEvent.click(within(bank()).getByRole('button', { name: 'me' }));
     expect(answer()).toBe('Excuse me');
     expect(within(line()).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Excuse', 'me']);
-    // the bank keeps every place, the ones laid hidden behind their ghosts
+    // The bank keeps every place, laid tiles hidden behind their ghosts.
     expect(within(bank()).queryByRole('button', { name: 'Excuse' })).toBeNull();
     expect(bank().children).toHaveLength(4);
     expect(felt).toEqual(['tap', 'tap']);
@@ -98,7 +98,7 @@ describe('an answer built from word tiles', () => {
     await waitFor(() => expect(localStorage.getItem('hevalo_lesson_answer_mode')).toBe('keyboard'));
     first.unmount();
 
-    // the next one opens with the keyboard too, and the tiles are a tap away
+    // The next one opens with the keyboard too, with the tiles a tap away.
     renderWithProviders(<Held exercise={translate} />);
     await act(async () => undefined);
     expect(screen.getByLabelText('Your translation')).toBeTruthy();
@@ -114,7 +114,6 @@ describe('an answer built from word tiles', () => {
     expect(screen.queryByRole('button', { name: 'Use word tiles' })).toBeNull();
   });
 
-  // Soranî reads from the right: the line fills from there, and the bank starts there
   it('runs right to left for Soranî, on the line and in the bank', async () => {
     FakeAudio.made = [];
     vi.stubGlobal('Audio', FakeAudio);

@@ -38,12 +38,11 @@ import { heldDim } from './MotionParts';
 export type { SheetDetent } from './sheetMotion';
 
 /**
- * What a scroll view inside a sheet and the sheet tell each other: how far
- * the content is scrolled, so the sheet knows when a drag is its own, and
- * whether the sheet is being dragged, so the content holds still meanwhile.
+ * What a scroll view inside a sheet and the sheet share: the content's scroll offset, so the sheet knows when a drag is
+ * its own, and whether the sheet is being dragged, so the content holds still.
  */
 interface SheetScroll {
-  /** a scroll view arrives; returns its leaving */
+  /** Registers a scroll view; returns its unregister. */
   attach: () => () => void;
   onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scrollEnabled: boolean;
@@ -52,31 +51,22 @@ interface SheetScroll {
 const SheetScrollContext = createContext<SheetScroll | null>(null);
 
 /**
- * The grabber's box is 17 points tall across the sheet, and its top edge is
- * the sheet's own, which cuts off anything reaching past it: the 14 it once
- * reached upwards was never there. It reaches down only, 8 into the header,
- * where the ‹ and the ✕ are drawn after it and still win where the two meet.
+ * The grabber's box is 17 points tall with its top at the sheet's edge, which clips anything above, so it reaches
+ * down only, 8 into the header, where the ‹ and ✕ are drawn later and win where they meet.
  */
 const GRABBER_SLOP = { top: 0, bottom: 8, left: 0, right: 0 };
-/**
- * The ✕ and the ‹ are drawn as small circles with nothing close beside them,
- * so each reaches past its edges (`reach="open"`): 9 a side, a fingertip's 48.
- */
+/** The ✕ and ‹ are small circles with nothing beside them, so each reaches past its edges (`reach="open"`): 9 a side, to 48. */
 const ROUND = 30;
 /**
- * How far above the sheet's top edge a tap on the dimmed page does nothing.
- * A finger that meant the grabber or the header and landed a little high is
- * not asking to close the sheet, and closing it would lose what was in it.
- * Not a redirect: the tap is only not taken as a close.
+ * How far above the sheet's top edge a tap on the dimmed page is ignored: a finger aiming for the grabber or header
+ * and landing high is not asking to close the sheet and lose its content.
  */
 const SCRIM_GUARD = 12;
 
 /**
- * The ScrollView for content that can run longer than its sheet. The sheet
- * reads how far it is scrolled: a drag down with the content at its top moves
- * the sheet, any other drag scrolls the content, as in a system sheet. At its
- * top it does not bounce — the sheet is what gives there. Outside a sheet it
- * is a plain ScrollView.
+ * A ScrollView for content that may outgrow its sheet. The sheet reads its scroll offset: a downward drag with the
+ * content at its top moves the sheet, any other drag scrolls the content, as in a system sheet. It does not bounce
+ * at the top, since the sheet gives there. Outside a sheet it is a plain ScrollView.
  */
 export function SheetScrollView({ onScroll, scrollEnabled = true, ref, ...props }: ScrollViewProps & { ref?: Ref<ScrollView> }): React.JSX.Element {
   const sheet = useContext(SheetScrollContext);
@@ -101,40 +91,20 @@ export function SheetScrollView({ onScroll, scrollEnabled = true, ref, ...props 
 }
 
 /**
- * A sheet that rises from the bottom edge: the one shape every sheet in the
- * app takes.
+ * The one sheet shape in the app, rising from the bottom edge. The whole sheet is a handle: it follows the finger
+ * one to one from anywhere, with a rubber band past its top, unless the drag starts in content scrolled away from
+ * its top (`SheetScrollView`), which scrolls instead. On release it goes if the projected flick passes half of what
+ * shows, else settles at its nearest height carrying the finger's speed. A tap on the dimmed page, the ✕ (shown
+ * with or without a title) or the system back gesture also closes it.
  *
- * The whole sheet is a handle, as a system sheet is. It follows the finger
- * one to one from wherever the drag starts — the grabber, the header, the
- * content — and gives with the rubber band past its top. A drag that starts
- * in content scrolled away from its top scrolls the content instead (that
- * content goes in a `SheetScrollView`, which tells the sheet how far it is
- * scrolled). Let go, it decides by where the flick would have carried it:
- * past half of what shows and it goes, otherwise it settles at its nearest
- * height, carrying the finger's speed into the spring. A tap on the dimmed
- * page above, the ✕, or the system's back gesture closes it too. The ✕ is
- * there with or without a title, so a sheet whose content carries its own
- * heading (an item, a letter) still has it.
+ * It opens on the interface spring within 300 ms and leaves in the standard exit time, sooner after a fast flick
+ * (`leaveMs`), and reports closed as soon as it has left so the page behind takes taps at once.
  *
- * It opens on the interface's own spring, there within 300 ms, and leaves in
- * the time anything leaving takes — sooner when a flick was already taking it
- * faster (`leaveMs`). It is closed the moment it has left, so the page behind
- * takes a tap as soon as it is back in sight.
- *
- * By default it is as tall as its content, never more than nine tenths of
- * the screen. With `detents` it rests at those heights instead — iOS's
- * medium, about half the screen, and large, or shares of the screen — opening
- * at the shortest; a flick moves between them, the grabber cycles them, and
- * landing on another one is felt as a light knock. At a shorter one the rest
- * of the sheet waits below the screen's edge, and the content is laid out in
- * what shows.
- *
- * It keeps its last line clear of the home indicator, and moves up out of
- * the keyboard's way while a field in it is being typed into. It is never
- * wider than a sheet on a tablet.
- *
- * Under Reduce Motion it fades in and out and does not spring; a drag still
- * follows the finger, and a release lands where it is going at once.
+ * By default it fits its content up to nine tenths of the screen. With `detents` it rests at those heights
+ * (`medium`, `large`, or screen fractions), opening at the shortest; flicks move between them, the grabber cycles
+ * them, and each change gets a light haptic, with content laid out in what shows. It stays clear of the home
+ * indicator, moves above the keyboard while typing, and is never wider than a tablet sheet. Under Reduce Motion it
+ * fades instead of springing, and a release lands at once.
  */
 export function BottomSheet({
   visible,
@@ -151,20 +121,20 @@ export function BottomSheet({
 }: {
   visible: boolean;
   onClose: () => void;
-  /** the sheet's heading, beside the ✕ */
+  /** The sheet's heading, beside the ✕. */
   title?: string;
-  /** a title in a language of its own (a story's): the voice VoiceOver reads it in, and the side it starts from */
+  /** A title in its own language (a story's): the language VoiceOver reads it in, and its starting side. */
   titleLanguage?: { accessibilityLanguage: string; style?: StyleProp<TextStyle> };
-  /** a glyph before the title, when it says what kind of sheet this is (a flag for a report) */
+  /** A glyph before the title saying what kind of sheet this is (a flag for a report). */
   icon?: React.ComponentProps<typeof Icon>['name'];
-  /** a sheet in steps: a ‹ before the title, in the icon's place, back to the step before */
+  /** For a sheet in steps: a ‹ in the icon's place, back to the previous step. */
   onBack?: () => void;
-  /** false while something the sheet started is on its way (a delete): nothing closes it until it has answered */
+  /** False while something the sheet started is in flight (a delete); nothing closes it until that answers. */
   dismissible?: boolean;
-  /** the heights it rests at, `['medium', 'large']` or shares of the screen; without, it is as tall as its content */
+  /** The heights it rests at, `['medium', 'large']` or screen fractions; without, it fits its content. */
   detents?: readonly SheetDetent[];
   children: ReactNode;
-  /** padding and gaps inside the sheet, under the header */
+  /** Padding and gaps inside the sheet, under the header. */
   contentStyle?: StyleProp<ViewStyle>;
   testID?: string;
 }): React.JSX.Element {
@@ -175,7 +145,7 @@ export function BottomSheet({
   const reduce = useReducedMotion();
   const { height: screen } = useWindowDimensions();
   const cap = Math.round(screen * SHEET_MAX);
-  // the detents by value, not by the array a caller builds afresh each render
+  // The detents by value, not by the array a caller builds afresh each render.
   const detentKey = detents?.join(',') ?? '';
   const heights = useMemo(() => detentHeights(detents, screen), [detentKey, screen]);
   const stops = useMemo(() => restingOffsets(heights), [heights]);
@@ -185,14 +155,14 @@ export function BottomSheet({
   const y = useRef(new Animated.Value(0)).current;
   const [measured, setMeasured] = useState(0);
   const height = tallest ?? measured;
-  // where it rests now: the resting offset it last settled at, or is settling at
+  // Where it rests now: the offset it last settled at, or is settling at.
   const rest = useRef(lowest);
-  // how much of the sheet is below the screen's edge at rest, so its content is laid out in what shows
+  // How much of the sheet is below the screen's edge at rest, so content is laid out in what shows.
   const [hidden, setHidden] = useState(lowest);
   const closing = useRef(false);
   const [dragging, setDragging] = useState(false);
 
-  // up from below on the spring each time it opens, to its shortest height
+  // Springs up from below to its shortest height each time it opens.
   useEffect(() => {
     if (!visible) return;
     closing.current = false;
@@ -208,7 +178,7 @@ export function BottomSheet({
     return () => run.stop();
   }, [visible, reduce, screen, lowest, y]);
 
-  /** Close, unless it may not be closed yet; says whether it is going. `velocity` is a flick's, and `from` where the finger let go of it. */
+  /** Closes unless it may not close yet, and returns whether it is going. `velocity` is a flick's, `from` where the finger let go. */
   const dismiss = (velocity = 0, from = rest.current): boolean => {
     if (closing.current) return true;
     if (!dismissible) return false;
@@ -218,16 +188,16 @@ export function BottomSheet({
       return true;
     }
     const gone = (height || screen) + insets.bottom;
-    // a time, not a spring: it is closed as it leaves the screen, and not most of a second after (`leaveMs`)
+    // A timing rather than a spring, so it reports closed as it leaves the screen, not most of a second later (`leaveMs`).
     timing(y, gone, leaveMs(gone - from, velocity, duration.base, duration.quick)).start(() => onClose());
     return true;
   };
 
-  /** Rest at `offset`, from a finger let go at `velocity`; a different height than before is felt as it lands. */
+  /** Rests at `offset` after a release at `velocity`; a change of height gets a haptic as it lands. */
   const settle = (offset: number, velocity: number): void => {
     if (offset !== rest.current) haptic('tap');
     rest.current = offset;
-    // growing, its content has the room at once; shrinking, once it is down
+    // Growing, the content gets the room at once; shrinking, once it is down.
     if (offset < hidden) setHidden(offset);
     if (reduce) {
       y.setValue(offset);
@@ -237,7 +207,7 @@ export function BottomSheet({
     releaseSpring(y, offset, velocity).start(({ finished }) => finished && setHidden(offset));
   };
 
-  // the content's scroll, as a SheetScrollView reports it
+  // The content's scroll, as a SheetScrollView reports it.
   const scroll = useRef({ attached: 0, offset: 0 });
   const attach = useCallback(() => {
     scroll.current.attached += 1;
@@ -251,7 +221,7 @@ export function BottomSheet({
   }, []);
   const bridge = useMemo<SheetScroll>(() => ({ attach, onScroll, scrollEnabled: !dragging }), [attach, onScroll, dragging]);
 
-  // what the responders below (made once) read: always the latest
+  // What the responders below (created once) read: always the latest.
   const latest = { stops, height: height || screen, dismissible, cap, sized: tallest !== undefined, measured, dismiss, settle };
   const now = useRef(latest);
   now.current = latest;
@@ -265,13 +235,13 @@ export function BottomSheet({
       setDragging(false);
       const v = samples.velocity();
       const to = settleSheet(drag.at, v, now.current);
-      // a sheet that may not close yet settles as one let go too soon does
+      // A sheet that may not close yet settles as if released too soon.
       if (to === 'close' && now.current.dismiss(v, drag.at)) return;
       now.current.settle(to === 'close' ? Math.max(...now.current.stops) : to, v);
     };
     const shared = {
       onPanResponderGrant: (_e: unknown, g: PanResponderGestureState) => {
-        // from where the finger caught it, even mid-flight
+        // From where the finger caught it, even mid-flight.
         drag.dy0 = g.dy;
         drag.from = rest.current;
         drag.at = rest.current;
@@ -288,28 +258,28 @@ export function BottomSheet({
       },
       onPanResponderRelease: release,
       onPanResponderTerminate: release,
-      // a drag, once the sheet has it, stays the sheet's
+      // Once the sheet has a drag, it keeps it.
       onPanResponderTerminationRequest: () => false,
     };
     responders.current = {
-      // anywhere on the sheet, caught before the content can take it, when the drag is the sheet's to take
+      // Anywhere on the sheet, captured before the content, when the drag is the sheet's to take.
       whole: PanResponder.create({
         ...shared,
         onMoveShouldSetPanResponderCapture: (_e, g) => {
           if (!vertical(g)) return false;
           const s = scroll.current;
           if (s.attached > 0) return s.offset <= 0 && (g.dy > 0 || rest.current > Math.min(...now.current.stops));
-          // no scroll view says how far it is scrolled: safe while nothing in it can scroll, which is while it fits
+          // Without a scroll view reporting its offset, only safe while nothing can scroll, which is while it fits.
           return now.current.sized || now.current.measured < now.current.cap - 1;
         },
       }),
-      // the grabber and the header, always
+      // The grabber and the header, always.
       handle: PanResponder.create({ ...shared, onMoveShouldSetPanResponder: (_e, g) => vertical(g) }),
     };
   }
   const { whole, handle } = responders.current;
 
-  // the page behind dims less as the sheet is pulled down towards closing
+  // The backdrop dims less as the sheet is pulled down towards closing.
   const shown = (height || screen) - lowest;
   const dim = y.interpolate({ inputRange: [lowest, lowest + Math.max(1, shown)], outputRange: [1, 0], extrapolate: 'clamp' });
   const growing = hidden > 0;
@@ -318,15 +288,12 @@ export function BottomSheet({
     settle(at > 0 ? stops[at - 1]! : lowest, 0);
   };
 
-  // where the sheet is laid out, in the same place the scrim starts from (both fill the screen's top-left)
+  // The sheet's layout position, in the same frame the scrim starts from (both fill from the top left).
   const laidOut = useRef<{ x: number; y: number; width: number } | null>(null);
   /*
-   * A tap on the dimmed page closes the sheet, unless it lands in the band
-   * `SCRIM_GUARD` deep just above the sheet's top edge, over the sheet's
-   * width. The edge is where the sheet rests: its laid-out top, lowered by
-   * whatever part of it is kept below the screen at its height. A tap beside
-   * a sheet narrower than the screen (a tablet's) still closes it, and so
-   * does one whose place is not known (a screen reader's, a key's).
+   * A tap on the dimmed page closes the sheet, unless it lands in the `SCRIM_GUARD` band just above the sheet's
+   * resting top edge (its laid-out top, lowered by any part kept below the screen), across the sheet's width. A tap
+   * beside a narrower tablet sheet still closes it, as does one with no known position (screen reader, keyboard).
    */
   const onScrim = (e: GestureResponderEvent): void => {
     const { pageX, pageY } = e.nativeEvent;
@@ -338,7 +305,7 @@ export function BottomSheet({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={() => dismiss()} statusBarTranslucent>
-      {/* the sheet is not beside the controls of the screen it opened from, so no group of theirs caps its reach */}
+      {/* The sheet is not beside its opener's controls, so their reach group caps nothing here. */}
       <ReachReset>
         <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <Animated.View style={[styles.scrim, { backgroundColor: colors.scrim, opacity: dim }]}>
@@ -364,10 +331,10 @@ export function BottomSheet({
               },
             ]}
           >
-            {/* the handle: the grabber and the header are where the sheet can always be dragged from */}
+            {/* The handle: the sheet can always be dragged from the grabber and header. */}
             <View {...handle.panHandlers}>
               {stops.length > 1 ? (
-                // with heights to move between, the grabber is a control: a tap moves to the next one
+                // With detents, the grabber is a control: a tap moves to the next one.
                 <Pressable
                   onPress={cycle}
                   style={({ pressed }) => [styles.grabberBox, pressed && heldDim]}
@@ -407,7 +374,7 @@ export function BottomSheet({
                     {title}
                   </Text>
                 ) : (
-                  // no title: the content carries its own heading, and the ✕ stays on the closing side
+                  // No title: the content has its own heading, and the ✕ stays on the closing side.
                   <View style={styles.spacer} />
                 )}
                 <Pressable
@@ -441,17 +408,17 @@ const styles = StyleSheet.create({
   fill: { flex: 1, justifyContent: 'flex-end' },
   scrim: StyleSheet.absoluteFill,
   sheet: {
-    // a sheet on a tablet too, centred, rather than a band across the screen
+    // Centred on a tablet too, rather than a band across the screen.
     width: '100%',
     maxWidth: SHEET_MAX_WIDTH,
     alignSelf: 'center',
-    // and shorter than its content when the keyboard leaves it less room: its ScrollView takes up the difference
+    // And shorter than its content when the keyboard leaves less room; its ScrollView absorbs the difference.
     flexShrink: 1,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     overflow: 'hidden',
   },
-  // a fingertip of room round the grabber, so it can be caught
+  // A fingertip of room round the grabber, so it can be caught.
   grabberBox: { alignItems: 'center', paddingTop: spacing.sm, paddingBottom: spacing.xs },
   grabber: { width: 36, height: 5, borderRadius: radii.pill },
   header: {
@@ -463,8 +430,8 @@ const styles = StyleSheet.create({
   },
   title: { flex: 1, fontSize: typography.ios.row, fontWeight: typography.weights.semibold },
   spacer: { flex: 1 },
-  // the ✕ and the ‹: small circles, reaching a fingertip's 48 past their edges
+  // The ✕ and ‹: small circles reaching 48 past their edges.
   round: { width: ROUND, height: ROUND, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  // gives way under the 90% cap, so a ScrollView inside scrolls instead of being cut off
+  // Shrinks under the 90% cap, so a ScrollView inside scrolls instead of being cut off.
   content: { flexShrink: 1, paddingHorizontal: layout.gutter, gap: spacing.sm },
 });

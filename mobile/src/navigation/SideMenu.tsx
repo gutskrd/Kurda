@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, type ReactNode } from 'react';
+import { createContext, useCallback, useContext } from 'react';
 import { Animated, Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,11 +13,8 @@ import { useDirection } from '../reports/direction';
 import { useEdgePanel } from './edgePanel';
 
 /**
- * How much of the screen the panel covers.
- *
- * The strip of the screen left over is not decoration. It is what tells you
- * the app is still behind the panel rather than replaced by it, and it is
- * where you tap to get back.
+ * How much of the screen the panel covers. The strip left over shows the app is still behind it, and a tap there closes
+ * it.
  */
 const WIDTH_RATIO = 0.84;
 
@@ -26,13 +23,7 @@ export interface MenuLink {
   labelKey: TranslationKey;
   icon: IconName;
   onPress: () => void;
-  /**
-   * A count on the right of the row, for a destination with something
-   * waiting in it.
-   *
-   * Already a string rather than a number: `unreadBadge` caps it, so what
-   * arrives here is "3" or "9+" and this does not have to know which.
-   */
+  /** A count at the end of the row, already capped by `unreadBadge` ("3", "9+"). */
   badge?: string;
 }
 
@@ -43,47 +34,31 @@ export interface MenuGroup {
 }
 
 /**
- * The menu panel: the places that have no tab of their own.
- *
- * It belongs to Profile and comes in from that screen's menu button, at the
- * end of its header — so it slides in from the end edge, the side the button
- * is on. It slides over the app rather than pushing it: the screen behind
- * stays where it is and a scrim darkens it. The panel itself is a real
- * surface, the app's background colour, not a floating card, because it is
- * attached to the edge of the screen and a card would look like it had come
- * loose.
- *
- * Built on `Animated` and `PanResponder` from React Native itself. The
- * alternative was `@react-navigation/drawer`, which needs Reanimated and
- * Gesture Handler: two native dependencies and a rebuild for one panel. How
- * it moves is `useEdgePanel`, which the new-message panel shares.
+ * The menu panel: the places with no tab of their own. It belongs to Profile and slides in over the app, on a scrim,
+ * from the edge its button is on. It moves with `useEdgePanel` (React Native's `Animated` and `PanResponder`), shared
+ * with the new-message panel, so one panel needs no extra native dependencies.
  */
 export function SideMenu({
   open,
   onClose,
-  header,
   groups,
-  footer,
   side = 'start',
 }: {
   open: boolean;
   onClose: () => void;
-  /** Who you are, at the top. */
-  header?: ReactNode;
   groups: MenuGroup[];
-  footer?: ReactNode;
   /** The edge it comes from: the side its button is on. Mirrored in a right-to-left language. */
   side?: 'start' | 'end';
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
-  // which physical edge: the end is the right in a left-to-right language
+  // Which physical edge: the end is the right in a left-to-right language.
   const fromRight = (side === 'end') !== (dir.row === 'row-reverse');
   const sign = fromRight ? 1 : -1;
   const insets = useSafeAreaInsets();
   const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
-  // in and out on the interface's spring, shut under a finger, and shut by Android's back: every edge panel's motion
+  // The motion every edge panel shares: the interface spring, a drag to close, and Android's back.
   const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign });
 
   const renderLink = useCallback(
@@ -115,7 +90,6 @@ export function SideMenu({
     <View
       style={StyleSheet.absoluteFill}
       pointerEvents={open ? 'box-none' : 'none'}
-      // closed, it is not something a screen reader should find its way into
       accessibilityElementsHidden={!open}
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
     >
@@ -149,9 +123,8 @@ export function SideMenu({
           },
         ]}
       >
-        {/* past the screen's edge, so a panel pulled further open than it goes shows more panel, not a gap */}
+        {/* Past the screen's edge, so a panel pulled further open shows more panel rather than a gap. */}
         <View pointerEvents="none" style={[styles.skirt, fromRight ? styles.skirtRight : styles.skirtLeft, { width, backgroundColor: colors.background }]} />
-        {header ? <View style={styles.header}>{header}</View> : null}
 
         <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
           {groups.map((group, i) => (
@@ -163,20 +136,12 @@ export function SideMenu({
             </View>
           ))}
         </ScrollView>
-
-        {footer ? <View style={styles.footer}>{footer}</View> : null}
       </Animated.View>
     </View>
   );
 }
 
-/**
- * A way for a screen to open the panel without being handed a callback.
- *
- * The panel is owned by the tab shell, because it has to cover the tab bar.
- * The button that opens it belongs at the top of whatever screen you are on.
- * One of those is six components away from the other.
- */
+/** Lets any screen open the panel without a callback: the tab shell owns the panel, since it must cover the tab bar. */
 const OpenMenu = createContext<() => void>(() => {});
 
 export const MenuProvider = OpenMenu.Provider;
@@ -198,7 +163,6 @@ const styles = StyleSheet.create({
   skirt: { position: 'absolute', top: 0, bottom: 0 },
   skirtLeft: { right: '100%' },
   skirtRight: { left: '100%' },
-  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
   body: { paddingBottom: spacing.lg },
   group: { paddingVertical: spacing.xs },
   groupTitle: { ...sectionLabel, paddingHorizontal: spacing.lg, marginTop: spacing.md, marginBottom: spacing.xs },
@@ -220,5 +184,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
 });

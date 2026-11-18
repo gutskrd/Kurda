@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bucket, waitingCount, type RailFriend } from './rail';
+import { bucket, type RailFriend } from './rail';
 import { elapsed, lastSeen } from './time';
 import { LOCALES, TRANSLATIONS } from '../i18n/translations';
 
@@ -26,7 +26,7 @@ describe('bucket', () => {
     expect(b.offline.map((f) => f.userId)).toEqual(['away']);
   });
 
-  /* in a game counts as in a game, whatever the presence flag says */
+  /* In a game counts as in a game, whatever the presence flag says. */
   it('puts a friend in a game with the players even if they read as offline', () => {
     const b = bucket([friend({ userId: 'x', online: false, activity: { kind: 'race', since: '2026-09-28T11:00:00Z' } })]);
     expect(b.playing.map((f) => f.userId)).toEqual(['x']);
@@ -34,9 +34,8 @@ describe('bucket', () => {
   });
 
   /**
-   * The longest-running game first: a match twelve minutes old is closer to
-   * being over — and to somebody free to talk — than one that started thirty
-   * seconds ago.
+   * The longest-running game first: a match twelve minutes in is closer to over, and to somebody free to talk, than one
+   * just started.
    */
   it('orders players by how long they have been in', () => {
     const b = bucket([
@@ -61,17 +60,6 @@ describe('bucket', () => {
   });
 });
 
-describe('waitingCount', () => {
-  /*
-   * Unread group messages are deliberately not in it. A badge that counted every
-   * message is a number you learn to ignore; these are the two that go stale.
-   */
-  it('counts what expires, not what accumulates', () => {
-    expect(waitingCount({ unread: { requests: 2, challenges: 1, notifications: 40, groups: 99 } })).toBe(3);
-    expect(waitingCount({ unread: { requests: 0, challenges: 0, notifications: 12, groups: 7 } })).toBe(0);
-  });
-});
-
 /** A translator that interpolates for real, so a dropped placeholder shows up. */
 const translator = (loc: (typeof LOCALES)[number]) =>
   ((key, vars) =>
@@ -93,7 +81,7 @@ describe('elapsed', () => {
     expect(elapsed('not a date', t, NOW)).toBe('');
   });
 
-  /* a clock that is a little ahead must not produce a negative duration */
+  /* A clock that is a little ahead must not produce a negative duration. */
   it('never counts backwards', () => {
     expect(elapsed('2026-09-28T12:00:30Z', t, NOW)).toBe('just now');
   });
@@ -108,7 +96,7 @@ describe('lastSeen', () => {
     expect(lastSeen('2026-09-26T12:00:00Z', t, NOW)).toBe('2d ago');
   });
 
-  /* past a month the exact number stops meaning anything on a friends list */
+  /* Past a month the exact number stops meaning anything on a friends list. */
   it('stops counting the days after a month', () => {
     expect(lastSeen('2026-07-01T12:00:00Z', t, NOW)).toBe('a while ago');
   });
@@ -119,9 +107,8 @@ describe('lastSeen', () => {
   });
 
   /*
-   * Every shape in every language. These are abbreviations — `m` in English,
-   * `xl` for xulek in Kurmancî, `dk` in Turkish — so a dropped `{count}` is easy
-   * to miss and reads as a unit with no number in front of it.
+   * Every shape in every language. These are abbreviations (`m` in English, `xl` in Kurmancî, `dk` in Turkish), so a
+   * dropped `{count}` is easy to miss.
    */
   it('leaves no placeholder unfilled, in any language', () => {
     for (const loc of LOCALES) {

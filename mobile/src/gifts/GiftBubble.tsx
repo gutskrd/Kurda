@@ -14,13 +14,10 @@ import { useReportAction } from '../reports/reportAction';
 import { GiftBox } from './art';
 
 /**
- * A gift in the chat.
- *
- * To you, unopened: a wrapped present that breathes a little (still, with
- * Reduce Motion) and "Tap to open". Opened: what it was, and from whom. To the sender: what
- * they gave and whether it has been opened — "Opened ✓", or in a group how many
- * of the recipients have. To everyone else in a group: the wrapped present and
- * whom it is for. The price is never shown; a present is not a receipt.
+ * A gift in the chat. To you, unopened: a wrapped present that breathes a little (still under Reduce Motion) and "Tap
+ * to open"; opened: what it was and from whom. To the sender: what they gave and whether it was opened ("Opened ✓", or
+ * how many recipients have in a group). To everyone else in a group: the wrapped present and whom it is for. The price
+ * is never shown.
  */
 export function GiftBubble({
   card,
@@ -30,12 +27,12 @@ export function GiftBubble({
   onReport,
 }: {
   card: GiftCard;
-  /** the viewer sent it */
+  /** The viewer sent it. */
   mine: boolean;
   senderName: string;
-  /** unwrap (or look again at) the viewer's own gift */
+  /** Unwrap (or look again at) the viewer's own gift. */
   onOpen: (giftId: string) => void;
-  /** report the message it came in (someone else's): a long press, or a screen-reader action */
+  /** Report the message it came in (someone else's): a long press, or a screen-reader action. */
   onReport?: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -69,7 +66,7 @@ export function GiftBubble({
     <View
       style={[
         styles.bubble,
-        // the art leads on the reading side, and the roomier edge is the text's
+        // The art leads on the reading side, and the roomier edge is the text's.
         { flexDirection: dir.row, backgroundColor: colors.glassFill, borderColor: colors.gold },
         dir.row === 'row-reverse' ? styles.textLeft : styles.textRight,
       ]}
@@ -106,10 +103,10 @@ export function GiftBubble({
   }
   const giftId = card.myGiftId;
   return (
-    // a card, so it gives under the finger as every card does
+    // A card, so it gives under the finger as every card does.
     <PressableScale
       onPress={() => onOpen(giftId)}
-      // the bubble takes the touch, so the row's press-and-hold would never see it
+      // The bubble takes the touch, so the row's long press would never see it.
       onLongPress={onReport}
       delayLongPress={350}
       accessibilityRole="button"
@@ -121,8 +118,8 @@ export function GiftBubble({
   );
 }
 
-/** "For Rojda, Azad and 2 more" — names this viewer may see, "a group member" for the rest. */
-export function recipientsLine(card: GiftCard, t: Translate): string {
+/** "For Rojda, Azad and 2 more": names this viewer may see, "a group member" for the rest. */
+function recipientsLine(card: GiftCard, t: Translate): string {
   const names = card.recipients.map((r) => (r.isMe ? null : (r.name ?? t('gift.bubble.aMember')))).filter((n): n is string => n !== null);
   if (names.length === 0) return t('gift.bubble.forYou');
   const shown = names.slice(0, 2).join(', ');
@@ -131,7 +128,7 @@ export function recipientsLine(card: GiftCard, t: Translate): string {
     : t('gift.bubble.for', { names: shown });
 }
 
-/** The wrapped present, rising and settling slowly — a gift waiting is the one moving thing in a thread. */
+/** The wrapped present, rising and settling slowly: a waiting gift is the one moving thing in a thread. */
 function Breathing({ card }: { card: GiftCard }): React.JSX.Element {
   const { colors } = useTheme();
   const alive = useMotionAlive();

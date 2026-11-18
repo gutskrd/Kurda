@@ -8,11 +8,11 @@ vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// whether the screen under test is the one in front: a screen behind another reads nothing until it is come back to
+// Whether the screen under test is in front; a screen behind another reads nothing until it returns.
 const focus = vi.hoisted(() => ({ on: true }));
 vi.mock('@react-navigation/native', async () => ({ ...(await import('../play/testing/navigation')), useIsFocused: () => focus.on }));
 vi.mock('../widget/reload', () => ({ reloadLetterWidget: vi.fn() }));
-// a letter's notification arriving while the app is open, as the phone hands it over
+// Letter notifications arriving while the app is open.
 const pushes = vi.hoisted(() => ({ listeners: new Set<(notice: unknown) => void>() }));
 vi.mock('./letterPushes', () => ({
   onLetterNotice: (listener: (notice: unknown) => void) => {
@@ -35,7 +35,7 @@ import { DRAFTS_KEY, setDraftStoreForTests } from './drafts';
 import { LettersScreen } from './LettersScreen';
 import { LetterThreadScreen } from './LetterThreadScreen';
 
-// the birds' flights end at once, so what follows them follows at once
+// The birds' flights end at once, so what follows them happens at once.
 patchReactNativeWeb({ reduceMotion: true });
 
 const LETTER = 'Silav! Navê min Rojda ye. Tu çawa yî? Ez kurdî hîn dibim.';
@@ -59,7 +59,7 @@ const home = (over: Partial<LettersHome> = {}): LettersHome => ({
   paper: DEFAULT_PAPER,
   ...over,
 });
-/** The decor a letter written on the paper it opened on, with nothing drawn or stuck to it, is sent with. */
+/** The decor sent with a plain letter on the default paper. */
 const plain = { paper: DEFAULT_PAPER, strokes: [], notes: [] };
 const visitor: LetterVisitor = {
   person: baran,
@@ -83,7 +83,7 @@ let dropDrafts: () => void = () => undefined;
 beforeEach(() => {
   navigation.navigate.mockClear();
   focus.on = true;
-  // each test starts on a phone with nothing half written
+  // Each test starts with no drafts.
   dropDrafts = setDraftStoreForTests(memoryStore());
 });
 afterEach(() => {
@@ -94,13 +94,13 @@ afterEach(() => {
   window.dispatchEvent(new Event('resize'));
 });
 
-/** A phone 390 wide, so the window is drawn and what the birds do on its sill can be looked at; otherwise the screen has no width and draws none. */
+/** A phone 390 wide, so the window and its sill are drawn; without a width the screen draws none. */
 function phoneWide(): void {
   Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 390 });
   window.dispatchEvent(new Event('resize'));
 }
 
-/** Open the paper and write a letter on it. */
+/** Opens the paper and writes a letter on it. */
 async function write(body: string): Promise<void> {
   fireEvent.click(await screen.findByTestId('letters-write'));
   fireEvent.change(screen.getByTestId('letters-paper-input'), { target: { value: body } });
@@ -128,7 +128,7 @@ describe('the letters screen', () => {
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     await write(LETTER);
     fireEvent.click(screen.getByTestId('letters-paper-send'));
-    // the flight ends at once for a reader who asked for less motion, and the bird waits out there
+    // Under Reduce Motion the flight ends at once, and the bird waits outside.
     expect(await screen.findByTestId('letters-out')).toBeTruthy();
     expect(screen.getByText(/waiting out there with your letter until someone calls it/)).toBeTruthy();
     expect(screen.getByText('No birds are out right now. Send yours, and someone may call it to their window.')).toBeTruthy();
@@ -144,16 +144,16 @@ describe('the letters screen', () => {
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(await screen.findByText('2 birds are out there, each carrying a letter from someone your age.')).toBeTruthy();
     fireEvent.click(screen.getByTestId('letters-call'));
-    // their bird has come down to the window with its letter, and stands beside yours
+    // Their bird has landed with its letter beside yours.
     expect(await screen.findByText('Silav! Ez Baran im.')).toBeTruthy();
     expect(await screen.findByText('Baran’s bird is at your window')).toBeTruthy();
     expect(client.calls.find((c) => c.path === '/letters/call')?.body).toEqual({});
     await waitFor(() => expect(screen.getAllByTestId(/^letter-pigeon-(home|asleep)$/)).toHaveLength(2));
     expect(screen.getByTestId('letters-visitor')).toBeTruthy();
-    // your own bird stays home while it is here
+    // Your bird stays home while it is here.
     expect(screen.queryByTestId('letters-write')).toBeNull();
     expect(screen.queryByTestId('letters-call')).toBeNull();
-    // a single word is a letter, and the visiting bird carries it
+    // A single word is a letter, and the visiting bird carries it.
     fireEvent.change(screen.getByTestId('letters-visitor-answer-input'), { target: { value: 'Silav' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/letters/visitor')?.body).toEqual({ body: 'Silav', decor: plain }));
@@ -174,7 +174,7 @@ describe('the letters screen', () => {
     fireEvent.click(screen.getByTestId('letters-visitor-send-on'));
     fireEvent.click(screen.getByTestId('letters-visitor-send-on-yes'));
     await waitFor(() => expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/letters/visitor')).toBe(true));
-    // it picks its letter up and flies on, and your own bird may go out again
+    // It takes its letter and flies on, and your bird may go out again.
     await waitFor(() => expect(screen.queryByTestId('letters-visitor')).toBeNull());
     expect(await screen.findByTestId('letters-write')).toBeTruthy();
   });
@@ -204,7 +204,7 @@ describe('the letters screen', () => {
     fireEvent.click(await screen.findByTestId('letters-visitor-send-on'));
     fireEvent.click(screen.getByTestId('letters-visitor-send-on-yes'));
     expect(await screen.findByTestId('letters-visitor')).toBeTruthy();
-    // said under the answer being written, where the reader is
+    // Shown under the answer being written.
     expect(await screen.findByTestId('letters-visitor-answer-problem')).toBeTruthy();
   });
 
@@ -221,11 +221,11 @@ describe('the letters screen', () => {
     phoneWide();
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeTruthy();
-    // it has landed and laid the letter on the sill (at once, for a reader who asked for less motion)
+    // It has landed and laid the letter on the sill.
     await waitFor(() => expect(screen.getByTestId('letter-on-sill')).toBeTruthy());
     fireEvent.click(screen.getByTestId('letters-home-read'));
     expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
-    // read there and come back to: the screen is as the server now says, with your bird at home
+    // Read and returned to: the screen follows the server, with your bird home.
     homecoming = null;
     act(() => refocus());
     expect(await screen.findByTestId('letters-write')).toBeTruthy();
@@ -239,11 +239,11 @@ describe('the letters screen', () => {
     phoneWide();
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
-    // their bird has landed beside yours and laid the letter on the sill
+    // Their bird has landed beside yours and laid the letter on the sill.
     await waitFor(() => expect(screen.getByTestId('letter-on-sill')).toBeTruthy());
     fireEvent.click(screen.getByTestId('letters-home-read'));
     expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
-    // read there and come back to: their bird has gone, and the screen is as it was
+    // Read and returned to: their bird has gone.
     arrival = null;
     act(() => refocus());
     expect(await screen.findByTestId('letters-write')).toBeTruthy();
@@ -310,7 +310,7 @@ describe('the letters screen', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
     fireEvent.click(screen.getByTestId('letters-bird-confirm'));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/letters/bird')?.body).toEqual({ bird: 3 }));
-    // another phone spent them meanwhile: the screen reads them again and says what is missing
+    // Spent on another phone meanwhile: the screen re-reads and says what is missing.
     expect(await screen.findByText('You need 380 more Zêr.')).toBeTruthy();
   });
 
@@ -369,7 +369,7 @@ describe('a correspondence', () => {
     expect(await screen.findByText('Silav Rojda! Ez Baran im, ji Hewlêrê.')).toBeTruthy();
     fireEvent.change(screen.getByTestId('letters-reply-input'), { target: { value: 'Spas Baran! Çi xweş e.' } });
     fireEvent.click(screen.getByTestId('letters-reply-send'));
-    // the letter is on the table, and the paper is gone until their answer
+    // The letter is in the correspondence, and the paper is gone until their answer.
     expect(await screen.findByText('Spas Baran! Çi xweş e.')).toBeTruthy();
     expect(await screen.findByTestId('letters-waiting')).toBeTruthy();
     expect(screen.queryByTestId('letters-reply-input')).toBeNull();
@@ -403,7 +403,7 @@ const L1 = 'a1b2c3d4-0000-4000-8000-000000000001';
 const L2 = 'a1b2c3d4-0000-4000-8000-000000000002';
 const T2 = '7a0c2d3f-2e3b-4c4d-9e5f-6a7b8c9d0e1f';
 const azad = { id: 'u-azad', name: 'Azad', bird: 5 };
-/** A letter at the window still to land: a pen pal’s bird with Baran’s next letter, unless said otherwise. */
+/** A letter still to land: by default a pen pal's bird with Baran's next letter. */
 const landing = (over: Partial<LetterLanding> = {}): LetterLanding => ({
   letterId: L1,
   threadId: THREAD,
@@ -414,7 +414,7 @@ const landing = (over: Partial<LetterLanding> = {}): LetterLanding => ({
   deliveredAt: '2026-11-14T10:00:00.000Z',
   ...over,
 });
-/** Azad’s bird at the window, called by somebody and waiting for an answer. */
+/** Azad's bird at the window, called and waiting for an answer. */
 const azadsBird: LetterVisitor = { ...visitor, person: azad, letter: { ...visitor.letter, id: 'l77', body: 'Silav, ez Azad im.' } };
 const gets = (client: { calls: Array<{ method: string; path: string }> }): number => client.calls.filter((c) => c.method === 'GET' && c.path === '/letters?landings=1').length;
 const landedPosts = (client: { calls: Array<{ path: string; body?: unknown }> }): unknown[] => client.calls.filter((c) => c.path === '/letters/landed').map((c) => c.body);
@@ -437,7 +437,7 @@ describe('every bird lands at the window', () => {
     expect(navigation.navigate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId('letters-home-read'));
     expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
-    // said once, however many moments say so
+    // Reported once, however many times it is shown.
     expect(landedPosts(client)).toHaveLength(1);
   });
 
@@ -471,7 +471,7 @@ describe('every bird lands at the window', () => {
     testAuth.client = client;
     renderWithProviders(<LettersScreen onExit={() => undefined} bird={THREAD} onBirdUsed={() => undefined} />);
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD }));
-    // still at the window, Azad’s bird waits for its answer, and Baran’s letter has not landed
+    // Azad's bird still waits for its answer, and Baran's letter has not landed.
     expect(await screen.findByText('Silav, ez Azad im.')).toBeTruthy();
     expect(landedPosts(client)).toEqual([]);
     fireEvent.click(screen.getByTestId('letters-visitor-send-on'));
@@ -517,7 +517,7 @@ describe('every bird lands at the window', () => {
       renderWithProviders(<LettersScreen onExit={() => undefined} />);
       expect(await screen.findByTestId('letters-write')).toBeTruthy();
       const before = gets(client);
-      // just read: coming straight back asks nothing
+      // Just read, so coming straight back asks nothing.
       act(() => fronts.forEach((fn) => fn('active')));
       expect(gets(client)).toBe(before);
       landings = [landing()];
@@ -546,7 +546,7 @@ describe('every bird lands at the window', () => {
     const read = gets(client);
     act(() => pushes.listeners.forEach((hear) => hear({ threadId: THREAD, how: 'window', letterId: L1, fromUserId: null })));
     await flush();
-    // the focus read is the screen coming back; a notification while it is behind another asks nothing
+    // The focus read is the screen coming back; a notification while it is behind another asks nothing.
     expect(read).toBe(before + 1);
     expect(gets(client)).toBe(read);
   });
@@ -598,12 +598,12 @@ describe('every bird lands at the window', () => {
     const client = fakeClient({ [HOME]: () => Promise.resolve(ok(home({ landings }))), 'POST /letters/landed': ok(null) } as never);
     testAuth.client = client;
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
-    // the older letter first
+    // The older letter first.
     expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
     expect(screen.getByText('Another bird is waiting to come in.')).toBeTruthy();
     fireEvent.click(screen.getByTestId('letters-home-read'));
     expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
-    // read there and come back to: Azad’s bird comes in now
+    // Read and returned to: Azad's bird comes in now.
     landings = [landings[1]!];
     act(() => refocus());
     expect(await screen.findByText('Azad’s bird brought you a letter')).toBeTruthy();
@@ -650,13 +650,13 @@ describe('every bird lands at the window', () => {
     testAuth.client = client;
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(await screen.findByText('Silav, ez Azad im.')).toBeTruthy();
-    // under the visitor's words: your bird home with Baran's answer, and the way to read it
+    // Under the visitor's words: your bird home with Baran's answer, and the way to read it.
     expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeTruthy();
     expect(screen.getByTestId('letters-home-read')).toBeTruthy();
     await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }]));
     fireEvent.change(screen.getByTestId('letters-visitor-answer-input'), { target: { value: 'Silav Azad' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send it home with Azad’s bird' }));
-    // once Azad's bird has flown off with the answer, the letter still to read is what the window says
+    // Once Azad's bird has left with the answer, the window shows the letter still to read.
     await waitFor(() => expect(screen.queryByTestId('letters-visitor-answer-input')).toBeNull());
     await waitFor(() => expect(screen.queryByText('You and Azad are pen pals now')).toBeNull());
     expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeTruthy();
@@ -670,7 +670,7 @@ describe('every bird lands at the window', () => {
     testAuth.client = fakeClient({ [HOME]: () => Promise.resolve(ok(home({ visitor: at }))) } as never);
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.change(await screen.findByTestId('letters-visitor-answer-input'), { target: { value: 'Silav Baran, ez Rojda me.' } });
-    // its day is up: read again, the server has it at the window no more
+    // Its day is up, and the server no longer has it at the window.
     at = null;
     act(() => refocus());
     expect(await screen.findByText('Your answer is kept. You can send it with your own bird.')).toBeTruthy();
@@ -695,7 +695,7 @@ describe('every bird lands at the window', () => {
     const client = fakeClient({
       [HOME]: () => Promise.resolve(ok(home({ birdsOut: 2, sky: [4, 6], visitor: at }))),
       'POST /letters/call': () => {
-        // called on another phone a moment before
+        // Called on another phone a moment before.
         at = visitor;
         return Promise.resolve(fail({ code: 'VISITOR_HERE', status: 409 }));
       },
@@ -714,7 +714,7 @@ describe('every bird lands at the window', () => {
     testAuth.client = fakeClient({
       [HOME]: () => Promise.resolve(ok(home({ out }))),
       'POST /letters/out': () => {
-        // sent out from the website a moment before
+        // Sent out from the website a moment before.
         out = { since: '2026-11-13T10:00:00.000Z', visiting: false };
         return Promise.resolve(fail({ code: 'BIRD_OUT', status: 409 }));
       },
@@ -865,7 +865,7 @@ describe('a correspondence, kept up to date', () => {
       expect(await screen.findByTestId('letters-reply-input')).toBeTruthy();
       await flush();
       act(() => FakeSocket.all[0]!.hello());
-      // they said goodbye on their phone
+      // They said goodbye on their phone.
       closed = true;
       act(() => FakeSocket.all[0]!.push('user:me', { type: 'letters_changed' }));
       expect(await screen.findByTestId('letters-closed')).toBeTruthy();
@@ -888,7 +888,7 @@ describe('a correspondence, kept up to date', () => {
     fireEvent.click(screen.getByTestId('letters-reply-send'));
     expect(await screen.findByTestId('letters-waiting')).toBeTruthy();
     second.unmount();
-    // their answer comes, and the paper that opens for it is a fresh one
+    // Their answer arrives, and the paper that opens for it is fresh.
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     await waitFor(() => expect((screen.getByTestId('letters-reply-input') as HTMLTextAreaElement).value).toBe(''));
   });

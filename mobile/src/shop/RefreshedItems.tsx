@@ -13,12 +13,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
- * Items whose art was redrawn (shared/src/cosmetics.ts).
- *
- * The shop's backgrounds and icons are drawn by code now. Every item somebody
- * already owned got new art in the same mood and stayed theirs, and they are
- * told so once. That is all: a purchase is final, so there is nothing to hand
- * back and nowhere this sends them to do it.
+ * Items whose art was redrawn (shared/src/cosmetics.ts). Owned items got new art in the same mood and stayed theirs,
+ * and the owner is told so once; a purchase is final, so there is nothing to hand back.
  */
 
 type Inventory = { items: InventoryItem[] } & Partial<RefreshedInventory>;
@@ -27,11 +23,9 @@ const getInventory = (client: ApiClient): Promise<ApiResult<Inventory>> => clien
 const markSeen = (client: ApiClient): Promise<ApiResult<{ seen: boolean }>> => client.post('/me/inventory/refreshed/seen');
 
 /**
- * "We refreshed some backgrounds and icons — they're still yours", once.
- *
- * Mounted beside the screens. It asks the inventory when the app opens; when
- * there is something the person has not been told about, a small sheet says
- * so. Closing it marks it seen, on every device.
+ * "We refreshed some backgrounds and icons; they're still yours", once. Mounted beside the screens, it asks the
+ * inventory when the app opens and shows a small sheet when there is something unseen; closing it marks it seen on
+ * every device.
  */
 export function RefreshedNotice(): React.JSX.Element | null {
   const { client, user, isGuest } = useAuth();
@@ -40,7 +34,7 @@ export function RefreshedNotice(): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // a guest owns nothing from the shop, and the inventory is refused to one
+    // A guest owns nothing from the shop, and the inventory is refused to one.
     if (!user || isGuest) return;
     let active = true;
     void getInventory(client).then((res) => {

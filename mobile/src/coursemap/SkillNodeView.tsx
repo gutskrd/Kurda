@@ -18,18 +18,15 @@ import { RoundStars, TopicRing } from './TopicRing';
 import type { SkillNode } from './types';
 
 const { node: NODE } = PATH_GEOMETRY;
-/** How far the face goes down into its base under a finger (shared `PATH_STOP_ART.press`). */
+/** How far the face sinks into its base when pressed (shared `PATH_STOP_ART.press`). */
 const PRESS = PATH_STOP_ART.press;
 
 type Stop = PathStop<SkillNode>;
 
 /**
- * What coming back from a lesson changed about this stop, to show rather than
- * only draw (shared `pathChanges`, timed by `PATH_RETURN`): its ring moved on
- * (`ring`: a piece filled, or a round made whole and a star earned), finished
- * (it pops and turns gold from how it looked, `wasLook`), opened (the lock
- * gives way to its number, and it pops), the bubble's new place, or a unit's
- * prize won (its story, or its chest: it wobbles, then bursts open).
+ * What a return from a lesson changed about this stop (shared `pathChanges`, timed by `PATH_RETURN`): its ring
+ * moved on (`ring`), it finished and turns gold from `wasLook`, it opened, the bubble moved here, or a unit's prize
+ * was won.
  */
 export interface StopChange {
   ring?: RingChange;
@@ -42,37 +39,22 @@ export interface StopChange {
 
 /** How far a stop swells as it pops. */
 const POP = 1.12;
-/** How far the current skill's pool of light swells, once, and how long after the path opens — when the page has scrolled to it. */
+/** How far the current skill's glow swells, once, and how long after the path opens, when the page has scrolled to it. */
 const PULSE = 1.08;
 const PULSE_AT_MS = 700;
 
 /**
- * One stop on the lesson path: a chunky raised disc in its unit's colour —
- * the shared drawing, its face over a darker base with one highlight — with
- * what it is said by its glyph as well as its colour: a gold coin when done,
- * with a star on it for each round of its lessons played (one to three, and a
- * small review sign once a refresh would help), the number of an open skill,
- * a padlock when closed, review's arrows. Round every skill is its ring, a
- * piece for each lesson (TopicRing): violet as they are finished in the round
- * being played, and gold all round once all three rounds are. A chapter's
- * story closes it as its prize, rolled up on stone until the chapter is done
- * and open on gold from then on (a unit without a story ends at its chest),
- * and the first skill of a later unit that can be jumped to is the gate the
- * jump goes through. Pressed, the face sinks into its base.
+ * One stop on the lesson path: a raised disc in its unit's colour (shared drawing) whose glyph says what it is, a
+ * gold coin with one to three stars when done, a number when open, a padlock when locked, arrows for review. Skills
+ * wear a ring with one piece per lesson (TopicRing). A chapter ends at its story, and a jumpable unit's first stop
+ * is drawn as a gate. Pressed, the face sinks into its base.
  *
- * The current skill stands higher, in a soft pool of its unit's light, with
- * the learner standing on it (LessonPath's LearnerToken); over them the
- * "Start" (or "Continue") flag, which opens its next lesson in one tap. The
- * whole of it bobs gently while the path is in front (`bob`), and stands
- * still for anyone who has asked their phone for less motion. Its pool of
- * light swells once as the path opens on it.
+ * The current skill stands higher in a glow of its unit's colour, with the learner on it and a "Start" flag above.
+ * It bobs while the path is in view, not under Reduce Motion.
  *
- * Back from a lesson, a stop shows what the lesson did to it (`change`): the
- * ring's piece fills, a finished stop pops as it turns gold and its star
- * drops in, a round made whole on a gold stop earns the next star, an opened
- * one trades its padlock for its number with a pop and a light knock, a
- * chapter's prize wobbles and bursts open, and the flag arrives last. Under
- * Reduce Motion there is no `change`: the path is simply as it now is.
+ * After a lesson, `change` animates what it did to the stop: the ring fills, the stop pops and turns gold, a star
+ * drops in, a padlock gives way to a number, a prize bursts open, and the flag arrives last. Under Reduce Motion
+ * there is no `change`.
  */
 export function SkillNodeView({
   stop,
@@ -92,27 +74,27 @@ export function SkillNodeView({
   onStart,
 }: {
   stop: Stop;
-  /** where the stop's round sits in its unit's path, in points */
+  /** The stop's position across its unit's path, in points. */
   left: number;
   top: number;
   tone: ToneColors;
-  /** the unit's colour by name, for the shared drawing */
+  /** The unit's colour by name, for the shared drawing. */
   unitTone: UnitTone;
-  /** everything the stop is, for a screen reader */
+  /** The stop's full screen-reader label. */
   label: string;
-  /** the word over the current skill, and what a screen reader says for it */
+  /** The flag text over the current skill, and its screen-reader label. */
   callout?: { text: string; label: string };
-  /** what coming back from a lesson changed here, played once */
+  /** What a return from a lesson changed here, played once. */
   change?: StopChange | null;
-  /** the first stop of a unit that can be jumped to, and the words over it */
+  /** The flag text over the first stop of a unit that can be jumped to. */
   jump?: { text: string };
-  /** drawn in full; a stop far from the screen is a plain round in its colour */
+  /** Drawn in full; far from the screen it is a plain round in its colour. */
   near?: boolean;
-  /** the current stop's bob, shared with the learner standing on it */
+  /** The current stop's bob, shared with the learner on it. */
   bob?: Animated.Value | null;
-  /** the bob is running (for a test to tell a stop that moves from one that stands still) */
+  /** Whether the bob is running, so tests can tell. */
   bobbing?: boolean;
-  /** its rise as its unit first comes into view: 0 under the ground, 1 in place */
+  /** Its rise as its unit first comes into view: 0 under the ground, 1 in place. */
   rise?: Animated.AnimatedInterpolation<number> | null;
   onPress: () => void;
   onStart?: () => void;
@@ -125,18 +107,18 @@ export function SkillNodeView({
   const finishing = !!change?.finishing;
   const opening = !!change?.opening;
   const unlocking = !!change?.unlocking;
-  // how it looked before it turned gold: drawn over the gold until the stop pops
+  // Its look before turning gold, drawn over the gold until the stop pops.
   const was = finishing && change?.wasLook && change.wasLook !== look ? change.wasLook : null;
-  // a prize won by the lesson: shut as it was until it has wobbled, then open
+  // A prize won by the lesson stays shut until it has wobbled, then opens.
   const shutLook: PathStopLook = stop.kind === 'story' ? 'storyLocked' : 'chest';
 
-  // a pop as it finishes or opens; an opened stop's padlock gives way to its number
+  // A pop as it finishes or opens; an opened stop's padlock gives way to its number.
   const pop = useRef(new Animated.Value(1)).current;
   const lock = useRef(new Animated.Value(opening ? 1 : 0)).current;
   const shut = useRef(new Animated.Value(unlocking ? 1 : 0)).current;
   const before = useRef(new Animated.Value(was ? 1 : 0)).current;
   const wobble = useRef(new Animated.Value(0)).current;
-  // a stop already on the path when the change arrives starts from how it was, from the first frame it is drawn changing
+  // A stop already drawn when the change arrives starts from its old look, from the first frame.
   const seen = useRef(change);
   if (seen.current !== change) {
     seen.current = change;
@@ -166,7 +148,7 @@ export function SkillNodeView({
     const run = Animated.parallel([
       Animated.sequence([Animated.delay(at), timing(pop, POP, half), springTo(pop, 1, 'bouncy')]),
       ...(opening ? [timing(lock, 0, PATH_RETURN.glyphMs, { delay: at })] : []),
-      // it turns gold as it pops
+      // It turns gold as it pops.
       ...(finishing ? [timing(before, 0, half, { delay: at })] : []),
     ]);
     run.start();
@@ -180,11 +162,11 @@ export function SkillNodeView({
   const glyph = glyphOf(stop, look, tone, FACE_INK[scheme]);
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
-  // its ring, as it is now and, coming back from a lesson that moved it on, as it was
+  // Its ring now, and as it was before a lesson that moved it on.
   const ring = near ? ringOf(stop) : null;
   const moved = change?.ring && stop.kind === 'skill' ? change.ring : null;
   const roundDone = !!moved && moved.to.rounds > moved.from.rounds;
-  // the stars on a finished skill's coin; the one the lesson earned drops in
+  // The stars on a finished skill's coin; the one this lesson earned drops in.
   const stars = stop.kind === 'skill' && stop.state === 'done' && stop.rounds > 0 ? stop.rounds : 0;
 
   return (
@@ -196,7 +178,7 @@ export function SkillNodeView({
         <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="none">
           {ring && stop.kind === 'skill' ? (
             <TopicRing
-              // a return gives the ring a new start
+              // A return remounts the ring so it starts again.
               key={moved ? 'moving' : 'still'}
               ring={ring}
               from={moved ? ringAt(stop, moved.from) : null}
@@ -207,7 +189,7 @@ export function SkillNodeView({
           ) : null}
           {near ? <StopArt look={look} tone={unitTone} part="base" near={near} /> : <View style={[styles.plainLip, { backgroundColor: plainColour(look, tone, rest).lip }]} />}
           {opening && near ? (
-            // the closed stone it was, over it until it opens
+            // The locked stone it was, over it until it opens.
             <Animated.View style={[StyleSheet.absoluteFill, { opacity: lock }]}>
               <StopArt look="locked" tone={unitTone} part="base" near />
             </Animated.View>
@@ -261,7 +243,7 @@ export function SkillNodeView({
               <View style={[styles.plainFace, { backgroundColor: plainColour(look, tone, rest).face }]} />
             )}
             {opening && !glyph ? (
-              // the stop to do now: its padlock goes, and the learner arrives on it
+              // The current stop: its padlock goes and the learner arrives on it.
               <Animated.View style={[styles.glyph, { opacity: lock }]} pointerEvents="none">
                 <Icon name="lock" size={26} color={FACE_INK[scheme].stone} />
               </Animated.View>
@@ -270,7 +252,7 @@ export function SkillNodeView({
             {glyph ? (
               <View style={styles.glyph} pointerEvents="none">
                 {stop.kind === 'skill' && stop.state === 'available' && opening ? (
-                  // the padlock it had, giving way to its number
+                  // The padlock it had, giving way to its number.
                   <>
                     <Animated.View style={[styles.glyphLayer, { opacity: lock }]}>
                       <Icon name="lock" size={26} color={FACE_INK[scheme].stone} />
@@ -299,19 +281,18 @@ export function SkillNodeView({
 }
 
 /**
- * The glyph on a stop's face, by what it is: a skill's number or padlock,
- * review's arrows. A finished skill's coin carries its stars instead (one for
- * each round played; a check only on a map too old to count them), the
- * current skill the learner standing on it, and the drawn stops their own.
+ * The glyph on a stop's face: a skill's number or padlock, or review's arrows. A finished coin carries its stars
+ * instead (a check only on a map too old to count them), the current skill carries the learner, and the drawn
+ * stops carry their own.
  */
 function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark']): { icon?: IconName; number?: number; colour: string } | null {
   if (stop.kind === 'review') return { icon: 'review', colour: ink.paper(tone) };
   if (stop.kind !== 'skill' || look === 'jump') return null;
   switch (stop.state) {
-    // cream on a finished stop's gold, whatever the chapter: what was earned looks the same everywhere
+    // Cream on gold in every chapter, so what was earned looks the same everywhere.
     case 'done':
       return stop.rounds > 0 ? null : { icon: 'check', colour: DONE_INK };
-    // the learner stands on the current skill: their picture is its glyph
+    // The learner's picture is the current skill's glyph.
     case 'current':
       return null;
     case 'available':
@@ -321,31 +302,27 @@ function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_I
   }
 }
 
-/** A stop far from the screen, drawn as a plain round in the colour its drawing has. */
+/** A stop far from the screen, as a plain round in its drawing's colour. */
 function plainColour(look: string, tone: ToneColors, rest: (typeof REST)['dark']): { face: string; lip: string } {
   if (look === 'done' || look === 'strong' || look === 'refresh' || look === 'story') return { face: GOLD_TOKEN.face, lip: GOLD_TOKEN.lip };
   if (look === 'current') return { face: tone.fill, lip: tone.lip };
   return { face: rest.fill, lip: rest.lip };
 }
 
-/** A finished stop's gold token and its glyph (shared art/path-land.ts), for a stop drawn plain while far from the screen. */
+/** A finished stop's gold and glyph colours (shared art/path-land.ts), for drawing it plain. */
 const GOLD_TOKEN = { face: '#e9a93b', lip: '#b8781f' } as const;
 const DONE_INK = '#fffaf0';
 
-/** A stable name per kind of stop, for tests and for the screenshots that check the path. */
+/** A stable name per kind of stop, for tests and the screenshots that check the path. */
 function testName(stop: Stop): string {
   if (stop.kind !== 'skill') return stop.kind;
   return stop.state;
 }
 
-/** The soft pool of the unit's light the current skill stands in. */
+/** The size of the glow the current skill stands in. */
 const GLOW = { rx: 66, ry: 32 } as const;
 
-/**
- * The soft pool of its unit's light the current skill stands in, which swells
- * once as the path opens on it, so the eye finds it. Opacity and scale only,
- * on the native driver, and still under Reduce Motion.
- */
+/** The glow under the current skill, which swells once as the path opens so the eye finds it. Native driver; still under Reduce Motion. */
 function Glow({ fill }: { fill: string }): React.JSX.Element {
   const reduce = useReducedMotion();
   const pulse = useRef(new Animated.Value(1)).current;
@@ -354,7 +331,7 @@ function Glow({ fill }: { fill: string }): React.JSX.Element {
     const run = Animated.sequence([Animated.delay(PULSE_AT_MS), timing(pulse, PULSE + 0.06, duration.quick + 40), springTo(pulse, 1, 'bouncy')]);
     run.start();
     return () => run.stop();
-    // once, as it is first drawn
+    // Once, on first draw.
   }, []);
   return (
     <Animated.View style={[styles.glow, { transform: [{ scale: pulse }] }]} pointerEvents="none">
@@ -373,13 +350,9 @@ function Glow({ fill }: { fill: string }): React.JSX.Element {
 }
 
 /**
- * "Start" over the current skill, over the learner standing on it: a chunky
- * flag in the unit's colour on its darker lip, outlined like the stops. It
- * moves with the stop's bob (`bobbing` says so, for a test), which stops the
- * moment the screen is not the one in view, the app is not in front, or the
- * phone asks for less motion. It gives under the finger as every button
- * does. "Jump here?" over a later unit stands over the gate, still, from the
- * first: it is an offer, not the next step.
+ * The "Start" flag over the current skill and the learner on it. It bobs with the stop while the screen is in view
+ * and the app is in front, never under Reduce Motion, and gives under a finger like every button. "Jump here?" over
+ * a later unit stays still, since it is an offer rather than the next step.
  */
 function Callout({
   text,
@@ -390,7 +363,7 @@ function Callout({
 }: {
   text: string;
   label: string;
-  /** it has just moved here from the stop before: it fades in once the rest of the path has moved */
+  /** It just moved here from the previous stop, so it fades in once the rest of the path has moved. */
   arriving: boolean;
   bobbing: boolean;
   onPress: () => void;
@@ -407,7 +380,7 @@ function Callout({
     run.start();
     return () => run.stop();
   }, [reduce, arriving, shown]);
-  // by day the valley's ink with cream words; by evening a cream pill with the ink
+  // Ink with cream text by day; a cream pill with ink text by evening.
   const pill = scheme === 'dark' ? { face: '#fffaf0', edge: '#d6c7a6', words: '#3d2a1f' } : { face: '#3d2a1f', edge: '#24170f', words: '#fffaf0' };
   return (
     <Animated.View style={[styles.calloutWrap, { opacity: shown }]} pointerEvents="box-none" testID={bobbing ? 'lp-callout-bobbing' : undefined}>
@@ -469,7 +442,7 @@ const styles = StyleSheet.create({
   glow: { position: 'absolute', left: STOP_FACE.x - GLOW.rx, top: STOP_FACE.y + PATH_STOP_ART.raised + 4 - GLOW.ry },
   calloutWrap: {
     position: 'absolute',
-    // over the learner standing on the stop: the face's middle, less the token, less a little air
+    // Above the learner on the stop: the face's middle, plus the token, plus a little air.
     bottom: STOP_HEIGHT - STOP_FACE.y + TOKEN_HEIGHT + 6 + spacing.xs,
     left: (NODE - CALLOUT_WIDTH) / 2,
     width: CALLOUT_WIDTH,

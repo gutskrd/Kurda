@@ -1,13 +1,8 @@
 // @vitest-environment jsdom
 /**
- * One exercise giving way to the next: the question that was answered leaves
- * as the next one arrives, exactly as it stood, and nothing else on the
- * screen turns with it.
- *
- * Kept apart from the lesson's other tests because it holds every timing
- * until the test lets it finish (as the intro's tests do): under test an
- * animation otherwise ends the moment it begins, and an exercise on its way
- * out would never be seen on its way.
+ * One exercise giving way to the next: the answered question leaves as it stood while the next arrives, and nothing
+ * else turns. Kept apart because it holds every animation until the test releases it; otherwise animations end at
+ * once under test and the leaving exercise is never seen.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -66,7 +61,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Every held animation runs to its end: what was leaving has gone. */
+/** Runs every held animation to its end, so whatever was leaving is gone. */
 function finishAll(): void {
   act(() => held.runs.splice(0).forEach((run) => run.finish()));
 }
@@ -93,21 +88,21 @@ describe('one exercise giving way to the next', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
 
-    // going forward, in a language read from the left: out by the start side
+    // Going forward in a left-to-right language: out by the start side.
     const leaving = await screen.findByTestId('slide-out-start');
     const arriving = screen.getByTestId('slide-in');
     expect(leaving.textContent).toContain('Water?');
     expect(arriving.textContent).toContain('Bread?');
-    // exactly as it stood: the answer that was given is still the one chosen, and marked right
+    // Exactly as it stood: the given answer is still chosen and marked right.
     expect(within(leaving).getByRole('radio', { name: /^av/, hidden: true }).getAttribute('aria-checked')).toBe('true');
-    // the question to answer is the one arriving: its two options, with nothing chosen, are all a screen reader is offered
+    // Screen readers are offered only the arriving question's two options, with nothing chosen.
     const offered = screen.getAllByRole('radio');
     expect(offered).toHaveLength(2);
     for (const option of offered) {
       expect(arriving.contains(option)).toBe(true);
       expect(option.getAttribute('aria-checked')).toBe('false');
     }
-    // the bar above and the footer below stay where they are
+    // The bar above and the footer below stay put.
     for (const fixed of [screen.getByRole('progressbar'), screen.getByRole('button', { name: 'Check' })]) {
       expect(leaving.contains(fixed)).toBe(false);
       expect(arriving.contains(fixed)).toBe(false);
@@ -131,12 +126,7 @@ describe('one exercise giving way to the next', () => {
     expect(screen.queryByTestId('slide-out-start')).toBeNull();
   });
 
-  /*
-   * The exercise on its way out is the previous one, and the lesson has
-   * moved on: what happens in it must not be taken as the next one's answer.
-   * Put off while it could still be answered, it leaves with its field open,
-   * and typing into it then would have filled in the exercise arriving.
-   */
+  // Put off while still answerable, the leaving exercise keeps its field open; typing there must not fill in the next one.
   it('takes nothing from the exercise that is leaving as the next one’s answer', async () => {
     FakeAudio.made = [];
     vi.stubGlobal('Audio', FakeAudio);
@@ -157,7 +147,7 @@ describe('one exercise giving way to the next', () => {
     expect((screen.getByRole('textbox') as HTMLInputElement | HTMLTextAreaElement).value).toBe('');
   });
 
-  // somebody who turned speaking off is never shown the exercise that is passed over, on its way in or on its way out
+  // For someone who turned speaking off, a skipped speaking exercise is never shown, arriving or leaving.
   it('never draws a speaking exercise that is passed over, and never opens its microphone', async () => {
     mic.reset();
     testAuth.client = fakeClient({ ...standing(true), ...right });
@@ -167,7 +157,7 @@ describe('one exercise giving way to the next', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
 
-    // the question answered is what leaves, and the one after the speaking exercise is what arrives
+    // The answered question leaves, and the one after the speaking exercise arrives.
     const leaving = await screen.findByTestId('slide-out-start');
     expect(leaving.textContent).toContain('Water?');
     expect(screen.getByTestId('slide-in').textContent).toContain('Bread?');

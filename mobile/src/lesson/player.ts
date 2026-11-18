@@ -2,10 +2,8 @@ import { feedbackKind, type ExerciseType, type Feedback } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * The lesson player's rules live in @kurda/shared (lesson-player.ts), so the
- * phone and the browser play a lesson the same way: no hearts, a missed item
- * asked again a few exercises later, and a resumed lesson that picks up where
- * it stopped. What is left here is the phone's own words for them.
+ * The lesson player's rules live in @kurda/shared (lesson-player.ts), so phone and website play lessons the same
+ * way: no hearts, missed items asked again a few exercises later, and resumable lessons. This adds the phone's words.
  */
 export {
   REASK_GAP,
@@ -28,13 +26,9 @@ export {
 } from '@kurda/shared';
 
 /**
- * The feedback banner's headline, which must be true of the answer
- * (`feedbackKind`).
- *
- * A strict spelling item grades the same slip (e for ê) as a typo that is NOT
- * accepted — the letter is what it tests. A spoken answer was never graded by
- * the server: its verdict is the learner's own rating of their recording, so a
- * recording that counted is just that: saved.
+ * The feedback banner's headline, which must be true of the answer (`feedbackKind`). A strict spelling item grades
+ * a slip (e for ê) as an unaccepted typo, since the letter is what it tests. A spoken answer is never graded by the
+ * server; a recording that counted is simply saved.
  */
 export function feedbackTitle(feedback: Feedback): TranslationKey {
   switch (feedbackKind(feedback)) {
@@ -54,10 +48,8 @@ export function feedbackTitle(feedback: Feedback): TranslationKey {
 }
 
 /**
- * How an answer is felt as its verdict arrives: crisp for a right one, a
- * gentle double for one that was not (never the harsh error buzz — a miss is
- * part of learning). A spoken answer is the learner's own rating of their
- * recording rather than a grade, so it is not felt as either.
+ * The haptic for a verdict: crisp for right, a gentle double for wrong (never the error buzz, since a miss is part
+ * of learning). A spoken answer is the learner's own rating, so it gets neither.
  */
 export function answerFeel(type: ExerciseType | undefined, accepted: boolean): 'correct' | 'wrong' | null {
   if (type === 'speaking') return null;

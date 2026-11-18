@@ -17,18 +17,14 @@ import { ImpostorStart, type CouchAsk } from './ImpostorStart';
 import { dialectNameKey } from '../i18n/dialectName';
 
 /**
- * Impostor on the phone: without an id, the start (ImpostorStart.tsx:
- * the game in a line and one thing to press), offered only where approved
- * word cards are; with one, the room (play/GameRoom.tsx) with the table
- * inside. A code, an invite, a
- * card or the next round opens a room here as new params on the same screen.
- * From the start, "Play on this phone" opens the game for people in one room
- * (CouchGame.tsx); the back arrow there returns to the start.
+ * Impostor on the phone: without an id, the start (ImpostorStart.tsx), offered only where approved word cards exist;
+ * with one, the room (play/GameRoom.tsx). A code, an invite, a card or the next round opens a room here as new params.
+ * "Play on this phone" opens the game for one room (CouchGame.tsx).
  */
 export function ImpostorScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const [id, setId] = useState<string | null>(initialId ?? null);
-  // the game on one phone, and what was chosen on the way into it (a way to play, a category)
+  // The game on one phone, and what was chosen on the way in (a way to play, a category).
   const [couch, setCouch] = useState<CouchAsk | null>(null);
   useEffect(() => {
     if (initialId) setId(initialId);
@@ -39,7 +35,7 @@ export function ImpostorScreen({ id: initialId, onExit }: { id?: string; onExit:
     <GradientBackground>
       <ScreenHeader title={t(onOnePhone ? 'games.couch.title' : 'games.impostor.name')} onBack={onOnePhone ? () => setCouch(null) : onExit} />
       {onOnePhone ? (
-        // the game on one phone scrolls itself, so its button can stay under the list
+        // The game on one phone scrolls itself, so its button can stay under the list.
         <CouchGame ask={couch} onLeave={() => setCouch(null)} />
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -53,9 +49,8 @@ export function ImpostorScreen({ id: initialId, onExit }: { id?: string; onExit:
 type LobbySettings = { difficulty?: keyof typeof PARTY_LEVEL_KEY; clueSeconds?: number; category?: string | null };
 
 /**
- * What a lobby plays with, for the people waiting in it: the variety, the
- * level, the category when the host chose one (by its Kurdish name, read from
- * the list the host chose in) and the time for a clue.
+ * What a lobby plays with, for those waiting in it: the variety, the level, the category the host chose (by its Kurdish
+ * name) and the time for a clue.
  */
 function LobbyNote({ dialect, settings }: { dialect: GameDialect; settings: LobbySettings }): React.JSX.Element {
   const { colors } = useTheme();

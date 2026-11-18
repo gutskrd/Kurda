@@ -2,11 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-native', () => import('../play/testing/native'));
-/*
- * The timing a slide leaves on, held until the test lets it finish: under
- * test every animation otherwise ends the moment it begins, and a slide on
- * its way out would never be seen on its way.
- */
+// The leaving timing is held until the test releases it; otherwise animations end at once under test and the leaving slide is never seen.
 const held = vi.hoisted(() => ({ runs: [] as { finish: () => void }[] }));
 vi.mock('./animate', async (original) => ({
   ...(await original<typeof import('./animate')>()),
@@ -35,14 +31,14 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-/** Every held animation runs to its end: the slide that was leaving has gone. */
+/** Runs every held animation to its end, so the leaving slide is gone. */
 function gone(): void {
   act(() => held.runs.splice(0).forEach((run) => run.finish()));
 }
 
 const mounted: string[] = [];
 
-/** A slide with something of its own: a count it keeps, and a note of each time it is mounted. */
+/** A slide with its own state: a count it keeps, and a record of each mount. */
 function Counter({ name }: { name: string }): React.JSX.Element {
   const [count, setCount] = useState(0);
   const leaving = useSlideLeaving();
@@ -72,7 +68,7 @@ describe('a slide giving way to the next', () => {
         <Counter name="second" />
       </SlideSwap>,
     );
-    // a picture of its props: what it kept for itself is not in the still
+    // A still pictures its props, without what the slide kept for itself.
     expect(within(screen.getByTestId('slide-out-start')).getByText('first: 0, leaving')).toBeTruthy();
     expect(within(screen.getByTestId('slide-in')).getByText('second: 0')).toBeTruthy();
     expect(mounted).toEqual(['first', 'first', 'second']);
@@ -95,7 +91,7 @@ describe('a slide giving way to the next', () => {
         <Counter name="second" />
       </SlideSwap>,
     );
-    // the same slide, not another one: its count is kept and it was mounted once
+    // The same slide, not another: its count is kept and it mounted once.
     expect(within(screen.getByTestId('slide-out-start')).getByText('first: 1, leaving')).toBeTruthy();
     expect(within(screen.getByTestId('slide-in')).getByText('second: 0')).toBeTruthy();
     expect(mounted).toEqual(['first', 'second']);
@@ -119,7 +115,6 @@ describe('a slide giving way to the next', () => {
     expect(within(screen.getByTestId('slide-out-end')).getByText('first: 0, leaving')).toBeTruthy();
   });
 
-  // beside the slide arriving, the one going is not offered to a screen reader: it is not there to be read or pressed
   it('hides the slide that is leaving from a screen reader', () => {
     const { rerender } = render(
       <SlideSwap id="a" direction="forward" held>
@@ -151,7 +146,7 @@ describe('a slide giving way to the next', () => {
       </SlideSwap>,
     );
     rerender(first);
-    // the same first slide, with its count, no longer leaving; the second goes out by the end side
+    // The same first slide with its count, no longer leaving; the second leaves by the end side.
     expect(within(screen.getByTestId('slide-in')).getByText('first: 1')).toBeTruthy();
     expect(within(screen.getByTestId('slide-out-end')).getByText('second: 0, leaving')).toBeTruthy();
     expect(mounted).toEqual(['first', 'second']);
@@ -166,7 +161,7 @@ describe('a slide giving way to the next', () => {
         <Counter name="first" />
       </SlideSwap>,
     );
-    // a slide passed over: nothing is drawn for it
+    // A skipped slide draws nothing.
     rerender(
       <SlideSwap id="b" direction="forward" held>
         {null}

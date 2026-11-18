@@ -6,28 +6,16 @@ import { fontScaleCap, spacing, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
 
 /**
- * A page's name set large, as part of the page rather than in a bar over it.
- *
- * A pushed screen gets `ScreenHeader`: a 44pt bar with the title centred
- * between the way back and whatever sits opposite it. A tab gets
- * `TabHeader`, with search and the bell at its far end. This is for the page
- * between the two — Friends — whose name is big, at the reading edge, with
- * the way back before it and one link after it.
- *
- * No top inset here. The screens reserve it differently — one on a list's
- * content container, others on the screen — and each of those is right for
- * what it wraps, so this stays out of it.
+ * A page's name set large as part of the page, between a pushed screen's `ScreenHeader` and a tab's `TabHeader`: the
+ * way back before it and one link after it (Friends). It adds no top inset; each screen reserves that itself.
  */
 export function LargeTitle({
   title,
-  subtitle,
   left,
   right,
   style,
 }: {
   title: string;
-  /** The line under it, where a page has something worth saying about itself. */
-  subtitle?: string;
   /** A leading control, before the title. */
   left?: ReactNode;
   /** A trailing action, on the title's own line. */
@@ -44,9 +32,9 @@ export function LargeTitle({
         <Text
           style={[styles.title, dir.text, { color: colors.textPrimary }]}
           numberOfLines={1}
-          // one line at 34 points: grown without limit it is cut off with an ellipsis after a few letters
+          // One line at 34pt: grown without limit it would be cut off after a few letters.
           maxFontSizeMultiplier={fontScaleCap.heading}
-          // a long name is set a little smaller on the phone rather than cut
+          // A long name is set a little smaller on the phone rather than cut.
           adjustsFontSizeToFit
           minimumFontScale={0.75}
           accessibilityRole="header"
@@ -55,16 +43,13 @@ export function LargeTitle({
         </Text>
         {right ?? null}
       </View>
-      {subtitle ? <Text style={[styles.subtitle, dir.text, { color: colors.textSecondary }]}>{subtitle}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  // the title takes the space, so a leading control sits before it and a
-  // trailing one is pushed to the end — rather than all three spreading out
+  // The title takes the space, so a leading control sits before it and a trailing one at the end.
   row: { alignItems: 'center', gap: spacing.md, minHeight: 44 },
-  // 34, the large-title size
+  // 34pt, the large-title size.
   title: { ...display(typography.sizes.xxl), flex: 1 },
-  subtitle: { fontSize: typography.sizes.sm, marginTop: 2 },
 });

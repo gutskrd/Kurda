@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-/*
- * Every fire on the phone burns at a level: as big as the streak or the run
- * it stands for has grown it (shared `fireLevel`, `runFireLevel`), never
- * simply lit or not.
- */
+// Every fire in the app burns at a level grown from its streak or run (shared `fireLevel`, `runFireLevel`), never simply lit or not.
 
-/** Node's file system, which this workspace's types do not describe: the test reads the sources it runs beside. */
+/** Node's file system, which this workspace's types do not include: the test reads the sources beside it. */
 interface Files {
   readFileSync(path: string, encoding: 'utf8'): string;
   readdirSync(path: string, options: { withFileTypes: true }): { name: string; isDirectory(): boolean }[];

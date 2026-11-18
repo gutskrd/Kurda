@@ -12,8 +12,8 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { forgetDeviceId } from './deviceId';
 
 /*
- * What the account calls say when they fail: in the reader’s words, never a
- * claim that something happened when the server did not take it.
+ * What the account calls say when they fail: in the reader's words, never claiming something happened when the server
+ * did not take it.
  */
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });

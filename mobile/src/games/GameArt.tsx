@@ -6,29 +6,17 @@ import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 
 /**
- * A game's cover on the phone, drawn from the shared art
- * (shared/src/art/games.ts) so the website shows the same picture.
+ * A game's cover on the phone, drawn from the shared art (shared/src/art/games.ts) so the website shows the same
+ * picture. It fills its square with corners rounded by `coverRadius`, which also clips parts that move past the edge.
+ * It is decoration beside the game's name, so screen readers skip it; each drawing gets its own clip-path ids, since a
+ * screen can show the same cover twice.
  *
- * A cover is an illustration that fills its square, so it is shown edge to
- * edge with its corners rounded here, by a share of its size (`coverRadius`):
- * the rounding also keeps a part that moves past the cover's edge from
- * showing outside it.
- *
- * It is decoration beside the game's name, so it is hidden from a screen
- * reader. A screen can show the same cover twice (the featured game, and its
- * card under a filter), and a drawing's clip paths are found by id, so every
- * one drawn here gets ids of its own.
- *
- * `moving` plays the cover's own loop: its parts are laid over one another,
- * each drawn once, and one clock running on the native driver moves them all
- * by their poses — position, turn, size and opacity, nothing drawn again.
- * `after` starts the loop that far in, so a list of covers does not move as
- * one. With Reduce Motion on, the still cover is shown — and so it is while
- * the screen it is on is behind another or the app is in the background: a
- * loop nobody is watching is a cost and nothing else.
+ * `moving` plays the cover's loop: one native-driver clock moves every layer by its poses (position, turn, size,
+ * opacity), with nothing redrawn. `after` starts the loop that far in, so a list of covers does not move as one. The
+ * cover stays still under Reduce Motion, behind another screen and in the background.
  */
 /** How round a cover's corners are at a size: the same shape small and large, and the same as the website's. */
-export const coverRadius = (size: number): number => Math.round(size * 0.22);
+const coverRadius = (size: number): number => Math.round(size * 0.22);
 
 export function GameArt({ game, size = 72, moving = false, after = 0 }: { game: GameEmblem; size?: number; moving?: boolean; after?: number }): React.JSX.Element {
   const idPrefix = `ga${useId().replace(/[^A-Za-z0-9]/g, '')}`;
@@ -57,7 +45,7 @@ function MovingArt({ game, size, idPrefix, after }: { game: GameEmblem; size: nu
     const loop = gameEmblemLoopMs(game);
     const from = (after % loop) / loop;
     let stopped = false;
-    // the first time round starts partway in; after that the loop is whole
+    // The first time round starts partway in; after that the loop is whole.
     clock.setValue(from);
     const first = Animated.timing(clock, { toValue: 1, duration: loop * (1 - from), easing: Easing.linear, useNativeDriver: true });
     const rounds = Animated.loop(Animated.timing(clock, { toValue: 1, duration: loop, easing: Easing.linear, useNativeDriver: true }));
@@ -87,7 +75,7 @@ function MovingArt({ game, size, idPrefix, after }: { game: GameEmblem; size: nu
         const poses = layer.poses;
         const over = (pick: (p: GamePose) => number): Animated.AnimatedInterpolation<number> => clock.interpolate({ inputRange: MOMENTS, outputRange: poses.map(pick) });
         const turn = clock.interpolate({ inputRange: MOMENTS, outputRange: poses.map((p) => `${p.r}deg`) });
-        // a view turns about its middle: stepping out to the layer's pivot and back makes it turn about that instead
+        // A view turns about its middle: stepping out to the layer's pivot and back makes it turn about that instead.
         const out = { x: (layer.pivot[0] - 60) * unit, y: (layer.pivot[1] - 60) * unit };
         return (
           <Animated.View
@@ -119,6 +107,6 @@ function MovingArt({ game, size, idPrefix, after }: { game: GameEmblem; size: nu
 }
 
 const styles = StyleSheet.create({
-  // the corners clip: a part that moves past the cover's edge stops at it
+  // The corners clip: a part that moves past the cover's edge stops at it.
   cover: { overflow: 'hidden' },
 });

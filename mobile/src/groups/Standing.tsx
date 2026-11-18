@@ -26,19 +26,9 @@ interface CardGroup {
 export type Banned = Extract<GroupStanding, { kind: 'banned' }>;
 
 /**
- * Where someone who is out of a group stands with it, in place of the chat.
- *
- * A group is private, so this has two readers only, and neither is shown a
- * raw error. Someone banned (who opens it from a notification, or was banned
- * while the chat was open) sees until when, or for good, the reason if one was
- * given, and where asking to come back stands — ask (a sheet with a note for
- * the admins), the request waiting with a way to withdraw it, the day they may
- * ask again, or that the admins are not taking requests from them. And someone
- * removed while the chat was open (`left`, with no ban) is told they are no
- * longer in the group and that an admin can add them again.
- *
- * Anyone else is not shown a group at all: the thread says there is no such
- * group, which is all the server tells them.
+ * Where someone out of a group stands with it, in place of the chat, never as a raw error. Someone banned sees until
+ * when, the reason, and where asking to come back stands; someone removed while the chat was open (`left`, no ban) is
+ * told an admin can add them again.
  */
 export function StandingCard({
   group,
@@ -48,12 +38,12 @@ export function StandingCard({
   onReload,
 }: {
   group: CardGroup;
-  /** the ban, when that is why they are out; null for someone only removed */
+  /** The ban, when that is why they are out; null for someone only removed. */
   banned: Banned | null;
   left: boolean;
-  /** the standing changed here (a request sent or withdrawn) */
+  /** The standing changed here (a request sent or withdrawn). */
   onStanding: (standing: GroupStanding) => void;
-  /** ask the server where the reader stands, when an answer says it changed */
+  /** Ask the server where the reader stands, when an answer says it changed. */
   onReload: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -158,13 +148,9 @@ function RequestPart({
 }
 
 /**
- * Asking to come back: an optional note the admins will read, and Send.
- *
- * `onAnswer` gets where the request now stands — waiting, or, when the server
- * says so instead, a wait or requests closed — or null when the standing
- * itself moved (no longer banned, a request already waiting, the group gone)
- * and should be asked for again. Anything else (asking too often today) stays
- * in the sheet.
+ * Asking to come back, with an optional note for the admins. `onAnswer` gets the request's new standing, or null when
+ * the standing itself moved (no longer banned, a request already waiting, the group gone) and should be asked for
+ * again. Anything else (asking too often today) stays in the sheet.
  */
 function AskSheet({
   visible,

@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The equipped background and icon on a profile load on a phone: the art the
- * shop ships with arrives as a path on the website, which the phone resolves
- * against the site, and art uploaded in the admin as a whole CDN address,
- * which it keeps.
+ * The equipped background and icon load on a phone: shipped art arrives as a site path, resolved against the site, and
+ * art uploaded in the admin as a whole CDN address, kept as is.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -22,7 +20,7 @@ afterEach(cleanup);
 const UPLOADED = `https://media.hevalo.app/cosmetic/background/${'ab'.repeat(32)}.webp`;
 
 const src = async (container: HTMLElement): Promise<string | null | undefined> => {
-  // the picture is drawn once it starts loading, an effect after the element
+  // The picture is drawn once it starts loading, an effect after the element.
   await waitFor(() => expect(container.querySelector('img')).not.toBeNull());
   return container.querySelector('img')?.getAttribute('src');
 };

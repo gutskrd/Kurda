@@ -25,15 +25,10 @@ import { ExtraTimeSwitch } from './ExtraTimeSwitch';
 import { questionIn } from '../legend';
 import { translatedText, translationToggle } from './translated';
 
-/** Options are numbered 1–4, the same numbers the web's keys use. */
+/** An option tile's minimum height, shared with the reveal. */
 export const OPTION_MIN_HEIGHT = 60;
 
-/**
- * Where the game is, under its "Question 2 of 5": one short line per
- * question, the ones behind and the one on screen in the violet that marks
- * where you are (gold is for what is earned). Hidden from screen readers,
- * which hear the words above it.
- */
+/** Progress under "Question 2 of 5": one short line per question, done and current ones in violet. Hidden from screen readers, which hear the words. */
 export function QuestionSteps({ index, total }: { index: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   return (
@@ -45,7 +40,7 @@ export function QuestionSteps({ index, total }: { index: number; total: number }
   );
 }
 
-/** Whether English is shown under the question: what this phone was told, else only at level 1. */
+/** Whether English shows under the question: this phone's setting, else only at level 1. */
 export function showEnglish(pref: boolean | null, level: number): boolean {
   return pref ?? level === 1;
 }
@@ -53,15 +48,10 @@ export function showEnglish(pref: boolean | null, level: number): boolean {
 type Sending = { choice: number; state: 'sending' | 'failed' | 'late'; error?: string };
 
 /**
- * One question (contract §A1 "Question"). The title takes the screen
- * reader's focus when a new question comes (and nothing else here ever
- * does); the timer is a bar, said aloud once, at ten seconds left; an untimed
- * question in a group says only, in its last half minute, that it closes
- * soon.
- *
- * An answer is sent again and again until it lands or the question closes
- * (answer.ts). "Sending…" while it travels, then "Answer locked" with how many
- * have answered — never who.
+ * One question (contract §A1 "Question"). Its title takes screen-reader focus when a new question arrives, and
+ * nothing else here does. The timer is a bar announced once at ten seconds left; an untimed group question says only
+ * that it closes soon in its last half minute. An answer is resent until it lands or the question closes (answer.ts),
+ * showing "Sending…" then "Answer locked" with how many have answered, never who.
  */
 export function Question({
   view,
@@ -94,16 +84,13 @@ export function Question({
   useTicker(timed ? 250 : 5_000, true);
   useFocusOn(titleRef, q ? q.index : null);
 
-  // a new question: the last one's sending state and story sheet go
+  // A new question clears the last one's sending state and story sheet.
   useEffect(() => {
     setSending(null);
     setStoryOpen(false);
   }, [q?.index]);
 
-  /*
-   * The question on screen now. An answer still on its way when the next
-   * question arrives must not land its "too late" or its choice on that one.
-   */
+  // The question on screen now, so an answer still in flight when the next arrives cannot apply "too late" or its choice to it.
   const shownIndex = useRef(q?.index);
   shownIndex.current = q?.index;
 
@@ -118,7 +105,7 @@ export function Question({
   if (!q) return null;
   const dialect = view.settings.dialect;
   const english = showEnglish(prefs.englishUnder, view.settings.level);
-  // the question in the reader's language where the story has it, else the English (shown under the Kurdish on request)
+  // The question in the reader's language where the story has it, else English (shown under the Kurdish on request).
   const tr = questionIn(q, locale);
   const trSet = tr ? translatedText(tr.lang) : null;
   const locked = q.myChoice !== null;
@@ -135,7 +122,7 @@ export function Question({
       phaseEndsAt: view.phaseEndsAt,
       movedOn: () => shownIndex.current !== index,
     });
-    // the game has moved on meanwhile; the newer view already says where it is
+    // The game moved on meanwhile; the newer view already shows where it is.
     if (shownIndex.current !== index) return;
     switch (out.kind) {
       case 'accepted':
@@ -145,7 +132,7 @@ export function Question({
         return;
       case 'already':
       case 'not-current':
-        // it arrived after all, or the question already moved on: show where the game is
+        // It arrived after all, or the question already moved on: show where the game is.
         refresh();
         setSending(null);
         return;
@@ -210,7 +197,7 @@ export function Question({
         {q.options.map((option, i) => {
           const on = chosen === i;
           return (
-            // the lipped tile a lesson's answers are: it sinks under the finger, wears the brand's ink once chosen, and fades when another was
+            // A lesson's lipped answer tile: it sinks under the finger, takes the brand ink once chosen, and fades when another is.
             <Tile
               key={i}
               state={on ? 'picked' : locked ? 'disabled' : 'idle'}
@@ -245,7 +232,7 @@ export function Question({
 
       {status ? (
         <View style={styles.statusRow}>
-          {/* sent, not yet judged: violet, so no tick says "right" before the reveal does */}
+          {/* Sent but not judged: violet, so no tick says "right" before the reveal. */}
           {locked ? <Icon name="check" size={16} color={colors.primary} /> : null}
           <Text style={[styles.status, { color: colors.textPrimary }]}>{status}</Text>
         </View>
@@ -283,7 +270,7 @@ export function Question({
           title={story.title}
           dialect={dialect}
           onClose={() => setStoryOpen(false)}
-          // looking the answer up must not hide how long is left to give it
+          // Looking at the story must not hide how long is left.
           footer={timed && left !== null ? <TimerBar left={left} total={total} withText /> : undefined}
         >
           <StoryText story={story} fontSize={Math.round(STORY_BODY_SIZE * prefs.textScale)} onGloss={onGloss} />
@@ -294,9 +281,8 @@ export function Question({
 }
 
 /**
- * How long is left on a timed question: a bar that turns red in the last ten
- * seconds, read as "12 seconds left". `withText` shows the seconds too, where
- * the bar stands alone (the Story sheet, over the question).
+ * The time left on a timed question: a bar that turns red in the last ten seconds, read as "12 seconds left".
+ * `withText` shows the seconds too, where the bar stands alone (the Story sheet).
  */
 function TimerBar({ left, total, withText }: { left: number; total: number; withText?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -349,7 +335,7 @@ const styles = StyleSheet.create({
   toggle: { alignSelf: 'flex-start', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   toggleText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   options: { gap: spacing.sm },
-  // the face of a full-width tile: the number, then the words from where the text starts
+  // A full-width tile's face: the number, then the words from where the text starts.
   option: {
     alignItems: 'center',
     justifyContent: 'flex-start',

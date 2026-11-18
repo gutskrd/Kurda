@@ -7,14 +7,11 @@ import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
- * The light that crosses every skeleton on the screen: one value and one loop
- * for all of them, started by the first that appears and stopped with the
- * last, so the sweep passes over a whole list together — and costs one
- * animation however many blocks there are. It is the only thing in the app
- * that loops, and only while something is loading.
+ * The light crossing every skeleton on screen: one value and one loop for all of them, started by the first and
+ * stopped with the last, so a list sweeps together at the cost of one animation. It loops only while something loads.
  */
 const SWEEP_MS = 1600;
-/** what the browser waits before showing its placeholders, so the two apps feel the same */
+/** The website's wait before showing placeholders, so the two apps feel the same. */
 const REVEAL_AFTER_MS = 120;
 const sweep = new Animated.Value(0);
 let watching = 0;
@@ -24,7 +21,7 @@ function watchSweep(): () => void {
   watching += 1;
   if (watching === 1) {
     sweep.setValue(0);
-    // never an "interaction": a loop that held one would keep lists waiting to render for as long as it ran
+    // Never an "interaction": a loop holding one would delay list rendering for as long as it ran.
     loop = Animated.loop(Animated.timing(sweep, { toValue: 1, duration: SWEEP_MS, easing: Easing.inOut(Easing.quad), useNativeDriver: true, isInteraction: false }));
     loop.start();
   }
@@ -38,11 +35,9 @@ function watchSweep(): () => void {
 }
 
 /**
- * Skeleton placeholder: a soft block in the shape of what is coming, with a
- * narrow band of light passing over it — a transform on the native driver, so
- * a screen full of them costs nothing. Under Reduce Motion the light is taken
- * away and the block stays: the shape is the useful half. Hidden from screen
- * readers (it's decorative; the screen announces "loading" via the boundary).
+ * A skeleton placeholder: a soft block in the shape of what is coming, with a narrow band of light passing over it
+ * on the native driver. Under Reduce Motion the light is removed and the block stays. Hidden from screen readers; the
+ * screen announces loading itself.
  */
 export function Skeleton({
   width = '100%',
@@ -52,13 +47,10 @@ export function Skeleton({
   style,
 }: {
   width?: DimensionValue;
-  /** a number, or '100%' to fill a box that has its own shape (a square picture) */
+  /** A number, or '100%' to fill a box with its own shape (a square picture). */
   height?: DimensionValue;
   radius?: number;
-  /**
-   * Drawn on a card that already has the block's own grey (a profile's card):
-   * one step up, so the shape still shows.
-   */
+  /** Drawn on a card already in the block's grey (a profile card): one step up, so the shape still shows. */
   raised?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
@@ -66,10 +58,8 @@ export function Skeleton({
   const alive = useMotionAlive();
   const [w, setW] = useState(0);
   /*
-   * Grey only once the wait is long enough to notice. An answer that comes
-   * back at once would otherwise flash a page of grey for a frame or two; the
-   * shape still takes its room from the first frame, so nothing moves when
-   * it does appear.
+   * Grey only once the wait is noticeable, so an instant answer does not flash a page of grey. The shape takes its
+   * room from the first frame, so nothing moves when it appears.
    */
   const [shown, setShown] = useState(false);
   useEffect(() => {
@@ -77,21 +67,21 @@ export function Skeleton({
     return () => clearTimeout(id);
   }, []);
 
-  // a skeleton on a tab behind another, or in a backgrounded app, does not keep the one sweep running
+  // A skeleton behind another tab, or in a backgrounded app, does not keep the shared sweep running.
   useEffect(() => {
     if (!alive) return;
     return watchSweep();
   }, [alive]);
 
   const band = Math.max(24, w * 0.6);
-  // rests off the far edge for the last part of each pass, so it reads as one sweep rather than a band bouncing
+  // Rests off the far edge for the end of each pass, so it reads as one sweep rather than a bouncing band.
   const translateX = sweep.interpolate({ inputRange: [0, 0.7, 1], outputRange: [-band, w + band * 0.2, w + band * 0.2] });
   const light = scheme === 'dark' ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.55)';
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      // how a test, or a check of a screen's loading state against its loaded one, finds the blocks
+      // How tests, and checks of a screen's loading state against its loaded one, find the blocks.
       testID="skeleton"
       onLayout={(e) => setW(e.nativeEvent.layout.width)}
       style={[
@@ -108,23 +98,15 @@ export function Skeleton({
   );
 }
 
-/**
- * How tall a line of text at `size` stands when the style gives it no line
- * height of its own: about 1.2 times the size on the platforms' own faces
- * (17 → 20, 15 → 18, 13 → 16). Near enough that a placeholder built from it
- * lands within a point or two of the words that replace it.
- */
+/** A text line's height at `size` with no explicit line height: about 1.2 times the size on system faces (17 → 20, 15 → 18, 13 → 16), within a point or two. */
 export function lineOf(size: number): number {
   return Math.round(size * 1.2);
 }
 
 /**
- * One line of text, in grey: as tall as the line it stands for, with a bar
- * about as tall as its letters centred in it — so a stack of these is exactly
- * as tall as the paragraph, and each bar sits where the words will.
- *
- * `align` is which edge the bar starts from: the reading edge (`start`, the
- * right in Soranî when the caller mirrors), or the middle for centred text.
+ * One grey text line: as tall as the line it stands for, with a letter-height bar centred in it, so a stack matches
+ * the paragraph and each bar sits where the words will. `align` is the bar's starting edge: the reading edge
+ * (`start`, mirrored by the caller in Soranî) or the centre for centred text.
  */
 export function SkeletonText({
   size,
@@ -135,7 +117,7 @@ export function SkeletonText({
   style,
 }: {
   size: number;
-  /** the style's own line height, when it sets one */
+  /** The style's own line height, when it sets one. */
   lineHeight?: number;
   width?: DimensionValue;
   align?: 'flex-start' | 'center' | 'flex-end';
@@ -149,8 +131,8 @@ export function SkeletonText({
   );
 }
 
-/** A skeleton mimicking a list row: a circular avatar + two text lines. */
-export function SkeletonRow({ avatar = true }: { avatar?: boolean }): React.JSX.Element {
+/** A list-row skeleton: a round avatar and two text lines. */
+function SkeletonRow({ avatar = true }: { avatar?: boolean }): React.JSX.Element {
   return (
     <View style={styles.row}>
       {avatar ? <Skeleton width={40} height={40} radius={radii.pill} /> : null}
@@ -162,7 +144,7 @@ export function SkeletonRow({ avatar = true }: { avatar?: boolean }): React.JSX.
   );
 }
 
-/** A stack of text-line skeletons of varying widths — for article/detail bodies. */
+/** Text-line skeletons of varying widths, for article and detail bodies. */
 export function SkeletonLines({ count = 3, style }: { count?: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const widths = ['70%', '92%', '85%', '78%', '60%'];
   const { t } = useI18n();
@@ -175,7 +157,7 @@ export function SkeletonLines({ count = 3, style }: { count?: number; style?: St
   );
 }
 
-/** A stack of skeleton rows — the default "loading" state for list/feed screens. */
+/** Skeleton rows, the default loading state for list and feed screens. */
 export function SkeletonList({ count = 6, avatar = true, style }: { count?: number; avatar?: boolean; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const { t } = useI18n();
   return (

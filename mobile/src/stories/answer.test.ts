@@ -48,7 +48,7 @@ describe('sendAnswer', () => {
       ...s,
       send: async () => {
         const res = await s.send();
-        moved = s.sent.length === 2; // the next question arrived during the second try
+        moved = s.sent.length === 2; // The next question arrived during the second try.
         return res;
       },
       phaseEndsAt: s.at(30_000),

@@ -5,7 +5,6 @@ import {
   canGift,
   itemsText,
   kindWithCount,
-  sectionTitle,
   CONFIRM_THRESHOLD_ZER,
   needsConfirmation,
   withinBalance,
@@ -26,13 +25,13 @@ const item = (over: Partial<ShopItem>): ShopItem => ({
   ...over,
 });
 
-// a translator that shows which key it was asked for, with its values
+// A translator that shows which key it was asked for, with its values.
 const t = (key: string, vars?: Record<string, string | number>): string =>
   `translated:${key}${vars ? `(${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join(',')})` : ''}`;
 
 describe('the shop’s sections', () => {
   it('are the shared kinds, in the order every screen shows them', () => {
-    // GET /shop orders by category name; the sections do not follow it
+    // GET /shop orders by category name; the sections do not follow it.
     const sections = groupByCategory([
       item({ sku: 'tag', category: 'tag' }),
       item({ sku: 'i1', category: 'icon' }),
@@ -42,21 +41,6 @@ describe('the shop’s sections', () => {
     ]);
     expect(sections.map((s) => s.category)).toEqual(['background', 'icon', 'tag', 'other']);
     expect(sections[1]!.items.map((i) => i.sku)).toEqual(['i1', 'i2']);
-  });
-});
-
-describe('sectionTitle', () => {
-  it('translates each kind', () => {
-    expect(sectionTitle('background', t as never)).toBe('translated:shop.kind.background');
-    expect(sectionTitle('icon', t as never)).toBe('translated:shop.kind.icon');
-    expect(sectionTitle('tag', t as never)).toBe('translated:shop.kind.tag');
-  });
-
-  it('files a category nobody has a kind for under "More", rather than showing the server’s word', () => {
-    // the old shop headed sections BACKGROUND, ICON, TAG and once SHOP.CATEGORY.MISC
-    for (const category of ['misc', 'cosmetic', 'powerup', 'brand-new-thing']) {
-      expect(sectionTitle(category, t as never)).toBe('translated:shop.kind.other');
-    }
   });
 });
 
@@ -100,7 +84,7 @@ describe('needsConfirmation', () => {
     expect(needsConfirmation(item({ currency: 'zer', price: CONFIRM_THRESHOLD_ZER }))).toBe(false);
     expect(needsConfirmation(item({ currency: 'gems', price: 100_000 }))).toBe(true);
     expect(needsConfirmation(item({ currency: 'gems', price: 1 }))).toBe(true);
-    // nothing is spent on a free item, so there is nothing to be sure about
+    // Nothing is spent on a free item, so there is nothing to be sure about.
     expect(needsConfirmation(item({ currency: 'gems', price: 0 }))).toBe(false);
   });
 });

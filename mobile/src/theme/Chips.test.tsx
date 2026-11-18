@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-/*
- * react-native-web drops a ScrollView's `keyboardShouldPersistTaps` before
- * the page, so the ScrollView is wrapped to note the props it is given.
- */
+// react-native-web drops a ScrollView's `keyboardShouldPersistTaps`, so the ScrollView is wrapped to record its props.
 const seen = vi.hoisted(() => ({ scrollers: [] as Record<string, unknown>[] }));
 vi.mock('react-native', async () => {
   const web = await import('react-native-web');
@@ -27,12 +24,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { forgetReach, reachOf } from '../testing/reach';
 import { Chips } from './Chips';
 
-/*
- * A row of filter chips (theme/Chips.tsx): how far each chip answers a
- * finger inside the scroller that holds it. The scroller cut off the reach
- * its chips had been given, so they answered over their drawn 36 alone, and
- * a tap in the 8pt between two chips landed on neither.
- */
+// How far each chip answers inside its scroller, which once clipped their reach so a tap between chips hit neither.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {

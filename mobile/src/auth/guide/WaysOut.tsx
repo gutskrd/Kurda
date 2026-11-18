@@ -10,18 +10,15 @@ import { heldDim } from '../../theme/MotionParts';
 export interface WayOut {
   label: string;
   onPress: () => void;
-  /** it cannot be taken back (deleting the account) */
+  /** It cannot be taken back (deleting the account). */
   danger?: boolean;
   testID?: string;
 }
 
 /**
- * The ways out of a question that has to be answered before the app opens
- * (the emailed code, the birth month): signing out, deleting the account.
- *
- * Side by side and quiet, under everything else, because they are not what
- * the screen is for; one under the other, close, where a longer language
- * wraps them. Each is still a full touch target.
+ * The ways out of a question that must be answered before the app opens (the emailed code, the birth month): signing
+ * out and deleting the account. Quiet and under everything else, side by side or stacked where a language wraps them;
+ * each still a full touch target.
  */
 export function WaysOut({ ways }: { ways: readonly WayOut[] }): React.JSX.Element {
   const { colors } = useTheme();

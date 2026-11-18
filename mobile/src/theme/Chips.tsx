@@ -9,30 +9,15 @@ import { haptic } from '../feedback/haptics';
 import { pressedDim } from './motion';
 
 /**
- * A row of filter chips: All · Unread · Groups, People · Words · Lessons.
+ * A row of filter chips (All · Unread · Groups). Unlike the segmented control, which splits a screen into equal
+ * halves, chips narrow a list, each as wide as its word, and the row scrolls sideways when words do not fit. The
+ * chosen chip has the violet wash with violet text and is announced as selected; solid violet is for a screen's main
+ * button.
  *
- * Not the segmented control. That one switches between two halves of a screen
- * (Lessons | Games) and its options share the width equally; these narrow a
- * list, each is as wide as its word, and the row scrolls sideways when a
- * language's words do not fit — which a segmented control can only answer by
- * cutting them off.
- *
- * The chosen chip wears the violet wash with violet words, as a switch that
- * is on does, and says it is selected to a screen reader too. It was solid
- * violet, which the app keeps for a screen's main button: a row of filters
- * read as a row of things to press.
- *
- * It is laid inside the page's gutter but scrolls out to the screen's edges,
- * so a chip that does not fit is cut by the edge of the phone — which reads
- * as "there is more this way" — rather than by an invisible line 16 points in.
- *
- * A chip is drawn 36 tall and answers a finger over 48 by the width of its
- * word plus half the gap on each side, so the row has no dead seams. A
- * scroller cuts off whatever reaches past its edge, so the row keeps `room`
- * above and below it inside the scroller, which is pulled back out by the
- * same amount: nothing moves on screen, and the chips reach as far as the
- * room. A chip tapped while the keyboard is up is chosen at once, rather
- * than the first tap only putting the keyboard away.
+ * The row sits in the page's gutter but scrolls out to the screen's edges, so a clipped chip reads as "more this
+ * way". Chips are drawn 36 tall and answer over 48 across their word plus half the gap each side, so there are no
+ * dead seams; since a scroller clips any reach past its edge, the row keeps `room` above and below inside it, offset
+ * by an equal negative margin. A chip tapped with the keyboard up is chosen at once.
  */
 export function Chips<T extends string>({
   options,
@@ -46,13 +31,9 @@ export function Chips<T extends string>({
   value: T;
   onChange: (v: T) => void;
   labelOf: (v: T) => string;
-  /** a number after the word, where there is one worth showing */
+  /** A number after the word, where one is worth showing. */
   countOf?: (v: T) => number | null;
-  /**
-   * How far above and below the row the chips reach, and the scroller is
-   * grown to hold them: at most the gap to whatever is above or below,
-   * less how far that reaches into the gap itself.
-   */
+  /** How far above and below the row the chips reach, which the scroller grows to hold: at most the gap to the neighbours, less their own reach into it. */
   room?: number;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -63,7 +44,7 @@ export function Chips<T extends string>({
   return (
     <ScrollView
       ref={scroller}
-      // right to left, the first chip is on the right: start the row there
+      // Right to left, the first chip is on the right, so start the row there.
       onContentSizeChange={() => {
         if (mirrored) scroller.current?.scrollToEnd({ animated: false });
       }}
@@ -73,7 +54,7 @@ export function Chips<T extends string>({
       contentContainerStyle={[styles.row, rr.content, { flexDirection: dir.row }]}
       style={[styles.scroller, rr.scroller]}
     >
-      {/* each chip reaches half the gap to the next, and up and down as far as the room the row keeps (the group's row gap is twice it) */}
+      {/* Each chip reaches half the gap to the next, and vertically as far as the row's room (the group's row gap is twice it). */}
       <ReachGroup gap={spacing.sm} rowGap={room * 2}>
         {options.map((opt) => {
           const active = opt === value;
@@ -89,7 +70,7 @@ export function Chips<T extends string>({
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               accessibilityLabel={count ? `${label}, ${count}` : label}
-              // a chip's width is its word's, not known before it is drawn: `open` reaches past every edge, and the group caps it to the gap and the room
+              // A chip's width is unknown before layout, so `open` reaches past every edge and the group caps it to the gap and room.
               reach="open"
               style={({ pressed }) => [
                 styles.chip,
@@ -112,7 +93,7 @@ export function Chips<T extends string>({
   );
 }
 
-/** How much of the violet a chosen chip is, as the last two digits of its colour: the tab bar's own wash. */
+/** A chosen chip's violet wash as a hex alpha suffix, matching the tab bar. */
 const CHOSEN_WASH = '1F';
 
 const styles = StyleSheet.create({

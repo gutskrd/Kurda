@@ -28,22 +28,11 @@ import { LENGTH_KEY, categoryLabel, categoryTitle, levelHint, levelName } from '
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * The stories library's sort and filter on the phone (Learn → Stories), built
- * from the same sheet as the wall's (theme/FilterSheet.tsx).
- *
- * The search stays in view and searches as you type. Beside it a funnel opens
- * one sheet: the order (easiest first, newest, A to Z), the level by its plain
- * name with a line on what it means, the length with the minutes it takes,
- * read aloud or not, and the category with how many stories it holds. Choices
- * there are a draft until "Show N stories", whose number is asked of the
- * server as they change. While anything is on, the funnel is filled, its name
- * says what, and a chip for each part under the search says so too, with a ✕
- * that lets just that part go — and "Clear all" once there are two. The
- * screen keeps what is chosen while it is open.
- *
- * Which Kurdish is not in the sheet: the library shows one variety at a time,
- * chosen by the switch at its top (StoriesView), and everything here — the
- * list, the counts, the minutes a length takes — is that variety's.
+ * The stories library's sort and filter (Learn → Stories), built on the wall's sheet (theme/FilterSheet.tsx). The
+ * search stays in view and searches as you type; a funnel opens one sheet with order, level, length, narration and
+ * category. Sheet choices are a draft until "Show N stories", whose count is fetched as they change. While anything
+ * is on, the funnel is filled and named, and a removable chip per part sits under the search, with "Clear all"
+ * from two. The variety is not in the sheet: the library shows one at a time via its switch (StoriesView).
  */
 
 /** What narrows or orders the library, apart from the words typed in the search. */
@@ -53,16 +42,16 @@ export interface LibraryFilter {
   narrated: boolean;
   category: string | null;
   sort: StorySort;
-  /** "All stories" from the Categories shelf: the paged list with nothing narrowing it */
+  /** "All stories" from the Categories shelf: the paged list with nothing narrowing it. */
   all: boolean;
 }
 
 export const NO_FILTER: LibraryFilter = { level: null, length: null, narrated: false, category: null, sort: DEFAULT_STORY_SORT, all: false };
 
-/** A page of 24, as the server's default; a phone shows two or three to a row, so a page is eight rows or more. */
-export const PAGE = 24;
+/** A page of 24, the server's default: eight or more rows at two or three to a row. */
+const PAGE = 24;
 
-/** Whether nothing in the sheet differs from the library as it opens. */
+/** Whether nothing in the sheet differs from the library's opening state. */
 export function isPlainFilter(f: LibraryFilter): boolean {
   return f.level === null && f.length === null && !f.narrated && f.category === null && f.sort === DEFAULT_STORY_SORT;
 }
@@ -72,7 +61,7 @@ export function isFiltering(q: string, filter: LibraryFilter): boolean {
   return q.trim() !== '' || !isPlainFilter(filter) || filter.all;
 }
 
-/** The query GET /stories is asked, for what was typed and chosen in the variety on show, from `offset` on; the default order is left out. */
+/** The GET /stories query for the search and choices in the shown variety, from `offset`; the default order is omitted. */
 export function libraryQuery(q: string, filter: LibraryFilter, dialect: StoryDialect, offset = 0): StoryQuery {
   return {
     q: q.trim() || undefined,
@@ -87,7 +76,7 @@ export function libraryQuery(q: string, filter: LibraryFilter, dialect: StoryDia
   };
 }
 
-export const SORT_KEY: Record<StorySort, TranslationKey> = {
+const SORT_KEY: Record<StorySort, TranslationKey> = {
   level: 'stories.sort.easiest',
   newest: 'feed.sort.newest',
   title: 'stories.sort.title',
@@ -95,12 +84,12 @@ export const SORT_KEY: Record<StorySort, TranslationKey> = {
 
 const SORT_ICON: Record<StorySort, IconName> = { level: 'sort', newest: 'clock', title: 'text' };
 
-/** The count's own question: the order changes no count, so it is left out, and one story is all it needs back. */
+/** The count request's key: order does not change a count, and one story is enough back. */
 function countKey(q: string, f: LibraryFilter, dialect: StoryDialect): string {
   return storyQueryString({ ...libraryQuery(q, f, dialect), sort: undefined, limit: 1, offset: undefined });
 }
 
-/** One thing that is on, as its chip says it and as the funnel's name lists it. */
+/** One active part, as its chip and the funnel's name show it. */
 interface Part {
   key: string;
   label: string;
@@ -109,7 +98,7 @@ interface Part {
   undo: Partial<LibraryFilter>;
 }
 
-/** Everything that is on, in the order the sheet has it. */
+/** Every active part, in the sheet's order. */
 export function activeParts(f: LibraryFilter, t: (key: TranslationKey, vars?: Record<string, string | number>) => string, library: StoryLibrary | null, locale: string): Part[] {
   const parts: Part[] = [];
   const add = (key: string, label: string, undo: Partial<LibraryFilter>, icon?: IconName): void => {
@@ -128,7 +117,7 @@ export function filterButtonLabel(parts: readonly Part[], t: (key: TranslationKe
   return parts.length ? t('feed.sortFilter.buttonOn', { what: parts.map((p) => p.label).join(', ') }) : t('feed.sortFilter.button');
 }
 
-/** The chips under the search while anything is on: each opens the sheet, its ✕ lets that part go; "Clear all" once there are two. */
+/** The chips under the search while anything is on: each opens the sheet, its ✕ removes that part; "Clear all" from two. */
 export function LibraryFilterChips({
   parts,
   onOpen,
@@ -157,15 +146,13 @@ export function LibraryFilterChips({
   );
 }
 
-/** How long a draft waits for the next choice before its count is asked for. */
+/** How long a draft waits for the next choice before its count is fetched. */
 const COUNT_DEBOUNCE_MS = 250;
 
 /**
- * The sheet itself. It starts from what the library shows each time it
- * opens, and hands the draft on only from "Show N stories". The number is
- * what is known already where it can be — the count of the variety on show,
- * the list on show — and otherwise `GET /stories?…&limit=1`, a moment after
- * the choices stop changing; the last number stays up while the next is asked.
+ * The sheet. It starts from the library's current state on each open and applies the draft only on "Show N
+ * stories". The count comes from what is already known where possible (the variety's total, the shown list), else
+ * `GET /stories?…&limit=1` shortly after the choices settle; the last number stays up meanwhile.
  */
 export function LibraryFilterSheet({
   visible,
@@ -180,11 +167,11 @@ export function LibraryFilterSheet({
   visible: boolean;
   value: LibraryFilter;
   q: string;
-  /** the variety on show: every count here is of its stories */
+  /** The variety on show; every count here is of its stories. */
   dialect: StoryDialect;
-  /** that variety's front page, for its total and the levels and categories that hold something */
+  /** That variety's front page, for its total and the levels and categories that hold something. */
   library: StoryLibrary | null;
-  /** how many stories the list on show has in all, once it is known */
+  /** How many stories the shown list has in all, once known. */
   shownTotal: number | null;
   onApply: (next: LibraryFilter) => void;
   onClose: () => void;
@@ -197,7 +184,7 @@ export function LibraryFilterSheet({
   }, [visible, value]);
   const set = (next: Partial<LibraryFilter>) => setDraft((d) => ({ ...d, ...next, all: false }));
 
-  // how many the draft would show
+  // How many the draft would show, with counts already fetched kept by request key.
   const seen = useRef(new Map<string, number>());
   const [count, setCount] = useState<number | null>(null);
   const key = countKey(q, draft, dialect);
@@ -229,7 +216,7 @@ export function LibraryFilterSheet({
       live = false;
       clearTimeout(timer);
     };
-  }, [visible, key, ready, client]); // the draft is read through its key, the question that names a count
+  }, [visible, key, ready, client]); // The draft is read through its key, which names the count request.
 
   const applyLabel =
     count === null
@@ -238,7 +225,7 @@ export function LibraryFilterSheet({
         ? t('stories.filter.applyNone')
         : t(count === 1 ? 'stories.filter.applyOne' : 'stories.filter.apply', { count: formatNumber(count, locale) });
 
-  // only levels and categories a reader would find something in, and the one chosen whatever it holds
+  // Only levels and categories with stories, plus the chosen one whatever it holds.
   const levels = library?.levels ? STORY_LEVELS.filter((l) => l === draft.level || library.levels!.some((h) => h.level === l && h.count > 0)) : [...STORY_LEVELS];
   const categories = (library?.categories ?? []).filter((c) => c.count > 0 || c.slug === draft.category);
   const minutes = (length: StoryLength): string => {
@@ -299,7 +286,7 @@ export function LibraryFilterSheet({
 }
 
 const styles = StyleSheet.create({
-  // the chips sit a little closer to the search than the sections below do
+  // The chips sit a little closer to the search than the sections below do.
   chips: { marginTop: -spacing.sm, alignItems: 'center' },
   clearAll: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },
   clearAllText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },

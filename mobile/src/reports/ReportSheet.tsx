@@ -33,11 +33,8 @@ import { useDirection } from './direction';
 import { pressedDim } from '../theme/motion';
 
 /**
- * What is being reported. The sheet turns it into `POST /reports`.
- *
- * A game player is named by the game and their seat, never by an account id:
- * a game shows people who are not your friends as "Player N", and the server
- * maps the seat to the person (shared `FileReportRequest`).
+ * What is being reported, turned into `POST /reports` by the sheet. A game player is named by the game and their seat,
+ * never by an account id; the server maps the seat to the person (shared `FileReportRequest`).
  */
 export type ReportTarget =
   | { type: 'user'; userId: string }
@@ -52,32 +49,13 @@ export type ReportTarget =
   | { type: 'letter'; letterId: string };
 
 /**
- * The one report sheet, everywhere something can be reported.
+ * The one report sheet, everywhere something can be reported: `visible` (keep it mounted and flip this), `target`,
+ * `name` for the title ("Report Rojda"; left out, the title says what it is), `blockable` `{ userId, name }` and
+ * `leavable` `{ groupId, name }` to offer Block or Leave group on the done screen, `onClose()`, and `onBlocked` /
+ * `onLeftGroup` once those worked.
  *
- * Props:
- * - `visible` — show it (it is a BottomSheet; keep it mounted and flip this).
- * - `target` — what is reported (`ReportTarget`).
- * - `name` — whom the title names ("Report Rojda", "Report Player 2"); left
- *   out, the title says what it is ("Report this message").
- * - `blockable` — `{ userId, name }` of the person behind it, to offer
- *   **Block** on the done screen (`name` null when the screen has none to
- *   show: "Block this person"). Leave it out when you only know a seat or the
- *   person is you; nothing is offered then.
- * - `leavable` — `{ groupId, name }` to offer **Leave group** on the done
- *   screen (a group, or a message in one).
- * - `onClose()` — the sheet was closed (the ✕, a drag down, Done, the back button).
- * - `onBlocked(userId)` / `onLeftGroup(groupId)` — after the one-tap action
- *   worked, so the screen can step away from what is now gone.
- *
- * Stories (mobile-games) reports a player with
- * `<ReportSheet visible target={{ type: 'game_player', game: 'stories', gameId, seat }} name={t('…', { seat })} onClose={…} />`.
- *
- * The steps, as the contract asks (M1): a category in plain, child-friendly
- * words, most urgent first; "Someone may hurt themselves" shows where to find
- * help *before* anything else; then an optional note — no minimum length, so a
- * child never has to find words; then a done screen that says what happens
- * next and offers the things that help right now. There is no Mute: the app
- * has no personal mute to offer.
+ * The steps: a category in plain, child-friendly words, most urgent first ("Someone may hurt themselves" shows where to
+ * find help before anything else); an optional note with no minimum length; and a done screen with what happens next.
  */
 export function ReportSheet({
   visible,
@@ -103,7 +81,7 @@ export function ReportSheet({
   const [category, setCategory] = useState<ReportCategoryInfo | null>(null);
   const [receipt, setReceipt] = useState<ReportReceipt | null>(null);
 
-  // a sheet opened again starts again: the last report is not this one
+  // A sheet opened again starts again: the last report is not this one.
   useEffect(() => {
     if (!visible) return;
     setStep('category');
@@ -163,7 +141,7 @@ const TITLE: Record<ReportTarget['type'], TranslationKey> = {
   letter: 'report.title.message',
 };
 
-/** A step's heading, said aloud when the step changes — the sheet does not move focus by itself. */
+/** A step's heading, announced when the step changes, since the sheet does not move focus by itself. */
 function useAnnounce(text: string): void {
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(text);
@@ -202,9 +180,8 @@ function CategoryStep({ onPick }: { onPick: (c: ReportCategoryInfo) => void }): 
 }
 
 /**
- * Help, before the report: when someone may hurt themselves, the first thing
- * on the screen is where to find help — for them, or for the person reporting,
- * who may be the one at risk. The report still goes on afterwards.
+ * Help before the report: when someone may hurt themselves, the first thing shown is where to find help, for them or
+ * for the reporter, who may be the one at risk. The report still goes on afterwards.
  */
 function HelpFirst({ onContinue }: { onContinue: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -298,9 +275,8 @@ function NoteStep({
 }
 
 /**
- * After: thanks, what happens next, and the things that help at once — a
- * block ends it for you and tells nobody; leaving a group takes you out of it.
- * Each is one tap, and says so when it is done.
+ * After: thanks, what happens next, and what helps at once (a block ends it for you and tells nobody; leaving a group
+ * takes you out). Each is one tap and confirms itself.
  */
 function DoneStep({
   receipt,
@@ -487,7 +463,7 @@ function reportErrorText(error: ApiError, t: (key: TranslationKey, vars?: Record
 }
 
 const styles = StyleSheet.create({
-  // the gutter is the ScrollView's own, so it scrolls edge to edge under the sheet's header
+  // The ScrollView keeps the gutter, so it scrolls edge to edge under the sheet's header.
   scroller: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm },
   lead: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },

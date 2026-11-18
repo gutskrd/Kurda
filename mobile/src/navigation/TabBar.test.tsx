@@ -59,24 +59,18 @@ describe('the tab bar', () => {
     const bar = await screen.findByRole('tablist');
     const tabs = within(bar).getAllByRole('tab');
     expect(tabs.map((t) => t.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Profile']);
-    // every tab says what it is: a row of glyphs alone has to be learnt before it can be used
+    // Every tab has a word under its glyph.
     for (const word of ['Home', 'Learn', 'Messages', 'Profile']) expect(within(bar).getByText(word)).toBeTruthy();
   });
 
-  /*
-   * Search was the fifth tab. It opens from the magnifier at the top of
-   * every tab now, so the bar is the four places and nothing else.
-   */
+  /* Search opens from the magnifier at the top of every tab, so the bar holds only the four places. */
   it('has no tab for search', async () => {
     open();
     const bar = await screen.findByRole('tablist');
     expect(within(bar).queryByRole('tab', { name: 'Search' })).toBeNull();
   });
 
-  /*
-   * A held tab says so to whatever listens for it, and goes nowhere: the
-   * name it used to show while held is under the icon all the time now.
-   */
+  /* A held tab tells whatever listens for it, and goes nowhere. */
   it('sends a long press on, and goes nowhere when it is let go', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
@@ -100,11 +94,7 @@ describe('the tab bar', () => {
     expect(screen.getByRole('tab', { name: 'Home' }).getAttribute('aria-selected')).toBe('false');
   });
 
-  /*
-   * Unread direct and group messages, and friend requests waiting, are all
-   * waiting in Messages — and are said in words, since a number in a circle
-   * is nothing to a screen reader.
-   */
+  /* Unread direct and group messages and waiting friend requests all count on Messages, and are said in words. */
   it('counts what is waiting in Messages on its tab, and says so', async () => {
     open({ chats: [2], groups: [0], requests: 1 });
     const tab = await screen.findByRole('tab', { name: 'Messages, 3 unread' });
@@ -136,10 +126,7 @@ describe('the tab bar', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Learn', undefined);
   });
 
-  /*
-   * Tapping the tab you are on goes nowhere — it sends the press, which the
-   * tab's own list hears and scrolls back to the top on.
-   */
+  /* Tapping the tab you are on sends the press, which the tab's own list hears and scrolls to the top on. */
   it('scrolls the current tab to the top instead of navigating when it is tapped again', async () => {
     const { navigation, emitted } = open({ index: 1 });
     fireEvent.click(await screen.findByRole('tab', { name: 'Learn' }));
@@ -147,10 +134,7 @@ describe('the tab bar', () => {
     expect(navigation.navigate).not.toHaveBeenCalled();
   });
 
-  /*
-   * Moving to another tab is a choice changing, and is felt as one; tapping
-   * the tab you are on changes nothing and is felt as nothing.
-   */
+  /* Moving to another tab ticks; tapping the one you are on does not. */
   it('ticks as you move to another tab, and is quiet when you tap the one you are on', async () => {
     resetHaptics();
     const felt: HapticEvent[] = [];
@@ -166,11 +150,7 @@ describe('the tab bar', () => {
     }
   });
 
-  /*
-   * The air round the capsule is part of the bar a thumb lands on. Every tab
-   * answers across it to the bar’s top and bottom edge, and the two end tabs
-   * to its rounded ends; between tabs nothing is added, since they touch.
-   */
+  /* Every tab answers across the bar's padding to its top and bottom edge, and the end tabs to its rounded ends. */
   it('answers a thumb on the bar’s own edge, not only on the tabs inside it', async () => {
     open();
     await screen.findByRole('tablist');
@@ -184,7 +164,7 @@ describe('the tab bar', () => {
     localStorage.setItem('kurda_locale_v1', 'ckb');
     open();
     await screen.findByRole('tablist');
-    // Home is on the right in Soranî, and Profile on the left
+    // Home is on the right in Soranî, and Profile on the left.
     await waitFor(() => expect(reachOf('tab-Home')).toEqual({ top: 6, bottom: 6, left: 0, right: 6 }));
     expect(reachOf('tab-Profile')).toEqual({ top: 6, bottom: 6, left: 6, right: 0 });
     expect(reachOf('tab-Learn')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });

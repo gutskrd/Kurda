@@ -13,11 +13,6 @@ vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
 vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 
-/*
- * "Extra time" in a timed story game (stories/game/ExtraTimeSwitch.tsx): a
- * switch with its words, where the whole row turns it.
- */
-
 beforeEach(() => {
   localStorage.clear();
   resetPrefsCache();
@@ -32,7 +27,7 @@ describe('ExtraTimeSwitch', () => {
     const apply = vi.fn(() => null);
     renderWithProviders(<ExtraTimeSwitch view={view} apply={apply} />);
     await act(async () => undefined);
-    // the row is the switch, named and explained, and the system switch inside it is not offered as a second one
+    // The row is the switch, named and described, and the system switch inside is not a second one.
     expect(screen.getAllByRole('switch')).toHaveLength(1);
     const row = screen.getByRole('switch', { name: 'Extra time' });
     expect(row.getAttribute('aria-checked')).toBe('false');

@@ -12,7 +12,7 @@ vi.mock('@react-navigation/native', async () => {
   const { useEffect } = await import('react');
   return {
     useNavigation: () => ({ navigate, goBack: vi.fn() }),
-    // the screen is in front: its focus effect runs once, as on arrival
+    // The screen is in front: its focus effect runs once, as on arrival.
     useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
     useScrollToTop: () => undefined,
   };
@@ -67,9 +67,8 @@ const client = () =>
 
 describe('a caring message', () => {
   /*
-   * Notifications moved to the bell on Home, but this one is pinned at the top
-   * of Messages too until it is read: a check on somebody's wellbeing is the
-   * one notice that must not wait behind a bell.
+   * Besides the bell, this one is pinned at the top of Messages until read: a check on somebody's wellbeing must not
+   * wait behind a bell.
    */
   it('is pinned at the top of Messages, and opens there in full with its helpline one tap away', async () => {
     testAuth.client = client();
@@ -77,7 +76,7 @@ describe('a caring message', () => {
     const row = await screen.findByRole('button', { name: "We're thinking of you" });
     expect(screen.queryByRole('button', { name: 'Find a helpline' })).toBeNull();
     fireEvent.click(row);
-    // the whole of it, the helpline paragraph included, which the row cuts to two lines
+    // The whole of it, the helpline paragraph included, which the row cuts to two lines.
     const words = await screen.findAllByText((_, el) => el?.tagName === 'DIV' && el.textContent === body && el.children.length === 0);
     expect(words.some((el) => !row.contains(el))).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Find a helpline' }));

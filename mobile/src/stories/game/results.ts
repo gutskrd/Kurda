@@ -1,12 +1,10 @@
 import type { StoryGameMode, StoryGameReviewItem, StoryGameStanding } from '@kurda/shared';
 
 /**
- * How a finished game's standings are shown (the StoryGameResults rules):
- * a podium only with four or more players; a duo as both scores and the two
- * together, without places; three players in seat order with only your own
- * place said to you. A game alone has nobody to stand against.
+ * How a finished game's standings are laid out: a podium only with four or more players, a duo as both scores and
+ * their sum without places, three players in seat order with only your own place said. A solo game has no standings.
  */
-export type StandingsLayout = 'solo' | 'duo' | 'seats' | 'podium';
+type StandingsLayout = 'solo' | 'duo' | 'seats' | 'podium';
 
 export function standingsLayout(mode: StoryGameMode, standings: readonly StoryGameStanding[]): StandingsLayout {
   if (mode === 'solo' || standings.length < 2) return 'solo';

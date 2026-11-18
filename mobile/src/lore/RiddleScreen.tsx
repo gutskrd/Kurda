@@ -36,28 +36,11 @@ import { InLanguage } from './parts';
 import { mergeHints, rememberAnswer, rememberedAnswer, rememberedList } from './store';
 
 /**
- * One riddle (its own address, `app/learn/riddles/<slug>`): the question,
- * large and centred in the display face, in its own Kurdish and direction,
- * with its translation a tap away; the hints already taken; a field to guess
- * in, with the Kurdish key bar above it; a hint, one at a time; and Show the
- * answer, which asks once and then opens the answer on a screen of its own.
- *
- * The server judges a guess (shared `riddleGuessMatches`), and the line under
- * the field says what it forgives, so a learner is not left wondering whether
- * a capital or a missing mark on an ê cost them. A guess that is not it is
- * told so kindly and the field stays as it was, to be changed. A right one is
- * a small moment — a check drawing itself in, the answer, any XP the server
- * paid — and then the way on to why it is right.
- *
- * Nothing on this screen holds an answer, a hint not taken or an
- * explanation before the learner asks: the page the server sends carries
- * none, a hint is fetched when Take a hint is pressed, and the answer only
- * arrives with a right guess or a confirmed reveal.
- *
- * What a solve is worth is said here because a solve pays: the riddle's XP,
- * half of it once a hint is taken, none once the answer has been seen.
- * Challenge a friend hands the question and the riddle's address to the
- * phone's share sheet — never the answer.
+ * One riddle (`app/learn/riddles/<slug>`): the question in its own Kurdish with its translation a tap away, the hints
+ * taken, a guess field with the Kurdish key bar, and Show the answer, which confirms once and opens the answer screen.
+ * The server judges a guess (shared `riddleGuessMatches`) and the line under the field says what it forgives. Nothing
+ * here holds an answer, an untaken hint or an explanation before the learner asks. A solve pays the riddle's XP, half
+ * after a hint and none after the answer was seen; Challenge a friend shares the question, never the answer.
  */
 export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -71,11 +54,11 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
   const [riddle, setRiddle] = useState<RiddleDetail | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [hints, setHints] = useState<RiddleHint[]>([]);
-  // the hint taken in this sitting, which unfolds; the ones that came with the page are simply there
+  // The hint taken in this sitting, which unfolds; the ones that came with the page are simply there.
   const [fresh, setFresh] = useState<number | null>(null);
   const [guess, setGuess] = useState('');
   const [verdict, setVerdict] = useState<'right' | 'wrong' | null>(null);
-  // how near the last wrong guess was, when it was: said instead of a plain "not quite"
+  // How near the last wrong guess was, when it was: said instead of a plain "not quite"
   const [near, setNear] = useState<RiddleNear | null>(null);
   const [solved, setSolved] = useState<{ answer: RiddleAnswer; xp: number } | null>(null);
   const [busy, setBusy] = useState<'guess' | 'hint' | 'reveal' | null>(null);
@@ -108,7 +91,7 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
     const res = await takeHint(client, slug, index);
     setBusy(null);
     if (!res.ok) {
-      // a hint taken on another phone first: the page is read again, with every hint it has
+      // A hint taken on another phone first: the page is read again, with every hint it has.
       if (res.error.code === 'HINT_ORDER') load();
       else setProblem(describeError(res.error, t));
       return;
@@ -124,7 +107,7 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
     if (!riddle || !text || busy) return;
     setBusy('guess');
     setProblem(null);
-    // the interface language goes with the guess, so the answer said in it is told to say it in Kurdish
+    // The interface language goes with the guess, so an answer typed in it is told to say it in Kurdish.
     const res = await client.post<RiddleGuessResult>(`/riddles/${encodeURIComponent(slug)}/guess`, { guess: text, locale });
     setBusy(null);
     if (!res.ok) {
@@ -172,7 +155,7 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
 
   const challenge = (): void => {
     if (!riddle) return;
-    // the question and where to find it; the answer stays with whoever solves it
+    // The question and where to find it; the answer stays with whoever solves it.
     void Share.share({ message: t('lore.riddle.shareMessage', { question: riddle.question, url: riddleUrl(slug) }) }).catch(() => undefined);
   };
 
@@ -215,7 +198,7 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.facts, { flexDirection: dir.row }]}>
-          {/* how hard it is is information, not a prize: the quiet pill, as its neighbours are */}
+          {/* How hard it is is information, not a prize: the quiet pill, as its neighbours are. */}
           <Pill label={t(DIFFICULTY_KEY[riddle.difficulty])} />
           <Pill label={t(CATEGORY_KEY[riddle.category])} />
           {daily ? <Pill icon="calendar" label={t('lore.riddles.daily')} /> : null}
@@ -342,7 +325,7 @@ function HintCard({ hint, dialect }: { hint: RiddleHint; dialect: RiddleDetail['
   return (
     <View style={[styles.hint, { backgroundColor: colors.controlTrack }]} testID={`riddle-hint-${hint.index}`}>
       <View style={[styles.hintHead, { flexDirection: dir.row }]}>
-        {/* which hint this is: a label in the quiet ink, as the website numbers its hints */}
+        {/* Which hint this is: a label in the quiet ink, as the website numbers its hints. */}
         <Icon name="lightbulb" size={14} color={colors.textSecondary} />
         <Text style={[styles.hintLabel, { color: colors.textSecondary }]}>{t('lore.riddle.hintN', { n: hint.index + 1 })}</Text>
       </View>

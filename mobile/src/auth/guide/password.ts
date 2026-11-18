@@ -1,8 +1,6 @@
 /**
- * How strong a password being typed is, for the meter under the field: a
- * rough measure, so somebody choosing one sees it grow as they add to it.
- * The rules that refuse a password are the validators' (auth/validators.ts);
- * this only says how good one that passes them is.
+ * How strong a password being typed is, for the meter under the field: a rough measure that grows as one adds to it.
+ * The rules that refuse a password are auth/validators.ts; this only rates one that passes.
  */
 import type { TranslationKey } from '../../i18n/translations';
 import { PASSWORD_MIN } from '../validators';
@@ -13,10 +11,9 @@ export type PasswordStrength = 0 | 1 | 2 | 3 | 4;
 export const STRENGTH_LEVELS = 4;
 
 /**
- * Length first, then variety: at least the minimum for a weak one, twelve
- * for the next step, a letter beside a number for another, and either a
- * mix of cases or a symbol for the last. Short of the minimum it is weak
- * whatever is in it, since the server will not take it.
+ * Length first, then variety: the minimum for weak, twelve for the next level, a letter beside a number for another,
+ * and a mix of cases or a symbol for the last. Short of the minimum it is weak whatever it holds, since the server will
+ * not take it.
  */
 export function passwordStrength(password: string): PasswordStrength {
   if (password.length === 0) return 0;

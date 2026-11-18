@@ -9,14 +9,8 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useDirection } from '../reports/direction';
 
 /**
- * After a gift from the shop: where it went.
- *
- * A gift given from the shop is posted into the chat with that friend like
- * any other (the API does it), so the shop says so and offers the way there,
- * instead of an alert that said it was "on its way" to nowhere in particular.
- *
- * It arrives the way a menu does, growing a little and fading in, and only
- * fades under Reduce Motion.
+ * After a gift from the shop: where it went. The API posts it into the chat with that friend, so the shop says so and
+ * offers the way there. It arrives growing a little and fading in; only the fade under Reduce Motion.
  */
 export function GiftSentNote({
   itemName,

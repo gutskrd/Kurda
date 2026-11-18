@@ -5,7 +5,6 @@ import type {
   MyRanks,
   RankBoard,
   RankBoardScope,
-  RankCard,
   RankResult,
   RankedGame,
   SeasonEmblem,
@@ -15,16 +14,10 @@ import type {
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
-/**
- * Game Ranks, the weekly leagues and badges over the API (contract 4). The
- * shapes are @kurda/shared's, the same ones the API sends and the browser
- * reads, so nothing here declares a type of its own.
- */
+/** Game Ranks, the weekly leagues and badges over the API. The shapes are @kurda/shared's, as the API sends them. */
 
 /** Your rank in every game, a running rated-game cooldown, and the season. */
 export const getMyRanks = (client: ApiClient): Promise<ApiResult<MyRanks>> => client.get('/ranks/me');
-
-export const getRankCard = (client: ApiClient, game: RankedGame): Promise<ApiResult<RankCard>> => client.get(`/ranks/me/${game}`);
 
 /** What a finished game did to your rank, with its one plain reason. */
 export const getRankResult = (client: ApiClient, game: RankedGame, ref: string): Promise<ApiResult<RankResult>> =>

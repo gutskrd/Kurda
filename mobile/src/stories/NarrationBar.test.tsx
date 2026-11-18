@@ -16,9 +16,9 @@ vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
-// the bar's position hook lives beside the phone's player; nothing here plays
+// The bar's position hook lives beside the phone's player; nothing here plays.
 vi.mock('expo-audio', () => ({ createAudioPlayer: () => ({}) }));
-// every control noted as it is drawn, so its reach can be read
+// Records each control as it is drawn, so its reach can be read.
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -60,10 +60,10 @@ function fakePlayer() {
   return { player, log, clock, report: (s: PlayerStatus) => status(s) };
 }
 
-/** Each narrator's way of telling its bar about a change, as useNarration wires it. */
+/** How each narrator notifies its bar of a change, as useNarration wires it. */
 const listeners = new Map<Narrator, (s: NarrationState) => void>();
 
-/** The bar with a live narrator behind it, the way the reader mounts it. */
+/** The bar with a live narrator behind it, mounted as the reader does. */
 function Harness({ narrator, rate, onRate, speaker }: { narrator: Narrator; rate: NarrationRate; onRate: (r: NarrationRate) => void; speaker: string | null }) {
   const [state, setState] = useState<NarrationState>(narrator.state);
   useEffect(() => {
@@ -95,13 +95,13 @@ describe('rateLabel', () => {
 
 describe('lineTime', () => {
   it('reads a tap on the line as a point on the track, from the screen and the line’s place on it', () => {
-    // a line 300 wide starting 40 in, over a story of a minute
+    // A line 300 wide starting 40 in, over a one-minute story.
     expect(lineTime(40 + 225, 40, 300, 60_000)).toBe(45_000);
     expect(lineTime(40, 40, 300, 60_000)).toBe(0);
-    // a finger a little past either end is that end
+    // A finger slightly past either end counts as that end.
     expect(lineTime(10, 40, 300, 60_000)).toBe(0);
     expect(lineTime(400, 40, 300, 60_000)).toBe(60_000);
-    // nothing to read yet: no line measured, no story, no point
+    // Nothing measured or loaded yet, so no point.
     expect(lineTime(100, 40, 0, 60_000)).toBeNull();
     expect(lineTime(100, 40, 300, 0)).toBeNull();
     expect(lineTime(Number.NaN, 40, 300, 60_000)).toBeNull();
@@ -116,13 +116,13 @@ describe('NarrationBar', () => {
 
   it('answers a finger a fingertip past the seek line and the speed, with the clock out of the line’s reach', () => {
     mount();
-    // the line is 32 tall: 8 above and below makes 48, and it spans the bar, so nothing at its ends
+    // The line is 32 tall: 8 above and below makes 48, and it spans the bar, so nothing at its ends.
     expect(reachOf('Position in the story')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
-    // the times stand the line's reach further off, so a tap on the clock is not a jump in the story
+    // The times sit the line's reach further off, so a tap on the clock does not seek.
     expect(getComputedStyle(screen.getByLabelText('Position in the story')).marginBottom).toBe('8px');
-    // the speed is 44 by 32: up to 48 each way, and only as far as the row it stands in
+    // The speed pill is 44 by 32: up to 48 each way, but only within its row.
     expect(reachOf('Speed: 1×')).toEqual({ top: 8, bottom: 8, left: 2, right: 2 });
-    // the steps beside the play button are 44: 2 each way, inside the 4 between them and it
+    // The 44-point steps beside play reach 2 each way, inside the 4 between them.
     expect(reachOf('Previous sentence')).toEqual({ top: 2, bottom: 2, left: 2, right: 2 });
   });
 
@@ -136,7 +136,7 @@ describe('NarrationBar', () => {
     expect(f.log).toContain('load a.m4a');
     expect(await screen.findByText('Sentence 1 of 3')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pause' })).toBeTruthy();
-    // the sound moves on; the line reads where it is from the track
+    // The sound moves on; the line reads its place from the track.
     act(() => narrator.next());
     expect(await screen.findByText('Sentence 2 of 3')).toBeTruthy();
     expect(screen.getByText('0:02')).toBeTruthy();

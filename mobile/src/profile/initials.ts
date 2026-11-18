@@ -1,30 +1,17 @@
 /**
- * Initials / monogram avatar fallback (KUR-178). Pure + deterministic: derive a
- * 1–2 character monogram from a display name and a stable background color from
- * the user's id, so a user with no photo always gets the same avatar with no
- * network round-trip. Kurdish Latin diacritics (ê î û ç ş) are preserved.
+ * Monogram avatar fallback, pure and deterministic: a 1–2 character monogram from a display name and a stable
+ * background colour from the user's id, so a user without a photo always gets the same avatar with no network round
+ * trip. Kurdish Latin diacritics (ê î û ç ş) are preserved.
  */
 import { TONES } from '../coursemap/path';
 
 const tone = TONES.light;
 
 /**
- * The monogram's grounds: the course's own colours, as the lesson path paints
- * a unit by day, so a face with no photo is in a colour the app already has.
- *
- * They were eight hues picked for this file alone. One was the exact red the
- * app says "danger" in, so a person could look like an error, and one the
- * green of a look the app no longer has. Each slot now holds the course tone
- * nearest the hue it had, so nobody's avatar jumps to another family of
- * colour; the path has seven tones and there are eight slots, and the eighth
- * is the river's deeper edge, where a navy was.
- *
- * The deep, by-day fills in both schemes, because the monogram on them is
- * white in both. Saffron gives its deeper edge instead of its fill: the fill
- * is a gold, which the path writes on in dark brown and white cannot be read
- * on. Every one meets WCAG AA (4.5:1) against white, asserted in
- * initials.test.ts. The order and the count are what map an id to a colour:
- * changing either gives everybody a different one.
+ * The monogram's grounds: the course's own colours, as the lesson path paints a unit by day. Seven tones fill eight
+ * slots; the eighth is the river's deeper edge. The deep by-day fills in both schemes, since the monogram is white in
+ * both; saffron gives its deeper edge, since its gold fill cannot carry white. Each meets WCAG AA (4.5:1) against white
+ * (initials.test.ts). The order and the count map an id to a colour: changing either changes everybody's.
  */
 export const AVATAR_COLORS = [
   tone.meadow.fill,
@@ -39,9 +26,10 @@ export const AVATAR_COLORS = [
 
 export const AVATAR_TEXT_COLOR = '#FFFFFF';
 
-/** A word's letter/number characters (drops @, punctuation, emoji); falls back
- *  to every character when a word has none, so an emoji-only name still yields
- *  something. Uses Array.from so surrogate pairs stay intact. */
+/**
+ * A word's letter and number characters (no @, punctuation or emoji), falling back to every character for a word with
+ * none, so an emoji-only name still yields something. Array.from keeps surrogate pairs intact.
+ */
 function meaningfulChars(word: string): string[] {
   const all = Array.from(word);
   const letters = all.filter((c) => /[\p{L}\p{N}]/u.test(c));
@@ -49,9 +37,8 @@ function meaningfulChars(word: string): string[] {
 }
 
 /**
- * A 1–2 character monogram. Multi-word names take the first character of the
- * first and last words; a single word takes its first two characters. Blank
- * input falls back to '?'. Uppercased (Kurdish Latin: ş→Ş, î→Î, …).
+ * A 1–2 character monogram: the first characters of the first and last words, or a single word's first two. Blank input
+ * gives '?'. Uppercased (ş→Ş, î→Î).
  */
 export function deriveInitials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -63,7 +50,7 @@ export function deriveInitials(name: string): string {
   return raw.toUpperCase() || '?';
 }
 
-/** Deterministic 32-bit FNV-1a hash — stable across runs and platforms. */
+/** Deterministic 32-bit FNV-1a hash, stable across runs and platforms. */
 function hashString(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {
@@ -73,7 +60,7 @@ function hashString(s: string): number {
   return h >>> 0;
 }
 
-/** A stable palette colour for a seed (use the user id) — same seed → same colour. */
+/** A stable palette colour for a seed (use the user id). */
 export function avatarColor(seed: string): string {
   return AVATAR_COLORS[hashString(seed) % AVATAR_COLORS.length]!;
 }
@@ -84,7 +71,7 @@ export interface InitialsAvatarData {
   textColor: string;
 }
 
-/** Everything a monogram avatar needs, from a display name + a stable id. */
+/** Everything a monogram avatar needs, from a display name and a stable id. */
 export function initialsAvatar(name: string, seed: string): InitialsAvatarData {
   return { initials: deriveInitials(name), backgroundColor: avatarColor(seed), textColor: AVATAR_TEXT_COLOR };
 }

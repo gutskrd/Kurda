@@ -19,25 +19,14 @@ import { useValley } from '../ValleyScope';
 import { CARD } from '../valley';
 
 /**
- * A lesson's answer box with the Kurdish key bar above it — on Translate,
- * Listening and Writing alike, in the course's variety of Kurdish.
+ * A lesson's answer box with the Kurdish key bar above it (Translate, Listening, Writing), in the course's variety:
+ * the letters come from `typingKeys` as on the website, the row wraps, and Soranî is typed right to left.
  *
- * The bar used to be on Writing only, always Kurmancî, and in one row that a
- * Soranî course's twelve letters would have run off. Now the letters are the
- * course's (`typingKeys`, the set the browser's lessons use), the row wraps,
- * and a Soranî answer is typed right to left.
+ * A key is inserted at the cursor. The cursor position is set once right after a key and released as soon as the
+ * field reports it, since a permanently held `selection` makes a React Native cursor jump while typing.
  *
- * A key goes in where the cursor is. The cursor is told where to go only once,
- * right after a key: a `selection` held on the field for good is what makes a
- * React Native cursor jump about as you type, so it is let go again as soon as
- * the field reports it has moved there.
- *
- * The field is one of the lesson's cream cards, on its hairline edge, and
- * what is typed in it is set in the display face, as the Kurdish everywhere
- * else in the lesson is. Once the answer is graded the field answers back:
- * green and popping a little when it was accepted, in the red of a miss and
- * shaking once when it was not (still under Reduce Motion, where the colour
- * says it alone).
+ * Once graded the field reacts: green with a small pop when accepted, red with one shake when not (under Reduce
+ * Motion only the colour changes).
  */
 export function KurdishAnswerInput({
   text,
@@ -53,14 +42,14 @@ export function KurdishAnswerInput({
 }: {
   text: string;
   onChangeText: (text: string) => void;
-  /** the course's variety (`SessionView.dialect`); Kurmancî when unknown */
+  /** The course's variety (`SessionView.dialect`); Kurmancî when unknown. */
   dialect?: string | null;
   disabled: boolean;
   placeholder: string;
   placeholderTextColor: string;
   accessibilityLabel: string;
   multiline?: boolean;
-  /** how the answer was graded, once it has been */
+  /** How the answer was graded, once it has been. */
   verdict?: 'right' | 'wrong' | null;
   style?: StyleProp<TextStyle>;
 }): React.JSX.Element {
@@ -124,7 +113,7 @@ export function KurdishAnswerInput({
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.sm },
-  // the lesson's own column starts at the left edge; the keys sit with it
+  // The lesson's column starts at the left edge, and the keys line up with it.
   bar: { justifyContent: 'flex-start' },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },
   field: { borderWidth: CARD.edge, borderRadius: CARD.radius, fontFamily: displayFont, fontSize: typography.sizes.lg - 2 },

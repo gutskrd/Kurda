@@ -19,7 +19,7 @@ import { notifyGuestRefused } from './guestRefused';
 
 patchReactNativeWeb({ reduceMotion: true });
 
-// a phone's screen: jsdom's window has no height, and a sheet's heights are shares of it
+// A phone's screen: jsdom's window has no height, and a sheet's heights are shares of it.
 Object.defineProperty(window, 'visualViewport', { value: { height: 800, width: 390, scale: 1 }, configurable: true });
 window.dispatchEvent(new Event('resize'));
 
@@ -78,7 +78,7 @@ describe('the account gate', () => {
     expect(felt).toEqual(['select']);
     stop();
     restore();
-    // not now: the offer goes and nothing else happens
+    // Not now: the offer goes and nothing else happens.
     fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
     expect(screen.queryByRole('heading', { name: 'Create an account to post' })).toBeNull();
     expect(navigation.navigate).not.toHaveBeenCalled();

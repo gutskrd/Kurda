@@ -19,7 +19,7 @@ import { VerifyEmailScreen } from './VerifyEmailScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
 
-/** What the screen asks of the session, as the stand-in session answers it. */
+/** What the screen asks of the session, as the test session answers it. */
 type Session = typeof testAuth & {
   verifyEmailCode: (code: string) => Promise<string | null>;
   resendVerificationCode: () => Promise<string | null>;
@@ -60,10 +60,10 @@ describe('confirming an address', () => {
     renderWithProviders(<VerifyEmailScreen />);
     expect(screen.getByText('I sent a code to your email. Type it in and we’re off!')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Confirm your email' })).toBeTruthy();
-    // the address it went to, as it was typed, and how long each thing lasts
+    // The address as typed, and how long each thing lasts.
     expect(screen.getByText('rojda@exmaple.com')).toBeTruthy();
     expect(screen.getByText(/The code expires 15 minutes after it was sent\. A sign-up that isn’t confirmed within 7 days is removed\./)).toBeTruthy();
-    // one question, so nothing to count
+    // One question, so no step count.
     expect(screen.queryByTestId('step-progress')).toBeNull();
   });
 
@@ -101,7 +101,7 @@ describe('confirming an address', () => {
     expect(await screen.findByText('That code isn’t right.')).toBeTruthy();
     expect(screen.getByText('Hmm, have another look at that one.')).toBeTruthy();
     expect((screen.getByTestId('code') as HTMLInputElement).value).toBe('');
-    // and the next whole code is sent again
+    // The next complete code is sent again.
     type('482137');
     await waitFor(() => expect(session.verifyEmailCode).toHaveBeenCalledTimes(2));
   });
@@ -126,7 +126,7 @@ describe('confirming an address', () => {
     expect(session.resendVerificationCode).toHaveBeenCalledTimes(1);
   });
 
-  // a reach that came and went with the wait would be cut off at the footer's edge once it came back
+  // A reach lost during the wait would be cut off at the footer's edge when it came back.
   it('keeps the same reach while it waits to offer another code', async () => {
     const session = unconfirmed();
     renderWithProviders(<VerifyEmailScreen />);
@@ -138,7 +138,7 @@ describe('confirming an address', () => {
     expect(reachOf('resend')).toEqual({ top: 2, bottom: 2, left: 0, right: 0 });
   });
 
-  // the bold words were a target twenty-two points tall in the middle of a line
+  // The bold words alone were a 22-point target in the middle of a line.
   it('makes the whole sentence the button that sends a new code, and names it by what it does', () => {
     const session = unconfirmed();
     renderWithProviders(<VerifyEmailScreen />);
@@ -153,7 +153,7 @@ describe('confirming an address', () => {
     testAuth.user = { ...testAuth.user, email: 'a.very.long.address.for.a.narrow.phone@example.org' };
     renderWithProviders(<VerifyEmailScreen />);
     const address = screen.getByText('a.very.long.address.for.a.narrow.phone@example.org');
-    // one line would be nowrap with an ellipsis at its end
+    // A single line would be nowrap with an ellipsis.
     expect(getComputedStyle(address).whiteSpace).not.toBe('nowrap');
   });
 
@@ -169,7 +169,7 @@ describe('a mistyped address', () => {
   it('is put right in place: the address is the way in, and the code goes to the new one', async () => {
     const session = unconfirmed();
     renderWithProviders(<VerifyEmailScreen />);
-    // the field is not there until it is asked for
+    // The field appears only once asked for.
     expect(screen.queryByTestId('new-address')).toBeNull();
     fireEvent.click(screen.getByTestId('change-address'));
     expect(await screen.findByRole('heading', { name: 'What’s your email?' })).toBeTruthy();
@@ -178,7 +178,7 @@ describe('a mistyped address', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send the code there' }));
 
     await waitFor(() => expect(session.changePendingEmail).toHaveBeenCalledWith('rojda@example.com'));
-    // back at the code, which is on its way to the new address
+    // Back at the code, now on its way to the new address.
     expect(await screen.findByRole('heading', { name: 'Confirm your email' })).toBeTruthy();
     expect(screen.getByText('We sent a code to your new address.')).toBeTruthy();
     expect(screen.queryByTestId('new-address')).toBeNull();

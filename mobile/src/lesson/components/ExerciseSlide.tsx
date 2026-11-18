@@ -10,8 +10,8 @@ import { SpeakingExercise } from './SpeakingExercise';
 import { TranslateExercise } from './TranslateExercise';
 import { WritingExercise } from './WritingExercise';
 
-/** The answer being put together, whichever kind of exercise it is for, and how each part of it is changed. */
-export interface ExerciseDraft {
+/** The answer being built, for any exercise kind, and how each part changes. */
+interface ExerciseDraft {
   choice: number | null;
   onChoice: (index: number) => void;
   text: string;
@@ -21,30 +21,18 @@ export interface ExerciseDraft {
   selfRating: SelfRating | null;
   onRate: (rating: SelfRating | null) => void;
   onRecorded: (recorded: boolean) => void;
-  /** put this one off: a clip that will not play, said by the exercise itself */
+  /** Puts this one off: a clip that will not play, reported by the exercise. */
   onSkip: () => void;
 }
 
 const nothing = (): void => undefined;
 
 /**
- * The exercise on screen, as one slide of the lesson: whichever of the seven
- * kinds it is, drawn from the player's state.
+ * The exercise on screen as one slide of the lesson's `SlideSwap`. Each step being its own slide gives every
+ * exercise a fresh start: audio, tiles, microphone and flashing pairs never carry over to the next.
  *
- * It is what the lesson's `SlideSwap` turns, so one question leaves as the
- * next arrives. Each step is a slide of its own, which is also what gives
- * every exercise a fresh start: a conversation still playing stops rather
- * than following into the next one, the tiles laid for one translation are
- * not left on the next one's line, each listening clip plays by itself as it
- * appears, two speaking exercises in a row do not share a microphone, and a
- * pair still flashing does not follow into the next set.
- *
- * A slide on its way out is still mounted for a moment, exactly as it stood,
- * with the answer and the verdict it had. It is the previous exercise, and
- * the player's state has already moved to the next one, so it lets go of the
- * player: it is disabled and its callbacks do nothing. Otherwise a clip that
- * failed a moment too late would put off the exercise after it, and a
- * recording that finished late would count as the next one's.
+ * A leaving slide stays mounted briefly as it was, but the player's state has already moved on, so it is disabled
+ * and its callbacks do nothing; otherwise a late clip failure or recording would apply to the next exercise.
  */
 export function ExerciseSlide({
   exercise,
@@ -55,12 +43,12 @@ export function ExerciseSlide({
   draft,
 }: {
   exercise: Exercise;
-  /** the lesson's variety, for the Kurdish keys and the tiles */
+  /** The lesson's variety, for the Kurdish keys and the tiles. */
   dialect?: string | null;
-  /** still to be answered: not waiting on a verdict, and not showing one */
+  /** Still to be answered: not waiting on or showing a verdict. */
   answering: boolean;
   feedback: Feedback | null;
-  /** how the answer on screen was graded, for the exercise to answer back with */
+  /** How the answer on screen was graded, for the exercise to react to. */
   verdict: 'right' | 'wrong' | null;
   draft: ExerciseDraft;
 }): React.JSX.Element | null {

@@ -19,8 +19,8 @@ describe('formatMinute', () => {
 describe('stepMinute', () => {
   it('steps by 30 and wraps within a day', () => {
     expect(stepMinute(9 * 60, 1)).toBe(9 * 60 + 30);
-    expect(stepMinute(23 * 60 + 30, 1)).toBe(0); // wraps midnight
-    expect(stepMinute(0, -1)).toBe(23 * 60 + 30); // wraps back
+    expect(stepMinute(23 * 60 + 30, 1)).toBe(0); // Wraps midnight.
+    expect(stepMinute(0, -1)).toBe(23 * 60 + 30); // Wraps back.
   });
 });
 
@@ -35,13 +35,7 @@ describe('quietEnabled', () => {
   });
 });
 
-/**
- * Four of these five labels were shown to users as their own key names —
- * the literal text notifications.pref.streak — because the map held keys but
- * was typed Record<…, string>, and the screen printed it without t(). The
- * fifth held the bare English word Events. The type stops it recurring; this
- * stops a label being added that no language can answer.
- */
+/** Each category label is a catalogue key with a translation in every language. */
 describe('notification category labels', () => {
   it('every category resolves to real copy in all nine languages', () => {
     for (const category of NOTIFICATION_CATEGORIES) {

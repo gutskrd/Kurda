@@ -16,11 +16,11 @@ export interface ChatMessage extends ChatMessageExtras {
   senderId: string;
   username?: string;
   avatarUrl?: string | null;
-  /** null for a gift or a game card */
+  /** Null for a gift or a game card. */
   body: string | null;
   createdAt: string;
   readAt?: string | null;
-  /** a group message deleted by its author or a group moderator */
+  /** A group message deleted by its author or a group moderator. */
   deleted?: boolean;
 }
 
@@ -35,14 +35,13 @@ export function giftCatalog(client: ApiClient, toUserIds: readonly string[]): Pr
 }
 
 export interface SentGift extends SendGiftResult {
-  /** the gift message as the sender sees it, when this send posted one */
+  /** The gift message as the sender sees it, when this send posted one. */
   message: ChatMessage | null;
 }
 
 /**
- * Send one item to one or more friends in a chat. `idempotencyKey` is made
- * once per choice (see `newGiftKey`), so a retry after a dropped connection
- * replays the same send instead of paying twice.
+ * Send one item to one or more friends in a chat. `idempotencyKey` is made once per choice (`newGiftKey`), so a retry
+ * after a dropped connection replays the send instead of paying twice.
  */
 export function sendGift(
   client: ApiClient,
@@ -64,7 +63,7 @@ export function openGift(
   return client.post<{ card: GiftCard; equippable: EquippableCategory | null }>(`/gifts/${encodeURIComponent(giftId)}/open`);
 }
 
-/** One gift card as this viewer sees it — after "opened" changed somewhere else. */
+/** One gift card as this viewer sees it, after "opened" changed somewhere else. */
 export function giftBatchCard(client: ApiClient, batchId: string): Promise<ApiResult<{ card: GiftCard }>> {
   return client.get<{ card: GiftCard }>(`/gifts/batches/${encodeURIComponent(batchId)}`);
 }

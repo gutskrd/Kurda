@@ -9,26 +9,22 @@ import { PressableScale } from '../theme/MotionParts';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { LetterOnPaper } from './PaperSheet';
+import { HIDDEN, LetterOnPaper } from './PaperSheet';
 
 /**
- * The small pieces the letters screens share, as the website has them
- * (web/src/letters/LetterParts.tsx): a pen pal's bird as their picture, and a
- * letter as it is read — on its own paper (PaperSheet.tsx), with the way to
- * report one written to you, and to keep it on your home-screen widget.
- * Writing one is LetterComposer.tsx.
+ * Pieces the letters screens share, matching web/src/letters/LetterParts.tsx: a pen pal's bird as their picture,
+ * and a letter as it is read on its own paper (PaperSheet.tsx), with report and widget actions. Writing is
+ * LetterComposer.tsx.
  */
 
-const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
-
-/** The plain warm paper a letter taken down is shown on, light and dark, as it always was. */
+/** The plain paper a removed letter is shown on, in light and dark. */
 function useRemovedPaper(): { paper: string; line: string; soft: string } {
   const { scheme } = useTheme();
   return scheme === 'dark' ? { paper: '#e9dfcd', line: '#d6c8ad', soft: '#6f6476' } : { paper: '#fbf3e4', line: '#e9dcc3', soft: '#6f6476' };
 }
 
 let drawings = 0;
-/** An id prefix of this drawing's own, so two birds on a screen never share a clip. */
+/** An id prefix per drawing, so two birds on a screen never share a clip path. */
 function useArtId(): string {
   const id = useRef<string | null>(null);
   if (id.current === null) {
@@ -38,7 +34,7 @@ function useArtId(): string {
   return id.current;
 }
 
-/** Somebody's pigeon, its portrait in a round of its own as their picture. Decoration: their name is always beside it. */
+/** A pen pal's pigeon portrait as their picture. Decorative, since their name is always beside it. */
 export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }): React.JSX.Element {
   const id = useArtId();
   const xml = useMemo(() => letterBirdSvg({ bird, portrait: true, size, idPrefix: id }), [bird, size, id]);
@@ -49,18 +45,16 @@ export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }):
   );
 }
 
-/** What the widget action under a letter you were sent needs to know and do. */
-export interface WidgetAction {
+/** The widget action under a received letter. */
+interface WidgetAction {
   pinned: boolean;
   busy: boolean;
   onToggle: () => void;
 }
 
 /**
- * A letter as it is read: on its own paper, with who wrote it and when at the
- * top of the sheet, and under it, for one written to you, the ways to keep it
- * on your widget and to report it. A letter taken down by moderation is a
- * plain card saying so, its paper, drawing and notes gone with it.
+ * A letter as it is read: on its own paper with sender and time at the top, and under a received letter the widget
+ * and report actions. A letter removed by moderation is a plain card saying so, without its paper or decor.
  */
 export function LetterSheet({
   letter,
@@ -79,7 +73,7 @@ export function LetterSheet({
   const plain = useRemovedPaper();
   let when = '';
   try {
-    // the hour as a chat writes it, with no zero before it in a language that does not put one there
+    // The hour as a chat shows it, without a leading zero where the language uses none.
     when = new Date(letter.sentAt).toLocaleString(locale, { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
   } catch {
     when = new Date(letter.sentAt).toLocaleString();
@@ -139,7 +133,7 @@ const styles = StyleSheet.create({
   badge: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: radii.pill, backgroundColor: '#e3f1fb' },
 
   letter: { gap: 2 },
-  // the quiet things to do with a letter, under it toward the end of the line
+  // The quiet actions under a letter, toward the end of the line.
   actions: { justifyContent: 'flex-end', flexWrap: 'wrap', columnGap: spacing.md },
   action: { alignItems: 'center', gap: 5, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.xs },
   actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },

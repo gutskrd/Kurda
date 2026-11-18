@@ -35,12 +35,12 @@ const check = (p: ReturnType<typeof phone>) => checkInstall(p.stores, [SESSION, 
 
 describe('the session kept across an uninstall', () => {
   it('keeps the session on the first start of the version that checks, so an update signs nobody out', async () => {
-    // a phone signed in by an earlier version: a session and a device id, and no install id anywhere
+    // A phone signed in by an earlier version: a session and a device id, and no install id anywhere.
     const p = phone({ local: { kurda_onboarding_v1: '{}' }, keychain: { [SESSION]: 'tokens', [DEVICE]: 'device' } });
     expect(await check(p)).toBe('first');
     expect(p.kept.get(SESSION)).toBe('tokens');
     expect(p.kept.get(DEVICE)).toBe('device');
-    // the same id in both places from now on, and every later start is the same install
+    // The same id in both places from now on, and every later start is the same install.
     expect(p.local.get(INSTALL_KEY)).toBeTruthy();
     expect(p.kept.get(INSTALL_KEY)).toBe(p.local.get(INSTALL_KEY));
     expect(await check(p)).toBe('same');
@@ -55,7 +55,7 @@ describe('the session kept across an uninstall', () => {
     expect(await check(p)).toBe('reinstalled');
     expect(p.kept.has(SESSION)).toBe(false);
     expect(p.kept.has(DEVICE)).toBe(false);
-    // the new install has an id of its own, and keeps what it signs in to from then on
+    // The new install has an id of its own, and keeps what it signs in to from then on.
     expect(p.kept.get(INSTALL_KEY)).not.toBe(before);
     p.kept.set(SESSION, 'new tokens');
     expect(await check(p)).toBe('same');
@@ -81,7 +81,7 @@ describe('the session kept across an uninstall', () => {
     const p = phone({ keychain: { [SESSION]: 'tokens' } });
     p.faults.localWrites = true;
     expect(await check(p)).toBe('first');
-    // nothing is left in the Keychain that a later start could take for an earlier install's
+    // Nothing is left in the Keychain that a later start could take for an earlier install's.
     expect(p.kept.has(INSTALL_KEY)).toBe(false);
     expect(await check(p)).toBe('first');
     expect(p.kept.get(SESSION)).toBe('tokens');

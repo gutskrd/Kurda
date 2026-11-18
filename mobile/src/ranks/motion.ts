@@ -1,8 +1,6 @@
 /**
- * The rank result's numbers, as numbers (no React Native). The celebration a
- * result can open is the app's one celebration (theme/celebration.ts); what is
- * the ranks' own is how many flecks each kind of moment throws and how long
- * the points take to count.
+ * The rank result's numbers. The celebration is the app's one (theme/celebration.ts); the ranks set only how many
+ * flecks each moment throws and how long the points take to count.
  */
 
 /** How many flecks each kind of moment gets: a division is a nod, a new tier a little more. */

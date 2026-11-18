@@ -19,7 +19,7 @@ afterEach(() => {
   forgetReach();
 });
 
-/** The face of the tile a button is: drawn last, over its lip. */
+/** The tile's face: drawn last, over its lip. */
 function face(button: HTMLElement): HTMLElement {
   return button.lastElementChild as HTMLElement;
 }
@@ -54,14 +54,14 @@ describe('a tile', () => {
     expect(onPress).not.toHaveBeenCalled();
   });
 
-  // under Reduce Motion it does not travel: it is simply down while held and up again when let go
+  // Under Reduce Motion it does not travel: simply down while held and up when released.
   it('sinks onto its lip while it is held, and stands back up when it is let go', async () => {
     renderWithProviders(<Tile label="av" onPress={() => undefined} />);
-    // the Reduce Motion setting is read as it mounts
+    // The Reduce Motion setting is read on mount.
     await act(async () => undefined);
     const tile = screen.getByRole('button', { name: 'av' });
     expect(face(tile).style.transform).toMatch(/translateY\(0px\)/);
-    // held from the keyboard, which presses at once where a finger waits a moment to be sure it is a press
+    // Held from the keyboard, which presses at once where a finger waits to be sure.
     act(() => {
       fireEvent.keyDown(tile, { key: ' ' });
     });
@@ -108,7 +108,7 @@ describe('a place with a look of its own', () => {
   };
   const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
 
-  // a lesson's cream cards on their sandy edge, and its Check in dark ink, while every other tile keeps the palette's
+  // A lesson's cream cards on their sandy edge and its dark-ink Check, while other tiles keep the palette's colours.
   it('paints its tiles and its lesson button in its own colours, and the lip follows a face rounded its own way', () => {
     renderWithProviders(
       <TileLookScope look={look}>

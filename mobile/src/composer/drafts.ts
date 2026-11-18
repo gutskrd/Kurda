@@ -4,13 +4,8 @@ import { isEmptyDraft, parsePostDraft, postDraftStorageKey, type PostDraft } fro
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * The composer's draft, kept on this phone.
- *
- * One per person (`postDraftStorageKey`), saved a moment after each change and
- * cleared when the post goes up or the draft is deleted. Drafts used to be
- * saved on the server with a "Save draft" button, and nothing ever let you
- * open one again; on the phone they cost nothing, and they are back the next
- * time the composer opens.
+ * The composer's draft, kept on this phone: one per person (`postDraftStorageKey`), saved a moment after each change
+ * and cleared when the post goes up or the draft is deleted.
  */
 export async function loadDraft(userId: string, store: DeviceStore = deviceStore): Promise<PostDraft | null> {
   const draft = parsePostDraft(await store.get(postDraftStorageKey(userId)));
@@ -27,11 +22,9 @@ export async function clearDraft(userId: string, store: DeviceStore = deviceStor
 }
 
 /*
- * A picked picture lives in the picker's cache, which the system may empty at
- * any time. A draft has to outlast that, so each picture is copied into the
- * app's own documents first (and the copy removed when it is no longer on a
- * draft). In the web build there is no such folder, and the picture lives as
- * long as the tab does.
+ * A picked picture lives in the picker's cache, which the system may empty at any time, so each is copied into the
+ * app's documents first (and removed once no draft uses it). The web build has no such folder; the picture lasts as
+ * long as the tab.
  */
 const FOLDER = FileSystem.documentDirectory ? `${FileSystem.documentDirectory}composer/` : null;
 
@@ -55,7 +48,7 @@ export async function dropPicture(uri: string | null): Promise<void> {
   try {
     await FileSystem.deleteAsync(uri, { idempotent: true });
   } catch {
-    // already gone
+    // Already gone.
   }
 }
 

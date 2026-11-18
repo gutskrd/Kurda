@@ -9,11 +9,9 @@ import { Note, SectionLabel } from '../stories/ui';
 import type { MpDialectOffer } from './mpAvailability';
 
 /**
- * What a host chooses for a table of Who Am I? on the phone, in the invite
- * sheet (play/InviteSheet.tsx): only what is offered in the Kurdish chosen
- * above — a difficulty the identities fill — and the longest the game may
- * run, handed up as the lobby's settings as they change, or null when the
- * game cannot be made in that Kurdish.
+ * What a host chooses for a table of Who Am I? in the invite sheet (play/InviteSheet.tsx): a difficulty offered in the
+ * chosen Kurdish and the longest the game may run, handed up as the lobby's settings, or null when the game cannot be
+ * made in that Kurdish.
  */
 
 export const DIFFICULTY_KEY: Record<GameDifficulty, TranslationKey> = {
@@ -37,7 +35,8 @@ export function TableChoices({
   const [minutes, setMinutes] = useState<string>(String(WHO_AM_I_TABLE_DEFAULT_MINUTES));
   const chosen = difficulty && difficulties.includes(difficulty) ? difficulty : (difficulties[0] ?? null);
   useEffect(() => {
-    // a table this app makes offers the friends all four answers (yes, could be, no, not sure); one without the count is a table of two
+    // A table this app makes offers all four answers (yes, could be, no, not sure); one without the count is a table of
+    // two.
     onChange(chosen ? { dialect, difficulty: chosen, minutes: Number(minutes), answers: 4 } : null);
   }, [dialect, chosen, minutes, onChange]);
   if (!chosen) return <Note icon="question">{t('games.whoAmI.notOffered')}</Note>;

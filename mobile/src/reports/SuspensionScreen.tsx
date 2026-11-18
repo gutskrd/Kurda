@@ -20,27 +20,24 @@ import { CATEGORY_LABEL } from './labels';
 import { formatUntil } from './sendErrors';
 
 /**
- * A client that speaks with the appeal token and nothing else.
- *
- * The token reads `GET /me/standing` and files `POST /me/appeals`, and is
- * refused everywhere else. It cannot be refreshed: when it runs out (a day),
- * the answer is 401, the screen says to sign in again, and nothing is stored.
+ * A client that speaks only with the appeal token, which can read `GET /me/standing` and file `POST /me/appeals` and
+ * nothing else. It cannot be refreshed: when it expires (a day) the answer is 401, the screen says to sign in again,
+ * and nothing is stored.
  */
-export function appealClient(baseUrl: string, appealToken: string): ApiClient {
+function appealClient(baseUrl: string, appealToken: string): ApiClient {
   const storage: TokenStorage = {
     get: async (): Promise<TokenPair> => ({ accessToken: appealToken, refreshToken: '' }),
     set: async () => undefined,
     clear: async () => undefined,
   };
-  // Hevalo offline for a while is said over this screen as over any other
+  // Hevalo offline for a while is said over this screen as over any other.
   return new ApiClient({ baseUrl, storage, onLogout: () => undefined, onMaintenance: showMaintenance });
 }
 
 /**
- * The ban the suspension screen is about: the account-wide one in force, as
- * the server picks it for sign-in (`currentBan`) — a permanent ban first, then
- * the one that ends last (no end first), then the newest. With two in force,
- * the review is asked of the one that is keeping the person out.
+ * The ban the suspension screen is about: the account-wide one in force, as the server picks it at sign-in
+ * (`currentBan`): a permanent ban first, then the one ending last, then the newest. With two in force, the review is
+ * asked of the one keeping the person out.
  */
 export function accountSanction(standing: AccountStanding | null): StandingSanction | null {
   const bans = (standing?.active ?? []).filter((s) => s.kind === 'suspension' || s.kind === 'permanent_ban');
@@ -56,13 +53,8 @@ export function accountSanction(standing: AccountStanding | null): StandingSanct
 }
 
 /**
- * Signing in to a suspended or banned account.
- *
- * Calm, and complete: why (the rule and what the reviewer wrote), until when
- * in the person's own time or that it is permanent, and "Ask for a review"
- * while that is still open — sent with the appeal token sign-in gave, which
- * can do that and read the standing, and nothing else. It used to be a bare
- * "this account is disabled" on a sign-in form, with nowhere to go.
+ * Signing in to a suspended or banned account: why (the rule and the reviewer's note), until when in the person's own
+ * time or that it is permanent, and "Ask for a review" while open, sent with the appeal token from sign-in.
  */
 export function SuspensionScreen({
   details,
@@ -82,7 +74,7 @@ export function SuspensionScreen({
   const [expired, setExpired] = useState(false);
   const [asking, setAsking] = useState(false);
   const [filed, setFiled] = useState<AppealView | null>(null);
-  // offline, or the server down: the review waits on the standing, so say so and offer to try again
+  // Offline, or the server down: the review waits on the standing, so say so and offer to try again.
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [round, setRound] = useState(0);
 
@@ -92,7 +84,7 @@ export function SuspensionScreen({
     void accountStanding(client).then((res) => {
       if (!alive) return;
       if (res.ok) setStanding(res.data);
-      // the token lasts a day; past that it is refused, and only signing in again gives a new one
+      // The token lasts a day; past that it is refused, and only signing in again gives a new one.
       else if (res.error.status === 401 || res.error.kind === 'unauthorized') setExpired(true);
       else setLoadError(res.error);
     });
@@ -103,7 +95,7 @@ export function SuspensionScreen({
 
   const sanction = accountSanction(standing);
   const appeal = filed ?? sanction?.appeal.current ?? null;
-  // the standing knows best once it has loaded; until then, what sign-in said
+  // The standing knows best once loaded; until then, what sign-in said.
   const canAsk = sanction ? sanction.appeal.allowed : details.appealable;
 
   return (
@@ -156,7 +148,7 @@ export function SuspensionScreen({
                 label={t('appeal.title')}
                 tone="primary"
                 onPress={() => setAsking(true)}
-                // the request names the decision, which only the standing says
+                // The request names the decision, which only the standing says.
                 disabled={!sanction}
                 style={styles.ask}
               />

@@ -1,6 +1,6 @@
-/** Pure shop view helpers (KUR-070) — no React Native, so unit-testable. */
+/** Pure shop view helpers, with no React Native so they are unit-testable. */
 
-import { itemCategory, type ItemCategory, type ItemSort } from '@kurda/shared';
+import type { ItemCategory, ItemSort } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 export type Currency = 'zer' | 'gems';
@@ -14,13 +14,9 @@ export interface ShopItem {
   price: number;
   isUnique: boolean;
   inStock: boolean;
-  /**
-   * The item's art, as a site path (`/cosmetics/icons/made-08-caydan.png`) —
-   * `assetUrl()` makes it a whole address. `GET /shop` has always sent it;
-   * this type had dropped it, so no row in the phone's shop had a picture.
-   */
+  /** The item's art as a site path (`/cosmetics/icons/made-08-caydan.png`); `assetUrl()` makes it a whole address. */
   assetUrl: string | null;
-  /** worn free while Premium is active, and still for sale to keep */
+  /** Worn free while Premium is active, and still for sale to keep. */
   premiumOnly: boolean;
 }
 
@@ -31,15 +27,12 @@ export interface Balances {
 
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
-/** Purchases above this many Zêr ask for explicit confirmation (KUR-070). */
+/** Purchases above this many Zêr ask for explicit confirmation. */
 export const CONFIRM_THRESHOLD_ZER = 500;
 
 /**
- * The words for each kind of item, plural, as a tab and a section say them.
- *
- * The kinds themselves, their order and what falls under "More" are
- * @kurda/shared's (shop-items.ts), the same for the shop, the inventory and
- * the gift picker, on the phone and in the browser.
+ * The words for each kind of item, plural, as a tab and a section say them. The kinds, their order and what falls under
+ * "More" are @kurda/shared's (shop-items.ts).
  */
 export const KIND_LABEL: Record<ItemCategory | 'all', TranslationKey> = {
   all: 'shop.kind.all',
@@ -58,18 +51,6 @@ export const SORT_LABEL: Record<ItemSort, TranslationKey> = {
   name: 'shop.sort.name',
 };
 
-/**
- * The words for a section heading.
- *
- * Every category the server sends is filed under one of the shared kinds, so
- * a heading is always a word — never the server's own (`BACKGROUND`) and never
- * a translation key, which is a string too and once rendered straight to
- * screen as SHOP.CATEGORY.MISC. A category nobody has a kind for is "More".
- */
-export function sectionTitle(category: string, t: (key: TranslationKey) => string): string {
-  return t(KIND_LABEL[itemCategory(category)]);
-}
-
 /** "1 item", "27 items". */
 export function itemsText(t: Translate, count: number): string {
   return count === 1 ? t('shop.items.one') : t('shop.items.many', { count });
@@ -80,39 +61,37 @@ export function kindWithCount(t: Translate, kind: ItemCategory | 'all', count: n
   return t('shop.kind.a11y', { kind: t(KIND_LABEL[kind]), items: itemsText(t, count) });
 }
 
-/** A currency's name inside a sentence. Zêr is a name and is never translated; gems are a common noun, so they take the reader's own word. */
+/**
+ * A currency's name inside a sentence. Zêr is a name and never translated; gems are a common noun, so they take the
+ * reader's word.
+ */
 export function currencyLabel(t: Translate, currency: Currency): string {
   return currency === 'zer' ? 'Zêr' : t('gift.picker.gems');
 }
 
 /**
- * Whether a balance covers an item, in the item's own currency: a gem item
- * against the gems, never against the Zêr. `times` is how many are being paid
- * for (a gift to several friends).
+ * Whether a balance covers an item in its own currency (a gem item against the gems, never the Zêr). `times` is how
+ * many are paid for (a gift to several friends).
  */
 export function withinBalance(item: { currency: Currency; price: number }, balances: Balances, times = 1): boolean {
   return balances[item.currency] >= item.price * times;
 }
 
-/** Can the user afford this item with their current balances? */
+/** Whether the current balances cover this item. */
 export function canAfford(item: ShopItem, balances: Balances): boolean {
   return withinBalance(item, balances);
 }
 
 /**
- * Purchases that ask once more before the money moves: dear Zêr ones, and
- * anything priced in gems, which are the scarcer currency. Every purchase is
- * final, so the question repeats that (ShopScreen's confirmation).
+ * Purchases that ask once more: dear Zêr ones, and anything in gems, the scarcer currency. Every purchase is final, so
+ * the question repeats that.
  */
 export function needsConfirmation(item: ShopItem): boolean {
   if (item.price <= 0) return false;
   return item.currency === 'gems' || item.price > CONFIRM_THRESHOLD_ZER;
 }
 
-/**
- * Whether an item can be sent as a gift from the shop. Something free cannot
- * — the API refuses it (NOT_GIFTABLE) — so it is not offered.
- */
+/** Whether an item can be sent as a gift from the shop. A free one cannot (the API refuses it with NOT_GIFTABLE). */
 export function canGift(item: ShopItem): boolean {
   return item.price > 0;
 }

@@ -15,13 +15,11 @@ import { declineRematch, offerRematch, rematchState } from './api';
 import { Ticket } from './Ticket';
 
 /**
- * What the panel shows, from the server's RematchState (contract §B1 "Play
- * again"): two players each ask (lichess), and the second "Rematch" starts
- * the next game at once; with more players the host opens the next round and
- * everyone else may join it with one tap. Nobody is put in a game they did
- * not choose.
+ * The panel's state, from the server's RematchState (contract §B1 "Play again"). With two players each asks, and the
+ * second "Rematch" starts the next game at once; with more, the host opens the next round and others join it with
+ * one tap. Nobody is put in a game they did not choose.
  */
-export type RematchView =
+type RematchView =
   | { kind: 'pair-offer' }
   | { kind: 'pair-waiting' }
   | { kind: 'pair-asked' }
@@ -32,10 +30,8 @@ export type RematchView =
   | { kind: 'next'; lobbyId: string };
 
 /**
- * `isHost` matters only for a round: once the host has opened the next round
- * the server no longer offers them `canOpenRound`, and the open round looks to
- * them exactly as it does to a guest. The host goes to it ("Go to the next
- * game"); a guest is asked whether to join.
+ * `isHost` matters only for a round: once the host has opened it, the server stops offering `canOpenRound` and the
+ * round looks to them as it does to a guest. The host goes to it; a guest is asked whether to join.
  */
 export function rematchView(state: RematchState, isHost = false): RematchView {
   if (state.kind === 'pair') {
@@ -51,16 +47,10 @@ export function rematchView(state: RematchState, isHost = false): RematchView {
 }
 
 /**
- * "Play again" on a results screen, the same for every online game. `other`
- * is the other player's name as the game shows it (a friend's name, or
- * "Player 2"). A pair game the two both asked for opens straight away; the
- * host's new round opens for the host, and the others choose to join it.
- * Leaving the results with an offer standing takes the offer back.
- *
- * An offer is a ticket like any other invite (Ticket.tsx): the one you hold
- * out waits in outline, with a light crossing it now and then, and the one
- * the other player holds out to you is filled in the game's colour. Asking
- * someone else in hands out tickets through the invite sheet.
+ * "Play again" on any online game's results. `other` is the other player's name as the game shows it. A pair game
+ * both asked for opens at once; a host's new round opens for the host and the others choose to join. Leaving the
+ * results withdraws a standing offer. Offers are tickets (Ticket.tsx): yours waits in outline with a passing shine,
+ * and one held out to you is filled in the game's colour.
  */
 export function RematchPanel({
   game,
@@ -73,11 +63,11 @@ export function RematchPanel({
   game: PlayGame;
   lobbyId: string;
   other: string;
-  /** this viewer hosts the finished game (decides who opens and who joins a round) */
+  /** This viewer hosts the finished game, which decides who opens a round and who joins. */
   isHost?: boolean;
-  /** go to the next game (it exists and this player is in it, or may join it) */
+  /** Goes to the next game, which exists and this player is in or may join. */
   onOpen: (nextLobbyId: string) => void;
-  /** "Invite someone else": the invite sheet for this game */
+  /** "Invite someone else": the invite sheet for this game. */
   onInviteOthers?: () => void;
 }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -107,13 +97,12 @@ export function RematchPanel({
     ),
   );
 
-  // this viewer opened the round themselves (the screen may not know it hosts)
+  // This viewer opened the round themselves (the screen may not know it hosts).
   const [openedRound, setOpenedRound] = useState(false);
   const view = state ? rematchView(state, isHost || openedRound) : null;
 
-  // Both asked (or the host opened the round): the next game exists, and
-  // they go to it. Only when that happens while this screen is up — coming
-  // back to these results later shows a button instead of bouncing forward.
+  // Both asked (or the host opened the round), so go to the next game, but only if it happens while this screen is
+  // up: returning to these results later shows a button instead of bouncing forward.
   const firstSeen = useRef(true);
   useEffect(() => {
     if (!view) return;
@@ -124,7 +113,7 @@ export function RematchPanel({
     if (!first) onOpen(view.lobbyId);
   }, [view, onOpen]);
 
-  // an offer stands while both are on the results; leaving takes it back
+  // An offer stands while both are on the results; leaving withdraws it.
   useEffect(() => {
     offered.current = state?.kind === 'pair' && state.offeredByMe && !state.nextLobbyId;
   }, [state]);
@@ -144,8 +133,7 @@ export function RematchPanel({
     else setError(describeError(res.error, t));
   };
 
-  // The host's "Play again" in a round game: the new lobby is theirs, so they
-  // go straight to it (the guests are told and choose).
+  // The host's "Play again" in a round game: the new lobby is theirs, so they go straight to it.
   const openRound = async (): Promise<void> => {
     setBusy(true);
     setError(null);
@@ -172,7 +160,7 @@ export function RematchPanel({
     </Text>
   );
 
-  // an offer as a ticket: held out by you and waiting, or held out to you
+  // An offer as a ticket: yours, waiting, or one held out to you.
   const offerTicket = (text: string, waiting: boolean) => (
     <Ticket
       tone={game}
@@ -191,7 +179,7 @@ export function RematchPanel({
   const series = state?.series;
   return (
     <View style={styles.wrap}>
-      {/* the running score, once there has been a rematch: after one game it is only that game's result */}
+      {/* The running score, once there has been a rematch. */}
       {series && series.me + series.other + series.draws >= 2 ? (
         <View accessible accessibilityLabel={t('play.rematch.seriesLabel', { me: series.me, other: series.other, name: other })}>
           <Text style={[styles.series, { color: colors.textPrimary }]}>{t('play.rematch.series', { me: series.me, other: series.other })}</Text>

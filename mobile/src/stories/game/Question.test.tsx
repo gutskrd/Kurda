@@ -104,7 +104,7 @@ describe('Question', () => {
     const steps = screen.getByTestId('question-steps');
     expect(steps.children).toHaveLength(5);
     const lit = [...steps.children].map((c) => (c as HTMLElement).style.backgroundColor);
-    // the two so far share one colour, the three to come another
+    // The two done share one colour, the three to come another.
     expect(new Set(lit.slice(0, 2)).size).toBe(1);
     expect(new Set(lit.slice(2)).size).toBe(1);
     expect(lit[0]).not.toBe(lit[2]);
@@ -120,7 +120,7 @@ describe('Question', () => {
       '3. Şor',
       '4. Şirîn',
     ]);
-    // an option is read in the story's language, not the app's
+    // An option is read in the story's language, not the app's.
     expect(screen.getByRole('button', { name: '2. Germ' }).getAttribute('lang')).toBe('ku');
   });
 
@@ -216,7 +216,7 @@ describe('Question', () => {
     expect(JSON.parse(localStorage.getItem('hevalo_stories_prefs_v1') ?? '{}')).toMatchObject({ englishUnder: false });
     cleanup();
     renderQuestion(gameView({}, { level: 3 }));
-    // the phone was told: hidden, whatever the level
+    // The phone's setting hides it, whatever the level.
     expect(screen.getByRole('button', { name: 'Show in English' })).toBeTruthy();
   });
 
