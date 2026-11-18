@@ -603,7 +603,11 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           ))}
         </Card>
         {/* A save refused from the list shows under it; one refused in the word's sheet shows there. */}
-        {saveError && !gloss ? <Note tone="danger" icon="alert">{saveError.text}</Note> : null}
+        {saveError && !gloss ? (
+          <Note tone="danger" icon="alert" live>
+            {saveError.text}
+          </Note>
+        ) : null}
       </View>
     ) : null;
 
@@ -1051,7 +1055,11 @@ function GlossSheet({
           ) : null}
         </View>
       ) : null}
-      {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
+      {error ? (
+        <Note tone="danger" icon="alert" live>
+          {error}
+        </Note>
+      ) : null}
     </Sheet>
   );
 }

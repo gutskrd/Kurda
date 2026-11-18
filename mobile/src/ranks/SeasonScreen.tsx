@@ -257,7 +257,11 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                       );
                     })}
                   </GlassCard>
-                  {frameError ? <Note tone="danger" icon="alert">{frameError}</Note> : null}
+                  {frameError ? (
+                    <Note tone="danger" icon="alert" live>
+                      {frameError}
+                    </Note>
+                  ) : null}
                 </View>
               ) : null}
             </ScrollView>

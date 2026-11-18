@@ -319,7 +319,11 @@ export function CosmeticPicker({
         </>
       )}
 
-      {error ? <Text style={[styles.error, dir.text, { color: colors.danger }]}>{error}</Text> : null}
+      {error ? (
+        <Text style={[styles.error, dir.text, { color: colors.danger }]} accessibilityLiveRegion="polite">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }

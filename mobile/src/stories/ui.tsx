@@ -184,17 +184,23 @@ export function Note({
   children,
   tone = 'plain',
   icon,
+  live = false,
   style,
 }: {
   children: ReactNode;
   tone?: 'plain' | 'danger';
   icon?: IconName;
+  /** Said to a screen reader as it appears, as for a change that was just put back. */
+  live?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const fg = tone === 'danger' ? colors.danger : colors.textSecondary;
   return (
-    <View style={[styles.note, { backgroundColor: tone === 'danger' ? colors.dangerFill : colors.controlTrack }, style]}>
+    <View
+      style={[styles.note, { backgroundColor: tone === 'danger' ? colors.dangerFill : colors.controlTrack }, style]}
+      {...(live ? { accessibilityRole: 'alert' as const, accessibilityLiveRegion: 'polite' as const } : null)}
+    >
       {icon ? <Icon name={icon} size={16} color={fg} /> : null}
       <Text style={[styles.noteText, { color: tone === 'danger' ? colors.danger : colors.textPrimary }]}>{children}</Text>
     </View>

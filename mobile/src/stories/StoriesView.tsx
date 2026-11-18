@@ -434,7 +434,11 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           onUndo={(undo) => setFilter({ ...filter, ...undo })}
           onClearAll={() => setFilter({ ...NO_FILTER })}
         />
-        {notice ? <Note tone="danger" icon="alert">{notice}</Note> : null}
+        {notice ? (
+          <Note tone="danger" icon="alert" live>
+            {notice}
+          </Note>
+        ) : null}
         {body}
       </ScrollView>
 
