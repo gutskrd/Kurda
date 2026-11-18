@@ -17,19 +17,14 @@ import { courseContentSchema } from './import.js';
 import type { ExerciseType } from './repository.js';
 
 /**
- * The check for The Kurmanji Road (api/content/lessons/road): the plan, and
- * every unit file written against it.
+ * The check for the Kurmanji Road (api/content/lessons/road): the plan and every unit file written against it.
  *
- * The road is 192 lessons written by several hands over many sessions, and
- * what makes it a course rather than a pile of exercises is that each lesson
- * only uses Kurdish the learner has already met, meets its own new words
- * often enough to learn them, and is recorded mostly by Hamo. None of that
- * can be seen by reading one lesson, so it is checked here, in CI and from
- * the command line (scripts/road-check.ts), with every problem located by
- * unit, lesson, exercise and field so a writer can go straight to it.
+ * The road is 192 lessons by several writers, and what makes it a course is that each lesson uses only Kurdish the
+ * learner has met, repeats its new words enough to learn them, and is recorded mostly by Hamo. None of that is visible
+ * in one lesson, so it is checked here, in CI and from scripts/road-check.ts, with every problem located by unit,
+ * lesson, exercise and field.
  *
- * Exercise `voice` is read from the raw JSON: the payload schemas do not
- * carry it yet, and a parsed payload would have lost it.
+ * Exercise `voice` is read from the raw JSON because the payload schemas do not carry it yet.
  */
 
 export const ROAD_DIR = new URL('../../content/lessons/road/', import.meta.url);
@@ -43,19 +38,15 @@ export const ROAD_COURSE = { slug: 'kurmanji-road', dialect: 'kurmanji', titleKu
 export const ROAD_VOICES = ['hamo', 'xezo', 'hevalo'] as const;
 export type RoadVoice = (typeof ROAD_VOICES)[number];
 /**
- * Who records the road: Hamo, every line of it, so one person can finish a
- * chapter and see it go online (road-chapters.ts). Xezal and Hevalo still
- * take part — in the scenes, in what Hamo tells, in what Xezal writes — but
- * whatever is heard is Hamo, and a conversation is Hamo talking with the
- * learner, whose own lines nobody records.
+ * Who records the road: Hamo, every line, so one person can finish a chapter and see it go online (road-chapters.ts).
+ * Xezal and Hevalo still appear in scenes and in what Hamo tells, but what is heard is Hamo, and a conversation is Hamo
+ * talking with the learner, whose lines nobody records.
  */
 export const ROAD_RECORDER: RoadVoice = 'hamo';
 
 /**
- * A line that calls Hamo by name, or calls him uncle, as someone talking to
- * him would: “Spas, Hamo!”, “Xalo, tu baş î?”. Hamo cannot record it — he
- * would be talking to himself — so a line he models for the learner to say
- * back to him leaves the name out, and one only the learner says is theirs.
+ * A line that addresses Hamo by name or as uncle (“Spas, Hamo!”, “Xalo, tu baş î?”). Hamo cannot record it without
+ * talking to himself, so a line he models for the learner leaves the name out, and one only the learner says is theirs.
  */
 export function addressesHamo(text: string): boolean {
   return /(^|[,.!?…:;«“]\s*)(hamo|xalo|apo)\s*([,.!?…;»”]|$)/iu.test(text.trim());
@@ -99,10 +90,8 @@ export interface RoadUnit {
   titleEn: string;
   story: string;
   /**
-   * `hamo` once the chapter is written for Hamo alone (`ROAD_RECORDER`): then
-   * every line in it is his and no line has him talk to himself. A chapter
-   * not rewritten yet keeps the older split of its recordings between the
-   * characters, until it is.
+   * `hamo` once the chapter is written for Hamo alone (`ROAD_RECORDER`): every line is his and none has him address
+   * himself. A chapter not yet rewritten keeps its older split between characters.
    */
   recorder?: RoadVoice;
   skills: RoadSkill[];
@@ -158,11 +147,10 @@ export function formatProblem(p: RoadProblem): string {
 // ---------- what the road never says ----------
 
 /*
- * The road is written for whole families across the Kurdish and wider Middle Eastern world, and a line that one
- * family hears as warm another can hear as something else. Two things are held out of every line, in Kurdish and in
- * English alike: talk of what a character is not as a man or a woman, and any tie between Hamo and Xezal beyond
- * neighbours in one village. He never calls her his friend, his daughter or niece, his wife or his love, and the
- * course never has him say it about her. Each pattern looks within one sentence.
+ * The road is written for families across the Kurdish and wider Middle Eastern world, where a line one family hears as
+ * warm another can hear otherwise. Two things are kept out of every line, in Kurdish and English: talk of what a
+ * character is not as a man or a woman, and any tie between Hamo and Xezal beyond village neighbours (never friend,
+ * daughter, niece, wife or love). Each pattern looks within one sentence.
  */
 const NEITHER_MAN_NOR_WOMAN: readonly RegExp[] = [
   /\bne\s+mêr\b[^.!?]*\bne\s+jin\b/i,
@@ -198,9 +186,8 @@ export function familyProblems(text: string): string[] {
 // ---------- how a line sounds ----------
 
 /*
- * Every Kurdish line is a word or a sentence someone would really say. Two shapes give a line away as written to
- * fill a count rather than to be said: a word said three times running ("Erê, erê, erê!"), and a line set out like a
- * script, a name and a colon ("Hevalo: erê.").
+ * Every Kurdish line must be something someone would say. Two shapes betray filler: a word said three times running
+ * ("Erê, erê, erê!") and a script-style name and colon ("Hevalo: erê.").
  */
 const SAID_THRICE = /(?<![\p{L}\p{M}])([\p{L}\p{M}]+)[\s,.!?…]+\1[\s,.!?…]+\1(?![\p{L}\p{M}])/iu;
 const SCRIPT_LINE = /(?:^|[.!?…]\s+)\p{Lu}[\p{L}\p{M}]*:\s/u;
@@ -278,11 +265,9 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 /**
- * What an exercise asks to have recorded. The same as `lessonAudioTargets`,
- * with the rule the platform is moving to: a translate with `say` goes from
- * Kurdish to English, so only `say` is Kurdish and only `say` is recorded.
- * (A multiple-choice item’s targets are exactly its `say`, which is why it
- * stands in for that case here.)
+ * What an exercise asks to have recorded: `lessonAudioTargets`, plus the rule the platform is moving to, that a
+ * translate with `say` goes from Kurdish to English so only `say` is recorded. (A multiple-choice item's targets are
+ * exactly its `say`, so it stands in for that case.)
  */
 export function recordedTexts(type: string, payload: unknown): string[] {
   if (type === 'conversation') return [];
@@ -322,13 +307,9 @@ interface Lexicon {
 const lexicons = new WeakMap<RoadPlan, Lexicon>();
 
 /**
- * The words that show an item is in a sentence. A single word is shown by any
- * of its forms, and so is an item written as alternatives (“im / me”,
- * “neke / nekin”), which is one word in its spellings. A phrase is shown by
- * the forms it brings that nothing before
- * it did — “hez kirin” by hez, not by kirin, which every other sentence has —
- * and not by forms it shares with another item of its own lesson, so two
- * phrases built on the same word are not each counted for the other.
+ * The words that show an item is in a sentence. A single word, or an item written as alternatives (“im / me”, “neke /
+ * nekin”), is shown by any of its forms. A phrase is shown by the forms it brings that nothing earlier did (“hez kirin”
+ * by hez, not by the common kirin), and not by forms it shares with another item of its own lesson.
  */
 function signsOf(entry: ItemEntry, knownBefore: (w: string) => boolean, sameLesson: Set<string>, core: Set<string>): string[] {
   const { item } = entry;
@@ -395,15 +376,12 @@ const CEFR: Record<number, string> = { 1: 'A1', 2: 'A1', 3: 'A1', 4: 'A1', 5: 'A
 export const GRAMMAR_MD_MAX = 1200;
 
 /**
- * The plan on its own: complete (12 units of 4 skills of 4 lessons, keys in
- * order, a role and a voice for each), and a lexicon a check can rely on —
- * 4 to 8 items a lesson, none introduced twice, every form a lower-case word
- * in Hawar letters.
+ * The plan on its own: complete (12 units of 4 skills of 4 lessons, keys in order, a role and voice for each) with a
+ * reliable lexicon (4 to 8 items per lesson, none introduced twice, every form a lower-case Hawar-letter word).
  */
 /**
- * How many new items a lesson brings in: few at the start and more as the road goes on, so the first chapters are
- * easy and the later ones carry more. A meet or build lesson brings its chapter's number, give or take one; a talk
- * lesson three to five; a review lesson none, since it is there to bring back what came before.
+ * How many new items a lesson introduces, growing along the road: a meet or build lesson brings its chapter's number,
+ * give or take one; a talk lesson three to five; a review lesson none.
  */
 export const ROAD_BUDGET: Record<number, { meet: number; build: number; cap: number }> = {
   1: { meet: 4, build: 4, cap: 48 },
@@ -525,11 +503,9 @@ const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s): s is
 const QUOTED = /[“«"]([^”»"]+)[”»"]/g;
 
 /**
- * The Kurdish in an exercise. `strict` fields are certainly Kurdish and are
- * held to every rule; the rest (multiple-choice options, Kurdish quoted in an
- * English prompt, a conversation question in the units whose questions are
- * English) may be either language, so they only count towards meeting an
- * item, and only when every word in them is Kurdish the learner knows.
+ * The Kurdish in an exercise. `strict` fields are certainly Kurdish and held to every rule; the rest (multiple-choice
+ * options, Kurdish quoted in English prompts, conversation questions in units with English questions) may be either
+ * language, so they only count toward meeting an item, and only when every word is Kurdish the learner knows.
  */
 function kurdishFields(ex: RawExercise, unit: number): KurdishField[] {
   const p = ex.payload;
@@ -584,9 +560,9 @@ const ENGLISH_LINE_MAX = 120;
 const CUE_MAX = 40;
 
 /**
- * 8: an item that says what it asks keeps to it. Its line is the sentence alone — no scene, no quotes around
- * it — since the apps name the task in the headline; a picture's word is the word its right picture shows; a
- * sentence to repeat is the one shown; and a cue is a few words.
+ * Rule 8: an item that states what it asks keeps to it. Its line is the sentence alone (no scene, no quotes) since the
+ * apps name the task; a picture's word is what its right picture shows; a repeat line is the one shown; and a cue is a
+ * few words.
  */
 function askProblems(ex: RawExercise): Array<{ message: string; field: string }> {
   const p = ex.payload;
@@ -630,13 +606,10 @@ export interface RoadCheckOptions {
 }
 
 /**
- * Check unit files against the plan (§4 of the road’s contract): structure
- * and payloads, the alphabet, the lexicon, the lesson recipe, the voices and
- * the lengths. Every problem is reported, not just the first, and with its
- * place, so one run gives a writer the whole list.
+ * Check unit files against the plan (§4 of the road's contract): structure and payloads, alphabet, lexicon, lesson
+ * recipe, voices and lengths. Every problem is reported with its place, so one run gives a writer the whole list.
  *
- * Hamo’s share of the recordings is held per unit: each unit lands on its
- * own, and a unit that keeps the split cannot pull the course below it.
+ * Hamo's share of recordings is held per unit, since each unit lands on its own.
  */
 export function checkRoad(options: RoadCheckOptions = {}): RoadCheck {
   const plan = options.plan ?? loadRoadPlan();
@@ -695,10 +668,9 @@ export function checkRoad(options: RoadCheckOptions = {}): RoadCheck {
 }
 
 /**
- * Where a word must come back after the lesson that brings it in: soon, while it is fresh; again a little later in
- * the chapter or the next; and again in a later chapter. Gaps that grow are what keep a word, and a word that is met
- * once and never again is forgotten. A window is held only when every lesson in it was checked, and is cut short
- * where the course ends.
+ * Where a word must come back after the lesson introducing it: soon, again later in the chapter or the next, and again
+ * in a later chapter, since growing gaps are what make a word stick. A window is held only when every lesson in it was
+ * checked, and is cut short where the course ends.
  */
 export const ROAD_RETURNS: ReadonlyArray<{ from: number; to: number; say: string }> = [
   { from: 1, to: 3, say: 'in the three lessons after it' },
@@ -757,11 +729,9 @@ export interface RoadStoryInput {
 }
 
 /**
- * The story at the end of each chapter, held to what the chapter taught: a
- * slug that names its chapter (`road-NN-…`), one story a chapter, Kurmancî at
- * the chapter's level, Hawar letters and a capital at each sentence, and
- * words the learner has met by the chapter's last lesson — at most 2 % new,
- * every one of them glossed (Hu & Nation's 98 % for reading with ease).
+ * The story at the end of each chapter, held to what the chapter taught: a slug naming its chapter (`road-NN-…`), one
+ * story per chapter, Kurmancî at the chapter's level, Hawar letters and sentence capitals, and words met by the
+ * chapter's last lesson, at most 2% new and every new one glossed (the 98% coverage needed for comfortable reading).
  * Questions point at one of their own options.
  */
 export function checkRoadStories(plan: RoadPlan, stories: readonly RoadStoryInput[]): RoadProblem[] {
@@ -950,10 +920,9 @@ function checkUnit(
         }
         for (const id of used) met.set(id, (met.get(id) ?? 0) + 1);
 
-        // 7: what the item asks about is on screen. Its Kurdish in `say` is never sent as text, and its recording
-        // is played before the answer only when the prompt shows that Kurdish (lessonaudio/delivery.ts), so an
-        // item whose prompt does not would ask about a sentence the learner can neither read nor hear.
-        // A missing word's line holds its sentence with a gap, so that one is read with the gap filled instead.
+        // 7: what the item asks about is on screen. Its `say` Kurdish is never sent as text, and its recording plays
+        // before the answer only when the prompt shows that Kurdish (lessonaudio/delivery.ts), so a prompt without it
+        // would ask about a sentence the learner can neither read nor hear. A missing-word line is read with the gap filled.
         if (
           QUOTES_SAY.has(ex.type) &&
           ex.payload.ask !== 'missing' &&

@@ -4,18 +4,13 @@ import { ContentRepository, type StoredLessonVersion } from './repository.js';
 import { InvalidExercisePayloadError, validateExercisePayload, type MultipleChoicePayload } from './exercises.js';
 
 /**
- * Course content import (KUR-041). A structured JSON document (what a
- * content spreadsheet exports to) is validated — structurally and per
- * exercise payload — with every error located by path, then imported.
- * Published lessons are never mutated (createLessonVersion + the DB
- * immutability trigger).
+ * Course content import: a structured JSON document is validated (structure and each exercise payload, every error
+ * located by path), then imported. Published lessons are never mutated (createLessonVersion plus the DB immutability
+ * trigger).
  *
- * A lesson gets a new version only when its content changed. Every run used
- * to version every lesson, and a new version means new exercise ids — while
- * review history is keyed on exercise ids — so loading content on each
- * deploy would have reset every learner's review schedule each time. Now
- * each lesson's content is hashed (`lessonContentHash`) and compared with
- * what is stored at its slot; an unchanged lesson is left alone.
+ * A lesson gets a new version only when its content changed: new versions mean new exercise ids, and review history is
+ * keyed on those, so re-versioning on every deploy would reset every learner's reviews. Each lesson's content is hashed
+ * (`lessonContentHash`) and compared with what is stored at its slot.
  */
 
 export const exerciseSchema = z.object({
@@ -85,12 +80,9 @@ export type ValidationResult =
 const ANSWER_POSITION_LINT_MIN = 3;
 
 /**
- * Lint (a warning, never an error): every multiple-choice answer in the
- * course sits at the same option. Lessons shuffle options per session, so
- * learners no longer see it there; but authored order is what any surface
- * that shows a stored item as written (an editor's preview, an export, a
- * client that predates the shuffle) shows, and a key that is always "A" is
- * easy to learn instead of the language.
+ * Lint warning (never an error): every multiple-choice answer in the course at the same option. Sessions shuffle
+ * options, but surfaces that show stored items as written (editor preview, exports, pre-shuffle clients) would teach
+ * that the answer is always "A".
  */
 function answerPositionWarnings(content: CourseContent): ImportIssue[] {
   const positions: number[] = [];
@@ -170,10 +162,8 @@ export interface HashableLesson {
 }
 
 /**
- * A lesson's content hash: its titles and every exercise (position, type and
- * payload), with payloads read through their schema exactly as `addExercise`
- * stores them and keys sorted, so the same lesson hashes the same whether it
- * comes from a JSON file or back out of Postgres.
+ * A lesson's content hash: titles and every exercise (position, type, payload), payloads read through their schema
+ * exactly as `addExercise` stores them and keys sorted, so a lesson hashes the same from JSON or from Postgres.
  */
 export function lessonContentHash(lesson: HashableLesson): string {
   const exercises = [...lesson.exercises]
@@ -193,10 +183,8 @@ export function lessonContentHash(lesson: HashableLesson): string {
 }
 
 /**
- * The stored version an incoming lesson is the same as, if any: the one
- * learners see (the highest published version) first, then the newest
- * version of any kind, so a re-run neither re-versions published content nor
- * stacks identical drafts on top of an unpublished one.
+ * The stored version an incoming lesson matches, if any: the one learners see (highest published) first, then the
+ * newest of any kind, so re-runs neither re-version published content nor stack identical drafts.
  */
 function matchingVersion(versions: StoredLessonVersion[], hash: string): StoredLessonVersion | null {
   const live = versions.find((v) => v.status === 'published');
@@ -207,9 +195,8 @@ function matchingVersion(versions: StoredLessonVersion[], hash: string): StoredL
 }
 
 /**
- * Publishing puts every imported lesson in front of learners, so none may
- * carry a listening item with nothing to play: no clip of its own and no
- * studio recording of its transcription. One query for the whole document.
+ * Publishing puts every imported lesson in front of learners, so none may carry a listening item with nothing to play
+ * (no clip and no studio recording of its transcription). One query for the whole document.
  */
 async function silentOnPublish(repo: ContentRepository, content: CourseContent): Promise<ImportIssue[]> {
   const paths: string[] = [];
@@ -236,8 +223,8 @@ async function silentOnPublish(repo: ContentRepository, content: CourseContent):
 export interface ImportOptions {
   dryRun?: boolean;
   /**
-   * publish each imported lesson version (seed loads as playable). Refused,
-   * with nothing written, while a listening item would have nothing to play.
+   * Publish each imported lesson version (seed loads are playable). Refused with nothing written while a listening item
+   * would have nothing to play.
    */
   publish?: boolean;
 }
@@ -251,8 +238,8 @@ export interface ImportResult {
 }
 
 /**
- * Import validated content. On a dry run, nothing is written — only the
- * validation issues and a summary of what WOULD be created are returned.
+ * Import validated content. A dry run writes nothing and returns only the validation issues and a summary of what WOULD
+ * be created.
  */
 export async function importCourse(
   repo: ContentRepository,

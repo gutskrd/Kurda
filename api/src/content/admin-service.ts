@@ -38,9 +38,8 @@ type TransitionResult =
   | { ok: false; code: 'LISTENING_AUDIO_MISSING'; silent: SilentListening[] };
 
 /**
- * One lesson slot (a skill's position) in the admin's lesson list: its newest
- * version, where it sits in the course, and — when that newest version is a
- * draft or in review — the version learners are on today.
+ * One lesson slot (a skill's position) in the admin lesson list: its newest version, its place in the course, and, when
+ * that version is a draft or in review, the version learners are on today.
  */
 export interface LessonListItem {
   id: string;
@@ -105,11 +104,9 @@ interface LessonRow {
 }
 
 /**
- * Admin content management (KUR-100). Editors author drafts here with the SAME
- * validation the import pipeline uses (`validateExercisePayload`), move them
- * through draft → in_review → published, and are protected from clobbering each
- * other by an optimistic `lock_version`. Published lessons are immutable (DB
- * trigger); "editing" a published lesson clones a fresh draft version.
+ * Admin content management. Editors author drafts with the SAME validation as import (`validateExercisePayload`), move
+ * them through draft → in_review → published, and an optimistic `lock_version` stops them overwriting each other.
+ * Published lessons are immutable (DB trigger); "editing" one clones a fresh draft version.
  */
 export class ContentAdminService {
   private readonly repo: ContentRepository;
@@ -129,11 +126,8 @@ export class ContentAdminService {
   }
 
   /**
-   * Every lesson slot, newest version first per slot, in course order — what
-   * the admin's Lessons page lists, so an editor picks a lesson by its title
-   * rather than pasting its id. Each slot appears once: the version an editor
-   * would open (a draft of the next version, say), with the live version's id
-   * beside it when that is a different row.
+   * Every lesson slot in course order, each once: the version an editor would open (say a draft of the next version),
+   * with the live version's id beside it when that is a different row.
    */
   async listLessons(filters: LessonListFilters = {}): Promise<{ lessons: LessonListItem[]; total: number }> {
     const params: unknown[] = [];
@@ -275,10 +269,8 @@ export class ContentAdminService {
   }
 
   /**
-   * Replace a draft's titles + exercises. Validates every exercise up front
-   * (import-pipeline parity), then commits under an optimistic-lock check:
-   * a stale `expectedLock` is rejected as a CONFLICT rather than overwriting a
-   * concurrent editor's work.
+   * Replace a draft's titles and exercises. Every exercise is validated first (as import does), then committed under an
+   * optimistic-lock check: a stale `expectedLock` is a CONFLICT rather than an overwrite.
    */
   async updateDraft(
     lessonId: string,
@@ -344,11 +336,9 @@ export class ContentAdminService {
   }
 
   /**
-   * in_review → published (records published_at) — unless a listening item in
-   * it has no clip of its own and its transcription is not recorded yet: it
-   * would reach learners with nothing to play (lessonaudio/publish-guard.ts).
-   * The lesson row and the recordings it relies on stay locked until the
-   * commit, so neither can change between the check and the publish.
+   * in_review → published (records published_at), unless a listening item has no clip of its own and its transcription
+   * is not recorded yet (lessonaudio/publish-guard.ts). The lesson row and the recordings it relies on stay locked
+   * until commit, so neither changes between check and publish.
    */
   async approve(lessonId: string): Promise<TransitionResult> {
     const client = await this.pool.connect();

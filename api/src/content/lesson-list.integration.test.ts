@@ -1,8 +1,6 @@
 /**
- * The admin's lesson list (GET /admin/content/lessons) over HTTP: an editor
- * finds a lesson by its title instead of pasting its id, sees one row per
- * lesson slot (the newest version, with the live one beside it), and gets the
- * skills a new lesson can go in.
+ * The admin lesson list (GET /admin/content/lessons) over HTTP: find a lesson by title, one row per slot (newest
+ * version with the live one beside it), and the skills a new lesson can go in.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

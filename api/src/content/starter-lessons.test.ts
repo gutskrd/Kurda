@@ -1,8 +1,6 @@
 /**
- * Guards the starter lessons (api/content/lessons) in CI rather than at a
- * deploy: every exercise passes the schema it is stored under, and the
- * conversation is ready for the people recording it — every part has a
- * character to be shown as, and every line has its meaning for learners.
+ * Guards the starter lessons (api/content/lessons) in CI: every exercise passes its schema, and the conversation is
+ * ready to record (every part has a character and every line its meaning).
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';

@@ -1,15 +1,10 @@
 /**
- * Starter lessons: complete lessons the API ships with (api/content/lessons),
- * written out in full and left as drafts for the team to record and publish.
- * The first is a conversation lesson, so the people recording it only have to
- * open it and say their lines.
+ * Starter lessons: complete lessons the API ships with (api/content/lessons), left as drafts for the team to record and
+ * publish.
  *
- * Each is seeded once, as the starter stories are (stories/import.ts): a row
- * in `content_seeds` remembers it, so a starter an editor deleted stays gone
- * rather than coming back on the next restart. It goes in at the end of the
- * skill its file names, in the course its file names; until that course is
- * loaded there is nowhere to put it, and it is tried again on the next start.
- * Nothing here throws: a broken file must not stop the API from starting.
+ * Each is seeded once, like the starter stories (stories/import.ts): a `content_seeds` row remembers it, so a deleted
+ * starter stays gone. It goes in at the end of the skill and course its file names; until that course is loaded it is
+ * retried on each start. Nothing here throws: a broken file must not stop the API.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -54,10 +49,8 @@ async function skillFor(client: pg.PoolClient, starter: Starter): Promise<string
 }
 
 /**
- * Seed every starter lesson not seeded yet, each as a draft at the end of its
- * skill. Two instances starting together (a deploy's overlap) both try; the
- * marker is written first in the same transaction, so the second waits on the
- * first and then finds it done.
+ * Seed every starter lesson not yet seeded, each as a draft at the end of its skill. Concurrent starts during a deploy
+ * are safe: the marker is written first in the same transaction, so the second waits and then finds it done.
  */
 export async function seedStarterLessons(
   pool: pg.Pool,

@@ -14,17 +14,14 @@ function distractorsFor(words: number): number {
 const LETTER = /\p{L}/u;
 
 /**
- * The word tiles of each translate and listening item of a session (undefined
- * for the others): the words of its main accepted answer, a word twice being
- * two tiles, and a few that are not, in an order shuffled for the session, so
- * a resumed session shows the same bank.
+ * The word tiles for each translate and listening item of a session (undefined for others): the words of its main
+ * accepted answer (a repeated word is two tiles) plus a few distractors, shuffled per session so a resumed session
+ * shows the same bank.
  *
- * The words that are not the answer come from the session's other items of
- * the same variety, in the answer's language (`item-words.ts`), and are none of
- * the item's accepted answers' words nor a diacritic slip of one. An item whose
- * answer's language cannot be told gets no bank, and its learner types as
- * before; so does an answer of more than `BANK_MAX_WORDS` words, and a one-word
- * answer the session has nothing to set beside.
+ * Distractors come from the session's other items of the same variety, in the answer's language (`item-words.ts`), and
+ * are never words of an accepted answer or a diacritic slip of one. No bank (the learner types instead) when the
+ * answer's language cannot be told, the answer exceeds `BANK_MAX_WORDS` words, or a one-word answer has nothing to set
+ * beside it.
  */
 export function wordBanks(items: readonly SessionItem[]): Array<string[] | undefined> {
   const words = items.map((item) => itemWords(item.type, item.payload, item.dialect));

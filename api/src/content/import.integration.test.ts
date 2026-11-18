@@ -1,4 +1,4 @@
-/** Content import against real Postgres (CI job). KUR-041. */
+/** Content import against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { lessonAudioKey } from '@kurda/shared';
@@ -107,9 +107,8 @@ describe.skipIf(!DATABASE_URL)('importCourse (integration)', () => {
     );
 
   /**
-   * Review history is keyed on exercise ids, and a new version has new ones.
-   * Re-running an unchanged import — what loading content on every deploy
-   * does — must leave every lesson, and so every learner's schedule, alone.
+   * Review history is keyed on exercise ids and new versions get new ids, so an unchanged re-import (as every deploy
+   * does) must leave every lesson and learner schedule alone.
    */
   it('re-importing unchanged content creates zero new versions', async () => {
     const before = await slotVersions();
