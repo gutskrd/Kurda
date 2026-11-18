@@ -112,7 +112,8 @@ export function ProfileActivity({
 
   if (active === null) return null;
 
-  const items = page?.items ?? [];
+  // A post being deleted is gone at once; the last one gone leaves the empty state.
+  const items = (page?.items ?? []).filter((item) => !deleting(item));
   const entries = page?.entries ?? [];
   const empty = page !== null && items.length === 0 && entries.length === 0;
 
@@ -172,7 +173,7 @@ export function ProfileActivity({
         <EmptyState title={t('profile.nothingHere')} body={t('profile.nothingHere.body')} />
       ) : (
         <View style={styles.list}>
-          {items.filter((item) => !deleting(item)).map((item) => (
+          {items.map((item) => (
             <FeedCard key={item.key} item={item} />
           ))}
           {entries.map((e) => (

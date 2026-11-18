@@ -138,6 +138,42 @@ describe('ReportSheet', () => {
     expect(onLeftGroup).toHaveBeenCalledWith('g1');
   });
 
+  /* As on the website: done at once, the page told before the server answers; a refusal takes it back and says why. */
+  it('blocks and leaves at once from the done screen, and takes either back with the reason when refused', async () => {
+    let answerBlock: (res: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'POST /reports': ok(receipt()),
+      'POST /friends/u3/block': () => new Promise((resolve) => (answerBlock = resolve)) as never,
+      'POST /groups/g1/leave': fail({ kind: 'client', status: 403, code: 'OWNER_CANNOT_LEAVE', message: 'owner' }),
+    });
+    const onBlocked = vi.fn();
+    const onLeftGroup = vi.fn();
+    renderWithProviders(
+      <ReportSheet
+        visible
+        target={{ type: 'group_message', messageId: 'm9' }}
+        blockable={{ userId: 'u3', name: 'Azad' }}
+        leavable={{ groupId: 'g1', name: 'Newroz club' }}
+        onClose={() => undefined}
+        onBlocked={onBlocked}
+        onLeftGroup={onLeftGroup}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Scam or spam' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Block Azad' }));
+    // Before the server has answered.
+    expect(screen.getByRole('button', { name: 'Blocked' })).toBeTruthy();
+    expect(onBlocked).toHaveBeenCalledWith('u3');
+    answerBlock(fail({ kind: 'network', status: 0, message: 'offline' }));
+    expect(await screen.findByRole('button', { name: 'Block Azad' })).toBeTruthy();
+    expect(screen.getByRole('alert')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Leave Newroz club' }));
+    expect(onLeftGroup).toHaveBeenCalledWith('g1');
+    expect(await screen.findByRole('button', { name: 'Leave Newroz club' })).toBeTruthy();
+  });
+
   it('says plainly when the daily limit is reached, and keeps the note', async () => {
     testAuth.client = fakeClient({ 'POST /reports': fail({ code: 'REPORT_LIMIT', status: 429, kind: 'rate_limited' }) });
     renderWithProviders(<ReportSheet visible target={{ type: 'library_post', postId: 'p1' }} onClose={() => undefined} />);

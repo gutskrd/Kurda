@@ -331,4 +331,26 @@ describe('the wall', () => {
     const cards = screen.getAllByRole('button', { name: /^Poem: / }).map((b) => b.getAttribute('aria-label'));
     expect(cards).toEqual(['Poem: Şev', 'Poem: Roj']);
   });
+
+  it('shows the empty wall, without the sort chip, while its only post is being deleted', async () => {
+    testAuth.client = fakeClient({
+      'GET /feed?section=all&limit=20&offset=0': ok({ items: [item()] }),
+      'GET /chat/conversations': ok({ conversations: [] }),
+      'GET /me/groups/unread': ok({ unread: [] }),
+      'GET /friends/requests': ok({ requests: [] }),
+      'GET /me/notifications/unread-count': ok({ count: 0 }),
+      'GET /me/gifts/unseen': ok({ unseen: 0 }),
+    });
+    renderWithProviders(
+      <UnreadProvider>
+        <CivakScreen />
+      </UnreadProvider>,
+    );
+    expect(await screen.findByRole('button', { name: 'Poem: Şev' })).toBeTruthy();
+    act(() => hideDeleting({ targetType: 'library', id: 'p1' }));
+    expect(screen.getByText('Welcome to Hevalo')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Sort and filter' })).toBeNull();
+    act(() => unhideDeleting({ targetType: 'library', id: 'p1' }));
+    expect(screen.getByRole('button', { name: 'Poem: Şev' })).toBeTruthy();
+  });
 });

@@ -16,6 +16,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { MessagesScreen } from './MessagesScreen';
 import { FriendRequestsScreen } from './FriendRequestsScreen';
+import { hideBlocked, unhideBlocked } from '../social/blocks';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
@@ -248,5 +249,19 @@ describe('Messages, when the conversations cannot be read', () => {
     renderWithProviders(<MessagesScreen />);
     expect(await screen.findByRole('button', { name: 'Try again' })).toBeTruthy();
     expect(screen.queryByText('No messages yet')).toBeNull();
+  });
+});
+
+/* A list whose last row is taken away while the change is on its way shows what an empty list shows. */
+describe('Messages when its last conversation is blocked', () => {
+  it('shows the empty state, without the search, filters or new-group row of a list', async () => {
+    open({ chats: [CHATS[0]!], groups: [], requests: [] });
+    expect(await screen.findByText('azad')).toBeTruthy();
+    act(() => hideBlocked('u-azad'));
+    expect(screen.queryByText('azad')).toBeNull();
+    expect(screen.getByText('No messages yet')).toBeTruthy();
+    expect(screen.queryByLabelText('Search messages')).toBeNull();
+    act(() => unhideBlocked('u-azad'));
+    expect(await screen.findByText('azad')).toBeTruthy();
   });
 });

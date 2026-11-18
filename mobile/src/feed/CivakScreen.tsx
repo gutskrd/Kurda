@@ -197,9 +197,10 @@ export function CivakScreen({
     setItems((prev) => (prev ?? []).map((i) => (i.key === next.key ? next : i)));
   }, []);
 
-  // A post you deleted leaves the wall at once, reposts of it included.
+  // A post you deleted leaves the wall at once, reposts of it included; the last one gone leaves the empty wall.
   useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
   const deleting = useDeleting();
+  const shown = (items ?? []).filter((i) => !deleting(i));
 
   // The first screenful rises in once, as the wall arrives.
   const entering = useListEntrance(!!items && items.length > 0);
@@ -224,7 +225,7 @@ export function CivakScreen({
 
         <FlatList
           ref={listRef}
-          data={(items ?? []).filter((i) => !deleting(i))}
+          data={shown}
           keyExtractor={(i) => i.key}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: tabBarInset }}
@@ -244,7 +245,7 @@ export function CivakScreen({
               <FriendsRow refreshKey={pulls} />
               {plain ? (
                 /* Sorting and filtering: one quiet chip over the first post saying the current choice, offered only once there are posts to sort. */
-                (items?.length ?? 0) > 0 ? (
+                shown.length > 0 ? (
                   <View style={[styles.filterChips, { flexDirection: dir.row }]}>
                     <Pressable
                       onPress={() => setFiltering(true)}
