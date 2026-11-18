@@ -2,17 +2,10 @@ import type pg from 'pg';
 import type { SessionCheck } from './gateway.js';
 
 /**
- * Which of the sessions behind live sockets have ended, for the gateway's
- * `checkSessions`: the same question the auth hook asks of every request
- * (plugins/auth.ts), so a socket stops when an access token from the same
- * session would. A session has ended when its account is gone, closed or
- * banned now, or when its sign-in has no unrevoked refresh token left —
- * signed out, revoked from the session list, or ended with every other
- * session by a new password, a ban or "sign out everywhere". A session named
- * by its account alone (an access token from before sessions were named in
- * it) is asked about the account only.
- *
- * One statement for all of them, however many sockets a node holds.
+ * Which sessions behind live sockets have ended, for `checkSessions`: the auth hook's question (plugins/auth.ts), so a
+ * socket stops when the same session's access token would. A session ends when its account is gone, closed or banned,
+ * or its sign-in has no unrevoked refresh token left. A session known only by its account (from an older token) is
+ * checked on the account alone. One statement for all of them.
  */
 export function endedSessions(db: Pick<pg.Pool, 'query'>): SessionCheck {
   return async (sessions) => {

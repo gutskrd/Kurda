@@ -1,9 +1,6 @@
 /**
- * Generate a structurally-valid lexicon fixture for STAGING scale/perf
- * testing (KUR-048). These are NOT real Kurmanji definitions — they exist to
- * load ≥5,000 entries so search/index performance can be validated. The real
- * curated lexicon is supplied by the content team and loaded via the same
- * `dict:import` pipeline.
+ * Generates a structurally valid lexicon fixture for scale testing on staging. The entries are not real Kurmanji; the
+ * curated lexicon is loaded through the same `dict:import` pipeline.
  *
  *   node scripts/gen-lexicon-fixture.mjs [count] > fixture.json
  */
@@ -15,8 +12,7 @@ const vowels = ['a', 'e', 'ê', 'i', 'î', 'o', 'u', 'û'];
 const codas = ['', 'n', 'r', 'v', 'ş', 'k', 'l', 'm', 't'];
 const pos = ['noun', 'verb', 'adjective', 'adverb'];
 
-// Mixed-radix mapping index → unique two-syllable headword (no collisions,
-// so we never loop; capacity is (onset*vowel*coda)^2 ≈ 1.8M >> 5000).
+// A mixed-radix index gives each entry a unique two-syllable headword, so there are no collisions (capacity about 1.8M).
 const radices = [onsets, vowels, codas, onsets, vowels, codas];
 
 function headwordFor(index) {

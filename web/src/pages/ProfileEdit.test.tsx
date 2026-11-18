@@ -95,7 +95,7 @@ describe('Edit Profile page', () => {
     const tile = await screen.findByRole('radio', { name: 'Avatar default-01' });
     await userEvent.click(tile);
     expect(await screen.findByText('Profile picture updated.')).toBeInTheDocument();
-    // it deletes the uploaded photo first, then sets the avatar
+    // It deletes the uploaded photo first, then sets the avatar.
     expect(calls.some((c) => c.url === 'DELETE /me/profile-picture')).toBe(true);
     expect(calls.find((c) => c.url.includes('/me/cosmetics/avatar'))?.body).toEqual({ key: 'default-01' });
   });
@@ -135,7 +135,7 @@ describe('Edit Profile page', () => {
     const tile = screen.getByText('Kurdish Tag').closest('figure')!;
     const link = within(tile).getByRole('link', { name: 'Manage tags' });
     expect(link).toHaveAttribute('href', '#tags');
-    // the place it goes to is on this page: the Tags card
+    // The place it goes to is on this page: the Tags card.
     const target = document.getElementById('tags');
     expect(target).not.toBeNull();
     expect(within(target!).getByRole('heading', { name: 'Tags' })).toBeInTheDocument();

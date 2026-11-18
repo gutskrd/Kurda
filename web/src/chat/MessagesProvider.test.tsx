@@ -201,7 +201,7 @@ describe('MessagesProvider', () => {
     expect(await screen.findByText('5')).toBeInTheDocument();
   });
 
-  it('counts again each minute while the tab is in view, and asks nothing while it is hidden', async () => {
+  it('counts again each minute and says it is here every two while the tab is in view, and asks nothing while it is hidden', async () => {
     // only the intervals are fake: waitFor polls on one, so this waits on real timeouts instead
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     setup('/app');
@@ -216,18 +216,21 @@ describe('MessagesProvider', () => {
 
     vi.advanceTimersByTime(60_000);
     await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 1));
+    expect(asked('/me/heartbeat')).toBe(beats);
+    vi.advanceTimersByTime(60_000);
+    await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 2));
     expect(asked('/me/heartbeat')).toBe(beats + 1);
 
     // a tab behind another one: neither the count nor the presence beat is asked for
     hidden(true);
     vi.advanceTimersByTime(10 * 60_000);
-    expect(asked('/chat/conversations')).toBe(counted + 1);
+    expect(asked('/chat/conversations')).toBe(counted + 2);
     expect(asked('/me/heartbeat')).toBe(beats + 1);
 
     // and coming back asks once, at once, for what it missed
     hidden(false);
     document.dispatchEvent(new Event('visibilitychange'));
-    await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 2));
+    await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 3));
     expect(asked('/me/heartbeat')).toBe(beats + 2);
   });
 

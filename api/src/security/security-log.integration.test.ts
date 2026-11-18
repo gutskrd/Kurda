@@ -1,8 +1,7 @@
 /**
- * The security log against real Postgres: what each sign-in, failure, lock,
- * probe and change of access leaves behind; that nothing in it can be rewritten
- * or erased early; that the console reads it only for superadmins; and that a
- * critical event is emailed once, with nothing from the log in the email.
+ * The security log against real Postgres: what each sign-in, failure, lock, probe and access change records, that
+ * nothing can be rewritten or erased early, that only superadmins read it, and that a critical event is emailed once
+ * with nothing from the log in the email.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -144,7 +143,7 @@ describe.skipIf(!DATABASE_URL)('the security log (integration)', { timeout: 30_0
   });
 
   it('notes an ordinary account trying admin pages, once an hour', async () => {
-    // signed in afresh: the session before was ended when its old key came back
+    // Signed in afresh: the previous session ended when its old key was reused.
     const token = (await login(member.email, PASSWORD, ip())).json().tokens.accessToken as string;
     const probe = () => app.inject({ method: 'GET', url: '/admin/users', headers: { authorization: `Bearer ${token}` }, remoteAddress: ip() });
     expect((await probe()).statusCode).toBe(404);
@@ -188,8 +187,8 @@ describe.skipIf(!DATABASE_URL)('the security log (integration)', { timeout: 30_0
       (count) => count > 0,
     );
     const mail = sent.find((m) => m.to === owner.email)!;
-    // The sweep sends every critical alert still waiting in one email, and the suites running beside this one raise
-    // their own (each console sign-in in a fresh test is a new place), so this alert may arrive alone or in a tally.
+    // The sweep sends every waiting critical alert in one email, and parallel suites raise their own, so this alert may
+    // arrive alone or in a tally.
     const title = 'Admin console sign-in from a new device or network';
     expect(mail.vars.list).toContain(title);
     expect(mail.vars.headline === title || /^\d+ alerts$/.test(mail.vars.headline), mail.vars.headline).toBe(true);

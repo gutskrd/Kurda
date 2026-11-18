@@ -4,29 +4,10 @@ import { safeEqual } from '../iap/webhook-auth.js';
 import type { AppConfig } from '../config/env.js';
 
 /**
- * Prometheus metrics: request rate and error rate come from
- * http_requests_total (status label); latency percentiles (p95 etc.)
- * from the http_request_duration_seconds histogram. Exposed at /metrics.
- *
- * That endpoint was open to anyone. On the live API it answered 200 with 422
- * lines describing the process and everything it serves:
- *
- *   nodejs_version_info{version="v22.23.2"}   the exact runtime to look up CVEs for
- *   process_start_time_seconds                uptime, so deploys are visible
- *   process_resident_memory_bytes             headroom, so load is visible
- *   http_requests_total{route="/auth/login"}  every route, including admin ones,
- *                                             with traffic and error rates
- *
- * None of that is catastrophic on its own; all of it is free reconnaissance,
- * and a scrape is not something a stranger should be able to ask for. It also
- * sat in the rate limiter's exemption list, so serialising the whole registry
- * was an unmetered request anybody could repeat.
- *
- * It needs a bearer token now, compared in constant time. With no token
- * configured it simply is not there in production — an unauthenticated metrics
- * endpoint is the thing being fixed, so the default cannot be to serve one — and
- * stays open in development, where a scrape is a convenience and the process is
- * a laptop.
+ * Prometheus metrics: request and error rates from http_requests_total (status label), latency percentiles from the
+ * http_request_duration_seconds histogram, exposed at /metrics. The registry reveals the runtime version, uptime,
+ * memory and every route with its traffic, and /metrics is exempt from the rate limiter, so it needs a bearer token
+ * compared in constant time. Without a token it is not served in production; it stays open in development.
  */
 export function setupMetrics(app: FastifyInstance, config: AppConfig): Registry {
   const registry = new Registry();
@@ -48,8 +29,7 @@ export function setupMetrics(app: FastifyInstance, config: AppConfig): Registry 
   });
 
   app.addHook('onResponse', async (req, reply) => {
-    // routeOptions.url groups by route pattern (/items/:id), not raw URL —
-    // raw URLs would explode label cardinality
+    // Label by route pattern (/items/:id), not raw URL, to keep label cardinality bounded.
     const route = req.routeOptions.url ?? 'unmatched';
     if (route === '/metrics') return;
     requestsTotal.inc({ method: req.method, route, status: reply.statusCode });
@@ -61,8 +41,7 @@ export function setupMetrics(app: FastifyInstance, config: AppConfig): Registry 
 
   app.get('/metrics', async (req, reply) => {
     if (!token) {
-      // 404 rather than 503: a scraper that is not configured here has nothing
-      // to retry, and there is no reason to confirm the path exists
+      // 404 rather than 503: an unconfigured scraper has nothing to retry, and the path need not be confirmed.
       if (!openInDev) return reply.code(404).send({ code: 'NOT_FOUND', message: 'route not found' });
       return reply.type(registry.contentType).send(await registry.metrics());
     }

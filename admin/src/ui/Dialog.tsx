@@ -1,13 +1,7 @@
 /**
- * Dialogs: the one place the admin asks "are you sure?".
- *
- * They replace the browser's alert, confirm and prompt, which every page used.
- * Those cannot say which button is the dangerous one, cannot ask for a typed
- * confirmation, block the whole tab (and every timer in it), look different in
- * every browser and are suppressed outright by some — a "Remove" that silently
- * did nothing on a phone that had blocked them.
- *
- * `useDialogs()` keeps call sites as short as the old ones:
+ * Dialogs, the one place the console asks "are you sure?", instead of the browser's alert, confirm and prompt, which
+ * cannot mark the dangerous button or ask for typed confirmation, block the tab, and are suppressed by some browsers.
+ * With `useDialogs()`:
  *
  *   if (!(await dialogs.confirm({ title: 'Remove “heval”?', confirmLabel: 'Remove', tone: 'danger' }))) return;
  *   const name = await dialogs.prompt({ title: 'Rename', label: 'New name', initial: word });
@@ -22,10 +16,10 @@ export interface DialogProps {
   onClose: () => void;
   children?: ReactNode;
   footer?: ReactNode;
-  /** a dangerous choice: the scrim does not close it, so a stray tap cannot answer it either */
+  /** A dangerous choice: the scrim does not close it, so a stray tap cannot answer it either. */
   dismissable?: boolean;
   size?: 'small' | 'medium' | 'large';
-  /** for role="alertdialog": something the person must answer, not just read */
+  /** For role="alertdialog": something the person must answer, not just read. */
   alert?: boolean;
 }
 
@@ -68,15 +62,12 @@ export function Dialog({ open, title, onClose, children, footer, dismissable = t
 
 export interface ConfirmOptions {
   title: ReactNode;
-  /** what will happen, in plain words */
+  /** What will happen, in plain words. */
   body?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   tone?: 'default' | 'danger';
-  /**
-   * For what cannot be undone: the confirm button stays off until this exact
-   * text is typed (a username, a key) — a deliberate act, not a reflex click.
-   */
+  /** For what cannot be undone: confirm stays off until this exact text (a username, a key) is typed. */
   typed?: { phrase: string; label?: string };
 }
 
@@ -151,15 +142,11 @@ export interface PromptOptions {
   initial?: string;
   placeholder?: string;
   confirmLabel?: string;
-  /** a problem with the value, or null when it can be sent */
+  /** A problem with the value, or null when it can be sent. */
   validate?: (value: string) => string | null;
   multiline?: boolean;
   maxLength?: number;
-  /**
-   * A dangerous change asked with a reason (voiding a game, resetting a
-   * rating): the confirm button is the red one, and a stray tap on the scrim
-   * cannot close it and lose what was typed.
-   */
+  /** A dangerous change asked with a reason: confirm is the red one, and the scrim cannot close it and lose the text. */
   tone?: 'default' | 'danger';
 }
 
@@ -175,7 +162,7 @@ function PromptDialog({
   const [value, setValue] = useState(options.initial ?? '');
   const [touched, setTouched] = useState(false);
   const id = useId();
-  // a page's own check replaces the default one (a note may be emptied to clear it)
+  // A page's own check replaces the default one (a note may be emptied to clear it).
   const problem = options.validate ? options.validate(value) : value.trim() ? null : 'This can’t be empty.';
   const danger = options.tone === 'danger';
   const send = (): void => {
@@ -258,7 +245,7 @@ const DialogContext = createContext<Dialogs | null>(null);
 /** One dialog at a time for the whole admin; a second question waits for the first answer. */
 export function DialogProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [queue, setQueue] = useState<Pending[]>([]);
-  // a key per question, so a prompt's field starts empty for the next one
+  // A key per question, so a prompt's field starts empty for the next one.
   const seq = useRef(0);
   const [keys, setKeys] = useState<number[]>([]);
 

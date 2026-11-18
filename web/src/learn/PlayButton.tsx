@@ -3,16 +3,9 @@ import { SpeakerIcon } from '../components/icons';
 import { onPlaying, play } from '../lib/sound';
 
 /**
- * A labelled button that plays one recording — "Play", "0.75×", "Hear it" —
- * through the app's one player, so a second tap restarts rather than doubles
- * the voice. The button that started the sound is lit while it plays (the
- * normal and the slow button play the same file, so the speed tells them
- * apart); a second tap starts it again rather than stopping it, so it is a
- * plain button, not a toggle.
- *
- * `round` shows the speaker alone in a round button, the label its name and
- * its tooltip: for a recording whose button needs no words beside the one
- * who says it.
+ * A labelled button ("Play", "0.75×", "Hear it") that plays one recording through the app's one player. The button that
+ * started it is lit while it plays; a second tap restarts it, so it is a button, not a toggle. `round` shows the speaker
+ * alone in a round button, its label as name and tooltip.
  */
 export function PlayButton({
   src,

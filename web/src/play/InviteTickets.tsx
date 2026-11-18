@@ -6,24 +6,11 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { Ticket, ticketToneClass } from '../ui/Ticket';
 
 /**
- * Asking friends into a game, as handing each of them a ticket (the invite
- * sheet, play/InviteSheet.tsx).
- *
- * Each friend picked is written out a ticket of their own in the game's
- * colour — their face on the stub, their name on the body — which slides up
- * into a small fanned hand above Send. Pressing Send tears the tickets off
- * one after another and sends each flying to its friend in the list above,
- * with a burst of specks where it lands. Once the server has them, the
- * sheet says so for a moment over the fanned tickets ("Tickets sent", and
- * who to) before it closes or opens the lobby. A refusal brings the tickets
- * back, the hand shakes once, and the reason shows as before.
- *
- * A game posted in a group is one ticket, pinned to the group.
- *
- * The hand is a picture of the ticked boxes, which a screen reader already
- * has, so it is hidden from one; the moment after sending is said aloud.
- * Under Reduce Motion nothing is written out, flies, bursts or shakes: the
- * tickets are simply there, and then the moment is.
+ * Asking friends into a game as handing out tickets (play/InviteSheet.tsx): each friend picked gets a ticket in the
+ * game's colour in a fanned hand above Send. Send tears them off and flies each to its friend's row; once the server
+ * has them, "Tickets sent" shows briefly before the sheet closes or the lobby opens. A refusal brings them back with a
+ * shake. A group game is one ticket pinned to the group. The hand is hidden from screen readers, which have the
+ * checkboxes; the moment after sending is announced. Reduced motion skips the movement.
  */
 
 /** Someone a ticket is written out to. */
@@ -36,15 +23,15 @@ export interface Admit {
 /** How long each ticket takes to reach its friend, and how far apart they leave. */
 export const FLY_MS = 560;
 export const FLY_STAGGER_MS = 80;
-/** How long the moment after sending stays before the sheet closes or the lobby opens. */
+/** How long "sent" shows before the sheet closes or the lobby opens. */
 export const SENT_MS = 1400;
 
-/** How long a hand of `count` tickets takes to fly, the last one included. */
+/** How long a hand of `count` tickets takes to fly, the last included. */
 export function flightMs(count: number): number {
   return count > 0 ? FLY_MS + (count - 1) * FLY_STAGGER_MS : 0;
 }
 
-/** A ticket's place in a fanned hand of `count`: tilted a little more the further it is from the middle. */
+/** A ticket's place in a fanned hand: tilted more the further from the middle. */
 function fanStyle(i: number, count: number, extra: Record<string, string | number> = {}): CSSProperties {
   return { '--i': i, '--n': count, '--tilt': `${(i - (count - 1) / 2) * 2}deg`, ...extra } as CSSProperties;
 }
@@ -75,10 +62,8 @@ function GroupTicket({ game, name, pinned }: { game: PlayGame; name: string; pin
 }
 
 /**
- * The hand of tickets above Send: one per friend picked, in the order they
- * were picked, or the group's one. `flying` sends them off to the friends'
- * rows in the list (found by `data-friend`, inside `scope`); `back` counts
- * refusals, and each brings them back once more.
+ * The hand of tickets above Send, in picking order, or the group's one. `flying` sends them to the friends' rows
+ * (`data-friend` inside `scope`); `back` counts refusals, each bringing them back once more.
  */
 export function AdmitTray({
   game,
@@ -90,24 +75,23 @@ export function AdmitTray({
 }: {
   game: PlayGame;
   people: readonly Admit[];
-  /** a game posted in a group: its name, for the one ticket pinned to it */
+  /** A game posted in a group: its name, for the one pinned ticket. */
   group?: string | null;
   flying: boolean;
   back: number;
-  /** where to look for the friends' rows the tickets fly to */
+  /** Where to find the friends' rows the tickets fly to. */
   scope: React.RefObject<HTMLElement | null>;
 }): React.JSX.Element | null {
   const tray = useRef<HTMLUListElement>(null);
-  // the tickets that were in the hand when it was refused come back; one picked after that is simply written out
+  // Tickets in the hand when refused come back; one picked after that is simply written out.
   const hand = people.map((p) => p.id).join(' ');
   const refusal = useRef<{ n: number; hand: string; ids: ReadonlySet<string> }>({ n: 0, hand: '', ids: new Set() });
   if (back !== refusal.current.n) refusal.current = { n: back, hand, ids: new Set(people.map((p) => p.id)) };
   const returning = !flying && back > 0 ? refusal.current.ids : new Set<string>();
-  // the hand shakes once, as it was when it was refused
+  // The hand shakes once, as it was when refused.
   const shaken = returning.size > 0 && refusal.current.hand === hand;
 
-  // Where each ticket flies: to its friend's face in the list, while that is
-  // in sight; otherwise straight up, out of the hand.
+  // Each ticket flies to its friend's face in the list while visible, otherwise straight up.
   useLayoutEffect(() => {
     if (!flying || !tray.current) return;
     const list = scope.current?.querySelector('.invite-list')?.getBoundingClientRect();
@@ -141,11 +125,7 @@ export function AdmitTray({
   );
 }
 
-/**
- * The moment after sending: the tickets fanned out, and who they went to —
- * "Ticket sent to Rojda", or "Tickets sent" and the names — or the group's
- * ticket pinned, "Posted in Hevalên Kurmancî". Said aloud as it appears.
- */
+/** The moment after sending: the fanned tickets and who they went to, or the group's pinned ticket; announced as it appears. */
 export function TicketsSent({ game, people, group }: { game: PlayGame; people: readonly Admit[]; group?: string | null }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();

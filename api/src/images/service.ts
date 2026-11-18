@@ -35,13 +35,7 @@ export interface ImagePost {
   updatedAt: Date;
 }
 
-/**
- * A post with its author attached.
- *
- * A separate type rather than optional fields on ImagePost, for the same reason
- * the library keeps them apart: the read paths always populate it and the write
- * paths never do.
- */
+/** A post with its author attached; a separate type because read paths always fill it and write paths never do. */
 export interface ImagePostWithAuthor extends ImagePost {
   author: Author;
 }
@@ -68,24 +62,17 @@ interface Row {
 }
 
 /**
- * Community image & meme sharing (KUR-290). Image required (a confirmed #013
- * media key), caption optional; users, admins, and the founder publish, guests
- * view. Caption is control-char-stripped on input (#108); web/mobile escape on
- * render. Removal is soft (retained for moderation #292). Auto image-scan (#294)
- * and reports (#292) are wired separately.
- *
- * A minor's pictures, like their library posts, are for them and their friends
- * only; to anyone else they are not there (users/age.ts `writtenForSql`).
- * Nor are anyone's pictures there for somebody with a block between the two
- * of them, whichever placed it (friends/blocked.ts).
+ * Community image posts: an image required (a confirmed media key), a caption optional. Captions are stripped of
+ * control characters on input and escaped by the apps; removal is soft, kept for moderation. A minor's pictures are
+ * only for them and their friends (users/age.ts `writtenForSql`), and nobody's are shown across a block
+ * (friends/blocked.ts).
  */
 export class ImagePostService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * A picture post, claiming its picture: the author's own upload, cleared by
-   * the scan and on no other post (media/postMedia.ts), confirmed in the same
-   * transaction as the post that uses it.
+   * Creates a picture post and claims its picture: the author's own upload, cleared by the scan and on no other post
+   * (media/postMedia.ts), confirmed in the post's transaction.
    */
   async create(authorId: string, authorRole: AuthorRole, input: CreateInput): Promise<CreateResult> {
     const imageMediaId = input.imageMediaId?.trim();
@@ -153,10 +140,7 @@ export class ImagePostService {
     return res.rows[0] ? toPost(res.rows[0]) : null;
   }
 
-  /**
-   * A post as it stands, for deciding what an edit needs before it is made —
-   * no view counted, no reader rules; the edit checks who may make it.
-   */
+  /** A post as it stands, for deciding what an edit needs: no view counted and no reader rules, since the edit checks access. */
   async current(id: string): Promise<ImagePost | null> {
     const res = await this.pool.query<Row>(`SELECT * FROM image_posts WHERE id = $1 AND status <> 'removed'`, [id]);
     return res.rows[0] ? toPost(res.rows[0]) : null;

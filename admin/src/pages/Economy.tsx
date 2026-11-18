@@ -19,7 +19,7 @@ interface DriftReport {
   windowDays: number;
   faucet: number;
   sink: number;
-  /** null when nothing has been spent yet, so the ratio is infinite. */
+  /** Null when nothing has been spent yet, so the ratio is infinite. */
   ratio: number | null;
   target: number;
   drifting: boolean;
@@ -28,9 +28,8 @@ interface DriftReport {
 const CURRENCY_LABEL: Record<Currency, string> = { zer: 'Zêr', gems: 'Gems' };
 
 /**
- * The economy (KUR-074): how much of each currency is out there, how much
- * came in (faucets) and went out (sinks) each day, whether the balance is
- * drifting from its target, and whether every balance still equals its ledger.
+ * The economy: each currency in circulation, daily faucets and sinks, drift from the target, and whether every balance
+ * still equals its ledger.
  */
 export function Economy(): React.JSX.Element {
   const toast = useToast();
@@ -128,7 +127,7 @@ export function Economy(): React.JSX.Element {
 
           {points.length > 0 && (
             <Section flush title="Day by day">
-              {/* thirty rows of five numbers: read down a column, so a table that scrolls rather than thirty cards */}
+              {/* Thirty rows of five numbers: read down a column, so a table that scrolls rather than thirty cards. */}
               <Table caption={`${name} day by day`} columns={columns} rows={[...points].reverse()} rowKey={(p) => p.day} layout="scroll" />
             </Section>
           )}

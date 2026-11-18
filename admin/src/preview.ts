@@ -1,9 +1,6 @@
 /**
- * Exercise preview model (KUR-100). Normalizes a stored exercise payload into
- * the same view-model the mobile player renders from, so the admin "preview"
- * shows exactly what a learner will see — not an admin-only approximation. The
- * React shell renders these; keeping the mapping pure makes it testable and the
- * single definition of "how an exercise looks".
+ * The exercise preview model: a stored payload mapped to the view model the phone's player renders from, so the
+ * preview shows what a learner sees. Pure, so it is tested without a browser.
  */
 
 export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing' | 'conversation';

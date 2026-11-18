@@ -1,38 +1,29 @@
 /**
- * Hevalo Admin — calm, readable frosted glass.
- *
- * Violet ribbons of light fold over one another on black behind a scrim
- * (backdrop/), and the content sits on near-opaque frosted surfaces: the glass
- * is the frame, never something to read text through. Neutral zinc for
- * structure; colour only where it means something (a status, a warning, a
- * failure). Dark in every scheme, as the backdrop is: light panels and dark
- * headings over black would be grey cards and unreadable titles.
- *
- * Pure CSS on shared class names — every page inherits it. The kit's own
+ * The console's base styles: content on near-opaque frosted surfaces over the ribbon backdrop (backdrop/), neutral zinc
+ * for structure and colour only where it means something. Dark in every scheme, as the backdrop is. The kit's own
  * pieces (tables, dialogs, drawers, toasts, fields) are in ui/kit.css.
  */
 :root {
-  /* text */
+  /* Text. */
   --text: #f4f4f5;
   --text-2: #d4d4d8;
   --text-dim: #a1a1aa;
 
-  /* the backdrop the glass samples: the ribbons' own black (backdrop/ribbons.ts), so whatever of the page
-     shows past them, scrolled with a phone's keyboard up or pulled past its end, is the same colour */
+  /* The ribbons' own black (backdrop/ribbons.ts), so any page showing past them (overscroll, a keyboard) matches. */
   --bg-1: #0d0d10;
   --bg-2: #030208;
-  /* light enough that the ribbons show between the panels, dark enough that a page's own headings read over them */
+  /* Light enough that the ribbons show between the panels, dark enough that a page's own headings read over them. */
   --scrim-top: rgba(6, 4, 12, 0.5);
   --scrim-bottom: rgba(6, 4, 12, 0.66);
 
-  /* frosted surfaces, from faint to near-solid */
+  /* Frosted surfaces, from faint to near-solid. */
   --glass: rgba(30, 30, 35, 0.55);
   --glass-solid: rgba(36, 36, 42, 0.78);
   --glass-hover: rgba(44, 44, 50, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
   --surface: rgba(26, 26, 31, 0.76);
   --surface-strong: rgba(30, 30, 35, 0.97);
-  /* drawers and dialogs: opaque, so nothing behind ghosts through what is read in them */
+  /* Drawers and dialogs: opaque, so nothing behind ghosts through what is read in them. */
   --surface-solid: #1e1e23;
   --hairline: rgba(255, 255, 255, 0.1);
   --separator: rgba(255, 255, 255, 0.075);
@@ -56,20 +47,20 @@
   --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 28px 70px rgba(0, 0, 0, 0.6), 0 8px 20px rgba(0, 0, 0, 0.45);
 
-  /* muted semantic tints — status only: light enough that a 12 px badge's words pass 4.5:1 on
-     their own tint over a card */
+  /* Muted semantic tints — status only: light enough that a 12 px badge's words pass 4.5:1 on
+     their own tint over a card. */
   --ok: #4ade80; --ok-bg: rgba(74, 222, 128, 0.13);
   --warn: #fbbf24; --warn-bg: rgba(251, 191, 36, 0.13);
   --bad: #fc8d85; --bad-bg: rgba(249, 112, 102, 0.14);
   --info: #93c5fd; --info-bg: rgba(147, 197, 253, 0.13);
 
-  /* sizes a finger can hit */
+  /* Sizes a finger can hit. */
   --target: 44px;
   --control-h: 38px;
-  /* the phone's top bar, under the status bar's safe area: what a sticky part of a page sits below */
+  /* The phone's top bar, under the status bar's safe area: what a sticky part of a page sits below. */
   --topbar-h: calc(var(--control-h) + 17px);
   --topbar-bottom: calc(var(--topbar-h) + env(safe-area-inset-top));
-  /* the page's side margin, kept clear of a notch when a phone lies on its side */
+  /* The page's side margin, kept clear of a notch when a phone lies on its side. */
   --gutter: 16px;
   --gutter-start: max(var(--gutter), env(safe-area-inset-left));
   --gutter-end: max(var(--gutter), env(safe-area-inset-right));
@@ -88,22 +79,15 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   /*
-   * The backdrop the glass panels sample: violet ribbons on black, drawn live
-   * behind everything (backdrop/Backdrop.tsx). It is fixed so it never
-   * scrolls, and it sits UNDER a scrim (::before) rather than behind raw text:
-   * moving light straight behind dense tables destroys legibility, which is the
-   * usual way a background like this goes wrong. The base colour stays where
-   * the ribbons cannot be drawn: on the root, not here. A body with a
-   * background of its own (while the root has one too) paints it over
-   * everything fixed below zero, the ribbons included, which is how they once
-   * went missing behind a plain black page.
+   * The ribbons (backdrop/Backdrop.tsx) are fixed and sit under a scrim (::before), since moving light straight behind
+   * dense tables is unreadable. The base colour belongs on the root: a body background would paint over the ribbons.
    */
   background: transparent;
 }
 body::before {
   content: '';
   position: fixed;
-  /* the screen's largest height, as the ribbons under it: a keyboard opening does not pull it up off them */
+  /* The screen's largest height, as the ribbons under it: a keyboard opening does not pull it up off them. */
   top: 0; left: 0; right: 0;
   height: 100vh;
   height: 100lvh;
@@ -111,7 +95,7 @@ body::before {
   background: linear-gradient(var(--scrim-top), var(--scrim-bottom));
   pointer-events: none;
 }
-/* a layer is open: the page behind it stays where it is */
+/* A layer is open: the page behind it stays where it is. */
 body.has-layer { overflow: hidden; }
 
 a { color: var(--text); text-decoration: none; }
@@ -130,7 +114,7 @@ code { font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospac
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
-/* ---- controls: glassy, restrained -------------------------------------- */
+/* ---- Controls: glassy, restrained -------------------------------------- */
 button {
   font: inherit;
   font-weight: 500;
@@ -190,8 +174,8 @@ input, select, textarea {
   transition: border-color 0.14s ease, box-shadow 0.14s ease;
 }
 textarea { font: inherit; line-height: 1.5; }
-/* a date and time field has a width of its own that grid and flex cells cannot shrink, so on a narrow
-   form it ran past its column; it may scroll its own text instead */
+/* A date and time field has a width of its own that grid and flex cells cannot shrink, so on a narrow
+   form it ran past its column; it may scroll its own text instead. */
 input { min-width: 0; max-width: 100%; }
 input[type='checkbox'], input[type='radio'] {
   width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0;
@@ -200,14 +184,8 @@ input[type='checkbox'], input[type='radio'] {
 input::placeholder, textarea::placeholder { color: var(--text-dim); }
 input:disabled, select:disabled, textarea:disabled { opacity: 0.6; }
 
-/*
- * Dropdown options need OPAQUE colours.
- *
- * The popup is drawn by the OS, not on the page, so a translucent control fill
- * composites against the system surface rather than the frosted panel behind
- * it. Options inherit the control's text colour, which left the list nearly
- * invisible — light text on a light popup.
- */
+/* Dropdown options need opaque colours: the system draws the popup, so a translucent fill would put light text on a
+   light surface. */
 option, optgroup { background-color: #1c1c21; color: #f4f4f5; }
 input:focus, select:focus, textarea:focus {
   outline: none;
@@ -219,16 +197,14 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 }
 label { font-weight: 500; color: var(--text-2); }
 
-/* A phone, or any touch screen: everything a finger presses is at least 44 px,
-   and fields are 16 px — below that iOS Safari zooms the page on focus and
-   never zooms back out. `:root` outranks a page's own smaller field (a 13 px
-   select, a monospace code box), which otherwise brought the zoom back. */
+/* A touch screen: everything pressed is at least 44 px, and fields are 16 px, below which iOS Safari zooms in on focus
+   and stays zoomed. `:root` outranks a page's own smaller field. */
 @media (pointer: coarse), (max-width: 760px) {
   :root { --control-h: var(--target); }
   :root input:not([type='checkbox']):not([type='radio']):not([type='range']), :root select, :root textarea { font-size: 16px; }
 }
 
-/* ---- the shell: sidebar on a wide screen, a top bar and a drawer on a phone ---- */
+/* ---- The shell: sidebar on a wide screen, a top bar and a drawer on a phone ---- */
 .skip-link {
   position: absolute; left: 12px; top: -60px; z-index: 100;
   padding: 10px 14px; border-radius: var(--radius-sm);
@@ -260,7 +236,7 @@ label { font-weight: 500; color: var(--text-2); }
   padding: 18px var(--gutter-end) 48px var(--gutter-start);
   padding-bottom: calc(48px + env(safe-area-inset-bottom));
 }
-/* below the sticky top bar: a field or a heading moved to by the keyboard or a link is not hidden under it */
+/* Below the sticky top bar: a field or a heading moved to by the keyboard or a link is not hidden under it. */
 @media (max-width: 1023px) {
   html { scroll-padding-top: calc(var(--topbar-bottom) + 8px); }
 }
@@ -277,18 +253,18 @@ label { font-weight: 500; color: var(--text-2); }
     -webkit-backdrop-filter: blur(var(--blur-strong));
     backdrop-filter: blur(var(--blur-strong));
     border-right: 1px solid var(--hairline);
-    /* the brand and account stay put; the link list scrolls on its own */
+    /* The brand and account stay put; the link list scrolls on its own. */
     overflow: hidden;
   }
   .main { padding: 30px 36px 64px; }
 }
 
 .brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 6px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; color: var(--text); }
-/* Hevalo's icon beside the name (brand/HevaloMark.tsx), its eyes on the pointer */
+/* Hevalo's icon beside the name (brand/HevaloMark.tsx), its eyes on the pointer. */
 .brand-mark { flex: 0 0 auto; }
 .brand-sub { display: block; font-weight: 500; font-size: 12px; color: var(--text-dim); letter-spacing: 0; }
 
-/* the nav: groups with their pages, and a box to find a page by name */
+/* The nav: groups with their pages, and a box to find a page by name. */
 .nav { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1 1 auto; }
 .nav-search { position: relative; }
 .nav-search .icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
@@ -338,15 +314,15 @@ label { font-weight: 500; color: var(--text-2); }
 .account-role { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account button { white-space: nowrap; padding: 6px 10px; flex: 0 0 auto; }
 
-/* ---- small layout helpers ------------------------------------------------ */
+/* ---- Small layout helpers ------------------------------------------------ */
 .spacer { flex: 1 1 auto; }
 .row { display: flex; gap: 8px; align-items: center; }
 
-/* ---- typography -------------------------------------------------------- */
+/* ---- Typography -------------------------------------------------------- */
 .subtle { color: var(--text-dim); }
 .section-title { font-weight: 600; font-size: 13px; color: var(--text-2); margin: 30px 0 14px; }
 
-/* ---- glass surfaces ---------------------------------------------------- */
+/* ---- Glass surfaces ---------------------------------------------------- */
 .card {
   background: var(--surface);
   -webkit-backdrop-filter: blur(var(--blur-strong));
@@ -360,7 +336,7 @@ label { font-weight: 500; color: var(--text-2); }
   .card { padding: 16px; border-radius: var(--radius-sm); }
 }
 
-/* ---- a long job, running ----------------------------------------------- */
+/* ---- A long job, running ----------------------------------------------- */
 /* The dictionary import takes about ninety minutes, so the one thing this has
    to communicate is that something is still happening. */
 .progress {
@@ -376,7 +352,7 @@ label { font-weight: 500; color: var(--text-2); }
   transition: width 400ms ease;
 }
 
-/* ---- tables: crisp inside the glass card (the kit's Table builds on these) ---- */
+/* ---- Tables: crisp inside the glass card (the kit's Table builds on these) ---- */
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 11px 14px; vertical-align: middle; }
 thead th {
@@ -389,7 +365,7 @@ tbody tr:hover td { background: var(--control); }
 tbody tr:last-child td { border-bottom: none; }
 td strong, td .name { color: var(--text); font-weight: 600; }
 
-/* ---- status badges: small, muted --------------------------------------- */
+/* ---- Status badges: small, muted --------------------------------------- */
 .badge {
   display: inline-flex; align-items: center;
   padding: 2px 10px; border-radius: 999px;
@@ -399,17 +375,11 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .badge.ok { background: var(--ok-bg); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 24%, transparent); }
 .badge.mid { background: var(--warn-bg); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 24%, transparent); }
 .badge.hi,
-/* "danger" was used in three places and never defined, so an empty Wordle band,
-   an inactive shop item and an unplayable base word all rendered as plain grey */
+/* For an empty Peyvok band, an inactive shop item and an unplayable base word. */
 .badge.danger { background: var(--bad-bg); color: var(--bad); border-color: color-mix(in srgb, var(--bad) 24%, transparent); }
 
-/* ---- key/value detail grid --------------------------------------------- */
-.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; }
-.grid2 .k { color: var(--text-dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
-.grid2 .v { color: var(--text); }
-@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
 
-/* ---- monospace areas --------------------------------------------------- */
+/* ---- Monospace areas --------------------------------------------------- */
 .code-area {
   font-family: ui-monospace, 'Cascadia Code', 'SF Mono', 'Consolas', monospace;
   font-size: 12.5px; line-height: 1.55; width: 100%;
@@ -424,7 +394,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   border-radius: var(--radius-sm); word-break: break-all; user-select: all;
 }
 
-/* ---- analytics viz: neutral -------------------------------------------- */
+/* ---- Analytics viz: neutral -------------------------------------------- */
 .bars { display: flex; align-items: flex-end; gap: 3px; height: 110px; padding-top: 8px; }
 .bars .b { flex: 1 1 0; max-width: 32px; background: var(--text-2); border-radius: 3px 3px 0 0; min-height: 2px; opacity: 0.8; transition: opacity 0.1s ease; }
 .bars .b:hover { opacity: 1; }
@@ -433,20 +403,17 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .funnel-fill { height: 100%; background: var(--text); border-radius: var(--radius-xs); min-width: 2px; opacity: 0.82; }
 .funnel-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--text-2); }
 
-/* ---- login: liquid-glass card on the consistent base color ------------- */
+/* ---- Login: liquid-glass card on the consistent base color ------------- */
 .login { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 24px; overflow: hidden; }
 
-/* The sign-in is all ribbons: nothing on this screen is read but the card, so it has
-   next to no scrim and the light shows at its full strength. Focus rings follow the
-   white type. */
+/* Only the card is read on the sign-in, so it has next to no scrim; focus rings follow the white type. */
 .login :focus-visible { outline-color: #fff; }
 :root:has(.login) {
   --scrim-top: rgba(4, 2, 9, 0);
   --scrim-bottom: rgba(4, 2, 9, 0.2);
 }
 
-/* The card: large radius, dark frosted glass so the white type reads over the brightest
-   fold of the ribbons behind it, rim highlight. */
+/* Dark frosted glass, so the white type reads over the brightest fold of the ribbons. */
 .login-card {
   position: relative; z-index: 1;
   width: 452px; max-width: 100%; min-width: 0;
@@ -472,13 +439,9 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 }
 .login-brand { display: inline-flex; align-items: center; gap: 10px; }
 /*
- * Hevalo leans in over the card (brand/Companion) as over a windowsill, seen from the chest up:
- * the stage keeps room above the card for him, and his box (shared COMPANION_VIEW, 660 by 1103,
- * 540 of it as wide as --cp-w, with room either side for a hoof he lifts out to his cheeks) has
- * its sill, 818 down it, on the card's top edge. He is drawn in front of the card, cut at the edge
- * himself, so his forelegs hang down over its top padding (shared COMPANION_OVERHANG, 285, inside
- * his box, which the padding keeps clear). No filter on him: a browser may cut what it filters at
- * the element's edge, and it would redraw the shadow on every frame he moves.
+ * Hevalo leans over the card (brand/Companion). His box is shared COMPANION_VIEW (660 by 1103, 540 of it as wide as
+ * --cp-w) with its sill 818 down on the card's top edge, and his forelegs hang COMPANION_OVERHANG (285) into the card's
+ * top padding. No filter on him: a browser may clip what it filters and would redraw the shadow on every frame.
  */
 .login-stage {
   --cp-w: min(160px, 38vw);
@@ -497,7 +460,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .login-title { margin: 0 0 10px; font-size: 44px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; color: #fff; }
 .login-welcome { margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 
-/* Each field has its label above it: a placeholder alone vanished as soon as typing began. */
+/* Each field has its label above it, as a placeholder vanishes once typing begins. */
 .login-field { margin-bottom: 15px; }
 .login-label { display: block; margin: 0 0 7px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
 .login-field-error { margin-top: 7px; font-size: 13px; line-height: 1.45; color: #ffb3a7; }
@@ -523,9 +486,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 }
 .login-input input.has-eye { padding-right: 58px; }
 .login-eye {
-  /* Centre vertically with top/bottom+margin (not transform) so the global
-     `button:active { transform: translateY(0.5px) }` can't knock it out of
-     place on click — the eye stays put. */
+  /* Centred with top, bottom and margin, not a transform, so the global `button:active` nudge cannot move it. */
   position: absolute; right: 7px; top: 0; bottom: 0; margin: auto 0;
   display: flex; align-items: center; justify-content: center;
   width: var(--target); height: var(--target); min-width: 0; padding: 0;
@@ -537,14 +498,13 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .login-eye:hover { color: #fff; background: rgba(255, 255, 255, 0.14); }
 .login-eye:active { transform: none; }
 
-/* remember (left) + forgot (right) */
+/* Remember me on the left, forgot on the right. */
 .login-actions {
   display: flex; justify-content: space-between; align-items: center;
   gap: 12px; margin: 2px 0 20px; font-size: 14px;
 }
 .login-remember { display: flex; align-items: center; gap: 9px; min-height: var(--target); color: rgba(255, 255, 255, 0.9); cursor: pointer; }
-/* A clean, normal-looking checkbox: reset the global glass-input styling and
-   draw a small square that shows a checkmark when ticked. */
+/* A plain checkbox, reset from the global glass-input styling. */
 .login-remember input[type='checkbox'] {
   appearance: none; -webkit-appearance: none;
   flex: none; width: 18px; height: 18px; margin: 0; padding: 0;
@@ -578,7 +538,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .login-forgot:hover { color: rgba(255, 255, 255, 0.82); background: none; }
 @media (pointer: coarse) { .login-forgot { min-height: var(--target); } }
 
-/* big translucent pill button */
+/* Big translucent pill button. */
 .login-submit {
   align-self: center; width: 64%; min-width: 210px; height: 54px; margin-top: 2px;
   font-size: 16px; font-weight: 500; color: #fff;
@@ -598,7 +558,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 
 @media (max-width: 520px) {
   .login-stage { width: 100%; }
-  /* a phone shows the ribbons small, right behind the card: less frost, so they still show through it */
+  /* A phone shows the ribbons small, right behind the card: less frost, so they still show through it. */
   .login-card {
     width: 100%; padding: 30px 24px 32px; border-radius: 24px;
     background: rgba(10, 6, 22, 0.3);
@@ -609,7 +569,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   .login-submit { width: 100%; }
 }
 
-/* ---- states ------------------------------------------------------------ */
+/* ---- States ------------------------------------------------------------ */
 .error { color: var(--danger); font-size: 13px; }
 .empty {
   padding: 52px 24px; text-align: center; color: var(--text-dim);
@@ -621,7 +581,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   * { transition: none !important; animation: none !important; }
 }
 
-/* ---- section tabs (drill-down within a page) ---------------------------- */
+/* ---- Section tabs (drill-down within a page) ---------------------------- */
 .tabs {
   display: flex;
   gap: 6px;
@@ -632,8 +592,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   padding: 7px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--glass-border);
-  /* tabs sit directly on the backdrop rather than inside a card, so they need
-     their own glass or they read as flat chips on the photo */
+  /* Tabs sit straight on the backdrop, so they need glass of their own. */
   background: var(--glass);
   -webkit-backdrop-filter: blur(var(--blur));
   backdrop-filter: blur(var(--blur));
@@ -651,7 +610,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   box-shadow: var(--shadow-sm);
 }
 
-/* ---- alphabet audio: a list to work through, and one sound in the studio --- */
+/* ---- Alphabet audio: a list to work through, and one sound in the studio --- */
 .aa-summary { margin-bottom: 18px; }
 .aa-layout { display: grid; gap: 20px; align-items: start; }
 @media (min-width: 900px) {
@@ -714,16 +673,12 @@ kbd {
 .aa-keys { display: none; }
 @media (hover: hover) and (pointer: fine) { .aa-keys { display: block; } }
 
-/* ---- audio studio: the two sides, and the lessons' list --------------------- */
+/* ---- Audio studio: the two sides, and the lessons' list --------------------- */
 .studio-tabs { margin-bottom: 20px; }
 .studio-tabs .tab { padding: 9px 18px; font-size: 14px; }
 .rec { display: grid; gap: 10px; }
 
-.la-what { margin: 12px 0 0; font-size: 13px; line-height: 1.5; }
-.la-walk {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-  margin-bottom: 14px; padding: 12px 16px; font-weight: 500;
-}
+
 .la-course { margin-top: 8px; }
 .la-course-title { font-size: 17px; font-weight: 600; margin: 26px 0 0; letter-spacing: -0.01em; }
 .la-course .section-title { margin: 14px 0 10px; }
@@ -734,11 +689,11 @@ kbd {
 .la-row + .la-row { border-top: 1px solid var(--separator); }
 .la-row.is-on { background: var(--glass-solid); border-top-color: transparent; box-shadow: var(--shadow-sm); }
 .la-row-line { display: flex; align-items: center; gap: 8px; padding: 6px 4px; }
-/* flat inside the lesson's card: the card is the glass, not each line of it */
+/* Flat inside the lesson's card: the card is the glass, not each line of it. */
 button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .la-play { flex: 0 0 auto; width: 36px; height: 36px; padding: 0; font-size: 13px; }
 .la-row-main {
-  /* the button's own centring would centre the text's column in the row */
+  /* The button's own centring would centre the text's column in the row. */
   flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; justify-items: start; justify-content: stretch;
   padding: 6px 8px; text-align: left; font-weight: 400;
 }
@@ -752,14 +707,14 @@ button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-fil
 .la-add-form input { flex: 1 1 auto; min-width: 0; font-size: 16px; }
 .la-tips { margin-top: 14px; }
 @media (max-width: 560px) {
-  /* play button beside the text, the status under it */
+  /* Play button beside the text, the status under it. */
   .la-row-line { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; row-gap: 2px; }
   .la-row .badge { grid-column: 2; justify-self: start; margin-left: 8px; }
   .la-studio { padding: 4px 8px 12px; }
   .la-text { font-size: 19px; }
 }
 
-/* ---- speaking characters: who says it, the preview, the jobs over every recording ---- */
+/* ---- Speaking characters: who says it, the preview, the jobs over every recording ---- */
 .voice-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 28px; padding: 4px 0 10px; }
 .voice-pick { display: grid; gap: 6px; min-width: 0; }
 .voice-pick-label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
@@ -812,7 +767,7 @@ button.voice-pick-option.is-on { background: var(--surface-strong); border-color
   .vc-job-actions { width: 100%; }
 }
 
-/* ---- stories: the list, and the editor beside its checks ----------------- */
+/* ---- Stories: the list, and the editor beside its checks ----------------- */
 .st-coverage { display: grid; gap: 8px; }
 .st-coverage-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .st-coverage-row strong { min-width: 84px; }
@@ -828,7 +783,7 @@ button.voice-pick-option.is-on { background: var(--surface-strong); border-color
 .st-layout { display: grid; gap: 20px; align-items: start; grid-template-columns: minmax(0, 1fr); }
 .st-main { display: grid; gap: 16px; min-width: 0; }
 .st-aside { display: grid; gap: 16px; min-width: 0; }
-/* a grid column is as wide as its widest select's longest option unless told otherwise, which on a phone is wider than the screen */
+/* A grid column is as wide as its widest select's longest option unless told otherwise, which on a phone is wider than the screen. */
 .st-main, .st-aside, .st-section, .st-field, .st-gloss, .st-q-body, .st-options, .st-evidence-pick,
 .st-actions, .st-actions-main, .st-checks { grid-template-columns: minmax(0, 1fr); }
 .st-main select { max-width: 100%; }
@@ -836,9 +791,9 @@ button.voice-pick-option.is-on { background: var(--surface-strong); border-color
   .st-layout { grid-template-columns: minmax(0, 1fr) 300px; }
   .st-aside { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; scrollbar-width: thin; }
 }
-/* on a narrow screen the buttons and checks come before the long form */
+/* On a narrow screen the buttons and checks come before the long form. */
 @media (max-width: 1099px) { .st-aside { order: -1; } }
-/* the save bar at the foot (pages.css .editor-bar): only where the buttons are above the form, not beside it */
+/* The save bar at the foot (pages.css .editor-bar): only where the buttons are above the form, not beside it. */
 .editor-bar.st-savebar { display: none; }
 @media (max-width: 1099px) { .editor-bar.st-savebar { display: flex; } }
 
@@ -935,14 +890,14 @@ button.st-go {
 .st-where { font-weight: 600; color: var(--text); }
 .st-clear { color: var(--ok); font-weight: 600; font-size: 13px; }
 
-/* ---- the story list's filters and the editor's library sections ---------------- */
+/* ---- The story list's filters and the editor's library sections ---------------- */
 .st-tools .check { padding: 0; min-height: 0; flex: 0 0 auto; }
-/* the list has more facets than a laptop's width holds as columns, so its rows are cards there: two abreast, not a long single file */
+/* The list has more facets than a laptop's width holds as columns, so its rows are cards there: two abreast, not a long single file. */
 @media (min-width: 900px) {
   .st-list .table-wrap.is-cards > .kit-table tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .st-list .table-wrap.is-cards > .kit-table tbody tr.table-state, .st-list .table-wrap.is-cards > .kit-table tbody tr.table-loading { grid-column: 1 / -1; }
 }
-/* the dictionary badge beside a glossary word is a sentence long: it wraps under the label on a phone */
+/* The dictionary badge beside a glossary word is a sentence long: it wraps under the label on a phone. */
 .st-gloss .st-label-row { flex-wrap: wrap; }
 .st-gloss .st-label-row .badge { white-space: normal; text-align: start; }
 .st-star { display: inline-grid; place-items: center; color: var(--warn); margin-inline-end: 4px; vertical-align: -2px; }
@@ -983,9 +938,9 @@ button.st-cover.is-on { background: var(--surface-strong); border-color: var(--t
 .st-translation-source { margin: 0; padding-inline-start: 22px; display: grid; gap: 10px; font-size: 14px; line-height: 1.6; color: var(--text-2); }
 .st-translation-source li::marker { color: var(--text-dim); font-size: 12px; }
 @media (min-width: 900px) { .st-translation-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
-/* a translated heading sits beside the Kurdish one: the reader shows a section's title over it in either language */
+/* A translated heading sits beside the Kurdish one: the reader shows a section's title over it in either language. */
 .st-translation-source li.is-heading { font-weight: 600; color: var(--text); }
-/* one language's title, questions and what comes after reading, under its text, the whole width; the Kurdish under each field */
+/* One language's title, questions and what comes after reading, under its text, the whole width; the Kurdish under each field. */
 .st-tr-parts, .st-tr-footer { grid-column: 1 / -1; display: grid; gap: 12px; min-width: 0; }
 .st-tr-group { border: none; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--separator); display: grid; gap: 12px; min-width: 0; }
 .st-tr-group > legend { font-weight: 600; padding: 0; }
@@ -998,11 +953,11 @@ button.st-cover.is-on { background: var(--surface-strong); border-color: var(--t
 .st-tr-review .st-review-note { flex-basis: 100%; }
 .st-tr-actions { flex-wrap: wrap; gap: 8px; }
 
-/* a saga's sections, listed under the text's facts; a heading paragraph stands out in the preview */
+/* A saga's sections, listed under the text's facts; a heading paragraph stands out in the preview. */
 .st-sections { margin: 6px 0 0; padding-inline-start: 22px; font-size: 13.5px; color: var(--text-2); display: grid; gap: 2px; }
 .st-para.is-heading .st-sentences { font-weight: 600; }
 
-/* sources, questions to think about and notes: one row each, removed by the button at its foot */
+/* Sources, questions to think about and notes: one row each, removed by the button at its foot. */
 .st-sources, .st-source, .st-reflection, .st-note { display: grid; gap: 8px; min-width: 0; }
 .st-source, .st-note { padding: 10px 0; border-top: 1px solid var(--separator); }
 .st-source .st-remove, .st-reflection .st-remove, .st-note .st-remove { justify-self: start; }
@@ -1026,7 +981,7 @@ button.st-cover.is-on { background: var(--surface-strong); border-color: var(--t
 .st-review-note { margin: 0; padding: 8px 12px; border-inline-start: 3px solid var(--hairline); color: var(--text-2); white-space: pre-wrap; }
 .st-review-actions { flex-wrap: wrap; }
 
-/* the preview: the reader's page in the admin's own look, the cover band over the title */
+/* The preview: the reader's page in the admin's own look, the cover band over the title. */
 .st-pv { border: 1px solid var(--hairline); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-strong); }
 .st-pv-cover { aspect-ratio: 16 / 5; max-height: 220px; background: var(--control); }
 .st-pv-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }

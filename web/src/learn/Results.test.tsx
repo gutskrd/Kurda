@@ -7,11 +7,7 @@ import type { QuestDay } from '@kurda/shared';
 import { Results } from './Results';
 import type { SessionResults } from './types';
 
-/*
- * The end of a lesson on its own: the three cards, the title by how it went,
- * and the screens after it — the streak's card (after its flame, on the day
- * the fire grew), today's quests and a chest — against a scripted API.
- */
+/* The end of a lesson against a scripted API: the cards, the title, and the streak, quests and chest screens after it. */
 
 let calls: string[] = [];
 
@@ -149,7 +145,7 @@ describe('water for the tree', () => {
     show({ tree: { gained: 1, water: 3 } });
     expect(screen.getByText('+1 water for your tree')).toBeInTheDocument();
     cleanup();
-    // no tree planted, a replay, or a server without trees: the results carry nothing about it
+    // No tree planted, a replay, or a server without trees: the results carry nothing about it.
     show();
     expect(screen.queryByText(/water for your tree/)).toBeNull();
   });
@@ -176,14 +172,14 @@ describe('after the results', () => {
     show({ quests: steps }, { moments: kept });
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    // an ordinary day: no flame first, the card is the whole of the moment, with the way on from its first frame
+    // An ordinary day: no flame first, the card is the whole of the moment, with the way on from its first frame.
     expect(await screen.findByRole('heading', { name: '4-day streak' })).toBeInTheDocument();
     expect(document.querySelector('.end-flame')).toBeNull();
     expect(screen.getByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
 
-    // then today's three, the one this lesson finished called so
+    // Then today's three, the one this lesson finished called so.
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('heading', { name: 'Quest complete!' })).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Keep your streak going' })).toHaveAttribute('aria-valuetext', '1 of 1');
@@ -199,14 +195,14 @@ describe('after the results', () => {
     expect(calls).toContain('POST /me/quests/q1/claim');
     await userEvent.click(within(chest).getByRole('button', { name: 'Continue' }));
 
-    // back on the quests, the chest open and the way on in the bar
+    // Back on the quests, the chest open and the way on in the bar.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByText('Its chest is open')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Done' })).toHaveFocus();
   });
 
   it('moves on with Enter from anywhere without a use of its own for it, and the flame with Escape rather than leaving', async () => {
-    // the seventh day: the fire grew into a campfire, so its flame has the screen first
+    // The seventh day: the fire grew into a campfire, so its flame has the screen first.
     show({ streak: { ...base.streak, current: 7 } }, { moments: kept });
     await screen.findByRole('heading', { name: 'Great work!' });
     await userEvent.keyboard('{Enter}');
@@ -215,7 +211,7 @@ describe('after the results', () => {
     expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     expect(await screen.findByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
-    // the number rolled on the flame's screen: on the card it stands at today's from the start
+    // The number rolled on the flame's screen: on the card it stands at today's from the start.
     expect(document.querySelector('.end-week .roll-column')).toBeNull();
   });
 
@@ -225,7 +221,7 @@ describe('after the results', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByRole('heading', { name: '4-day streak' });
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    // the card is still there, going: its words fading, its medal gathering itself
+    // The card is still there, going: its words fading, its medal gathering itself.
     expect(document.querySelector('.end-week')).toHaveClass('is-leaving');
     expect(await screen.findByRole('heading', { name: 'Quest complete!' })).toBeInTheDocument();
     expect(document.querySelector('.end-week')).toBeNull();
@@ -266,19 +262,14 @@ describe('after the results', () => {
   });
 });
 
-/*
- * The quiet Share beside the way on: the lesson as it went on its results,
- * the streak on its card on one of its big days, and none on a review. What
- * goes out is a line, the squares and the site's address, and nothing of who
- * is sharing.
- */
+/* The quiet Share: the lesson on its results, the streak on its big days, none on a review, and nothing about the sharer. */
 describe('sharing', () => {
   const SITE = window.location.origin;
   const exercises: DeliveredExercise[] = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id, i) => ({ id, position: i + 1, type: 'multiple_choice' }));
-  // six asked, the third missed the first time
+  // Six asked, the third missed the first time.
   const lesson: Partial<SessionResults> = { correct: 5, total: 6, accuracy: 5 / 6, mistakes: [{ exerciseId: 'e3', verdict: 'wrong' }] };
   const kept: LessonMoments = { ...NO_LESSON_MOMENTS, streakKept: true };
-  // somebody with a name and a country (a made-up one), neither of which a share may carry
+  // Someone with a name and a (made-up) country, neither of which a share may carry.
   const WHO = { id: 'u-4471', username: 'rojda', displayName: 'Rojda', country: 'DE', emailVerified: true };
 
   function open(
@@ -328,7 +319,7 @@ describe('sharing', () => {
     const share = within(bar).getByRole('button', { name: 'Share' });
     expect(share).toHaveClass('btn-secondary');
     expect(share.closest('.lesson-bar-start')).not.toBeNull();
-    // the way on is still the last thing in the row, and the only one drawn as it
+    // The way on is still the last thing in the row, and the only one drawn as it.
     const row = bar.querySelector('.lesson-bar-row')!;
     expect(row.lastElementChild).toHaveClass('lesson-bar-go');
     expect(bar.querySelectorAll('.lesson-bar-go')).toHaveLength(1);
@@ -346,12 +337,12 @@ describe('sharing', () => {
   it('shares nothing that says whose lesson it was', async () => {
     const { said } = sheet();
     open();
-    // the account is read by now: it is on the page’s side, and stays there
+    // The account is read by now: it is on the page’s side, and stays there.
     await userEvent.click(await screen.findByRole('button', { name: 'Share' }));
     const text = said();
     expect(text.length).toBeGreaterThan(0);
     for (const theirs of [WHO.id, WHO.username, WHO.displayName, WHO.country, '/users/', '/profile', '@']) expect(text, theirs).not.toContain(theirs);
-    // one address, and it is the page of a lesson finished, which is about nobody
+    // One address, and it is the page of a lesson finished, which is about nobody.
     expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/lesson`]);
   });
 
@@ -399,7 +390,7 @@ describe('sharing', () => {
     open({ streak: { ...base.streak, current: 7 } }, { moments: kept });
     await screen.findByRole('heading', { name: 'Great work!' });
     await userEvent.keyboard('{Enter}');
-    // the seventh day’s flame first, which has no bar and no Share
+    // The seventh day’s flame first, which has no bar and no Share.
     await screen.findByRole('heading', { name: '7-day streak' });
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
@@ -410,7 +401,7 @@ describe('sharing', () => {
     expect(share).toHaveBeenCalledTimes(1);
     expect(said()).toBe(`7 days of Kurdish in a row. 🔥\n${SITE}/win/streak/7`);
     for (const theirs of [WHO.id, WHO.username, WHO.displayName, '/users/']) expect(said()).not.toContain(theirs);
-    // the way on is still the bar’s one button
+    // The way on is still the bar’s one button.
     expect(bar.querySelector('.lesson-bar-row')!.lastElementChild).toHaveClass('lesson-bar-go');
   });
 

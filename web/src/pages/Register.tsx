@@ -15,22 +15,14 @@ import { rememberAfterSignup } from '../auth/afterSignup';
 import { UsernameField } from '../auth/UsernameField';
 import { usernameRefusalText } from '../lib/usernameText';
 
-/** The fields this form can mark: the three the server refuses over, and the month and year it will not send without. */
+/** The fields this form can mark: the three the server refuses over, and the birth month and year. */
 type Field = AuthField | 'birth';
 
 /**
- * Create an account (/register).
- *
- * A refusal that is about one field is said under that field, which is marked,
- * shaken once and given the caret (auth/fieldProblem.ts): a username that is
- * taken under the username, a password rule under the password, the month and
- * year not chosen under those. What a username may be made of is under its
- * field from the start, as the password's rule is, so it is read before the
- * form is refused for it and not only after; the field itself writes the name
- * in lowercase as it is typed and names a character that cannot be in it
- * (auth/UsernameField.tsx), and a name the rule refuses is said there before
- * anything is sent. An address that may already have an account is not about
- * a field and keeps its place above the form.
+ * Create an account (/register). A refusal about one field is said under it, which is marked, shaken and focused
+ * (auth/fieldProblem.ts). The username and password rules show under their fields from the start; the username field
+ * lowercases as you type and names disallowed characters before anything is sent (auth/UsernameField.tsx). An address
+ * that may already have an account is not a field problem and shows above the form.
  */
 export function Register(): React.JSX.Element {
   const { register } = useAuth();
@@ -44,11 +36,11 @@ export function Register(): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [birth, setBirth] = useState(EMPTY_BIRTH_MONTH);
   const [error, setError] = useState<string | null>(null);
-  /** the server's code for the refusal, where it calls for a way on rather than a fix to the form */
+  /** The server's code for the refusal, where it calls for a way on rather than a fix to the form. */
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const problems = useFieldProblem<Field>({ email: 'email', username: 'username', password: 'password' });
   const [busy, setBusy] = useState(false);
-  // read once: an earlier refusal in this browser session keeps the form away
+  // Read once: an earlier refusal this browser session keeps the form away.
   const [stopped, setStopped] = useState<AgeStopKind | null>(ageStopRemembered);
   const [inside, setInside] = useState(false);
   const held = useRef<(() => void) | null>(null);
@@ -59,7 +51,7 @@ export function Register(): React.JSX.Element {
     setError(null);
     setErrorCode(null);
     problems.clear();
-    // the rule the server would refuse it by, said under the field without asking (shared/src/username.ts)
+    // The rule the server would refuse by, said under the field up front (shared/src/username.ts).
     const name = checkUsername(username);
     if (!name.ok) {
       problems.show('username', usernameRefusalText(name.reason, name.reason === 'invalid-chars' ? name.chars : undefined, t));
@@ -71,16 +63,15 @@ export function Register(): React.JSX.Element {
       return;
     }
     setBusy(true);
-    // made, the page stays a moment for Hevalo to be pleased, then leaves by itself
+    // Once made, the page stays a moment for Hevalo, then leaves by itself.
     const release = holdArrival();
     held.current = release;
-    // the language they chose here is the account's from the first moment,
-    // so the confirmation email and the next sign-in already speak it
+    // The chosen language is the account's from the start, so the confirmation email uses it.
     const err = await register({ email, username: name.value, password, locale, ...chosen });
     if (err) release?.();
     setBusy(false);
     if (err?.code === 'UNDER_MINIMUM_AGE') {
-      // no account was made; the explanation replaces the form, and stays
+      // No account was made; the explanation replaces the form and stays.
       rememberAgeStop('refused');
       setStopped('refused');
     } else if (err?.field) {
@@ -89,8 +80,7 @@ export function Register(): React.JSX.Element {
       setError(err.message);
       setErrorCode(err.code ?? null);
     } else {
-      // a friend's invite or a story's quiz that sent them here: opened once
-      // the email is confirmed (pages/VerifyEmail), not lost to the first lesson
+      // A friend's invite or a story quiz that sent them here opens once the email is confirmed (pages/VerifyEmail).
       rememberAfterSignup((location.state as { from?: unknown } | null)?.from);
       setInside(true);
       if (release) await arrivalPause();
@@ -115,12 +105,7 @@ export function Register(): React.JSX.Element {
         </div>
 
         <form onSubmit={submit} noValidate>
-          {/*
-            An address that may already have an account is not a mistake in the
-            form, so it is said calmly and with the two ways on: signing in, or
-            a new password. The server keeps it vague on purpose — nobody may
-            learn from here which addresses are registered — and so does this.
-          */}
+          {/* Said calmly with both ways on (sign in, new password), and as vague as the server about whether the address is registered. */}
           {error && errorCode === 'REGISTRATION_FAILED' ? (
             <div className="msg" role="alert">
               {error}
@@ -218,11 +203,7 @@ export function Register(): React.JSX.Element {
             className={problems.fieldClass('birth', 'field birth-month')}
           />
 
-          {/*
-            Asked here rather than after signing up, and it takes effect while
-            you are still on this page — so the first thing a new account sees
-            is already in the language it chose, including its welcome email.
-          */}
+          {/* Asked here so the new account, and its welcome email, are in the chosen language from the start. */}
           <div className="field">
             <LanguagePicker value={locale} onChange={setLocale} help={t('language.chooseHelp')} disabled={busy} />
           </div>
@@ -231,7 +212,7 @@ export function Register(): React.JSX.Element {
             {busy ? t('auth.register.submitting') : t('auth.register.submit')}
           </Button>
 
-          {/* the sentence names two documents, so it links to both of them */}
+          {/* The sentence names two documents, so it links to both. */}
           <p className="oauth-note">
             {t('auth.register.terms')}{' '}
             <Link to="/terms" className="doc-link">{t('footer.terms')}</Link>

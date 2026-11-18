@@ -88,14 +88,14 @@ describe('the dictionary’s pronunciations', () => {
     await user.click(await screen.findByRole('button', { name: /^av/ }));
     const picker = screen.getByRole('radiogroup', { name: 'Who says it' });
     expect(within(picker).getByRole('radio', { name: 'None' })).toHaveAttribute('aria-checked', 'true');
-    // nothing to record: no recorder here
+    // Nothing to record: no recorder here.
     expect(screen.queryByRole('button', { name: 'Record' })).toBeNull();
 
     await user.click(within(picker).getByRole('radio', { name: 'Hamo' }));
     expect(within(picker).getByRole('radio', { name: 'Hamo' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByText(/1 without a character, 1 with a character and no mouth timeline/)).toBeInTheDocument();
     await waitFor(() => expect(api.calls.filter((c) => c.method === 'PATCH').map((c) => c.body)).toEqual([{ speaker: 'hamo' }]));
-    // the character says the word, its mouth timed from the words until a timeline is made
+    // The character says the word, its mouth timed from the words until a timeline is made.
     expect(screen.getByRole('button', { name: 'Play with Hamo' })).toBeInTheDocument();
     expect(screen.getByText('No timeline yet: the mouth is timed from the words.')).toBeInTheDocument();
 

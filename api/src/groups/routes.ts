@@ -27,10 +27,8 @@ const idParam = z.object({ id: z.uuid() });
 const memberParam = z.object({ id: z.uuid(), userId: z.uuid() });
 
 /**
- * Groups / clubs (KUR-084). Every group is private: these routes list a
- * person's own groups and nobody else's, show a group to its members only
- * (and to someone banned, its name and their standing), and let people in one
- * way, an owner or admin adding a friend.
+ * Group routes. Every group is private: these list a person's own groups only, show a group to its members (and to
+ * someone banned, its name and their standing), and let people in one way, an owner or admin adding a friend.
  */
 export function registerGroupRoutes(
   app: FastifyInstance,
@@ -41,10 +39,8 @@ export function registerGroupRoutes(
 ): void {
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
   /**
-   * The classifier's word on a group's published text — its name and
-   * description, a ban's reason, a request's note — after the wordlist the
-   * service applies: what it would block is refused, what it would flag is
-   * kept for the moderators' queue.
+   * The classifier's verdict on a group's published text (name, description, ban reason, request note), after the
+   * service's word list: what it would block is refused, what it would flag is kept for the moderators.
    */
   const screen = async (authorId: string, contentRef: string | undefined, ...texts: Array<string | null | undefined>): Promise<void> => {
     const text = texts.filter((x): x is string => Boolean(x && x.trim())).join('\n');
@@ -52,11 +48,7 @@ export function registerGroupRoutes(
     const verdict = await aiMod.moderate({ surface: 'profile', text, authorId, contentType: 'group', ...(contentRef ? { contentRef } : {}) });
     if (verdict.blocked) throw new AppError('GROUP_TEXT_REJECTED', 422, 'the text has words that are not allowed here');
   };
-  /**
-   * Create a group (creator becomes owner): a name, and what it is about if
-   * they like. An app from before every group was private may still send
-   * `privacy`; the schema drops what it does not name, so it is ignored.
-   */
+  /** Creates a group with the creator as owner. `privacy` from older apps is dropped by the schema. */
   app.post(
     '/groups',
     {
@@ -73,7 +65,7 @@ export function registerGroupRoutes(
       const input = req.body as { name: string; description?: string };
       await screen(req.user!.id, undefined, input.name, input.description);
       if (trust) {
-        // per-level cap (KUR-295): a new account can't spin up many groups fast
+        // Per-trust-level cap, so a new account cannot create many groups quickly.
         const gate = await trust.checkAction(req.user!.id, 'group_create');
         if (!gate.allowed) {
           return reply
@@ -87,28 +79,22 @@ export function registerGroupRoutes(
     },
   );
 
-  // There are no groups to discover. Kept for apps that still ask on opening their old list; remove once none does.
+  // There are no groups to discover; kept for older apps that still request the list.
   app.get('/groups', { preHandler: requireAccount }, async () => ({ groups: [] }));
   /** The caller's own groups: the only list of groups there is. */
   app.get('/me/groups', { preHandler: requireAccount }, async (req) => ({ groups: await groups.myGroups(req.user!.id, publicUrl) }));
 
   /**
-   * A group with its roster, for a member. Someone banned from it gets its
-   * name, picture and standing only; anyone else 404 GROUP_NOT_FOUND, as for
-   * an id that is no group's (`GroupService.get`).
+   * A group with its roster, for a member. Someone banned gets its name, picture and their standing; anyone else gets
+   * 404 GROUP_NOT_FOUND, as for an unknown id.
    */
   app.get('/groups/:id', { schema: { params: idParam }, preHandler: requireAccount }, async (req) =>
     groups.get((req.params as { id: string }).id, req.user!.id, publicUrl),
   );
 
   /**
-   * Change the group's name or description, as its owner or an admin. Both are
-   * published text, so the same gates as making a group, and a ceiling on how
-   * often, so a name cannot be flipped back and forth to spam the members.
-   *
-   * `privacy` is no longer something a group has. An app from before may send
-   * it; it is accepted and changes nothing, even when it is all that was sent,
-   * and the answer is the group as it stands.
+   * Changes the group's name or description, as owner or admin, with the same gates as creating a group and a limit
+   * on how often, so a name cannot be flipped to spam members. `privacy` from older apps is accepted and ignored.
    */
   app.patch(
     '/groups/:id',
@@ -139,10 +125,8 @@ export function registerGroupRoutes(
   );
 
   /**
-   * The group's picture: the raw image bytes (Content-Type image/*), put up
-   * through every guard a profile photo goes through — size, real type,
-   * re-encoded to WebP, the storage ceiling and the image scan — by the owner
-   * or an admin. Rate-limited like any upload.
+   * The group's picture as raw image bytes, through every guard a profile photo goes through (size, real type, WebP
+   * re-encode, storage ceiling, image scan), by owner or admin. Rate limited like any upload.
    */
   const limits = config ? mediaLimits(config) : null;
   const usage = new MediaUsageService(app.db, app.redis ?? null);
@@ -187,19 +171,15 @@ export function registerGroupRoutes(
   const ok = { ok: true } as const;
 
   /**
-   * Out of the group's live chat as well as its member list. Reading the chat
-   * checks membership every time, but a socket already in the room stayed there,
-   * and the grant that let it in lasted a week: whoever left or was removed
-   * went on receiving every message as it was sent, and could enter the room
-   * again from a new connection. Read when called, as the gateway is set up after these
-   * routes; a missed revoke only leaves what was there before.
+   * Takes people out of the group's live room as well as its member list, so an open socket stops receiving
+   * messages. Looked up when called, since the gateway is set up after these routes.
    */
   const leaveRoom = async (groupId: string, userIds: readonly string[]): Promise<void> => {
     if (!app.hasDecorator('realtime')) return;
     for (const userId of userIds) await app.realtime.revoke(groupRoom(groupId), userId).catch(() => undefined);
   };
 
-  // Nobody joins a group by themselves. Kept so an app that still shows a Join button is told why; remove once none does.
+  // Nobody joins a group by themselves; kept so older apps showing a Join button are told why.
   app.post('/groups/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async () => {
     throw new AppError('INVITE_ONLY', 403, 'this group is invite-only');
   });
@@ -247,11 +227,9 @@ export function registerGroupRoutes(
   );
 
   /**
-   * Ban someone (the owner or an admin): out of the group and its live room,
-   * not back by themselves for a day, a week or for good, and with
-   * `deleteMessages` every message of theirs in the group gone from every
-   * open view (`group_msgs_deleted`). Each ban is a line in their
-   * notifications, so how often one admin may ban is held too.
+   * Bans someone, as owner or admin: out of the group and its live room, not back by themselves for a day, a week or
+   * for good, and with `deleteMessages` all their messages removed from every open view (`group_msgs_deleted`). Each
+   * ban notifies them, so how often one admin may ban is limited too.
    */
   app.post(
     '/groups/:id/bans',
@@ -292,9 +270,8 @@ export function registerGroupRoutes(
   }));
 
   /**
-   * Ask to come back, as someone banned. At most five a day per person,
-   * across every group: with one waiting per group and a longer wait after
-   * each one turned down, nobody can make asking a way to pester admins.
+   * Asks to come back, as someone banned. At most five a day per person across all groups, with one waiting per group
+   * and a longer wait after each refusal, so asking cannot pester admins.
    */
   app.post(
     '/groups/:id/requests',
@@ -337,7 +314,7 @@ export function registerGroupRoutes(
   );
   app.delete('/groups/:id', { schema: { params: idParam }, preHandler: requireAccount }, async (req) => {
     const { id } = req.params as { id: string };
-    // who was in it, read before the rows go with the group
+    // Read the members before the rows go with the group.
     const members = await app.db.query<{ user_id: string }>(`SELECT user_id FROM group_members WHERE group_id = $1`, [id]);
     await groups.deleteGroup(req.user!.id, id);
     await leaveRoom(id, members.rows.map((m) => m.user_id));

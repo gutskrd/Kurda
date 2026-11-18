@@ -36,12 +36,8 @@ import { Sound } from '../alphabet/Sound';
 import { Meaning } from '../alphabet/Meaning';
 
 /**
- * The alphabet, for a beginner: every letter, what it sounds like next to the
- * reader's own language, and a word to remember it by. See
- * `alphabet/letters.ts` in @kurda/shared for how it teaches and why.
- *
- * Open to everyone, account or not: it is the first thing a beginner needs and
- * it costs nothing to serve — no request leaves the page.
+ * The alphabet for a beginner: every letter, its sound compared with the reader's language, and a word to remember it
+ * by (see @kurda/shared `alphabet/letters.ts`). Open to everyone; nothing is fetched.
  */
 
 type Script = 'kmr' | 'ckb';
@@ -70,13 +66,13 @@ const GROUP_BODY: Record<LetterGroupId, MessageKey> = {
   throat: 'alphabet.group.throatBody',
 };
 
-/** A group as the page shows it; the groups themselves are @kurda/shared's, the same as the phone's. */
+/** A group as the page shows it; the groups are @kurda/shared's, as on the phone. */
 function titled<L>(g: LetterGroup<L>, script: Script): Group<L> {
   const body = g.id === 'vowels' && script === 'ckb' ? 'alphabet.group.vowelsBodyCkb' : GROUP_BODY[g.id];
   return { id: g.id, title: GROUP_TITLE[g.id], body, letters: g.letters };
 }
 
-/** Kurmancî, sorted against the reader's language — the false friends first, because that is where the mistakes are. */
+/** Kurmancî sorted against the reader's language, false friends first, since that is where the mistakes are. */
 function latinGroups(locale: AppLocale): Group<LatinLetter>[] {
   return latinLetterGroups(locale).map((g) => titled(g, 'kmr'));
 }
@@ -85,7 +81,7 @@ function soraniGroups(): Group<SoraniLetter>[] {
   return soraniLetterGroups().map((g) => titled(g, 'ckb'));
 }
 
-/** A comparison, with the sound itself picked out. */
+/** A comparison, with the sound picked out. */
 function Like({ like }: { like: SoundLikeness }): React.JSX.Element {
   return (
     <span className="ab-like" dir="auto">
@@ -96,7 +92,7 @@ function Like({ like }: { like: SoundLikeness }): React.JSX.Element {
   );
 }
 
-/** A Kurdish word with its letter marked — the shape and the sound met together. */
+/** A Kurdish word with its letter marked. */
 function KurdishWord({ word, letter }: { word: string; letter: string }): React.JSX.Element {
   const at = indexInWord(word, letter);
   if (at < 0) return <span lang="ku">{word}</span>;
@@ -121,7 +117,7 @@ export function Alphabet(): React.JSX.Element {
   const sorani = useMemo(() => soraniGroups(), []);
   const order = script === 'kmr' ? latin.flatMap((g) => g.letters.map((l) => l.id)) : sorani.flatMap((g) => g.letters.map((l) => l.id));
 
-  // on a wide screen there is always a letter open beside the grid; on a phone, one opens when tapped
+  // On a wide screen a letter is always open beside the grid; on a phone one opens when tapped.
   const [picked, setPicked] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
   useEffect(() => {
@@ -131,7 +127,7 @@ export function Alphabet(): React.JSX.Element {
   const current = picked ?? order[0]!;
 
   const [seen, markSeen] = useSeen(script);
-  // hearing it the moment you tap is the point of tapping: sound and shape, together
+  // Tapping plays the sound at once: sound and shape together.
   const open = (id: string): void => {
     setPicked(id);
     markSeen(id);
@@ -151,7 +147,7 @@ export function Alphabet(): React.JSX.Element {
   const progress = (
     <div className={`ab-progress${explored === order.length ? ' is-done' : ''}`}>
       <div className="ab-progress-track" aria-hidden="true">
-        {/* a full-width fill moved along its track by `--p` (styles/motion.css), as the lesson's bar is */}
+        {/* A full-width fill moved along its track by `--p` (styles/motion.css), like the lesson's bar. */}
         <span style={{ '--p': order.length > 0 ? explored / order.length : 0 } as React.CSSProperties} />
       </div>
       <span className="ab-progress-text" aria-live="polite">
@@ -286,7 +282,7 @@ export function Alphabet(): React.JSX.Element {
               {t('alphabet.next.title')}
             </h2>
             <div className="ab-next-links">
-              {/* the words that come after the letters: colours, numbers, days and months (pages/Words.tsx) */}
+              {/* The words after the letters: colours, numbers, days and months (pages/Words.tsx). */}
               <Link className="btn btn-secondary" to={`/app/learn/words?script=${script}`}>
                 {t('words.fromAlphabet')}
               </Link>
@@ -312,7 +308,7 @@ export function Alphabet(): React.JSX.Element {
   );
 }
 
-/** One rule worth more than five letters: the hat. */
+/** One rule worth five letters: the circumflex. */
 function HatRule(): React.JSX.Element {
   const t = useT();
   return (
@@ -334,7 +330,7 @@ function HatRule(): React.JSX.Element {
   );
 }
 
-/** A word taken apart and put back together — how Arabic script joins, shown rather than told. */
+/** A word taken apart and joined again, showing how Arabic script joins. */
 function JoinDemo(): React.JSX.Element {
   const t = useT();
   const parts = ['ک', 'و', 'ر', 'د', 'ی'];
@@ -374,10 +370,8 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
 }
 
 /**
- * The letter large, and its sound beside it: the head of either card. When
- * the letter's recordings have a character, it stands whole on a stage with
- * the letter beside it, and says the letter and the word below it both;
- * without one, the letter and its button stand on the card as they are.
+ * The large letter and its sound, heading either card. When the recordings have a character, they stand on a stage
+ * beside the letter and say both the letter and the word; otherwise the letter and its button stand alone.
  */
 function CardHead({ clips, glyph, sound, ipa }: { clips: SpokenClip[]; glyph: React.ReactNode; sound: string | null; ipa: string }): React.JSX.Element {
   const t = useT();

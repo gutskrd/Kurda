@@ -10,7 +10,7 @@ import { RaceService, RaceTextService } from './race-service.js';
  * Typing race: a solo time trial over an admin-curated text. Speed is server-authoritative: start records when the text
  * was handed out and finish measures against that, so clients cannot report their own time.
  *
- * Shapes: @kurda/shared `RaceStartRequest`, `RaceGameView`, `RaceResultView`, `RaceBestView`.
+ * Shapes: @kurda/shared `RaceGameView`, `RaceResultView`, `RaceBestView`.
  */
 
 const raceLength = z.coerce.number().int().min(1).max(3);

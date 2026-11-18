@@ -5,8 +5,7 @@ import { WalletService } from './service.js';
 export function registerWalletRoutes(app: FastifyInstance): void {
   const wallet = new WalletService(app.db);
 
-  /** Balances + recent history. Credits/debits are internal-only —
-   *  they happen inside features (daily rewards #67, shop #71, admin #101). */
+  /** Balances and recent history; credits and debits happen only inside features. */
   app.get('/me/wallet', { preHandler: requireAuth }, async (req) => {
     const [balances, history] = await Promise.all([
       wallet.balances(req.user!.id),

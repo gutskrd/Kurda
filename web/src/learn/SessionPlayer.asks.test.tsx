@@ -6,11 +6,8 @@ import { jsonResponse, renderApp } from '../test/utils';
 import { LESSON_PATHS, SessionPlayer } from './SessionPlayer';
 
 /*
- * Items that say what they ask (`ask`): the headline names it, the bubble
- * holds the line alone, a new word is marked and its badge takes the
- * kicker's place, a missing word's gap takes the word as it is chosen or
- * typed, and a picture item's options are pictures, named by what they
- * show. An item without an ask is shown as it always was.
+ * Items that say what they ask: the headline, the bubble's line, new-word marks and badge, the missing word's gap, and
+ * picture options; items without an ask are shown as always.
  */
 
 let answers: Array<{ exerciseId: string; answer: unknown }> = [];
@@ -23,7 +20,7 @@ beforeEach(() => {
   answers = [];
   played = [];
   grade = () => right;
-  // the keyboard chosen in one test is not the next one’s choice
+  // The keyboard chosen in one test is not the next one’s choice.
   localStorage.clear();
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
@@ -100,10 +97,10 @@ describe('what does this mean', () => {
   it('asks it in the headline, with the line alone in the bubble, its play and slow play, and a badge for the new word', async () => {
     lesson([meaning, { ...meaning, id: 'm2', newWords: undefined }]);
     expect(await headline()).toHaveTextContent('What does this mean?');
-    // the kicker gives way to the badge, which is read out
+    // The kicker gives way to the badge, which is read out.
     expect(screen.getByText('New word')).toBeInTheDocument();
     expect(kicker()).toBeNull();
-    // the bubble holds the line and the two buttons that play it, and nothing else
+    // The bubble holds the line and the two buttons that play it, and nothing else.
     expect(line()).toHaveTextContent(/^Silav!$/);
     expect(line()).toHaveAttribute('lang', 'ku');
     const inBubble = within(bubble());
@@ -112,7 +109,7 @@ describe('what does this mean', () => {
     expect(played.at(-1)).toEqual({ src: 'https://cdn.test/silav.mp3', rate: 0.75 });
     await userEvent.click(inBubble.getByRole('button', { name: 'Listen' }));
     expect(played.at(-1)).toEqual({ src: 'https://cdn.test/silav.mp3', rate: 1 });
-    // the new word is marked, and its own meaning comes before the dictionary’s
+    // The new word is marked, and its own meaning comes before the dictionary’s.
     const word = inBubble.getByRole('button', { name: 'What “Silav” means' });
     expect(word).toHaveClass('is-new');
     await userEvent.click(word);
@@ -120,13 +117,13 @@ describe('what does this mean', () => {
     expect(meanings.map((li) => li.textContent)).toEqual(['hello', 'greeting']);
     await userEvent.keyboard('{Escape}');
 
-    // the options are cards of words, as before
+    // The options are cards of words, as before.
     await userEvent.click(screen.getByRole('button', { name: /Hello!/ }));
     await check();
     expect(answers[0]).toEqual({ exerciseId: 'm1', answer: { choice: 1 } });
     await next();
 
-    // the same item with no new word: the lesson’s name over it again
+    // The same item with no new word: the lesson’s name over it again.
     expect(await headline()).toHaveTextContent('What does this mean?');
     await waitFor(() => expect(kicker()).toHaveTextContent('First steps'));
     expect(screen.queryByText('New word')).toBeNull();
@@ -168,7 +165,7 @@ describe('a reply, and the Kurdish for an English line', () => {
         type: 'multiple_choice',
         ask: 'choose-kurdish',
         prompt: 'I am well.',
-        // were one sent, it would say the answer: an English line plays nothing
+        // Were one sent, it would say the answer: an English line plays nothing.
         modelAudioUrl: 'https://cdn.test/answer.mp3',
         options: ['Ez baş im.', 'Tu baş im.', 'Ez baş me.'],
       },
@@ -187,11 +184,11 @@ describe('a missing word', () => {
     grade = () => ({ verdict: 'wrong', accepted: false, correction: 'baş', duplicate: false });
     lesson([{ id: 'g1', type: 'multiple_choice', ask: 'missing', prompt: 'Ez ___ im.', options: ['silav', 'baş', 'Hamo'] }]);
     expect(await headline()).toHaveTextContent('Fill in the missing word');
-    // empty, and said as a blank
+    // Empty, and said as a blank.
     expect(gap()).toHaveTextContent(/^blank$/);
     expect(gap()).not.toHaveClass('is-filled');
     expect(line()).toHaveTextContent('Ez blank im.');
-    // the options are word chips; a tap or a number puts the word in the gap, and another replaces it
+    // The options are word chips; a tap or a number puts the word in the gap, and another replaces it.
     expect(screen.getByRole('button', { name: 'silav' })).toHaveClass('lesson-chip');
     await userEvent.click(screen.getByRole('button', { name: 'silav' }));
     expect(gap()).toHaveTextContent(/^silav$/);
@@ -243,13 +240,13 @@ describe('which picture', () => {
       expect(card).toHaveClass('lesson-picture');
       expect(card.querySelector('svg')).not.toBeNull();
     }
-    // a number picks a picture as it picks an option
+    // A number picks a picture as it picks an option.
     await userEvent.keyboard('3');
     expect(within(group).getByRole('button', { name: 'water' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(within(group).getByRole('button', { name: 'tea' }));
     await check();
     expect(answers[0]).toEqual({ exerciseId: 'p1', answer: { choice: 0 } });
-    // the verdict names the right picture by what it shows, not by its id
+    // The verdict names the right picture by what it shows, not by its id.
     await screen.findByRole('region', { name: 'Feedback' });
     expect(live()).toContain('The answer: apple');
     expect(within(group).getByRole('button', { name: /apple/ })).toHaveTextContent('right answer');
@@ -271,7 +268,7 @@ describe('translating, hearing and repeating', () => {
     expect(await headline()).toHaveTextContent('Translate this sentence');
     expect(line()).toHaveTextContent(/^Ez baş im\.$/);
     expect(within(bubble()).getByRole('button', { name: 'Slower (0.75×)' })).toBeInTheDocument();
-    // the headline stays when the keyboard is chosen
+    // The headline stays when the keyboard is chosen.
     await userEvent.click(screen.getByRole('button', { name: 'Use keyboard' }));
     expect(await headline()).toHaveTextContent('Translate this sentence');
     await userEvent.type(await screen.findByRole('textbox'), 'I am well{Enter}');

@@ -62,8 +62,7 @@ function fakePool(rows: Row[]) {
     query: async (sql: string) => {
       if (/^\s*SELECT/i.test(sql)) {
         state.selectCount += 1;
-        // active() filters enabled + ends_at > now; the service re-filters by
-        // window, so returning the enabled rows is enough here.
+        // The service re-filters by window, so returning the enabled rows is enough here.
         return { rows: state.rows.filter((r) => r.enabled), rowCount: state.rows.length };
       }
       // upsert/setEnabled paths just need to succeed
@@ -106,7 +105,7 @@ describe('EventService.active caching', () => {
       startsAt: '2026-03-21T00:00:00.000Z',
       endsAt: '2026-03-22T00:00:00.000Z',
     });
-    // cache was invalidated → next active() re-queries
+    // The cache was invalidated, so the next call queries again.
     await svc.active(now);
     expect(state.selectCount).toBe(2);
   });

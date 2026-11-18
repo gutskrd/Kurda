@@ -10,11 +10,8 @@ import type { MediaUsageService } from './mediaUsage.js';
 export const AUDIO_KINDS = ['voice-note', 'speaking'] as const;
 
 /**
- * How many audio files one account may upload in a day. A voice comment or a
- * narration is a handful a day for the busiest author; without a count of its
- * own the hourly rate limit alone let one account put gigabytes on the bucket
- * between two sweeps, and the shared storage ceiling then paused everybody's
- * pictures.
+ * Audio files one account may upload a day. Without a count of its own, the hourly rate limit let one account put
+ * gigabytes on the bucket between sweeps, and the shared storage ceiling then paused everyone's pictures.
  */
 export const AUDIO_DAILY_UPLOADS = 30;
 
@@ -47,15 +44,9 @@ const reject = (status: number, code: string, message: string, reason: string): 
 export const AUDIO_CONTENT_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/webm', 'audio/wav'] as const;
 
 /**
- * Install the raw-audio body parser, once.
- *
- * Two routes take audio bytes — a voice note and a speaking-practice recording
- * — and Fastify throws if the same content type is claimed twice, so whichever
- * registers first installs it for both. The `bodyLimit` is what makes an
- * oversized upload a 413 before the server has buffered it, rather than after.
- *
- * The declared content type only decides whether the body is read at all; what
- * the file actually is comes from `sniffAudioType` further down.
+ * Installs the raw-audio body parser once: two routes take audio, and fastify throws if a content type is claimed
+ * twice. `bodyLimit` makes an oversized upload a 413 before it is buffered. The declared type only decides whether
+ * the body is read; `sniffAudioType` decides what the file is.
  */
 export function registerAudioParser(app: FastifyInstance, maxUploadBytes: number): void {
   if (app.hasContentTypeParser(AUDIO_CONTENT_TYPES[0])) return;
@@ -67,23 +58,14 @@ export function registerAudioParser(app: FastifyInstance, maxUploadBytes: number
 }
 
 /**
- * Store a user-supplied voice note cost-safely and return its confirmed media key
- * (KUR-282). Unlike images there's no server transcode (no ffmpeg), so cost is
- * capped by a tight upload-size limit + the shared storage/op ceilings: size →
- * Class-A op ceiling → real-MIME sniff (reject non-audio) → storage ceiling
- * (fail-closed) → PUT → confirm. Content-addressed, so re-uploads are idempotent.
- * Audio isn't image-scanned (#294 is image-only); a report flow (#292-style) is the
- * moderation path for voice content.
+ * Stores a voice note cost-safely and returns its confirmed key. Audio is not transcoded, so cost is capped by a tight
+ * size limit and the shared ceilings: size, op ceiling, real-type sniff, storage ceiling (fail-closed), PUT, confirm.
+ * Keys are content-addressed, so re-uploads are idempotent. Audio is not image-scanned; reports are its moderation path.
  *
- * The file is kept under its uploader's name, so it is counted against them
- * (`AUDIO_DAILY_UPLOADS`), goes with their account when that is deleted, and
- * can be traced when it is reported. It used to belong to nobody. One that no
- * post or comment ever points at is removed a day later (media/service.ts
- * `cleanupOrphans`), where it used to stay on the public bucket for good.
- *
- * The course's own audio (a lesson line, a letter's name), which staff
- * upload, is given no uploader (`null`): it belongs to the course, and must
- * not go when the person who recorded it closes their account.
+ * The file is kept under its uploader, so it counts against them (`AUDIO_DAILY_UPLOADS`), goes with their account and
+ * can be traced when reported; one no post or comment uses is removed a day later (media/service.ts
+ * `cleanupOrphans`). The course's own audio, uploaded by staff, has no uploader (`null`), so it stays when its
+ * recorder closes their account.
  */
 export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: Buffer, uploaderId: string | null): Promise<StoreAudioResult> {
   const { pool, storage, usage, limits, log } = deps;
@@ -102,7 +84,7 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
     return reject(415, 'INVALID_AUDIO', 'unsupported or non-audio file', 'invalid-type');
   }
 
-  // a member's own recordings are counted; the course's audio, which staff upload by the hundred, is not
+  // A member's own recordings are counted; staff upload course audio by the hundred and are not.
   if (uploaderId !== null && (AUDIO_KINDS as readonly string[]).includes(kind)) {
     const today = await pool.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM media_uploads

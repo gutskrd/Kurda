@@ -38,7 +38,7 @@ import {
   type Scope,
   type VoiceFilter,
 } from '../lessonAudio';
-import { Banner, Button, EmptyState, ErrorState, Icon, Loading, Tabs, useDialogs } from '../ui';
+import { Banner, Button, EmptyState, ErrorState, Icon, Loading, Tabs, reducedMotion, useDialogs } from '../ui';
 import { bustUrl, speakerName, useSpeakerChange } from '../ui/SpeakerPicker';
 import { rememberSpeaker, rememberedSpeaker, type Speaker } from '../voice';
 import { VOICE_ORDER, voiceName } from '../voicePlan';
@@ -59,38 +59,12 @@ function studioHref(course: string | null): string {
 }
 
 /**
- * Recording the Kurdish the lessons and the stories use: two sides of the
- * audio studio ("Record lesson sentences", "Record story sentences") over the
- * one list the API reads off every lesson and story — published or still a
- * draft — so an editor can record before anything goes live.
- *
- * For a lesson: each item's `say`, the first accepted answer of a writing or
- * listening item and of a translation without `say` (one with it goes from
- * Kurdish to English, and its answers are English), a speaking item's model
- * sentence, and every match-pairs card. For a story: every sentence, as the story reader cuts it.
- * A sentence recorded once is sent with everything that uses it — with the
- * exercise, or once it is answered where hearing it first would give the
- * answer away (api/src/lessonaudio/delivery.ts).
- *
- * "Record next missing" walks the missing items in course order: save one and
- * the next comes up. A "Record" link from the lesson or story list opens this
- * on that one lesson or story (`focus`). Anything else can be recorded too,
- * through "Add a phrase".
- *
- * Each row's studio (SentenceStudio, which the story editor shares) also says
- * who is shown saying it: a new take goes up with that character and a mouth
- * timeline made from it (voice.ts), and a change to a saved one is sent at once.
- *
- * The lessons say who records what (`voice` on an exercise, a conversation
- * line's character), and the studio follows that plan: a row still to record
- * says who it is for, with their bust, and its picker opens on them; the Voice
- * filter shows one character's lines, counting what is left for each; the
- * Recording plan card gives each character's progress, course by course. A
- * character's script (`voice`, #/audio/lessons?voice=hamo&course=…) lists
- * their lines alone, recorded or not, numbered in course order under each
- * lesson's heading, so the person who voices them can sit down and say them
- * in a row with the same recorder and keys. The course filter narrows any of
- * this to one course — the road, say, apart from the older lessons.
+ * The studio's lesson and story sentence sides, over the one list the API reads off every lesson and story, drafts
+ * included, so recording can happen before anything goes live. A recording is sent with everything that uses it
+ * (api/src/lessonaudio/delivery.ts). "Record next missing" walks the gaps in course order, `focus` opens one lesson
+ * or story, and "Add a phrase" records anything else. The studio follows the lessons' plan of who records what: a row
+ * says who it is for, the Voice filter and Recording plan count each character's lines, and a character's script
+ * (`?voice=hamo&course=…`) lists their lines in course order to record in a row.
  */
 export function LessonAudio({
   scope = 'lessons',
@@ -100,27 +74,27 @@ export function LessonAudio({
   voice: scriptVoice = null,
 }: {
   scope?: Scope;
-  /** from the address (?show=missing): the dashboard's link opens on what is missing */
+  /** From the address (?show=missing): the dashboard's link opens on what is missing. */
   initialFilter?: Filter;
-  /** one lesson (<skillId>:<position>) or story (<storyId>:0) to show alone */
+  /** One lesson (<skillId>:<position>) or story (<storyId>:0) to show alone. */
   focus?: string | null;
-  /** from the address (?course=kurmanji-road): open on one course's sentences */
+  /** From the address (?course=kurmanji-road): open on one course's sentences. */
   course?: string | null;
-  /** from the address (?voice=hamo): that character's script */
+  /** From the address (?voice=hamo): that character's script. */
   voice?: SpeakerId | null;
 }): React.JSX.Element {
   const dialogs = useDialogs();
-  // a course and a script are the lessons' whole list narrowed, not one lesson's or a story's
+  // A course and a script are the lessons' whole list narrowed, not one lesson's or a story's.
   const wide = scope === 'lessons' && !focus;
   const script = wide ? scriptVoice : null;
   const [items, setItems] = useState<Item[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  // a script lists every line, recorded or not, so the numbers stay put as they are recorded
+  // A script lists every line, recorded or not, so the numbers stay put as they are recorded.
   const [filter, setFilter] = useState<Filter>(initialFilter ?? (script ? 'all' : 'missing'));
   const [course, setCourse] = useState<string | null>(wide ? initialCourse : null);
   const [voice, setVoice] = useState<VoiceFilter>('all');
-  // who records a row the plan gives to someone, when the editor chooses another for it
+  // Who records a row the plan gives to someone, when the editor chooses another for it.
   const [picks, setPicks] = useState<ReadonlyMap<string, Speaker>>(() => new Map());
   const [selected, setSelected] = useState<string | null>(null);
   const [walking, setWalking] = useState(false);
@@ -129,12 +103,12 @@ export function LessonAudio({
   const [phraseProblem, setPhraseProblem] = useState<string | null>(null);
   const rows = useRef(new Map<string, HTMLElement>());
   const player = usePlayer();
-  // who says the next new recording: the last choice made for one
+  // Who says the next new recording: the last choice made for one.
   const [nextSpeaker, setNextSpeaker] = useState<Speaker>(rememberedSpeaker);
   const changeSpeaker = useSpeakerChange('lesson', (key, speaker) => setItems((all) => withVoice(all, key, speaker)));
   const timelines = useRef<'unasked' | 'asked'>('unasked');
 
-  // this side's view of the list: only its own uses of each text, in the course chosen, then the voice chosen
+  // This side's view of the list: only its own uses of each text, in the course chosen, then the voice chosen.
   const scoped = useMemo(() => items.flatMap((i) => inScope(i, scope, focus) ?? []), [items, scope, focus]);
   const inThisCourse = useMemo(() => scoped.flatMap((i) => inCourse(i, course) ?? []), [scoped, course]);
   const view = useCallback(
@@ -149,7 +123,7 @@ export function LessonAudio({
   const listed = useMemo(() => view(items), [view, items]);
   const full = useMemo(() => new Map(items.map((i) => [i.key, i])), [items]);
 
-  // a save resolves after the upload; by then the list may have moved on
+  // A save resolves after the upload; by then the list may have moved on.
   const latest = useRef({ items, view, walking });
   latest.current = { items, view, walking };
 
@@ -167,7 +141,7 @@ export function LessonAudio({
     }
   }, []);
 
-  // open on what is missing, or on everything when nothing is
+  // Open on what is missing, or on everything when nothing is.
   const started = useRef(false);
   useEffect(() => {
     void load().then((loadedItems) => {
@@ -178,18 +152,18 @@ export function LessonAudio({
   }, [load, initialFilter, scope, focus, script]);
 
   const ordered = useMemo(() => displayOrder(listed), [listed]);
-  // the selected item stays on screen even when the filter would hide it — it
-  // was just recorded, say, and the editor should see that it worked
+  // The selected item stays on screen even when the filter would hide it — it
+  // was just recorded, say, and the editor should see that it worked.
   const shown = useMemo(() => ordered.filter((i) => matches(i, filter) || i.key === selected), [ordered, filter, selected]);
   const grouped = useMemo(() => group(shown), [shown]);
-  // a script's numbers are each line's place among all of the character's lines
+  // A script's numbers are each line's place among all of the character's lines.
   const numbers = useMemo(() => new Map(ordered.map((i, at) => [i.key, at + 1])), [ordered]);
   const done = progress(listed);
   const n = counts(listed);
   const focusTitle = focus ? scoped.find((i) => i.usedIn[0])?.usedIn[0]?.lessonTitle : null;
   const courseOptions = useMemo(() => {
     const listedCourses = coursesOf(scoped);
-    // a course asked for by the address that has nothing here yet is still the one chosen
+    // A course asked for by the address that has nothing here yet is still the one chosen.
     return course && !listedCourses.some((c) => c.slug === course) ? [...listedCourses, { slug: course, title: course }] : listedCourses;
   }, [scoped, course]);
   const courseTitle = course ? (courseOptions.find((c) => c.slug === course)?.title ?? course) : null;
@@ -202,9 +176,8 @@ export function LessonAudio({
     setNote(null);
   };
 
-  // The stored timelines, for the preview of a recording saved before: the
-  // list is read without them, since every sentence's would make it much
-  // heavier, and read once more with them only when an opened row needs one.
+  // Stored timelines for an older recording's preview: the list is read without them, as they make it much heavier,
+  // and again with them only when an opened row needs one.
   useEffect(() => {
     const open = items.find((i) => i.key === selected);
     if (!open?.recorded || !open.speaker || !open.hasLipsync || open.lipsync !== undefined || timelines.current !== 'unasked') return;
@@ -212,20 +185,19 @@ export function LessonAudio({
     api<Listing>('/admin/lesson-audio?withLipsync=1').then(
       (res) => setItems((all) => withTimelines(all, res.items)),
       () => {
-        // the preview times the mouth from the words meanwhile; the next row opened asks again
+        // The preview times the mouth from the words meanwhile; the next row opened asks again.
         timelines.current = 'unasked';
       },
     );
   }, [selected, items]);
 
-  // bring the selected row into view, for the keyboard and for the walk
+  // Bring the selected row into view, for the keyboard and for the walk.
   useEffect(() => {
-    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (selected) rows.current.get(selected)?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+    if (selected) rows.current.get(selected)?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
   }, [selected]);
 
   const startWalk = (): void => {
-    // start on the row the editor has open, if it is one still to record
+    // Start on the row the editor has open, if it is one still to record.
     const open = !walking ? ordered.find((i) => i.key === selected && !i.recorded) : undefined;
     const first = open ?? nextMissing(ordered, selected);
     if (!first) {
@@ -276,7 +248,7 @@ export function LessonAudio({
   };
 
   const left = n.missing;
-  // what no lesson uses is in no course and no one's script
+  // What no lesson uses is in no course and no one's script.
   const filters: Filter[] = wide && !course && voice === 'all' ? ['missing', 'recorded', 'unused', 'all'] : ['missing', 'recorded', 'all'];
   const emptyTitle = (): string => {
     if (script) return `Nothing ${courseTitle ? `in ${courseTitle} ` : ''}is planned for ${voiceName(script)} yet.`;
@@ -306,7 +278,7 @@ export function LessonAudio({
         if (item.recorded) {
           changeSpeaker({ key: item.key, from: item.speaker ?? null, to: speaker, label: item.text });
         } else if (item.line || item.plannedSpeaker) {
-          // a choice against the plan is for this row alone; the plan stays the default for the rest
+          // A choice against the plan is for this row alone; the plan stays the default for the rest.
           setPicks((all) => new Map(all).set(item.key, speaker));
         } else {
           setNextSpeaker(speaker);
@@ -414,7 +386,7 @@ export function LessonAudio({
           <h2 className="la-course-title">{course.title}</h2>
           {course.units.map((unit) => (
             <div key={unit.id}>
-              {/* a story is its own unit and lesson: its card says its title once */}
+              {/* A story is its own unit and lesson: its card says its title once. */}
               {!unit.lessons.every((l) => l.story) && <div className="section-title">{unit.title}</div>}
               {unit.lessons.map((lesson) => (
                 <div key={lesson.id} className="card la-lesson">
@@ -567,10 +539,7 @@ function CoursePick({
   );
 }
 
-/**
- * The recording plan, course by course: for each character, how much of what
- * the lessons give them is recorded, and the way to their script.
- */
+/** The recording plan per course: how much of each character's lines is recorded, with a link to their script. */
 function RecordingPlan({ plan }: { plan: readonly CoursePlan[] }): React.JSX.Element {
   return (
     <section className="card la-plan" aria-labelledby="la-plan-title">
@@ -707,21 +676,21 @@ function Row({
   onNext,
   confirm,
 }: {
-  /** the item as this side of the studio sees it */
+  /** The item as this side of the studio sees it. */
   item: Item;
-  /** the item with every use, lessons and stories alike: what a removal affects */
+  /** The item with every use, lessons and stories alike: what a removal affects. */
   full: Item;
   selected: boolean;
   rowRef: (el: HTMLElement | null) => void;
   onSelect: () => void;
   player: Player;
-  /** its place in a script, counted from 1 */
+  /** Its place in a script, counted from 1. */
   number?: number;
-  /** say who a row still to record is for: a script, all one character's, has no need to */
+  /** Say who a row still to record is for: a script, all one character's, has no need to. */
   showPlan: boolean;
-  /** who says it when it is recorded now, if it has no recording yet and no plan says who */
+  /** Who says it when it is recorded now, if it has no recording yet and no plan says who. */
   nextSpeaker: Speaker;
-  /** who the editor chose for it against its plan, if they did */
+  /** Who the editor chose for it against its plan, if they did. */
   picked?: Speaker;
   onSpeaker: (speaker: Speaker) => void;
   onSaved: (saved: Saved) => void;
@@ -731,7 +700,7 @@ function Row({
   confirm: ReturnType<typeof useDialogs>['confirm'];
 }): React.JSX.Element {
   const script = scriptOf(item.text);
-  // who it is for: a conversation's part is its own character's, another text the plan's — whatever was picked
+  // Who it is for: a conversation's part is its own character's, another text the plan's — whatever was picked
   // last for other sentences. A recording keeps whoever was heard in it.
   const planned: Speaker | undefined = item.line ? item.line.character : (item.plannedSpeaker ?? undefined);
   const speaker = item.recorded ? (item.speaker ?? null) : picked !== undefined ? picked : planned !== undefined ? planned : nextSpeaker;

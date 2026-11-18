@@ -12,7 +12,7 @@ import {
 } from '@kurda/shared';
 import { api } from '../api';
 import { ClipRecorder, ShortcutHint } from '../recorder';
-import { EmptyState, ErrorState, Tabs } from '../ui';
+import { EmptyState, ErrorState, Tabs, reducedMotion } from '../ui';
 import { SpeakerPicker, useSpeakerChange } from '../ui/SpeakerPicker';
 import { SpeakingPreview } from '../ui/SpeakingPreview';
 import { rememberSpeaker, rememberedSpeaker, scriptOfClip, uploadWithVoice, type Speaker } from '../voice';
@@ -22,35 +22,20 @@ interface Recording {
   url: string;
   durationMs: number | null;
   updatedAt: string;
-  /** who is shown saying it, or null for no character */
+  /** Who is shown saying it, or null for no character. */
   speaker?: SpeakerId | null;
   hasLipsync?: boolean;
-  /** the stored timeline, null for none, as the list and a save made here send it */
+  /** The stored timeline, null for none, as the list and a save made here send it. */
   lipsync?: LipsyncData | null;
 }
 
 export type Filter = 'missing' | 'recorded' | 'all';
 
 /**
- * Recording the alphabet page's sounds: the Letters side of the audio studio.
- *
- * Every letter and example word ships with a synthesised clip, which is a guide
- * and no more. This is where a person replaces them: pick a sound, press Record,
- * say exactly what is written, and stop. The page trims the silence, levels the
- * volume and plays it back; Save puts it live, and the next sound still missing
- * comes up. A file from a phone works the same way, through Upload.
- *
- * Removing a recording brings the synthesised clip back, so nothing here can
- * leave a letter silent.
- *
- * The word sets' words (colours, numbers, days, months) are recorded here
- * too, in groups of their own after the letters. A few of them have no
- * synthesised clip, where no voice could say them accurately: until they are
- * recorded, they have no sound at all.
- *
- * The studio also says who is shown saying the sound, as the sentences' does:
- * a new take goes up with that character and a timeline read in the sound's
- * own script (voice.ts).
+ * The audio studio's Letters side: native recordings replacing the synthesised clip each letter and example word
+ * ships with. Save puts a take live and moves to the next missing sound; removing one brings the synthesised clip
+ * back. The word sets' words follow the letters, and a few have no synthesised clip, so they are silent until
+ * recorded. A take goes up with its character and a timeline in the sound's script (voice.ts).
  */
 export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}): React.JSX.Element {
   const [recordings, setRecordings] = useState<Record<string, Recording>>({});
@@ -59,18 +44,17 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'missing');
   const [selected, setSelectedKey] = useState<string>(ALPHABET_CLIPS[0]!.key);
   const studio = useRef<HTMLElement>(null);
-  // who says the next new recording: the last choice made for one
+  // Who says the next new recording: the last choice made for one.
   const [nextSpeaker, setNextSpeaker] = useState<Speaker>(rememberedSpeaker);
   const changeSpeaker = useSpeakerChange('alphabet', (key, speaker) =>
     setRecordings((all) => (all[key] ? { ...all, [key]: { ...all[key], speaker } } : all)),
   );
 
-  // on a phone the studio sits above the list: a tap on a letter far down brings it back into view
+  // On a phone the studio sits above the list: a tap on a letter far down brings it back into view.
   const setSelected = (key: string, reveal = false): void => {
     setSelectedKey(key);
     if (!reveal || typeof matchMedia !== 'function' || !matchMedia('(max-width: 899px)').matches) return;
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    requestAnimationFrame(() => studio.current?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' }));
+    requestAnimationFrame(() => studio.current?.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' }));
   };
 
   const load = useCallback(async () => {
@@ -89,7 +73,7 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
     void load();
   }, [load]);
 
-  // start on the first sound still missing, once we know which those are
+  // Start on the first sound still missing, once we know which those are.
   const started = useRef(false);
   useEffect(() => {
     if (!loaded || started.current) return;
@@ -238,7 +222,7 @@ function Studio({
   ref: React.Ref<HTMLElement>;
   clip: AlphabetClip;
   recording: Recording | null;
-  /** who says it when it is recorded now, if it has no recording yet */
+  /** Who says it when it is recorded now, if it has no recording yet. */
   nextSpeaker: Speaker;
   onSpeaker: (speaker: Speaker) => void;
   onPrev: () => void;
@@ -249,7 +233,7 @@ function Studio({
   const group = ALPHABET_CLIP_GROUPS.find((g) => g.group === clip.group)!.title;
   const speaker = recording ? (recording.speaker ?? null) : nextSpeaker;
   const word = isWordSetClipKey(clip.key);
-  // a few words no voice could say accurately have no synthesised clip: until recorded they are silent
+  // A few words no voice could say accurately have no synthesised clip: until recorded they are silent.
   const synthesised = Object.hasOwn(SYNTHESISED_ALPHABET_CLIPS, clip.key) || Object.hasOwn(SYNTHESISED_WORD_CLIPS, clip.key);
 
   return (

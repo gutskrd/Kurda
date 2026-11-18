@@ -1,31 +1,22 @@
 /**
- * Working through a long list a few items at a time, as the Characters page
- * does over every recording: with pause, resume and cancel, and an outcome
- * for each item, so one that fails is set aside and the rest go on.
- *
- * Pausing lets the items already started finish and starts no more until
- * resumed. Cancelling starts no more either, and aborts what the work passed
- * the signal to (a download); an item stopped that way is neither done nor
- * failed, only not done.
- *
- * The items come from a source: a list in hand, or pages read from the server
- * as the run gets to them (`pagedSource`), so a run over thousands starts at
- * once. When the server says to slow down (`retryAfter` recognises it), the
- * whole run waits as long as it asked and the item is tried again: a busy
- * server is no fault of the item, and failing every item left would be wrong.
+ * Working through a long list a few items at a time (the Characters page's jobs), with pause, resume and cancel and an
+ * outcome per item, so a failure is set aside and the rest go on. Pausing lets started items finish; cancelling also
+ * aborts their signal, and an item stopped that way is only not done. Items come from a list or from pages read as
+ * the run reaches them (`pagedSource`). When the server asks to slow down (`retryAfter`), the whole run waits and the
+ * item is tried again, since a busy server is no fault of the item.
  */
 
 export interface BatchControl {
   readonly paused: boolean;
   readonly cancelled: boolean;
-  /** aborted on cancel */
+  /** Aborted on cancel. */
   readonly signal: AbortSignal;
   pause(): void;
   resume(): void;
   cancel(): void;
-  /** resolves at once unless paused; then when resumed or cancelled */
+  /** Resolves at once unless paused; then when resumed or cancelled. */
   wait(): Promise<void>;
-  /** resolves after `ms`, or at once on cancel */
+  /** Resolves after `ms`, or at once on cancel. */
   sleep(ms: number): Promise<void>;
 }
 
@@ -79,9 +70,9 @@ export function batchControl(): BatchControl {
 
 /** Where a run's items come from. */
 export interface BatchSource<T> {
-  /** the next item, or null when there are no more; asked again after it throws, it carries on where it was */
+  /** The next item, or null when there are no more; asked again after it throws, it carries on where it was. */
   next(): Promise<T | null>;
-  /** known to have nothing left, without asking */
+  /** Known to have nothing left, without asking. */
   done(): boolean;
 }
 
@@ -108,9 +99,8 @@ export function chainSources<T>(...sources: BatchSource<T>[]): BatchSource<T> {
 }
 
 /**
- * Items read a page at a time, the next page asked for only when the last is
- * used up. Two workers asking at once share one request; a request that fails
- * is made again from the same cursor the next time an item is asked for.
+ * Items read a page at a time, the next asked for when the last is used up. Workers asking at once share one request,
+ * and a failed request is retried from the same cursor on the next ask.
  */
 export function pagedSource<T>(page: (cursor: string | null) => Promise<{ items: T[]; nextCursor: string | null }>): BatchSource<T> {
   const buffer: T[] = [];
@@ -144,18 +134,17 @@ export interface BatchOptions<T> {
   control: BatchControl;
   concurrency?: number;
   onOutcome?: (outcome: BatchOutcome<T>) => void;
-  /** how long the server asked to wait, in ms, when `error` is it asking to slow down; null otherwise */
+  /** How long the server asked to wait, in ms, when `error` is it asking to slow down; null otherwise. */
   retryAfter?: (error: unknown) => number | null;
-  /** the run is waiting until this time (Date.now() ms) at the server's asking; null when it goes on */
+  /** The run is waiting until this time (Date.now() ms) at the server's asking; null when it goes on. */
   onHold?: (until: number | null) => void;
-  /** the source could not give its next item, for a reason other than slowing down: it is not asked again */
+  /** The source could not give its next item, for a reason other than slowing down: it is not asked again. */
   onSourceError?: (error: unknown) => void;
 }
 
 /**
- * Run `work` over the items, at most `concurrency` at once, in order.
- * Resolves when every item has an outcome, or once cancelled and the items in
- * hand are finished. Never rejects: a failure is an item's outcome.
+ * Run `work` over the items in order, at most `concurrency` at once. Resolves when every item has an outcome, or once
+ * cancelled and the items in hand are finished; never rejects.
  */
 export async function runBatch<T>(
   items: readonly T[] | BatchSource<T>,
@@ -163,7 +152,7 @@ export async function runBatch<T>(
   { control, concurrency = 2, onOutcome, retryAfter, onHold, onSourceError }: BatchOptions<T>,
 ): Promise<void> {
   const source = Array.isArray(items) ? listSource(items as readonly T[]) : (items as BatchSource<T>);
-  // items to try again after a wait the server asked for, first in line
+  // Items to try again after a wait the server asked for, first in line.
   const again: T[] = [];
   let ended = false;
   let resumeAt = 0;
@@ -173,7 +162,7 @@ export async function runBatch<T>(
     resumeAt = Math.max(resumeAt, Date.now() + Math.max(0, ms));
     onHold?.(resumeAt);
     if (holding) return;
-    // a later request to wait moves resumeAt on, and the wait goes on with it
+    // A later request to wait moves resumeAt on, and the wait goes on with it.
     const wait = async (): Promise<void> => {
       do await control.sleep(Math.max(0, resumeAt - Date.now()));
       while (!control.cancelled && Date.now() < resumeAt);
@@ -207,7 +196,7 @@ export async function runBatch<T>(
 
   const worker = async (): Promise<void> => {
     for (;;) {
-      // a pause with nothing left to start is the end, not a wait
+      // A pause with nothing left to start is the end, not a wait.
       if (nothingLeft()) return;
       await control.wait();
       while (holding) {
@@ -222,7 +211,7 @@ export async function runBatch<T>(
         await work(item, control.signal);
         onOutcome?.({ item, ok: true });
       } catch (error) {
-        // stopped by the cancel, not by a fault of its own
+        // Stopped by the cancel, not by a fault of its own.
         if (control.cancelled && control.signal.aborted && isAbort(error)) return;
         const wait = control.cancelled ? null : (retryAfter?.(error) ?? null);
         if (wait !== null) {

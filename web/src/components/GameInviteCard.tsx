@@ -16,18 +16,9 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /**
- * Renders a chat message body: if it carries a Hevalo game-invite link, show a
- * visual invite card (with any surrounding text kept above it); otherwise render
- * the text as-is. Used by both direct and group chat bubbles.
- *
- * What somebody wrote runs in its own direction (`dir="auto"`), whatever the
- * page's: Kurmancî in an Arabic or Soranî interface stays left to right, with
- * its question mark at the end of the question rather than the start, and
- * Soranî in an English one runs right to left.
- *
- * An invite to a game that is no longer part of Hevalo keeps the words sent
- * with it and loses its link: in its place a line says the game is no longer
- * played, and there is nothing to press.
+ * A chat message body: an invite link becomes an invite card under any text sent with it, and anything else is shown as
+ * written. The text runs in its own direction (`dir="auto"`) whatever the page's. An invite to a retired game keeps its
+ * words and shows a note in place of the link.
  */
 export function MessageBody({ body }: { body: string }): React.JSX.Element {
   const invite = parseInvite(body);
@@ -45,7 +36,7 @@ export function MessageBody({ body }: { body: string }): React.JSX.Element {
     );
   }
   if (!invite) return <span dir="auto">{body}</span>;
-  // keep any human text the sender wrote alongside the link
+  // Keep any text the sender wrote alongside the link.
   const rest = body.replace(inviteLinkPattern(), ' ').replace(/\s+/g, ' ').trim();
   return (
     <>
@@ -70,16 +61,9 @@ const ACTION_KEY: Record<GameInviteType, MessageKey> = {
 };
 
 /**
- * A rich preview for a game lobby — the card the front page shows arriving in a
- * chat, drawn by the same `InviteCardBody`, so the two cannot disagree. Like
- * every invite it is a ticket in its game's colour (ui/Ticket.tsx).
- *
- * The whole card is the link, so the tap target is the card rather than a small
- * button — which matters most on a phone, where this sits inside a bubble. The
- * "Join" inside it is a span that looks like a button; a real one inside a link
- * would be two controls fighting over one tap. It carries its OWN surface rather
- * than inheriting the bubble's, because your own bubble is white in this theme
- * and a translucent card disappeared into it.
+ * A lobby invite as a ticket in its game's colour (ui/Ticket.tsx), drawn by the same `InviteCardBody` as the front page's.
+ * The whole card is the link, so "Join" is a span styled as a button rather than a second control. It has its own surface
+ * because your own bubble is white in this theme.
  */
 export function GameInviteCard({ invite }: { invite: GameInvite }): React.JSX.Element {
   const t = useT();
@@ -91,10 +75,7 @@ export function GameInviteCard({ invite }: { invite: GameInvite }): React.JSX.El
   );
 }
 
-/**
- * What stands where an invite to a retired game was: one quiet line, not a
- * ticket, since there is no game behind it to join or to look at.
- */
+/** One quiet line where an invite to a retired game was, since there is nothing to join. */
 export function RetiredGameNote(): React.JSX.Element {
   const t = useT();
   return <span className="invite-retired">{t('games.retired')}</span>;

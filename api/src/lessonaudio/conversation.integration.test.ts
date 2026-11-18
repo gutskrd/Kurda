@@ -1,10 +1,7 @@
 /**
- * Conversations against real Postgres: each part recorded on its own, by
- * whoever plays it; the page they record on, with who made each take; and the
- * lines' recordings arriving with the conversation a learner is given.
- *
- * Runs on DATABASE_URL alone, with the storage PUT stubbed unless S3_ENDPOINT
- * is set, as the lesson audio test does.
+ * Conversations against real Postgres: each part recorded on its own by whoever plays it, the recording page with
+ * who made each take, and the lines' recordings delivered with the conversation. Runs on DATABASE_URL alone, with
+ * the storage PUT stubbed unless S3_ENDPOINT is set.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -255,7 +252,7 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
     expect(audio[1]).toEqual(expect.any(String));
     expect(audio[0]).not.toBe(audio[1]);
     expect(audio.slice(2)).toEqual([null, null]);
-    // each recorded line said by its own part's character, whatever voice the take was saved under, or none
+    // Each recorded line is said by its own part's character, whatever voice the take was saved under.
     expect((ex.lineVoices as Array<{ speaker: string } | null>).map((v) => v?.speaker ?? null)).toEqual(['xezo', 'hamo', null, null]);
 
     const options = ex.options as string[];

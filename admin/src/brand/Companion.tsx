@@ -6,16 +6,11 @@ import '@kurda/shared/src/characters/companion.css';
 /** How long Hevalo is pleased before the next step opens, unless motion is turned down. */
 export const HAPPY_MS = 650;
 
-export const stillWanted = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Hevalo leaning in over the console's sign-in card (@kurda/shared
- * characters/companion), in the console's calm tone: the same reactions as
- * on the website at a smaller size, and no words. He watches the boxes in
- * `watch` as they are filled in, covers his eyes for a password, and takes
- * the form's `status`. While `low`, he shows only his head and neck over the
- * card, and once it is not, he climbs out and lays his forelegs over it.
- * Decorative: the form says in words whatever he shows.
+ * Hevalo over the sign-in card (@kurda/shared characters/companion): the website's reactions at a smaller size and
+ * without words. He watches the boxes in `watch`, covers his eyes for a password and takes the form's `status`; while
+ * `low` only his head shows over the card. Decorative, as the form says in words whatever he shows.
  */
 export function Companion({
   status,
@@ -31,7 +26,7 @@ export function Companion({
   const host = useRef<HTMLSpanElement>(null);
   const player = useRef<CompanionPlayer | null>(null);
   const prefix = `cp${useId().replace(/[^\w-]/g, '')}`;
-  // as he is when he first comes up; later changes are played as they come
+  // As he is when he first comes up; later changes are played as they come.
   const lowAtFirst = useRef(low);
 
   useEffect(() => {

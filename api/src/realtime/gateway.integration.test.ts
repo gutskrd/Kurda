@@ -1,4 +1,4 @@
-/** Realtime gateway (KUR-049) with real WebSocket clients (CI job). */
+/** Realtime gateway with real WebSocket clients. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -164,10 +164,7 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
     await waitFor(ws, (m) => m.type === 'left');
   });
 
-  // Changed on purpose: one connection per user used to win (the newest), so a
-  // phone and a browser tab pushed each other off and the loser missed its
-  // events. Several devices now stay connected, and every one hears the user's
-  // events; only a connection past the limit pushes the oldest off.
+  // Several devices stay connected and each hears the user's events; only a connection past the limit pushes the oldest off.
   it('a person stays connected on several devices, and each gets their events', async () => {
     const user = await makeUser('devices');
     const phone = await connect(user.token);
@@ -244,7 +241,7 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
     const refused = await waitFor(first.ws, (m) => m.type === 'error');
     expect(refused.code).toBe('NOT_INVITED');
 
-    // the room was in the resume state before the revoke; it stays left
+    // The room was in the resume state before the revoke; it stays left.
     first.ws.terminate();
     const second = await connect(user.token, first.hello.resumeToken as string);
     expect(second.hello.resumedRooms).toEqual([]);
@@ -308,7 +305,7 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
   });
 
   it('lets a reconnect rejoin every room at once', async () => {
-    // the biggest burst a real client sends: a join for each room it was in
+    // The biggest burst a real client sends: a join for each room it was in.
     const user = await makeUser('rejoin');
     const rooms = Array.from({ length: 40 }, (_, i) => `group:${suffix}:rejoin:${i}`);
     for (const room of rooms) await app.realtime.invite(room, user.id);

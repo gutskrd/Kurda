@@ -27,12 +27,10 @@ Defined in `lib/config.js` and enforced by k6's exit code, so these double as a
 A run that breaches any threshold exits non-zero → the release is blocked until
 the regression is understood.
 
-## Test-data isolation (edge case)
-Load-test VUs use emails under the reserved `loadtest.kurda.invalid` domain
-(`vuEmail` here mirrors `api/src/loadtest/marker.ts`). `isLoadTestUser()` flags
-them so **analytics (KUR-105/106) and leaderboards exclude them** — a load run
-never pollutes product metrics or rankings. Seed these accounts on staging before
-a run and reap them after.
+## Test data
+Load-test VUs sign up under the reserved `loadtest.kurda.invalid` domain (`vuEmail`), so their accounts are easy to
+find. The server does not single them out in analytics or leaderboards, so run the suite against staging only, seed
+the accounts before a run and delete them after.
 
 ## Baselines
 Measured capacity + targets live in [`docs/scaling/capacity-baselines.md`](../docs/scaling/capacity-baselines.md).

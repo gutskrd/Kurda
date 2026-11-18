@@ -4,12 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ImageFramer } from './ImageFramer';
 import { WHOLE_PICTURE, ZOOM_RANGE, type Frame } from './frame';
 
-/**
- * The framer is exercised through the frames it emits rather than through what
- * it paints. What it paints is `cropRect`, which has its own tests and does not
- * need a canvas to prove; what matters here is that a control reaches it, and
- * that a gesture is reported as finished exactly once.
- */
+/** Exercised through the frames it emits; what it paints is `cropRect`, tested on its own. */
 function show(frame: Frame = WHOLE_PICTURE) {
   const onChange = vi.fn();
   const onSettled = vi.fn();
@@ -41,13 +36,13 @@ describe('ImageFramer', () => {
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0]![0].zoom).toBeGreaterThan(1);
-    // a click is a whole gesture, so it settles immediately — one undo step
+    // A click is a whole gesture, so it settles at once: one undo step.
     expect(onSettled).toHaveBeenCalledTimes(1);
   });
 
   it('will not zoom out past the whole picture', async () => {
     show();
-    // at zoom 1 the crop already fills the frame; below it there would be a gap
+    // At zoom 1 the crop already fills the frame.
     expect(screen.getByRole('button', { name: 'Zoom out' })).toBeDisabled();
   });
 
@@ -80,12 +75,7 @@ describe('ImageFramer', () => {
     expect(onSettled).toHaveBeenCalledTimes(1);
   });
 
-  /*
-   * A slider emits continuously while it moves and settles once when it is let
-   * go, so dragging it end to end is a single step rather than four hundred.
-   * fireEvent rather than userEvent: a range input's value is set directly, and
-   * userEvent's key handling does not move one in jsdom.
-   */
+  // fireEvent rather than userEvent: jsdom does not move a range input on userEvent's keys.
   it('drives the zoom while moving, and settles only when let go', () => {
     const { onChange, onSettled } = show();
     const slider = screen.getByLabelText('Zoom');

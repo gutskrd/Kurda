@@ -3,11 +3,7 @@ import type { DeliveredExercise } from '@kurda/shared';
 import { en } from '../i18n/en';
 import { askHeadline, lineIsEnglish, lineTokens } from './asks';
 
-/*
- * What an item that says what it asks is shown with: its headline, and its
- * line as the bubble lays it out — the server's words when they add up to
- * the line, the new words marked with their own meaning first, and the gap.
- */
+/* The headline and bubble line for an item that says what it asks: the server's words, new-word meanings first, and the gap. */
 
 const t = (key: keyof typeof en, vars: Record<string, string | number> = {}): string =>
   en[key].replace(/\{(\w+)\}/g, (_, name: string) => String(vars[name] ?? `{${name}}`));

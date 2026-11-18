@@ -9,13 +9,8 @@ const setBody = z.object({ assetKey: z.string().min(1).max(200), note: z.string(
 const resetBody = z.object({ note: z.string().trim().max(300).optional() }).optional();
 
 /**
- * Pictures put in place of the art that ships (art/overrides.ts).
- *
- * `GET /art/overrides` is public, as the pictures themselves are: the apps
- * load it at start, signed in or not, and briefly cached at the edge. The admin
- * routes are for the admins who keep the shop's art (the same who upload it),
- * behind the two-step code like every staff route; every change is in the
- * admin audit trail with the slot it changed.
+ * Routes for art overrides. `GET /art/overrides` is public and briefly cached at the edge, since the apps load it
+ * before sign-in. The admin routes are for the admins who keep the shop's art; every change is audited.
  */
 export function registerArtRoutes(app: FastifyInstance, art: ArtOverrideService): void {
   app.get('/art/overrides', { config: { skipValidation: true } }, async () => art.published());

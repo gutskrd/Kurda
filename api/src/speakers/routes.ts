@@ -1,40 +1,21 @@
 /**
- * Who says a recording already made, and its mouth's timeline.
+ * Who says an existing recording, and its mouth's timeline:
  *
  *   PATCH /admin/audio/:kind?key=…        { speaker?: SpeakerId | null, lipsync?: { v, d, k } | null }
- *   GET   /admin/audio/:kind/file?key=…   the recording's own sound, to make its timeline from
+ *   GET   /admin/audio/:kind/file?key=…   the recording's sound, to make its timeline from
  *   GET   /admin/dictionary/audio         the dictionary's pronunciations (dictionary-audio.ts)
  *
- * `kind` is the kind of recording, and `key` the one recording:
- *
  *   lesson      a lesson or story sentence, by its lessonAudioKey (as DELETE /admin/lesson-audio names it)
- *   alphabet    a sound on the alphabet page or a word in the word sets, by its ALPHABET_CLIPS key
+ *   alphabet    an alphabet sound or word-set word, by its ALPHABET_CLIPS key
  *   dictionary  a dictionary pronunciation, by its id (each entry's `audio[].id`)
  *
- * This is for recordings made before the characters, and for any whose
- * speaker or timeline should change without recording it again: choose a
- * character for it, make its timeline later from its sound, or take either
- * away (null). A field left out is left as it is; at least one is needed. The
- * key travels in the query string, as the studio's other routes carry it,
- * because a sentence is too long and too full of characters for a path.
- *
- * The timeline is checked strictly (decodeLipsync, at most
- * LIPSYNC_MAX_ENTRIES cues) and must be no longer than the recording. A
- * dictionary pronunciation has no stored length, so its timeline is held to
- * DICTIONARY_AUDIO_MAX_MS instead.
- *
- * The same people who record may do it. Under /admin, so the second factor
- * and the audit trail come with it; this also writes its own audit entry with
- * what changed.
- *
- * The file is the recording's bytes sent through the API, so the panel can
- * decode them without the media host allowing its origin
- * (recording-file.ts). A read, so it writes no audit entry, as the studio's
- * lists write none.
- *
- * The panel's Characters page works through every recording two at a time,
- * reading each file and then saving its timeline, so both routes allow 1,500
- * in any ten minutes (BATCH_RATE) rather than the default hundred a minute.
+ * For recordings made before the characters, or whose speaker or timeline should change without re-recording: set
+ * either, or clear it with null; omitted fields stay, and at least one is needed. The key is in the query string, as a
+ * sentence is too long for a path. Timelines are checked strictly (decodeLipsync, at most LIPSYNC_MAX_ENTRIES cues) and
+ * may not exceed the recording; dictionary pronunciations have no stored length, so DICTIONARY_AUDIO_MAX_MS applies.
+ * Open to recorders, under /admin with the second factor and audit trail, and the PATCH writes its own audit entry.
+ * The file route is a read and writes none. The Characters page processes every recording two at a time, so both
+ * routes allow 1,500 per ten minutes (BATCH_RATE).
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -97,7 +78,7 @@ const KINDS: Record<'lesson' | 'alphabet' | 'dictionary', Kind> = {
   },
 };
 
-/** A kind's tables, checked against the map itself as well as the route's schema: nothing but these literals names a table in SQL. */
+/** A kind's tables, checked against the map as well as the schema, so only these literals ever name a table in SQL. */
 function kindOf(kind: string): Kind {
   if (!Object.hasOwn(KINDS, kind)) throw new AppError('NOT_FOUND', 404, 'no such recording');
   return KINDS[kind as keyof typeof KINDS];

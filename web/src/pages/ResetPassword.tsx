@@ -14,16 +14,15 @@ function resetError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'INVALID_TOKEN':
       return t('auth.reset.invalidLink');
-    // a password the policy turned down is said in the reader's words, rule by rule (lib/api)
+    // A password the policy refused is said rule by rule in the reader's words (lib/api).
     default:
       return describeError(err, t);
   }
 }
 
 /**
- * Where the emailed reset link lands: set a new password using the one-time
- * token from the URL. The token is single-use and short-lived server-side, so a
- * stale or reused link fails closed and the user is pointed at a fresh request.
+ * Where the emailed reset link lands: a new password with the URL's one-time token. The token is single-use and
+ * short-lived, so a stale or reused link fails closed and points to a fresh request.
  */
 export function ResetPassword(): React.JSX.Element {
   const { client } = useAuth();
@@ -52,8 +51,7 @@ export function ResetPassword(): React.JSX.Element {
     else setError(resetError(res.error, t));
   }
 
-  // A link without a token can't do anything — say so instead of showing a form
-  // that is guaranteed to fail.
+  // A link without a token cannot work, so say so instead of showing a form that will fail.
   if (!token) {
     return (
       <div className="auth-wrap">

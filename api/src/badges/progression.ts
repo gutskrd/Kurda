@@ -17,13 +17,9 @@ export interface Progression {
 }
 
 /**
- * XP, the leagues and the badges, wired to one another the same way in every
- * process that pays XP or settles a week — the API, the job worker, and the
- * story games the worker finishes for a closing account: every award can join
- * the week's league and tell it the goal is met, and a settled week moves the
- * league badges. Given the ranks module's events (`RankService.events`), the
- * ranked badges listen to them: pass the events of the RankService that rates
- * this process's games, so a rated game finished here is counted here.
+ * XP, the leagues and the badges, wired together the same way in every process that pays XP or settles a week:
+ * an award can join the week's league, and a settled week moves the league badges. Pass the events of the
+ * RankService that rates this process's games, so the ranked badges count rated games finished here.
  */
 export function createProgression(
   pool: pg.Pool,

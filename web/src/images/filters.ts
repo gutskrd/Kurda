@@ -11,65 +11,35 @@ import {
 } from './adjust';
 
 /**
- * The filters.
- *
- * A filter is mostly not a separate mechanism — it is a set of the same
- * adjustments a person can reach themselves, given a name. That is deliberate:
- * it means a filter can be turned down rather than only on or off, it means the
- * sliders keep working after one is chosen, and it means there is almost
- * nothing in a filter that could not be undone by hand.
- *
- * Two things genuinely cannot be expressed as slider values, so they hang off
- * the preset instead. A gradient map repaints the picture from its brightness,
- * which is how a thermal camera and a real sepia work and is not something any
- * amount of saturation can imitate. And an overlay is a second picture drawn on
- * top, which is not colour maths at all.
- *
- * Named in Kurmancî, like everything else people touch in this app.
+ * The photo filters: named sets of the same adjustments a person can make, so a filter can be turned down and the
+ * sliders keep working on top. A gradient map (`tone`) and an overlay picture cannot be slider values, so they hang off
+ * the preset. Names are Kurmancî in every language.
  */
 export interface Overlay {
   src: string;
-  /** how much of the picture's width the artwork spans */
+  /** How much of the picture's width the artwork spans. */
   widthShare: number;
-  /**
-   * ...unless that would make it taller than this much of the picture.
-   *
-   * The artwork is nearly square. Sized by width alone it hangs off the bottom
-   * of a landscape crop — which a canvas silently clips, so the flag would
-   * quietly lose its lower half on exactly the shape most photographs are.
-   */
+  /** The most of the picture's height it may take; the nearly square artwork would otherwise be clipped on landscape crops. */
   maxHeightShare: number;
   opacity: number;
 }
 
 export interface FilterPreset {
   key: string;
-  /**
-   * The filter's name, in Kurmancî, in every language.
-   *
-   * A filter's name is a name, the way Instagram's Clarendon is: it is what you
-   * call the look, not a description of it. Translating "Zêr" to "Gold" on a
-   * German screen would rename the thing rather than explain it — which is what
-   * `hintKey` is for.
-   */
+  /** The filter's name in Kurmancî, in every language; `hintKey` explains it. */
   label: string;
-  /** what it means, for the tooltip — the names are not all obvious */
+  /** What it means, for the tooltip. */
   hintKey: MessageKey;
   adjustments: Adjustments;
-  /** repaint from brightness through a palette */
+  /** Repaint from brightness through a palette. */
   tone?: { stops: readonly ColourStop[]; amount: number };
-  /** a second picture, laid over the top right */
+  /** A second picture, laid over the top right. */
   overlay?: Overlay;
 }
 
 /* --- palettes ------------------------------------------------------------- */
 
-/**
- * The ironbow a thermal camera uses: cold is dark and blue, hot runs up through
- * purple and red into white. It is a real palette rather than a blue-to-red
- * fade, because the purple-to-orange middle is what makes it read as a heat
- * camera instead of as a tinted photograph.
- */
+/** The ironbow palette of a thermal camera: dark blue through purple and red into white. */
 const THERMAL: readonly ColourStop[] = [
   [0.0, 0, 0, 22],
   [0.2, 32, 0, 92],
@@ -98,7 +68,7 @@ const preset = (
   extra: Pick<FilterPreset, 'tone' | 'overlay'> = {},
 ): FilterPreset => ({ key, label, hintKey, adjustments: { ...NEUTRAL, ...adjustments }, ...extra });
 
-/** The one that does nothing. Always first, and where every picture starts. */
+/** The one that does nothing; always first, and where every picture starts. */
 export const NO_FILTER = 'orijinal';
 
 export const FILTERS: readonly FilterPreset[] = [
@@ -173,12 +143,7 @@ export const FILTERS: readonly FilterPreset[] = [
     vignette: 20,
   }),
 
-  /*
-   * Properly old, rather than merely faded. The sepia is a gradient map, so the
-   * picture is repainted in aged silver from its own brightness instead of
-   * having brown thrown over it, and the grain and the heavy vignette do the
-   * rest of the century.
-   */
+  /* Old rather than faded: a sepia gradient map, with grain and a heavy vignette. */
   preset(
     'kevnar',
     'Kevnar',
@@ -191,8 +156,7 @@ export const FILTERS: readonly FilterPreset[] = [
     'germi',
     'Germî',
     'photo.filter.heat',
-    // contrast first, so the brightness range is spread out before the palette
-    // reads it — a flat picture maps to a flat band of one colour
+    // Contrast first, so a flat picture does not map to a flat band of one colour.
     { contrast: 26 },
     { tone: { stops: THERMAL, amount: 1 } },
   ),
@@ -218,13 +182,7 @@ export const FILTERS: readonly FilterPreset[] = [
   }),
 ];
 
-/**
- * Every piece of overlay artwork any filter uses.
- *
- * Drawing is synchronous — it backs the export as well as the preview — so the
- * artwork has to be decoded before anything asks for it. There is one of these
- * today; the list means adding a second costs nothing.
- */
+/** Every overlay artwork any filter uses, decoded up front since drawing is synchronous. */
 export function overlaySources(): string[] {
   return FILTERS.map((f) => f.overlay?.src).filter((src): src is string => typeof src === 'string');
 }
@@ -237,13 +195,7 @@ export function presetByKey(key: string): FilterPreset {
 /** A fixed order, so the signature is stable whatever order the keys come in. */
 const ADJ_ORDER = [...ADJUSTMENT_KEYS].sort();
 
-/**
- * Ramps are built once per preset and kept.
- *
- * Building one walks 256 steps and searches the stops at each; doing that for
- * every thumbnail on every redraw would be the most expensive thing on screen,
- * and the answer never changes.
- */
+/** Ramps, built once per preset, since every thumbnail would otherwise rebuild them on each redraw. */
 const ramps = new Map<string, Uint8Array>();
 function rampFor(preset: FilterPreset): Uint8Array | null {
   if (!preset.tone) return null;
@@ -254,25 +206,12 @@ function rampFor(preset: FilterPreset): Uint8Array | null {
   return built;
 }
 
-/**
- * Everything that will be done to the picture: the filter turned down to its
- * strength, plus whatever the person moved by hand.
- *
- * One value so that the live preview, the ten thumbnails and the export all ask
- * the same question and cannot answer it differently.
- */
+/** Everything done to the picture, as one value shared by the preview, the thumbnails and the export. */
 export interface Grade {
   adjustments: Adjustments;
   tone: ToneMap | null;
   overlay: Overlay | null;
-  /**
-   * A short, complete identity for this grade.
-   *
-   * The grading cache needs to know whether two grades are the same, and a
-   * grade holds a 768-byte palette. Serialising that on every draw to build a
-   * cache key costs more than the cache saves, and the three inputs below
-   * determine the whole thing anyway.
-   */
+  /** A short identity for the cache key; the three inputs determine the grade without serialising its 768-byte palette. */
   signature: string;
 }
 
@@ -283,8 +222,7 @@ export function gradeOf(filterKey: string, strength: number, byHand: Adjustments
   return {
     signature: `${found.key}|${k}|${ADJ_ORDER.map((a) => byHand[a]).join(',')}`,
     adjustments: combine(scale(found.adjustments, k), byHand),
-    // strength fades the palette back towards the picture's own colour, and
-    // fades the overlay out, so one slider turns the whole look down
+    // Strength fades the palette and the overlay together, so one slider turns the whole look down.
     tone: ramp && found.tone ? { ramp, amount: found.tone.amount * k } : null,
     overlay: found.overlay ? { ...found.overlay, opacity: found.overlay.opacity * k } : null,
   };

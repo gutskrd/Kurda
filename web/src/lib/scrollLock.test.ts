@@ -13,7 +13,7 @@ describe('lockPageScroll', () => {
   it('holds the window still on the root element and leaves the body alone', () => {
     const unlock = lockPageScroll();
     expect(root().overflow).toBe('hidden');
-    // a hidden body would become a scroll container and take the sticky bar with it
+    // A hidden body would become a scroll container and take the sticky bar with it.
     expect(document.body.style.overflow).toBe('');
     unlock();
     expect(root().overflow).toBe('');

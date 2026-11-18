@@ -22,27 +22,12 @@ interface Log {
 }
 
 /**
- * The one gate every way of putting words in front of readers goes through: a
- * new post, a draft published, an edit, a picture's caption or alt text
- * (KUR-295, #293).
- *
- * It used to be on the create route alone, so an edit or a publish went up
- * unscreened — post something harmless, then edit it — and a picture post went
- * up with no check at all. Each of those counts as a post now: the per-level
- * velocity cap first, the duplicate/burst spam check on the new words, and the
- * AI screening after it lands (which flags for review and never blocks —
- * reviewers decide, as they always have for written posts).
- *
- * It is for people posting: an author's own post, edit or publish. Staff
- * editing somebody else's post are not posting, so nothing of it is counted
- * against them or remembered as their words — and the post's author did not
- * write the edit, so it is not flagged under the author's name either (staff
- * edits were never gated). Staff publishing somebody's draft put the author's
- * own words up: those are screened as the author's (`screen`), and counted
- * against nobody.
- *
- * Without a trust service (no Redis in a test app) the gate is open, as the
- * trust checks have always been.
+ * The one gate for every way words reach readers: a new post, a published draft, an edit, a caption or alt text. Each
+ * counts as a post: the per-level velocity cap first, the duplicate and burst spam check on the new words, then
+ * automated screening after it lands, which flags for review and never blocks. It is for people posting their own
+ * content; staff editing someone else's post are not posting, so nothing is counted against them or flagged under
+ * either name, and a draft staff publish is screened as its author's (`screen`) and counted against nobody. Without a
+ * trust service (no Redis in a test app) the gate is open.
  */
 export class PostGate {
   constructor(
@@ -52,13 +37,12 @@ export class PostGate {
   ) {}
 
   /**
-   * Before the write: may this person post now, and are these words spam?
-   * `words` is only what is new — empty for a post that is only pictures, or an
-   * edit that changes no words, and then only the velocity cap applies.
+   * Before the write: may this person post now, and are these words spam? `words` is only what is new; when empty, as for
+   * a pictures-only post or an edit changing no words, only the velocity cap applies.
    */
   async check(userId: string, words: string): Promise<GateRefusal | null> {
     if (!this.trust) return null;
-    // per-level velocity cap (KUR-295): new accounts post fewer per hour
+    // Per-trust-level velocity cap: new accounts post less per hour.
     const gate = await this.trust.checkAction(userId, 'post');
     if (!gate.allowed) {
       return { status: 429, code: 'TRUST_VELOCITY', message: 'you are posting too fast — slow down for new accounts' };
@@ -73,17 +57,13 @@ export class PostGate {
     return null;
   }
 
-  /** After the write: count it toward the cap and screen what readers now see. */
+  /** After the write: counts it toward the cap and screens what readers now see. */
   async passed(userId: string, screened: Screened | null): Promise<void> {
     if (this.trust) await this.trust.recordAction(userId, 'post');
     await this.screen(userId, screened);
   }
 
-  /**
-   * Screen words that went up without counting them as anybody's post: a
-   * draft staff published for its author. A flag names `authorId`, who wrote
-   * them.
-   */
+  /** Screens words that went up without counting as anyone's post, such as a draft staff published; a flag names `authorId`. */
   async screen(authorId: string, screened: Screened | null): Promise<void> {
     if (this.aiMod && screened?.text) {
       await this.aiMod

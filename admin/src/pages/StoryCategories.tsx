@@ -20,10 +20,8 @@ export function categorySlugFrom(name: string): string {
 }
 
 /**
- * The library's categories (#/stories/categories): what a story is filed
- * under, named per interface language, in the order the library lists them.
- * A category is added, renamed, moved and deleted here; deleting one that
- * stories are filed under asks again, with the count, before it unfiles them.
+ * The library's categories (#/stories/categories), named per interface language in the library's order. Deleting one
+ * with stories asks again, with the count, before unfiling them.
  */
 export function StoryCategories(): React.JSX.Element {
   const toast = useToast();
@@ -36,11 +34,7 @@ export function StoryCategories(): React.JSX.Element {
 
   const rows = categories.data ?? null;
 
-  /**
-   * Move a category one place up or down: the two rows trade positions. Rows
-   * sharing a position (a list made by hand) are renumbered first, in the
-   * order shown, so the trade means something.
-   */
+  /** Move a category one place by trading positions with its neighbour, renumbering first if positions are shared. */
   async function move(c: StoryCategory, step: -1 | 1): Promise<void> {
     if (!rows) return;
     const at = rows.findIndex((r) => r.slug === c.slug);
@@ -52,7 +46,7 @@ export function StoryCategories(): React.JSX.Element {
     setBusy(c.slug);
     try {
       if (distinct) {
-        // the moved row takes its neighbour's place, then the neighbour takes the moved row's
+        // The moved row takes its neighbour's place, then the neighbour takes the moved row's.
         await updateCategory(c.slug, { name: c.name, position: rows[to]!.position });
         await updateCategory(rows[to]!.slug, { name: rows[to]!.name, position: c.position });
       } else {
@@ -207,7 +201,7 @@ function CategoryForm({
 
   const setName = (locale: string, value: string): void => {
     setNames((n) => ({ ...n, [locale]: value }));
-    // the slug follows the English name until the editor writes their own
+    // The slug follows the English name until the editor writes their own.
     if (locale === 'en' && !slugEdited) setSlug(categorySlugFrom(value));
   };
 

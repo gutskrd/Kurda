@@ -21,19 +21,11 @@ export interface ClaimResult {
 export const PLUS_DAILY_REASON = 'plus_daily';
 
 /**
- * Daily Zêr reward claims (KUR-067). Server-time only: the claim day is the
- * user's tz-local calendar date (KUR-031's `localDate`), so a device clock can
- * never unlock an extra claim. The grant is atomic with the cycle-state update
- * and idempotent per (user, day).
- *
- * A claim needs a lesson or practice session finished on that same local day —
- * the streak service's `last_learned_on`, written when a session completes.
- * A daily Peyvok win keeps a streak but does not count here.
- *
- * A Hevalo+ member receives `PLUS_DAILY_GEMS` gems with the claim: in the
- * same transaction, once a day by a ledger key of its own, and under a reason
- * of its own rather than a gem rule's, so it stands outside the daily cap on
- * earned gems — it is part of what membership is, not something earned.
+ * Daily Zêr reward claims. The claim day is the user's local calendar date (`localDate`) by server time, so a device
+ * clock can never unlock an extra claim; the grant is atomic with the cycle update and idempotent per user and day. A
+ * claim needs a lesson or practice session finished that local day (`last_learned_on`); a daily Peyvok win keeps a
+ * streak but does not count. A Hevalo+ member also gets `PLUS_DAILY_GEMS` in the same transaction, under a ledger key
+ * and reason of its own, outside the earned-gems cap, since it is part of membership.
  */
 export class DailyRewardService {
   private readonly streaks: StreakService;
@@ -67,10 +59,7 @@ export class DailyRewardService {
     return (await this.streaks.lastLearnedOn(userId, executor)) === today;
   }
 
-  /**
-   * Cycle progress + next reward for the calendar UI, and the gems a claim
-   * today adds for a Hevalo+ member (0 for everyone else).
-   */
+  /** Cycle progress and the next reward for the calendar, and the gems a claim today adds for a Hevalo+ member (0 otherwise). */
   async status(userId: string, now: Date = new Date()): Promise<DailyRewardStatus & { cycleDay: number; plusGems: number }> {
     const { tz, plus } = await this.account(userId, now);
     const today = localDate(now, tz);
@@ -80,10 +69,8 @@ export class DailyRewardService {
   }
 
   /**
-   * Claim today's reward. Throws ALREADY_CLAIMED if today is already claimed,
-   * LEARN_FIRST if no lesson or practice session has been finished today, and
-   * REWARDS_PAUSED for a confirmed bot or an account on a payment-fraud hold
-   * (economy/standing.ts). The amount is the server's own (daily-cycle.ts).
+   * Claims today's reward: ALREADY_CLAIMED if claimed, LEARN_FIRST without a lesson or practice today, REWARDS_PAUSED for
+   * a confirmed bot or fraud hold (economy/standing.ts). The amount is the server's (daily-cycle.ts).
    */
   async claim(userId: string, now: Date = new Date()): Promise<ClaimResult> {
     await assertEconomyNotHeld(this.pool, userId, 'rewards');
@@ -114,7 +101,7 @@ export class DailyRewardService {
         reason: 'daily_reward',
         idempotencyKey: `daily:${userId}:${today}`,
       });
-      // a member's gems ride on the same claim: the day's lock above already makes this once a day, and the key says so to the ledger
+      // A member's gems ride on the claim: the day's lock makes this once a day, and the key says so to the ledger.
       let plusGems = 0;
       if (plus) {
         const gems = await this.wallet.creditWithin(client, {

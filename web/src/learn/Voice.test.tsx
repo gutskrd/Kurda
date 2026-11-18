@@ -6,10 +6,7 @@ import { jsonResponse, renderApp } from '../test/utils';
 import { LESSON_PATHS, SessionPlayer } from './SessionPlayer';
 import { exerciseClips, promptWords } from './Voice';
 
-/*
- * Who says a lesson's recordings: the character an editor chose shows beside
- * what plays it, and a recording with none changes nothing.
- */
+/* The character an editor chose for a recording shows beside what plays it; a recording without one changes nothing. */
 
 const CLIP = 'https://cdn.test/listen.m4a';
 const MODEL = 'https://cdn.test/model.m4a';
@@ -62,7 +59,7 @@ describe('a lesson’s speaking characters', () => {
     expect(voice).not.toBeNull();
     const face = voice.querySelector('.speaking-character')!;
     expect(face).toHaveAttribute('data-speaker', 'hamo');
-    // the buttons already say what is heard
+    // The buttons already say what is heard.
     expect(face).toHaveAttribute('aria-hidden', 'true');
     expect(speakers()).toHaveLength(1);
   });
@@ -143,7 +140,7 @@ describe('exerciseClips', () => {
         { speaker: 0, text: 'Tu çawa yî?' },
       ],
       lineAudio: ['https://cdn.test/0.m4a', 'https://cdn.test/1.m4a', null],
-      // the first saved under Hamo's voice by mistake, the second under none
+      // The first saved under Hamo's voice by mistake, the second under none.
       lineVoices: [hamo, null, null],
     });
     expect(clips).toEqual([

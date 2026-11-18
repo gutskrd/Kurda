@@ -1,4 +1,4 @@
-/** Friend system (KUR-081) against real Postgres. */
+/** Friend system against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -89,8 +89,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
   it('will not let the recipient cancel a request as if they had sent it', async () => {
     await friends.request(id.d!, id.e!);
 
-    // e is the recipient; cancelling is for the sender, and declining is a
-    // separate act that e is entitled to make instead
+    // e is the recipient: cancelling is the sender's act, declining is e's.
     await friends.cancelRequest(id.e!, id.d!);
     expect(has(await friends.incomingRequests(id.e!), id.d!)).toBe(true);
 
@@ -147,10 +146,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     await friends.unblock(id.c!, id.d!);
   });
 
-  /**
-   * The blocklist. Its own users throughout: the a–e graph is mutated by the
-   * tests above and a list that has to be exhaustive cannot share it.
-   */
+  /** The blocklist, with its own users, since the tests above change the a–e graph and this list must be exhaustive. */
   describe('the list of who you have blocked', () => {
     let me = '';
     let token = '';
@@ -188,12 +184,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
       expect(Date.parse(page.blocked[0]!.blockedAt)).toBeGreaterThan(0);
     });
 
-    /**
-     * The one property that matters most here. A block is silent by design —
-     * `request` returns 'silent' rather than admitting it, and a blocked user's
-     * profile answers 404 — and all of that is undone if the list ever answers
-     * "who blocked me" as well as "who did I block".
-     */
+    /** A block is silent (a 'silent' request result, a 404 profile), which the list must not undo by revealing who blocked you. */
     it('never tells you who has blocked you', async () => {
       expect((await friends.blocked(one)).blocked).toEqual([]);
       expect((await friends.blocked(one)).total).toBe(0);
@@ -286,13 +277,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     expect(has(forX, x)).toBe(false); // never yourself
   });
 
-  /**
-   * The list is paged so that a profile drawing eight avatars can ask for
-   * eight instead of five hundred. What has to hold is that the count keeps
-   * telling the truth while the page gets shorter — a heading that says "8
-   * friends" over a list of eight, when there are forty, is worse than the
-   * over-fetch it replaced.
-   */
+  /** The list is paged so a profile can ask for eight avatars, but the count must still tell the whole length. */
   it('pages the list without lying about how long it is', async () => {
     const hub = await register('hub', '10.81.30.1');
     const others: string[] = [];
@@ -318,8 +303,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
       all.friends.map((f) => f.userId),
     );
 
-    // past the end there is no row to carry count(*) OVER (), and answering 0
-    // would read as "no friends" rather than "no more friends"
+    // Past the end no row carries count(*) OVER (), and 0 would read as "no friends" rather than "no more".
     const past = await friends.list(hub, undefined, 2, 10);
     expect(past.friends).toEqual([]);
     expect(past.total).toBe(4);

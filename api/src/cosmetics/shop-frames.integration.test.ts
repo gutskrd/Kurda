@@ -1,12 +1,7 @@
 /**
- * The shop's frames against real Postgres, through the routes the apps call:
- * the frames migration 1751000431000 put on sale are listed with their
- * pictures, bought with Zêr like any other piece, worn through the route a
- * season frame is worn through, and then sent with the wearer's profile — the
- * SKU and the picture to lay round the face. A frame that is not owned is
- * neither worn nor shown, and a season frame still has no picture: the apps
- * draw that one. A frame can be a present like anything else on sale, and the
- * friend who is given one wears it.
+ * The shop's frames against real Postgres through the apps' routes: listed with their pictures, bought with Zêr,
+ * worn through the season frame's route, and sent with the wearer's profile. An unowned frame is neither worn nor
+ * shown, a season frame has no picture (the apps draw it), and a frame can be given as a present.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -62,7 +57,7 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     await wallet.credit({ userId: ids.buyer!, currency: 'zer', amount: 5000, reason: 'admin_adjustment' });
   });
 
-  // (the two accounts stay, as other suites leave theirs: one has spent Zêr, and the wallet's ledger is never taken from)
+  // The two accounts stay, as in other suites: one has spent Zêr, and the wallet ledger is append-only.
   afterAll(async () => {
     await pool?.end();
     await app?.close();

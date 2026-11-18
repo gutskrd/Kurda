@@ -3,20 +3,10 @@ import { ProviderIdentityBlock } from '../copyright/ProviderDetails';
 import { useT } from '../i18n/I18nProvider';
 
 /*
- * What Hevalo keeps, in plain words.
- *
- * Every sentence here is something the product already does, and each one can
- * be traced to where it is done: the collected data and the permissions are the
- * App Store answers in docs/app-store/privacy.md; profile visibility and
- * blocking are Settings; the hashed phone number is phone verification; the
- * export, the deletion and its 14-day grace are api/src/gdpr; asking again after
- * a material change is the consent version in api/src/gdpr/consent.ts. If one of
- * those changes, the sentence about it has to change with it.
- *
- * It opens with who is responsible, because the GDPR asks a privacy notice to
- * name its controller and how to reach it before anything else: the registered
- * business, its address and its KvK number, from the same record the Terms and
- * About pages show, so the three can never disagree.
+ * What Hevalo keeps, in plain words. Each sentence matches something the product does, and must change with it: data and
+ * permissions (docs/app-store/privacy.md), visibility and blocking (Settings), the hashed phone number (phone
+ * verification), export and deletion with its 14-day grace (api/src/gdpr), and re-consent (api/src/gdpr/consent.ts). It
+ * opens with the controller and how to reach them, as the GDPR requires, from the same record as Terms and About.
  */
 const SECTIONS: ReadonlyArray<DocSection> = [
   { title: 'privacy.collect.title', body: 'privacy.collect.body' },

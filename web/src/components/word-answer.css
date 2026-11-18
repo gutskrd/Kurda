@@ -1,9 +1,4 @@
-/*
- * The end of a word game (components/WordAnswer.tsx): the word a Peyvok was
- * about with what it means, and the rhymes a round did not find. Quiet beside
- * the result above it: the word is the one large thing, everything else is
- * the page's secondary ink.
- */
+/* The end of a word game (components/WordAnswer.tsx): the word, large, with everything else in secondary ink. */
 
 /* ---- the answer, with its meaning and Save to vocabulary -------------------------------- */
 .wg-answer {
@@ -35,7 +30,7 @@
   gap: 6px;
   margin-top: var(--space-1);
 }
-/* a saved word is on: the violet of everything chosen, as in the dictionary, and still where it was */
+/* A saved word is on: the violet of everything chosen, as in the dictionary. */
 .wg-answer-save.is-on,
 .wg-answer-save.is-on:disabled {
   color: var(--primary);
@@ -48,7 +43,7 @@
 }
 
 /* ---- a battle's "The word was …", with its meaning under it ----------------------------- */
-/* the results are spaced 18px apart; the meaning belongs to the sentence above it, so it sits close under it */
+/* Results are 18px apart; the meaning belongs to the sentence above, so it sits close under it. */
 .wg-meaning-line {
   margin: calc(-1 * var(--space-3)) 0 0;
   color: var(--ink-3);
@@ -67,7 +62,7 @@
 .wg-missed-title {
   margin: 0;
   color: var(--ink-3);
-  /* a small label over the list, in the page's own letters rather than the display face of its headings */
+  /* A small label in the body font rather than the headings' display face. */
   font-family: var(--font-sans);
   font-size: var(--text-caption);
   font-weight: 700;
@@ -102,7 +97,7 @@
   font-size: var(--text-caption);
   overflow-wrap: anywhere;
 }
-/* the matches' results are centred, and so is what they missed */
+/* The matches' results are centred, and so is what they missed. */
 .match-results .wg-missed {
   width: min(100%, 440px);
   justify-items: center;
@@ -124,7 +119,7 @@
   opacity: 0.8;
 }
 
-/* a finger needs 44px: Save to vocabulary grows on touch screens, as the lobbies' small buttons do */
+/* Save to vocabulary grows to 44px on touch screens, as the lobbies' small buttons do. */
 @media (pointer: coarse) {
   .wg-answer-save.btn-sm {
     height: 44px;

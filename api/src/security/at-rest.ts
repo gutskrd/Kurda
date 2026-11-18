@@ -1,19 +1,12 @@
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto';
 
 /**
- * Encrypting a secret the server has to keep and read back later, such as a
- * token another service gave it to act for someone: a copy of the database on
- * its own (a backup, a replica, a leaked dump) then holds nothing usable.
- *
- * AES-256-GCM with a fresh 96-bit nonce for every value, and the purpose bound
- * in as associated data, so a value sealed for one use cannot be passed off as
- * another. The key is derived (HKDF-SHA256) from a server secret, the app's JWT
- * secret, as the moderation pseudonyms and the lesson shuffle are keyed from
- * it, with a label of its own per purpose. Rotating that secret makes every
- * value sealed before it unreadable; `unseal` then answers null, and each
- * caller treats that as nothing kept.
- *
- * Stored as `v1.<nonce>.<tag>.<ciphertext>`, each part base64url.
+ * Encrypts a secret the server must keep and read back, such as another service's token, so a copy of the database
+ * alone (a backup, a replica, a leaked dump) holds nothing usable. AES-256-GCM with a fresh 96-bit nonce per value and
+ * the purpose as associated data, so a value sealed for one use cannot pass for another. The key is derived with
+ * HKDF-SHA256 from the JWT secret with a label per purpose; rotating that secret makes earlier values unreadable, and
+ * `unseal` then returns null, which callers treat as nothing kept. Stored as `v1.<nonce>.<tag>.<ciphertext>` in
+ * base64url.
  */
 
 const VERSION = 'v1';
@@ -33,11 +26,7 @@ export function seal(secret: string, purpose: string, plaintext: string): string
   return [VERSION, nonce.toString('base64url'), cipher.getAuthTag().toString('base64url'), body.toString('base64url')].join('.');
 }
 
-/**
- * What `seal` encrypted, or null when `sealed` was not sealed for this purpose
- * under this secret: another key, another purpose, altered, or not a sealed
- * value at all.
- */
+/** What `seal` encrypted, or null when `sealed` was not sealed for this purpose under this secret, was altered, or is not sealed at all. */
 export function unseal(secret: string, purpose: string, sealed: string): string | null {
   const parts = sealed.split('.');
   if (parts.length !== 4 || parts[0] !== VERSION) return null;

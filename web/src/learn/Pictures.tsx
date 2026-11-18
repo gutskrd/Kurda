@@ -1,8 +1,6 @@
 /**
- * The pictures of a "which picture is it?" item (shared art/word-pictures.ts):
- * its options are picture ids, each drawn on a card in place of words. Only
- * the picture says what an option is, so a screen reader is given its English
- * name (`pictureName`) instead.
+ * The pictures of a "which picture is it?" item (shared art/word-pictures.ts): options are picture ids drawn on cards,
+ * named for screen readers by their English name (`pictureName`).
  */
 import { useId, useMemo } from 'react';
 import { WORD_PICTURES, wordPictureSvg, type WordPictureId } from '@kurda/shared';
@@ -14,21 +12,14 @@ export function isWordPicture(id: string): id is WordPictureId {
   return Object.prototype.hasOwnProperty.call(WORD_PICTURES, id);
 }
 
-/**
- * What a picture shows, in English: its name for a screen reader and the
- * right answer the verdict names. An id the catalogue does not know (a newer
- * server than this page) is named by itself.
- */
+/** What a picture shows, in English, for screen readers and the verdict; an unknown id (a newer server) is named by itself. */
 export function pictureName(id: string): string {
   return isWordPicture(id) ? WORD_PICTURES[id].en : id;
 }
 
 /**
- * A word's picture, drawn twice — on the light paper and at dusk — with the
- * stylesheet showing the one the page is in, so a change of theme needs no
- * redraw. Decorative: the card it is on carries the name. An id the
- * catalogue does not know is shown as its name, so the option can still be
- * chosen.
+ * A word's picture drawn twice, light and dusk, with the stylesheet showing the page's one so a theme change needs no
+ * redraw. Decorative; the card carries the name. An unknown id shows as its name so it can still be chosen.
  */
 export function PictureArt({ id }: { id: string }): React.JSX.Element {
   const base = `wp${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;

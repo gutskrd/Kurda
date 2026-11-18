@@ -30,11 +30,7 @@ function isContainer(value: unknown): value is Record<string, unknown> {
   );
 }
 
-/**
- * How deep a request's JSON may nest. Nothing the apps send comes near it; far
- * deeper bodies only cost memory to walk and validate, and stored as jsonb
- * they run Postgres out of stack.
- */
+/** How deep request JSON may nest; deeper bodies cost memory to walk and, stored as jsonb, run Postgres out of stack. */
 export const MAX_JSON_DEPTH = 32;
 
 /** What is wrong with a request part, in the shape a validation issue has. */
@@ -44,16 +40,10 @@ export interface RequestProblem {
 }
 
 /**
- * Cleans a request part (an object or an array, at any depth) in place: every
- * NUL character is taken out of its strings. Returns a problem when there is
- * no clean form — a key holding a NUL, which cannot be rewritten without
- * changing what it names, or nesting deeper than MAX_JSON_DEPTH — and null
- * otherwise.
- *
- * Walked with a stack rather than by recursion, so even a body nested far past
- * the limit cannot exhaust the call stack. Raw bodies (a Buffer, a stream, a
- * string kept for a signature check) are left as they came: they are for a
- * parser of their own, and a signed one must stay byte for byte.
+ * Cleans a request part (object or array, any depth) in place by removing every NUL from its strings. Returns a
+ * problem when there is no clean form (a key holding a NUL, or nesting past MAX_JSON_DEPTH), else null. Walked with a
+ * stack, not recursion, so deep bodies cannot exhaust the call stack. Raw bodies (a Buffer, a stream, a string kept
+ * for a signature check) are left untouched.
  */
 export function cleanRequestPart(value: unknown): RequestProblem | null {
   if (!isContainer(value)) return null;
@@ -75,16 +65,9 @@ export function cleanRequestPart(value: unknown): RequestProblem | null {
 }
 
 /**
- * Wires zod as the schema validator and enforces at boot that every
- * route declares the schemas it needs:
- *  - POST/PUT/PATCH must declare schema.body
- *  - routes with :params must declare schema.params
- *
- * A route may opt out explicitly with `config: { skipValidation: true }`
- * (reserve for webhook raw-body endpoints; justify in review).
- *
- * zod object schemas strip unknown keys by default, so extra fields
- * never reach handlers.
+ * Wires zod as the validator and enforces at boot that every route declares its schemas: POST, PUT and PATCH need
+ * schema.body, and routes with :params need schema.params. Opt out only with `config: { skipValidation: true }`, for
+ * raw-body webhooks. zod object schemas strip unknown keys, so extra fields never reach handlers.
  */
 export function setupValidation(app: FastifyInstance): void {
   app.setValidatorCompiler<ZodType>(({ schema, httpPart }) => {
@@ -100,15 +83,9 @@ export function setupValidation(app: FastifyInstance): void {
   });
 
   /*
-   * No text in a request reaches a handler with a NUL character in it.
-   * Postgres cannot store one in text or jsonb and answers with an error, which
-   * surfaced as a 500 from any route that wrote or even looked up what it was
-   * sent (a search, a display name, a sign-in). Taken out here, once, for every
-   * route: the query string, the path and the body, schema or no schema, before
-   * any schema or handler sees them, so every check runs on what is kept. This
-   * is the rule user text already follows (control characters are stripped,
-   * not refused); a key holding one is refused, having no clean form, and so
-   * is JSON nested deeper than MAX_JSON_DEPTH.
+   * No request text reaches a handler with a NUL in it: Postgres cannot store one in text or jsonb and would answer
+   * with an error, a 500. Removed once here from query, path and body, before any schema or handler, as control
+   * characters are elsewhere; a key holding one is refused, as is JSON nested past MAX_JSON_DEPTH.
    */
   app.addHook('preValidation', async (req) => {
     const parts: Array<[string, unknown]> = [

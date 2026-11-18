@@ -2,17 +2,15 @@ import { z } from 'zod';
 import { DictionaryRepository, normalizedHeadword, type XrefRelation } from './repository.js';
 
 /**
- * Deduplicating lexicon importer (KUR-048). Source data (JSON array of
- * entries) is validated, then imported de-duplicating by NORMALIZED headword
- * + part of speech:
+ * Deduplicating lexicon importer. A JSON array of entries is validated, then imported by normalized headword and
+ * part of speech:
  *
- *  - new headword          → create the entry + its senses
- *  - same headword, new POS → add the sense under the existing entry
- *  - same headword + POS, same definition → skip (duplicate)
- *  - same headword + POS, DIFFERENT definition → conflict: flagged for manual
- *    review, never silently merged
+ *  - new headword → create the entry and its senses
+ *  - same headword, new part of speech → add the sense to the entry
+ *  - same headword and part of speech, same definition → skip
+ *  - same headword and part of speech, different definition → flag as a conflict for review, never merge
  *
- * Dry-run writes nothing and returns the full conflict report.
+ * A dry run writes nothing and returns the full conflict report.
  */
 
 const POS_VALUES = [
@@ -21,14 +19,7 @@ const POS_VALUES = [
 ] as const;
 const RELATIONS = ['synonym', 'antonym', 'root', 'derived', 'related'] as const;
 
-/**
- * A sense needs *a* definition, not an English one.
- *
- * `definitionEn` was required, which assumed every source explains Kurdish in
- * English. Wîkîferheng — the largest Kurdish lexicon there is — explains
- * Kurmancî in Kurmancî, so its 447,000 glosses are Kurdish and were unimportable
- * without writing them into an English field and lying about them.
- */
+/** A sense needs a definition in some language, not necessarily English: the largest Kurdish lexicon explains Kurmancî in Kurmancî. */
 const senseSchema = z
   .object({
     pos: z.enum(POS_VALUES),
@@ -75,12 +66,8 @@ export interface LexiconImportResult {
 const same = (a: string, b: string): boolean => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
- * What to do with an incoming sense that matches an existing one's part of speech.
- *
- * Compared per language, which is the whole point. An existing English
- * definition and an incoming Kurdish one are not two answers to the same
- * question — they are two halves of one entry, and treating them as a conflict
- * would report every word twice over when two sources are imported in turn.
+ * What to do with an incoming sense matching an existing one's part of speech. Compared per language: an English
+ * definition and a Kurdish one are two halves of one entry, not a conflict.
  */
 type Verdict =
   | { kind: 'duplicate' }
@@ -175,12 +162,7 @@ export async function importLexicon(
         if (verdict.kind === 'duplicate') {
           result.duplicatesSkipped += 1;
         } else if (verdict.kind === 'fill') {
-          /*
-           * The two sources describe this word in different languages, so the
-           * second completes the first. This is what makes importing Wîkîferheng
-           * (Kurdish glosses) and then English Wiktionary give one entry with
-           * both, rather than a conflict report the length of the dictionary.
-           */
+          // The sources describe the word in different languages, so the second completes the first.
           if (!options.dryRun) await repo.fillSenseDefinition(match.id, verdict.side, verdict.text);
           result.definitionsFilled += 1;
         } else {
@@ -196,7 +178,7 @@ export async function importLexicon(
     }
   }
 
-  // cross-references (best-effort): resolve target headwords that now exist
+  // Best-effort cross-references to target headwords that now exist.
   if (!options.dryRun) {
     for (const entry of validation.entries) {
       if (!entry.xrefs?.length) continue;

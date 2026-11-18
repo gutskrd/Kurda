@@ -4,7 +4,7 @@ import { FaqList } from '../components/FaqList';
 import { useT } from '../i18n/I18nProvider';
 import { FAQ } from '../landing/faq';
 
-/** Every question, on a page of its own — the front page carries the first six. */
+/** Every question on one page; the front page carries the first six. */
 export function Faq(): React.JSX.Element {
   const t = useT();
   return (

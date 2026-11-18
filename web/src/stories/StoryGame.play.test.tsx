@@ -7,11 +7,7 @@ import { asked, renderPlay } from '../play/testing';
 import { StoryGame } from './StoryGame';
 import { detail, fakeApi, gameView, heldPoll, type Call } from './testing';
 
-/*
- * A story game and the play layer (contract §A1 / §B): the host's
- * "Invite friends" and the friends asked, in the lobby; "Play again" on the
- * results of a duo or a group.
- */
+/* A story game with the play layer: the host's "Invite friends" and invited list in the lobby, and "Play again" after. */
 
 afterEach(() => {
   vi.restoreAllMocks();

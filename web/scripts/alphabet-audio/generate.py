@@ -35,10 +35,9 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT = os.path.join(ROOT, 'public', 'audio', 'alphabet')
 MANIFEST = os.path.join(ROOT, '..', 'shared', 'src', 'alphabet', 'clips.ts')
 
-# (key, text, expected IPA without stress marks). A text in [[ ]] is an eSpeak
-# phoneme given directly — only the short u, which the voice otherwise reads long.
-# A letter's sound: a vowel on its own; a consonant before a, the way Kurdish
-# primers say them, because a stop like b or q cannot be heard alone.
+# (key, text, expected IPA without stress marks). Text in [[ ]] is an eSpeak phoneme given directly, used only for the
+# short u, which the voice otherwise reads long. A consonant is said before a, as Kurdish primers do, since a stop like
+# b or q cannot be heard alone.
 KMR_SOUNDS = [
     ('a', 'a', 'a'), ('b', 'ba', 'ba'), ('c', 'ca', 'dʒa'), ('ç', 'ça', 'tʃa'), ('d', 'da', 'da'),
     ('e', 'e', 'ɛ'), ('ê', 'ê', 'e'), ('f', 'fa', 'fa'), ('g', 'ga', 'ɡa'), ('h', 'ha', 'ha'),
@@ -48,7 +47,7 @@ KMR_SOUNDS = [
     ('û', 'û', 'u'), ('v', 'va', 'va'), ('w', 'wa', 'wa'), ('x', 'xa', 'xa'), ('y', 'ya', 'ja'),
     ('z', 'za', 'za'),
 ]
-# Kurmancî's example words, as letters.ts has them
+# Kurmancî's example words, as letters.ts has them.
 KMR_WORDS = [
     ('a', 'av', 'av'), ('b', 'bav', 'bav'), ('c', 'cîran', 'dʒiran'), ('ç', 'çav', 'tʃav'), ('d', 'dest', 'dɛst'),
     ('e', 'ez', 'ɛz'), ('ê', 'êvar', 'evar'), ('f', 'fêkî', 'feci'), ('g', 'gul', 'ɡʊl'), ('h', 'hesp', 'hɛsp'),
@@ -58,13 +57,13 @@ KMR_WORDS = [
     ('û', 'rû', 'ru'), ('v', 'evîn', 'ɛvin'), ('w', 'welat', 'wɛlat'), ('x', 'xwişk', 'xwɪʃk'), ('y', 'yek', 'jɛk'),
     ('z', 'ziman', 'zɪman'),
 ]
-# the sounds only Soranî gives letters of their own; the rest share Kurmancî's clips
+# The sounds only Soranî gives letters of their own; the rest share Kurmancî's clips.
 CKB_SOUNDS = [
     ('ḧe', 'ar', 'حا', 'ħaː'), ('eyn', 'ar', 'عا', 'ʕaː'), ('xeyn', 'ar', 'غا', 'ɣaː'),
     ('hamza', 'ar', 'أا', 'ʔaː'), ('łam', 'ru', 'ла', 'ɭɑ'), ('ře', 'ku', 'ra', 'ra'),
 ]
-# Soranî's example words. Read from Latin by the Kurmancî voice (same sounds),
-# or from Arabic by the Arabic voice where the word turns on ح ع غ.
+# Soranî's example words, read from Latin by the Kurmancî voice, or from Arabic by the Arabic voice where the word
+# turns on ح ع غ.
 CKB_WORDS = [
     ('hamza', 'ku', 'aw', 'aw'), ('alif', 'ku', 'dar', 'dar'), ('be', 'ku', 'bawk', 'bawk'),
     ('pe', 'ku', 'pişîle', 'pɪʃilɛ'), ('te', 'ku', 'to', 'to'), ('cîm', 'ku', 'cwan', 'dʒwan'),
@@ -78,7 +77,7 @@ CKB_WORDS = [
     ('he', 'ku', 'hawrê', 'hawre'), ('e', 'ku', 'êware', 'ewaɾɛ'), ('waw', 'ku', 'wişe', 'wɪʃɛ'),
     ('ww', 'ku', 'dûr', 'dur'), ('o', 'ku', 'xor', 'xor'), ('ye', 'ku', 'yek', 'jɛk'), ('ê', 'ku', 'rê', 're'),
 ]
-# minimal pairs: one mark, another word
+# Minimal pairs: one mark, another word.
 PAIRS = [('kur', 'kʊr'), ('kûr', 'kur'), ('dil', 'dɪl'), ('dîl', 'dil'), ('ker', 'kɛr'), ('kêr', 'cer'), ('şer', 'ʃɛr'), ('şêr', 'ʃer')]
 
 
@@ -89,7 +88,7 @@ def plain(ipa: str) -> str:
 def make(key: str, voice: str, text: str, expect: str, speed: int, clips: dict, out: str = OUT, prefix: str = 'a') -> None:
     espeak.voice(voice)
     phonemes = text.startswith('[[')
-    # a phoneme given directly is already the answer; text is checked against what it should say
+    # A phoneme given directly is the answer already; text is checked against what it should say.
     got = expect if phonemes else plain(espeak.ipa(text))
     if got != expect:
         sys.exit(f'{key}: eSpeak says /{got}/ for {text!r}, expected /{expect}/ — refusing to write it')

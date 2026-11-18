@@ -22,14 +22,14 @@ import type { WalletService } from '../wallet/service.js';
 /** Executor: a pool or a client, so water can be earned inside a lesson's own transaction. */
 type Executor = Pick<pg.Pool, 'query'>;
 
-/** The Zêr ledger's reasons: what a full-grown tree's harvest pays, and what a kind of tree costs. */
+/** The Zêr ledger reasons: a full-grown tree's harvest, and buying a kind. */
 export const TREE_HARVEST_REASON = 'tree_harvest';
 export const TREE_PURCHASE_REASON = 'tree_purchase';
 
 /** The most water anybody holds: far more than learning earns, and what the column allows. */
 const WATER_MOST = 9999;
 
-/** A kind as the learner sees it in the nursery: what it costs, and whether it is theirs to plant. */
+/** A kind as the nursery shows it: its cost, and whether it is the learner's to plant. */
 export interface TreeKindOffer {
   species: TreeSpecies;
   starter: boolean;
@@ -59,7 +59,7 @@ export interface Watered {
   revived: boolean;
 }
 
-/** What a finished lesson says about the tree: the water it earned, and what is held now. */
+/** What a finished lesson reports about the tree: the water earned, and what is held now. */
 export interface WaterEarned {
   gained: number;
   water: number;
@@ -88,11 +88,9 @@ function recordOf(row: TreeRow): TreeRecord | null {
 }
 
 /**
- * Water for a lesson or a practice session worked through: one more held by
- * the learner's tree, if they have planted one. Called inside the
- * completion's own transaction, once per completion, so a session never
- * earns twice. Nothing is earned before a tree is planted: the first tree
- * comes with the water to bring its seed up.
+ * Water for a completed lesson or practice session: one more held by the learner's tree, if planted. Called inside the
+ * completion's transaction once per completion, so a session never earns twice. Nothing is earned before planting;
+ * the first tree comes with the water to raise its seed.
  */
 export async function earnWater(db: Executor, userId: string, amount = 1): Promise<WaterEarned | null> {
   const res = await db.query<{ water: number; was: number }>(
@@ -107,12 +105,8 @@ export async function earnWater(db: Executor, userId: string, amount = 1): Promi
 }
 
 /**
- * The learner's tree (shared `tree.ts`): planting one, watering it with what
- * lessons earned, buying another kind, and showing it on a profile.
- *
- * Every day here is the learner's own calendar day, in the time zone their
- * account holds, as the streak's days are: a tree watered before their
- * midnight was watered that day wherever the server is.
+ * The learner's tree (shared `tree.ts`): planting, watering with what lessons earned, buying kinds, and the profile
+ * view. Every day is the learner's own calendar day in their account's zone, as for the streak.
  */
 export class TreeService {
   constructor(
@@ -144,10 +138,8 @@ export class TreeService {
   }
 
   /**
-   * Plant a kind: the first tree, or another in place of the one that
-   * stands, which is gone with all it had grown. Only a kind that is free or
-   * already bought (403 TREE_NOT_OWNED). The water held stays, and a tree is
-   * never planted with less than brings its seed up.
+   * Plants a kind: the first tree, or a replacement for the standing one, which is lost with its growth. Only a free or
+   * bought kind (403 TREE_NOT_OWNED). Held water stays, and a tree is never planted with less than raises its seed.
    */
   async plant(userId: string, species: string, now: Date = new Date()): Promise<MyTree> {
     if (!isTreeSpecies(species)) throw new AppError('TREE_NOT_FOUND', 404, 'no such kind of tree');
@@ -179,10 +171,8 @@ export class TreeService {
   }
 
   /**
-   * Buy a kind with Zêr, once: it is the learner's to plant from then on.
-   * Buying plants nothing, so the tree that stands is not lost by it. 409
-   * TREE_OWNED for a kind already theirs or free to everybody, 402 when the
-   * Zêr is short.
+   * Buys a kind with Zêr, once, to plant from then on. Buying plants nothing, so the standing tree is kept. 409
+   * TREE_OWNED for a kind already owned or free, 402 when Zêr is short.
    */
   async buy(userId: string, species: string, now: Date = new Date()): Promise<MyTree> {
     if (!isTreeSpecies(species)) throw new AppError('TREE_NOT_FOUND', 404, 'no such kind of tree');
@@ -205,12 +195,9 @@ export class TreeService {
   }
 
   /**
-   * Pour water held onto the tree: `count` of it, or as much as there is.
-   * The tree grows by it, is fresh again whatever state it was in, and a
-   * full-grown one may bear, which pays Zêr through the wallet in the same
-   * transaction (keyed on the tree and the harvest, so a retry pays once; an
-   * account the economy does not pay still waters and bears, unpaid). 404
-   * TREE_NOT_PLANTED before a tree is planted, 409 TREE_NO_WATER with none held.
+   * Pours held water onto the tree, `count` or all of it. The tree grows and is fresh again, and a full-grown one may
+   * bear, paying Zêr in the same transaction under a key of tree and harvest so a retry pays once (an account the
+   * economy does not pay still waters and bears, unpaid). 404 TREE_NOT_PLANTED, 409 TREE_NO_WATER.
    */
   async water(userId: string, count: number, now: Date = new Date()): Promise<Watered> {
     const client = await this.pool.connect();
@@ -253,7 +240,7 @@ export class TreeService {
     }
   }
 
-  /** Somebody's tree as their profile shows it, on their own today; null when they have planted none. */
+  /** Someone's tree as their profile shows it on their own today; null when none is planted. */
   async glimpse(userId: string, now: Date = new Date()): Promise<TreeGlimpse | null> {
     const res = await this.pool.query<TreeRow>(`SELECT ${TREE_COLUMNS}, u.timezone FROM user_trees t JOIN users u ON u.id = t.user_id WHERE t.user_id = $1`, [userId]);
     const row = res.rows[0];

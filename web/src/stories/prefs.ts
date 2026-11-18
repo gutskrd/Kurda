@@ -1,18 +1,12 @@
 /**
- * What a reader's device remembers about Stories: the variety and length they
- * last looked at, the text size, whether English sits under the questions,
- * extra time, and the quiz settings "Quiz yourself" starts with.
- *
- * All of it is a convenience, so all of it is allowed to be missing: storage
- * can throw (a private window, blocked site data) or come back empty, and
- * every read here falls back to the default rather than failing the page.
+ * What this device remembers about Stories: the variety, text size, English under questions, extra time and the "Quiz
+ * yourself" settings. Storage may throw or be empty, so every read falls back to a default.
  */
 import {
   DEFAULT_QUESTION_COUNT,
   QUESTION_COUNTS,
   isAllowedQuestionCount,
   isStoryDialect,
-  isStoryLength,
   isTextDuring,
   isTimerPreset,
   storyDialectForCourse,
@@ -25,7 +19,6 @@ import {
 
 const KEY = {
   variety: 'hevalo.stories.variety',
-  length: 'hevalo.stories.length',
   textSize: 'hevalo.stories.textSize',
   english: 'hevalo.stories.english',
   extraTime: 'hevalo.stories.extraTime',
@@ -46,17 +39,13 @@ function write(key: string, value: string | null): void {
     if (value === null) localStorage.removeItem(key);
     else localStorage.setItem(key, value);
   } catch {
-    // a device that will not remember is still a device that can read
+    // A device that will not remember can still read.
   }
 }
 
-// ---- the course a learner is on -------------------------------------------------
+// ---- The course a learner is on ----
 
-/**
- * The variety of the last lesson this device opened, which is what "the
- * learner's course" means here: the lesson player knows it, nothing else has
- * to be asked for it, and it follows a learner who switches course.
- */
+/** Records the variety of the last lesson opened on this device, which is what "the learner's course" means here. */
 export function rememberCourseDialect(dialect: string | null | undefined): void {
   if (dialect) write(KEY.course, storyDialectForCourse(dialect));
 }
@@ -67,13 +56,12 @@ export function courseDialect(): StoryDialect | null {
   return isStoryDialect(course) ? course : null;
 }
 
-/** this tab's own choice, so going to a story and back keeps the variety you were looking at */
+/** This tab's own choice, so visiting a story and coming back keeps the variety. */
 let sessionVariety: StoryDialect | null = null;
 
 /**
- * The variety the hub opens on (contract §A1): the learner's course; else
- * Soranî when the interface is Soranî; else the one chosen last time; else
- * Kurmancî. A choice made in this tab wins for as long as the tab is open.
+ * The variety the hub opens on: the learner's course, else Soranî for a Soranî interface, else the last choice, else
+ * Kurmancî. A choice made in this tab wins while it is open.
  */
 export function defaultVariety(locale: string): StoryDialect {
   if (sessionVariety) return sessionVariety;
@@ -86,14 +74,9 @@ export function defaultVariety(locale: string): StoryDialect {
 }
 
 /**
- * The variety the stories show — the library, and the switch on a story told
- * in both: the one chosen last on this device (with that switch, or on the
- * riddles' and proverbs' shelves, which share the choice); before any choice,
- * Soranî for a Soranî interface, otherwise Kurmancî. Unlike `defaultVariety`
- * the learner's course does not come into it: somebody who chose Kurmancî
- * stories keeps them, whichever course they are on. Only a choice made with a
- * switch is kept (`rememberVariety`); opening a story of the other variety
- * from a link is not one.
+ * The variety stories are shown in: the last choice on this device (by a story switch or the riddles' and proverbs'
+ * shelves, which share it), else Soranî for a Soranî interface, else Kurmancî. Unlike `defaultVariety` the course does
+ * not count. Only a switch records a choice (`rememberVariety`); opening a story from a link does not.
  */
 export function shownVariety(locale: string): StoryDialect {
   if (sessionVariety) return sessionVariety;
@@ -107,29 +90,16 @@ export function rememberVariety(dialect: StoryDialect): void {
   write(KEY.variety, dialect);
 }
 
-/** For tests: forget this tab's choice. */
+/** Forgets this tab's choice, for tests. */
 export function resetSessionVariety(): void {
   sessionVariety = null;
 }
 
-// ---- the length filter ------------------------------------------------------------
-
-export type LengthFilter = StoryLength | 'all';
-
-export function rememberedLength(): LengthFilter {
-  const v = read(KEY.length);
-  return isStoryLength(v) ? v : 'all';
-}
-
-export function rememberLength(length: LengthFilter): void {
-  write(KEY.length, length);
-}
-
-// ---- reading ----------------------------------------------------------------------
+// ---- Reading ----
 
 /** Text sizes, as a step in rem; the second is where everyone starts. */
 export const TEXT_SIZES = [1, 1.15, 1.32, 1.52] as const;
-export const DEFAULT_TEXT_SIZE = 1;
+const DEFAULT_TEXT_SIZE = 1;
 
 export function rememberedTextSize(): number {
   const raw = read(KEY.textSize);
@@ -143,9 +113,8 @@ export function rememberTextSize(step: number): void {
 }
 
 /**
- * "English under questions": null until the reader chooses, and then their
- * choice. Unchosen, English shows under level-1 questions only (a beginner is
- * asked in Kurdish they may not read yet; past that, the Kurdish is the point).
+ * "English under questions": null until the reader chooses. Unchosen, English shows under level-1 questions only,
+ * since a beginner may not read the Kurdish yet.
  */
 export function rememberedEnglish(): boolean | null {
   const v = read(KEY.english);
@@ -169,10 +138,10 @@ export function rememberExtraTime(on: boolean): void {
   write(KEY.extraTime, on ? 'on' : 'off');
 }
 
-// ---- "Quiz yourself" ------------------------------------------------------------------
+// ---- "Quiz yourself" ----
 
 export interface SoloSettings {
-  /** null: the length's default */
+  /** Null: the length's default. */
   questionCount: QuestionCount | null;
   timerSeconds: TimerSeconds;
   textDuring: TextDuring;
@@ -198,7 +167,7 @@ export function rememberSolo(settings: SoloSettings): void {
   write(KEY.quiz, JSON.stringify(settings));
 }
 
-/** The count a remembered setting asks for on a story of this length: the length's default when it is not offered there. */
+/** The count a remembered setting gives on a story of this length, or the length's default when not offered there. */
 export function soloCountFor(length: StoryLength, remembered: QuestionCount | null): QuestionCount {
   return remembered !== null && isAllowedQuestionCount(length, remembered) ? remembered : DEFAULT_QUESTION_COUNT[length];
 }

@@ -1,34 +1,17 @@
 import { PROVIDER, emailPictureTone, type EmailPicture } from '@kurda/shared';
 
 /**
- * How every email from Hevalo and from Zagrosian looks: the sender's mark,
- * one drawn picture on a tile, moving in a small loop, a large heading, a few
- * short lines, one thing to press (or a code to type), and a quiet footer
- * that says who wrote and where to answer. Nothing else: an email that asks
- * for one thing shows one thing.
+ * How every email from Hevalo and Zagrosian looks: the sender's mark, one looping picture on a tile, a large
+ * heading, a few short lines, one thing to press or a code to type, and a footer saying who wrote and where to
+ * answer. This file only draws; the words come from the plain text (templates.ts) or a support answer.
  *
- * This file only draws. What an email says is written once, as its plain
- * text (templates.ts), and read into blocks from there; an answer from the
- * support inbox hands its own blocks over (support-inbox.ts).
+ * Mail programs draw a small, old subset of HTML, so: tables with every style inline, since some drop stylesheets;
+ * images at an address (no SVG), each sized so the page does not jump and on a coloured tile so a blocked image
+ * leaves a tile; a still frame beside each loop for programs honouring reduced motion; and tiles behind the mark and
+ * picture because dark mode leaves images alone.
  *
- * Email programs draw a small, old part of HTML, each a different part:
- *   - the page is tables with every style written on the element, because
- *     some programs throw a stylesheet away;
- *   - pictures are images at an address (email draws no SVG), each with its
- *     size written on it so the page does not jump while they load, and its
- *     tile's colour behind it so a blocked image leaves a tile, not a hole;
- *   - the picture is its loop, and beside it, out of sight, the moment it
- *     rests on: a program that passes on a reader's wish for less motion
- *     shows that instead, and one that plays no loops shows the loop's first
- *     frame, which is the same moment;
- *   - a program in dark mode either reads the stylesheet's dark colours or
- *     turns the light page dark itself, and leaves images alone either way,
- *     which is why the mark and the picture sit on tiles of their own.
- *
- * Whatever is filled in (a username, a statement somebody wrote) is escaped
- * here and is never markup. A link is drawn only for an address this server
- * made: a button for an http(s) address, a link inside a sentence only for
- * an address on Hevalo itself. Anything else stays text.
+ * Filled-in text is always escaped. A button is drawn only for an http(s) address and an inline link only for one
+ * on Hevalo itself; anything else stays text.
  */
 
 export type EmailBrand = 'hevalo' | 'zagrosian';
@@ -91,7 +74,7 @@ const BRANDS: Readonly<Record<EmailBrand, Brand>> = {
   zagrosian: { name: 'Zagrosian', home: 'https://zagrosian.com', logo: 'https://zagrosian.com/icon-192.png', display: SANS, tracking: '-0.03em' },
 };
 
-/** The page's colours by day; the stylesheet below gives a program that asks for them the night's. */
+/** Day colours; the stylesheet below gives the night ones to programs that ask. */
 const INK = '#111111';
 const INK_2 = '#2f3033';
 const INK_3 = '#5e6066';
@@ -103,7 +86,7 @@ export function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/** An address a button may open: http or https, and nothing else (never `javascript:` or `data:`). */
+/** An address a button may open: http or https only, never `javascript:` or `data:`. */
 export function safeHref(value: string): string | null {
   try {
     const url = new URL(value.trim());
@@ -113,7 +96,7 @@ export function safeHref(value: string): string | null {
   }
 }
 
-/** An address a sentence may link to: one on Hevalo itself. Anybody else's stays text, however it got into the sentence. */
+/** An address a sentence may link to: only one on Hevalo itself. */
 function ownHref(value: string): string | null {
   const href = safeHref(value);
   if (!href) return null;
@@ -158,7 +141,7 @@ function block(b: EmailBlock, align: 'center' | 'left'): string {
       );
     case 'button': {
       const href = safeHref(b.href);
-      // an address that is not one a button may open is shown as it is, so nothing is lost and nothing is pressed
+      // An address a button may not open is shown as text, so nothing is lost and nothing can be pressed.
       if (!href) return row(`<p class="ink2" style="margin:0;font:400 15px/1.5 ${SANS};color:${INK_2};word-break:break-all;">${escapeHtml(b.href)}</p>`, align, '0 0 14px');
       return row(
         `<a href="${escapeHtml(href)}" class="btn" style="display:inline-block;background:${INK};color:${PAPER};font:600 17px/1 ${SANS};text-decoration:none;padding:17px 34px;border-radius:999px;">${escapeHtml(b.label)}</a>`,

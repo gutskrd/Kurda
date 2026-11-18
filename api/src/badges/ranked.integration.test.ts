@@ -1,13 +1,6 @@
 /**
- * The ranked badges earned from real rated games (contract 4 §R → §B2): Peyvok
- * Battles and Pêşbaziya Serwayanes played through their services, rated by Game
- * Ranks, told on `ranks.events`, and heard by the badges the way the API
- * wires them (`createProgression` given the RankService's events). Then a
- * season closed by the season job, and the season's badges it hands out.
- *
- * Only what a game cannot produce in a test's time is seeded: a rating that is
- * already high (to beat a stronger player, or to finish a season at the top),
- * and the other players of a season, so that a top 1% means something.
+ * Ranked badges earned from real rated games, wired as the API wires them, then a season closed by the season job.
+ * Only what a test cannot play in time is seeded: high ratings, and the other players of a season.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import pg from 'pg';
@@ -55,11 +48,7 @@ describe.skipIf(!DATABASE_URL)('ranked badges from rated games (integration)', (
     clock = new Date(clock.getTime() + ms);
   };
 
-  /**
-   * The badges hear of a game after its commit, on their own: everything they
-   * were told is waited for here before anything is checked (the listeners
-   * are the ones `createProgression` subscribed; this only keeps their promises).
-   */
+  /** The badges hear of a game after its commit, so every listener promise is awaited before checking. */
   const pending = new Set<Promise<unknown>>();
   const settle = async () => {
     while (pending.size) await Promise.all([...pending]);
@@ -81,7 +70,7 @@ describe.skipIf(!DATABASE_URL)('ranked badges from rated games (integration)', (
       `SELECT peak_points, points, placement_done, rated_games FROM game_ratings WHERE user_id = $1 AND game = $2`,
       [userId, game],
     )).rows[0]!;
-  /** A rating already earned, written straight to the table (games cannot climb this far in a test's time). */
+  /** A rating written straight to the table, since games cannot climb this far in a test. */
   const seedRating = async (
     userId: string,
     game: RankedGame,
@@ -153,8 +142,8 @@ describe.skipIf(!DATABASE_URL)('ranked badges from rated games (integration)', (
         );
         entryIds.push(r.rows[0]!.id);
       }
-      // fifty games, a little over six hours apart, all in one season: start
-      // now, or at the next season's start when this one ends too soon
+      // Fifty games a little over six hours apart in one season: from now, or from the next season's start if this
+      // one ends too soon.
       const now = new Date();
       const season = seasonOf(now);
       clock = new Date(season.endsAt).getTime() - now.getTime() > 20 * DAY ? now : new Date(new Date(season.endsAt).getTime() + HOUR);

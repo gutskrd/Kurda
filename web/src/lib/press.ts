@@ -1,29 +1,21 @@
 /**
- * When a button, a link or a row shows that it is pressed.
- *
- * A browser shows `:active` the instant a finger lands, so a finger that
- * lands on a button only to scroll the page lit the button up, and every
- * scroll through a list flickered the rows it passed over. The pressed look
- * is drawn from a class instead (`is-pressed`; the build turns the styles'
- * `:active` into it, `pressStyles.ts`), and the class is set here the way the
- * systems' own lists do it: at once for a mouse or a pen, but for a finger
- * only once it has stayed put for `TOUCH_HOLD_MS` without moving off to
- * scroll. A quick tap, let go before then, still flashes pressed as it lands,
- * so a tap always answers. The keyboard's Space and Enter press too.
+ * Sets the `is-pressed` class that the build substitutes for `:active` (`pressStyles.ts`). A browser shows `:active`
+ * the instant a finger lands, so scrolling lit up whatever it started on. Here a mouse, pen or key presses at once, a
+ * finger only after holding still for `TOUCH_HOLD_MS`, and a quicker tap still flashes pressed.
  */
 
-/** What can be pressed: whatever a click or a tap does something on. */
+/** Whatever a click or tap does something on. */
 const PRESSABLE =
   'a[href], button, summary, label, select, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="option"], [role="switch"], [role="checkbox"], [role="radio"], input[type="checkbox"], input[type="radio"], input[type="button"], input[type="submit"]';
 
-/** How long a finger stays put before it is a press rather than the start of a scroll, as a phone's own lists wait. */
+/** How long a finger holds still before it is a press rather than the start of a scroll. */
 export const TOUCH_HOLD_MS = 100;
-/** How long a quick tap shows as pressed, so it is seen. */
+/** How long a quick tap shows as pressed. */
 export const TAP_FLASH_MS = 120;
-/** How far a finger may move and still be pressing, rather than scrolling. */
+/** How far a finger may move and still be pressing. */
 const SLOP_PX = 10;
 
-/** Starts showing presses on the page; gives back a way to stop. */
+/** Starts showing presses on the page; returns the way to stop. */
 export function installPressFeedback(doc: Document = document): () => void {
   let pressed: Element | null = null;
   let hold = 0;
@@ -61,7 +53,7 @@ export function installPressFeedback(doc: Document = document): () => void {
 
   const move = (e: PointerEvent): void => {
     if (!pressed || e.pointerId !== from.id || e.pointerType !== 'touch') return;
-    // a finger that has set off is scrolling, not pressing
+    // A finger that moves off is scrolling.
     if (Math.hypot(e.clientX - from.x, e.clientY - from.y) > SLOP_PX) clear();
   };
 
@@ -69,7 +61,7 @@ export function installPressFeedback(doc: Document = document): () => void {
     if (!pressed || e.pointerId !== from.id) return;
     const el = pressed;
     if (hold) {
-      // let go before the hold was up: a tap, shown for an instant as it lands
+      // Released before the hold was up: a tap, flashed briefly.
       window.clearTimeout(hold);
       hold = 0;
       el.classList.add('is-pressed');
@@ -100,7 +92,7 @@ export function installPressFeedback(doc: Document = document): () => void {
     ['keydown', keyDown as EventListener],
     ['keyup', keyUp as EventListener],
   ];
-  // scrolling anywhere ends a press, so it is heard on the way down from every scrolling box
+  // Capture phase, so a scroll in any scrolling box ends the press.
   for (const [type, fn] of listen) doc.addEventListener(type, fn, { capture: true, passive: true });
   return () => {
     clear();

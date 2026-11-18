@@ -12,30 +12,22 @@ export interface VerifiedReceipt {
   transactionId: string;
   productId: string;
   environment: IapEnvironment;
-  /** family-shared receipts are exempt from receipt-reuse fraud flags (KUR-073). */
+  /** Family-shared receipts are exempt from receipt-reuse fraud flags. */
   ownershipType: OwnershipType;
 }
 
 /**
- * Server-to-server receipt validation (KUR-072). The real Apple (App Store
- * Server API) and Google (Play Developer API) verifiers plug in behind this
- * interface; the shape they return is all the IapService needs. Kept abstract
- * so the grant/dedup/refund logic is fully testable without live store
- * credentials — the same pattern as the speaking scorer (real model = KUR-120).
+ * Server-to-server receipt validation. Real store verifiers plug in behind this interface; keeping it abstract lets
+ * the grant, deduplication and refund logic be tested without store credentials.
  */
 export interface ReceiptVerifier {
   verify(platform: IapPlatform, token: string, productId: string): Promise<VerifiedReceipt>;
 }
 
 /**
- * Dev/test verifier: the token is a JSON blob describing the receipt, so tests
- * (and local development without store accounts) can drive every branch
- * deterministically.
- *
- * Never selected in production — createReceiptVerifier will not hand it out
- * there, because every field it returns is taken from the token it was given,
- * and the app refuses to start if one is handed to it there anyway
- * (`assertProductionVerifier`).
+ * Dev and test verifier: the token is a JSON blob describing the receipt, so tests can drive every branch. Never
+ * used in production, since every field comes from the token: createReceiptVerifier will not return it there, and
+ * `assertProductionVerifier` stops the app if one is passed in anyway.
  */
 export class StubReceiptVerifier implements ReceiptVerifier {
   async verify(_platform: IapPlatform, token: string, productId: string): Promise<VerifiedReceipt> {
@@ -61,18 +53,9 @@ export class StubReceiptVerifier implements ReceiptVerifier {
 }
 
 /**
- * The verifier a production deploy gets when it has no store credentials.
- *
- * It refuses every receipt, which is the only safe thing an unverified
- * environment can do. IAP_PURCHASES_OFF exists so such a deploy can *boot* —
- * that is all it buys. (Its older name, IAP_ALLOW_STUB, is read the same way:
- * it once handed out the stub to satisfy it, and now selects only this.) That
- * was the wrong shape: the stub answers `valid: true` to any
- * JSON carrying a transactionId, and every field it reports comes from the
- * token, so the caller also chooses `environment: 'production'` and walks
- * through the sandbox check on the way past. The only thing standing between
- * that and free currency was whether anyone had added a row to `gem_packs` —
- * which is a thing you do on the way to launch, not a security control.
+ * The verifier a production deploy without store credentials gets: it refuses every receipt, the only safe answer
+ * without verification. IAP_PURCHASES_OFF (or its older name IAP_ALLOW_STUB) lets such a deploy boot and nothing
+ * more; it must never yield the stub, which accepts any JSON carrying a transactionId.
  */
 export class UnavailableReceiptVerifier implements ReceiptVerifier {
   async verify(): Promise<VerifiedReceipt> {
@@ -84,27 +67,18 @@ export class UnavailableReceiptVerifier implements ReceiptVerifier {
   }
 }
 
-/** Store purchases are switched off: the flag, or its older name, which means the same and nothing more. */
+/** Store purchases are switched off, by the flag or its older name. */
 export function purchasesOff(config: AppConfig): boolean {
   return config.IAP_PURCHASES_OFF === 'true' || config.IAP_ALLOW_STUB === 'true';
 }
 
 /**
- * Select the verifier for the current environment. Real store verifiers are
- * wired here once their credentials are configured; until then (and in tests)
- * the stub is used.
- *
- * Production without a real verifier is a hard error, so we never silently
- * accept unverified receipts on the live store. A deployment may opt out of
- * the crash with IAP_PURCHASES_OFF=true — and what it gets is the verifier
- * that refuses, never the one that approves. Booting without store
- * credentials and granting purchases without store credentials are different
- * requests, and only the first one is reasonable.
+ * Selects the verifier for the environment: the stub outside production. Production without a real verifier is a
+ * hard error, so unverified receipts are never accepted; IAP_PURCHASES_OFF=true avoids the crash by selecting the
+ * verifier that refuses, never one that approves.
  */
 export function createReceiptVerifier(config: AppConfig): ReceiptVerifier {
-  // NOTE: AppleReceiptVerifier / GoogleReceiptVerifier (real S2S calls) plug in
-  // here when APPLE/GOOGLE store credentials land — follow-up, needs live
-  // store accounts to integration-test. Until then dev/test use the stub.
+  // Real store verifiers plug in here once store credentials exist.
   if (config.NODE_ENV === 'production') {
     if (!purchasesOff(config)) {
       throw new Error(
@@ -118,9 +92,8 @@ export function createReceiptVerifier(config: AppConfig): ReceiptVerifier {
 }
 
 /**
- * The last word before a verifier is used: under NODE_ENV=production a stub —
- * however it got here, from this module or handed in by whoever builds the app
- * — stops the process from starting. Returns the verifier it was given.
+ * The last check before a verifier is used: under NODE_ENV=production a stub, however it arrived, stops the process
+ * from starting. Returns the verifier it was given.
  */
 export function assertProductionVerifier<T extends ReceiptVerifier>(config: AppConfig, verifier: T): T {
   if (config.NODE_ENV === 'production' && verifier instanceof StubReceiptVerifier) {

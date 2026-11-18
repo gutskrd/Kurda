@@ -1,8 +1,6 @@
 /*
- * The teams of a team game's lobby (play/TeamPicker.tsx): a column per team
- * in its tone from the path's palette (`--u-fill`, `--u-text`), named as well
- * as coloured. Side by side from a tablet's width, one above the other on a
- * phone. Every control is at least 44 px tall.
+ * A team game's lobby teams (play/TeamPicker.tsx): a column per team in its path tone (`--u-fill`, `--u-text`), side by
+ * side from tablet width, stacked on a phone; every control at least 44px tall.
  */
 .team-picker {
   display: grid;

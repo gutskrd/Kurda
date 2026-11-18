@@ -44,11 +44,7 @@ function bodyOf(fetchMock: ReturnType<typeof vi.fn>, path: string): Record<strin
 }
 
 describe('Register', () => {
-  /**
-   * Nothing on the form may hint at which answer gets an account, or gets more:
-   * no default to accept, and the years that are too young are listed like
-   * every other.
-   */
+  // Nothing hints at which answer gets an account: no default, and too-young years are listed like the rest.
   it('asks for the birth month and year with nothing chosen and every year offered', () => {
     renderRegister();
     const month = screen.getByLabelText(en['age.month']) as HTMLSelectElement;
@@ -73,21 +69,16 @@ describe('Register', () => {
     const said = await screen.findByRole('alert');
     expect(said).toHaveTextContent(en['age.required']);
     expect(bodyOf(fetchMock, '/auth/register')).toBeUndefined();
-    // said under the two it is about, which are marked, and not above the form
+    // Said under the two it is about, which are marked, and not above the form.
     const birth = screen.getByRole('group', { name: en['age.label'] });
     expect(birth).toContainElement(said);
     expect(birth).toHaveClass('has-problem');
-    // and gone once an answer is being given
+    // And gone once an answer is being given.
     await chooseBirth('3', '1990');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  /**
-   * Every refusal used to be one red box above the first field. A username
-   * that is taken is said under the username, which is marked, shaken once and
-   * given the caret; and what a username may be made of is under its field
-   * from the start, not only after the form was refused for it.
-   */
+  // A taken username is said under the username, which is marked, shaken and focused, and its rule shows from the start.
   it('says what is wrong with the username under the username, and its rule there from the start', async () => {
     vi.stubGlobal(
       'fetch',
@@ -95,7 +86,7 @@ describe('Register', () => {
     );
     renderRegister();
     const username = screen.getByLabelText('Username');
-    // the rule is a hint that stays, and the field is typed as it is meant
+    // The rule is a hint that stays, and the field is typed as it is meant.
     expect(username).toHaveAccessibleDescription(USERNAME_RULE);
     expect(username).toHaveAttribute('autocapitalize', 'none');
     expect(username).toHaveAttribute('spellcheck', 'false');
@@ -110,10 +101,10 @@ describe('Register', () => {
     expect(field).toHaveClass('has-problem', 'is-shake-a');
     expect(username).toHaveAttribute('aria-invalid', 'true');
     await waitFor(() => expect(username).toHaveFocus());
-    // the rule is still there beside it, and nothing is said above the form
+    // The rule is still there beside it, and nothing is said above the form.
     expect(within(field as HTMLElement).getByText(USERNAME_RULE)).toHaveClass('field-hint');
     expect(document.querySelector('.msg')).toBeNull();
-    // the other fields are not marked for it
+    // The other fields are not marked for it.
     expect(screen.getByLabelText('Password').closest('.field')).not.toHaveClass('has-problem');
 
     await userEvent.type(username, '2');
@@ -167,7 +158,7 @@ describe('Register', () => {
 
     const said = await screen.findByRole('alert');
     expect(said).toHaveClass('field-problem');
-    // whatever the rule's words are, they are on the page once: not as a grey hint and again in red
+    // Whatever the rule's words are, they are on the page once: not as a grey hint and again in red.
     expect(screen.getAllByText(said.textContent!)).toHaveLength(1);
   });
 
@@ -219,10 +210,7 @@ describe('Register', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(en['error.code.passwordBreached']);
   });
 
-  /**
-   * Someone sent here from a friend's game invite gets there once the account
-   * exists and its email is confirmed — not the first lesson (pages/VerifyEmail).
-   */
+  // Someone sent from a friend's invite gets there once the email is confirmed, not the first lesson (pages/VerifyEmail).
   it('remembers where the new account was going, for after the email is confirmed', async () => {
     vi.stubGlobal(
       'fetch',
@@ -248,17 +236,7 @@ describe('Register', () => {
     expect(JSON.parse(localStorage.getItem('hevalo.afterSignup') ?? '{}')).toMatchObject({ path: '/app/games/peyvok-battle?id=b1' });
   });
 
-  /**
-   * Under 13 no account is made. The form gives way to an explanation, and it
-   * stays for the rest of the browser session — an empty form handed straight
-   * back would only invite a different year.
-   */
-  /**
-   * An address that already has an account is refused without saying so (the
-   * server will not tell anybody which addresses are registered). The page
-   * says what can be done instead, and offers both, rather than "Something
-   * went wrong".
-   */
+  // The server never says an address is registered, so the page offers sign-in and a password reset instead.
   it('offers to sign in or reset the password when the details cannot make an account', async () => {
     vi.stubGlobal(
       'fetch',
@@ -291,7 +269,7 @@ describe('Register', () => {
     await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(en['error.code.passwordNeedsNumber']);
-    // a refusal about the form itself has no ways out of it, only the fix
+    // A refusal about the form itself has no ways out of it, only the fix.
     expect(within(alert).queryByRole('link')).not.toBeInTheDocument();
   });
 

@@ -50,7 +50,7 @@ describe('Rankings', () => {
     expect(league).toHaveAttribute('aria-selected', 'true');
     expect(await screen.findByRole('heading', { name: en['leagues.resting.title'] })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: en['leagues.leave'] })).toBeInTheDocument();
-    // the leaderboard is not asked for until it is looked at
+    // The leaderboard is not asked for until it is looked at.
     expect(fetch.mock.calls.some(([url]) => String(url).includes('/leaderboards/'))).toBe(false);
     expect(screen.queryByText('rojda')).toBeNull();
   });
@@ -127,11 +127,11 @@ describe('Rankings, by Zêr and Gewher', () => {
     expect(await screen.findByText('dilan')).toBeInTheDocument();
     expect(fetch.mock.calls.some(([url]) => String(url).includes('/leaderboards/zer?scope=global&limit=25&offset=0'))).toBe(true);
     expect(screen.getByText(en['rankings.board.zerBlurb'])).toBeInTheDocument();
-    // most to least, the tie sharing second, each amount with the coin beside it and its name for a screen reader
+    // Most to least, the tie sharing second, each amount with the coin beside it and its name for a screen reader.
     expect(rows(en['rankings.board.zer'])).toEqual(['1dilan900Zêr', '2azad500Zêr', '2rojin500Zêr', '4baran100Zêr']);
     const first = within(screen.getByRole('list', { name: en['rankings.board.zer'] })).getAllByRole('listitem')[0]!;
     expect(first.querySelector('.rank-amount svg')).not.toBeNull();
-    // the board stopped at its depth and reached it: this is the top of it, not everyone
+    // The board stopped at its depth and reached it: this is the top of it, not everyone.
     expect(screen.getByText(en['rankings.topOnly'].replace('{count}', '4'))).toBeInTheDocument();
     expect(screen.queryByText('rojda')).toBeNull();
   });

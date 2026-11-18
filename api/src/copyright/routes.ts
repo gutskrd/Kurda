@@ -5,9 +5,8 @@ import { requireAuth } from '../plugins/auth.js';
 import type { CopyrightService } from './service.js';
 
 /*
- * The body is only shaped here, generously: what each field must hold is the
- * shared check's job (copyrightNoticeProblems), so the form and the API answer
- * with the same problems, field by field, in one 422.
+ * The body is only shaped here: the shared check (copyrightNoticeProblems) decides what each field must hold, so
+ * the form and the API report the same problems in one 422.
  */
 const text = (max: number) => z.string().max(max).nullish();
 const noticeBody = z.object({
@@ -41,14 +40,9 @@ const counterBody = z.object({
 const idParams = z.object({ id: z.uuid() });
 
 /**
- * Copyright notices (contract-3 §C).
- *
- * - `POST /copyright/notices` — no sign-in: rights holders are usually not
- *   members. No captcha either; a few notices an hour per network address is
- *   the brake (in the limiter, and again in the database).
- * - `GET /me/copyright/notices`, `POST /me/copyright/notices/:id/counter` —
- *   the uploader's side: which notices took something of theirs down, and
- *   the counter-notice.
+ * Copyright notice routes. `POST /copyright/notices` needs no sign-in, since rights holders are rarely members;
+ * a few notices an hour per address is the brake, in the limiter and again in the database. The `/me` routes are
+ * the uploader's side: which notices took something down, and the counter-notice.
  */
 export function registerCopyrightRoutes(app: FastifyInstance, copyright: CopyrightService): void {
   app.post(

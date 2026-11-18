@@ -2,13 +2,9 @@ import { createHash } from 'node:crypto';
 import { QUEST_KINDS, type ChestTier, type QuestKind } from '@kurda/shared';
 
 /**
- * Daily quests, the pure part: which three a learner gets on a day, how much
- * each asks, the chest it pays, and what is in the chest.
- *
- * Everything here is decided by a hash of who and when, never by a random
- * draw: asking again (a retry, a second device, the read and the completion
- * that both make the day's quests) always gives the same three, the same
- * targets and the same Zêr, so nothing can be rerolled by asking twice.
+ * The pure part of daily quests: which three a learner gets, how much each asks, the chest it pays and what is in it.
+ * Everything comes from a hash of who and when, never a random draw, so asking again gives the same quests, targets
+ * and Zêr and nothing can be rerolled.
  */
 
 /** One of a day's quests as the pick makes it, before any progress. */
@@ -28,10 +24,7 @@ export const CHEST_ZER: Readonly<Record<ChestTier, { min: number; max: number }>
   epic: { min: 20, max: 35 },
 };
 
-/**
- * Days a finished quest's chest can still be opened, today included: a quest
- * done just before midnight is not lost by opening the chest just after.
- */
+/** Days a finished quest's chest can still be opened, today included, so one finished before midnight is not lost after it. */
 export const CLAIM_DAYS = 7;
 
 /** Accuracy a session needs to move the `accuracy` quest: 80% right the first time. */
@@ -43,10 +36,7 @@ function words(text: string): number[] {
   return Array.from({ length: 8 }, (_, i) => digest.readUInt32BE(i * 4));
 }
 
-/**
- * How much a kind asks, from one word of the day's hash: lessons 2–3,
- * accuracy 2, XP 30/40/50/60, listening answers 5–8, a perfect lesson 1.
- */
+/** How much a kind asks, from one word of the day's hash: lessons 2–3, accuracy 2, XP 30/40/50/60, listening 5–8, a perfect lesson 1. */
 export function questTarget(kind: QuestKind, word: number): number {
   switch (kind) {
     case 'streak':
@@ -65,9 +55,8 @@ export function questTarget(kind: QuestKind, word: number): number {
 }
 
 /**
- * The chest a quest pays, by how much it asks: keeping the streak and the
- * smaller lesson and XP quests are common; three lessons, 50 XP or more, the
- * accuracy and the listening quests are rare; a perfect lesson is epic.
+ * The chest a quest pays, by how much it asks: the streak and smaller lesson and XP quests are common; three lessons,
+ * 50 XP or more, accuracy and listening are rare; a perfect lesson is epic.
  */
 export function chestTier(kind: QuestKind, target: number): ChestTier {
   switch (kind) {
@@ -85,11 +74,7 @@ export function chestTier(kind: QuestKind, target: number): ChestTier {
   }
 }
 
-/**
- * Every kind of quest as it would be asked of a learner on a day (their own
- * 'YYYY-MM-DD'), in the order of QUEST_KINDS, and which three of them the day
- * picks: keeping the streak, then two of the other five.
- */
+/** Every kind of quest as asked on a learner's day ('YYYY-MM-DD'), in QUEST_KINDS order, marking the day's three: the streak and two others. */
 export function dayQuests(userId: string, day: string): Array<PickedQuest & { picked: boolean }> {
   const [a, b, ...sizes] = words(`quests:${userId}:${day}`);
   const rest = [...PICKABLE];
@@ -102,7 +87,7 @@ export function dayQuests(userId: string, day: string): Array<PickedQuest & { pi
   });
 }
 
-/** A learner's three quests on a day, keeping the streak first, in the order of QUEST_KINDS so a day reads the same wherever it is shown. */
+/** A learner's three quests on a day, the streak first, in QUEST_KINDS order so a day reads the same everywhere. */
 export function pickQuests(userId: string, day: string): PickedQuest[] {
   return dayQuests(userId, day)
     .filter((q) => q.picked)
@@ -136,7 +121,7 @@ export function chestAmount(tier: ChestTier, userId: string, id: string): number
 export interface QuestEvent {
   /** a lesson, rather than a practice session */
   lesson: boolean;
-  /** right the first time, out of what was scored (0..1) */
+  /** Right the first time, out of what was scored (0..1). */
   accuracy: number;
   /** a lesson with nothing missed and nothing put off */
   perfect: boolean;
@@ -147,9 +132,8 @@ export interface QuestEvent {
 }
 
 /**
- * How a finished session moves each kind: `add` on top of the progress so far,
- * or progress raised to `atLeast` (a total, like today's XP, that is never added
- * twice). Both are capped at the quest's target where they are applied.
+ * How a finished session moves each kind: `add` to the progress, or raise it to `atLeast` (a total such as today's
+ * XP, never added twice); both capped at the target where applied.
  */
 export function questMoves(event: QuestEvent): Record<QuestKind, { add: number; atLeast: number }> {
   return {

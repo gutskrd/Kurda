@@ -1,8 +1,6 @@
 /**
- * Pure dashboard math + definitions (KUR-106). Aggregates are precomputed into
- * rollup tables (counts only, no PII), so figures stay correct even after a user
- * is deleted/anonymized. The definitions here are the documented meaning of each
- * metric, kept beside the code that computes them.
+ * Dashboard math and metric definitions. Aggregates are precomputed into rollup tables (counts only, no personal
+ * data), so figures stay correct after an account is deleted.
  */
 
 /** "Active" = a user with at least one tracked event in the window. */

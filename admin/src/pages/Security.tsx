@@ -17,14 +17,8 @@ const CAPABILITY: Record<string, string> = {
 };
 
 /**
- * My security: this login's 2FA, roles and what they open — read from the
- * session the panel was let in with (GET /admin/session).
- *
- * It used to ask /admin/me, which refuses an account with only the legacy
- * `admin` or `founder` role; the page then said "2FA not set up" to an admin
- * who had it, and its "Set up 2FA" button re-generated their secret and
- * un-confirmed it. Setting up 2FA happens once, before the panel opens (the
- * gate), and nowhere else.
+ * My security: this login's 2FA, roles and what they open, from the session the console opened with (GET
+ * /admin/session, which every staff role can read). 2FA is set up only at the gate, before the console opens.
  */
 export function Security(): React.JSX.Element {
   const { me } = useAuth();

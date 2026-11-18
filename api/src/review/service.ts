@@ -6,9 +6,8 @@ import { INITIAL_SM2, scheduleAnswer, type Quality } from './sm2.js';
 export const REVIEW_QUEUE_LIMIT = 20;
 
 /**
- * Whether an answer to this kind of exercise is evidence the scheduler may
- * use. Speaking is not: the learner rates their own recording and the server
- * cannot check it, so a self-rated "good" must not push a word weeks away.
+ * Whether an answer to this exercise type is evidence for the scheduler. Speaking is not: the learner rates their own
+ * recording, so a self-rated "good" must not push a word weeks away.
  */
 export function feedsReview(type: ExerciseType): boolean {
   return type !== 'speaking';
@@ -27,7 +26,7 @@ export interface ReviewItem {
 
 export interface ReviewQueue {
   items: ReviewItem[];
-  /** total items due now (may exceed items.length when capped) */
+  /** Total items due now; may exceed items.length when capped. */
   dueCount: number;
 }
 
@@ -56,23 +55,17 @@ function toItem(row: ItemRow): ReviewItem {
 }
 
 /**
- * Per-user word-strength tracking (KUR-033). Each review outcome advances
- * the item's SM-2 state and reschedules it; the queue returns items due now,
- * most-overdue first, capped so a long absence never floods the learner.
+ * Per-user word strength. Each review outcome advances the item's SM-2 state and reschedules it; the queue returns
+ * items due now, most overdue first, capped so a long absence never floods the learner.
  */
 export class ReviewService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Record a review outcome for an item and reschedule it. Upserts the
-   * item's SM-2 state; runs inside the caller's transaction when an
-   * executor is passed.
-   *
-   * Only a spaced review moves the schedule (`scheduleAnswer`): a right answer
-   * to an item that is not yet due — a same-day replay, an early practice item
-   * — leaves it exactly as it was and is returned unchanged. A wrong answer is
-   * always recorded as a lapse. "Same day" is the learner's day, so their time
-   * zone is read along with the item.
+   * Records a review outcome and reschedules the item, upserting its SM-2 state, inside the caller's transaction when
+   * given an executor. Only a spaced review moves the schedule (`scheduleAnswer`): a right answer to an item not yet due
+   * (a same-day replay, early practice) leaves it unchanged; a wrong answer always counts as a lapse. "Same day" is the
+   * learner's, so their time zone is read with the item.
    */
   async record(
     userId: string,
@@ -119,11 +112,7 @@ export class ReviewService {
     return toItem(saved.rows[0]!);
   }
 
-  /**
-   * Schedule a brand-new review item, due now. Idempotent: an existing item
-   * (e.g. a re-saved word) keeps its SM-2 history. Returns whether a new
-   * item was actually created.
-   */
+  /** Schedules a new review item, due now. Idempotent: an existing item, such as a re-saved word, keeps its history. Returns whether one was created. */
   async scheduleNew(userId: string, itemId: string, now: Date = new Date()): Promise<boolean> {
     const res = await this.pool.query(
       `INSERT INTO review_items (user_id, item_id, repetitions, interval_days, easiness, due_at)
@@ -135,12 +124,9 @@ export class ReviewService {
   }
 
   /**
-   * Items due for review now, most overdue first, capped at `limit`. Dict
-   * items (item_id 'dict:<entryId>') only appear while their word is still
-   * saved — unsaving stops scheduling but keeps the SM-2 history (KUR-047).
-   * Speaking exercises never appear: their answers no longer move the
-   * schedule (`feedsReview`), so one left over from before would be due
-   * forever.
+   * Items due now, most overdue first, capped at `limit`. Dictionary items (`dict:<entryId>`) appear only while the word
+   * is still saved; unsaving keeps the history. Speaking items never appear, since their answers no longer move the
+   * schedule and a leftover one would be due forever.
    */
   async queue(userId: string, now: Date = new Date(), limit = REVIEW_QUEUE_LIMIT): Promise<ReviewQueue> {
     const savedFilter = `AND (item_id NOT LIKE 'dict:%'

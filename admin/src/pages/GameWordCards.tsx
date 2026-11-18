@@ -20,19 +20,9 @@ import { Badge, Banner, Button, Field, Icon, Section, errorLine, useDebounced, u
 import './game-words.css';
 
 /**
- * Who Am I?'s identities and its questions, in the admin's Game content page
- * (pages/GameContent.tsx).
- *
- * - `WordPicker`: approved words taught by published lessons, each with its
- *   approved meanings and an example, to make an identity of. The server copies the
- *   Kurdish across (api/src/games/word-cards.ts): nothing Kurdish is typed
- *   here, and each card is a draft until a reviewer approves it.
- * - The editors for those rows afterwards: the word and anything Kurdish read
- *   only, as it was copied; the meanings in the interface languages, an
- *   identity's category and its facts table (yes, no, sometimes, or not
- *   said), and the level, the editor's to set.
- * - The editor for a question template: new Kurdish, so a draft for a native
- *   speaker, with the fact it asks and what it means.
+ * Who Am I?'s identities and questions on the Game content page. `WordPicker` makes an identity from an approved word
+ * whose Kurdish the server copies (api/src/games/word-cards.ts); its editor keeps the Kurdish read-only and edits the
+ * meanings, category, facts table and level. A question template is new Kurdish, so a draft for a native speaker.
  */
 
 export const CATEGORY_NAME: Record<string, string> = {
@@ -53,10 +43,8 @@ function factChoice(value: WhoAmIFactValue | undefined): string {
 }
 
 /**
- * The facts table: every fact an identity can be asked about, yes, no,
- * sometimes (honest people would answer either way, as a dog is in one house
- * and in the yard of another), or not said (the question is never asked of
- * this card, as "Does it sell things?" is never asked of a cat).
+ * The facts table: every fact an identity can be asked about, as yes, no, sometimes (honest people would answer either
+ * way), or not said (never asked of this card).
  */
 export function FactsTable({ facts, onChange, readOnly }: { facts: Facts; onChange: (f: Facts) => void; readOnly: boolean }): React.JSX.Element {
   const sometimes = Object.values(facts).filter((v) => v === 'sometimes').length;
@@ -89,7 +77,7 @@ export function FactsTable({ facts, onChange, readOnly }: { facts: Facts; onChan
                 <option value="">Not said</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
-                {/* once the card has its share of "sometimes", only a row that already says it keeps the choice */}
+                {/* Once the card has its share of "sometimes", only a row that already says it keeps the choice. */}
                 <option value="sometimes" disabled={sometimes >= WHO_AM_I_MAX_SOMETIMES && facts[f.key] !== 'sometimes'}>
                   Sometimes
                 </option>
@@ -251,15 +239,11 @@ function MakeCard({ word, kind, onMade }: { word: GameWordCandidate; kind: WordC
   );
 }
 
-/**
- * Approved words to make a card of, searched by their Kurdish or their
- * meaning, with what each means and an example, and what has already been
- * made of it.
- */
+/** Approved words to make a card of, searched by Kurdish or meaning, with an example and what was already made of each. */
 export function WordPicker({ kind, dialect: fixed }: { kind: WordCardKind; dialect?: GameDialect }): React.JSX.Element {
   const [dialect, setDialect] = useState<GameDialect>(fixed ?? 'kmr');
   const [query, setQuery] = useState('');
-  // an identity is always a word the lessons teach
+  // An identity is always a word the lessons teach.
   const from: GameWordSource = 'vocabulary';
   const [open, setOpen] = useState<string | null>(null);
   const q = useDebounced(query, 300);

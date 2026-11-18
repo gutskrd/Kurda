@@ -6,13 +6,10 @@ export const GLOSS_MAX_LENGTH = 40;
 const SENSES = 3;
 
 /**
- * The English meanings the dictionary gives Kurdish words, for each of
- * `lookups` in the order asked (an empty list for a word it does not have),
- * in one statement however many there are. A word is found by its letters
- * with its diacritics kept (`headword_normalized`, the games' `letterKey`):
- * folding them, as a search does to find what was meant, would give "ser"
- * (head) the meanings of "şer" (war). Where several entries are filed under the
- * same letters, every first sense comes before any second.
+ * The English meanings of each Kurdish word in `lookups`, in order (an empty list for an unknown word), in one
+ * statement. Words are matched with their diacritics kept (`headword_normalized`, the games' `letterKey`), since
+ * folding them would give "ser" (head) the meanings of "şer" (war). Where several entries share the letters,
+ * every first sense comes before any second.
  */
 export async function englishGlosses(
   db: Pick<pg.Pool, 'query'>,

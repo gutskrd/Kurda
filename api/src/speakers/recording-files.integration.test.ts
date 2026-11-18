@@ -1,11 +1,7 @@
 /**
- * What the admin panel's Characters page reads, against real Postgres: a
- * recording's own file through the API, the studio's lists with their stored
- * timelines, and the dictionary's pronunciations a page at a time.
- *
- * The bucket is held in memory (the storage's put and read are stubbed), and
- * other sites are a fake fetch and a fake name lookup, so nothing leaves the
- * machine: what is under test is what the API reads, refuses and sends.
+ * What the admin Characters page reads, against real Postgres: a recording's file through the API, the studio's lists
+ * with stored timelines, and paged dictionary pronunciations. The bucket is in memory and other sites are a fake fetch
+ * and name lookup, so nothing leaves the machine.
  */
 import { Readable } from 'node:stream';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -25,7 +21,7 @@ const RATE = 22050;
 const ADMIN_ORIGIN = 'https://admin.test';
 const TIMEOUT_MS = 300;
 
-/** A mono 16-bit PCM WAV of a quiet tone, `ms` long, varied by `seed` so each is a file of its own. */
+/** A mono 16-bit PCM WAV of a quiet tone, `ms` long, varied by `seed` so each is a distinct file. */
 function wav(ms: number, seed: number): Buffer {
   const frames = Math.round((ms / 1000) * RATE);
   const b = Buffer.alloc(44 + frames * 2);
@@ -165,8 +161,8 @@ describe.skipIf(!DATABASE_URL)('recording files and the Characters lists (integr
     editor = await register('rfEditor', '10.95.0.1', '{content_editor}');
     learner = await register('rfLearner', '10.95.0.2', '{}');
 
-    // two sentences, one with a speaker and a timeline, and one sound of the alphabet; files of
-    // this run's own, since the same bytes already stored are reused and never put again
+    // Two sentences, one with a speaker and timeline, and one alphabet sound; unique to this run, since stored bytes are
+    // reused and never put again.
     const salt = (Date.now() % 997) / 997;
     takes.set(T.voiced, wav(900, 3 + salt));
     takes.set(T.plain, wav(700, 5 + salt));
@@ -522,7 +518,7 @@ describe.skipIf(!DATABASE_URL)('recording files and the Characters lists (integr
           );
           // the response is cut short, which the panel sees as a failed read
           expect(streamed).toBeInstanceOf(Error);
-          // and the site was read no further than the chunk that went over
+          // And the site was read no further than the chunk that went over.
           expect(produced).toBeLessThanOrEqual(AUDIO_FILE_MAX_BYTES + 64 * 1024);
         } finally {
           upstream.set(page, () => new Response(mp3(), { headers: { 'content-type': 'audio/mpeg' } }));

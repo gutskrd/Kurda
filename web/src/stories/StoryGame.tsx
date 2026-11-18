@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-// Soranî in a face made for Arabic script
+// Soranî in a face made for Arabic script.
 import '@fontsource-variable/vazirmatn';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { MAX_PLAYERS, storyTextDirection, type StoryGameView } from '@kurda/shared';
@@ -22,13 +22,8 @@ import { useGameStory, useStoryGame } from './useStoryGame';
 import { useGameFinished } from '../feedback/gameFinished';
 
 /**
- * A story game (/app/games/stories/play/:gameId): the lobby, the reading,
- * each question and its answer, and the results — one screen whose middle
- * changes with the game.
- *
- * One polite live region speaks for the whole game (a new question, an
- * answer locked, right or wrong, the results), so a screen reader hears each
- * change once and nothing ever takes the focus but a new question's heading.
+ * A story game (/app/games/stories/play/:gameId): lobby, reading, questions and answers, and results on one screen. One
+ * polite live region announces every change once; only a new question's heading takes focus.
  */
 export function StoryGame(): React.JSX.Element {
   const { gameId = '' } = useParams();
@@ -40,16 +35,15 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
   const navigate = useNavigate();
   const game = useStoryGame(id);
   const [said, setSaid] = useState('');
-  // a fresh string each time, so saying the same thing twice is heard twice
+  // A fresh string each time, so repeating the same text is heard twice.
   const announce = useCallback((text: string) => setSaid((prev) => (prev === text ? `${text} ` : text)), []);
 
   const view = game.load.state === 'ready' ? game.load.view : null;
   const story = useGameStory(id, view !== null && view.status !== 'lobby');
-  // the rating box hears of a game that ended while it was played here (not
-  // one opened finished), and not of one this player left
+  // The rating box hears of a game that ended while played here, not one opened finished or one this player left.
   const me = view?.players.find((p) => p.isMe);
   useGameFinished('stories', view ? id : null, view?.status === 'finished', me?.gone ?? false);
-  // while reading and answering, an invite to something else waits as a chip
+  // While reading and answering, an invite to something else waits as a chip.
   useQuietInvites(view !== null && (view.status === 'reading' || view.status === 'question' || view.status === 'reveal'));
 
   async function leave(): Promise<void> {
@@ -102,13 +96,9 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
   );
 }
 
-/**
- * The host's "Invite friends" and the list of friends asked (the play
- * layer's, as in every game's lobby). Only the host asks: the server takes
- * invites from the host alone.
- */
+/** The host's "Invite friends" and the list of friends asked, from the play layer; the server takes invites only from the host. */
 function lobbyInvites(view: StoryGameView): { invite?: React.ReactNode; invited?: React.ReactNode } {
-  // the host themself, not whoever holds the controls while the host is away
+  // The host themself, not whoever holds the controls while the host is away.
   if (!view.players.some((p) => p.isMe && p.isHost)) return {};
   const room = Math.max(0, MAX_PLAYERS[view.mode] - view.players.filter((p) => !p.gone).length);
   return {
@@ -117,11 +107,7 @@ function lobbyInvites(view: StoryGameView): { invite?: React.ReactNode; invited?
   };
 }
 
-/**
- * Playing again from the results: a duo's rematch both ask for, a group's
- * next round the host opens (play/RematchPanel). A solo check is taken again
- * from the story itself, where its best score and what a repeat pays are shown.
- */
+/** Playing again from the results: a duo's rematch or a group's next round (play/RematchPanel); a solo check is retaken from the story. */
 function PlayAgain({ view }: { view: StoryGameView }): React.JSX.Element | null {
   const t = useT();
   if (view.mode === 'solo') return null;
@@ -136,12 +122,12 @@ function PlayAgain({ view }: { view: StoryGameView }): React.JSX.Element | null 
   );
 }
 
-/** The game's title, what kind of game it is, and the way out. */
+/** The game's title, its kind, and the way out. */
 function GameHead({ view, onLeave }: { view: StoryGameView; onLeave: () => Promise<void> }): React.JSX.Element {
   const t = useT();
   const { lang, dir } = storyTextDirection(view.settings.dialect);
   const over = view.status === 'finished' || view.status === 'cancelled';
-  // the host leaving a lobby closes it for everyone; anyone leaving a game under way cannot come back
+  // The host leaving a lobby closes it for everyone; leaving a game under way is final.
   const hostOfLobby = view.status === 'lobby' && view.players.some((p) => p.isMe && p.isHost);
   return (
     <header className="sg-head">
@@ -157,7 +143,7 @@ function GameHead({ view, onLeave }: { view: StoryGameView; onLeave: () => Promi
         </h1>
         <p className="sg-sub">
           {t(MODE_KEY[view.mode])}
-          {/* everyone sees whether a game with others is Rated or Friendly */}
+          {/* Everyone sees whether a game with others is Rated or Friendly. */}
           {view.mode !== 'solo' && view.rated && <RatedBadge rated={shownRated(view.rated)} size="sm" className="sg-rated" />}
         </p>
       </div>

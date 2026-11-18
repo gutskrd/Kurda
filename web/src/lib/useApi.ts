@@ -4,7 +4,7 @@ import { describeError } from './api';
 import { GUEST, ask, justAnswered, lastAnswer } from './apiMemory';
 import { useT } from '../i18n/I18nProvider';
 
-/** A question's answer as a screen holds it: the data, or why not, or still waiting. */
+/** A request's state as a screen holds it: the data, the error, or still loading. */
 export interface ApiState<T> {
   data: T | null;
   error: string | null;
@@ -12,10 +12,8 @@ export interface ApiState<T> {
 }
 
 /**
- * Whose answers the memory may hand over (lib/apiMemory.ts): the signed-in
- * person's, a visitor's, or nobody's while it is still being found out who is
- * here — a request made then is answered for whoever the stored session turns
- * out to be, and is kept for nobody.
+ * Whose answers the memory may hand over (lib/apiMemory.ts): the signed-in person's, a visitor's, or nobody's while the
+ * stored session is still being checked; answers then are kept for nobody.
  */
 export function useMemoryOwner(): string | null {
   const { status, user } = useAuth();
@@ -24,23 +22,13 @@ export function useMemoryOwner(): string | null {
 }
 
 /**
- * GET a path through the shared API client with loading/error/data states.
- * Re-runs when `path` changes. `reload` refetches on demand (e.g. retry button).
+ * GETs a path through the shared client with loading, error and data states, again whenever `path` changes or
+ * `reload` is called.
  *
- * A path this tab has asked before is answered at once from memory
- * (lib/apiMemory.ts) — `loading` is false and the last answer is the data —
- * and is asked again behind that, so the screen is there before the network
- * is and catches up when it answers. A failure of the network or the server
- * then leaves the last answer showing; a refusal of the question itself
- * replaces it with the error, as before.
- *
- * `fresh` is the way out, for anything that must never be shown a moment
- * old: a game's state, a lobby, a lesson in progress, a report, where an
- * account stands. Nothing is read from memory or kept in it, and every mount
- * and every `reload` asks the server, exactly as this hook always did.
- *
- * A `null` path asks nothing: for a caller that was handed the answer by
- * whoever rendered it, and has no need to ask again.
+ * A path asked before in this tab is answered at once from memory (lib/apiMemory.ts) and refreshed behind that; a
+ * network or server failure keeps the last answer, while a refusal replaces it with the error. `fresh` skips the
+ * memory for anything that must never be shown late (game state, lobbies, lessons, reports, account standing). A null
+ * path asks nothing.
  */
 export function useApiGet<T>(path: string | null, { fresh = false }: { fresh?: boolean } = {}): ApiState<T> & { reload: () => void } {
   const { client } = useAuth();
@@ -54,9 +42,9 @@ export function useApiGet<T>(path: string | null, { fresh = false }: { fresh?: b
   });
   const [nonce, setNonce] = useState(0);
   const reload = useCallback(() => setNonce((n) => n + 1), []);
-  // which reload the last request answered, so only an asked-for reload skips "it was only just answered"
+  // The reload the last request answered, so only an explicit reload skips the just-answered check.
   const asked = useRef(0);
-  // whose memory, as it is when the question is asked: finding out who is here is not a reason to ask again
+  // The memory owner when the question is asked; learning who is here is no reason to ask again.
   const memoryNow = useRef(memory);
   memoryNow.current = memory;
 
@@ -71,7 +59,7 @@ export function useApiGet<T>(path: string | null, { fresh = false }: { fresh?: b
     asked.current = nonce;
     const kept = memory ? lastAnswer<T>(memory, path) : null;
     if (kept) {
-      // shown at once; and when another part of this page has only just been given it, that is the answer
+      // Shown at once; if another part of the page has only just been given it, that is the answer.
       setState((s) => (s.data === kept.data && !s.loading && s.error === null ? s : { data: kept.data, error: null, loading: false }));
       if (!reloading && memory && justAnswered(memory, path)) return;
     } else {
@@ -84,7 +72,7 @@ export function useApiGet<T>(path: string | null, { fresh = false }: { fresh?: b
         setState((s) => (s.data === res.data && !s.loading && s.error === null ? s : { data: res.data, error: null, loading: false }));
         return;
       }
-      // the network or the server failing is no reason to take away what is already on the screen
+      // A network or server failure is no reason to take away what is on screen.
       const stillThere = kept !== null && memory !== null && lastAnswer<T>(memory, path) !== null;
       if (stillThere) return;
       setState({ data: null, error: describeError(res.error, t), loading: false });

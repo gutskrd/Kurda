@@ -5,6 +5,7 @@ import type { IconName } from '../theme/Icon';
 import { LENGTH_KEY } from '../stories/labels';
 import { quoted } from '../stories/storyText';
 import { dialectNameKey } from '../i18n/dialectName';
+import { DIFFICULTY_KEY } from '../wordle/board';
 
 /** Each online game's name, as the Play tab already calls it. */
 export const GAME_NAME_KEY: Record<PlayGame, TranslationKey> = {
@@ -23,15 +24,6 @@ export const GAME_ICON: Record<PlayGame, IconName> = {
   'last-letter': 'link',
   impostor: 'people',
   'who-am-i': 'question',
-};
-
-export type Difficulty = 'easy' | 'medium' | 'hard';
-
-/** A word battle's difficulty, by name. */
-export const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
-  easy: 'games.difficulty.easy',
-  medium: 'games.difficulty.medium',
-  hard: 'games.difficulty.hard',
 };
 
 /**

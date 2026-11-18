@@ -40,11 +40,8 @@ import type { MessageKey } from '../i18n/en';
 import { SendError } from '../reports/SendError';
 
 /**
- * Why `POST /shop/gift` did not give it, in the words the chat's gift picker
- * uses. The route answers a skipped friend with its own codes; the app's
- * generic copy read the daily limit's 429 as "too many requests" and the rest
- * as "something went wrong". Anything else (a limit on the account, funds) is
- * said by SendError.
+ * Why `POST /shop/gift` refused, in the chat gift picker's words; the generic copy would read the daily limit as "too
+ * many requests". Account limits and funds are said by SendError.
  */
 function shopGiftRefusal(error: ApiError, name: string, t: (key: MessageKey, vars?: Record<string, string>) => string): string | null {
   switch (error.code) {
@@ -66,7 +63,7 @@ function shopGiftRefusal(error: ApiError, name: string, t: (key: MessageKey, var
   }
 }
 
-/** A catalog tile: the item plus whether the viewer already owns it. */
+/** A catalogue tile: the item plus whether the viewer already owns it. */
 interface Tile {
   sku: string;
   name: string;
@@ -80,11 +77,7 @@ interface Tile {
 
 type Currency = Tile['currency'];
 
-/**
- * A friend as `GET /friends` sends one (`FriendSummary`). It was declared with
- * `id`, which the API has never sent: every gift posted `toUserId: undefined`
- * and was refused with a validation error, so a gift from the web never went.
- */
+/** A friend as `GET /friends` sends one (`FriendSummary`); it has `userId`, not `id`. */
 interface Friend {
   userId: string;
   username: string;
@@ -102,17 +95,12 @@ interface ReceivedGift {
   seenAt: string | null;
 }
 
-/**
- * Items can be priced in either currency, so never hardcode one on a label.
- *
- * Zêr is the app's own currency and keeps its Kurmancî name in every language,
- * the way a currency does; gems are a common noun and get translated.
- */
+/** Items are priced in either currency, so never hardcode one. Zêr keeps its Kurmancî name everywhere; gems are translated. */
 function currencyName(currency: Currency, t: (key: MessageKey) => string): string {
   return currency === 'gems' ? t('shop.gems') : 'Zêr';
 }
 
-/** What a purchase says once it is yours: where a thing of its kind is put to use. */
+/** What a purchase says once it is yours: where a thing of its kind is used. */
 function boughtMessage(category: string): MessageKey {
   switch (itemCategory(category)) {
     case 'tag':
@@ -127,64 +115,44 @@ function boughtMessage(category: string): MessageKey {
 }
 
 /**
- * Shop — browse, buy, and gift what is on sale, by kind.
- *
- * Everything the API sends is shown, under its kind (backgrounds, icons, tags,
- * and anything else under "More"), with a count on each tab; under All each
- * kind has its own titled section. It can be searched (name and description,
- * with or without the Kurdish letters), sorted, and narrowed to what the
- * balance reaches or to what is free — and all of that is kept in the address,
- * so a narrowed Shop survives a reload and Back.
- *
- * Buying something that costs anything asks first, and says that the purchase
- * is final: nothing bought can be handed back for Zêr or gems.
- *
- * Over the catalogue, what of yours the Shop can change: the bird that carries
- * your letters, and the tree you grow (shop/YourBird.tsx, shop/YourTree.tsx),
- * each bought or swapped here as on its own page, with the Zêr shown at the
- * top following whatever is spent on either.
- *
- * Buying only grants ownership; equipping happens in Edit Profile. All prices,
- * ownership and payment are server-authoritative (POST /shop/purchase and
- * /shop/gift validate the price and move the money atomically); the client
- * displays and requests, and celebrates afterwards.
+ * The Shop: browse, buy and gift by kind (backgrounds, icons, tags, and "More"), with counts on the tabs and a section
+ * per kind under All. Search (with or without Kurdish letters), sort and filters (affordable, free) live in the address,
+ * so they survive a reload and Back. Anything priced asks first and says purchases are final. Above the catalogue are
+ * your bird and tree (shop/YourBird.tsx, shop/YourTree.tsx), bought or swapped here. Buying grants ownership; equipping
+ * is in Edit Profile. The server owns prices, ownership and payment (POST /shop/purchase, /shop/gift).
  */
 export function Shop(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const locale = useLocale();
-  // what is on sale, what is owned and what there is to spend are asked every time: a shelf drawn from
-  // memory would offer again what was bought a minute ago, against a balance that has since been spent
+  // Stock, ownership and balance are fetched fresh: a remembered shelf would offer again what was just bought.
   const shop = useApiGet<{ items: ShopItem[] }>('/shop', { fresh: true });
   const inventory = useApiGet<InventoryWithNotice>('/me/inventory', { fresh: true });
   const wallet = useApiGet<{ balances: { zer: number; gems?: number } }>('/me/wallet', { fresh: true });
   const [view, setView] = useShopView();
   const ids = useIdPrefix('shop');
-  // your bird and your tree are asked for with the catalogue, so they arrive with it rather than after it
+  // Your bird and tree are fetched with the catalogue, so they arrive together.
   const letters = useLettersHome();
   const tree = useTree();
 
-  /** balances learned since the wallet was read: a purchase or a gift answers with the new one */
+  /** Balances learned since the wallet was read: a purchase or gift answers with the new one. */
   const [known, setKnown] = useState<Partial<Record<Currency, number>>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok'; text: string } | { kind: 'err'; error: ApiError | string } | null>(null);
-  /** the chat a gift just went to, where it now waits wrapped */
+  /** The chat a gift just went to, where it waits wrapped. */
   const [giftChat, setGiftChat] = useState<Friend | null>(null);
   const [bought, setBought] = useState<Set<string>>(new Set());
-  /** the tile that just succeeded — drives the one-shot celebration */
+  /** The tile that just succeeded, for the one-shot celebration. */
   const [celebrating, setCelebrating] = useState<string | null>(null);
   const [gifting, setGifting] = useState<Tile | null>(null);
-  /** the item whose purchase is being confirmed */
+  /** The item whose purchase is being confirmed. */
   const [asking, setAsking] = useState<Tile | null>(null);
 
   const balanceOf = useCallback(
     (currency: Currency): number | null => known[currency] ?? wallet.data?.balances?.[currency] ?? null,
     [known, wallet.data],
   );
-  /**
-   * Whether this can be paid for now — in its own currency. "Within my Zêr"
-   * used to hold a gem-priced item against the Zêr balance.
-   */
+  /** Whether this can be paid for now, in its own currency. */
   const canAfford = useCallback(
     (tile: Tile): boolean => {
       if (tile.price === 0) return true;
@@ -194,7 +162,7 @@ export function Shop(): React.JSX.Element {
     [balanceOf],
   );
 
-  /** The Zêr a new bird or a tree kind left, which the balance at the top and every price then go by. */
+  /** The Zêr left after a bird or tree purchase, which the balance and prices then use. */
   const learnZer = useCallback((zer: number) => setKnown((k) => ({ ...k, zer })), []);
 
   const ownedSkus = useMemo(() => {
@@ -203,8 +171,7 @@ export function Shop(): React.JSX.Element {
     return s;
   }, [inventory.data, bought]);
 
-  // /shop hides owned unique items, so "owned" here is what was bought on this visit
-  // (or an item that can be owned more than once)
+  // /shop hides owned unique items, so "owned" here is what was bought on this visit (or a repeatable item).
   const tiles: Tile[] = useMemo(
     () =>
       (shop.data?.items ?? []).map((i) => ({
@@ -220,7 +187,7 @@ export function Shop(): React.JSX.Element {
     [shop.data, ownedSkus],
   );
 
-  /** Play the celebration once, then clear it so it can play again later. */
+  /** Plays the celebration once, then clears it so it can play again. */
   const celebrate = useCallback((sku: string) => {
     setCelebrating(sku);
     setTimeout(() => setCelebrating((c) => (c === sku ? null : c)), 1100);
@@ -237,7 +204,7 @@ export function Shop(): React.JSX.Element {
     });
     setBusy(null);
     if (res.ok) {
-      // the answer is the balance of the item's own currency
+      // The answer is the balance of the item's own currency.
       setKnown((k) => ({ ...k, [tile.currency]: res.data.balance }));
       setBought((prev) => new Set(prev).add(tile.sku));
       celebrate(tile.sku);
@@ -247,7 +214,7 @@ export function Shop(): React.JSX.Element {
     }
   }
 
-  /** Something with a price asks first; something free is simply taken. */
+  /** Something priced asks first; something free is simply taken. */
   function askToBuy(tile: Tile): void {
     if (busy || tile.owned) return;
     if (tile.price === 0) {
@@ -278,12 +245,11 @@ export function Shop(): React.JSX.Element {
     setBusy(null);
     setGifting(null);
     if (res.ok) {
-      // the answer is the balance of the item's own currency: a gift bought
-      // with gems must not overwrite the Zêr shown at the top
+      // The answer is the balance of the item's own currency, so a gem gift does not overwrite the Zêr shown.
       setKnown((k) => ({ ...k, [tile.currency]: res.data.balance }));
       celebrate(tile.sku);
       setMsg({ kind: 'ok', text: t('shop.onItsWay', { name: tile.name, to: to.username }) });
-      // every gift arrives in the chat between the two of you, wrapped
+      // Every gift arrives wrapped in the chat between the two of you.
       setGiftChat(to);
     } else {
       setMsg({ kind: 'err', error: shopGiftRefusal(res.error, to.username, t) ?? res.error });
@@ -293,7 +259,7 @@ export function Shop(): React.JSX.Element {
   const gemPriced = tiles.some((tile) => tile.currency === 'gems');
   const zer = balanceOf('zer');
   const gems = balanceOf('gems');
-  // the heading is the page's own from the first frame; only the catalogue waits
+  // The heading shows from the first frame; only the catalogue waits.
   const header = (
     <div className="page-header">
       <span className="eyebrow">{t('nav.profile')}</span>
@@ -322,16 +288,15 @@ export function Shop(): React.JSX.Element {
     );
   if (shop.error) return <ErrorState title={t('shop.loadFailed')} message={shop.error} onRetry={shop.reload} />;
 
-  // ---- what is shown: the kinds on sale, and the items the view lets through ----
+  // ---- What is shown: the kinds on sale, and the items the view lets through ----
   const kinds = categoriesIn(tiles);
   const keep = (tile: Tile): boolean =>
-    // an owned item stays: hiding it for costing more than is held today would
-    // be telling someone they cannot afford what they already have
+    // An owned item stays, so nobody is told they cannot afford what they have.
     (!view.afford || tile.owned || canAfford(tile)) && (!view.free || tile.price === 0);
-  // every kind at once, searched, narrowed and sorted: what the tabs count
+  // Every kind at once, searched, filtered and sorted: what the tabs count.
   const matching = applyItemFilter(tiles, { ...view, category: 'all' }, keep, locale);
   const counts = countByCategory(matching);
-  // a kind the Shop has none of (an old link) shows everything instead of nothing
+  // A kind the Shop has none of (an old link) shows everything instead of nothing.
   const active: KindTab = view.category !== 'all' && kinds.includes(view.category) ? view.category : 'all';
   const shown = active === 'all' ? matching : matching.filter((tile) => itemCategory(tile.category) === active);
   const filtered = shopViewFiltered(view);
@@ -354,8 +319,7 @@ export function Shop(): React.JSX.Element {
     <div className="container">
       {header}
 
-      {/* a refusal says what stopped it — a limit on the account with when it
-          ends and where the reasons are (SendError) — rather than "try again" */}
+      {/* A refusal says what stopped it (SendError), such as an account limit with its end date. */}
       {msg?.kind === 'err' && <SendError error={msg.error} role="status" className="shop-msg" />}
       {msg?.kind === 'ok' && (
         <div className="msg msg-success" role="status" style={{ marginBottom: 16 }}>
@@ -374,7 +338,7 @@ export function Shop(): React.JSX.Element {
         </div>
       )}
 
-      {/* refreshed items: the one-time notice (contract-3 §S) */}
+      {/* The one-time notice about refreshed items. */}
       <RefreshedNotice inventory={inventory.data} />
 
       <GiftsReceived onEquipHint={() => setMsg(null)} />
@@ -382,8 +346,6 @@ export function Shop(): React.JSX.Element {
       <YourBird home={letters} zer={zer} onZer={learnZer} />
       <YourTree tree={tree} zer={zer} onZer={learnZer} />
 
-      {/* the catalogue only grows, and scrolling all of it to find one thing is
-          not browsing — it is searching, badly */}
       {tiles.length === 0 ? (
         <p className="muted">{t('shop.nothingYet')}</p>
       ) : (
@@ -442,12 +404,7 @@ export function Shop(): React.JSX.Element {
   );
 }
 
-/**
- * An item's picture, of whatever kind it is, or its kind's glyph when it has
- * none (the Kurdish tag). A frame is shown the way it will be worn: round the
- * shopper's own face, since a ring with nothing in it says little of how it
- * will look.
- */
+/** An item's picture, or its kind's glyph without one. A frame is shown round the shopper's own face. */
 function TileArt({ assetUrl, category }: { assetUrl: string | null; category: string }): React.JSX.Element {
   const { user } = useAuth();
   const face = useAvatarSrc(user?.avatarUrl);
@@ -470,12 +427,8 @@ function TileArt({ assetUrl, category }: { assetUrl: string | null; category: st
 }
 
 /**
- * Gifts you have been sent.
- *
- * Sits above the catalog and only appears when there is something in it, so the
- * notification ("someone sent you a gift") lands somewhere that acknowledges it
- * rather than dropping you into a shop that looks unchanged. Opening the page
- * marks them seen, which clears the badge.
+ * Gifts you have been sent, above the catalogue only when there are some, so a gift notification lands somewhere that
+ * shows it. Opening the page marks them seen, clearing the badge.
  */
 function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -488,12 +441,10 @@ function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.
       const res = await client.get<{ gifts: ReceivedGift[]; unseen: number }>('/me/gifts');
       if (cancelled || !res.ok) return;
       setGifts(res.data.gifts);
-      // reading the list IS opening them; anything else leaves a badge that
-      // never clears no matter what you do
+      // Reading the list is what opens them; otherwise the badge never clears.
       if (res.data.unseen > 0) {
         await client.post('/me/gifts/seen');
-        // and tell the badge, which is on another screen and would otherwise go
-        // on claiming there are unopened gifts until its next poll
+        // Tell the badge on the other screen now rather than at its next poll.
         giftsWereOpened();
       }
     })();
@@ -531,7 +482,7 @@ function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.
   );
 }
 
-/** Choose which friend a gift goes to. Gifting is friends-only, server-side. */
+/** Chooses which friend a gift goes to; the server allows friends only. */
 function GiftPicker({
   tile,
   busy,
@@ -566,7 +517,7 @@ function GiftPicker({
           currency: currencyName(tile.currency, t),
         })}
       </p>
-      {/* a gift is bought like anything else, and is as final */}
+      {/* A gift is bought like anything else, and as final. */}
       <p className="muted">{t('shop.giftFinal')}</p>
 
       {friends === null ? (
@@ -602,7 +553,7 @@ function GiftPicker({
   );
 }
 
-/** One kind's items (or the one kind chosen), as priced tiles. */
+/** One kind's items (or the chosen kind), as priced tiles. */
 function ShopGrid({
   tiles,
   canAfford,
@@ -634,8 +585,7 @@ function ShopGrid({
               <TileArt assetUrl={tile.assetUrl} category={tile.category} />
               {celebrating === tile.sku && <span className="shop-shine" aria-hidden />}
             </div>
-            {/* the name is Kurdish and the line under it says what it is, as
-                the phone has always shown it */}
+            {/* The name is Kurdish and the line under it says what it is, as on the phone. */}
             <figcaption className="shop-caption">
               <span className="shop-name" title={tile.name}>
                 {tile.name}
@@ -650,15 +600,9 @@ function ShopGrid({
               <span className="shop-owned">{t('shop.owned')}</span>
             ) : (
               <div className="shop-actions">
-                {/*
-                  The price is on the tile, not only inside the button. It used
-                  to live in the button's label, which meant an item you could
-                  not yet afford said "Not enough Zêr" and nothing else — so
-                  the one thing you needed to know, what to save towards, was
-                  the one thing the shop would not tell you.
-                */}
+                {/* The price is on the tile, not only in the button, so an unaffordable item still says what to save for. */}
                 <span className={`shop-price${affordable ? '' : ' is-short'}`}>
-                  {/* what the Free filter calls it, rather than "0 Zêr" — and no coin beside it */}
+                  {/* What the Free filter calls it, rather than "0 Zêr", with no coin. */}
                   {tile.price === 0 ? (
                     t('items.free')
                   ) : (
@@ -676,8 +620,7 @@ function ShopGrid({
                 <Button size="sm" disabled={busy !== null || !affordable} onClick={() => onBuy(tile)}>
                   {tile.price === 0 ? t('edit.getFree') : t('shop.buy')}
                 </Button>
-                {/* a free item is not a gift (the API refuses it: it would be a
-                    notification in someone's face at no cost) */}
+                {/* Free items cannot be gifted (the API refuses: a notification at no cost). */}
                 {tile.price > 0 && (
                   <button
                     type="button"

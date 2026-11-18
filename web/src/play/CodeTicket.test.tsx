@@ -7,7 +7,7 @@ import { CodeTicket } from './CodeTicket';
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
-  // the clipboard and the share sheet are put on the navigator per test
+  // The clipboard and the share sheet are put on the navigator per test.
   delete (navigator as { clipboard?: unknown }).clipboard;
   delete (navigator as { share?: unknown }).share;
 });
@@ -32,7 +32,7 @@ describe('the code ticket', () => {
     renderApp(<CodeTicket game="wordle-battle" code="ABC234" />);
     expect(tiles()).toEqual(['A', 'B', 'C', '2', '3', '4']);
     const code = within(ticket()).getByRole('button', { name: 'Copy the join code A B C 2 3 4' });
-    // the gap sits between the halves, and the code reads left to right in every language
+    // The gap sits between the halves, and the code reads left to right in every language.
     expect(code.querySelector('.code-tiles-gap')?.previousElementSibling).toHaveTextContent('C');
     expect(code).toHaveAttribute('dir', 'ltr');
     expect(ticket()).toHaveClass('code-ticket--wordle-battle');
@@ -46,7 +46,7 @@ describe('the code ticket', () => {
     expect(writeText).toHaveBeenCalledWith('ABC234');
     expect(screen.getByRole('button', { name: 'Copied!' })).toHaveClass('is-done');
     expect(screen.getByRole('status')).toHaveTextContent('Code copied');
-    // the tick throws its sparks
+    // The tick throws its sparks.
     expect(document.querySelector('.code-ticket-burst')).not.toBeNull();
   });
 
@@ -70,12 +70,12 @@ describe('the code ticket', () => {
     const share = shareSheet();
     renderApp(<CodeTicket game="wordle-battle" code="ABC234" />);
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    // the link is last, where a message draws it as the game's card: the game and the code, on the site the ticket is on
+    // The link is last, where a message draws it as the game's card: the game and the code, on the site the ticket is on.
     expect(share).toHaveBeenCalledWith({
       title: 'Pêşbaziya Peyvan',
       text: `Play a Peyvok battle with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: ${window.location.origin}/join/peyvok-battle/ABC234`,
     });
-    // nothing is handed over beside the words: some share targets drop a link sent that way
+    // Nothing is handed over beside the words: some share targets drop a link sent that way.
     expect(share.mock.calls[0]![0]).not.toHaveProperty('url');
   });
 
@@ -122,7 +122,7 @@ describe('the code ticket', () => {
     const first = renderApp(<CodeTicket game="wordle-battle" code={null} invite={<button type="button">Invite friends</button>} />);
     expect(screen.queryByRole('group', { name: 'Join code' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Invite friends' })).toBeInTheDocument();
-    // drawn afresh inside the app's own providers: the ticket reads who is signed in, for the link it shares
+    // Drawn afresh inside the app's own providers: the ticket reads who is signed in, for the link it shares.
     first.unmount();
     renderApp(<CodeTicket game="wordle-battle" code={null} />);
     expect(document.querySelector('.code-ticket, .code-ticket-alone')).toBeNull();

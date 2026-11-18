@@ -1,13 +1,8 @@
 /**
- * Reads what the recording script is made of (recording/script.ts) — every
- * lesson version a learner or an editor can reach, the stories, the learning
- * games' spoken lines, the course's voice plan and any Road lesson still only
- * in its files — and what has been recorded, for the "Record by person" page.
- *
- * The script changes only when content does, and building it walks every
- * lesson, so it is kept for a minute and built by one request at a time; the
- * takes are read fresh on every request, so a take made a moment ago shows as
- * done at once. Nothing here writes.
+ * Reads what the recording script is built from (every reachable lesson version, stories, the games' spoken lines, the
+ * voice plan, and Road lessons still only in files) and what is recorded, for the "Record by person" page. The script
+ * changes only with content and walks every lesson, so it is cached for a minute and built by one request at a time;
+ * takes are read fresh, so a new take shows at once. Read-only.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -58,7 +53,7 @@ interface RawPlan {
   units?: Array<{ skills?: Array<{ lessons?: Array<{ new?: Array<{ ku?: unknown; en?: unknown }> }> }> }>;
 }
 
-/** The voice plan's people and words; a plan that cannot be read leaves the three characters, in the studio's order. */
+/** The voice plan's people and words; an unreadable plan leaves the three characters in the studio's order. */
 export function planFrom(raw: unknown): PlanInput {
   const plan = (typeof raw === 'object' && raw !== null ? raw : {}) as RawPlan;
   const about: Partial<Record<SpeakerId, string>> = {};
@@ -81,11 +76,7 @@ export function planFrom(raw: unknown): PlanInput {
 export interface RecordingPeopleOptions {
   /** where the Road's plan and unit files are */
   roadDir?: URL;
-  /**
-   * List the Road lessons that are only in the files: not seeded (a file the
-   * seeder refused, or one deployed since it ran) and with nothing else at
-   * their place. Off under test, where the seeding is off too.
-   */
+  /** Lists Road lessons only in the files (unseeded, with nothing at their place); off under test, where seeding is off. */
   withRoadFiles?: boolean;
   ttlMs?: number;
 }
@@ -184,10 +175,8 @@ export class RecordingPeopleService {
   }
 
   /**
-   * The Road's lessons that are in its files and not in the course: never
-   * seeded, and with no lesson at their place. A lesson the seeder put in and
-   * an editor deleted since has its seed mark, and stays out, as it stays out
-   * of the course. Each is listed as a draft, which is what it would be.
+   * Road lessons in the files but not in the course: never seeded and with no lesson at their place. One seeded and
+   * since deleted keeps its seed mark and stays out. Each is listed as a draft.
    */
   private async unseededRoad(dir: URL, inCourse: readonly ExerciseInput[]): Promise<ExerciseInput[]> {
     let files;

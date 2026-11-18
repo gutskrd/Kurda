@@ -24,28 +24,16 @@ import { codeFromTyping, joinCodeError } from './joinCode';
 import { joinPath, lobbyPath } from './playApi';
 
 /**
- * Joining any game by its code: the Games hub's "Join with a code" (a card
- * that opens a sheet), and the same boxes inline where a page has room for
- * them (the Stories library). One way in for all three games, because one
- * code reaches any of them (`POST /play/join`).
- *
- * Six boxes over one real text field (components/CodeBoxes.tsx, which the
- * code that confirms an email address is typed into as well). The field
- * upper-cases what is typed and drops what cannot be in a code; an old invite
- * link pasted into it still opens its lobby. The sixth character joins on its
- * own, and Join is there for whoever reaches for a button.
- *
- * Every state shows on the boxes: each character pops in, the box being
- * filled has a caret; joining runs a wave across them; getting in turns them
- * green one after another with a handful of flecks before the lobby opens;
- * a refusal shakes them once in red, with a sentence that says what to do,
- * and the next keystroke clears it. Under Reduce Motion only the colours
- * change, at once.
+ * Joining any game by its code (`POST /play/join`): the Games hub's "Join with a code" sheet, or inline where a page has
+ * room (the Stories library). Six boxes over one text field (components/CodeBoxes.tsx) that upper-cases and drops what
+ * cannot be in a code; a pasted old invite link still opens its lobby. The sixth character joins by itself. The boxes
+ * show each state: typing, a wave while joining, green with flecks on success, a red shake on refusal with what to do.
+ * Under reduced motion only the colours change.
  */
 
-/** How long getting in is shown before the lobby opens: the boxes turning, and the flecks falling. */
+/** How long getting in shows before the lobby opens. */
 const JOINED_MS = 1250;
-/** The same moment, still: long enough to see the boxes have turned green. */
+/** The same, under reduced motion: long enough to see the boxes turn green. */
 const JOINED_STILL_MS = 450;
 
 type Phase = 'idle' | 'joining' | 'joined' | 'error';
@@ -57,11 +45,11 @@ export function JoinCodeForm({
   onJoined,
 }: {
   autoFocus?: boolean;
-  /** inside a sheet whose title already says it, the label is for the ear only */
+  /** Inside a sheet whose title says it already, the label is for screen readers only. */
   labelHidden?: boolean;
-  /** in a page's own panel: lined up with the words above it, Join beside the boxes */
+  /** In a page's own panel: aligned with the words above, Join beside the boxes. */
   inline?: boolean;
-  /** called just before the lobby opens (the sheet closes itself) */
+  /** Called just before the lobby opens (the sheet closes itself). */
   onJoined?: () => void;
 }): React.JSX.Element {
   const t = useT();
@@ -72,7 +60,7 @@ export function JoinCodeForm({
   const [code, setCode] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
   const [message, setMessage] = useState<string | null>(null);
-  // each refusal shakes the boxes anew, and from which box the characters are new (they pop in)
+  // Each refusal shakes the boxes anew; `fresh` marks where new characters pop in.
   const [refusals, setRefusals] = useState(0);
   const [fresh, setFresh] = useState(0);
   const [focused, setFocused] = useState(false);
@@ -92,7 +80,7 @@ export function JoinCodeForm({
 
   useEffect(() => {
     if (!autoFocus) return;
-    // after the sheet around the field has taken the focus for itself, as it does when it opens
+    // After the sheet around the field has taken focus, as it does when it opens.
     const timer = window.setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 0);
     return () => window.clearTimeout(timer);
   }, [autoFocus]);
@@ -115,7 +103,7 @@ export function JoinCodeForm({
     setMessage(null);
     const res = await client.post<JoinedByCode>('/play/join', { code: value });
     if (!mounted.current) return;
-    // a code can only lead to a game this app has a page for
+    // A code can only lead to a game this app has a page for.
     if (res.ok && !isPlayGame(res.data.game)) {
       refuse(t('play.join.notFound'));
       return;
@@ -132,14 +120,14 @@ export function JoinCodeForm({
       }, still ? JOINED_STILL_MS : JOINED_MS);
       return;
     }
-    // an account that has not answered the birth month question: the app asks it now, as for any game
+    // An account without a birth month is asked now, as for any game.
     if (res.error.code === 'BIRTH_DATE_REQUIRED') void refreshUser();
     refuse(joinCodeError(res.error, t));
   }
 
   function change(raw: string): void {
     if (busy) return;
-    // an invite link from before codes, pasted whole: it still opens its lobby
+    // An invite link from before codes, pasted whole, still opens its lobby.
     const invite = parseInvite(raw);
     if (invite) {
       onJoined?.();
@@ -191,7 +179,7 @@ export function JoinCodeForm({
         {phase === 'joined' && !still && <JoinedBurst />}
       </CodeBoxes>
       <div className="code-entry-foot">
-        {/* the line is kept while empty, so a refusal does not move Join; the alert is only there with something to say */}
+        {/* The line stays while empty so a refusal does not move Join; the alert appears only with something to say. */}
         <p className="code-entry-message">
           {message && (
             <span id={messageId} role="alert">
@@ -210,11 +198,7 @@ export function JoinCodeForm({
   );
 }
 
-/**
- * The handful of flecks thrown when a code gets you in: the celebration's own
- * (shared celebration.ts, ranks/Celebration.tsx), smaller — a nod, not a
- * prize — and thrown as the last box turns.
- */
+/** The flecks when a code gets you in: the celebration's own (shared celebration.ts), smaller, as the last box turns. */
 function JoinedBurst(): React.JSX.Element {
   const flecks = useMemo(() => burstPlan(BURST.lesson, 23, 3, 120), []);
   const burstMs = 950;
@@ -243,11 +227,8 @@ function JoinedBurst(): React.JSX.Element {
 }
 
 /**
- * The ticket on the Games hub's card and at the top of the sheet: the outline
- * both apps share (a stub, a tear line with a notch at each end, three tiles
- * for the code), drawn flat in the sun's gold from the palette so it follows
- * the light and the dark scheme. The stub takes the stronger tint, as the
- * stub of every ticket in the app does; a right-to-left page mirrors it.
+ * The ticket on the Games hub's card and atop the sheet, in both apps' shared outline, flat in the palette's gold so it
+ * follows the scheme; mirrored on a right-to-left page.
  */
 export function TicketArt({ className }: { className?: string }): React.JSX.Element {
   return (
@@ -271,9 +252,8 @@ export function TicketArt({ className }: { className?: string }): React.JSX.Elem
 }
 
 /**
- * The sheet "Join with a code" opens. Joining needs an account, as every game
- * does; a visitor is told so here and offered the two ways in, and comes back
- * to this sheet after signing in (`?join` on the Games hub opens it).
+ * The sheet "Join with a code" opens. A visitor is offered sign-up and sign-in, and returns to this sheet after
+ * (`?join` on the Games hub opens it).
  */
 export function JoinCodeSheet({ open, onClose }: { open: boolean; onClose: () => void }): React.JSX.Element {
   const t = useT();
@@ -303,11 +283,7 @@ export function JoinCodeSheet({ open, onClose }: { open: boolean; onClose: () =>
   );
 }
 
-/**
- * The Games hub's way in by code: a card as wide as the page, with the
- * ticket on it, that opens the sheet. Coming back from signing in with
- * `?join` opens the sheet again, and the address forgets it once it has.
- */
+/** The Games hub's full-width card that opens the sheet; returning with `?join` reopens it, and the address drops it. */
 export function JoinCodeEntry(): React.JSX.Element {
   const t = useT();
   const [params, setParams] = useSearchParams();
@@ -317,7 +293,7 @@ export function JoinCodeEntry(): React.JSX.Element {
     const next = new URLSearchParams(params);
     next.delete('join');
     setParams(next, { replace: true });
-  }, []); // once, as the page opens
+  }, []); // Once, as the page opens.
 
   return (
     <>

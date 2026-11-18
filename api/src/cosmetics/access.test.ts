@@ -49,8 +49,7 @@ describe('isPremiumActive / hasAccess', () => {
     expect(hasAccess(bg({ owned: false, premiumOnly: false }), true)).toBe(false);
   });
   it('an item taken out of the shop stays with its owner, and premium no longer lends it', () => {
-    // inactive used to mean "gone for everyone"; it means "no longer sold"
-    // since the shop's old art was withdrawn with its owners keeping it
+    // Inactive means no longer sold; an owner keeps wearing it.
     expect(hasAccess(bg({ owned: true, active: false }), false)).toBe(true);
     expect(hasAccess(bg({ owned: true, active: false, premiumOnly: true }), true)).toBe(true);
     expect(hasAccess(bg({ owned: false, active: false, premiumOnly: true }), true)).toBe(false);
@@ -108,10 +107,7 @@ describe('resolveCosmetics — background access + fallback', () => {
     });
   });
 
-  /**
-   * A gift stops looking like a gift the moment it is equipped. Carrying the
-   * sender through is what lets a profile say who it came from.
-   */
+  /** Carrying the sender through lets a profile say who a worn gift came from. */
   it('carries the sender through when the item was a gift', () => {
     const r = resolveCosmetics(
       {

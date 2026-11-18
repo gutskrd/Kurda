@@ -1,14 +1,8 @@
 /**
- * Transactional email templates (KUR-098), localized Kurdish + English (v1).
- * Pure rendering — subject + plain-text body with `{var}` interpolation. An
- * unknown locale falls back to English so a send never produces a blank email.
- *
- * Each email is written once, as its plain text. The designed version every
- * reader with a modern inbox sees is read from that same text (`designOf`):
- * its paragraphs, the link that becomes the one button, the code that becomes
- * a large code, the lines that stay lines. So the two can never say different
- * things, and a new template needs only its text, its picture and, where it
- * has a link to press, what the button says. The look itself is layout.ts.
+ * Transactional email templates in Kurdish and English, rendered from a subject and plain-text body with `{var}`
+ * interpolation; an unknown locale falls back to English. The designed version is read from the same text
+ * (`designOf`), so the two never differ and a new template needs only its text, its picture and, with a link, the
+ * button's label. The look is layout.ts.
  */
 import { PROVIDER, type EmailPicture } from '@kurda/shared';
 import { renderEmailHtml, type EmailBlock, type EmailDesign, type Inline } from './layout.js';
@@ -37,20 +31,8 @@ export const EMAIL_LOCALES = ['en', 'ku'] as const;
 export type EmailLocale = (typeof EMAIL_LOCALES)[number];
 
 /**
- * Which of these two a reader gets, from the nine the app itself speaks.
- *
- * The app stores a locale per account and the whole send path has carried one
- * since it was written — the job payload, the service, `renderEmail`. No caller
- * ever passed it, so every email rendered `en`. The workaround was to put the
- * Kurmancî copy in the `en` slot as well, byte for byte, which did get Kurdish
- * mail to Kurdish readers — and sent Kurmancî to everyone else, in the two
- * messages you cannot finish signing up or recover an account without.
- *
- * Callers pass the account's locale now, so `en` can be English again.
- *
- * Soranî maps to English deliberately: there is no Soranî email copy yet, and a
- * reader of Soranî is not served by Kurmancî in a script they may not read. It
- * becomes its own entry the day that copy exists.
+ * Which copy a reader gets, from the app's nine locales. Soranî maps to English: there is no Soranî copy yet, and
+ * Kurmancî in a script a Soranî reader may not read would serve them worse.
  */
 export function emailLocaleFor(locale: string | null | undefined): EmailLocale {
   return locale === 'ku' ? 'ku' : 'en';
@@ -118,11 +100,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
       text: 'Silav {username},\n\nKesekî xwest şîfreya hesabê te yê Hevalo ji nû ve saz bike. Hesabê te hê bê şîfre ye, ji ber ku tu bi xizmeteke din têdikevî.\n\nHeke tu dixwazî bi navnîşana e-nameya xwe û şîfreyekê jî têkevî, li vir yekê saz bike: {link}\n\nEv girêdan ji bo demjimêrekê derbasdar e. Heke te ev daxwaz nekiriye, tu dikarî vê e-nameyê paşguh bikî: tiştek nayê guhertin.\n\n— Tîma Hevalo',
     },
   },
-  /**
-   * To moderators, for a P0 report. Deliberately empty of everything the
-   * report holds — no content, no names, no category — email is not a safe
-   * place for it; the link is the whole message.
-   */
+  /** To moderators, for a P0 report. Holds nothing of the report, since email is not a safe place for it; the link is the message. */
   'moderation-urgent': {
     en: {
       subject: 'A new urgent report needs review',
@@ -134,10 +112,8 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
   },
   /**
-   * To superadmins, when the security log records something critical (an admin
-   * console sign-in from somewhere new, two-step codes locked, a surge of failed
-   * sign-ins). Names the kinds of event and how many, never an address or an
-   * account: the log is where those are, behind the console's sign-in.
+   * To superadmins when the security log records something critical. Names the kinds of event and counts, never an
+   * address or account; those stay in the log behind the console's sign-in.
    */
   'security-alert': {
     en: {
@@ -150,11 +126,9 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
   },
   /*
-   * To someone who sent a copyright notice from /copyright — usually not a
-   * member, so email is the only way to reach them. The receipt (DSA Art.
-   * 16(4)) and the decision (Art. 16(5)); the counter-notice's copy is the one
-   * the DMCA (§512(g)(2)(B)) asks the provider to forward. Plain text only:
-   * these are records, and are kept the way they were sent.
+   * To someone who sent a copyright notice, usually not a member, so email is the only way to reach them: the
+   * receipt (DSA Art. 16(4)), the decision (Art. 16(5)), and the counter-notice copy the DMCA (§512(g)(2)(B)) asks
+   * for. Plain text only, kept as sent.
    */
   'copyright-received': {
     en: {
@@ -181,10 +155,8 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
   },
   /*
-   * Upheld with nothing to take down: the notice was about a profile, or its
-   * link matched nothing we could find, and the decision acted on the account.
-   * Saying "removed" here would be untrue, so this says what happened and asks
-   * for the exact link if the material is still up.
+   * Upheld with nothing to take down: the notice was about a profile or its link matched nothing, and the decision
+   * acted on the account. It asks for the exact link if the material is still up.
    */
   'copyright-upheld': {
     en: {
@@ -223,9 +195,8 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
   },
   /*
-   * Security notices. Plain text, and nothing in them the person signing in
-   * chose (not the device's name): whoever did it may not be the owner, and
-   * this lands in the owner's inbox.
+   * Security notices: plain text, with nothing the person signing in chose (such as the device's name), since they may
+   * not be the owner.
    */
   'new-sign-in': {
     en: {
@@ -266,9 +237,7 @@ function interpolate(template: string, vars: Record<string, string>): string {
   return template.replace(TOKEN_RE, (whole, key: string) => (key in vars ? vars[key]! : whole));
 }
 
-// ---------------------------------------------------------------------------
-// the designed email, read from the text
-// ---------------------------------------------------------------------------
+// The designed email, read from the text.
 
 /** What each email's picture is, and what its button says when it has a link to press. */
 const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<EmailLocale, string> }> = {
@@ -291,17 +260,16 @@ const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<Ema
   'security-alert': { picture: 'bell', button: { en: 'Open the security log', ku: 'Tomara ewlehiyê veke' } },
 };
 
-/** The footer's two lines every email has: where to write, and the link again for a button that will not press. */
+/** The footer's two lines: where to write, and the link again for a button that will not press. */
 const HELP: Record<EmailLocale, string> = { en: 'Need a hand? Write to {email}.', ku: 'Alîkarî divê? Ji {email} re binivîse.' };
 const FALLBACK: Record<EmailLocale, string> = { en: 'If the button doesn’t work, copy this link:', ku: 'Heke bişkok naxebite, vê girêdanê kopî bike:' };
 
-/** A paragraph longer than this is read from the edge; set in the middle it would be a ragged block. */
+/** Paragraphs longer than this are left-aligned; centred they would be a ragged block. */
 const CENTRED_UP_TO = 220;
 
 /**
- * A paragraph as the layout takes it: its words, with what was filled in as
- * plain words too (the layout escapes them), except the two things a sentence
- * may link — `{link}` and the `{contact}` address.
+ * A paragraph as the layout takes it: plain words throughout (the layout escapes them), except the two things a
+ * sentence may link, `{link}` and the `{contact}` address.
  */
 function sentence(template: string, vars: Record<string, string>): Inline[] {
   const out: Inline[] = [];
@@ -325,10 +293,9 @@ function keepsItsLines(chunk: string): boolean {
 }
 
 /**
- * The email's design, read from its text: blank lines part the paragraphs; a
- * `{code}` alone is the code; a `{link}` alone, or closing a line after a
- * colon, is the button; the last line after a dash is who signs it. What
- * follows the button or the code is the small print.
+ * Reads the design from the text: blank lines separate paragraphs, a lone `{code}` is the code, a lone `{link}` or
+ * one ending a line after a colon is the button, the last line after a dash is the signature, and whatever follows
+ * the button or code is the small print.
  */
 function designOf(template: EmailTemplate, locale: EmailLocale, entry: Entry, vars: Record<string, string>): EmailDesign {
   const chunks = entry.text
@@ -379,7 +346,7 @@ function designOf(template: EmailTemplate, locale: EmailLocale, entry: Entry, va
     title: interpolate(entry.subject, vars),
     ...(preheader !== undefined ? { preheader } : {}),
     picture: DESIGN[template].picture,
-    // a reference in brackets belongs to the subject line, where a reader searches for it, not to the heading
+    // A bracketed reference belongs to the subject, where a reader searches for it, not the heading.
     heading: interpolate(entry.subject.replace(/\s*\(\{\w+\}\)\s*$/, ''), vars),
     blocks,
     align: centred ? 'center' : 'start',

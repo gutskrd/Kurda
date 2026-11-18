@@ -1,19 +1,15 @@
 /**
- * Which accounts record which voices (`recording_voices`): read for the
- * console's session and the "Record by person" page, and changed by a
- * superadmin from a person's page (PUT /admin/users/:id/voices).
- *
- * A link says whose script opens first when the person opens the page, and,
- * for an account that holds only the voice actor role, the one set of lines
- * it may record at all (recording/access.ts). It grants nothing by itself:
- * the account still needs a role that opens the recording page.
+ * Which accounts record which voices (`recording_voices`), read for the console session and the "Record by person"
+ * page and changed by a superadmin (PUT /admin/users/:id/voices). A link decides whose script opens first and, for a
+ * voice-actor-only account, the only lines it may record. It grants nothing alone; the account still needs a role that
+ * opens the page.
  */
 import type pg from 'pg';
 import { isVoiceId, type VoiceId } from './script.js';
 
 type Executor = Pick<pg.Pool, 'query'>;
 
-/** How many voices one account may be linked to: every character and both narrators, with room for a part or two. */
+/** Voices one account may be linked to: every character and both narrators, with room for a part or two. */
 export const VOICES_PER_ACCOUNT_MAX = 10;
 
 /** The voices linked to an account, in the order they were linked. */
@@ -27,7 +23,7 @@ export interface LinkedAccount {
   username: string;
 }
 
-/** Who records each voice, for the people page's cards: accounts that are still there, oldest link first. */
+/** Who records each voice, for the people page: accounts still present, oldest link first. */
 export async function voiceLinks(db: Executor): Promise<Map<VoiceId, LinkedAccount[]>> {
   const { rows } = await db.query<{ voice: string; id: string; username: string }>(
     `SELECT v.voice, u.id, u.username
@@ -45,11 +41,9 @@ export type SetVoicesResult =
   | { ok: false; code: 'NOT_FOUND' | 'USER_BANNED' | 'UNKNOWN_VOICE' };
 
 /**
- * Make an account's voices exactly `voices`: links that are not asked for go,
- * new ones are added with who made them, and the ones kept keep their date.
- * The account row is locked first, so two superadmins changing one account's
- * voices at once end with one of their lists, not a mix. A banned account is
- * given no new voice; its old ones can still be taken away.
+ * Sets an account's voices to exactly `voices`: unwanted links go, new ones record who made them, kept ones keep
+ * their date. The account row is locked first, so concurrent edits end with one list, not a mix. A banned account
+ * gets no new voice, though old ones can be removed.
  */
 export async function setVoices(pool: pg.Pool, adminId: string, userId: string, voices: readonly string[]): Promise<SetVoicesResult> {
   const wanted = [...new Set(voices)];

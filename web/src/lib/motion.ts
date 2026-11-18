@@ -3,15 +3,11 @@ import { celebrationEndMs, celebrationPlan } from '@kurda/shared';
 import { haptic } from './haptics';
 
 /**
- * The few moving parts that need JavaScript rather than a stylesheet. The
- * tokens themselves (durations, curves, the press) are CSS custom properties
- * in styles/tokens.css, and the movements are in styles/motion.css; what is
- * here is the timing a component has to know about — when a celebration has
- * finished, how far a number has counted, whether a list is still arriving,
- * whether something is in front of the reader at all.
+ * Timing that components need from JavaScript; the motion tokens live in styles/tokens.css and the movements in
+ * styles/motion.css.
  */
 
-/** The reader asked their device for less motion: everything becomes a fade, or simply the end. */
+/** The reader asked for less motion: everything becomes a fade, or jumps to its end. */
 export function prefersReducedMotion(): boolean {
   try {
     return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
@@ -20,15 +16,10 @@ export function prefersReducedMotion(): boolean {
   }
 }
 
-/** How long something that is closing takes to leave: `--dur` in styles/tokens.css, which its stylesheet uses. */
+/** How long a closing element takes to leave; matches `--dur` in styles/tokens.css. */
 export const LEAVE_MS = 200;
 
-/**
- * Whether this browser will play a movement at all: it can be asked whether
- * the reader wants less of it, and the answer is no. Where it cannot be asked
- * (no `matchMedia`) nothing is waited for, and what would have moved is
- * simply where it ends.
- */
+/** Whether this browser plays movement: `matchMedia` exists and reduced motion is off. */
 export function playsMotion(): boolean {
   try {
     return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -38,19 +29,9 @@ export function playsMotion(): boolean {
 }
 
 /**
- * Whether something that has just been closed is still leaving — a dialog or
- * a sheet, which goes out the way it came in rather than vanishing.
- *
- * True from the very render in which `open` turns false, for `LEAVE_MS`,
- * which is how long whatever closes stays drawn (with its closing class) so
- * the stylesheet can take it away. It is false at once for a reader who asked
- * for less motion, and wherever motion cannot be played: there the thing is
- * simply gone. Opened again while leaving, it is no longer leaving.
- *
- * Only the picture stays. The caller hands the focus back and frees the page
- * the moment `open` turns false, and marks what is still drawn as inert and
- * hidden from assistive technology: nobody can reach into a dialog that has
- * been closed.
+ * Whether something just closed (a dialog, a sheet) is still playing its exit: true for `LEAVE_MS` from the render in
+ * which `open` turns false, and false at once where motion is off. Reopening ends it. The caller returns focus and
+ * marks the leaving element inert and hidden from assistive technology straight away.
  */
 export function useLeaving(open: boolean): boolean {
   const [was, setWas] = useState(open);
@@ -76,10 +57,8 @@ export function countUpMs(delta: number, reduce: boolean): number {
 }
 
 /**
- * A number counting up from `from` to `to`, once, after `delayMs`, on the
- * out-curve; straight to `to` under reduced motion. What a screen reader is
- * given should be the final number (the caller's job: an aria-label, or
- * visually-hidden text), not every number on the way.
+ * A number counting from `from` to `to` once, after `delayMs`; straight to `to` under reduced motion. Give screen
+ * readers the final number (an aria-label or visually hidden text), not each step.
  */
 export function useCountUp(to: number, { from = 0, delayMs = 0 }: { from?: number; delayMs?: number } = {}): number {
   const [reduce] = useState(prefersReducedMotion);
@@ -110,10 +89,8 @@ export function useCountUp(to: number, { from = 0, delayMs = 0 }: { from?: numbe
 }
 
 /**
- * A celebration playing (shared celebration.ts): felt once as the art lands,
- * over when the last fleck has fallen — or at once, when it is skipped.
- * `playing` is what the stylesheet keys the movement on. It starts `delayMs`
- * after it mounts, for a moment that opens on something else first.
+ * A celebration (shared celebration.ts): felt once as the art lands, over when the last fleck falls or when skipped.
+ * The stylesheet keys on `playing`, which starts `delayMs` after mount.
  */
 export function useCelebrationMoment(delayMs = 0): { playing: boolean; skip: () => void } {
   const [playing, setPlaying] = useState(true);
@@ -133,40 +110,33 @@ export function useCelebrationMoment(delayMs = 0): { playing: boolean; skip: () 
     };
   }, [feel, delayMs]);
   const skip = useCallback(() => {
-    // skipped before it landed: the moment still happened, and is still felt
+    // Skipped before landing: still felt.
     feel();
     setPlaying(false);
   }, [feel]);
   return { playing, skip };
 }
 
-/** How long a list is "arriving" after its first content: its first rows rise in during it, once. */
+/** How long a list counts as arriving after its first content, while its first rows rise in. */
 export const ARRIVAL_MS = 900;
 
-/** The lists that have risen in already, while the tab is open: each rises once (as a unit of the path does). */
+/** Lists that have already risen in this tab; each rises once. */
 const ARRIVED = new Set<string>();
 
-/** Every list may arrive again: for the tests, where one tab is many visits. */
+/** Lets every list arrive again, for tests. */
 export function forgetArrivals(): void {
   ARRIVED.clear();
 }
 
 /**
- * Whether a list that has just been filled is still arriving — for the class
- * that lets its first screenful rise in. True for a moment after `ready`
- * first turns true and never again, so a later refresh, a filter or a row
- * added at the top simply appears.
- *
- * And once in a tab, by the list's `name`: Home and Messages are opened many
- * times a day, and rows that rise in on every visit are movement on the most
- * used screens for nobody's benefit. Rows that are already there when the
- * list is first drawn — it was kept from the last visit (lib/apiMemory.ts) —
- * have not arrived at all, and do not rise.
+ * Whether a newly filled list is still arriving, for the class that lets its first screenful rise in. True briefly
+ * after `ready` first turns true, and only once per tab for each `name`, since lists like Home are opened many times a
+ * day. A list drawn from memory (lib/apiMemory.ts) does not rise at all.
  */
 export function useArrival(ready: boolean, name: string): boolean {
   const [arriving, setArriving] = useState(false);
   const since = useRef<number | null>(null);
-  // decided as the list is first drawn: rows in hand then came from memory, and a list seen before has had its moment
+  // Decided on the first draw: rows already in hand came from memory, and a list seen before has had its moment.
   const [may] = useState(() => !ready && !ARRIVED.has(name));
   useEffect(() => {
     if (!ready || !may) return;
@@ -185,13 +155,8 @@ export function useArrival(ready: boolean, name: string): boolean {
 }
 
 /**
- * Whether an element is in front of the reader: its tab is the one being
- * looked at and the element is on the screen. A loop that is only decoration
- * (a code ticket's glint) runs only while this is true, as a speaking
- * character rests when it is not in front — a light crossing a ticket in a
- * background tab, or scrolled away under the fold, is work nobody sees.
- * Without an IntersectionObserver (an old browser, a test) the element counts
- * as on the screen.
+ * Whether an element is in front of the reader: its tab is visible and it is on screen. Decorative loops run only
+ * then. Without IntersectionObserver (old browsers, tests) the element counts as on screen.
  */
 export function useInFront(ref: RefObject<Element | null>): boolean {
   const [visible, setVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');

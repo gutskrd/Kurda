@@ -38,12 +38,8 @@ export function withSentenceSpeaker(audio: StoryAudio, key: string, speaker: Spe
 }
 
 /**
- * The story's sentences in reading order, each with its recording, and a
- * studio under the one that is open: record, upload a file, hear it back,
- * save (replacing an old take), remove. The same store and the same studio as
- * the audio studio's "Record story sentences" side, which stays a link away
- * for recording several stories in a row. The sentences are the saved text's:
- * what the reader cuts, which an unsaved edit has not reached yet.
+ * The story's sentences in reading order with their recordings, and the studio under the open one, as on the audio
+ * studio's story side. The sentences are the saved text's, as the reader cuts it.
  */
 export function AudioSection({
   story,
@@ -51,14 +47,14 @@ export function AudioSection({
   onAudio,
 }: {
   story: AdminStory | null;
-  /** the text has unsaved changes, so the sentences here may not be the ones on screen */
+  /** The text has unsaved changes, so the sentences here may not be the ones on screen. */
   textChanged: boolean;
   onAudio: (next: StoryAudio) => void;
 }): React.JSX.Element {
   const dialogs = useDialogs();
   const player = usePlayer();
   const [open, setOpen] = useState<string | null>(null);
-  // who says the next new recording: the last choice made for one
+  // Who says the next new recording: the last choice made for one.
   const [nextSpeaker, setNextSpeaker] = useState<Speaker>(rememberedSpeaker);
   const changeSpeaker = useSpeakerChange('lesson', (key, speaker) => {
     if (story) onAudio(withSentenceSpeaker(story.audio, key, speaker));

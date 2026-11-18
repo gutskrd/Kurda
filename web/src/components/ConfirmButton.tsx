@@ -1,19 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n/I18nProvider';
 
-/** How long the armed state waits before giving up on you. */
+/** How long the armed state waits for the second press. */
 const ARMED_MS = 4_000;
 
 /**
- * A button for something you cannot undo.
- *
- * One press arms it and the label changes to ask; a second press does the
- * thing. It disarms itself after a few seconds, and on blur, so a half-pressed
- * Delete never sits there waiting to catch a stray click later.
- *
- * In place of `confirm()`, which is a browser dialog the app cannot style, lands
- * outside the page for a screen reader, and is blocked outright in some
- * embedded browsers — leaving the action silently impossible.
+ * A button for something that cannot be undone: the first press arms it and asks, the second acts. It disarms after a
+ * few seconds and on blur. Used instead of `confirm()`, which cannot be styled and is blocked in some embedded browsers.
  */
 export function ConfirmButton({
   label,
@@ -31,14 +24,13 @@ export function ConfirmButton({
   onConfirm: () => void | Promise<void>;
   className?: string;
   disabled?: boolean;
-  /** the plain-words version, for the accessible name and the tooltip */
+  /** The plain-words version, for the accessible name and the tooltip. */
   title: string;
-  /** "menuitem" when it is one of a menu's items */
+  /** "menuitem" when it is a menu item. */
   role?: 'menuitem';
 }): React.JSX.Element {
   const t = useT();
-  // resolved here rather than as a default argument: a default is evaluated
-  // before any hook has run
+  // Not a default argument, which is evaluated before any hook has run.
   const confirm = confirmLabel ?? t('common.sure');
   const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -79,7 +71,7 @@ export function ConfirmButton({
       onBlur={() => setArmed(false)}
       onClick={() => void press()}
     >
-      {/* while it is being done the button keeps its word, and so its width: nothing beside it moves */}
+      {/* While busy the button keeps its word, and so its width. */}
       {busy ? (busyLabel ?? label) : armed ? confirm : label}
     </button>
   );

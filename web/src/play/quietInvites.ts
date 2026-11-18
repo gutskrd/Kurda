@@ -1,13 +1,9 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
 /**
- * While a game is being played — a story's reading, a question, a word being
- * guessed — an invite to another game waits as a one-line chip instead of a
- * banner, so it never sits over the thing you are answering. A game screen
- * says so with `useQuietInvites(true)`; the banner asks `useInvitesQuiet()`.
- *
- * A count, not a flag: two screens saying it at once (a route changing) do
- * not undo each other.
+ * While a game is played, an invite to another waits as a one-line chip instead of a banner. A game screen calls
+ * `useQuietInvites(true)` and the banner asks `useInvitesQuiet()`. A count, so two screens overlapping during a route
+ * change do not undo each other.
  */
 let holds = 0;
 const listeners = new Set<() => void>();

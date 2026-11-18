@@ -1,25 +1,16 @@
 import { PATH_RING, TOPIC_STARS, ringPieces, roundStars, starPath } from '@kurda/shared';
 
 /**
- * A topic's ring and its stars on the website's lesson path, drawn from the
- * same rule and the same shapes as the phone's (@kurda/shared
- * lesson-rounds.ts): a ring round the stop cut into one piece for each of its
- * lessons — in the app's violet once its lesson is finished in the round being
- * played, the rest the quiet track, and all of it in the app's gold once all
- * three rounds are played — and on a finished topic's gold coin a star for
- * each round, one to three.
- *
- * What is drawn is what the path says to draw at this moment of a return from
- * a lesson (learn/CoursePath.tsx steps it through `PATH_RETURN`): the pieces
- * fill one after another (`from`, the pieces filled before, sets each new
- * one's delay), the ring goes gold when a round is made whole, and a star
- * earned drops in (`earned`). The stylesheet moves them, and holds them still
- * under Reduce Motion (path.css). Decorative: the stop's own words say it all.
+ * A topic's ring and stars on the lesson path, by the same rule and shapes as the phone (@kurda/shared lesson-rounds.ts):
+ * one ring piece per lesson, violet once finished in the current round, gold all round once all three rounds are played,
+ * and a star per round on a finished topic's coin. During a return (learn/CoursePath.tsx, `PATH_RETURN`) the pieces fill
+ * one after another from `from`, the ring turns gold when a round completes, and an `earned` star drops in; path.css
+ * moves them and holds them under reduced motion. Decorative; the stop's words say it all.
  */
 
 const { pad, box, width } = PATH_RING;
 
-/** How long a ring takes to fill from where it was, piece after piece. */
+/** How long a ring takes to fill from where it was, piece by piece. */
 const FILL_MS = 400;
 
 export function TopicRing({
@@ -30,13 +21,13 @@ export function TopicRing({
   locked = false,
 }: {
   of: number;
-  /** pieces drawn filled */
+  /** Pieces drawn filled. */
   filled: number;
-  /** the whole ring gold: all three rounds played, or a round just made whole */
+  /** The whole ring gold: all three rounds played, or a round just completed. */
   whole: boolean;
-  /** coming back from a lesson, the pieces that were filled before it: the rest fill one after another */
+  /** On a return from a lesson, the pieces filled before it; the rest fill one after another. */
   from?: number;
-  /** a topic not open yet: its ring a faint track */
+  /** A topic not open yet: its ring a faint track. */
   locked?: boolean;
 }): React.JSX.Element | null {
   const pieces = ringPieces(of);
@@ -69,11 +60,7 @@ export function TopicRing({
   );
 }
 
-/**
- * A finished topic's stars on its coin, in the valley's cream edged in a deep
- * gold so they read on the gold they stand on. `earned`: the last one was won
- * by the lesson just played, and drops in.
- */
+/** A finished topic's stars on its coin, cream edged in deep gold; `earned` drops the last one in. */
 export function RoundStars({ rounds, earned = false }: { rounds: number; earned?: boolean }): React.JSX.Element | null {
   const stars = roundStars(rounds);
   if (stars.length === 0) return null;
@@ -91,7 +78,7 @@ export function RoundStars({ rounds, earned = false }: { rounds: number; earned?
   );
 }
 
-/** A topic's stars in its card, three in a row: one in the app's gold for each round played, the rest the ring's track. */
+/** A topic's stars in its card: gold for each round played, the rest the ring's track. */
 export function StarRow({ rounds }: { rounds: number }): React.JSX.Element {
   return (
     <span className="lp-star-row" aria-hidden="true" data-testid={`lp-card-stars-${rounds}`}>

@@ -31,42 +31,27 @@ export interface StreakSummary {
   current: number;
   longest: number;
   freezes: number;
-  /**
-   * The most freezes this learner may hold at once, for the apps to draw the
-   * empty places beside the held ones: one, two for a Hevalo+ member, and
-   * never fewer than they hold (a second one kept after membership ended).
-   */
+  /** The most freezes this learner may hold, for drawing empty places: one, two for a Hevalo+ member, never fewer than held. */
   maxFreezes: number;
   /** 'YYYY-MM-DD' in the user's tz, or null if never active */
   lastActiveOn: string | null;
-  /**
-   * Days with a finished lesson or practice session, ever. Shown beside the
-   * current streak because, unlike it, a missed day never takes it away.
-   */
+  /** Days with a finished lesson or practice session, ever; shown beside the streak because a missed day never takes it away. */
   daysLearned: number;
   /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
   freezeProgress: number;
   sessionsPerFreeze: number;
-  /**
-   * The missed day the last freeze spent covered ('YYYY-MM-DD' in the user's
-   * tz), or null: an app that has not said so yet says once that the streak
-   * was kept.
-   */
+  /** The missed day the last freeze covered ('YYYY-MM-DD' in the user's zone), or null, so an app can say once the streak was kept. */
   freezeUsedOn: string | null;
-  /**
-   * The streak that ended and can still be restored (POST /me/streak/repair):
-   * how long it was, what restoring it costs this learner now, and when the
-   * offer ends. Null when there is nothing to restore.
-   */
+  /** The ended streak that can still be restored: its length, the cost now and when the offer ends; null when there is none. */
   repair: StreakRepairOffer | null;
 }
 
 /** What POST /me/streak/repair answers with. */
 export interface RepairResult {
   restored: true;
-  /** this run had been restored already (a second tap, a retry): nothing was charged or changed again */
+  /** This run was already restored (a second tap, a retry), so nothing was charged or changed again. */
   duplicate: boolean;
-  /** the length of the run that was brought back */
+  /** The length of the run brought back. */
   days: number;
   /** what it cost: 0 for a Hevalo+ member's free one */
   costGems: number;
@@ -86,15 +71,11 @@ const REFUSALS: Record<Exclude<RepairRefusal, 'restored'>, { code: string; messa
 /** The ledger's reason for the gems a restore costs. */
 export const STREAK_REPAIR_REASON = 'streak_repair';
 
-/**
- * The streak as a finished lesson or practice session reports it: the summary,
- * with the learner's today and the days lately learned, for the week row the
- * results show. Only there: /me stays the summary alone.
- */
+/** The streak as a finished session reports it: the summary plus today and recent learning days, for the results' week row. */
 export interface SessionStreak extends StreakSummary {
   /** the learner's today, 'YYYY-MM-DD' in their timezone */
   today: string;
-  /** days of the last RECENT_DAYS (theirs) with a session that was learning, and the day a freeze kept, if in them */
+  /** Days of the last RECENT_DAYS with a learning session, and any day a freeze kept among them. */
   recent: RecentDay[];
 }
 
@@ -113,7 +94,7 @@ interface StreakRow {
   ended_restored_on: string | null;
 }
 
-/** A learner's row as the service works with it: the run, the tally, and whether they are a Hevalo+ member. */
+/** A learner's row as the service uses it: the run, the tally, and whether they are a Hevalo+ member. */
 interface Loaded {
   state: StreakState;
   tally: LearningTally;
@@ -122,16 +103,13 @@ interface Loaded {
 
 const EMPTY: StreakState = { currentStreak: 0, longestStreak: 0, lastActiveOn: null, freezes: 0 };
 
-/**
- * pg returns DATE as 'YYYY-MM-DD' when the column is read as text; when it
- * comes back as a Date, normalize to the calendar date string.
- */
+/** pg returns DATE as 'YYYY-MM-DD' when read as text; a Date is normalised to that string. */
 function dateText(value: string | Date | null): string | null {
   if (value == null) return null;
   return typeof value === 'string' ? value : new Date(value).toISOString().slice(0, 10);
 }
 
-/** The row's columns are null together when the account has no streak row yet (the read joins it to the account). */
+/** The row's columns are all null when the account has no streak row yet (the read joins it to the account). */
 function rowToState(row: StreakRow | undefined): StreakState {
   if (!row || row.current_streak == null) return EMPTY;
   const endedOn = dateText(row.ended_last_active_on);
@@ -198,21 +176,12 @@ function runValues(s: StreakState): unknown[] {
 }
 
 /**
- * Daily streak tracking (KUR-031). Day boundaries are the user's local
- * calendar date; a stored freeze auto-covers a single missed day. State is
- * settled lazily on read and on activity, so a missed day is reflected the
- * next time the user is seen — no scheduled job required.
- *
- * Beside the run it keeps what learning has added up to (`LearningTally`):
- * days learned in total, the last of them, and finished sessions counting
- * towards the next freeze — one per five, which is how freezes are earned.
- *
- * It also keeps the run that last ended, and restores it (`repair`) for gems
- * or, for a Hevalo+ member, once a month for nothing: the rules are the shared
- * streak-repair module's, the decision and every date are made here. Every
- * write reads the row under its lock first, in the caller's transaction or one
- * of its own, so a restore that was paid for cannot be overwritten by a lesson
- * or a read that began before it.
+ * Daily streaks. Days are the user's local calendar dates, and a stored freeze covers a single missed day. State is
+ * settled lazily on read and on activity, so no scheduled job is needed. Beside the run it keeps a `LearningTally`:
+ * days learned, the last of them, and sessions toward the next freeze (one per five). It also keeps the run that last
+ * ended and restores it (`repair`) for gems, or monthly for free for a Hevalo+ member, by the shared streak-repair
+ * rules with every date decided here. Every write reads the row under its lock first, so a paid restore cannot be
+ * overwritten by a lesson or read that began earlier.
  */
 export class StreakService {
   constructor(
@@ -220,11 +189,7 @@ export class StreakService {
     private readonly wallet: WalletService = new WalletService(pool),
   ) {}
 
-  /**
-   * Run `work` in a transaction: the caller's when they passed their client,
-   * one of its own on the bare pool, so that a row's lock taken in it holds
-   * until the write that follows is in.
-   */
+  /** Runs `work` in a transaction, the caller's client or one of its own, so a row lock taken in it holds until the write. */
   private async within<T>(executor: Executor, work: (tx: Executor) => Promise<T>): Promise<T> {
     if (executor !== this.pool) return work(executor);
     const client = await this.pool.connect();
@@ -242,10 +207,8 @@ export class StreakService {
   }
 
   /**
-   * The learner's row beside their membership's end, in one statement. Read the
-   * DATE columns as text so they never drift across tz. `lock` takes the row's
-   * lock first, for a read that a write follows in the same transaction
-   * (`within`).
+   * The learner's row with their membership end, in one statement, DATE columns read as text so they never shift with
+   * time zones. `lock` takes the row lock first, for a read followed by a write in the same transaction.
    */
   private async load(executor: Executor, userId: string, opts: { lock?: boolean } = {}): Promise<Loaded> {
     if (opts.lock) await executor.query(`SELECT 1 FROM user_streaks WHERE user_id = $1 FOR UPDATE`, [userId]);
@@ -298,11 +261,8 @@ export class StreakService {
   }
 
   /**
-   * The offer to restore the run that ended, or null: null too for an account
-   * paused from rewards (economy/standing.ts), which would only be refused.
-   * The price and whether it is the month's free one are read only while
-   * there is an offer to make, so a streak that is simply going costs nothing
-   * more to show.
+   * The offer to restore the ended run, or null, also null for an account paused from rewards. The price and free
+   * monthly restore are read only when there is an offer, so a live streak costs nothing extra to show.
    */
   private async offer(executor: Executor, userId: string, state: StreakState, plus: boolean, today: string, timeZone: string): Promise<StreakRepairOffer | null> {
     const ended = state.ended;
@@ -320,13 +280,9 @@ export class StreakService {
   }
 
   /**
-   * Record a finished lesson or practice session. Counts today's streak at
-   * most once per local day, adds the day to the days-learned total, and moves
-   * the next freeze one session closer (see `recordSession`). Runs inside the
-   * caller's transaction when an executor is passed — callers do this only on
-   * the transition to completed, so a session is never counted twice, and only
-   * for a session that was learning (`countsAsLearning`), so finishing one with
-   * nothing answered pays for nothing.
+   * Records a finished lesson or practice session: counts today's streak at most once per local day, adds the day to
+   * days learned, and moves the next freeze closer (`recordSession`). Runs in the caller's transaction when given an
+   * executor; callers do this only on the transition to completed and only for a learning session (`countsAsLearning`).
    */
   async recordActivity(
     userId: string,
@@ -344,10 +300,8 @@ export class StreakService {
   }
 
   /**
-   * Keep today's streak for something that is not a lesson or a practice
-   * session (a daily Peyvok win). The day counts for the streak only: it is not
-   * a day learned, it does not earn towards a freeze, and it does not unlock
-   * the daily Zêr, which are all paid for learning.
+   * Keeps today's streak for something other than a lesson or practice (a daily Peyvok win): the day counts for the
+   * streak only, not as a day learned, toward a freeze, or for the daily Zêr.
    */
   async recordPlayDay(
     userId: string,
@@ -365,12 +319,9 @@ export class StreakService {
   }
 
   /**
-   * Current streak for display. Settles to today first (burning a freeze
-   * for a covered miss and noting the day it kept, zeroing a broken run and
-   * remembering it so it can be restored) and persists that so /me is always
-   * truthful. Nearly every read changes nothing and is one statement; one that
-   * does settles again under the row's lock, so it writes over nothing that
-   * changed meanwhile.
+   * The current streak for display. Settles to today first (spending a freeze for a covered miss and noting the day, or
+   * zeroing a broken run and remembering it for restoring) and persists that. Most reads change nothing and are one
+   * statement; one that does settles again under the row lock, so it overwrites nothing changed meanwhile.
    */
   async get(userId: string, timeZone: string, now: Date = new Date()): Promise<StreakSummary> {
     const today = localDate(now, timeZone);
@@ -387,23 +338,12 @@ export class StreakService {
   }
 
   /**
-   * Restore the run that ended (POST /me/streak/repair). Everything is decided
-   * here: which run, whether it can still be restored today (the learner's
-   * day), and what it costs — the gem price, or nothing for a Hevalo+ member's
-   * one free restore of the calendar month.
-   *
-   * One transaction under the streak row's lock: the record of the restore
-   * (one row per ended run), the gems through the ledger under a key naming
-   * the same run, and the run itself. So two requests at once restore once and
-   * charge once, and a request for a run restored already — a second tap, a
-   * retry after a lost answer — is answered as the first was, with `duplicate`
-   * set, and changes nothing. That holds while the run's offer would still
-   * have been open; later there is simply nothing to restore.
-   *
-   * Refused with NOTHING_TO_RESTORE, STREAK_TOO_SHORT or RESTORE_EXPIRED (409)
-   * when the run is not on offer, INSUFFICIENT_FUNDS (402, the wallet's own)
-   * when the gems are short, and REWARDS_PAUSED (403) for an account paused
-   * from rewards, as a claim is.
+   * Restores the ended run (POST /me/streak/repair). The server decides which run, whether it can still be restored on
+   * the learner's day, and the cost: the gem price, or nothing for a Hevalo+ member's one free restore a month. One
+   * transaction under the row lock writes the restore record (one per ended run), charges gems under a key naming the
+   * run, and restores it, so concurrent requests restore and charge once, and a repeat while the offer would be open is
+   * answered like the first with `duplicate`. Refused with NOTHING_TO_RESTORE, STREAK_TOO_SHORT or RESTORE_EXPIRED
+   * (409), INSUFFICIENT_FUNDS (402) or REWARDS_PAUSED (403).
    */
   async repair(userId: string, timeZone: string, now: Date = new Date()): Promise<RepairResult> {
     await assertEconomyNotHeld(this.pool, userId, 'rewards');
@@ -418,7 +358,7 @@ export class StreakService {
       const settled = settle(loaded.state, today);
       const ended = settled.ended ?? null;
       let standing = repairStanding(ended, today);
-      // restored already: the same answer again while its offer would have been open, nothing to restore after that
+      // Restored already: the same answer again while its offer would have been open, nothing to restore after.
       if (standing === 'restored' && today > repairLastDay(ended!)) standing = 'nothing';
       if (standing !== 'open' && standing !== 'restored') {
         throw new AppError(REFUSALS[standing].code, 409, REFUSALS[standing].message);
@@ -428,7 +368,7 @@ export class StreakService {
         plus: isPremiumActive(loaded.premiumUntil, now),
         freeRepairsThisMonth: await this.freeRepairsThisMonth(client, userId, today),
       });
-      // the record first: it has one row per ended run, so a run restored before is found here rather than paid for again
+      // The record first: one row per ended run, so a run restored before is found here rather than paid for again.
       const recorded =
         standing === 'open'
           ? await client.query(
@@ -458,7 +398,7 @@ export class StreakService {
         const was = first.rows[0];
         result = { restored: true, duplicate: true, days: was?.days ?? run.days, costGems: was?.cost_gems ?? 0, free: was?.free ?? false };
       }
-      // a run on record as restored whose row says otherwise is put right here too, without another charge
+      // A run recorded as restored whose row says otherwise is corrected here too, without another charge.
       state = standing === 'open' ? restore(settled, today) : settled;
       if (standing === 'open' || moved(loaded.state, settled)) await this.save(client, userId, state);
       await client.query('COMMIT');
@@ -476,19 +416,11 @@ export class StreakService {
   }
 
   /**
-   * The learner's today and the days of the last RECENT_DAYS on which they
-   * finished a lesson or practice session that was learning, by the day
-   * boundary a day learned is counted by (the session's completion, in their
-   * timezone, with half its items answered that day: `countsAsLearning`), and
-   * the days freezes last kept when they fall in them. One statement, over the
-   * learner's own sessions; a practice session paid XP exactly when it was
-   * learning (a test to jump ahead never is); a learning game's round was
-   * learning when at least half of it was right (`learning_counted`).
-   *
-   * The missed days a restore brought a streak back across are said the same
-   * way a frozen day is (`frozen`: kept, not learned), from the day after the
-   * run's last to the day before the restore; one of them learned on all the
-   * same shows as learned, as the week row prefers.
+   * The learner's today and the days of the last RECENT_DAYS with a learning session, by the day it counted for
+   * (completion in their zone with half its items answered that day, `countsAsLearning`), plus the days freezes kept.
+   * One statement over the learner's own sessions: practice counts when it paid XP (never a jump-ahead test), and a
+   * learning game's round when at least half was right (`learning_counted`). Days a restore bridged show as kept
+   * (`frozen`), unless one was learned anyway.
    */
   async recent(userId: string, timeZone: string, now: Date = new Date()): Promise<{ today: string; recent: RecentDay[] }> {
     const tz = safeTimeZone(timeZone);
@@ -526,7 +458,7 @@ export class StreakService {
     return (await this.load(executor, userId)).tally.lastLearnedOn;
   }
 
-  /** Grant a streak freeze, up to the most this learner may hold (`maxFreezesFor`). Returns the new balance. */
+  /** Grants a streak freeze up to the most this learner may hold (`maxFreezesFor`) and returns the new balance. */
   async grantFreeze(userId: string, executor: Executor = this.pool, now: Date = new Date()): Promise<number> {
     return this.within(executor, async (tx) => {
       const before = await this.load(tx, userId, { lock: true });
@@ -537,7 +469,7 @@ export class StreakService {
   }
 }
 
-/** Whether settling changed anything a row keeps: the count, the freezes, or the day the run is anchored to. */
+/** Whether settling changed anything the row keeps: the count, the freezes, or the run's anchor day. */
 function moved(before: StreakState, after: StreakState): boolean {
   return after.currentStreak !== before.currentStreak || after.freezes !== before.freezes || after.lastActiveOn !== before.lastActiveOn;
 }

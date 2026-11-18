@@ -1,13 +1,9 @@
 /**
- * Cultural event seeder (KUR-090).
+ * Upserts one events row per upcoming year from the annual event templates (by default every template in
+ * content/events/), so recurring holidays like Newroz appear without a deploy. Rows are keyed `<key>-<year>`, so a
+ * re-run only refreshes; files that are not event templates are skipped, and --dry-run writes nothing.
  *
  *   tsx scripts/seed-events.ts [file.json ...] [--years N] [--dry-run]
- *
- * Reads annual event templates (defaults to every template in content/events/)
- * and upserts one events-table row per upcoming year — so recurring holidays
- * like Newroz appear on time without a code deploy. Idempotent: rows are keyed
- * `<key>-<year>`, so re-running only refreshes. Files that aren't event
- * templates (e.g. lesson content) are skipped. --dry-run reports without writing.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

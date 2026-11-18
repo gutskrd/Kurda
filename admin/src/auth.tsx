@@ -18,39 +18,34 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [me, setMe] = useState<Me | null>(null);
 
-  // Rehydrate the current user after a reload — the token persists in
-  // localStorage but `me` is in-memory only, so without this the @username
-  // (and any role-based UI) disappears on refresh.
+  // The token survives a reload but `me` does not, so it is fetched again.
   useEffect(() => {
     if (!getToken() || me) return;
     void api<{ user: Me }>('/me')
       .then((res) => setMe(res.user))
       .catch((err) => {
-        // a 401 already bounced us to login via the api client; ignore others
+        // A 401 already bounced us to login via the api client; ignore others.
         if (!(err instanceof ApiError)) throw err;
       });
-    // run once on mount; login()/logout() keep `me` in sync afterwards
+    // Run once on mount; login()/logout() keep `me` in sync afterwards.
   }, []);
 
   async function login(email: string, password: string, remember = true): Promise<void> {
     const res = await api<{ tokens: { accessToken: string; refreshToken: string } }>('/admin/auth/login', {
       method: 'POST',
-      // the name the admin's own Settings lists this session under; "Remember
-      // me" left off keeps the session on the server for a day, not a month
+      // The name the admin's own Settings lists this session under; "Remember
+      // me" left off keeps the session on the server for a day, not a month.
       body: { email, password, deviceName: consoleName(), remember },
     });
     setToken(res.tokens.accessToken, remember, res.tokens.refreshToken);
-    // the login payload omits roles — fetch the full profile so role-based UI works
+    // The login payload omits roles — fetch the full profile so role-based UI works.
     const meRes = await api<{ user: Me }>('/me');
     setMe(meRes.user);
   }
 
   function logout(): void {
-    // best effort, and before the tokens go: the session ends server-side too,
-    // so signing out is not merely local and the session leaves the admin's
-    // list of signed-in devices. Its 2FA goes with it (the verification is the
-    // session's). A sign-in kept from before the console held a refresh token
-    // can only end its 2FA.
+    // Best effort, before the tokens go: the session and its 2FA end on the server too. A session with no refresh
+    // token can only end its 2FA.
     const refresh = getRefreshToken();
     if (refresh) void endSession(refresh);
     else void api('/admin/session/end', { method: 'POST' }).catch(() => undefined);

@@ -21,8 +21,8 @@ describe('Landing', () => {
     expect(h1).toHaveTextContent(/learn kurdish/i);
     expect(h1).toHaveTextContent(/play together/i);
     expect(screen.getByRole('link', { name: /start learning kurdish/i })).toHaveAttribute('href', '/register');
-    // the games are a look around, not a promise to play without signing up:
-    // every game needs an account (deliberately changed from "Play a game first")
+    // The games are a look around, not a promise to play without signing up:
+    // every game needs an account (deliberately changed from "Play a game first").
     expect(screen.getByRole('link', { name: /see the games/i })).toHaveAttribute('href', '/app/games');
     expect(screen.getByText(/the games need a free account/i)).toBeInTheDocument();
   });
@@ -39,11 +39,7 @@ describe('Landing', () => {
     }
   });
 
-  /**
-   * Lessons live in the phone app, which is not in the stores yet. The section
-   * that shows a lesson has to say so, rather than let the picture imply that
-   * the lesson is a click away.
-   */
+  // The lessons section says where lessons are: in the browser now, the apps still to come.
   it('says where the lessons are, where it shows one: in the browser now, the apps still to come', () => {
     show();
     const learn = document.getElementById('learn')!;

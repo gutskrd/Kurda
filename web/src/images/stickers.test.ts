@@ -2,13 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { en } from '../i18n/en';
 import { PICTURE_STICKERS } from './stickers';
 
-/**
- * The picture stickers against the files that ship.
- *
- * The listing is Vite's own view of `public/stickers`, so a sticker whose file
- * was removed, or a file nothing offers, fails here rather than as a blank
- * button in the picker.
- */
+/** Picture stickers against the shipped files in `public/stickers`, so a missing or orphaned file fails here. */
 const onDisk = Object.keys(import.meta.glob('/public/stickers/*')).map((p) => p.replace(/^\/public/, ''));
 
 describe('picture stickers', () => {
@@ -33,10 +27,7 @@ describe('picture stickers', () => {
   });
 });
 
-/**
- * The emoji are Noto's images, which come under the Apache License — it asks
- * for a copy of the licence beside them and a note of what was changed.
- */
+/** Noto's emoji images are Apache-licensed, which asks for the licence beside them and a note of what changed. */
 const notice = Object.values(
   import.meta.glob<string>('/public/emoji/NOTICE.txt', { query: '?raw', import: 'default', eager: true }),
 )[0];

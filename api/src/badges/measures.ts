@@ -5,14 +5,9 @@ import { PRACTICE_TARGET } from '../practice/practice-select.js';
 import { rankTierIndexSql } from './rank-hooks.js';
 
 /**
- * What each badge counts (contract 4 §B2), read from the tables where it
- * happened — lessons, reviews, games, streaks, gifts, league weeks, rated
- * games — and never from anything a client sends. Every measure can be worked
- * out again at any moment and gives the same answer, so evaluating a badge
- * twice, or late, or after a retry, cannot over-count.
- *
- * Days are UTC days (the league's clock) except where a badge is about a
- * learner's own calendar day — Newroz in their own time zone.
+ * What each badge counts, read from the tables where it happened and never from anything a client sends. Every
+ * measure can be recomputed at any time with the same answer, so a repeated, late or retried evaluation cannot
+ * over-count. Days are UTC days, except where a badge is about the learner's own calendar (Newroz in their zone).
  */
 
 type Executor = Pick<pg.Pool, 'query'>;
@@ -31,17 +26,10 @@ interface Pending {
 }
 
 /**
- * One learner's evaluation: loaders shared by the measures that need the same
- * rows (every event badge reads the same list of learning days), each loaded
- * at most once.
- *
- * A lesson moves some thirty badges, and asking for each count on its own was
- * a round trip apiece, twice for every lesson finished. So every value the
- * measures ask for in the same turn of the event loop is gathered and sent as
- * one statement — a SELECT of their subqueries side by side — and each measure
- * gets its own column back (`value`). The counts are the same statements they
- * always were; only the trip is shared. Start the measures together and await
- * them together, or each one waits for its own trip again.
+ * One learner's evaluation. Every value the measures ask for in the same tick is sent as one SELECT of their
+ * subqueries side by side, and each measure gets its own column back (`value`); a lesson moves about thirty
+ * badges, so this saves a round trip apiece. Start the measures together and await them together, or each waits
+ * for its own trip. Loaders shared by several measures run at most once.
  */
 export class MeasureContext {
   private learningDaysCache?: Promise<string[]>;
@@ -77,9 +65,8 @@ export class MeasureContext {
   }
 
   /**
-   * The one value `sql` selects for this learner — a single column of at most
-   * one row; no row reads as null — with `$1` the learner and `$2` onwards
-   * `params`. Sent with the others asked for alongside it (see the class note).
+   * The single value `sql` selects for this learner (one column, at most one row; no row reads as null), with `$1`
+   * the learner and `$2` onwards `params`. Batched with the others asked for alongside it.
    */
   value<T>(sql: string, params: unknown[] = []): Promise<T> {
     return new Promise<T>((resolve, reject) => {
@@ -92,7 +79,7 @@ export class MeasureContext {
     const batch = this.queued;
     this.queued = [];
     const params: unknown[] = [this.userId];
-    // each statement's own $2, $3… move up past the parameters of those before it; $1 stays the learner
+    // Each statement's own $2, $3… move past the parameters of the ones before it; $1 stays the learner.
     const columns = batch.map((item, i) => {
       const shift = params.length - 1;
       params.push(...item.params);
@@ -135,10 +122,7 @@ export function comebacks(days: readonly string[], awayDays = 14): number {
   return count;
 }
 
-/**
- * Returns after at least `awayDays` days without learning that were followed
- * by `run` days in a row, counting the day of the return.
- */
+/** Returns after at least `awayDays` days without learning, followed by `run` days in a row including the return. */
 export function comebackRuns(days: readonly string[], awayDays = 14, run = 7): number {
   let count = 0;
   for (let i = 1; i < days.length; i++) {
@@ -153,7 +137,7 @@ export function comebackRuns(days: readonly string[], awayDays = 14, run = 7): n
 /** Calendar weeks, Monday to Sunday, with a learning day on all seven days. */
 export function fullWeeks(days: readonly string[]): number {
   const per = new Map<number, number>();
-  // day 0 (1 January 1970) was a Thursday, so a week from Monday is (day + 3) / 7
+  // Day 0 (1 January 1970) was a Thursday, so the week from Monday is (day + 3) / 7.
   for (const d of days) {
     const week = Math.floor((dayNumber(d) + 3) / 7);
     per.set(week, (per.get(week) ?? 0) + 1);
@@ -187,10 +171,8 @@ export function yearsWithin(days: readonly string[], from: [number, number], to:
 }
 
 /**
- * The monthly challenge (Mehane): learn on a number of days in a calendar
- * month fitted to the learner — two more than they managed the month before,
- * at least 8 and at most 20 — like Apple's personal monthly goals. Fitted from
- * their own history, so it is never out of reach and never trivially in it.
+ * The monthly challenge (Mehane): learn on a number of days in a calendar month fitted to the learner, two more
+ * than the month before, between 8 and 20, so it is never out of reach and never trivial.
  */
 export const MONTHLY_GOAL_MIN = 8;
 export const MONTHLY_GOAL_MAX = 20;
@@ -230,9 +212,8 @@ export function yearsWithChallengeIn(days: readonly string[], quarter: number): 
 }
 
 /**
- * The ranking of a finished Peyvok Battle in SQL, the comparator of
- * game/wordle-battle.ts's `rankBattle`: solvers first, then fewer guesses,
- * then faster; among the rest, more progress, then faster. Ties share a rank.
+ * The ranking of a finished Peyvok Battle in SQL, matching `rankBattle` in game/wordle-battle.ts: solvers first,
+ * then fewer guesses, then faster; among the rest, more progress, then faster. Ties share a rank.
  */
 const BATTLE_RANK = `rank() OVER (PARTITION BY p.battle_id ORDER BY p.solved DESC,
   CASE WHEN p.solved THEN p.guess_count ELSE 0 END ASC,
@@ -253,9 +234,8 @@ const battleWins = (extra: string) => `
 export const PEYVOK_GUESSES = 6;
 
 /**
- * The finished games of one kind the learner played with a friend among the
- * other players, one row each: players' table, games' table, the column that
- * joins them, and anything more a game must be.
+ * One row per finished game of one kind the learner played with a friend among the other players. Takes the
+ * players' table, the games' table, the column joining them, and any extra condition.
  */
 const withFriend = (players: string, games: string, key: string, extra = '') => `
   SELECT p.${key} FROM ${players} p JOIN ${games} g ON g.id = p.${key}
@@ -283,10 +263,8 @@ const answersOf = (types: readonly string[]): Measure =>
   );
 
 /**
- * A rank tier (0 Deşt … 5 Stêrk) reached at a season's peak, counted in seasons:
- * from the peaks the rated games and season closes told the badges, and from
- * the ranks module's own season results — so a close whose news was lost (a
- * restart between the close and the count) is still counted the next time.
+ * Seasons in which a rank tier (0 Deşt … 5 Stêrk) was reached at the peak, from the peaks the badges were told
+ * and from the ranks module's own season results, so a close whose event was lost is still counted next time.
  */
 const seasonsReached = (tierIndex: number): Measure =>
   count(
@@ -314,9 +292,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   ),
   stories_finished: count(`SELECT count(*) AS n FROM story_completions WHERE user_id = $1`),
   units_completed: async (ctx) => {
-    // a unit is done when every published lesson in it has been finished at
-    // least once (any version of the lesson in that place); counted in the
-    // course where the learner has done most
+    // A unit is done when every published lesson in it has been finished at least once, in any version; counted in
+    // the course where the learner has done the most.
     const best = await ctx.value<[number, number] | null>(
       `WITH done AS (
          SELECT DISTINCT l.skill_id, l.position FROM lesson_sessions ls JOIN lessons l ON l.id = ls.lesson_id
@@ -338,9 +315,9 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   ),
   listening_speaking_answers: answersOf(['listening', 'speaking']),
   typed_answers: answersOf(['translate', 'writing']),
-  // an item the scheduler now brings back only after a month or more (SM-2's interval)
+  // Items the scheduler brings back only after a month or more.
   review_items_month: count(`SELECT count(*) AS n FROM review_items WHERE user_id = $1 AND interval_days >= 30`),
-  // words on the learner's list now (unsaving one does not take the bar back: progress never falls)
+  // Saved words now; unsaving one does not take a tier back, because progress never falls.
   saved_words: count(`SELECT count(*) AS n FROM saved_words WHERE user_id = $1`),
 
   // ---- habit
@@ -391,8 +368,7 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   peyvok_three_guesses: count(
     `SELECT count(*) AS n FROM wordle_games WHERE user_id = $1 AND status = 'won' AND jsonb_array_length(guesses) <= 3`,
   ),
-  // rated games played to the end, counted since the last moderation sanction
-  // that stood against them (a report upheld starts the count again)
+  // Rated games played to the end since the last upheld moderation sanction, which restarts the count.
   fair_rated_games: count(
     `SELECT count(*) AS n FROM badge_rated_games g
       WHERE g.user_id = $1 AND NOT g.left_game
@@ -434,8 +410,7 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
        ${withFriend('game_lobby_players', 'game_lobbies', 'lobby_id')}
      ) x`,
   ),
-  // the same, for a game that was a rematch (the battle tables' `rematch_of`: a
-  // pair's rematch, or the next round a host opened); a story game has none
+  // The same for a rematch (`rematch_of`: a pair's rematch, or the next round a host opened); story games have none.
   friend_rematches: count(
     `SELECT count(*) AS n FROM (
        ${withFriend('wordle_battle_players', 'wordle_battles', 'battle_id', 'AND g.rematch_of IS NOT NULL')}
@@ -445,7 +420,7 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
        ${withFriend('game_lobby_players', 'game_lobbies', 'lobby_id', 'AND g.rematch_of IS NOT NULL')}
      ) x`,
   ),
-  // a text written to a friend, once for each friend a day (only friends can be written to, chat/service.ts)
+  // A message to a friend, counted once per friend a day; only friends can be written to.
   friend_letter_days: count(
     `SELECT count(DISTINCT (CASE WHEN m.user_lo = $1 THEN m.user_hi ELSE m.user_lo END, (m.created_at AT TIME ZONE 'UTC')::date)) AS n
        FROM dm_messages m WHERE m.sender_id = $1 AND m.kind = 'text'`,
@@ -479,9 +454,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
 
   // ---- secret
   battle_win_two_guesses: count(battleWins('AND x.solved AND x.guess_count <= 2')),
-  // a Stories group game (three or more) won outright from last place at half
-  // time: the fewest right answers over the first half of the questions, and
-  // the highest score at the end
+  // A Stories group game (three or more players) won from last place at half time: fewest right answers over the
+  // first half, highest score at the end.
   group_comeback_win: count(
     `WITH games AS (
        SELECT g.id, g.question_count FROM story_games g JOIN story_game_players p ON p.game_id = g.id
@@ -523,10 +497,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   ),
   comeback_week: async (ctx) => ({ progress: comebackRuns(await ctx.learningDays()) }),
   peyvok_first_guess: count(`SELECT count(*) AS n FROM wordle_games WHERE user_id = $1 AND status = 'won' AND jsonb_array_length(guesses) = 1`),
-  // a review that counted with as many items as a session takes (PRACTICE_TARGET),
-  // every one answered right the first time and to the letter: a 'typo' (a
-  // diacritic slip) is accepted, but not here. An item has one answer, its
-  // first: a second try is never recorded.
+  // A counted review with a full session's items (PRACTICE_TARGET), each right the first time and to the letter: a
+  // 'typo' (a diacritic slip) does not count here. Only an item's first answer is recorded.
   perfect_full_review: count(
     `SELECT count(*) AS n FROM practice_sessions s
       WHERE s.user_id = $1 AND s.completed_at IS NOT NULL AND s.xp_awarded > 0 AND s.total_count >= $2

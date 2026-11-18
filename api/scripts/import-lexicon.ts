@@ -1,12 +1,10 @@
 /**
- * Dictionary lexicon import CLI (KUR-048).
+ * Validates and imports lexicon data, de-duplicating by normalized headword and part of speech.
  *
  *   tsx scripts/import-lexicon.ts <file.json> [--dry-run]
  *
- * Validates and imports lexicon data, de-duplicating by normalized headword +
- * part of speech. --dry-run writes nothing and prints the conflict report
- * (same headword+POS with a different definition → manual review, never
- * silently merged).
+ * --dry-run writes nothing and prints the conflict report: the same headword and part of speech with a different
+ * definition goes to manual review, never merged silently.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -48,17 +46,8 @@ async function main(): Promise<void> {
         `${res.duplicatesSkipped} duplicate(s) skipped, ${res.definitionsFilled} definition(s) filled in, ${res.conflicts.length} conflict(s)` +
         (res.dryRun ? ' (dry run — nothing written)' : ''),
     );
-    /*
-     * Summarised, with the full list written out.
-     *
-     * A hand-written lexicon produces a handful of conflicts and printing them
-     * all is right. A real one does not: `headword_normalized` folds diacritics,
-     * so `zabit` and `zabît` are one identity and about 7% of Kurmancî arrives
-     * as a conflict with a word it is not — roughly thirty thousand lines for
-     * the whole of Wîkîferheng, which is not a report anybody reads. The first
-     * few go to the terminal so the shape is visible; the rest go to a file that
-     * can be looked at.
-     */
+        // Summarised, with the full list written to a file: the normalized headword folds diacritics, so about 7% of a
+        // real lexicon arrives as conflicts, far too many lines for a terminal.
     if (res.conflicts.length > 0) {
       const SHOWN = 10;
       console.log(`\n${res.conflicts.length} conflict(s) — flagged for review, NOT merged:`);

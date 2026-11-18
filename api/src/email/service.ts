@@ -15,7 +15,7 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-/** The domain of the stand-in address a provider-made account has when its provider confirmed no address. */
+/** The domain of the stand-in address given to a provider-made account whose provider confirmed none. */
 export const PLACEHOLDER_EMAIL_DOMAIN = 'noemail.kurda.app';
 
 /** An address that stands in for "none": never written to. */
@@ -24,10 +24,9 @@ export function isPlaceholderAddress(email: string): boolean {
 }
 
 /**
- * Transactional email (KUR-098): render a localized template and hand it to the
- * provider — unless the address is suppressed (a prior bounce/complaint), in
- * which case the send is skipped. Called from the queue worker, so a provider
- * outage retries with backoff and never blocks the auth flow that enqueued it.
+ * Transactional email: renders a localized template and hands it to the provider, unless the address is suppressed
+ * after a bounce or complaint. Called from the queue worker, so a provider outage retries with backoff and never
+ * blocks the auth flow that enqueued it.
  */
 export class EmailService {
   constructor(
@@ -57,8 +56,7 @@ export class EmailService {
     locale: EmailLocale = 'en',
     opts: { idempotencyKey?: string } = {},
   ): Promise<SendResult> {
-    // the address an account is given when its provider confirmed none (auth/oauth.ts) is nobody's mailbox:
-    // nothing is rendered for it and nothing is paid to have it bounce
+    // The stand-in address of a provider-made account (auth/oauth.ts) is nobody's mailbox, so nothing is sent.
     if (isPlaceholderAddress(to)) return { sent: false, suppressed: true };
     if (await this.isSuppressed(to)) return { sent: false, suppressed: true };
     const { subject, text, html } = renderEmail(template, locale, vars);

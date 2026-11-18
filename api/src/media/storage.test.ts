@@ -237,8 +237,7 @@ describe('the private bucket', () => {
           bucket(i.Bucket).delete(i.Key!);
           return {};
         case 'ListObjectsV2Command': {
-          // as S3 does: the token marks the last key listed, so deleting what
-          // was listed does not shift the next page
+          // As S3 does: the token marks the last key listed, so deleting what was listed does not shift the next page.
           const after = i.ContinuationToken ?? '';
           const keys = [...bucket(i.Bucket).keys()].filter((k) => k.startsWith(i.Prefix!) && k > after).sort();
           const page = keys.slice(0, 2);

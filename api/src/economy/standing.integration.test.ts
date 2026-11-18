@@ -1,9 +1,7 @@
 /**
- * Who the economy pays (economy/standing.ts), against real Postgres: the
- * automatic Gem grants skip a closed, banned, confirmed-bot, shadow-flagged
- * or fraud-held account silently, and a confirmed bot or a fraud-held
- * account asking for a reward is told it is paused — while everyone else is
- * paid as before.
+ * Who the economy pays, against real Postgres: automatic Gem grants skip a closed, banned, confirmed-bot,
+ * shadow-flagged or fraud-held account silently, a confirmed bot or fraud-held account claiming a reward is told
+ * it is paused, and everyone else is paid.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
@@ -77,7 +75,7 @@ describe.skipIf(!DATABASE_URL)('who the economy pays (integration)', () => {
 
   it('grants no automatic Gems to a blocked account, silently, and pays everyone else', async () => {
     const gems = new GemService(pool, wallet);
-    // a rule of this suite's own, switched on: an account's standing is asked only once a rule would pay
+    // A rule of this suite's own: standing is checked only once a rule would pay.
     await gems.upsertRule({ key: gemRule, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
     for (const tag of ['cheat', 'bot', 'held', 'banned', 'closed']) {
       const who = p[tag]!;

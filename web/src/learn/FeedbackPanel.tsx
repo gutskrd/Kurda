@@ -27,8 +27,8 @@ import { BarRow } from './ActionBar';
 import { kurdishText } from './map';
 import { PlayButton } from './PlayButton';
 
-/** What the verdict says. Each must be true of the answer it is shown for (`feedbackKind`). */
-export const VERDICT: Record<FeedbackKind, MessageKey> = {
+/** What the verdict says; each must be true of the answer it is shown for (`feedbackKind`). */
+const VERDICT: Record<FeedbackKind, MessageKey> = {
   correct: 'lesson.fb.correct',
   almost: 'lesson.fb.almost',
   almostStrict: 'lesson.fb.almostStrict',
@@ -38,7 +38,7 @@ export const VERDICT: Record<FeedbackKind, MessageKey> = {
   spokenRetry: 'lesson.fb.spokenRetry',
 };
 
-/** What a typed miss was, in a line (`typedHint`). */
+/** What a typed miss was, in one line (`typedHint`). */
 const HINT: Record<TypedHint['kind'], MessageKey> = {
   marks: 'lesson.hint.marks',
   lookalike: 'lesson.hint.lookalike',
@@ -47,20 +47,16 @@ const HINT: Record<TypedHint['kind'], MessageKey> = {
   extra: 'lesson.hint.extra',
 };
 
-/** Answers that are Kurdish typed by the learner, set letter by letter against the right one. */
+/** Kurdish answers the learner types, compared letter by letter with the right one. */
 const TYPED: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening']);
-/** Answers whose right answer is Kurdish (a multiple-choice option, the answer to a conversation's question or a pair may be in any language). */
-const KURDISH_ANSWER: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening', 'speaking']);
+/** Exercise types whose right answer is Kurdish; other types' answers may be in any language. */
+export const KURDISH_ANSWER: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening', 'speaking']);
 
-/** How tall the character beside the verdict is: head to waist, standing on the sheet's floor; and Hevalo's window, standing in. */
+/** The height of the character beside the verdict (head to waist), and of Hevalo's window. */
 const FEEDBACK_FACE = 88;
 const STAND_IN = 96;
 
-/**
- * Kurdish set inside an interface sentence in any language: isolated, so a
- * Soranî letter in an English line, or a Kurmancî one in an Arabic line,
- * keeps its own direction and does not reorder the words around it.
- */
+/** Isolates Kurdish inside an interface sentence, so it keeps its own direction without reordering the words around it. */
 const isolate = (text: string): string => `⁨${text}⁩`;
 
 function Marked({ segments }: { segments: DiffSegment[] }): React.JSX.Element {
@@ -71,7 +67,7 @@ function Marked({ segments }: { segments: DiffSegment[] }): React.JSX.Element {
   );
 }
 
-/** One sentence for a screen reader: the verdict, and the right answer when there is one to give. */
+/** One sentence for a screen reader: the verdict, and the right answer when there is one. */
 export function announce(feedback: Feedback, t: (key: MessageKey, vars?: Record<string, string | number>) => string): string {
   const verdict = t(VERDICT[feedbackKind(feedback)]);
   const answer = feedback.correction && !(feedback.accepted && feedback.verdict === 'correct') ? ` ${t('lesson.fb.answerIs', { answer: feedback.correction })}` : '';
@@ -83,33 +79,23 @@ function hintLine(hint: TypedHint | null, rtl: boolean, t: (key: MessageKey, var
   if (!hint) return null;
   if (hint.kind === 'order') return t(HINT.order);
   if (hint.kind === 'missing' || hint.kind === 'extra') return t(HINT[hint.kind], { word: isolate(hint.word) });
-  // "s → ş": the letter written, then the one meant, in the reading order of the Kurdish
+  // "s → ş": the letter written, then the one meant, in the Kurdish reading order.
   const pairs = hint.pairs.map(([given, meant]) => (rtl ? `${given} ← ${meant}` : `${given} → ${meant}`)).join(', ');
   return t(HINT[hint.kind], { pairs: isolate(pairs) });
 }
 
-/** A run of right answers, shown from three; it pops when it reaches a milestone. */
+/** A run of right answers, shown from three; it pops at a milestone. */
 export interface RunMark {
   count: number;
   milestone: boolean;
 }
 
 /**
- * The verdict sheet (ActionBar.tsx), after an answer: the verdict in words and
- * a mark (never colour alone), the learner's typed answer above the right one
- * with the letters that differ marked and, when the slip was one thing, what
- * it was ("only the marks differ: s → ş"); the native recording, which plays
- * by itself a moment after the verdict (Settings → Sounds) and can be heard
- * again; and Continue, in the place Check was, which takes the focus so a
- * keyboard goes on with Enter.
- *
- * A right answer may be praised in the course's own Kurdish ("Aferîn!") with
- * the meaning beside it, and a run is counted from three ("3 in a row") and
- * named at a milestone. Beside the verdict stands whoever says the model when
- * the exercise above does not show them already — or Hevalo, popping up in
- * his window, on the first answer of a lesson, on every miss (curious, never
- * sad) and at a milestone, and not on every right answer, so his cheer keeps
- * its worth.
+ * The verdict sheet (ActionBar.tsx): the verdict in words and a mark, never colour alone; a typed answer above the
+ * right one with the differing letters marked and, for a single kind of slip, what it was ("only the marks differ: s →
+ * ş"); the recording, which plays by itself after the verdict (Settings → Sounds); and Continue where Check was, focused
+ * so Enter goes on. A right answer may be praised in Kurdish, and runs count from three. Beside it stands the model's
+ * speaker, or Hevalo on a lesson's first answer, every miss and milestones, so his cheer keeps its worth.
  */
 export function FeedbackPanel({
   feedback,
@@ -123,18 +109,18 @@ export function FeedbackPanel({
   onContinue,
 }: {
   feedback: Feedback;
-  /** the right answer is Kurdish whatever the item's type (a reply chosen in Kurdish, a missing word) */
+  /** The right answer is Kurdish whatever the item's type (a reply chosen in Kurdish, a missing word). */
   kurdishAnswer?: boolean;
   dialect: string | null | undefined;
-  /** who says the model, when nobody above does (`feedbackClip`) */
+  /** Who says the model, when nobody above does (`feedbackClip`). */
   speaker?: SpokenClip | null;
-  /** Hevalo's reaction, when he stands in beside this verdict */
+  /** Hevalo's reaction, when he stands in beside this verdict. */
   hevalo?: CharacterReaction | null;
-  /** the Kurdish word a right answer is praised with */
+  /** The Kurdish word a right answer is praised with. */
   praise?: string | null;
-  /** right answers in a row, once there are enough to show */
+  /** Right answers in a row, once there are enough to show. */
   run?: RunMark | null;
-  /** open the skill's Tips, when it has them */
+  /** Opens the skill's Tips, when it has them. */
   onWhy?: (() => void) | null;
   onContinue: () => void;
 }): React.JSX.Element {
@@ -150,23 +136,20 @@ export function FeedbackPanel({
   const shownRun = run && run.count >= RUN_SHOWN_FROM ? run : null;
   const model = feedback.modelAudioUrl;
 
-  // the focus goes to Continue, where Check was: Enter, Enter is the lesson
+  // Focus goes to Continue, where Check was: Enter, Enter is the lesson.
   useEffect(() => {
     root.current?.querySelector<HTMLButtonElement>('.lesson-bar-go')?.focus({ preventScroll: true });
   }, []);
 
-  // the Kurdish, heard straight after the verdict (once the chime has had its
-  // moment) through the app's one player, so the character beside it says it;
-  // not for a spoken answer, whose model was just compared, and gone on Continue
+  // The Kurdish plays after the verdict's chime through the app's one player, so the character beside it says it; not
+  // for a spoken answer, whose model was just compared, and stopped on Continue.
   useEffect(() => {
     if (!model || feedback.exerciseType === 'speaking' || !autoplayOn()) return;
     const id = window.setTimeout(() => play(model), VERDICT_TIMING.modelAtMs);
     return () => window.clearTimeout(id);
   }, [model, feedback.exerciseType]);
 
-  // Enter goes on from anywhere but another control: from the sheet, or from
-  // the page after a click elsewhere — but not from a dialog (the Tips) open
-  // over the lesson
+  // Enter goes on from anywhere but another control, and not from a dialog (the Tips) over the lesson.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== 'Enter' || e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
@@ -179,7 +162,7 @@ export function FeedbackPanel({
   }, [onContinue]);
 
   const face = speaker ? (
-    // cheering a right answer and thinking a wrong one over; a click says it again
+    // Cheering a right answer, thinking a wrong one over; a click replays it.
     <ClipSpeaker clips={[speaker]} crop="half" size={FEEDBACK_FACE} decorative replay reaction={feedback.accepted ? 'cheer' : 'hmm'} />
   ) : hevalo ? (
     <HevaloWindow size={STAND_IN} reaction={hevalo} />
@@ -218,7 +201,7 @@ export function FeedbackPanel({
 
           {diff ? (
             <dl className="lesson-compare">
-              {/* read the way they are written: a Soranî course's English answer runs left to right */}
+              {/* Read as written: a Soranî course's English answer runs left to right. */}
               <dt>{t('lesson.fb.yours')}</dt>
               <dd lang={lang} dir="auto">
                 <Marked segments={diff.given} />

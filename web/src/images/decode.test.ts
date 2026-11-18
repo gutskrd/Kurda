@@ -7,8 +7,7 @@ const bytes = (...b: number[]) => new Blob([new Uint8Array([...b, ...Array(16).f
 
 describe('sniffPictureFormat', () => {
   it('reads the bytes, not the name or the declared type', async () => {
-    // named .png, declared image/png, and actually a JPEG — the name and the
-    // type both come from whatever handed the file over, and both can be wrong
+    // Named .png, declared image/png, actually a JPEG: both name and type can be wrong.
     const lying = new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0])], 'photo.png', { type: 'image/png' });
     expect(await sniffPictureFormat(lying)).toBe('jpeg');
   });
@@ -35,8 +34,7 @@ describe('sniffPictureFormat', () => {
 
 describe('shouldHaveDecoded', () => {
   it('separates "your browser cannot" from "this should have worked"', () => {
-    // the screenshot case: a PNG that failed is not a format problem, and the
-    // app must not tell someone to convert a file that is already fine
+    // A PNG that failed is not a format problem; nobody should be told to convert it.
     expect(shouldHaveDecoded('png')).toBe(true);
     expect(shouldHaveDecoded('jpeg')).toBe(true);
     expect(shouldHaveDecoded('heic')).toBe(false);
@@ -57,7 +55,7 @@ describe('decodePicture', () => {
 
     expect(decoded).toMatchObject({ width: 800, height: 600 });
     expect(createImageBitmap).toHaveBeenCalledOnce();
-    // the whole point: no URL is created, so none can be revoked mid-read
+    // No URL is created, so none can be revoked mid-read.
     expect(createObjectURL).not.toHaveBeenCalled();
     decoded!.release();
     expect(bitmap.close).toHaveBeenCalledOnce();
@@ -99,7 +97,7 @@ describe('decodePicture', () => {
   });
 
   it('treats a zero-sized bitmap as a failure, not a picture', async () => {
-    // createImageBitmap can resolve with nothing usable; drawing that is a blank
+    // createImageBitmap can resolve with nothing usable.
     const bitmap = { width: 0, height: 0, close: vi.fn() };
     vi.stubGlobal('createImageBitmap', vi.fn(async () => bitmap));
     vi.stubGlobal('URL', { ...URL, createObjectURL: () => 'blob:x', revokeObjectURL: () => undefined });
@@ -114,7 +112,7 @@ describe('decodePicture', () => {
     }
     vi.stubGlobal('Image', Img);
 
-    // it does not stop there — the <img> route still gets its turn
+    // The <img> route still gets its turn.
     expect(await decodePicture(new Blob([new Uint8Array([1])]))).toMatchObject({ width: 320 });
     expect(bitmap.close).toHaveBeenCalledOnce();
   });

@@ -15,24 +15,17 @@ import { CelebrationArt } from '../ranks/Celebration';
 import { FIRE_STAGE_NAME } from './fireWords';
 import './streak.css';
 
-/** What the server pays a freeze for, when it does not say (older responses). */
+/** What a freeze costs in sessions when an older server does not say. */
 const SESSIONS_PER_FREEZE = 5;
 
-/** The fire beside the streak in words: framed in a square this big, whatever its stage. */
+/** The fire beside the streak in words, framed in a square this big at any stage. */
 const HEAD_FIRE = 48;
 
 /**
- * The streak's whole story, in a sheet opened from the streak in Learn's
- * "Today" — the same as the phone's: the streak in words beside its fire, the
- * three numbers a missed day never takes away (the longest run, the days
- * learned in all, the freezes learning has earned) with what a freeze costs,
- * and the ladder of the fire's stages. `streak` null keeps it closed.
- *
- * While a streak that ended can still be restored (`streak.repair`), the sheet
- * says so under the streak's words: which streak, the last day it can be
- * brought back on, and one button with what that costs. It is said once, in
- * plain words, here and nowhere else: no countdown, and nothing about what
- * will be lost. `onRestored` hands the restored streak to the page.
+ * The streak's whole story in a sheet from Learn's "Today", as on the phone: the streak beside its fire, the longest run,
+ * days learned and freezes (with what a freeze costs), and the fire's stages. `streak` null keeps it closed. While an
+ * ended streak can be restored (`streak.repair`), one plain line and one button say which streak, until when and the
+ * price; no countdown, nothing about what will be lost. `onRestored` hands the restored streak to the page.
  */
 export function StreakSheet({
   streak,
@@ -51,10 +44,7 @@ export function StreakSheet({
   );
 }
 
-/**
- * What the open sheet shows. Mounted only while it is open, so what it
- * remembers — that the streak was just restored — is forgotten when it closes.
- */
+/** The open sheet's contents, mounted only while open so a just-restored state is forgotten on close. */
 function StreakDetail({ streak, onRestored }: { streak: StreakSummary; onRestored?: (streak: StreakSummary) => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -98,7 +88,7 @@ function StreakDetail({ streak, onRestored }: { streak: StreakSummary; onRestore
           </div>
         ))}
       </dl>
-      {/* a Hevalo+ member has room for a second freeze, and the hint says how many rather than "one" */}
+      {/* A Hevalo+ member can hold a second freeze, so the hint gives the number. */}
       <p className="streak-sheet-hint">
         {(shown.maxFreezes ?? 1) > 1
           ? t('profile.freezeHintPlus', { count: number(shown.sessionsPerFreeze ?? SESSIONS_PER_FREEZE), max: number(shown.maxFreezes ?? 1) })
@@ -109,11 +99,7 @@ function StreakDetail({ streak, onRestored }: { streak: StreakSummary; onRestore
   );
 }
 
-/**
- * The last day the streak can be restored on, named in full in the reader's
- * language ("Thursday, 12 November"): a moment inside it, the minute before
- * the offer ends. A day, not a countdown.
- */
+/** The last day a restore is possible, in full ("Thursday, 12 November"), from the minute before the offer ends. */
 function lastDay(until: string, locale: string): string {
   const ends = Date.parse(until);
   if (Number.isNaN(ends)) return '';
@@ -125,20 +111,14 @@ function lastDay(until: string, locale: string): string {
   }
 }
 
-/** The refusals that mean this streak can no longer be restored at all. */
+/** Refusals meaning this streak can no longer be restored at all. */
 const GONE = new Set(['NOTHING_TO_RESTORE', 'RESTORE_EXPIRED', 'STREAK_TOO_SHORT']);
 
 /**
- * The offer to bring back the streak that ended: one sentence saying which
- * streak and through which day, and one button with the price in gems — or
- * that it is free, for a Hevalo+ member's restore of the month.
- *
- * When the gems are known to be short the button is there but cannot be
- * pressed, and above it are the balance and one line on where gems come from.
- * Nothing is sold here. The server decides: the request carries nothing, and
- * a refusal is read for what it means — the balance read again if the gems
- * were short after all, and, if the streak can no longer be restored, a plain
- * sentence in place of the offer, with no button left to press.
+ * The offer to restore an ended streak: which streak and through which day, and one button with the gem price (or free,
+ * for a Hevalo+ member's monthly restore). When gems are known to be short the button is disabled, with the balance and
+ * where gems come from. The server decides: a short balance is re-read, and a streak past restoring is said plainly with
+ * no button.
  */
 function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestored: (streak: StreakSummary) => void }): React.JSX.Element {
   const t = useT();
@@ -153,11 +133,11 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
 
   const readGems = useCallback(async (): Promise<void> => {
     const res = await client.get<{ balances: WalletBalances }>('/me/wallet');
-    // `ok` is about the status code, not the shape
+    // `ok` says nothing about the body's shape.
     if (res.ok && typeof res.data?.balances?.gems === 'number') setGems(res.data.balances.gems);
   }, [client]);
 
-  // a free restore needs no balance; a priced one says it only when the gems are short
+  // A free restore needs no balance; a priced one says it only when the gems are short.
   useEffect(() => {
     if (!offer.free) void readGems();
   }, [offer.free, readGems]);
@@ -176,7 +156,7 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
     else setProblem(describeError(res.error, t));
   }
 
-  // short only once the balance is known; until then the button is live and the server answers
+  // Short only once the balance is known; until then the button works and the server answers.
   const short = !offer.free && gems !== null && gems < offer.costGems;
   if (gone) {
     return (
@@ -220,15 +200,12 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
   );
 }
 
-/** The restored streak's fire: framed in a square this big inside the glow it arrives in. */
+/** The restored streak's fire, framed in a square this big inside its glow. */
 const BACK_FIRE = 72;
 
 /**
- * The streak, back: its fire arriving the way anything earned arrives here
- * (`CelebrationArt` and `useCelebrationMoment` — the art springs in, a ring
- * widens once, a few flecks, a buzz on a phone and the reward chime), then
- * the words. For a reader who asked for less motion the fire simply fades in.
- * The headline takes the focus the button had, so a screen reader says it.
+ * The streak back: its fire arrives as anything earned does here (`CelebrationArt`, `useCelebrationMoment`), then the
+ * words; under reduced motion the fire fades in. The headline takes the button's focus, so it is announced.
  */
 function Restored({ streak }: { streak: StreakSummary }): React.JSX.Element {
   const t = useT();
@@ -243,7 +220,7 @@ function Restored({ streak }: { streak: StreakSummary }): React.JSX.Element {
   }, []);
 
   return (
-    // a click on it while it plays skips to the end
+    // A click while it plays skips to the end.
     <div
       className={`celebrate celebrate-inline streak-restored tone-zer ${moment.playing ? 'is-playing' : 'is-done'}`}
       onClick={moment.playing ? moment.skip : undefined}
@@ -268,14 +245,12 @@ const PLACE_WORDS: Record<FireLadderPlace, MessageKey> = {
   ahead: 'fire.ladder.ahead',
 };
 
-/** Each stage's fire on the ladder, framed to fill a square this big: a spark as plain as the Newroz fire, each telling by what it has, and every row as tall. */
+/** Each ladder fire is framed to fill a square this big, so every row is the same height. */
 const RUNG_FIRE = 44;
 
 /**
- * The fire's stages from the spark to the Newroz fire (shared `fireLadder`),
- * each a small fire with its name and the day it comes: the ones reached
- * burning with a check, the one burning now ringed and marked "Now", the
- * ones ahead standing still and dimmed — something to look forward to.
+ * The fire's stages from the spark to the Newroz fire (shared `fireLadder`), each with its name and day: reached ones
+ * burning with a check, the current one ringed and marked "Now", later ones still and dimmed.
  */
 export function FireLadder({ days }: { days: number }): React.JSX.Element {
   const t = useT();

@@ -1,20 +1,11 @@
 /*
- * The lesson path (pages/CourseMap.tsx).
+ * The lesson path (pages/CourseMap.tsx). Calm on purpose: soft colours, one line to follow, nothing counting down.
+ * Each unit has its own tone (`lp-tone-*`, in @kurda/shared's UNIT_TONES order) for its heading, finished lessons and
+ * walked line; gold is for what was earned and violet for where the learner is.
  *
- * Calm on purpose: soft colours, one line to follow, nothing that counts down.
- * Each unit takes a colour of its own (`lp-tone-*`, in the order
- * @kurda/shared's UNIT_TONES gives them) and everything in the unit is drawn
- * from it — the heading pinned over it, the lessons done, the line walked so
- * far. Gold is kept for what was earned: a finished topic's coin and its
- * stars, a ring made whole three times, a chapter's story won; and the app's
- * violet for where the learner is on the road, the pieces of a ring filling.
- *
- * Every tone has two sets of values, cut from the app's hues. On the dark page
- * the colours are light and the words on them dark; on the light page they are
- * vivid and deep enough for white words, except saffron, which stays a gold and
- * is written on in a dark brown. Both pairs were checked: the words on a banner
- * read at 4.5:1 or better, and every filled stop stands 3:1 or better against
- * the page.
+ * Every tone has a light and a dark set cut from the app's hues: light colours with dark words on the dark page, deep
+ * ones with white words on the light page (saffron keeps dark brown words). Banner text is 4.5:1 or better and every
+ * filled stop 3:1 or better against the page.
  */
 
 .lp-tone-meadow { --u-fill: #78d694; --u-lip: #459b61; --u-ink: #011c0a; --u-text: #92dfa7; }
@@ -34,15 +25,15 @@
 :root[data-theme='light'] .lp-tone-rose { --u-fill: #cd3688; --u-lip: #a51a6a; --u-ink: #ffffff; --u-text: #af0f6f; }
 
 .lp {
-  /* the grey of what is not open yet, and of the line still ahead */
+  /* The grey of what is not open yet, and of the line still ahead. */
   --lp-rest: #2b283c;
   --lp-rest-lip: #1a1828;
   --lp-rest-ink: rgba(255, 255, 255, 0.5);
   --lp-line: rgba(255, 255, 255, 0.2);
-  /* the gold rim and the trophy: the sun, as everywhere else it marks something earned */
+  /* The gold rim and trophy: the sun, as everywhere it marks something earned. */
   --lp-gold-lip: #b88d1f;
   --lp-gold-ink: #3a2a00;
-  /* a topic's ring where it is not filled, and the edge under every piece of it (as the phone's coursemap/path.ts RING) */
+  /* A ring's unfilled track and the edge under every piece (as the phone's coursemap/path.ts RING). */
   --lp-ring-track: #2b283c;
   --lp-ring-edge: rgba(6, 4, 16, 0.6);
   --node: 72px;
@@ -83,7 +74,7 @@
   background: var(--surface-3);
   color: var(--ink);
 }
-/* the course you are in: drawn round, so it does not compete with the page's one button */
+/* The current course is outlined, so it does not compete with the page's one button. */
 .lp-course.is-on {
   background: transparent;
   box-shadow: inset 0 0 0 2px var(--ink);
@@ -102,11 +93,9 @@
   display: grid;
 }
 /*
- * The open section's heading, pinned under the bar as its units go by
- * (learn/PathSections.tsx): "Section 1 · Chapter 2" over the name of the unit
- * at the top of the window, in that unit's colour on its darker lip, with its
- * guide as a book on the far side. Its colour turns as the next unit comes up
- * under it, and simply changes for anyone who asked for less motion.
+ * The open section's heading, pinned under the bar (learn/PathSections.tsx), in the top unit's colour on its darker lip
+ * with its guide as a book on the far side. The colour turns as the next unit comes up, or simply changes under reduced
+ * motion.
  */
 .lp-open-section {
   display: grid;
@@ -170,7 +159,7 @@
   outline-offset: 2px;
 }
 
-/* between two units, a quiet line with the next one's number over its name, between two hairlines: its heading */
+/* Between two units, a quiet line with the next one's number over its name, between two hairlines. */
 .lp-divider {
   margin: 0;
   padding: var(--space-5) var(--space-2);
@@ -220,11 +209,7 @@
   grid-column: 2;
 }
 
-/*
- * A section that is not open, as one card: its number, its level by the
- * app's own name for it and what that is like, and where it stands. One done
- * or begun opens when pressed; a shut one stays shut.
- */
+/* A closed section as one card; done or begun ones open when pressed, shut ones stay shut. */
 .lp-scard {
   display: flex;
   align-items: center;
@@ -260,7 +245,7 @@ button.lp-scard:focus-visible {
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
-/* what was won is gold; what is shut is the quiet grey */
+/* What was won is gold; what is shut is the quiet grey. */
 .lp-scard-badge.is-done {
   background: var(--gold);
   color: var(--lp-gold-ink);
@@ -307,7 +292,7 @@ button.lp-scard:focus-visible {
   rotate: -45deg;
 }
 /* ---- where the path stops for now ------------------------------------------- */
-/* the next unit, still being made: a signpost on up the road, and on the road Hamo beside it, recording */
+/* The next unit, still being made: a signpost up the road, with Hamo recording beside it on the road. */
 .lp-next {
   display: flex;
   align-items: flex-end;
@@ -330,7 +315,7 @@ button.lp-scard:focus-visible {
   height: 120px;
 }
 :dir(rtl) .lp-next-sign {
-  /* the sign points on toward the end of the line, which a right-to-left page reads to the left */
+  /* The sign points on toward the end of the line, which is leftward on a right-to-left page. */
   transform: scaleX(-1);
 }
 .lp-next-host {
@@ -388,12 +373,7 @@ button.lp-scard:focus-visible {
 
 /* ---- the world -------------------------------------------------------------- */
 
-/*
- * The path and, where the page leaves room beside it, the rail of units: a
- * slim column of milestones that stays in reach as the path scrolls. Where
- * there is no room, each unit banner's flag button opens the same rail in a
- * sheet instead.
- */
+/* The path and, where there is room, the sticky rail of units; elsewhere each banner's flag opens the rail in a sheet. */
 .lp-world {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -437,7 +417,7 @@ button.lp-scard:focus-visible {
   text-transform: uppercase;
   color: var(--ink-3);
 }
-/* the rail itself: a line through every milestone's middle */
+/* The rail: a line through every milestone's middle. */
 .lp-rail ol::before {
   content: '';
   position: absolute;
@@ -529,7 +509,7 @@ button.lp-scard:focus-visible {
 :root[data-theme='light'] .lp-unit-rail {
   background: color-mix(in srgb, var(--u-lip) 55%, transparent);
 }
-/* where the rail stands beside the path, the heading needs no button for it (after the rule above, which would show it) */
+/* Where the rail stands beside the path, the heading needs no button for it (after the rule above, which shows it). */
 @media (min-width: 1100px) {
   .lp-unit-rail {
     display: none;
@@ -539,13 +519,9 @@ button.lp-scard:focus-visible {
 /* ---- the path --------------------------------------------------------------- */
 
 /*
- * Stops are placed by @kurda/shared's `lessonPath`: `top` from it, and `--x`,
- * how far a stop leans from the middle toward the end of the line. Placing
- * them from the logical start makes a right-to-left page lean the other way.
- * Under them each unit's land (learn/PathWorld.tsx): its ground, the road
- * walked so far and its landmark, drawn by @kurda/shared's art/path-land.ts
- * and art/path-landmark.ts as the painted valley the owner chose, and tucked
- * a little under the unit's banner.
+ * Stops are placed by @kurda/shared's `lessonPath`: `top`, and `--x` leaning from the middle toward the line's end,
+ * placed from the logical start so right-to-left pages lean the other way. Under them each unit's land
+ * (learn/PathWorld.tsx), drawn by art/path-land.ts and art/path-landmark.ts, tucks a little under the unit's banner.
  */
 .lp-path {
   position: relative;
@@ -553,7 +529,7 @@ button.lp-scard:focus-visible {
   padding: 0;
   list-style: none;
 }
-/* the first unit's land runs a little under the heading pinned over it */
+/* The first unit's land runs a little under the pinned heading. */
 .lp-path.is-first {
   margin-top: -14px;
 }
@@ -600,7 +576,7 @@ button.lp-scard:focus-visible {
   height: var(--node);
 }
 .lp-stop.is-open {
-  /* over the next unit's banner too: the card of a unit's last stop, its story, opens down across it */
+  /* Over the next unit's banner too, since the card of a unit's last stop (its story) opens down across it. */
   z-index: 7;
 }
 
@@ -618,12 +594,11 @@ button.lp-scard:focus-visible {
   color: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  /* moved to with the arrow keys: clear of the flag above it (the page's
-     scroll padding, base.css, already keeps it clear of the top bar) */
+  /* Scrolled to by arrow keys: clear of the flag above (base.css's scroll padding already clears the top bar). */
   scroll-margin-top: 120px;
   scroll-margin-bottom: calc(var(--bottom-chrome, 0px) + 72px);
 }
-/* the drawn disc: its base stays on the ground, its face (and what is on it) sinks into it under a finger */
+/* The drawn disc: the base stays on the ground and the face sinks into it under a finger. */
 .lp-node-face {
   position: absolute;
   inset: 0;
@@ -647,7 +622,7 @@ button.lp-scard:focus-visible {
 .lp-node:active .lp-stars {
   translate: 0 7px;
 }
-/* a unit far from the screen: its stops are plain rounds until it comes near */
+/* A unit far from the screen: plain rounds until it comes near. */
 .lp-node:not(.is-drawn) .lp-node-face {
   inset: 4px 0 12px;
   border-radius: 50%;
@@ -689,14 +664,14 @@ button.lp-scard:focus-visible {
   line-height: 1;
 }
 
-/* the glyph on the face, in the colour the face needs: cream on a finished stop's gold, the chapter's ink on its own colour */
+/* The glyph in the colour the face needs: cream on a finished stop's gold, the chapter's ink on its own colour. */
 .lp-node.is-done .lp-node-glyph {
   color: #fffaf0;
 }
 .lp-node.is-current .lp-node-glyph {
   color: var(--u-ink);
 }
-/* on an open stop's cream: deep by day; by evening the cream stays light, so the valley's ink */
+/* On an open stop's cream: deep by day; by evening the cream stays light, so the valley's ink. */
 .lp-node.is-available .lp-node-glyph,
 .lp-node.is-review .lp-node-glyph {
   color: #3d2a1f;
@@ -705,7 +680,7 @@ button.lp-scard:focus-visible {
 :root[data-theme='light'] .lp-node.is-review .lp-node-glyph {
   color: var(--u-text);
 }
-/* on a closed stop's field stone */
+/* On a closed stop's field stone. */
 .lp-node.is-locked .lp-node-glyph {
   color: #d6d2dc;
 }
@@ -726,9 +701,9 @@ button.lp-scard:focus-visible {
   box-shadow: 0 0 0 2px var(--u-fill);
 }
 
-/* the stop to do now: in a soft pool of its unit's light */
+/* The current stop sits in a soft pool of its unit's light. */
 .lp-glow {
-  /* the stop's own base draws its ring of light on the road now */
+  /* The stop's own base draws its ring of light on the road now. */
   display: none;
   position: absolute;
   inset-inline-start: -30px;
@@ -740,13 +715,9 @@ button.lp-scard:focus-visible {
   pointer-events: none;
 }
 /*
- * A topic's ring (learn/PathRing.tsx, the shape @kurda/shared's): a piece
- * for each lesson round the stop, the quiet track until its lesson is
- * finished in the round being played, the app's violet then, and the whole
- * ring the app's gold once all three rounds are; each piece edged a step
- * darker so it reads on any ground. Coming back from a lesson the new pieces
- * fill one after another (`--d`). A right-to-left page fills it the other way
- * round, as it mirrors the path.
+ * A topic's ring (learn/PathRing.tsx): a piece per lesson, the track until finished in the current round, violet then,
+ * and gold all round after three rounds, each piece edged a step darker. Returning from a lesson the new pieces fill in
+ * turn (`--d`); right-to-left pages fill the other way.
  */
 .lp-ring {
   position: absolute;
@@ -787,7 +758,7 @@ button.lp-scard:focus-visible {
   }
 }
 
-/* a finished topic's stars on its coin: the valley's cream, edged in a deep gold */
+/* A finished topic's stars on its coin: cream edged in deep gold. */
 .lp-stars {
   position: absolute;
   inset: 0;
@@ -816,7 +787,7 @@ button.lp-scard:focus-visible {
     scale: 0.92;
   }
 }
-/* the stars in a topic's card, three in a row: gold for each round played */
+/* A topic card's three stars: gold for each round played. */
 .lp-star-row {
   display: inline-flex;
   gap: 4px;
@@ -832,10 +803,7 @@ button.lp-scard:focus-visible {
   stroke: #a8691a;
 }
 
-/*
- * The learner, on the stop to do now: their picture in a ring of the unit's
- * colour, on a stem whose foot is on the stop's face.
- */
+/* The learner on the current stop: their picture in a ring of the unit's colour, on a stem standing on the stop's face. */
 .lp-learner {
   position: absolute;
   z-index: 3;
@@ -868,7 +836,7 @@ button.lp-scard:focus-visible {
   background: var(--u-fill);
 }
 
-/* "Start" over the learner: a chunky flag in the unit's colour on its darker lip, outlined like the stops */
+/* "Start" over the learner: a chunky flag in the unit's colour on its darker lip, outlined like the stops. */
 .lp-callout {
   position: absolute;
   bottom: 118px;
@@ -881,7 +849,7 @@ button.lp-scard:focus-visible {
   padding: 0 var(--space-4);
   border: 0;
   border-radius: var(--r-pill);
-  /* by evening a cream pill with the valley's ink; by day the ink pill with cream words */
+  /* By evening a cream pill with the valley's ink; by day an ink pill with cream words. */
   background: #fffaf0;
   color: #3d2a1f;
   font-size: var(--text-secondary);
@@ -924,10 +892,8 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * Hevalo, whole, standing beside the stop to do now (shared `mascotSpot`):
- * placed as the stops are, from the logical start, so a right-to-left page
- * has him on its own other side; at the valley's scale, as tall as its trees
- * are. Not on the narrowest screens, where he would crowd the path.
+ * Hevalo beside the current stop (shared `mascotSpot`), placed from the logical start like the stops and as tall as the
+ * valley's trees; hidden on the narrowest screens.
  */
 .lp-mascot {
   position: absolute;
@@ -935,7 +901,7 @@ button.lp-scard:focus-visible {
   inset-inline-start: calc(50% + var(--mx, 0px) - 36px);
   width: 72px;
   height: 112px;
-  /* his feet on the ground beside the stop's foot: `top` is where a head-high figure's top would be */
+  /* Feet beside the stop's foot: `top` is where a head-high figure's top would be. */
   margin-top: -20px;
   display: flex;
   align-items: flex-end;
@@ -952,11 +918,9 @@ button.lp-scard:focus-visible {
 /* ---- motion ----------------------------------------------------------------- */
 
 /*
- * Only the unit in view moves (`is-seen`), and nothing moves for anyone who
- * asked for less motion: the stop to do now and the learner on it bob, the
- * stops of a unit rise into place one after another the first time it comes
- * into view (`is-rising`; until then `is-waiting` keeps them under the
- * ground), and the landmark's one loop turns.
+ * Only the unit in view (`is-seen`) moves, and nothing under reduced motion: the current stop and learner bob, a unit's
+ * stops rise into place the first time it is seen (`is-rising`; `is-waiting` keeps them underground until then), and
+ * the landmark's loop turns.
  */
 @media (prefers-reduced-motion: no-preference) {
   .lp-unit.is-seen .lp-stop.is-here:not(.is-open),
@@ -992,11 +956,11 @@ button.lp-scard:focus-visible {
     transform-origin: 50% 0;
     animation: lp-swing 2.8s ease-in-out infinite;
   }
-  /* the learner's hop, from the stop they finished to the one to do now */
+  /* The learner hops from the finished stop to the current one. */
   .lp-learner.is-hopping {
     animation: lp-hop 520ms ease-in-out both;
   }
-  /* a chest earned by the lesson: it wobbles as the skill pops, then bursts open */
+  /* A chest the lesson earned wobbles as the skill pops, then bursts open. */
   .lp-node.is-wobbling .lp-node-face {
     transform-origin: 50% 80%;
     animation: lp-wobble 250ms ease-in-out 2;
@@ -1100,11 +1064,9 @@ button.lp-scard:focus-visible {
 }
 
 /*
- * Coming back after a lesson (learn/CoursePath.tsx, on @kurda/shared's
- * PATH_RETURN): the finished stop pops and its check draws in, the opened one
- * pops as its number takes the padlock's place, a chest earned wobbles and
- * bursts open, the bubble arrives at the new stop and the learner hops there.
- * Under Reduce Motion none of it runs: the path is drawn as it is.
+ * Returning from a lesson (learn/CoursePath.tsx, PATH_RETURN): the finished stop pops and draws its check, the opened one
+ * pops as its number replaces the padlock, a chest wobbles and bursts, and the bubble and learner move on. None of it
+ * runs under reduced motion.
  */
 @keyframes lp-node-pop {
   50% {
@@ -1165,13 +1127,13 @@ button.lp-scard:focus-visible {
   background: var(--panel-bg);
   box-shadow: var(--shadow);
   animation: lp-pop-in var(--dur) var(--ease-out);
-  /* brought into view clear of the tab bar; base.css keeps it clear of the top bar */
+  /* Scrolled into view clear of the tab bar; base.css keeps it clear of the top bar. */
   scroll-margin-bottom: calc(var(--bottom-chrome, 0px) + var(--space-4));
 }
 .lp-pop-arrow {
   position: absolute;
   top: -8px;
-  /* under the stop it belongs to: the card is centred, the stop leans by --x */
+  /* Under its stop: the card is centred, the stop leans by --x. */
   inset-inline-start: calc(50% + var(--x, 0px) - 8px);
   width: 16px;
   height: 16px;
@@ -1233,10 +1195,10 @@ button.lp-scard:focus-visible {
   display: block;
   height: 100%;
   border-radius: inherit;
-  /* a place on the road, not something won: the app's violet, as the ring's pieces are */
+  /* A place on the road, not a reward: violet, as the ring's pieces are. */
   background: var(--primary);
 }
-/* the chapter complete, on its story's card: in gold, as what was won */
+/* The chapter complete, on its story's card, in gold. */
 .lp-pop-won {
   justify-self: start;
   display: inline-flex;
@@ -1253,7 +1215,7 @@ button.lp-scard:focus-visible {
   justify-self: center;
   gap: 6px;
 }
-/* the card's one action, and what the lesson it opens pays under it */
+/* The card's one action, with what its lesson pays under it. */
 .lp-pop-go {
   display: grid;
   justify-items: center;
@@ -1371,7 +1333,7 @@ a.lp-part-row:hover {
   gap: var(--space-2);
   margin-top: var(--space-5);
 }
-/* the skill's name over its note: a quiet label, under the note's own heading in weight */
+/* The skill's name over its note: a quiet label, lighter than the note's own heading. */
 .lp-guide-skill-title {
   margin: 0;
   font-family: var(--font-sans);
@@ -1384,7 +1346,7 @@ a.lp-part-row:hover {
 
 /* ---- the path while it loads ------------------------------------------------- */
 
-/* the banner's own box and lip, in the grey of something not here yet */
+/* The banner's box and lip in the grey of something not loaded yet. */
 .lp-skel-banner {
   background: var(--surface);
   box-shadow: 0 5px 0 var(--surface-2);

@@ -27,11 +27,9 @@ export interface MediaUsageSnapshot {
 }
 
 /**
- * Media cost accounting (KUR-177 hardening). Storage is measured from our own
- * `media_uploads` records (reliable, fails to `null` so callers can fail closed).
- * R2 operations we initiate are counted in Redis per month — an approximate,
- * self-reported guard; Cloudflare's dashboard is the source of truth for real
- * billing, and Class B (public reads) can't be seen here at all.
+ * Media cost accounting. Storage is measured from `media_uploads` (null on failure, so callers fail closed). Storage
+ * operations we start are counted in Redis per month as an approximate guard; the provider's billing is the truth,
+ * and public reads cannot be seen here.
  */
 export class MediaUsageService {
   constructor(
@@ -41,11 +39,8 @@ export class MediaUsageService {
   ) {}
 
   /**
-   * Total stored bytes; `null` if the query fails (→ fail closed).
-   *
-   * Confirmed uploads, and the picture uploads held for a post that has not
-   * claimed them yet: those sit in the bucket for up to a day unconfirmed, and
-   * leaving them out would let a burst of uploads past the ceiling.
+   * Total stored bytes, or null if the query fails, so callers fail closed. Includes picture uploads held unconfirmed
+   * for a post, which sit in the bucket for up to a day, so a burst of uploads cannot pass the ceiling.
    */
   async totalStoredBytes(): Promise<number | null> {
     try {

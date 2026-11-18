@@ -22,8 +22,7 @@ export function ErrorState({
   onRetry?: () => void;
 }): React.JSX.Element {
   const t = useT();
-  // the default has to be resolved here rather than in the parameter list: a
-  // default argument is evaluated before any hook has run
+  // Not a default argument, which is evaluated before any hook has run.
   const heading = title ?? t('common.somethingWentWrong');
   return (
     <div className="state" role="alert">
@@ -40,20 +39,16 @@ export function ErrorState({
   );
 }
 
-/*
- * The heading is an h2 wherever the state stands: it is almost always the
- * first thing under a page's title, and an h3 there skipped a level for
- * anybody moving through the page by its headings.
- */
+/* The heading is an h2 because it almost always sits right under a page's title. */
 export function EmptyState({
   title,
   message,
   action,
 }: {
   title: string;
-  /** a line under the heading, when the heading does not say enough on its own */
+  /** A line under the heading, when the heading is not enough on its own. */
   message?: string;
-  /** optional way out of the empty state, e.g. a link to the setting that fills it */
+  /** An optional way out, e.g. a link to the setting that fills it. */
   action?: React.ReactNode;
 }): React.JSX.Element {
   return (

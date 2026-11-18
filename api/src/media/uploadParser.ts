@@ -1,12 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 
 /**
- * Register the raw-image body parser once for the whole app (KUR-177/290).
- * Fastify content-type parsers are global, so every through-server image upload
- * (profile photos, meme/image posts) shares this one. Fastify rejects a body over
- * `bodyLimit` with 413 before buffering it, so an oversized upload never reaches a
- * handler. `application/octet-stream` lets clients send bytes without committing to
- * a MIME the server would only re-sniff anyway.
+ * Registers the raw-image body parser once for the app, since fastify content-type parsers are global and every
+ * through-server image upload shares it. A body over `bodyLimit` is rejected with 413 before buffering.
+ * `application/octet-stream` lets clients send bytes without naming a type the server re-sniffs anyway.
  */
 export function registerImageUploadParser(app: FastifyInstance, maxUploadBytes: number): void {
   app.addContentTypeParser(

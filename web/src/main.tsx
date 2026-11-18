@@ -17,71 +17,52 @@ import './styles/rail.css';
 import './styles/editor.css';
 import './styles/product.css';
 import './styles/alphabet.css';
-// the words after the letters: colours, numbers, days and months
+// The words after the letters: colours, numbers, days and months.
 import './styles/words.css';
 import './styles/learn.css';
 import './styles/marketing.css';
 import './styles/stories.css';
-// a ticket: the shape every invitation takes (ui/Ticket.tsx)
+// A ticket: the shape every invitation takes (ui/Ticket.tsx).
 import './styles/ticket.css';
-// playing with friends: invites, the banner, game cards, playing again
+// Playing with friends: invites, the banner, game cards, playing again.
 import './styles/play.css';
-// gifts in chat, reporting, account standing
+// Gifts in chat, reporting, account standing.
 import './styles/social.css';
 import './styles/settings.css';
 import './styles/keyboard.css';
 import './styles/feedback.css';
 import './styles/ranks.css';
-// how things move: presses, answers, bars, lists arriving, sheets, celebrations
+// How things move: presses, answers, bars, lists arriving, sheets, celebrations.
 import './styles/motion.css';
-// the shell's newer parts: the top bar and its menu, the bell, the five places' own pages
+// The shell's newer parts: the top bar and its menu, the bell, the five places' pages.
 import './styles/shell.css';
-// how far past its edges each control answers a press, after every control's own rules (lib/reach.ts)
+// Each control's touch reach, after every control's own rules (lib/reach.ts).
 import './styles/reach.css';
-// Hevalo offline for a while: the screen in place of the app
+// The screen in place of the app while Hevalo is offline.
 import './styles/maintenance.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');
 
-/*
- * Light or dark before anything is drawn.
- *
- * The scheme is one attribute on <html> that every colour is keyed off, so it
- * is set here, ahead of the language and the first render, rather than by a
- * component: set later, somebody who chose light would watch the page draw
- * dark and then flip.
- */
+/* The colour scheme is set before anything is drawn, so someone who chose light never sees a dark first frame. */
 applyTheme();
 watchSystemTheme();
 
 /*
- * The pictures an admin has put in place of the built-in art (badges,
- * emblems, frames, default avatars): asked for now, alongside the language,
- * so they are usually in hand by the first render. This browser's copy of the
- * last list is drawn until then, and the built-in art when there is none.
+ * The admin's replacements for built-in art (badges, emblems, frames, default avatars), fetched now so they are usually
+ * in hand by the first render; until then the last cached list or the built-in art is drawn.
  */
 startArtOverrides();
-// a button shows pressed only for a real press, never for a finger that is scrolling (lib/press.ts)
+// A button shows pressed only for a real press, never for a scrolling finger (lib/press.ts).
 installPressFeedback();
-// where the last press was, so a dialog can grow out of what opened it (lib/opener.ts)
+// The last press's position, so a dialog can grow out of its opener (lib/opener.ts).
 watchOpeners();
-// while the page is being built, `?show-reach` in the address tints the area each control answers in (styles/reach.css)
+// In development, `?show-reach` tints each control's touch area (styles/reach.css).
 if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('show-reach')) document.documentElement.classList.add('show-reach');
 
 /*
- * The language before the app.
- *
- * Only one of the nine catalogues ships in the entry chunk, so the one this
- * visitor reads has to be fetched — and it is fetched here, before the first
- * render, so that render has the right words in it. Rendering first and
- * swapping the language in afterwards would show every non-English reader a
- * flash of English on every cold load, which is a worse thing to do to
- * somebody than making them wait for one small file they were going to need
- * anyway.
- *
- * `preloadCatalogue` falls back to English rather than rejecting, so a
- * language pack that will not download delays the app and does not stop it.
+ * Only one catalogue ships in the entry chunk, so the reader's is fetched before the first render; rendering first would
+ * flash English on every cold load. `preloadCatalogue` falls back to English rather than rejecting.
  */
 void preloadCatalogue().then(() => {
   createRoot(root).render(

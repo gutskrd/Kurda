@@ -15,19 +15,15 @@ import { takeAfterSignup } from '../auth/afterSignup';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/**
- * Where a newly confirmed account goes: its first lesson (pages/NextLesson.tsx
- * finds it). It went to /app, the community wall, which is not what most
- * people sign up to a language app for, and nothing there led to a lesson.
- */
+/** Where a newly confirmed account goes: its first lesson (pages/NextLesson.tsx finds it). */
 const AFTER_VERIFY = '/app/learn/next';
 
-/** Matches the server's per-IP resend limit (4/hour) — don't invite a 429. */
+/** Matches the server's per-IP resend limit (4 an hour). */
 const RESEND_COOLDOWN_SEC = 60;
 
-/** How long a confirmed code is shown before the page moves on: the boxes turning green one after another, and Hevalo pleased. */
+/** How long a confirmed code shows before moving on: the boxes turning green, Hevalo pleased. */
 const CONFIRMED_MS = 950;
-/** The same moment, still: long enough to see the boxes have turned. */
+/** The same under reduced motion: long enough to see the boxes turn. */
 const CONFIRMED_STILL_MS = 450;
 
 function verifyError(err: ApiError, t: Translate): string {
@@ -44,20 +40,10 @@ function verifyError(err: ApiError, t: Translate): string {
 }
 
 /**
- * Confirm ownership of the email address with the 6-digit code sent at signup.
- * Reachable only while signed in but unverified — ProtectedRoute sends people
- * here and won't let them into the app until this succeeds.
- *
- * The page asks for one thing. The code is typed into the boxes a game's code
- * is typed into (components/CodeBoxes.tsx), so they move the same way: sent
- * as the last digit lands, a wave while the server looks, green when it is
- * right, and a shake in red with a sentence under them when it is not. The
- * button is there for whoever would rather press it.
- *
- * The address the code went to is shown as it was typed, because a typo is
- * only ever caught by seeing it back, and it is the button that puts it
- * right. Under the form, quietly: the way to another code, how long
- * everything lasts, and the way out.
+ * Confirms the email with the 6-digit code sent at sign-up; ProtectedRoute keeps an unverified account here. The code is
+ * typed into the same boxes as a game code (components/CodeBoxes.tsx): sent as the last digit lands, a wave while
+ * checking, green when right, a red shake and a sentence when not. The address is shown as typed, with a way to correct
+ * it, since a typo is only caught by seeing it. Below: another code, how long things last, and the way out.
  */
 export function VerifyEmail(): React.JSX.Element {
   const { client, user, logout, refreshUser } = useAuth();
@@ -67,29 +53,27 @@ export function VerifyEmail(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // an emailed link that did not work: said over the form, because what it says to do is in the form below it
+  // A failed emailed link, shown above the form, since what it says to do is in the form.
   const [linkError, setLinkError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
-  // putting a mistyped address right: the field is there only once it is asked for
+  // Correcting a mistyped address; the field appears only when asked for.
   const [changing, setChanging] = useState(false);
   const [address, setAddress] = useState('');
-  // what the boxes show: a code with the server, one that was not right (until another digit is typed), and which digits are new
+  // What the boxes show: a code being checked, a wrong one (until another digit is typed), and which digits are new.
   const [checking, setChecking] = useState(false);
   const [refused, setRefused] = useState(false);
   const [refusals, setRefusals] = useState(0);
   const [fresh, setFresh] = useState(0);
   const [focused, setFocused] = useState(false);
   const [still] = useState(prefersReducedMotion);
-  // the code is confirmed here and the page leaves when its moment is over, not the instant the account says so
+  // Confirmed here; the page leaves when its moment is over, not the instant the account says so.
   const confirming = useRef(false);
   const codeField = useRef<HTMLInputElement>(null);
   /**
-   * Where to go once confirmed: where the account was being made for — a
-   * friend's game, a story's quiz (auth/afterSignup) — else the first lesson.
-   * A birth month still missing is asked there, by the app's own gate. Taken
-   * once and kept: confirming both answers the code and flips
-   * `emailVerified`, and each of those leaves this screen.
+   * Where to go once confirmed: where the account was made for (a friend's game, a story quiz; auth/afterSignup), else
+   * the first lesson, whose gate asks a missing birth month. Taken once and kept, since confirming changes the state
+   * this screen depends on twice.
    */
   const destination = useRef<string | null>(null);
   const afterVerify = useCallback((): string => (destination.current ??= takeAfterSignup() ?? AFTER_VERIFY), []);
@@ -100,8 +84,7 @@ export function VerifyEmail(): React.JSX.Element {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  // The emailed link carries a one-time token instead of a code; redeem it on
-  // arrival so following the link just works (that endpoint needs no session).
+  // An emailed link carries a one-time token instead of a code, redeemed on arrival (no session needed).
   const [params] = useSearchParams();
   const linkToken = params.get('token');
   useEffect(() => {
@@ -122,7 +105,7 @@ export function VerifyEmail(): React.JSX.Element {
     };
   }, [linkToken, client, refreshUser, navigate, t, afterVerify]);
 
-  // already verified (e.g. confirmed in another tab) → don't strand them here
+  // Already verified (in another tab, say): do not strand them here.
   useEffect(() => {
     if (user?.emailVerified && !confirming.current) navigate(afterVerify(), { replace: true });
   }, [user?.emailVerified, navigate, afterVerify]);
@@ -131,7 +114,7 @@ export function VerifyEmail(): React.JSX.Element {
     async (digits: string) => {
       if (confirming.current) return;
       if (digits.length !== VERIFICATION_CODE_LENGTH) {
-        // the button pressed on a code that is not whole: said, and the typing goes on where it was
+        // The button pressed on an incomplete code: say so, and typing goes on where it was.
         setNotice(null);
         setError(t('auth.verify.enterCode', { digits: VERIFICATION_CODE_LENGTH }));
         codeField.current?.focus();
@@ -145,11 +128,11 @@ export function VerifyEmail(): React.JSX.Element {
       const res = await client.post<{ verified: boolean }>('/auth/verify-email-code', { code: digits });
       setChecking(false);
       if (res.ok) {
-        // the boxes turn and Hevalo is pleased while the fresh profile is fetched, so the wait is the moment itself
+        // The boxes turn and Hevalo is pleased while the fresh profile loads, so the wait is the moment itself.
         setConfirmed(true);
         setFresh(VERIFICATION_CODE_LENGTH);
         const moment = new Promise<void>((done) => window.setTimeout(done, still ? CONFIRMED_STILL_MS : CONFIRMED_MS));
-        // pull the fresh profile so emailVerified flips before we route onward
+        // Fetch the fresh profile so emailVerified flips before routing on.
         await Promise.all([refreshUser(), moment]);
         navigate(afterVerify(), { replace: true });
         return;
@@ -157,7 +140,7 @@ export function VerifyEmail(): React.JSX.Element {
       confirming.current = false;
       setBusy(false);
       setError(verifyError(res.error, t));
-      // a code that was not right is typed again from the first box
+      // A wrong code is retyped from the first box.
       setCode('');
       setRefused(true);
       setRefusals((n) => n + 1);
@@ -165,14 +148,14 @@ export function VerifyEmail(): React.JSX.Element {
     [client, refreshUser, navigate, afterVerify, t, still],
   );
 
-  /** What the field holds after a keystroke or a paste; the last digit sends the code. */
+  /** What the field holds after a keystroke or paste; the last digit sends the code. */
   function typeCode(raw: string): void {
     if (confirming.current) return;
     const next = codeDigits(raw);
     if (next === code) return;
     setFresh(next.startsWith(code) ? code.length : 0);
     setCode(next);
-    // whatever was said about the last code, or about a link, is over once another digit is typed
+    // Anything said about the last code or a link is over once another digit is typed.
     setRefused(false);
     setError(null);
     setLinkError(null);
@@ -193,11 +176,7 @@ export function VerifyEmail(): React.JSX.Element {
     }
   }
 
-  /**
-   * The one line that speaks, under whatever is being typed: what went wrong,
-   * or that a code is on its way. Its room is kept while it is empty, so a
-   * refusal does not push the button down under the pointer.
-   */
+  /** The one line that speaks under the typing: an error, or that a code is on its way; its room is kept so nothing moves. */
   const said = error ?? notice;
   const saidLine = (
     <p className={`verify-said${error ? ' is-error' : ''}`}>
@@ -210,11 +189,8 @@ export function VerifyEmail(): React.JSX.Element {
   );
 
   /**
-   * A mistyped address is the commonest reason a code never comes. It is put
-   * right in place: the account, its name and its password stay, the code
-   * goes to the new address, and the one sent to the old address stops
-   * working. Starting over used to be the only way, and found the username
-   * taken by the sign-up just left behind.
+   * Corrects a mistyped address, the commonest reason a code never comes: the account stays, the code goes to the new
+   * address, and the old address's code stops working.
    */
   async function changeAddress(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -233,7 +209,7 @@ export function VerifyEmail(): React.JSX.Element {
     setCode('');
     setAddress('');
     setChanging(false);
-    // changed, but the day's ceiling of emails is reached: said rather than a code promised
+    // Changed, but the day's email limit is reached, so no code is promised.
     if (res.data.sent) setNotice(t('auth.verify.changed'));
     else setError(t('error.code.verificationEmailLimit'));
     setCooldown(RESEND_COOLDOWN_SEC);
@@ -247,11 +223,7 @@ export function VerifyEmail(): React.JSX.Element {
         <div className="auth-head">
           <h1>{t('auth.verify.title')}</h1>
           <p>{t('auth.verify.enterCode', { digits: VERIFICATION_CODE_LENGTH })}</p>
-          {/*
-            The address the code went to, as it was typed, and the way to put it
-            right: a typo is only ever caught by seeing it back, and the place
-            it is seen is the place to fix it.
-          */}
+          {/* The address as typed, with the way to correct it where it is seen. */}
           {user?.email && (
             <button
               type="button"
@@ -277,7 +249,7 @@ export function VerifyEmail(): React.JSX.Element {
         )}
 
         {changing ? (
-          /* one thing at a time: while the address is put right, the code for the old one is not asked for */
+          /* One thing at a time: while correcting the address, no code for the old one is asked for. */
           <form onSubmit={(e) => void changeAddress(e)}>
             <div className="field">
               <label className="field-label" htmlFor="verify-new-address">
@@ -324,7 +296,7 @@ export function VerifyEmail(): React.JSX.Element {
               onChange={(e) => typeCode(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              // read-only, not disabled, while the server looks: the focus stays, so a wrong code is typed again without a click
+              // Read-only, not disabled, while checking, so focus stays for retyping a wrong code.
               readOnly={checking || confirmed}
               inputMode="numeric"
               autoComplete="one-time-code"
@@ -338,7 +310,7 @@ export function VerifyEmail(): React.JSX.Element {
             <Button type="submit" block disabled={busy}>
               {confirmed ? t('auth.verify.confirmed') : checking ? t('auth.verify.submitting') : t('auth.verify.submit')}
             </Button>
-            {/* the boxes turning green is for the eye; this is the same news for the ear */}
+            {/* The same news as the boxes turning green, for screen readers. */}
             <p className="sr-only" role="status">
               {confirmed ? t('auth.verify.confirmed') : ''}
             </p>
@@ -353,7 +325,7 @@ export function VerifyEmail(): React.JSX.Element {
             </button>
             .
           </p>
-          {/* how long each thing lasts, said once and small */}
+          {/* How long each thing lasts, said once and small. */}
           <p className="verify-small">
             {t('auth.verify.expiresIn15')} {t('auth.verify.keptFor', { days: UNCONFIRMED_SIGNUP_DAYS })}
           </p>

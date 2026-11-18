@@ -1,8 +1,7 @@
 /**
- * The learner's tree against real Postgres, through the real routes: planted
- * once, watered with what finished lessons and practice earn, growing and
- * bearing, faring badly when left dry and brought back by water, another kind
- * bought with Zêr and planted in its place, and shown on its owner's profile.
+ * The learner's tree through the real routes against real Postgres: planted once, watered by finished lessons and
+ * practice, growing and bearing, suffering when dry and revived by water, another kind bought and planted, and shown
+ * on the profile.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -82,7 +81,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
       )
     ).rows[0];
 
-  /** Make the stored tree what a test needs: so often watered, so much held, last watered so many days ago. */
+  /** Sets the stored tree to what a test needs: waterings, water held, and days since last watered. */
   async function make(who: Learner, over: { waterings?: number; water?: number; dryDays?: number; harvests?: number }, timezone = 'UTC') {
     await pool.query(
       `UPDATE user_trees SET waterings = COALESCE($2, waterings), water = COALESCE($3, water), harvests = COALESCE($5, harvests),
@@ -134,7 +133,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
     });
 
     it('plants a free kind as a seed, on the learner’s own day, with the water to bring it up', async () => {
-      // a zone that is always on another day than UTC for part of the day: the day is theirs, not the server's
+      // A zone on a different day from UTC for part of every day: the day is the learner's, not the server's.
       const ana = await learner('plant', 'Pacific/Kiritimati');
       const res = await call(ana, 'POST', '/me/tree/plant', { species: 'hinar' });
       expect(res.statusCode, res.body).toBe(200);
@@ -178,7 +177,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
       expect(res.json().planted).toBe(2);
       // a tree of its own: what the first paid is never mixed up with what this one pays
       expect((await stored(ana))!.id).not.toBe(first!.id);
-      // planting again never makes water: with none held it is planted with the first water, with some it keeps what there is
+      // Planting again never makes water: with none held it is planted with the first water, otherwise it keeps what there is.
       await call(ana, 'POST', '/me/tree/plant', { species: 'beru' });
       expect((await stored(ana))!.water).toBe(4);
     });
@@ -316,7 +315,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
       expect(bought.statusCode, bought.body).toBe(200);
       expect(bought.json().zer).toBe(30);
       expect(bought.json().kinds.find((k: { species: string }) => k.species === 'tu').owned).toBe(true);
-      // the tree that stands is as it was
+      // The standing tree is unchanged.
       expect(bought.json().tree).toMatchObject({ species: 'beru', waterings: 9 });
       const ledger = await pool.query(`SELECT amount, ref_id FROM wallet_ledger WHERE user_id = $1 AND reason = $2`, [ana.id, TREE_PURCHASE_REASON]);
       expect(ledger.rows).toEqual([{ amount: -price, ref_id: 'tu' }]);
@@ -327,7 +326,7 @@ describe.skipIf(!DATABASE_URL)('the learner’s tree (integration)', () => {
       expect(await zer(ana)).toBe(30);
       expect((await call(ana, 'POST', '/me/tree/kinds/beru/buy')).json().code).toBe('TREE_OWNED');
       expect((await call(ana, 'POST', '/me/tree/kinds/cactus/buy')).json().code).toBe('TREE_NOT_FOUND');
-      // theirs to plant now, and again later for nothing
+      // Theirs to plant now, and again later for free.
       const planted = await call(ana, 'POST', '/me/tree/plant', { species: 'tu' });
       expect(planted.json().tree).toMatchObject({ species: 'tu', stage: 0 });
       await call(ana, 'POST', '/me/tree/plant', { species: 'beru' });

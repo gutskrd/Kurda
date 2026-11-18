@@ -6,7 +6,7 @@ import { sendEmailJob } from '../jobs/email.js';
 import { SecurityAlerts, type SecurityMailer } from './alerts.js';
 import { NO_SECURITY_LOG, SecurityLog, type SecurityRecorder } from './log.js';
 
-/** How often critical alerts not emailed yet are sent (an alert also tries at once, when it is recorded). */
+/** How often unsent critical alerts are emailed; an alert also tries at once when recorded. */
 export const SECURITY_SWEEP_MS = 5 * 60 * 1000;
 /** When the log's retention first runs after start (then daily), as the moderation evidence's does. */
 export const SECURITY_PURGE_FIRST_MS = 12 * 60 * 1000;
@@ -17,14 +17,9 @@ export interface SecurityLogOptions {
 }
 
 /**
- * The security log, made once and hung on the app (`app.securityLog`) before
- * any hook or route that records into it is set up: the 2FA gate, the rate
- * limiter, sign-in, the admin routes. Without a database it records nothing.
- *
- * Two timers keep it: the five-minute sweep emails any critical alert that is
- * still unsent (a send failed, or the gap between emails held it back), and
- * the daily retention (first a few minutes after start, as a host that sleeps
- * when idle may never stay up a whole day) drops what is past keeping and
+ * The security log, made once and hung on the app (`app.securityLog`) before any hook or route that records into it.
+ * Without a database it records nothing. A five-minute sweep emails critical alerts still unsent, and the daily
+ * retention (first a few minutes after start, since an idle host may never stay up a day) drops expired events and
  * forgets old addresses.
  */
 export function setupSecurityLog(app: FastifyInstance, config: AppConfig, options: SecurityLogOptions = {}): void {

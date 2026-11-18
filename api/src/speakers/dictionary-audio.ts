@@ -1,22 +1,17 @@
 /**
- * The dictionary's pronunciations, for the admin panel's Characters page:
+ * The dictionary's pronunciations for the admin Characters page:
  *
  *   GET /admin/dictionary/audio?speaker=…&lipsync=…&q=…&cursor=…&limit=…
  *
  *   speaker   none | any | hevalo | hamo | xezo   who says it (none: no character)
  *   lipsync   missing | present                   whether a timeline is stored
- *   q         the start of the headword, as typed or without its accents
- *   limit     1–200, 100 when not given
- *   cursor    the page's `nextCursor`, for the page after it
+ *   q         the start of the headword, with or without accents
+ *   limit     1–200, default 100
+ *   cursor    the previous page's `nextCursor`
  *
- * In headword order, then by id, a page at a time: an import can bring a
- * pronunciation with every word, so this is never sent whole. Each item
- * carries its stored timeline, so a page is at most a couple of hundred small
- * timelines. `counts` is over every pronunciation, whatever the filters, for
- * the page's summary.
- *
- * Each item's `id` is what PATCH /admin/audio/dictionary and
- * GET /admin/audio/dictionary/file take as `key`.
+ * Paged in headword then id order, since an import can bring a pronunciation with every word; each item carries its
+ * stored timeline. `counts` covers every pronunciation regardless of filters. Each item's `id` is the `key` that
+ * PATCH /admin/audio/dictionary and GET /admin/audio/dictionary/file take.
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';

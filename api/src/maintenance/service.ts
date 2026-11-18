@@ -12,9 +12,8 @@ import { claimArt, releaseArt } from '../shop/art.js';
 import { NO_SECURITY_LOG, type SecurityRecorder } from '../security/log.js';
 
 /**
- * How long the setting is reused before the database is asked again. Every
- * request asks, so this is what keeps that free; a change here clears it at
- * once, and another server instance picks it up within this long.
+ * How long the setting is reused before asking the database again; every request asks. A change here clears it at
+ * once, and other instances pick it up within this time.
  */
 const CACHE_MS = 5_000;
 
@@ -66,16 +65,10 @@ function settingsOf(row: Row): MaintenanceSettings {
 }
 
 /**
- * Taking Hevalo offline for a while (migration 1751000202000; @kurda/shared
- * maintenance.ts for what the apps do with it).
- *
- * One row says whether it is on, from and until when, and what people see.
- * Nothing runs at the start or the end: whether it is on is worked out from
- * the times on every ask (`maintenancePhase`), so a start set for tonight
- * begins tonight and an end that reopens does, with no job to miss it.
- *
- * The picture is uploaded first, as shop art is, and held while this row
- * names it, exactly as a replaced picture is (art/overrides.ts).
+ * Taking Hevalo offline (migration 1751000202000; @kurda/shared maintenance.ts for the apps). One row holds whether
+ * it is on, from and until when, and what people see. Whether it is on is worked out from the times on every ask
+ * (`maintenancePhase`), so scheduled starts and ends need no job. The picture is uploaded like shop art and held
+ * while this row names it, as art overrides are.
  */
 export class MaintenanceService {
   private cached: { at: number; row: Row } | null = null;
@@ -147,9 +140,8 @@ export class MaintenanceService {
   }
 
   /**
-   * Change it: turn it on (now, or from a start), change what people see
-   * while it is on, or turn it off. Turned on with no start, it starts now,
-   * and that moment is kept while it stays on, as "since".
+   * Changes the setting: on now or from a start, a new notice while on, or off. Turned on with no start it starts now,
+   * and that moment is kept as "since" while it stays on.
    */
   async set(adminId: string, input: MaintenanceSettings): Promise<MaintenanceChange> {
     const bad = (message: string): MaintenanceChange => ({ ok: false, status: 400, code: 'INVALID_SCHEDULE', message });
@@ -178,7 +170,7 @@ export class MaintenanceService {
       was = res.rows[0] ?? OFF;
       const wasOn = maintenancePhase(settingsOf(was), now);
       if (input.enabled) {
-        // a start already past is now; an offline screen that is up keeps the moment it went up
+        // A start already past means now; an offline screen already up keeps the moment it went up.
         if (!startsAt || startsAt < now) startsAt = wasOn === 'on' && was.starts_at ? was.starts_at : now;
         if (endsAt && endsAt <= now) {
           await client.query('ROLLBACK');
@@ -217,8 +209,7 @@ export class MaintenanceService {
     }
     const state = await this.state();
 
-    // into the security log when it goes up, is set for later, or comes down: taking the app away from
-    // everyone is the one thing in the console nobody should find out about from the users
+    // Going up, being scheduled or coming down goes in the security log, so nobody learns of it from users.
     const before = maintenancePhase(settingsOf(was), now);
     const going = before !== 'on' && before !== 'scheduled' && (state.phase === 'on' || state.phase === 'scheduled');
     const ending = (before === 'on' || before === 'scheduled') && (state.phase === 'off' || state.phase === 'ended');

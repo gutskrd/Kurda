@@ -11,11 +11,7 @@ const GOOD_LENGTH = 8;
 /** Kinds of exercise in a lesson that is not one question again and again. */
 const GOOD_MIX = 3;
 
-/**
- * Build exercises from words: the editor types the words once, Kurdish beside
- * its meaning, chooses which kinds of exercise to make, and they are added to
- * the end of the draft (lessonBuilder.ts), to be edited like any other.
- */
+/** Build exercises from a list of words and meanings, appended to the draft (lessonBuilder.ts) and edited like any other. */
 export function QuickBuild({
   open,
   room,
@@ -23,7 +19,7 @@ export function QuickBuild({
   onAdd,
 }: {
   open: boolean;
-  /** how many more exercises the lesson takes */
+  /** How many more exercises the lesson takes. */
   room: number;
   onClose: () => void;
   onAdd: (exercises: Exercise[]) => void;
@@ -122,10 +118,8 @@ export function QuickBuild({
 type Check = { tone: 'ok' | 'warn' | 'bad'; text: string; link?: { href: string; label: string } };
 
 /**
- * Is it ready? What a lesson needs before learners get it, checked as the
- * editor works: titles, a good length, a mix of kinds, and its recordings —
- * the sentences, each conversation's lines, and above all a listening item's,
- * without which it cannot be published at all.
+ * What a lesson needs before learners get it, checked while editing: titles, length, a mix of kinds and recordings,
+ * of which a listening item's is required to publish.
  */
 export function LessonReadiness({
   lesson,
@@ -138,7 +132,7 @@ export function LessonReadiness({
   titles: { ku: string; en: string };
   dirty: boolean;
 }): React.JSX.Element {
-  // read again after every save (its lockVersion moves), which is when the recordings asked for change
+  // Read again after every save (its lockVersion moves), which is when the recordings asked for change.
   const audio = useLoad(() => api<Listing>('/admin/lesson-audio'), [lesson.id, lesson.lockVersion]);
 
   const checks = useMemo((): Check[] => {

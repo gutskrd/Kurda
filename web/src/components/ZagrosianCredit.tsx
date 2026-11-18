@@ -2,15 +2,8 @@ import { ZAGROSIAN_MARK, ZAGROSIAN_URL, ZAGROSIAN_VIEWBOX } from '../brand/zagro
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Who made this, at the foot of the page.
- *
- * An imprint rather than an advertisement: it sits quiet in the bottom bar at
- * the weight of the copyright line beside it, and only brightens when somebody
- * reaches for it. The mark is drawn in `currentColor`, so it lifts with the
- * words rather than staying lit while they move.
- *
- * The name is not translated — it is a company, and a company is called what it
- * is called in every language. Only the sentence around it changes.
+ * The maker's imprint in the bottom bar, at the copyright line's weight, brightening on hover; the mark uses
+ * `currentColor` so it lifts with the words. The company name is not translated.
  */
 export function ZagrosianCredit(): React.JSX.Element {
   const t = useT();

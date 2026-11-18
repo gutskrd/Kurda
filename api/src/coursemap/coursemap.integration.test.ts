@@ -1,4 +1,4 @@
-/** Course map against real Postgres (CI job). KUR-040. */
+/** Course map against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -118,11 +118,7 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
     expect(skills[0].lessons[0]).toMatchObject({ lessonId: skillA.firstLessonId, completed: true });
   });
 
-  /**
-   * A corrected lesson is a new row at the same place. Finishing is asked of
-   * the place, so the learner who finished the first version has still
-   * finished it — and the skill after it stays open.
-   */
+  /** A corrected lesson is a new row at the same place, and finishing is asked of the place. */
   it('keeps a lesson finished when a corrected version of it is published', async () => {
     const before = (await authed('GET', `/courses/${courseId}/map`)).json();
     const oldId = before.units[0].skills[0].lessons[0].lessonId as string;
@@ -148,12 +144,7 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
     await authed('POST', `/sessions/${sid}/complete`);
   }
 
-  /**
-   * Every finish of a lesson is a session of its own, so the map can count
-   * them: each lesson's times, replays and finishes of an earlier version
-   * included, and from them each skill's rounds and the pieces of its ring
-   * (shared `topicRounds`), counted in one read for the whole map.
-   */
+  /** Every finish is its own session, so the map counts each lesson's finishes and each skill's rounds and ring. */
   it('counts every time a lesson is finished, an earlier version’s too, as its skill’s rounds and ring', async () => {
     const before = (await authed('GET', `/courses/${courseId}/map`)).json();
     const [skillA, skillB] = before.units[0].skills;
@@ -191,11 +182,7 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
     expect((await authed('GET', `/courses/${courseId}/map`)).json().units[0].level).toBe('A1');
   });
 
-  /**
-   * The road’s chapters go online one by one as Hamo records them. The map
-   * ends at the last one online and names the next as on its way, and each
-   * chapter carries the story that closes it once learners can read it.
-   */
+  /** The road's chapters go online one by one; the map ends at the last one online and names the next. */
   it('ends a road at its last chapter online, with its story, and names the next one on its way', async () => {
     const road = `map-road-${suffix}`;
     const story = `road-11-map-${suffix}`;

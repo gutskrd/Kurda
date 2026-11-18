@@ -1,24 +1,13 @@
 /**
- * Pure, server-authoritative cosmetic resolution — the ONE place that decides
- * which avatar/background/icon a profile actually shows, and computes level
- * progress. No DB, no I/O: it takes already-fetched rows so it's cheap and
- * unit-testable. Access rules live here so routes never re-implement them.
- *
- * Access to a cosmetic = the user OWNS it (entitlement) OR it is premium_only,
- * still on sale, and the user's premium is currently active. Premium access is evaluated at
- * read time against server time, so it disappears automatically on expiry with
- * no revocation job and without deleting the user's equipped-SKU reference.
+ * Pure cosmetic resolution: the one place that decides which avatar, background and icon a profile shows, and
+ * computes level progress, from rows already fetched. Access means the user owns the item, or it is premium_only,
+ * still on sale, and their premium is active. Premium is checked against server time on every read, so access
+ * ends on expiry with no revocation job and the equipped SKU is kept.
  */
 import { levelForXp, xpForLevel } from '../tags/level.js';
 import { avatarAssetUrl, effectiveAvatarKey } from './avatars.js';
 
-/**
- * Who gave someone the thing they are wearing.
- *
- * Half the point of a gift is that it is seen to be from someone. An item that
- * arrives and then looks exactly like one that was bought is a present with the
- * card thrown away.
- */
+/** Who gave someone the item they are wearing, so a profile can show it was a gift. */
 export interface Gifter {
   id: string;
   username: string;
@@ -88,15 +77,9 @@ export const ART_KINDS = ['background', 'icon'] as const;
 export type ArtKind = (typeof ART_KINDS)[number];
 
 /**
- * Where art uploaded in the admin is stored: `cosmetic/background/<sha256>.webp`
- * and `cosmetic/icon/<sha256>.png`, content-addressed like every other upload.
- *
- * The art the shop started with ships with the website (`backgrounds/…`,
- * `icons/…` under web/public/cosmetics) and is served from the site's own
- * origin; art added later lives in object storage and is served from the CDN.
- * The prefix is how an `asset_key` says which of the two it is, and the
- * pattern is exact so that no other stored object — somebody's profile photo,
- * say — can be dressed up as a shop item by naming its key.
+ * Where art uploaded in the admin is stored: `cosmetic/background/<sha256>.webp` and `cosmetic/icon/<sha256>.png`.
+ * The shop's original art ships with the website and is served from its origin; uploaded art is served from the
+ * CDN. The pattern is exact so no other stored object, such as a profile photo, can pass as a shop item.
  */
 const UPLOADED_ART = /^cosmetic\/(background|icon)\/[a-f0-9]{64}\.(webp|png)$/;
 
@@ -111,11 +94,7 @@ export function uploadedArtKind(key: string): ArtKind | null {
   return m ? (m[1] as ArtKind) : null;
 }
 
-/**
- * A built-in background or icon: a file the website ships, by its path under
- * /cosmetics. Plain file names only, so a key can never climb out of that
- * folder into the rest of the site.
- */
+/** A built-in background or icon by its path under /cosmetics; plain file names only, so a key cannot leave the folder. */
 const BUILT_IN_ART: Record<ArtKind, RegExp> = {
   background: /^backgrounds\/[a-z0-9][a-z0-9._-]*\.(webp|png|jpg|jpeg|gif|mp4|webm)$/,
   icon: /^icons\/[a-z0-9][a-z0-9._-]*\.(png|webp)$/,
@@ -126,30 +105,23 @@ export function isBuiltInArtKey(kind: ArtKind, key: string): boolean {
 }
 
 /**
- * The URL a background or icon's art is served from: uploaded art from the
- * CDN (null while storage is unconfigured, as a profile photo is), built-in art
- * from the site, as a site-relative path the web resolves against its own
- * origin and the phone against the site's (mobile `assetUrl()`).
+ * The URL an item's art is served from: uploaded art from the CDN (null while storage is unconfigured), built-in
+ * art as a site-relative path the web and phone resolve against the site.
  */
 export function cosmeticArtUrl(assetKey: string, publicUrl: PublicUrl): string | null {
   return isUploadedArtKey(assetKey) ? publicUrl(assetKey) : `${STATIC_BASE}/${assetKey}`;
 }
 
 /**
- * Resolve a cosmetic catalog item's asset key to a public URL for *browsing*
- * (shop, inventory, gifts, the admin's catalogue). Every place that shows a
- * background or icon goes through here or `resolveCosmetics`, so art uploaded
- * in the admin and art that ships with the site resolve the same way
- * everywhere. Any other item is drawn from an uploaded square picture when
- * it has one; null otherwise, and for a missing key.
- * Presentation only — ownership/premium access is enforced server-side at equip.
+ * Resolves a catalogue item's asset key to a public URL for browsing (shop, inventory, gifts, admin catalogue), the
+ * same way `resolveCosmetics` does. Other items use an uploaded square picture when they have one; null otherwise.
+ * Presentation only: access is enforced at equip.
  */
 export function cosmeticAssetUrl(category: string, assetKey: string | null, publicUrl: PublicUrl): string | null {
   if (!assetKey) return null;
-  // (a frame bought in the shop is a picture the site ships too; a season frame has none, and is drawn by the apps)
+  // A shop frame is a file the site ships too; a season frame has none and is drawn by the apps.
   if (category === 'background' || category === 'icon' || category === 'frame') return cosmeticArtUrl(assetKey, publicUrl);
-  // any other item (a power-up, a streak freeze, a tag…) may be given a square
-  // picture uploaded in the admin; without one the apps draw its glyph
+  // Any other item may have a square picture uploaded in the admin; without one the apps draw its glyph.
   if (uploadedArtKind(assetKey) === 'icon') return publicUrl(assetKey);
   return null;
 }
@@ -164,12 +136,9 @@ export function isPremiumActive(premiumUntil: Date | null, now: Date = new Date(
 }
 
 /**
- * Resolve a user's display avatar URL, with the canonical priority: uploaded
- * photo → selected default avatar → universal fallback (default-01). It NEVER
- * returns null — every user always has a valid avatar. A premium-gated avatar
- * falls back to default-01 once premium lapses (`premiumActive` defaults to true
- * for callers that don't track it, e.g. list DTOs). Shared by the profile
- * resolver and the social/chat lists so avatars look identical everywhere.
+ * A user's display avatar URL: uploaded photo, else the selected default avatar, else default-01; never null. A
+ * premium-gated avatar falls back once premium lapses (`premiumActive` defaults to true for callers that do not
+ * track it). Shared by the profile and the social and chat lists so avatars match everywhere.
  */
 export function resolveAvatarUrl(
   profilePhotoKey: string | null,
@@ -185,12 +154,8 @@ export function resolveAvatarUrl(
 }
 
 /**
- * Access = owned OR (premium_only AND premium active AND still on sale).
- *
- * Inactive means taken out of the shop, not taken away: an item somebody owns
- * stays theirs to wear when it stops being sold — the shop's old art was
- * replaced and withdrawn that way (migration 1751000161000), and its owners
- * keep their items. What premium lends without owning ends with the sale.
+ * Access is owned, or premium_only with premium active and the item still on sale. Inactive means withdrawn from
+ * sale, not taken away: owners keep wearing it, while what premium lends ends with the sale.
  */
 export function hasAccess(item: EquippedItem, premiumActive: boolean): boolean {
   if (item.owned) return true;
@@ -205,10 +170,8 @@ function bgType(assetKey: string): 'image' | 'gif' | 'video' {
 }
 
 /**
- * Resolve the profile's visible cosmetics.
- * @param publicUrl resolves an object key to a public CDN URL (an uploaded
- *                   photo, art uploaded in the admin); null when storage is
- *                   unconfigured.
+ * Resolves the profile's visible cosmetics.
+ * @param publicUrl resolves an object key to a public CDN URL; null when storage is unconfigured.
  */
 export function resolveCosmetics(
   raw: CosmeticRaw,
@@ -221,8 +184,7 @@ export function resolveCosmetics(
   const avatarUrl = resolveAvatarUrl(raw.profilePhotoKey, raw.selectedAvatarKey, publicUrl, premium);
 
   let background: ResolvedBackground | null = null;
-  // built-in art is "backgrounds/x.webp" on the site, uploaded art a CDN key;
-  // uploaded art with no storage to serve it from shows no background at all
+  // Built-in art is a site path and uploaded art a CDN key; uploaded art with no storage shows no background.
   const bgUrl = raw.background?.assetKey ? cosmeticArtUrl(raw.background.assetKey, publicUrl) : null;
   if (raw.background && raw.background.assetKey && bgUrl && hasAccess(raw.background, premium)) {
     background = {

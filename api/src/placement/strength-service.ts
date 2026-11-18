@@ -11,11 +11,7 @@ export interface SkillStrength {
   unlocked: boolean;
 }
 
-/**
- * Per-skill strength for a course (KUR-039), computed on demand from the
- * learner's spaced-repetition state over each skill's exercises, plus the
- * course's unlocked-through level from placement/progress.
- */
+/** Per-skill strength for a course, computed on demand from review state, with the course's unlocked-through level. */
 export class SkillStrengthService {
   constructor(private readonly pool: pg.Pool) {}
 

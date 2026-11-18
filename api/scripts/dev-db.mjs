@@ -1,13 +1,8 @@
 /**
- * Local development Postgres via embedded-postgres — a self-contained
- * Postgres server with no system install or Docker. Keeps running until
- * interrupted. Connection string:
+ * A local development Postgres, embedded, with no system install; runs until interrupted. The data dir (api/.pgdata)
+ * is ignored by git and persists across restarts.
  *
  *   postgres://postgres:postgres@localhost:5433/kurda
- *
- * The data dir (api/.pgdata) is gitignored and persists across restarts.
- * Production/staging use a real managed Postgres (KUR-008); this is a
- * dev convenience only.
  */
 import EmbeddedPostgres from 'embedded-postgres';
 import { existsSync } from 'node:fs';
@@ -30,9 +25,8 @@ if (!existsSync(dataDir)) {
 }
 
 await pg.start();
-// Create as UTF8 from template0 — on Windows the cluster defaults to
-// WIN1252, which can't store Kurdish characters (ê î û ç ş) used in
-// schema constraints. template0 allows the encoding override.
+// Created as UTF8 from template0, since a Windows cluster defaults to WIN1252, which cannot store the Kurdish letters
+// in schema constraints.
 const client = pg.getPgClient();
 await client.connect();
 const exists = await client.query("SELECT 1 FROM pg_database WHERE datname = 'kurda'");

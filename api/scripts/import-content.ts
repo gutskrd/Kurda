@@ -1,15 +1,11 @@
 /**
- * Content import CLI (KUR-041).
+ * Validates a course-content JSON document, every exercise payload included, and imports it.
  *
  *   tsx scripts/import-content.ts <file.json> [--dry-run] [--publish]
  *
- * Validates a course-content JSON document (structure + every exercise
- * payload) and imports it. --dry-run writes nothing and reports every
- * validation error with its path. --publish marks each imported lesson
- * version published (so a seed loads as playable); it refuses, writing
- * nothing, while a listening item has no clip and no audio-studio recording
- * of its transcription. Re-import creates a new version only for a lesson
- * whose content changed; published lessons are never mutated.
+ * --dry-run writes nothing and reports every validation error with its path. --publish publishes each imported lesson
+ * version, and refuses, writing nothing, while a listening item has neither a clip nor a recording of its
+ * transcription. A re-import makes a new version only for a changed lesson; published lessons are never changed.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -56,7 +52,7 @@ async function main(): Promise<void> {
       `✓ ${verb}: ${s.units} unit(s), ${s.skills} skill(s), ${s.lessons} lesson(s), ${s.exercises} exercise(s)` +
         (result.dryRun ? ' (dry run — nothing written)' : publish ? ' (published)' : ' (draft)'),
     );
-    // unchanged lessons keep their exercise ids, so review history survives a re-run
+        // Unchanged lessons keep their exercise ids, so review history survives a re-run.
     console.log(`  ${s.versionsCreated} new lesson version(s), ${s.unchanged} lesson(s) unchanged`);
   } finally {
     await pool.end();

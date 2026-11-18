@@ -1,12 +1,7 @@
 /**
- * Badges (contract 4 §B2) against real Postgres: every badge's count from the
- * tables where it happened, the events that move them, unlocks told once,
- * the showcase, secrets, rarity, the admin's award and revoke, and the old
- * achievements' migration.
- *
- * Source rows are written straight to the tables: the lessons, games and
- * gifts themselves are tested through their own routes; this is about what
- * the badges make of them.
+ * Badges against real Postgres: counts, the events that move them, unlocks, the showcase, secrets, rarity, admin
+ * award and revoke, and the migration of the old achievements. Source rows are written straight to their tables;
+ * the features that write them are tested through their own routes.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
@@ -258,7 +253,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
   describe('a harder ladder', () => {
     it('keeps a tier earned when it took less, and points the bar at the tier after it', async () => {
       const p = await counted();
-      // silver when Ders asked 50 lessons; it now asks more, and 60 is short of it
+      // 60 lessons was silver under the old target and is short of the current one.
       await pool.query(
         `INSERT INTO user_badges (user_id, badge_key, tier, progress, earned_at, tier_earned_at, seen_tier)
          VALUES ($1, 'ders', 2, 60, now(), ARRAY[now(), now()], 2)`,
@@ -547,7 +542,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
 
     it('Zengil counts listening and speaking answered right, Pênûs translating and writing, in finished lessons only', async () => {
       const p = await counted();
-      // two right of each kind (the third, last, wrong); and an unfinished lesson that counts for nothing
+      // Two right of each kind (the last answer is wrong), plus an unfinished lesson that counts for nothing.
       await answeredLesson(p.id, ['listening', 'speaking', 'listening', 'speaking', 'multiple_choice']);
       await answeredLesson(p.id, ['translate', 'writing', 'translate', 'writing', 'match_pairs']);
       await answeredLesson(p.id, ['listening', 'translate', 'multiple_choice'], false);
@@ -655,7 +650,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       expect(await badges.unseen(p.id)).toEqual([]);
       const version = await pool.query<{ catalogue: number }>(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [p.id]);
       expect(version.rows[0]!.catalogue).toBe(3);
-      // from now on it is a badge like any other: its next tier is told
+      // From here on it is an ordinary badge, so its next tier is announced.
       for (let d = 7; d < (badgeDef('cay')!.tiers[1] as number); d++) {
         await pool.query(`INSERT INTO daily_goals (user_id, goal_date, effective_goal, completed_at) VALUES ($1, $2, 10, now())`, [
           p.id,
@@ -841,8 +836,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     });
 
     it('a player who walked out is no Kewê çiyê, whatever the gap', async () => {
-      // the ranks engine counts no gap over a player who walked out (engine.test.ts);
-      // a leaver's own game never counts either
+      // The ranks engine counts no gap over a player who walked out, and a leaver's own game never counts.
       const me = await counted();
       const strong = await counted();
       await badges.onRatedGameFinished({

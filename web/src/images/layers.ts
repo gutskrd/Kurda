@@ -1,26 +1,19 @@
 import { stickerImage } from './stickers';
 import { fontStack, layoutLines, type FontKey } from './photoText';
-import type { CropRect } from './frame';
+import { clamp, type CropRect } from './frame';
 
 /**
- * What sits on top of a picture.
- *
- * Words, stickers and drawn strokes are one list rather than three, because
- * they share almost everything — a position, a size, a turn — and because the
- * order they were added in is the order they stack. Three parallel lists would
- * mean inventing a rule for how they interleave.
- *
- * Everything is measured as a share of the picture, never in pixels: a layout
- * arranged on a phone has to land in the same place in the stored file, and the
- * two are different sizes.
+ * What sits on top of a picture: words, stickers and strokes in one list, since they share position, size and turn and
+ * the order added is the stacking order. Everything is a share of the picture, never pixels, so a layout made on a
+ * phone lands the same in the stored file.
  */
 
 export interface Common {
   id: string;
-  /** 0–1 of width and height: the centre of the thing */
+  /** 0–1 of width and height: the centre. */
   x: number;
   y: number;
-  /** degrees, 0–360 — a full turn, not a lean */
+  /** Degrees, 0–360. */
   rotation: number;
 }
 
@@ -28,28 +21,20 @@ export interface TextLayerV2 extends Common {
   kind: 'text';
   value: string;
   font: FontKey;
-  /** as a share of the shorter edge */
+  /** As a share of the shorter edge. */
   size: number;
   color: string;
   plate: boolean;
 }
 
 /**
- * A sticker: either a character or a picture.
- *
- * `glyph` is an emoji, drawn as text in the system emoji font. `src` is a file
- * under /stickers, drawn as an image. One of the two is set — a sticker with a
- * `src` ignores its glyph — and they share everything else, so placing, turning
- * and resizing needed no second implementation.
- *
- * The pictures are served from this app's own origin on purpose: drawing a
- * cross-origin image onto a canvas taints it, and a tainted canvas cannot be
- * exported at all, which would break posting rather than just the sticker.
+ * A sticker: an emoji `glyph` drawn as text, or a picture `src` under /stickers (which wins). Pictures come from this
+ * app's own origin because a cross-origin image taints the canvas, and a tainted canvas cannot be exported.
  */
 export interface StickerLayer extends Common {
   kind: 'sticker';
   glyph: string;
-  /** path under /stickers when this is a picture rather than a character */
+  /** Path under /stickers for a picture sticker. */
   src?: string;
   size: number;
 }
@@ -58,20 +43,15 @@ export interface StrokeLayer {
   kind: 'stroke';
   id: string;
   color: string;
-  /** as a share of the shorter edge */
+  /** As a share of the shorter edge. */
   width: number;
-  /** points as shares of the picture, so a stroke scales with it */
+  /** Points as shares of the picture, so a stroke scales with it. */
   points: Array<{ x: number; y: number }>;
 }
 
 export type Layer = TextLayerV2 | StickerLayer | StrokeLayer;
 
-/**
- * A layer you can pick up and move.
- *
- * A stroke is drawn where it was drawn — it has no centre to drag and no size
- * to turn — so the two are kept apart rather than every control checking.
- */
+/** A layer that can be moved; strokes stay where they were drawn. */
 export type PlacedLayer = TextLayerV2 | StickerLayer;
 
 export function isPlaced(layer: Layer): layer is PlacedLayer {
@@ -79,18 +59,15 @@ export function isPlaced(layer: Layer): layer is PlacedLayer {
 }
 
 export const SIZE_RANGE = { min: 0.03, max: 0.3 } as const;
-/** A full turn. Half a turn each way was a lean, not a rotation. */
+/** A full turn. */
 export const ROTATION_RANGE = { min: 0, max: 360 } as const;
 export const STROKE_RANGE = { min: 0.004, max: 0.06 } as const;
 
 /**
- * The corner the signature owns.
- *
- * Nothing is drawn over it — the mark goes on last — but the editor shades it
- * so nobody arranges something important underneath and wonders where it went.
- * Matches the server's placement: about 5.5% of the shorter edge, inset 2.8%.
+ * The corner the server's signature mark covers, shaded in the editor so nothing important is placed under it; matches
+ * the server: about 5.5% of the shorter edge, inset 2.8%.
  */
-export const SIGNATURE_ZONE = { heightShare: 0.055, insetShare: 0.028, minHeight: 22, maxHeight: 56 } as const;
+const SIGNATURE_ZONE = { heightShare: 0.055, insetShare: 0.028, minHeight: 22, maxHeight: 56 } as const;
 
 export function signatureBox(width: number, height: number, handle: string): {
   x: number;
@@ -117,9 +94,7 @@ export function newId(): string {
   return `l${counter}`;
 }
 
-const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
-
-/** Hold a layer inside what the controls can express. */
+/** Holds a layer inside what the controls can express. */
 export function clampLayer(layer: Layer): Layer {
   if (layer.kind === 'stroke') {
     return { ...layer, width: clamp(layer.width, STROKE_RANGE.min, STROKE_RANGE.max) };
@@ -127,7 +102,7 @@ export function clampLayer(layer: Layer): Layer {
   return {
     ...layer,
     size: clamp(layer.size, SIZE_RANGE.min, SIZE_RANGE.max),
-    // a turn wraps: 370° is 10°, and dragging past the end should keep going
+    // A turn wraps: 370° is 10°.
     rotation: ((layer.rotation % 360) + 360) % 360,
     x: clamp(layer.x, 0, 1),
     y: clamp(layer.y, 0, 1),
@@ -192,18 +167,16 @@ function drawSticker(ctx: CanvasRenderingContext2D, layer: StickerLayer, width: 
 
   if (layer.src) {
     const img = stickerImage(layer.src);
-    // not loaded yet: draw nothing this frame rather than a broken box. The
-    // editor redraws when it arrives, and the export waits for all of them.
+    // Not loaded yet: draw nothing this frame. The editor redraws when it arrives, and the export waits for all.
     if (img) {
-      // `px` is the longest edge, so a tall sticker and a wide one at the same
-      // size setting take up the same amount of picture
+      // `px` is the longest edge, so tall and wide stickers at one size cover the same area.
       const scale = px / Math.max(img.naturalWidth, img.naturalHeight);
       const w = img.naturalWidth * scale;
       const h = img.naturalHeight * scale;
       ctx.drawImage(img, -w / 2, -h / 2, w, h);
     }
   } else {
-    // a system emoji font, so the glyph is the one the writer picked
+    // A system emoji font, so the glyph is the one the writer picked.
     ctx.font = `${px}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -222,19 +195,14 @@ function drawStroke(ctx: CanvasRenderingContext2D, layer: StrokeLayer, width: nu
   ctx.beginPath();
   const [first, ...rest] = layer.points;
   ctx.moveTo(first!.x * width, first!.y * height);
-  // a single tap is a dot, not nothing
+  // A single tap is a dot.
   if (rest.length === 0) ctx.lineTo(first!.x * width + 0.01, first!.y * height);
   for (const p of rest) ctx.lineTo(p.x * width, p.y * height);
   ctx.stroke();
   ctx.restore();
 }
 
-/**
- * Draw the picture and everything on it.
- *
- * The signature is not here: it goes on last, and on the server, so that
- * nothing a person adds can end up over the top of it.
- */
+/** Draws the picture and everything on it. The signature is added last, by the server. */
 export function drawLayers(
   canvas: HTMLCanvasElement,
   image: CanvasImageSource,
@@ -249,12 +217,10 @@ export function drawLayers(
   if (!ctx) return;
 
   ctx.clearRect(0, 0, width, height);
-  // scaling a photograph is the one thing this canvas does that quality shows
-  // on, and the default in some engines is a box filter
+  // Some engines default to a box filter when scaling.
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  // one draw path for the preview and the export, so what is arranged is what
-  // is stored — a second implementation for one of them is how they drift
+  // One draw path for preview and export, so what is arranged is what is stored.
   if (crop) ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, width, height);
   else ctx.drawImage(image, 0, 0, width, height);
 
@@ -267,33 +233,20 @@ export function drawLayers(
 }
 
 /**
- * Ask for pointer capture, and carry on without it if it is refused.
- *
- * Capture is what keeps a drag working when the pointer leaves the element it
- * started on. It is an optimisation, not a requirement — but calling it throws
- * rather than returning false when the browser has no active pointer with that
- * id, and an exception here would abandon the gesture before it had recorded
- * where it started. A drag that follows the pointer only while it stays over
- * the handle is a poor drag; one that does nothing at all is a broken control.
+ * Asks for pointer capture, carrying on without it: capture keeps a drag going off the element, but it throws when the
+ * browser has no active pointer with that id, which would abandon the gesture.
  */
 export function captureIfPossible(target: Element, pointerId: number): void {
   try {
     target.setPointerCapture(pointerId);
   } catch {
-    // no active pointer with that id — the gesture still works, uncaptured
+    // No active pointer with that id; the gesture still works uncaptured.
   }
 }
 
 /* --- keeping things inside the picture ------------------------------------ */
 
-/**
- * A context used only for measuring text, never for drawing.
- *
- * Text has no size until it has been laid out, and a layer has to be held
- * inside the frame at the moment it is dragged rather than at the moment it is
- * painted. Created once, lazily, and allowed to be null: without it the size is
- * estimated instead, which is worse but never wrong enough to matter.
- */
+/** A context for measuring text only, made lazily; without one the size is estimated. */
 let measurer: CanvasRenderingContext2D | null | undefined;
 function measuringContext(): CanvasRenderingContext2D | null {
   if (measurer === undefined) {
@@ -306,13 +259,7 @@ function measuringContext(): CanvasRenderingContext2D | null {
   return measurer;
 }
 
-/**
- * How big a layer is drawn, in pixels, before it is turned.
- *
- * Deliberately mirrors `drawText` and `drawSticker` — if those change, this has
- * to change with them, because a box that does not match what is painted is
- * worse than no box at all.
- */
+/** A layer's drawn size in pixels before turning. Mirrors `drawText` and `drawSticker`; keep them in step. */
 export function layerBox(layer: PlacedLayer, width: number, height: number): { w: number; h: number } {
   const shortEdge = Math.min(width, height);
 
@@ -320,8 +267,7 @@ export function layerBox(layer: PlacedLayer, width: number, height: number): { w
     const px = Math.round(shortEdge * layer.size);
     const img = layer.src ? stickerImage(layer.src) : null;
     if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
-      // `px` is the longest edge, so a tall sticker and a wide one at the same
-      // setting take up the same amount of picture
+      // `px` is the longest edge, so tall and wide stickers at one size cover the same area.
       const scale = px / Math.max(img.naturalWidth, img.naturalHeight);
       return { w: img.naturalWidth * scale, h: img.naturalHeight * scale };
     }
@@ -340,43 +286,24 @@ export function layerBox(layer: PlacedLayer, width: number, height: number): { w
     lines = layoutLines(ctx, layer.value, width * 0.86);
     blockWidth = Math.max(0, ...lines.map((l) => ctx.measureText(l).width));
   } else {
-    // no canvas to ask: assume an average glyph a little over half the font size
+    // No canvas to ask: assume an average glyph a little over half the font size.
     lines = layer.value.split('\n');
     blockWidth = Math.min(width * 0.86, Math.max(...lines.map((l) => l.length)) * fontPx * 0.55);
   }
 
-  /*
-   * Words you have not typed yet still need somewhere to be.
-   *
-   * `drawText` paints nothing for an empty value, so the measured block is zero
-   * wide and the selection outline collapses to a sliver of padding — which is
-   * what you would be looking at for the whole moment between pressing "Add
-   * words" and typing the first letter. A placeholder-sized box shows where
-   * they are going to land instead.
-   */
+  /* Empty words draw nothing, so a placeholder-sized box shows where they will land until the first letter is typed. */
   if (layer.value.trim().length === 0) blockWidth = width * 0.3;
 
   const blockHeight = Math.max(1, lines.length) * lineHeight;
-  // the plate is what you actually see the edge of, so it is what must fit
+  // The plate is the visible edge, so it is what must fit.
   return layer.plate
     ? { w: blockWidth + pad * 2, h: blockHeight + pad * 1.4 }
     : { w: blockWidth, h: blockHeight };
 }
 
 /**
- * Hold a layer inside the picture.
- *
- * `clampLayer` keeps the *centre* between 0 and 1, which lets half of a sticker
- * hang off the edge — and on export that half is simply gone. This clamps the
- * box instead, so what you place is what gets posted.
- *
- * A turned layer needs more room than an upright one: the bounding box of a
- * rotated rectangle grows by |cos| and |sin| of the angle, which is why the two
- * axes are mixed together below.
- *
- * Something genuinely bigger than the picture is centred rather than jammed
- * against an edge — there is no position that fits it, and the middle is the
- * least surprising place for it to be.
+ * Holds a layer's box inside the picture, where `clampLayer` only holds its centre and lets half a sticker be cut off
+ * on export. A turned box grows by |cos| and |sin| of the angle. Anything bigger than the picture is centred.
  */
 export function keepInside(layer: PlacedLayer, width: number, height: number): PlacedLayer {
   if (width <= 0 || height <= 0) return layer;

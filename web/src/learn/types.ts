@@ -1,13 +1,10 @@
 /**
- * What the learning endpoints send, as the browser reads it. The shapes are
- * the API's own (api/src/coursemap/service.ts, content/sessions.ts,
- * practice/service.ts); what is about playing a session — the delivered
- * exercise, a graded answer — comes from @kurda/shared, which the phone uses
- * too.
+ * What the learning endpoints send (api/src/coursemap/service.ts, content/sessions.ts, practice/service.ts); session
+ * play shapes come from @kurda/shared, as on the phone.
  */
 import type { DeliveredExercise, GradeResult, QuestStep, RecentDay, RecordedAnswer, Verdict } from '@kurda/shared';
 
-/** GET /courses */
+/** GET /courses. */
 export interface CourseSummary {
   id: string;
   slug: string;
@@ -22,9 +19,9 @@ export interface LessonNode {
   lessonId: string;
   position: number;
   title: string;
-  /** finished by this learner — this version of the lesson or an earlier one */
+  /** Finished by this learner, this version of the lesson or an earlier one. */
   completed: boolean;
-  /** how many times they have finished it, replays included (absent from an older server) */
+  /** Times finished, replays included (absent from an older server). */
   times?: number;
 }
 
@@ -33,30 +30,29 @@ export interface SkillNode {
   level: number;
   title: string;
   state: SkillState;
-  /** 0–100 */
+  /** 0–100. */
   strength: number;
   hasGrammar: boolean;
   firstLessonId: string | null;
   lessons: LessonNode[];
-  /** full rounds of its lessons played (its stars) and its ring's pieces filled, by the shared rule (absent from an older server) */
+  /** Full rounds played (its stars), by the shared rule; absent from an older server. */
   rounds?: number;
   pieces?: number;
 }
 
-/** GET /courses/:id/map */
+/** GET /courses/:id/map. */
 export interface CourseMap {
   course: { id: string; title: string };
   /**
-   * Up to the last unit with a lesson out; each chapter of the road with the
-   * story that closes it, once learners can read it, and its level in the
-   * course plan ('A1'), which the path groups units into sections by.
+   * Up to the last unit with a lesson out; each chapter with its closing story once readable, and its course-plan level
+   * ('A1'), by which the path groups units into sections.
    */
   units: Array<{ unitId: string; title: string; skills: SkillNode[]; story?: { slug: string; title: string } | null; level?: string | null }>;
-  /** the unit after the last one out, while it is being made; `recordedBy` names who records it (the road's are Hamo's) */
+  /** The unit after the last one out, while being made; `recordedBy` names who records it (Hamo on the road). */
   upcoming?: { number: number; title: string; recordedBy: 'hamo' | null } | null;
 }
 
-/** GET /lessons/:id/session — a lesson's session, new or resumed */
+/** GET /lessons/:id/session: a lesson's session, new or resumed. */
 export interface LessonSessionView {
   sessionId: string;
   lessonId: string;
@@ -68,7 +64,7 @@ export interface LessonSessionView {
   dialect: string | null;
 }
 
-/** GET /practice/sessions/:id, and POST /practice/session when there is something to practise */
+/** GET /practice/sessions/:id, and POST /practice/session when there is something to practise. */
 export interface PracticeSessionView {
   sessionId: string;
   exercises: DeliveredExercise[];
@@ -76,17 +72,17 @@ export interface PracticeSessionView {
   completed?: boolean;
 }
 
-/** POST /practice/session when there is nothing to practise */
+/** POST /practice/session when there is nothing to practise. */
 export interface EmptyPractice {
   empty: true;
   suggestion: { lessonId: string; title: string } | null;
 }
 
-/** GET /practice/due */
+/** GET /practice/due. */
 export interface PracticeDue {
   due: number;
   available: number;
-  /** a review started in the last day and left unfinished, to go back to */
+  /** A review started in the last day and left unfinished, to go back to. */
   open?: string | null;
 }
 
@@ -101,22 +97,22 @@ export interface Mistake {
 export interface Streak {
   current: number;
   longest: number;
-  /** the last day that counted (the server always sends it; older test data may not) */
+  /** The last day that counted (always sent by the server; older test data may lack it). */
   lastActiveOn?: string | null;
-  /** freezes held, each covering one missed day */
+  /** Freezes held, each covering one missed day. */
   freezes?: number;
-  /** days with a finished lesson or practice session, ever: a missed day never takes one away */
+  /** Days with a finished lesson or practice, ever; a missed day never takes one away. */
   daysLearned?: number;
-  /** finished sessions towards the next freeze, of `sessionsPerFreeze` */
+  /** Finished sessions towards the next freeze, of `sessionsPerFreeze`. */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
-  /** the learner's own today (YYYY-MM-DD, their timezone), to lay out the week */
+  /** The learner's own today (YYYY-MM-DD, their time zone), to lay out the week. */
   today?: string;
-  /** days in the last 14 (theirs) on which they learned, or a freeze kept the streak */
+  /** Days in their last 14 on which they learned or a freeze kept the streak. */
   recent?: RecentDay[];
 }
 
-/** POST …/complete — a lesson's results carry `firstCompletion`, practice's do not */
+/** POST …/complete; a lesson's results carry `firstCompletion`, practice's do not. */
 export interface SessionResults {
   correct: number;
   total: number;
@@ -125,16 +121,16 @@ export interface SessionResults {
   xpAwarded: number;
   streak: Streak;
   firstCompletion?: boolean;
-  /** today's quests this session moved, before and after (absent when none moved, or on an older server) */
+  /** Today's quests this session moved, before and after (absent when none moved, or on an older server). */
   quests?: QuestStep[];
-  /** the water this session earned the learner's tree, and what they hold now (absent when it earned none, or on an older server) */
+  /** Water this session earned the learner's tree, and their total (absent when none, or on an older server). */
   tree?: { gained: number; water: number };
 }
 
-/** POST …/answers */
+/** POST …/answers. */
 export interface AnswerResult extends GradeResult {
   duplicate: boolean;
 }
 
-/** POST …/retry: graded, never recorded */
+/** POST …/retry: graded, never recorded. */
 export type RetryResult = Omit<GradeResult, 'duplicate'>;

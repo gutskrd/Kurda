@@ -14,16 +14,9 @@ import { FeedCard } from '../feed/FeedCard';
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
 
 /**
- * One picture on its own page: the same post the wall shows — who posted it,
- * the picture, the heart and the rest, the caption — and the conversation
- * under it.
- *
- * The likes, reposts and saves are fetched separately from the post because
- * only that call knows whether you are among them — the post itself is public
- * and cached the same for everyone. Until they arrive the row of actions is
- * already there, waiting, so nothing under it moves when the numbers land.
- * Comments reuse the library's threaded component; the two APIs are the same
- * shape, and a second copy of the reply tree would drift.
+ * One picture on its own page: the wall's post and its conversation. Likes, reposts and saves are fetched separately,
+ * since only that call knows whether you are among them (the post is public and cached for everyone); the action row
+ * holds its place until they arrive. Comments reuse the library's threaded component, as the two APIs share a shape.
  */
 export function DimenPost(): React.JSX.Element {
   const t = useT();
@@ -31,21 +24,21 @@ export function DimenPost(): React.JSX.Element {
   const { client, status } = useAuth();
   const navigate = useNavigate();
   const { data: post, error, loading, reload } = useApiGet<ImagePost>(`/images/${id}`);
-  // kept with the post it is for, so another post's numbers never show for a moment on this one
+  // Kept with its post, so another post's numbers never show here for a moment.
   const [counts, setCounts] = useState<{ id: string; engagement: PostEngagement } | null>(null);
   const [size, setSize] = useState<{ url: string; width: number; height: number } | null>(null);
   const commentsRef = useRef<HTMLDivElement>(null);
-  // the post's card on a wall lands on the post drawn below (feed/FeedCard.tsx): said here, before the post has arrived, so the page is held for it
+  // A wall card's picture lands on this post (feed/FeedCard.tsx); promised before the post arrives, so the page is held for it.
   useGrowsInto(`post:image:${id}`, { shape: 'card' });
 
   useEffect(() => {
-    // asked once whoever is reading is known, so "liked" is yours and not a guest's
+    // Fetched once the reader is known, so "liked" is yours and not a guest's.
     if (status === 'restoring' || !id) return;
     let cancelled = false;
     void (async () => {
       const res = await client.get<{ engagement?: PostEngagement }>(`/posts/image/${id}/engagement`);
       if (cancelled) return;
-      // a failed count must not take the picture down with it
+      // A failed count must not take the picture down with it.
       setCounts({ id, engagement: res.ok && res.data.engagement ? res.data.engagement : NO_ENGAGEMENT });
     })();
     return () => {
@@ -53,9 +46,8 @@ export function DimenPost(): React.JSX.Element {
     };
   }, [client, id, status]);
 
-  // the picture's sides are not in the post, so they are read off the picture
-  // itself; until then it is held at the grid's usual shape, and moves once at
-  // most, by the difference
+  // The post does not give the picture's sides, so they are read off the image; until then it holds the grid's usual
+  // shape and moves at most once.
   const imageUrl = post?.imageUrl ?? null;
   useEffect(() => {
     if (!imageUrl) return;

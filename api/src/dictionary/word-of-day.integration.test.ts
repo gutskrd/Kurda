@@ -1,4 +1,4 @@
-/** Word of the day against real Postgres (CI job). KUR-046. */
+/** Word of the day against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { DictionaryRepository } from './repository.js';

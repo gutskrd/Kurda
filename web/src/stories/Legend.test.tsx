@@ -56,7 +56,7 @@ function legend(over: Partial<StoryDetail> = {}): StoryDetail {
     length: 'saga',
     paragraphs,
     sections: storySections(paragraphs),
-    // a glossary word in a heading is never marked there
+    // A glossary word in a heading is never marked there.
     glossary: [{ term: 'hesinkar', meanings: { en: 'blacksmith' } }],
     translations: { en: english },
     metaTranslations: { en: { title: 'Kawa the Blacksmith', summary: 'The story of Kawa and Newroz.' }, de: { title: 'Kawa der Schmied' } },
@@ -78,12 +78,12 @@ describe('a legend in the reader', () => {
     const chapter = await screen.findByRole('heading', { level: 2, name: 'Hesinkarê bajêr' });
     expect(chapter).toHaveAttribute('lang', 'ku');
     expect(document.body.textContent).not.toContain('##');
-    // its number over it, and its title in the reader's language under it
+    // Its number over it, and its title in the reader's language under it.
     expect(chapter.closest('.story-chapter')).toHaveTextContent('Chapter 1');
     expect(within(chapter.closest('.story-chapter') as HTMLElement).getByText('The town’s blacksmith')).toHaveAttribute('lang', 'en');
-    // a heading is not a sentence: no glossary button, no Translation toggle of its own
+    // A heading is not a sentence: no glossary button, no Translation toggle of its own.
     expect(within(chapter.closest('.story-chapter') as HTMLElement).queryByRole('button')).toBeNull();
-    // the introduction, before the first chapter, is marked as such
+    // The introduction, before the first chapter, is marked as such.
     const intro = screen.getByText(/Berî gelek salan/).closest('.story-para') as HTMLElement;
     expect(intro).toHaveClass('is-intro');
     expect(within(intro).getByText('Introduction')).toBeInTheDocument();
@@ -97,13 +97,13 @@ describe('a legend in the reader', () => {
     fakeApi({ 'GET /stories/kawa': legend() });
     reader();
     const contents = await screen.findByRole('navigation', { name: 'Chapters' });
-    // the saved place is the first chapter's last paragraph: one of two read
+    // The saved place is the first chapter's last paragraph: one of two read.
     expect(within(contents).getByText('Chapters read: 1 of 2')).toBeInTheDocument();
     const items = within(contents).getAllByRole('button');
     expect(items.map((b) => b.textContent)).toEqual(['Introduction', '1Chapter 1Hesinkarê bajêrThe town’s blacksmithRead', '2Chapter 2Agirê NewrozêThe fire of Newroz']);
     await userEvent.click(items[2]!);
     expect(scrolled.at(-1)).toHaveAttribute('data-paragraph', '3');
-    // and the reader's tools carry the same way to every chapter
+    // And the reader's tools carry the same way to every chapter.
     const pick = screen.getByRole('combobox', { name: 'Go to a chapter' });
     expect(within(pick).getAllByRole('option').map((o) => o.textContent)).toEqual(['Introduction', 'Chapter 1: Hesinkarê bajêr', 'Chapter 2: Agirê Newrozê']);
     await userEvent.selectOptions(pick, 'Chapter 1: Hesinkarê bajêr');
@@ -130,7 +130,7 @@ describe('a legend in the reader', () => {
     const about = screen.getByRole('region', { name: 'About this story' });
     expect(within(about).getByRole('heading', { level: 3, name: 'Legend and history' })).toBeInTheDocument();
     expect(within(about).getByText('Newroz is an old festival.')).toBeInTheDocument();
-    // the Kurdish a tap away
+    // The Kurdish a tap away.
     expect(within(about).getByText('Read it in Kurdish')).toBeInTheDocument();
     expect(within(about).getByText('Efsane û dîrok')).toHaveAttribute('lang', 'ku');
     expect(within(about).getByText('Literary work')).toBeInTheDocument();

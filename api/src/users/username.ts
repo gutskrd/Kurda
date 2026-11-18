@@ -1,30 +1,21 @@
-import { USERNAME_MAX, USERNAME_MIN, checkUsername, refusedChars, type UsernameCheck, type UsernameReason, type UsernameRefusal } from '@kurda/shared';
+import { USERNAME_MAX, USERNAME_MIN, checkUsername, refusedChars, type UsernameReason, type UsernameRefusal } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 
 /**
- * The server's side of the username rule (KUR-004).
- *
- * The rule itself is shared/src/username.ts, so the browser and the phone refuse
- * exactly the names the server does, as they are typed. What is here is the
- * server's way of saying no: an INVALID_USERNAME answer whose details carry the
- * reason, and for a character that is not allowed the characters, for the apps
- * to put in the reader's own words; and an English sentence for anything that
- * reads the answer without them.
- *
- * The database keeps what of the rule a CHECK can (`users_username_format`,
- * migration 1751000540000_lowercase-usernames): the character set, the length,
- * and the dots. The citext unique index on users.username stays the authority
- * on whether a name is taken.
+ * The server's side of the username rule, which lives in shared/src/username.ts so the apps refuse exactly what the
+ * server does as it is typed. Here is the refusal: INVALID_USERNAME with the reason in its details (and the disallowed
+ * characters) for the apps to word, plus an English sentence for anything else. The database enforces what a CHECK can
+ * (`users_username_format`, migration 1751000540000_lowercase-usernames), and the citext unique index decides whether
+ * a name is taken.
  */
 export { USERNAME_MAX, USERNAME_MIN };
 
 export type UsernameError = UsernameReason;
-export type UsernameResult = UsernameCheck;
 
 /** The full rule, and the canonical name: NFC, trimmed, lowercase. */
 export const validateUsername = checkUsername;
 
-/** The sentence for a refused name, in English, for whatever reads the answer without the apps' words. */
+/** The English sentence for a refused name, for whatever reads the answer without the apps' words. */
 export function usernameRefusalMessage(refusal: UsernameRefusal): string {
   switch (refusal.reason) {
     case 'invalid-chars': {

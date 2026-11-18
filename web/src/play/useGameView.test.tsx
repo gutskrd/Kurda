@@ -128,7 +128,7 @@ describe('useGameView', () => {
         return jsonResponse(200, me);
       }),
     );
-    // this connection never opens: the hook follows the game with the long-poll
+    // This connection never opens: the hook follows the game with the long-poll.
     const { result, unmount } = renderHook(() => useGameView('last-letter', 'g1'), { wrapper: wrap(fakeRealtime()) });
     await waitFor(() => expect(asked.some((u) => u.includes('?v=2'))).toBe(true), { timeout: 4_000 });
     expect(result.current.load.state).toBe('ready');

@@ -64,19 +64,14 @@ function rewardsText(r: Record<string, unknown>): string {
 }
 
 /**
- * Live events (KUR-089): seasonal and holiday events with their window, theme,
- * quests and rewards — data, so launching one needs no deploy.
- *
- * Saving an event used to delete its quests and rewards (the form never sent
- * them), and a reward could be set here without the second admin the
- * Approvals page exists for. Now an edit keeps both; quests are edited as
- * JSON; a change of rewards goes to Approvals.
+ * Live events: seasonal and holiday events with their window, theme, quests and rewards, as data so launching one needs
+ * no deploy. An edit keeps the quests (edited as JSON) and rewards; a change of rewards goes to Approvals.
  */
 export function Events(): React.JSX.Element {
   const toast = useToast();
   const dialogs = useDialogs();
   const list = useLoad(() => api<{ events: GameEvent[] }>('/admin/events').then((r) => r.events), []);
-  // an event with rewards waits in Approvals, so it is not on this list yet: say so
+  // An event with rewards waits in Approvals, so it is not on this list yet: say so.
   const pending = useLoad(
     () => api<{ pending: { target: string }[] }>('/admin/config/changes').then((r) => r.pending.filter((c) => c.target === 'event').length),
     [],
@@ -251,7 +246,7 @@ function EventForm({ event, onClose, onSaved }: { event: GameEvent | null; onClo
     setBusy(true);
     try {
       if (rewardsChanged) {
-        // anything that grants currency waits for a second admin
+        // Anything that grants currency waits for a second admin.
         const res = await api<{ status: 'applied' | 'pending' }>('/admin/config/changes', {
           method: 'POST',
           body: { target: 'event', payload: { ...body, rewards: rewardMap } },

@@ -5,7 +5,7 @@ import type { FraudService } from './service.js';
 
 const resolveBody = z.object({ decision: z.enum(['clear', 'confirm']) });
 
-/** Admin payment-fraud review queue (KUR-073). */
+/** Admin payment-fraud review queue. */
 export function registerFraudRoutes(app: FastifyInstance, fraud: FraudService): void {
   /** The open review queue with per-flag evidence. */
   app.get(

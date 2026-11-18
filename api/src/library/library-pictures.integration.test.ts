@@ -1,12 +1,7 @@
 /**
- * Written posts with pictures, over HTTP against real Postgres: the composer's
- * rules (words or a picture, a title for a story or a poem, at most four, the
- * lengths counted trimmed), whose pictures a post may use and how often, edits
- * that add, remove and describe pictures, and the drafts the installed apps
- * saved on the server.
- *
- * Uploads are seeded as `POST /images/upload` leaves them (test/media.ts); the
- * upload route itself is covered in images/picture-upload.integration.test.ts.
+ * Written posts with pictures over HTTP against real Postgres: the composer's rules, whose pictures a post may use
+ * and how often, edits that add, remove and describe pictures, and server drafts from installed apps. Uploads are
+ * seeded as `POST /images/upload` leaves them (test/media.ts).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -100,11 +95,11 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
       { mediaKey: a, altText: 'A street in Amed at dusk', width: 1280, height: 960, url: `https://cdn.test/${a}` },
       { mediaKey: b, altText: null, width: 1280, height: 720, url: `https://cdn.test/${b}` },
     ]);
-    // the post is what confirms an upload: both are claimed now
+    // The post confirms its uploads, so both are claimed now.
     expect(await confirmed(a)).toBe(true);
     expect(await confirmed(b)).toBe(true);
 
-    // and reading it back gives the same pictures, with the old fields intact
+    // Reading it back gives the same pictures, with the older fields intact.
     const read = (await call('GET', `/library/posts/${post.id}`)).json();
     expect(read.media.map((m: Media) => m.mediaKey)).toEqual([a, b]);
     for (const field of ['id', 'authorId', 'type', 'title', 'body', 'audioMediaId', 'audioUrl', 'status', 'viewCount', 'commentCount', 'author']) {
@@ -212,8 +207,7 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     await pool.query(`UPDATE media_uploads SET quarantine_state = 'pending', preserve_evidence = true WHERE key = $1`, [quarantined]);
     await refused(quarantined);
 
-    // a profile photo (its key is in its public address), a voice note, and an
-    // upload from before uploads had owners
+    // A profile photo (its key is in its public address), a voice note, and an upload from before uploads had owners.
     const profile = `profile-photo/lp-${suffix}.webp`;
     const voice = `voice-note/lp-${suffix}.webm`;
     const legacy = `image-post/lp-${suffix}-legacy.webp`;
@@ -245,7 +239,7 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     expect(twice.statusCode).toBe(422);
     expect(twice.json().code).toBe('MEDIA_IN_USE');
 
-    // and a picture posted the old way is taken too
+    // A picture posted the old way is taken too.
     const old = await upload(me);
     expect((await call('POST', '/images', me.token, { imageMediaId: old, category: 'image' })).statusCode).toBe(201);
     expect((await call('POST', '/library/posts', me.token, { media: [{ mediaKey: old }] })).json().code).toBe('MEDIA_IN_USE');
@@ -282,8 +276,7 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     expect(res.json().media[0].url).toBe(`https://cdn.test/${c}`);
     expect(res.json()).toHaveProperty('audioUrl');
 
-    // the new one is claimed, the kept one still is, and the dropped one is let
-    // go to the orphan sweep — with a fresh day before it
+    // The new one is claimed, the kept one still is, and the dropped one goes to the orphan sweep with a fresh day.
     expect(await confirmed(c)).toBe(true);
     expect(await confirmed(a)).toBe(true);
     const dropped = await pool.query<{ confirmed_at: Date | null; created_at: Date }>(
@@ -305,11 +298,10 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     const reported = (await call('POST', '/library/posts', me.token, { body: 'Wêne', media: [{ mediaKey: a }, { mediaKey: b }] })).json();
     const flagged = (await call('POST', '/library/posts', me.token, { body: 'Du', media: [{ mediaKey: c }, { mediaKey: d }] })).json();
     expect((await call('POST', `/library/posts/${reported.id}/report`, reader.token, { reason: 'spam' })).statusCode).toBe(200);
-    // the scan let `d` up but asked a person to look at it (#294)
+    // The scan let `d` through but flagged it for a person to review.
     await pool.query(`INSERT INTO image_scans (media_key, surface, action, model_version) VALUES ($1, 'feed', 'flag', 'test')`, [d]);
 
-    // the author takes the reported picture off, keeping the words; and the
-    // flagged one off the other post
+    // The author removes the reported picture, keeping the words, and the flagged one from the other post.
     expect((await call('PATCH', `/library/posts/${reported.id}`, me.token, { media: [{ mediaKey: a }] })).statusCode).toBe(200);
     expect((await call('PATCH', `/library/posts/${flagged.id}`, me.token, { media: [{ mediaKey: c }] })).statusCode).toBe(200);
 
@@ -320,8 +312,7 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
       expect(storage.objects.has(key)).toBe(true);
     }
 
-    // once the report is dealt with, what an edit takes off goes as usual (a
-    // report is a row in the one reports table now, on its case)
+    // Once the report is resolved, what an edit removes goes as usual.
     await pool.query(
       `UPDATE moderation_cases SET status = 'no_violation', resolved_at = now() WHERE source_ref = 'library_post:' || $1`,
       [reported.id],
@@ -329,8 +320,7 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     await pool.query(`UPDATE reports SET status = 'no_violation', closed_at = now() WHERE target_id = $1`, [reported.id]);
     expect((await call('PATCH', `/library/posts/${reported.id}`, me.token, { media: [] })).statusCode).toBe(200);
     expect(await confirmed(a)).toBe(false);
-    // ...though the report's snapshot still holds it, so the sweep leaves the
-    // file alone until the evidence's retention lets it go
+    // The report's snapshot still holds it, so the sweep keeps the file until the evidence retention ends.
     await new MediaService(pool, storage).cleanupOrphans(new Date(Date.now() + 25 * 3_600_000));
     expect(storage.objects.has(a)).toBe(true);
   });
@@ -439,7 +429,7 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     expect((await call('GET', '/me/library/drafts', other.token)).json().posts).toEqual([]);
     expect((await call('GET', '/me/library/drafts')).statusCode).toBe(401);
 
-    // finished and published, it is a draft no longer
+    // Finished and published, it is no longer a draft.
     expect((await call('PATCH', `/library/posts/${draft.id}`, me.token, { body: 'Destpêk û dawî' })).statusCode).toBe(200);
     expect((await call('POST', `/library/posts/${draft.id}/publish`, me.token)).statusCode).toBe(200);
     expect((await call('GET', '/me/library/drafts', me.token)).json().posts).toEqual([]);

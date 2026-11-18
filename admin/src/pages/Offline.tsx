@@ -58,7 +58,7 @@ function formOf(s: OfflineState): Form {
     picture: s.settings.assetKey && s.pictureUrl ? { key: s.settings.assetKey, url: s.pictureUrl } : null,
     later: s.phase === 'scheduled',
     startsAt: s.phase === 'scheduled' && s.settings.startsAt ? toLocalInput(s.settings.startsAt) : '',
-    // an end already past is not offered again
+    // An end already past is not offered again.
     backBy: s.settings.endsAt && Date.parse(s.settings.endsAt) > Date.now() ? toLocalInput(s.settings.endsAt) : '',
     reopenAtEnd: s.settings.reopenAtEnd,
   };
@@ -70,7 +70,7 @@ function settingsOf(f: Form, enabled: boolean, phase: MaintenancePhase): Mainten
     title: f.title.trim() || null,
     message: f.message.trim() || null,
     assetKey: f.picture?.key ?? null,
-    // offline already: the server keeps the moment it went up
+    // Offline already: the server keeps the moment it went up.
     startsAt: phase !== 'on' && f.later ? fromLocalInput(f.startsAt) : null,
     endsAt: fromLocalInput(f.backBy),
     reopenAtEnd: f.reopenAtEnd,
@@ -118,11 +118,8 @@ const PHASE: Record<MaintenancePhase, { tone: 'ok' | 'warn' | 'bad' | 'neutral';
 };
 
 /**
- * Taking Hevalo offline for a while, on the website and in the phone app, and
- * what people see meanwhile: a title, a message, a picture and when it is
- * back. Staff and this console carry on as normal, so the app can be checked
- * before it opens again. Going offline needs the word typed; coming back is
- * one confirmed tap, and a time it is back can open it again by itself.
+ * Taking Hevalo offline on the website and the app, with what people see meanwhile. Staff and this console carry on,
+ * so the app can be checked first. Going offline needs a typed word; coming back is one confirmed tap or a set time.
  */
 export function Offline(): React.JSX.Element {
   const toast = useToast();

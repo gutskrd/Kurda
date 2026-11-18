@@ -42,32 +42,24 @@ export const LENGTH_KEY: Record<StoryLength, MessageKey> = {
   short: 'stories.length.short',
   medium: 'stories.length.medium',
   long: 'stories.length.long',
-  // a legend told in chapters
+  // A legend told in chapters.
   saga: 'stories.length.saga',
 };
 
-/** The story a game is set up on, when one is already chosen (the reader, a lobby). */
+/** The story a game is set up on, when already chosen (the reader, a lobby). */
 export type ChosenStory = Pick<StoryListItem, 'id' | 'title' | 'dialect' | 'length' | 'level'>;
 
-/** "~2–3 min": a length's reading time in a variety, as the chips and labels show it. */
+/** "~2–3 min": a length's reading time in a variety. */
 export function minutesLabel(dialect: StoryDialect, length: StoryLength, t: (k: MessageKey, v?: Record<string, string | number>) => string): string {
   const { min, max } = lengthMinutes(dialect, length);
   return min === max ? t('stories.minutes', { count: min }) : t('stories.minutesRange', { min, max });
 }
 
 /**
- * Setting up a quiz: presets only, each a radio group (contract §A1).
- *
- * Opened on a story (from the reader, or a lobby's "Change settings") the
- * story and its length are fixed and shown; opened from the hub, the host
- * picks a length — only lengths, and levels, that have a published story in
- * the variety are offered, from the list the hub already has — and then
- * "Surprise me" or a story. Question counts a length does not allow are not
- * offered at all. "Who can join → Anyone 18+" is offered only to someone the
- * server says may host an open game.
- *
- * Creating goes straight to the game. Solo settings are remembered on the
- * device, for the next "Quiz yourself".
+ * Setting up a quiz from presets, each a radio group. Opened on a story, the story and length are fixed; from the hub,
+ * the host picks a length and level that have a published story, then "Surprise me" or a story. Counts a length does
+ * not allow are hidden, and "Anyone 18+" is offered only to someone the server lets host an open game. Creating goes
+ * straight to the game; solo settings are remembered for the next "Quiz yourself".
  */
 export function SetupSheet({
   open,
@@ -76,7 +68,6 @@ export function SetupSheet({
   initialMode,
   story,
   catalogue,
-  initialLength,
   skipReading = false,
   lobby,
   onSaved,
@@ -86,12 +77,11 @@ export function SetupSheet({
   dialect: StoryDialect;
   initialMode: StoryGameMode;
   story?: ChosenStory | null;
-  /** the hub's published stories of this variety, when no story is chosen */
+  /** The hub's published stories of this variety, when no story is chosen. */
   catalogue?: readonly StoryListItem[];
-  initialLength?: StoryLength | null;
-  /** the reader opened it: the story has just been read */
+  /** Opened from the reader: the story has just been read. */
   skipReading?: boolean;
-  /** a lobby's own settings, to change rather than create */
+  /** A lobby's own settings, to change rather than create. */
   lobby?: StoryGameView;
   onSaved?: (view: StoryGameView) => void;
 }): React.JSX.Element {
@@ -105,7 +95,7 @@ export function SetupSheet({
       ? { id: lobby.settings.storyId, title: lobby.settings.storyTitle, dialect: lobby.settings.dialect, length: lobby.settings.length, level: lobby.settings.level }
       : null);
 
-  // lengths and levels with something to play (hub)
+  // Lengths and levels with something to play (hub).
   const available = useMemo(() => {
     const list = catalogue ?? [];
     return STORY_LENGTHS.filter((l) => list.some((s) => s.length === l));
@@ -113,7 +103,7 @@ export function SetupSheet({
 
   const [mode, setMode] = useState<StoryGameMode>(lobby?.mode ?? initialMode);
   const [length, setLength] = useState<StoryLength>(
-    fixed?.length ?? (initialLength && available.includes(initialLength) ? initialLength : (available[0] ?? 'short')),
+    fixed?.length ?? available[0] ?? 'short',
   );
   const [level, setLevel] = useState<StoryLevel | 'any'>('any');
   const [pick, setPick] = useState<string>('surprise');
@@ -128,7 +118,7 @@ export function SetupSheet({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // whether "Anyone 18+" may be offered is the server's to say
+  // Whether "Anyone 18+" may be offered is the server's to say.
   useEffect(() => {
     if (!open) return;
     let live = true;
@@ -140,25 +130,24 @@ export function SetupSheet({
     };
   }, [open, client]);
 
-  // a length change keeps the count only where the new length offers it
+  // A length change keeps the count only where the new length offers it.
   useEffect(() => {
     setCount((c) => (isAllowedQuestionCount(length, c) ? c : DEFAULT_QUESTION_COUNT[length]));
     setPick('surprise');
     setLevel('any');
   }, [length]);
 
-  // the timer follows the mode until the host sets one
+  // The timer follows the mode until the host sets one.
   useEffect(() => {
     if (!timerTouched) setTimer(mode === 'solo' ? solo.timerSeconds : DEFAULT_TIMER[mode]);
-  }, [mode]); // the mode alone: a touched timer stays as set
+  }, [mode]); // The mode alone: a touched timer stays as set.
 
   const inLength = useMemo(() => (catalogue ?? []).filter((s) => s.length === length), [catalogue, length]);
   const levels = useMemo(() => STORY_LEVELS.filter((lv) => inLength.some((s) => s.level === lv)), [inLength]);
   const choices = inLength.filter((s) => level === 'any' || s.level === level);
   const { lang, dir } = storyTextDirection(fixed?.dialect ?? dialect);
   const shared = mode !== 'solo';
-  // Rated or Friendly for a game with others: the last choice, else Friendly
-  // among friends and Rated when opened to everyone (the server's default)
+  // Rated or Friendly: the last choice, else Friendly among friends and Rated when open to everyone (the server's default).
   const [rated, setRated] = useRatedChoice('stories', access === 'open');
 
   async function submit(): Promise<void> {
@@ -185,7 +174,7 @@ export function SetupSheet({
       timerSeconds: timer,
       textDuring: text,
       access: shared ? access : 'friends',
-      // a story just read is not read again before its questions
+      // A story just read is not read again before its questions.
       skipReading: mode === 'solo' && skipReading && Boolean(fixed),
       extraTime: rememberedExtraTime(),
       ...(shared ? { rated } : {}),
@@ -313,7 +302,7 @@ export function SetupSheet({
           />
         )}
 
-        {/* a new game with others is Rated or Friendly; a lobby's own is changed in the lobby */}
+        {/* A new game with others is Rated or Friendly; a lobby's own is changed in the lobby. */}
         {shared && !lobby && <RatedChoice value={rated} onChange={setRated} />}
 
         {error && (

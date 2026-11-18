@@ -1,9 +1,4 @@
-/**
- * A picture post goes through the same gate as a written one — velocity cap,
- * spam check, screening of its caption — over HTTP with real Postgres + Redis
- * (KUR-295, #293). It used to go up with no check at all, so the one route
- * with no velocity cap was also the one whose words nobody screened.
- */
+/** A picture post passes the same gate as a written one (velocity cap, spam check, caption screening), with real Postgres and Redis. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

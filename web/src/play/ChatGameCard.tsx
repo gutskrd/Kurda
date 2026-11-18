@@ -21,29 +21,17 @@ const STATUS_KEY: Record<Exclude<LobbyCard['status'], 'open'>, MessageKey> = {
 };
 
 /**
- * A game shared in a chat (contract §B1): which game and how it is set, and
- * where it stands now — open with "2 of 4 joined", started, finished — read
- * live, so the card changes with the game instead of anyone editing a
- * message. Join while it can be joined (one tap, through the game's own join
- * rule); Open when you are in it. A game this reader may not see reads as no
- * longer available, the same as one that is gone.
- *
- * The card asks for its state when it is shown, whenever the server says the
- * game changed, and when the tab comes back; it does not poll, since a long
- * conversation can hold many of them.
- *
- * It is a ticket (ui/Ticket.tsx): the game's mark on a stub in its colour,
- * and where it stands as a stamp. Once you are in, "Joined" is stamped across
- * it — landing with a small thump when it happens while you watch. A game
- * that finished or was called off is grey, its stub punched and the outcome
- * stamped; one that is gone is grey and punched, and says so.
+ * A game shared in a chat, read live so the card follows the game: its settings, where it stands ("2 of 4 joined",
+ * started, finished), Join while it can be joined and Open once you are in. A game this reader may not see reads as no
+ * longer available. It refreshes when shown, on the server's change events and when the tab returns, never by polling.
+ * It is a ticket (ui/Ticket.tsx), stamped "Joined" or with its outcome, and greyed and punched once over or gone.
  */
 export function ChatGameCard({
   game,
   lobbyId,
   from,
 }: ChatGameRef & {
-  /** who posted it, so a screen reader hears whose invite it is */
+  /** Who posted it, so a screen reader hears whose invite it is. */
   from?: { id: string; name: string } | null;
 }): React.JSX.Element {
   const t = useT();
@@ -97,7 +85,7 @@ export function ChatGameCard({
       : t(STATUS_KEY[card.status]);
   const live = card && (card.status === 'open' || card.status === 'full' || card.status === 'started');
   const spent = card?.status === 'finished' || card?.status === 'cancelled' || card?.status === 'unavailable';
-  // the stamp: in, or how it ended; a game that is simply gone says so in words instead
+  // The stamp: joined, or how it ended; a game that is gone says so in words instead.
   const stamp = card?.isMember && live ? 'joined' : card?.status === 'finished' || card?.status === 'cancelled' ? card.status : null;
   const fresh = useFreshStamp(stamp, card !== null);
   const label =
@@ -120,7 +108,7 @@ export function ChatGameCard({
         )}
         <span className="invite-eyebrow">{t('games.invite.eyebrow')}</span>
         <span className="invite-title">{name}</span>
-        {/* Rated or Friendly, before anyone joins (Game Ranks) */}
+        {/* Rated or Friendly, before anyone joins. */}
         {card && typeof card.summary.rated === 'boolean' && <RatedBadge rated={card.summary.rated} size="sm" className="invite-rated" />}
         {parts.length > 0 && (
           <span className="invite-blurb">
@@ -134,7 +122,7 @@ export function ChatGameCard({
             ))}
           </span>
         )}
-        {/* a stamped ending is its own status line */}
+        {/* A stamped ending is its own status line. */}
         {!(stamp && stamp !== 'joined') && <span className="chat-game-status">{status}</span>}
         {error && (
           <span className="chat-game-error" role="status">
@@ -156,12 +144,8 @@ export function ChatGameCard({
 }
 
 /**
- * What a thread hands `MessageList` as `renderBody` for game cards: the live
- * card for a message that is one, nothing (draw it as text) otherwise. A
- * thread that draws other kinds too tries theirs first and falls back to this.
- *
- * A card shared for a game that is no longer part of Hevalo has no lobby to
- * read and none to join: it is a line saying so, with nothing to press.
+ * `renderBody` for game cards in a `MessageList`: the live card for a game message, else undefined (draw it as text).
+ * A card for a retired game is a line saying so.
  */
 export function gameCardBody(m: ChatExtras & { senderId?: string; username?: string }): React.ReactNode | undefined {
   if (m.kind !== 'game' || !m.game) return undefined;

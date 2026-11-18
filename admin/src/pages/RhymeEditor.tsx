@@ -31,16 +31,16 @@ interface PromptWord {
   isRhymePrompt: boolean;
   perfect: number;
   near: number;
-  /** words you ruled out that the endings would have accepted */
+  /** Words you ruled out that the endings would have accepted. */
   ruledOut: number;
-  /** how many pairs you have decided by hand */
+  /** How many pairs you have decided by hand. */
   decided: number;
 }
 
 interface PromptList {
   total: number;
   poolSize: number;
-  /** nothing is curated, so rounds are drawing from the whole pool */
+  /** Nothing is curated, so rounds are drawing from the whole pool. */
   usingFallback: boolean;
   words: PromptWord[];
 }
@@ -58,7 +58,7 @@ interface RebuildResult {
 interface RhymeRow {
   word: string;
   quality: Quality;
-  /** what the word endings say, before any decision */
+  /** What the word endings say, before any decision. */
   derived: Quality;
   source: 'derived' | 'decided';
 }
@@ -69,9 +69,9 @@ interface RhymeView {
   inDictionary: boolean;
   rhymes: RhymeRow[];
   ruledOut: RhymeRow[];
-  /** what the game accepts, whether or not it fitted in `rhymes` */
+  /** What the game accepts, whether or not it fitted in `rhymes`. */
   total: { perfect: number; near: number };
-  /** true when `rhymes` was cut short — the counts above are the real ones */
+  /** True when `rhymes` was cut short — the counts above are the real ones. */
   truncated: boolean;
 }
 
@@ -84,15 +84,9 @@ const STRENGTH: Record<Quality, string> = {
 };
 
 /**
- * The rhyme game's content, end to end.
- *
- * The base words — every word a round can open with — and, for the one you
- * open, everything that rhymes with it and how strongly, where each verdict
- * came from, and the words you ruled out.
- *
- * The game derives rhymes from word endings; a decision here overrides that in
- * either direction. "Auto" is not the same as "not a rhyme" — it means no
- * opinion, use whatever the endings say.
+ * The rhyme game's content: the base words a round can open with, and for one of them everything that rhymes, how
+ * strongly, why, and what was ruled out. Rhymes come from word endings; a decision here overrides that either way,
+ * and "Auto" means no opinion, not "not a rhyme".
  */
 export function RhymeEditor(): React.JSX.Element {
   const toast = useToast();
@@ -136,13 +130,8 @@ export function RhymeEditor(): React.JSX.Element {
   };
 
   /**
-   * Put every playable word back in the game.
-   *
-   * The one action that undoes the cliff below: it marks every pool word that
-   * has something to rhyme against, so the base words become the whole playable
-   * pool again and marking one more word afterwards adds to it rather than
-   * replacing it. The dry run produces the numbers the question shows, so they
-   * are the real outcome rather than an estimate.
+   * Put every playable word back in the game by marking every pool word with something to rhyme against, so marking
+   * one more adds to the set instead of narrowing it. The dry run gives the question its real numbers.
    */
   const useEveryPlayableWord = (): void =>
     void run('rebuild', async () => {
@@ -261,22 +250,12 @@ export function RhymeEditor(): React.JSX.Element {
         >
           While nothing is marked, a round can open with any of the {l.poolSize} words in the games — including ones with nothing to rhyme
           against, which makes the round unplayable. The list below is therefore the whole pool.{' '}
-          {/*
-            Marking one word does not narrow this a little: it narrows it to
-            that word. Saying so here is the whole warning — the banner
-            disappears the instant it stops being true, which is exactly when it
-            becomes worth reading.
-          */}
+          {/* Marking one word narrows rounds to that word alone; the banner shows only while that is still true. */}
           <strong>The moment you mark one word, rounds open with that word only, until you mark more.</strong>
         </Banner>
       )}
 
-      {/*
-        A curated set that is smaller than the pool is a restriction, and the
-        header alone ("2 of 159 pool words") reads like progress rather than
-        like a limit. This says what the game will actually do, and stays until
-        it is no longer surprising.
-      */}
+      {/* A curated set smaller than the pool is a limit, which "2 of 159 pool words" alone reads as progress. */}
       {l && !l.usingFallback && l.total < l.poolSize && (
         <Banner
           tone="info"
@@ -371,7 +350,7 @@ function RhymePanel({ word, dialect, onChanged }: { word: string; dialect: strin
         body: { word, rhyme, quality: q, addToPool, dialect: dialect === 'sorani' ? 'sorani' : 'kurmanji' },
       });
       await view.reload();
-      onChanged(); // the base-word list shows counts, so it moves too
+      onChanged(); // The base-word list shows counts, so it moves too.
     } catch (err) {
       toast.error(errorLine(err, 'rhyme words'));
     } finally {

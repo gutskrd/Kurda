@@ -32,7 +32,7 @@ function sound(key: string, over: Partial<AlphabetRecording> = {}): AlphabetReco
 
 function word(headword: string, over: Partial<DictionaryAudioAdminItem> = {}): DictionaryAudioAdminItem {
   return {
-    // ASCII, as a uuid is, so it reads the same in an address
+    // ASCII, as a uuid is, so it reads the same in an address.
     id: `id-${Array.from(headword, (c) => c.codePointAt(0)!.toString(16)).join('-')}`,
     entryId: `entry-${headword}`,
     headword,
@@ -164,7 +164,7 @@ describe('the characters side of the studio', () => {
     await user.click(within(give).getByRole('button', { name: 'Give 1 recording to Xezo' }));
     expect(await within(give).findByText('Finished: 1 saved')).toBeInTheDocument();
     expect(api.patches().map((c) => [c.path, c.body])).toEqual([['/admin/audio/alphabet?key=kmr%3Asound%3Ab', { speaker: 'xezo' }]]);
-    // the counts follow: the sentence and the three words without a character are left
+    // The counts follow: the sentence and the three words without a character are left.
     await user.selectOptions(within(give).getByLabelText('Which recordings'), 'all');
     expect(within(give).getByRole('button', { name: 'Give 4 recordings to Xezo' })).toBeEnabled();
   });
@@ -180,7 +180,7 @@ describe('the characters side of the studio', () => {
     await user.click(within(give).getByRole('button', { name: 'Give 3 recordings to Hamo' }));
     expect(await within(give).findByText('Finished: 3 saved')).toBeInTheDocument();
     expect(api.patches().map((c) => api.dict.find((w) => w.id === keyOf(c))?.headword).sort()).toEqual(['av', 'bav', 'mal']);
-    // only the words with no character were asked for, a page at a time
+    // Only the words with no character were asked for, a page at a time.
     const lists = api.calls().filter((c) => c.path.startsWith('/admin/dictionary/audio?') && c.path.includes('speaker=none'));
     expect(lists.length).toBeGreaterThan(1);
     expect(api.dict.map((w) => w.speaker)).toEqual(['hamo', 'hamo', 'hamo', 'xezo', 'hamo']);
@@ -200,15 +200,15 @@ describe('the characters side of the studio', () => {
       ['/admin/audio/alphabet?key=kmr%3Aword%3Aa', `/admin/audio/dictionary?key=${dar.id}`, '/admin/audio/lesson?key=spas'].sort(),
     );
     for (const c of api.patches()) expect(c.body).toEqual({ lipsync: expect.objectContaining({ v: 1, d: 800 }) });
-    // every file came through the API, never from where the recording is kept
+    // Every file came through the API, never from where the recording is kept.
     const files = api.calls().filter((c) => c.path.includes('/file?'));
     expect(files.map((c) => c.path).sort()).toEqual(
       ['/admin/audio/alphabet/file?key=kmr%3Aword%3Aa', `/admin/audio/dictionary/file?key=${dar.id}`, '/admin/audio/lesson/file?key=spas'].sort(),
     );
     expect(vi.mocked(fetch).mock.calls.every(([url]) => String(url).startsWith('/admin/'))).toBe(true);
-    // nothing is left without one, and those that have one are not touched…
+    // Nothing is left without one, and those that have one are not touched…
     expect(within(time).getByRole('button', { name: 'Every recording here has a timeline' })).toBeDisabled();
-    // …until the editor asks for them to be made again
+    // …until the editor asks for them to be made again.
     await user.click(within(time).getByRole('checkbox', { name: 'Remake existing timelines' }));
     await user.click(within(time).getByRole('button', { name: 'Make 6 timelines' }));
     expect(await within(time).findByText('Finished: 6 saved')).toBeInTheDocument();
@@ -229,7 +229,7 @@ describe('the characters side of the studio', () => {
     expect(within(time).getByRole('status')).toHaveTextContent('Paused');
     api.release();
     await waitFor(() => expect(within(time).getByText('2 of 6')).toBeInTheDocument());
-    // paused: the two in hand finished, and nothing else began
+    // Paused: the two in hand finished, and nothing else began.
     expect(api.patches()).toHaveLength(2);
     expect(api.held()).toBe(0);
 
@@ -239,7 +239,7 @@ describe('the characters side of the studio', () => {
     api.release();
     expect(await within(time).findByText('Cancelled: 4 saved')).toBeInTheDocument();
     expect(api.most()).toBe(2);
-    // the last two were never touched, and are still to do
+    // The last two were never touched, and are still to do.
     expect(api.patches().map(keyOf).sort()).toEqual(['du', 'sê', 'yek', 'çar']);
     expect(within(time).getByRole('button', { name: 'Make 2 timelines' })).toBeEnabled();
   });

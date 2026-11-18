@@ -2,18 +2,11 @@ import type pg from 'pg';
 import type { Currency } from './service.js';
 
 /**
- * Does every balance still equal the sum of its ledger?
- *
- * WalletService writes a ledger row and the balance it moves in one statement,
- * so the two can only part if something wrote one of them another way — a hand
- * edit, a script, a bug in a migration. Nothing in the database ties them
- * together after the fact, so this checks: every (person, currency) that has a
- * balance row or ledger rows, with the two compared, in one pass over the
- * ledger. That is cheap enough to run daily (jobs/wallet-jobs.ts) and on
- * demand (`GET /admin/economy/reconcile`), and it only reads.
- *
- * A balance with no ledger rows behind it must be zero, and ledger rows with
- * no balance row must sum to zero; either one otherwise is a mismatch.
+ * Whether every balance still equals its ledger sum. WalletService writes both in one statement, so they part only if
+ * something wrote one another way (a hand edit, a script, a migration bug). One read-only pass over the ledger compares
+ * every (person, currency) with a balance or ledger rows, cheap enough to run daily (jobs/wallet-jobs.ts) and on demand
+ * (`GET /admin/economy/reconcile`). A balance with no ledger must be zero, and ledger rows with no balance must sum to
+ * zero.
  */
 
 export interface WalletMismatch {
@@ -40,10 +33,7 @@ export const RECONCILE_LIST_MAX = 200;
 export class WalletReconciler {
   constructor(private readonly pool: Pick<pg.Pool, 'query'>) {}
 
-  /**
-   * Compare every balance with its ledger, or only these people's (`userIds`,
-   * which a test or an admin looking at one account passes).
-   */
+  /** Compares every balance with its ledger, or only these people's (`userIds`). */
   async check(opts: { userIds?: string[]; limit?: number } = {}): Promise<ReconcileReport> {
     const limit = Math.min(Math.max(opts.limit ?? 50, 1), RECONCILE_LIST_MAX);
     const scoped = opts.userIds !== undefined;

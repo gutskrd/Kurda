@@ -33,7 +33,7 @@ export interface SupportEmail extends SupportEmailSummary {
   text: string | null;
   html: string | null;
   attachmentList: SupportAttachment[];
-  /** false while the body has not been read from Resend (no key that may, or Resend was down) */
+  /** False while the body has not been read from the provider (no key that may, or the provider was down). */
   bodyAvailable: boolean;
   answers: Array<{ id: string; body: string; sentAt: string; admin: { id: string; username: string } | null }>;
 }
@@ -66,11 +66,9 @@ export interface ReceivedMailReader {
 const BODY_MAX = 200_000;
 
 /**
- * Text from a received mail that goes back out in a header of our answer (its
- * subject, its message id) or into a one-line column: a single line with no
- * control characters. Anyone can send the support address a subject with an
- * encoded line break, which in our answer's headers would start a header of
- * their choosing, or a NUL, which Postgres cannot store at all.
+ * Text from a received mail that goes into a header of our answer or a one-line column: one line with no control
+ * characters. A sender could otherwise inject a header with an encoded line break, or store a NUL, which Postgres
+ * refuses.
  */
 export function headerLine(value: string): string {
   return stripControlChars(value.replace(/[\r\n\t]+/g, ' ')).trim();
@@ -81,10 +79,7 @@ function storableBody(value: string | null): string | null {
   return value === null ? null : value.replaceAll('\u0000', '');
 }
 
-/**
- * The `In-Reply-To` an answer carries: the mail's id in angle brackets, or none
- * when what the mail gave is not one plain id (spaces, line breaks, brackets).
- */
+/** The `In-Reply-To` an answer carries: the mail's id in angle brackets, or none when it is not one plain id. */
 export function threadIdOf(messageId: string | null): string | null {
   if (!messageId) return null;
   const bare = messageId.trim().replace(/^<|>$/g, '');
@@ -92,9 +87,8 @@ export function threadIdOf(messageId: string | null): string | null {
 }
 
 /**
- * "Rojda Kurd <rojda@example.com>" → its address and its name; a bare address
- * has no name. What does not look like either is kept whole as the address, so
- * nothing that arrived is lost.
+ * "Name <name@example.com>" to its address and name; a bare address has no name. Anything else is kept whole as the
+ * address, so nothing that arrived is lost.
  */
 export function parseMailbox(raw: string): { address: string; name: string | null } {
   const trimmed = raw.trim();
@@ -107,15 +101,9 @@ export function parseMailbox(raw: string): { address: string; name: string | nul
 }
 
 /**
- * The text of an HTML body, for the list's preview when a mail came with no plain text.
- *
- * Anyone can send the support address a mail, and this runs on every mail each
- * time the inbox is listed, so it has to take time in proportion to the mail's
- * length whatever the mail contains. The regular expressions it used before
- * did not: a body of nothing but `<style>` repeated, with no closing tag, made
- * each one scan to the end of the body again, and 200 KB of it held the server
- * for seconds per mail. Each pattern here stops at the next `<` or `>`, and a
- * block with no end is looked for once.
+ * The text of an HTML body, for the list preview when a mail has no plain text. It runs on every mail each time the
+ * inbox is listed and anyone can send one, so it must take time linear in the body whatever it holds: each pattern
+ * stops at the next `<` or `>`, and an unclosed block is searched for only once.
  */
 export function htmlToPreviewText(html: string): string {
   return dropHiddenBlocks(html)
@@ -155,9 +143,8 @@ function dropHiddenBlocks(html: string): string {
 }
 
 /**
- * Resend's received-mail API (`GET /emails/receiving/:id`). The key must be
- * one that may read received mail — a full-access key; a send-only key is
- * refused, and the refusal says so rather than a bare 403.
+ * Resend's received-mail API (`GET /emails/receiving/:id`). It needs a full-access key; a send-only key is refused,
+ * and the error says so.
  */
 export class ResendMailReader implements ReceivedMailReader {
   constructor(private readonly apiKey: string) {}
@@ -223,13 +210,12 @@ export function replySubject(subject: string): string {
   return /^re:/i.test(bare) ? bare : `Re: ${bare || '(no subject)'}`;
 }
 
-/** As much of the mail an answer answers as is quoted under it in the designed email; the text version carries all of it. */
+/** How much of the answered mail is quoted under the designed answer; the text version carries all of it. */
 const QUOTED_UP_TO = 4000;
 
 /**
- * An answer as a designed email: the sender's mark, what the person at the
- * desk wrote (their paragraphs and line breaks kept), and the mail it answers
- * quoted under it. No picture and no heading: it is a letter, not a notice.
+ * An answer as a designed email: the sender's mark, what the agent wrote with its paragraphs kept, and the answered
+ * mail quoted under it. No picture or heading: it is a letter, not a notice.
  */
 export function answerHtml(answer: { brand: EmailBrand; subject: string; body: string; quoted?: { caption: string; text: string } }): string {
   const blocks: EmailBlock[] = answer.body
@@ -245,18 +231,10 @@ export function answerHtml(answer: { brand: EmailBrand; subject: string; body: s
 }
 
 /**
- * The support inbox: mail received at the support address, kept so admins can
- * read it in the panel and answer it from there.
- *
- * The body is read from Resend once and kept — opening a mail should not need
- * Resend to be up, and reading it again would cost a call every time. An
- * answer goes out from the support address, threaded under the mail it answers
- * (In-Reply-To / References), with the mail it answers quoted under it.
- *
- * Mail written to an address at zagrosian.com is the business's own post. Where
- * an address for it is set (`zagrosianFrom`), its answer goes out from that
- * address under Zagrosian's mark; otherwise it is answered as support, as
- * everything was before.
+ * The support inbox: mail received at the support address, read and answered from the admin panel. The body is
+ * read from the provider once and kept, so opening a mail does not depend on the provider. Answers go out from the
+ * support address, threaded under the mail with it quoted. Mail to an address at zagrosian.com is answered from
+ * `zagrosianFrom` under that brand where it is set, and as support otherwise.
  */
 export class SupportInbox {
   constructor(
@@ -269,7 +247,7 @@ export class SupportInbox {
     return this.deps.reader !== null;
   }
 
-  /** Keep a received mail. Its id, or null when it was already kept (a webhook delivered twice). */
+  /** Keeps a received mail; returns its id, or null when it was already kept (a repeated webhook). */
   async record(mail: ReceivedMail): Promise<string | null> {
     const from = parseMailbox(headerLine(mail.from));
     const { rows } = await this.pool.query<{ id: string }>(
@@ -313,7 +291,7 @@ export class SupportInbox {
     return true;
   }
 
-  /** The inbox, newest first: what is open, or what was archived. */
+  /** The inbox, newest first: open mail, or archived mail. */
   async list(opts: { archived: boolean; limit: number; before?: string }): Promise<{ emails: SupportEmailSummary[]; unread: number }> {
     const { rows } = await this.pool.query<Row>(
       `SELECT e.*, (SELECT count(*) FROM support_email_replies r WHERE r.email_id = e.id) AS replies
@@ -335,9 +313,9 @@ export class SupportInbox {
     return Number(rows[0]?.n ?? 0);
   }
 
-  /** One mail, whole — reading its body from Resend first if that has not happened yet. Opening it marks it read. */
+  /** One mail in full, fetching its body first if needed; opening marks it read. */
   async open(id: string): Promise<SupportEmail> {
-    // a body that could not be read before may be readable now; a failure here still shows the mail
+    // A body that could not be read before may be readable now; on failure the mail is still shown.
     await this.fetchBody(id).catch(() => false);
     const { rows } = await this.pool.query<Row>(
       `UPDATE support_emails SET read_at = COALESCE(read_at, now()) WHERE id = $1
@@ -386,10 +364,7 @@ export class SupportInbox {
     if (res.rowCount === 0) throw new AppError('NOT_FOUND', 404, 'no such email');
   }
 
-  /**
-   * Answer a mail from the support address. Sent at once, not queued: the
-   * admin is waiting to hear whether it went, and a failure says why.
-   */
+  /** Answers a mail from the support address, at once rather than queued, so the admin hears whether it went. */
   async reply(id: string, adminId: string, body: string): Promise<{ id: string; sentAt: string }> {
     const { rows } = await this.pool.query<Row>(`SELECT *, 0 AS replies FROM support_emails WHERE id = $1`, [id]);
     const mail = rows[0];

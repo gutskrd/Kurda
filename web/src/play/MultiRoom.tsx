@@ -24,14 +24,14 @@ import type { GameViewHandle } from './useGameView';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/** "You", Hevalo, a friend's name, or "Player 3": how a seat of a multiplayer learning game is named. */
+/** "You", Hevalo, a friend's name, or "Player 3": a seat's name in a multiplayer learning game. */
 export function multiSeatName(p: Pick<MultiSeat, 'seat' | 'name' | 'isMe' | 'bot'>, t: Translate): string {
   if (p.isMe) return t('games.you');
   if (p.bot) return t('play.room.hevalo');
   return p.name ?? t('stories.game.playerN', { seat: p.seat });
 }
 
-/** A seat's name, looked up by its number in a view. */
+/** A seat's name by its number in a view. */
 export function seatNamer(view: Pick<MultiView, 'players'>, t: Translate): (seat: number) => string {
   return (seat) => {
     const p = view.players.find((x) => x.seat === seat);
@@ -43,37 +43,24 @@ export interface GameRoomProps<Board> {
   game: MultiGame;
   id: string;
   room: GameViewHandle<Board>;
-  /** where a new game of this kind is made, and what that link says */
+  /** Where a new game of this kind is made, and what that link says. */
   newPath: string;
   newLabel: string;
-  /** what the lobby says about the game's settings, above the roster */
+  /** What the lobby says about the game's settings, above the roster. */
   lobbyNote?: (view: MultiView<Board>) => ReactNode;
-  /** the game itself, while it is under way: its own staging */
+  /** The game itself while under way. */
   playing: (view: MultiView<Board>) => ReactNode;
-  /** the game's own word on how it ended, above the places */
+  /** The game's own word on how it ended, above the places. */
   ending?: (view: MultiView<Board>) => ReactNode;
-  /** a place's score, in the game's own words ("Words: 12") */
+  /** A place's score in the game's words ("Words: 12"). */
   scoreOf: (result: MultiResult, view: MultiView<Board>) => string;
-  /** why the lobby cannot start as it stands (a team too small), in the reader's words; null when it can */
-  startProblem?: (view: MultiView<Board>) => string | null;
-  /** what a team game says about its teams, inside the team picker */
-  teamNote?: (view: MultiView<Board>) => ReactNode;
 }
 
 /**
- * The room around any multiplayer learning game, on the website: the lobby,
- * the game, and its results, made of the play layer's own parts so every new
- * game reads like the others — the join code on its ticket with Invite
- * friends beside it, the roster by seat (a friend by name, anyone else as
- * "Player N", Hevalo as Hevalo) with Remove for the host and a report beside
- * each other player, Rated or Friendly, Start for the host and Join for
- * someone the join rule lets in, and after the game its places, what it did to
- * your rank, and Play again. The places show the XP a game with other people
- * paid; a game against Hevalo pays none, and says so in one line under them.
- *
- * The game gives only its own staging (`playing`) and how a score reads.
- * Everything here works from the one view every game answers (`MultiView`),
- * kept current by `useGameView`.
+ * The room around any multiplayer learning game: lobby, game and results, built from the play layer's parts so every
+ * game reads alike (join code and Invite friends, the roster by seat with Remove and report, Rated or Friendly, Start
+ * and Join, then places, rank change and Play again). A game against Hevalo pays no XP and says so once. The game
+ * supplies only `playing` and how a score reads; everything else works from `MultiView`, kept current by `useGameView`.
  */
 export function GameRoom<Board>({
   game,
@@ -85,8 +72,6 @@ export function GameRoom<Board>({
   playing,
   ending,
   scoreOf,
-  startProblem,
-  teamNote,
 }: GameRoomProps<Board>): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
@@ -96,9 +81,9 @@ export function GameRoom<Board>({
   const { load } = room;
   const view = load.state === 'ready' ? load.view : null;
   const active = view?.status === 'active' && view.me !== null;
-  // while playing, an invite to something else waits as a chip
+  // While playing, an invite to something else waits as a chip.
   useQuietInvites(active);
-  // the rating box hears of a game that ended while you played it
+  // The rating box hears of a game that ended while you played it.
   useGameFinished(game, view?.me ? id : null, view?.status === 'finished');
 
   async function control(path: string, body?: unknown): Promise<void> {
@@ -124,7 +109,6 @@ export function GameRoom<Board>({
 
   if (view.status === 'lobby') {
     const short = present.length < view.minPlayers;
-    const problem = short ? null : (startProblem?.(view) ?? null);
     return (
       <div className="match-lobby match-room mp-room">
         <CodeTicket
@@ -142,7 +126,6 @@ export function GameRoom<Board>({
             isHost={view.isHost}
             game={game}
             gameId={id}
-            note={teamNote?.(view)}
             onTeam={(seat, team) => control('team', { seat, team })}
             onRemove={(seat) => control('remove', { seat })}
           />
@@ -169,16 +152,9 @@ export function GameRoom<Board>({
             {busy ? t('games.joining') : t('play.room.join')}
           </Button>
         ) : view.isHost ? (
-          <>
-            {problem && (
-              <p className="mp-start-problem" role="status">
-                {problem}
-              </p>
-            )}
-            <Button size="lg" disabled={busy || short || problem !== null} onClick={() => void control('start')}>
-              {short ? t('play.room.waiting') : busy ? t('games.starting') : t('play.room.start')}
-            </Button>
-          </>
+          <Button size="lg" disabled={busy || short} onClick={() => void control('start')}>
+            {short ? t('play.room.waiting') : busy ? t('games.starting') : t('play.room.start')}
+          </Button>
         ) : (
           <p className="muted">{t('play.room.waitingHost')}</p>
         )}
@@ -212,7 +188,7 @@ export function GameRoom<Board>({
     );
   }
 
-  // finished
+  // Finished.
   const mine = view.results?.find((r) => r.seat === view.me?.seat);
   const others = view.players.filter((p) => !p.isMe && !p.bot);
   return (
@@ -235,7 +211,7 @@ export function GameRoom<Board>({
               score={scoreOf(r, view)}
               trailing={
                 <>
-                  {/* only XP that was earned is shown: a game against Hevalo pays none, and a row never reads "+0 XP" */}
+                  {/* Only earned XP shows, so a row never reads "+0 XP". */}
                   {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
                   {p && !me && !p.bot && <PlayerReport game={game} gameId={id} seat={r.seat} name={name(r.seat)} />}
                 </>
@@ -244,7 +220,7 @@ export function GameRoom<Board>({
           );
         })}
       </RankList>
-      {/* against Hevalo nobody else is playing, so there is no XP on the rows above: say so once, and where it is earned */}
+      {/* Against Hevalo there is no XP on the rows above: say so once, and where it is earned. */}
       {view.mode === 'solo' && <p className="gs-alone">{t('games.noXpAlone')}</p>}
       {view.me !== null && view.mode === 'group' && (
         <RematchPanel game={game} lobbyId={id} otherName={others[0] ? name(others[0].seat) : t('games.opponent')} isHost={view.canControl} />
@@ -256,7 +232,7 @@ export function GameRoom<Board>({
   );
 }
 
-/** The headline of a finished game, given the focus: what was on the screen just changed. */
+/** A finished game's headline, focused because the screen just changed. */
 function Verdict({ won, label }: { won: boolean; label: string }): React.JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);

@@ -1,8 +1,4 @@
-/**
- * The audio studio's listing without a database: who each text is planned
- * for (`plannedSpeaker`) and which course each use is in, read off rows as
- * Postgres returns them, in course order.
- */
+/** The audio studio's listing without a database: planned speakers and each use's course, from rows in course order. */
 import { describe, expect, it } from 'vitest';
 import { conversationLineKey, lessonAudioKey } from '@kurda/shared';
 import type { ExerciseType } from '../content/repository.js';
@@ -35,7 +31,7 @@ function row(at: Place, type: ExerciseType, payload: unknown) {
   };
 }
 
-/** A pool that answers the listing's three queries: the exercises, the stories and the recordings. */
+/** A pool answering the listing's three queries: exercises, stories and recordings. */
 function pool(exercises: unknown[], recordings: unknown[] = [], stories: unknown[] = []) {
   return {
     query: async (sql: string) => {

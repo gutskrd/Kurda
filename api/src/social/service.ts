@@ -21,12 +21,8 @@ export interface FavoriteRef {
 }
 
 /**
- * Who may read a profile, widest first.
- *
- * 'members' is the meaningful one: signed in, but not necessarily a friend. It
- * exists because the app is readable without an account, so 'everyone' now
- * genuinely means the public web — a wider audience than most people want, and
- * not one they should land in without choosing it.
+ * Who may read a profile, widest first. 'members' means signed in, not necessarily a friend; since the app is readable
+ * without an account, 'everyone' means the public web and must be chosen.
  */
 export const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
 
@@ -63,22 +59,14 @@ export interface PublicProfile {
   favoriteStory?: FavoriteRef | null;
   xp?: number;
   streak?: number;
-  /**
-   * Their league tier key (translated by the apps), or null for someone who
-   * has never been in a league or does not take part — never a made-up
-   * "bronze". Same as `league?.tier`, kept for the apps that read it.
-   */
+  /** Their league tier key (translated by the apps), or null when never in a league or not taking part. Same as `league?.tier`, for older apps. */
   tier?: LeagueTier | null;
   league?: ProfileLeague | null;
-  /**
-   * Their Game Ranks, per game played (contract-4 §U): the tier now — or
-   * "Resting" after 28 days without a rated game, to anyone but them — and the
-   * best this season and ever. Replaces the frozen all-time `rating`/`rank`.
-   */
+  /** Their Game Ranks per game played: the current tier (or "Resting" to others after 28 days without a rated game), and the season's and all-time best. */
   ranks?: ProfileRank[];
-  /** the frame they wear around their avatar (a SKU they own: a season frame, or one bought in the shop), or null */
+  /** The frame they wear around their avatar (an owned season or shop frame), or null. */
   frameSku?: string | null;
-  /** that frame's picture, when it is one of the shop's; a season frame has none and is drawn by the apps */
+  /** That frame's picture when it is a shop frame; season frames are drawn by the apps. */
   frameAssetKey?: string | null;
   /** badges earned (and the legacy tournament win) */
   achievements?: number;
@@ -90,15 +78,14 @@ export interface PublicProfile {
 
 const MIN_QUERY = 2;
 /**
- * The shortest query looked for in the middle of a name. Two letters are found
- * where a name or one of its words starts: inside names they match most of the
- * table, and a trigram index cannot narrow a two-letter piece down.
+ * The shortest query searched for inside a name; two letters match only where a name or word starts, since inside
+ * names they match most of the table and a trigram index cannot narrow them.
  */
 const MIN_ANYWHERE = 3;
 /** The shortest query that is also matched loosely, so a typo still finds someone. */
 const MIN_FUZZY = 4;
 
-/** Fold the search form the same way the folded username index does (KUR-044). */
+/** Folds the search text the way the folded username index does. */
 function foldForm(input: string): string {
   return foldDiacritics(normalizeKurdish(input)).toLowerCase();
 }
@@ -108,17 +95,11 @@ const FOLDED_USERNAME = `translate(lower(u.username::text), 'êîûçş', 'eiucs
 const FOLDED_NAME = `translate(lower(u.display_name), 'êîûçş', 'eiucs')`;
 
 /**
- * User search + public profiles (KUR-082). Username prefix search is
- * diacritic-folded (so "se" finds "sê"/"şev") and never surfaces users blocked
- * in either direction or those hidden from search. A profile's detail respects
- * its owner's visibility (everyone / members / friends / nobody), while identity
- * + the friend-relationship are always enough to send a request.
- *
- * Minors are never found by search, and their profile is never on the public
- * web: 'everyone' is refused when they set it and read as 'members' if an
- * older setting says so. Both are worked out from age at the moment of asking,
- * and both treat an account whose age is not on record yet the same way (see
- * users/age.ts): nobody is taken for an adult before they have said so.
+ * User search and public profiles. Search is diacritic-folded ("se" finds "sê" and "şev") and never shows users
+ * blocked either way or hidden from search. Profile detail follows its owner's visibility, while identity and the
+ * friend relationship always suffice to send a request. Minors, and accounts with no age on record (users/age.ts),
+ * are never found by search or shown on the public web: 'everyone' is refused for them and read as 'members' if set
+ * earlier.
  */
 export class SocialService {
   private readonly ranks: Pick<RankService, 'profileRanks'>;
@@ -132,26 +113,16 @@ export class SocialService {
   }
 
   /**
-   * People by username or display name, excluding self, blocks, and non-searchable users.
-   *
-   * Found wherever the query sits in a name — "serk" finds "berserker" — and,
-   * from four letters, when no name holds it, by the names nearest to it, so a
-   * slip of the thumb still finds the person. Diacritics are folded on both
-   * sides.
-   *
-   * Ranked the way a search for a person is meant: the exact username first,
-   * then friends whose name matches (the person you are looking for is usually
-   * someone you know), then everyone else by how well they match — a name that
-   * starts with the query, a word in it that starts with it, the query inside
-   * the username, inside the display name — and near misses closest first. One
-   * query: the friendship is read in the same pass.
+   * People by username or display name, excluding self, blocks and unsearchable users. Matches anywhere in a name
+   * ("serk" finds "berserker") and, from four letters with no match, the nearest names, diacritics folded. Ranked for
+   * finding a person: the exact username, then matching friends, then everyone else by match quality, near misses
+   * closest first. One query, with friendship read in the same pass.
    */
   async search(viewerId: string, query: string, publicUrl: PublicUrl = () => null, limit = 20): Promise<SearchHit[]> {
-    // "@hamo." copied out of a sentence is a search for hamo: the @ and the full stop are not the name (shared/src/username.ts)
+    // "@hamo." copied from a sentence is a search for hamo (shared/src/username.ts).
     const folded = foldForm(query.trim().startsWith('@') ? handleName(query) : query).trim();
     if (folded.length < MIN_QUERY) return [];
-    // the query taken literally inside a pattern: usernames hold underscores,
-    // and `_` or `%` left as wildcards would list names that do not hold it
+    // The query taken literally in the pattern: usernames hold underscores, and `_` or `%` as wildcards would match too much.
     const startsOrWordStarts = `${FOLDED_USERNAME} LIKE $3 || '%' OR ${FOLDED_NAME} LIKE $3 || '%'
             OR ${FOLDED_NAME} LIKE '% ' || $3 || '%' OR ${FOLDED_USERNAME} LIKE '%\\_' || $3 || '%'`;
     const anywhere = `${FOLDED_USERNAME} LIKE '%' || $3 || '%' OR ${FOLDED_NAME} LIKE '%' || $3 || '%'`;
@@ -211,11 +182,7 @@ export class SocialService {
     }));
   }
 
-  /**
-   * Update the caller's profile visibility. A minor's profile cannot be put on
-   * the public web, nor can one whose age is not on record yet (that is asked
-   * first); every other rung is theirs to choose.
-   */
+  /** Updates the caller's profile visibility; a minor's, or one with no age on record, cannot be put on the public web. */
   async setVisibility(userId: string, visibility: Visibility): Promise<void> {
     if (visibility === 'everyone') {
       const age = await this.pool.query<{ birth_year: number | null; birth_month: number | null }>(
@@ -231,14 +198,9 @@ export class SocialService {
     await this.pool.query(`UPDATE users SET profile_visibility = $2 WHERE id = $1`, [userId, visibility]);
   }
 
-  /** A user's public profile, gated by their privacy setting + blocks. */
   /**
-   * Someone's public profile.
-   *
-   * `viewerId` is null for a signed-out reader. That is not a special case so
-   * much as the least-privileged one: no blocks apply, nobody is a friend, and
-   * so a profile set to friends-only or nobody shows a stranger exactly what it
-   * shows any other non-friend.
+   * Someone's public profile, gated by privacy and blocks. `viewerId` is null for a signed-out reader, the least
+   * privileged case: no blocks, no friends, so friends-only and nobody profiles show what any stranger sees.
    */
   async profile(viewerId: string | null, targetId: string): Promise<PublicProfile> {
     const row = await this.pool.query<{
@@ -286,13 +248,9 @@ export class SocialService {
       ic_gifter_id: string | null;
       ic_gifter_name: string | null;
     }>(
-      // Single query: profile + stats + equipped cosmetics (with the owner's
-      // ownership of each) + favorites. No N+1; the route resolves keys → URLs.
-      // Who sent a gift being worn, and whose post is a favourite, are other
-      // people showing up on this profile: a minor among them is named to the
-      // viewer only as a friend ($2, users/age.ts), or an adult's profile on
-      // the public web would be a way to find them. A favourite written by
-      // somebody with a block between them and the viewer is not shown either.
+      // One query for the profile, stats, equipped cosmetics with ownership, and favourites. A gift's sender and a
+      // favourite's author are named to the viewer only as allowed for minors (users/age.ts), and favourites across a
+      // block are not shown.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
               u.last_seen_at, u.premium_until, u.xp, u.profile_visibility, u.country,
               u.birth_year, u.birth_month, u.guest,
@@ -360,8 +318,7 @@ export class SocialService {
     if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
 
     const isSelf = viewerId !== null && viewerId === targetId;
-    // a guest (auth/guest.ts) has no profile anyone else can open: to everyone
-    // but themselves the id is as good as unknown, and said so, not "private"
+    // A guest has no profile others can open: to anyone else the id is unknown, not private.
     if (u.guest && !isSelf) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
     // one read says both whether a block stands between them and where they stand
     const friendStatus: FriendStatus =
@@ -370,8 +327,7 @@ export class SocialService {
     if (friendStatus === 'blocked') {
       throw new AppError('USER_NOT_FOUND', 404, 'no such user');
     }
-    // an 'everyone' stored before we knew their age is read as 'members' for a
-    // minor, or for anyone whose age is not on record yet: never the open web
+    // An 'everyone' stored before their age was known reads as 'members' for a minor or unknown age.
     const visibility: Visibility =
       u.profile_visibility === 'everyone' && !isKnownAdultRow(u) ? 'members' : u.profile_visibility;
     const canSeeDetail =

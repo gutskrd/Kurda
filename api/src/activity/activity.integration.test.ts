@@ -1,4 +1,4 @@
-/** Friend activity feed (KUR-087) against real Postgres (+ Redis when present). */
+/** Congratulations on friend milestones, against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -9,7 +9,7 @@ import { FriendService } from '../friends/service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
-describe.skipIf(!DATABASE_URL)('activity feed (integration)', () => {
+describe.skipIf(!DATABASE_URL)('activity congratulations (integration)', () => {
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;
@@ -38,22 +38,17 @@ describe.skipIf(!DATABASE_URL)('activity feed (integration)', () => {
     await friends.request(a, b);
     await friends.respond(b, a, true);
   };
-  const has = (feed: Array<{ id: string }>, eventId: string): boolean => feed.some((e) => e.id === eventId);
 
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     friends = new FriendService(pool);
-    activity = new ActivityService(pool, friends, app.redis);
+    activity = new ActivityService(pool, friends);
     id.a = await register('a', '10.87.1.1');
     id.b = await register('b', '10.87.2.1');
-    id.c = await register('c', '10.87.3.1'); // private (nobody)
-    id.d = await register('d', '10.87.4.1');
     id.e = await register('e', '10.87.5.1'); // non-friend
     await makeFriends(id.a!, id.b!);
-    await makeFriends(id.c!, id.d!);
-    await pool.query(`UPDATE users SET profile_visibility = 'nobody' WHERE id = $1`, [id.c!]);
   });
 
   afterAll(async () => {
@@ -62,27 +57,10 @@ describe.skipIf(!DATABASE_URL)('activity feed (integration)', () => {
     await app.close();
   });
 
-  it('a milestone reaches friend feeds but not non-friends', async () => {
-    const event = await activity.publish(id.a!, 'achievement', { achievementId: 'first_lesson' });
-    const feedB = await activity.feed(id.b!);
-    expect(has(feedB, event.id)).toBe(true);
-    expect(feedB.find((e) => e.id === event.id)!.actorUsername).toContain('act_a');
-    // a non-friend never sees it
-    expect(has(await activity.feed(id.e!), event.id)).toBe(false);
-  });
-
-  it('a private (nobody) actor does not broadcast to feeds', async () => {
-    const event = await activity.publish(id.c!, 'league_promotion', { tier: 'silver' });
-    expect(has(await activity.feed(id.d!), event.id)).toBe(false);
-  });
-
-  it('congratulate is idempotent and reflected in the feed', async () => {
+  it('congratulate is idempotent', async () => {
     const event = await activity.publish(id.a!, 'streak_milestone', { days: 7 });
     expect(await activity.congratulate(id.b!, event.id)).toBe(1);
-    expect(await activity.congratulate(id.b!, event.id)).toBe(1); // idempotent
-    const entry = (await activity.feed(id.b!)).find((e) => e.id === event.id)!;
-    expect(entry.congrats).toBe(1);
-    expect(entry.didCongrats).toBe(true);
+    expect(await activity.congratulate(id.b!, event.id)).toBe(1);
   });
 
   it('only a friend can congratulate: somebody who merely knows the id is told nothing and counted nowhere', async () => {

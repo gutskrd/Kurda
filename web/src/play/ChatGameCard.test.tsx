@@ -66,7 +66,7 @@ describe('ChatGameCard', () => {
     await signedInAndListening(calls);
 
     state = card({ status: 'finished', canJoin: false });
-    // another lobby's change is not this card's
+    // Another lobby's change is not this card's.
     realtime.emit({ type: 'play_changed', game: 'wordle-battle', lobbyId: 'other' });
     realtime.emit({ type: 'play_changed', game: 'wordle-battle', lobbyId: 'b1' }, 'group:g1');
     expect(await screen.findByText('Finished')).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe('ChatGameCard as a ticket', () => {
     fakeApi({ [CARD]: card({ isMember: true, canJoin: false }) });
     renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
     expect(await screen.findByText('You’re in')).toHaveClass('ticket-stamp', 'is-success');
-    // already in when the conversation was opened: stamped, not landing
+    // Already in when the conversation was opened: stamped, not landing.
     expect(stampOf()).not.toHaveClass('is-fresh');
     expect(screen.getByText('2 of 4 joined')).toBeInTheDocument();
   });

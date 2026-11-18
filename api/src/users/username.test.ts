@@ -1,8 +1,4 @@
-/**
- * The server's side of the username rule: the rule itself is tested where it
- * lives (shared/src/username.test.ts); these check that the server applies it
- * as it is, and how it says no.
- */
+/** The server's side of the username rule (the rule is tested in shared/src/username.test.ts): it applies the rule as is and says how it refuses. */
 import { describe, expect, it } from 'vitest';
 import { AppError } from '../plugins/errors.js';
 import { canonicalUsername, invalidUsername, usernameRefusalMessage, validateUsername } from './username.js';

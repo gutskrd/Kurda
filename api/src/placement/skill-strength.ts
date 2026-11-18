@@ -1,8 +1,6 @@
 /**
- * Per-skill strength scoring (KUR-039). Pure. Strength (0–100) blends how
- * well-remembered a skill's words are (SM-2 easiness) with how mature the
- * reviews are (repetitions), derived from the spaced-repetition state
- * (KUR-033) of the exercises in that skill.
+ * Pure per-skill strength (0–100), blending how well a skill's items are remembered (SM-2 easiness) with how mature
+ * their reviews are (repetitions), from the spaced-repetition state of the skill's exercises.
  */
 
 import { DEFAULT_EASINESS, MIN_EASINESS } from '../review/sm2.js';

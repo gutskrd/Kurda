@@ -18,10 +18,8 @@ export interface FraudReview {
 }
 
 /**
- * Payment-fraud pipeline (KUR-073). Gathers per-account signals, runs the pure
- * rules, and — when a purchase trips a rule — records a review and puts the
- * account on hold so its purchases are withheld (never auto-banned). Admins
- * clear a hold (releasing any held Gems) or confirm it from the review queue.
+ * Payment-fraud pipeline: gathers per-account signals and runs the rules; when a purchase trips one, records a review
+ * and holds the account's purchases, never banning it. Admins clear a hold, releasing held Gems, or confirm it.
  */
 export class FraudService {
   constructor(
@@ -80,7 +78,7 @@ export class FraudService {
     );
   }
 
-  /** Open reviews, oldest first — the admin queue (KUR-073). */
+  /** Open reviews, oldest first, for the admin queue. */
   async pendingReviews(): Promise<FraudReview[]> {
     const rows = await this.pool.query<{
       id: string;
@@ -108,10 +106,7 @@ export class FraudService {
     }));
   }
 
-  /**
-   * Resolve a review. 'clear' releases the hold and grants any Gems that were
-   * held for it; 'confirm' keeps the hold and leaves the purchase ungranted.
-   */
+  /** Resolves a review: 'clear' releases the hold and grants any held Gems; 'confirm' keeps the hold and grants nothing. */
   async resolve(
     reviewId: string,
     decision: 'clear' | 'confirm',
@@ -157,7 +152,7 @@ export class FraudService {
     }
   }
 
-  /** Grant a previously-held IAP receipt's Gems, idempotently. */
+  /** Grants a held receipt's Gems, idempotently. */
   private async grantHeldReceipt(client: pg.PoolClient, receiptId: string | null): Promise<number> {
     if (!receiptId) return 0;
     const res = await client.query<{

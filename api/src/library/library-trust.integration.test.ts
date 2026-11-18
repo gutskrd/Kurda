@@ -1,8 +1,6 @@
 /**
- * Trust velocity + spam enforcement on the library write paths, over HTTP with
- * real Postgres + Redis (KUR-295). The generic library tests build the app
- * without Redis (velocity fails open), so this suite pins the enforcement that
- * only bites when Redis is wired.
+ * Trust velocity and spam enforcement on library writes, over HTTP with real Postgres and Redis. The other library
+ * tests run without Redis, where velocity fails open, so this suite pins what applies once Redis is wired.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -58,8 +56,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('library trust enforcement (integra
 
   it('throttles a new account past its per-hour post cap (429 TRUST_VELOCITY)', async () => {
     const tok = await register('vel', '10.31.0.1');
-    // a `new` account gets 2 library posts/hour; distinct bodies so velocity —
-    // not spam — is what bites
+    // A `new` account gets two library posts an hour; distinct bodies so velocity, not spam, is what trips.
     expect((await call('POST', '/library/posts', tok, { type: 'poem', title: 'a', body: 'first poem' })).statusCode).toBe(201);
     expect((await call('POST', '/library/posts', tok, { type: 'poem', title: 'b', body: 'second poem' })).statusCode).toBe(201);
     const third = await call('POST', '/library/posts', tok, { type: 'poem', title: 'c', body: 'third poem' });
@@ -73,8 +70,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('library trust enforcement (integra
     const postId = (await call('POST', '/library/posts', tok, { type: 'story', title: 'host', body: 'a story to comment under' })).json().id;
 
     const dupe = { body: 'buy cheap followers now' };
-    // repeats 1-4 land (allow / throttle — throttle doesn't block); the 5th trips
-    // REPEAT_MUTE and the account is auto-muted before the comment lands
+    // Repeats 1-4 land (throttle does not block); the fifth trips REPEAT_MUTE and the account is muted first.
     for (let i = 0; i < 4; i++) {
       expect((await call('POST', `/library/posts/${postId}/comments`, tok, dupe)).statusCode).toBe(201);
     }

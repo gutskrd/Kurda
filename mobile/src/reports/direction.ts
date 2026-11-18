@@ -18,8 +18,8 @@ export interface Direction {
 }
 
 /**
- * Right to left for Soranî and Arabic. The app does not flip its layout as a whole (nothing calls I18nManager, and
- * `tokens.rtlReady` is false), so screens using this mirror themselves: rows start on the right, text is aligned and
+ * Right to left for Soranî and Arabic. The app does not flip its layout as a whole (nothing calls
+ * I18nManager), so screens using this mirror themselves: rows start on the right, text is aligned and
  * directed right to left, chevrons point the other way. If I18nManager is ever turned on, the platform mirrors
  * everything and this steps aside rather than mirroring twice.
  */

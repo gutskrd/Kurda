@@ -1,4 +1,4 @@
-/** Personalized streak reminders (KUR-096) against real Postgres. */
+/** Personalized streak reminders against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -43,7 +43,7 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     return res.json().user.id;
   }
 
-  // seed a user with tz=UTC, a live streak, and XP history at 08:00 UTC
+  // Seed a user in UTC with a live streak and XP history at 08:00 UTC.
   async function seed(userId: string, streak: number, lastActiveOn: string): Promise<void> {
     await pool.query(`UPDATE users SET timezone = 'UTC' WHERE id = $1`, [userId]);
     await pool.query(
@@ -59,7 +59,7 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     );
   }
 
-  // a later day's run needs the learners active the day before it, or their streaks have ended by then
+  // A later day's run needs the learners active the day before, or their streaks have ended.
   async function practisedOn(day: string, ...userIds: string[]): Promise<void> {
     await pool.query(`UPDATE user_streaks SET last_active_on = $1 WHERE user_id = ANY($2::uuid[])`, [day, userIds]);
   }
@@ -162,11 +162,7 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     expect(sent.some((s) => s.userId === atRisk)).toBe(true);
   });
 
-  /*
-   * One statement reads every learner's day, so a single zone Postgres does
-   * not know (stored before sign-up checked against the database's list)
-   * used to fail the whole run, and nobody was reminded that hour.
-   */
+  /* One statement reads every learner's day, so a zone Postgres does not know must not fail the whole run. */
   it('reads a zone the database does not know as UTC, and still reminds everyone else', async () => {
     const odd = await register('streakZ', '10.96.0.5');
     await seed(odd, 5, '2026-06-20');

@@ -25,35 +25,31 @@ export interface TakeState {
   phase: TakePhase;
   problem: string | null;
   setProblem: (problem: string | null) => void;
-  /** the microphone is turned off for this site */
+  /** The microphone is turned off for this site. */
   blocked: boolean;
-  /** the input level while recording, 0–1 */
+  /** The input level while recording, 0–1. */
   level: number;
-  /** how long the take has run, in seconds */
+  /** How long the take has run, in seconds. */
   seconds: number;
-  /** starting, trimming or saving: no other step can be taken */
+  /** Starting, trimming or saving: no other step can be taken. */
   busy: boolean;
   platform: MicPlatform;
-  /** the player of the take being judged */
+  /** The player of the take being judged. */
   preview: RefObject<HTMLAudioElement | null>;
   record: () => Promise<void>;
   stop: () => Promise<void>;
-  /** take a file instead of the microphone */
+  /** Take a file instead of the microphone. */
   takeFile: (file: File) => Promise<void>;
-  /** hand the ready take to `store`; a throw (an ApiError, ideally) keeps the take and says why */
+  /** Hand the ready take to `store`; a throw (an ApiError, ideally) keeps the take and says why. */
   save: (store: (wav: Uint8Array) => Promise<void>) => Promise<void>;
-  /** play the take being judged again */
+  /** Play the take being judged again. */
   listen: () => void;
 }
 
 /**
- * Record → stop → hear it back → keep, or take a file instead: the steps of
- * one take, for every recorder in the console (ClipRecorder below, and the
- * person-by-person page's own). Every take goes through the same pipeline
- * (audioClip.ts): trimmed, levelled and encoded as a short mono WAV before
- * the editor hears it, so what they approve is exactly what is saved. The
- * microphone side (micCapture.ts) works the same on a laptop, an Android
- * phone and an iPhone, and is let go of when the recorder goes.
+ * Record → stop → hear it back → keep, or take a file instead: the steps of one take, for every recorder in the
+ * console. Each take is trimmed, levelled and encoded (audioClip.ts) before the editor hears it, so what they approve
+ * is what is saved; the microphone (micCapture.ts) is let go of when the recorder goes.
  */
 export function useTake(maxSeconds: number, what: string): TakeState {
   const [phase, setPhase] = useState<TakePhase>({ name: 'idle' });
@@ -65,12 +61,12 @@ export function useTake(maxSeconds: number, what: string): TakeState {
   const frame = useRef(0);
   const stopTimer = useRef<number | null>(null);
   const preview = useRef<HTMLAudioElement>(null);
-  // a raw take may start and end with silence; it is trimmed to maxSeconds afterwards,
-  // and a file over 30 s is refused before it is decoded
+  // A raw take may start and end with silence; it is trimmed to maxSeconds afterwards,
+  // and a file over 30 s is refused before it is decoded.
   const maxTakeMs = Math.min(maxSeconds * 2, 28) * 1000;
   const platform = typeof navigator === 'undefined' ? 'other' : micPlatform(navigator.userAgent, navigator.maxTouchPoints);
 
-  // if the microphone is already refused for this site, say how to allow it before a press fails
+  // If the microphone is already refused for this site, say how to allow it before a press fails.
   useEffect(() => {
     let alive = true;
     void micPermission().then((state) => {
@@ -81,7 +77,7 @@ export function useTake(maxSeconds: number, what: string): TakeState {
     };
   }, []);
 
-  // let go of a preview URL once it is no longer shown
+  // Let go of a preview URL once it is no longer shown.
   const previewUrl = phase.name === 'ready' || phase.name === 'saving' ? phase.clip.url : null;
   useEffect(
     () => () => {
@@ -90,7 +86,7 @@ export function useTake(maxSeconds: number, what: string): TakeState {
     [previewUrl],
   );
 
-  // and of the microphone, if the editor moves on mid-take
+  // And of the microphone, if the editor moves on mid-take.
   useEffect(
     () => () => {
       cancelAnimationFrame(frame.current);
@@ -106,7 +102,7 @@ export function useTake(maxSeconds: number, what: string): TakeState {
     try {
       const ready = await prepare(data, maxSeconds, what);
       setPhase({ name: 'ready', clip: ready });
-      // hear it straight away: that is the moment to judge it (a phone may refuse to play unasked; the player is there)
+      // Hear it straight away: that is the moment to judge it (a phone may refuse to play unasked; the player is there).
       requestAnimationFrame(() => void preview.current?.play().catch(() => undefined));
     } catch (err) {
       setProblem(err instanceof ClipError ? err.message : 'Could not read that recording.');
@@ -166,8 +162,7 @@ export function useTake(maxSeconds: number, what: string): TakeState {
     setPhase({ name: 'saving', clip: ready });
     try {
       await store(ready.wav);
-      // the parent usually moves on to the next item, which mounts a fresh
-      // recorder; when it stays here (nothing left to record), show the saved one
+      // The parent usually moves on to a fresh recorder; when it stays (nothing left to record), show the saved one.
       setPhase({ name: 'idle' });
     } catch (err) {
       setProblem(err instanceof ApiError ? err.message : 'Could not save it. Try again.');
@@ -194,14 +189,9 @@ export function useTake(maxSeconds: number, what: string): TakeState {
 }
 
 /**
- * Record → stop → hear it back → save, or take a file instead: the one
- * recorder the audio studio has, for a letter and for a lesson sentence alike
- * (the steps are `useTake`'s). The parent does the upload; this only hands it
- * the WAV.
- *
- * With `shortcuts`, R records and stops, Space plays the take back, Enter
- * saves and the arrows move between items — none of them while the editor is
- * typing in a field. Only one recorder on a page should have them.
+ * The audio studio's recorder, for a letter and a lesson sentence alike; the parent does the upload. With `shortcuts`,
+ * R records and stops, Space plays back, Enter saves and the arrows move between items, never while typing in a field;
+ * only one recorder on a page should have them.
  */
 export function ClipRecorder({
   say,
@@ -215,15 +205,15 @@ export function ClipRecorder({
   onNext,
   shortcuts = false,
 }: {
-  /** the text being recorded, as the editor sees it */
+  /** The text being recorded, as the editor sees it. */
   say: string;
   maxSeconds: number;
-  /** how errors name the thing to say: "one letter or one word", "one sentence" */
+  /** How errors name the thing to say: "one letter or one word", "one sentence". */
   what: string;
   recording: SavedClip | null;
-  /** store the WAV; throw (an ApiError, ideally) to keep the take and say why */
+  /** Store the WAV; throw (an ApiError, ideally) to keep the take and say why. */
   onSave: (wav: Uint8Array) => Promise<void>;
-  /** remove the saved recording, once the editor has confirmed `removePrompt` */
+  /** Remove the saved recording, once the editor has confirmed `removePrompt`. */
   onRemove?: () => Promise<void>;
   removePrompt: string;
   onPrev?: () => void;
@@ -373,11 +363,11 @@ export function ClipRecorder({
 }
 
 /** The keys, for a page that turns them on. */
-export function ShortcutHint({ moves = 'previous / next' }: { moves?: string }): React.JSX.Element {
+export function ShortcutHint(): React.JSX.Element {
   return (
     <p className="aa-keys">
       <kbd>R</kbd> record / stop · <kbd>Space</kbd> listen · <kbd>Enter</kbd> save · <kbd>↑</kbd>
-      <kbd>↓</kbd> {moves}
+      <kbd>↓</kbd> previous / next
     </p>
   );
 }

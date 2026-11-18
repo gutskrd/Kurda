@@ -146,14 +146,9 @@ describe.skipIf(!DATABASE_URL)('shop gifts (integration)', () => {
     expect((await call('GET', '/me/gifts', tokens.taker!)).json().unseen).toBe(0);
   });
 
-  /**
-   * The point of a gift is that it is seen to be from someone. Once equipped it
-   * is otherwise indistinguishable from something bought, so the profile has to
-   * carry the sender or the card has been thrown away with the wrapping.
-   */
+  /** An equipped gift otherwise looks bought, so the profile carries the sender. */
   it('names the sender on the profile once the gift is equipped', async () => {
-    // an equipped background only resolves when it has artwork to resolve to,
-    // and the shared test row was created without any
+    // An equipped background resolves only with artwork, and the shared test row has none.
     await pool.query(`UPDATE shop_items SET asset_key = 'backgrounds/background-01.webp' WHERE sku = $1`, [SKU]);
     await pool.query(`UPDATE users SET equipped_background_sku = $1 WHERE id = $2`, [SKU, ids.taker!]);
 
@@ -179,8 +174,7 @@ describe.skipIf(!DATABASE_URL)('shop gifts (integration)', () => {
 
     const res = await call('GET', `/users/${ids.taker!}`, tokens.giver!);
     expect(res.statusCode).toBe(200);
-    // the background really is there — otherwise this would pass by resolving
-    // to nothing at all, which proves nothing about gifts
+    // The background really resolves; resolving to nothing would prove nothing about gifts.
     expect(res.json().background?.sku).toBe(bought);
     expect(res.json().background?.giftedBy ?? null).toBeNull();
 

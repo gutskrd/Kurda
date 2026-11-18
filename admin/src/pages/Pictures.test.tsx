@@ -42,7 +42,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// sixty badges are drawn on the first tab, which takes a while in a test browser
+// Sixty badges are drawn on the first tab, which takes a while in a test browser.
 describe('the pictures page', { timeout: 20_000 }, () => {
   it('names each slot as an admin would say it', () => {
     expect(slotName({ family: 'rank', key: 'zozan', level: null })).toMatch(/^Zozan/);
@@ -74,7 +74,7 @@ describe('the pictures page', { timeout: 20_000 }, () => {
   it('gives a levelled badge a picture for every level and one for each level', async () => {
     const user = userEvent.setup();
     show();
-    // sixty badges are drawn: the name goes in at once rather than a letter at a time
+    // Sixty badges are drawn: the name goes in at once rather than a letter at a time.
     await user.click(await screen.findByLabelText('Find a badge'));
     await user.paste(levelled.nameKu);
     await user.click(screen.getAllByRole('button', { name: new RegExp(`^${levelled.nameKu}: original`) })[0]!);

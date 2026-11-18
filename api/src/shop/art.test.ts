@@ -1,7 +1,4 @@
-/**
- * The checks and re-encoding an uploaded background or icon goes through
- * (shop/art.ts `processArt`), on pictures made here: no bucket, no database.
- */
+/** The checks and re-encoding an uploaded background or icon goes through (`processArt`), on pictures made here. */
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { ART_SPECS, artKey, processArt } from './art.js';

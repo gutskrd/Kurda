@@ -11,11 +11,7 @@ import { Lesson } from './Lesson';
 import { Review } from './Review';
 import { NextLesson } from './NextLesson';
 
-/*
- * The learning routes as a learner moves through them: Learn → a course's map
- * → a lesson → a review, and "your next lesson" after sign-up. Each test runs
- * the real routes against a scripted API.
- */
+/* The learning routes as a learner moves through them (Learn, a course map, a lesson, a review, the next lesson after sign-up), against a scripted API. */
 
 interface Call {
   method: string;
@@ -136,7 +132,7 @@ describe('Learn', () => {
     expect(within(first).getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
     expect(within(first).getByRole('link', { name: 'Course map' })).toHaveAttribute('href', '/app/learn/course/c1');
 
-    // not only the first course: the Newroz one is there too, not started
+    // Not only the first course: the Newroz one is there too, not started.
     const second = screen.getByRole('heading', { name: 'Newroz' }).closest('article')!;
     expect(within(second).getByRole('link', { name: 'Start' })).toHaveAttribute('href', '/app/learn/lesson/n1?course=c2');
   });
@@ -188,14 +184,14 @@ describe('Learn', () => {
       },
     });
     routes('/app/learn');
-    // the path is Learn's home: the course furthest along, its lesson up next one tap away, Hevalo beside it
+    // The path is Learn's home: the course furthest along, its lesson up next one tap away, Hevalo beside it.
     const path = await screen.findByRole('region', { name: 'Kurmanji for Beginners' });
     expect(await within(path).findByRole('button', { name: 'Greetings, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
     expect(path.querySelector('.lp-mascot [data-speaker="hevalo"]')).not.toBeNull();
     await userEvent.click(within(path).getByRole('link', { name: 'Continue: Greetings' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Greetings' })).toBeInTheDocument();
     expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l2?course=c1');
-    // and the lesson comes back to Learn, not to the course's own page
+    // And the lesson comes back to Learn, not to the course's own page.
     expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn');
   });
 
@@ -217,7 +213,7 @@ describe('Learn', () => {
   });
 
   it('says how today is going in one row, kindly, without counting anything down', async () => {
-    // /me is the session and the streak at once, so this one answers it itself
+    // /me is the session and the streak at once, so this one answers it itself.
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -238,11 +234,7 @@ describe('Learn', () => {
     expect(within(today).getByRole('link', { name: '7 due' })).toHaveAttribute('href', '/app/learn/review');
   });
 
-  /**
-   * Past the goal the chip went on counting against it — "130/20 XP" — which
-   * reads as a sum gone wrong. A goal that is met says what was earned, with
-   * the mark of done beside it.
-   */
+  // A passed goal says what was earned with a done mark, rather than "130/20 XP".
   it('says what was earned, with a done mark, once today’s goal is passed, not a fraction over it', async () => {
     vi.stubGlobal(
       'fetch',
@@ -318,25 +310,25 @@ describe('a course map', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Kurmanji for Beginners' })).toBeInTheDocument();
     expect(screen.getByText('1 of 3 lessons done')).toBeInTheDocument();
 
-    // the unit, named for its number and its name: a course without levels is one section, not named
+    // The unit, named for its number and its name: a course without levels is one section, not named.
     const unit = screen.getByRole('region', { name: 'Chapter 1, Basics' });
-    // the heading pinned over the path says the same, in the unit's colour
+    // The heading pinned over the path says the same, in the unit's colour.
     const pin = screen.getByTestId('lp-pin');
     expect(within(pin).getByText('Chapter 1')).toBeInTheDocument();
     expect(within(pin).getByText('Basics')).toBeInTheDocument();
     expect(screen.queryByText(/Section/)).not.toBeInTheDocument();
 
-    // every stop is a button with its whole state in its name
+    // Every stop is a button with its whole state in its name.
     expect(within(unit).getByRole('button', { name: 'Greetings, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
     expect(within(unit).getByRole('button', { name: 'Numbers, Not open yet, 0 of 1 lessons done' })).toBeInTheDocument();
     expect(within(unit).getByRole('button', { name: 'Chapter 1 trophy, not earned yet' })).toBeInTheDocument();
-    // nothing due, so no review stop
+    // Nothing due, so no review stop.
     expect(within(unit).queryByRole('button', { name: /^Review/ })).not.toBeInTheDocument();
 
-    // one tap from the map into the lesson up next
+    // One tap from the map into the lesson up next.
     expect(within(unit).getByRole('link', { name: 'Continue: Greetings' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
 
-    // the courses, to move between them
+    // The courses, to move between them.
     expect(screen.getByRole('navigation', { name: 'Your courses' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Newroz' })).toHaveAttribute('href', '/app/learn/course/c2');
   });
@@ -358,20 +350,20 @@ describe('a course map', () => {
     serve({ 'GET /courses/c1/map': road, 'GET /practice/due': { due: 0, available: 3 } });
     routes('/app/learn/course/c1');
 
-    // chapter 1 is not done: its story waits, rolled up, and says what opens it
+    // Chapter 1 is not done: its story waits, rolled up, and says what opens it.
     const shut = await screen.findByRole('button', { name: 'Hamo’s story: Mêvan, çay û sêv, opens when the chapter is done' });
     await userEvent.click(shut);
     const card = screen.getByRole('group', { name: 'Hamo’s story' });
     expect(within(card).getByText('Finish the chapter, and Hamo tells you how it ends.')).toBeInTheDocument();
     expect(within(card).queryByRole('link')).not.toBeInTheDocument();
 
-    // chapter 2 is: its story opens in the reader
+    // Chapter 2 is: its story opens in the reader.
     await userEvent.click(screen.getByRole('button', { name: 'Hamo’s story: Mêvanê bê simbêl' }));
     const open = screen.getByRole('group', { name: 'Hamo’s story' });
     expect(within(open).getByText('Mêvanê bê simbêl')).toHaveAttribute('lang', 'ku');
     expect(within(open).getByRole('link', { name: 'Read the story' })).toHaveAttribute('href', '/app/learn/stories/road-02-mevane-be-simbel');
 
-    // the path stops at the last chapter online, and says the next is on its way, Hamo recording it
+    // The path stops at the last chapter online, and says the next is on its way, Hamo recording it.
     const next = screen.getByRole('region', { name: 'House and village' });
     expect(within(next).getByText('Chapter 3')).toBeInTheDocument();
     expect(within(next).getByText('On its way: Hamo is recording it now.')).toBeInTheDocument();
@@ -395,7 +387,7 @@ describe('a course map', () => {
     expect(within(card).getByText('1 of 2 lessons done')).toBeInTheDocument();
     expect(within(card).getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
 
-    // its Tips, fetched once, in a sheet of their own
+    // Its Tips, fetched once, in a sheet of their own.
     await userEvent.click(within(card).getByRole('button', { name: 'Tips' }));
     const tips = await screen.findByRole('dialog', { name: 'Tips for Greetings' });
     expect(await within(tips).findByRole('heading', { level: 3, name: 'Silavkirin' })).toBeInTheDocument();
@@ -403,14 +395,14 @@ describe('a course map', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    // a locked one says, kindly, what opens it — and its lessons are not links yet
+    // A locked one says, kindly, what opens it — and its lessons are not links yet.
     await userEvent.click(screen.getByRole('button', { name: /^Numbers, Not open yet/ }));
     const locked = screen.getByRole('group', { name: 'Numbers' });
     expect(within(locked).getByText('Finish “Greetings” to open this one.')).toBeInTheDocument();
     expect(within(locked).queryByRole('link', { name: /One to five/ })).not.toBeInTheDocument();
     expect(within(locked).getByText('One to five').closest('li')).toHaveTextContent('Not open yet');
 
-    // Escape closes it, back on its stop
+    // Escape closes it, back on its stop.
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('group', { name: 'Numbers' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Numbers, Not open yet/ })).toHaveFocus();
@@ -432,7 +424,7 @@ describe('a course map', () => {
   });
 
   it('shows what a lesson did on coming back: the ring filled, the skill finished, the next one opened, the bubble moved on', async () => {
-    // as the path was drawn before the lesson: Greetings current with one lesson of two, Numbers closed
+    // As the path was drawn before the lesson: Greetings current with one lesson of two, Numbers closed.
     sessionStorage.setItem('hevalo:path:c1', JSON.stringify({ 's:greet': { state: 'current', done: 1 }, 's:num': { state: 'locked', done: 0 } }));
     const after: Map = {
       ...basics,
@@ -449,16 +441,16 @@ describe('a course map', () => {
     serve({ 'GET /courses/c1/map': after, 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
-    // first as it was: Greetings still current-looking, Numbers still closed, the bubble not yet moved
+    // First as it was: Greetings still current-looking, Numbers still closed, the bubble not yet moved.
     const greet = await screen.findByRole('button', { name: /^Greetings/ });
     expect(greet).toHaveClass('is-current');
     expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveClass('is-locked');
     expect(screen.queryByRole('link', { name: 'Start: Numbers' })).not.toBeInTheDocument();
-    // then Greetings is finished, Numbers opens, and the bubble arrives there
+    // Then Greetings is finished, Numbers opens, and the bubble arrives there.
     await waitFor(() => expect(greet).toHaveClass('is-done', 'is-finishing'), { timeout: 3000 });
     await waitFor(() => expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveClass('is-current', 'is-opening'), { timeout: 3000 });
     expect(await screen.findByRole('link', { name: 'Start: Numbers' }, { timeout: 3000 })).toHaveClass('is-arriving');
-    // and the path as it is now is what next time is compared with, rounds and rings with it
+    // And the path as it is now is what next time is compared with, rounds and rings with it.
     expect(JSON.parse(sessionStorage.getItem('hevalo:path:c1')!)).toEqual({
       's:greet': { state: 'done', done: 2, rounds: 1, pieces: 0 },
       's:num': { state: 'current', done: 0, rounds: 0, pieces: 0 },
@@ -471,13 +463,13 @@ describe('a course map', () => {
     await screen.findByRole('button', { name: /^Greetings/ });
     expect(screen.getAllByTestId('lp-learner')).toHaveLength(1);
     expect(screen.getByTestId('lp-learner')).toHaveAttribute('aria-hidden', 'true');
-    // the rail beside the path: every unit by its number and name, the one the learner is in marked
+    // The rail beside the path: every unit by its number and name, the one the learner is in marked.
     const rail = screen.getAllByRole('navigation', { name: 'Course map' })[0]!;
     const here = within(rail).getByRole('button', { name: 'Chapter 1, Basics' });
     expect(here).toHaveAttribute('aria-current', 'step');
     await userEvent.click(here);
     expect(screen.getByRole('button', { name: /^Greetings/ })).toHaveFocus();
-    // where there is no room for the rail, the heading's flag opens it in a sheet
+    // Where there is no room for the rail, the heading's flag opens it in a sheet.
     await userEvent.click(screen.getByRole('button', { name: 'Course map' }));
     const sheet = await screen.findByRole('dialog', { name: 'Course map' });
     expect(within(sheet).getByRole('button', { name: 'Chapter 1, Basics' })).toBeInTheDocument();
@@ -492,7 +484,7 @@ describe('a course map', () => {
     expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveFocus();
     await userEvent.keyboard('{End}');
     expect(screen.getByRole('button', { name: /trophy/ })).toHaveFocus();
-    // the unit's grammar is its heading's guide, not a stop: the first stop on the path is its first skill
+    // The unit's grammar is its heading's guide, not a stop: the first stop on the path is its first skill.
     await userEvent.keyboard('{Home}');
     expect(greetings).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
@@ -524,20 +516,20 @@ describe('a course map', () => {
     serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
-    // the open section: its units named under the section's number
+    // The open section: its units named under the section's number.
     expect(await screen.findByRole('region', { name: 'Section 2, Chapter 2, Family' })).toBeInTheDocument();
     expect(within(screen.getByTestId('lp-pin')).getByText('Section 2 · Chapter 2')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Chapter 3, House' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Topic d, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
 
-    // the finished one before it, by the app's plain name for its level, never its CEFR letter
+    // The finished one before it, by the app's plain name for its level, never its CEFR letter.
     const done = screen.getByTestId('lp-section-1');
     expect(within(done).getByText('Starter')).toBeInTheDocument();
     expect(within(done).getByText('Section complete')).toBeInTheDocument();
     expect(within(done).queryByText(/A1/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Topic a/ })).not.toBeInTheDocument();
 
-    // the shut one after it: what it is, how many chapters, what opens it; and it does not open
+    // The shut one after it: what it is, how many chapters, what opens it; and it does not open.
     const shut = screen.getByTestId('lp-section-3');
     expect(within(shut).getByText('Intermediate')).toBeInTheDocument();
     expect(within(shut).getByText('One chapter')).toBeInTheDocument();
@@ -545,7 +537,7 @@ describe('a course map', () => {
     expect(shut.tagName).not.toBe('BUTTON');
     expect(within(shut).queryByRole('button')).not.toBeInTheDocument();
 
-    // pressed, the finished one opens again, and the learner's own folds into a card that says they are there
+    // Pressed, the finished one opens again, and the learner's own folds into a card that says they are there.
     expect(done).toHaveAccessibleName('Section 1, Starter, First words and short sentences, Section complete, One chapter');
     await userEvent.click(done);
     expect(screen.getByRole('button', { name: 'Topic a, Done — strong, round 2 of 3, 0 of 2 lessons' })).toBeInTheDocument();
@@ -559,12 +551,12 @@ describe('a course map', () => {
     serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
-    // Topic c has all three rounds: its ring whole and gold, three stars on its coin
+    // Topic c has all three rounds: its ring whole and gold, three stars on its coin.
     const c = await screen.findByRole('button', { name: 'Topic c, Done — strong, all 3 rounds done' });
     expect(within(c).getByTestId('lp-ring')).toHaveClass('is-whole');
     expect(within(c).getAllByTestId('lp-stars-3')).toHaveLength(1);
     expect(c.querySelectorAll('.lp-ring-piece')).toHaveLength(2);
-    // Topic d, the one to do now: a piece filled of two, and no stars yet
+    // Topic d, the one to do now: a piece filled of two, and no stars yet.
     const d = screen.getByRole('button', { name: /^Topic d/ });
     expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1);
     expect(within(d).queryByTestId(/lp-stars/)).not.toBeInTheDocument();
@@ -595,12 +587,12 @@ describe('a course map', () => {
     expect(within(card).getByTestId('lp-chapter-complete')).toHaveTextContent('Chapter complete');
     expect(within(card).getByRole('link', { name: 'Read the story' })).toHaveAttribute('href', '/app/learn/stories/road-01-tale');
     expect(within(card).getByRole('link', { name: 'Practise' })).toHaveAttribute('href', '/app/learn/review');
-    // no trophy beside it: the story is the chapter's last stop
+    // No trophy beside it: the story is the chapter's last stop.
     expect(screen.queryByRole('button', { name: /trophy/ })).not.toBeInTheDocument();
   });
 
   it('fills the ring, turns the stop gold and drops its star in on coming back from the lesson that finished its round', async () => {
-    // as the path was drawn before the lesson: Topic d current, one lesson of two done
+    // As the path was drawn before the lesson: Topic d current, one lesson of two done.
     sessionStorage.setItem(
       'hevalo:path:c1',
       JSON.stringify({ 's:a': { state: 'done', done: 2, rounds: 1, pieces: 0 }, 's:b': { state: 'done', done: 2, rounds: 1, pieces: 1 }, 's:c': { state: 'done', done: 2, rounds: 3, pieces: 2 }, 's:d': { state: 'current', done: 1, rounds: 0, pieces: 1 }, 's:e': { state: 'locked', done: 0, rounds: 0, pieces: 0 }, 's:f': { state: 'locked', done: 0, rounds: 0, pieces: 0 } }),
@@ -612,31 +604,31 @@ describe('a course map', () => {
     routes('/app/learn/course/c1');
 
     const d = await screen.findByRole('button', { name: /^Topic d/ });
-    // first as it was: one piece filled, no star
+    // First as it was: one piece filled, no star.
     expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1);
-    // then the ring whole and gold as the stop turns gold, and its star dropping in
+    // Then the ring whole and gold as the stop turns gold, and its star dropping in.
     await waitFor(() => expect(within(d).getByTestId('lp-ring')).toHaveClass('is-whole'), { timeout: 3000 });
     await waitFor(() => expect(d.querySelector('.lp-star.is-earned')).not.toBeNull(), { timeout: 3000 });
-    // and the next round begins as the star lands: the ring empty again, the star kept
+    // And the next round begins as the star lands: the ring empty again, the star kept.
     await waitFor(() => expect(within(d).getByTestId('lp-ring')).not.toHaveClass('is-whole'), { timeout: 3000 });
     expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(0);
     expect(within(d).getByTestId('lp-stars-1')).toBeInTheDocument();
   });
 
   it('comes back to the section a lesson was played in, a finished one too, with its ring moving on', async () => {
-    // as the path was drawn before: the learner in the second section, the first finished
+    // As the path was drawn before: the learner in the second section, the first finished.
     sessionStorage.setItem(
       'hevalo:path:c1',
       JSON.stringify({ 's:a': { state: 'done', done: 2, rounds: 1, pieces: 0 }, 's:b': { state: 'done', done: 2, rounds: 1, pieces: 1 }, 's:c': { state: 'done', done: 2, rounds: 3, pieces: 2 }, 's:d': { state: 'current', done: 1, rounds: 0, pieces: 1 }, 's:e': { state: 'locked', done: 0, rounds: 0, pieces: 0 }, 's:f': { state: 'locked', done: 0, rounds: 0, pieces: 0 } }),
     );
-    // a lesson of Topic a played a second time
+    // A lesson of Topic a played a second time.
     const replayed = sections();
     replayed.units[0]!.skills[0] = { ...replayed.units[0]!.skills[0]!, lessons: [{ ...lesson('a1', true, 'Lesson a1'), times: 2 }, { ...lesson('a2', true, 'Lesson a2'), times: 1 }] };
     serve({ 'GET /courses/c1/map': replayed, 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
     const a = await screen.findByRole('button', { name: 'Topic a, Done — strong, round 2 of 3, 1 of 2 lessons' });
     await waitFor(() => expect(a.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1), { timeout: 3000 });
-    // the learner's own section waits folded, to go back to
+    // The learner's own section waits folded, to go back to.
     expect(screen.getByTestId('lp-section-2')).toHaveAccessibleName(/^Section 2, Beginner, .*You are here/);
   });
 
@@ -687,12 +679,7 @@ describe('a lesson', () => {
     expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn/course/c1');
   });
 
-  /**
-   * Opening a lesson showed a spinner alone on an empty screen until its
-   * session arrived. It shows the lesson's own frame now — the way out where
-   * the way out will be, the empty progress track, the bar at the foot — so
-   * the lesson arrives into a picture that is already there.
-   */
+  // While the session loads, the lesson's own frame shows, with a working way out.
   it('stands in the lesson’s own frame while the session is on its way, with the way out already working', async () => {
     let letGo: () => void = () => undefined;
     const held = new Promise<void>((resolve) => (letGo = resolve));
@@ -716,15 +703,15 @@ describe('a lesson', () => {
     );
     routes({ pathname: '/app/learn/lesson/l2', search: '?course=c1' });
 
-    // said once, as a status, for a screen reader; the boxes are not read out
+    // Said once, as a status, for a screen reader; the boxes are not read out.
     const waiting = (await screen.findByText('Opening the lesson…')).closest('[role="status"]')!;
     expect(waiting).toHaveAttribute('aria-busy', 'true');
     const frame = waiting.closest('.lesson')!;
     expect(frame.querySelector('.lesson-progress')).not.toBeNull();
     expect(frame.querySelector('.lesson-bar')).not.toBeNull();
-    // no spinner on an empty page any more
+    // No spinner on an empty page.
     expect(document.querySelector('.spinner')).toBeNull();
-    // leaving does not wait for the lesson, and goes where the lesson's own ✕ will
+    // Leaving does not wait for the lesson, and goes where the lesson's own ✕ will.
     expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn/course/c1');
 
     letGo();
@@ -755,7 +742,7 @@ describe('review', () => {
     expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/review/p1');
     const starts = calls.filter((c) => c.method === 'POST' && c.path === '/practice/session');
     expect(starts).toEqual([{ method: 'POST', path: '/practice/session', body: { exerciseIds: ['x'] } }]);
-    // the session it was handed is not fetched again
+    // The session it was handed is not fetched again.
     expect(calls.some((c) => c.path === '/practice/sessions/p1')).toBe(false);
   });
 

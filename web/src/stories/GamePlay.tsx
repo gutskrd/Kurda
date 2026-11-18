@@ -20,17 +20,13 @@ import { haptic } from '../lib/haptics';
 
 /** "This question closes soon" shows in the last stretch of an untimed question's cap. */
 const CLOSES_SOON_MS = 30_000;
-/** "Questions start in about a minute" in the last minute before the reading's hard cap. */
+/** "Questions start in about a minute", in the last minute before the reading's hard cap. */
 const HARD_CAP_WARNING_MS = 60_000;
 
-// ---------------------------------------------------------------------------
-// reading
-
 /**
- * Everyone reads at their own pace (contract §A1). Nobody is shown a clock:
- * only how many have finished — never who — and, after the soft cap, that the
- * host may start the questions; a minute before the hard cap, that they will
- * start on their own. A solo reader starts the questions when ready.
+ * Everyone reads at their own pace with no clock shown: only how many have finished (never who), after the soft cap
+ * that the host may start, and a minute before the hard cap that questions start by themselves. A solo reader starts
+ * when ready.
  */
 export function GameReading({
   view,
@@ -99,7 +95,7 @@ export function GameReading({
                 rememberTextSize(n);
               }}
             />
-            {/* whatever is recorded plays as one track; a partly recorded story says so on the bar */}
+            {/* Whatever is recorded plays as one track; a partly recorded story says so on the bar. */}
             {audio.track.length > 0 && <StoryPlayerBar audio={audio} />}
           </div>
           <StoryText paragraphs={story.paragraphs} glossary={story.glossary} dialect={story.dialect} textSize={size} audio={audio} />
@@ -151,9 +147,6 @@ export function GameReading({
 const NO_PARAGRAPHS: string[] = [];
 const NO_AUDIO: Record<string, string> = {};
 
-// ---------------------------------------------------------------------------
-// a question
-
 /** The story beside the question (wide screens) or behind a "Story" button (phones). */
 function StoryPane({ story, size, wide, label }: { story: StoryDetail; size: number; wide: boolean; label: string }): React.JSX.Element {
   if (wide) {
@@ -167,15 +160,10 @@ function StoryPane({ story, size, wide, label }: { story: StoryDetail; size: num
 }
 
 /**
- * One question (contract §A1): its place in the questions as a ring and
- * "2 of 5", the prompt (and English under it at level 1, or when asked for),
- * the options as full-width pills numbered 1–4 — the keys 1–4 answer on a
- * keyboard — and, for a timed question, a bar and a count that are only ever
- * announced at "10 seconds left". The heading takes the focus when the
- * question appears, and nothing takes it after.
- *
- * Sending is careful: "Sending…" until the server has it, the same answer
- * again after a network failure, then "Answer locked — 2 of 4 answered".
+ * One question: the counter, the prompt (with English under it at level 1 or on request), the options as pills that keys
+ * 1–4 answer, and for a timed question a bar announced only at "10 seconds left". The heading takes focus when the
+ * question appears, and nothing after. Answers show "Sending…" until the server has them, retry after network failures,
+ * then "Answer locked — 2 of 4 answered".
  */
 export function GameQuestion({
   view,
@@ -197,7 +185,7 @@ export function GameQuestion({
   const q = view.question;
   const heading = useRef<HTMLHeadingElement>(null);
   const [english, setEnglish] = useState(() => showEnglishFor(view.settings.level, rememberedEnglish()));
-  // the question in the reader's language where it is translated into it, else in English
+  // In the reader's language where translated, else English.
   const help = q ? questionHelp(q, locale, view.settings.dialect) : null;
   const [sending, setSending] = useState<number | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -212,15 +200,15 @@ export function GameQuestion({
   const visibleText = view.settings.textDuring === 'visible' && story !== null;
   const { lang, dir } = storyTextDirection(view.settings.dialect);
 
-  // the new question's heading takes the focus, and is said
+  // The new question's heading takes focus and is announced.
   useEffect(() => {
     if (!q) return;
     heading.current?.focus();
     announce(t('stories.status.question', { index: q.index + 1, total: q.total }));
-    // once per question: a new index is a new question
+    // Once per question.
   }, [q?.index]);
 
-  // "10 seconds left", said once; the count itself is never read out
+  // "10 seconds left", announced once; the count itself is never read out.
   const saidTen = useRef(false);
   useEffect(() => {
     if (timed && left !== null && left <= 10_000 && left > 0 && !locked && !saidTen.current) {
@@ -248,7 +236,7 @@ export function GameQuestion({
     [q, locked, sending, answer, view.mode, announce, t],
   );
 
-  // keys 1–4 answer, unless someone is typing or a dialog is open
+  // Keys 1–4 answer, unless someone is typing or a dialog is open.
   useEffect(() => {
     if (!q || locked) return;
     const onKey = (e: KeyboardEvent): void => {
@@ -363,15 +351,10 @@ export function GameQuestion({
   );
 }
 
-// ---------------------------------------------------------------------------
-// the answer
-
 /**
- * The answer to a question (contract §A1): the right option with a mark and
- * the words "Right answer", the viewer's own choice marked, the one-line
- * explanation, and where the story says so, quoted. A duo or group moves on
- * when everyone has continued (or after a while); the host cannot skip it.
- * Only the verdict and the right option are announced.
+ * A question's answer: the right option marked "Right answer", the viewer's choice, the explanation, and the story's own
+ * words where it says so. Duo and group games move on when everyone continues (or after a while); the host cannot skip.
+ * Only the verdict and right option are announced.
  */
 export function GameReveal({
   view,
@@ -389,7 +372,7 @@ export function GameReveal({
   const q = view.question;
   const r = view.reveal;
   const [english, setEnglish] = useState(() => showEnglishFor(view.settings.level, rememberedEnglish()));
-  // the reveal carries the question's translations with its explanation
+  // The reveal carries the question's translations with its explanation.
   const help = q && r ? questionHelp({ promptEn: q.promptEn, explanationEn: r.explanationEn, translations: r.translations ?? q.translations }, locale, view.settings.dialect) : null;
   const [busy, setBusy] = useState(false);
   const next = useRef<HTMLButtonElement>(null);
@@ -403,10 +386,10 @@ export function GameReveal({
     const verdict =
       r.myCorrect === true ? t('stories.game.right') : r.myChoice === null ? t('stories.game.noAnswer') : t('stories.game.notThisTime');
     announce(t('stories.game.revealSaid', { verdict, answer: right }));
-    // felt as the verdict on your answer is shown, on a touch screen that can; nothing when you gave none
+    // A buzz with the verdict where the device can, unless no answer was given.
     if (r.myChoice !== null) haptic(r.myCorrect ? 'correct' : 'wrong');
     next.current?.focus();
-    // once per answer
+    // Once per answer.
   }, [r?.index]);
 
   if (!q || !r) return null;
@@ -469,7 +452,7 @@ export function GameReveal({
           {help.explanation}
         </p>
       )}
-      {/* the question's own choice, so the translation can be asked for here too */}
+      {/* The question's own toggle, so the translation can be asked for here too. */}
       {help && (help.prompt || help.explanation) && <EnglishToggle on={english} onChange={setEnglish} english={help.lang === 'en'} />}
       <Evidence story={story} paragraph={r.evidenceParagraph} sentence={r.evidenceSentence} />
 

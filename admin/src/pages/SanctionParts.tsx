@@ -15,18 +15,11 @@ import {
 import { Select, Textarea } from '../ui';
 
 /**
- * The parts of a sanction form that the case's decision, a person's page and
- * an appeal's "change it" share: the row of lengths (24 h to permanent), and
- * a whole sanction — what, how long, which rule, and the words the person
- * reads — kept as one draft so a change of kind or rule rewrites the words
- * nobody has typed into.
+ * Sanction form parts shared by a case's decision, a person's page and an appeal: the row of lengths, and a whole
+ * sanction kept as one draft so a change of kind or rule rewrites the words nobody has typed into.
  */
 
-/**
- * The lengths as a row of chips, one chosen. `permanent: false` leaves out
- * "Permanent" — an appeal's new sanction can never be a ban, and a
- * suspension needs an end.
- */
+/** The lengths as a row of chips; `permanent: false` leaves out "Permanent", as for an appeal's new sanction. */
 export function DurationChips({
   kind,
   hours,
@@ -72,10 +65,10 @@ export function DurationChips({
 export interface SanctionDraft {
   kind: SanctionKind;
   durationHours: number | null;
-  /** '' until one is chosen */
+  /** '' until one is chosen. */
   policy: string;
   statement: string;
-  /** typed by the moderator: a change of rule or kind leaves it alone */
+  /** Typed by the moderator: a change of rule or kind leaves it alone. */
   statementEdited: boolean;
   internalNote: string;
 }
@@ -119,11 +112,7 @@ export function sanctionDraftProblems(d: SanctionDraft, { needsPolicy = true }: 
 /** The kinds a person's page offers, lightest first. A removal needs content, so it is the case's to give. */
 export const PERSON_KINDS: readonly SanctionKind[] = ['warning', 'chat_mute', 'post_mute', 'feature_limit', 'suspension', 'permanent_ban'];
 
-/**
- * The fields of a sanction. `kinds` limits what can be chosen (an appeal's
- * new sanction is never a ban); `withPolicy` and `withNote` are off where the
- * rule and the record come from elsewhere (an appeal keeps the original rule).
- */
+/** A sanction's fields. `kinds` limits the choice; `withPolicy` and `withNote` are off where those come from elsewhere. */
 export function SanctionFields({
   draft,
   onChange,
@@ -134,7 +123,7 @@ export function SanctionFields({
 }: {
   draft: SanctionDraft;
   onChange: (next: SanctionDraft) => void;
-  /** "@heval" */
+  /** "@heval". */
   who: string;
   kinds?: readonly SanctionKind[];
   withPolicy?: boolean;
@@ -167,7 +156,7 @@ export function SanctionFields({
           hint="Someone who may hurt themselves is helped from a case, with a caring message — never sanctioned."
           options={[
             { value: '', label: 'Choose a rule…', disabled: true },
-            // self-harm is never a reason to sanction (the API refuses it too)
+            // self-harm is never a reason to sanction (the API refuses it too).
             ...REPORT_CATEGORIES.filter((c) => c.key !== 'self_harm').map((c) => ({ value: c.key, label: categoryName(c.key) })),
           ]}
         />

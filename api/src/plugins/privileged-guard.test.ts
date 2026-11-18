@@ -1,15 +1,7 @@
 /**
- * Which routes count as staff surface.
- *
- * The admin 2FA gate used to answer that from the URL — anything under /admin —
- * and six routes just as privileged were registered elsewhere, so a password
- * with no second factor reached them. The answer now comes from the guard: a
- * route that asks for a role is staff surface wherever it lives.
- *
- * These tests pin the mechanism that carries that answer, because it is easy to
- * break silently. Wrap `requireRoles` in one more helper that returns a plain
- * arrow function and the mark is gone, every route it guards quietly leaves the
- * gate, and nothing else in the suite would notice.
+ * Which routes count as staff surface: any route whose guard asks for a role. This pins the marking mechanism, which
+ * is easy to break silently: wrapping `requireRoles` in a helper returning a plain arrow function would drop the mark
+ * and take its routes out of the 2FA gate unnoticed.
  */
 import { describe, expect, it } from 'vitest';
 import { markPrivileged, requireAuth, requireRoles, routeIsPrivileged } from './auth.js';
@@ -26,8 +18,7 @@ describe('privileged guards', () => {
   });
 
   it('does not mark a route that only requires a signed-in user', () => {
-    // being logged in is not being staff; gating every authenticated route on a
-    // TOTP code would lock every player out of the app
+    // Being signed in is not being staff; requiring a TOTP code on every authenticated route would lock players out.
     expect(routeIsPrivileged(requireAuth)).toBe(false);
     expect(routeIsPrivileged([requireAuth])).toBe(false);
   });
@@ -38,8 +29,7 @@ describe('privileged guards', () => {
   });
 
   it('marks the guard itself, not one shared object', () => {
-    // each call to requireRoles returns a fresh closure; marking must travel with
-    // it rather than depending on a registry keyed by something else
+    // Each requireRoles call returns a fresh closure, so the mark must travel with it.
     const a = requireRoles('admin');
     const b = requireRoles('support');
     expect(routeIsPrivileged(a)).toBe(true);
@@ -54,8 +44,7 @@ describe('privileged guards', () => {
   });
 
   it('returns the same function it was given', () => {
-    // markPrivileged must not wrap: a wrapper would change `this`, arity, and the
-    // identity Fastify holds on to
+    // markPrivileged must not wrap, which would change `this`, arity and the identity fastify keeps.
     const original = async (): Promise<void> => undefined;
     expect(markPrivileged(original)).toBe(original);
   });

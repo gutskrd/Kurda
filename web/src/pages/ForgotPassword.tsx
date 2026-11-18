@@ -15,8 +15,7 @@ export function ForgotPassword(): React.JSX.Element {
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setBusy(true);
-    // The endpoint intentionally doesn't reveal whether an account exists, so we
-    // always show the same confirmation — no account enumeration from the client.
+    // The endpoint never reveals whether an account exists, so the same confirmation always shows.
     await requestPasswordReset(email);
     setBusy(false);
     setSent(true);

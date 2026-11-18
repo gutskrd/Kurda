@@ -14,13 +14,8 @@ import {
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Pick a colour: a gradient to point at, a hue to slide, and the three ways of
- * writing it down — any of which you can type into.
- *
- * The hue is held separately from the colour. Drag to pure black and the hue is
- * gone from the colour itself, but the square must not jump back to red; the
- * slider remembers where you were, which is what every picker does and what
- * people expect.
+ * A colour picker: a square, a hue slider, and hex, RGB and HSL fields to type into. The hue is held separately, so
+ * dragging to black or grey does not snap the square back to red.
  */
 export function ColorPicker({
   value,
@@ -35,15 +30,14 @@ export function ColorPicker({
   const [hue, setHue] = useState(hsv.h);
   const squareRef = useRef<HTMLDivElement>(null);
 
-  // follow the colour when it is changed from outside, but not while it is grey
-  // and has no hue of its own to follow
+  // Follow outside changes, except to a grey, which has no hue to follow.
   useEffect(() => {
     if (hsv.s > 0.01 && hsv.v > 0.01) setHue(hsv.h);
   }, [hsv.h, hsv.s, hsv.v]);
 
   const commit = (next: { r: number; g: number; b: number }): void => onChange(toHex(next));
 
-  /** Point anywhere in the square: across is saturation, down is darkness. */
+  /** Picks from the square: across is saturation, down is darkness. */
   const pickAt = (clientX: number, clientY: number): void => {
     const box = squareRef.current?.getBoundingClientRect();
     if (!box || box.width === 0) return;
@@ -126,13 +120,7 @@ export function ColorPicker({
   );
 }
 
-/**
- * One of the three boxes.
- *
- * It holds what you are typing until you finish, because "#3a" on the way to
- * "#3ab26f" is not a colour and the picker must not lurch at every keystroke.
- * A value that never becomes one is put back rather than left looking accepted.
- */
+/** One of the three fields. It holds the typed text until it parses, and reverts if it never does. */
 function Field({
   label,
   value,

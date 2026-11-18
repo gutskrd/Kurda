@@ -1,8 +1,4 @@
-/**
- * XP → level curve (KUR-286) for the auto-granted "level" tag. Pure and
- * deterministic. A gentle square-root curve: level 1 at 0 XP, then each level
- * costs progressively more, so the number stays meaningful without ballooning.
- */
+/** The pure XP-to-level curve behind the automatic "level" tag: level 1 at 0 XP, each level costing more, so the number stays meaningful. */
 
 /** XP per the curve: level n starts at STEP * (n-1)^2 XP. */
 const STEP = 100;

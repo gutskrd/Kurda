@@ -1,19 +1,15 @@
 import { useMemo, useState } from 'react';
 import { glossSpans, localeDir, storyCoverFor, storyParagraphs, storyTextDirection, type AppLocale, type StoryCategory } from '@kurda/shared';
 import { artSrc } from '../shop/art';
-import { categoryLabel, cefrLabel, draftFromForm, localeName, traditionLine, translationChecks, type AdminStory, type StoryForm, type TextFacts } from '../stories';
+import { localeName } from '../format';
+import { categoryLabel, cefrLabel, draftFromForm, traditionLine, translationChecks, type AdminStory, type StoryForm, type TextFacts } from '../stories';
 import { Badge, Icon } from '../ui';
 import { EditorSection } from './StoryEditorFields';
 
 /**
- * The story as the reader will show it, from the form as it is now: the
- * cover (the picture chosen, else the kilim the apps give this story, the
- * same one every time), the title, "A2 · Elementary", the category, the
- * minutes, the narrated badge, the author and tradition line, the synopsis,
- * then the paragraphs with the glossary's words marked and a paragraph's
- * translation under it. Not a copy of the reader's code — the admin has its
- * own look — but the same order and the same decisions, so an editor sees
- * what a learner will meet before it is published.
+ * The story as the reader will show it, from the form as it is now: the cover, title, level, category, minutes,
+ * attribution and synopsis, then the paragraphs with glossary words marked and translations under them. The console's
+ * own look, but the reader's order and decisions.
  */
 export function StoryPreview({
   form,
@@ -30,10 +26,10 @@ export function StoryPreview({
   const draft = useMemo(() => draftFromForm(form), [form]);
   const translated = translationChecks(form).filter((c) => c.state !== 'empty');
   const [locale, setLocale] = useState<string>('');
-  // the chosen translation, or English, or the first there is; none when there is none
+  // The chosen translation, or English, or the first there is; none when there is none.
   const shownLocale = translated.find((c) => c.locale === locale)?.locale ?? translated.find((c) => c.locale === 'en')?.locale ?? translated[0]?.locale ?? null;
   const translation = shownLocale ? storyParagraphs(draft.translations[shownLocale] ?? '') : [];
-  // what the apps lay the story on, over that picture's own ground while it loads: storyCoverFor picks the same rug for them
+  // What the apps lay the story on, over that picture's own ground while it loads: storyCoverFor picks the same rug for them.
   const art = storyCoverFor({ slug: draft.slug, cover: draft.cover });
   const cover = artSrc(art.path);
   const minutes = draft.readingMinutes ?? facts.minutes;

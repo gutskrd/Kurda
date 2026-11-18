@@ -1,8 +1,6 @@
 /**
- * What a "Review" entry and a "practise these now" button need from practice,
- * against real Postgres: how many items are due (counted as a session would
- * find them), a session of exactly the items asked for, and a re-ask of a
- * missed item that is graded but never recorded.
+ * What a "Review" entry and "practise these now" need, against real Postgres: the due count as a session would find
+ * it, a session of exactly the items asked, and a re-ask of a missed item that is graded but never recorded.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -60,7 +58,7 @@ describe.skipIf(!DATABASE_URL)('practice: due count, chosen items, retry (integr
     return player;
   }
 
-  /** Give a learner review items as a lesson would, due `dueInDays` from now. */
+  /** Gives a learner review items as a lesson would, due `dueInDays` from now. */
   async function schedule(player: Player, items: string[], dueInDays: number): Promise<void> {
     for (const item of items) {
       await pool.query(
@@ -139,7 +137,7 @@ describe.skipIf(!DATABASE_URL)('practice: due count, chosen items, retry (integr
     await pool.query(`UPDATE practice_sessions SET created_at = now() - interval '25 hours' WHERE id = $1`, [first]);
     expect((await authed(player, 'GET', '/practice/due')).json().open).toBeNull();
 
-    // only the learner's own: somebody else's review, started just now, is not offered
+    // Only the learner's own: someone else's review, started just now, is not offered.
     const other = await register('propeek');
     await schedule(other, [ex.tr], -1);
     const theirs = (await authed(other, 'POST', '/practice/session', { exerciseIds: [ex.tr] })).json().sessionId as string;

@@ -1,14 +1,8 @@
 /**
- * The Zêr and Gewher boards against real Postgres (and Redis when present):
- * what each person holds now, highest first, ties sharing a place, a page at
- * a time down to the board's depth; the same listing rules as the weekly
- * board, with the staff and empty wallets left out as well; and the caller's
- * own balance and place always live.
- *
- * Balances are written straight to `wallet_balances` and are near the highest
- * balance the database allows (migration 1751000214000), so these people lead
- * the shared board whatever else is in the database, and the places asserted
- * are places on the whole board.
+ * The Zêr and Gewher boards against real Postgres, and Redis when present: current holdings highest first, ties
+ * sharing a place, paged to the board's depth, the weekly board's listing rules plus staff and empty wallets left
+ * out, and the caller's own balance and place always live. Balances are written near the database's ceiling, so
+ * these people lead the shared board and the asserted places are places on the whole board.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -92,8 +86,7 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     await hold(people.bot!, 'zer', BASE + 940);
     await hold(people.banned!, 'zer', BASE + 930);
     await hold(people.held!, 'gems', BASE + 950);
-    // Gewher is a board of its own: led by someone who is fourth for Zêr, and
-    // without the top of the Zêr board, who holds none
+    // Gewher is its own board: led by the fourth for Zêr, and without the Zêr leader, who holds none.
     await hold(people.next!, 'gems', BASE + 20);
     await hold(people.tieA!, 'gems', BASE + 10);
     await hold(people.me!, 'gems', BASE + 10);
@@ -229,9 +222,9 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     const wallet = new WalletService(pool);
     await wallet.credit({ userId: people.me!.id, currency: 'zer', amount: 60, reason: 'test_board', idempotencyKey: `lbz-${suffix}-live` });
     const board = await boards().board('zer', people.me!.id);
-    // ahead of `next` now, whatever the list says
+    // Ahead of `next` now, whatever the list says.
     expect(board.me).toEqual({ rank: 4, score: BASE + 110 });
-    // the sorted set lists the balance as it was built, for a few minutes; straight from Postgres it is the new one
+    // The sorted set keeps the balance it was built with for a few minutes; Postgres has the new one.
     expect(board.top.find((e) => e.userId === people.me!.id)?.score).toBe(REDIS_URL ? BASE + 50 : BASE + 110);
     await wallet.debit({ userId: people.me!.id, currency: 'zer', amount: 60, reason: 'test_board', idempotencyKey: `lbz-${suffix}-back` });
     await boards().rebuild('zer');
@@ -265,7 +258,7 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     };
     // straight from Postgres
     await check(shallow());
-    // and from the sorted set, which is put back as it was afterwards
+    // And from the sorted set, restored afterwards.
     if (redis) {
       try {
         await shallow(redis).rebuild('zer');
@@ -273,7 +266,7 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
       } finally {
         await boards().rebuild('zer');
       }
-      // a board that was not cut gives everyone their place again
+      // A board that was not cut gives everyone their place again.
       expect((await boards().board('zer', people.next!.id)).me).toEqual({ rank: 4, score: BASE + 100 });
     }
   });
@@ -313,8 +306,8 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      // a test database is small enough that reading it all and sorting would win; this asks
-      // whether the index can serve the read in order at all
+      // A test database is small enough that a full sort would win, so this only asks whether the index can serve the
+      // read in order.
       await client.query('SET LOCAL enable_seqscan = off');
       await client.query('SET LOCAL enable_bitmapscan = off');
       const plan = await client.query<{ 'QUERY PLAN': string }>(

@@ -1,14 +1,8 @@
 /**
- * Work that may happen only once a transaction has committed — telling other
- * modules about a rated game, say: a listener that reads the database before
- * the commit would not see the game, and one told about a transaction that
- * then rolled back would act on something that never happened.
- *
- * Code deep inside a transaction (the rank service, called from a game's
- * finish) queues it against the client it was handed; the code that owns the
- * transaction runs the queue after COMMIT and drops it on ROLLBACK. A pooled
- * client is reused, so an owner also clears it when it begins, in case an
- * earlier owner of the same client never did.
+ * Work that may run only once a transaction has committed, such as telling other modules about a rated game: a
+ * listener reading before the commit would not see it, and a rollback would leave it acting on nothing. Code
+ * inside the transaction queues work against its client; the owner of the transaction runs the queue after COMMIT
+ * and drops it on ROLLBACK. Pooled clients are reused, so an owner also clears the queue when it begins.
  */
 const queues = new WeakMap<object, Array<() => void>>();
 
@@ -19,7 +13,7 @@ export function afterCommit(client: object, fn: () => void): void {
   else queues.set(client, [fn]);
 }
 
-/** The transaction committed: run what was queued, each on its own (one failing never stops the rest). */
+/** After COMMIT: runs what was queued, each on its own so one failure never stops the rest. */
 export function runAfterCommit(client: object): void {
   const queue = queues.get(client);
   queues.delete(client);
@@ -32,7 +26,7 @@ export function runAfterCommit(client: object): void {
   }
 }
 
-/** The transaction rolled back (or is about to begin): forget what was queued. */
+/** After ROLLBACK, or before BEGIN: forgets what was queued. */
 export function dropAfterCommit(client: object): void {
   queues.delete(client);
 }

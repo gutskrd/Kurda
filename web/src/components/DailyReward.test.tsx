@@ -39,16 +39,12 @@ describe('DailyReward', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /claim daily zêr/i }));
     expect(await screen.findByText(/\+20 zêr claimed/i)).toBeInTheDocument();
-    // the balance counts up from 100 to where it now is
+    // The balance counts up from 100.
     expect(await screen.findByText('120', undefined, { timeout: 2000 })).toBeInTheDocument();
     expect(screen.getByText(/claimed today/i)).toBeInTheDocument();
   });
 
-  /**
-   * The reward is paid for learning. Before a lesson or practice session has
-   * been finished today the server refuses a claim, so the tile says what to
-   * do instead of offering a button that would fail.
-   */
+  // Before a lesson or practice today the server refuses a claim, so the tile says what to do instead.
   it('says what today’s reward needs instead of offering a claim that would fail', async () => {
     const fetchMock = vi.fn(
       routedFetch({
@@ -74,11 +70,7 @@ describe('DailyReward', () => {
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/rewards/daily/claim'))).toBe(false);
   });
 
-  /**
-   * Deliberately changed. A day already claimed showed the card with "Claimed
-   * today" and the balance, which the top bar shows too; it now steps aside,
-   * so the wall under it starts at the top.
-   */
+  // The top bar already shows the balance, so a claimed day hides the card and the wall starts at the top.
   it('steps aside on a day already claimed, whatever was learned', async () => {
     vi.stubGlobal(
       'fetch',
@@ -103,10 +95,7 @@ describe('DailyReward', () => {
     expect(screen.queryByRole('link', { name: en['daily.goLearn'] })).not.toBeInTheDocument();
   });
 
-  /**
-   * A Hevalo+ member's claim brings a few gems as well: said in one line, as
-   * what the claim adds before it and what it added after, and to nobody else.
-   */
+  // Only a Hevalo+ member sees the line about the gems a claim adds.
   it('says the gems a Hevalo+ member’s claim adds, and that it added them', async () => {
     const fetchMock = vi.fn(async (url: string) => {
       if (url.includes('/rewards/daily/claim')) return jsonResponse(200, { claimed: true, cycleDay: 3, reward: 20, balance: 120, plusGems: 5 });
@@ -164,7 +153,7 @@ describe('DailyReward', () => {
   it('renders nothing if the reward status cannot load', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(500, {})));
     const { container } = renderApp(<DailyReward />);
-    // allow the effect to settle
+    // Let the effect settle.
     await new Promise((r) => setTimeout(r, 0));
     expect(container.querySelector('.zer-card')).toBeNull();
   });

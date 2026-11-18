@@ -23,13 +23,13 @@ export function registerDictionaryRoutes(app: FastifyInstance, badges?: SavedWor
     return tz.rows[0]?.timezone ?? 'UTC';
   }
 
-  /** Deterministic word of the day for the learner's local day (KUR-046). */
+  /** Deterministic word of the day for the learner's local day. */
   app.get('/dictionary/word-of-day', { preHandler: requireAuth }, async (req) => {
     const word = await wotd.today(await timezoneOf(req.user!.id));
     return { word };
   });
 
-  /** The learner's saved words (KUR-047). */
+  /** The learner's saved words. */
   app.get('/me/saved-words', { preHandler: requireAuth }, async (req) => {
     return { words: await saved.list(req.user!.id) };
   });
@@ -66,7 +66,7 @@ export function registerDictionaryRoutes(app: FastifyInstance, badges?: SavedWor
     },
   );
 
-  /** Remove a bookmark (keeps the review history, stops scheduling). */
+  /** Removes a bookmark; the review history is kept but no longer scheduled. */
   app.delete(
     '/dictionary/entries/:id/save',
     { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },

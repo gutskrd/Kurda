@@ -1,10 +1,6 @@
 /**
- * Deleting an item, asked about first in words that say what will happen.
- *
- * Whether it is deleted or retired is the server's to decide — it counts who
- * owns, wears or was given the item under a lock (api/src/shop/catalogue.ts)
- * — so the question asks it first (GET …/usage) and says which it will be,
- * and the answer after says which it was.
+ * Deleting an item, asked first in words that say what will happen. The server decides between delete and retire
+ * under a lock (api/src/shop/catalogue.ts), so the question asks it first (GET …/usage) and the answer says which it was.
  */
 import { useEffect, useState } from 'react';
 import { api } from '../api';
@@ -34,7 +30,7 @@ function whyKept(u: ItemUsage): string {
   if (u.owners > 0) return `${ownersText(u.owners)}, so it can’t be deleted.`;
   if (u.equipped > 0) return `${people(u.equipped)} ${u.equipped === 1 ? 'is' : 'are'} wearing it, so it can’t be deleted.`;
   if (u.gifts > 0) return `It was given as a gift ${u.gifts === 1 ? 'once' : `${u.gifts.toLocaleString()} times`}, and deleting it would take the gift out of those chats.`;
-  // history from the art refresh: who owned it then is kept with it (nothing is paid back; purchases are final)
+  // Owner records kept from an art replacement (nothing is paid back; purchases are final).
   if (u.refunds > 0) return 'Its owners were recorded when its art was replaced, so it is kept with that record.';
   return 'It is part of the art that ships with the app, so it is kept as a retired item rather than deleted — that way a re-seed of the catalogue can’t bring it back.';
 }

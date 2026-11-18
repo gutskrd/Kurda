@@ -22,10 +22,9 @@ const packBody = z.object({
   active: z.boolean().optional(),
 });
 
-/** In-app purchases (KUR-072): redeem, refund webhook, restore. */
+/** In-app purchases: redeem, refund webhook, restore. */
 export function registerIapRoutes(app: FastifyInstance, iap: IapService, config: AppConfig): void {
-  // webhook auth: constant-time shared secret today; provider-signature
-  // verification plugs in here in production (KUR-112).
+  // Webhooks are authenticated with a constant-time shared secret; store signature verification would plug in here.
   const webhookVerifier = new SharedSecretWebhookVerifier(config.IAP_WEBHOOK_SECRET);
 
   /** Admin: define a gem pack. */
@@ -58,9 +57,8 @@ export function registerIapRoutes(app: FastifyInstance, iap: IapService, config:
   }));
 
   /**
-   * Store refund webhook → Gem clawback. Guarded by a shared secret; disabled
-   * (503) when unconfigured so we never expose an unauthenticated clawback.
-   * Real Apple JWS / Google RTDN signature verification is a follow-up.
+   * Store refund webhook, which claws back Gems. Guarded by a shared secret and refused with 503 when none is
+   * configured, so a clawback is never unauthenticated.
    */
   app.post(
     '/iap/webhooks/:platform',

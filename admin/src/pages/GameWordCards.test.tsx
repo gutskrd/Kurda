@@ -15,7 +15,7 @@ import { GameContent } from './GameContent';
 
 const ID = '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde0002';
 
-// stand-in Kurdish for the fixtures, never shown to a learner
+// stand-in Kurdish for the fixtures, never shown to a learner.
 const words: GameWordCandidate[] = [
   {
     ref: 'vocab:w:kmr:bbbbbbbbbbbbbbbbbbbbbbbb',
@@ -81,11 +81,11 @@ describe('cards from approved words', () => {
     expect(text(page)).toContain('Wî gurz hilda.');
     expect(text(page)).toContain('Published lessons');
     expect(text(page)).toContain('Is an identity');
-    // identities are made of the lessons' words alone, in the variety picked
+    // Identities are made of the lessons' words alone, in the variety picked.
     const asked = api.calls.find((c) => c.path.includes('/words?'))!.path;
     expect(asked).toContain('dialect=kmr');
     expect(asked).toContain('from=vocabulary');
-    // the cards of the games that are gone are not offered
+    // The cards of the games that are gone are not offered.
     expect(text(page)).not.toContain('Bluff');
   });
 
@@ -93,7 +93,7 @@ describe('cards from approved words', () => {
     const api = fakeApi(on('GET', /^\/admin\/game-content\/words\?/, json({ words })), on('POST', '/admin/game-content/from-word', json(row(), 201)));
     const page = await open('#/game-content/words');
     const identities = page.querySelectorAll('section')[page.querySelectorAll('section').length - 1]!;
-    // the identities' list asks for the lessons' words alone
+    // The identities' list asks for the lessons' words alone.
     expect(api.calls.filter((c) => c.path.includes('/words?')).some((c) => c.path.includes('from=vocabulary'))).toBe(true);
     await click(button(identities.querySelectorAll('.gc-word')[0]!, 'Use this word'));
     const make = button(identities, 'Make an identity') as HTMLButtonElement;
@@ -121,7 +121,7 @@ describe('the facts table', () => {
     await choose(Array.from(identities.querySelectorAll('select')).find((s) => s.querySelector('option[value="animal"]'))!, 'animal');
     for (const fact of ['It is alive', 'It is an animal']) await choose(identities.querySelector(`select[aria-label="${fact}"]`), 'yes');
     for (const fact of ['You find it at home', 'It works outdoors', 'It makes a sound']) await choose(identities.querySelector(`select[aria-label="${fact}"]`), 'sometimes');
-    // three is a card’s share: a fourth row cannot say it, and a row that does keeps the choice
+    // Three is a card’s share: a fourth row cannot say it, and a row that does keeps the choice.
     const fourth = identities.querySelector<HTMLSelectElement>('select[aria-label="It can fly"]')!;
     expect(fourth.querySelector<HTMLOptionElement>('option[value="sometimes"]')!.disabled).toBe(true);
     expect(identities.querySelector<HTMLSelectElement>('select[aria-label="It makes a sound"]')!.querySelector<HTMLOptionElement>('option[value="sometimes"]')!.disabled).toBe(false);

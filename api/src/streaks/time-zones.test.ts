@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { databaseTimeZones, storableTimeZone } from './time-zones.js';
 
-/** A database that knows these zones, and counts how often it was asked; `fail` makes the next read fail. */
+/** A database that knows these zones and counts reads; `fail` makes the next read fail. */
 function database(names: string[]) {
   const db = {
     asked: 0,

@@ -1,11 +1,6 @@
 /**
- * A lesson from a list of words: the quick way to a complete lesson. The
- * editor writes the words and phrases once, each Kurdish beside its meaning,
- * and gets the exercises a lesson is made of, from easy to hard: meet them
- * (match the pairs), recognise them (what does it mean?), recall them
- * (translate into Kurdish), hear them (listen and type) and say them. Every
- * exercise made is an ordinary one, edited like any other afterwards. Pure,
- * so it is tested without a browser.
+ * A lesson from a list of words: each Kurdish word or phrase beside its meaning becomes exercises from easy to hard
+ * (match the pairs, recognise, recall, listen and type, say). Each is an ordinary exercise, edited like any other.
  */
 import { lessonAudioKey, normalizeKurdish } from '@kurda/shared';
 import type { Exercise } from './lessons';
@@ -93,10 +88,8 @@ function forAudio(pairs: readonly WordPair[]): WordPair[] {
 }
 
 /**
- * The exercises for `pairs`, in the order a learner meets them: the pairs
- * first, then each word recognised, then recalled, then heard, then said. The
- * right answer is written first; the server shows answers in a different order
- * to every learner.
+ * The exercises for `pairs` in the order a learner meets them. The right answer is written first; the server shuffles
+ * answers for every learner.
  */
 export function buildExercises(pairs: readonly WordPair[], kinds: ReadonlySet<BuildKind>): Exercise[] {
   const out: Array<Pick<Exercise, 'type' | 'payload'>> = [];
@@ -105,7 +98,7 @@ export function buildExercises(pairs: readonly WordPair[], kinds: ReadonlySet<Bu
     const size = Math.ceil(pairs.length / boards);
     for (let b = 0; b < boards; b++) {
       const board = pairs.slice(b * size, (b + 1) * size);
-      // a board of one is no matching: it joins the one before
+      // A board of one is no matching: it joins the one before.
       if (board.length < 2) continue;
       out.push({ type: 'match_pairs', payload: { pairs: board.map((p) => ({ left: p.ku, right: p.en })) } });
     }

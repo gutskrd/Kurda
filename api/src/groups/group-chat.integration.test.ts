@@ -1,4 +1,4 @@
-/** Group chat (KUR-085) against real Postgres. */
+/** Group chat against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -138,20 +138,17 @@ describe.skipIf(!DATABASE_URL)('group chat (integration)', () => {
     const ping = hub.published.slice(before).find((pub) => pub.ev.type === 'group_typing');
     expect(ping).toBeDefined();
     expect(ping!.room).toBe(`group:${gid}`);
-    // receivers need a name to show; looking it up per keystroke on the client
-    // would be a request per person per ping
+    // Receivers need a name to show, without a lookup per ping.
     expect(ping!.ev).toMatchObject({ groupId: gid, userId: id.a });
     expect(String((ping!.ev as { username?: string }).username)).toContain('gc_a');
 
-    // removed in an earlier test — membership is re-checked, so they cannot
-    // keep pinging a group they left
+    // Removed in an earlier test; membership is re-checked, so they cannot keep pinging.
     await expect(chat.typing(id.c!, gid)).rejects.toThrow(/not in this group/i);
     await expect(chat.typing(id.d!, gid)).rejects.toThrow(/not in this group/i);
   });
 
   it('stores nothing for a typing ping', async () => {
-    // it is ephemeral by design: a missed one costs nothing and there is no
-    // state to clean up
+    // Typing is ephemeral: nothing is stored.
     const before = await pool.query(`SELECT count(*)::int AS n FROM group_messages WHERE group_id = $1`, [gid]);
     await chat.typing(id.a!, gid);
     const after = await pool.query(`SELECT count(*)::int AS n FROM group_messages WHERE group_id = $1`, [gid]);

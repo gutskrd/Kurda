@@ -1,4 +1,4 @@
-/** In-app notification inbox (KUR-097) against real Postgres. */
+/** In-app notification inbox against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

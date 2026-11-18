@@ -3,10 +3,7 @@ import { GameIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { InviteSheet, type InviteTarget } from './InviteSheet';
 
-/**
- * "Play" with one friend — on their profile and on their row in the friends
- * list. Opens the invite sheet with them already chosen.
- */
+/** "Play" with one friend, on their profile and friends row: the invite sheet with them chosen. */
 export function PlayWithButton({
   userId,
   name,
@@ -16,7 +13,7 @@ export function PlayWithButton({
   userId: string;
   name: string;
   className?: string;
-  /** a row with little room: the icon, with the words as its name */
+  /** A row with little room: the icon, with the words as its name. */
   iconOnly?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -38,11 +35,7 @@ export function PlayWithButton({
   );
 }
 
-/**
- * The game button in a chat's composer: in a conversation with a friend, the
- * sheet with them chosen; in a group, a game whose card is posted to the
- * group for its members to join.
- */
+/** The game button in a chat's composer: the sheet with the friend chosen, or in a group a card posted for its members. */
 export function ChatGameButton({ target }: { target: Extract<InviteTarget, { kind: 'new' } | { kind: 'group' }> }): React.JSX.Element {
   const t = useT();
   const [open, setOpen] = useState(false);

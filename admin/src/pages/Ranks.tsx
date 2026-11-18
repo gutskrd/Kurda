@@ -38,12 +38,8 @@ import { PairGamesDrawer, PlayerGamesTable, RankCell, RankEmblem, useResetRating
 type View = 'spread' | 'top' | 'pairs';
 
 /**
- * Game Ranks for staff (contract 4, §R3, §R4, §U): how the active players
- * spread over the tiers in each game — to tune the one tier table in
- * @kurda/shared — the top of each game, and the pairs whose rated games
- * together look unusual, with the two things an admin can do about a rating:
- * void a game's effect and reset a player.
- *
+ * Game ranks for staff: how active players spread over each game's tiers (to tune the tier table in @kurda/shared),
+ * the top players, and pairs whose rated games look unusual, with voiding a game and resetting a player.
  * #/ranks (the spread), #/ranks/top/<game>, #/ranks/pairs.
  */
 export function Ranks(): React.JSX.Element {
@@ -75,7 +71,7 @@ export function Ranks(): React.JSX.Element {
   );
 }
 
-// ---- the spread -----------------------------------------------------------------------
+// ---- The spread -----------------------------------------------------------------------
 
 function Spread(): React.JSX.Element {
   const loaded = useLoad(() => api<{ games: TierSpread[] }>('/admin/ranks/spread').then((r) => r.games), []);
@@ -141,11 +137,7 @@ function spreadColumns(games: TierSpread[]): ReadonlyArray<Column<TierSpread['ti
   ];
 }
 
-/**
- * One game's spread as bars: a bar per tier, longest for the fullest tier, with
- * the count and share written beside it — the bar is never the only way to
- * read the number.
- */
+/** One game's spread as a bar per tier, with the count and share written beside it, never the bar alone. */
 function SpreadChart({ spread }: { spread: TierSpread }): React.JSX.Element {
   const max = Math.max(...spread.tiers.map((t) => t.players), 1);
   const few = spread.activePlayers < FEW_PLAYERS;
@@ -187,7 +179,7 @@ function SpreadChart({ spread }: { spread: TierSpread }): React.JSX.Element {
   );
 }
 
-// ---- the top ---------------------------------------------------------------------------
+// ---- The top ---------------------------------------------------------------------------
 
 function Top({ game }: { game: RankedGame }): React.JSX.Element {
   const loaded = useLoad(() => api<{ players: TopPlayer[] }>(`/admin/ranks/top/${encodeURIComponent(game)}`).then((r) => r.players), [game]);
@@ -286,7 +278,7 @@ function PlayerGamesDrawer({ player, onClose, onChanged }: { player: TopPlayer; 
   );
 }
 
-// ---- the pairs --------------------------------------------------------------------------
+// ---- The pairs --------------------------------------------------------------------------
 
 /** The score adds the signals up (a shared device 3, many games in a day 2, lopsided results 2, a shared network 1). */
 function scoreTone(score: number): Tone {

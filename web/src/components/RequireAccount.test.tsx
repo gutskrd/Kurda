@@ -37,8 +37,7 @@ describe('RequireAccount', () => {
     guest();
     renderApp(<RequireAccount what="gate.what.sendMessages">{inside}</RequireAccount>, ['/app/messages']);
 
-    // being redirected with no explanation and no way back is how you lose
-    // someone who was only curious
+    // Asked rather than redirected with no explanation.
     expect(await screen.findByText(/You need an account for this/)).toBeInTheDocument();
     expect(screen.queryByText('the protected thing')).not.toBeInTheDocument();
   });
@@ -66,10 +65,7 @@ describe('RequireAccount', () => {
     expect(screen.getByRole('link', { name: 'Back to Community' })).toHaveAttribute('href', '/app/civak');
   });
 
-  /**
-   * A game invite is `/app/games/peyvok-battle?id=…`: without its query, the way
-   * back after signing in or signing up led to an empty game page.
-   */
+  // A game invite carries its lobby in the query, which the way back after signing in must keep.
   it('keeps the whole address, query and all, for the way back', async () => {
     guest();
     function From(): React.JSX.Element {
@@ -92,10 +88,8 @@ describe('RequireAccount', () => {
     member(false);
     const { container } = renderApp(<RequireAccount what="gate.what.sendMessages">{inside}</RequireAccount>, ['/app/messages']);
 
-    // opening the app to guests must not become a way around email
-    // verification. This test mounts the component alone, so the redirect has
-    // nowhere to land — what it can show is that neither the page nor the
-    // sign-in prompt is rendered, which is what navigating away looks like.
+    // Opening the app to guests must not bypass email verification. Mounted alone the redirect has nowhere to land, so
+    // the test checks that neither the page nor the sign-in prompt renders.
     await waitFor(() => expect(container.querySelector('.gate')).toBeNull());
     expect(screen.queryByText('the protected thing')).not.toBeInTheDocument();
     expect(screen.queryByText(/You need an account/)).not.toBeInTheDocument();

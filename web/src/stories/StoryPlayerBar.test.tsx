@@ -8,12 +8,7 @@ import { StoryPlayerBar, clockText } from './ReaderControls';
 import { nextRate, useStoryAudio } from './useStoryAudio';
 import { detail, fakeApi } from './testing';
 
-/**
- * The one player the app has, as a fake that remembers what it was given:
- * every source loaded into it, every time it was told to play, and where it
- * stands in the clip — so a test can tell a sentence started over from one
- * carried on.
- */
+/** A fake of the app's one player, recording every load and play and its position, so a restart can be told from a resume. */
 const loads: string[] = [];
 const plays: string[] = [];
 class FakeAudio extends EventTarget {
@@ -45,7 +40,7 @@ class FakeAudio extends EventTarget {
   }
 }
 
-/** The app makes its one element the first time anything plays and keeps it, so the tests read it from the module. */
+/** The app creates its one element on first play and keeps it, so tests read it from the module. */
 const el = (): FakeAudio => soundPlayer() as unknown as FakeAudio;
 
 beforeEach(() => {
@@ -105,13 +100,13 @@ describe('the story player', () => {
     await userEvent.click(within(group).getByRole('button', { name: 'Play' }));
     expect(loads).toEqual([URL1]);
     expect(screen.getByTestId('current')).toHaveTextContent('0:0');
-    // the clip's own clock moves the line and the numbers
+    // The clip's own clock moves the line and the numbers.
     act(() => {
       el().currentTime = 1.5;
       el().dispatchEvent(new Event('timeupdate'));
     });
     expect(within(group).getByText('0:02 / 0:05')).toBeInTheDocument();
-    // the first sentence ends: the second starts at its place on the track
+    // The first sentence ends: the second starts at its place on the track.
     act(() => el().dispatchEvent(new Event('ended')));
     expect(loads).toEqual([URL1, URL2]);
     expect(screen.getByTestId('current')).toHaveTextContent('0:1');
@@ -151,7 +146,7 @@ describe('the story player', () => {
     await userEvent.click(within(group).getByRole('button', { name: 'Pause' }));
     expect(el().paused).toBe(true);
     await userEvent.click(within(group).getByRole('button', { name: 'Play' }));
-    // one load, two plays: the clip was not reloaded, so it keeps its place
+    // One load, two plays: the clip was not reloaded, so it keeps its place.
     expect(loads).toEqual([URL1]);
     expect(plays).toEqual([URL1, URL1]);
     expect(el().currentTime).toBeCloseTo(1.2);
@@ -187,7 +182,7 @@ describe('the story player', () => {
     expect(within(group).getByRole('button', { name: 'Pause' })).not.toHaveAttribute('aria-busy');
     act(() => el().dispatchEvent(new Event('error')));
     expect(within(group).getByRole('alert')).toHaveTextContent('This sentence didn’t play.');
-    // the bar is back to Play, and pressing it tries the sentence again
+    // The bar is back to Play, and pressing it tries the sentence again.
     await userEvent.click(within(group).getByRole('button', { name: 'Play' }));
     expect(within(group).queryByRole('alert')).toBeNull();
   });

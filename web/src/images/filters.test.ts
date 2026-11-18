@@ -18,18 +18,14 @@ describe('the catalogue', () => {
     }
   });
 
-  /**
-   * A filter's name is a name — Zêr is called Zêr on a German screen, the way
-   * Instagram's Clarendon is called Clarendon everywhere. What a reader needs
-   * translating is the tooltip that says what the look actually is.
-   */
+  // A filter's name is a name, kept in every language; the hint says what the look is.
   it('keeps its Kurmancî name in every language, and translates the hint', () => {
     const zer = presetByKey('zer')!;
     expect(zer.label).toBe('Zêr');
     expect(translator(en)(zer.hintKey)).toBe('Gold');
     expect(translator(de)(zer.hintKey)).toBe('Gold');
     expect(translator(tr)(zer.hintKey)).toBe('Altın');
-    // and every hint resolves to something, in a language that is not English
+    // Every hint resolves to something in a language other than English.
     for (const f of FILTERS) {
       expect(translator(tr)(f.hintKey), f.key).not.toBe(f.hintKey);
     }
@@ -58,17 +54,17 @@ describe('the ones that needed new machinery', () => {
     const germi = presetByKey('germi');
     expect(germi.tone).toBeDefined();
     expect(germi.tone!.amount).toBe(1);
-    // and it spreads the range first, or a flat picture maps to one flat colour
+    // It spreads the range first, or a flat picture maps to one flat colour.
     expect(germi.adjustments.contrast).toBeGreaterThan(0);
   });
 
   it('makes the antique old rather than merely faded', () => {
     const kevnar = presetByKey('kevnar');
-    // a real sepia is a repaint from brightness, not brown thrown over the top
+    // A real sepia repaints from brightness.
     expect(kevnar.tone).toBeDefined();
     expect(kevnar.adjustments.grain).toBeGreaterThan(0);
     expect(kevnar.adjustments.vignette).toBeGreaterThan(0);
-    // and distinct from the merely-faded one it sits next to
+    // Distinct from the merely faded one beside it.
     expect(presetByKey('kevn').tone).toBeUndefined();
   });
 
@@ -86,7 +82,7 @@ describe('the ones that needed new machinery', () => {
 
   it('lists the artwork that has to be decoded before a draw', () => {
     expect(overlaySources()).toContain('/filters/kurdistan.webp');
-    // only what is actually used — the list drives a preload
+    // Only what is used, since the list drives a preload.
     expect(overlaySources().length).toBe(FILTERS.filter((f) => f.overlay).length);
   });
 });
@@ -97,11 +93,7 @@ describe('gradeOf', () => {
     expect(grade.adjustments).toEqual(presetByKey('zer').adjustments);
   });
 
-  /**
-   * Strength has to reach everything, not just the sliders. A half-strength
-   * heat camera that still repaints every colour at full force would not be
-   * half of anything.
-   */
+  // Strength reaches the gradient map and overlay too, not just the sliders.
   it('at zero strength does nothing at all, whatever the filter uses', () => {
     for (const key of ['zer', 'germi', 'kevnar', 'piksel', 'ala']) {
       const grade = gradeOf(key, 0, NEUTRAL);
@@ -130,12 +122,7 @@ describe('gradeOf', () => {
   });
 
   describe('the cache signature', () => {
-    /**
-     * The grading cache compares grades, and a grade carries a 768-byte palette.
-     * Serialising that on every draw would cost more than the cache saves, so
-     * the signature stands in for it — which only works if it really does
-     * change whenever the result would.
-     */
+    /** The signature stands in for the 768-byte palette in the cache key, so it must change whenever the result would. */
     it('is stable for the same inputs', () => {
       expect(gradeOf('zer', 0.5, byHand({ warmth: 4 })).signature).toBe(
         gradeOf('zer', 0.5, byHand({ warmth: 4 })).signature,

@@ -15,7 +15,7 @@ import {
   type Frame,
 } from './frame';
 
-/** The one thing that must never break: the crop lies inside the picture. */
+/** The invariant: the crop lies inside the picture. */
 function expectInside(iw: number, ih: number, aspect: number, frame: Frame): void {
   const c = cropRect(iw, ih, aspect, frame);
   expect(c.sx).toBeGreaterThanOrEqual(-1e-9);
@@ -49,7 +49,7 @@ describe('cropRect', () => {
   });
 
   it('halves the crop at zoom 2', () => {
-    // a big picture, so the resolution ceiling is nowhere near this zoom
+    // A big picture, so the resolution ceiling is far from this zoom.
     const c = cropRect(4000, 2250, 1, { zoom: 2, cx: 0.5, cy: 0.5 });
     expect(c.sw).toBe(1125);
     expect(c.sh).toBe(1125);
@@ -70,28 +70,23 @@ describe('cropRect', () => {
 
 describe('clampFrame', () => {
   it('holds zoom inside its range', () => {
-    // 4000px of picture has detail to spare, so the whole range is available
+    // 4000px of picture has detail to spare, so the whole range is available.
     expect(clampFrame(4000, 4000, 1, { zoom: 99, cx: 0.5, cy: 0.5 }).zoom).toBe(ZOOM_RANGE.max);
     expect(clampFrame(4000, 4000, 1, { zoom: 0.1, cx: 0.5, cy: 0.5 }).zoom).toBe(ZOOM_RANGE.min);
   });
 
-  /**
-   * The ceiling is the picture's, not a constant. Zooming past what the source
-   * holds cannot reveal anything — it can only hand back an upscale — so the
-   * gesture stops instead.
-   */
+  // The ceiling is the picture's own, since zooming past its pixels can only upscale.
   it('stops a small picture short of the full range', () => {
-    // a 1000px square: at zoom 1.95 the crop is already down to MIN_EXPORT_EDGE
+    // A 1000px square: at zoom 1.95 the crop is already down to MIN_EXPORT_EDGE.
     const capped = clampFrame(1000, 1000, 1, { zoom: 99, cx: 0.5, cy: 0.5 }).zoom;
     expect(capped).toBeCloseTo(1000 / MIN_EXPORT_EDGE, 6);
     expect(capped).toBeLessThan(ZOOM_RANGE.max);
-    // and the crop it produces is exactly the floor, never below it
+    // The crop it produces is exactly the floor.
     expect(cropRect(1000, 1000, 1, { zoom: 99, cx: 0.5, cy: 0.5 }).sw).toBeCloseTo(MIN_EXPORT_EDGE, 6);
   });
 
   it('centres an axis the crop spans completely', () => {
-    // a square crop of a landscape picture is as tall as the picture, so there
-    // is nowhere to move it vertically however hard you drag
+    // A square crop of a landscape picture is as tall as the picture, so it cannot move vertically.
     const f = clampFrame(1600, 900, 1, { zoom: 1, cx: 0.5, cy: 0.9 });
     expect(f.cy).toBe(0.5);
   });
@@ -105,7 +100,7 @@ describe('clampFrame', () => {
 
 describe('panFrame', () => {
   it('moves the frame opposite the drag', () => {
-    // dragging the picture rightwards reveals what was off to the left
+    // Dragging the picture right reveals what was off to the left.
     const moved = panFrame(1600, 900, 1, { zoom: 2, cx: 0.5, cy: 0.5 }, 40, 0, 400, 400);
     expect(moved.cx).toBeLessThan(0.5);
   });
@@ -162,9 +157,9 @@ describe('maxZoomFor', () => {
   });
 
   it('depends on the shape, because the shape decides the crop', () => {
-    // a square crop of a landscape picture is bounded by its height
+    // A square crop of a landscape picture is bounded by its height.
     expect(maxZoomFor(4000, 1200, 1)).toBeCloseTo(1200 / MIN_EXPORT_EDGE, 6);
-    // the same picture at its own ratio is bounded by its width
+    // The same picture at its own ratio is bounded by its width.
     expect(maxZoomFor(4000, 1200, 4000 / 1200)).toBe(ZOOM_RANGE.max);
   });
 });
