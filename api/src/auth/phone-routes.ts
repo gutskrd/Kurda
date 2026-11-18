@@ -7,9 +7,8 @@ const sendBody = z.object({ phone: z.string().min(4).max(32) });
 const verifyBody = z.object({ phone: z.string().min(4).max(32), code: z.string().min(4).max(10) });
 
 /**
- * Optional phone (SMS) verification routes (KUR-297). All authenticated and
- * rate-limited (#010) — code sends are the abuse-sensitive step. Never required
- * for normal use; a user without a phone is unaffected.
+ * Optional phone (SMS) verification routes, all authenticated and rate-limited, since code sends are the
+ * abuse-sensitive step. Never required for normal use.
  */
 export function registerPhoneVerificationRoutes(
   app: FastifyInstance,

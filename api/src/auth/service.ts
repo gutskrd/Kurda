@@ -77,10 +77,7 @@ export interface RegisterInput {
   locale?: string;
   timezone?: string;
   deviceName?: string;
-  /**
-   * Birth month and year. The route has already refused an impossible month
-   * and anyone under 13.
-   */
+  /** Birth month and year. The route has already refused an impossible month and anyone under 13. */
   birthYear: number;
   birthMonth: number;
   /** the app's `x-device-id`, remembered as the account's first known device */
@@ -99,10 +96,8 @@ export interface PublicUser {
   timezone: string;
   emailVerified: boolean;
   /**
-   * No birth month on record yet: every client asks once, before anything
-   * else, and nothing is offered until it is answered (POST /me/birth-date).
-   * Never for a guest: the claim form asks, and a guest is offered nothing
-   * that needs the answer.
+   * No birth month on record yet: every client asks once, first, and nothing is offered until it is answered (POST
+   * /me/birth-date). Never for a guest; the claim form asks.
    */
   birthDateRequired: boolean;
   /** a guest account (auth/guest.ts): learning only, until claimed */
@@ -141,9 +136,8 @@ export const RESET_EMAILS_PER_HOUR = 3;
 export type CaptchaReason = 'attempts' | 'network' | 'surge';
 
 /**
- * Sign-in needs the challenge first. 403 like LOGIN_VERIFICATION_REQUIRED, the
- * other "do one more thing" answer; `details.captchaRequired` is what clients
- * look for. Said the same way whether or not the address has an account.
+ * Sign-in needs the challenge first. 403 like LOGIN_VERIFICATION_REQUIRED; clients look for `details.captchaRequired`.
+ * Identical whether or not the address has an account.
  */
 export function captchaRequired(reason: CaptchaReason): AppError {
   return new AppError('CAPTCHA_REQUIRED', 403, 'complete the challenge to sign in', { captchaRequired: true, reason });
@@ -183,8 +177,8 @@ export class AuthService {
   }
 
   /**
-   * Refuses a password that appears in the public corpus of breached passwords
-   * (auth/breached-password.ts). Off under test unless configured; fails open.
+   * Refuse a password found in the public breached-password corpus (auth/breached-password.ts). Off under test unless
+   * configured; fails open.
    */
   async assertNotBreached(password: string): Promise<void> {
     if (!breachCheckEnabled(this.config)) return;
@@ -199,8 +193,8 @@ export class AuthService {
   }
 
   /**
-   * A security email, at most once a day per account and kind when `daily`.
-   * Best-effort: signing in never fails because a notice could not be queued.
+   * A security email, at most once a day per account and kind when `daily`. Best-effort: sign-in never fails because a
+   * notice could not be queued.
    */
   private async securityNotice(
     user: { id: string; email: string | null; username: string; locale?: string },
@@ -236,9 +230,8 @@ export class AuthService {
   }
 
   /**
-   * Absolute link into the web app for an emailed token. Built from
-   * APP_BASE_URL because the API and the web app are different origins, and the
-   * token is what the linked page posts back.
+   * Absolute web-app link for an emailed token, built from APP_BASE_URL because the API and web app are different
+   * origins.
    */
   private emailLink(path: string, token: string): string {
     const base = this.config.APP_BASE_URL.endsWith('/')
@@ -271,9 +264,8 @@ export class AuthService {
   }
 
   /**
-   * Emails a 6-digit ownership-verification code (KUR-014). Best-effort: signup
-   * must never fail because email couldn't enqueue. Returns the raw code for
-   * tests; production callers ignore it (only the mailbox owner sees it).
+   * Email a 6-digit ownership code. Best-effort: sign-up never fails because email could not enqueue. Returns the raw
+   * code for tests; production callers ignore it.
    */
   private async sendVerificationCode(user: {
     id: string;
@@ -314,10 +306,8 @@ export class AuthService {
   }
 
   /**
-   * Re-issues a verification code for a signed-in, still-unverified user.
-   * No-ops silently if the account is already verified. False when the day's
-   * ceiling of confirmation emails is reached and nothing was sent, so the
-   * app can say so instead of promising a code that is not coming.
+   * Re-issue a code for a signed-in, unverified user; silent no-op if already verified. False when the day's
+   * confirmation-email ceiling stopped it, so the app can say so.
    */
   async resendVerificationCode(userId: string): Promise<boolean> {
     const res = await this.pool.query<{
@@ -341,20 +331,12 @@ export class AuthService {
   }
 
   /**
-   * Puts right the address of a sign-up that has not confirmed it yet, and
-   * sends the code there.
+   * Correct the address of an unconfirmed sign-up and send the code there. The account keeps its name and password; the
+   * code sent to the old address stops working.
    *
-   * A mistyped address is the commonest reason a sign-up is never confirmed,
-   * and the only way out was to start again, which found the username taken
-   * by the sign-up just abandoned. The account stays, with its name and its
-   * password; only the address changes, and with it the code: the one sent
-   * to the old address stops working.
-   *
-   * Only an account that has not confirmed (a confirmed address is changed
-   * in Settings, with its own proof). An address a confirmed account has is
-   * answered as sign-up answers it; one an unconfirmed sign-up holds is taken
-   * from it, as at sign-up. Returns whether a code went out, false when the
-   * day's ceiling stopped it.
+   * Only for unconfirmed accounts (a confirmed address changes in Settings with its own proof). An address a confirmed
+   * account has is answered as at sign-up; one an unconfirmed sign-up holds is taken from it. Returns whether a code
+   * went out (false when the daily ceiling stopped it).
    */
   async changePendingEmail(userId: string, email: string): Promise<{ user: PublicUser; sent: boolean }> {
     const address = normalizeKurdish(email);
@@ -387,15 +369,12 @@ export class AuthService {
   }
 
   /**
-   * Verifies a submitted code for a signed-in user and, on success, marks the
-   * email verified. Returns the low-level result so the route can map it to a
-   * specific status/error.
+   * Verify a submitted code for a signed-in user and on success mark the email verified. Returns the low-level result
+   * for the route to map to a status.
    */
   /**
-   * Confirming an address is exactly when a bootstrap-admin allowlist entry can
-   * first be honoured, so reconcile right here instead of waiting for the next
-   * restart. Idempotent and best-effort: a failure must never fail the
-   * verification the user just completed.
+   * Confirming an address is when a bootstrap-admin allowlist entry can first be honoured, so reconcile here instead of
+   * waiting for a restart. Idempotent and best-effort: it never fails the verification.
    */
   private async reconcileBootstrapAdmins(): Promise<void> {
     if (!this.config.BOOTSTRAP_ADMIN_EMAILS) return;
@@ -442,7 +421,7 @@ export class AuthService {
     await this.deps.security?.record('password.reset_requested', { userId: user.id, staff: isPrivileged(user.roles) });
     try {
       if (!user.password_hash) {
-        // OAuth-only account (KUR-019): there is no password to reset, but the
+        // OAuth-only account: there is no password to reset, but the
         // mail invites them to SET one — so send a real reset link (resetPassword
         // sets the hash whether or not one existed) rather than a dead message.
         if (this.deps.jobs) {
@@ -491,7 +470,7 @@ export class AuthService {
     );
     const passwordHash = await hashPassword(newPassword);
     // token_version bump invalidates every outstanding access token;
-    // revoking refresh tokens kills all sessions (KUR-016 semantics)
+    // revoking refresh tokens ends every session
     const updated = await this.pool.query<{ email: string | null; username: string; locale: string }>(
       // the link came out of the mailbox, which is what confirming an address is: it is not asked for a code as well
       `UPDATE users SET password_hash = $2, token_version = token_version + 1,
@@ -521,11 +500,9 @@ export class AuthService {
   }
 
   /**
-   * A signed-in change of password, the current one first. Every other session
-   * ends (its refresh tokens are revoked, and the version bump ends its access
-   * tokens at once); this one carries on with the fresh access token returned,
-   * so changing a password does not sign you out where you changed it. Reset
-   * links still waiting in the mailbox die too, and the owner is told.
+   * A signed-in password change, current password first. Every other session ends (refresh tokens revoked, version bump
+   * ends their access tokens); this one continues with the returned access token. Pending reset links die too, and the
+   * owner is told.
    */
   async changePassword(
     userId: string,
@@ -626,7 +603,7 @@ export class AuthService {
       throw err;
     }
 
-    // versioned consent (KUR-109); the route schema guarantees acceptTerms was
+    // versioned consent; the route schema guarantees acceptTerms was
     // true. The birth month is kept, never a verdict drawn from it: minor
     // status is worked out from it whenever it is needed (users/age.ts).
     const birth = { birth_year: input.birthYear, birth_month: input.birthMonth };
@@ -649,28 +626,20 @@ export class AuthService {
     if (input.deviceId) await this.devices.remember(user.id, 'device', input.deviceId).catch(() => undefined);
     const network = networkHashOf(input.ip);
     if (network !== null) await this.devices.remember(user.id, 'network', network).catch(() => undefined);
-    // Email ownership is proven by a 6-digit code the client enters (KUR-014).
+    // Email ownership is proven by a 6-digit code the client enters.
     await this.sendVerificationCode(user);
     return { user: toPublicUser(user), tokens };
   }
 
   /**
-   * A guest claims their account (auth/guest.ts): the same row gets the
-   * address, the password, the chosen username (or keeps the generated one),
-   * the birth month and the consent a sign-up records, and stops being a
-   * guest. Everything learned as a guest — XP, streak, lessons, badges — is
-   * already on the row, so nothing is moved.
+   * A guest claims their account (auth/guest.ts): the same row gets address, password, username (chosen or kept), birth
+   * month and consent, and stops being a guest. Progress is already on the row, so nothing moves.
    *
-   * From here on the account is a fresh sign-up: the address is unconfirmed,
-   * so the activation gate (plugins/activation.ts) holds its writes until the
-   * code this sends is entered, as it does after POST /auth/register. The
-   * sessions the guest had stay signed in; the guard reads the row on every
-   * request, so they are held at the same gate at once.
+   * From here it is a fresh sign-up: the address is unconfirmed, so the activation gate (plugins/activation.ts) holds
+   * its writes until the code is entered. The guest's sessions stay signed in and hit the same gate at once.
    *
-   * The route has already checked the address, password, username and age
-   * the way sign-up does; this is the write, and the refusals the database
-   * can give: an address or a name in use, or a row that is no longer a
-   * guest (claimed from another device a moment ago).
+   * The route has already checked address, password, username and age as sign-up does; this is the write plus the
+   * database's refusals (address or name in use, or the row no longer a guest).
    */
   async claim(
     userId: string,
@@ -735,22 +704,15 @@ export class AuthService {
 
   /**
    * Password sign-in, guarded against guessing without locking the owner out.
-   *
-   * - Every attempt draws on one budget: a device that has signed in to this
-   *   account before keeps its own (known-devices.ts), as does a network that
-   *   has, for apps that send no device id; every other client shares the
-   *   account's, which an address with no account has too, keyed by its hash,
-   *   so the answers never say whether an account exists.
-   * - After CAPTCHA_AFTER_FAILURES failures on that budget or from the network,
-   *   or while failures surge everywhere (login-surge.ts), a client the account
-   *   does not know must pass the CAPTCHA (CAPTCHA_REQUIRED). With it, even a
-   *   locked budget lets the right password in, so the owner is never stuck
-   *   for a day; without a CAPTCHA configured, a lock is a wall, as before.
-   * - A network is hard-locked only when it sprays: many failures across
-   *   several accounts (lockout.ts), never for one person mistyping on a
-   *   carrier's shared address.
-   * - Every path spends one argon2 verification, the refusals included, so how
-   *   long an answer takes says nothing about the account either.
+   * - Every attempt draws on one budget: a device (known-devices.ts) or network that signed in before keeps its own;
+   *   everyone else shares the account's, which unknown addresses also have, keyed by hash, so answers never reveal
+   *   whether an account exists.
+   * - After CAPTCHA_AFTER_FAILURES failures on that budget or network, or during a global surge (login-surge.ts), an
+   *   unknown client must pass the CAPTCHA (CAPTCHA_REQUIRED). With it, even a locked budget admits the right password;
+   *   without a CAPTCHA configured, a lock is a wall.
+   * - A network is hard-locked only when it sprays across several accounts (lockout.ts), never for one person on a
+   *   shared carrier address.
+   * - Every path spends one argon2 verification, refusals included, so timing reveals nothing.
    */
   async login(input: {
     email: string;
@@ -763,9 +725,8 @@ export class AuthService {
     /** false: "Remember me" was left off, and the session is kept a day, not a month */
     remember?: boolean;
     /**
-     * Who this sign-in is for at all (the admin console's: owner-access.ts).
-     * Asked once the password is right; an account it refuses is answered
-     * exactly as a wrong password is, counts as one, and is given nothing.
+     * Who this sign-in is for at all (the admin console's owner-access.ts). Asked once the password is right; a refused
+     * account gets the wrong-password answer, counts as a failure, and gets nothing.
      */
     only?: (userId: string) => Promise<boolean>;
   }): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
@@ -799,7 +760,7 @@ export class AuthService {
     const scope: LockoutScope = known ? 'device' : 'account';
     const key = known && user ? this.devices.hash(user.id, known.kind, known.value) : user ? user.id : target;
 
-    // progressive lockout checks come before any password work (KUR-023)
+    // progressive lockout checks come before any password work
     const [keyLock, keyFailures] = await Promise.all([this.lockouts.lockedFor(scope, key), this.lockouts.failures(scope, key)]);
     const watchNetwork = !known && input.ip !== undefined;
     const [netLock, netFailures] = watchNetwork
@@ -861,7 +822,7 @@ export class AuthService {
     if (suspended) throw suspended;
 
     // a returning user keeps their account: logging in during the
-    // deletion grace period cancels the deletion (KUR-024)
+    // deletion grace period cancels the deletion
     const cancelled = await this.pool.query(
       `UPDATE users SET deletion_requested_at = NULL
        WHERE id = $1 AND deletion_requested_at IS NOT NULL`,
@@ -899,10 +860,8 @@ export class AuthService {
   }
 
   /**
-   * Signs out one session: the family of the presented refresh token is
-   * revoked, so neither it nor the access tokens issued with it work again
-   * (plugins/auth.ts). Says nothing about whether the token was known — there
-   * is nothing to learn from signing out.
+   * Sign out one session by revoking the presented refresh token's family, so neither it nor its access tokens work
+   * again (plugins/auth.ts). Silent about whether the token was known.
    */
   async logout(rawToken: string): Promise<void> {
     await this.pool.query(
@@ -914,14 +873,11 @@ export class AuthService {
   }
 
   /**
-   * Rotates a refresh token (KUR-015): the presented token is retired and
-   * a new one issued in the same family. Presenting an already-rotated or
-   * revoked token is treated as theft — the entire family is revoked.
+   * Rotate a refresh token: retire the presented one and issue a new one in the same family. Presenting a rotated or
+   * revoked token is treated as theft and revokes the whole family.
    *
-   * The session keeps its device, its name and how long it lasts. One opened
-   * by an app that said neither (a sign-in from before devices were kept)
-   * takes them from this request: its `x-device-id`, and a name from its
-   * User-Agent, so a session still in use is listed by its device from now on.
+   * The session keeps its device, name and lifetime. A session whose app sent neither takes them from this request
+   * (`x-device-id`, and a name from the User-Agent).
    */
   async refresh(rawToken: string, from: { deviceId?: string | null; deviceName?: string } = {}): Promise<IssuedTokens> {
     const client = await this.pool.connect();
@@ -948,19 +904,11 @@ export class AuthService {
         throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');
       }
 
-      // A ban ends refreshing: the account is told why (403 ACCOUNT_SUSPENDED,
-      // with the appeal token) rather than "your session was stolen". Checked
-      // before the reuse rule because a ban revokes every refresh token — the
-      // phone's next refresh presents one of those, and it must land on the
-      // suspension screen, not the sign-in form. Every token the account still
-      // holds is revoked (a ban written straight to the account left them live).
-      //
-      // But only for a token the account could still have used: unexpired, and
-      // either live or ended by the ban itself (revoked when the ban began, not
-      // rotated). Any other — rotated long ago, revoked as stolen, expired —
-      // gets the answer it always got: the appeal token reads the person's
-      // standing and files their one appeal per decision, which is not for
-      // whoever kept an old token.
+      // A ban ends refreshing with 403 ACCOUNT_SUSPENDED and the appeal token, not "session stolen". Checked before the
+      // reuse rule because a ban revokes every refresh token and the phone's next refresh must reach the suspension
+      // screen; any token still live is revoked too. Only for a token the account could still have used (unexpired,
+      // live or revoked by the ban itself); rotated, stolen or expired tokens get the usual answer, since the appeal
+      // token files the person's one appeal per decision.
       const owner = await this.users.findById(row.user_id);
       const ban = owner ? await currentBan(client, owner.id) : null;
       if (owner && ban) {

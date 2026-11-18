@@ -1,17 +1,14 @@
 /**
- * Phone-number normalization + masking (KUR-297) — pure. Normalizes user input
- * to E.164 (a light validator; a full libphonenumber adapter can replace this
- * behind the same signature) and produces a masked display form. No storage of
- * the raw number: callers keep only the hash + the mask.
+ * Phone-number normalization and masking, pure: input to E.164 (a light validator) and a masked display form. The raw
+ * number is never stored; callers keep only the hash and the mask.
  */
 
 /** E.164: a leading '+', a non-zero country digit, then 7–14 more digits. */
 const E164_RE = /^\+[1-9]\d{7,14}$/;
 
 /**
- * Normalize loose input ("+1 (415) 555-0132", "00447700900123") to E.164, or
- * null if it cannot be a valid international number. Accepts a leading '00' as
- * the international prefix and strips spaces / dashes / parens.
+ * Normalize loose input ("+1 (415) 555-0132", "00447700900123") to E.164, or null if it cannot be a valid international
+ * number. Accepts a leading '00' and strips spaces, dashes and parentheses.
  */
 export function normalizeE164(input: string): string | null {
   const trimmed = input.trim();
@@ -24,8 +21,8 @@ export function normalizeE164(input: string): string | null {
 }
 
 /**
- * Masked display form: keep the country prefix (up to the first 3 digits) and
- * the last 2 digits, mask the middle. `+14155550132` → `+141•••••••32`.
+ * Masked display form: keeps the country prefix (up to 3 digits) and the last 2 digits. `+14155550132` →
+ * `+141•••••••32`.
  */
 export function maskE164(e164: string): string {
   const body = e164.slice(1); // drop '+'

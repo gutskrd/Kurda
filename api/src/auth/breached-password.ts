@@ -8,17 +8,12 @@ export const BREACH_CHECK_TIMEOUT_MS = 1_500;
 type FetchLike = typeof fetch;
 
 /**
- * Whether a password appears in the public corpus of passwords from data
- * breaches, which is the first list any attacker tries.
+ * Whether a password appears in the public breached-password corpus, the first list attackers try.
  *
- * k-anonymity: only the first five hex characters of the password's SHA-1
- * leave the server; the corpus answers with every suffix under that prefix
- * (padded with decoys, `Add-Padding`, so the size of the answer says nothing
- * either), and the match is made here. Neither the password nor its full hash
- * is ever sent.
+ * k-anonymity: only the first five hex characters of the SHA-1 leave the server; the corpus returns every suffix under
+ * that prefix (padded with decoys via `Add-Padding`) and the match is made here.
  *
- * Fails open: an answer that is late, refused or unreadable counts as "not
- * breached", so an outage there never stops anyone signing up here.
+ * Fails open: a late, refused or unreadable answer counts as "not breached", so an outage never blocks sign-up.
  */
 export async function isBreachedPassword(
   password: string,

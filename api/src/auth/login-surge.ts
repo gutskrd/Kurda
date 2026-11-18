@@ -9,15 +9,12 @@ export const SURGE_FLAG_KEY = 'auth:login-surge';
 const minuteKey = (minute: number) => `auth:login-failures:${minute}`;
 
 /**
- * The circuit breaker for credential stuffing: lists of leaked addresses and
- * passwords tried against many accounts at once, a few attempts each, from
- * many addresses — which no per-account or per-network count ever sees.
+ * Circuit breaker for credential stuffing: leaked credentials tried against many accounts, a few attempts each, from
+ * many addresses, which no per-account or per-network count sees.
  *
- * Every failed sign-in is counted in a per-minute bucket. Past
- * SURGE_FAILURES_PER_MINUTE the flag goes up, and while it is up every sign-in
- * from a device the account does not know needs the CAPTCHA; it comes down
- * SURGE_HOLD_SECONDS after the last minute over the line. A warning is logged
- * once per surge, when the flag first goes up.
+ * Failed sign-ins are counted per minute. Past SURGE_FAILURES_PER_MINUTE the flag goes up, and while it is up every
+ * sign-in from a device the account does not know needs the CAPTCHA; it comes down SURGE_HOLD_SECONDS after the last
+ * minute over the line. One warning is logged per surge.
  *
  * Without Redis there is nothing shared to count in, and this does nothing.
  */

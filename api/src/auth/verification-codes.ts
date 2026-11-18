@@ -2,12 +2,10 @@ import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
 import type pg from 'pg';
 
 /**
- * Email verification codes (KUR-014): a 6-digit numeric code, valid briefly,
- * that proves the user controls the mailbox. The code is low-entropy by design
- * (easy to type), so two defences matter:
- *  - it is bound to a specific authenticated user (the hash mixes in the user
- *    id), so a code is useless against any other account, and
- *  - a per-code attempt cap makes online guessing infeasible before it expires.
+ * Email verification codes: 6 digits, short-lived, proving mailbox control. Low entropy by design (easy to type), so
+ * two defences matter:
+ * - the hash mixes in the user id, so a code is useless against any other account;
+ * - a per-code attempt cap makes online guessing infeasible before expiry.
  * Only a hash is stored; the raw code exists only in the email.
  */
 
@@ -27,9 +25,8 @@ export function generateCode(): string {
 }
 
 /**
- * Issues a fresh code for the user, replacing any outstanding one (resend
- * invalidates the previous code and resets the attempt counter). Returns the
- * raw code for the caller to email.
+ * Issue a fresh code, replacing any outstanding one (the old code dies and attempts reset). Returns the raw code to
+ * email.
  */
 export async function createVerificationCode(
   pool: Pick<pg.Pool, 'query'>,
@@ -49,10 +46,9 @@ export async function createVerificationCode(
 }
 
 /**
- * Checks a submitted code for the user under a row lock so racing submissions
- * can't share an attempt budget. A correct code is consumed (deleted); a wrong
- * one increments the attempt counter; expiry and the attempt cap are enforced
- * before any comparison. The hash compare is constant-time.
+ * Check a submitted code under a row lock so racing submissions share one attempt budget. A correct code is consumed
+ * (deleted), a wrong one counts an attempt; expiry and the cap are checked before comparing, and the comparison is
+ * constant-time.
  */
 export async function verifyCode(
   pool: pg.Pool,

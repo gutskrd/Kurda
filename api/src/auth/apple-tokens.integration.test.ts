@@ -1,8 +1,7 @@
 /**
- * Sign in with Apple's refresh token, kept at sign-in and revoked when the
- * account is deleted for good (App Store guideline 5.1.1(v)), against real
- * Postgres. Apple is stood in for: its signing keys, its token endpoint and its
- * revoke endpoint answer from here, and every request to them is recorded.
+ * Sign in with Apple's refresh token against real Postgres: kept at sign-in and revoked on final account deletion (App
+ * Store guideline 5.1.1(v)). Apple's signing keys, token and revoke endpoints are stood in for here, and every request
+ * to them is recorded.
  */
 import { generateKeyPairSync } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,4 +1,4 @@
-/** Optional phone (SMS) verification vs real Postgres (CI job). KUR-297. */
+/** Optional phone (SMS) verification vs real Postgres (CI job). */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { PhoneVerificationService } from './phone-verification-service.js';
@@ -119,7 +119,7 @@ describe.skipIf(!DATABASE_URL)('phone verification (integration)', () => {
     expect((await svc.status(a)).verified).toBe(false); // detached — exclusivity
   });
 
-  it('a verified phone fast-tracks the trust level (#295)', async () => {
+  it('a verified phone fast-tracks the trust level', async () => {
     const trust = new TrustService(pool);
     // 1-day-old, email-verified account: normally `basic` (needs 7d for established)
     const u = await makeUser({ verified: true, ageMs: DAY + 60_000 });
