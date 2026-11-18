@@ -8,15 +8,9 @@ import { forgetMpAvailability } from '../games/mpAvailability';
 import { BackButton } from '../layouts/BackButton';
 import { WhoAmI } from './WhoAmI';
 
-/**
- * Ez kî me? on one phone, from the way in to the end: the setup and what it
- * asks the server for (the room's size, never a name), the phone handed
- * straight to the first player with no card to memorise and no words to
- * choose from, a suggested question picked in one tap and read out, the phone
- * turned to the friends who see the card and tap the answer themselves, the
- * card gone again and its verdict, a question of a player's own asked out
- * loud, a guess said out loud that the friends judge, one that misses and one
- * that lands, the end, and another game with the same names.
+/*
+ * Ez kî me? on one phone from start to end: the setup (sending the room size, never names), suggested and own
+ * questions, the friends' answers and verdicts, spoken guesses judged by the friends, the end, and a rematch.
  */
 
 afterEach(() => {
@@ -58,10 +52,7 @@ const offer = (difficulties: string[]) => ({
   '/games/who-am-i/couch?dialect=ckb': { dialect: 'ckb', difficulties: [] },
 });
 
-/**
- * A signed-in reader, and a server that offers the game in Kurmancî and deals a card for every player asked for, for
- * as many answers as the phone asked for (two when it asked for none, as the real one does).
- */
+/** A signed-in reader and a server dealing a Kurmancî card per player, for the answer count asked (two by default). */
 function serve(routes: Record<string, unknown> = {}, deals: WhoAmIDeal[] = DEALS): Call[] {
   const calls: Call[] = [];
   const all: Record<string, unknown> = {
@@ -129,10 +120,7 @@ async function take(name: string): Promise<void> {
   expect(await screen.findByRole('heading', { name: `${name}, who are you?` })).toBeInTheDocument();
 }
 
-/**
- * The phone turned to the friends. The way there takes no tap in its first moment on the screen (a double tap on the
- * board must not run on into the card), so the tap is made until it is taken.
- */
+/** Turns the phone to the friends, retrying the tap, since the button ignores taps in its first moment on screen. */
 async function turnToFriends(): Promise<void> {
   const button = await screen.findByRole('button', { name: 'Friends: tap here' });
   await waitFor(async () => {
