@@ -1,9 +1,6 @@
 /**
- * Choosing an item's picture: a file from the picker or dropped on the frame,
- * shown at once, checked here, then uploaded straight away so the server's
- * own checks answer before the form is saved. The frame is the shape the apps
- * draw it in — a background 16:9, an icon square over a checkerboard, so what
- * is see-through looks see-through.
+ * Choosing an item's picture, picked or dropped: shown at once, checked here, then uploaded straight away so the
+ * server's checks answer before the form is saved. The frame has the shape the apps draw it in.
  */
 import { useEffect, useId, useRef, useState, type DragEvent } from 'react';
 import { apiUpload } from '../api';

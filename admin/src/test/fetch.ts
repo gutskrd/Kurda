@@ -1,17 +1,11 @@
-/**
- * A fake API for the admin's tests: `fetch` answered by a list of routes, and
- * a record of every call (method, path, body) to assert on.
- */
+/** A fake API for the tests: `fetch` answered by a list of routes, and a record of every call to assert on. */
 import { vi } from 'vitest';
 
 export interface Call {
   method: string;
   path: string;
   body: unknown;
-  /**
-   * The request's headers, names in lower case. Not one of the record's own
-   * keys, so a test comparing whole calls compares method, path and body.
-   */
+  /** The request's headers in lower case; not enumerable, so a test comparing whole calls compares method, path and body. */
   readonly headers: Record<string, string>;
 }
 

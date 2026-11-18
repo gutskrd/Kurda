@@ -1,9 +1,5 @@
 // @vitest-environment jsdom
-/**
- * The shop's backgrounds and icons in the admin: cards with their art, adding
- * one with an uploaded picture, editing it, and deleting it — which the
- * dialog says, before anything happens, will delete it or retire it.
- */
+/** The shop's backgrounds and icons: the cards, adding one with an uploaded picture, editing, and deleting or retiring. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor, within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';

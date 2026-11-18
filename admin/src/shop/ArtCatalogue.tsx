@@ -1,12 +1,6 @@
 /**
- * The shop's backgrounds or its icons, as cards with their art: a background
- * at 16:9, an icon square on a checkerboard so what is see-through shows. Each
- * card says what it is called, what it costs, whether it is on sale and how
- * many people own it, with Edit and Delete under it.
- *
- * Retired items (deleted while people owned them) are left out unless asked
- * for: they are not in the shop any more, and what an admin manages here is
- * the shop.
+ * The shop's backgrounds or icons as cards with their art (an icon on a checkerboard, so transparency shows), each
+ * with its name, price, sale state and owners. Retired items are left out unless asked for, as they are not in the shop.
  */
 import { useMemo, useState } from 'react';
 import { foldForSearch } from '@kurda/shared';

@@ -1,13 +1,7 @@
 /**
- * Add or edit a background or an icon: its picture, name, description, price
- * and whether it is on sale. A full-screen sheet on a phone.
- *
- * An edit sends only what changed (PATCH /shop/items/:sku), so nothing it does
- * not show — a sale window, the one-per-person flag — is ever cleared. A new
- * item is added with POST /admin/shop/items, which refuses an SKU that is
- * taken instead of replacing that item. A price of 1,000 or more goes to a
- * second admin in Approvals, the whole change with it, as on the catalogue
- * table's form.
+ * Add or edit a background or an icon. An edit sends only what changed (PATCH /shop/items/:sku), so fields it does not
+ * show are never cleared; a new item uses POST /admin/shop/items, which refuses a taken SKU. A price of 1,000 or more
+ * goes to a second admin in Approvals, the whole change with it.
  */
 import { useState } from 'react';
 import { api, ApiError } from '../api';

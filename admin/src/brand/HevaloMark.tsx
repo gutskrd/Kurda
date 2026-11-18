@@ -4,10 +4,8 @@ import { followPointer } from './eyes';
 const SOURCES = [96, 192, 288].map((size) => `/brand/hevalo-${size}.webp ${size}w`).join(', ');
 
 /**
- * Hevalo's icon, whose eyes follow the pointer (eyes.ts). The pictures have
- * no pupils of their own: they are drawn over them where the icon has them,
- * so they can move. `size` is how wide it is shown, in pixels. Decorative
- * beside the name it stands for, so hidden from assistive technology.
+ * Hevalo's icon with eyes that follow the pointer (eyes.ts): the picture has no pupils, so they are drawn over it.
+ * `size` is its width in pixels. Hidden from assistive technology, as the name beside it says it.
  */
 export function HevaloMark({ size, className }: { size: number; className?: string }): React.JSX.Element {
   const left = useRef<HTMLSpanElement>(null);

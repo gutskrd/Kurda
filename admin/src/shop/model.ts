@@ -1,8 +1,4 @@
-/**
- * The shop's catalogue as the admin sees it: an item, what state it is in,
- * and the price rule. Shared by the catalogue table (pages/Shop.tsx) and the
- * backgrounds and icons views (this folder).
- */
+/** The shop's catalogue as the console sees it: an item, its state and the price rule, for pages/Shop.tsx and this folder. */
 import type { Tone } from '../ui';
 
 export type Currency = 'zer' | 'gems';
@@ -34,7 +30,7 @@ export interface ShopItem {
 export type ArtKind = 'background' | 'icon';
 export const isArtKind = (category: string): category is ArtKind => category === 'background' || category === 'icon';
 
-/** The categories POST /shop/items accepts, in words; `tag` was missing, so the Kurdish tag could not be saved. */
+/** The categories POST /shop/items accepts, in words. */
 export const CATEGORIES: ReadonlyArray<{ value: string; label: string }> = [
   { value: 'background', label: 'Background' },
   { value: 'icon', label: 'Profile icon' },
@@ -57,10 +53,8 @@ export function priceText(price: number, currency: Currency): string {
 export type SaleState = 'on' | 'off' | 'scheduled' | 'ended' | 'hidden' | 'retired';
 
 /**
- * Whether someone can buy it now, and if not why: retired (deleted while
- * people owned it), hidden (not listed), taken off sale, or outside its sale
- * window. All of them keep it out of the shop for players; the badge says
- * which, because each is undone in a different place.
+ * Whether someone can buy it now, and if not why: retired, hidden, off sale, or outside its sale window. The badge
+ * says which, as each is undone in a different place.
  */
 export function saleState(
   item: Pick<ShopItem, 'active' | 'inStock' | 'availableFrom' | 'availableTo' | 'retiredAt'>,
@@ -83,10 +77,7 @@ export const STATE: Record<SaleState, { text: string; tone: Tone }> = {
   retired: { text: 'Retired', tone: 'neutral' },
 };
 
-/**
- * Whether saving this goes to a second admin: a price (or currency) that is new
- * and at or over the line. The rest of a dear item saves at once.
- */
+/** Whether saving goes to a second admin: a new price or currency at or over the line; the rest saves at once. */
 export function needsApproval(before: Pick<ShopItem, 'price' | 'currency'> | null, price: number, currency: Currency): boolean {
   if (price < APPROVAL_PRICE) return false;
   return !before || before.price !== price || before.currency !== currency;

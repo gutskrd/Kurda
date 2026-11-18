@@ -1,9 +1,6 @@
 /**
- * The rules an uploaded background or icon has to meet, said before the file
- * is sent, and the server's refusals said in words an admin can act on. The
- * server checks all of it again (api/src/shop/art.ts); checking here first
- * means a wrong picture is caught the moment it is dropped, not after a
- * five-megabyte upload.
+ * The rules an uploaded background or icon must meet, checked as soon as it is dropped instead of after the upload,
+ * and the server's refusals in words an admin can act on. The server checks it all again (api/src/shop/art.ts).
  */
 import { foldForSearch } from '@kurda/shared';
 import { ApiError } from '../api';
@@ -119,11 +116,7 @@ export function uploadProblem(kind: ArtKind, err: unknown): string {
 /** Where art is drawn from: uploaded art has a whole URL; the art that ships is a path on the site. */
 const SITE_URL = ((import.meta.env.VITE_SITE_URL as string | undefined)?.trim() || 'https://hevalo.app').replace(/\/$/, '');
 
-/**
- * Make an item's art URL one the admin can load. The admin is served from its
- * own origin, and the art that ships lives on the website's, so a site path
- * is resolved against the site — as the phone app does (mobile `assetUrl`).
- */
+/** An item's art URL the console can load: shipped art is a path on the website, resolved as the app's `assetUrl` does. */
 export function artSrc(url: string | null | undefined): string | null {
   if (!url) return null;
   if (/^[a-z][a-z\d+.-]*:/i.test(url) || url.startsWith('//')) return url;

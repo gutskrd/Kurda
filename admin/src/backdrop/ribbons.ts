@@ -1,17 +1,7 @@
 /**
- * The admin's backdrop: ribbons of violet light folding over one another on
- * black, worked out for every pixel of the screen on its graphics chip, so
- * they stay sharp however large the window is.
- *
- * Each ribbon is a band woven of fine lines between two edges that wave and
- * twist. Where a ribbon turns edge-on its lines crowd together and their light
- * adds up to a bright fold; where it lies open they spread apart into a dim,
- * fine weave. A soft glow surrounds each, brightest at its folds.
- *
- * The picture is laid out on a scene 658 by 494 and fitted to the window by
- * its width: a wide window loses only black above and below, and a phone's
- * tall one gains more black above and below, with the whole shape across its
- * middle.
+ * The console's backdrop: violet ribbons on black, drawn per pixel by a fragment shader so they stay sharp at any
+ * size. Each ribbon is a band of fine lines between two waving, twisting edges; where it turns edge-on the lines crowd
+ * into a bright fold. The scene is 658 by 494, fitted to the window's width and centred vertically.
  */
 export const SCENE = { width: 658, height: 494 } as const;
 

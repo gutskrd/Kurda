@@ -1,8 +1,4 @@
-/**
- * Render for the admin's Testing Library tests: mount into the document with
- * the admin's own React, inside the providers every page has (toasts and
- * dialogs), and unmount after each test (setup.ts).
- */
+/** Render for the Testing Library tests: mount with the console's own React inside the kit's providers; setup.ts unmounts. */
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { DialogProvider } from '../ui/Dialog';

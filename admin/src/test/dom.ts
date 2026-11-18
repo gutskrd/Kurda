@@ -1,7 +1,4 @@
-/**
- * Rendering a page for the admin's tests (jsdom): mount, wait for what it
- * fetches, and act on it the way a person does — click, type, choose.
- */
+/** Rendering a page for the tests: mount, wait for what it fetches, and click, type and choose as a person does. */
 import { act, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 

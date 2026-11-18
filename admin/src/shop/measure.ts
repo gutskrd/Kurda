@@ -1,8 +1,4 @@
-/**
- * The size of a picture the admin picked, read by the browser before anything
- * is sent. Its own module so the component tests can stand in for it: a test
- * browser has no image decoder.
- */
+/** The size of a picked picture, read before anything is sent; its own module so tests, which cannot decode images, mock it. */
 export async function measureImage(file: Blob): Promise<{ width: number; height: number } | null> {
   if (typeof createImageBitmap === 'function') {
     try {
