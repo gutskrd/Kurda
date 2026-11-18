@@ -244,6 +244,24 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(long.count, long.statements.join('\n')).toBeLessThanOrEqual(2);
     });
 
+    it('the badges’ unread counts cost the same for one conversation as for six, and read no conversation list', async () => {
+      const groups = new GroupService(pool);
+      await message(ids.f1!, ids.solo!, 'one');
+      for (const tag of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6']) await message(ids[tag]!, ids.me!, `from ${tag}`);
+      for (const [owner, tag] of [['solo', 'One'], ['me', 'Six']] as const) {
+        const { id } = await groups.create(ids[owner]!, { name: `${tag} unread ${suffix}`.slice(0, 40) });
+        await pool.query(`INSERT INTO group_messages (group_id, sender_id, body) VALUES ($1, $2, 'hello')`, [id, ids.f1]);
+      }
+      const one = await steady('GET', '/chat/unread', 'solo');
+      const six = await steady('GET', '/chat/unread', 'me');
+      expect(one.body.direct).toEqual([{ userId: ids.f1, unread: 1 }]);
+      expect(six.body.direct.length).toBeGreaterThanOrEqual(6);
+      expect(six.count, six.statements.join('\n')).toBe(one.count);
+      // the session read, the direct counts and the group counts
+      expect(six.count, six.statements.join('\n')).toBeLessThanOrEqual(3);
+      expect(six.statements.join('\n')).not.toMatch(/row_number\(\)|last_seen_at/);
+    });
+
     it('sending a direct message stays within its budget', async () => {
       const sent = await steady('POST', `/chat/${ids.f4}/messages`, 'me', { body: 'hello there' });
       expect(sent.count, sent.statements.join('\n')).toBeLessThanOrEqual(6);

@@ -1,4 +1,5 @@
 /** Direct messages against real Postgres. */
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -6,6 +7,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ChatService } from './service.js';
 import { FriendService } from '../friends/service.js';
+import { canonicalPair } from '../friends/pair.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -128,5 +130,41 @@ describe.skipIf(!DATABASE_URL)('direct messages (integration)', () => {
     expect(withB!.lastMessage).toBe('baş im, spas!');
     expect(withB!.unread).toBeGreaterThanOrEqual(1);
     expect(withB!.lastFromMe).toBe(false);
+  });
+
+  it('counts for the badges what the conversation list counts, from either side of a pair', async () => {
+    // one partner sorting before A and one after, so A is user_hi in one pair and user_lo in the other; a third whose
+    // account is deleted, and D, who blocked A
+    const named = async (tag: string, first: string): Promise<string> => {
+      const userId = first + randomUUID().slice(8);
+      await pool.query(`INSERT INTO users (id, email, username) VALUES ($1, $2, $3)`, [userId, `dm_${tag}_${suffix}@it.kurda.app`, `dm_${tag}_${suffix}`.slice(0, 30)]);
+      return userId;
+    };
+    const low = await named('low', '00000000');
+    const high = await named('high', 'ffffffff');
+    const gone = await named('gone', '77777777');
+    const write = async (from: string, to: string, n: number, read = false): Promise<void> => {
+      const { lo, hi } = canonicalPair(from, to);
+      await pool.query(
+        `INSERT INTO dm_messages (user_lo, user_hi, sender_id, body, read_at) SELECT $1, $2, $3, 'silav ' || i, $5 FROM generate_series(1, $4::int) i`,
+        [lo, hi, from, n, read ? new Date() : null],
+      );
+    };
+    await write(low, id.a!, 3);
+    await write(low, id.a!, 2, true);
+    await write(high, id.a!, 4);
+    await write(id.a!, high, 5); // A's own, unread by them
+    await write(gone, id.a!, 1);
+    await pool.query(`UPDATE users SET deleted_at = now() WHERE id = $1`, [gone]);
+    await write(id.d!, id.a!, 2);
+
+    const counts = await chat.unread(id.a!);
+    const listed = (await chat.conversations(id.a!)).filter((c) => c.unread > 0).map((c) => ({ userId: c.userId, unread: c.unread }));
+    const byPerson = (list: Array<{ userId: string; unread: number }>) => [...list].sort((x, y) => x.userId.localeCompare(y.userId));
+    expect(byPerson(counts)).toEqual(byPerson(listed));
+    expect(counts).toEqual(expect.arrayContaining([{ userId: low, unread: 3 }, { userId: high, unread: 4 }]));
+    expect(counts.map((c) => c.userId)).not.toContain(gone);
+    expect(counts.map((c) => c.userId)).not.toContain(id.d);
+    expect((await chat.unread(high)).find((c) => c.userId === id.a)?.unread).toBe(5);
   });
 });

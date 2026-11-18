@@ -89,7 +89,7 @@ import { registerFeedRoutes } from './feed/routes.js';
 import { ActivityService } from './activity/service.js';
 import { registerActivityRoutes } from './activity/routes.js';
 import { ChatService } from './chat/service.js';
-import { registerChatRoutes } from './chat/routes.js';
+import { registerChatRoutes, registerChatUnreadRoute } from './chat/routes.js';
 import { registerLetterRoutes } from './letters/routes.js';
 import { LetterService } from './letters/service.js';
 import { GroupService } from './groups/service.js';
@@ -801,12 +801,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerModerationRoutes(app, moderation);
 
     // Direct messages: sent over HTTP, pushed and acknowledged over the WebSocket; a message to a friend moves the Name badge.
-    registerChatRoutes(
-      app,
-      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation, badges),
-      trust,
-      aiMod,
-    );
+    const chat = new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation, badges);
+    registerChatRoutes(app, chat, trust, aiMod);
 
     // Letters by bird: pen pals in Kurdish, met by sending a bird out, within an age band (letters/service.ts).
     registerLetterRoutes(
@@ -830,6 +826,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       moderation,
     );
     registerGroupChatRoutes(app, groupChat);
+    // The badges' unread counts, direct and group, without the conversation list.
+    registerChatUnreadRoute(app, chat, groupChat);
 
     // Story games: Postgres holds the game, and long-polls are woken across instances over the room bus.
     const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: badges, friends, ranks });

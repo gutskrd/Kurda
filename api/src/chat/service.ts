@@ -10,6 +10,7 @@ import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from '../social/presence.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 export const MAX_MESSAGE_LEN = 2000;
 
@@ -320,6 +321,26 @@ export class ChatService {
     if (await this.friends.areBlocked(from, to)) return;
     if ((await this.friends.statusBetween(from, to)) !== 'friends') return;
     await this.notifier.notifyUser(to, { type: 'dm_typing', from }).catch(() => undefined);
+  }
+
+  /**
+   * The conversation list's unread counts alone, for the badges: each person with messages to you unread, under the
+   * list's own rules (no deleted accounts, nobody across a block). Counted from the unread rows of each side of the
+   * pair, and each person looked up once, so a long list never reads every account.
+   */
+  async unread(user: string): Promise<Array<{ userId: string; unread: number }>> {
+    const rows = await this.pool.query<{ sender_id: string; unread: number }>(
+      `SELECT w.sender_id, w.unread
+         FROM (
+           SELECT sender_id, count(*)::int AS unread FROM dm_messages WHERE user_lo = $1 AND sender_id <> $1 AND read_at IS NULL GROUP BY sender_id
+           UNION ALL
+           SELECT sender_id, count(*)::int FROM dm_messages WHERE user_hi = $1 AND sender_id <> $1 AND read_at IS NULL GROUP BY sender_id
+         ) w
+        WHERE (SELECT u.deleted_at IS NULL FROM users u WHERE u.id = w.sender_id)
+          AND ${notBlockedSql('w.sender_id', '$1::uuid')}`,
+      [user],
+    );
+    return rows.rows.map((r) => ({ userId: r.sender_id, unread: r.unread }));
   }
 
   /** Conversation list: last message + unread per correspondent (blocks hidden). */
