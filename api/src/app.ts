@@ -706,12 +706,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // Personalized streak reminders, hourly, by local time.
     const streakReminders = new StreakReminderService(app.db, {
-      enqueue: async (userId, notification) => {
+      enqueueAll: async (items) => {
         // job path records to the inbox in the worker; inline path records here
-        if (app.jobs) await app.jobs.enqueue(makePushSendJob(pushService), { userId, notification });
+        if (app.jobs) await app.jobs.enqueueAll(makePushSendJob(pushService), items);
         else {
-          await inbox.record(userId, notification);
-          await pushService.deliver(userId, notification);
+          await inbox.recordAll(items);
+          for (const { userId, notification } of items) await pushService.deliver(userId, notification);
         }
       },
     });

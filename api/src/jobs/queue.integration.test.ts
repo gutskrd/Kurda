@@ -73,6 +73,20 @@ describe.skipIf(!REDIS_URL)('job queue (integration)', () => {
     });
   });
 
+  it('queues many jobs at once, and none when one of them is invalid', async () => {
+    await queue.enqueueAll(okJob, [{ msg: 'yek' }, { msg: 'du' }, { msg: 'sê' }]);
+    await vi.waitFor(
+      () => {
+        for (const msg of ['yek', 'du', 'sê']) expect(processed).toHaveBeenCalledWith(msg);
+      },
+      { timeout: 10_000, interval: 100 },
+    );
+    const waiting = await queue.raw.getJobCounts('waiting', 'prioritized', 'delayed');
+    await expect(queue.enqueueAll(okJob, [{ msg: 'çar' }, { msg: 5 } as unknown as { msg: string }])).rejects.toThrow(/invalid payload/);
+    expect(await queue.raw.getJobCounts('waiting', 'prioritized', 'delayed')).toEqual(waiting);
+    expect(processed).not.toHaveBeenCalledWith('çar');
+  });
+
   it('rejects invalid payloads at enqueue time (queue never sees them)', async () => {
     await expect(
       queue.enqueue(sendEmailJob, { to: 'not-an-email', template: 'verify-email', vars: {} }),

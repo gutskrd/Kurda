@@ -3,9 +3,9 @@ import type { Notification } from '../push/service.js';
 import { dueReminder, reminderMessage, type ReminderKind } from './streak-reminder.js';
 import { notKnownAdultSql } from '../users/age.js';
 
-/** Enqueue a push for one user — injected so the service doesn't know the queue. */
+/** Queues the pushes of one run together — injected so the service doesn't know the queue. */
 export interface ReminderEnqueuer {
-  enqueue(userId: string, notification: Notification): Promise<void>;
+  enqueueAll(items: ReadonlyArray<{ userId: string; notification: Notification }>): Promise<void>;
 }
 
 interface CandidateRow {
@@ -85,16 +85,11 @@ export class StreakReminderService {
     }
     const fresh = await this.markSent(due.map(({ row, kind }) => ({ userId: row.user_id, localDate: row.local_today, kind })));
 
-    let sent = 0;
-    for (const { row, kind } of due) {
-      if (!fresh.has(`${row.user_id}|${row.local_today}|${kind}`)) continue;
-      await this.enqueuer.enqueue(row.user_id, {
-        category: 'streak',
-        ...reminderMessage(kind, row.current_streak, row.locale),
-      });
-      sent += 1;
-    }
-    return sent;
+    const sends = due
+      .filter(({ row, kind }) => fresh.has(`${row.user_id}|${row.local_today}|${kind}`))
+      .map(({ row, kind }) => ({ userId: row.user_id, notification: { category: 'streak' as const, ...reminderMessage(kind, row.current_streak, row.locale) } }));
+    await this.enqueuer.enqueueAll(sends);
+    return sends.length;
   }
 
   /** Records the sends in one statement and returns those not already sent today (as `user|day|kind`), the ones to send. */

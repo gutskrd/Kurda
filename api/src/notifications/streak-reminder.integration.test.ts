@@ -16,9 +16,11 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
   let pool: pg.Pool;
   const suffix = Date.now().toString(36);
   const sent: { userId: string; notification: Notification }[] = [];
+  let batches = 0;
   const enqueuer: ReminderEnqueuer = {
-    enqueue: async (userId, notification) => {
-      sent.push({ userId, notification });
+    enqueueAll: async (items) => {
+      batches += 1;
+      sent.push(...items);
     },
   };
   let service: StreakReminderService;
@@ -114,7 +116,10 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     sent.length = 0;
     // a day of its own, so nothing has been sent yet
     await practisedOn('2026-06-15', atRisk, minorOptedIn);
+    const before = batches;
     await service.runHourly(new Date('2026-06-16T08:30:00Z'));
+    // both reminders in one queueing
+    expect(batches - before).toBe(1);
     const german = sent.find((s) => s.userId === minorOptedIn);
     expect(german?.notification.title).toBe('Ein paar Minuten Kurdisch?');
     expect(sent.find((s) => s.userId === atRisk)?.notification.title).toBe('A few minutes of Kurdish?');
