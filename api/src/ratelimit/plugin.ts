@@ -21,6 +21,12 @@ export const DEFAULT_RATE_LIMIT: Required<RateLimitOptions> = {
 const EXEMPT_ROUTES = new Set(['/health', '/metrics']);
 
 /**
+ * The one budget every address no route answers shares. Keyed by the address itself, each made-up path had a budget
+ * of its own, so a stream of them was never limited and left a counter behind for each.
+ */
+const NO_ROUTE = '(no route)';
+
+/**
  * An address is limited by its network (net/network-key.ts): itself for IPv4, its /64 for IPv6, so moving within a
  * /64 gives no fresh budget. `req.ip` is the client as net/client-ip.ts resolved it.
  */
@@ -43,7 +49,7 @@ export interface RateLimitHooks {
  */
 export function setupRateLimit(app: FastifyInstance, store: RateLimitStore, hooks: RateLimitHooks = {}): void {
   app.addHook('onRequest', async (req, reply) => {
-    const route = req.routeOptions?.url ?? req.url;
+    const route = req.routeOptions?.url ?? NO_ROUTE;
     if (EXEMPT_ROUTES.has(route)) return;
 
     const override = (req.routeOptions?.config as { rateLimit?: RateLimitOptions } | undefined)
