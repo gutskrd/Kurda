@@ -1,6 +1,6 @@
 /**
- * The admin stories API, as the list and the editor use it: the calls, what a
- * refusal means, and the two-step actions ("save and publish").
+ * The admin stories API as the list and the editor use it: the calls, what a refusal means, and the two-step actions
+ * ("save and publish").
  *
  *   GET    /admin/stories?q&status&dialect&level&category&review&featured&limit&offset
  *                                            a page of stories with their problem counts: { stories, total }
@@ -19,10 +19,8 @@
  *   PUT    /admin/story-categories/:slug     { name, position? }
  *   DELETE /admin/story-categories/:slug     409 IN_USE with the count, unless ?force=1 (its stories are left unfiled)
  *
- * Every change to a story carries the `lockVersion` the editor loaded, so two
- * people editing one story cannot silently overwrite each other: the second
- * gets 409 STALE and is asked to reload. Publishing needs a reviewer's
- * approval first (409 NOT_REVIEWED).
+ * Every change carries the `lockVersion` the editor loaded, so a second editor gets 409 STALE instead of overwriting
+ * the first. Publishing needs a reviewer's approval first (409 NOT_REVIEWED).
  */
 import type { StoryCategory, StoryDialect, StoryProblem, StoryValidation } from '@kurda/shared';
 import { api, ApiError } from './api';
@@ -57,11 +55,7 @@ export function listStories(filter: ListFilter, page = 0): Promise<StoryPage> {
   return api<StoryPage>(`${BASE}?${listParams(filter, page)}`);
 }
 
-/**
- * How many stories each status tab would show under the other filters: one
- * request per status, asking for a single row and reading the total. The
- * server pages the list, so the counts cannot be read off the page on screen.
- */
+/** How many stories each status tab would show under the other filters: a one-row page per status, read for its total. */
 export async function statusCounts(filter: ListFilter): Promise<Record<StoryStatus | 'all', number>> {
   const statuses = STATUS_TABS.filter((s): s is StoryStatus => s !== 'all');
   const totals = await Promise.all(statuses.map((status) => listStories({ ...filter, status }, 0).then((p) => p.total)));
@@ -94,11 +88,7 @@ export function reviewStory(story: Pick<AdminStory, 'id' | 'lockVersion'>, appro
   return api<AdminStory>(`${at(story.id)}/review`, { method: 'POST', body: { approved, note, lockVersion: story.lockVersion } });
 }
 
-/**
- * Save one language of a story — its text, title and summary, questions,
- * reflections and notes in that language — on a published story too: it stays
- * online and approved, and the language is marked as needing review.
- */
+/** Save one language of a story, published ones included: the story stays online and approved, the language needs review. */
 export function saveStoryTranslation(
   story: Pick<AdminStory, 'id' | 'lockVersion'>,
   locale: string,
@@ -128,7 +118,7 @@ export function featureStory(story: Pick<AdminStory, 'id' | 'lockVersion'>, feat
   return api<AdminStory>(`${at(story.id)}/feature`, { method: 'POST', body: { featured, lockVersion: story.lockVersion } });
 }
 
-// ── categories ──────────────────────────────────────────────────────────────
+// ── Categories ──────────────────────────────────────────────────────────────
 
 export interface CategoryInput {
   name: StoryCategory['name'];
@@ -165,19 +155,19 @@ export function categoryInUse(err: unknown): number | null {
   return typeof count === 'number' ? count : 0;
 }
 
-// ── refusals ────────────────────────────────────────────────────────────────
+// ── Refusals ────────────────────────────────────────────────────────────────
 
 export type StoryFailure =
-  /** someone changed the story since it was loaded: reload before going on */
+  /** Someone changed the story since it was loaded: reload before going on. */
   | { kind: 'stale'; message: string }
-  /** the server found problems; `validation` has them by field when it said which */
+  /** The server found problems; `validation` has them by field when it said which. */
   | { kind: 'invalid'; message: string; validation: StoryValidation | null }
   | { kind: 'slug_taken'; message: string }
-  /** a game has used the story, so it cannot be deleted (archive it instead) */
+  /** A game has used the story, so it cannot be deleted (archive it instead). */
   | { kind: 'in_use'; message: string }
-  /** its status changed under the editor (published, archived) */
+  /** Its status changed under the editor (published, archived). */
   | { kind: 'state'; message: string }
-  /** no reviewer has approved it, so it cannot be published yet */
+  /** No reviewer has approved it, so it cannot be published yet. */
   | { kind: 'not_reviewed'; message: string }
   | { kind: 'not_found'; message: string }
   | { kind: 'forbidden'; message: string }
@@ -190,11 +180,7 @@ function isProblemList(v: unknown): v is StoryProblem[] {
   );
 }
 
-/**
- * A request-schema refusal (400 VALIDATION_ERROR) names fields the zod way,
- * 'questions.0.options.1'; the editor files problems the validateStory way,
- * 'questions[0].options[1]', so the same field shows it.
- */
+/** A request-schema refusal names fields as 'questions.0.options.1'; the editor files them as 'questions[0].options[1]'. */
 function requestIssues(details: unknown): StoryProblem[] {
   if (!Array.isArray(details)) return [];
   return details.flatMap((issue) => {
@@ -241,22 +227,15 @@ export function storyFailure(err: unknown): StoryFailure {
 }
 
 export type ActionOutcome =
-  /** `story` is the story as it now is, or null once deleted */
+  /** `story` is the story as it now is, or null once deleted. */
   | { ok: true; story: AdminStory | null }
-  /**
-   * `story` is set when an earlier step went through — "save and publish"
-   * that saved, then could not publish — so the editor keeps what was saved
-   * (and its new lockVersion) rather than the copy it started with.
-   */
+  /** `story` is set when an earlier step went through (saved, then not published), so the editor keeps what was saved. */
   | { ok: false; failure: StoryFailure; story: AdminStory | null };
 
 /**
- * Do one thing to a story.
- *
- * Submit and publish check the story as it is stored, so unsaved edits are
- * saved first ("Save and publish"): what a reviewer publishes is what they are
- * looking at. A new story is created by its first save. Unpublish, archive and
- * delete act on what is stored; the page asks before it discards edits.
+ * Do one thing to a story. Submit and publish check the stored story, so unsaved edits are saved first and a reviewer
+ * publishes what they are looking at. Unpublish, archive and delete act on what is stored; the page asks before it
+ * discards edits.
  */
 export async function runStoryAction(
   action: StoryAction,
@@ -285,7 +264,7 @@ export async function runStoryAction(
     });
     return { ok: true, story: current };
   } catch (err) {
-    // `current` is still what the last successful step returned (or the story as loaded)
+    // `current` is still what the last successful step returned (or the story as loaded).
     return { ok: false, failure: storyFailure(err), story: current !== ctx.story ? current : null };
   }
 }

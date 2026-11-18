@@ -1,8 +1,7 @@
 /**
- * Profile-photo cost-safety pipeline (KUR-177 hardening) against real Postgres +
- * MinIO. Exercises the through-server upload service directly (validation,
- * resize/WebP, limits, replacement, orphaning) plus the route's rate limit.
- * Skipped unless DATABASE_URL and S3_ENDPOINT are set.
+ * The profile photo pipeline against real Postgres and a real bucket: the through-server upload service (validation,
+ * resize to WebP, limits, replacement, orphaning) and the route's rate limit. Skipped unless DATABASE_URL and
+ * S3_ENDPOINT are set.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -166,8 +165,7 @@ describe.skipIf(!ready)('profile photo cost-safety (integration)', () => {
     ]);
     expect(a.ok && b.ok).toBe(true);
     const winner = await photoKey(userId);
-    // exactly one confirmed profile-photo row belongs to this user's final key,
-    // and the loser is not left confirmed-but-unreferenced
+    // Exactly one confirmed profile-photo row belongs to the user's final key, and the loser is not left confirmed but unreferenced.
     const confirmedForUser = await pool.query<{ count: string }>(
       `SELECT COUNT(*)::int AS count FROM media_uploads m
        WHERE m.confirmed_at IS NOT NULL AND m.key LIKE 'profile-photo/%'

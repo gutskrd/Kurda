@@ -1,18 +1,14 @@
-/**
- * The size of a picture the admin picked, read by the browser before anything
- * is sent. Its own module so the component tests can stand in for it: a test
- * browser has no image decoder.
- */
+/** The size of a picked picture, read before anything is sent; its own module so tests, which cannot decode images, mock it. */
 export async function measureImage(file: Blob): Promise<{ width: number; height: number } | null> {
   if (typeof createImageBitmap === 'function') {
     try {
-      // honours the picture's EXIF orientation, as the server does
+      // Honours the picture's EXIF orientation, as the server does.
       const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
       const size = { width: bitmap.width, height: bitmap.height };
       bitmap.close();
       return size;
     } catch {
-      // not a picture this browser can read; the server will say what it is
+      // Not a picture this browser can read; the server will say what it is.
     }
   }
   if (typeof URL.createObjectURL !== 'function') return null;

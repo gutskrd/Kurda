@@ -1,10 +1,6 @@
 /**
- * An unconfirmed account cannot do anything, against real Postgres.
- *
- * The web app has always redirected an unverified account to the verify screen,
- * and a redirect is not a rule. The server never looked at `email_verified_at`,
- * so a token from a fresh signup could post, like, message and buy. This is the
- * half that holds when somebody talks to the API directly.
+ * An unconfirmed account cannot do anything, against real Postgres: the server enforces `email_verified_at`, not just
+ * the web app's redirect, for anyone talking to the API directly.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -84,7 +80,7 @@ describe.skipIf(!DATABASE_URL)('account activation (integration)', () => {
   });
 
   it('refuses everything that writes', async () => {
-    // registering and then posting used to be two requests and no confirmation
+    // Each would otherwise be possible straight after registering.
     const cases: Array<[Parameters<typeof call>[0], string, unknown?]> = [
       ['POST', '/library/posts', { type: 'gotin', title: 'Snuck in', body: 'Not confirmed.' }],
       ['POST', `/posts/library/${postId}/like`],
@@ -111,17 +107,9 @@ describe.skipIf(!DATABASE_URL)('account activation (integration)', () => {
     expect((await call('DELETE', '/me/sessions', unverified)).statusCode).toBe(200);
   });
 
-  /**
-   * The exemption used to be the prefix `/auth/`, which made this a 200.
-   *
-   * Sending an SMS is filed under authentication and costs real money at a real
-   * carrier. An account one request old, which has not shown it owns the email
-   * address it signed up with, has no business spending it — and with the stub
-   * sender the bill was zero, so nothing ever said so.
-   */
+  /** Sending an SMS costs money, so an account that has not confirmed its email may not, though the route is under /auth/. */
   it('refuses an SMS to an account that has not confirmed its email', async () => {
-    // its own account: the shared `unverified` token has been signed out by the
-    // time this runs, and a 401 would pass for the wrong reason
+    // Its own account: the shared `unverified` token is signed out by now, and a 401 would pass for the wrong reason.
     const cold = await register('sms', '10.88.0.4');
     const res = await call('POST', '/auth/phone/send', cold.token, { phone: '+9647500000000' });
     expect(res.statusCode).toBe(403);
@@ -140,8 +128,7 @@ describe.skipIf(!DATABASE_URL)('account activation (integration)', () => {
 
     await pool.query(`UPDATE users SET email_verified_at = now() WHERE id = $1`, [fresh.id]);
 
-    // no new token needed: the guard reads the row on every request, so
-    // confirming takes effect on the very next call
+    // No new token needed: the guard reads the row on every request, so confirming applies on the next call.
     expect((await call('POST', `/posts/library/${postId}/like`, fresh.token)).statusCode).toBe(200);
   });
 });

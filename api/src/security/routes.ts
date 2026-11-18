@@ -48,10 +48,8 @@ const revealBody = z.object({ reason: z.string().trim().min(5).max(300) });
 const idParam = z.object({ id: z.uuid() });
 
 /**
- * The security log in the admin console: superadmins only, behind the two-step
- * code like every staff route. Reading it, marking alerts reviewed, and seeing
- * the address one event came from (a reason required, and the reveal itself
- * recorded both here and in the admin audit trail).
+ * The security log in the admin console, for superadmins behind the two-step code: reading it, marking alerts
+ * reviewed, and revealing an event's address with a reason, the reveal itself recorded here and in the audit trail.
  */
 export function registerSecurityLogRoutes(app: FastifyInstance, reader: SecurityLogReader, totp: AdminTotpService): void {
   const superadmin = [requireAuth, requireAdmin(totp, 'superadmin')];

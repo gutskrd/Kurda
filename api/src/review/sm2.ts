@@ -1,9 +1,6 @@
 /**
- * SM-2 spaced-repetition scheduling (KUR-033). Pure — no clock, no DB — so
- * the interval progression is exhaustively unit-testable.
- *
- * Reference: SuperMemo SM-2. `quality` is the learner's recall on a 0–5
- * scale; ≥3 is a pass, <3 is a lapse that resets the interval.
+ * Pure SM-2 spaced-repetition scheduling. `quality` is recall on a 0–5 scale: 3 or more passes, less is a lapse that
+ * resets the interval.
  */
 import { dayDiff, localDate } from '../streaks/streak-logic.js';
 
@@ -30,9 +27,8 @@ export function nextEasiness(easiness: number, quality: Quality): number {
 }
 
 /**
- * Apply one review outcome. A pass (quality ≥ 3) advances the interval
- * (1 day → 6 days → ×easiness); a lapse (quality < 3) resets repetitions
- * and drops the interval back to 1 day. Easiness is always updated.
+ * Applies one review outcome. A pass advances the interval (1 day, then 6, then ×easiness); a lapse resets repetitions
+ * and the interval to 1 day. Easiness is always updated.
  */
 export function review(state: Sm2State, quality: Quality): Sm2State {
   const easiness = nextEasiness(state.easiness, quality);
@@ -61,35 +57,16 @@ export function dueAfter(now: Date, intervalDays: number): Date {
 export interface Scheduled {
   state: Sm2State;
   dueAt: Date;
-  /**
-   * When it was last answered, if it ever was. Absent on a row written before
-   * this was read (or by hand); it is then taken to be when the item was
-   * scheduled, `dueAt` less the interval, which is when `record` wrote it.
-   */
+  /** When it was last answered, if ever; when absent, taken as when it was scheduled (`dueAt` minus the interval). */
   lastReviewedAt?: Date | null;
 }
 
 /**
- * Whether answering an item now is a spaced review: it is due, or at least
- * half of its current interval has passed since it was scheduled — and either
- * way it is a later day, on the learner's own calendar, than the last time it
- * was answered.
- *
- * Spacing is what makes a review strengthen memory more than a repeat does.
- * A replay of the same lesson an hour later, or a not-yet-due item padded into
- * practice, is massed repetition; counting it as a review stretched the
- * interval as if the learner had remembered across the gap. Half the interval
- * lets an item reviewed a little early still count, so a learner who practises
- * the evening before a due date is not penalised.
- *
- * Half the interval alone still let the same day through: every newly learned
- * item has a one-day interval, so a lesson at nine in the morning replayed at
- * nine at night moved its words from one day to six. A review has to cross a
- * night, so the day is the learner's (`timeZone`), not UTC's, whose midnight
- * falls in the middle of an evening in much of the world.
- *
- * An item that has never been answered (a saved word, interval 0) has no
- * earlier day to be later than: it is reviewable at once.
+ * Whether answering now is a spaced review: the item is due, or half its interval has passed since it was scheduled,
+ * and either way it is a later day on the learner's calendar than its last answer. Only spaced reviews strengthen
+ * memory; a same-day replay or an early padded item is massed repetition and must not stretch the interval. Half the
+ * interval lets slightly early reviews count. The day must change because new items have one-day intervals, and it is
+ * the learner's day (`timeZone`), not UTC's. A never-answered item (a saved word, interval 0) is reviewable at once.
  */
 export function isSpacedReview(item: Scheduled, now: Date, timeZone = 'UTC'): boolean {
   const scheduledAt = item.dueAt.getTime() - item.state.interval * DAY_MS;
@@ -100,14 +77,10 @@ export function isSpacedReview(item: Scheduled, now: Date, timeZone = 'UTC'): bo
 }
 
 /**
- * Apply one answer to an item's schedule, honestly. Returns the new schedule,
- * or null when the answer must leave it alone.
- *
+ * Applies one answer to an item's schedule, returning the new schedule or null to leave it alone:
  *  - a new item: its first review, whatever the answer
- *  - a wrong answer: always a lapse — forgetting is evidence whenever it shows
- *  - a right answer: advances SM-2 only when it is a spaced review
- *    (`isSpacedReview`, on the learner's calendar in `timeZone`); a same-day
- *    replay or an early practice item leaves the schedule where it was
+ *  - a wrong answer: always a lapse
+ *  - a right answer: advances only when it is a spaced review (`isSpacedReview`, on the learner's calendar)
  */
 export function scheduleAnswer(
   prev: Scheduled | null,
@@ -120,11 +93,7 @@ export function scheduleAnswer(
   return { state, dueAt: dueAfter(now, state.interval), lastReviewedAt: now };
 }
 
-/**
- * Map a lesson-answer verdict to an SM-2 quality grade. An answer that was not
- * accepted is a lapse whatever its verdict: a strict spelling item's typo
- * (right word, wrong letter) missed the very thing it tests.
- */
+/** Maps a lesson verdict to an SM-2 quality. An unaccepted answer is a lapse whatever its verdict: a strict spelling item's typo missed what it tests. */
 export function qualityFromVerdict(verdict: 'correct' | 'typo' | 'wrong', accepted = verdict !== 'wrong'): Quality {
   if (!accepted) return 2; // lapse
   switch (verdict) {

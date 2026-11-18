@@ -1,7 +1,4 @@
-/**
- * The XP ledger records what was earned and what counts for the league
- * (contract 4 §L4), against real Postgres.
- */
+/** The XP ledger records what was earned and what counts for the league, against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { XpService, type AwardedXp } from './service.js';

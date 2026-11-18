@@ -6,12 +6,8 @@ import type { LeaderboardService } from './service.js';
 import { isBoardScope, isBoardType } from './rank.js';
 
 /**
- * Leaderboards (KUR-063): one page of a board plus the caller's own rank.
- *
- * `:type` is what is ranked — `weekly_xp`, or the Zêr (`zer`) and Gewher
- * (`gewher`) each person holds now (rank.ts). `scope` picks who the board covers — everyone, your friends, or your country —
- * and the caller's rank is always computed within that same board, so the number
- * beside your name means what the list around it means.
+ * Leaderboards: one page of a board plus the caller's own rank. `:type` is `weekly_xp`, `zer` or `gewher`
+ * (rank.ts); `scope` is everyone, friends or country, and the caller's rank is computed within that same board.
  */
 export function registerLeaderboardRoutes(app: FastifyInstance, boards: LeaderboardService): void {
   const query = z.object({
@@ -20,11 +16,7 @@ export function registerLeaderboardRoutes(app: FastifyInstance, boards: Leaderbo
     offset: z.coerce.number().int().min(0).max(100_000).optional(),
   });
 
-  /**
-   * A leaderboard. Readable without an account — a scoreboard that only members
-   * can see is not much of a scoreboard — though `me` and the friends and
-   * country scopes need one, since they are about a particular person.
-   */
+  /** A leaderboard, readable without an account; `me` and the friends and country scopes need one. */
   app.get(
     '/leaderboards/:type',
     { schema: { params: z.object({ type: z.string().max(20) }), querystring: query } },
@@ -40,9 +32,8 @@ export function registerLeaderboardRoutes(app: FastifyInstance, boards: Leaderbo
   );
 
   /**
-   * Admin/ops: rebuild the sorted sets from Postgres (cache is not truth). Every
-   * board, one after another, with how many each lists; the console reads the
-   * weekly count it has always shown and the others ride along.
+   * Admin: rebuilds every board's sorted set from Postgres, one after another, with how many each lists; the console
+   * shows the weekly count.
    */
   app.post(
     '/admin/leaderboards/rebuild',

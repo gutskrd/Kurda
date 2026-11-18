@@ -1,43 +1,21 @@
 /**
- * Native recordings of the Kurdish that lessons use — the "Lessons" side of
- * the admin's audio studio, beside the alphabet's recordings.
+ * Native recordings of the Kurdish lessons use, the "Lessons" side of the admin audio studio:
  *
- *   GET    /admin/lesson-audio            what the lessons need, what is recorded, where each is used,
- *                                         and who each is planned for (`plannedSpeaker`, from the
- *                                         exercises' `voice` and the conversations' characters)
- *                                         (&withLipsync=1: each with its stored timeline, or null)
+ *   GET    /admin/lesson-audio            needs, recordings, usages and planned speakers (&withLipsync=1 adds timelines)
  *   PUT    /admin/lesson-audio?text=…     store a recording of that text (raw audio/wav body)
  *   DELETE /admin/lesson-audio?key=…      remove one (&force=1 when a published listening item plays it)
- *   GET    /admin/lesson-audio/conversations/:id?lesson=…
- *                                         one conversation's lines and their recordings, with who made each:
- *                                         the page each person records their part on
+ *   GET    /admin/lesson-audio/conversations/:id?lesson=…   one conversation's lines and takes, for its recording page
  *
- * A conversation's line is recorded with `&line=<conversation id>:<part>`
- * beside the text: its recording is the conversation's own, filed under who
- * says it (`conversationLineKey`), so the same words said by the other part,
- * or in another conversation, stay a recording of their own.
+ * A conversation line is recorded with `&line=<conversation id>:<part>` and filed under that part
+ * (`conversationLineKey`), so the same words in another part or conversation stay separate. The PUT may name the
+ * speaker (`&speaker=hevalo|hamo|xezo|none`) and the lip-sync timeline (`&lipsync=`, speakers/voice.ts); without a
+ * speaker the new take keeps the old one's, and without a timeline it has none. PATCH /admin/audio/lesson changes
+ * either later.
  *
- * The PUT may also say who says the recording and how their mouth moves, as
- * `&speaker=hevalo|hamo|xezo|none` and `&lipsync=<the timeline as JSON>`
- * (speakers/voice.ts). Without a speaker the new take keeps the old one's;
- * without a timeline it has none, since the old timeline was the old take's.
- * PATCH /admin/audio/lesson?key=… changes either later (speakers/routes.ts).
- *
- * There is no public list: learners get the recordings with the exercises that
- * use them (lessonaudio/delivery.ts), and with the stories that say them
- * (GET /stories/:idOrSlug). Any text may be recorded, not only one a
- * lesson uses today, so an editor can record a phrase before the lesson that
- * needs it is written.
- *
- * The admin panel records or takes a file, trims the silence, levels the
- * volume and sends a short mono WAV; the server checks it is one, and no
- * longer than a sentence needs. The text travels in the query string, as the
- * alphabet's key does, because it holds characters awkward in a path.
- *
- * The PUT alone is also open to the voice actor role, for the "Record by
- * person" page: such an account may store a take only of a line of the voices
- * linked to it (recording/access.ts). Listing, removing and the studio's other
- * routes stay the content roles'.
+ * There is no public list: learners get recordings with the exercises and stories that use them. Any text may be
+ * recorded, so an editor can record ahead of a lesson. The panel sends a trimmed, levelled short mono WAV, which the
+ * server checks; the text travels in the query string because it holds characters awkward in a path. Only the PUT is
+ * also open to voice actors, for the lines linked to them (recording/access.ts).
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -89,10 +67,7 @@ const conversationQuery = z.object({ lesson: z.uuid().optional() });
 const LINE = /^([a-z0-9]{6,32}):(\d{1,2})$/;
 const keyQuery = z.object({ key: z.string().min(1).max(LESSON_AUDIO_TEXT_MAX * 2), force: z.string().optional() });
 
-/**
- * The text to record, as typed (NFC, spaces evened out), and its key: a
- * conversation line's when `line` names one, else the text's own.
- */
+/** The text to record as typed (NFC, spaces evened) and its key: a conversation line's when `line` names one. */
 function textFrom(query: unknown): { text: string; key: string; line: { conversation: string; part: number } | null } {
   const parsed = textQuery.safeParse(query);
   const text = parsed.success ? normalizeKurdish(parsed.data.text) : '';
@@ -107,10 +82,7 @@ function textFrom(query: unknown): { text: string; key: string; line: { conversa
   return { text, key: conversationLineKey(line.conversation, line.part, text), line };
 }
 
-/**
- * `onTake` runs after every take is saved, without holding up the answer: the
- * road's chapters go online once their last line is recorded (content/road-chapters.ts).
- */
+/** `onTake` runs after every saved take without delaying the answer; road chapters go online once their last line is recorded. */
 export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfig, onTake: () => void = () => undefined): void {
   const base = audioLimits(config);
   // a WAV of a sentence is far under the voice-note cap; the duration check below is the real bound
@@ -119,7 +91,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
   const audit = new AuditService(app.db);
   const service = new LessonAudioService(app.db);
   const canRecord = requireRoles(...LESSON_AUDIO_ROLES);
-  // a take may also come from the "Record by person" page, whose voice actors record their own lines (recording/access.ts)
+  // Voice actors may upload takes for the lines linked to their account (recording/access.ts).
   const canTake = requireRoles(...RECORDING_ROLES);
 
   registerAudioParser(app, base.maxUploadBytes);
@@ -145,9 +117,8 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
     '/admin/lesson-audio',
     {
       config: {
-        // a recording session walks hundreds of short items, a few seconds
-        // each, so this allows several times the alphabet's pace; storage and
-        // the media op ceilings still bound what it can cost
+        // A recording session walks hundreds of short items, so this allows several times the alphabet's pace; storage and
+        // media op ceilings still bound the cost.
         rateLimit: { max: 600, windowMs: 60 * 60_000, per: 'user-or-ip' as const },
         skipValidation: true,
       },
@@ -235,7 +206,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       } finally {
         client.release();
       }
-      // a story's "fully narrated" badge may have just changed, and a chapter may have just been finished
+      // A story's "fully narrated" badge or a chapter's completion may have just changed.
       await bustStoryLists(app.cache);
       onTake();
       return reply.code(201).send({
@@ -258,9 +229,8 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
     const client = await app.db.connect();
     try {
       await client.query('BEGIN');
-      // lock the row before asking who plays it: an approve that has just
-      // checked this recording holds it until it commits, so its lesson is
-      // published (and seen below) before this goes on
+      // Lock the row before checking who plays it: an approve that just checked this recording holds it until it commits,
+      // so its lesson is published and seen below.
       const found = await client.query(`SELECT 1 FROM lesson_audio WHERE key = $1 FOR UPDATE`, [key]);
       if (found.rowCount === 0) throw new AppError('NOT_FOUND', 404, 'that text has no recording');
       // a published listening item with no clip of its own plays this: without it, it plays nothing

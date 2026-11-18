@@ -1,11 +1,8 @@
 /**
- * Letters that nothing two people do at once can lose, and birds that never
- * sit where nobody can answer them, against real Postgres: two birds answered
- * at each other's windows (one after the other and at the same moment), two
- * windows calling at once, a call home or a bird's fourteenth day racing a
- * call, the same letter sent again after its reply was lost, a suspension
- * over and in force, a mute, a birthday into another band, and a bird of
- * yours at a window holding one of your pen pal places.
+ * Letters that no concurrent actions can lose, and birds never stuck where nobody can answer them, against real
+ * Postgres: crossing answers (in turn and at once), two windows calling at once, a recall or the fourteenth day
+ * racing a call, a resend after a lost reply, suspensions, a mute, a birthday into another band, and a visiting bird
+ * holding a pen pal place.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -65,7 +62,7 @@ describe.skipIf(!DATABASE_URL)('letters held and raced (integration)', () => {
     letters = new LetterService(pool);
   });
 
-  // every scenario starts with no bird out anywhere and none at a window, so the bird called is the one the test sent
+  // Every scenario starts with no bird out or visiting, so the bird called is the one the test sent.
   beforeEach(async () => {
     await pool.query(`UPDATE letter_visits SET ended_at = now(), outcome = 'closed' WHERE ended_at IS NULL`);
     await pool.query(`UPDATE letters SET status = 'recalled', landed_at = COALESCE(landed_at, now()) WHERE status = 'flying'`);
@@ -163,7 +160,7 @@ describe.skipIf(!DATABASE_URL)('letters held and raced (integration)', () => {
     await letters.sendOut(a.id, letter);
     const bird = (await pool.query<{ id: string }>(`SELECT id FROM letters WHERE sender_id = $1 AND status = 'flying'`, [a.id])).rows[0]!.id;
     await pool.query(`UPDATE letters SET created_at = now() - interval '14 days 1 minute' WHERE id = $1`, [bird]);
-    // a call that reached the bird just before its time was up, and has not yet committed
+    // A call that reached the bird just before its time ran out and has not committed yet.
     const inFlight = await pool.connect();
     let page: Promise<LettersHome> | null = null;
     try {
@@ -237,7 +234,7 @@ describe.skipIf(!DATABASE_URL)('letters held and raced (integration)', () => {
     await out(w);
     expect((await callBird(b)).statusCode).toBe(200);
     await pool.query(`UPDATE users SET muted_until = now() + interval '1 hour' WHERE id = $1`, [w.id]);
-    // it leaves the sill it was at, and nobody else can call it
+    // It leaves the sill, and nobody else can call it.
     expect((await home(b)).visitor).toBeNull();
     expect((await callBird(c)).json()).toMatchObject({ code: 'NO_BIRDS_OUT' });
     expect((await home(w)).out).toMatchObject({ visiting: false });
@@ -301,7 +298,7 @@ describe.skipIf(!DATABASE_URL)('letters held and raced (integration)', () => {
     await penPals(w, others.slice(0, PEN_PALS_MAX - 1));
     await out(w);
     await out(x, 'Silav! Ez X me.');
-    // her bird at his window holds her fifth place: answering another bird would leave its answer no room
+    // Her bird at his window holds her fifth place, so answering another bird would leave no room for its answer.
     expect(((await callBird(w)).json() as { visitor: { person: { id: string } } }).visitor.person.id).toBe(x.id);
     expect(((await callBird(v)).json() as { visitor: { person: { id: string } } }).visitor.person.id).toBe(w.id);
     expect((await answer(w)).json()).toMatchObject({ code: 'PEN_PALS_FULL' });
@@ -318,7 +315,7 @@ describe.skipIf(!DATABASE_URL)('letters held and raced (integration)', () => {
   it('brings a bird home when its writer turns sixteen, and frees a sill when its reader does', async () => {
     const [writer, reader, other] = [await person('bdw', 15), await person('bdr', 15), await person('bdo', 15)];
     await out(writer);
-    // the writer's birthday: nobody in the old band can be written back to
+    // The writer's birthday: nobody in the old band can be written back to.
     await pool.query(`UPDATE users SET birth_year = birth_year - 1 WHERE id = $1`, [writer.id]);
     expect(await home(writer)).toMatchObject({ out: null, returned: { why: 'band' } });
 

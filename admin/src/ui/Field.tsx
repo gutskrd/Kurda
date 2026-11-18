@@ -1,9 +1,6 @@
 /**
- * Form fields with their label, a hint and an error, wired together the way a
- * screen reader needs: the label names the control, the hint and the error
- * describe it, and an error marks it invalid. Pages used placeholders as
- * labels ("lesson id (uuid)"), which vanish as soon as you type and which most
- * screen readers do not announce as a name.
+ * Form fields with a label, hint and error wired for screen readers: the label names the control, the hint and error
+ * describe it, and an error marks it invalid.
  */
 import { cloneElement, isValidElement, useId, type InputHTMLAttributes, type ReactElement, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 
@@ -12,14 +9,12 @@ interface FieldProps {
   hint?: ReactNode;
   error?: ReactNode;
   required?: boolean;
-  /** the label beside the control rather than above it */
-  inline?: boolean;
   className?: string;
   children: ReactElement<Record<string, unknown>>;
 }
 
 /** Wraps one control: `<Field label="SKU" hint="…"><input … /></Field>`. */
-export function Field({ label, hint, error, required, inline = false, className, children }: FieldProps): React.JSX.Element {
+export function Field({ label, hint, error, required, className, children }: FieldProps): React.JSX.Element {
   const auto = useId();
   const id = (isValidElement(children) && typeof children.props.id === 'string' ? children.props.id : null) ?? auto;
   const hintId = hint ? `${id}-hint` : undefined;
@@ -32,7 +27,7 @@ export function Field({ label, hint, error, required, inline = false, className,
     required: required ?? children.props.required,
   });
   return (
-    <div className={`field${inline ? ' is-inline' : ''}${error ? ' has-error' : ''}${className ? ` ${className}` : ''}`}>
+    <div className={`field${error ? ' has-error' : ''}${className ? ` ${className}` : ''}`}>
       <label htmlFor={id}>
         {label}
         {required && (

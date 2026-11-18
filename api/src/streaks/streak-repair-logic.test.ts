@@ -1,8 +1,6 @@
 /**
- * The streak's arithmetic for what was added with restoring a streak: a run
- * that ends is remembered, `restore` brings it back across the missed days,
- * a Hevalo+ member's second freeze keeps a second day, and the instant a
- * learner's day begins (the end of the offer) is found in any time zone.
+ * Streak arithmetic for restoring: an ended run is remembered, `restore` brings it back across the missed days, a
+ * Hevalo+ member's second freeze keeps a second day, and a learner's day start (the offer's end) is found in any zone.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -97,7 +95,7 @@ describe('restore', () => {
   it('goes on with the next lesson as if the missed days had been kept', () => {
     const restored = restore(run(12, '2026-11-03'), '2026-11-06');
     expect(record(restored, '2026-11-06').state.currentStreak).toBe(13);
-    // it has today to be learned on, as a streak whose last day was yesterday always has
+    // It has today to be learned on, as a streak whose last day was yesterday does.
     expect(settle(restored, '2026-11-06').currentStreak).toBe(12);
     // and ends again without it: a restore keeps the days that were missed, not the ones still to come
     const again = settle(restored, '2026-11-07');

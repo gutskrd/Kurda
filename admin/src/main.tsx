@@ -10,7 +10,7 @@ import './pages/pages.css';
 import './pages/moderation.css';
 import './pages/ranks.css';
 
-// the ribbons behind every page, in a root of their own so nothing the pages do redraws them
+// The ribbons behind every page, in a root of their own so nothing the pages do redraws them.
 createRoot(document.getElementById('backdrop')!).render(<Backdrop />);
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

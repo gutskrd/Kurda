@@ -28,28 +28,17 @@ import {
   TRADITION_LABEL,
   TRANSLATION_REVIEW_LABEL,
   blankTranslation,
-  localeName,
   reviewTranslation,
   saveTranslation,
 } from '../gameContent';
+import { localeName } from '../format';
 import { Badge, Banner, Button, Field, FormActions, Note, Section, Tabs, Time, UserLink, errorLine, useToast, type Tone } from '../ui';
 
 /**
- * The editors of the Stories' riddles and proverbs, on the Game content page
- * (GameContent.tsx), and the panel their translations are written and
- * reviewed in, one language at a time.
- *
- * A riddle's question and its answer are kept apart on screen, in sections of
- * their own: what a learner reads first, and what they must ask for. Every
- * Kurdish field is marked up in the row's variety; a proverb's variant in its
- * own. Anything traditional names its sources, and a note for the reviewers
- * stays in the panel: the learner routes never send it.
- *
- * Translations are not part of the row's approval. Each language is saved on
- * its own ("Save this language") and reviewed on its own ("Mark reviewed",
- * "Needs review"), on a row in any state but archived — so a published
- * riddle's German is corrected without unpublishing it, and without its
- * Kurdish needing approval again.
+ * The editors of the Stories' riddles and proverbs on the Game content page, and their translations panel. A riddle's
+ * question and answer sit in separate sections; Kurdish fields are marked up in the row's variety; a reviewers' note is
+ * never sent to learners. Translations are saved and reviewed per language, outside the row's approval, so a published
+ * riddle's German can be fixed without unpublishing it.
  */
 
 type Payload = Record<string, unknown>;
@@ -70,7 +59,6 @@ function TextList({
   lang,
   dir,
   readOnly,
-  multiline = false,
 }: {
   label: string;
   hint?: string;
@@ -83,18 +71,13 @@ function TextList({
   lang: string;
   dir: 'ltr' | 'rtl';
   readOnly: boolean;
-  multiline?: boolean;
 }): React.JSX.Element {
   return (
     <Field label={label} hint={hint}>
       <div className="gc-list">
         {items.map((value, i) => (
           <span key={i} className="row">
-            {multiline ? (
-              <textarea rows={2} aria-label={itemLabel(i)} value={value} lang={lang} dir={dir} readOnly={readOnly} onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))} />
-            ) : (
-              <input aria-label={itemLabel(i)} value={value} lang={lang} dir={dir} readOnly={readOnly} onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))} />
-            )}
+            <input aria-label={itemLabel(i)} value={value} lang={lang} dir={dir} readOnly={readOnly} onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))} />
             {!readOnly && items.length > min && (
               <Button variant="ghost" icon="trash" aria-label={`Remove ${itemLabel(i).toLowerCase()}`} onClick={() => onChange(items.filter((_, j) => j !== i))}>
                 Remove
@@ -363,7 +346,7 @@ export function ProverbFields({ payload, onChange, dialect, readOnly }: { payloa
   );
 }
 
-// ---------- translations ----------
+// ---------- Translations ----------
 
 const REVIEW_TONE: Record<TranslationReview, Tone> = { unreviewed: 'warn', reviewed: 'ok' };
 
@@ -554,11 +537,7 @@ function TranslationForm({
   );
 }
 
-/**
- * A riddle's or a proverb's translations, a tab per app language: the row's
- * own language is the original, edited above; every other one is saved and
- * reviewed here on its own, whatever the row's state.
- */
+/** A riddle's or proverb's translations, a tab per app language; the row's own language is the original, edited above. */
 export function TranslationsPanel({ row, onSaved }: { row: AdminGameContent; onSaved: (row: AdminGameContent) => void }): React.JSX.Element {
   const toast = useToast();
   const own = originalLocale(row.dialect);

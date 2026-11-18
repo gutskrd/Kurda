@@ -138,8 +138,7 @@ describe('honest spacing — scheduleAnswer', () => {
     const first = scheduleAnswer(null, 5, day0)!; // 09:00, due tomorrow, interval 1
     expect(scheduleAnswer(first, 5, at(0, 2))).toBeNull();
     expect(scheduleAnswer(first, 4, at(0, 11))).toBeNull();
-    // the same lesson again at nine at night: half of a one-day interval has
-    // passed, but it is still the same day, so it is massed repetition
+    // The same lesson again at nine at night: half a one-day interval has passed, but it is the same day, so massed repetition.
     expect(isSpacedReview(first, at(0, 12))).toBe(false);
     expect(scheduleAnswer(first, 5, at(0, 12))).toBeNull();
     expect(scheduleAnswer(first, 5, at(0, 14, 59))).toBeNull();
@@ -149,8 +148,7 @@ describe('honest spacing — scheduleAnswer', () => {
     const first = scheduleAnswer(null, 5, day0)!;
     // midnight UTC, fifteen hours on
     expect(scheduleAnswer(first, 5, at(0, 15))?.state.interval).toBe(6);
-    // a late-evening lesson replayed just after midnight is a new day, but not
-    // half a day later: still not spaced
+    // A late-evening lesson replayed just after midnight is a new day but not half a day later, so still not spaced.
     const late = scheduleAnswer(null, 5, at(0, 14))!; // 23:00
     expect(scheduleAnswer(late, 5, at(0, 16))).toBeNull(); // 01:00 next day
     expect(scheduleAnswer(late, 5, at(1, 2))?.state.interval).toBe(6); // 11:00 next day

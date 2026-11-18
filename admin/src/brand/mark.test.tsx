@@ -11,7 +11,7 @@ function placed(box: { left: number; top: number; width: number; height: number 
   return el;
 }
 
-describe("Hevalo's icon", () => {
+describe('Hevalo’s icon', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -33,10 +33,10 @@ describe("Hevalo's icon", () => {
     const eyes = [placed({ left: 100, top: 100, width: 58, height: 68 }), placed({ left: 200, top: 100, width: 58, height: 68 })];
     const pupils = eyes.map((eye) => eye.appendChild(document.createElement('span')));
     const stop = followPointer(pupils[0]!, pupils[1]!);
-    // the DOM the tests run in has no PointerEvent: a mouse event carries the same fields
+    // The DOM the tests run in has no PointerEvent: a mouse event carries the same fields.
     window.dispatchEvent(Object.assign(new MouseEvent('pointermove', { clientX: 1000, clientY: 134 }), { pointerType: 'mouse' }));
     for (let i = 0; i < 60 && frames.length; i++) frames.shift()!(i * 16);
-    // both look right: each pupil has moved that way from where it is drawn
+    // Both look right: each pupil has moved that way from where it is drawn.
     for (const pupil of pupils) expect(Number.parseFloat(pupil.style.translate)).toBeGreaterThan(0);
     stop();
     for (const pupil of pupils) expect(pupil.style.translate).toBe('');

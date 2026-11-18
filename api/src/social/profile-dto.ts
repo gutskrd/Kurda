@@ -10,10 +10,8 @@ interface FavoriteDto {
 }
 
 /**
- * The public profile as sent to clients: cosmetics resolved to URLs, level
- * derived from XP, favorites reduced to id+title (and only when published).
- * Raw keys (photo key, avatar key, equipped SKUs, premium_until, entitlement
- * flags) are intentionally dropped — never serialized to clients.
+ * The public profile as sent to clients: cosmetics resolved to URLs, level derived from XP, favourites reduced to id
+ * and title when published. Raw keys and entitlement or premium fields are never serialized.
  */
 export interface PublicProfileDto {
   userId: string;
@@ -22,8 +20,7 @@ export interface PublicProfileDto {
   friendStatus: string;
   private: boolean;
   bio?: string | null;
-  /** Uploaded photo only (null if none) — kept for backward compatibility; new
-   *  clients should prefer `avatarUrl`, which also resolves the default avatar. */
+  /** The uploaded photo only, null if none, for older clients; newer ones use `avatarUrl`, which also resolves the default avatar. */
   profilePhotoUrl: string | null;
   avatarUrl: string | null;
   country: string | null;
@@ -39,9 +36,9 @@ export interface PublicProfileDto {
   league?: ProfileLeague | null;
   /** Game Ranks per game played (shared `ProfileRank`); "Resting" ones carry no tier for others */
   ranks?: ProfileRank[];
-  /** the frame worn around the avatar: a season frame (shared SEASON_FRAME_SKUS) or one bought in the shop; null for none */
+  /** The frame around the avatar: a season frame or a shop frame; null for none. */
   frameSku?: string | null;
-  /** the picture of a frame from the shop, to lay round the avatar; null for a season frame, which the apps draw */
+  /** A shop frame's picture to lay round the avatar; null for a season frame, which the apps draw. */
   frameUrl?: string | null;
   achievements?: number;
   badges?: ShowcaseBadge[];

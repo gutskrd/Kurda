@@ -18,7 +18,7 @@ export interface Notifier {
   notifyUser(userId: string, event: Record<string, unknown>): Promise<void>;
 }
 
-/** Moderation hook: masks profanity, tracks offenses, enforces escalation mutes (KUR-086). */
+/** Moderation hook: masks profanity, tracks offences and enforces escalation mutes. */
 export interface ChatModeration {
   isChatMuted(userId: string): Promise<boolean>;
   filter(text: string): { masked: string; flagged: boolean };
@@ -30,10 +30,7 @@ export interface ChatBadges {
   onLetterSent(fromUserId: string, toUserId: string): Promise<void>;
 }
 
-/**
- * A direct message. Most are text; a gift or a game card is a message with a
- * kind and the reference it needs (shared `ChatMessageExtras`), and no body.
- */
+/** A direct message. Most are text; a gift or a game card has a kind and its reference instead of a body. */
 export interface DmMessage extends ChatMessageExtras {
   id: string;
   senderId: string;
@@ -63,11 +60,9 @@ export interface Conversation {
 }
 
 /**
- * 1:1 direct messages (KUR-083). Friends-only, ≤2000 chars, basic text. Live
- * delivery + typing + receipts go over the WebSocket gateway; the rows are the
- * paginated history and offline-delivery store. Blocks are silent: a message to
- * someone who has blocked the sender is dropped server-side but the sender sees
- * it as sent.
+ * Direct messages between friends, up to 2000 characters of plain text. Live delivery, typing and receipts go over
+ * the WebSocket gateway; the rows are the history and offline store. Blocks are silent: a message to someone who
+ * blocked the sender is dropped, but the sender sees it as sent.
  */
 export class ChatService {
   constructor(
@@ -84,7 +79,7 @@ export class ChatService {
     if (!trimmed || trimmed.length > MAX_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_MESSAGE_LEN} characters`);
     }
-    // escalation mute (KUR-086) applies everywhere
+    // The escalation mute applies everywhere.
     if (this.moderation && (await this.moderation.isChatMuted(from))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
@@ -115,10 +110,8 @@ export class ChatService {
     const body = filtered.masked;
 
     const { lo, hi } = canonicalPair(from, to);
-    // The sender's name comes back with the insert (one statement, no extra
-    // round trip) purely so the recipient's notification can say WHO wrote.
-    // Resolving it client-side would fail for the case that matters most: the
-    // first message from someone not yet in your conversation list.
+    // The sender's name comes back with the insert so the notification can say who wrote, even for a first message
+    // from someone not yet in the recipient's conversation list.
     const row = await this.pool.query<{
       id: string;
       created_at: Date;
@@ -161,15 +154,10 @@ export class ChatService {
   }
 
   /**
-   * A game card from `from` to `to` (contract §B3): a message that points at
-   * a lobby instead of holding text, so it can show the lobby's live state.
-   * The text pipeline — length, the profanity mask, trust and AI screening —
-   * has nothing to read and is skipped. Who may message whom is not: friends
-   * only, a block drops it silently (the sender sees it as sent, as with any
-   * message), and a chat mute applies as it does to text — the moderation
-   * mute with the same answer a message gets (403 MUTED, until when; the
-   * message route asks it in a preHandler, a card has no route of its own),
-   * then the escalation mute. Delivered live like any DM.
+   * A game card from `from` to `to`: a message pointing at a lobby, so it can show the lobby's live state. The text
+   * checks (length, profanity mask, trust and automated screening) are skipped as there is no text, but the rest
+   * holds: friends only, a block drops it silently, and both the moderation mute (403 MUTED, asked here because a
+   * card has no route of its own) and the escalation mute apply.
    */
   async sendCard(from: string, to: string, card: ChatGameRef, publicUrl: PublicUrl = () => null): Promise<DmMessage> {
     if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
@@ -232,7 +220,7 @@ export class ChatService {
     return message;
   }
 
-  /** Paginated history (newest first past `before`); marks incoming delivered. */
+  /** Paginated history, newest first before `before`; marks incoming messages delivered. */
   async history(
     user: string,
     other: string,
@@ -241,11 +229,9 @@ export class ChatService {
     publicUrl: PublicUrl = () => null,
   ): Promise<DmMessage[]> {
     const { lo, hi } = canonicalPair(user, other);
-    // An open thread polls this, so it is one statement: whether a block
-    // stands between them (then nothing at all, and nothing marked
-    // delivered), the page, and their messages marked delivered. The page is
-    // read from the statement's snapshot, before the marking, as it always
-    // was read first; there is always one row, carrying the flags.
+    // An open thread polls this, so it is one statement: whether a block stands between them (then nothing is
+    // returned or marked), the page, and their messages marked delivered. The page comes from the statement's
+    // snapshot, before the marking; there is always one row carrying the flags.
     const result = await this.pool.query<
       Partial<KindColumns> & {
         blocked: boolean;
@@ -327,10 +313,8 @@ export class ChatService {
   }
 
   /**
-   * Ephemeral typing indicator, between friends only, as a message is: anyone
-   * signed in could otherwise reach any account's live connection with their
-   * own id, a stranger a child's included. Silent either way, so the answer
-   * says nothing of a block or of who is friends with whom.
+   * Typing indicator, between friends only, as messages are; otherwise anyone could reach any account's live
+   * connection. Silent either way, so it reveals nothing about blocks or friendships.
    */
   async typing(from: string, to: string): Promise<void> {
     if (await this.friends.areBlocked(from, to)) return;

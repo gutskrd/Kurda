@@ -104,15 +104,14 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
   });
 
   it('lists everything the owner has posted in one section', async () => {
-    // stories and poems were separate tabs; they are one Posts list now, the
-    // same way the community wall stopped being three pages
+    // Stories, poems and pictures are one Posts list.
     const res = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!);
     expect(res.statusCode).toBe(200);
 
     const titles = res.json().items.map((i: { title: string }) => i.title);
     expect(titles).toContain(`Story ${suffix}`);
     expect(titles).toContain(`Poem ${suffix}`);
-    // a post's kind is what it IS now, not which tab it came from
+    // A post's kind is what it is, not a tab.
     expect(res.json().items.every((i: { kind: string }) => ['story', 'poem', 'image', 'meme'].includes(i.kind))).toBe(true);
   });
 
@@ -145,8 +144,7 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
     expect((await call('PATCH', '/me/profile/sections', tokens.owner!, { posts: false })).statusCode).toBe(200);
 
     const res = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!);
-    // an empty list, not an error: a viewer should not be able to tell a hidden
-    // section from one that simply has nothing in it
+    // An empty list, not an error, so a hidden section cannot be told from an empty one.
     expect(res.statusCode).toBe(200);
     expect(res.json().items).toEqual([]);
 

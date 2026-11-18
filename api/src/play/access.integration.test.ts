@@ -1,4 +1,4 @@
-/** The join rule and the identity rule every online game shares (contract §B2), against real Postgres. */
+/** The join and identity rules every online game shares, against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { canJoin, identities, mayHostOpen, type JoinCheck } from './access.js';
@@ -25,7 +25,7 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
     users.push(res.rows[0]!.id);
     return res.rows[0]!.id;
   };
-  /** A group with these members, the first its owner: seated, since none of them is the others' friend here. */
+  /** A group of these members, the first its owner, seated directly since none is another's friend here. */
   const makeGroup = async (memberIds: string[]): Promise<string> => {
     const g = await pool.query<{ id: string }>(
       `INSERT INTO groups (name, owner_id) VALUES ($1, $2) RETURNING id`,
@@ -82,7 +82,7 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
       expect(await canJoin(pool, check({ joinerId: groupMate, hostId: host, chatGroupId: gid }))).toBe(true);
       expect(await canJoin(pool, check({ joinerId: minorGroupMate, hostId: host, chatGroupId: gid }))).toBe(true);
       expect(await canJoin(pool, check({ joinerId: outsider, hostId: host, chatGroupId: gid }))).toBe(false);
-      // not when the game was not shared there
+      // Not when the game was not shared there.
       expect(await canJoin(pool, check({ joinerId: groupMate, hostId: host }))).toBe(false);
       // nor once the group is archived
       await pool.query(`UPDATE groups SET archived_at = now() WHERE id = $1`, [gid]);
@@ -111,7 +111,7 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
       await befriend(pool, host, friend);
       const gid = await makeGroup([groupMate, host, minorGroupMate, friend]);
       expect(await canJoin(pool, check({ joinerId: minorGroupMate, hostId: host, chatGroupId: gid }))).toBe(true);
-      // a moderator takes the host out (after a report, say): their games shared there no longer let the group in
+      // A moderator removes the host (after a report, say), so their games shared there no longer admit the group.
       await pool.query(`DELETE FROM group_members WHERE group_id = $1 AND user_id = $2`, [gid, host]);
       expect(await canJoin(pool, check({ joinerId: groupMate, hostId: host, chatGroupId: gid }))).toBe(false);
       expect(await canJoin(pool, check({ joinerId: minorGroupMate, hostId: host, chatGroupId: gid }))).toBe(false);

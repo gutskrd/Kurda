@@ -41,38 +41,29 @@ export interface Entry {
   headword: string;
   dialect: string;
   senses: Sense[];
-  /** its pronunciations, each with who says it and the mouth's timeline when a character is chosen */
+  /** Its pronunciations, each with its speaker and, when a character is chosen, the mouth's timeline. */
   audio: DictionaryAudio[];
   xrefs: Array<{ entryId: string; headword: string; relation: XrefRelation }>;
 }
 
-/**
- * What to look a headword up by: letters only, diacritics folded.
- *
- * Re-exported under the name the dictionary code already used for it. The
- * definition moved to @kurda/shared next to `letterKey`, which is the other
- * key this table carries — see 1751000115000 for why there are two.
- */
+/** The lookup key for a headword: letters only, diacritics folded (shared `dictionaryKey`; see migration 1751000115000). */
 export const normalizedHeadword = dictionaryKey;
 
-/** Lexicon data access (KUR-043). */
+/** Lexicon data access. */
 export class DictionaryRepository {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * `letter_count` is written here rather than computed when read: the admin
-   * screen filters hundreds of thousands of rows by it, and `[^p{L}]` on an
-   * NFC string has no exact SQL equivalent to filter with (see 1751000114000).
-   * One writer, so the games' view of a word's length and the admin's cannot
-   * drift apart.
+   * `letter_count` is stored rather than computed on read: the admin screen filters hundreds of thousands of rows by
+   * it, and `[^p{L}]` on an NFC string has no exact SQL equivalent. One writer keeps the games' and admin's word
+   * lengths in step.
    */
   async createEntry(headword: string, dialect = 'kurmanji'): Promise<string> {
     const res = await this.pool.query<{ id: string }>(
       `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, letter_count)
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      // both keys, because the table carries both: the games compare a guess
-      // against the first and a search or an import looks a word up by the
-      // second. Writing only one is how an import became invisible to the games
+      // Both keys: the games compare guesses against the first, searches and imports look words up by the second.
+      // Writing only one makes an import invisible to the games.
       [headword, letterKey(headword), dictionaryKey(headword), dialect, letterCount(headword)],
     );
     return res.rows[0]!.id;
@@ -128,13 +119,8 @@ export class DictionaryRepository {
   }
 
   /**
-   * Fill in a definition a sense does not have yet.
-   *
-   * Two sources describe the same word in different languages — Wîkîferheng in
-   * Kurdish, English Wiktionary in English — and the second should complete the
-   * first rather than collide with it. Only ever writes an absent side; an
-   * existing definition is a conflict for a person to look at, not something to
-   * overwrite here.
+   * Fills in a definition a sense lacks, so a second source in another language completes the entry. Only an absent
+   * side is written; an existing definition is a conflict for a person to review.
    */
   async fillSenseDefinition(senseId: string, side: 'en' | 'ku', text: string): Promise<void> {
     const column = side === 'en' ? 'definition_en' : 'definition_ku';
@@ -159,7 +145,7 @@ export class DictionaryRepository {
     ]);
   }
 
-  /** Add an entry to the word-of-the-day pool at a position (KUR-046). */
+  /** Adds an entry to the word-of-the-day pool at a position. */
   async addToWotdPool(entryId: string, position: number): Promise<void> {
     await this.pool.query(
       `INSERT INTO dict_wotd_pool (entry_id, position) VALUES ($1, $2)

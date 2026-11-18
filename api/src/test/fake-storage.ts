@@ -1,11 +1,9 @@
 import { PrivateStorageUnavailable, type MediaStorage } from '../media/storage.js';
 
 /**
- * An in-memory stand-in for the media bucket and the private evidence storage,
- * for the moderation suites: what is public, what is kept privately, and what
- * the CDN was asked to forget. `failCopies` makes the next copies throw, as a
- * storage outage would. Data exports go to `privateFiles`, and only while
- * `hasPrivateBucket` is true, as the real storage keeps them.
+ * An in-memory media bucket and private evidence storage for the moderation suites: what is public, what is private,
+ * and what the CDN was asked to forget. `failCopies` makes the next copies throw. Data exports go to `privateFiles`
+ * only while `hasPrivateBucket` is true, as with real storage.
  */
 export class FakeStorage {
   readonly publicObjects = new Map<string, { contentType: string | undefined }>();

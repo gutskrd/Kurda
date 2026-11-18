@@ -1,9 +1,8 @@
 import type { Redis } from 'ioredis';
 
 /**
- * Tiny TTL key-value seam for realtime state (tickets, invites, resume
- * sessions — KUR-049). Redis in production (required for multi-node);
- * in-memory fallback keeps single-node dev/test working without Redis.
+ * A small TTL key-value seam for realtime state (tickets, invites, resume sessions): Redis in production, required
+ * for several nodes, and in memory for a single node.
  */
 export interface RealtimeKV {
   set(key: string, value: string, ttlSeconds: number): Promise<void>;

@@ -19,7 +19,7 @@ interface PrefsRow {
   marketing: boolean;
   /** null: never chosen, so the default for their age, like `streak` */
   progress: boolean | null;
-  /** null: never chosen, so as `friends` is, which letters were sent under before they had a setting of their own */
+  /** Null when never chosen, which follows `friends`, the setting letters used before they had their own. */
   letters: boolean | null;
   quiet_start_min: number | null;
   quiet_end_min: number | null;
@@ -53,18 +53,10 @@ export interface PrefsPatch {
 }
 
 /**
- * Notification preferences (KUR-095). Missing rows read as defaults (marketing
- * off), so a user who never touched settings still gets a sane policy. `allows`
- * is the delivery-time gate: it loads the current prefs + the user's timezone
- * and evaluates category + quiet hours against the moment of delivery.
- *
- * Streak reminders are the one setting whose default depends on age (off for
- * a minor, and for an account whose age is not on record yet), so it is
- * stored only once somebody chooses it: NULL means "the default for my age",
- * read when it is asked. Saving another setting leaves it NULL rather than
- * writing today's default in as a choice, which would keep a minor's
- * reminders off for good, past 18. League and badge news (`progress`) is
- * stored the same way, for the same reason.
+ * Notification preferences. Missing rows read as defaults (marketing off). `allows` is the delivery-time gate: the
+ * current preferences and time zone judged against the moment of delivery. Streak reminders and progress news default
+ * by age (off for minors and accounts with no age on record), so they are stored only once chosen and NULL means
+ * "the default for my age", read on each ask; saving other settings leaves them NULL, so a minor's default ends at 18.
  */
 export class NotificationPrefsService {
   constructor(private readonly pool: pg.Pool) {}
@@ -89,11 +81,7 @@ export class NotificationPrefsService {
     return row ? toPrefs(row, minor) : defaultPrefs({ minor });
   }
 
-  /**
-   * Upsert the caller's preferences; unspecified fields keep their value —
-   * the streak setting included, which stays "the default for my age" until
-   * it is chosen.
-   */
+  /** Upserts the caller's preferences; unspecified fields keep their value, the age-defaulted ones staying unchosen. */
   async update(userId: string, patch: PrefsPatch): Promise<NotificationPrefs> {
     const { row, minor } = await this.stored(userId);
     const base = defaultPrefs({ minor });
@@ -140,10 +128,8 @@ export class NotificationPrefsService {
   }
 
   /**
-   * When a push the gate holds back would be allowed: the end of the user's
-   * quiet hours, at the start of that minute, while the category is on and
-   * `at` is inside them. Null when the category is off (it is never sent) or
-   * the moment is not quiet.
+   * When a push held by the gate would be allowed: the start of the minute quiet hours end, while the category is on
+   * and `at` is inside them. Null when the category is off or the moment is not quiet.
    */
   async quietUntil(userId: string, category: NotificationCategory, at: Date = new Date()): Promise<Date | null> {
     const [prefs, tz] = await Promise.all([this.get(userId), this.timezone(userId)]);

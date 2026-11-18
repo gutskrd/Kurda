@@ -1,10 +1,8 @@
 import type { AppConfig } from '../config/env.js';
 
 /**
- * Push delivery provider (KUR-094). The pipeline (token lifecycle, queued
- * batching, invalid-token pruning) talks to this contract only; which provider
- * answers is chosen from configuration (`createPushProvider`). A provider
- * reports which tokens it rejected so the caller can prune them.
+ * Push delivery providers. The pipeline (token lifecycle, queued batching, invalid-token pruning) uses only this
+ * contract; `createPushProvider` picks one from configuration. A provider reports rejected tokens for pruning.
  */
 
 export type PushPlatform = 'ios' | 'android';
@@ -15,11 +13,7 @@ export interface PushMessage {
   title: string;
   body: string;
   data?: Record<string, string>;
-  /**
-   * How long the push service may hold the message for a phone that is off or
-   * out of signal. Unset is the service's own default (weeks), which is right
-   * for news and wrong for anything about today.
-   */
+  /** How long the push service may hold the message for an offline phone; unset is its default of weeks, wrong for anything about today. */
   ttlSeconds?: number;
 }
 
@@ -33,15 +27,14 @@ export interface PushProvider {
   send(messages: PushMessage[]): Promise<PushSendResult>;
 }
 
-/** What a provider writes to the log: pino's shape, which app.log and the worker's logger both have. */
+/** The logger shape a provider writes to, which both app.log and the worker's logger have. */
 export interface PushLog {
   warn(obj: Record<string, unknown>, msg: string): void;
 }
 
 /**
- * In-memory provider: records everything it was asked to send and reports a
- * configurable set of tokens as invalid. Used by tests, and wherever delivery
- * is switched off (PUSH_PROVIDER=stub), so the rest of the pipeline still runs.
+ * In-memory provider that records what it was asked to send and reports chosen tokens as invalid. Used by tests and
+ * wherever delivery is off (PUSH_PROVIDER=stub), so the rest of the pipeline still runs.
  */
 export class StubPushProvider implements PushProvider {
   readonly sent: PushMessage[] = [];
@@ -55,7 +48,7 @@ export class StubPushProvider implements PushProvider {
   }
 }
 
-/** Expo's push service: one endpoint for both platforms, free, and it holds the APNs and FCM credentials. */
+/** Expo's push service: one endpoint for both platforms, holding the APNs and FCM credentials. */
 export const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 /** The most messages Expo takes in one request. */
 export const EXPO_CHUNK_SIZE = 100;
@@ -94,24 +87,12 @@ class ExpoRequestError extends Error {
 }
 
 /**
- * Delivery through Expo's push service (https://docs.expo.dev/push-notifications/sending-notifications/).
- * The phone registers an Expo push token (`ExponentPushToken[…]`), and Expo
- * passes each message on to APNs or FCM with the credentials EAS keeps for
- * the project, so the server needs no Apple or Google keys of its own.
- *
- * Messages go in requests of at most 100. A request that fails for a reason
- * that may pass — no connection, a timeout, a 5xx or a 429 — is tried once
- * more after a pause; if that fails too, the chunk is logged and dropped
- * rather than thrown, because the job around it would otherwise send the
- * whole fan-out again to the devices that already had it.
- *
- * Expo answers each message with a ticket. `DeviceNotRegistered` means the app
- * was uninstalled or the token is dead, so the token is handed back for
- * pruning; other ticket errors are logged. Receipts (the later, second answer,
- * which is where most APNs/FCM rejections surface) are not polled yet.
- *
- * `accessToken` is only needed when "Enhanced security for push
- * notifications" is switched on for the project at expo.dev.
+ * Delivery through Expo's push service. Phones register an Expo push token (`ExponentPushToken[…]`) and Expo forwards
+ * each message to APNs or FCM with the project's credentials, so the server needs no store keys. Messages go in
+ * requests of at most 100; a request failing for a passing reason (no connection, timeout, 5xx, 429) is retried once
+ * after a pause, then logged and dropped rather than thrown, since a throw would resend the whole fan-out.
+ * `DeviceNotRegistered` tickets return the token for pruning; other ticket errors are logged. Receipts are not polled.
+ * `accessToken` is needed only with enhanced push security on.
  */
 export class ExpoPushProvider implements PushProvider {
   private readonly accessToken?: string;
@@ -233,9 +214,8 @@ function toExpoMessage(m: PushMessage): ExpoMessage {
 }
 
 /**
- * The active provider. PUSH_PROVIDER picks it; unset, production delivers
- * through Expo and everything else (development, tests) gets the stub, so a
- * laptop or a test run never reaches somebody's phone by accident.
+ * The active provider: PUSH_PROVIDER picks it; unset, production delivers through Expo and everything else gets the
+ * stub, so no laptop or test run reaches a phone.
  */
 export function createPushProvider(config: AppConfig, log?: PushLog): PushProvider {
   const choice = config.PUSH_PROVIDER ?? (config.NODE_ENV === 'production' ? 'expo' : 'stub');

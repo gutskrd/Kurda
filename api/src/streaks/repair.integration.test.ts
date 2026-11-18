@@ -1,9 +1,7 @@
 /**
- * Restoring a streak that ended (StreakService.repair, POST /me/streak/repair)
- * against real Postgres: what /me offers, what a restore charges and leaves on
- * the row, the ledger and the record, and every way it is refused — nothing to
- * restore, too short, too late, gems short, an account paused from rewards —
- * with a second request and a burst of them charging and restoring once.
+ * Restoring an ended streak (POST /me/streak/repair) against real Postgres: what /me offers, what a restore charges
+ * and records, every refusal (nothing to restore, too short, too late, gems short, rewards paused), and repeated or
+ * concurrent requests charging and restoring once.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -32,7 +30,7 @@ describe.skipIf(!DATABASE_URL)('restoring a streak (integration)', () => {
 
   const learner = (): Promise<TestLearner> => makeLearner(pool, `srp${n++}${suffix}`);
 
-  /** A run of `days` whose last day was `lastActiveOn`, as the row held it before anything noticed it had ended. */
+  /** A run of `days` ending on `lastActiveOn`, as the row held it before anything noticed it had ended. */
   const seed = (userId: string, days: number, lastActiveOn: string, freezes = 0) =>
     pool.query(
       `INSERT INTO user_streaks (user_id, current_streak, longest_streak, last_active_on, freezes)
@@ -88,7 +86,7 @@ describe.skipIf(!DATABASE_URL)('restoring a streak (integration)', () => {
     await seed(who.id, 12, '2026-03-07');
     await gems(who.id, 60);
 
-    // the 8th was missed: on the 9th the streak has ended and can be restored through the 11th
+    // The 8th was missed: on the 9th the streak has ended and can be restored through the 11th.
     const ended = await streaks.get(who.id, 'UTC', at('2026-03-09'));
     expect(ended).toMatchObject({ current: 0, longest: 12, repair: { days: 12, costGems: STREAK_REPAIR_COST_GEMS, free: false, until: '2026-03-12T00:00:00.000Z' } });
     expect(await row(who.id)).toEqual({ current: 0, last: '2026-03-07', ended: 12, ended_last: '2026-03-07', restored: null });
@@ -156,7 +154,7 @@ describe.skipIf(!DATABASE_URL)('restoring a streak (integration)', () => {
       streaks.recordPlayDay(who.id, 'UTC', at('2026-03-09')),
       streaks.get(who.id, 'UTC', at('2026-03-09')),
     ]);
-    // whichever came first, the restore was paid for once and the run stands, today counted on top of it
+    // Whichever came first, the restore was charged once and the run stands, with today counted on top.
     expect(await charges(who.id)).toEqual([-50]);
     const after = await streaks.get(who.id, 'UTC', at('2026-03-09'));
     expect(after).toMatchObject({ current: 10, lastActiveOn: '2026-03-09', repair: null });
@@ -257,7 +255,7 @@ describe.skipIf(!DATABASE_URL)('restoring a streak (integration)', () => {
     expect(paid).toMatchObject({ duplicate: false, costGems: 50, free: false, gems: 10 });
     expect(await charges(who.id)).toEqual([-50]);
 
-    // a third in the month, with the gems now short, is refused like anybody's
+    // A third in the month, with gems now short, is refused like anyone's.
     await seed(who.id, 15, '2026-03-26');
     await expect(streaks.repair(who.id, 'UTC', at('2026-03-28'))).rejects.toMatchObject({ code: 'INSUFFICIENT_FUNDS' });
 

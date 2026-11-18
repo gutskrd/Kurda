@@ -1,18 +1,12 @@
 /**
- * Leaderboard rank helpers (KUR-063). Redis sorted sets are the fast path; this
- * pure logic backs the Postgres rebuild/fallback and computes a user's rank
- * from scores. Kept pure so ranking is unit-testable without Redis.
+ * Leaderboard rank helpers. Redis sorted sets are the fast path; this pure logic backs the Postgres rebuild and
+ * fallback and computes a user's rank from scores.
  */
 
 /**
- * What a board ranks. The weekly-XP board is this week's XP, starting afresh
- * every Monday. The Zêr and Gewher boards rank what each person holds now, all
- * time, highest first: a balance grows over months of playing and falls when it
- * is spent, so it says something different about a person than one week does,
- * and it has a board of its own rather than a column on the weekly one.
- *
- * The all-time rating board was fed by the ranked quiz and frozen since it
- * went; a game's skill boards are Game Ranks' own (ranks/service.ts), per game.
+ * What a board ranks: this week's XP, starting afresh every Monday, or the Zêr or Gewher each person holds now,
+ * which says something different and so has a board of its own. Per-game skill boards are Game Ranks'
+ * (ranks/service.ts).
  */
 export const BOARD_TYPES = ['weekly_xp', 'zer', 'gewher'] as const;
 export type BoardType = (typeof BOARD_TYPES)[number];
@@ -21,11 +15,7 @@ export function isBoardType(value: string): value is BoardType {
   return (BOARD_TYPES as readonly string[]).includes(value);
 }
 
-/**
- * The boards that rank a wallet balance, and the wallet currency behind each.
- * The board is named for the currency as the app names it, Gewher, while the
- * wallet has always called the same thing 'gems'.
- */
+/** The balance boards and the wallet currency behind each; the app's Gewher is 'gems' in the wallet. */
 export const BALANCE_BOARDS = { zer: 'zer', gewher: 'gems' } as const;
 export type BalanceBoardType = keyof typeof BALANCE_BOARDS;
 
@@ -52,10 +42,8 @@ export interface RankedEntry extends ScoreRow {
 }
 
 /**
- * A user's rank from a descending score list: strictly-higher scores rank above
- * them, ties share the higher rank (competition ranking). Works whether or not
- * the user is themselves in the list — a shadow-excluded user still gets a
- * plausible rank against everyone else, so they're never told they're excluded.
+ * A user's rank in a descending score list: strictly higher scores rank above, ties share the higher rank. Works
+ * whether or not the user is in the list, so a shadow-excluded user still gets a plausible rank.
  */
 export function rankForScore(scoresDesc: number[], myScore: number): number {
   let higher = 0;
@@ -67,16 +55,10 @@ export function rankForScore(scoresDesc: number[], myScore: number): number {
 }
 
 /**
- * Attach ranks to an already-sorted (descending) score list, ties sharing the
- * higher place as they do in `rankForScore` (1, 2, 2, 4), so the number beside
- * a name in the list agrees with the one the board gives that person as `me`.
- * Balances tie far more often than a week's XP does: everybody who has only
- * ever claimed the same daily rewards holds the same Zêr.
- *
- * startAt is the 0-based position of the first row within the whole board, so a
- * second page continues from 26 instead of starting again at 1. firstRank is
- * the first row's own place, which only the whole board knows when that row
- * ties with the last one on the page before; left out, it is startAt + 1.
+ * Attaches ranks to a descending score list, ties sharing the higher place (1, 2, 2, 4) as in `rankForScore`, so a
+ * row's number matches the board's `me`. Balances tie often. `startAt` is the first row's 0-based position on the
+ * whole board, so page two continues from 26; `firstRank` is that row's own place when it ties with the previous
+ * page, defaulting to startAt + 1.
  */
 export function withRanks(rows: ScoreRow[], startAt = 0, firstRank = startAt + 1): RankedEntry[] {
   let rank = firstRank;

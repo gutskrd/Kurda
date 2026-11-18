@@ -64,29 +64,19 @@ function savedSide(): Side {
 }
 
 /**
- * The audio studio: one place to record the Kurdish in a native voice — the
- * alphabet's letters and words, the lessons' sentences, the stories'
- * sentences — each side at an address of its own (#/audio/letters,
- * #/audio/lessons, #/audio/stories) and a link of its own in the nav, because
- * the owner could not find where to record. `?show=missing` opens on what is
- * still missing (the dashboard's links); `?lesson=` and `?story=` on one
- * lesson or story (the Record links in their lists); `?course=` on one
- * course's sentences, and `?voice=hamo` on that character's script, the lines
- * the lessons plan for them (lessonAudio.ts). All sides record, trim, level
- * and save the same way (recorder.tsx). Two more sides are for who is
- * shown saying the recordings: #/audio/dictionary for the dictionary's
- * pronunciations, which are not recorded here (DictionaryVoices.tsx), and
- * #/audio/characters for every recording at once (Characters.tsx).
+ * The audio studio, where the Kurdish is recorded in a native voice: letters and words, lesson sentences and story
+ * sentences, each side at its own address (#/audio/letters, #/audio/lessons, #/audio/stories) and recording the same
+ * way (recorder.tsx). `?show=missing`, `?lesson=`, `?story=`, `?course=` and `?voice=` open on a part of a side
+ * (lessonAudio.ts). Two more sides set who is shown saying recordings: #/audio/dictionary (DictionaryVoices.tsx) and
+ * #/audio/characters (Characters.tsx).
  */
 export function AudioStudio(): React.JSX.Element {
   const route = useRoute();
   const requested = route.rest[0];
   const side = SIDES.find((s) => s.key === requested);
 
-  // #/audio alone: the side used last. Only while the address is still this
-  // page's: this effect also fires as the person leaves (the route changes
-  // before the page unmounts), and sending them back then locked them into
-  // the Record audio section — every link out snapped straight back.
+  // #/audio alone opens the side used last, but only while the address is still this page's: the effect also fires on
+  // the way out, before the page unmounts, and redirecting then would trap every link out.
   const page = route.page;
   useEffect(() => {
     if (!side && page === 'audio') location.replace(`#/audio/${savedSide()}`);
@@ -97,13 +87,13 @@ export function AudioStudio(): React.JSX.Element {
     try {
       localStorage.setItem(TAB_KEY, side.key);
     } catch {
-      // a blocked storage only means the side is not remembered
+      // A blocked storage only means the side is not remembered.
     }
   }, [side]);
 
   if (!side) return <div />;
 
-  // one conversation has a page of its own, with its own header: #/audio/conversations/<id>
+  // One conversation has a page of its own, with its own header: #/audio/conversations/<id>.
   const conversation = side.key === 'conversations' ? (route.rest[1] ?? null) : null;
   if (conversation) return <ConversationAudio id={conversation} lessonId={route.query.get('lesson')} part={route.query.get('part')} />;
 

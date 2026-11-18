@@ -1,7 +1,4 @@
-/**
- * The rating box, Send feedback, the store prompt's limits, the admin inbox and
- * what GDPR does with the answers — against real Postgres (contract-2 §F).
- */
+/** The rating box, Send feedback, the store prompt's limits, the admin inbox and GDPR handling, against real Postgres. */
 import { createHmac } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -240,7 +237,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       await finishedWordle(user.id, 0);
       await finishedWordle(user.id, 0);
       await finishedWordle(user.id, 3);
-      // the box was shown long ago, so it does not hold the store prompt back
+      // The box was shown long ago, so it does not hold the store prompt back.
       await pool.query(`UPDATE users SET app_feedback_prompted_at = now() - interval '30 days' WHERE id = $1`, [user.id]);
       return user;
     }
@@ -293,12 +290,12 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       const user = await register('srSession');
       await finishedWordle(user.id);
       await call('POST', '/me/store-review/prompted', user, { appVersion: '1.4.0' });
-      // the store prompt was just called: the box waits
+      // The store prompt was just called, so the box waits.
       expect((await state(user)).shouldPrompt).toBe(false);
 
       const other = await veteran('srBox');
       await pool.query(`UPDATE users SET app_feedback_prompted_at = now() WHERE id = $1`, [other.id]);
-      // the box was just shown: the store prompt waits
+      // The box was just shown, so the store prompt waits.
       expect((await state(other, '?platform=ios&appVersion=1.4.0')).storeReviewEligible).toBe(false);
     });
 
@@ -322,7 +319,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
                 ($1, 'mal', 60000, 'active', NULL)`,
         [user.id],
       );
-      // a race run, one given up before a letter was typed, and one still going
+      // A race run, one given up before a letter was typed, and one still going.
       await pool.query(
         `INSERT INTO race_games (user_id, text_id, accent_mode, dialect, finished_at, wpm) VALUES
            ($1, $2, 'forgiving', 'kurmanci', now(), 31.5), ($1, $2, 'forgiving', 'kurmanci', now(), 0),
@@ -359,8 +356,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
         );
       }
 
-      // a story game finished with them in it; one they left, one the host took
-      // them out of, and one still being read
+      // A story game finished with them in it; one they left, one the host removed them from, and one still being read.
       const story = await insertStory(pool, { slug: `fg-story-${Date.now().toString(36)}` });
       stories.push(story.id);
       for (const [status, leftAt, removed] of [
@@ -385,11 +381,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect(await countFinishedGames(pool, other.id, 'UTC')).toEqual({ games: 0, days: 0 });
     });
 
-    /*
-     * Giving up finishes a race as well, so an empty one opened and abandoned
-     * would have been a "finished game" — enough for the box, and a third of
-     * what the store prompt asks for.
-     */
+    /* Giving up also finishes a race, so an empty abandoned one must not count as a finished game. */
     it('does not count a race given up before a letter was typed', async () => {
       const user = await register('fgGaveUp');
       const start = async (): Promise<string> => {
@@ -412,11 +404,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect((await state(user)).shouldPrompt).toBe(true);
     });
 
-    /*
-     * The count runs on the results screen after every game, so each table it
-     * reads must find one player's rows without reading everyone's: the two
-     * multiplayer player tables were keyed by game alone (migration 156).
-     */
+    /* The count runs after every game, so each table must find one player's rows by an index starting with the player. */
     it('reads every game table by an index that starts with the player', async () => {
       const tables = FINISHED_GAME_SOURCES.map((sql) => /\bFROM\s+(\w+)/.exec(sql)![1]!);
       expect(tables).toEqual([
@@ -428,7 +416,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
         'story_game_players',
         'game_lobby_players',
       ]);
-      // whole, or kept to the rows that have a player (a seat Hevalo takes has none): a player's own rows are in either
+      // Whole, or limited to rows with a player (a Hevalo seat has none); a player's own rows are in either.
       const indexed = await pool.query<{ table: string }>(
         `SELECT DISTINCT c.relname AS table
            FROM pg_index i
@@ -442,12 +430,9 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
     });
 
     /*
-     * The play-invites migration (149, on its own branch) indexes the same two
-     * player tables by player under the same default names. Merged, it runs
-     * first, and 156 creating them again failed with 42P07 and stopped every
-     * migration after it; and 156's down dropping them made 149's down fail.
-     * This database already has them, as it will once 149 has run, so 156's
-     * own statements are run against it here — in a transaction rolled back.
+     * Migration 149 creates the same two player-table indexes under the same default names, so 156 must not fail when
+     * they exist, and its down must not drop them. This database already has them, so 156's own statements run here in
+     * a transaction that is rolled back.
      */
     it('indexes the player tables whether or not the play-invites migration did first (migration 156)', async () => {
       const { MigrationBuilder } = await import('node-pg-migrate');
@@ -570,7 +555,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
     it('pages on after the last answer shown, so marking answers read skips none', async () => {
       const first = await list('&status=new&limit=2');
       expect(first.items.map((i) => i.id)).toEqual([ids[3], ids[2]]);
-      // both read: with an offset of 2 the next page would now skip the two still new
+      // Both marked read: with an offset of 2 the next page would now skip the two still new.
       for (const i of first.items) {
         expect((await call('PATCH', `/admin/feedback/${i.id as string}`, admin, { status: 'read' })).statusCode).toBe(200);
       }

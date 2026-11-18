@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { requireAuth } from '../plugins/auth.js';
 import type { DailyRewardService } from './service.js';
 
-/** Daily Zêr reward claims + calendar (KUR-067). */
+/** Daily Zêr reward claims and calendar. */
 export function registerDailyRewardRoutes(app: FastifyInstance, rewards: DailyRewardService): void {
   /** Cycle progress + next reward for the login calendar. */
   app.get('/rewards/daily', { preHandler: requireAuth }, async (req) => rewards.status(req.user!.id));

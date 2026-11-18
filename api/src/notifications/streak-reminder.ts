@@ -1,8 +1,6 @@
 /**
- * Pure streak-reminder timing (KUR-096). Decides, for one user at one moment,
- * whether to nudge them and with which reminder — evaluated against their LOCAL
- * hour so a global spread of timezones each gets its reminder at the right local
- * time. The job runs hourly and only users whose local hour matches fire.
+ * Pure streak-reminder timing: for one user at one moment, whether to remind them and how, judged by their local
+ * hour. The job runs hourly and only users whose local hour matches are sent one.
  */
 import { isAppLocale, type AppLocale } from '@kurda/shared';
 
@@ -29,10 +27,8 @@ export function preferredHour(historicalHour: number | null): number {
 }
 
 /**
- * The reminder to send right now, or null. Never fires if the user already
- * practiced today or has no live streak. A later nudge at 22:00 (for streaks
- * ≥ 7, still called `last_chance` in the send log) takes precedence over the
- * primary reminder if they coincide.
+ * The reminder to send now, or null: never after practice today or without a live streak. The 22:00 nudge for streaks
+ * of 7 or more (`last_chance` in the send log) beats the primary reminder when they coincide.
  */
 export function dueReminder(ctx: ReminderContext): ReminderKind | null {
   if (ctx.practicedToday) return null;
@@ -55,22 +51,10 @@ interface ReminderCopy {
 }
 
 /**
- * The copy, in every language the app speaks.
- *
- * An invitation, not a warning. This used to read "Don't lose your streak!"
- * and "Last chance!", in English to everyone, which frames a day off as a loss
- * and leans on guilt — the pattern the roadmap in docs/research asks us to
- * drop, for learners of every age. So it says how long the streak is and how
- * little today needs, and nothing about what could be lost.
- *
- * It says "your streak is N days", not "you have learned N days in a row": the
- * streak is kept by a daily Peyvok and by a freeze as well as by a lesson, so
- * the second sentence would not always be true.
- *
- * Where a language changes the noun with the number, the sentence either picks
- * the form (English, German, French, Spanish, Dutch) or is built so the number
- * stands alone (Arabic); Kurmancî, Soranî and Turkish keep the singular after a
- * number anyway.
+ * The copy in every app language. An invitation, not a warning: it gives the streak's length and how little today
+ * needs, never what could be lost. It says "your streak is N days" rather than "you have learned N days in a row",
+ * since Peyvok and freezes keep a streak too. Where a noun changes with the number the sentence picks the form or
+ * isolates the number; Kurmancî, Soranî and Turkish keep the singular after a number.
  */
 const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   en: {
@@ -165,11 +149,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   },
 };
 
-/**
- * Copy for each reminder kind, in the account's own language — the one it
- * chose in the app. Anything the app does not speak gets English rather than
- * nothing.
- */
+/** The copy for each reminder kind in the account's app language, English for anything the app does not speak. */
 export function reminderMessage(kind: ReminderKind, streak: number, locale?: string | null): ReminderMessage {
   const copy = REMINDER_COPY[isAppLocale(locale) ? locale : 'en'];
   return kind === 'last_chance' ? { ...copy.lastChance } : copy.primary(streak);

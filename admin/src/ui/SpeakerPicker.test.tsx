@@ -29,7 +29,7 @@ describe('who says it', () => {
     expect(options.map((o) => o.textContent)).toEqual(['Hevalo', 'Hamo', 'Xezo', 'None']);
     expect(within(group).getByRole('radio', { name: 'Hevalo' })).toHaveAttribute('aria-checked', 'true');
     expect(group.querySelectorAll('img[src^="data:image/svg+xml"]')).toHaveLength(3);
-    // one Tab stop: the chosen one
+    // One Tab stop: the chosen one.
     expect(options.map((o) => o.tabIndex)).toEqual([0, -1, -1, -1]);
   });
 

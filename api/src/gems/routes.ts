@@ -10,7 +10,7 @@ const ruleBody = z.object({
   active: z.boolean(),
 });
 
-/** Gem earning-rule configuration (KUR-068), admin-only. */
+/** Gem earning-rule configuration, admin-only. */
 export function registerGemRoutes(app: FastifyInstance, gems: GemService): void {
   app.get('/admin/gem-rules', { preHandler: requireRoles('admin') }, async () => ({
     rules: await gems.rules(),

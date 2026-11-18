@@ -47,7 +47,6 @@ import {
   kurdishChanged,
   levelOptions,
   liveChecks,
-  localeName,
   localeTranslationPayload,
   looksRandomSlug,
   needsNativeReview,
@@ -77,7 +76,8 @@ import {
   storyFailure,
   type StoryFailure,
 } from '../storiesApi';
-import { Badge, Banner, Icon, Loading, PageHeader, Time, useDialogs, useLoad, type ConfirmOptions } from '../ui';
+import { localeName } from '../format';
+import { Badge, Banner, Icon, Loading, PageHeader, Time, reducedMotion, useDialogs, useLoad, type ConfirmOptions } from '../ui';
 import { AudioSection } from './StoryAudioSection';
 import { Field, ProblemList, ReadOnly, described, type FieldProblems, type ProblemTone } from './StoryEditorFields';
 import { AfterReadingSection, AttributionSection, LibraryFields, TranslationsSection } from './StoryLibraryFields';
@@ -115,9 +115,6 @@ const LEAVE: ConfirmOptions = {
 
 const BACK = { href: '#/stories', label: 'All stories' };
 
-function reducedMotion(): boolean {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /** Questions open at first: all of a short bank, else the ones a save would be refused for. */
 function initiallyOpen(form: StoryForm): Set<string> {
@@ -137,14 +134,9 @@ function dedupe(list: readonly StoryProblem[]): StoryProblem[] {
 }
 
 /**
- * One story: its text, glossary and questions, checked as they are typed,
- * and the steps from draft to published.
- *
- * What it checks is what the API checks (`liveChecks` runs the shared
- * `validateStory`), so the buttons say ahead of time what the server would
- * refuse; when the server refuses anyway, its list is shown too. Every change
- * carries the version of the story the editor loaded, and if someone else
- * changed it since, nothing is overwritten: the editor is asked to reload.
+ * One story: its text, glossary and questions, checked while typed, and the steps from draft to published. The checks
+ * are the API's own (`liveChecks`), so the buttons say ahead what the server would refuse; every change carries the
+ * loaded version, so a story changed by someone else since is reloaded, never overwritten.
  */
 export function StoryEditor({
   id,
@@ -152,9 +144,9 @@ export function StoryEditor({
   onCreated,
   onDeleted,
 }: {
-  /** null for a new story */
+  /** Null for a new story. */
   id: string | null;
-  /** the story as just saved, when the page was opened by creating it */
+  /** The story as just saved, when the page was opened by creating it. */
   initial: AdminStory | null;
   onCreated: (story: AdminStory) => void;
   onDeleted: (title: string) => void;
@@ -167,7 +159,7 @@ export function StoryEditor({
   const [phase, setPhase] = useState<'loading' | 'ready' | 'failed'>(id && !initial ? 'loading' : 'ready');
   const [loadProblem, setLoadProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState<Busy>(null);
-  /** the language a save or review of its own is out for */
+  /** The language a save or review of its own is out for. */
   const [busyLocale, setBusyLocale] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(
     initial ? { tone: 'ok', text: 'Saved.' } : null,
@@ -180,7 +172,7 @@ export function StoryEditor({
 
   const dispatch = (action: EditorAction): void => {
     dispatchForm(action);
-    // what the server said was about the story as it was sent, not as it is now
+    // What the server said was about the story as it was sent, not as it is now.
     setServer(null);
   };
 
@@ -206,7 +198,7 @@ export function StoryEditor({
         if (!live) return;
         const failure = storyFailure(err);
         setLoadProblem(
-          // an address that is not a story's id at all is refused as a bad request
+          // An address that is not a story's id at all is refused as a bad request.
           failure.kind === 'not_found' || failure.kind === 'invalid'
             ? 'There is no such story. It may have been deleted.'
             : failure.kind === 'forbidden'
@@ -240,9 +232,8 @@ export function StoryEditor({
     warning: problemsAt(warnings, path, exact),
   });
 
-  // leaving with unsaved work asks first: closing or reloading the tab, and
-  // any change of address — the back button, the nav, "All stories", a typed
-  // #/… address — in the admin's own dialog (nav.ts waits for its answer)
+  // Leaving with unsaved work asks first: a closed or reloaded tab, and any change of address in the console's own
+  // dialog (nav.ts waits for its answer).
   useEffect(() => {
     if (!dirty) return;
     const onUnload = (e: BeforeUnloadEvent): void => {
@@ -272,19 +263,19 @@ export function StoryEditor({
 
   const canSave = editable && !busy && !conflict && checks.blocking.length === 0 && (dirty || story === null);
   const canSubmit = editable && !busy && !conflict && checks.blocking.length === 0 && checks.beforePublish.length === 0;
-  // the languages with unsaved translations, and whether anything else is unsaved: a language is saved on its own
-  // only against the story as it is stored, and a save of translations alone keeps the approval
+  // The languages with unsaved translations, and whether anything else is unsaved: a language is saved on its own
+  // only against the story as it is stored, and a save of translations alone keeps the approval.
   const changed = useMemo(() => changedLocales(form, loaded), [form, loaded]);
   const besides = useMemo(() => changedBesidesTranslations(form, loaded), [form, loaded]);
   const savedLocales = useMemo(() => translatedLocales(draftFromForm(loaded)), [loaded]);
   const translationsOnly = story !== null && dirty && !besides && changed.length > 0;
-  // publishing waits for a reviewer, and an approval is of the words as they are: edits to the Kurdish need it again
+  // Publishing waits for a reviewer, and an approval is of the words as they are: edits to the Kurdish need it again.
   const approved = story?.reviewStatus === 'approved';
   const reapprove = approved && kurdishChanged(form, loaded);
   const canPublish = canSubmit && approved && !reapprove;
   const textChanged = story !== null && draftFromForm(form).body !== draftFromForm(loaded).body;
 
-  // Ctrl/⌘+S saves, as in any editor
+  // Ctrl/⌘+S saves, as in any editor.
   const saveRef = useRef<() => void>(() => undefined);
   saveRef.current = () => {
     if (canSave) void act('save');
@@ -310,7 +301,7 @@ export function StoryEditor({
       for (const target of fieldIdsFor(path)) {
         const el = document.getElementById(target);
         if (!el) continue;
-        // a translation folded away, say: what hides the field is opened first
+        // A translation folded away, say: what hides the field is opened first.
         for (let d = el.closest('details'); d; d = d.parentElement?.closest('details') ?? null) d.open = true;
         el.scrollIntoView?.({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
         el.focus({ preventScroll: true });
@@ -339,7 +330,7 @@ export function StoryEditor({
     setBusy('reload');
     try {
       const fresh = await getStory(story.id);
-      // someone else's version may have other questions: open what a first load would
+      // Someone else's version may have other questions: open what a first load would.
       setOpen(initiallyOpen(show(fresh)));
       setConflict(null);
       setServer(null);
@@ -351,11 +342,7 @@ export function StoryEditor({
     }
   }
 
-  /**
-   * The story as the server now has it after a change that is not a save — a
-   * review, a feature — which touches its standing and its version, not its
-   * words: the form, and any unsaved edits in it, stay as they are.
-   */
+  /** The story after a change that is not a save (a review, a feature): the form and its unsaved edits stay. */
   const refresh = (next: AdminStory): void => setStory(next);
 
   /** A refusal of a review or a feature change: a stale copy is a conflict, anything else a notice. */
@@ -368,11 +355,7 @@ export function StoryEditor({
     }
   };
 
-  /**
-   * One language as the server saved it: the story's new version, and that
-   * language taken into the form and into what counts as saved, while every
-   * other unsaved edit stays where it is.
-   */
+  /** One language as the server saved it, taken into the form and the saved copy; other unsaved edits stay. */
   const savedLocale = (next: AdminStory, locales: readonly string[]): void => {
     const from = formFromStory(next, { previous: form });
     setStory(next);
@@ -381,8 +364,7 @@ export function StoryEditor({
   };
 
   /**
-   * Save each language in `locales` on its own, in turn, from the version
-   * `start`: the approval of the Kurdish stays, and a published story stays
+   * Save each language in `locales` in turn from version `start`, keeping the Kurdish approval and a published story
    * online. Stops at the first refusal, keeping what was saved before it.
    */
   async function saveLocales(start: AdminStory, locales: readonly string[]): Promise<{ story: AdminStory; failure: StoryFailure | null }> {
@@ -473,7 +455,7 @@ export function StoryEditor({
       confirmLabel: approve ? 'Approve' : 'Withdraw approval',
       multiline: true,
       maxLength: STORY_REVIEW_NOTE_MAX,
-      // a note is welcome, not required
+      // A note is welcome, not required.
       validate: () => null,
     });
     if (note === null || !mounted.current) return;
@@ -534,7 +516,7 @@ export function StoryEditor({
           story && needsNativeReview(story)
             ? 'This is a starter story that no native speaker has published yet. Publish it only once a native speaker has read the text and every question.'
             : null,
-          // the address is the story's for good once learners have it: changing it later breaks their links
+          // The address is the story's for good once learners have it: changing it later breaks their links.
           looksRandomSlug(slug)
             ? `Its address ends in random letters (${slug}). Once it is published, changing it breaks the links learners have to it.`
             : null,
@@ -565,7 +547,7 @@ export function StoryEditor({
     setNotice(null);
     setServer(null);
     let base = { story, form, dirty };
-    // translations alone changed: each language is saved on its own, which keeps the approval (and the action goes on from there)
+    // Translations alone changed: each language is saved on its own, which keeps the approval (and the action goes on from there).
     if (story && translationsOnly && (action === 'save' || action === 'submit' || action === 'publish')) {
       const saved = await saveLocales(story, changed);
       if (!mounted.current) return;
@@ -592,7 +574,7 @@ export function StoryEditor({
         return;
       }
       if (!story) {
-        // what was typed is saved: going to the new story's own address loses nothing
+        // What was typed is saved: going to the new story's own address loses nothing.
         leaving();
         onCreated(outcome.story);
         return;
@@ -601,7 +583,7 @@ export function StoryEditor({
       setNotice({ tone: 'ok', text: DONE[action as Exclude<StoryAction, 'delete'>] });
       return;
     }
-    // "save and publish" may have saved before it was refused
+    // "save and publish" may have saved before it was refused.
     if (outcome.story) {
       if (!story) {
         leaving();
@@ -694,7 +676,7 @@ export function StoryEditor({
           ) : undefined
         }
         actions={
-          // its sentences are in the audio studio while it is not archived
+          // Its sentences are in the audio studio while it is not archived.
           story && status !== 'archived' ? (
             <a className="button-link" href={storyRecordHref(story.id)}>
               <Icon name="mic" />
@@ -1071,8 +1053,8 @@ export function StoryEditor({
         </aside>
       </div>
 
-      {/* on a phone the buttons are at the top, above a long form: once something changes, saving stays at the
-          foot of the screen too, as in the lesson editor (CSS shows it only where the buttons are not beside the form) */}
+      {/* On a phone the buttons are at the top, above a long form: once something changes, saving stays at the
+          foot of the screen too, as in the lesson editor (CSS shows it only where the buttons are not beside the form). */}
       {dirty && availableActions(status).includes('save') && (
         <div className="editor-bar st-savebar">
           <span className="editor-bar-state">
@@ -1146,7 +1128,7 @@ function GlossaryRow({
   row: GlossRow;
   found: number[];
   dialect: StoryDialect;
-  /** whether the saved story's term is a dictionary headword; null for a story not saved yet */
+  /** Whether the saved story's term is a dictionary headword; null for a story not saved yet. */
   matched: boolean | null;
   at: (path: string, exact?: boolean) => FieldProblems;
   dispatch: (a: EditorAction) => void;
@@ -1572,9 +1554,9 @@ function Actions({
   canSave: boolean;
   canSubmit: boolean;
   canPublish: boolean;
-  /** a reviewer has approved the story as saved */
+  /** A reviewer has approved the story as saved. */
   approved: boolean;
-  /** the unsaved edits change what was approved */
+  /** The unsaved edits change what was approved. */
   reapprove: boolean;
   onAct: (a: StoryAction) => void;
 }): React.JSX.Element {
@@ -1660,7 +1642,7 @@ function Checks({
   server: StoryValidation | null;
   onGo: (path: string) => void;
 }): React.JSX.Element {
-  // what the server refused is not cleared by the live checks agreeing: it is cleared by the next edit
+  // What the server refused is not cleared by the live checks agreeing: it is cleared by the next edit.
   const clear = checks.blocking.length === 0 && checks.beforePublish.length === 0 && !server?.errors.length;
   return (
     <section className="card st-checks" aria-labelledby="st-checks-title">

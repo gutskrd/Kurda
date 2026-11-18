@@ -1,11 +1,9 @@
 import { createHash } from 'node:crypto';
 
 /**
- * Deterministic experiment bucketing (KUR-107). Assignment is a pure function of
- * (userId, experimentKey), so a user gets the SAME variant on every device and
- * after a reinstall (the edge case) — nothing is device-random. Hashing the pair
- * spreads users evenly and independently per experiment (the same user can be in
- * different buckets for different experiments).
+ * Deterministic experiment bucketing: the variant is a pure function of user id and experiment key, so a user gets
+ * the same one on every device and after a reinstall, and hashing the pair spreads users independently per
+ * experiment.
  */
 
 export interface Variant {
@@ -21,9 +19,8 @@ export function bucketFraction(userId: string, experimentKey: string): number {
 }
 
 /**
- * The variant a user falls into, by proportional weight. Falls back to
- * `'control'` when there are no positive-weight variants (a safe default that
- * also lets a kill-switched experiment resolve to control).
+ * The variant a user falls into by weight, or `'control'` when no variant has a positive weight, which also lets a
+ * kill-switched experiment resolve to control.
  */
 export function assignVariant(userId: string, experimentKey: string, variants: readonly Variant[]): string {
   const positive = variants.filter((v) => v.weight > 0);

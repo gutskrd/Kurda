@@ -9,17 +9,13 @@ export const SHIELD = { windowSeconds: 10 * 60, probes: 20, blockSeconds: 60 * 6
 const EXEMPT = new Set(['/health', '/metrics']);
 
 /**
- * What somebody already signed in does to stay signed in, which carries no
- * session of its own: renewing the access token with the refresh token, and
- * signing out. The block is for strangers on a network that has been probing;
- * whoever is signed in on it (a school, a carrier's shared address) is meant
- * to carry on, and without these they were signed out the next time their
- * fifteen minutes ran out, for the rest of the hour. Each still has its own
- * rate limit, and a refresh token is the credential either way.
+ * Requests that keep an existing sign-in without a session of their own: refreshing the access token and signing out.
+ * The block is for strangers on a probing network; signed-in users on it (a school, a carrier's shared address) carry
+ * on. Each still has its own rate limit, and the refresh token is the credential either way.
  */
 const SESSION_KEEPING = new Set(['/auth/refresh', '/auth/logout']);
 
-/** Where the counts are kept: Redis when there is one, so every instance sees them, else this process's memory. */
+/** Where the counts are kept: Redis when available, so every instance sees them, else this process's memory. */
 interface ShieldStore {
   /** count one probe; how many there have been in the window */
   probe(network: string): Promise<number>;
@@ -73,21 +69,12 @@ function memoryStore(): ShieldStore {
 }
 
 /**
- * The scanner shield, the API's answer to the bots that try every server for
- * PHP scripts, WordPress pages and secrets files (@kurda/shared
- * scanner-paths.ts).
- *
- * - A probe is answered "not found" before anything else runs: no route, no
- *   session lookup, no database. It goes in the security log, once an hour per
- *   network.
- * - A network that sends SHIELD.probes of them within SHIELD.windowSeconds is
- *   shut out for SHIELD.blockSeconds, for every request made without a session:
- *   someone already signed in on the same network (a school, a carrier's
- *   shared address) carries on, and anyone else is told to try later. The
- *   block goes in the security log as a warning.
- *
- * Installed after the session is read and before the rate limiter, so a
- * blocked scanner spends nothing of anyone's limits.
+ * The scanner shield against bots that try every server for PHP scripts, CMS admin pages and secrets files
+ * (@kurda/shared scanner-paths.ts). A probe gets "not found" before anything else runs (no route, session lookup or
+ * database) and is logged once an hour per network. A network sending SHIELD.probes within SHIELD.windowSeconds is
+ * shut out for SHIELD.blockSeconds for requests without a session, so signed-in users on it carry on; the block is
+ * logged as a warning. Installed after the session is read and before the rate limiter, so blocked scanners use no
+ * one's limits.
  */
 export function installScannerShield(app: FastifyInstance, options: { redis?: Redis } = {}): void {
   const store = options.redis ? redisStore(options.redis) : memoryStore();

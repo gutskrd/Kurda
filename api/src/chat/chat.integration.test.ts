@@ -1,4 +1,4 @@
-/** 1:1 direct messages (KUR-083) against real Postgres. */
+/** Direct messages against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

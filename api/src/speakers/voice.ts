@@ -1,18 +1,9 @@
 /**
- * Who says a recording, and its mouth's timeline: reading them from a request
- * and writing them into what the apps are sent.
- *
- * Every kind of recording carries the same two columns (1751000183000):
- * `speaker`, one of SPEAKERS or NULL for no character, and `lipsync`, the
- * stored timeline. A timeline is checked strictly before it is stored, so the
- * apps decode what they are sent without guarding against anything else.
- *
- * A recording with a speaker and no stored timeline is sent one made here
- * from its words and its length (`lipsyncFromText`), marked
- * `lipsyncSource: 'text'`: the apps are often not sent the words (a listening
- * clip's are its answer), so this is the only way its mouth can move with
- * them. It is never stored, so a stored timeline still means one made from
- * the sound, and the admin's job of making those still finds the recording.
+ * Who says a recording and its mouth's timeline: read from requests and written into what the apps are sent. Every
+ * kind of recording has `speaker` (one of SPEAKERS, or NULL for none) and `lipsync` (the stored timeline, checked
+ * strictly before storing). A recording with a speaker but no stored timeline is sent one made from its words and
+ * length (`lipsyncFromText`), marked `lipsyncSource: 'text'`, since the apps often lack the words; it is never stored,
+ * so a stored timeline always means one made from the sound.
  */
 import { z } from 'zod';
 import {
@@ -32,18 +23,10 @@ import { AppError } from '../plugins/errors.js';
 /** The most cues a timeline may have: several times what the longest recording needs. */
 export const LIPSYNC_MAX_ENTRIES = 2000;
 
-/**
- * How much longer than its recording a timeline may say it is. The browser
- * that made it decoded the file itself, and a decoder may count a frame or two
- * of padding that the server's reading of the file does not.
- */
+/** How much longer than its recording a timeline may be: the browser's decoder may count a frame or two of padding the server does not. */
 export const LIPSYNC_TOLERANCE_MS = 250;
 
-/**
- * The columns a delivery query reads, from the table aliased `alias` (or
- * none): the speaker, and the timeline only when there is a speaker to show,
- * so a recording without one never costs a payload its timeline.
- */
+/** The columns a delivery query reads from table `alias`: the speaker, and the timeline only with a speaker, so no payload carries an unused one. */
 export function voiceColumns(alias = ''): string {
   const at = alias ? `${alias}.` : '';
   return `${at}speaker, CASE WHEN ${at}speaker IS NOT NULL THEN ${at}lipsync END AS lipsync`;
@@ -62,18 +45,15 @@ export interface SpokenWords {
   script?: LipsyncScript;
 }
 
-/** How many timelines made from words are kept: a busy lesson's and story's worth many times over. */
+/** How many word-made timelines are cached: a busy lesson's and story's worth many times over. */
 const TEXT_TIMELINES_KEPT = 2000;
 
-/** Made from words, most recently used last; null where none can be made, so that is not worked out twice. */
+/** Word-made timelines, most recently used last; null where none can be made, so it is not attempted twice. */
 const textTimelines = new Map<string, LipsyncData | null>();
 
 /**
- * The timeline for `words` spread over their recording's length, or null when
- * the length is unknown or no timeline fits it. The same words and length
- * always give the same timeline, so each is made once and kept, by those two
- * (and the script), for as long as it is among the TEXT_TIMELINES_KEPT used
- * most recently.
+ * The timeline for `words` spread over their recording's length, or null when the length is unknown or nothing fits.
+ * Deterministic, so each is made once and cached by words, length and script among the TEXT_TIMELINES_KEPT most recent.
  */
 export function textLipsync(words: SpokenWords): LipsyncData | null {
   const { text, durationMs, script } = words;
@@ -98,9 +78,8 @@ export function textLipsync(words: SpokenWords): LipsyncData | null {
 }
 
 /**
- * What travels beside a recording's URL: nothing without a speaker; the
- * stored timeline when there is one; otherwise one made from `words`, when
- * they and the recording's length are known.
+ * What travels beside a recording's URL: nothing without a speaker, else the stored timeline, else one made from
+ * `words` when they and the length are known.
  */
 export function voiceOf(row: VoiceRow, words?: SpokenWords): RecordingVoice | undefined {
   if (!isSpeakerId(row.speaker)) return undefined;
@@ -121,12 +100,7 @@ export const lipsyncSchema = z.unknown().transform((value, ctx): LipsyncTimeline
 
 export const speakerSchema = z.enum(SPEAKERS);
 
-/**
- * A timeline as it is stored, once it is known to fit its recording: no
- * longer than the recording, give or take LIPSYNC_TOLERANCE_MS. Every cue is
- * inside the timeline (decodeLipsync saw to that), so every cue is inside the
- * recording too.
- */
+/** A timeline as stored once it fits its recording, within LIPSYNC_TOLERANCE_MS; decodeLipsync keeps every cue inside the timeline, so inside the recording. */
 export function fitLipsync(timeline: LipsyncTimeline, durationMs: number): LipsyncData {
   if (timeline.durationMs > durationMs + LIPSYNC_TOLERANCE_MS) {
     throw new AppError(
@@ -139,17 +113,15 @@ export function fitLipsync(timeline: LipsyncTimeline, durationMs: number): Lipsy
 }
 
 /**
- * The speaker and timeline that come with a new recording, in its upload's
- * query string beside the text or key (the body is the audio itself):
+ * The speaker and timeline for a new recording, from its upload's query string (the body is the audio):
  *
  *   speaker=hevalo|hamo|xezo   who says it
  *   speaker=none                no character
  *   (no speaker)                whoever said the recording it replaces
  *   lipsync={"v":1,…}           its timeline, URL-encoded JSON
- *   (no lipsync)                none: an old timeline belongs to the old take
+ *   (no lipsync)                none, since an old timeline belongs to the old take
  *
- * The timeline is checked against the recording's length by the caller, once
- * the recording has been read.
+ * The caller checks the timeline against the recording's length once it has read the recording.
  */
 export function voiceFromQuery(query: unknown): { speaker?: SpeakerId | null; lipsync?: LipsyncTimeline } {
   const q = (typeof query === 'object' && query !== null ? query : {}) as { speaker?: unknown; lipsync?: unknown };

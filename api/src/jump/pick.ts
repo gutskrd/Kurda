@@ -1,7 +1,4 @@
-/**
- * Which exercises a test to jump ahead asks. Pure, so the spread is tested
- * without a database.
- */
+/** Which exercises a jump-ahead test asks; pure, so the spread is tested without a database. */
 
 /** A copy of `list` in an order drawn with `random` (Fisher–Yates). */
 function shuffled<T>(list: readonly T[], random: () => number): T[] {
@@ -14,12 +11,9 @@ function shuffled<T>(list: readonly T[], random: () => number): T[] {
 }
 
 /**
- * Up to `count` exercises, spread over the skills a test skips (`bySkill`,
- * each skill's exercises, the skills in course order): one from each skill in
- * turn, so every skill is asked about before any is asked twice, and each
- * skill's in an order of its own every time. With more skills than questions,
- * a draw of them, still asked in course order. Fewer than `count` when the
- * skills have fewer.
+ * Up to `count` exercises spread over the skipped skills (`bySkill`, in course order): one from each skill in turn,
+ * so every skill is asked before any twice, each skill's in a fresh order. With more skills than questions, a draw of
+ * them in course order. Fewer than `count` when the skills have fewer.
  */
 export function pickJumpItems(bySkill: readonly (readonly string[])[], count: number, random: () => number = Math.random): string[] {
   const lists = bySkill.map((list) => shuffled(list, random));

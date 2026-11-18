@@ -1,4 +1,4 @@
-/** Community library moderation: report → #102 queue → resolve (CI job). KUR-285. */
+/** Library moderation: a report becomes a queue case and is resolved. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -60,8 +60,7 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
     expect((await call('POST', `/library/posts/${postId}/report`, reporterTok, { reason: 'again' })).json().deduped).toBe(true);
     await call('POST', `/library/posts/${postId}/report`, otherTok, { reason: 'me too' });
 
-    // Changed on purpose: the old route writes through the one report service
-    // now, so the report is a case at once (no sync), from the 'report' source.
+    // The route writes through the shared report service, so the report is a case at once, from the 'report' source.
     const mine = (await queue.queue({ q: postId })).cases.filter((c) => c.source === 'report');
     expect(mine).toHaveLength(1); // mass-report deduped to a single case
     expect(mine[0]!.subject).toBeTruthy();
@@ -94,8 +93,7 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
     const c = (await queue.queue({ q: audioComment.id })).cases.find((x) => x.source === 'report')!;
     expect(c).toBeTruthy();
 
-    // ban the comment author from the queue (typing their username, which the
-    // only moderator must; with two or more the ban waits under a suspension)
+    // Ban the comment author from the queue by typing their username, as a sole moderator must.
     expect(await queue.resolve(c.id, modId, 'ban', `lm_author_${suffix}`.slice(0, 30))).toBe(true);
     const u = await pool.query<{ banned_at: Date | null }>(`SELECT banned_at FROM users WHERE id = $1`, [audioComment.authorId]);
     expect(u.rows[0]!.banned_at).not.toBeNull();

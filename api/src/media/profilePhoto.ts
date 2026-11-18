@@ -37,13 +37,10 @@ const reject = (status: number, code: string, message: string, reason: string): 
 export type StoredPhoto = { ok: true; key: string; reused: boolean } | Extract<SetPhotoResult, { ok: false }>;
 
 /**
- * Steps 1–7 of putting up a picture that stands for somebody or something —
- * a profile photo or a group's picture — cost-safely (KUR-177): size → op
- * ceiling → real MIME + resize/WebP/compress → storage ceiling (fail-closed)
- * → refuse what moderation already refused → PUT → scan. `current` is the key
- * the owner holds now: the same bytes again are a no-op. The upload is left
- * unconfirmed; the caller's own swap confirms it, so a failure anywhere before
- * leaves the old picture in place and the new object for the orphan job.
+ * Steps 1–7 of putting up a picture that stands for someone or something (a profile photo or group picture): size, op
+ * ceiling, real type and WebP, storage ceiling (fail-closed), refusing what moderation already refused, PUT, scan.
+ * `current` is the key the owner holds now, so identical bytes are a no-op. The upload stays unconfirmed for the
+ * caller's swap, so an earlier failure leaves the old picture and the new object for the orphan job.
  */
 export async function storeScannedPhoto(
   deps: ProfilePhotoDeps,
@@ -97,9 +94,7 @@ export async function storeScannedPhoto(
   // 5) already this exact picture → idempotent no-op (retry-safe, no R2 write)
   if (current === key) return { ok: true, key, reused: true };
 
-  // the same picture moderation blocked or took off the bucket (keys are
-  // content hashes, so anyone uploading the same bytes lands on it) is never
-  // written back to the public CDN
+  // Bytes moderation blocked or took off the bucket are never written back, whoever uploads them (keys are content hashes).
   const known = await pool.query(
     `SELECT 1 FROM media_uploads WHERE key = $1 AND (scan_status = 'blocked' OR quarantine_state IS NOT NULL)`,
     [key],
@@ -108,8 +103,7 @@ export async function storeScannedPhoto(
     return reject(422, 'PHOTO_REJECTED', 'this image was rejected by moderation', 'moderation') as StoredPhoto;
   }
 
-  // 6) register + upload (idempotent by content-addressed key). If the PUT fails,
-  //    the row stays unconfirmed (orphan-cleaned) and the old picture is untouched.
+  // 6) Register and upload, idempotent by key. If the PUT fails the row stays unconfirmed and the old picture untouched.
   await pool.query(
     `INSERT INTO media_uploads (key, content_type, content_length)
      VALUES ($1, 'image/webp', $2)
@@ -124,8 +118,7 @@ export async function storeScannedPhoto(
     return reject(502, 'MEDIA_UPLOAD_FAILED', 'could not store the image; please try again', 'put-failed') as StoredPhoto;
   }
 
-  // 7) moderation gate (#181): a non-cleared image is left unconfirmed → orphaned.
-  //    A picture that stands for somebody or a group is held to the profile bar.
+  // 7) Moderation gate: an uncleared image stays unconfirmed and is reclaimed; such pictures are held to the profile bar.
   const scan = await moderation.scan(key, 'profile');
   if (scan.scanStatus !== 'cleared') {
     return reject(422, 'PHOTO_REJECTED', 'this image was rejected by moderation', 'moderation') as StoredPhoto;
@@ -134,10 +127,8 @@ export async function storeScannedPhoto(
 }
 
 /**
- * Validate, normalise and store a user's profile photo, cost-safely (KUR-177):
- * every guard in `storeScannedPhoto`, then a per-user-serialised swap that sets
- * the new key and un-confirms the old (which the orphan job reclaims). A
- * failure before the swap leaves the old photo intact.
+ * Validates, normalises and stores a profile photo: every guard in `storeScannedPhoto`, then a per-user swap that sets
+ * the new key and unconfirms the old for the orphan job. A failure before the swap leaves the old photo.
  */
 export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, raw: Buffer): Promise<SetPhotoResult> {
   const { pool, storage, usage, log } = deps;
@@ -147,15 +138,11 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
   const { key } = stored;
   if (stored.reused) return { ok: true, profilePhotoUrl: storage.publicUrl(key), reused: true };
 
-  // 8) swap, serialised per user (locks the user row) so concurrent uploads can't
-  //    leave a confirmed-but-unreferenced object. Confirm new, set it, un-confirm old.
+  // 8) Swap under the user's row lock, so concurrent uploads cannot leave a confirmed but unreferenced object.
   const oldKey = await withUserLock(pool, userId, key);
 
-  // 9) delete the replaced object now; on failure the orphan job retries (it's
-  //    already un-confirmed) — never breaks the user's new photo. Content-hashed
-  //    keys are shared when two users have identical photos, so only delete when
-  //    no OTHER user still references the replaced key (the current user's row now
-  //    holds the new key). Otherwise leave it — deleting would 404 their photo.
+  // 9) Delete the replaced object now (the orphan job retries a failure), but only when no other user references it:
+  // identical photos share a content-hashed key.
   if (oldKey && oldKey !== key) {
     // ...and never one a report's evidence is holding on to
     const stillUsed = await pool.query(
@@ -177,8 +164,7 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
   return { ok: true, profilePhotoUrl: storage.publicUrl(key), reused: false };
 }
 
-/** Confirm `newKey`, set it on the user, and un-confirm the replaced key — all in
- *  one transaction with the user row locked. Returns the replaced key (or null). */
+/** Confirms `newKey`, sets it on the user and unconfirms the replaced key in one transaction under the user lock; returns the replaced key. */
 async function withUserLock(pool: pg.Pool, userId: string, newKey: string): Promise<string | null> {
   const client = await pool.connect();
   try {
@@ -190,8 +176,7 @@ async function withUserLock(pool: pg.Pool, userId: string, newKey: string): Prom
     const oldKey = prev.rows[0]?.profile_photo_key ?? null;
     await client.query(`UPDATE media_uploads SET confirmed_at = now() WHERE key = $1 AND confirmed_at IS NULL`, [newKey]);
     await client.query(`UPDATE users SET profile_photo_key = $2 WHERE id = $1`, [userId, newKey]);
-    // un-confirm the old key so it drops from the storage total + is orphan-reclaimed,
-    // unless another user still references it (content-hashed keys are shared)
+    // Unconfirm the old key so it leaves the storage total and is reclaimed, unless another user still references it.
     if (oldKey && oldKey !== newKey) {
       const stillUsed = await client.query(`SELECT 1 FROM users WHERE profile_photo_key = $1 LIMIT 1`, [oldKey]);
       if ((stillUsed.rowCount ?? 0) === 0) {

@@ -1,10 +1,6 @@
 /**
- * "Who says it": the character a learner sees saying a recording, or none —
- * a small bust of each of the three, and a plain mark for no one.
- *
- * A radio group, as the keyboard expects one: Tab comes to the chosen option
- * and leaves the group, the arrow keys move along it and choose as they go,
- * Home and End jump to the ends.
+ * "Who says it": the character a learner sees saying a recording, or none, as a radio group of small busts. Tab stops
+ * on the chosen option, the arrows move and choose, Home and End jump to the ends.
  */
 import { useCallback, useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { CHARACTER_NAMES, SPEAKERS, characterSvg, type SpeakerId } from '@kurda/shared';
@@ -40,7 +36,7 @@ export function SpeakerPicker({
   value: Speaker;
   onChange: (next: Speaker) => void;
   label?: string;
-  /** offer "None" as well as the three */
+  /** Offer "None" as well as the three. */
   none?: boolean;
   disabled?: boolean;
   hint?: ReactNode;
@@ -48,7 +44,7 @@ export function SpeakerPicker({
   const id = useId();
   const options: Speaker[] = none ? [...SPEAKERS, null] : [...SPEAKERS];
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
-  // the chosen one takes the Tab stop; the first, when none of these is chosen
+  // The chosen one takes the Tab stop; the first, when none of these is chosen.
   const stop = Math.max(0, options.indexOf(value));
 
   const move = (e: KeyboardEvent, at: number): void => {
@@ -112,13 +108,8 @@ export function SpeakerPicker({
 }
 
 /**
- * Changing who says a recording already saved: shown at once (`apply`), sent
- * to the server one change at a time, and put back with a toast if refused.
- *
- * Arrowing along the picker chooses at every step, so changes can come faster
- * than the server answers. One PATCH per recording is in flight at a time;
- * when it answers, the latest choice is sent if it differs, so the server ends
- * at what the editor ended at and never at a choice passed on the way.
+ * Changing who says a saved recording: shown at once (`apply`), put back with a toast if refused. Arrowing chooses at
+ * every step, so one PATCH per recording is in flight at a time and the latest choice follows if it differs.
  */
 export function useSpeakerChange(
   kind: AudioKind,

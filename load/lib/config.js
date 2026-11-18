@@ -3,8 +3,7 @@
 
 export const BASE_URL = __ENV.BASE_URL || 'https://staging.kurda.app';
 
-// Reserved domain so load-test users are excluded from analytics/leaderboards
-// (mirrors api/src/loadtest/marker.ts — LOADTEST_EMAIL_DOMAIN).
+// The reserved domain load-test accounts sign up under, so they are easy to find and delete after a run.
 export const LOADTEST_DOMAIN = 'loadtest.kurda.invalid';
 export const vuEmail = (n) => `vu-${n}@${LOADTEST_DOMAIN}`;
 export const PASSWORD = 'load-test-password-123';

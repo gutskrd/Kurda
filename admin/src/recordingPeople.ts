@@ -1,16 +1,8 @@
 /**
- * The "Record by person" page as data: what GET /admin/recording/people
- * and /admin/recording/people/:voice answer, how the page filters one
- * person's lines, where it starts (where they left off), which line comes
- * next once a take is kept, where a take is sent and with which speaker, and
- * the script a person can download to rehearse from. Kept apart from the page
- * so it is tested without a browser.
- *
- * A take goes to the upload route the studio uses for its store — the
- * lessons' (`/admin/lesson-audio?text=…`, with `&line=` for a conversation's
- * line) or the alphabet's (`/admin/alphabet/audio?key=…`) — and its timeline
- * is made exactly as the studio makes it (voice.ts): from the words alone for
- * a lesson's text, in the clip's script for a letter or a word-set word.
+ * The "Record by person" page as data: what GET /admin/recording/people(/:voice) answers, filtering one person's
+ * lines, where they left off, what comes next, where a take is sent, and the downloadable script, kept apart from the
+ * page so it tests without a browser. A take goes to the same upload route as in the studio (lessons or alphabet) and
+ * its timeline is made the same way (voice.ts).
  */
 import type { LipsyncData, LipsyncScript, SpeakerId } from '@kurda/shared';
 import type { Speaker } from './voice';
@@ -33,7 +25,7 @@ export interface Person extends Tally {
   about: string | null;
   dialect: ScriptDialect | null;
   dialects: Array<Tally & { dialect: ScriptDialect }>;
-  /** the accounts that record this voice (empty for a voice actor, who sees only their own) */
+  /** The accounts that record this voice (empty for a voice actor, who sees only their own). */
   linked: Array<{ id: string; username: string }>;
 }
 
@@ -44,9 +36,9 @@ export interface RoadChapter {
   titleEn: string;
   lessons: number;
   published: number;
-  /** the story Hamo tells at the chapter's end, which goes online with it; absent from an older server */
+  /** The story Hamo tells at the chapter's end, which goes online with it; absent from an older server. */
   story?: { slug: string; title: string; online: boolean } | null;
-  /** the recordings its lessons and story play, and how many are made */
+  /** The recordings its lessons and story play, and how many are made. */
   lines: number;
   recorded: number;
   online: boolean;
@@ -54,11 +46,11 @@ export interface RoadChapter {
 
 export interface PeopleListing {
   people: Person[];
-  /** the voices linked to the account asking */
+  /** The voices linked to the account asking. */
   mine: VoiceId[];
-  /** the account records only its own voices */
+  /** The account records only its own voices. */
   ownVoicesOnly: boolean;
-  /** the road's chapters in order; absent from a server that does not say */
+  /** The road's chapters in order; absent from a server that does not say. */
   chapters?: RoadChapter[];
 }
 
@@ -127,9 +119,9 @@ export type SourceFilter = 'all' | 'published' | 'draft';
 
 export interface Filters {
   status: StatusFilter;
-  /** one heading's lines (a unit, a story, a word set), or every heading's */
+  /** One heading's lines (a unit, a story, a word set), or every heading's. */
   section: string | null;
-  /** lines learners meet today, or lines only drafts have so far */
+  /** Lines learners meet today, or lines only drafts have so far. */
   source: SourceFilter;
 }
 
@@ -173,11 +165,7 @@ export function counts(lines: readonly Line[], filters: Filters): Record<StatusF
   return { all: rest.length, done, todo: rest.length - done };
 }
 
-/**
- * The next line still to record after `afterId`, in `ordered`'s order,
- * wrapping round: what comes up once a take is kept. Null when every one is
- * recorded.
- */
+/** The next line still to record after `afterId`, wrapping round; null when every one is recorded. */
 export function nextTodo(ordered: readonly Line[], afterId: string | null): Line | null {
   const at = afterId ? ordered.findIndex((l) => l.id === afterId) : -1;
   for (let step = 1; step <= ordered.length; step++) {
@@ -195,11 +183,7 @@ export function neighbour(ordered: readonly Line[], id: string | null, step: num
   return ordered[Math.max(0, Math.min(ordered.length - 1, at + step))]!;
 }
 
-/**
- * Where a person picks up: the line they were on, while it is still to
- * record; else the first still to record after it (they kept it, or someone
- * else did); else the first still to record at all; else the first line.
- */
+/** Where a person picks up: their saved line while still to record, else the next to record after it, else the first. */
 export function resumeAt(ordered: readonly Line[], savedId: string | null): Line | null {
   if (ordered.length === 0) return null;
   const saved = savedId ? ordered.find((l) => l.id === savedId) : undefined;
@@ -222,7 +206,7 @@ export function savePlace(voice: VoiceId, lineId: string): void {
   try {
     localStorage.setItem(`${RESUME_KEY}:${voice}`, lineId);
   } catch {
-    // a blocked storage only means the next visit starts at the first line to record
+    // A blocked storage only means the next visit starts at the first line to record.
   }
 }
 
@@ -234,12 +218,8 @@ export function uploadPath(line: Pick<Line, 'store' | 'key' | 'text' | 'conversa
 }
 
 /**
- * Who a take is saved as said by, and how its timeline is read: a
- * character's line as that character, as the studio saves a conversation's
- * line; a narrator's without a speaker, so whoever an editor chose for it
- * stays (`undefined`: voice.ts leaves it out). A letter or a word-set word is
- * timed in its clip's script, as the alphabet's studio times it; a lesson's
- * text from its words alone, as the lessons' studio does.
+ * Who a take is saved as said by, and how its timeline is read, as the studio does it: a character's line as that
+ * character, a narrator's with no speaker so an editor's choice stays; a letter or word-set word in its clip's script.
  */
 export function uploadVoice(line: Pick<Line, 'store' | 'text' | 'dialect' | 'speaker'>, person: Pick<Person, 'kind'>): { speaker: Speaker | undefined; text: string; script?: LipsyncScript } {
   const speaker = person.kind === 'narrator' ? undefined : line.speaker;
@@ -283,10 +263,8 @@ export function dialectName(dialect: ScriptDialect): string {
 }
 
 /**
- * A person's script, to read from and rehearse: every line in course order
- * under its heading, numbered, each with what it means, the line before it,
- * where it is said, and whether it is recorded yet. Markdown, so it reads
- * as plain text and prints cleanly from any editor.
+ * A person's script to rehearse from, as Markdown: every line in course order under its heading, numbered, with its
+ * meaning, the line before it, where it is said and whether it is recorded.
  */
 export function scriptMarkdown(person: Pick<Person, 'name'>, lines: readonly Line[], now = new Date()): string {
   const left = lines.filter((l) => !isDone(l)).length;
@@ -330,7 +308,7 @@ export function scriptCsv(lines: readonly Line[]): string {
       .map(csvCell)
       .join(','),
   );
-  // a byte-order mark, so a spreadsheet opens the Kurdish letters as Unicode
+  // A byte-order mark, so a spreadsheet opens the Kurdish letters as Unicode.
   return `﻿${[head.join(','), ...rows].join('\r\n')}\r\n`;
 }
 

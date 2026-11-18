@@ -1,9 +1,6 @@
 /**
- * Parts the Ranks, Seasons, Leagues and Badges pages share, and the person
- * page's Ranks tab: the art (drawn by @kurda/shared, the same strings the web
- * and the phone draw), where a weekly run stands, and the two actions that
- * change a rating — voiding a game's effect and resetting a player — asked
- * the same way wherever they are offered.
+ * Parts the Ranks, Seasons, Leagues and Badges pages and a person's Ranks tab share: the art from @kurda/shared, where
+ * a weekly run stands, and the two rating actions (void a game, reset a player), asked the same way everywhere.
  */
 import { useId, useMemo } from 'react';
 import {
@@ -53,7 +50,7 @@ import {
   gameName,
 } from '../progress';
 
-// ---- the art ----------------------------------------------------------------------
+// ---- The art ----------------------------------------------------------------------
 
 /** A plain identifier for the art's gradient ids, unique on the page (React's ids carry colons). */
 function useArtId(): string {
@@ -61,10 +58,8 @@ function useArtId(): string {
 }
 
 /**
- * One drawing, inline. The SVG comes from our own deterministic builders, not
- * from anything a person typed, so it is safe to set as markup. With a label
- * it is an image of that name; without one it is decoration beside text that
- * already says it.
+ * One drawing, inline. The SVG comes from the shared builders, never from user input, so it is safe as markup. With a
+ * label it is an image of that name; without one it is decoration.
  */
 function Art({ svg, label, className }: { svg: string; label?: string; className?: string }): React.JSX.Element {
   return (
@@ -88,13 +83,13 @@ export function RankEmblem({
 }: {
   tier: RankTier | null;
   division?: Division | null;
-  /** placement games played, when there is no tier yet */
+  /** Placement games played, when there is no tier yet. */
   placing?: number;
   size?: number;
   label?: string;
 }): React.JSX.Element {
   const id = useArtId();
-  // drawn once per look: a list re-renders on every menu opened, and fifty emblems redrawn each time add up
+  // Drawn once per look: a list re-renders on every menu opened, and fifty emblems redrawn each time add up.
   const svg = useMemo(
     () =>
       tier === null
@@ -117,11 +112,7 @@ export function SeasonFrame({ tier, size = 40 }: { tier: RankTier; size?: number
   return <Art svg={svg} className="art-emblem" />;
 }
 
-/**
- * A badge medallion at a tier (1–4), or locked at 0. A key the art has no
- * drawing for — a retired achievement kept on an old account — shows a plain
- * placeholder rather than failing the page.
- */
+/** A badge medallion at a tier (1–4), or locked at 0; a key with no drawing (a retired badge) shows a placeholder. */
 export function BadgeArt({ badgeKey, tier, tiers, size = 56, label }: { badgeKey: string; tier: number; tiers: number; size?: number; label?: string }): React.JSX.Element {
   const id = useArtId();
   const svg = useMemo(() => {
@@ -139,11 +130,11 @@ export function BadgeArt({ badgeKey, tier, tiers, size = 56, label }: { badgeKey
   return <Art svg={svg} label={label} className="art-badge" />;
 }
 
-// ---- a weekly run -------------------------------------------------------------------
+// ---- A weekly run -------------------------------------------------------------------
 
 /** Where a settle or merge stands, with when, and what it did or why it failed. */
-export function RunLine({ title, run, now }: { title: string; run: LeagueRunStatus | null; now?: Date }): React.JSX.Element {
-  const state = runState(run, now);
+export function RunLine({ title, run }: { title: string; run: LeagueRunStatus | null }): React.JSX.Element {
+  const state = runState(run);
   return (
     <div className="run-line">
       <div className="run-head">
@@ -169,7 +160,7 @@ export function RunLine({ title, run, now }: { title: string; run: LeagueRunStat
   );
 }
 
-// ---- changing a rating ----------------------------------------------------------------
+// ---- Changing a rating ----------------------------------------------------------------
 
 /** What `POST /admin/ranks/games/:game/:ref/void` answers. */
 interface VoidResult {
@@ -254,11 +245,11 @@ export function useResetRating(): (user: { id: string; username: string }, game:
   };
 }
 
-// ---- rated games ------------------------------------------------------------------------
+// ---- Rated games ------------------------------------------------------------------------
 
 function GameState({ g }: { g: { voided: boolean; voidReason: string | null; weight: number } }): React.JSX.Element {
   if (g.voided) {
-    // the reason on the page, not in a tooltip a finger never brings up
+    // The reason on the page, not in a tooltip a finger never brings up.
     return (
       <>
         <Badge tone="neutral">Voided</Badge>
@@ -368,12 +359,12 @@ export function PairGamesDrawer({
 }
 
 /** "Çiya II · 1,040 points" with the emblem, for a list row. */
-export function RankCell({ tier, division, points, placement }: { tier: RankTier | null; division: Division | null; points: number; placement?: { played: number; of: number } | null }): React.JSX.Element {
+export function RankCell({ tier, division, points }: { tier: RankTier | null; division: Division | null; points: number }): React.JSX.Element {
   return (
     <span className="rank-cell">
-      <RankEmblem tier={tier} division={division} placing={placement?.played} size={28} />
+      <RankEmblem tier={tier} division={division} size={28} />
       <span>
-        <span className="rank-cell-name">{rankLine(tier, division, placement)}</span>
+        <span className="rank-cell-name">{rankLine(tier, division)}</span>
         <span className="subtle"> · {points.toLocaleString()} pts</span>
       </span>
     </span>

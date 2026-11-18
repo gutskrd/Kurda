@@ -1,15 +1,9 @@
 import type { BotSignals } from './scoring.js';
 
-/**
- * Derive behavioral bot signals (KUR-110) from concrete aggregates — pure and
- * deterministic so every mapping is unit-testable. The raw sources are gathered
- * by the service (game answer stats #058, activity-hour spread from the XP
- * ledger, accounts-per-device from #296); this turns them into the 0..1 anomaly
- * levels the scoring core expects.
- */
+/** Turns the raw aggregates the service gathers into the 0..1 anomaly levels the scoring core expects. */
 
 export interface SignalInput {
-  /** questions answered across ranked games (#058 cheat_stats) */
+  /** Questions answered across ranked games. */
   questionsAnswered: number;
   /** answers faster than humanly possible */
   impossibleCount: number;
@@ -17,9 +11,9 @@ export interface SignalInput {
   fastCount: number;
   /** round-trip-time anomalies (scripted/uniform latency) */
   rttAnomalyCount: number;
-  /** distinct hours-of-day the account was active over the recent window (0..24) */
+  /** Distinct hours of the day the account was active over the recent window (0..24). */
   distinctActiveHours: number;
-  /** accounts sharing this account's device fingerprint (#296) */
+  /** Accounts sharing this account's device fingerprint. */
   deviceAccountCount: number;
 }
 

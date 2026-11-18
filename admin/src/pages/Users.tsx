@@ -12,9 +12,9 @@ interface UserRow {
   username: string;
   email: string;
   ban: BanState;
-  /** a chat mute in force now */
+  /** A chat mute in force now. */
   muted: boolean;
-  /** a posting mute or a feature limit in force now (absent from an older API: then not known, not shown) */
+  /** A posting mute or a feature limit in force now (absent from an older API: then not known, not shown). */
   limited?: boolean;
   roles: string[];
   createdAt: string;
@@ -30,7 +30,7 @@ const FILTERS = [
   { value: 'staff', label: 'Staff' },
 ] as const;
 
-/** the longest search the API takes; a longer paste would be refused, not searched */
+/** The longest search the API takes; a longer paste would be refused, not searched. */
 export const USERS_Q_MAX = 200;
 const clampQ = (q: string): string => q.trim().slice(0, USERS_Q_MAX).trim();
 
@@ -57,14 +57,9 @@ function goList(q: string, filter: string, page: number): void {
 }
 
 /**
- * People: the list (#/users), and one person (#/users/<id>, with a tab
- * after it: #/users/<id>/standing).
- *
- * The list loads itself, newest first — the account you need is usually the
- * one that just signed up — with the real total, a search (a username, an
- * email, or an id) and a filter for who is suspended, muted or staff right
- * now. Search, filter and page live in the address, so Back from a person
- * returns to the same page of the same search.
+ * People: the list (#/users) and one person (#/users/<id>/<tab>). The list is newest first, as the account wanted is
+ * usually a new one, with a search by username, email or id and a status filter. Search, filter and page live in the
+ * address, so Back from a person returns to the same page.
  */
 export function Users(): React.JSX.Element {
   const route = useRoute();
@@ -91,12 +86,12 @@ function UserList(): React.JSX.Element {
     lastList = `#/users${query ? `?${query}` : ''}`;
   }, [applied, filter, page]);
 
-  // the search box types freely; the list follows once typing pauses, from its first page
+  // The search box types freely; the list follows once typing pauses, from its first page.
   const [q, setQ] = useState(applied);
   const settled = useDebounced(q, 400);
   useEffect(() => {
     if (settled.trim() !== applied) goList(settled, filter, 0);
-    // only the typed text moves the address; the rest is already there
+    // Only the typed text moves the address; the rest is already there.
   }, [settled]);
 
   const total = list.data?.total ?? 0;
@@ -160,11 +155,7 @@ function UserList(): React.JSX.Element {
   );
 }
 
-/**
- * "Banned", "Suspended", "Muted", "Limited" (a posting mute or a feature
- * limit) and staff roles: what someone opening the row should know first.
- * "Active" only when nothing at all limits the account.
- */
+/** "Banned", "Suspended", "Muted", "Limited" and staff roles, first on the row; "Active" only when nothing limits it. */
 export function StatusBadges({
   ban,
   muted,

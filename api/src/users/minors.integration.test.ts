@@ -1,11 +1,7 @@
 /**
- * Age at sign-up and the protections for minors, against real Postgres.
- *
- * Minor status is never stored: every rule here reads it from the birth month
- * at the moment of asking (users/age.ts). So the suites below set up accounts
- * of a given age through the real sign-up and the real one-time question, and
- * then check each rule from the outside — what an adult stranger can and cannot
- * do to reach a minor.
+ * Age at sign-up and the protections for minors, against real Postgres. Minor status is never stored but read from the
+ * birth month on each ask (users/age.ts), so accounts of a given age are made through the real sign-up and question,
+ * and each rule is checked from outside: what an adult stranger can and cannot do to reach a minor.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -57,10 +53,9 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
     });
 
   /**
-   * A confirmed account of the given age. null = no birth month on record: an
-   * account from before we asked (or a Google or Apple sign-up that has not
-   * answered yet). Sign-up itself now needs one, so that state is made the way
-   * it arises — the columns are simply empty.
+   * A confirmed account of the given age; null means no birth month on record, as for an account from before the
+   * question or an unanswered provider sign-up. Sign-up now requires one, so that state is made by leaving the columns
+   * empty.
    */
   const signUp = async (tag: string, years: number | null): Promise<Account> => {
     const res = await register(tag, bornYearsAgo(years ?? 30));
@@ -99,7 +94,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       await client.query('BEGIN');
       await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
       await client.query(`DELETE FROM groups WHERE name LIKE '%${suffix}'`);
-      // closed accounts are anonymized, so their address no longer carries the suffix
+      // Closed accounts are anonymised, so their address no longer carries the suffix.
       await client.query(
         `DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app' OR id = ANY($1::uuid[])`,
         [closed],
@@ -205,9 +200,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       expect(row.rows[0]).toEqual({ birth_year: birthYear, birth_month: birthMonth, birth_date: null });
     });
 
-    // deliberately changed: this made an account with no birth month and
-    // expected it to be asked for one later. Every protection rests on the
-    // answer, so an email sign-up without one is now refused outright
+    // Every protection rests on the answer, so an email sign-up without a birth month is refused outright.
     it('makes no account without a birth month', async () => {
       const res = await register('noage');
       expect(res.statusCode).toBe(400);
@@ -298,22 +291,18 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
     });
 
     it('turns on a minor’s defaults for an account made before we asked', async () => {
-      // made as an adult's so that it can act before anyone knew, then its
-      // birth month taken away: an account from before the question
+      // Made as an adult's so it can act before anyone knew, then its birth month removed: an account from before the question.
       const user = await signUp('late', 30);
       const asker = await signUp('asker', 30);
       const asked = await signUp('asked', 30);
-      // settings from before anyone knew: public to members, reminders on, in
-      // this week's league, a stranger's friend request waiting, and one of
-      // their own sent
+      // Settings from before anyone knew: public to members, reminders on, in this week's league, a stranger's friend
+      // request waiting, and one of their own sent.
       await call(user, 'PUT', '/me/notification-prefs', { friends: false });
       await new LeagueService(pool).ensureMembership(user.id);
       expect((await call(asker, 'POST', '/friends/requests', { userId: user.id })).json().outcome).toBe('requested');
       expect((await call(user, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('requested');
-      // analytics switched on, and groups: one an adult runs that they are in,
-      // one of their own with somebody else in it, and one they are alone in
-      // (the memberships written as they stood, not through the friendships
-      // this test is about to count)
+      // Analytics on, and groups: one an adult runs that they are in, one of their own with someone else, and one they are
+      // alone in (memberships written directly, not through the friendships being counted).
       expect((await call(user, 'POST', '/me/consent', { analytics: true })).statusCode).toBe(200);
       const group = async (owner: Account, name: string) =>
         (await call(owner, 'POST', '/groups', { name: `${name} ${suffix}` })).json().id as string;
@@ -339,8 +328,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         analyticsConsent: false,
       });
 
-      // their groups stay as they were: every group is private, so each is one
-      // they made or somebody who runs it put them in
+      // Their groups stay: each is one they made or someone who runs it put them in.
       const member = await pool.query<{ group_id: string }>(`SELECT group_id FROM group_members WHERE user_id = $1`, [
         user.id,
       ]);
@@ -358,8 +346,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       // and nobody is taken out of a live chat
       expect(revoked).toEqual([]);
       expect((await call(user, 'GET', '/me/notification-prefs')).json()).toMatchObject({ streak: false, friends: false });
-      // out of this week's table (the row is kept, marked as left, so that
-      // choosing to come back returns them to the same one)
+      // Out of this week's table, the row kept as left so coming back returns them to the same group.
       const league = await pool.query(
         `SELECT 1 FROM league_members WHERE user_id = $1 AND week_key = $2 AND left_at IS NULL`,
         [user.id, weekStart(new Date())],
@@ -439,9 +426,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       return { status: res.statusCode, body };
     };
 
-    // deliberately changed: this pinned a 403 NOT_ACCEPTING_REQUESTS for a
-    // request to a minor, which an adult could not get for an adult — so it
-    // told anyone which accounts belong to children
+    // A request to a minor must look like one to an adult who has not replied, or it would reveal which accounts are children's.
     it('a request to a minor is answered exactly like one to an adult who has not replied', async () => {
       // the same privacy as the minor's, so nothing but age differs
       await call(quiet, 'PUT', '/me/privacy', { visibility: 'friends' });
@@ -479,7 +464,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       const accept = await call(minor, 'POST', `/friends/requests/${adult.id}/accept`);
       expect(accept.statusCode).toBe(404);
       expect(accept.json().code).toBe('NO_REQUEST');
-      // while the adult it was sent to sees theirs
+      // While the adult it was sent to sees theirs.
       const quietSees = (await call(quiet, 'GET', '/friends/requests')).json().requests as Array<{ userId: string }>;
       expect(quietSees.map((r) => r.userId)).toContain(adult.id);
 
@@ -522,8 +507,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
     });
 
     it('nobody is suggested a minor as a friend of a friend', async () => {
-      // adult and friendOfMinor become friends, so friendOfMinor's friends —
-      // the minor among them — are adult's friends of friends
+      // adult and friendOfMinor become friends, so friendOfMinor's friends, the minor among them, are adult's friends of friends.
       await call(adult, 'POST', '/friends/requests', { userId: friendOfMinor.id });
       await call(friendOfMinor, 'POST', `/friends/requests/${adult.id}/accept`);
       await call(friendOfMinor, 'POST', '/friends/requests', { userId: other.id });
@@ -593,9 +577,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         expect([minorLooks.statusCode, minorLooks.json().code]).toEqual([404, 'GROUP_NOT_FOUND']);
       });
 
-      // deliberately changed: this pinned a 403 NOT_ACCEPTING_INVITES for a
-      // minor, while an adult stranger was added outright — another way to
-      // tell which accounts are children's
+      // Adding someone to a group must answer the same whatever their age, or it would reveal which accounts are children's.
       it('adding someone to a group answers the same whatever their age', async () => {
         // a stranger adding a minor, and adding an adult: one refusal for both
         const minorByStranger = await call(adult, 'POST', `/groups/${strangersGroup}/invite`, { userId: minor.id });
@@ -621,8 +603,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         const inFriends = await call(minor, 'POST', `/groups/${friendsGroup}/chat`, { body: 'Silav!' });
         expect(inFriends.statusCode).toBe(200);
 
-        // `other` is in it too and is no friend of the minor's: inside a group
-        // that changes nothing, since somebody each of them chose put them there
+        // `other` is in it and not the minor's friend; inside a group that changes nothing, since someone each chose put them there.
         const forOther = (await call(other, 'GET', `/groups/${friendsGroup}`)).json();
         expect(forOther.members.map((m: { userId: string }) => m.userId).sort()).toEqual([friendOfMinor.id, minor.id, other.id].sort());
         expect(forOther.ownerId).toBe(friendOfMinor.id);

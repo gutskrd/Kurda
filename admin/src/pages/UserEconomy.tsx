@@ -4,12 +4,8 @@ import { humanize } from '../moderation';
 import { Badge, Button, FieldRow, FormActions, Section, Select, Table, TextInput, Time, errorLine, useDialogs, useLoad, useToast, type Column } from '../ui';
 
 /**
- * A person's money and things: balances, the ledger, what they own, whether
- * they are a Hevalo+ member — and, for a superadmin, a change to any of them.
- *
- * Every change goes through the API, which moves money through the
- * double-entry ledger (a balance is never edited directly) and keeps every
- * call in the audit log with the reason given.
+ * A person's balances, ledger, items and Hevalo+ membership, and for a superadmin a change to any of them. The API
+ * moves money through the double-entry ledger, never editing a balance, and audits every change with its reason.
  */
 
 interface EconomyUser {
@@ -35,7 +31,7 @@ const CURRENCY: Readonly<Record<string, string>> = { zer: 'Zêr', gems: 'Gems' }
 const LEDGER_REASON: Readonly<Record<string, string>> = {
   admin_adjustment: 'Changed by an admin',
   shop_purchase: 'Shop purchase',
-  // from before purchases were final: the ledger keeps every row it ever had
+  // From before purchases were final: the ledger keeps every row it ever had.
   shop_return: 'Shop return (no longer offered)',
   daily_quest: 'Daily quest chest',
   event_quest: 'Event quest reward',
@@ -98,19 +94,12 @@ export function WalletPanel({ user, canAdjust, onChanged }: { user: EconomyUser;
 /** The most one change may add or take away, as the API allows. */
 export const WALLET_ADJUST_MAX = 1_000_000;
 /**
- * From here a credit is asked about in red, like a debit, and the amount must
- * be typed again: the same line where a shop price waits for a second admin.
- * A grant does not wait for one, because the owner is often the only admin and
- * a second sign-off would leave them unable to make it at all; typing the
- * number back stops the slip (1000000 for 1000) that a click would not.
+ * From here a credit is asked in red and the amount typed again (the shop's second-admin line). It does not wait for a
+ * second admin, who may not exist; retyping catches a slip like 1000000 for 1000.
  */
 const LARGE_ADJUSTMENT = 1_000;
 
-/**
- * Add or take away Zêr or Gems, with a reason kept in the audit log. A change
- * mints or burns currency, so it is said back — amount, currency and the
- * balance it leaves — and confirmed before anything is sent.
- */
+/** Add or take away Zêr or Gems with a reason; it mints or burns currency, so the result is said back and confirmed first. */
 function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => void }): React.JSX.Element {
   const [currency, setCurrency] = useState<'zer' | 'gems'>('zer');
   const [amount, setAmount] = useState('');
@@ -149,7 +138,7 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
     if (!yes) return;
     setBusy(true);
     try {
-      // one key per confirmed change: a double click or a retry moves the money once
+      // One key per confirmed change: a double click or a retry moves the money once.
       const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, {
         method: 'POST',
         body: { currency, amount: value, reason: reason.trim(), idempotencyKey: crypto.randomUUID() },
@@ -206,11 +195,8 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
 export const PLUS_GRANT_MAX_DAYS = 366;
 
 /**
- * Whether they are a Hevalo+ member and until when — and, for a superadmin,
- * giving it for a number of days or adding days to what they have. This is
- * how testers and reviewers get membership while it cannot be bought. What
- * will happen is said back (the new end) and confirmed before anything is
- * sent, and the reason goes to the audit log.
+ * Hevalo+ membership and its end, and for a superadmin days to give or add (how testers get it while it cannot be
+ * bought). The new end is said back and confirmed first, and the reason is audited.
  */
 function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdjust: boolean; onChanged: () => void }): React.JSX.Element {
   const [days, setDays] = useState('');
@@ -235,7 +221,7 @@ function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdj
     e.preventDefault();
     setTouched(true);
     if (daysError || reasonError) return;
-    // as the API counts: from the end they have while it is still to come, from now otherwise
+    // As the API counts: from the end they have while it is still to come, from now otherwise.
     const end = new Date((member ? until.getTime() : Date.now()) + value * 86_400_000);
     const count = `${value.toLocaleString()} ${value === 1 ? 'day' : 'days'}`;
     const yes = await dialogs.confirm({
@@ -246,7 +232,7 @@ function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdj
     if (!yes) return;
     setBusy(true);
     try {
-      // one key per confirmed grant: a double click or a retry adds the days once
+      // One key per confirmed grant: a double click or a retry adds the days once.
       const res = await api<{ premiumUntil: string }>(`/admin/users/${user.id}/plus`, {
         method: 'POST',
         body: { days: value, reason: reason.trim(), idempotencyKey: crypto.randomUUID() },
@@ -313,7 +299,7 @@ export function ItemsPanel({ user, canAdjust }: { user: { id: string; username: 
   const [sku, setSku] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  // as in the balance form: what is missing is said on "Give the item", and each goes once it is filled
+  // As in the balance form: what is missing is said on "Give the item", and each goes once it is filled.
   const [touched, setTouched] = useState(false);
   const skuError = sku ? null : 'Choose the item to give.';
   const reasonError = reason.trim() ? null : 'Say why, for the audit log.';

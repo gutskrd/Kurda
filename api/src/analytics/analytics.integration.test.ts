@@ -1,4 +1,4 @@
-/** Event tracking ingest (KUR-105) against real Postgres. */
+/** Event tracking ingest against real Postgres. */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -85,11 +85,6 @@ describe.skipIf(!DATABASE_URL)('analytics ingest (integration)', () => {
     expect(res.statusCode, res.body).toBe(200);
   };
 
-  /*
-   * This used to store every event it was sent. Analytics consent is off until
-   * the person turns it on, and the consent migration said the pipeline had to
-   * gate on it; now it does.
-   */
   it('stores nothing over HTTP for an account that has not agreed to analytics', async () => {
     const eventId = randomUUID();
     const res = await track(await login(), eventId);

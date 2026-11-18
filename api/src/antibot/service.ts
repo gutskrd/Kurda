@@ -23,10 +23,9 @@ interface GatheredRow {
 }
 
 /**
- * The raw signal inputs for the account `user` (a column), from the source
- * tables: its game answer stats (`c`, cheat_stats, which the caller joins),
- * the distinct hours it earned XP in over the last week, and the most accounts
- * any of its devices was seen with. `user` is always a literal from this file.
+ * SQL for the raw signal inputs of the account in column `user`: its game answer stats (`c`, joined by the
+ * caller), the distinct hours it earned XP in over the last week, and the most accounts any of its devices was
+ * seen with. `user` is always a literal from this file.
  */
 function gatherColumns(user: string): string {
   return `${user} AS user_id, c.questions_answered, c.impossible_count, c.fast_count, c.rtt_anomaly_count,
@@ -53,12 +52,9 @@ function inputOf(row: GatheredRow): SignalInput {
 }
 
 /**
- * Behavioral bot detection (KUR-110). The scoring job gathers each account's
- * behavioral signals (game answer stats #058, activity-hour spread from the XP
- * ledger, accounts-per-device #296), scores them with the pure core, and
- * persists the verdict. `challenge` accounts get an invisible CAPTCHA next
- * session; `flagged` accounts are queued for a human who can confirm-and-reverse
- * their ill-gotten XP (append-only ledger, reversible) or clear a false positive.
+ * Bot detection. The scoring job gathers each account's signals, scores them with the pure core and stores the
+ * verdict. `challenge` accounts get an invisible CAPTCHA next session; `flagged` ones wait for a human who can
+ * confirm and reverse their XP through the ledger, or clear a false positive.
  */
 export class BotDetectionService {
   constructor(private readonly pool: pg.Pool) {}
@@ -73,11 +69,7 @@ export class BotDetectionService {
     return scored!;
   }
 
-  /**
-   * Scoring job: score every account with enough game activity. Returns #scored.
-   * Every account's signals are gathered in one query and every verdict written
-   * in one statement, rather than four statements for each account.
-   */
+  /** Scores every account with enough game activity, in one read and one write, and returns how many. */
   async scoreActive(): Promise<number> {
     const rows = await this.pool.query<GatheredRow>(
       `SELECT ${gatherColumns('c.user_id')} FROM cheat_stats c WHERE c.questions_answered >= $1`,
@@ -143,16 +135,14 @@ export class BotDetectionService {
   }
 
   /**
-   * Confirm a flagged account as a bot: reverse its XP gains through the
-   * append-only ledger (a compensating negative entry under the ledger-admin
-   * bypass) and mark the verdict confirmed. Returns the XP reversed.
+   * Confirms a flagged account as a bot: reverses its XP with a compensating ledger entry and marks the verdict
+   * confirmed. Returns the XP reversed.
    */
   async confirmAndReverse(userId: string, adminId: string): Promise<number> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      // the same steps the moderation queue takes for a confirmed bot case;
-      // the compensating negative ledger entry keeps users.xp == ledger sum
+      // The same steps the moderation queue takes for a confirmed bot; the ledger entry keeps users.xp equal to its sum.
       const xp = await confirmBot(client, userId, adminId);
       await client.query('COMMIT');
       return xp;
@@ -164,7 +154,7 @@ export class BotDetectionService {
     }
   }
 
-  /** Clear a false positive: the account is no longer challenged/flagged. */
+  /** Clears a false positive, so the account is no longer challenged or flagged. */
   async clear(userId: string, adminId: string): Promise<boolean> {
     const res = await this.pool.query(
       `UPDATE bot_scores SET status = 'cleared', challenge = false, flagged = false,

@@ -43,15 +43,14 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
   const registry = new JobRegistry();
   if (config?.DATABASE_URL) {
     const pool = createPool(config);
-    // real, suppression-aware email sender (KUR-098); stub only without a DB
+    // The real, suppression-aware email sender; the stub only without a database.
     registry.register(makeSendEmailJob(new EmailService(pool, createEmailProvider(config))));
     const storage = createStorage(config);
     if (storage) {
       registry.register(makeCleanupOrphansJob(new MediaService(pool, storage)));
     }
-    // A closing account leaves its story games, which can finish one for the
-    // others: paid as the API pays them, and the API instances told over
-    // Redis, so their players' screens move on at once.
+    // A closing account leaves its story games, which can finish one for the others: paid as the API pays, with the API
+    // instances told over Redis so players' screens move on.
     const storyGames = standaloneStoryGames(pool, { redis: config.REDIS_URL ? createRedis(config) : null, log });
     // and the multiplayer learning games, the same way
     const multiplayer = standaloneMultiplayer(pool, { redis: config.REDIS_URL ? createRedis(config) : null, log });
@@ -65,30 +64,28 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
     if (storage) {
       registry.register(makeExportJob(gdpr));
     }
-    // queued push fan-out (KUR-094) gated by preferences at delivery time (KUR-095)
+    // Queued push delivery, gated by preferences at delivery time.
     const push = new PushService(
       new DeviceTokenService(pool),
       createPushProvider(config, log),
       new NotificationPrefsService(pool),
     );
     const queue = config.REDIS_URL ? JobQueue.create(config) : null;
-    // a letter's push that quiet hours hold back is queued again for when they end, and goes then only if the letter still waits
+    // A letter's push held by quiet hours is queued again for when they end, and goes only if the letter still waits.
     registry.register(
       makePushSendJob(push, new InboxService(pool), {
         later: queue ? async (payload, delayMs, key) => void (await queue.enqueue(makePushSendJob(push), payload, { delayMs, idempotencyKey: key })) : undefined,
         stillNews: letterPushStillNews(pool),
       }),
     );
-    // the league week (Monday's settle, Wednesday's merge) and the badges'
-    // nightly rarity and daily push. Promotion news goes back through the
-    // queue as ordinary pushes; a badge a settle unlocks is celebrated on the
-    // API instances, told over the room bus
+    // The league week (Monday's settle, Wednesday's merge) and the badges' nightly rarity and daily push. Promotion news
+    // goes through the queue as ordinary pushes; a badge a settle unlocks is celebrated on the API instances via the bus.
     const redis = config.REDIS_URL ? createRedis(config) : undefined;
     const inbox = new InboxService(pool);
     const bus = redis ? new RedisRoomPublisher(redis) : null;
     const { leagues, badges } = createProgression(pool, {
       gems: new GemService(pool, new WalletService(pool)),
-      activity: new ActivityService(pool, new FriendService(pool), redis),
+      activity: new ActivityService(pool, new FriendService(pool)),
       notices: progressNotices({ inbox, push, jobs: queue }),
       badgeNotices: (badgeService) =>
         badgeNotices({
@@ -149,7 +146,7 @@ export function createWorker(
     if (!job) return;
     const exhausted = job.attemptsMade >= (job.opts.attempts ?? 1);
     if (exhausted) {
-      // ALERT: job is now in the DLQ (BullMQ failed set) and will not retry
+      // Alert: the job is now in the dead-letter set and will not retry.
       log.error(
         { jobId: job.id, jobName: job.name, attempts: job.attemptsMade, err: err.message },
         'job exhausted retries — moved to DLQ',

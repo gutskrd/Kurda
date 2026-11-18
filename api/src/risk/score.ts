@@ -1,11 +1,8 @@
 /**
- * Signup & login risk scoring (KUR-296). Pure and deterministic: combine
- * device / IP / velocity / email signals into a 0–100 risk score, map it to an
- * action (proceed / step-up / verify-or-block), and enforce per-device and
- * per-IP account-creation caps. This is the decision layer that #017 (email),
- * #025 (CAPTCHA), #297 (phone), and #295 (velocity limits) plug into — it does
- * not replace them. No I/O; the auth boundary gathers the signals and applies
- * the returned action.
+ * Pure sign-up and sign-in risk scoring: device, address, velocity and email signals become a 0–100 score, mapped to
+ * an action (proceed, step up, verify or block), with per-device and per-address account caps. The auth boundary
+ * gathers the signals and applies the action; email verification, CAPTCHA, phone checks and velocity limits plug in
+ * there.
  */
 
 /** IP reputation from a provider (datacenter / VPN / known-abuse lists). */
@@ -19,16 +16,13 @@ export interface RiskSignals {
   accountsFromDeviceRecently: number;
   /** accounts created from this network (an IPv4 address, or an IPv6 /64) in the recent window */
   accountsFromIpRecently: number;
-  /** the email is from a disposable-domain (#025) */
+  /** The email is from a disposable domain. */
   disposableEmail: boolean;
   /** request velocity, per minute */
   velocityPerMin: number;
   /** geo / timezone mismatch vs. the account's usual */
   geoMismatch: boolean;
-  /**
-   * a shared network (campus / café / carrier NAT), by reputation or because
-   * many established accounts use it — softens IP volume, never device volume
-   */
+  /** A shared network (campus, café, carrier NAT), by reputation or because many established accounts use it; softens address volume, never device volume. */
   sharedNetwork: boolean;
 }
 
@@ -58,13 +52,11 @@ export function computeRiskScore(signals: RiskSignals): number {
 
   if (signals.disposableEmail) score += RISK_WEIGHTS.disposableEmail;
 
-  // Multiple accounts from one physical device is suspicious even on a shared
-  // network, so device volume always counts at full weight.
+  // Several accounts from one device is suspicious even on a shared network, so device volume always counts fully.
   const deviceExtra = Math.max(0, signals.accountsFromDeviceRecently - 1);
   score += deviceExtra * RISK_WEIGHTS.perExtraDeviceAccount;
 
-  // IP volume is softened on shared networks (classroom / café) so a busy
-  // campus isn't punished on IP alone.
+  // Address volume is softened on shared networks, so a busy campus is not punished on address alone.
   const ipExtra = Math.max(0, signals.accountsFromIpRecently - 1);
   const ipFactor = signals.sharedNetwork ? SHARED_NETWORK_IP_FACTOR : 1;
   score += ipExtra * RISK_WEIGHTS.perExtraIpAccount * ipFactor;
@@ -89,10 +81,9 @@ export function riskBand(score: number): RiskBand {
 
 /**
  * The action to take:
- *  - `proceed`         — allow with no added friction.
- *  - `step_up`         — require a stronger check (visible CAPTCHA #025 and/or
- *                        email verification #017 before activation).
- *  - `verify_or_block` — require phone verification (#297) or soft-block for review.
+ *  - `proceed`: no added friction
+ *  - `step_up`: a stronger check (visible CAPTCHA and/or email verification before activation)
+ *  - `verify_or_block`: phone verification, or a soft block for review
  */
 export type RiskAction = 'proceed' | 'step_up' | 'verify_or_block';
 
@@ -131,15 +122,11 @@ export interface RiskAssessment {
   score: number;
   band: RiskBand;
   action: RiskAction;
-  /** true when a per-device/IP cap was exceeded (overrides the band action) */
+  /** A per-device or per-address cap was exceeded, overriding the band's action. */
   hardBlock: boolean;
 }
 
-/**
- * Full assessment: score → band → action, with a cap breach overriding the
- * band to force `verify_or_block`. The decision, its score, and the
- * contributing signals should be logged for tuning + audit (#104).
- */
+/** The full assessment: score, band and action, with a cap breach forcing `verify_or_block`. Log the decision and signals for tuning and audit. */
 export function assessRisk(signals: RiskSignals): RiskAssessment {
   const score = computeRiskScore(signals);
   const band = riskBand(score);

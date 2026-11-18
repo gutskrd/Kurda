@@ -22,18 +22,11 @@ export interface GrantResult {
 const REASON = (key: string): string => `gem_earn:${key}`;
 
 /**
- * Config-driven Gem grants (KUR-068). Amounts, per-rule daily caps, and
- * cooldowns all come from the `gem_rules` table (no hardcoded amounts). Every
- * grant is idempotent per `(rule, refId)` so a re-triggered achievement or data
- * backfill can't double-pay, and a per-user global daily cap bounds total
- * earning. Grants land in the append-only wallet ledger.
- *
- * The ledger's idempotency keys are unique across everyone, so a `refId` must
- * name the person as well as the event (`${achievementId}:${userId}`), or the
- * first person paid for an event would be the only one ever paid for it. And
- * nobody the economy does not pay (economy/standing.ts — a closed or banned
- * account, a confirmed bot, a shadow-flagged cheater, a payment-fraud hold) is
- * granted anything: these grants are never asked for, so the refusal is silent.
+ * Config-driven Gem grants: amounts, per-rule daily caps and cooldowns come from `gem_rules`, and a per-user daily
+ * cap bounds total earning. Every grant is idempotent per (rule, refId) and lands in the append-only ledger. Ledger
+ * keys are unique across everyone, so a `refId` must name the person as well as the event
+ * (`${achievementId}:${userId}`). Accounts the economy does not pay (economy/standing.ts) are silently granted
+ * nothing.
  */
 export class GemService {
   constructor(
@@ -72,9 +65,8 @@ export class GemService {
   }
 
   /**
-   * Grant Gems for a rule to a user, keyed on `refId` for idempotency. Returns
-   * how many were actually granted (0 when capped, on cooldown, unknown rule,
-   * or already granted for this refId).
+   * Grants Gems for a rule, keyed on `refId` for idempotency, and returns how many were granted: 0 when capped, on
+   * cooldown, for an unknown rule, or already granted.
    */
   async grant(userId: string, ruleKey: string, refId: string): Promise<GrantResult> {
     const ruleRow = await this.pool.query<{ amount: number; daily_cap: number | null; cooldown_seconds: number }>(

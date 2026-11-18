@@ -1,25 +1,8 @@
 /**
- * The picture a shared win's link shows where it is pasted.
- *
- * A win sent to somebody outside Hevalo is a line and a link
- * (shared/src/win-link.ts), and whatever the link is pasted into draws a card
- * for it. Nothing that unfurls a link draws SVG, so each card there is
- * (shared/src/art/share-card.ts) is written into the website's public folder
- * as an image:
- *
- *   web/public/share/<card>.png   1200 by 630, the size link previews ask for
- *
- * One for each kind of win, one for each length of streak that is offered
- * for sharing, and one for each league. They are the postcard as it is drawn
- * for the page the link opens, so the card in a message is the picture the
- * friend lands on. Nothing is written on them: what a preview says is its
- * title and its line, which the website's edge script writes (web:
- * worker.ts), and the message the link arrives in is in the sender's own
- * words.
- *
- * The pictures are flat colour, so they are saved with a palette: a third of
- * the weight of full colour and nothing to see for it, which matters to a
- * card that is fetched by a phone in the middle of a conversation.
+ * Writes the cards a shared win's link shows when pasted (web/public/share/<card>.png, 1200 by 630), since nothing
+ * that previews a link draws SVG: one per kind of win, shareable streak length and league, drawn as the postcard on
+ * the page the link opens (shared/src/art/share-card.ts). They carry no words; the website's edge script writes the
+ * preview's title and line. Saved with a palette, a third of the weight of full colour with no visible loss.
  *
  * Run after a card's drawing is changed, and commit what it writes:
  *

@@ -41,7 +41,7 @@ describe('GET /health', () => {
   it('writes no request log lines at info, as the platform asks it every few seconds', async () => {
     app = buildApp(loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'info' }));
     let level: string | undefined;
-    // a check runs inside the request, so it sees the logger the request was given
+    // A check runs inside the request, so it sees the request's logger.
     app.health.register('probe', async () => {
       level = currentRequest()?.log.level;
       return { status: 'ok' };

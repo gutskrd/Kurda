@@ -9,14 +9,11 @@ const skuBody = z.object({ sku: z.string().min(1).max(80).nullable() });
 const postBody = z.object({ postId: z.uuid() });
 
 /**
- * Profile cosmetics + favorites (equip only — purchasing stays in /shop). Every
- * mutation is scoped to the authenticated user (req.user.id); the client never
- * says who owns what — the server resolves the SKU and checks entitlement /
- * premium access. Reuses shop_items / user_entitlements / library_posts.
+ * Profile cosmetics and favourites; buying stays in /shop. Every change is scoped to the signed-in user, and the
+ * server resolves the SKU and checks entitlement or premium access.
  */
 export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: CosmeticsService): void {
-  /** The default-avatar catalog + which require premium (for the picker's locks).
-   *  Static/global data — no per-user DB work. */
+  /** The default-avatar catalogue and which require premium, for the picker's locks. */
   app.get(
     '/cosmetics/avatars',
     { config: { skipValidation: true }, preHandler: requireAccount },

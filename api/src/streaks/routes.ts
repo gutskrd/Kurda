@@ -2,15 +2,11 @@ import type { FastifyInstance } from 'fastify';
 import { requireAuth } from '../plugins/auth.js';
 import type { StreakService } from './service.js';
 
-/**
- * What a learner can do to their own streak. Reading it is GET /me's (and a
- * finished session's); the one thing to ask for is the streak that ended back.
- */
+/** What a learner can do to their own streak: GET /me reads it, and the one action is restoring the streak that ended. */
 export function registerStreakRoutes(app: FastifyInstance, streaks: StreakService): void {
   /**
-   * Restore the streak that ended. No body: which streak, whether it can still
-   * be restored and what it costs are the server's to decide, by its own clock
-   * and the learner's time zone on the account.
+   * Restores the ended streak. No body: which streak, whether it can be restored and the cost are decided by the
+   * server's clock and the account's time zone.
    */
   app.post(
     '/me/streak/repair',

@@ -30,7 +30,7 @@ function at(hash: string): void {
   location.hash = hash;
 }
 
-// ---- ranks ----------------------------------------------------------------------------
+// ---- Ranks ----------------------------------------------------------------------------
 
 const tiers = (counts: number[]): TierSpread['tiers'] => {
   const total = counts.reduce((a, b) => a + b, 0);
@@ -71,15 +71,15 @@ describe('Game ranks', () => {
     renderUi(<Ranks />);
     const bars = await screen.findByRole('list', { name: 'Pêşbaziya Peyvan: players per tier' });
     const rows = within(bars).getAllByRole('listitem');
-    // the climb reads top down: Stêrk first
+    // The climb reads top down: Stêrk first.
     expect(rows[0]).toHaveTextContent('Stêrk');
     expect(rows[2]).toHaveTextContent('Çiya15 19%');
     expect(screen.getByText('80 active players · 6 still placing')).toBeInTheDocument();
-    // a game under fifty is said to be one
+    // A game under fifty is said to be one.
     const rhyme = screen.getByRole('heading', { name: 'Pêşbaziya Serwayan' }).closest('section')!;
     expect(rhyme).toHaveTextContent('Under 50 active players');
     expect(screen.getByRole('heading', { name: 'Pêşbaziya Peyvan' }).closest('section')).not.toHaveTextContent('Under 50 active players');
-    // the comparison table: a row per tier, a column per game
+    // The comparison table: a row per tier, a column per game.
     const table = screen.getByRole('table', { name: 'Players per tier in each game' });
     const zozan = within(table).getByText('Zozan (High pasture)', { ignore: 'title' }).closest('tr')!;
     expect(zozan).toHaveTextContent('25 31%');
@@ -168,7 +168,7 @@ describe('Game ranks', () => {
     const drawer = screen.getByRole('dialog', { name: 'Pêşbaziya Peyvan: @baran and @cihan' });
     await within(drawer).findByText('Counted ×0.5');
     expect(within(drawer).getByText('Voided')).toBeInTheDocument();
-    // a voided game has nothing more to void
+    // A voided game has nothing more to void.
     expect(within(drawer).getAllByRole('button', { name: 'Void…' })).toHaveLength(1);
     await user.click(within(drawer).getByRole('button', { name: 'Void…' }));
     const ask = screen.getByRole('alertdialog', { name: 'Void this Pêşbaziya Peyvan game’s rating effect?' });
@@ -183,7 +183,7 @@ describe('Game ranks', () => {
     await waitFor(() => expect(posts(calls, `/admin/ranks/games/wordle-battle/${REF}/void`)).toHaveLength(1));
     expect(posts(calls, `/admin/ranks/games/wordle-battle/${REF}/void`)[0]!.body).toEqual({ reason: 'win trading on one phone' });
     expect(await screen.findByText('Voided. 3 later games were worked out again for 4 players.')).toBeInTheDocument();
-    // and the list of games is read again
+    // And the list of games is read again.
     await waitFor(() => expect(calls.filter((c) => c.path === `/admin/ranks/pairs/wordle-battle/${A}/${B}`)).toHaveLength(2));
   });
 
@@ -195,7 +195,7 @@ describe('Game ranks', () => {
   });
 });
 
-// ---- seasons ----------------------------------------------------------------------------
+// ---- Seasons ----------------------------------------------------------------------------
 
 const CURRENT = seasonOf(new Date()).id;
 const SEASONS: SeasonList = {
@@ -243,7 +243,7 @@ describe('Seasons', () => {
     await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'End them now' }));
     await waitFor(() => expect(posts(calls, '/admin/seasons/end')).toHaveLength(1));
     expect(await screen.findByText('Closed 1 season.')).toBeInTheDocument();
-    // the list is read again
+    // The list is read again.
     await waitFor(() => expect(calls.filter((c) => c.path === '/admin/seasons')).toHaveLength(2));
   });
 
@@ -259,7 +259,7 @@ describe('Seasons', () => {
     at('#/seasons/2026-Q2');
     renderUi(<Seasons />);
     expect(await screen.findByRole('heading', { level: 1, name: 'Bihar 2026 (Spring)' })).toBeInTheDocument();
-    // nothing still due: it opens on what was handed out
+    // Nothing still due: it opens on what was handed out.
     const row = (await screen.findByText('@cihan')).closest('tr')!;
     expect(row).toHaveTextContent('Stêrk (Star)');
     expect(row).toHaveTextContent('Stêrkê Bihar 2026');
@@ -276,7 +276,7 @@ describe('Seasons', () => {
   });
 });
 
-// ---- leagues ----------------------------------------------------------------------------
+// ---- Leagues ----------------------------------------------------------------------------
 
 const WEEK = weekStart(new Date());
 const settle = (over: Partial<LeagueRunStatus> = {}): LeagueRunStatus => ({
@@ -337,7 +337,7 @@ describe('Leagues', () => {
     await screen.findByRole('table', { name: 'League groups' });
     await user.selectOptions(screen.getByLabelText('League'), 'cem');
     expect(within(screen.getByRole('table', { name: 'League groups' })).queryByText('Kanî (Spring)', { ignore: 'title' })).not.toBeInTheDocument();
-    // no week after this one
+    // No week after this one.
     expect(screen.queryByRole('link', { name: 'The week after' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'The week before' })).toHaveAttribute('href', `#/leagues?week=${last}`);
     location.hash = `#/leagues?week=${last}`;
@@ -406,7 +406,7 @@ describe('Leagues', () => {
   });
 });
 
-// ---- badges -----------------------------------------------------------------------------
+// ---- Badges -----------------------------------------------------------------------------
 
 const CATALOGUE: BadgeCatalogue = {
   families: ['learning', 'habit', 'games', 'ranked', 'friends', 'events', 'secret'],

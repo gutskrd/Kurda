@@ -15,20 +15,14 @@ describe('avatar registry', () => {
     expect(avatarRequiresPremium('default-01')).toBe(false);
   });
 
-  /**
-   * The built-in avatars used to be a paid range with one free fallback. They
-   * are all free now, and this is the assertion that says so: a manifest entry
-   * that quietly goes back to `requiresPremium: true` fails here rather than
-   * silently locking a picture someone was already using.
-   */
+  /** Every built-in avatar is free, so a manifest entry turning premium again fails here instead of locking a picture. */
   it('gives away every built-in avatar', () => {
     const reg = avatarRegistry();
     expect(reg.length).toBeGreaterThan(1);
     expect(reg.filter((a) => a.requiresPremium)).toEqual([]);
   });
 
-  // The old default (the deer in the hat) became an avatar of its own when the
-  // default changed; a migration moves everyone who had chosen it there.
+  // The former default (the deer in the hat) is an avatar of its own; a migration moved everyone who chose it there.
   it('keeps the old default picture selectable as default-17', () => {
     expect(isValidAvatarKey('default-17')).toBe(true);
     expect(avatarRequiresPremium('default-17')).toBe(false);
@@ -45,11 +39,8 @@ describe('avatar registry', () => {
 
   describe('effectiveAvatarKey', () => {
     /**
-     * Nothing in the catalog is premium any more, so premium is no longer
-     * an input to which picture you get. The gate stays in the function
-     * because it is what a future premium avatar would need, and because it
-     * is the reason a lapsed entitlement degrades to a valid picture rather
-     * than a broken one.
+     * No avatar is premium now, but the gate stays for a future premium avatar, and because it makes a lapsed
+     * entitlement fall back to a valid picture.
      */
     it('resolves a chosen avatar whether or not premium is active', () => {
       expect(effectiveAvatarKey('default-01', false)).toBe('default-01');

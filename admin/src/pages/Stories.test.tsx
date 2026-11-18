@@ -29,7 +29,7 @@ vi.mock('../ui/Dialog', async (importOriginal) => {
       : isValidElement(node)
         ? renderToStaticMarkup(node).replace(/<\/li><li>/g, ' ').replace(/<[^>]+>/g, '')
         : '';
-  // one object for every render, as the real hook gives
+  // One object for every render, as the real hook gives.
   const dialogs = {
     confirm: async (o: ConfirmOptions) => answers.confirm([plain(o.title), plain(o.body)].filter(Boolean).join(' ')),
     prompt: async (o: PromptOptions) => answers.prompt([plain(o.title), plain(o.body)].filter(Boolean).join(' ')),
@@ -39,7 +39,7 @@ vi.mock('../ui/Dialog', async (importOriginal) => {
 const confirm = answers.confirm;
 const prompt = answers.prompt;
 
-// the microphone and the trimming are the browser's: here a take is three bytes, ready at once
+// The microphone and the trimming are the browser's: here a take is three bytes, ready at once.
 vi.mock('../micCapture', async (original) => ({
   ...(await original<typeof import('../micCapture')>()),
   micPermission: async () => 'granted',
@@ -157,33 +157,33 @@ describe('the list', () => {
     const c = await open('#/stories');
     expect(rows(c)).toEqual(['Rêya Dibistanê', 'Şorbeya Nîskê', 'کلیلی ماڵەوە', 'Qelema Şîn']);
     const row = (title: string) => [...c.querySelectorAll('tbody tr')].find((r) => text(r).includes(title))!;
-    // a starter is marked until someone publishes it
+    // A starter is marked until someone publishes it.
     expect(text(row('Şorbeya Nîskê'))).toContain('Starter (needs native review)');
     expect(text(row('Qelema Şîn'))).not.toContain('Starter');
     expect(text(row('Şorbeya Nîskê'))).toContain('1 to fix · 2 to check');
     expect(text(row('Şorbeya Nîskê'))).toContain('8 / 12');
     expect(text(row('Rêya Dibistanê'))).toContain('Ready');
-    // the level as its CEFR letter, the category by its English name, the audio and the review
+    // The level as its CEFR letter, the category by its English name, the audio and the review.
     expect(text(row('Rêya Dibistanê'))).toContain('A1');
     expect(text(row('Rêya Dibistanê'))).toContain('Everyday life');
     expect(text(row('Rêya Dibistanê'))).toContain('No audio');
     expect(text(row('Rêya Dibistanê'))).toContain('Unreviewed');
     expect(text(row('Şorbeya Nîskê'))).toContain('Approved');
     expect(text(row('کلیلی ماڵەوە'))).toContain('Not filed');
-    // the featured story carries its star
+    // The featured story carries its star.
     expect(row('Qelema Şîn').querySelector('.st-star')).not.toBeNull();
     expect(row('Rêya Dibistanê').querySelector('.st-star')).toBeNull();
-    // the Soranî title is right to left
+    // The Soranî title is right to left.
     expect(row('کلیلی ماڵەوە').querySelector('strong')!.getAttribute('dir')).toBe('rtl');
-    // what learners can play: one short Kurmancî story is published, nothing else
+    // What learners can play: one short Kurmancî story is published, nothing else.
     const coverage = [...c.querySelectorAll('.st-coverage-row')].map((r) => [...r.children].map((el) => text(el)));
     expect(coverage).toEqual([
       ['Kurmancî', 'Short: 1', 'Medium: 0', 'Long: 0', 'Saga: 0'],
       ['Soranî', 'Short: 0', 'Medium: 0', 'Long: 0', 'Saga: 0'],
     ]);
-    // a length nobody can play is marked
+    // A length nobody can play is marked.
     expect(c.querySelector('.st-coverage-row .badge.danger')).not.toBeNull();
-    // the categories page is a step away
+    // The categories page is a step away.
     expect(button(c, 'Categories')!.getAttribute('href')).toBe('#/stories/categories');
   });
 
@@ -199,7 +199,7 @@ describe('the list', () => {
     await click(button(c, /^All/));
     await choose(c.querySelector('select[aria-label="Variety"]'), 'kurmanci');
     expect(rows(c)).toEqual(['Rêya Dibistanê', 'Şorbeya Nîskê', 'Qelema Şîn']);
-    // the tabs count what each would show under the other filters
+    // The tabs count what each would show under the other filters.
     expect(count(/^All/)).toBe('3');
     expect(count(/^In review/)).toBe('0');
     await choose(c.querySelector('select[aria-label="Level"]'), 'A2');
@@ -216,7 +216,7 @@ describe('the list', () => {
     expect(paths(api)).toContain('/admin/stories?dialect=kurmanci&review=approved&featured=1&limit=50');
     await click(c.querySelector('.st-tools input[type="checkbox"]'));
     await choose(c.querySelector('select[aria-label="Review"]'), 'all');
-    // the search goes out once it has stopped being typed
+    // The search goes out once it has stopped being typed.
     const before = paths(api).length;
     await type(c.querySelector('input[type="search"]'), 'sorbeya');
     expect(paths(api).length).toBe(before);
@@ -226,7 +226,7 @@ describe('the list', () => {
     await type(c.querySelector('input[type="search"]'), 'nothing like it');
     await debounce();
     expect(text(c)).toContain('No story matches these filters.');
-    // the filters are remembered for the next visit
+    // The filters are remembered for the next visit.
     expect(JSON.parse(sessionStorage.getItem('kurda_admin_stories_filter')!)).toMatchObject({ dialect: 'kurmanci', query: 'nothing like it', page: 0 });
   });
 
@@ -248,11 +248,11 @@ describe('the list', () => {
     unmount!();
     unmount = null;
 
-    // the list shrank since page 3 was remembered: the last page there is
+    // The list shrank since page 3 was remembered: the last page there is.
     api.use(listRoute(many.slice(0, 60)));
     const again = await open('#/stories');
     expect(text(again.querySelector('.pagination-at'))).toBe('51–60 of 60');
-    // a new filter starts on the first page
+    // A new filter starts on the first page.
     await click(button(again, /^Draft/));
     expect(text(again.querySelector('.pagination-at'))).toBe('1–50 of 60');
   });
@@ -281,7 +281,7 @@ describe('the list', () => {
     const c = await open('#/stories');
     expect(button(c, 'Record the sentences of “Rêya Dibistanê”')!.getAttribute('href')).toBe(`#/audio/stories?story=${STORY_ID}`);
     expect(button(c, 'Record the sentences of “Kevn”')).toBeNull();
-    // and from the story itself
+    // And from the story itself.
     await click(button(c, 'Rêya Dibistanê'));
     expect(button(c, 'Record its sentences')!.getAttribute('href')).toBe(`#/audio/stories?story=${STORY_ID}`);
   });
@@ -386,7 +386,7 @@ describe('the categories', () => {
     expect(paths(api, 'DELETE').slice(1)).toEqual(['/admin/story-categories/family', '/admin/story-categories/family?force=1']);
     expect(rows(c)).toEqual(['Animal fables', 'Legends and history']);
 
-    // a no to the second question deletes nothing
+    // A no to the second question deletes nothing.
     confirm.mockClear();
     api.use(on('DELETE', '/admin/story-categories/fable', failure(409, 'IN_USE', 'in use', { count: 1 })));
     confirm.mockImplementation((said) => !said.includes('Remove it from'));
@@ -403,7 +403,7 @@ describe('the editor', () => {
     listApi();
     const c = await open(`#/stories/${STORY_ID}`);
     expect(text(c.querySelector('.st-checks'))).toContain('Nothing to fix.');
-    // nothing changed yet: nothing to save
+    // Nothing changed yet: nothing to save.
     expect(saveButton(c).disabled).toBe(true);
 
     await click(button(c, 'Add a word'));
@@ -419,7 +419,7 @@ describe('the editor', () => {
     expect((button(c, 'Publish') as HTMLButtonElement | null) ?? button(c, 'Save and publish')).toBeTruthy();
     expect((button(c, 'Save and publish') as HTMLButtonElement).disabled).toBe(true);
 
-    // as the reader would mark it: a whole word, in any case
+    // As the reader would mark it: a whole word, in any case.
     await type(c.querySelector('#story-glossary-2-term'), 'ŞÎLAN');
     expect(c.querySelector('#story-glossary-2-term-problems')).toBeNull();
     expect(text(c.querySelector('#story-glossary-2 .st-hint'))).toBe('Marked in paragraph 3');
@@ -433,7 +433,7 @@ describe('the editor', () => {
     const body = (c.querySelector('#story-body') as HTMLTextAreaElement).value;
     await type(c.querySelector('#story-body'), `${body}\n\n${body}`);
     expect(text(c.querySelector('.st-facts'))).toBe('144 words · no length yet · about 3 min to read');
-    // a draft may be between lengths; publishing may not
+    // A draft may be between lengths; publishing may not.
     expect(text(c.querySelector('#story-body-problems'))).toBe(
       'Before publishing: 144 words is between the lengths: the nearest is medium (150–250 words)',
     );
@@ -459,7 +459,7 @@ describe('the editor', () => {
     await choose(category, 'fable');
     await click(c.querySelector('input[name="story-tradition"][value="adapted"]'));
     expect(text(c.querySelector('#story-tradition'))).toContain('Traditional material, retold freely for learners.');
-    // an adapted story without a source is worth a look, and says so where the source goes
+    // An adapted story without a source is worth a look, and says so where the source goes.
     expect(text(c.querySelector('#story-source-problems'))).toBe('Check: a traditional or adapted story should name where it comes from');
     await type(c.querySelector('#story-source'), 'Kurdish oral tradition');
     expect(c.querySelector('#story-source-problems')).toBeNull();
@@ -472,7 +472,7 @@ describe('the editor', () => {
     const sent = api.calls.find((call) => call.method === 'PUT')!.body as Record<string, unknown>;
     expect(sent).toMatchObject({ level: 2, category: 'fable', tradition: 'adapted', source: 'Kurdish oral tradition', sourceUrl: 'https://example.org/tale', readingMinutes: 4 });
     expect(text(c.querySelector('.st-notice'))).toBe('Saved.');
-    // the preview says it the reader's way
+    // The preview says it the reader's way.
     expect(text(c.querySelector('.st-pv-meta'))).toContain('A2 · Elementary');
     expect(text(c.querySelector('.st-pv-meta'))).toContain('Animal fables');
     expect(text(c.querySelector('.st-pv-meta'))).toContain('4 min');
@@ -492,10 +492,10 @@ describe('the editor', () => {
     api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: 5 }))));
     const c = await open(`#/stories/${STORY_ID}`);
     const covers = c.querySelector('.st-covers')!;
-    // every shared cover, and None
+    // Every shared cover, and None.
     expect(covers.querySelectorAll('[role="radio"]')).toHaveLength(STORY_COVERS.length + 1);
     expect(button(covers, 'None')!.getAttribute('aria-checked')).toBe('true');
-    // with none chosen, the preview lays the story on the kilim the apps give it, over that rug's own colour
+    // With none chosen, the preview lays the story on the kilim the apps give it, over that rug's own colour.
     const rug = storyRugFor(storyFixture().slug);
     expect(c.querySelector('.st-pv-cover img')!.getAttribute('src')).toBe(`https://hevalo.app/cosmetics/backgrounds/${rug.file}`);
     expect((c.querySelector('.st-pv-cover') as HTMLElement).style.backgroundColor).not.toBe('');
@@ -529,15 +529,15 @@ describe('the editor', () => {
     expect(section.querySelector('summary .badge')!.classList.contains('danger')).toBe(true);
     expect(text(c.querySelector('#story-translations-en-problems'))).toContain('Must fix: the translation has 2 paragraphs and the text 3');
     expect(saveButton(c).disabled).toBe(true);
-    // the text's paragraphs stand beside the translation to align them
+    // The text's paragraphs stand beside the translation to align them.
     expect(section.querySelector('.st-translation')!.querySelectorAll('.st-translation-source li')).toHaveLength(3);
     await type(c.querySelector('#story-translations-en'), 'Rojîn is ten.\n\nThe road is long.\n\nTheir teacher is Şîlan.');
     expect(text(section.querySelector('summary'))).toBe('English paragraphs: 3 of 3');
     expect(section.querySelector('summary .badge')!.classList.contains('ok')).toBe(true);
     expect(text(section.querySelector('.st-h2'))).toBe('Translations (1 of 9)');
-    // the preview shows it under each paragraph
+    // The preview shows it under each paragraph.
     expect([...c.querySelectorAll('.st-pv-translation')].map((el) => text(el))).toEqual(['Rojîn is ten.', 'The road is long.', 'Their teacher is Şîlan.']);
-    // only a translation changed: “Save draft” saves that language on its own, which keeps an approval
+    // Only a translation changed: “Save draft” saves that language on its own, which keeps an approval.
     api.use(
       on('PUT', `${AT}/translations/en`, (call) =>
         json(storyFixture({ translations: { en: (call.body as { body: string }).body }, translationReview: { en: { status: 'unreviewed' } }, lockVersion: 5 })),
@@ -564,7 +564,7 @@ describe('the editor', () => {
     expect(text(c.querySelector('.st-badges'))).toContain('Unreviewed');
     expect((button(c, 'Publish') as HTMLButtonElement).disabled).toBe(true);
     expect(text(c.querySelector('.st-actions'))).toContain('A reviewer has to approve the story before it can be published');
-    // submitting for review does not wait for approval
+    // Submitting for review does not wait for approval.
     expect((button(c, 'Submit for review') as HTMLButtonElement).disabled).toBe(false);
 
     const approved = storyFixture({ reviewStatus: 'approved', reviewedBy: { id: 'u-rev', username: 'dilan' }, reviewedAt: '2026-10-12T09:00:00.000Z', reviewNote: 'Read twice.', lockVersion: 5 });
@@ -581,7 +581,7 @@ describe('the editor', () => {
     await click(button(c, 'Publish'));
     expect(api.calls.at(-1)).toEqual({ method: 'POST', path: `${AT}/publish`, body: { lockVersion: 5 } });
     expect(text(c.querySelector('.st-notice'))).toBe('Published: learners can read it now.');
-    // live: its approval cannot be withdrawn without unpublishing first
+    // Live: its approval cannot be withdrawn without unpublishing first.
     expect(button(c, 'Withdraw approval')).toBeNull();
     expect(text(c.querySelector('#story-review'))).toContain('Unpublish the story first to withdraw its approval.');
   });
@@ -592,10 +592,10 @@ describe('the editor', () => {
     api.use(on('POST', `${AT}/review`, json(storyFixture({ reviewStatus: 'unreviewed', reviewedAt: '2026-10-13T09:00:00.000Z', reviewNote: 'Names misspelled.', lockVersion: 5 }))));
     const c = await open(`#/stories/${STORY_ID}`);
     expect((button(c, 'Publish') as HTMLButtonElement).disabled).toBe(false);
-    // the filing can change freely
+    // The filing can change freely.
     await type(c.querySelector('#story-author'), 'Someone');
     expect((button(c, 'Save and publish') as HTMLButtonElement).disabled).toBe(false);
-    // the words cannot
+    // The words cannot.
     await type(c.querySelector('#story-summary'), 'Changed.');
     expect((button(c, 'Save and publish') as HTMLButtonElement).disabled).toBe(true);
     expect(text(c.querySelector('.st-actions'))).toContain('The unsaved edits change what was approved');
@@ -606,9 +606,9 @@ describe('the editor', () => {
     expect(api.calls.find((call) => call.path === `${AT}/review`)!.body).toEqual({ approved: false, note: 'Names misspelled.', lockVersion: 4 });
     expect(text(c.querySelector('.st-notice'))).toBe('Approval withdrawn.');
     expect(text(c.querySelector('#story-review'))).toContain('Approval withdrawn');
-    // the unsaved edits were not lost to the review
+    // The unsaved edits were not lost to the review.
     expect((c.querySelector('#story-summary') as HTMLTextAreaElement).value).toBe('Changed.');
-    // and the next save carries the version the review made
+    // And the next save carries the version the review made.
     api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: 6 }))));
     await click(saveButton(c));
     expect((api.calls.find((call) => call.method === 'PUT')!.body as { lockVersion: number }).lockVersion).toBe(5);
@@ -651,7 +651,7 @@ describe('the editor', () => {
     expect((button(items[0]!, 'Play “Rojîn deh salî ye.”') as HTMLButtonElement).disabled).toBe(false);
     expect((button(items[1]!, 'No recording yet') as HTMLButtonElement).disabled).toBe(true);
 
-    // open the second sentence, record and save: it goes up under its text, said by the remembered character
+    // Open the second sentence, record and save: it goes up under its text, said by the remembered character.
     await click(items[1]!.querySelector('.la-row-main'));
     const studio = section.querySelector('.rec')!;
     expect(studio.getAttribute('aria-label')).toBe('Record “Ew li gundekî biçûk dijî.”');
@@ -663,7 +663,7 @@ describe('the editor', () => {
     expect(put.path).toBe(`/admin/lesson-audio?text=${encodeURIComponent('Ew li gundekî biçûk dijî.')}&speaker=hevalo`);
     expect(text(section.querySelector('.st-h2'))).toBe('Audio (2 of 12 sentences recorded)');
     expect(text(section.querySelectorAll('.st-audio-row')[1]!)).toContain('Recorded · 1.2 s');
-    // the editor's own state is untouched: nothing to save
+    // The editor's own state is untouched: nothing to save.
     expect(saveButton(c).disabled).toBe(true);
   });
 
@@ -712,7 +712,7 @@ describe('the editor', () => {
     await click(button(section, 'Keep the link'));
     expect(saveButton(c).disabled).toBe(true);
 
-    // finding a story of the other variety by its title
+    // Finding a story of the other variety by its title.
     expect((section.querySelector('select') as HTMLSelectElement).value).toBe('sorani');
     await choose(section.querySelector('select'), 'kurmanci');
     await type(section.querySelector('input[type="search"]'), 'Şorbeya');
@@ -722,14 +722,14 @@ describe('the editor', () => {
     expect(text(section)).toContain('Linked to “Şorbeya Nîskê” when the story is saved.');
     await click(saveButton(c));
     expect((api.calls.find((call) => call.method === 'PUT')!.body as { sameStoryAs: string }).sameStoryAs).toBe(starter.id);
-    // saved: nothing pending any more
+    // Saved: nothing pending any more.
     expect(text(c.querySelector('#story-versions'))).not.toContain('when the story is saved');
   });
 
   it('shows the evidence it points at, and lets a sentence be chosen in its paragraph', async () => {
     listApi();
     const c = await open(`#/stories/${STORY_ID}`);
-    // six questions: closed until opened
+    // Six questions: closed until opened.
     const first = c.querySelector('#story-questions-0') as HTMLDetailsElement;
     expect(first.open).toBe(false);
     await click(first.querySelector('summary'));
@@ -747,7 +747,7 @@ describe('the editor', () => {
     const api = listApi();
     const c = await open(`#/stories/${STORY_ID}`);
     const body = c.querySelector('#story-body') as HTMLTextAreaElement;
-    // paragraph 2 split in two: question 5's sentence is in paragraph 3 now, question 3's in 4
+    // Paragraph 2 split in two: question 5's sentence is in paragraph 3 now, question 3's in 4.
     await type(body, body.value.replace('derbas dibin. ', 'derbas dibin.\n\n'));
     await click(c.querySelector('#story-questions-4 summary'));
     expect(text(c.querySelector('#story-questions-4 .st-evidence mark'))).toBe('Rojîn ji kulîlkên sor hez dike.');
@@ -762,12 +762,12 @@ describe('the editor', () => {
     );
     expect(text(c.querySelector('#story-questions-2 summary'))).toContain('1 to check');
 
-    // what is sent is the evidence where its words are now
+    // What is sent is the evidence where its words are now.
     api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: 5 }))));
     await click(button(c, /^Save draft/));
     const sent = api.calls.find((call) => call.method === 'PUT')!.body as { questions: Array<{ evidenceParagraph: number; evidenceSentence: number }> };
     expect(sent.questions.slice(2, 5).map((q) => [q.evidenceParagraph, q.evidenceSentence])).toEqual([[3, 1], [3, 3], [2, 1]]);
-    // saved, the new words are the ones chosen
+    // Saved, the new words are the ones chosen.
     expect(c.querySelector('#story-questions-2-evidenceSentence-problems')).toBeNull();
   });
 
@@ -798,7 +798,7 @@ describe('the editor', () => {
     expect(banner?.getAttribute('role')).toBe('alert');
     expect(text(banner?.querySelector('strong'))).toBe('This story changed since you opened it.');
     expect(text(banner?.querySelector('.subtle'))).toContain('Someone else saved a change to it. Nothing of yours was saved over it.');
-    // the edit is still on screen to copy; nothing else can be sent until it is reloaded
+    // The edit is still on screen to copy; nothing else can be sent until it is reloaded.
     expect((c.querySelector('#story-summary') as HTMLTextAreaElement).value).toBe('Mine.');
     expect(saveButton(c).disabled).toBe(true);
     expect((button(c, 'Delete') as HTMLButtonElement).disabled).toBe(true);
@@ -807,7 +807,7 @@ describe('the editor', () => {
     const theirs = storyFixture({ summary: 'Theirs.', lockVersion: 9 });
     api.use(on('GET', AT, json(theirs)), on('PUT', AT, (call) => json({ ...theirs, ...(call.body as object), lockVersion: 10 })));
     await click(button(c, 'Reload the story'));
-    // unsaved edits are only thrown away with a yes
+    // Unsaved edits are only thrown away with a yes.
     expect(confirm).toHaveBeenCalledWith('Reload the story as it is saved now? Your changes here will be lost.');
     expect(c.querySelector('.st-conflict')).toBeNull();
     expect((c.querySelector('#story-summary') as HTMLTextAreaElement).value).toBe('Theirs.');
@@ -850,9 +850,9 @@ describe('the editor', () => {
       'Question 2 · prompt',
       'keep a question to 300 characters',
     ]);
-    // the live checks agreeing with the old text does not make the refusal go away
+    // The live checks agreeing with the old text does not make the refusal go away.
     expect(c.querySelector('.st-clear')).toBeNull();
-    // and taking the editor there opens the question
+    // And taking the editor there opens the question.
     await click(button(c, /^Question 2 · prompt/));
     expect((c.querySelector('#story-questions-1') as HTMLDetailsElement).open).toBe(true);
     expect(text(c.querySelector('#story-questions-1-prompt-problems'))).toBe('Must fix: keep a question to 300 characters');
@@ -876,7 +876,7 @@ describe('the editor', () => {
     expect(text(c.querySelector('.st-notice'))).toBe('Published: learners can read it now.');
     expect(text(c.querySelector('.st-badges'))).toContain('Published');
     expect(text(c.querySelector('.st-badges'))).not.toContain('Starter');
-    // published: read-only, and only unpublish, archive and delete
+    // Published: read-only, and only unpublish, archive and delete.
     expect((c.querySelector('#story-title') as HTMLInputElement).readOnly).toBe(true);
     expect([...c.querySelectorAll('.st-actions button')].map((b) => text(b))).toEqual(['Unpublish', 'Archive', 'Delete']);
   });
@@ -915,7 +915,7 @@ describe('the editor', () => {
     expect(confirm.mock.calls[0]![0]).toContain('Learners stop seeing it at once');
     expect(text(c.querySelector('.st-notice'))).toBe('Unpublished: it is a draft again, and learners no longer see it.');
     expect((c.querySelector('#story-body') as HTMLTextAreaElement).readOnly).toBe(false);
-    // reviewed once already: not marked as needing review again
+    // Reviewed once already: not marked as needing review again.
     expect(text(c.querySelector('.st-badges'))).not.toContain('Starter');
   });
 
@@ -931,7 +931,7 @@ describe('the editor', () => {
     api.use(on('DELETE', `${AT}?lockVersion=4`, json({ id: STORY_ID, deleted: true })));
     await click(button(c, 'Delete'));
     expect(location.hash).toBe('#/stories');
-    // said in a toast, which sits outside the page (it stays while a dialog makes the page inert)
+    // Said in a toast, which sits outside the page (it stays while a dialog makes the page inert).
     expect(text(document.body.querySelector('.toasts'))).toContain('Deleted “Rêya Dibistanê”.');
   });
 
@@ -1014,7 +1014,7 @@ describe('the editor', () => {
     listApi([storyFixture({ translations: { de: 'Eins.' } })]);
     const c = await open(`#/stories/${STORY_ID}`);
     const details = c.querySelector('#story-translations-de')!.closest('details') as HTMLDetailsElement;
-    // a translation with a problem is open from the start; closed by hand, the check reopens it
+    // A translation with a problem is open from the start; closed by hand, the check reopens it.
     expect(details.open).toBe(true);
     details.open = false;
     await click(button(c, /^Translation \(German\)/));
@@ -1046,7 +1046,7 @@ describe('one language of a story', () => {
       ),
     );
     const c = await open(`#/stories/${published.id}`);
-    // the Kurdish cannot be edited while it is published, the translations can
+    // The Kurdish cannot be edited while it is published, the translations can.
     expect((c.querySelector('#story-title') as HTMLInputElement).readOnly).toBe(true);
     const text$ = c.querySelector<HTMLTextAreaElement>('#story-translations-de')!;
     expect(text$.readOnly).toBe(false);
@@ -1055,7 +1055,7 @@ describe('one language of a story', () => {
 
     await type(text$, 'Eins.\n\nZwei.\n\nDrei.');
     await type(c.querySelector('#story-metaTranslations-de-title'), 'Der Schulweg');
-    // a question in German: its options in the order of the Kurdish ones, beside them
+    // A question in German: its options in the order of the Kurdish ones, beside them.
     await type(c.querySelector('#story-questions-0-translations-de-prompt'), 'Wie alt ist Rojîn?');
     expect(text(panel(c, 'de').querySelector('.st-tr-option .st-tr-original'))).toBe('✓ Deh salî');
     await type(c.querySelector('#story-questions-0-translations-de-options-1'), 'Neun');
@@ -1082,7 +1082,7 @@ describe('one language of a story', () => {
     expect(text(panel(c, 'de').querySelector('summary'))).toContain('Needs review');
     expect(save().disabled).toBe(true);
 
-    // a native speaker of German has read it
+    // A native speaker of German has read it.
     await click(button(panel(c, 'de'), 'Mark reviewed'));
     expect(prompt).toHaveBeenCalledWith(expect.stringContaining('Mark the German translation reviewed?'));
     const review = api.calls.find((call) => call.method === 'POST' && call.path.endsWith('/review'))!;
@@ -1124,7 +1124,7 @@ describe('a legend’s sections, sources and what comes after reading', () => {
     await choose(c.querySelector('#story-notes-0-kind'), 'history');
     await type(c.querySelector('#story-notes-0-title'), 'Dîrok');
     await type(c.querySelector('#story-notes-0-body'), 'Ev çîrok ne dîrok e.');
-    // a question to think about can be translated with the rest of a language
+    // A question to think about can be translated with the rest of a language.
     expect(c.querySelector('#story-reflections-0-translations-de')).not.toBeNull();
 
     await click(button(c, /^Save draft/));
@@ -1141,7 +1141,7 @@ describe('leaving the editor', () => {
   const LEAVE = 'Leave without saving? Your changes here will be lost.';
   const summary = (c: HTMLElement) => c.querySelector<HTMLTextAreaElement>('#story-summary');
 
-  // the back button, a link in the nav and a typed address change only the hash
+  // The back button, a link in the nav and a typed address change only the hash.
   it('asks before the address changes under unsaved edits, and stays put on a no', async () => {
     listApi();
     const c = await open(`#/stories/${STORY_ID}`);
@@ -1154,7 +1154,7 @@ describe('leaving the editor', () => {
     expect(summary(c)!.value).toBe('Mine.');
     expect(text(c.querySelector('.st-badges'))).toContain('Unsaved changes');
 
-    // the back button asks the same; after a no it still goes back, and asks again
+    // The back button asks the same; after a no it still goes back, and asks again.
     confirm.mockReturnValueOnce(false);
     history.back();
     await settle();
@@ -1177,7 +1177,7 @@ describe('leaving the editor', () => {
     expect(confirm).not.toHaveBeenCalled();
     expect(summary(c)).toBeNull();
 
-    // nor once the edits are saved
+    // Nor once the edits are saved.
     location.hash = `#/stories/${STORY_ID}`;
     await settle();
     await type(summary(c), 'Mine.');
@@ -1197,7 +1197,7 @@ describe('leaving the editor', () => {
     expect(confirm.mock.calls).toEqual([[LEAVE]]);
     expect(location.hash).toBe('#/stories');
 
-    // a delete asks its own question, not the leaving one as well
+    // A delete asks its own question, not the leaving one as well.
     confirm.mockClear();
     api.use(on('DELETE', `${AT}?lockVersion=4`, json({ id: STORY_ID, deleted: true })));
     await click(button(c, 'Rêya Dibistanê'));
@@ -1206,7 +1206,7 @@ describe('leaving the editor', () => {
     expect(confirm).toHaveBeenCalledTimes(1);
     expect(confirm.mock.calls[0]![0]).toContain('Your unsaved changes here are not kept.');
     expect(location.hash).toBe('#/stories');
-    // said in a toast, which sits outside the page (it stays while a dialog makes the page inert)
+    // Said in a toast, which sits outside the page (it stays while a dialog makes the page inert).
     expect(text(document.body.querySelector('.toasts'))).toContain('Deleted “Rêya Dibistanê”.');
   });
 
@@ -1226,7 +1226,7 @@ describe('leaving the editor', () => {
     await type(c.querySelector('#story-title'), 'Nû');
     await type(c.querySelector('#story-slug'), 'nu-nu');
     await click(button(c, /^Save draft/));
-    // gone while it saves, and on to another story
+    // Gone while it saves, and on to another story.
     await click(button(c, 'All stories'));
     await click(button(c, 'Rêya Dibistanê'));
     await type(summary(c), 'Mine.');
@@ -1234,7 +1234,7 @@ describe('leaving the editor', () => {
     await settle();
     expect(location.hash).toBe(`#/stories/${STORY_ID}`);
     expect(summary(c)!.value).toBe('Mine.');
-    // and its unsaved edits are still guarded
+    // And its unsaved edits are still guarded.
     confirm.mockClear();
     confirm.mockReturnValueOnce(false);
     location.hash = '#/stories';

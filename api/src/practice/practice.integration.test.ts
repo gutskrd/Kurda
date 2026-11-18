@@ -1,4 +1,4 @@
-/** Practice/review mode against real Postgres (CI integration job). KUR-034. */
+/** Practice and review against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -57,8 +57,7 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
   });
 
   afterAll(async () => {
-    // practice awarded XP → deleting the user cascades into the append-only
-    // xp_ledger, which only permits DELETE under the admin flag.
+    // Practice paid XP, so deleting the user cascades into the append-only xp_ledger, which allows DELETE only under the admin flag.
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -83,8 +82,8 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
     const res = await authed('POST', '/practice/session');
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ empty: true });
-    // a published, uncompleted lesson exists (at least the one seeded here);
-    // the shared CI DB may hold others, so just assert a valid suggestion
+    // A published unfinished lesson exists (at least the seeded one); the shared database may hold others, so only
+    // assert a suggestion.
     expect(res.json().suggestion).not.toBeNull();
     expect(typeof res.json().suggestion.lessonId).toBe('string');
   });
@@ -156,12 +155,7 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
     expect(stillDue).not.toContain(ex.tr);
   });
 
-  /**
-   * A saved dictionary word is a review item `dict:<entryId>`, and practice
-   * used to cast every candidate id to a uuid — so anyone who had saved a
-   * word got a server error. It has no exercise to practise it with, so
-   * practice leaves it out and keeps working.
-   */
+  /** A saved dictionary word is review item `dict:<entryId>` with no exercise, so practice leaves it out and keeps working. */
   it('works for a learner with saved dictionary words, leaving the words out', async () => {
     const entry = await pool.query<{ id: string }>(
       `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect)
@@ -190,13 +184,11 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
   });
 
   /**
-   * Postgres finds a session by its id in capitals too, so the id in the URL
-   * must not be the shuffle seed: graded under it, the tap lands on whichever
-   * option that other order puts there.
+   * Postgres finds a session by its id in capitals too, so the URL's id must not seed the shuffle, or a tap is graded
+   * against another order.
    */
   it('grades a choice by the order it was shown, whatever case the session id is sent in', async () => {
-    // a session where the capitalised id would put another option under the
-    // tap, so the test can tell the two seeds apart
+    // A session where the capitalised id would put another option under the tap, so the seeds can be told apart.
     let sid = '';
     let tapped = -1;
     for (let i = 0; i < 20 && !sid; i++) {

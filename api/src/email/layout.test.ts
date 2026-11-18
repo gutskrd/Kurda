@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderEmailHtml, safeHref, type EmailDesign } from './layout.js';
 import { answerHtml } from './support-inbox.js';
 
-/**
- * The email layout, as a program that draws email needs it: every style on
- * the element, images with their size, colours for the night, and nothing
- * that was filled in ever read as markup.
- */
+/** The email layout as mail programs need it: inline styles, sized images, dark-mode colours, and filled-in text never read as markup. */
 
 const design = (over: Partial<EmailDesign> = {}): EmailDesign => ({
   brand: 'hevalo',
@@ -29,7 +25,7 @@ describe('the email layout', () => {
     expect(html).toMatch(/<div style="display:none;[^"]*">Shown beside the subject<\/div>/);
     // every image says its size, so the page does not jump, and is decoration to a screen reader
     for (const img of html.match(/<img [^>]*>/g) ?? []) expect(img).toMatch(/width="\d+" height="\d+" alt=""/);
-    // the picture is its loop; the moment it rests on is beside it, out of sight unless less motion is asked for
+    // The picture is its loop; the still frame beside it is hidden unless reduced motion is asked for.
     expect(html).toContain('<img class="loop" src="https://hevalo.app/email/key.gif" width="168" height="168"');
     expect(html).toMatch(/<img class="still" src="https:\/\/hevalo\.app\/email\/key\.png" width="168" height="168" alt="" style="display:none;mso-hide:all;/);
     expect(html).toContain('@media (prefers-reduced-motion:reduce){.loop{display:none!important}.still{display:block!important}}');
@@ -67,7 +63,7 @@ describe('the email layout', () => {
     );
     expect(html).not.toContain('<img src=x');
     expect(html).not.toMatch(/onerror=alert\(1\)>/);
-    // each of the twelve places it was filled into shows it as the words it is
+    // Each of the twelve places it was filled into shows it as text.
     expect(html.split('&lt;img src=x onerror=alert(1)&gt;&quot;&#39;&amp;').length - 1).toBe(12);
   });
 

@@ -36,16 +36,11 @@ const editBody = z.object({ caption: z.string().max(2_000).nullable() });
 const idParam = z.object({ id: z.uuid() });
 
 /**
- * Community image & meme sharing (KUR-290/291). Reads public (guests view);
- * upload/create/edit/remove require auth + an ownership/admin check. Images are
- * uploaded through the server (`POST /images/upload`) so every byte is validated,
- * resized, WebP-compressed and moderated cost-safely before a post can reference
- * it — the create step only accepts a media id that already cleared that pipeline,
- * that its author uploaded, and that no other post uses.
- *
- * New posts with pictures are written posts (library/routes.ts) and use the same
- * upload; `POST /images` stays for the apps already installed, and a caption
- * goes through the same gate as any other words (trust/post-gate.ts).
+ * Community image posts. Reads are public; upload, create, edit and remove need an account and an ownership or staff
+ * check. Images go through the server (`POST /images/upload`) to be validated, resized, compressed and screened
+ * before a post may use them, and create accepts only a cleared media id its author uploaded and no other post uses.
+ * New picture posts are written posts (library/routes.ts); `POST /images` stays for installed apps, with the caption
+ * gated like any other words (trust/post-gate.ts).
  */
 export function registerImagePostRoutes(
   app: FastifyInstance,
@@ -59,16 +54,14 @@ export function registerImagePostRoutes(
   const usage = new MediaUsageService(app.db, app.redis ?? null);
   const gate = new PostGate(trust, aiMod, app.log);
   /**
-   * Whether this request may edit or take down somebody else's picture: a staff
-   * role, from a session the console itself would let in (admin/admin-gate.ts
-   * `staffCleared`). A staff password alone is a member's.
+   * Whether this request may edit or take down somebody else's picture: a staff role from a session the console would
+   * admit (admin/admin-gate.ts `staffCleared`). A staff password alone counts as a member.
    */
   const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => authorRole(req) !== 'user' && (await staffCleared(app, req));
 
   /**
-   * Edit a caption (author or admin). A changed caption is new words in front
-   * of readers, so it is gated like a post; taking one off is not, and nor is
-   * staff editing somebody's caption (trust/post-gate.ts).
+   * Edits a caption (author or admin). A changed caption is new words for readers, so it is gated like a post; removing
+   * one is not, nor is staff editing (trust/post-gate.ts).
    */
   const editCaption = async (req: FastifyRequest, reply: FastifyReply): Promise<unknown> => {
     const { id } = req.params as { id: string };
@@ -95,12 +88,9 @@ export function registerImagePostRoutes(
   });
 
   /**
-   * Through-server upload: raw image bytes → cost-safe stored WebP → media id,
-   * owned by the uploader and unconfirmed until a post uses it.
-   *
-   * `?ownWork=false` is "I made this" switched off: the picture goes up without
-   * the signature, which would otherwise claim somebody else's picture as the
-   * poster's. Left out (as the installed apps do), it is on.
+   * Through-server upload: raw image bytes to a stored WebP and a media id, owned by the uploader and unconfirmed until a
+   * post uses it. `?ownWork=false` leaves off the signature, which would otherwise claim someone else's picture as the
+   * poster's; omitted, as installed apps do, it is on.
    */
   app.post(
     '/images/upload',
@@ -116,8 +106,7 @@ export function registerImagePostRoutes(
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
       if (!raw) return reply.code(415).send({ code: 'INVALID_IMAGE', message: 'send raw image bytes with an image/* content-type' });
 
-      // the handle comes from the database, never from the request: a mark the
-      // uploader could name is a mark they could put someone else's name on
+      // The handle comes from the database, never the request, so nobody can sign with someone else's name.
       const who = await app.db.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [req.user!.id]);
 
       const ownWork = !['false', '0'].includes(String((req.query as Record<string, unknown>).ownWork ?? ''));
@@ -146,17 +135,14 @@ export function registerImagePostRoutes(
     { schema: { body: createBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post'), requireUnrestricted('media')] },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
-      // refused for its picture before it counts toward anything (the create
-      // claims it, and decides)
+      // A refused picture is turned away before anything counts; the create claims it and decides.
       const picture = await checkPostPictures(app.db, req.user!.id, [body.imageMediaId.trim()]);
       if (!picture.ok) return refusePicture(reply, picture.code);
-      // a picture post was the one way onto the wall with no velocity cap, no
-      // spam check and no screening of its words; it goes through the gate now
+      // Picture posts pass the same gate as written ones.
       const refused = await gate.check(req.user!.id, body.caption?.trim() ?? '');
       if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });
-      // the referenced media must have cleared the upload pipeline and be this
-      // author's own unused upload — not an arbitrary, unmoderated or oversized
-      // key, somebody else's picture, or a picture already posted
+      // The media must be this author's own unused upload that cleared the pipeline, never an arbitrary, unscreened or
+      // oversized key, someone else's picture, or one already posted.
       const res = await images.create(req.user!.id, authorRole(req), body);
       if (!res.ok) return refusePicture(reply, res.reason);
       await gate.passed(req.user!.id, captionScreened(res.post));
@@ -183,8 +169,7 @@ export function registerImagePostRoutes(
       offset: q.offset,
       viewerId: req.user?.id ?? null,
     });
-    // a wall of pictures with no names is not a community; the byline comes
-    // from the same loader the library uses, so one person has one face
+    // Bylines come from the library's loader, so one person has one face everywhere.
     return { posts: (await images.withAuthors(posts, publicUrl)).map(withUrl) };
   });
 
@@ -209,17 +194,14 @@ export function registerImagePostRoutes(
   );
 }
 
-/**
- * A picture that cannot be posted. An unusable key keeps the answer the
- * installed apps already handle (INVALID_POST); one already on a post says so.
- */
+/** A picture that cannot be posted: an unusable key keeps the INVALID_POST answer installed apps handle; one already posted says so. */
 function refusePicture(reply: FastifyReply, reason: 'invalid' | PictureClaimFailure): FastifyReply {
   return reason === 'MEDIA_IN_USE'
     ? reply.code(422).send({ code: 'MEDIA_IN_USE', message: 'this picture is already on a post' })
     : reply.code(422).send({ code: 'INVALID_POST', message: 'image must be uploaded via /images/upload first' });
 }
 
-/** What the screening reads of a picture post: its caption (#293). */
+/** What screening reads of a picture post: its caption. */
 function captionScreened(post: { id: string; caption: string | null }) {
   return { surface: 'caption' as const, contentType: 'caption' as const, contentRef: post.id, text: post.caption ?? '' };
 }

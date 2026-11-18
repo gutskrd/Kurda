@@ -20,15 +20,11 @@ interface CandidateRow {
 }
 
 /**
- * Personalized streak reminders (KUR-096). Runs hourly: for every user with a
- * live streak, it computes their LOCAL hour/date from their timezone and their
- * historical practice hour (the mode of their XP activity), then sends the
- * reminder that's due — at the practice hour (fallback 19:00), plus a last-chance
- * nudge at 22:00 for streaks ≥ 7. The send log makes it idempotent, and the
- * per-timezone local-hour match means there's no single global blast. Users who
- * already practiced today are never notified, and nor is anyone who has turned
- * streak reminders off — which a minor has until they turn them on — or whose
- * account is waiting to be deleted.
+ * Personalized streak reminders, run hourly. For every user with a live streak it takes their local hour and date
+ * and their usual practice hour (the mode of their XP activity) and sends what is due: a reminder at the practice hour
+ * (19:00 by default), and a last-chance nudge at 22:00 for streaks of 7 or more. The send log makes it idempotent.
+ * Nobody who practised today, turned reminders off (minors have them off until they choose), or is awaiting deletion
+ * is reminded.
  */
 export class StreakReminderService {
   constructor(
@@ -36,7 +32,7 @@ export class StreakReminderService {
     private readonly enqueuer: ReminderEnqueuer,
   ) {}
 
-  /** Evaluate all live-streak users at `now`; returns how many reminders sent. */
+  /** Evaluates all live-streak users at `now` and returns how many reminders were sent. */
   async runHourly(now: Date = new Date()): Promise<number> {
     const res = await this.pool.query<CandidateRow>(
       `SELECT
@@ -101,10 +97,7 @@ export class StreakReminderService {
     return sent;
   }
 
-  /**
-   * Record the sends, every one in one statement; returns those not already
-   * sent today (as `user|day|kind`), which are the ones to send.
-   */
+  /** Records the sends in one statement and returns those not already sent today (as `user|day|kind`), the ones to send. */
   private async markSent(sends: Array<{ userId: string; localDate: string; kind: ReminderKind }>): Promise<Set<string>> {
     if (sends.length === 0) return new Set();
     const res = await this.pool.query<{ user_id: string; sent_on: string; kind: string }>(

@@ -2,13 +2,9 @@ import type pg from 'pg';
 import type { MediaStorage } from '../media/storage.js';
 
 /**
- * A picture upload as `POST /images/upload` leaves it: owned by the uploader,
- * through the scan, and unconfirmed until a post uses it.
- *
- * Written straight into the table, because the route needs a bucket that the
- * integration database runs without — and what a post checks is this row
- * (media/postMedia.ts). Re-seeding a key hands it to the new owner, unused, so
- * suites with fixed keys can run again on the same database.
+ * A picture upload as `POST /images/upload` leaves it: owned by the uploader, scanned, and unconfirmed until a post
+ * uses it. Written straight to the table, since the route needs a bucket the integration database lacks, and posts
+ * check this row (media/postMedia.ts). Re-seeding a key hands it to the new owner unused, so fixed keys can rerun.
  */
 export async function seedPictureUpload(
   pool: Pick<pg.Pool, 'query'>,
@@ -28,12 +24,9 @@ export async function seedPictureUpload(
 }
 
 /**
- * A bucket that keeps what is put in it in memory, for the routes that need
- * storage to run at all (`POST /images/upload` answers 503 without it).
- *
- * Decorate an app built without S3 settings with it before `ready()`:
- * `app.decorate('storage', memoryStorage())`. The real bucket's behaviour is
- * covered by the suites that run against MinIO.
+ * An in-memory bucket for routes that need storage to run (`POST /images/upload` answers 503 without it). Decorate an
+ * app built without S3 settings before `ready()`: `app.decorate('storage', memoryStorage())`. Real-bucket behaviour is
+ * covered by suites run against a real bucket.
  */
 export function memoryStorage(base = 'https://cdn.test'): MediaStorage & { objects: Map<string, Buffer> } {
   const objects = new Map<string, Buffer>();

@@ -1,17 +1,7 @@
 /**
- * The admin's map: every page, the group it sits in, and who may open it.
- *
- * Who may open a page is what the API allows, not a guess. Each page names
- * the guard its routes use — a capability (`moderation.act`) or a list of
- * roles, the legacy `admin` role included — and `GET /admin/session` says what
- * this account holds (`capabilities` and `staffRoles`). The old nav hid three
- * links by a hard-coded role list and showed every other link to everyone, so
- * a moderator was offered pages that answered 403 and landed on one of them.
- *
- * Hiding a link is not access control: the API checks every request again.
- * This only keeps the panel from offering what will be refused.
- *
- * Pure data and functions, so the gating is tested without a browser.
+ * The console's map: every page, its group, and who may open it. Each page names the guard its API routes use (a
+ * capability or a list of roles) and `GET /admin/session` says what this account holds, so the nav offers only what
+ * the API allows. Hiding a link is not access control: the API checks every request again.
  */
 import type { IconName } from './ui/icons';
 
@@ -29,10 +19,10 @@ export type Capability =
 
 /** What this session holds, from GET /admin/session. */
 export interface SessionAccess {
-  /** every staff role, the legacy `admin` and `founder` included */
+  /** Every staff role, the legacy `admin` and `founder` included. */
   staffRoles: readonly string[];
   capabilities: readonly string[];
-  /** the voices this account records (Hamo, a narrator…): the console opens on them */
+  /** The voices this account records (Hamo, a narrator…): the console opens on them. */
   voices?: readonly string[];
 }
 
@@ -45,8 +35,7 @@ export function canOpen(access: Access, session: SessionAccess): boolean {
   return access.roles.some((r) => session.staffRoles.includes(r));
 }
 
-// The guards behind the pages (api/src/…): kept in one place so a change to a
-// route's guard is a change to one line here.
+// The guards behind the pages (api/src/…), one line each to follow a route's guard.
 const LEGACY_ADMIN = { roles: ['admin'] } as const; // requireRoles('admin'): analytics, economy, events, flags, jobs…
 const RECORDERS = { roles: ['superadmin', 'content_editor', 'admin'] } as const; // ALPHABET_AUDIO_ROLES / LESSON_AUDIO_ROLES
 // RECORDING_ROLES (api/src/recording/access.ts): the studio's, and the voice actor, who records their own lines and opens nothing else
@@ -62,7 +51,7 @@ const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /
 const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit, /admin/security, /admin/maintenance
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
 const SUPPORT_READERS = { roles: ['superadmin', 'admin', 'support'] } as const; // email/admin-routes.ts SUPPORT_READERS (the settings half: EMAIL_ADMINS)
-/** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts */
+/** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts. */
 export const RANK_TOOL_ROLES = ['admin', 'superadmin'] as const;
 const RANK_TOOLS = { roles: RANK_TOOL_ROLES } as const;
 
@@ -93,11 +82,7 @@ export interface NavEntry {
   sub?: string;
   access: Access;
   keywords?: string;
-  /**
-   * The page's name where the nav's group is not beside it — the phone's top
-   * bar and the browser tab — when the label alone would not say it: the
-   * Economy group's "Overview" is the economy's overview, not the dashboard.
-   */
+  /** The page's name away from its group (phone top bar, browser tab), where the label alone is unclear ("Overview"). */
   title?: string;
 }
 
@@ -105,8 +90,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'dashboard', label: 'Dashboard', group: 'overview', icon: 'home', page: 'dashboard', access: { anyone: true }, keywords: 'home start summary' },
   { id: 'analytics', label: 'Analytics', group: 'overview', icon: 'chart', page: 'analytics', access: LEGACY_ADMIN, keywords: 'dau mau retention funnel' },
 
-  // the owner could not find where to record: it gets a group of its own, near the top, in plain words,
-  // opening on each person's own lines — what they have to say, in order — before the studio's sides
+  // Recording has its own group near the top, opening on each person's own lines before the studio's sides.
   { id: 'record-people', label: 'Record by person', group: 'record', icon: 'users', page: 'record', access: VOICES, keywords: 'voice actor people hamo xezo xezal hevalo narrator script lines to record dashboard' },
   { id: 'record-letters', label: 'Record the alphabet and words', group: 'record', icon: 'letters', page: 'audio', sub: 'letters', access: RECORDERS, keywords: 'audio studio letters alphabet words colours numbers days months voice microphone' },
   { id: 'record-lessons', label: 'Record lesson sentences', group: 'record', icon: 'mic', page: 'audio', sub: 'lessons', access: RECORDERS, keywords: 'audio studio words sentences voice microphone' },
@@ -135,7 +119,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'wordle', label: 'Peyvok', group: 'games', icon: 'grid', page: 'wordle', access: GAME_EDITORS, keywords: 'coverage word game' },
   { id: 'rhyme', label: 'Rhyme', group: 'games', icon: 'rhyme', page: 'rhyme', access: GAME_EDITORS, keywords: 'rhymes base words' },
   { id: 'race', label: 'Race texts', group: 'games', icon: 'keyboard', page: 'race', access: GAME_EDITORS, keywords: 'typing race' },
-  // the learning games' own content, behind the capability its API routes ask for (api/src/games/routes.ts)
+  // The learning games' own content, behind the capability its API routes ask for (api/src/games/routes.ts).
   { id: 'game-content', label: 'Learning game content', title: 'Game content', group: 'games', icon: 'list', page: 'game-content', access: { capability: 'content.edit' }, keywords: 'learning games sentences passages cards review readiness import build a sentence' },
 
   { id: 'ranks', label: 'Game ranks', group: 'ranks', icon: 'mountain', page: 'ranks', access: RANK_TOOLS, keywords: 'rating tiers top players suspicious pairs void reset' },
@@ -158,16 +142,10 @@ export const NAV: readonly NavEntry[] = [
   { id: 'system', label: 'System', group: 'settings', icon: 'server', page: 'system', access: LEGACY_ADMIN, keywords: 'jobs leaderboards push media storage' },
 ];
 
-/**
- * Pages that are not a nav link of their own, with their guard: they are
- * reached from another page (a story from the story list), or by an old address.
- */
+/** Every page's guard, including pages reached only from another page or an old address. */
 const PAGE_ACCESS: Record<string, Access> = Object.fromEntries(NAV.map((n) => [n.page, n.access]));
 
-/**
- * Old addresses, so a bookmark or a link in a message still lands. The first
- * part of the address is swapped; anything after it is kept.
- */
+/** Old addresses, so bookmarks still land: the first part is swapped and the rest kept. */
 export const ALIASES: Readonly<Record<string, string>> = {
   alphabet: 'audio/letters',
   content: 'lessons',
@@ -178,9 +156,9 @@ export const ALIASES: Readonly<Record<string, string>> = {
 };
 
 export interface Route {
-  /** the page key: #/lessons/<id> → lessons */
+  /** The page key: #/lessons/<id> → lessons. */
   page: string;
-  /** the parts below it: #/lessons/<id> → [<id>] */
+  /** The parts below it: #/lessons/<id> → [<id>]. */
   rest: string[];
   query: URLSearchParams;
 }
@@ -205,7 +183,7 @@ export function parseRoute(hash: string): Route {
   return { page: first, rest, query: new URLSearchParams(search) };
 }
 
-/** The address of a page: href('audio', 'lessons') → #/audio/lessons */
+/** The address of a page: href('audio', 'lessons') → #/audio/lessons. */
 export function href(page: string, ...rest: string[]): string {
   return `#/${[page, ...rest].map(encodeURIComponent).join('/')}`;
 }
@@ -224,11 +202,7 @@ export function isKnownPage(page: string): boolean {
   return page in PAGE_ACCESS;
 }
 
-/**
- * Where a session starts: someone who lends a voice, on their own lines (one
- * voice's script, or their voices first among everyone's); anyone else on the
- * first page in the nav they can open.
- */
+/** Where a session starts: a voice on their own lines, anyone else on the first page in the nav they can open. */
 export function landingRoute(session: SessionAccess): string {
   const voices = session.voices ?? [];
   if (voices.length > 0 && mayOpenPage('record', session)) return voices.length === 1 ? `record/${encodeURIComponent(voices[0]!)}` : 'record';

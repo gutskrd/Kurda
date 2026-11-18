@@ -54,7 +54,7 @@ async function loadAllLines(
   const lines: Line[] = [];
   let first: LinesPage | null = null;
   let cursor: string | null = null;
-  // a few pages of a few hundred lines: a guard against a cursor that never ends
+  // A few pages of a few hundred lines: a guard against a cursor that never ends.
   for (let page = 0; page < 200; page++) {
     const query = new URLSearchParams({ status: 'all', limit: '500' });
     if (dialect) query.set('dialect', dialect);
@@ -164,19 +164,10 @@ function ScriptMenu({ person, lines }: { person: Pick<Person, 'id' | 'name'>; li
 }
 
 /**
- * Record by person (#/record, #/record/<voice>): everyone who lends the
- * course a voice — the voice plan's characters, any conversation part no
- * character plays, a narrator for each variety — each with what is left for
- * them, and, on choosing one, their lines one after another in course order:
- * the line big, what it means, the line before it to act from, and a
- * recorder that keeps a take and moves on to the next line still to record.
- *
- * A take goes to the upload route the studio's own side for that line uses,
- * under the same key and with the same lip-sync timeline, so it is the
- * recording every lesson, story and game that says the line plays
- * (recordingPeople.ts). Someone linked to a voice lands here on their own
- * lines (navigation.ts); a voice actor sees only theirs, which the server
- * decides, not this page.
+ * Record by person (#/record, #/record/<voice>): every voice of the course with what is left for it, and one voice's
+ * lines in course order, each with its meaning and the line before, and a recorder that moves to the next. A take is
+ * saved exactly as the studio saves that line (recordingPeople.ts). Someone linked to a voice lands on their lines;
+ * a voice actor sees only theirs, as the server decides.
  */
 export function RecordByPerson({ voice }: { voice: string | null }): React.JSX.Element {
   return voice ? <PersonScript key={voice} voice={voice} /> : <People />;
@@ -224,10 +215,7 @@ function People(): React.JSX.Element {
   );
 }
 
-/**
- * The road's chapters, each with how much of it is recorded: a chapter goes
- * online by itself, all its lessons at once, the moment its last line is in.
- */
+/** The road's chapters and how much of each is recorded; a chapter goes online by itself once its last line is in. */
 function Chapters({ chapters }: { chapters: readonly RoadChapter[] }): React.JSX.Element {
   return (
     <section className="rp-group" aria-label="Chapters">
@@ -352,7 +340,7 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
       setLines(all);
       setFound(first.person);
       setLoading({ sofar: all.length, total: all.length, done: true });
-      // where they left off, in this browser; else the first line still to record
+      // Where they left off, in this browser; else the first line still to record.
       setCurrent((was) => was ?? resumeAt(all, savedPlace(voice))?.id ?? null);
     } catch (err) {
       if (ticket === attempt.current) setError(err);
@@ -365,11 +353,11 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
 
   const byId = useMemo(() => new Map(lines.map((l, i) => [l.id, { line: l, number: i + 1 }])), [lines]);
   const inDialect = useMemo(() => (dialect ? lines.filter((l) => l.dialect === dialect) : lines), [lines, dialect]);
-  // the line on screen stays listed when the filter would hide it — it was just recorded, say
+  // The line on screen stays listed when the filter would hide it — it was just recorded, say.
   const shown = useMemo(() => inDialect.filter((l) => matchesFilters(l, filters) || l.id === current), [inDialect, filters, current]);
   const n = counts(inDialect, filters);
   const line = current ? (byId.get(current)?.line ?? null) : null;
-  // counted from the lines on screen, so each take kept here shows at once
+  // Counted from the lines on screen, so each take kept here shows at once.
   const person = useMemo(() => (found ? { ...found, ...tallyOf(lines) } : null), [found, lines]);
   const sections = useMemo(() => sectionsOf(inDialect), [inDialect]);
 
@@ -396,7 +384,7 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
     const saved = await uploadWithVoice<Uploaded>(uploadPath(line), wav, uploadVoice(line, person));
     const after = withTake(lines, line.id, saved, me?.username ?? null);
     setLines(after);
-    // on to the next line still to record, in the order on screen
+    // On to the next line still to record, in the order on screen.
     const listed = after.filter((l) => (!dialect || l.dialect === dialect) && (matchesFilters(l, filters) || l.id === line.id));
     const next = nextTodo(listed, line.id);
     if (next) setCurrent(next.id);
@@ -406,7 +394,7 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
     }
   };
 
-  // a click leaves no button focused, so Space and Enter go to the recorder and not to the last button pressed
+  // A click leaves no button focused, so Space and Enter go to the recorder and not to the last button pressed.
   const unfocus = (e: MouseEvent): void => {
     const button = (e.target as HTMLElement).closest('button');
     if (button && e.detail > 0) button.blur();
@@ -487,7 +475,7 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
         meta={<ProgressRing done={person.done} total={person.total} size={44} />}
         actions={wide ? <ScriptMenu person={person} lines={lines} /> : undefined}
       />
-      {/* on a phone the filters and the script live with the list, so the line to say is the first thing on screen */}
+      {/* On a phone the filters and the script live with the list, so the line to say is the first thing on screen. */}
       {wide && filterBar}
       {!wide && (
         <Tabs
@@ -625,11 +613,8 @@ function takeLine(take: NonNullable<Line['take']>): string {
 }
 
 /**
- * The line being recorded, and its recorder: Record (Space), Stop (Space),
- * hear it back at once, then Keep (Enter) or Redo (Space); L plays it again,
- * and the arrows move to the line before or after. None of the keys while
- * someone is typing, choosing in a list, or has a button of their own in
- * focus (Tab there, and Space presses that button, as it should).
+ * The line being recorded and its recorder: Space records, stops and redoes, Enter keeps, L plays again and the arrows
+ * move. The keys stay off while typing, choosing in a list, or with a button in focus.
  */
 function TakeStage({
   line,
@@ -660,7 +645,7 @@ function TakeStage({
   const saved = useRef<HTMLAudioElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const script = scriptOf(line.text);
-  // a meaning of nothing but spaces is no meaning: the row is left out rather than drawn as a label beside a blank
+  // A meaning of nothing but spaces is no meaning: the row is left out rather than drawn as a label beside a blank.
   const meaning = line.meaning?.trim() || null;
   const status = line.places.some((p) => p.status === 'published') ? 'published' : line.places.some((p) => p.status === 'in_review') ? 'in_review' : 'draft';
   const judging = phase.name === 'ready' || phase.name === 'saving';
@@ -726,7 +711,7 @@ function TakeStage({
         {meaning && (
           <p className="rp-means">
             <span className="rp-label">Means</span>
-            {/* in quotation marks: the "I" that "ez" means read as a rule beside the label without them */}
+            {/* In quotation marks: the "I" that "ez" means read as a rule beside the label without them. */}
             <q lang="en">{meaning}</q>
           </p>
         )}

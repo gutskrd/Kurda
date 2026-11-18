@@ -1,13 +1,7 @@
 /**
- * Pure notification-preference logic (KUR-095). A push is allowed only if its
- * category is enabled AND the moment isn't inside the user's quiet hours. The
- * gate is evaluated at delivery time (in the worker), so a preference change is
- * honored even for sends already sitting in the queue. Marketing defaults OFF
- * for GDPR — opt-in, never opt-out.
- *
- * A letter is somebody writing to you, so its push is not thrown away in
- * quiet hours like a reminder would be: it waits for them to end
- * (`minutesToQuietEnd`, push/service.ts), and goes then if it is still news.
+ * Pure notification preference logic. A push needs its category on and a moment outside quiet hours. The gate runs at
+ * delivery, so a change applies to sends already queued. Marketing defaults off: opt-in only. A letter's push is not
+ * dropped in quiet hours but waits for them to end (`minutesToQuietEnd`, push/service.ts), going then if still news.
  */
 
 export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 'marketing', 'progress', 'letters'] as const;
@@ -19,7 +13,7 @@ export interface NotificationPrefs {
   games: boolean;
   events: boolean;
   marketing: boolean;
-  /** leagues and badges: a promotion, a badge earned (contract 4) */
+  /** League and badge news: a promotion, a badge earned. */
   progress: boolean;
   /** letters by bird: a pen pal's bird at the window, your own home with an answer */
   letters: boolean;
@@ -29,11 +23,8 @@ export interface NotificationPrefs {
 }
 
 /**
- * The preferences of someone who has never changed them. For a minor, streak
- * reminders start off: a daily nudge to keep a run going is the kind of
- * engagement prompt that should be a young person's choice, not a default.
- * League and badge news ("progress") starts off for a minor too, for the same
- * reason — the in-app list still has it, only the push waits for their choice.
+ * Preferences for someone who never changed them. Streak reminders and league and badge news start off for a minor,
+ * as engagement prompts should be a young person's choice; the in-app list still shows the news.
  */
 export function defaultPrefs(opts: { minor?: boolean } = {}): NotificationPrefs {
   return {
@@ -76,11 +67,7 @@ export function allows(prefs: NotificationPrefs, category: NotificationCategory,
   return !inQuietHours(prefs, minute);
 }
 
-/**
- * How many minutes from `minute` until the quiet window ends, or null when
- * `minute` is not in it. A push that waits for the end of quiet hours
- * (push/service.ts `HELD_IN_QUIET`) is sent then.
- */
+/** Minutes from `minute` until the quiet window ends, or null outside it; a push held for quiet hours is sent then. */
 export function minutesToQuietEnd(prefs: NotificationPrefs, minute: number): number | null {
   if (!inQuietHours(prefs, minute) || prefs.quietEndMin === null) return null;
   const left = (prefs.quietEndMin - minute + 1440) % 1440;

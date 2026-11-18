@@ -10,8 +10,8 @@ import { failure, fakeApi, json, on, type Call } from '../test/fetch';
 import { renderUi } from '../test/render';
 import { AudioStudio } from './AudioStudio';
 
-// the microphone and the trimming are the browser's: here a take is three bytes, ready at once
-// (or, for a test of its timeline, a real WAV)
+// The microphone and the trimming are the browser's: here a take is three bytes, ready at once
+// (or, for a test of its timeline, a real WAV).
 const take = vi.hoisted(() => ({ wav: new Uint8Array([82, 73, 70]) as Uint8Array }));
 vi.mock('../micCapture', async (original) => ({
   ...(await original<typeof import('../micCapture')>()),
@@ -74,7 +74,7 @@ beforeEach(() => {
   try {
     localStorage.clear();
   } catch {
-    // nothing to clear
+    // Nothing to clear.
   }
 });
 
@@ -94,7 +94,7 @@ describe('the audio studio', () => {
     renderUi(<AudioStudio />);
     expect(screen.getByRole('heading', { level: 1, name: 'Record story sentences' })).toBeInTheDocument();
     await waitFor(() => expect(rowTexts()).toEqual(['Dayika min şorbe çêdike', 'Qelema min şîn e']));
-    // the counts are the stories' own
+    // The counts are the stories' own.
     expect(screen.getByText('1 of 3 recorded')).toBeInTheDocument();
     const tabs = screen.getByRole('tablist', { name: 'What to record' });
     expect(within(tabs).getByRole('tab', { name: 'Story sentences' })).toHaveAttribute('aria-selected', 'true');
@@ -124,9 +124,9 @@ describe('the audio studio', () => {
     await user.click(within(studio).getByRole('button', { name: 'Record' }));
     await user.click(await within(studio).findByRole('button', { name: 'Stop' }));
     await user.click(await within(studio).findByRole('button', { name: 'Save' }));
-    // with who says it; a take this browser cannot decode, and whose length is unknown, goes up without a timeline
+    // With who says it; a take this browser cannot decode, and whose length is unknown, goes up without a timeline.
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT' && c.path === '/admin/lesson-audio?text=Spas&speaker=hevalo')).toBe(true));
-    // nothing else is missing on the lessons' side
+    // Nothing else is missing on the lessons' side.
     expect(await screen.findByText('That was the last one: everything here is recorded.')).toBeInTheDocument();
   });
 
@@ -144,11 +144,11 @@ describe('the audio studio', () => {
     location.hash = '#/audio/lessons';
     renderUi(<AudioStudio />);
     await screen.findByRole('heading', { name: 'Record lesson sentences' });
-    // the person taps a link out; the route changes while this page still hangs on screen,
-    // and sending them back to a side then locked them into the Record audio section
+    // The person taps a link out; the route changes while this page still hangs on screen,
+    // and sending them back to a side then locked them into the Record audio section.
     location.hash = '#/dashboard';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
-    // give a wrong redirect its chance to fire before looking
+    // Give a wrong redirect its chance to fire before looking.
     await new Promise((resolve) => setTimeout(resolve, 60));
     expect(location.hash).toBe('#/dashboard');
   });
@@ -192,21 +192,21 @@ describe('who says each recording', () => {
     renderUi(<AudioStudio />);
     await user.click(await screen.findByRole('button', { name: /^Spas/ }));
     const picker = screen.getByRole('radiogroup', { name: 'Who says it' });
-    // Hevalo, until the editor has picked someone
+    // Hevalo, until the editor has picked someone.
     expect(within(picker).getByRole('radio', { name: 'Hevalo' })).toHaveAttribute('aria-checked', 'true');
     await user.click(within(picker).getByRole('radio', { name: 'Xezo' }));
     expect(localStorage.getItem('kurda_admin_speaker')).toBe('xezo');
     await recordSpas(user);
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
     expect(api.calls.find((c) => c.method === 'PUT')!.path).toBe('/admin/lesson-audio?text=Spas&speaker=xezo');
-    // nothing was recorded to change
+    // Nothing was recorded to change.
     expect(api.calls.some((c) => c.method === 'PATCH')).toBe(false);
   });
 
   it('changes who says a saved recording at once, before the server has answered', async () => {
     const user = userEvent.setup();
     const api = fakeApi(on('GET', '/admin/lesson-audio', json(saidBy('hevalo'))), on('PATCH', '/admin/audio/lesson?key=silav', json({ speaker: 'hamo', lipsync: null })));
-    // the server takes its time
+    // The server takes its time.
     let answer = (): void => {};
     const held = new Promise<void>((resolve) => (answer = resolve));
     const served = fetch;
@@ -228,7 +228,7 @@ describe('who says each recording', () => {
     expect(screen.getByRole('button', { name: 'Play with Hamo' })).toBeInTheDocument();
     answer();
     await waitFor(() => expect(api.calls.filter((c) => c.method === 'PATCH').map((c) => c.body)).toEqual([{ speaker: 'hamo' }]));
-    // a change to a saved recording is not a pick for the next new one
+    // A change to a saved recording is not a pick for the next new one.
     expect(localStorage.getItem('kurda_admin_speaker')).toBeNull();
   });
 
@@ -274,7 +274,7 @@ describe('who says each recording', () => {
     await recordSpas(user);
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
     const timeline = lipsyncOf(api.calls.find((c) => c.method === 'PUT'))!;
-    // the length of the WAV, read from its header, with the words spread over it
+    // The length of the WAV, read from its header, with the words spread over it.
     expect(timeline.durationMs).toBe(800);
     expect(timeline.cues.map((c) => c.viseme)).toContain('a');
   });
@@ -360,7 +360,7 @@ describe('who says each recording', () => {
     renderUi(<AudioStudio />);
     for (const title of ['Colours', 'Numbers', 'Days of the week', 'Months']) expect(await screen.findByText(title)).toBeInTheDocument();
 
-    // a word is said as it is written, with what it is beside it, and plays in the synthesised voice until recorded
+    // A word is said as it is written, with what it is beside it, and plays in the synthesised voice until recorded.
     await user.click(screen.getByRole('button', { name: /^Duşem/ }));
     let studio = screen.getByRole('complementary', { name: 'Record this sound' });
     expect(within(studio).getByText('Days of the week')).toBeInTheDocument();
@@ -368,7 +368,7 @@ describe('who says each recording', () => {
     expect(within(studio).getByText('Synthesised voice')).toBeInTheDocument();
     expect(within(studio).queryByText(/for the letter/)).toBeNull();
 
-    // one no voice could say accurately has no sound at all until it is recorded
+    // One no voice could say accurately has no sound at all until it is recorded.
     await user.click(screen.getByRole('button', { name: /^خۆڵەمێشی/ }));
     studio = screen.getByRole('complementary', { name: 'Record this sound' });
     expect(within(studio).getByText('No sound yet')).toBeInTheDocument();
@@ -404,7 +404,7 @@ describe('the recording plan', () => {
       planned('Ez Xezal im', 1, 'Welcome', 'xezo'),
       planned('Bi xêr hatî', 1, 'Welcome', 'hamo', 'hamo'),
       planned('Sêv', 2, 'The family', 'hevalo'),
-      // planned for Hamo, and Xezal made the take
+      // Planned for Hamo, and Xezal made the take.
       planned('Spas dikim', 2, 'The family', 'hamo', 'xezo'),
       planned('Nan', 2, 'The family', 'hamo'),
     ],
@@ -421,20 +421,20 @@ describe('the recording plan', () => {
     expect(rowOf('Silav, ez Hamo me')).toHaveTextContent('For Hamo');
     expect(rowOf('Ez Xezal im')).toHaveTextContent('For Xezal');
     expect(rowOf('Sêv')).toHaveTextContent('For Hevalo');
-    // a text nothing plans says nothing of the kind
+    // A text nothing plans says nothing of the kind.
     expect(rowOf('Spas')).not.toHaveTextContent(/For /);
 
-    // the picker opens on the plan's character, not the last one picked (Hevalo, until someone is picked)
+    // The picker opens on the plan's character, not the last one picked (Hevalo, until someone is picked).
     await user.click(within(rowOf('Ez Xezal im')).getByRole('button', { name: /Ez Xezal im/ }));
     let picker = screen.getByRole('radiogroup', { name: 'Who says it' });
     expect(within(picker).getByRole('radio', { name: 'Xezo' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByText('The lesson plans it for Xezal. Saved with the recording.')).toBeInTheDocument();
-    // another choice is this row's alone, and not kept for the next new recording
+    // Another choice is this row's alone, and not kept for the next new recording.
     await user.click(within(picker).getByRole('radio', { name: 'Hamo' }));
     expect(within(picker).getByRole('radio', { name: 'Hamo' })).toHaveAttribute('aria-checked', 'true');
     expect(localStorage.getItem('kurda_admin_speaker')).toBeNull();
 
-    // a row without a plan opens on the last pick, as before
+    // A row without a plan opens on the last pick, as before.
     await user.click(within(rowOf('Spas')).getByRole('button', { name: /^Spas/ }));
     picker = screen.getByRole('radiogroup', { name: 'Who says it' });
     expect(within(picker).getByRole('radio', { name: 'Hevalo' })).toHaveAttribute('aria-checked', 'true');
@@ -490,7 +490,7 @@ describe('the recording plan', () => {
     renderUi(<AudioStudio />);
     const plan = await screen.findByRole('region', { name: 'Recording plan' });
     expect(within(plan).getByRole('heading', { name: 'The Kurmanji Road' })).toBeInTheDocument();
-    // nothing in the older course is planned for anyone: it has no plan to show
+    // Nothing in the older course is planned for anyone: it has no plan to show.
     expect(within(plan).queryByRole('heading', { name: 'Kurmancî for beginners' })).toBeNull();
     const lines = within(plan).getAllByRole('listitem').map((li) => li.textContent);
     expect(lines).toEqual(['Hamo2 / 4 recordedScript', 'Xezal0 / 1 recordedScript', 'Hevalo0 / 1 recordedScript']);
@@ -507,7 +507,7 @@ describe('the recording plan', () => {
     renderUi(<AudioStudio />);
     expect(await screen.findByRole('heading', { name: 'Hamo’s script' })).toBeInTheDocument();
     await waitFor(() => expect(rowTexts()).toEqual(['1. Silav, ez Hamo me', '2. Bi xêr hatî', '3. Spas dikim', '4. Nan']));
-    // under each lesson's heading, recorded lines and missing ones alike
+    // Under each lesson's heading, recorded lines and missing ones alike.
     const lessons = [...document.querySelectorAll('.la-lesson')].map((l) => [l.querySelector('.la-lesson-head strong')?.textContent, l.querySelectorAll('.la-row').length]);
     expect(lessons).toEqual([
       ['Welcome', 2],
@@ -516,10 +516,10 @@ describe('the recording plan', () => {
     expect(screen.getByText('2 of 4 recorded')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Xezal’s script' })).toHaveAttribute('href', '#/audio/lessons?voice=xezo&course=kurmanji-road');
     expect(screen.getByRole('link', { name: 'Every sentence' })).toHaveAttribute('href', '#/audio/lessons?course=kurmanji-road');
-    // a script has no row for the plan to name: every line is Hamo's
+    // A script has no row for the plan to name: every line is Hamo's.
     expect(document.querySelector('.la-for')).toBeNull();
 
-    // R records and stops, Enter saves, and the next of Hamo's missing lines comes up
+    // R records and stops, Enter saves, and the next of Hamo's missing lines comes up.
     await user.click(screen.getByRole('button', { name: 'Record next missing' }));
     const studio = screen.getByRole('group', { name: 'Record “Silav, ez Hamo me”' });
     expect(screen.getByRole('radio', { name: 'Hamo' })).toHaveAttribute('aria-checked', 'true');
@@ -531,7 +531,7 @@ describe('the recording plan', () => {
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
     expect(api.calls.find((c) => c.method === 'PUT')!.path).toBe(`/admin/lesson-audio?text=${encodeURIComponent('Silav, ez Hamo me')}&speaker=hamo`);
     expect(await screen.findByRole('group', { name: 'Record “Nan”' })).toBeInTheDocument();
-    // and the arrows move along the script
+    // And the arrows move along the script.
     await user.keyboard('{ArrowUp}');
     expect(await screen.findByRole('group', { name: 'Record “Spas dikim”' })).toBeInTheDocument();
   });

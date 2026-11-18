@@ -1,7 +1,6 @@
 /**
- * Notifications partitioning (KUR-115) — proves the planner prunes to a single
- * monthly partition for a time-bounded query, and that ensure_partitions()
- * creates ahead + drops beyond a retention window. Runs against real Postgres.
+ * Notifications partitioning: the planner prunes a time-bounded query to one monthly partition, and
+ * ensure_partitions() creates ahead and drops beyond a retention window. Against real Postgres.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
@@ -77,12 +76,11 @@ describe.skipIf(!DATABASE_URL)('notifications partitioning (integration)', () =>
       (await pool.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [name])).rows[0]!.ok as boolean;
     expect(await exists('notifications_2019_01')).toBe(true);
 
-    // retain 12 months → the 2019 partition is well beyond the cutoff and is dropped;
-    // the DEFAULT partition is never touched.
+    // Retain 12 months: the 2019 partition is past the cutoff and dropped; the DEFAULT partition is never touched.
     await pool.query(`SELECT ensure_partitions('notifications', 3, 12)`);
     expect(await exists('notifications_2019_01')).toBe(false);
     expect(await exists('notifications_default')).toBe(true);
-    // a future partition was created ahead
+    // A future partition was created ahead.
     expect(await exists(partName(monthStart(3)))).toBe(true);
   });
 

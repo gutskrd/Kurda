@@ -1,7 +1,4 @@
-/**
- * Integration tests — require REDIS_URL (CI integration job).
- * Exercise the full enqueue → worker → complete/DLQ pipeline.
- */
+/** The full enqueue, worker, complete and dead-letter pipeline against real Redis; skipped without REDIS_URL. */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { QueueEvents } from 'bullmq';
 import pino from 'pino';
@@ -36,7 +33,7 @@ describe.skipIf(!REDIS_URL)('job queue (integration)', () => {
       throw new Error('always fails');
     },
   });
-  // fails its first attempt and records the key each attempt was given
+  // Fails its first attempt and records the key each attempt got.
   const keys: string[] = [];
   const flakyJob = defineJob({
     name: 'it-flaky',

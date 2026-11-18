@@ -1,8 +1,6 @@
 /**
- * A person, everywhere the admin names one: their username, a link to their
- * page (#/users/<id>), and a "Minor" badge when they are under 18 — which
- * changes what a moderator may do, so it must never be a click away. Pages
- * used to show the first eight characters of a UUID, which nobody can act on.
+ * A person wherever the console names one: their username, a link to their page (#/users/<id>), and a "Minor" badge
+ * when under 18, which changes what a moderator may do and so is never a click away.
  */
 import { Badge } from './basics';
 
@@ -20,9 +18,9 @@ export function UserLink({
   minor,
   fallback = 'Deleted account',
 }: {
-  /** null when the account is gone (its rows are kept, the person is not) */
+  /** Null when the account is gone (its rows are kept, the person is not). */
   user: UserRef | null | undefined;
-  /** true under 18; null or undefined when not known */
+  /** True under 18; null or undefined when not known. */
   minor?: boolean | null;
   fallback?: string;
 }): React.JSX.Element {

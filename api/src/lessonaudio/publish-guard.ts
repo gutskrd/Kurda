@@ -4,14 +4,9 @@ import { lessonAudioKey } from '@kurda/shared';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * Listening items and the recordings they play.
- *
- * A listening item's own clip (`audioUrl`) is optional: without one it plays
- * the audio studio's recording of its first accepted transcription. Nothing in
- * the payload then guarantees it has anything to play, so publishing checks
- * (`silentListening`), and removing a recording a published item plays needs
- * saying so (`lessonsPlaying`). A silent item reaches a learner as a play
- * button that does nothing and an exercise they can only skip.
+ * Listening items and the recordings they play. Without its own clip (`audioUrl`) a listening item plays the studio
+ * recording of its first accepted transcription, so publishing checks one exists (`silentListening`) and removing a
+ * recording a published item plays must be forced (`lessonsPlaying`). A silent item is a dead play button.
  */
 
 /** A listening item that would have nothing to play. */
@@ -27,10 +22,7 @@ interface ListeningPayload {
   accepted?: unknown;
 }
 
-/**
- * The transcription whose studio recording a listening payload plays: null
- * when it has a clip of its own, '' when it is too malformed to say.
- */
+/** The transcription whose recording a listening payload plays: null with its own clip, '' when too malformed to say. */
 export function playsRecordingOf(payload: unknown): string | null {
   const p = (typeof payload === 'object' && payload !== null ? payload : {}) as ListeningPayload;
   if (typeof p.audioUrl === 'string' && p.audioUrl !== '') return null;
@@ -39,12 +31,9 @@ export function playsRecordingOf(payload: unknown): string | null {
 }
 
 /**
- * The listening items among `exercises` with no clip of their own and no
- * studio recording of their transcription, in one query.
- *
- * `lock` share-locks the recordings found, for a caller in a transaction: the
- * DELETE route locks a recording's row before it checks who plays it, so one
- * cannot be removed between this check and the caller's commit.
+ * The listening items among `exercises` with neither their own clip nor a studio recording, in one query. `lock`
+ * share-locks the recordings found; the DELETE route locks a recording before checking who plays it, so none can be
+ * removed between this check and the caller's commit.
  */
 export async function silentListening(
   db: Executor,
@@ -71,7 +60,7 @@ export async function silentListening(
   return waiting.filter((w) => !recorded.has(w.key)).map(({ index, text }) => ({ index, text }));
 }
 
-/** What an editor is told when publishing would put a silent listening item in front of learners. */
+/** What an editor is told when publishing would put a silent listening item before learners. */
 export function silentListeningMessage(silent: readonly SilentListening[]): string {
   const texts = [...new Set(silent.map((s) => s.text))];
   const named = texts
@@ -84,9 +73,8 @@ export function silentListeningMessage(silent: readonly SilentListening[]): stri
 }
 
 /**
- * The published lessons with a listening item that has no clip of its own and
- * plays the recording filed under `key` — what removing that recording would
- * leave silent. Older published versions count: sessions stay pinned to them.
+ * Published lessons with a clipless listening item playing the recording under `key`, which removing it would
+ * silence. Older published versions count, since sessions stay pinned to them.
  */
 export async function lessonsPlaying(db: Executor, key: string): Promise<Array<{ lessonId: string; title: string }>> {
   const { rows } = await db.query<{ lesson_id: string; title_en: string; payload: unknown }>(

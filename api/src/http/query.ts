@@ -1,12 +1,8 @@
 import { z } from 'zod';
 
 /**
- * Query-string fields for the public lists (the wall, the library, comments).
- *
- * These were read raw and handed to SQL, so `?limit=abc`, `?authorId=nope` or
- * a repeated key became a database error — a 500 anyone could produce without
- * an account, each one logged as a server fault. Checked here instead, they
- * are a 400. An empty value still means "not given", as it did.
+ * Query-string fields for the public lists (the wall, the library, comments), checked so a malformed or repeated
+ * value is a 400 rather than a database error. An empty value means "not given".
  */
 const absentIfEmpty = (v: unknown): unknown => (v === '' ? undefined : v);
 
@@ -21,10 +17,7 @@ export const queryUuid = z.preprocess(absentIfEmpty, z.uuid().optional());
 /** An optional short word (a sort, a type, a language): one value, not a list. */
 export const queryWord = z.string().max(40).optional();
 
-/**
- * Page size and position. The services still cap the size at what they serve
- * (100); larger is accepted and capped, as before, rather than refused.
- */
+/** Page size and position. Larger sizes are accepted and capped by the services at what they serve (100). */
 export const pageQuery = {
   limit: queryInt(1, 1_000),
   offset: queryInt(0, 1_000_000),

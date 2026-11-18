@@ -1,4 +1,4 @@
-/** Dictionary schema against real Postgres (CI job). KUR-043. */
+/** Dictionary schema against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { DictionaryRepository, normalizedHeadword } from './repository.js';

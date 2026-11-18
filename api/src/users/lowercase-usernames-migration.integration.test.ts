@@ -1,23 +1,10 @@
 /**
- * Migration 1751000540000_lowercase-usernames, against real Postgres.
- *
- * The migration is run on a fixture: a schema of its own holding a `users`
- * and a `username_history` shaped as the migration finds them (the old format
- * check, the hold trigger, the partial unique index), with rows made for each
- * thing it has to get right. Run in a schema of its own, it touches no row
- * another test reads.
- *
- * The fixture's usernames are text there, not citext. citext folds case by the
- * database's own collation, whatever the column's, so a test database made
- * with a full one cannot hold Şêr and şêr side by side, as a database made
- * with the C collation could: the one way two live accounts can come out of
- * the migration with one name, and so the way to check that the older keeps
- * it. A second, smaller fixture is citext, as the real tables are, to show
- * the migration reads and writes those the same.
- *
- * It is run up twice (it is written to be re-runnable, and that is part of
- * what is checked), down, and up again. The last block checks the migrated
- * database itself: the format check the server's names meet.
+ * Migration 1751000540000_lowercase-usernames against real Postgres, on a fixture schema with `users` and
+ * `username_history` shaped as the migration finds them (old format check, hold trigger, partial unique index), so it
+ * touches no row another test reads. The main fixture's usernames are text, since citext folds case by the database's
+ * collation and could not hold Şêr and şêr side by side as a C-collation database can, which is the case where the
+ * older account must keep the name; a smaller citext fixture shows citext is handled the same. Run up twice (it must
+ * be re-runnable), down and up again; the last block checks the migrated database's format check.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dirname, join } from 'node:path';
@@ -32,7 +19,7 @@ interface Migration {
   down(pgm: { sql: (text: string) => void }): void;
 }
 
-/** The tables as the migration finds them (migrations 1751000001000 and 1751000440000), with the usernames of `type`. */
+/** The tables as the migration finds them (migrations 1751000001000 and 1751000440000), usernames of `type`. */
 const fixtureTables = (type: 'text' | 'citext'): string => `
   CREATE TABLE users (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -65,10 +52,7 @@ const fixtureTables = (type: 'text' | 'citext'): string => `
     FOR EACH ROW EXECUTE FUNCTION users_username_not_held();
 `;
 
-/**
- * A fixture of the migration's tables in a schema of their own, with what a
- * test needs to fill it, run the migration on it, and look at what it did.
- */
+/** A fixture of the migration's tables in its own schema, with helpers to fill it, run the migration and inspect the result. */
 function fixture(type: 'text' | 'citext') {
   const schema = `username_fixture_${type}_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6)}`;
   const client = new pg.Client({ connectionString: DATABASE_URL });
@@ -90,7 +74,7 @@ function fixture(type: 'text' | 'citext') {
       await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`).catch(() => undefined);
       await client.end();
     },
-    /** One way of the migration, run as the CLI would run it: its statements in order, in one transaction. */
+    /** Runs one direction of the migration as the CLI would: its statements in order, in one transaction. */
     async run(direction: 'up' | 'down'): Promise<void> {
       const statements: string[] = [];
       migration[direction]({ sql: (text) => void statements.push(text) });
@@ -132,7 +116,7 @@ function fixture(type: 'text' | 'citext') {
       const history = await client.query(`SELECT user_id, username::text, held_until FROM username_history ORDER BY id`);
       return [...users.rows, ...history.rows];
     },
-    /** Whether the users table takes each name for a new live account: true, or the constraint that refused it. Nothing is kept. */
+    /** Whether the users table accepts each name for a new live account: true, or the refusing constraint. Nothing is kept. */
     async takesEach(names: string[]): Promise<Record<string, boolean | string>> {
       const out: Record<string, boolean | string> = {};
       await client.query('BEGIN');
@@ -159,7 +143,7 @@ describe.skipIf(!DATABASE_URL)('the lowercase-usernames migration (integration)'
   beforeAll(async () => {
     await f.open();
 
-    // Şêr, şêr and ŞÊR were three names under the C collation; Şêr_2 was a fourth, and the oldest of all
+    // Şêr, şêr and ŞÊR were three names under the C collation; Şêr_2 was a fourth, and the oldest.
     await person('first', 'Şêr', '2020-01-01T00:00:00Z');
     await person('second', 'şêr', '2021-01-01T00:00:00Z', { changedAt: '2024-05-01T00:00:00Z' });
     await person('third', 'ŞÊR', '2022-01-01T00:00:00Z');
@@ -173,7 +157,7 @@ describe.skipIf(!DATABASE_URL)('the lowercase-usernames migration (integration)'
     await person('closedKani', 'Kanî', '2017-01-01T00:00:00Z', { deleted: true });
     await hold('holder', 'ÇÎYA', 30);
     await hold('holder', 'kanî', 30);
-    // somebody's own earlier name, written in capitals
+    // Somebody's own earlier name, in capitals.
     await hold('hamo', 'HAMO_OLD', 30);
   });
 
@@ -267,7 +251,7 @@ describe.skipIf(!DATABASE_URL)('the lowercase-usernames migration (integration)'
     expect(await nameOf('underscored')).toBe('hamo_k');
     expect(await nameOf('dottedLater')).toBe('hamo_k_2');
     expect(await historyOf('dottedLater')).toEqual([{ username: 'hamo.k', holds: false }]);
-    // lowercase names fit the old check as they are
+    // Lowercase names fit the old check as they are.
     expect(await nameOf('first')).toBe('şêr');
     expect(await takesEach(['Rojda', 'a.b.c'])).toEqual({ Rojda: true, 'a.b.c': 'users_username_format' });
   });

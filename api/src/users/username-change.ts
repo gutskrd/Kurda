@@ -8,30 +8,20 @@ import type { SecurityRecorder } from '../security/log.js';
 import { invalidUsername, validateUsername, type UsernameError } from './username.js';
 
 /**
- * Changing a username (POST /me/username), and what a person is told before
- * they try (GET /me/username, GET /me/username/available).
+ * Changing a username (POST /me/username), and what a person is told first (GET /me/username, GET
+ * /me/username/available). A username is how others find and recognise an account, so changing it is an account
+ * change:
  *
- * A username is how other people find and recognise an account, so changing
- * one is treated as a change to the account, not to the profile:
+ * - the current password is asked again, so an unlocked phone is not enough to become someone else to their friends;
+ *   an account that signs in only through another service has no password, and the other limits stand in;
+ * - one change every USERNAME_CHANGE_COOLDOWN_DAYS; usernames are lowercase (shared/src/username.ts), so one's own name
+ *   in capitals is no change and spends nothing;
+ * - the name given up is held for its last owner for USERNAME_HOLD_DAYS, twice the wait, enforced by the database for
+ *   every way a username is set (migration username-history);
+ * - every change and every wrong password on the way is in the security log, and the owner is emailed at their
+ *   confirmed address with the old name and what to do if it was not them.
  *
- * - the current password is asked for again, as it is for a new password. A
- *   phone left unlocked on a table should not be enough to become somebody
- *   else to that person's friends. An account that signs in through another
- *   service has no password to ask for; its session is all it has, and the
- *   other limits here are what stand in for it;
- * - one change every USERNAME_CHANGE_COOLDOWN_DAYS. A username is written in
- *   lowercase (shared/src/username.ts), so asking for one's own name in
- *   capitals (Azad for azad) is asking for the name one has: no change, and
- *   nothing spent;
- * - the name given up is held for its last owner for USERNAME_HOLD_DAYS, twice
- *   the wait, so there are thirty days in which they can have it back and
- *   nobody else can. The database keeps that rule for every way a username is
- *   set (migration username-history);
- * - every change, and every wrong password on the way to one, is written in
- *   the security log, and the owner is told by email at their confirmed
- *   address, with the old name and what to do if it was not them.
- *
- * Whether a name is taken or only held is not said apart: both answer TAKEN.
+ * A taken name and a held name are not told apart: both answer TAKEN.
  */
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
 export const USERNAME_HOLD_DAYS = 60;
@@ -40,10 +30,10 @@ const DAY_MS = 24 * 3_600_000;
 /** What the settings show before a change is tried. */
 export interface UsernameStatus {
   username: string;
-  /** whether the current password has to be given (false for an account that signs in through another service only) */
+  /** Whether the current password must be given; false for an account that signs in only through another service. */
   needsPassword: boolean;
   canChange: boolean;
-  /** when the next change may be made; null when one may be made now */
+  /** When the next change may be made; null when one may be made now. */
   availableAt: string | null;
   cooldownDays: number;
   holdDays: number;
@@ -51,7 +41,7 @@ export interface UsernameStatus {
   held: Array<{ username: string; heldUntil: string }>;
 }
 
-/** Whether a name could be taken now, and if not, why in terms a form can say: for a character not allowed, which ones. */
+/** Whether a name could be taken now, and if not why, in terms a form can show (for disallowed characters, which ones). */
 export type UsernameAvailability =
   | { available: true; username: string }
   | { available: false; reason: UsernameError | 'taken' | 'same'; chars?: string[] };
@@ -111,7 +101,7 @@ export class UsernameChangeService {
     };
   }
 
-  /** Whether `raw` could be this account's username now: well formed, not in use, and not held for somebody else. */
+  /** Whether `raw` could be this account's username now: well formed, not in use and not held for someone else. */
   async available(userId: string, raw: string): Promise<UsernameAvailability> {
     const checked = validateUsername(raw);
     if (!checked.ok) return { available: false, reason: checked.reason, ...(checked.reason === 'invalid-chars' ? { chars: checked.chars } : {}) };
@@ -129,10 +119,8 @@ export class UsernameChangeService {
   }
 
   /**
-   * The change. Answers the username the account has afterwards and whether
-   * it changed. The password is checked before anything is locked; the wait
-   * is then read again on the locked row, so two requests at once make one
-   * change and one refusal.
+   * The change: returns the username afterwards and whether it changed. The password is checked before anything is
+   * locked, and the wait is read again on the locked row, so two concurrent requests make one change and one refusal.
    */
   async change(userId: string, raw: string, currentPassword: string | undefined): Promise<{ username: string; changed: boolean }> {
     const checked = validateUsername(raw);
@@ -177,7 +165,7 @@ export class UsernameChangeService {
         });
       }
       await client.query(`UPDATE users SET username = $2, username_changed_at = now() WHERE id = $1`, [userId, next]);
-      // a name of their own taken back is theirs again, not one they used to have
+      // Taking back one's own earlier name makes it current again, not a former one.
       await client.query(`DELETE FROM username_history WHERE user_id = $1 AND username = $2`, [userId, next]);
       await client.query(`INSERT INTO username_history (user_id, username, held_until) VALUES ($1, $2, now() + make_interval(days => $3))`, [
         userId,
@@ -198,7 +186,7 @@ export class UsernameChangeService {
     return { username: next, changed: true };
   }
 
-  /** The owner is told at the address they have shown to be theirs. Best-effort: the change does not wait on the mail. */
+  /** Tells the owner at their confirmed address; best-effort, so the change does not wait on the mail. */
   private async notify(account: AccountRow, previous: string, next: string): Promise<void> {
     if (!this.deps.jobs || account.email === null || account.email_verified_at === null) return;
     try {

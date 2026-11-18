@@ -2,13 +2,8 @@ import type pg from 'pg';
 import { canonicalPair } from '../friends/pair.js';
 
 /**
- * Relationships between test accounts, written straight to the tables.
- *
- * For suites about something else — who may join a game, who sees whose name
- * — that need two people to be friends or blocked as a precondition. The
- * friend and block flows themselves are tested through their routes in
- * friends.integration.test.ts; going through them here would make every game
- * test depend on request/accept rate limits that have nothing to do with it.
+ * Relationships between test accounts, written straight to the tables, for suites where friendship or a block is only
+ * a precondition. The real friend and block flows are tested in friends.integration.test.ts.
  */
 export async function befriend(pool: pg.Pool, a: string, b: string): Promise<void> {
   const { lo, hi } = canonicalPair(a, b);

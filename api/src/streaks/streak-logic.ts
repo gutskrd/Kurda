@@ -1,11 +1,7 @@
 /**
- * Pure streak arithmetic (KUR-031). No database, no clock — every function
- * takes its inputs explicitly so the day-boundary and freeze rules can be
- * unit-tested exhaustively, including DST edges.
- *
- * It also remembers the run that last ended, so that it can be restored for a
- * few days afterwards (`restore`; the price and the days are the shared
- * streak-repair rules).
+ * Pure streak arithmetic: every input is explicit, so day boundaries and freeze rules (DST edges included) are fully
+ * unit-tested. It also remembers the run that last ended so it can be restored for a few days (`restore`; price and
+ * days are the shared streak-repair rules).
  */
 import { repairOpen, type EndedStreak } from '@kurda/shared';
 
@@ -16,21 +12,11 @@ export interface StreakState {
   lastActiveOn: string | null;
   /** stored streak freezes: 0 up to the most this learner may hold (`maxFreezesFor`) */
   freezes: number;
-  /**
-   * The missed day the last freeze spent covered, 'YYYY-MM-DD' in the user's
-   * tz, or null (or absent) if none ever has: what the apps say once, "your
-   * streak was kept".
-   */
+  /** The missed day the last freeze covered ('YYYY-MM-DD' in the user's zone), or null or absent if none, for the apps' one-time "your streak was kept". */
   freezeUsedOn?: string | null;
-  /**
-   * How many days in a row, ending on `freezeUsedOn`, freezes kept: 1 unless a
-   * learner holding two missed two days running. Absent reads as 1.
-   */
+  /** How many consecutive days ending on `freezeUsedOn` freezes kept: 1 unless a learner holding two missed two days running. Absent reads as 1. */
   freezeUsedDays?: number;
-  /**
-   * The run that last ended, or null (or absent) if none has since this was
-   * kept: its length, its last day, and whether it was restored.
-   */
+  /** The run that last ended, or null or absent: its length, last day, and whether it was restored. */
   ended?: EndedStreak | null;
 }
 
@@ -43,11 +29,7 @@ export function maxFreezesFor(plus: boolean): number {
   return plus ? PLUS_MAX_FREEZES : MAX_FREEZES;
 }
 
-/**
- * A zone Intl can use, or UTC. Sign-up once stored whatever string it was
- * sent, and an unknown zone made Intl throw — every lesson completion and the
- * daily reward then failed with a 500 for that learner, for good.
- */
+/** A zone Intl can use, else UTC; an unknown stored zone would otherwise make Intl throw on every lesson and reward. */
 export function safeTimeZone(timeZone: string | null | undefined): string {
   if (!timeZone) return 'UTC';
   try {
@@ -60,8 +42,7 @@ export function safeTimeZone(timeZone: string | null | undefined): string {
 
 /** The user's local calendar date for an instant, as 'YYYY-MM-DD'. */
 export function localDate(now: Date, timeZone: string): string {
-  // en-CA formats as YYYY-MM-DD; the tz makes it the user's calendar day,
-  // so DST shifts never move the date boundary.
+  // en-CA formats as YYYY-MM-DD, and the zone makes it the user's calendar day, so DST never moves the boundary.
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: safeTimeZone(timeZone),
     year: 'numeric',
@@ -83,10 +64,9 @@ export function shiftDate(date: string, days: number): string {
 }
 
 /**
- * The instant a calendar day begins in a time zone. Found by halving the
- * thirty hours around the day's UTC midnight (no zone is further from UTC than
- * that) rather than by subtracting an offset, so a day whose midnight a clock
- * change skips still begins at its first minute.
+ * The instant a calendar day begins in a zone, found by bisecting the thirty hours around the day's UTC midnight (no
+ * zone is further from UTC) rather than subtracting an offset, so a day whose midnight a clock change skips still
+ * begins at its first minute.
  */
 export function startOfLocalDay(date: string, timeZone: string): Date {
   const tz = safeTimeZone(timeZone);
@@ -102,13 +82,10 @@ export function startOfLocalDay(date: string, timeZone: string): Date {
 }
 
 /**
- * Bring a stored state up to `today` without counting today as activity:
- * missed days are covered by freezes while there is one for each (consumed,
- * and the last day covered kept as `freezeUsedOn`); a gap longer than the
- * freezes held ends the run (current → 0, the freezes and the true last-active
- * date preserved, and the run kept as `ended` so it can be restored). A run
- * that has ended already is left as it is: there is nothing for a freeze to
- * keep. Idempotent for a given `today`.
+ * Brings a stored state up to `today` without counting today: missed days are covered while there is a freeze for
+ * each (spent, with the last covered day kept as `freezeUsedOn`); a longer gap ends the run (current 0, freezes and the
+ * last active date kept, and the run saved as `ended` for restoring). An already ended run is left alone. Idempotent
+ * for a given `today`.
  */
 export function settle(state: StreakState, today: string): StreakState {
   if (state.lastActiveOn === null) return state;
@@ -132,12 +109,9 @@ export function settle(state: StreakState, today: string): StreakState {
 }
 
 /**
- * What is remembered of a run as it ends. Normally the run itself. But a short
- * run that ends while the streak before it can still be restored joins that
- * one instead of replacing it: the offer stays, with the days learned since
- * added to it, so restoring never costs a learner the days they came back for.
- * Its last day stays the first run's, so the offer ends when it always would
- * have.
+ * What is remembered of an ending run: normally the run itself, but a short run ending while the previous streak can
+ * still be restored joins that offer instead, with its days added, so restoring never loses the days a learner came
+ * back for. Its last day stays the first run's, so the offer ends on time.
  */
 function endRun(state: StreakState, today: string): EndedStreak {
   const earlier = state.ended ?? null;
@@ -146,16 +120,10 @@ function endRun(state: StreakState, today: string): EndedStreak {
 }
 
 /**
- * Bring back the run that ended, on `today`. The caller has checked that it
- * can be (shared `repairStanding`) and has taken the price.
- *
- * The missed days are kept the way a freeze keeps a day: they add nothing to
- * the count and are not days learned, and the run goes on across them. With
- * nothing learned since, the count is the ended run's and its anchor moves to
- * yesterday, so a lesson today is its next day and the learner has today to do
- * one. With a run begun since and still alive, that run's days are added and
- * its anchor is kept: a day learned after the break is not lost. No freeze is
- * spent.
+ * Brings back the ended run on `today`; the caller has checked it can (`repairStanding`) and taken the price. The
+ * missed days are kept as a freeze keeps a day: no count and not learned, but the run continues across them. With
+ * nothing learned since, the count is the ended run's and its anchor moves to yesterday, so today's lesson is its next
+ * day. With a newer live run, its days are added and its anchor kept. No freeze is spent.
  */
 export function restore(state: StreakState, today: string): StreakState {
   const settled = settle(state, today);
@@ -173,9 +141,8 @@ export function restore(state: StreakState, today: string): StreakState {
 }
 
 /**
- * Record a goal-meeting activity for `today`. Settles first, then counts
- * today at most once: consecutive day extends the run, any gap restarts
- * it at 1. Returns the new state and whether today newly counted.
+ * Records a goal-meeting activity for `today`: settles first, then counts today at most once, a consecutive day
+ * extending the run and any gap restarting it at 1. Returns the new state and whether today newly counted.
  */
 export function record(state: StreakState, today: string): { state: StreakState; incremented: boolean } {
   const settled = settle(state, today);
@@ -200,10 +167,8 @@ export function record(state: StreakState, today: string): { state: StreakState;
 }
 
 /**
- * Grant a freeze, unless the learner already holds the most they may (`max`:
- * MAX_FREEZES, or a Hevalo+ member's two). Returns the (possibly unchanged)
- * state; one who holds more than the cap, a member whose membership ended,
- * keeps what they hold.
+ * Grants a freeze unless the learner already holds `max` (MAX_FREEZES, or two for a Hevalo+ member). A learner above
+ * the cap, such as a former member, keeps what they hold.
  */
 export function grantFreeze(state: StreakState, max: number = MAX_FREEZES): StreakState {
   return state.freezes >= max ? state : { ...state, freezes: state.freezes + 1 };
@@ -213,25 +178,9 @@ export function grantFreeze(state: StreakState, max: number = MAX_FREEZES): Stre
 export const SESSIONS_PER_FREEZE = 5;
 
 /**
- * Whether a finished lesson or practice session was learning: at least half
- * of its items answered, and never fewer than one.
- *
- * Finishing is a request anyone can send, with nothing answered at all. Five
- * of those earned a streak freeze, and one unlocked the daily Zêr — exactly the
- * pay-for-showing-up the rewards were changed to avoid. Half rather than all,
- * because a learner may skip a speaking item (no microphone) or a listening one
- * whose audio would not load, and a lesson with a few of those is still a
- * lesson. A session that is not learning still finishes and still earns its
- * XP; it just does not count as a day learned, a day of the streak, a step
- * towards a freeze or the daily Zêr.
- */
-/**
- * How many of a session's answers were given on the learner's today, in SQL.
- * `$1` is the session id, `$2` the time zone (pass it through safeTimeZone),
- * `$3` today's 'YYYY-MM-DD' — or the placeholders given, for a statement that
- * reads it beside something else. Learning is credited to the day it happened:
- * a sitting's answers kept in an open session and completed on later days
- * would otherwise buy a streak day and the daily Zêr on each of them.
+ * How many of a session's answers were given on the learner's today, in SQL: `$1` the session id, `$2` the time zone
+ * (passed through safeTimeZone), `$3` today's 'YYYY-MM-DD', or the given placeholders. Learning is credited to the day
+ * it happened, so answers kept in an open session cannot buy a streak day and Zêr on each later day.
  */
 export function answeredTodaySql(
   table: 'session_answers' | 'practice_answers',
@@ -241,6 +190,12 @@ export function answeredTodaySql(
           WHERE session_id = ${at.session} AND (answered_at AT TIME ZONE ${at.zone})::date = ${at.day}::date`;
 }
 
+/**
+ * Whether a finished lesson or practice session was learning: at least half its items answered, and at least one.
+ * Finishing is a request anyone can send with nothing answered, and must not earn freezes or the daily Zêr. Half,
+ * because a learner may skip a speaking item or a listening one whose audio failed. A session that is not learning
+ * still finishes and earns its XP, but is not a learning day, a streak day, a step toward a freeze or the daily Zêr.
+ */
 export function countsAsLearning(answered: number, total: number): boolean {
   return answered >= Math.max(1, Math.ceil(total / 2));
 }
@@ -250,13 +205,10 @@ export function countsAsLearningSql(answered: string, total: string): string {
   return `${answered} >= GREATEST(1, ceil(${total} / 2.0))`;
 }
 
-/** Days the streak's recent days reach back, today included: two weeks, whatever day a learner's week starts on. */
+/** Days the recent-days list reaches back, today included: two weeks, whatever day a week starts on. */
 export const RECENT_DAYS = 14;
 
-/**
- * What learning has added up to, kept beside the streak rather than in it: the
- * streak can be broken, these only grow (or, for the freeze count, fill up).
- */
+/** What learning has added up to, kept beside the streak: the streak can break, these only grow (or, for freezes, fill up). */
 export interface LearningTally {
   /** distinct days with at least one finished lesson or practice session */
   daysLearned: number;
@@ -269,14 +221,9 @@ export interface LearningTally {
 export const EMPTY_TALLY: LearningTally = { daysLearned: 0, lastLearnedOn: null, freezeProgress: 0 };
 
 /**
- * Record one finished lesson or practice session on `today`.
- *
- * The day counts for the streak exactly as `record` would have it, and once
- * for the days-learned total. The session itself counts towards a freeze: the
- * fifth since the last one earns another, unless the user already holds the
- * most they may (`maxFreezes`). Then the count waits, full, and the next session
- * after a freeze is spent earns it — so learning is never wasted, and nothing
- * can be stockpiled past the cap.
+ * Records one finished lesson or practice session on `today`: the streak day as `record` counts it, once for days
+ * learned, and one step toward a freeze; every fifth earns one unless the learner holds `maxFreezes`, when the count
+ * waits full and the next session after a freeze is spent earns it. Learning is never wasted and nothing stockpiles.
  */
 export function recordSession(
   streak: StreakState,

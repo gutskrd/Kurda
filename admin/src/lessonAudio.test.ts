@@ -21,7 +21,7 @@ import {
   scriptOf,
   voiceCounts,
   voiceOf,
-  voiceScript,
+
   matchesVoice,
   withRecording,
   withoutRecording,
@@ -212,7 +212,7 @@ describe('after saving and removing', () => {
 });
 
 describe('stories in the studio', () => {
-  // the API lists a story's sentences in the lesson shape: the story is its own unit and its one lesson
+  // The API lists a story's sentences in the lesson shape: the story is its own unit and its one lesson.
   const story = (over: Partial<Usage> = {}): Usage =>
     usage({
       courseId: 'stories:kurmanci',
@@ -253,7 +253,7 @@ describe('usage', () => {
 
   it('knows which texts a listening item cannot do without', () => {
     expect(neededForListening(item('Sêv', { usedIn: [usage({ exerciseTypes: ['listening'], listeningNeedsIt: true })] }))).toBe(true);
-    // a listening item with a clip of its own plays that meanwhile
+    // A listening item with a clip of its own plays that meanwhile.
     expect(neededForListening(item('Sêv', { usedIn: [usage({ exerciseTypes: ['listening'] })] }))).toBe(false);
     expect(neededForListening(item('Sêv'))).toBe(false);
   });
@@ -281,7 +281,7 @@ describe('the two sides of the studio, and one lesson or story', () => {
     expect(inScope(both, 'stories')?.usedIn).toEqual([story]);
     expect(inScope(onlyStory, 'lessons')).toBeNull();
     expect(inScope(onlyLesson, 'stories')).toBeNull();
-    // what nothing uses is recorded on the lessons' side, where phrases are added
+    // What nothing uses is recorded on the lessons' side, where phrases are added.
     expect(inScope(loose, 'lessons')).toBe(loose);
     expect(inScope(loose, 'stories')).toBeNull();
   });
@@ -307,9 +307,9 @@ describe('the recording plan', () => {
     item('Bi xêr hatî', { usedIn: [road(1)], plannedSpeaker: 'hamo', ...recorded, speaker: 'hamo' }),
     item('Ez Xezal im', { usedIn: [road(2)], plannedSpeaker: 'xezo' }),
     item('Sêv', { usedIn: [road(2)], plannedSpeaker: 'hevalo', ...recorded, speaker: 'hevalo' }),
-    // planned for Hamo, though Xezal made the take
+    // Planned for Hamo, though Xezal made the take.
     item('Spas', { usedIn: [road(3)], plannedSpeaker: 'hamo', ...recorded, speaker: 'xezo' }),
-    // nothing plans it: once recorded, it is whoever was heard
+    // Nothing plans it: once recorded, it is whoever was heard.
     item('Erê', { usedIn: [basics], ...recorded, speaker: 'xezo' }),
     item('Na', { usedIn: [basics] }),
     item('Newroz pîroz be', { ...recorded, speaker: 'hamo', usedIn: [], unused: true }),
@@ -341,12 +341,12 @@ describe('the recording plan', () => {
     ]);
     const silav = inCourse(items[0]!, 'kurmanji-road')!;
     expect(silav.usedIn).toEqual([road(1)]);
-    // filed under its first use in that course
+    // Filed under its first use in that course.
     expect(group([silav]).courses[0]!.title).toBe('The Kurmanji Road');
     expect(inCourse(items[6]!, 'kurmanji-road')).toBeNull();
     expect(inCourse(items[7]!, 'kurmanji-road')).toBeNull();
     expect(inCourse(items[0]!, null)).toBe(items[0]);
-    // an API from before the slug: the course id stands in
+    // An API from before the slug: the course id stands in.
     expect(courseKey({ courseId: 'c9' })).toBe('c9');
   });
 
@@ -372,14 +372,11 @@ describe('the recording plan', () => {
         ],
       },
     ]);
-    // a course nothing in which is planned for anyone has no plan
+    // A course nothing in which is planned for anyone has no plan.
     expect(recordingPlan([items[6]!])).toEqual([]);
   });
 
-  it('lists a character’s script in course order, recorded or not', () => {
-    const road1 = items.flatMap((i) => inCourse(i, 'kurmanji-road') ?? []);
-    expect(voiceScript(road1, 'hamo').map((i) => i.text)).toEqual(['Silav', 'Bi xêr hatî', 'Spas']);
-    expect(voiceScript(road1, 'xezo').map((i) => i.text)).toEqual(['Ez Xezal im']);
+  it('links to a character’s script', () => {
     expect(scriptHref('hamo', 'kurmanji-road')).toBe('#/audio/lessons?voice=hamo&course=kurmanji-road');
     expect(scriptHref('xezo', null)).toBe('#/audio/lessons?voice=xezo');
   });

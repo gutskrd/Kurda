@@ -123,8 +123,7 @@ describe.skipIf(!DATABASE_URL)('social rail (integration)', () => {
     );
     const body = await rail('me');
     const idler = body.friends.find((f: { userId: string }) => f.userId === ids.idler);
-    // a closed tab leaves 'playing' behind forever; "in a game since Tuesday" is
-    // worse than saying nothing
+    // A closed tab leaves 'playing' forever, and "in a game since Tuesday" is worse than nothing.
     expect(idler.activity).toBeNull();
   });
 
@@ -140,8 +139,7 @@ describe.skipIf(!DATABASE_URL)('social rail (integration)', () => {
     expect(shown.friends.find((f: { userId: string }) => f.userId === ids.mate).activity.game).toBe('Peyvok');
   });
 
-  // Challenges were invites to the ranked quiz, which Stories replaced. The
-  // fields stay on the wire, always empty, for phone builds already installed.
+  // Challenges are gone, but the fields stay on the wire, always empty, for installed phone builds.
   it('keeps the challenge fields for installed apps, always empty', async () => {
     const body = await rail('me');
     expect(body.challenges).toEqual([]);

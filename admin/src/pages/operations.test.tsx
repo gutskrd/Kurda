@@ -259,7 +259,7 @@ describe('the audit log', () => {
     await user.type(action, 'POST /admin/events');
     await user.click(await screen.findByRole('button', { name: 'Older entries' }));
     await waitFor(() => expect(calls.at(-1)!.path).toBe(`/admin/audit?limit=100&action=POST+%2Fadmin%2Fusers&beforeId=${page[99]!.id}`));
-    // typing two filters key by key over a page of 100 rows takes a few seconds on a busy machine
+    // Typing two filters key by key over a page of 100 rows takes a few seconds on a busy machine.
   }, 20_000);
 
   it('reads an action as a verb and a place', () => {
@@ -311,9 +311,8 @@ describe('Fraud', () => {
 describe('System', () => {
   const usage = { storedBytes: 9 * 1024 ** 3, storageLimitBytes: 10 * 1024 ** 3, objectCount: 1200, period: '2026-10', classAOps: 10, classALimit: 1_000_000, classBOps: 20, classBLimit: 10_000_000, note: '' };
 
-  // The league settle and the season close moved to the Leagues and Seasons
-  // pages (ranks.test.tsx asks before them there); the board by rating went
-  // with the Elo rating, so a rebuild reports the weekly XP board only.
+  // The league settle and season close are on the Leagues and Seasons pages (ranks.test.tsx), and the only board a
+  // rebuild reports is the weekly XP one.
   it('runs the board rebuild straight away and points to where the league and season runs are', async () => {
     const user = userEvent.setup();
     const { calls } = fakeApi(on('GET', '/admin/media/usage', json(usage)), on('POST', '/admin/leaderboards/rebuild', json({ weekly_xp: 4 })));

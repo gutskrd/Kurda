@@ -15,41 +15,24 @@ export interface JoinCheck {
   memberIds: readonly string[];
   /** the group chat the host shared the game into, if any */
   chatGroupId: string | null;
-  /** the host removed the joiner from this game earlier */
+  /** The host removed the joiner from this game earlier. */
   removed: boolean;
 }
 
 /**
- * Who may join a game — one rule for Peyvok Battle, Rhyme Match and Stories
- * (contract §B2; @kurda/shared `play` DEFAULT_ACCESS).
+ * Who may join a game, one rule for Peyvok Battle, Rhyme Match and Stories.
+ * Never anyone the host removed, and never anyone with a block either way against anyone in the game, present or
+ * gone. Then:
  *
- * Never anyone the host removed, and never anyone with a block either way
- * against anyone in the game, present or gone: a block keeps two people out of
- * each other's games, not just out of each other's lobbies as hosts. Then:
+ * - an 'open' game takes only known adults, friends of the host included; only a known adult can open one, so a child
+ *   is never in a game strangers can walk into;
+ * - a 'friends' game takes the host's friends and the members of a group chat it was shared into, while the host is
+ *   still a member. Every group is private and filled by members' own friends, so this brings no stranger to a child.
  *
- * - an 'open' game takes any known adult, and only known adults — a friend of
- *   the host's who is a minor, or whose age nobody knows, does not join one
- *   either. Only a known adult can open a game (checked where it is created),
- *   so a child is never in a game strangers could walk into;
- * - a 'friends' game takes the host's accepted friends, and the members of a
- *   group chat the host shared it into. Every group is private: everyone in
- *   one was put there by somebody they chose (an owner or admin adds only
- *   their own friends), so that brings in nobody new to a child. That holds
- *   only while the host is in the group too: a host the group has removed
- *   (after a report, say) no longer vouches through it, for this game or for
- *   the next rounds that inherit its group.
- *
- * A game shared into a group that was OPEN before every group became private
- * (`groups.privacy` still says so, migration 1751000420000) lets nobody in on
- * that account. Its members are strangers to one another: they walked in,
- * nobody chose them. A friends game can hold the host's friend who is
- * fifteen, and letting that room in would be the very stranger contact an
- * open game is refused to a minor for. A host who wants them in opens the
- * game instead.
- *
- * The answer is a yes or a no and is never explained: every caller turns a no
- * into the same "not found" as a game that does not exist, so a refusal says
- * nothing about anybody's age or blocks.
+ * A game shared into a formerly open group (`groups.privacy` 'open', migration 1751000420000) admits nobody on that
+ * account: its members are strangers, and a friends game may hold the host's teenage friend. A host who wants them
+ * opens the game instead. The answer is never explained: callers turn every no into the same "not found", so a
+ * refusal reveals nothing about age or blocks.
  */
 export async function canJoin(executor: Executor, check: JoinCheck): Promise<boolean> {
   if (check.removed || check.hostId === null) return false;
@@ -76,14 +59,9 @@ export async function canJoin(executor: Executor, check: JoinCheck): Promise<boo
 }
 
 /**
- * The players `viewerId` may not exchange free text with in a game where
- * players write to each other (a clue, a guess, a made-up meaning): anyone
- * with a block either way, and — when either of the two is a minor, or
- * somebody whose age nobody knows — anyone who is not their accepted friend.
- * The one rule both ways round, so what one may not be shown of the other's
- * the other may not be shown of theirs. A friends lobby can hold the host's
- * friends who are strangers to each other; this is what keeps a child among
- * them from writing to, or reading, a stranger.
+ * The players `viewerId` may not exchange free text with in a game where players write to each other: anyone with a
+ * block either way, and, when either is a minor or of unknown age, anyone not their friend. Symmetric, so neither
+ * sees what the other may not. This keeps a child in a friends lobby of strangers from writing to or reading them.
  */
 export async function textApart(executor: Executor, viewerId: string, otherIds: readonly string[]): Promise<Set<string>> {
   const others = [...new Set(otherIds)].filter((id) => id !== viewerId);
@@ -100,17 +78,14 @@ export async function textApart(executor: Executor, viewerId: string, otherIds: 
 }
 
 /**
- * Whether `joinerId` may sit down with these members in a game where players
- * write to each other: nobody among them is someone they may not exchange
- * text with (`textApart`). The join rule asks this as well as `canJoin` for
- * such a game, so a minor is never seated with anyone who is not their
- * friend, and nobody is seated with a minor who is not theirs.
+ * Whether `joinerId` may sit with these members in a game where players write to each other: none is someone they may
+ * not exchange text with (`textApart`). Asked alongside `canJoin`, so minors only ever sit with their friends.
  */
 export async function maySitTogether(executor: Executor, joinerId: string, memberIds: readonly string[]): Promise<boolean> {
   return (await textApart(executor, joinerId, memberIds)).size === 0;
 }
 
-/** Whether someone may open a game to every adult with the link: a known adult right now. */
+/** Whether someone may open a game to every adult with the link: a known adult now. */
 export async function mayHostOpen(executor: Executor, userId: string): Promise<boolean> {
   const res = await executor.query<{ adult: boolean }>(
     `SELECT NOT ${notKnownAdultSql('u')} AS adult FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL`,
@@ -126,13 +101,9 @@ export interface Identity {
 }
 
 /**
- * The identity rule (contract §B2, as for Stories): the players whose name and
- * picture `viewerId` may see — accepted friends, and in an 'open' game (every
- * member a known adult, by the join rule) anyone with no block either way.
- * Everyone else is "Player N" with the default picture, so in a friends game a
- * missing name means "not my friend" and nothing about anyone's age.
- *
- * The viewer's own entry is the caller's to fill; it is never looked up here.
+ * The identity rule: the players whose name and picture `viewerId` may see, friends and, in an 'open' game (all known
+ * adults by the join rule), anyone without a block either way. Everyone else is "Player N" with the default picture,
+ * so a missing name means only "not my friend". The viewer's own entry is the caller's to fill.
  */
 export async function identities(
   executor: Executor,

@@ -1,11 +1,8 @@
 import type pg from 'pg';
 
 /**
- * Base class for repositories over soft-deleted tables.
- *
- * Convention (api/DATABASE.md): rows are never hard-deleted by
- * application code; queries must exclude deleted rows via activeWhere().
- * Hard deletion happens only in the GDPR anonymization job (KUR-024).
+ * Base class for repositories over soft-deleted tables (api/DATABASE.md): application code never hard-deletes,
+ * and queries exclude deleted rows with activeWhere(). Only the GDPR anonymisation job hard-deletes.
  */
 export abstract class SoftDeleteRepository {
   constructor(

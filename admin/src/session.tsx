@@ -1,15 +1,11 @@
-/**
- * What this login may do in the admin, from GET /admin/session — read once by
- * the 2FA gate and shared with everything under it, so the nav, the landing
- * page and every page's own checks agree.
- */
+/** What this login may do, from GET /admin/session: read once by the 2FA gate and shared, so every check agrees. */
 import { createContext, useContext, type ReactNode } from 'react';
 import type { SessionAccess } from './navigation';
 
 export interface AdminSession extends SessionAccess {
-  /** the RBAC roles (superadmin, content_editor, moderator, support) */
+  /** The RBAC roles (superadmin, content_editor, moderator, support). */
   roles: string[];
-  /** the voices this account records; none from an API older than the people page */
+  /** The voices this account records; none from an API older than the people page. */
   voices?: string[];
   needsEnrollment: boolean;
   needsVerification: boolean;

@@ -42,7 +42,7 @@ describe('names', () => {
     expect(gameName('impostor')).toBe('Xapînok');
     expect(gameName('bluff')).toBe('Kurdish Bluff (no longer played)');
     expect(gameName('what-would-you-say')).toBe('What Would You Say? (no longer played)');
-    // a name nobody has heard of is shown as it is stored
+    // A name nobody has heard of is shown as it is stored.
     expect(gameName('no-such-game')).toBe('no-such-game');
   });
 

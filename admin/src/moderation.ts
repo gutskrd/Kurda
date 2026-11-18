@@ -1,14 +1,8 @@
 /**
- * Moderation, as data: the words the admin uses for a case's priority, rule,
- * status and source, the sanctions and how long they last, the decision a
- * moderator is putting together and the request it becomes, where a case sits
- * in the queue (for j/k), and how a case's history reads. Kept apart from the
- * pages so all of it is tested without a browser.
- *
- * The API stays the judge of a decision. `draftProblems` only catches what is
- * plainly missing before the panel asks the server for a preview — the
- * preview (`preview: true` on the same request) is where every rule is
- * checked, by the same code that will apply it.
+ * Moderation as data: names for a case's priority, rule, status and source, sanctions and their lengths, the decision
+ * being drafted and the request it becomes, queue order for j/k, and case history, kept apart from the pages so they
+ * test without a browser. The API judges a decision: `draftProblems` only catches what is plainly missing, and the
+ * preview (`preview: true` on the same request) checks every rule with the code that will apply it.
  */
 import {
   NOTE_TEXT,
@@ -77,11 +71,8 @@ export function slaTarget(p: ReportPriority): string {
 }
 
 /**
- * The rules, as short names for a list. The report sheet's own labels
- * (REPORT_CATEGORIES) are written for a child picking one and run to a line
- * each; a moderator scanning a queue needs two words. A rule this build does
- * not know yet (another part of Hevalo may add one) is shown
- * by its key rather than breaking the page.
+ * The rules as short names for a list; the report sheet's labels (REPORT_CATEGORIES) are written for a child and run
+ * to a line each. A rule this build does not know is shown by its key.
  */
 const CATEGORY_NAME: Readonly<Record<ReportCategory, string>> = {
   child_safety: 'Child safety',
@@ -225,10 +216,8 @@ export function sanctionName(kind: string): string {
 }
 
 /**
- * What lifting a sanction does, for the dialog that asks why. The API tells
- * the person only when it lifts something that limited them; a warning or a
- * removal is struck from their record and nothing more — removed content
- * comes back only when an appeal overturns the decision.
+ * What lifting a sanction does, for the dialog that asks why. The person is told only when a limit is lifted; a
+ * warning or removal is just struck from their record, and removed content returns only when an appeal overturns it.
  */
 export function liftEffect(kind: SanctionKind, who: string): string {
   if (SANCTION_SCOPE[kind] !== null) return `${who} is told it was lifted. What it stopped works again at once.`;
@@ -271,11 +260,7 @@ export function durationShort(hours: number | null): string {
   return hours % 24 === 0 && hours > 24 ? `${hours / 24} d` : `${hours} h`;
 }
 
-/**
- * Choosing a length can change the kind: a suspension with no end is a
- * permanent ban (the API refuses an endless suspension), and a ban given a
- * length is a suspension again.
- */
+/** A suspension with no end is a permanent ban (the API refuses an endless suspension), and a ban with a length a suspension. */
 export function withDuration(kind: DecisionActionKind, hours: number | null): { kind: DecisionActionKind; durationHours: number | null } {
   if (kind === 'suspension' && hours === null) return { kind: 'permanent_ban', durationHours: null };
   if (kind === 'permanent_ban' && hours !== null) return { kind: 'suspension', durationHours: hours };
@@ -288,12 +273,7 @@ export function defaultDuration(kind: DecisionActionKind): number | null {
   return kind === 'suspension' ? 168 : 24;
 }
 
-/**
- * What the person is told, unless the moderator writes their own: plain and
- * short, naming the rule. The API puts it inside the full notice (what
- * happens, until when, who decided, how to ask for a review) — the preview
- * shows the whole of it.
- */
+/** What the person is told unless the moderator writes their own; the API wraps it in the full notice the preview shows. */
 export function defaultStatement(kind: DecisionActionKind, policy: string | null | undefined, forReporter = false): string {
   if (kind === 'caring_message') return '';
   if (forReporter) {
@@ -337,7 +317,7 @@ export function sanctionPeriod(
 ): string {
   if (s.revokedAt) return `Lifted ${shortDate(new Date(s.revokedAt), now)}`;
   if (s.pendingApproval) return 'Waiting for a second admin';
-  // a warning and a removal happen once; they have a day, not a length
+  // A warning and a removal happen once; they have a day, not a length.
   if (s.kind === 'warning' || s.kind === 'content_removal') return `Given ${shortDate(new Date(s.startsAt), now)}`;
   if (!s.endsAt) return s.active ? 'No end' : 'Ended';
   const end = new Date(s.endsAt);
@@ -357,7 +337,7 @@ export function slaState(
   const due = new Date(c.slaDueAt).getTime();
   const left = (due - now.getTime()) / 1000;
   if (c.slaBreached || left <= 0) return { text: `Overdue by ${duration(Math.abs(left))}`, tone: 'bad' };
-  // the last quarter of the time it was given: soon
+  // The last quarter of the time it was given: soon.
   const soon = left <= (PRIORITY_SLA_HOURS[c.priority] * 3600) / 4;
   return { text: `Due in ${duration(left)}`, tone: soon ? 'warn' : 'neutral' };
 }
@@ -387,7 +367,7 @@ export function filtersFrom(query: URLSearchParams): QueueFilters {
   };
 }
 
-/** the longest search the queue API takes; a longer paste would be refused, not searched */
+/** The longest search the queue API takes; a longer paste would be refused, not searched. */
 export const QUEUE_Q_MAX = 200;
 
 /** The filters as a query string, the defaults left out: "priority=0&source=bots". */
@@ -424,7 +404,7 @@ export function rememberQueueOrder(ids: readonly string[], query = ''): void {
   try {
     sessionStorage.setItem(ORDER_KEY, JSON.stringify({ ids, query }));
   } catch {
-    // private mode, or storage full: j/k then simply has nowhere to go
+    // Private mode, or storage full: j/k then simply has nowhere to go.
   }
 }
 
@@ -436,7 +416,7 @@ export function queueOrder(): { ids: string[]; query: string } {
       return { ids: parsed.ids.filter((x): x is string => typeof x === 'string'), query: typeof parsed.query === 'string' ? parsed.query : '' };
     }
   } catch {
-    // unreadable: no order
+    // Unreadable: no order.
   }
   return { ids: [], query: '' };
 }
@@ -453,24 +433,24 @@ export function neighbourCase(id: string, step: 1 | -1, order = queueOrder().ids
 // ---------------------------------------------------------------------------
 
 export interface ActionDraft {
-  /** the panel's own key for the row */
+  /** The panel's own key for the row. */
   key: string;
   target: DecisionTarget;
   kind: DecisionActionKind;
   durationHours: number | null;
   statement: string;
-  /** typed by the moderator: a change of rule or kind leaves it alone */
+  /** Typed by the moderator: a change of rule or kind leaves it alone. */
   statementEdited: boolean;
 }
 
 export interface DecisionDraft {
   outcome: 'actioned' | 'no_violation';
-  /** '' until one is chosen */
+  /** '' until one is chosen. */
   policy: string;
   actions: ActionDraft[];
   removeContent: boolean;
   notifyReporters: boolean;
-  /** for the case record, not the person */
+  /** For the case record, not the person. */
   note: string;
 }
 
@@ -502,15 +482,14 @@ export function withPolicy(d: DecisionDraft, policy: string): DecisionDraft {
 }
 
 /**
- * Another kind for the same row: the length chosen carries over when the new
- * kind can have it (a 7-day chat mute becomes a 7-day posting mute), and the
- * statement follows unless the moderator wrote their own.
+ * Another kind for the same row: the length carries over when the new kind can have it, and the statement follows
+ * unless the moderator wrote their own.
  */
 export function withKind(a: ActionDraft, kind: DecisionActionKind, policy: string): ActionDraft {
   let hours: number | null;
   if (!hasDuration(kind) || kind === 'permanent_ban') hours = null;
   else if (!hasDuration(a.kind) || a.kind === 'permanent_ban') hours = defaultDuration(kind);
-  // "no end" is a length for a mute, not for a suspension
+  // "no end" is a length for a mute, not for a suspension.
   else hours = a.durationHours === null && kind === 'suspension' ? defaultDuration(kind) : a.durationHours;
   return {
     ...a,
@@ -522,7 +501,7 @@ export function withKind(a: ActionDraft, kind: DecisionActionKind, policy: strin
 
 /** The request the draft is: what the preview asks about and what the decision sends. */
 export function decisionRequest(d: DecisionDraft, extra: { preview?: boolean; confirmUsernames?: string[] } = {}): DecideRequest {
-  // one name typed goes as confirmUsername; a decision that bans two people for good sends both
+  // One name typed goes as confirmUsername; a decision that bans two people for good sends both.
   const typed = extra.confirmUsernames ?? [];
   const actioned = d.outcome === 'actioned';
   return {
@@ -681,11 +660,7 @@ export function noticeTargetText(target: { type: string; id: string } | null, fo
   return `${what} ${target.id.slice(0, 8)}${found ? '' : ' (not found when the notice arrived)'}`;
 }
 
-/**
- * A copyright case that a decision can only uphold by taking the post down
- * (the API answers CONTENT_REMOVAL_REQUIRED otherwise): one that came from a
- * notice and is about content still up.
- */
+/** A copyright case from a notice about content still up, which can only be upheld by taking the post down. */
 export function needsTakedown(c: { source: string; contentRemoved: boolean }, canRemove: boolean): boolean {
   return c.source === 'copyright' && canRemove && !c.contentRemoved;
 }
@@ -750,12 +725,8 @@ export function historyLine(action: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * A reported letter's decor as the case can draw it. The snapshot was checked
- * when the letter was sent, but it is read back from storage here, so it is
- * checked again by the same rules before anything is drawn from it: what
- * comes out is only known papers, tools, colours and whole numbers. One that
- * no longer passes (written under other limits, say) is said to be unreadable
- * rather than drawn half-way.
+ * A reported letter's decor as the case can draw it. Read back from storage, it is checked again by the sending rules
+ * before anything is drawn; one that fails is reported as unreadable instead of drawn half-way.
  */
 export function letterDecorOf(raw: unknown): { decor: LetterDecor | null; unreadable: boolean } {
   if (raw === null || raw === undefined) return { decor: null, unreadable: false };
@@ -779,10 +750,8 @@ export function decorLength(decor: LetterDecor): number {
 }
 
 /**
- * Where a note sits on the drawn sheet, as CSS: its centre as a share of the
- * sheet, its type as a share of the sheet's width (container units), turned
- * as it was placed. The page's own units make it land where its writer put it
- * whatever size the case shows the sheet at.
+ * Where a note sits on the drawn sheet, as CSS in the sheet's own units (centre as a share of the sheet, type size in
+ * container units, turned as placed), so it lands where its writer put it at any size.
  */
 export function notePlacement(note: PaperNote, length: number): { left: string; top: string; fontSize: string; transform: string } {
   const pct = (v: number): string => `${Math.round(v * 10000) / 100}%`;

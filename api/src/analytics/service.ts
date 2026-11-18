@@ -22,11 +22,9 @@ export interface AnalyticsHooks {
 }
 
 /**
- * Server-side event ingest (KUR-105). Validates each event against the schema
- * registry, drops unknown/malformed ones (counted via `onDropped`), and inserts
- * the rest deduped by the client's `event_id` — so an offline batch replayed
- * after reconnect never double-counts. Everything lands in the day-partitioned
- * `analytics_events` store.
+ * Server-side event ingest. Validates each event against the registry, drops unknown or malformed ones (counted
+ * via `onDropped`), and inserts the rest deduplicated by the client's `event_id`, so a replayed offline batch
+ * never counts twice.
  */
 export class AnalyticsService {
   constructor(

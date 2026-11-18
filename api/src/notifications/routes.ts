@@ -26,7 +26,7 @@ const patchBody = z
     { message: 'quietStartMin and quietEndMin must be set together', path: ['quietStartMin'] },
   );
 
-/** Per-category notification toggles + quiet hours (KUR-095). */
+/** Per-category notification toggles and quiet hours. */
 export function registerNotificationRoutes(app: FastifyInstance, prefs: NotificationPrefsService): void {
   app.get('/me/notification-prefs', { preHandler: requireAuth }, async (req) => prefs.get(req.user!.id));
 

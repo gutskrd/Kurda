@@ -1,15 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 /**
- * Keeps one page's render error from taking down the whole admin.
- *
- * Without this, an exception anywhere in a page unmounts the entire React tree
- * and leaves a blank white screen with no nav and no way back — which is exactly
- * how the Economy page presented when it hit an unexpected value. Now the page
- * area shows what went wrong and the rest of the admin keeps working.
- *
- * Reset by giving it a `resetKey` that changes (the active page): navigating
- * away and back clears the error rather than sticking on it for the session.
+ * Keeps one page's render error from blanking the whole console: the page area shows what went wrong and the nav
+ * keeps working. A changed `resetKey` (the active page) clears the error.
  */
 interface Props {
   children: ReactNode;
@@ -33,8 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
-    // there is no error reporting service wired up; the console is what an
-    // admin can actually hand over when reporting a broken page
+    // No error reporting service is wired up; the console is what an admin can hand over with a report.
     console.error('[admin] page crashed', error, info.componentStack);
   }
 

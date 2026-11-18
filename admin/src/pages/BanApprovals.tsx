@@ -6,12 +6,9 @@ import { categoryName } from '../moderation';
 import { Badge, Banner, Button, EmptyState, ErrorState, Loading, PageHeader, Section, Time, UserLink, duration, errorLine, useDialogs, useLoad, useToast } from '../ui';
 
 /**
- * Ban approvals (#/ban-approvals): permanent bans that wait for a second
- * moderator. A ban one moderator asks for keeps the account suspended for up
- * to 72 hours; a second one confirms it or turns it down, and if nobody does
- * it lapses and its case opens again. A child-safety ban is in force at once —
- * here it is confirmed after the fact. The moderator who asked can withdraw
- * their own request, never confirm it.
+ * Ban approvals (#/ban-approvals): permanent bans waiting for a second moderator. The account stays suspended for up to
+ * 72 hours until one confirms or declines; unanswered, the request lapses and the case reopens. A child-safety ban is
+ * in force at once and confirmed here afterwards. The requester can withdraw but never confirm.
  */
 export function BanApprovals(): React.JSX.Element {
   const list = useLoad(() => api<{ approvals: PendingApproval[] }>('/admin/moderation/approvals').then((r) => r.approvals), []);

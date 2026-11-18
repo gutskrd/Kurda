@@ -7,8 +7,7 @@ describe('ratioLabel', () => {
   });
 
   it('shows infinity when currency was earned but never spent', () => {
-    // the regression: the API sends null here (JSON has no Infinity) and the
-    // page used to call .toFixed() on it, crashing to a blank screen
+    // JSON has no Infinity, so the API sends null.
     expect(ratioLabel({ ratio: null, faucet: 500 })).toBe('∞');
   });
 

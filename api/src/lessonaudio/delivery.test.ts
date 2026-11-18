@@ -3,9 +3,8 @@ import { lessonAudioKey, type RecordingVoice } from '@kurda/shared';
 import { lessonAudioFor, modelAudioAfterAnswer } from './delivery.js';
 
 /**
- * A database that has recordings of `have`, said by `voices` where it names
- * one, and counts what it is asked. Like the real query, a recording with no
- * speaker comes back with no timeline either.
+ * A database holding recordings of `have`, spoken by `voices` where named, that counts its queries. As in the real
+ * query, a recording with no speaker has no timeline.
  */
 function fakeDb(have: Record<string, string>, voices: Record<string, RecordingVoice> = {}) {
   const calls: unknown[][] = [];
@@ -42,7 +41,7 @@ describe('lessonAudioFor', () => {
     const db = fakeDb({});
     await lessonAudioFor(db as never, lesson);
     expect(db.calls).toHaveLength(1);
-    // the translation's, the writing item's and the right option's models are the answers: not before answering
+    // The translation's, writing item's and right option's models are the answers, so they are not sent before answering.
     expect(new Set(db.calls[0]![0] as string[])).toEqual(new Set(['ez baş im', 'av', 'nan', 'roj baş'].map(lessonAudioKey)));
   });
 

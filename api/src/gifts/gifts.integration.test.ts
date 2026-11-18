@@ -1,10 +1,6 @@
 /**
- * Gifts that arrive in the chat, against real Postgres: every rule a send
- * goes through (friends only, a day of friendship around anyone who is not a
- * known adult, the daily caps, owned already, never free), what it changes
- * (the money, the item, the one chat message), who is told and how, the
- * retry that must not pay twice, the race two friends gifting at once must
- * not both win, and the unwrapping.
+ * Gifts in the chat against real Postgres: every rule a send goes through, what it changes, who is told, a retry
+ * that must not pay twice, two friends gifting at once, and unwrapping.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -249,8 +245,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     });
 
     it('reaches the recipient live, as a message and as a gift, and in their notifications', async () => {
-      // the events of the send above were recorded before this test's reset,
-      // so send another (not unique, so it can be given again)
+      // The events of the send above were recorded before this test's reset, so send another non-unique item.
       const res = await giftDm(alan, bea, POWER);
       expect(res.statusCode).toBe(200);
       const { batchId: b2 } = res.json();
@@ -394,7 +389,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
         alan.id,
       ]);
       const res = await giftDm(alan, ola, POWER);
-      // the answer anyone who is not a friend gets: nothing says it was a block
+      // The answer any non-friend gets; nothing says it was a block.
       expect(res.statusCode).toBe(403);
       expect(res.json().code).toBe('NOT_FRIENDS');
     });
@@ -420,8 +415,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
   });
 
   describe('a block after the gift', () => {
-    // A block is silent and absolute: the direct messages between the two
-    // are hidden from both, and a gift in them is part of that thread.
+    // A block hides the direct messages from both sides, and a gift in them is part of that thread.
     let sid: Account;
     let ria: Account; // fifteen
     let batchId = '';
@@ -512,8 +506,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
 
   describe('a failure after the gift is made', () => {
     it('still tells the recipient, before the answer to the sender is built', async () => {
-      // The gift is committed by then, and the sender's retry replays it
-      // without telling anyone: so the telling cannot wait on the answer.
+      // The gift is committed by then and a retry replays it without telling anyone, so telling cannot wait on the answer.
       const tia = await signUp('tia');
       const uli = await signUp('uli');
       await befriend(tia, uli);
@@ -528,7 +521,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       const note = await pool.query(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'kind' = 'gift'`, [uli.id]);
       expect(note.rowCount).toBe(1);
 
-      // and the retry gets the answer, from what was done
+      // The retry gets the answer from what was done.
       const again = await giftDm(tia, uli, POWER, k);
       expect(again.statusCode).toBe(200);
       expect(again.json()).toMatchObject({ sent: [uli.id], skipped: [], balance: { zer: 10_000 - 20 } });
@@ -537,9 +530,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
   });
 
   describe('a key used before in another chat', () => {
-    // A retry is the same request in the same chat. Taken as one elsewhere, a
-    // key would add people to a gift posted somewhere else: listed on a card
-    // in a chat they are not in, and told of a gift in a chat that never got it.
+    // A retry must be the same request in the same chat; otherwise a key could add people to a gift posted elsewhere.
     let ole: Account;
     let pia: Account;
     let kit: Account; // fifteen; ole's friend, not pia's
@@ -619,9 +610,8 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     });
 
     it('is refused when it was used for two gifts, which no one request made', async () => {
-      // one key, two sends in the same group to different friends: two gifts,
-      // each with its own message — and then a request naming both is a
-      // retry of neither
+      // One key, two sends in the same group to different friends: two gifts with their own messages, so a request
+      // naming both retries neither.
       const k = key();
       const a = await giftGroup(ole, g1, [kit], POWER, k);
       const b = await giftGroup(ole, g1, [pia], POWER, k);
@@ -634,7 +624,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     });
 
     it('whose gift has lost its message, is refused in a group and only answered from in a direct message', async () => {
-      // the group is gone, and its messages with it: nothing says where the gift was
+      // The group is gone with its messages, so nothing says where the gift was.
       const gone = await group('Key club gone', ole, [pia, kit]);
       const k = key();
       const first = await giftGroup(ole, gone, [pia], POWER, k);
@@ -648,7 +638,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       const elsewhere = await giftGroup(ole, g1, [pia, kit], POWER, k);
       expect(elsewhere.statusCode).toBe(409);
       expect(elsewhere.json().code).toBe('IDEMPOTENCY_REUSED');
-      // …to pia alone, who has it, all it can do is say what was given
+      // …to pia alone, who has it, so all it can do is say what was given.
       const again = await giftDm(ole, pia, POWER, k);
       expect(again.statusCode).toBe(200);
       expect(again.json()).toMatchObject({ batchId: first.json().batchId, sent: [pia.id], skipped: [], message: null });
@@ -700,9 +690,8 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     });
 
     it('two people giving the same friends something, listed the other way round, both go through', async () => {
-      // Not unique, so nothing decides between them: each friend gets two.
-      // Each send changes both friends' items, and without one order for
-      // that, each held one friend's while waiting for the other's.
+      // Not unique, so each friend gets two; without one lock order, each send would hold one friend's item while waiting
+      // for the other's.
       const pat = await signUp('pat');
       const quin = await signUp('quin');
       const f0 = await signUp('wayf0');
@@ -825,7 +814,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
         await befriend(ben, f);
         friends.push(f);
       }
-      // what they gave earlier today, to friends outside this group, up to two short of the cap
+      // Gifts given earlier today to friends outside this group, up to two short of the cap.
       const others: Account[] = [];
       for (let i = 0; i < Math.ceil((GIFTS_PER_DAY - 2) / GIFTS_PER_FRIEND_PER_DAY); i++) {
         const o = await signUp(`beno${i}`);
@@ -1112,7 +1101,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
         expect(res.statusCode).toBe(403);
         expect(res.json()).toMatchObject({ code: 'MUTED', details: { scope: 'chat', until: expect.any(String) } });
       }
-      // nothing was bought, given or posted
+      // Nothing was bought, given or posted.
       expect(await zer(mua)).toBe(before);
       expect(await giftRows(mua)).toEqual([]);
       expect(pushedTo(nel.id, 'gift_received')).toEqual([]);

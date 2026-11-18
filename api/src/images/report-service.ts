@@ -6,12 +6,9 @@ export type ImageTargetType = 'image_post' | 'image_comment';
 export type ReportResult = { ok: true; deduped: boolean } | { ok: false; reason: 'not-found' };
 
 /**
- * Image/meme reports (KUR-292), now written through the one report service
- * every surface uses (moderation/reports-service.ts): the caption, the image
- * key and the author are snapshotted at report time (and the image kept from
- * cleanup), and the report joins its case at once. `image_reports` keeps its
- * history and takes no new rows. The old route has no category: "something
- * else", with the reason as the note.
+ * Image post reports, written through the shared report service: caption, image key and author are snapshotted (the
+ * image is kept from cleanup) and the report joins its case at once. `image_reports` keeps its history and takes no
+ * new rows. This route has no category, so it files "something else" with the reason as the note.
  */
 export class ImageReportService {
   private readonly reports: ReportsService;

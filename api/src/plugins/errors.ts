@@ -4,10 +4,7 @@ import type { AppConfig } from '../config/env.js';
 import { captureError } from '../observability/sentry.js';
 import { RequestValidationError } from './validation.js';
 
-/**
- * Base class for domain errors. Route handlers and services throw these;
- * the central error handler turns them into the response envelope.
- */
+/** Base class for domain errors; the central error handler turns them into the response envelope. */
 export class AppError extends Error {
   constructor(
     public readonly code: string,
@@ -22,11 +19,7 @@ export class AppError extends Error {
 /** Retry-After for a 429 that does not know how long the wait is (a daily cap, a velocity gate). */
 export const DEFAULT_RETRY_AFTER_SEC = 60;
 
-/**
- * An AppError's details may carry `retryAfterSec`. Seconds, whole, at least
- * one — a Retry-After of 0 reads as "immediately", which is never what a
- * lockout means.
- */
+/** The `retryAfterSec` an AppError's details may carry: whole seconds, at least one, since 0 reads as "immediately". */
 function retryAfterOf(details: unknown): number | null {
   if (typeof details !== 'object' || details === null) return null;
   const value = (details as { retryAfterSec?: unknown }).retryAfterSec;
@@ -35,18 +28,9 @@ function retryAfterOf(details: unknown): number | null {
 }
 
 /**
- * A Postgres refusal that is about what the request asked for rather than about
- * the server, as the status and code to answer it with; null for anything else.
- *
- * - 23503, a foreign key: the request named a row that is not there (a friend
- *   request to a user id nobody has, saving a word or congratulating an event
- *   that does not exist). The services look most of these up first; this
- *   catches the ones that let the constraint decide, which used to answer 500.
- * - class 22, a data exception: a value Postgres cannot take as its type (a
- *   date that is no date, a number out of range, text it cannot store).
- *
- * Only real driver errors count: they carry a five-character SQLSTATE and a
- * severity, which a Node system error (`EPIPE`) or a Fastify error does not.
+ * A Postgres refusal caused by the request's own values, as a status and code; null for anything else. 23503 (foreign
+ * key) means the request named a row that does not exist; class 22 (data exception) a value Postgres cannot take as
+ * its type. Only real driver errors count, which carry a five-character SQLSTATE and a severity.
  */
 export function databaseClientError(err: unknown): { statusCode: number; code: string; message: string } | null {
   if (typeof err !== 'object' || err === null) return null;
@@ -58,16 +42,11 @@ export function databaseClientError(err: unknown): { statusCode: number; code: s
 }
 
 /**
- * Standard error envelope: { code, message, details?, requestId }.
- *
- * - AppError            → its own status/code/message
- * - RequestValidationError → 400 VALIDATION_ERROR with per-field details
- *   (zod issue messages describe the expectation; raw input values are
- *   never echoed back)
- * - a Postgres refusal of the request's own values → 404 / 400 with a
- *   generic message (see databaseClientError)
- * - anything else       → 500 INTERNAL_ERROR; real message logged, but the
- *   response body is generic outside development (no stack/message leaks)
+ * The standard error envelope `{ code, message, details?, requestId }`:
+ * - AppError → its own status, code and message
+ * - RequestValidationError → 400 VALIDATION_ERROR with per-field details, never echoing input values
+ * - a Postgres refusal of the request's values → 404 or 400 with a generic message (databaseClientError)
+ * - anything else → 500 INTERNAL_ERROR, logged in full, with a generic body outside development
  */
 export function setupErrorHandling(app: FastifyInstance, config: AppConfig): void {
   app.addHook('onSend', async (req, reply) => {
@@ -81,8 +60,8 @@ export function setupErrorHandling(app: FastifyInstance, config: AppConfig): voi
   app.setNotFoundHandler((req, reply) => {
     void reply.code(404).send({
       code: 'NOT_FOUND',
-      // the apps tell "no such route" (an API older than the app) from a game
-      // that is gone by these words (@kurda/shared isMissingRoute)
+      // The apps tell "no such route" (an API older than the app) from a game that is gone by this message
+      // (@kurda/shared isMissingRoute).
       message: ROUTE_NOT_FOUND_MESSAGE,
       requestId: req.id,
     });
@@ -99,10 +78,7 @@ export function setupErrorHandling(app: FastifyInstance, config: AppConfig): voi
     }
 
     if (err instanceof AppError) {
-      // An error that knows how long to wait should say so where a client can
-      // see it. LOCKED works the number out exactly and puts it in details;
-      // both apps read the header and render a countdown from it, so without
-      // this the lockout is reported as a flat "try again later".
+      // An error that knows the wait sends it as Retry-After, which both apps count down from.
       const retryAfterSec = retryAfterOf(err.details);
       if (retryAfterSec !== null) reply.header('retry-after', String(retryAfterSec));
       return reply.code(err.statusCode).send({

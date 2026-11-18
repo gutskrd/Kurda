@@ -1,12 +1,7 @@
 /**
- * Removed or banned from a group, and asking to come back, against real
- * Postgres and through the routes the apps call (@kurda/shared
- * group-membership.ts): who may ban whom, how long a ban lasts and what
- * replaces it, that leaving just before a ban does not escape it, that a
- * removal leaves no ban, the add refused while banned, what a banned person
- * is still shown of a group nobody else outside it can see, requests that
- * cannot be used to pester the admins, and the lines in everyone's
- * notifications.
+ * Removed from or banned from a group, and asking to come back, against real Postgres through the apps' routes: who
+ * may ban whom, how long a ban lasts and what replaces it, leaving just before a ban, removal leaving no ban, adds
+ * refused while banned, what a banned person still sees, requests that cannot pester admins, and the notifications.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -59,7 +54,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
   const call = (tag: string, method: 'GET' | 'POST' | 'DELETE', url: string, payload?: object) =>
     app.inject({ method, url, headers: { authorization: `Bearer ${token[tag]}` }, ...(payload ? { payload } : {}), remoteAddress: ip() });
 
-  /** A group of `owner`'s with an admin and members: the owner's friends, added by the owner, as anyone comes into a group. */
+  /** A group of `owner`'s with an admin and members, the owner's friends, added by the owner. */
   async function group(owner: string, admin: string | null, members: string[]): Promise<string> {
     const { id: gid } = await groups.create(await person(owner), { name: `Ban ${suffix} ${++n}` });
     for (const tag of [...(admin ? [admin] : []), ...members]) await addFriendsToGroup(pool, gid, id[owner]!, await person(tag));
@@ -138,7 +133,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
       await ban('o3', gid, 'm5', { duration: '1d', reason: 'first' });
       await groups.requestToRejoin(id.m5!, gid, null);
       await groups.decline(id.o3!, gid, id.m5!, false);
-      // banned already and no longer a member: it may still be replaced
+      // Already banned and no longer a member, the ban can still be replaced.
       const again = await ban('o3', gid, 'm5', { duration: 'perm', reason: 'second' });
       expect(again.statusCode).toBe(200);
       expect(again.json().ban).toMatchObject({ until: null, reason: 'second' });
@@ -184,10 +179,10 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
       expect(await standing('m10', gid)).toMatchObject({ kind: 'banned', reason: null, request: { kind: 'can_ask' } });
 
       await pool.query(`UPDATE group_bans SET until = now() - interval '1 minute' WHERE group_id = $1 AND user_id = $2`, [gid, id.m10]);
-      // the ban has run out: they are out like anyone, so the group is no longer shown to them
+      // The ban has run out, so they are an outsider and the group is no longer shown to them.
       expect((await call('m10', 'GET', `/groups/${gid}`)).json().code).toBe('GROUP_NOT_FOUND');
       expect((await add('o6', gid, 'm10')).statusCode).toBe(200);
-      // cleaned up as it was met
+      // The expired ban was deleted when met.
       expect((await pool.query(`SELECT 1 FROM group_bans WHERE group_id = $1 AND user_id = $2`, [gid, id.m10])).rowCount).toBe(0);
     });
 
@@ -383,7 +378,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('lifts the ban but does not put them back when a rule keeps them out', async () => {
-      // someone comes into a group only through a friend who is its owner or an admin, and this admin is not theirs
+      // People join only through a friend who is the owner or an admin, and this admin is not their friend.
       const shut = await group('o18', 'a5', ['m26']);
       await ban('o18', shut, 'm26');
       await call('m26', 'POST', `/groups/${shut}/requests`, {});
@@ -395,7 +390,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
       expect(told!.body).toMatch(/^An admin can add you to Ban .* again\.$/);
       expect(told!.data).toMatchObject({ rejoined: 'false' });
       expect(told!.data).not.toHaveProperty('privacy');
-      // their friend the owner can add them now
+      // Their friend the owner can add them now.
       expect((await add('o18', shut, 'm26')).statusCode).toBe(200);
 
       // their own group limit, though the owner who lets them back is their friend

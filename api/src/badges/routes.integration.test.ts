@@ -1,7 +1,4 @@
-/**
- * Badges, leagues and progress over HTTP and on the profile, and in the data
- * export and a child's erase, against real Postgres.
- */
+/** Badges, leagues and progress over HTTP, on the profile, in the data export and in a child’s erase. */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

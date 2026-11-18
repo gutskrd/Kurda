@@ -1,13 +1,8 @@
 /**
- * A staff power outside the console asks what the console asks (integration).
- *
- * Posts, pictures and their comments are edited and taken down through the
- * routes every member uses, which let a staff role act on anybody's. Those
- * routes ask for no role, so the console's gate (admin/admin-gate.ts) never
- * saw them, and a staff password alone, with no code from the second step,
- * could rewrite or remove any member's post. A staff account now acts on
- * somebody else's only from a session that has entered its code; until then
- * it is what any member is, the author of its own and of nothing else.
+ * Staff powers outside the console ask what the console asks. Member routes let staff edit and remove anyone's posts,
+ * pictures and comments without asking for a role, so the console gate (admin/admin-gate.ts) never saw them. A staff
+ * account now acts on others' content only from a session that entered its two-step code; until then it is an
+ * ordinary member.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -104,7 +99,7 @@ describe.skipIf(!DATABASE_URL)('staff powers over the content of others (integra
     ];
     expect(refused.map((r) => r.statusCode)).toEqual(Array(refused.length).fill(403));
 
-    // and nothing was written
+    // And nothing was written.
     const post = await pool.query(`SELECT status, language FROM library_posts WHERE id = $1`, [c.post]);
     expect(post.rows[0]).toMatchObject({ status: 'published' });
     expect(post.rows[0].language).not.toBe('ckb');

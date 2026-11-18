@@ -114,8 +114,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
 
   it('lets anyone equip any built-in avatar, with or without premium', async () => {
     await pool.query(`UPDATE users SET premium_until = NULL WHERE id = $1`, [userA]);
-    // what used to be a premium-only key now equips on an account with no
-    // premium at all — the whole built-in range is free
+    // Every built-in avatar is free, so this equips without premium.
     await expect(cosmetics.equipAvatar(userA, 'default-02')).resolves.toBeUndefined();
     await expect(cosmetics.equipAvatar(userA, 'default-01')).resolves.toBeUndefined();
     // reset shared state for later tests
@@ -136,7 +135,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     for (const k of ['profilePhotoKey', 'selectedAvatarKey', 'premiumUntil', 'email']) {
       expect(body).not.toHaveProperty(k);
     }
-    // background is resolved (owned one equipped earlier) with a url, no `owned` flag
+    // The owned background equipped earlier comes back with a URL and no `owned` flag.
     if (body.background) {
       expect(body.background).toHaveProperty('url');
       expect(body.background).not.toHaveProperty('owned');
@@ -151,7 +150,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     const items = res.json().items as Array<{ sku: string; category: string; assetKey: string | null; assetUrl: string | null; premiumOnly: boolean }>;
     const iconItem = items.find((i) => i.sku === sku.icon);
     expect(iconItem).toMatchObject({ category: 'icon', assetKey: 'icons/i.png', assetUrl: '/cosmetics/icons/i.png', premiumOnly: true });
-    // backgrounds are web-static too now (no R2 dependency)
+    // Built-in backgrounds are served from the site, not object storage.
     const bgItem = items.find((i) => i.sku === sku.owned);
     expect(bgItem).toMatchObject({ category: 'background', assetUrl: '/cosmetics/backgrounds/o.png' });
   });

@@ -1,8 +1,6 @@
 /**
- * The pictures on written posts in someone's data, against real Postgres: a
- * closed account's go with its posts (and so do the uploads it never posted),
- * other people's stay, and evidence leaves the public bucket but is kept; an
- * export lists the posts with links to their pictures.
+ * Pictures on written posts in someone's data, against real Postgres: a closed account's go with its posts, as do
+ * its unposted uploads; other people's stay; evidence leaves the public bucket but is kept; an export links them.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -114,8 +112,7 @@ describe.skipIf(!DATABASE_URL)('pictures on posts in GDPR erase and export (inte
       remoteAddress: ip(),
     });
     expect((await pool.query(`SELECT confirmed_at FROM media_uploads WHERE key = $1`, [b])).rows[0].confirmed_at).not.toBeNull();
-    // and a picture post the way the installed apps make one: its upload is
-    // both the post's picture and one of theirs, and goes once
+    // A picture post as installed apps make one: its upload is both the post's picture and one of theirs, and goes once.
     const old = await upload(child);
     const picturePost = await app.inject({
       method: 'POST',
@@ -129,10 +126,8 @@ describe.skipIf(!DATABASE_URL)('pictures on posts in GDPR erase and export (inte
     const storage = new FakeStorage();
     for (const key of [a, b, old]) storage.upload(key);
     await new GdprService(pool, { storage: storage.asStorage }).closeNow(child.id, 'under_minimum_age');
-    // the report's snapshot holds both pictures of the reported post — the
-    // one still on it and the one taken off — so they are not deleted with
-    // the account but moved to private storage, no longer served; the old
-    // picture post's upload goes
+    // The report's snapshot holds both pictures of the reported post, so they move to private storage rather than
+    // being deleted; the old picture post's upload goes.
     expect(await stored([a, b, old])).toEqual([a, b].sort());
     for (const key of [a, b]) {
       expect(storage.publicObjects.has(key)).toBe(false);

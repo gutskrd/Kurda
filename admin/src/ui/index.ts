@@ -1,10 +1,10 @@
-/** The admin's component kit — one import for a page. */
+/** The console's component kit, one import for a page. */
 export { Badge, Banner, Button, Note, PageHeader, Section, Stat, VisuallyHidden, type Tone } from './basics';
 export { ConfirmDialog, Dialog, DialogProvider, useDialogs, type ConfirmOptions, type PromptOptions } from './Dialog';
 export { Drawer } from './Drawer';
 export { describeError, errorLine, type DescribedError, type ErrorKind } from './errors';
 export { Checkbox, Field, FieldRow, FormActions, Select, TextInput, Textarea } from './Field';
-export { useCountdown, useDebounced, useLoad, useMediaQuery, type Loaded } from './hooks';
+export { reducedMotion, useCountdown, useDebounced, useLoad, useMediaQuery, type Loaded } from './hooks';
 export { Icon, type IconName } from './icons';
 export { ActionMenu, type MenuItem } from './Menu';
 export { EmptyState, ErrorState, Loading } from './states';

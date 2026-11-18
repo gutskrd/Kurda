@@ -1,4 +1,4 @@
-/** Game cards in DMs and group chats (contract §B3 `sendCard`) against real Postgres. */
+/** Game cards in direct messages and group chats, against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
@@ -96,8 +96,7 @@ describe.skipIf(!DATABASE_URL)('game cards in chats (integration)', () => {
     expect(text).toMatchObject({ kind: 'text', game: null });
     expect((await chat.history(host, friend)).find((m) => m.id === text.id)).toMatchObject({ kind: 'text', game: null });
 
-    // the conversation list never prints a null preview for a card (installed
-    // phone builds print it): they get a short stand-in, the apps the kind
+    // Installed phone builds print the conversation preview as it is, so a card gets a short stand-in, never null.
     await chat.sendCard(host, friend, card());
     const convo = (await chat.conversations(friend)).find((c) => c.userId === host)!;
     expect(convo.lastMessage).toBe(PREVIEW_FALLBACK.game);
@@ -188,7 +187,7 @@ describe.skipIf(!DATABASE_URL)('game cards in chats (integration)', () => {
     await groupChat.mute(owner, gid, member, '1h');
     await expect(groupChat.sendCard(member, gid, card())).rejects.toMatchObject({ code: 'MUTED' });
 
-    // a deleted card is gone from the history's view of it
+    // A deleted card is gone from the history.
     await groupChat.deleteMessage(owner, gid, posted.id);
     expect((await groupChat.history(owner, gid)).messages.find((m) => m.id === posted.id)).toMatchObject({ deleted: true, game: null });
   });

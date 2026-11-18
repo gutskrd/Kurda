@@ -1,8 +1,6 @@
 /**
- * Daily quests against real Postgres, through the real routes: the day's three
- * made on the first look, moved by finished lessons and practice that were
- * learning, and their chests opened once for Zêr. And the streak's recent days
- * that a finished session's results carry for the week row.
+ * Daily quests through the real routes against real Postgres: the day's three made on first look, moved by learning
+ * lessons and practice, chests opened once for Zêr, and the streak days a session's results carry.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -38,7 +36,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
   let registered = 0;
   let courseId = '';
   let unitId = '';
-  /** three lessons alike, so playing each once never meets the repeat rule: two listening items, then two to translate */
+  /** Three similar lessons, so playing each once never meets the repeat rule: two listening items, then two to translate. */
   const lessons: Array<{ id: string; exercises: string[] }> = [];
 
   async function learner(tag: string, timezone = 'UTC'): Promise<Learner> {
@@ -81,7 +79,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
     return { sessionId, body: done.json() };
   }
 
-  /** A practice session over `ids` (a test to jump ahead with `jump`), every item answered right, finished. */
+  /** A finished practice session over `ids` (a jump-ahead test with `jump`), every item answered right. */
   async function playPractice(who: Learner, ids: string[], jump = false) {
     const practice = new PracticeService(pool);
     const session = await practice.begin(who.id, ids, jump ? { courseId, unitId, position: 1 } : undefined);
@@ -195,7 +193,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
         ['perfect', 1, false, true],
       ]);
 
-      // an hour and a half later it is November there, while still October in UTC: a new day, a new month
+      // An hour and a half later it is November there but still October in UTC: a new day and month.
       const next = await quests.today(kai.id, new Date('2026-10-31T16:30:00Z'));
       expect(next.date).toBe('2026-11-01');
       expect(next.monthDone).toBe(0);
@@ -359,7 +357,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
       const ivo = await learner('recent', 'Asia/Tokyo');
       const day = today('Asia/Tokyo');
       const lesson = lessons[0]!;
-      /** a lesson finished at noon on `on` (Tokyo), with `answered` of its four items answered that day */
+      /** A lesson finished at noon on `on` (Tokyo), with `answered` of its four items answered that day. */
       const finishedLesson = async (on: string, answered: number) => {
         const at = `${on}T03:00:00Z`;
         const s = await pool.query<{ id: string }>(

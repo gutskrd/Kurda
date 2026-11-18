@@ -104,7 +104,7 @@ describe('fetchFromAllowedHost', () => {
     expect([err.refused, err.reason]).toEqual([true, 'host']);
     expect(away.asked).toEqual(['https://media.test/a.mp3']);
 
-    // relative to where it was sent, and on an allowed host: followed
+    // Relative to where it was sent, and on an allowed host, so it is followed.
     const near = answering({ 'https://media.test/a.mp3': to('/b.mp3'), 'https://media.test/b.mp3': () => new Response('ID3') });
     expect(await (await fetchFromAllowedHost('https://media.test/a.mp3', { hosts, signal: signal(), fetch: near.fetchFn, lookup })).text()).toBe('ID3');
 

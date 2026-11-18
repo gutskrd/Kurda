@@ -7,19 +7,14 @@ export interface IpReputationResult {
 }
 
 /**
- * Provider-agnostic IP reputation lookup (datacenter / VPN / known-abuse lists).
- * Real providers (an external reputation API, a maintained CIDR list) implement
- * this seam; the auth boundary must degrade gracefully when a lookup throws or
- * times out — see {@link safeLookup}.
+ * Provider-agnostic IP reputation (datacenter, VPN, known-abuse lists). Real providers would implement this seam; the
+ * auth boundary must degrade gracefully when a lookup fails (see {@link safeLookup}).
  */
 export interface IpReputationProvider {
   lookup(ip: string): Promise<IpReputationResult>;
 }
 
-/**
- * Default provider: treats every IP as clean, non-shared. Used until a real
- * reputation source is configured, and it is also the safe fallback value.
- */
+/** A provider returning a fixed result (clean and non-shared by default), for tests and as the neutral case. */
 export class StaticIpReputationProvider implements IpReputationProvider {
   constructor(
     private readonly value: IpReputationResult = { reputation: 'clean', sharedNetwork: false },
@@ -33,9 +28,8 @@ export class StaticIpReputationProvider implements IpReputationProvider {
 const NEUTRAL: IpReputationResult = { reputation: 'clean', sharedNetwork: false };
 
 /**
- * Look up an IP, degrading to a neutral (clean, non-shared) result on any
- * provider error or absence. Per the issue's edge case: a reputation outage
- * must never hard-block signups — the decision falls back to velocity + CAPTCHA.
+ * Looks up an address, degrading to a neutral result (clean, non-shared) on any error or with no provider, so a
+ * reputation outage never hard-blocks sign-ups; velocity and CAPTCHA still apply.
  */
 export async function safeLookup(
   provider: IpReputationProvider | undefined,

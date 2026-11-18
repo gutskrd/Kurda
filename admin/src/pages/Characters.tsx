@@ -38,13 +38,13 @@ interface Job {
   name: JobName;
   status: 'running' | 'paused' | 'stopping' | 'done' | 'cancelled';
   total: number;
-  /** settled, saved or failed */
+  /** Settled, saved or failed. */
   done: number;
   saved: number;
   failures: Failure[];
-  /** waiting until then (Date.now() ms) because the server asked to slow down */
+  /** Waiting until then (Date.now() ms) because the server asked to slow down. */
   holdUntil: number | null;
-  /** the dictionary's list could not be read on: the job did what it had */
+  /** The dictionary's list could not be read on: the job did what it had. */
   problem: string | null;
 }
 
@@ -53,9 +53,9 @@ type Work = (r: VoiceRecording, signal: AbortSignal) => Promise<void>;
 type DictionaryCounts = DictionaryAudioAdminPage['counts'];
 
 interface Loaded {
-  /** lesson, story and alphabet recordings, read whole */
+  /** Lesson, story and alphabet recordings, read whole. */
   listed: VoiceRecording[];
-  /** the dictionary's, which are only counted here and read a page at a time by a job */
+  /** The dictionary's, which are only counted here and read a page at a time by a job. */
   dictionary: DictionaryCounts;
 }
 
@@ -81,7 +81,7 @@ async function loadRecordings(): Promise<Loaded> {
 function dictionarySource(filter: DictionaryFilter, keep: (r: VoiceRecording) => boolean, signal: AbortSignal): BatchSource<VoiceRecording> {
   return pagedSource(async (cursor) => {
     const page = await dictionaryPage(filter, cursor, { signal });
-    // the server filtered them; this only makes sure nothing else is touched
+    // The server filtered them; this only makes sure nothing else is touched.
     return { items: page.items.map(fromDictionary).filter(keep), nextCursor: page.nextCursor };
   });
 }
@@ -94,22 +94,10 @@ const COLUMNS: ReadonlyArray<Column<KindCounts>> = [
 ];
 
 /**
- * The Characters side of the audio studio: who is shown saying the
- * recordings, and the mouth timelines they move with.
- *
- * A recording made before the characters has no speaker, so a learner sees
- * no one say it; one given a character since, without being recorded again,
- * has no timeline, so the mouth is timed from the words alone. Two jobs put
- * both right in bulk: give every recording without a character one, and make
- * the missing timelines — each file read through the API and decoded in this
- * browser, as the studio does for a new take, and the timeline saved with it.
- *
- * Both work through two recordings at a time, can be paused and cancelled,
- * and set a failure aside to retry rather than stop. The dictionary's
- * pronunciations are read a page at a time as a job reaches them. When the
- * server asks for a pause, the job waits as long as it said and goes on.
- * Jobs touch only the recordings the filter picks; a timeline already made is
- * replaced only when the editor asks for it.
+ * The studio's Characters side: who is shown saying recordings and their mouth timelines. Two bulk jobs give a
+ * character to recordings without one and make missing timelines, decoding each file in the browser as for a new take.
+ * They run two at a time over the recordings the filter picks, can pause and cancel, set failures aside, and wait when
+ * the server asks; an existing timeline is replaced only on request.
  */
 export function Characters(): React.JSX.Element {
   const list = useLoad(loadRecordings, []);
@@ -122,7 +110,7 @@ export function Characters(): React.JSX.Element {
   const control = useRef<BatchControl | null>(null);
   const work = useRef<Work | null>(null);
 
-  // leaving the page stops the job: nothing is left running where no one can see it
+  // Leaving the page stops the job: nothing is left running where no one can see it.
   useEffect(() => () => control.current?.cancel(), []);
 
   const busy = job !== null && (job.status === 'running' || job.status === 'paused' || job.status === 'stopping');
@@ -218,7 +206,7 @@ export function Characters(): React.JSX.Element {
 
   const retry = (failures: Failure[]): void => {
     if (!job || !work.current) return;
-    // as the list has them now, not as they were when they failed
+    // As the list has them now, not as they were when they failed.
     const current = new Map((loaded?.listed ?? []).map((r) => [idOf(r), r]));
     const again = new Set(failures.map((f) => idOf(f.recording)));
     const items = failures.map((f) => current.get(idOf(f.recording)) ?? f.recording);
@@ -341,7 +329,7 @@ function JobPanel({
   const failed = job.failures.length;
   const running = job.status === 'running' || job.status === 'paused' || job.status === 'stopping';
   const waiting = job.status === 'running' && job.holdUntil !== null;
-  // the counts were taken when the page loaded; the job may find a few more
+  // The counts were taken when the page loaded; the job may find a few more.
   const total = Math.max(job.total, job.done);
   const saved = `${job.saved} saved${failed ? `, ${failed} failed` : ''}`;
   const status =

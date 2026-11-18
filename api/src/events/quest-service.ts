@@ -41,11 +41,7 @@ export type ClaimResult =
   | { ok: true; claimed: boolean; reward: { zer?: number; gems?: number } }
   | { ok: false; code: 'NO_EVENT' | 'NO_QUEST' | ClaimBlock };
 
-/**
- * Reads XP/games/lessons from the canonical ledgers, scoped to the event
- * window. Progress therefore always reflects the window, not when it was read —
- * final-second progress counts, and there's no per-action counter to drift.
- */
+/** Reads XP, games and lessons from their ledgers over the event window, so there is no per-action counter to drift. */
 export class DbQuestMetrics implements QuestMetrics {
   constructor(private readonly pool: pg.Pool) {}
 
@@ -59,9 +55,7 @@ export class DbQuestMetrics implements QuestMetrics {
   }
 
   async storyQuizzes(userId: string, fromIso: string, toIso: string): Promise<number> {
-    // story games finished in the window that counted as learning for this
-    // player — the same test that paid them XP, so a quiz left half-answered
-    // does not count here either
+    // Story games finished in the window that counted as learning, by the same test that paid them XP.
     const res = await this.pool.query<{ count: string }>(
       `SELECT COUNT(*)::int AS count FROM story_game_players p JOIN story_games g ON g.id = p.game_id
        WHERE p.user_id = $1 AND p.learning_counted AND g.finished_at >= $2 AND g.finished_at < $3`,
@@ -82,11 +76,9 @@ export class DbQuestMetrics implements QuestMetrics {
 }
 
 /**
- * Event quests + explicit reward claims (KUR-091). Progress is derived; only the
- * claim is stored. A claim pays Zêr/Gems in the same transaction as the claim
- * row insert, and the (user, event, quest) unique constraint makes paying twice
- * impossible even under a double-tap. Rewards remain claimable for a 72h grace
- * period after the event ends.
+ * Event quests and reward claims. Progress is derived; only the claim is stored. A claim pays Zêr or Gems in the
+ * same transaction as its row, and the (user, event, quest) unique constraint makes paying twice impossible even
+ * on a double tap. Rewards stay claimable for 72 hours after the event ends.
  */
 export class QuestService {
   constructor(
@@ -125,8 +117,7 @@ export class QuestService {
     const nowMs = this.now().getTime();
     const endsMs = Date.parse(event.endsAt);
 
-    // quests of one kind (more XP, more lessons) differ only in their target:
-    // each kind is counted once for all of them
+    // Quests of one kind differ only in their target, so each kind is counted once.
     const counted = new Map<QuestType, Promise<number>>();
     const metricOf = (type: QuestType): Promise<number> => {
       let m = counted.get(type);

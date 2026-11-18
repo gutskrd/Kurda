@@ -1,4 +1,4 @@
-/** Reactions & threaded comments on image/meme posts (KUR-291), via HTTP. */
+/** Reactions and threaded comments on image posts, over HTTP. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -122,8 +122,7 @@ describe.skipIf(!DATABASE_URL)('image reactions & comments (integration)', () =>
   it('says who wrote each comment and reply, including the one just posted', async () => {
     const made = await call('POST', `/images/${postId}/comments`, otherTok, { body: 'nice picture' });
     expect(made.statusCode).toBe(201);
-    // the byline comes back with the comment: without it a comment you just
-    // wrote sits there nameless until the page is reloaded
+    // The byline comes back with the comment, so a new comment is not nameless until a reload.
     expect(made.json().author.username).toBe(`ix_other_${suffix}`.slice(0, 30));
 
     const reply = await call('POST', `/images/${postId}/comments`, authorTok, {

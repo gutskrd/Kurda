@@ -13,38 +13,17 @@ import {
 } from '../social/engagement-service.js';
 
 /**
- * One wall for everything the community writes and posts.
- *
- * Stories, poems and pictures lived on three pages that were the same page three
- * times — same authors, same comments, same shape of card. Merging them is not
- * only tidier to look at: a poem posted this morning was invisible to anyone who
- * happened to be browsing pictures.
- *
- * Every query here goes through the same rule as the library and the picture
- * wall: what a minor posts is shown to them and their friends only
- * (users/age.ts `writtenForSql`). The wall, somebody's profile tabs and the
- * cards somebody liked are all ways of reading the same posts, and a byline on
- * any of them would be a way to find a minor.
- *
- * And none of them shows anything by somebody with a block between them and
- * the reader, whichever of the two placed it (friends/blocked.ts): a block
- * that left the other person's posts on your wall would not have done the one
- * thing it was for.
+ * One wall for stories, poems and pictures. Every query applies the library's rule that what a minor posts is shown
+ * only to them and their friends (users/age.ts `writtenForSql`), since a byline on any card would be a way to find
+ * a minor, and hides anything by someone with a block between them and the reader, in either direction
+ * (friends/blocked.ts).
  */
 
 /**
- * The wall has two halves and each has its own kinds.
- *
- * Gotin is what people write, Dîmen is what they photograph or make. They read
- * differently and are looked for differently, so the filter is two levels: pick
- * a half, then narrow it. `all` at either level means "do not narrow".
- *
- * A written post can carry pictures now, so the halves are about what a post
- * has rather than which table it is in: the Gotin half is posts with words
- * (not memes — a meme's words are its caption), the Dîmen half is posts with
- * pictures, old picture posts included. A photo with a paragraph under it is
- * in both. Photos (wene) are the pictured posts not marked as memes; Memes
- * (mim) are the ones that are, old and new.
+ * The wall's two halves and their kinds. Gotin is what people write and Dîmen what they photograph or make; pick a
+ * half, then narrow it, with `all` meaning no narrowing at either level. The halves are about what a post has, not
+ * its table: Gotin is posts with words (a meme's words are its caption, so not memes), Dîmen is posts with pictures,
+ * and a photo with a paragraph is in both. Photos (wene) are pictured posts not marked as memes; Memes (mim) are.
  */
 export const FEED_SECTIONS = ['all', 'gotin', 'dimen'] as const;
 export type FeedSection = (typeof FEED_SECTIONS)[number];
@@ -64,10 +43,8 @@ export function isFeedKind(v: string): v is FeedKind {
 }
 
 /**
- * Which half a kind belongs to, and what it is called in the database.
- *
- * A kind implies its half — asking for helbest inside Dîmen is a contradiction,
- * not an empty result, so the caller is told rather than quietly given nothing.
+ * Which half a kind belongs to and its database name. A kind implies its half, so helbest inside Dîmen is reported
+ * as a contradiction rather than an empty result.
  */
 export function resolveKind(
   section: FeedSection,
@@ -97,10 +74,7 @@ export interface FeedItem {
   title: string | null;
   /** the text, trimmed for a card — the full thing lives on the post's page */
   excerpt: string | null;
-  /**
-   * The first picture. Kept for the apps installed before posts had several:
-   * they show this one on the card, and the rest once they are updated.
-   */
+  /** The first picture, for apps installed before posts could have several. */
   imageUrl: string | null;
   /** the first picture's alt text — what a screen reader says for `imageUrl` */
   imageAlt: string | null;
@@ -141,11 +115,7 @@ const IMAGE_COLUMNS = `'image', i.id, i.author_id, i.category, NULL, i.caption,
 /** A written post with at least one picture. */
 const HAS_PICTURES = 'EXISTS (SELECT 1 FROM library_post_media pm WHERE pm.post_id = l.id)';
 
-/**
- * How each order sorts the wall. Every one ends on the post's time and then
- * its id, so two posts that tie still come in the same order on every page —
- * paging by offset depends on that.
- */
+/** Each order's sort. All end on the post's time and id, so ties keep the same order on every page for offset paging. */
 const ORDER: Record<FeedSort, string> = {
   newest: 'at DESC, id DESC',
   oldest: 'at ASC, id ASC',
@@ -153,25 +123,15 @@ const ORDER: Record<FeedSort, string> = {
   discussed: 'comment_count DESC, at DESC, id DESC',
 };
 
-/**
- * What "most popular" counts: a post's hearts and reposts, each person once,
- * and its comments. Worked out only when the wall is ranked by it — the
- * newest-first wall does not pay for a count it does not use.
- */
+/** "Most popular": hearts and reposts, one per person, plus comments; computed only when the wall is ranked by it. */
 const POPULARITY = `(SELECT count(*) FROM post_engagements e
                       WHERE e.target_type = wall.source AND e.target_id = wall.id
                         AND e.kind IN ('like', 'repost'))::int + wall.comment_count`;
 
 /**
- * Both tables, one shape, one ordering.
- *
- * A UNION rather than two queries merged in JavaScript: paging a merge done in
- * the client means over-fetching both sides to be sure of the boundary, and
- * getting it subtly wrong the first time someone posts two things in the same
- * second.
- *
- * The order is one of four fixed strings, never anything a request wrote, and
- * `$6` is how far back a ranked wall looks (null for all time).
+ * Both tables in one shape and one ordering. A UNION, because paging a merge done in code needs over-fetching both
+ * sides to find the boundary. The order is one of four fixed strings, and `$6` is how far back a ranked wall looks
+ * (null for all time).
  */
 const feedSql = (sort: FeedSort): string => `
   SELECT ${COLUMNS} FROM (
@@ -200,12 +160,7 @@ const feedSql = (sort: FeedSort): string => `
   ORDER BY ${Object.hasOwn(ORDER, sort) ? ORDER[sort] : ORDER.newest}
   LIMIT $3 OFFSET $4`;
 
-/**
- * The same shape as the wall, for a known set of posts.
- *
- * Saved posts arrive as pointers with no ordering the database can apply, so
- * this fetches them and the caller puts them back in the order they were saved.
- */
+/** The wall's shape for a known set of posts; the caller restores the order they were saved in. */
 const BY_IDS_SQL = `
   SELECT ${COLUMNS} FROM (
     SELECT ${LIBRARY_COLUMNS}
@@ -219,13 +174,7 @@ const BY_IDS_SQL = `
        AND ${notBlockedSql('i.author_id', '$3::uuid')}
   ) AS chosen`;
 
-/**
- * Everything one person published, newest first.
- *
- * Ordered and paged in SQL across both tables, so "their tenth post" means the
- * tenth of everything they wrote rather than the tenth of whichever table it
- * happened to come from.
- */
+/** Everything one person published, newest first, ordered and paged in SQL across both tables. */
 const BY_AUTHOR_SQL = `
   SELECT ${COLUMNS} FROM (
     SELECT ${LIBRARY_COLUMNS}
@@ -268,8 +217,7 @@ export class FeedService {
     } = {},
   ): Promise<FeedItem[] | null> {
     const resolved = resolveKind(opts.section ?? 'all', opts.kind ?? 'all');
-    // a kind that cannot live in the half asked for is a contradiction, and the
-    // caller should hear that rather than an empty wall
+    // A kind that cannot be in the half asked for is a contradiction, not an empty wall.
     if (!resolved.ok) return null;
 
     const limit = Math.min(50, Math.max(1, opts.limit ?? 20));
@@ -284,13 +232,7 @@ export class FeedService {
     return this.hydrate(rows.rows, viewerId, publicUrl);
   }
 
-  /**
-   * What you have saved, most recently saved first.
-   *
-   * Always your own: someone else's reading list is theirs, and the profile tab
-   * already covers what they have chosen to show. Posts that have since been
-   * removed simply drop out rather than leaving holes.
-   */
+  /** What you have saved, most recently saved first; posts since removed drop out. */
   async saved(
     userId: string,
     opts: { limit?: number; offset?: number; publicUrl?: PublicUrl } = {},
@@ -299,17 +241,8 @@ export class FeedService {
   }
 
   /**
-   * The posts one person liked, or saved — as whole posts.
-   *
-   * A profile used to show these as a line of text with a thumbnail beside it,
-   * which meant a picture arrived as a 40px square and a poem as an icon. The
-   * thing somebody liked is a post, so this returns the post.
-   *
-   * `viewerId` is who is *looking*, which is not the same person as `userId`
-   * when this fills somebody else's profile tab. Engagement is resolved for the
-   * viewer, so the heart on a card in your friend's likes tab reflects whether
-   * **you** liked it — passing the owner's id would paint every card as already
-   * liked and let a stranger act on it by mistake.
+   * The posts one person liked or saved, as whole posts. `viewerId` is who is looking, which differs from `userId` on
+   * somebody else's profile tab: engagement is resolved for the viewer, so a heart shows whether you liked it.
    */
   async engagedBy(
     userId: string,

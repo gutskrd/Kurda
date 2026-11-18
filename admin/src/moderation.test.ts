@@ -111,7 +111,7 @@ describe('the queue in the address', () => {
     const f = filtersFrom(new URLSearchParams(''));
     expect(queuePath(f)).toBe('/admin/moderation/queue?status=open&limit=50');
     expect(queuePath({ ...f, category: 'hate' }, 'abc')).toBe('/admin/moderation/queue?category=hate&status=open&limit=50&cursor=abc');
-    // a pasted search longer than the API takes is cut to fit, not refused with an error
+    // A pasted search longer than the API takes is cut to fit, not refused with an error.
     expect(new URLSearchParams(queuePath({ ...f, q: 'x'.repeat(500) }).split('?')[1]).get('q')).toHaveLength(QUEUE_Q_MAX);
   });
 
@@ -174,7 +174,7 @@ describe('a decision being put together', () => {
     expect(req.actions[2]).not.toHaveProperty('durationHours');
     expect(decisionRequest({ ...d, outcome: 'no_violation' }).removeContent).toBe(false);
     expect(decisionRequest(d, { confirmUsernames: ['heval'] }).confirmUsername).toBe('heval');
-    // two bans for good in one decision: each name goes, so each ban is confirmed by its own
+    // Two bans for good in one decision: each name goes, so each ban is confirmed by its own.
     const two = decisionRequest(d, { confirmUsernames: ['heval', 'dijmin'] });
     expect(two.confirmUsernames).toEqual(['heval', 'dijmin']);
     expect(two.confirmUsername).toBeUndefined();
@@ -216,10 +216,10 @@ describe('sanctions and history', () => {
   });
 
   it('says truthfully what lifting a sanction does', () => {
-    // a limit is lifted and the person told (the API sends the notice)
+    // A limit is lifted and the person told (the API sends the notice).
     expect(liftEffect('chat_mute', '@baran')).toBe('@baran is told it was lifted. What it stopped works again at once.');
     expect(liftEffect('permanent_ban', '@baran')).toMatch(/^@baran is told/);
-    // a warning or a removal only comes off the record: no notice, and removed content stays hidden
+    // A warning or a removal only comes off the record: no notice, and removed content stays hidden.
     expect(liftEffect('warning', '@baran')).toBe('It comes off @baran’s record; they are not told.');
     expect(liftEffect('content_removal', '@baran')).toMatch(/content stays hidden/);
   });

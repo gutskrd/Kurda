@@ -48,17 +48,11 @@ interface Row {
 }
 
 /**
- * Threaded text comments on image/meme posts (KUR-291), mirroring the library
- * comment model (KUR-283): unbounded reply tree via `parent_comment_id`, thread
- * loads top-level-first with per-branch load-more, soft-delete tombstones the node
- * so a removed parent keeps its subtree. Post `comment_count` and parent
- * `reply_count` are kept in step inside each mutation's transaction.
- *
- * A minor's comments are read by them and their friends only, as in the
- * library (users/age.ts `writtenForSql`), and nobody comments on a picture they
- * cannot see or replies to a comment they cannot read. A block hides each
- * person's pictures and comments from the other, as in the library
- * (friends/blocked.ts).
+ * Threaded comments on image posts, mirroring the library's model: an unbounded reply tree via `parent_comment_id`,
+ * top-level first with per-branch load-more, and soft deletes that leave a tombstone so a removed parent keeps its
+ * subtree. Post `comment_count` and parent `reply_count` are kept in step in each mutation's transaction. A minor's
+ * comments are read only by them and their friends (users/age.ts `writtenForSql`), nobody comments on what they
+ * cannot see, and a block hides each person's pictures and comments from the other (friends/blocked.ts).
  */
 export class ImageCommentService {
   constructor(private readonly pool: pg.Pool) {}
@@ -170,8 +164,7 @@ export class ImageCommentService {
     });
   }
 
-  /** Soft-delete: tombstone the node (content cleared, subtree preserved) and
-   *  decrement the post's visible comment count. Author or admin only. */
+  /** Soft delete: tombstones the comment, keeping its subtree, and decrements the visible count. Author or admin only. */
   async remove(commentId: string, actorId: string, actorIsAdmin: boolean): Promise<MutateResult> {
     return this.owned(commentId, actorId, actorIsAdmin, async (client, row) => {
       if (row.status === 'removed') return { ok: true as const, comment: toComment(row) };

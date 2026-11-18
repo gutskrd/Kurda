@@ -17,10 +17,8 @@ import type { LobbyFacts, LobbyPhase } from './types.js';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * Peyvok Battle and Rhyme Match keep their lobbies the same way — a game row,
- * a row per player — so the lobby rules they share (who may join, seats,
- * names, idle lobbies, what a chat card says) live here once, over either
- * pair of tables.
+ * Peyvok Battle and Rhyme Match keep lobbies the same way (a game row and a row per player), so their shared lobby
+ * rules (joining, seats, names, idle lobbies, chat cards) live here over either pair of tables.
  */
 export interface BattleTables {
   game: 'wordle-battle' | 'rhyme-match';
@@ -74,25 +72,15 @@ export function lobbyIdle(row: Pick<LobbyRow, 'status' | 'updated_at'>, now: Dat
   return row.status === 'lobby' && now.getTime() - row.updated_at.getTime() >= LOBBY_IDLE_MINUTES * 60_000;
 }
 
-/**
- * A game under way that has not been touched for this long is not held
- * against its host's limit: every game ends long before it, and one left
- * hanging by a failed sweep must not stop its host from playing.
- */
+/** A game untouched this long no longer counts against its host's limit; every game ends long before, so it was left by a failed sweep. */
 const HOSTED_ACTIVE_MINUTES = 120;
 
 /**
- * Room for one more game hosted by `hostId`, inside the transaction that
- * makes it: at most MAX_HOSTED_GAMES lobbies and games under way of this kind
- * that the host is still in, as Stories has always kept (story-games
- * `insertGame`). A new one beyond that closes the host's oldest lobby nobody
- * has started, and is refused (409 TOO_MANY_GAMES) only when every one of
- * them is being played. A lobby gone idle, which the sweep is about to close,
- * does not count.
- *
- * Under the host's lock for this game, taken before the closed lobby's row,
- * so two lobbies made at once cannot both find room. Returns the lobby it
- * closed, for the caller to announce once the transaction has committed.
+ * Room for one more game hosted by `hostId`, inside the transaction that makes it: at most MAX_HOSTED_GAMES lobbies
+ * and running games of this kind the host is still in. Beyond that the host's oldest unstarted lobby is closed, and
+ * 409 TOO_MANY_GAMES comes only when all are being played; idle lobbies do not count. Taken under the host's lock
+ * before the closed lobby's row, so two lobbies made at once cannot both find room. Returns the closed lobby for the
+ * caller to announce after the commit.
  */
 export async function makeRoomToHost(executor: Executor, t: BattleTables, hostId: string, now: Date): Promise<string | null> {
   await lockPersonFor(executor, `hosting:${t.game}`, hostId);
@@ -120,15 +108,14 @@ export function inGame(seats: readonly SeatRow[]): SeatRow[] {
   return seats.filter((s) => !s.removed);
 }
 
-/** Everyone in the game right now: not removed, not gone. */
+/** Everyone in the game now: not removed, not gone. */
 export function present(seats: readonly SeatRow[]): SeatRow[] {
   return seats.filter((s) => !s.removed && s.left_at === null);
 }
 
 /**
- * The only id another player is ever given for someone. Installed phone
- * builds key their rows by `userId` and compare it with their own, so the
- * field stays — holding the viewer's own id, and `seat:N` for everyone else.
+ * The only id another player is ever given for someone. Installed phone builds key rows by `userId` and compare it
+ * with their own, so the field holds the viewer's own id and `seat:N` for everyone else.
  */
 export function seatId(seat: number): string {
   return `seat:${seat}`;
@@ -143,11 +130,9 @@ export async function seatsOf(executor: Executor, t: BattleTables, id: string): 
 }
 
 /**
- * The seat a new player takes: the one after every seat the game has ever
- * handed out. Not after the seats still on record — leaving a lobby deletes
- * the row, and the next joiner would sit in the seat just left, so a host's
- * "remove seat 3" from a screen a moment old would take out somebody else.
- * Call it under the game row's lock (the join's FOR UPDATE).
+ * The seat a new player takes: after every seat ever handed out, not just those on record, since leaving deletes the
+ * row and a reused seat would make a host's stale "remove seat 3" remove someone else. Call it under the game row's
+ * lock.
  */
 export async function takeSeat(executor: Executor, t: BattleTables, id: string): Promise<number> {
   const res = await executor.query<{ seat: number }>(
@@ -183,10 +168,7 @@ export interface SeatPlayer {
   gone: boolean;
 }
 
-/**
- * The players, by seat, as `viewerId` may see them. The viewer's own name is
- * left for the client, which has it.
- */
+/** The players by seat as `viewerId` may see them; the viewer's own name is left to the client. */
 export async function seatPlayers(
   executor: Executor,
   row: LobbyRow,
@@ -265,11 +247,7 @@ export function unavailableCard(game: LobbyCard['game'], lobbyId: string): Lobby
   return { game, lobbyId, status: 'unavailable', players: 0, maxPlayers: 0, summary: {}, canJoin: false, isMember: false };
 }
 
-/**
- * A chat card for one of these games, as one viewer sees it: its live state to
- * members and to anyone the join rule lets in; 'unavailable' to everyone else
- * (contract §B3 `GET /play/cards`).
- */
+/** A chat card for one of these games as one viewer sees it: live state to members and anyone the join rule admits, 'unavailable' otherwise. */
 export async function lobbyCard(
   executor: Executor,
   t: BattleTables,
@@ -305,11 +283,7 @@ export async function lobbyCard(
   };
 }
 
-/**
- * Closes lobbies nobody started for LOBBY_IDLE_MINUTES (`finished_at` too, so
- * nothing that counts open games — the social rail's "playing now" — counts
- * them). Returns the ones it closed.
- */
+/** Closes lobbies nobody started within LOBBY_IDLE_MINUTES, setting `finished_at` so open-game counts skip them; returns those closed. */
 export async function cancelIdleLobbies(executor: Executor, t: BattleTables, now: Date): Promise<string[]> {
   const res = await executor.query<{ id: string }>(
     `UPDATE ${t.table} SET status = 'cancelled', finished_at = $1, updated_at = $1
@@ -339,10 +313,7 @@ export function tallySeries(
   return tally;
 }
 
-/**
- * The games of a run of rematches ending in `id`, newest first: each one's
- * `rematch_of` back to where it began (at most 100 games back).
- */
+/** The games of a rematch run ending in `id`, newest first, through `rematch_of` (at most 100 back). */
 export async function rematchChain(executor: Executor, t: BattleTables, id: string): Promise<string[]> {
   const res = await executor.query<{ id: string }>(
     `WITH RECURSIVE chain(id, rematch_of, depth) AS (

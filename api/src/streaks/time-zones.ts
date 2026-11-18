@@ -2,16 +2,10 @@ import type pg from 'pg';
 import { safeTimeZone } from './streak-logic.js';
 
 /**
- * Which time zones an account may be given: one the app's own date code can
- * use (Intl, `safeTimeZone`) and the database can too.
- *
- * Intl alone is not enough. It takes names Postgres has never heard of — old
- * abbreviations such as `BET` or `AET`, `SystemV/…` names, a bare `+0530`,
- * links the zone database has since dropped — and a stored one of those made
- * every query that reads the day in the account's zone fail, the hourly streak
- * reminders for everyone among them. Postgres's list is also not the same
- * everywhere: it is whatever zone files the server was built with, so the
- * list is read from the database itself rather than written down here.
+ * Which time zones an account may be given: ones both Intl (`safeTimeZone`) and the database accept. Intl takes names
+ * Postgres may not know (old abbreviations, `SystemV/…`, a bare `+0530`, dropped links), and one stored would fail
+ * every query of the account's day, the hourly reminders for everyone included. Postgres's list depends on how the
+ * server was built, so it is read from the database rather than written here.
  */
 
 /** The time zones each database knows, read once per pool: they change only with a new server. */

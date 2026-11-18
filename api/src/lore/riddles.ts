@@ -1,27 +1,13 @@
 /**
- * The Stories' riddles, for learners (routes.ts): a variety's published
- * riddles, one riddle's page, a hint at a time, a guess checked here, and the
- * answer when it is asked for.
+ * The Stories' riddles for learners: a variety's published riddles, a riddle's page, one hint at a time, guesses
+ * checked here, and the answer on request. Nothing that could spoil a riddle is sent early: lists and pages carry the
+ * question, its place and its hint count, never an untaken hint, the answer, accepted forms or the explanation. Only
+ * published, approved rows are read, and anything else is 404.
  *
- * Nothing is sent that would spoil a riddle before the learner asks for it:
- * a list and a riddle's page carry its question, its place in the collection
- * and how many hints it has, and never a hint not yet taken, the answer, the
- * forms it accepts or the explanation. A hint is one call; the answer comes
- * with a right guess or a reveal. Only published, approved rows are read, and
- * a riddle that is not one is 404, the same as one that never existed.
- *
- * Anybody may play, signed in or not. A visitor's hints, guesses and reveals
- * are answered and remembered nowhere: the app keeps them. A signed-in
- * learner's are kept (`riddle_progress`), and a riddle solved by a guess
- * before its answer was shown pays a little XP once (`riddleXp`, shared): a
- * game source under the league's daily cap, its ledger ref
- * `riddle:<contentId>:<userId>` so it can be paid only once whatever happens.
- * A riddle revealed first stays revealed, and solving it after pays nothing
- * and does not count as solved; a riddle solved stays solved.
- *
- * Every text a riddle has in another language is sent with it, whatever that
- * language's review says (content-translations.ts): the review is the record
- * of who read it.
+ * Anyone may play. A visitor's hints, guesses and reveals are kept by the app only; a signed-in learner's are stored
+ * (`riddle_progress`), and a solve by guess before any reveal pays a little XP once (`riddleXp`), as a game source
+ * under the league's daily cap with ledger ref `riddle:<contentId>:<userId>`. A revealed riddle stays revealed and
+ * solving it later pays nothing; a solved riddle stays solved. Every translation is sent whatever its review status.
  */
 import type pg from 'pg';
 import {
@@ -119,7 +105,7 @@ export class RiddleService {
     private readonly xp: XpService,
   ) {}
 
-  /** Published riddles (of a variety, or the one with a slug), each checked again as it is read: a row a rule now refuses is left out. */
+  /** Published riddles of a variety, or the one with a slug, each rechecked so a row a rule now refuses is left out. */
   private async riddles(where: { dialect: GameDialect } | { slug: string }, db: Pick<pg.Pool, 'query'> = this.pool): Promise<Riddle[]> {
     const res = await db.query<{ id: string; dialect: GameDialect; payload: unknown }>(
       'dialect' in where
@@ -195,10 +181,7 @@ export class RiddleService {
     return { riddle: { ...card(r, progress), hintsUsed: Array.from({ length: taken }, (_, i) => hint(r, i)) } };
   }
 
-  /**
-   * A learner's record of a riddle, locked for this change: made on first
-   * touch, so two requests at once are taken one after the other.
-   */
+  /** A learner's record of a riddle, locked for this change and created on first touch, so concurrent requests take turns. */
   private async lockProgress(client: pg.PoolClient, userId: string, contentId: string): Promise<Progress> {
     await client.query(`INSERT INTO riddle_progress (user_id, content_id) VALUES ($1, $2) ON CONFLICT (user_id, content_id) DO NOTHING`, [userId, contentId]);
     const res = await client.query<Progress>(
@@ -224,10 +207,8 @@ export class RiddleService {
   }
 
   /**
-   * One hint, by its place. A signed-in learner takes them in order (the
-   * second after the first), and the count is kept for what a solve pays; a
-   * hint already taken can be read again for nothing more, and once the
-   * riddle is solved or revealed any hint can be. A visitor's are not kept.
+   * One hint by its index. A signed-in learner takes them in order and the count affects pay; a taken hint can be read
+   * again, and any hint once the riddle is solved or revealed. A visitor's are not kept.
    */
   async hint(slug: string, index: number, userId: string | null): Promise<{ hint: RiddleHint }> {
     const r = await this.one(slug);
@@ -247,19 +228,15 @@ export class RiddleService {
   }
 
   /**
-   * A guess, checked by the shared rule (`riddleGuessMatches`). Right, it
-   * comes back with the answer; wrong, with how near it was when it was
-   * (`riddleGuessNear`: a word the riddle lists as near, a letter away, or
-   * the answer in the learner's own language, `locale`), and nothing more:
-   * a near guess reveals nothing. A signed-in learner's guesses before a
-   * solve or a reveal are counted, near ones too, and the first right one
-   * solves the riddle and pays.
+   * A guess, checked by the shared `riddleGuessMatches`. Right, it returns the answer; wrong, only how near it was
+   * (`riddleGuessNear`: a listed near word, one letter off, or the answer in the learner's `locale`), revealing nothing.
+   * A signed-in learner's guesses before a solve or reveal are counted, and the first right one solves and pays.
    */
   async guess(slug: string, text: string, userId: string | null, locale: AppLocale | null = null): Promise<RiddleGuessResult> {
     const r = await this.one(slug);
     const correct = riddleGuessMatches(text, [r.payload.answer, ...r.payload.accepted], r.dialect);
     const wrong = (): RiddleGuessResult => {
-      // the answer in a Kurdish interface's own language is the answer itself: only another language's is a near miss
+      // In a Kurdish interface the answer in its own language is the answer itself; only another language's is a near miss.
       const own = locale && locale !== 'ku' && locale !== 'ckb' ? r.translations[locale]?.answer : undefined;
       const near = riddleGuessNear(text, { answers: [r.payload.answer, ...r.payload.accepted], near: r.payload.near, translated: own ? [own] : [] }, r.dialect);
       return near ? { correct: false, near } : { correct: false };
@@ -267,7 +244,7 @@ export class RiddleService {
     if (!userId) return correct ? { correct: true, answer: answer(r), xp: 0 } : wrong();
     const xp = await this.tx(async (client) => {
       const p = await this.lockProgress(client, userId, r.id);
-      // once solved, or once its answer was shown, a guess changes nothing
+      // Once solved or revealed, a guess changes nothing.
       if (p.solved_at || p.revealed_at) return 0;
       const guesses = Math.min(p.guesses + 1, 32_000);
       if (!correct) {
@@ -287,7 +264,7 @@ export class RiddleService {
     return correct ? { correct: true, answer: answer(r), xp } : wrong();
   }
 
-  /** The answer, asked for. A signed-in learner's riddle is revealed from now on, unless they had already solved it. */
+  /** The answer on request; a signed-in learner's riddle is revealed from now on unless already solved. */
   async reveal(slug: string, userId: string | null): Promise<{ answer: RiddleAnswer }> {
     const r = await this.one(slug);
     if (userId) {

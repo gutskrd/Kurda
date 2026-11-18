@@ -1,14 +1,9 @@
 import { inCidr, parseCidr, type ParsedIp } from './ip.js';
 
 /**
- * The address ranges Cloudflare's edge connects to origins from.
- *
- * Cloudflare publishes these at https://www.cloudflare.com/ips-v4 and
- * https://www.cloudflare.com/ips-v6 (also as JSON from
- * https://api.cloudflare.com/client/v4/ips). They change rarely; refresh both
- * lists from there when they do. A range missing here only means requests
- * through it keep the old behaviour (the edge is the caller), never that
- * anything is believed that should not be.
+ * The ranges Cloudflare's edge connects to origins from, as published at https://www.cloudflare.com/ips-v4 and
+ * https://www.cloudflare.com/ips-v6. Refresh both when they change; a missing range only means its requests show the
+ * edge as the caller, never that anything untrusted is believed.
  */
 export const CLOUDFLARE_IPV4 = [
   '173.245.48.0/20',

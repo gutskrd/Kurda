@@ -10,10 +10,8 @@ import {
 } from './dashboards.js';
 
 /**
- * Format a pg `date` value (which node-postgres parses to a Date at *local*
- * midnight) back to YYYY-MM-DD without a timezone shift. `toISOString()` would
- * move the day on any server west/east of UTC; using the local components keeps
- * the calendar day pg gave us.
+ * Formats a pg `date` (parsed to local midnight) as YYYY-MM-DD from its local parts; `toISOString()` would shift
+ * the day on a server outside UTC.
  */
 function ymd(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -37,10 +35,9 @@ export interface RetentionPoint {
 }
 
 /**
- * Computes and serves the core dashboards (KUR-106). `refreshDay` is run by a
- * daily job: it materializes DAU/WAU/MAU, funnel step counts, and retention
- * cohorts into the rollup tables (counts only). The readers serve those rollups
- * by date range, so dashboards are cheap and survive user deletion.
+ * The core dashboards. A daily job runs `refreshDay`, which writes DAU/WAU/MAU, funnel counts and retention
+ * cohorts into rollup tables (counts only); the readers serve those by date range, so they are cheap and survive
+ * account deletion.
  */
 export class DashboardService {
   constructor(private readonly pool: pg.Pool) {}
@@ -51,9 +48,7 @@ export class DashboardService {
     try {
       await client.query('BEGIN');
 
-      // Every count that closes on `day`, worked out and written in two
-      // statements (the metrics, then the retention cohorts) rather than a
-      // read and a write for each of them.
+      // Every count that closes on `day`, in two statements: the metrics, then the retention cohorts.
       const windows = [['dau', 1], ['wau', 7], ['mau', 30]] as const;
       const steps = Object.entries(FUNNELS).flatMap(([name, list]) => list.map((step) => ({ metric: `funnel.${name}.${step}`, step })));
       await client.query(
@@ -87,9 +82,7 @@ export class DashboardService {
         ],
       );
 
-      // retention cohorts maturing on `day`: everyone who signed up that day,
-      // and those of them active on day N, both from server-side truth rather
-      // than client events
+      // Retention cohorts maturing on `day`, from signups and activity rows rather than client events.
       await client.query(
         `INSERT INTO analytics_retention (cohort_day, day_n, cohort_size, retained)
          SELECT c.cohort_day, c.day_n,
