@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { MeProfile, ProfileSection, ProfileSections } from '../lib/types';
+import type { ApiResult, ProfileSection, ProfileSections } from '../lib/types';
 import { PROFILE_SECTIONS } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 import { failureText, useOptimistic } from '../lib/optimistic';
@@ -17,14 +17,16 @@ const COPY: Record<ProfileSection, { labelKey: MessageKey; hintKey: MessageKey }
 };
 
 /**
- * Which activity sections the profile shows others, read from the public profile visitors see rather than /me. Each
- * toggle moves at once and saves by itself (lib/optimistic.ts); the API merges the keys it is sent, so only what differs
- * from what the server has is sent, and its answer replaces the shown choice.
+ * Which activity sections the profile shows others, from the public profile visitors see rather than /me, which the
+ * page reads (`own`; null while it does). Each toggle moves at once and saves by itself (lib/optimistic.ts); the API
+ * merges the keys it is sent, so only what differs from what the server has is sent, and its answer replaces the shown
+ * choice.
  */
-export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
+export function SectionToggles({ own }: { own: ApiResult<{ sections?: ProfileSections | null }> | null }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
-  const [loaded, setLoaded] = useState<ProfileSections | null>(null);
+  const loaded = own?.ok ? (own.data.sections ?? null) : null;
+  const unread = own === null ? null : own.ok ? (own.data.sections ? null : t('edit.sections.failed')) : describeError(own.error, t);
   const [error, setError] = useState<string | null>(null);
   const [sections, want] = useOptimistic<ProfileSections | null, { sections: ProfileSections }>(
     loaded,
@@ -35,19 +37,6 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
       ),
     { fromAnswer: (data) => data.sections, onFailed: (refusal) => setError(failureText(refusal, t)) },
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const res = await client.get<{ sections?: ProfileSections | null }>(`/users/${me.id}`);
-      if (cancelled) return;
-      if (res.ok && res.data.sections) setLoaded(res.data.sections);
-      else setError(res.ok ? t('edit.sections.failed') : describeError(res.error, t));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [client, me.id, t]);
 
   function toggle(key: ProfileSection, next: boolean): void {
     setError(null);
@@ -61,7 +50,7 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
         {t('edit.sections.help')}
       </p>
 
-      {error && <div className="msg msg-error" role="status">{error}</div>}
+      {(error ?? unread) && <div className="msg msg-error" role="status">{error ?? unread}</div>}
 
       {sections === null ? (
         <p className="muted">{t('common.loading')}</p>

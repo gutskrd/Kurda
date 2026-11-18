@@ -3,31 +3,37 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SectionToggles } from './SectionToggles';
 import { renderApp, jsonResponse } from '../test/utils';
-import type { MeProfile } from '../lib/types';
+import type { ProfileSections } from '../lib/types';
 
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
 });
 
-const me = { id: 'u1', username: 'ada' } as unknown as MeProfile;
-const ALL = { posts: true, games: true, likes: true, saved: true };
+const ALL = { posts: true, games: true, likes: true, saved: true } as unknown as ProfileSections;
+/** The page's read of your own public profile. */
+const own = (sections: Partial<ProfileSections>) => ({ ok: true as const, data: { sections: sections as ProfileSections } });
 
 describe('SectionToggles', () => {
   it('reflects what the profile actually shows, read from the public profile', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => jsonResponse(200, { sections: { ...ALL, saved: false } })),
-    );
-    renderApp(<SectionToggles me={me} />);
+    const fetch = vi.fn(async (_url: string) => jsonResponse(200, {}));
+    vi.stubGlobal('fetch', fetch);
+    renderApp(<SectionToggles own={own({ ...ALL, saved: false })} />);
 
     expect(await screen.findByRole('checkbox', { name: /^Posts/ })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: /^Saved/ })).not.toBeChecked();
+    // the page has read the profile already: nothing is asked again here
+    expect(fetch.mock.calls.filter(([url]) => String(url).includes('/users/'))).toEqual([]);
+  });
+
+  it('says so when the page could not read them, and shows no boxes', async () => {
+    renderApp(<SectionToggles own={{ ok: false, error: { kind: 'server', message: 'down', status: 503 } }} />);
+    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).toBeNull();
   });
 
   it('offers a switch for what you have liked and saved', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { sections: { ...ALL, likes: false } })));
-    renderApp(<SectionToggles me={me} />);
+    renderApp(<SectionToggles own={own({ ...ALL, likes: false })} />);
 
     // Liking in public and listing likes on the profile are separate choices with separate switches.
     expect(await screen.findByRole('checkbox', { name: /^Likes/ })).not.toBeChecked();
@@ -47,7 +53,7 @@ describe('SectionToggles', () => {
         return jsonResponse(200, { sections: ALL });
       }),
     );
-    renderApp(<SectionToggles me={me} />);
+    renderApp(<SectionToggles own={own(ALL)} />);
 
     await userEvent.click(await screen.findByRole('checkbox', { name: /^Likes/ }));
 
@@ -67,7 +73,7 @@ describe('SectionToggles', () => {
         return jsonResponse(200, { sections: ALL });
       }),
     );
-    renderApp(<SectionToggles me={me} />);
+    renderApp(<SectionToggles own={own(ALL)} />);
 
     await userEvent.click(await screen.findByRole('checkbox', { name: /Games/ }));
 
@@ -85,7 +91,7 @@ describe('SectionToggles', () => {
         return jsonResponse(200, { sections: ALL });
       }),
     );
-    renderApp(<SectionToggles me={me} />);
+    renderApp(<SectionToggles own={own(ALL)} />);
 
     await userEvent.click(await screen.findByRole('checkbox', { name: /^Games/ }));
     await userEvent.click(screen.getByRole('checkbox', { name: /^Posts/ }));

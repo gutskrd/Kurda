@@ -97,7 +97,16 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
  * a filter, search and sort. The server authorizes everything: the client sends a SKU to equip and the expected price
  * to buy, which is refused if the catalogue changed.
  */
-export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
+export function CosmeticCustomizer({
+  me,
+  frameSku,
+  onChanged,
+}: {
+  me: MeProfile;
+  /** The frame worn, which /me does not say: the page reads it from your own public profile. */
+  frameSku: string | null;
+  onChanged: () => void;
+}): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const locale = useLocale();
@@ -105,12 +114,6 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
   const [shop, setShop] = useState<ShopItem[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [balances, setBalances] = useState<Partial<Record<Currency, number>>>({});
-  const [equipped, setEquipped] = useState<Record<Wearable, string | null>>({
-    background: me.equippedBackgroundSku ?? null,
-    icon: me.equippedIconSku ?? null,
-    // read from your own public profile once you are known to own a frame
-    frame: null,
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -129,11 +132,6 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     if (inv.ok) setInventory(inv.data.items ?? []);
     if (w.ok) setBalances({ zer: w.data.balances?.zer, gems: w.data.balances?.gems });
     if (!s.ok && !inv.ok) setError(describeError(s.ok ? inv.error : s.error, t));
-    // /me does not say which frame is worn; your own public profile does, as on the season page
-    if (inv.ok && (inv.data.items ?? []).some((i) => itemCategory(i.category) === 'frame')) {
-      const p = await client.get<{ frameSku?: string | null }>(`/users/${me.id}`);
-      if (p.ok) setEquipped((e) => ({ ...e, frame: p.data.frameSku ?? null }));
-    }
   }
 
   useEffect(() => {
@@ -168,9 +166,9 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
   const icon = wearing('icon');
   const frame = wearing('frame');
   const lines = {
-    background: useOptimistic(equipped.background, background.send, background.options),
-    icon: useOptimistic(equipped.icon, icon.send, icon.options),
-    frame: useOptimistic(equipped.frame, frame.send, frame.options),
+    background: useOptimistic(me.equippedBackgroundSku ?? null, background.send, background.options),
+    icon: useOptimistic(me.equippedIconSku ?? null, icon.send, icon.options),
+    frame: useOptimistic(frameSku, frame.send, frame.options),
   };
   const worn: Record<Wearable, string | null> = { background: lines.background[0], icon: lines.icon[0], frame: lines.frame[0] };
   const [iconEnabled, wantIconEnabled] = useOptimistic(me.premiumIconEnabled ?? true, (enabled) => client.put('/me/cosmetics/icon/visibility', { enabled }), {
