@@ -16,19 +16,16 @@ interface Props {
   text: string;
   onChangeText: (text: string) => void;
   disabled: boolean;
-  /** the course's variety of Kurdish, for the key bar */
+  /** The course's variety of Kurdish, for the key bar. */
   dialect?: string | null;
-  /** how the answer was graded, once it has been */
+  /** How the answer was graded, once it has been. */
   verdict?: 'right' | 'wrong' | null;
 }
 
 /**
- * Free-text writing with the Kurdish key bar (KUR-037), in the course's variety.
- *
- * An item that says what it asks (`ask`) has its line alone in a bubble
- * beside its character (`AskScene`): an English line to write in Kurdish
- * ('to-kurdish'), or a Kurdish one with a gap ('missing'), where the word
- * being typed stands in the gap as it is typed, and the field is one line.
+ * Free-text writing with the Kurdish key bar, in the course's variety. An item with `ask` puts its line alone in a
+ * bubble beside its character (`AskScene`): English to write in Kurdish ('to-kurdish'), or Kurdish with a gap
+ * ('missing'), where the typed word fills the gap and the field is one line.
  */
 export function WritingExercise({ exercise, text, onChangeText, disabled, dialect, verdict = null }: Props) {
   const { colors } = useTheme();
@@ -72,11 +69,11 @@ export function WritingExercise({ exercise, text, onChangeText, disabled, dialec
 
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
-  // the question, under the headline that says what to do with it
+  // The question, under the headline that says what to do with it.
   prompt: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
-  // the field's card, edge and face are the answer box's own (KurdishAnswerInput)
+  // The field's card, edge and face match the answer box (KurdishAnswerInput).
   input: { minHeight: 96, paddingVertical: spacing.md, paddingHorizontal: spacing.md, textAlignVertical: 'top' },
-  // one word, for a gap: one line, a fingertip tall
+  // One word for a gap: one line, a fingertip tall.
   word: { minHeight: MIN_TOUCH_TARGET + 8, paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.md },
   dim: { opacity: 0.6 },
 });

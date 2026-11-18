@@ -27,48 +27,37 @@ interface Props {
   choice: number | null;
   onSelect: (index: number) => void;
   disabled: boolean;
-  /** the verdict, once the answer is graded; null while choosing */
+  /** The verdict once graded; null while choosing. */
   feedback?: Feedback | null;
-  /** the course's variety of Kurdish, so a Soranî conversation reads right to left */
+  /** The course's variety of Kurdish, so a Soranî conversation reads right to left. */
   dialect?: string | null;
 }
 
 /**
- * Each part's colour, by its place in the conversation: four of the monogram
- * colours (profile/initials.ts), which are drawn under white letters in both
- * themes. Not their green or their red, which a lesson keeps for right and wrong.
+ * Each part's colour by its place: four monogram colours (profile/initials.ts) that carry white letters in both
+ * themes, skipping green and red, which a lesson keeps for right and wrong.
  */
 const PART_COLOURS = [AVATAR_COLORS[1], AVATAR_COLORS[4], AVATAR_COLORS[2], AVATAR_COLORS[7]] as const;
 
-/** How much of a part's colour washes its bubbles, as a hex alpha: more on the dark page, where the colours are darker than it. */
+/** How strongly a part's colour washes its bubbles, as hex alpha; more on the dark page. */
 const WASH = { light: '1F', dark: '3D' } as const;
 
 /** The initial beside each line. */
 const FACE = 40;
 
-/** The round play button in a bubble, drawn smaller than a fingertip and reaching one: the Pressable works its reach out from the size its style says. */
+/** A bubble's play button, drawn smaller than a fingertip; the Pressable computes its reach from this size. */
 const PLAY = 36;
 
 const NONE: readonly never[] = [];
 
 /**
- * A conversation, and then a question about it.
+ * A conversation, then a question about it. Lines read as a chat: the first part's at the line start and others' at
+ * the end, each in its own colour with an initial, so name, side and colour all tell who is talking. Recorded lines
+ * have play buttons, and "Play conversation" plays them in order, highlighting each.
  *
- * The lines read as a chat: the first part's at the start of the line and
- * everybody else's at the end, each part's bubbles in its own colour with its
- * initial beside them, so who is talking is told by the name, the side and the
- * colour together. A recorded line has its own play button, and "Play
- * conversation" plays every recorded line in order, lighting each bubble as it
- * is heard.
- *
- * Above the lines, when every part is played by a character, the characters
- * stand together on one stage looking at each other (`ConversationStage`):
- * whoever says the line being heard says it, lip-synced to the sound, and the
- * others look at them. A line is always said by its own part's character,
- * whichever voice its recording was saved under.
- *
- * The question is asked, and answers back once graded, exactly as a
- * multiple-choice item's is: it is one (`MultipleChoiceExercise`).
+ * When every part has a character, they stand together on one stage (`ConversationStage`), the speaker lip-synced
+ * and the others looking at them; a line is always said by its own part's character. The question is a
+ * `MultipleChoiceExercise`.
  */
 export function ConversationExercise({ exercise, choice, onSelect, disabled, feedback = null, dialect }: Props) {
   const { colors } = useTheme();
@@ -85,11 +74,11 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
   const listenable = canPlayAudio() && lineAudio.some((url) => !!url);
   const meanings = lines.some((line) => !!line.en);
   const playingAll = !!audio.turn?.all;
-  // Kurdish in its own direction, whatever language the app is read in
+  // Kurdish in its own direction, whatever the app's language.
   const sorani = isSoraniDialect(dialect ?? exercise.dialect);
   const kurdish = sorani ? styles.rtl : styles.ltr;
   const wash = colors.scheme === 'dark' ? WASH.dark : WASH.light;
-  // the characters playing the parts, when every part has one, to stand on the stage
+  // The characters playing the parts, when every part has one.
   const staged = conversationCast(speakers) !== null;
 
   return (
@@ -102,7 +91,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
       ) : null}
 
       {staged ? (
-        // the same way round as the bubbles below: the first part stands on the side its lines start from
+        // Ordered like the bubbles: the first part stands on its lines' starting side.
         <ConversationStage
           speakers={speakers}
           lines={lines}
@@ -112,7 +101,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
           playing={audio.playing}
           player={audio.clock}
           rtl={mirrored}
-          // they are all pleased with a right answer, and think a wrong one over with you
+          // All are pleased with a right answer, and think a wrong one over with you.
           reaction={feedback ? (feedback.accepted ? 'cheer' : 'hmm') : null}
         />
       ) : null}
@@ -142,17 +131,17 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
       <View style={styles.lines}>
         {lines.map((line, i) => {
           const yours = speakers[line.speaker]?.learner === true;
-          // the learner's own part is named in their language, a character in Kurdish
+          // The learner's own part is named in their language, a character in Kurdish.
           const name = yours ? t('lesson.conversation.you') : (speakers[line.speaker]?.name ?? '');
-          // four parts at most, each in its own colour; anything out of range reads as the first, as in the browser
+          // At most four parts, each in its colour; anything out of range reads as the first, as on the website.
           const part = line.speaker > 0 && line.speaker < PART_COLOURS.length ? line.speaker : 0;
-          // the learner's lines are theirs: across from the first part, in the colour of a message they sent
+          // The learner's lines sit across from the first part, in the colour of a sent message.
           const first = part === 0 && !yours;
           const tint = yours ? colors.bubbleMine : (PART_COLOURS[part] ?? PART_COLOURS[0]);
           const url = listenable ? lineAudio[i] : null;
           const heard = audio.turn?.line === i;
           const sounding = heard && audio.playing;
-          // the first part's initial at the start of the line and everybody else's at the end, whichever side that is
+          // The first part's initial at the line start and everyone else's at the end.
           const row = first ? dir.row : mirrored ? 'row' : 'row-reverse';
           return (
             <View key={i} style={[styles.row, { flexDirection: row }, first !== mirrored ? styles.rowStart : styles.rowEnd]}>
@@ -167,7 +156,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
                 testID={heard ? 'conversation-heard' : undefined}
                 style={[styles.bubble, { flexDirection: dir.row, backgroundColor: `${tint}${wash}`, borderColor: heard ? colors.gold : 'transparent' }]}
               >
-                {/* who says it, what they say and what it means, read out as one */}
+                {/* Speaker, words and meaning, read as one. */}
                 <View accessible style={styles.said}>
                   <Text style={[styles.name, yours ? null : kurdish, { color: colors.textSecondary }]}>{name}</Text>
                   <Text style={[styles.text, kurdish, { color: colors.textPrimary }]}>{line.text}</Text>
@@ -183,7 +172,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
                       { backgroundColor: colors.controlTrack, borderColor: sounding ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 },
                     ]}
                   >
-                    {/* the speaker points the same way in every language */}
+                    {/* The speaker icon points the same way in every language. */}
                     <Icon name="speaker" size={18} color={sounding ? colors.goldText : colors.primary} />
                   </Pressable>
                 ) : null}
@@ -198,34 +187,30 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
   );
 }
 
-/** One line asked for, and whether the rest of the conversation follows it. */
+/** A requested line, and whether the rest of the conversation follows it. */
 interface Turn {
   line: number;
   all: boolean;
-  /** which asking it is: the same line asked for twice is two turns */
+  /** Counts requests, so the same line asked for twice is two turns. */
   n: number;
 }
 
-/** The first line from `from` on that has a recording, or null. */
+/** The first line from `from` on with a recording, or null. */
 function nextRecorded(lineAudio: ReadonlyArray<string | null>, from: number): number | null {
   for (let i = from; i < lineAudio.length; i++) if (lineAudio[i]) return i;
   return null;
 }
 
 /**
- * The conversation's recordings through the lesson's one player (useAudio), so
- * only one sounds at a time and the sound stops when the exercise goes: a line
- * on its own, or every recorded line from the first, in order.
- *
- * A line plays as soon as its recording has loaded, and its turn is over when
- * the player stops after playing it — or cannot play it at all, which passes
- * on to the next rather than holding the conversation up.
+ * The conversation's recordings through the lesson's one player (useAudio), so one sounds at a time and sound stops
+ * when the exercise goes: a single line, or every recorded line in order. A line plays once loaded, and its turn
+ * ends when the player stops, or when it cannot play, which moves on rather than stalling.
  */
 function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
   turn: Turn | null;
-  /** the line playing now, or else the one heard last; null before any has been asked for */
+  /** The line playing now, or the one heard last; null before any was requested. */
   at: number | null;
-  /** the line's recording is sounding now */
+  /** The line's recording is sounding now. */
   playing: boolean;
   clock: PlaybackClock | null;
   source: string | null;
@@ -234,15 +219,15 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
   stop: () => void;
 } {
   const [turn, setTurn] = useState<Turn | null>(null);
-  // the line heard last, kept once its turn is over: the stage still shows who said it
+  // The last line heard, kept after its turn so the stage still shows who said it.
   const [last, setLast] = useState<number | null>(null);
   const url = turn ? (lineAudio[turn.line] ?? undefined) : undefined;
   const { source, playing, error, clock, play } = useAudio(url);
   const asked = useRef(0);
-  // the turn its recording was set playing for, and whether it has been heard playing since
+  // The turn its recording was started for, and whether it has been heard playing since.
   const started = useRef(0);
   const heard = useRef(false);
-  // the recording the player had when this last looked: a failure is the old one's until the player has moved on
+  // The recording the player had last time: a failure belongs to the old one until the player moves on.
   const loaded = useRef<string | undefined>(undefined);
 
   const ask = useCallback((line: number | null, all: boolean) => {
@@ -273,7 +258,7 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
       if (!heard.current) return;
     }
     heard.current = false;
-    // the next recorded line follows when the whole conversation is playing
+    // The next recorded line follows when the whole conversation is playing.
     const next = turn.all ? nextRecorded(lineAudio, turn.line + 1) : null;
     setTurn(next === null ? null : { line: next, all: true, n: ++asked.current });
   }, [turn, url, playing, error, lineAudio]);
@@ -311,7 +296,7 @@ const styles = StyleSheet.create({
   },
   said: { flexShrink: 1, gap: 2 },
   name: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  // what is said, in the display face the lesson's Kurdish is set in
+  // What is said, in the lesson's Kurdish display face.
   text: { ...display(typography.sizes.md + 1) },
   meaning: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   play: { width: PLAY, height: PLAY, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },

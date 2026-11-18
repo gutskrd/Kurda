@@ -49,33 +49,33 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
 import type { Streak } from '../types';
 
-/** Room the flame's screen keeps for the day's number, its words and the line under them, and round the fire; and the most it gives the fire. */
+/** Room the flame screen keeps for the day's number, its words and the line under them; and the fire's maximum size. */
 const FLAME_WORDS = 330;
 const FLAME_MOST = 400;
-/** The ring that bursts out of the fire as it lights, and the glow behind it. */
+/** The ring that bursts from the fire as it lights, and the glow behind it. */
 const RING = 168;
 const GLOW = RING * 1.6;
-/** The day's number on the flame's screen. */
+/** The day's number on the flame screen. */
 const NUMBER = 112;
-/** The streak's medal, which stands half over the top edge of the streak's card, and the point it squashes onto and hops off: its foot. */
+/** The streak medal, standing half over the card's top edge; it squashes and hops about its foot. */
 const MEDAL = 132;
 const MEDAL_FOOT = '50% 88%';
-/** The ring that bursts out of the medal as it turns to gold, the light behind it for that moment, and how far its flecks fly. */
+/** The ring that bursts from the medal as it turns gold, the light behind it, and how far its flecks fly. */
 const MEDAL_RING = 150;
 const MEDAL_GLOW = 240;
 const MEDAL_REACH = 120;
-/** A day of the week: its medal or its date. */
+/** A week day's medal or date. */
 const DAY = 36;
-/** How long the number takes to roll on, the streak's words to take their full ink, today's medal to pop in and the card to open. */
+/** Durations: the number's roll, the words reaching full ink, today's medal popping in, and the card opening. */
 const ROLL_MS = 480;
 const INK_MS = 260;
 const DAY_POP_MS = 520;
 const OPEN_MS = 240;
-/** How quiet the streak's words are while they are still yesterday's. */
+/** The streak words' opacity while they still show yesterday. */
 const YESTERDAY_INK = 0.45;
-/** How long after what stands under the card arrives the freeze bar starts to fill. */
+/** The delay after the content under the card arrives before the freeze bar fills. */
 const FREEZE_AFTER_MS = 260;
-/** The lit medal's slow ride up and down, and the sparks that rise off it now and then: how long each takes, and where each spark goes. */
+/** The lit medal's slow float and the occasional sparks off it: durations, and where each spark goes. */
 const FLOAT_MS = 3400;
 const FLOAT_RISE = 3;
 const SPARK_MS = 2600;
@@ -86,7 +86,7 @@ const SPARKS = [
   { dx: 6, size: 3, afterMs: 1900 },
 ] as const;
 
-/** Hevalo's words, by the day the streak was kept and which of its two lines (shared `streakSpeech`). */
+/** Hevalo's two lines per kind of day (shared `streakSpeech`). */
 const SPEECH: Record<StreakMood, readonly [TranslationKey, TranslationKey]> = {
   start: ['lesson.streak.say.start0', 'lesson.streak.say.start1'],
   comeback: ['lesson.streak.say.comeback0', 'lesson.streak.say.comeback1'],
@@ -95,48 +95,26 @@ const SPEECH: Record<StreakMood, readonly [TranslationKey, TranslationKey]> = {
 };
 
 /**
- * The streak kept today, after the results: shown when this lesson was the
- * first today, on the way to whichever way on the learner chose.
+ * The streak kept today, shown after the results of the day's first lesson on the way to whichever way on was
+ * chosen.
  *
- * On the day the fire grew (shared `flameMoment`) the flame comes first, on
- * a screen of its own. It opens dim and cool on yesterday, the fire as it was
- * and yesterday's number, and then the fire lights (shared `FLAME_IGNITE`):
- * it squashes and pops up, a ring of gold bursts out of it, the warm light
- * floods out from it over the screen, a few sparks fly, the day's number
- * rolls on to today's, and the pop leaps on up into the fire's new stage,
- * felt and heard as that lands, with a line under the day saying what it grew
- * into. It stays until the line has been read; a tap moves on sooner.
+ * On a day the fire grew (shared `flameMoment`) a flame screen comes first: it opens dim on yesterday's fire and
+ * number, then the fire lights (shared `FLAME_IGNITE`) with a gold ring, a flood of warm light and sparks, the number
+ * rolls to today's, and the fire grows into its new stage with a haptic and sound, captioned with what it became. It
+ * stays until read; a tap moves on sooner.
  *
- * Then, and on every other day straight away, the streak itself, on one
- * card: the streak's medal standing half over its top edge, the streak in
- * words, a few words from Hevalo about the day (a first day, a comeback, a
- * longest run yet, or another day) and the week, each day a small medal if it
- * was learned and its date if it is still to come. Under the card are the
- * fire's stage with the next one and how near the next freeze is, and one
- * button — "See you tomorrow" once today's goal is done.
+ * Then, or straight away on other days, one card: the medal half over its top edge, the streak in words, Hevalo's
+ * words about the day, and the week as medals for learned days and dates for days to come. Under it, the fire's
+ * stage and the next, the freeze progress, and one button. The card animates in (shared `streakReveal`): the grey
+ * medal hops and turns gold in the app's one celebration as the number rolls on, then the rest arrives in turn; a tap
+ * finishes it at once.
  *
- * The card comes alive as it opens (shared `streakReveal`): it opens on
- * yesterday, the medal grey and the number as it was; the medal gathers
- * itself, hops, turns to gold as the app's one celebration bursts out of it,
- * and lands as the number rolls on to today's; then the word, the week day
- * by day, what stands under the card and the way on arrive in turn. A tap on
- * the card finishes it at once. Leaving, its words fade and the medal gathers
- * itself and is gone.
- *
- * The week needs the learner's own today and recent days from the server; an
- * older server sends neither, and then the week is left out rather than
- * guessed. No countdown, nothing about losing it: a kept day is said as what
- * it is. Under Reduce Motion it all fades and nothing travels: the dim screen
- * cross-fades to the warm one, the grey medal to the gold one, and the rest
- * is simply there.
- *
- * On one of the streak's big days (shared `streakMilestone`: a week, a
- * fortnight, a month, a hundred days, a year) a quiet Share arrives with the
- * way on, over it: the days, a week of squares and the site's address. On
- * any other day there is none, so it is seen when it is there.
+ * The week needs the server's today and recent days, and is left out on an older server. No countdowns or talk of
+ * losing it. Under Reduce Motion everything cross-fades and nothing travels. On milestone days (shared
+ * `streakMilestone`) a quiet Share appears over the way on.
  */
 export function StreakMoment({ streak, goalDone, onContinue }: { streak: Streak; goalDone: boolean; onContinue: () => void }): React.JSX.Element {
-  // the flame is for the day the fire grew; on any other day the card is the whole of the moment
+  // The flame screen is for the day the fire grew; otherwise the card is the whole moment.
   const [grew] = useState(() => flameMoment(Math.max(1, streak.current)).grew !== null);
   const [phase, setPhase] = useState<'flame' | 'week'>(grew ? 'flame' : 'week');
   return phase === 'flame' ? (
@@ -146,7 +124,7 @@ export function StreakMoment({ streak, goalDone, onContinue }: { streak: Streak;
   );
 }
 
-/** "day streak", for the number in front of it. */
+/** "day streak", for the number before it. */
 function unitFor(n: number): TranslationKey {
   return n === 1 ? 'lesson.streak.unitOne' : 'lesson.streak.unit';
 }
@@ -157,18 +135,18 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
   const { width, height } = useWindowDimensions();
   const day = Math.max(1, streak.current);
   const [fire] = useState(() => flameMoment(day));
-  // the one celebration plays as it lights, felt and heard then — or, on the day the fire grew, as the growth lands
+  // The one celebration plays as it lights, or on a growth day as the growth lands.
   const moment = useCelebration({ sound: 'reward', feel: !fire.grew, delayMs: FLAME_IGNITE.atMs });
   useCelebrationHold(moment.playing || fire.grew !== null);
   const { plan } = moment;
   const said = `${formatNumber(day, locale)} ${t(unitFor(day))}`;
   const grewWords = fire.grew ? t(FIRE_GREW[fire.grew]) : null;
   const ink = scheme === 'dark' ? colors.gold : colors.textOnGold;
-  // as big as the screen lets the biggest fire there is be, the same at every stage (a young one drawn closer), framed
+  // As big as the screen allows the biggest fire, the same frame at every stage (a young fire drawn closer).
   const size = Math.min(FLAME_MOST, fireSizeToFit('newroz', width - layout.gutter * 2, height - FLAME_WORDS)) * fire.zoom;
   const frame = fireFrame(fire.level.stage);
   const stage = { width: (frame.w * size) / FIRE_VIEW.h, height: (frame.h * size) / FIRE_VIEW.h };
-  // its lighting (shared FLAME_IGNITE): the pop and the number's roll, and the warm light flooding out
+  // Its lighting (shared FLAME_IGNITE): the pop, the number's roll, and the warm light flooding out.
   const lit = useRef(new Animated.Value(0)).current;
   const flood = useRef(new Animated.Value(0)).current;
   const line = useRef(new Animated.Value(0)).current;
@@ -190,7 +168,7 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
       timing(flood, 1, FLAME_IGNITE.floodMs, { delay: FLAME_IGNITE.atMs, easing: Easing.out(Easing.cubic) }),
     ]);
     lighting.start();
-    // on by itself once the moment has been seen, or what the fire grew into read; a tap goes sooner
+    // Moves on by itself once seen, or once the growth caption is read; a tap goes sooner.
     const over = setTimeout(() => done.current(), fire.overMs);
     const lands = grewWords
       ? setTimeout(() => {
@@ -204,10 +182,10 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
       clearTimeout(over);
       clearTimeout(lands);
     };
-    // once, as it opens
+    // Only once, as it opens.
   }, []);
 
-  // faint until it lights, brightening as it squashes; under Reduce Motion only brightening, the warm light cross-fading in
+  // Faint until it lights, brightening as it squashes; under Reduce Motion only brightening, with the warm light cross-fading.
   const { pop, dim } = FLAME_IGNITE;
   const bright = lit.interpolate({ inputRange: [0, plan.travel ? pop[1].at : 1], outputRange: [dim, 1], extrapolate: 'clamp' });
   const squash = plan.travel
@@ -225,7 +203,7 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
     <Pressable
       onPress={() => {
         moment.skip();
-        // skipped before it landed: the day it grew is still felt
+        // Skipped before it landed: the growth is still felt.
         if (fire.grew) feelGrowth();
         onDone();
       }}
@@ -238,7 +216,7 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
       <Light width={width} height={height} tone="dim" />
       <View style={styles.flameMiddle}>
         <View style={[styles.flameStage, stage]}>
-          {/* the warm light, flooding out from the fire over the whole screen as it lights, and staying */}
+          {/* The warm light, flooding out from the fire over the whole screen as it lights, and staying. */}
           <Animated.View
             pointerEvents="none"
             style={[
@@ -256,7 +234,7 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
           >
             <Light width={width * FLOOD * 2} height={height * FLOOD * 2} tone="warm" />
           </Animated.View>
-          {/* the glow round the fire, in a box of its own size centred on it: a young fire's frame is smaller than its glow */}
+          {/* The glow round the fire, in its own box centred on it, since a young fire's frame is smaller than its glow. */}
           <Animated.View
             style={{ position: 'absolute', left: stage.width / 2 - GLOW / 2, top: stage.height / 2 - GLOW / 2, width: GLOW, height: GLOW, opacity: warm }}
             pointerEvents="none"
@@ -282,7 +260,7 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
           <RollingNumber from={day - 1} to={day} progress={roll} travel={plan.travel} text={display(NUMBER)} colour={ink} />
         </Animated.View>
         <Animated.Text style={[styles.flameUnit, { color: ink, opacity: moment.details }]}>{t(unitFor(day))}</Animated.Text>
-        {/* what the fire grew into, in its place from the start so nothing moves when it arrives */}
+        {/* What the fire grew into, laid out from the start so nothing moves when it appears. */}
         {grewWords ? (
           <Animated.Text style={[styles.grew, { color: ink, opacity: line, transform: [{ translateY: rise }] }]} testID="lesson-streak-grew">
             {grewWords}
@@ -293,15 +271,13 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
   );
 }
 
-/** How far the warm light reaches round the fire, as a share of the screen either way: past every edge, its soft rim never seen once it has flooded. */
+/** How far the warm light reaches round the fire, as a multiple of the screen: past every edge, so its rim never shows. */
 const FLOOD = 1.25;
 
 /**
- * The light behind the moment. Warm once the fire has lit: the sun's gold at
- * the edges, softening to a pale glow in the middle on the light page and to
- * an ember on the dark, laid round the fire `FLOOD` times the screen either
- * way, so the screen is only its middle and its rim fades out far past the
- * edges. Dim before it lights: a cool evening grey over the screen.
+ * The light behind the moment. Warm once lit: the sun's gold at the edges softening to a pale glow (light) or an
+ * ember (dark) in the middle, spread `FLOOD` times the screen so its rim fades far past the edges. Dim before:
+ * a cool evening grey.
  */
 function Light({ width, height, tone }: { width: number; height: number; tone: 'dim' | 'warm' }): React.JSX.Element {
   const { scheme } = useTheme();
@@ -324,7 +300,7 @@ function Light({ width, height, tone }: { width: number; height: number; tone: '
     );
   }
   const stops = scheme === 'dark' ? ['#2B1E0B', '#6B4410', '#C98512'] : ['#FFF6DE', '#FFD978', '#EFA312'];
-  // the screen's own light, reaching three quarters of the way across it from the fire, in a light FLOOD times as big
+  // The screen's own light reaches three quarters across from the fire, within a light FLOOD times as big.
   const k = 0.75 / FLOOD;
   return (
     <Svg width={width} height={height}>
@@ -343,11 +319,9 @@ function Light({ width, height, tone }: { width: number; height: number; tone: '
 }
 
 /**
- * A number rolling on: each digit that changes slides up and away as the new
- * one slides up into its place, the ones that stay put staying put. Driven by
- * `progress` (0 → 1); under Reduce Motion the two cross-fade instead. `text`
- * is how it is written, and `maxScale` how far the reader's own text size may
- * enlarge it — the room each digit rolls in grows with it.
+ * A number rolling on: each changing digit slides up and away as the new one slides in, the rest stay put. Driven by
+ * `progress` (0 → 1); under Reduce Motion the two cross-fade. `maxScale` is how far the reader's text size may
+ * enlarge it, which grows each digit's roll room.
  */
 function RollingNumber({
   from,
@@ -410,19 +384,18 @@ function RollingNumber({
   );
 }
 
-/** A part of the card on the card's clock: a value that follows the clock's own, or a number where nothing moves. */
+/** A card part on the card's clock: an animated value, or a plain number where nothing moves. */
 type Clocked = Animated.AnimatedInterpolation<number> | number;
 
-/** An ease-out that goes a little past where it is going and settles back, as the website's spring curve does. */
+/** An ease-out that overshoots slightly and settles back, like the website's spring curve. */
 function settleOut(t: number): number {
   const k = Math.max(0, Math.min(1, t)) - 1;
   return 1 + 2.4 * k * k * k + 1.4 * k * k;
 }
 
 /**
- * A part of the card arriving on the card's clock: 0 until `at`, 1 from `ms`
- * later, and eased in between. Drawn as a few straight pieces, because the
- * native driver joins the points of an interpolation with straight lines.
+ * A card part arriving on the card's clock: 0 until `at`, 1 from `ms` later, eased between. Drawn as a few straight
+ * pieces, since the native driver interpolates linearly between points.
  */
 function arriving(clock: Animated.Value, at: number, ms: number, curve: (t: number) => number = easeOut): Animated.AnimatedInterpolation<number> {
   const steps = 6;
@@ -430,16 +403,14 @@ function arriving(clock: Animated.Value, at: number, ms: number, curve: (t: numb
   return clock.interpolate({ inputRange, outputRange: inputRange.map((_, k) => curve(k / steps)), extrapolate: 'clamp' });
 }
 
-/** Up a few points and into place, for a part that is `arriving`; where it is, where nothing travels. */
+/** Rises a few points into place for an `arriving` part; stays put where nothing travels. */
 function risen(arrival: Clocked): Clocked {
   return typeof arrival === 'number' ? 0 : arrival.interpolate({ inputRange: [0, 1], outputRange: [8, 0] });
 }
 
 /**
- * The card's parts, each read off one clock that runs from when the card
- * opens to when everything stands still (shared `streakReveal`). One clock,
- * on the native driver: the whole of it plays while the JS thread is busy,
- * and finishing it early is one `setValue`.
+ * The card's parts, each read off one clock from opening until everything is still (shared `streakReveal`). One
+ * native-driver clock plays even while the JS thread is busy, and finishing early is one `setValue`.
  */
 function useReveal(plan: StreakReveal, clock: Animated.Value) {
   return useMemo(() => {
@@ -450,22 +421,22 @@ function useReveal(plan: StreakReveal, clock: Animated.Value) {
     const pose = (of: (p: (typeof track)[number]) => number): Animated.AnimatedInterpolation<number> =>
       clock.interpolate({ inputRange: when, outputRange: track.map(of), extrapolate: 'clamp' });
     return {
-      /** the card itself, as the screen opens */
+      /** The card itself, as the screen opens. */
       open: after(0, OPEN_MS),
-      /** the medal's turn about its foot: gathered, off the card, and down again */
+      /** The medal's motion about its foot: gathering, leaving the card, and landing. */
       turn: travel ? [{ translateY: pose((p) => p.lift * MEDAL) }, { scaleX: pose((p) => p.sx) }, { scaleY: pose((p) => p.sy) }] : [],
-      /** the gold medal over the grey one */
+      /** The gold medal over the grey one. */
       lit: clock.interpolate({ inputRange: [plan.lightAtMs, plan.lightAtMs + plan.lightMs], outputRange: [0, 1], extrapolate: 'clamp' }),
-      /** the light of the burst: there as the medal turns to gold, and gone again, so the card under it stays clean */
+      /** The burst's light: present as the medal turns gold, then gone, so the card stays clean. */
       glow: travel ? clock.interpolate({ inputRange: [plan.burstAtMs, plan.burstAtMs + 200, plan.burstAtMs + 900], outputRange: [0, 1, 0], extrapolate: 'clamp' }) : 0,
-      /** the streak's words taking their full ink, and its number rolling on */
+      /** The streak's words reaching full ink as the number rolls on. */
       ink: clock.interpolate({ inputRange: [plan.countAtMs, plan.countAtMs + INK_MS], outputRange: [YESTERDAY_INK, 1], extrapolate: 'clamp' }),
       roll: travel
         ? arriving(clock, plan.countAtMs, ROLL_MS, settleOut)
         : clock.interpolate({ inputRange: [plan.countAtMs, plan.overMs], outputRange: [0, 1], extrapolate: 'clamp' }),
       words: after(plan.wordsAtMs),
       dayNames: after(plan.weekAtMs),
-      /** one day of the week, the `order`-th to arrive: it grows into its place, and today's pops */
+      /** The `order`-th week day to arrive: it grows into place, and today's pops. */
       day: (order: number, pops: boolean): { opacity: Clocked; scale: Clocked } => {
         if (!travel) return { opacity: 1, scale: 1 };
         const at = plan.weekAtMs + order * plan.dayStepMs;
@@ -497,7 +468,7 @@ function StreakWeekScreen({
 }: {
   streak: Streak;
   goalDone: boolean;
-  /** the flame played before this (the day the fire grew): the number has rolled and the moment been felt and heard already */
+  /** The flame screen played first (a growth day), so the number has rolled and the moment was felt already. */
   afterFlame: boolean;
   onContinue: () => void;
 }): React.JSX.Element {
@@ -514,7 +485,7 @@ function StreakWeekScreen({
   const speech = streakSpeech(streak);
   const words = t(SPEECH[speech.mood][speech.line], { count: formatNumber(day, locale) });
   const plan = useMemo(() => streakReveal(reduce), [reduce]);
-  // the app's one celebration, bursting out of the medal as it turns to gold: felt and heard there, once
+  // The app's one celebration bursts from the medal as it turns gold, with haptic and sound once.
   const moment = useCelebration({ sound: 'reward', feel: !afterFlame, delayMs: plan.burstAtMs });
   const clock = useRef(new Animated.Value(0)).current;
   const leave = useRef(new Animated.Value(0)).current;
@@ -524,17 +495,17 @@ function StreakWeekScreen({
   const [settled, setSettled] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const show = useReveal(plan, clock);
-  // a badge earned meanwhile waits until the card has had its moment
+  // A badge earned meanwhile waits until the card has had its moment.
   useCelebrationHold(!settled);
-  // only a server that says what today is, and which days were learned, has a week to show
+  // Only a server that sends today and the learned days has a week to show.
   const week = streak.today && streak.recent ? streakWeek({ today: streak.today, recent: streak.recent, startsOn: weekStartsOn(locale) }) : null;
   const unit = t(unitFor(day));
   const title = `${formatNumber(day, locale)} ${unit}`;
 
   useEffect(() => {
-    // the flame said the day already, where there was one
+    // The flame screen already announced the day, where there was one.
     if (!afterFlame) AccessibilityInfo.announceForAccessibility?.(title);
-    // once, as it opens
+    // Only once, as it opens.
   }, []);
 
   useEffect(() => {
@@ -545,10 +516,10 @@ function StreakWeekScreen({
       if (finished) setSettled(true);
     });
     return () => run.stop();
-    // the Reduce Motion answer can arrive a moment late; then it simply plays again, as a fade
+    // The Reduce Motion answer can arrive late; then it replays, as a fade.
   }, [plan, clock]);
 
-  // lit and landed, it is never quite still: it rides up and down a little, while there is somebody to see it
+  // Once lit and landed it floats gently while the screen is in front.
   useEffect(() => {
     if (!settled || leaving || !alive || !plan.travel) return;
     const half = { duration: FLOAT_MS / 2, easing: Easing.inOut(Easing.sin), useNativeDriver: true };
@@ -564,7 +535,7 @@ function StreakWeekScreen({
     [],
   );
 
-  /** A tap on the card while it plays: everything where it ends, at once. */
+  /** A tap on the card while it plays: everything to its end state at once. */
   const finish = useCallback(() => {
     if (settled) return;
     playing.current?.stop();
@@ -573,7 +544,7 @@ function StreakWeekScreen({
     setSettled(true);
   }, [settled, clock, plan, moment]);
 
-  /** The way on: the card's words go and the medal gathers itself and is gone, and then on. */
+  /** The way on: the card's words fade and the medal gathers itself and leaves, then on. */
   const onward = useCallback(() => {
     if (going.current) return;
     if (!plan.travel) {
@@ -596,13 +567,13 @@ function StreakWeekScreen({
   return (
     <View style={[styles.screen, { paddingTop: top }]} testID="lesson-streak-day">
       <ScrollView contentContainerStyle={styles.weekBody}>
-        {/* a tap anywhere on it finishes it; nothing to a screen reader, which is read the card as it will stand */}
+        {/* A tap anywhere finishes it; screen readers skip it and read the card's final state. */}
         <Pressable onPress={finish} accessible={false} focusable={false} style={styles.weekTap} testID="streak-card">
-          {/* a quiet panel with its name at the top, and on it the card, the medal half over the card's top edge */}
+          {/* A quiet panel named at the top, holding the card with the medal half over its top edge. */}
           <Animated.View style={[styles.panel, { backgroundColor: colors.controlTrack, opacity: show.open, transform: [{ translateY: risen(show.open) }] }]}>
             <Animated.Text style={[styles.panelName, { color: colors.textSecondary, opacity: stay }]}>{t('profile.stat.streak')}</Animated.Text>
             <View style={[styles.card, { backgroundColor: colors.surface }]}>
-              {/* a picture beside the words that say it: not read out a second time */}
+              {/* A picture beside the words that say it, so not read twice. */}
               <View style={styles.medal} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="streak-medal">
                 <Animated.View style={[styles.medalGlow, { opacity: show.glow }]} pointerEvents="none">
                   <SoftGlow colour={colors.gold} size={MEDAL_GLOW} id="streak-medal-glow" />
@@ -621,7 +592,7 @@ function StreakWeekScreen({
                 <Animated.View style={{ transform: [{ translateY: float.interpolate({ inputRange: [0, 1], outputRange: [0, -FLOAT_RISE] }) }] }}>
                   <Animated.View style={{ opacity: leave.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), transformOrigin: MEDAL_FOOT, transform: gather }}>
                     <Animated.View style={{ transformOrigin: MEDAL_FOOT, transform: show.turn }} testID="streak-medal-turn">
-                      {/* yesterday's, in grey, and today's over it: one medal changing colour */}
+                      {/* Yesterday's grey medal with today's over it: one medal changing colour. */}
                       <StreakMedal size={MEDAL} label="" unlit />
                       <Animated.View style={[StyleSheet.absoluteFill, { opacity: show.lit }]} testID="streak-medal-lit">
                         <StreakMedal size={MEDAL} label="" />
@@ -632,7 +603,7 @@ function StreakWeekScreen({
                 {plan.travel && !leaving ? SPARKS.map((spark) => <Spark key={spark.dx} {...spark} startMs={plan.countAtMs} colour={colors.gold} />) : null}
               </View>
               <Animated.View style={[styles.cardWords, { opacity: stay }]}>
-                {/* the streak in words, its number on its own so that it can roll on: quiet while it is yesterday's */}
+                {/* The streak in words, the number separate so it can roll; quiet while it shows yesterday. */}
                 <Animated.View style={[styles.titleRow, { flexDirection: dir.row, opacity: show.ink }]} accessible accessibilityRole="header" accessibilityLabel={title}>
                   <RollingNumber from={afterFlame ? day : day - 1} to={day} progress={show.roll} travel={plan.travel} text={titleText} colour={colors.textPrimary} maxScale={1.3} />
                   <Text style={[styles.title, { color: colors.textPrimary }]} maxFontSizeMultiplier={1.3}>
@@ -648,7 +619,7 @@ function StreakWeekScreen({
           </Animated.View>
           <Animated.View style={[styles.under, { opacity: stay }]}>
             <Animated.View style={[styles.under, { opacity: show.under, transform: [{ translateY: risen(show.under) }] }]}>
-              {/* the fire's stage, and the next as a near goal: never a countdown, and at the Newroz fire simply its name */}
+              {/* The fire's stage and the next as a near goal; never a countdown, and at the Newroz fire just its name. */}
               {level.stage !== 'cold' ? (
                 <Text style={[styles.stage, { color: colors.textSecondary }]} testID="streak-stage">
                   <Text style={[styles.stageName, { color: colors.textPrimary }]}>{t(FIRE_STAGE_NAME[level.stage])}</Text>
@@ -660,9 +631,9 @@ function StreakWeekScreen({
           </Animated.View>
         </Pressable>
       </ScrollView>
-      {/* the way on: the last thing to arrive, and answering from the first frame */}
+      {/* The way on: last to arrive, but tappable from the first frame. */}
       <Animated.View style={[styles.bar, { paddingBottom: bottom, opacity: show.onward, transform: [{ translateY: risen(show.onward) }] }]} testID="streak-onward">
-        {/* on one of the streak's big days: a quiet Share over the way on, which keeps the foot of the screen */}
+        {/* On milestone days, a quiet Share over the way on, which keeps the foot of the screen. */}
         {streakMilestone(day) ? <ShareWin text={streakShare(t, locale, day)} testID="streak-share" /> : null}
         <ClayButton label={t(goalDone ? 'lesson.streak.seeYou' : 'common.continue')} tone="primary" size="large" onPress={onward} />
       </Animated.View>
@@ -670,12 +641,7 @@ function StreakWeekScreen({
   );
 }
 
-/**
- * A spark rising off the lit medal now and then, the way one rises off a
- * fire: up, out to its side, and gone. It waits `afterMs` past `startMs` (the
- * medal is gold by then) and comes round again for as long as the screen is
- * the one in front.
- */
+/** A spark rising off the lit medal now and then: up, out to its side, and gone. It waits `afterMs` past `startMs` and repeats while in front. */
 function Spark({ dx, size, afterMs, startMs, colour }: { dx: number; size: number; afterMs: number; startMs: number; colour: string }): React.JSX.Element {
   const alive = useMotionAlive();
   const rise = useRef(new Animated.Value(0)).current;
@@ -683,7 +649,7 @@ function Spark({ dx, size, afterMs, startMs, colour }: { dx: number; size: numbe
   useEffect(() => {
     if (!alive) return;
     const loop = Animated.loop(Animated.timing(rise, { toValue: 1, duration: SPARK_MS, easing: Easing.linear, useNativeDriver: true }));
-    // the first only once the medal has lit; back in front later, at its own beat straight away
+    // The first only after the medal lights; when back in front later, at its own beat straight away.
     const wait = setTimeout(() => loop.start(), Math.max(afterMs % 900, startMs + afterMs - (Date.now() - since)));
     return () => {
       clearTimeout(wait);
@@ -691,7 +657,7 @@ function Spark({ dx, size, afterMs, startMs, colour }: { dx: number; size: numbe
       rise.setValue(0);
     };
   }, [alive, rise, afterMs, startMs, since]);
-  // quick off the medal and slowing as it climbs, then nothing until it comes round again
+  // Quick off the medal and slowing as it climbs, then nothing until it repeats.
   const climb = [0, 0.15, 0.3, 0.6, 1];
   return (
     <Animated.View
@@ -716,14 +682,10 @@ function Spark({ dx, size, afterMs, startMs, colour }: { dx: number; size: numbe
 }
 
 /**
- * The week the streak was kept in: the days' initials over seven places,
- * from the day the learner's week starts on (Saturday in Kurdish and Arabic).
- * A day learned wears a small gold medal with the laurel, one a freeze kept an
- * ice-blue one with a snowflake; a day still to come is its date, and so is
- * one that went by without a lesson, more quietly — never a cross. Today,
- * still to learn, is its date in a gold ring. A sign for each, never the
- * colour alone. They arrive one after another (`day`, by the order each has)
- * and today's pops in last.
+ * The streak's week: day initials over seven places from the learner's first weekday (Saturday in Kurdish and
+ * Arabic). A learned day wears a small gold laurel medal, a frozen day an ice-blue snowflake medal; days to come and
+ * missed days show their date (missed ones more quietly, never a cross), and today, still to learn, its date in a
+ * gold ring. Each has a sign, never colour alone. They arrive in order, today's popping in last.
  */
 function WeekRow({ week, names, day }: { week: WeekDay[]; names: Clocked; day: (order: number, pops: boolean) => { opacity: Clocked; scale: Clocked } }): React.JSX.Element {
   const { colors } = useTheme();
@@ -748,7 +710,7 @@ function WeekRow({ week, names, day }: { week: WeekDay[]; names: Clocked; day: (
           >
             {initials[d.weekday] ?? ''}
           </Animated.Text>
-          {/* in the order they stand, and today's after the whole week */}
+          {/* In order, with today's after the whole week. */}
           <DayMark day={d} arrival={day(d.isToday ? week.length : i, d.isToday)} />
         </View>
       ))}
@@ -756,12 +718,12 @@ function WeekRow({ week, names, day }: { week: WeekDay[]; names: Clocked; day: (
   );
 }
 
-/** One day's place in the week: its medal, or its date. */
+/** One day's place in the week: its medal or its date. */
 function DayMark({ day, arrival }: { day: WeekDay; arrival: { opacity: Clocked; scale: Clocked } }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
   const medal = day.state === 'learned' || day.state === 'frozen' ? day.state : null;
-  // the day of the month, from the date as the server wrote it: no time zone moves it
+  // The day of the month from the server's date string, so no time zone shifts it.
   const date = Number(day.date.slice(8, 10));
   return (
     <Animated.View
@@ -779,11 +741,7 @@ function DayMark({ day, arrival }: { day: WeekDay; arrival: { opacity: Clocked; 
   );
 }
 
-/**
- * How near the next freeze is, or how many are saved: the line the "Day N"
- * card had, under the week. `filled` is how far its bar has got in filling to
- * where it now stands, on the card's clock.
- */
+/** How near the next freeze is, or how many are saved, under the week. `filled` is the bar's progress on the card's clock. */
 function FreezeLine({ streak, filled }: { streak: Streak; filled: Clocked }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -792,7 +750,7 @@ function FreezeLine({ streak, filled }: { streak: Streak; filled: Clocked }): Re
   const share = freeze?.kind === 'toward' ? freeze.done / freeze.per : 1;
   const [width, setWidth] = useState(0);
   if (!freeze) return null;
-  // the bar slides in from the reading side, as every bar's fill does
+  // The bar slides in from the reading side, as every bar's fill does.
   const away = dir.rtl ? width : -width;
   const translateX = typeof filled === 'number' ? away * (1 - share * filled) : filled.interpolate({ inputRange: [0, 1], outputRange: [away, away * (1 - share)] });
   const words =
@@ -820,24 +778,24 @@ const styles = StyleSheet.create({
   flameStage: { alignItems: 'center', justifyContent: 'center' },
   flood: { position: 'absolute' },
   flameUnit: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, marginTop: -spacing.xs },
-  // narrow enough that a sentence wraps into two lines of a size, rather than a full one and a word left over
+  // Narrow enough that a sentence wraps into two even lines rather than leaving one word over.
   grew: { maxWidth: 320, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, lineHeight: 26, textAlign: 'center', marginTop: spacing.md, paddingHorizontal: layout.gutter },
   rolling: { flexDirection: 'row', justifyContent: 'center' },
   leaving: { position: 'absolute', top: 0, left: 0, right: 0, textAlign: 'center' },
   weekBody: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: layout.gutter, paddingVertical: spacing.md, maxWidth: layout.column, width: '100%', alignSelf: 'center' },
   weekTap: { gap: spacing.md },
-  // the panel leaves the medal its room above the card
+  // The panel leaves the medal room above the card.
   panel: { borderRadius: radii.xl, paddingTop: spacing.md + 4, paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
   panelName: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center', marginBottom: MEDAL / 2 + spacing.sm },
   card: { alignItems: 'center', borderRadius: radii.lg, paddingTop: MEDAL / 2 + spacing.sm, paddingBottom: spacing.md + 4, paddingHorizontal: spacing.sm },
   cardWords: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.xs + 2 },
-  // half over the card's top edge
+  // Half over the card's top edge.
   medal: { position: 'absolute', top: -MEDAL / 2, alignSelf: 'center', width: MEDAL, height: MEDAL },
-  // the burst's light, centred on the medal and wider than it
+  // The burst's light, centred on the medal and wider than it.
   medalGlow: { position: 'absolute', left: (MEDAL - MEDAL_GLOW) / 2, top: (MEDAL - MEDAL_GLOW) / 2, width: MEDAL_GLOW, height: MEDAL_GLOW },
-  // a spark starts in the laurel, a little above the medal's middle
+  // A spark starts in the laurel, a little above the medal's centre.
   spark: { position: 'absolute', top: '26%', left: '50%', borderRadius: radii.pill },
-  // the number and its words on one line, a space apart
+  // The number and its words on one line, a space apart.
   titleRow: { alignItems: 'flex-end', justifyContent: 'center', columnGap: 7, flexWrap: 'wrap' },
   title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, lineHeight: 34, textAlign: 'center', letterSpacing: -0.4 },
   cheer: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.sm },
@@ -849,7 +807,7 @@ const styles = StyleSheet.create({
   dayName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
   dayNameToday: { fontWeight: typography.weights.bold },
   day: { width: DAY, height: DAY, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  // today, still to learn: its date in a ring
+  // Today, still to learn: its date in a ring.
   dayRing: { borderWidth: 2 },
   dayDate: { fontSize: typography.sizes.md + 1, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   dayGone: { opacity: 0.7 },

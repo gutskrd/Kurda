@@ -27,11 +27,11 @@ describe('AnswerQueue', () => {
     q.enqueue(pa('b'));
     q.enqueue(pa('c'));
 
-    // 'a' succeeds, 'b' is still offline (null) → halt before 'c'
+    // 'a' succeeds and 'b' is still offline (null), so the flush stops before 'c'.
     const sent = await q.flush(async (p) => (p.exerciseId === 'a' ? p.exerciseId : null));
 
     expect(sent).toEqual(['a']);
-    expect(q.pending).toBe(2); // b and c remain, in order
+    expect(q.pending).toBe(2); // 'b' and 'c' remain, in order.
   });
 
   it('resumes cleanly on a later flush', async () => {

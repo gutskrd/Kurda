@@ -1,8 +1,4 @@
-/**
- * What else a finished lesson did — today's goal, the streak, a new level —
- * decided by the rules in @kurda/shared (lesson-moments.ts), which the
- * browser's player uses too.
- */
+/** What else a finished lesson did (today's goal, the streak, a new level), by the rules in @kurda/shared (lesson-moments.ts). */
 export {
   NO_LESSON_MOMENTS as NO_MOMENTS,
   anyLessonMoment as anyMoment,

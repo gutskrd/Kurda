@@ -16,7 +16,7 @@ import type { HapticEvent } from '../../feedback/hapticPacing';
 import type { Exercise } from '../types';
 import { MatchPairsExercise, PAIR_FLASH_MS } from './MatchPairsExercise';
 
-/** Kurdish cards and their meanings, each side shuffled; `pairOf` says which meaning is each card's. */
+/** Kurdish cards and their meanings, each side shuffled; `pairOf` gives each card's meaning. */
 const pairs: Exercise = {
   id: 'mp',
   type: 'match_pairs',
@@ -41,7 +41,7 @@ afterEach(() => {
   cleanup();
 });
 
-/** The exercise as the lesson holds it: the pairs made so far, kept above it. */
+/** The exercise as the lesson holds it, with the pairs made so far kept above it. */
 function Held({ exercise, made }: { exercise: Exercise; made: (matches: MatchPair[]) => void }): React.JSX.Element {
   const [state, setState] = useState<MatchState>(emptyMatch);
   return (
@@ -59,7 +59,7 @@ function Held({ exercise, made }: { exercise: Exercise; made: (matches: MatchPai
 
 const card = (name: string): HTMLElement => screen.getByRole('button', { name });
 
-/** Taps far enough apart for each to be felt, as a person's are. */
+/** Taps spaced far enough apart for each haptic to fire, as a person's are. */
 function tap(name: string): void {
   resetHaptics();
   fireEvent.click(card(name));
@@ -74,14 +74,14 @@ describe('pairs answered as they are made', () => {
   it('keeps a right pair the moment it is made, from either side, says so, and spends both cards once it has shown', async () => {
     const made = vi.fn();
     renderWithProviders(<Held exercise={pairs} made={made} />);
-    // the meaning first this time
+    // The meaning first this time.
     tap('apple');
     expect(card('apple').getAttribute('aria-selected')).toBe('true');
     tap('sêv');
     expect(made).toHaveBeenLastCalledWith([{ left: 'sêv', right: 'apple' }]);
     expect(felt).toEqual(['select', 'correct']);
     expect(said).toEqual(['sêv and apple: a pair']);
-    // shown as right for a moment, then used up: no lip, no press
+    // Shown as right for a moment, then used up: no lip, no press.
     expect(card('sêv').getAttribute('aria-disabled')).not.toBe('true');
     await waitFor(() => expect(card('sêv').getAttribute('aria-disabled')).toBe('true'), { timeout: PAIR_FLASH_MS.right + 1000 });
     expect(card('apple').getAttribute('aria-disabled')).toBe('true');
@@ -102,7 +102,7 @@ describe('pairs answered as they are made', () => {
       expect(card(name).getAttribute('aria-disabled')).not.toBe('true');
       expect(card(name).children).toHaveLength(2);
     }
-    // and either can be paired again, rightly this time
+    // And either can be paired again, correctly this time.
     tap('nan');
     tap('bread');
     expect(made).toHaveBeenLastCalledWith([{ left: 'nan', right: 'bread' }]);
@@ -138,7 +138,7 @@ describe('pairs answered as they are made', () => {
 });
 
 describe('pairs from a server that does not say which is which', () => {
-  // made freely and graded together at Check, as they always were: tapping a made pair undoes it
+  // From an older server: made freely and graded together at Check.
   it('pairs whatever is tapped, says nothing of right or wrong, and undoes a pair tapped again', () => {
     const made = vi.fn();
     renderWithProviders(<Held exercise={{ ...pairs, pairOf: undefined }} made={made} />);

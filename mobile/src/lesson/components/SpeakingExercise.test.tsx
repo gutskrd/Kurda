@@ -8,10 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../../reports/testing/st
 vi.mock('expo-audio', () => import('../../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../../recording/testing/fakeMic'));
 
-/*
- * Which recorder the exercise gets. Metro hands a phone useRecorder.native.ts
- * and a browser useRecorder.ts; a test has no Metro, so it chooses here.
- */
+// Which recorder the exercise gets: Metro picks useRecorder.native.ts on a phone and useRecorder.ts in a browser, so tests choose here.
 const host = vi.hoisted(() => ({ phone: true }));
 vi.mock('../useRecorder', async (importOriginal) => {
   const browser = await importOriginal<typeof import('../useRecorder')>();
@@ -81,7 +78,7 @@ async function press(name: string | RegExp): Promise<void> {
   await settle();
 }
 
-/** The app leaves the front (a call, the home screen), as the system tells it. */
+/** The app leaves the front (a call, the home screen), as the system reports it. */
 async function leaveTheFront(): Promise<void> {
   Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
   document.dispatchEvent(new Event('visibilitychange'));
@@ -105,7 +102,7 @@ describe('speaking on a phone', () => {
     expect(mic.calls).toEqual(['ask', 'prepare', 'record']);
   });
 
-  // putting the exercise off is the lesson footer's "Can’t speak now" (LessonPlayerScreen.test.tsx)
+  // Putting the exercise off is the lesson footer's "Can't speak now" (LessonPlayerScreen.test.tsx).
   it('says a refused microphone plainly, and opens the settings', async () => {
     mic.answer = DENIED;
     const { said } = speaking();
@@ -113,7 +110,7 @@ describe('speaking on a phone', () => {
 
     expect(screen.getByText(/The microphone is off for Hevalo/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Start recording' })).toBeNull();
-    // nothing was switched over to recording, so there is nothing to put back
+    // Nothing switched to recording, so nothing to restore.
     expect(mic.modes).toEqual([]);
     expect(mic.calls).toEqual(['ask']);
     expect(said.recorded).not.toContain(true);
@@ -127,11 +124,11 @@ describe('speaking on a phone', () => {
     speaking();
     await press('Start recording');
 
-    // where things stand, where that is changed, and that the exercise can be passed over
+    // Where things stand, where to change it, and that the exercise can be skipped.
     const said = screen.getByText(/The microphone is off for Hevalo/);
     expect(said.textContent).toBe('The microphone is off for Hevalo. You can turn it on in your device settings, or skip this one.');
     expect(said.textContent).not.toMatch(/allow/i);
-    // no spinner, no button left busy or switched off: the way to the settings answers, and so does the lesson's own skip
+    // No spinner or disabled button: the settings link works, and so does the lesson's own skip.
     expect(screen.queryByRole('progressbar')).toBeNull();
     for (const button of screen.getAllByRole('button')) {
       expect(button.getAttribute('aria-busy'), button.textContent ?? '').not.toBe('true');
@@ -152,7 +149,7 @@ describe('speaking on a phone', () => {
     expect(mic.modes).toEqual([]);
     expect(said.recorded).not.toContain(true);
 
-    // the next press asks again, and records
+    // The next press asks again, and records.
     mic.failToAsk = false;
     await press('Start recording');
     expect(screen.getByRole('button', { name: 'Stop recording' })).toBeTruthy();
@@ -185,10 +182,10 @@ describe('speaking on a phone', () => {
     expect(screen.getByRole('button', { name: 'Re-record' })).toBeTruthy();
     expect(screen.getByText('How did it sound to you?')).toBeTruthy();
     expect(said.recorded.at(-1)).toBe(true);
-    // the take is felt as kept, once
+    // The kept take gets one haptic.
     expect(felt).toEqual(['tap']);
 
-    // heard back from its own file, beside the model
+    // Played back from its own file, beside the model.
     await press('Hear yourself');
     expect(FakeAudio.of('file:///cache/Audio/take-1.m4a')?.paused).toBe(false);
 
@@ -197,7 +194,7 @@ describe('speaking on a phone', () => {
   });
 
   it('puts the audio session back on playback, heard with the ring switch on silent, before the take is heard', async () => {
-    // the session as it stood when each player was made
+    // The audio session as it stood when each player was made.
     const sessionAt = new Map<string, Array<Record<string, unknown>>>();
     vi.stubGlobal(
       'Audio',
@@ -218,7 +215,7 @@ describe('speaking on a phone', () => {
     expect(mic.calls).toEqual(['ask', 'prepare', 'record', 'stop']);
     expect(mic.modes).toEqual([RECORDING, PLAYBACK]);
     expect(sessionAt.get('file:///cache/Audio/take-1.m4a')).toEqual([RECORDING, PLAYBACK]);
-    // the model still plays afterwards
+    // The model still plays afterwards.
     await press('Hear a native speaker');
     expect(FakeAudio.of(exercise.modelAudioUrl!)?.paused).toBe(false);
   });
@@ -255,7 +252,7 @@ describe('speaking on a phone', () => {
 
     await press('Re-record');
     expect(mic.deleted).toEqual(['file:///cache/Audio/take-1.m4a']);
-    // the rating was of the take that has gone
+    // The rating was of the take that has gone.
     expect(said.recorded.at(-1)).toBe(false);
     expect(said.rated.at(-1)).toBeNull();
     act(() => mic.recorder!.run(1500));
@@ -264,7 +261,7 @@ describe('speaking on a phone', () => {
     await press('Hear yourself');
     expect(FakeAudio.of('file:///cache/Audio/take-2.m4a')?.paused).toBe(false);
     expect(mic.modes).toEqual([RECORDING, PLAYBACK, RECORDING, PLAYBACK]);
-    // each take readied with the preset named, which on iOS is what gives it a file of its own
+    // Each take is prepared with the named preset, which on iOS gives it its own file.
     expect(mic.prepared).toEqual([RecordingPresets.HIGH_QUALITY, RecordingPresets.HIGH_QUALITY]);
   });
 
@@ -324,7 +321,7 @@ describe('speaking on a phone', () => {
   });
 });
 
-/** MediaRecorder as a browser has it, enough for one take. */
+/** A browser's MediaRecorder, enough for one take. */
 class FakeMediaRecorder {
   static made: FakeMediaRecorder[] = [];
   state: 'inactive' | 'recording' = 'inactive';
@@ -384,7 +381,7 @@ describe('speaking in a browser', () => {
     expect(said.recorded.at(-1)).toBe(true);
     await press('Hear yourself');
     expect(FakeAudio.of('blob:take-1')?.paused).toBe(false);
-    // the phone's audio session is not the browser's business
+    // The phone's audio session is not the browser's concern.
     expect(mic.modes).toEqual([]);
 
     view.unmount();

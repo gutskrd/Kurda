@@ -1,11 +1,8 @@
 import type { CourseMap } from '../coursemap/types';
 
 /**
- * A lesson's own name, as its course's map lists it: what the lesson player
- * writes small above each question, so the learner knows which lesson they
- * are in ("Hamo at the blue gate"). A map from before the server listed a
- * skill's lessons names only the skill, which stands in for its first lesson.
- * Null when the map does not have the lesson at all.
+ * A lesson's name as its course map lists it, shown small above each question ("Hamo at the blue gate"). An older
+ * map lists only skills, so a skill's name stands in for its first lesson. Null when the map lacks the lesson.
  */
 export function lessonTitle(map: CourseMap, lessonId: string): string | null {
   for (const unit of map.units) {
