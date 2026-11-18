@@ -1,23 +1,14 @@
 /**
- * What an item that says what it asks (`ask`, shared lesson-player.ts) is shown
- * with, apart from how it is drawn: its headline, and its line as the bubble
- * lays it out.
- *
- * Items written in the new style hold the line alone in their prompt and let
- * the headline say what to do with it ("What does this mean?"), so the
- * headline comes from here rather than from the item. An item without an ask
- * is asked as its type always was, and nothing here is used for it.
+ * The headline and bubble line for an item that says what it asks (`ask`, shared lesson-player.ts). Such items hold only
+ * the line in their prompt, and the headline ("What does this mean?") comes from here. Items without an ask are shown as
+ * their type always was.
  */
 import { CHARACTER_NAMES, GAP, isSoraniDialect, type DeliveredExercise, type NewWord, type PromptToken } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/**
- * The headline of an item that says what it asks; null for one that does not.
- * `tiles` says whether a built answer is being laid from word tiles, which a
- * listening item's headline names ("Tap what you hear").
- */
+/** The headline of an item that says what it asks, or null; `tiles` lets a listening headline say "Tap what you hear". */
 export function askHeadline(exercise: DeliveredExercise, t: Translate, how: { tiles: boolean; dialect: string | null | undefined }): string | null {
   switch (exercise.ask) {
     case undefined:
@@ -34,7 +25,7 @@ export function askHeadline(exercise: DeliveredExercise, t: Translate, how: { ti
       return t('lesson.ask.missing');
     case 'to-english':
       return t('lesson.ask.toEnglish');
-    // the road is in Kurmancî and says so; a Soranî course's item asks for Kurdish, as before
+    // The road is in Kurmancî and says so; a Soranî course's item asks for Kurdish.
     case 'to-kurdish':
       return isSoraniDialect(how.dialect) ? t('lesson.translate.ask') : t('lesson.ask.toKurmanji');
     case 'hear':
@@ -46,7 +37,7 @@ export function askHeadline(exercise: DeliveredExercise, t: Translate, how: { ti
   }
 }
 
-/** Whether an item's line is English, the language the learner puts into Kurdish or chooses the Kurdish for. */
+/** Whether an item's line is English, to be put into Kurdish or matched with it. */
 export function lineIsEnglish(exercise: DeliveredExercise): boolean {
   return exercise.ask === 'to-kurdish' || exercise.ask === 'choose-kurdish';
 }
@@ -54,24 +45,24 @@ export function lineIsEnglish(exercise: DeliveredExercise): boolean {
 /** A piece of an item's line as the bubble shows it: a word, what lies between two, or the missing word's place. */
 export interface LineToken {
   text: string;
-  /** what the word means, the meaning it was brought in with first */
+  /** The word's meanings, the one it was introduced with first. */
   meanings?: string[];
-  /** a word this item brings in for the first time */
+  /** A word this item introduces. */
   isNew?: boolean;
-  /** the place of a missing-word item's gap */
+  /** The place of a missing-word item's gap. */
   gap?: boolean;
 }
 
 /** At most this many meanings of a word, as the server sends. */
 const MEANINGS_MAX = 3;
 
-/** A word as the server's tokenizer reads one: letters, marks, digits and the ZWNJ, with an apostrophe or hyphen inside. */
+/** A word as the server's tokenizer reads one: letters, marks, digits and ZWNJ, with an inner apostrophe or hyphen. */
 const WORD = /[\p{L}\p{M}\p{N}‌]+(?:['’-][\p{L}\p{M}\p{N}‌]+)*/gu;
 
-/** What a word and a new word are compared by: the letters, in one case and one composition. */
+/** How words are compared with new words: NFC, lower case, trimmed. */
 const wordKey = (word: string): string => word.normalize('NFC').toLowerCase().trim();
 
-/** A line as its words and what lies between them, none with a meaning: for a line the server sent no words for. */
+/** A line's words and the text between them, without meanings, for a line the server sent no words for. */
 function wordsOf(line: string): LineToken[] {
   const out: LineToken[] = [];
   let at = 0;
@@ -84,19 +75,16 @@ function wordsOf(line: string): LineToken[] {
   return out;
 }
 
-/** A piece with the gap in it, as what comes before the gap, the gap, and what comes after. */
+/** Splits a piece containing the gap into before, the gap, and after. */
 function splitAtGap(token: LineToken): LineToken[] {
   if (!token.text.includes(GAP)) return [token];
   return token.text.split(GAP).flatMap((part, i) => [...(i > 0 ? [{ text: GAP, gap: true }] : []), ...(part ? [{ text: part }] : [])]);
 }
 
 /**
- * An item's line as the bubble lays it out: the server's words with their
- * meanings when they add up to the line (`promptTokens`), else the line's own
- * words; a word the item brings in (`newWords`) marked new, with the meaning
- * it was brought in with first — the meaning the lesson means, where the
- * dictionary's may lead with another — and the gap of a missing-word item as
- * a place of its own.
+ * An item's line as the bubble lays it out: the server's words with meanings when they add up to the line
+ * (`promptTokens`), else the line's own words. Words the item introduces (`newWords`) are marked new with the meaning the
+ * lesson means first, and a missing-word gap is its own place.
  */
 export function lineTokens(line: string, tokens: readonly PromptToken[] | undefined, newWords: readonly NewWord[] | undefined): LineToken[] {
   const trusted = !!tokens && tokens.map((token) => token.text).join('') === line;

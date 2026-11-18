@@ -1,14 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * The microphone, for a speaking exercise: ask only when the learner taps
- * Record, keep the take in memory, give the microphone back the moment it
- * stops.
- *
- * Every way it can fail is a state the exercise can say something true about,
- * because each needs a different answer from the learner: a browser with no
- * recorder at all (nothing to do here — skip), a refused permission (it can be
- * allowed again in the address bar), no microphone, or anything else.
+ * The microphone for a speaking exercise: asked only when Record is tapped, the take kept in memory, the microphone
+ * released as soon as it stops. Each failure is its own state because each needs a different answer: no recorder (skip),
+ * refused permission (allow it in the address bar), no microphone, or anything else.
  */
 export type RecorderPhase = 'idle' | 'asking' | 'recording' | 'denied' | 'noMic' | 'failed';
 
@@ -17,15 +12,12 @@ export interface Take {
   durationMs: number;
 }
 
-/** A take is cut off here: a phrase, not a speech, and an upload kept small. */
+/** A take stops here: a phrase, not a speech, and a small upload. */
 const MAX_TAKE_MS = 15_000;
 
 /**
- * What to ask the recorder for. The server takes a learner's recording as
- * WebM, MP4 or MP3 (MEDIA_AUDIO_ALLOWED_TYPES) and checks the bytes; Firefox
- * records Ogg unless asked, which it would refuse, so WebM is asked for where
- * the browser can make it (Chrome, Firefox, Edge) and MP4 where it cannot
- * (Safari). Undefined leaves the browser's own choice.
+ * The recording type to ask for. The server accepts WebM, MP4 or MP3 (MEDIA_AUDIO_ALLOWED_TYPES), and some browsers
+ * record Ogg unless asked, so WebM is asked for where supported and MP4 otherwise; undefined leaves the browser's choice.
  */
 function recordingType(): string | undefined {
   const can = (t: string): boolean => typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(t);
@@ -61,7 +53,7 @@ export function useRecorder(): {
     stream.current = null;
   }, []);
 
-  // leaving mid-take: stop recording and give the microphone back
+  // Leaving mid-take stops recording and releases the microphone.
   useEffect(() => {
     live.current = true;
     return () => {
@@ -117,7 +109,7 @@ export function useRecorder(): {
     try {
       rec.start();
     } catch {
-      // a recorder that will not start is a failure the exercise can say, never "waiting for the microphone" for good
+      // A recorder that will not start is a failure to report, never a permanent "waiting for the microphone".
       recorder.current = null;
       release();
       setPhase('failed');

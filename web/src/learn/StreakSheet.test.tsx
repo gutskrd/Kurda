@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-// the fire as its props: how big it burns and whether it stands still, whoever draws it
+// The fire as its props: how big it burns and whether it stands still.
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { fireLadder, fireLevel, fireSizeToFit } from '@kurda/shared';
@@ -8,11 +8,7 @@ import { preloadCatalogue } from '../i18n/catalogues';
 import type { StreakSummary } from '../lib/types';
 import { StreakSheet } from './StreakSheet';
 
-/*
- * The streak's sheet on the website, as on the phone: the streak in words by
- * its fire, the numbers a missed day never takes away, and the ladder of the
- * fire's stages — reached, burning now, and ahead.
- */
+/* The streak sheet, as on the phone: the streak by its fire, the numbers a missed day keeps, and the fire's stages. */
 
 const streak = (current: number): StreakSummary => ({ current, longest: 30, freezes: 1, lastActiveOn: '2026-10-29', daysLearned: 41, sessionsPerFreeze: 5 });
 
@@ -57,14 +53,14 @@ describe('the streak sheet', () => {
       'Blaze, from day 100, ahead',
       'Newroz fire, from day 365, ahead',
     ]);
-    // each stage drawn as it is, the one now as today has grown it; those ahead stand still
+    // Each stage drawn as it is, the one now as today has grown it; those ahead stand still.
     expect(rungFires().map((f) => f.dataset.stage)).toEqual(['spark', 'kindling', 'campfire', 'bigfire', 'bonfire', 'blaze', 'newroz']);
     expect(rungFires().map((f) => f.dataset.still === 'true')).toEqual([false, false, false, true, true, true, true]);
     expect(rungFires()[2]).toHaveAttribute('data-growth', String(fireLevel(9).growth));
-    // each framed to fill the same square, so a spark is as plain as the Newroz fire and every row as tall
+    // Each framed to fill the same square, so a spark is as plain as the Newroz fire and every row as tall.
     expect(rungFires().map((f) => f.dataset.framed)).toEqual(Array(7).fill('true'));
     expect(rungFires().map((f) => Number(f.dataset.size))).toEqual(fireLadder(9).map((step) => fireSizeToFit(step.stage, 44, 44)));
-    // the one now is marked in words as well as ringed, and only it
+    // The one now is marked in words as well as ringed, and only it.
     expect(within(ladder()).getAllByText('Now')).toHaveLength(1);
     expect(within(ladder()).getAllByRole('listitem')[2]).toHaveClass('is-now');
     expect(within(ladder()).getByText('Day 365')).toBeInTheDocument();

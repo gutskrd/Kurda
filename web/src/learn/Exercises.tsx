@@ -32,38 +32,29 @@ import { BuiltAnswer, useAnswerMode } from './WordTiles';
 /** What every exercise is given by the player. */
 export interface ExerciseProps {
   exercise: DeliveredExercise;
-  /** the course's variety of Kurdish, for the key bar and for marking Kurdish text */
+  /** The course's variety of Kurdish, for the key bar and for marking Kurdish text. */
   dialect: string | null | undefined;
-  /** graded: the answer stands and the feedback is showing */
+  /** Graded: the answer stands and the feedback shows. */
   locked: boolean;
-  /** an answer is on its way to the server */
+  /** An answer is on its way to the server. */
   busy: boolean;
   feedback: Feedback | null;
-  /**
-   * The id of the form the exercise answers through. Check is not the
-   * exercise's own: it is in the action bar at the foot of the lesson
-   * (ActionBar.tsx), in the same place for every exercise, and submits this
-   * form; a typed answer's Enter submits it too.
-   */
+  /** The form the exercise answers through; Check sits in the shared action bar (ActionBar.tsx) and submits it, as does Enter. */
   formId: string;
-  /** whether there is an answer to check yet: the action bar's Check waits for it */
+  /** Whether there is an answer to check yet; the action bar's Check waits for it. */
   onReady: (ready: boolean) => void;
-  /** `given` is what was typed, for the feedback to set beside the right answer */
+  /** `given` is what was typed, for the feedback to set beside the right answer. */
   onAnswer: (answer: unknown, given?: string) => void;
-  /** put this one off by itself: an item that cannot be done at all, such as a listening item with no recording */
+  /** Puts this item off by itself, for one that cannot be done at all (listening with no recording). */
   onSkip: () => void;
 }
 
-/** How an answer was graded, for the part it was given with to answer back. */
+/** How an answer was graded, for the part it was given with. */
 export function verdictOf(feedback: Feedback | null): 'right' | 'wrong' | null {
   return feedback ? (feedback.accepted ? 'right' : 'wrong') : null;
 }
 
-/**
- * The question, as a heading the focus can be put on: when an exercise that
- * starts with no field comes on screen, a screen reader is taken to what it
- * asks rather than left on the button that was pressed before it.
- */
+/** The question as a focusable heading, so screen readers land on it when an exercise without a field appears. */
 export function Ask({ children, focus }: { children: React.ReactNode; focus: boolean }): React.JSX.Element {
   const ref = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -77,9 +68,8 @@ export function Ask({ children, focus }: { children: React.ReactNode; focus: boo
 }
 
 /**
- * The exercise's own text. Prompts are written in the interface language, in
- * Kurdish, or both ("“Roj baş” tê çi wateyê?"), so they are not marked as
- * either; `dir="auto"` still sets a Soranî prompt right to left.
+ * The exercise's own text. Prompts mix the interface language and Kurdish, so they are not marked as either; `dir="auto"`
+ * still sets a Soranî prompt right to left.
  */
 export function Prompt({ text }: { text: string | undefined }): React.JSX.Element | null {
   if (!text) return null;
@@ -91,18 +81,12 @@ export function Prompt({ text }: { text: string | undefined }): React.JSX.Elemen
 }
 
 /**
- * A stage beside a speech bubble: a card tall (`STAGE.card`), shorter on a
- * phone so the character is narrower and the bubble has room, and shorter
- * still on a short screen so the answer stays in view; and the least share of
- * its width the character keeps — the bubble has the rest.
+ * A stage beside a speech bubble: a card tall (`STAGE.card`), shorter on a phone and on a short screen so the answer
+ * stays in view, with the least share of the width the character keeps.
  */
 const BUBBLE_STAGE = { phone: 196, short: 170, share: 0.36 } as const;
 
-/**
- * Whoever says an exercise's recordings, on a stage that leaves room beside
- * them for what they say (`Said`, `SoundBubble`); with nobody chosen, what
- * they say stands alone.
- */
+/** Whoever says an exercise's recordings, on a stage with room beside them for what they say; with nobody, the words stand alone. */
 function Scene({ exercise, feedback, children }: { exercise: DeliveredExercise; feedback: Feedback | null; children: React.ReactNode }): React.JSX.Element {
   const phone = useMediaQuery('(max-width: 480px)');
   const short = useMediaQuery('(max-height: 700px)');
@@ -115,10 +99,8 @@ function Scene({ exercise, feedback, children }: { exercise: DeliveredExercise; 
 }
 
 /**
- * What the exercise says, in a speech bubble beside whoever says it: the
- * prompt, its known words a tap away from their meanings, and at its start
- * the native recording when it can be heard before answering without giving
- * the answer away.
+ * What the exercise says, in a bubble beside its speaker: the prompt, known words a tap from their meanings, and the
+ * recording at its start when hearing it first does not give the answer away.
  */
 function Said({ exercise }: { exercise: DeliveredExercise }): React.JSX.Element | null {
   const t = useT();
@@ -131,10 +113,7 @@ function Said({ exercise }: { exercise: DeliveredExercise }): React.JSX.Element 
   );
 }
 
-/**
- * A few words of context beside an item's line, where the line alone could be
- * read two ways ("to two people"): a small pill under the bubble.
- */
+/** A few words of context under the bubble, where the line alone could be read two ways ("to two people"). */
 export function Cue({ text }: { text: string | undefined }): React.JSX.Element | null {
   if (!text) return null;
   return (
@@ -145,14 +124,9 @@ export function Cue({ text }: { text: string | undefined }): React.JSX.Element |
 }
 
 /**
- * The line of an item that says what it asks, alone in its bubble — the
- * headline says what to do with it — and its cue under it. A Kurdish line is
- * in the display face with its words a tap from their meanings, the words the
- * item brings in first among them, and the native recording at the start, at
- * full speed and at 0.75×, when it can be heard before answering. An English
- * line, to put into Kurdish or to choose the Kurdish for, is plain words with
- * nothing to hear: the recording would be the answer. A missing word's gap
- * holds the word chosen or typed (`gap`).
+ * The line of an item that says what it asks, alone in its bubble, with its cue. A Kurdish line is in the display face
+ * with glossed words (new ones first) and the recording at full and 0.75× speed when it does not give the answer away;
+ * an English line has nothing to hear. A missing word's gap holds what was chosen or typed (`gap`).
  */
 function AskedLine({ exercise, dialect, gap }: { exercise: DeliveredExercise; dialect: string | null | undefined; gap?: GapFill }): React.JSX.Element | null {
   const { lang, dir } = kurdishText(dialect);
@@ -172,13 +146,9 @@ function AskedLine({ exercise, dialect, gap }: { exercise: DeliveredExercise; di
   );
 }
 
-// ---------- multiple choice ----------
+// ---------- Multiple choice ----------
 
-/**
- * How an item's options are laid out: cards of words (in the Kurdish face
- * when they are Kurdish), a missing word's short chips in a row that wraps, or
- * pictures.
- */
+/** How options are laid out: word cards (in the Kurdish face when Kurdish), a missing word's wrapping chips, or pictures. */
 export type ChoiceLook = 'text' | 'kurdish' | 'chips' | 'pictures';
 
 function lookOf(exercise: DeliveredExercise): ChoiceLook {
@@ -196,10 +166,8 @@ function lookOf(exercise: DeliveredExercise): ChoiceLook {
 }
 
 /**
- * Choose one: the question in a bubble, with whoever says its recordings, and
- * the options under it (`Choices`). An item that says what it asks has its
- * headline from that, the line alone in the bubble, and options laid out for
- * what they are; a missing word's gap shows the word chosen.
+ * Choose one: the question in a bubble with its speaker, then the options (`Choices`). An item that says what it asks
+ * takes its headline from that and lays out options for what they are; a missing word's gap shows the choice.
  */
 export function MultipleChoice(props: ExerciseProps): React.JSX.Element {
   const t = useT();
@@ -230,18 +198,10 @@ export function MultipleChoice(props: ExerciseProps): React.JSX.Element {
 }
 
 /**
- * The options, for a multiple-choice item and for the question after a
- * conversation alike: full-width tiles, 1–6 on a keyboard. A tap or a number
- * chooses — a stray tap is not an answer, and the learner can think again —
- * and Check, or Enter, answers with the option's place as shown, as the phone
- * does. Once it is graded the chosen option and the right one are marked with
- * a tick and a cross as well as a colour. (The alphabet's quick questions
- * still answer on the tap: one letter at a time is a different rhythm.)
- *
- * `look` lays them out for what they are: Kurdish cards in the Kurdish face,
- * a missing word's chips in a row that wraps like word tiles, or square cards
- * with a picture each, named for a screen reader by what they show.
- * `onChosen` hears each choice, for a gap that shows it.
+ * The options, for multiple choice and the question after a conversation: full-width tiles, 1–6 on a keyboard. A tap or
+ * number chooses and Check or Enter answers with the option's shown position, as on the phone. Once graded, the chosen
+ * and right options are marked with a tick and a cross as well as colour. `look` sets the layout; picture cards are
+ * named by what they show. `onChosen` hears each choice, for a gap that shows it.
  */
 export function Choices({
   exercise,
@@ -271,7 +231,7 @@ export function Choices({
   useEffect(() => {
     if (locked || busy) return;
     const onKey = (e: KeyboardEvent): void => {
-      // not while typing somewhere, and not from inside a dialog (the Tips) over the lesson
+      // Not while typing, and not from inside a dialog (the Tips) over the lesson.
       if (e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable], [role="dialog"]')) return;
       const n = Number(e.key);
       if (Number.isInteger(n) && n >= 1 && n <= options.length) {
@@ -283,12 +243,12 @@ export function Choices({
     return () => window.removeEventListener('keydown', onKey);
   }, [locked, busy, options.length]);
 
-  // graded: the right option is the one the correction names, or the one chosen when it was right
+  // Graded: the right option is the one the correction names, or the chosen one when right.
   const right = (i: number): boolean => (feedback?.accepted ? i === chosen : feedback?.correction === options[i]);
-  // the one chosen pops (right) or shakes (wrong) as it is graded — styles/motion.css
+  // The chosen one pops (right) or shakes (wrong) as it is graded, in styles/motion.css.
   const stateOf = (i: number): TileState => (!locked ? (i === chosen ? 'picked' : 'idle') : right(i) ? 'right' : i === chosen ? 'wrong' : 'dim');
   const chosenClass = (i: number): string => (locked && i === chosen ? ' is-chosen' : '');
-  // a tick on the right one and a cross on a wrong choice, said in words too
+  // A tick on the right one and a cross on a wrong choice, in words too.
   const mark = (i: number, className: string, size: number): React.ReactNode =>
     locked && right(i) ? (
       <span className={className}>
@@ -393,7 +353,7 @@ export function Choices({
       }}
     >
       {list}
-      {/* kept in its place once answered (unseen), so nothing above the verdict moves */}
+      {/* Kept in place, unseen, once answered so nothing above the verdict moves. */}
       {options.length > 1 && (
         <p className={`lesson-hint lesson-hint--keys${locked ? ' is-spent' : ''}`} aria-hidden={locked || undefined}>
           {t('lesson.mc.keysSelect', { count: options.length })}
@@ -403,14 +363,11 @@ export function Choices({
   );
 }
 
-// ---------- translate and writing ----------
+// ---------- Translate and writing ----------
 
 /**
- * Translate, or write a sentence: what to put into words in a bubble, and the
- * answer — built from word tiles when the item brings a bank (`BuiltAnswer`),
- * else typed with the key bar. An item that says what it asks has its
- * headline from that and the line alone in the bubble; a missing word's gap
- * shows what is being typed or laid, so the sentence is read whole.
+ * Translate, or write a sentence: the line in a bubble and the answer, built from word tiles when the item has a bank
+ * (`BuiltAnswer`), else typed with the key bar. A missing word's gap shows what is being typed or laid.
  */
 export function TypedExercise({ exercise, dialect, locked, busy, feedback, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
@@ -448,14 +405,12 @@ export function TypedExercise({ exercise, dialect, locked, busy, feedback, formI
   );
 }
 
-// ---------- listening ----------
+// ---------- Listening ----------
 
 /**
- * Listen and put down what you hear (KUR-035): the recording in a bubble, at
- * full speed and at 0.75×, as often as wanted, and the answer built from word
- * tiles or typed (`BuiltAnswer`). "Can't listen now", in the action bar, puts
- * off listening for the rest of the lesson without a mistake. An item with no
- * recording at all cannot be done, so it is put off by itself, once.
+ * Listen and put down what you hear: the recording in a bubble at full and 0.75× speed, and the answer from tiles or
+ * typed (`BuiltAnswer`). "Can't listen now" puts listening off for the rest of the lesson without a mistake; an item
+ * with no recording is put off by itself, once.
  */
 export function Listening({ exercise, dialect, locked, busy, feedback, formId, onReady, onAnswer, onSkip }: ExerciseProps): React.JSX.Element | null {
   const t = useT();
@@ -470,9 +425,8 @@ export function Listening({ exercise, dialect, locked, busy, feedback, formId, o
     onSkip();
   }, [src, onSkip]);
 
-  // the question is the sound, so it plays as the exercise appears (where the
-  // browser allows it: the tap on Continue usually counts); "Play" says
-  // "Play again" once it has actually been heard
+  // The sound is the question, so it plays as the exercise appears where the browser allows (the Continue tap usually
+  // counts); "Play" becomes "Play again" once it has been heard.
   useEffect(() => {
     if (!src) return;
     const off = onPlaying((now) => {
@@ -512,12 +466,11 @@ export function Listening({ exercise, dialect, locked, busy, feedback, formId, o
   );
 }
 
-// ---------- match pairs ----------
+// ---------- Match pairs ----------
 
 /**
- * Match pairs: answered as each pair is made when the server says which
- * meaning each card pairs with (`pairOf`, `LiveMatch`), else made freely and
- * checked together (`FreeMatch`), as before.
+ * Match pairs: answered pair by pair when the server says which meaning each card pairs with (`pairOf`, `LiveMatch`),
+ * else made freely and checked together (`FreeMatch`).
  */
 export function MatchPairs(props: ExerciseProps): React.JSX.Element {
   const { lefts, rights, pairOf } = props.exercise;
@@ -525,13 +478,9 @@ export function MatchPairs(props: ExerciseProps): React.JSX.Element {
   return key ? <LiveMatch {...props} pairs={key} /> : <FreeMatch {...props} />;
 }
 
-/**
- * On a keyboard, a number picks that Kurdish card and Shift with it that
- * meaning — the key's place, not what it types: Shift+1 is "!" on one
- * keyboard and "+" on another.
- */
+/** Number keys pick a Kurdish card and Shift with them a meaning, read by key position since Shift+1 types different characters. */
 function useCardKeys(off: boolean, lefts: readonly string[], rights: readonly string[], tap: (side: 'left' | 'right', text: string) => void): void {
-  // the keys read the pairs as they are now, not as they were when the listener was set
+  // The keys read the pairs as they are now, not as at setup.
   const live = useRef(tap);
   live.current = tap;
   useEffect(() => {
@@ -563,11 +512,8 @@ function CardText({ side, text, dialect }: { side: 'left' | 'right'; text: strin
 }
 
 /**
- * Tap a Kurdish card, then its meaning. A pair made shows the same number on
- * both cards, so which card went with which is plain without colour; tap
- * either card again to undo it. A Kurdish card with a recording plays it when
- * it is tapped — hearing the word as it is chosen. Check, in the action bar,
- * waits until every card has its pair.
+ * Tap a Kurdish card, then its meaning. A made pair shows the same number on both cards, so it reads without colour;
+ * tap either again to undo. A Kurdish card with a recording plays it when tapped. Check waits for every pair.
  */
 function FreeMatch({ exercise, dialect, locked, busy, feedback, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
@@ -644,21 +590,14 @@ function FreeMatch({ exercise, dialect, locked, busy, feedback, formId, onReady,
   );
 }
 
-/**
- * How long a pair just tried keeps its colour: a right one flashes green with
- * a sweep of light and a sparkle before it settles, spent; a wrong one
- * flashes red and shakes once, then is as it was.
- */
+/** How long a tried pair keeps its colour: green with a sweep and sparkle when right, red with a shake when wrong. */
 const PAIR_FLASH_MS = { right: 650, wrong: 550 } as const;
 
 const cardId = (side: 'left' | 'right', text: string): string => `${side}:${text}`;
 
 /**
- * Pairs answered as they are made (`tapLive`): tap a card on either side, then
- * its partner. A right pair flashes green, is felt and heard, and stays made,
- * spent; a wrong one flashes red and shakes, and both cards are free again.
- * Each is said to a screen reader as it happens. There is nothing to check:
- * the last pair made answers the exercise, and the verdict rises at once.
+ * Pairs answered as made (`tapLive`): a right pair flashes green, is felt and heard, and stays made; a wrong one flashes
+ * red, shakes, and frees both cards. Each is announced. The last pair made answers the exercise, so there is no Check.
  */
 function LiveMatch({
   exercise,
@@ -676,12 +615,12 @@ function LiveMatch({
   const [state, setState] = useState<LiveMatchState>(emptyLiveMatch);
   const [flash, setFlash] = useState<ReadonlyMap<string, 'right' | 'wrong'>>(() => new Map());
   const [said, setSaid] = useState('');
-  // taps can come faster than renders (a keyboard): each reads the pairs as the last one left them
+  // Taps can outpace renders (a keyboard), so each reads the pairs as the last left them.
   const live = useRef(state);
   const timers = useRef<number[]>([]);
   const off = locked || busy;
 
-  // nothing for Check to wait for: the last pair made is the answer
+  // Nothing for Check to wait for: the last pair made is the answer.
   useEffect(() => onReady(false), [onReady]);
   useEffect(() => {
     const pending = timers.current;
@@ -710,7 +649,7 @@ function LiveMatch({
     const last = made && next.matches.length === lefts.length;
     light(pair, made ? 'right' : 'wrong');
     setSaid(t(made ? 'lesson.match.matched' : 'lesson.match.missed', { left: pair.left, right: pair.right }));
-    // the last pair is the answer: its verdict is felt and heard in its own place
+    // The last pair is the answer; its verdict is felt and heard in its own place.
     if (!made) {
       haptic('wrong');
       playLessonSound('wrong');
@@ -738,7 +677,7 @@ function LiveMatch({
         onClick={() => tap(side, text)}
       >
         <CardText side={side} text={text} dialect={dialect} />
-        {/* a mark as well as a colour: a sparkle for a pair found, a cross for one that is not */}
+        {/* A mark as well as a colour: a sparkle for a pair found, a cross for one that is not. */}
         {lit && (
           <span className={`tile-mark is-${lit}`} aria-hidden="true">
             {lit === 'right' ? <SparkleIcon size={14} /> : <CloseIcon size={14} weight="bold" />}

@@ -40,15 +40,13 @@ import { useQuestDay } from '../quests/useQuestDay';
 import { ShareWin } from '../share/ShareWin';
 import { lessonShare, streakShare } from '../share/winText';
 import { ActionBar, BarRow } from './ActionBar';
+import { KURDISH_ANSWER } from './FeedbackPanel';
 import { kurdishText } from './map';
 import { StreakFlame, StreakWeek } from './StreakMoment';
 import type { SessionResults } from './types';
 import './end.css';
 
-/** Answers that are Kurdish (a multiple-choice option, the answer to a conversation's question or a set of pairs may be in any language). */
-const KURDISH_ANSWER = new Set(['translate', 'writing', 'listening', 'speaking']);
-
-/** A kind word for how many were right first time, never a negative one (`resultsGrade`): the accuracy card's label. */
+/** A kind word for the first-time accuracy, never a negative one (`resultsGrade`), as the accuracy card's label. */
 const GRADE: Record<ResultsGrade, MessageKey> = {
   excellent: 'lesson.results.grade.excellent',
   solid: 'lesson.results.grade.solid',
@@ -62,7 +60,7 @@ const SUBTITLE: Record<ResultsOutcome, MessageKey> = {
   done: 'lesson.results.sub.done',
 };
 
-/** The mistakes open at once while they are few; more than this wait folded. */
+/** Mistakes show open while there are at most this many; more start folded. */
 const MISTAKES_OPEN = 3;
 
 /** The lesson after this one in the course, to go straight on to. */
@@ -71,48 +69,25 @@ export interface NextLesson {
   title: string;
 }
 
-/** The screens after a session, in order: the results, the streak kept (its flame, then its week), today's quests. */
+/** The screens after a session, in order: results, the streak kept (flame, then week), today's quests. */
 type Stage = 'results' | 'flame' | 'week' | 'quests';
 
-/** Not a key for moving on: one pressed on a control, typed in a field or inside a dialog over the page. */
+/** Whether a key belongs elsewhere: pressed on a control, typed in a field, or inside a dialog over the page. */
 function ownedElsewhere(target: EventTarget | null): boolean {
   return !!(target as HTMLElement | null)?.closest?.('button, a, input, textarea, select, summary, [contenteditable], [role="dialog"]');
 }
 
 /**
- * The end of a lesson or a review: what changed, then what comes next.
+ * The end of a lesson or review. The results open as the app's celebration (ranks/Celebration.tsx), Hevalo cheering as
+ * the buzz lands, a title and a warm line by how it went, then three counting cards: XP earned, right first time, and
+ * time taken; today's goal, league place and a new level follow. A screen reader hears the cards in one sentence. Every
+ * mistake is listed with its right answer. Items put off ("Can't listen now") are left out of the score, and the count
+ * says how many.
  *
- * The results open as the app's one celebration (ranks/Celebration.tsx), with
- * Hevalo popping up in his window and cheering as the buzz lands, a title by
- * how it went — perfect, great, or simply done — and a warm line under it. Three framed
- * cards follow, each with its colour's band holding its label: the XP earned
- * (gold), how many were right first time with a kind word for it (green), and
- * how long this sitting took (blue), each number counting up. Today's goal
- * moves from where it stood to where it is now, the week's league place and a
- * new level after them. A click on the celebration skips to the end, and
- * nothing moves on by itself. A screen reader hears the three in one sentence.
- *
- * Every mistake is listed with its question and its right answer — a list of
- * misses without their answers tells the learner what went wrong and not what
- * is right — open while there are few. An exercise put off ("Can't listen
- * now") is neither a mistake nor a right answer: the server leaves it out of
- * the score, so "8 of 8" with two put off is a perfect score of the eight
- * answered, and the results say how many were put off.
- *
- * Then, one tap at a time: the streak kept today, when this lesson is what
- * kept it (StreakMoment.tsx), and today's quests, when the session moved any
- * — their bars filling as they are watched, and "Open chest" when one is done
- * (quests/). What to do next is in the action bar, where Check was, on the
- * last of these: the next lesson while today's goal is still to meet; once it
- * is met, "Done" — a good place to stop — with the next lesson beside it;
- * practising the mistakes whenever there are any. Enter or Space moves on
- * from anywhere that has no use of its own for them.
- *
- * Beside the way on, in the same bar, a quiet Share (share/ShareWin.tsx): on
- * a lesson's results the lesson as it went, a square for each exercise; on
- * the streak's card the streak, on one of its big days only (shared
- * `streakMilestone`). A review is practice, not a lesson finished, and has
- * none. It never stands where the way on stands, and nothing waits for it.
+ * Then, a tap at a time: the streak kept today (StreakMoment.tsx) and today's quests when the session moved any. The way
+ * on sits in the action bar where Check was: the next lesson until today's goal is met, then "Done" beside it, and
+ * practising mistakes when there are any; Enter or Space moves on. A quiet Share (share/ShareWin.tsx) sits beside it on
+ * a lesson's results and on the streak's big days; reviews have none.
  */
 export function Results({
   title,
@@ -130,26 +105,26 @@ export function Results({
   onNext,
   onPractise,
 }: {
-  /** the page's name for a screen reader: the lesson's, or "Review" */
+  /** The page's name for screen readers: the lesson's, or "Review". */
   title: string;
-  /** the lesson's own name, when the page was told it: what a shared lesson is called */
+  /** The lesson's own name when the page was told it, for sharing. */
   lessonName?: string | null;
   results: SessionResults;
   exercises: DeliveredExercise[];
-  /** exercises put off and never answered in this session */
+  /** Exercises put off and never answered this session. */
   skipped?: number;
   kind: 'lesson' | 'practice';
   dialect: string | null | undefined;
-  /** what else the lesson did: today's goal, the streak, a new level, the league */
+  /** What else the lesson did: today's goal, the streak, a new level, the league. */
   moments?: LessonMoments;
-  /** the course's next lesson, when there is one */
+  /** The course's next lesson, when there is one. */
   next?: NextLesson | null;
-  /** how long this sitting took, from opening the player to its last answer */
+  /** How long this sitting took, from opening the player to its last answer. */
   elapsedMs: number;
   exitTo: string;
   exitLabel: string;
   onNext: (lesson: NextLesson) => void;
-  /** start a practice session of these exercises */
+  /** Starts a practice session of these exercises. */
   onPractise: (exerciseIds: string[]) => void;
 }): React.JSX.Element {
   const t = useT();
@@ -158,19 +133,19 @@ export function Results({
   const heading = useRef<HTMLHeadingElement>(null);
   const moment = useCelebrationMoment();
   useCelebrationHold(moment.playing);
-  // Hevalo cheers as the buzz lands (`hapticAtMs`), once
+  // Hevalo cheers once, as the buzz lands (`hapticAtMs`).
   const [cheer, setCheer] = useState(false);
   useEffect(() => {
     const id = window.setTimeout(() => setCheer(true), celebrationPlan(prefersReducedMotion()).hapticAtMs);
     return () => window.clearTimeout(id);
   }, []);
-  // heard as it opens: four notes rising to the octave (lib/sounds.ts)
+  // Heard as it opens: four notes rising to the octave (lib/sounds.ts).
   useEffect(() => playLessonSound('complete'), []);
 
   const mistakes = results.mistakes ?? [];
   const practise = practisableMistakes(mistakes, exercises);
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
-  // a review mixes courses, so each item's own variety marks its answer
+  // A review mixes courses, so each item's own variety marks its answer.
   const byId = new Map(exercises.map((ex) => [ex.id, ex]));
   const goal = moments.goal ?? null;
   const goalDone = moments.goalMet || (goal !== null && goal.to >= goal.target);
@@ -180,16 +155,16 @@ export function Results({
   const grade = resultsGrade(results.accuracy);
   const outcome = resultsOutcome({ perfect: moments.perfect === true, accuracy: results.accuracy });
 
-  // today's quests, read in full while the results are looked at, for the screen after them
+  // Today's quests, read while the results are on screen, for the screen after.
   const steps = results.quests ?? [];
   const questDay = useQuestDay(steps.length > 0);
   const [opened, setOpened] = useState<ReadonlySet<string>>(() => new Set());
   const rows = withOpened(questRows(questDay.day, steps), opened);
   const chests = rows.filter((r) => r.claimable);
   const [chestOpen, setChestOpen] = useState(false);
-  // chests left shut for now: the way on takes the bar instead
+  // Chests left shut for now; the way on takes the bar instead.
   const [later, setLater] = useState(false);
-  // the button that opened the chests goes with the last of them: the way on takes the focus then
+  // The button that opened the chests goes with the last one, and focus moves to the way on.
   const chestWasOpen = useRef(false);
   useEffect(() => {
     if (chestOpen) chestWasOpen.current = true;
@@ -199,23 +174,19 @@ export function Results({
     }
   }, [chestOpen]);
 
-  // the flame has the screen only on the day the fire grew: on any other day the streak's card is the whole of the moment
+  // The flame takes the screen only on the day the fire grew; otherwise the streak card is the whole moment.
   const fireGrew = moments.streakKept && flameMoment(results.streak.current).grew !== null;
   const stages: Stage[] = ['results'];
   if (moments.streakKept) stages.push(...(fireGrew ? (['flame', 'week'] as const) : (['week'] as const)));
   if (steps.length > 0) stages.push('quests');
   const [stage, setStage] = useState<Stage>('results');
   const following = stages[stages.indexOf(stage) + 1] ?? null;
-  // the streak's card: whether everything on it has arrived, and whether the way on was taken and it is going
+  // The streak card: whether everything has arrived, and whether it is leaving.
   const [weekSettled, setWeekSettled] = useState(false);
   const [weekLeaving, setWeekLeaving] = useState(false);
   const leaveTimer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
-  /**
-   * Take the way on from the streak's card: the card goes first (its words
-   * fade, its medal gathers itself and is gone), then `then`. From any other
-   * screen, and for a reader who asked for less motion, `then` at once.
-   */
+  /** Takes the way on from the streak card: the card leaves first, then `then`; elsewhere or under reduced motion, at once. */
   const leaving = (then: () => void): void => {
     if (stage !== 'week' || prefersReducedMotion()) {
       then();
@@ -230,12 +201,12 @@ export function Results({
   };
 
   useEffect(() => {
-    // each screen starts at its top; the one after the results takes the focus itself
+    // Each screen starts at its top; the ones after the results take focus themselves.
     if (stage === 'results') heading.current?.focus({ preventScroll: true });
     else document.scrollingElement?.scrollTo?.({ top: 0 });
   }, [stage]);
 
-  // what Enter and Space do: the bar's main button, whichever it is now
+  // What Enter and Space do: the bar's current main button.
   const primary = useRef<(() => void) | null>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -258,7 +229,7 @@ export function Results({
     action === 'next' ? t('lesson.results.next') : action === 'practise' ? t('lesson.results.practise') : t('common.done');
   const share = (xpToday: number): number => (goal && goal.target > 0 ? Math.max(0, Math.min(1, xpToday / goal.target)) : 0);
 
-  // the quiet Share of the screen in front: the lesson on its results, the streak on its card on one of its big days, and otherwise none
+  // The quiet Share for the screen in front: the lesson on its results, the streak on its big days, otherwise none.
   const shareButton =
     stage === 'results' && kind === 'lesson' ? (
       <ShareWin text={lessonShare(t, lessonName)} />
@@ -268,7 +239,7 @@ export function Results({
 
   let bar: React.ReactNode;
   if (stage === 'flame') {
-    // the flame has the whole screen, and moves on by itself
+    // The flame has the whole screen and moves on by itself.
     bar = null;
     primary.current = null;
   } else if (following) {
@@ -350,7 +321,7 @@ export function Results({
           <QuestsStage rows={rows} monthDone={questDay.day?.monthDone ?? null} />
         ) : (
           <section className="lesson-results" aria-labelledby="lesson-results-title">
-            {/* a click on it while it plays skips to the end */}
+            {/* A click while it plays skips to the end. */}
             <div
               className={`celebrate celebrate-inline tone-zer ${moment.playing ? 'is-playing' : 'is-done'}`}
               onClick={moment.playing ? moment.skip : undefined}
@@ -359,7 +330,7 @@ export function Results({
                 <HevaloWindow size={230} reaction={cheer ? 'cheer' : null} />
               </CelebrationArt>
               <div className="celebrate-details">
-                {/* the page's h1 is the lesson's name; this is the part of it on screen now */}
+                {/* The page's h1 is the lesson's name; this is the part on screen now. */}
                 <h2 className="lesson-results-title" id="lesson-results-title" tabIndex={-1} ref={heading}>
                   {outcome === 'perfect'
                     ? t('lesson.results.perfect')
@@ -439,7 +410,7 @@ export function Results({
                 <ul>
                   {mistakes.map((m) => {
                     const ex = byId.get(m.exerciseId);
-                    const kurdish = KURDISH_ANSWER.has(ex?.type ?? '');
+                    const kurdish = KURDISH_ANSWER.has(ex?.type);
                     const { lang, dir } = kurdishText(ex?.dialect ?? dialect);
                     return (
                       <li key={m.exerciseId}>
@@ -467,7 +438,7 @@ export function Results({
       </div>
       {bar &&
         (stage === 'week' ? (
-          // the way on is the last thing on the streak's card to arrive (shared `streakReveal`); its key answers from the first frame
+          // The way on arrives last on the streak card (shared `streakReveal`), but its key works from the first frame.
           <div
             className={`end-bar-late${weekSettled ? ' is-settled' : ''}`}
             style={{ '--onward-at': `${streakReveal(prefersReducedMotion()).onwardAtMs}ms` } as React.CSSProperties}
@@ -477,7 +448,7 @@ export function Results({
         ) : (
           <ActionBar>{bar}</ActionBar>
         ))}
-      {/* it keeps the chests it opened with, so one opened does not close it */}
+      {/* It keeps the chests it opened with, so opening one does not close it. */}
       {chestOpen && (
         <ChestScreen
           chests={chests}
@@ -500,12 +471,7 @@ function clock(seconds: number, locale: string): string {
   return h > 0 ? `${one.format(h)}:${two.format(m)}:${two.format(s)}` : `${one.format(m)}:${two.format(s)}`;
 }
 
-/**
- * The three cards: XP earned, right first time with its kind word as the
- * label, and the time this sitting took — each a band of its colour holding
- * the label over a framed number that counts up as the words land. Hidden
- * from a screen reader, which hears them in one sentence instead.
- */
+/** The three cards (XP, right first time, time taken), each counting up; hidden from screen readers, which hear one sentence. */
 function ResultCards({ results, grade, elapsedMs }: { results: SessionResults; grade: ResultsGrade; elapsedMs: number }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -516,7 +482,7 @@ function ResultCards({ results, grade, elapsedMs }: { results: SessionResults; g
   const right = useCountUp(percent, { delayMs: xpAtMs + tileStaggerMs });
   const time = useCountUp(seconds, { delayMs: xpAtMs + 2 * tileStaggerMs });
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
-  // "80 %", "%80", "٨٠٪": the reader's own way of writing a percentage
+  // "80 %", "%80", "٨٠٪": the reader's own way of writing a percentage.
   const pct = (n: number): string => new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(n / 100);
   const minutes = Math.floor(seconds / 60);
   return (
@@ -526,7 +492,7 @@ function ResultCards({ results, grade, elapsedMs }: { results: SessionResults; g
           <p className="end-stat-label">{t('lesson.results.totalXp')}</p>
           <p className="end-stat-value">
             <XpIcon size={22} />
-            {/* the sign before the number in a right-to-left page too */}
+            {/* The sign stays before the number on a right-to-left page too. */}
             <span dir="ltr">+{number(xp)}</span>
           </p>
         </div>
@@ -560,10 +526,8 @@ function ResultCards({ results, grade, elapsedMs }: { results: SessionResults; g
 }
 
 /**
- * Today's quests after a session that moved any: the three as rows, each bar
- * filling from where it stood before the session, a quest just finished lifting
- * and glowing, and the month's count under them. The title says how many were
- * finished just now.
+ * Today's quests after a session that moved any: each bar filling from where it stood, a just-finished quest lifting and
+ * glowing, and the month's count; the title says how many were finished just now.
  */
 function QuestsStage({ rows, monthDone }: { rows: QuestRow[]; monthDone: number | null }): React.JSX.Element {
   const t = useT();

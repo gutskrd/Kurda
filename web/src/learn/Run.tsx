@@ -4,10 +4,8 @@ import { Fire } from '../components/Fire';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Right answers in a row, over the lesson's bar while the run lasts (from
- * `RUN_SHOWN_FROM`): it pops each time it grows — the player gives it the run
- * as its key, so a new number is a new label — and is gone with a miss. Its
- * fire grows with the run (`runFireLevel`).
+ * Right answers in a row over the lesson's bar (from `RUN_SHOWN_FROM`): it pops as it grows (the run is its key), goes
+ * with a miss, and its fire grows with it (`runFireLevel`).
  */
 export function RunLabel({ run }: { run: number }): React.JSX.Element | null {
   const t = useT();
@@ -20,16 +18,13 @@ export function RunLabel({ run }: { run: number }): React.JSX.Element | null {
   );
 }
 
-/** How big a milestone's fire is drawn, framed: the biggest a run grows (the blaze) about 200 high, so a longer run's fire is a bigger one. */
+/** A milestone fire's framed size: the biggest a run grows (the blaze) about 200 high, so longer runs show bigger fires. */
 const RUN_FIRE = fireSizeToFit('blaze', 200, 200);
 
 /**
- * A run reaching a milestone (`runMilestone`), named across the whole screen
- * for a moment after Continue, before the next exercise: it springs in, or
- * fades in under reduced motion. Where the run's fire reached a new stage it
- * grows into it, and the moment lasts until it has (shared `runMoment`). Any
- * tap or key goes on at once, and that key does nothing else. Decorative: the
- * verdict above it already said so in words.
+ * A run milestone (`runMilestone`) named across the screen after Continue: it springs in (fades under reduced motion),
+ * grows its fire into a new stage where reached (shared `runMoment`), and any tap or key dismisses it without doing
+ * anything else. Decorative; the verdict already said it.
  */
 export function RunMoment({ count, onDone }: { count: number; onDone: () => void }): React.JSX.Element {
   const t = useT();
@@ -37,7 +32,7 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
   const over = useRef(false);
   const end = useRef(onDone);
   end.current = onDone;
-  // once, whichever comes first: the time, a tap or a key
+  // Once, whichever comes first: the time, a tap or a key.
   const finish = useRef((): void => {
     if (over.current) return;
     over.current = true;
@@ -46,7 +41,7 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
   useEffect(() => {
     const go = finish.current;
     const id = window.setTimeout(go, fire.ms);
-    // before anything else on the page hears it: the key that skips is not also an answer or a Continue
+    // Before anything else hears it, so the skipping key is not also an answer or a Continue.
     const onKey = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Tab') return;
       e.preventDefault();

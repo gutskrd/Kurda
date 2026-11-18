@@ -6,32 +6,23 @@ import type { MessageKey } from '../i18n/en';
 import type { SkillNode } from './types';
 
 /**
- * The website's lesson path a section at a time (learn/CoursePath.tsx): the
- * heading pinned over the open section, the quiet divider between two of its
- * units, and the card each section that is not open is folded into. The
- * phone draws the same (mobile coursemap/LessonPath.tsx), from the same
- * sections (@kurda/shared `lessonPath`).
+ * The lesson path a section at a time (learn/CoursePath.tsx): the pinned heading, dividers between units, and the cards
+ * closed sections fold into. The phone draws the same (mobile coursemap/LessonPath.tsx) from @kurda/shared `lessonPath`.
  */
 
 type Unit = PathUnit<SkillNode>;
 type Section = PathSection<SkillNode>;
 
 /**
- * What a section's level is called, and what it is like: the app's own plain
- * names for its levels, the ones the stories use (shared `levelNameKey`), so a
- * learner meets one ladder everywhere and never a bare CEFR letter. Null for a
- * section without a level, or with one past the ladder.
+ * A section level's plain name and hint, the same ladder the stories use (shared `levelNameKey`), never a CEFR letter.
+ * Null without a level or past the ladder.
  */
 export function levelWords(level: string | null): { name: MessageKey; hint: MessageKey } | null {
   const at = level ? levelOfCefr(level) : null;
   return at ? { name: levelNameKey(at), hint: levelHintKey(at) } : null;
 }
 
-/**
- * Which of the open section's units is at the top of the window, under the
- * pinned heading: the last whose top has gone up past the heading's foot.
- * Followed as the page scrolls, at most once a frame.
- */
+/** The open section's unit at the top of the window: the last whose top has passed the pinned heading's foot, read at most once a frame. */
 export function useUnitAtTop(root: React.RefObject<HTMLElement | null>, units: readonly Unit[]): string | null {
   const [at, setAt] = useState<string | null>(units[0]?.unitId ?? null);
   const ids = units.map((u) => u.unitId).join(',');
@@ -67,14 +58,9 @@ export function useUnitAtTop(root: React.RefObject<HTMLElement | null>, units: r
 }
 
 /**
- * The open section's heading, pinned to the top of the window under the bar
- * as its units are scrolled through: "Section 1 · Chapter 2" over the name of
- * the unit at the top, in that unit's colour, with its guide (the grammar
- * notes) as a book on the far side and, where the page has no room for the
- * rail of units beside the path, the flag that opens it. A course of one
- * section is not named. It says what the eye sees; each unit's own heading is
- * in the page's order for a screen reader (`UnitDivider`, and the first
- * unit's, read but not shown).
+ * The open section's heading, pinned under the bar: "Section 1 · Chapter 2" over the top unit's name in its colour, its
+ * guide as a book on the far side, and the rail's flag where there is no room for the rail. A one-section course is not
+ * named. It is for the eye; each unit's own heading is in the page order for screen readers.
  */
 export function UnitPin({
   unit,
@@ -83,7 +69,7 @@ export function UnitPin({
   onRail,
 }: {
   unit: Unit;
-  /** the section's number, or null when the course has one */
+  /** The section's number, or null when the course has one. */
   section: number | null;
   onGuide?: () => void;
   onRail: () => void;
@@ -102,7 +88,7 @@ export function UnitPin({
           <BookIcon size={20} />
         </button>
       )}
-      {/* the rail of units, where the page has no room for it beside the path */}
+      {/* The rail of units, where there is no room for it beside the path. */}
       <button type="button" className="lp-pin-button lp-unit-rail" aria-label={t('learn.openMap')} onClick={onRail}>
         <FlagIcon size={20} />
       </button>
@@ -110,17 +96,13 @@ export function UnitPin({
   );
 }
 
-/**
- * Between one unit and the next, a quiet line with the next unit's number and
- * name between two hairlines: its heading, so a long path reads in chapters.
- * The name wraps rather than being cut.
- */
+/** Between two units, a quiet line with the next unit's number and name: its heading, wrapping rather than cut. */
 export function UnitDivider({ unit, id }: { unit: Unit; id: string }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const chapter = t('coursemap.unit', { n: new Intl.NumberFormat(locale).format(unit.number) });
   return (
-    // said as one, as the unit's pinned heading says it: "Chapter 2, Family"
+    // Read as one, as the pinned heading says it: "Chapter 2, Family".
     <h2 className="lp-divider" id={id} aria-label={`${chapter}, ${unit.title}`}>
       <span className="lp-divider-eyebrow">{chapter}</span>
       <span className="lp-divider-title">{unit.title}</span>
@@ -129,11 +111,8 @@ export function UnitDivider({ unit, id }: { unit: Unit; id: string }): React.JSX
 }
 
 /**
- * A section that is not open, as one card: its number, its level by the
- * app's own name for it with a line saying what that is like, and where it
- * stands — done, how far the learner is through it, or, shut, how many
- * chapters wait in it and what opens it. A section done or begun opens when
- * pressed; a shut one stays shut.
+ * A closed section as one card: its number, level name and hint, and where it stands (done, how far through, or shut
+ * with its chapter count and what opens it). Done or begun sections open on a press; a shut one stays shut.
  */
 export function SectionCard({ section, here, onOpen }: { section: Section; here: boolean; onOpen: () => void }): React.JSX.Element {
   const t = useT();
@@ -149,7 +128,7 @@ export function SectionCard({ section, here, onOpen }: { section: Section; here:
         ? count
         : t('coursemap.sectionProgress', { done: n(section.unitsDone), total: n(section.units.length) });
   const after = section.state === 'locked' && section.number > 1 ? t('coursemap.sectionOpensAfter', { n: n(section.number - 1) }) : null;
-  // the whole card in one breath, its parts apart: what a screen reader says for it
+  // The whole card in one label, its parts separated, for screen readers.
   const label = [number, level ? t(level.name) : null, level ? t(level.hint) : null, here ? t('coursemap.state.current') : null, status, section.state === 'done' ? count : null, after]
     .filter(Boolean)
     .join(', ');

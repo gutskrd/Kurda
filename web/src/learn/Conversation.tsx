@@ -14,26 +14,23 @@ import { PlayButton } from './PlayButton';
 const NO_AUDIO: ReadonlyArray<string | null> = [];
 
 interface PlayThrough {
-  /** the line being heard, or null when the conversation is not playing */
+  /** The line being heard, or null when the conversation is not playing. */
   at: number | null;
   start: () => void;
   halt: () => void;
 }
 
 /**
- * The whole conversation heard through, one recorded line after another,
- * through the app's one player (lib/sound.ts), so it never talks over anything
- * else. A line with no recording is passed over, never guessed at. Anything
- * else taking the player — a line's own button, an option's — ends the run,
- * and so does leaving the exercise.
+ * Plays the whole conversation, one recorded line after another, through the app's one player (lib/sound.ts); unrecorded
+ * lines are skipped. Anything else taking the player, or leaving the exercise, ends the run.
  */
 function usePlayThrough(audio: ReadonlyArray<string | null>): PlayThrough {
   const [at, setAt] = useState<number | null>(null);
-  // the player's events can arrive before React renders again: they read this, not the state
+  // Player events can arrive before React re-renders, so they read this, not the state.
   const live = useRef({ at: null as number | null, audio });
   live.current.audio = audio;
 
-  // from line `from` on: the first one with a recording, or the end
+  // From line `from` on: the first one with a recording, or the end.
   const go = useCallback((from: number) => {
     const list = live.current.audio;
     let i = from;
@@ -51,7 +48,7 @@ function usePlayThrough(audio: ReadonlyArray<string | null>): PlayThrough {
     stop();
   }, []);
 
-  // a line plays to its end: the next one
+  // A line played to its end: the next one.
   useEffect(
     () =>
       onEnded((src) => {
@@ -61,7 +58,7 @@ function usePlayThrough(audio: ReadonlyArray<string | null>): PlayThrough {
     [go],
   );
 
-  // something else took the player: let go, without stopping what it plays
+  // Something else took the player: let go without stopping it.
   useEffect(
     () =>
       onPlaying((src) => {
@@ -73,7 +70,7 @@ function usePlayThrough(audio: ReadonlyArray<string | null>): PlayThrough {
     [],
   );
 
-  // Continue, or leaving the lesson, ends the conversation mid-line
+  // Continue, or leaving the lesson, ends the conversation mid-line.
   useEffect(
     () => () => {
       if (live.current.at !== null) stop();
@@ -86,22 +83,12 @@ function usePlayThrough(audio: ReadonlyArray<string | null>): PlayThrough {
 }
 
 /**
- * Two or three of the characters talking — or one of them talking with the
- * learner — then a question about what they said, asked and graded as a
- * multiple-choice item is (`Choices`).
- *
- * They stand together on a stage above, looking at each other, and whoever
- * says the line playing now says it, mouth moving with it: always that line's
- * own character (`ConversationStage`, which follows the one player from line
- * to line). The lines are speech bubbles in order: the first speaker's on the
- * start side, everyone else's across from them, each speaker in a tint of
- * their own and named over every line, so who says what never rests on
- * colour. The learner's own lines, when they have a part, are theirs: on the
- * end side under "You", to read and say back, never recorded. A line with a
- * recording has its own small button, and "Play conversation" hears every
- * recorded line through, marking the one being heard (`aria-current`) and
- * keeping it in view. The English of each line is there for a learner who
- * asks for it.
+ * Two or three characters talking, or one with the learner, then a question on what they said, graded as multiple choice
+ * (`Choices`). They stand together on a stage, and each line's own character speaks it (`ConversationStage`). Lines are
+ * bubbles in order: the first speaker on the start side, others across, each tinted and named so who speaks never rests
+ * on colour. The learner's own lines sit on the end side under "You", to read and say, never recorded. Recorded lines
+ * have their own button, and "Play conversation" plays them all, marking the current one (`aria-current`) and keeping
+ * it in view. Each line's English is there on request.
  */
 export function Conversation(props: ExerciseProps): React.JSX.Element {
   const { exercise, dialect, feedback } = props;
@@ -118,7 +105,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
   const heard = useRef<HTMLLIElement | null>(null);
   const verdict = verdictOf(feedback);
 
-  // the line being heard stays in view; under reduced motion it jumps rather than glides
+  // The line being heard stays in view; under reduced motion it jumps.
   useEffect(() => {
     if (at !== null) heard.current?.scrollIntoView({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' });
   }, [at, calm]);
@@ -160,7 +147,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
           const src = audio[i];
           const now = at === i;
           const yours = who?.learner === true;
-          // three speakers at most, each with a tint of their own; anything out of range reads as the first
+          // At most three speakers with their own tints; anything out of range reads as the first.
           const tint = line.speaker > 0 && line.speaker < CONVERSATION_LIMITS.speakersMax ? line.speaker : 0;
           const name = yours ? t('lesson.conversation.you') : who?.name;
           return (
@@ -173,7 +160,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
               <div className="lesson-line-bubble">
                 {name && (
                   <span className="lesson-line-name">
-                    {/* the learner's own part is named in their language, a character in Kurdish */}
+                    {/* The learner's own part is named in their language, a character in Kurdish. */}
                     <span lang={yours ? undefined : lang} dir={yours ? undefined : dir}>
                       {name}
                     </span>

@@ -45,7 +45,7 @@ type Unit = PathUnit<SkillNode>;
 
 const { node: NODE } = PATH_GEOMETRY;
 
-/** How a skill stands, in words — said after its name to a screen reader. */
+/** How a skill stands, in words, said after its name to a screen reader. */
 function stateKey(stop: SkillStop<SkillNode>): MessageKey {
   if (stop.state === 'current') return 'coursemap.state.current';
   if (stop.state === 'available') return 'coursemap.state.open';
@@ -57,11 +57,8 @@ const lessonHref = (lessonId: string, courseId: string): string =>
   `/app/learn/lesson/${lessonId}?course=${encodeURIComponent(courseId)}`;
 
 /**
- * The glyph on a stop: what it is, by shape as well as colour. A finished
- * topic's coin carries its stars instead (`RoundStars`; a check only on a map
- * too old to count them), the story and the chest are drawn whole
- * (`StopArt`), and the learner stands on the stop to do now: those carry no
- * glyph.
+ * The glyph on a stop, so its kind shows by shape as well as colour. A finished topic's coin shows its stars instead
+ * (`RoundStars`; a check on a map too old to count them); the story, the chest and the learner's own stop carry none.
  */
 function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
   if (stop.kind === 'review') return <RepostIcon size={28} weight="bold" />;
@@ -70,7 +67,7 @@ function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
   if (stop.state === 'locked') return <LockIcon size={26} weight="bold" />;
   if (stop.state === 'done') {
     const refresh = stop.finish === 'refresh' && (
-      // still done, with a small sign that a review would help
+      // Still done, with a small sign that a review would help.
       <span className="lp-node-badge">
         <RepostIcon size={14} weight="bold" />
       </span>
@@ -93,12 +90,9 @@ function stopClass(stop: Stop): string {
 }
 
 /**
- * How a stop is drawn (shared `pathStopSvg`): a skill by how it stands — a
- * finished one a gold coin however strong its reviews say it is, since its
- * stars now say how far it has been taken, and faded only when a refresh
- * would help — review as an open stop, a chapter's story as its prize, a
- * scroll rolled and tied on stone until the chapter is done and open on gold
- * from then on, and a unit without a story ending at its chest.
+ * How a stop is drawn (shared `pathStopSvg`): a finished skill is a gold coin whatever its review strength, faded only
+ * when a refresh would help; review is an open stop; a chapter's story is a scroll tied on stone until the chapter is
+ * done, then open on gold; a unit without a story ends at its chest.
  */
 function stopLook(stop: Stop): PathStopLook {
   if (stop.kind === 'review') return 'review';
@@ -109,10 +103,8 @@ function stopLook(stop: Stop): PathStopLook {
 }
 
 /**
- * What the learner reads when they tap a stop: what it is, how far they are,
- * one thing to do next, and what it pays. A locked skill says, kindly, what
- * opens it; a topic with a star says its stars and the round it is in; a
- * chapter's story, its prize, says the chapter is complete and opens it.
+ * The card a tapped stop opens: what it is, progress, one thing to do next, and what it pays. A locked skill says what
+ * opens it; a starred topic shows its stars and round; a chapter's story says the chapter is complete.
  */
 function StopCard({
   stop,
@@ -126,7 +118,7 @@ function StopCard({
   stop: Stop;
   unit: Unit;
   courseId: string;
-  /** where a lesson opened from here comes back to */
+  /** Where a lesson opened from here returns to. */
   home: string | null;
   review: PracticeDue | null;
   titleId: string;
@@ -175,7 +167,7 @@ function StopCard({
     return (
       <>
         <p className="lp-pop-eyebrow">{t('coursemap.unit', { n: unit.number })}</p>
-        {/* the chapter's prize: what the chest at its end said, in gold, as what was won */}
+        {/* The chapter's prize, in gold. */}
         {stop.open && (
           <p className="lp-pop-won" data-testid="lp-chapter-complete">
             <CheckIcon size={14} weight="bold" />
@@ -206,7 +198,7 @@ function StopCard({
 
   const { skill } = stop;
   const states = lessonStates(skill);
-  // the round being played: its lessons finished, and once a topic has a star, those of its next round
+  // The round being played: its lessons finished, and once a topic has a star, those of its next round.
   const share = stop.lessonsTotal > 0 ? Math.round(((stop.rounds > 0 ? stop.pieces : stop.lessonsDone) / stop.lessonsTotal) * 100) : 0;
   const action =
     stop.state === 'locked' || !stop.launch
@@ -216,10 +208,10 @@ function StopCard({
         : {
             to: lessonHref(stop.launch, courseId),
             label: stop.state === 'done' ? t('coursemap.again') : stop.lessonsDone > 0 ? t('learn.continue') : t('learn.start'),
-            // the lesson it opens has been finished before: a replay, which pays less
+            // The lesson was finished before: a replay, which pays less.
             again: skill.lessons.find((l) => l.lessonId === stop.launch)?.completed ?? stop.state === 'done',
           };
-  // what the lesson the button opens pays, in the server's own numbers (@kurda/shared xp.ts)
+  // What the lesson pays, from the server's own numbers (@kurda/shared xp.ts).
   const xp = action && action.again !== null ? lessonXpRange(action.again) : null;
   return (
     <>
@@ -229,7 +221,7 @@ function StopCard({
       <h3 className="lp-pop-title" id={titleId}>
         {skill.title}
       </h3>
-      {/* what it teaches: its lessons, each one a way in once it is open */}
+      {/* What it teaches: its lessons, each a way in once open. */}
       {skill.lessons.length > 0 && (
         <ol className="lp-parts">
           {skill.lessons.map((lesson, i) => {
@@ -313,11 +305,7 @@ function StopCard({
   );
 }
 
-/**
- * The full name a stop's button says, so a screen reader hears what the eye
- * sees: once a topic has a star, the round it is in ("Greetings, Done, round
- * 2 of 3, 3 of 4 lessons"), or that all three are done.
- */
+/** A stop button's full name, matching what is seen: the round once a topic has a star ("Greetings, Done, round 2 of 3, 3 of 4 lessons"). */
 function useStopLabel(): (stop: Stop, unit: Unit) => string {
   const t = useT();
   return (stop, unit) => {
@@ -334,11 +322,7 @@ function useStopLabel(): (stop: Stop, unit: Unit) => string {
   };
 }
 
-/**
- * A unit's grammar notes — its guide — or one skill's, in a sheet. Each note
- * is fetched the first time the sheet asks for it, so a map with twenty
- * skills does not fetch twenty notes nobody opened.
- */
+/** A unit's grammar notes (its guide), or one skill's, in a sheet; each note is fetched the first time it is shown. */
 function GuideSheet({ guide, onClose }: { guide: { skills: SkillNode[]; label: string } | null; onClose: () => void }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
@@ -358,7 +342,7 @@ function GuideSheet({ guide, onClose }: { guide: { skills: SkillNode[]; label: s
     return () => {
       live = false;
     };
-    // a note once fetched is kept (`notes` is read, not watched): only a new guide asks again
+    // A fetched note is kept (`notes` is read, not watched); only a new guide asks again.
   }, [guide, client, t]);
 
   return (
@@ -385,13 +369,11 @@ function GuideSheet({ guide, onClose }: { guide: { skills: SkillNode[]; label: s
   );
 }
 
-// ---------- coming back to the path ----------
+// ---------- Coming back to the path ----------
 
 /*
- * The path as it was last drawn in this tab, per course: what coming back to
- * it after a lesson is compared with, so the lesson's mark on it can be shown
- * happening rather than only having happened (shared `pathChanges`). A tab
- * that has never drawn the course has nothing to compare, and simply draws it.
+ * The path as last drawn in this tab, per course, so a return from a lesson can play what changed (shared
+ * `pathChanges`). Without a snapshot the path is simply drawn.
  */
 const snapshotKey = (courseId: string): string => `hevalo:path:${courseId}`;
 
@@ -411,53 +393,44 @@ function writeSnapshot(courseId: string, snapshot: PathSnapshot): void {
   try {
     sessionStorage.setItem(snapshotKey(courseId), JSON.stringify(snapshot));
   } catch {
-    // storage blocked: the next visit draws the path as it is, without the moment
+    // Storage blocked: the next visit draws the path without the moment.
   }
 }
 
 interface PathReturn {
   changes: PathChanges;
   prev: PathSnapshot;
-  /** the stop that was current, where the page opens before it moves on */
+  /** The stop that was current, where the page opens before it moves on. */
   from: string | null;
 }
 
 /**
- * The moments of a return (`PATH_RETURN`, counted from when the path is
- * drawn, as the phone counts them): the ring's new pieces fill, a finished
- * stop pops and turns gold, a star earned drops in, an opened stop loses its
- * lock, a ring made whole starts its next round, and the bubble moves on.
+ * The moments of a return (`PATH_RETURN`, counted from the draw as on the phone): the ring fills, a finished stop pops
+ * gold, a star drops in, an opened stop loses its lock, a whole ring starts its next round, and the bubble moves on.
  */
 const STEP = { fill: 1, finish: 2, star: 3, open: 4, next: 5, bubble: 6 } as const;
 
-/**
- * Where the return has got to (`STEP`), from 0 — drawn as it was, the page
- * settling — to `STEP.bubble`; null once it is over, or when there was
- * nothing to show.
- */
+/** Where the return has got to (`STEP`), from 0 (drawn as it was) to `STEP.bubble`; null once over or with nothing to show. */
 function useReturnStep(ret: PathReturn | null): number | null {
   const [at, setAt] = useState<{ ret: PathReturn | null; step: number | null }>({ ret: null, step: null });
   useEffect(() => {
     if (!ret) return;
     const { settleMs, finishAtMs, starAtMs, starMs, openAtMs, bubbleAtMs, bubbleMs, popMs } = PATH_RETURN;
     const marks = [settleMs, finishAtMs, starAtMs, openAtMs, starAtMs + starMs, bubbleAtMs];
-    // in order, each a moment later than the one before
+    // In order, each a moment after the last.
     const timers = marks.map((ms, i) => window.setTimeout(() => setAt({ ret, step: i + 1 }), ms));
     timers.push(window.setTimeout(() => setAt({ ret, step: null }), bubbleAtMs + Math.max(bubbleMs, popMs, 400)));
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [ret]);
   if (!ret) return null;
-  // until its first moment it is drawn as it was, from the very first frame
+  // Until its first moment it is drawn as it was, from the very first frame.
   return at.ret === ret ? at.step : 0;
 }
 
 /**
- * Hevalo beside the current stop (shared `mascotSpot`): across from it, never
- * on the line. He arrives with the path, greets a tap — which opens the stop's
- * card, as the stop itself would — and cheers when coming back shows a skill
- * finished or opened. The stop's own button is the way in for a keyboard or a
- * screen reader; he is a picture, and is left out of the reading order. Not on
- * the narrowest screens, where he would crowd the path.
+ * Hevalo beside the current stop (shared `mascotSpot`), never on the line. A tap opens the stop's card; he cheers when a
+ * return shows a skill finished or opened. He is decorative and out of the reading order, and hidden on the narrowest
+ * screens.
  */
 function PathMascot({ x, y, flip, cheer, onPress }: { x: number; y: number; flip: boolean; cheer: boolean; onPress: () => void }): React.JSX.Element {
   return (
@@ -467,10 +440,10 @@ function PathMascot({ x, y, flip, cheer, onPress }: { x: number; y: number; flip
   );
 }
 
-/** Hevalo drawn whole beside the path, at the scale of the valley's trees and houses rather than towering over them. */
+/** Hevalo's size beside the path, in scale with the valley's trees and houses. */
 const MASCOT_SIZE = 104;
 
-/** The units whose stops have risen into place already, by course, while the tab is open: each rises once. */
+/** Units whose stops have already risen in this tab, by course; each rises once. */
 const RISEN = new Set<string>();
 
 /** The section a stop is in, from 0; null for no stop. */
@@ -481,40 +454,15 @@ function sectionOf(path: Path<SkillNode>, key: string | null): number | null {
 }
 
 /**
- * A course's lesson path: on the course's own page (pages/CourseMap.tsx, with
- * its header) and as the home of Learn (pages/Learn.tsx, without).
+ * A course's lesson path, on the course page (pages/CourseMap.tsx, with its header) and as Learn's home
+ * (pages/Learn.tsx, without). Rules come from @kurda/shared's `lessonPath`, as on the phone.
  *
- * The course is shown a section at a time (shared `lessonPath`'s `sections`,
- * its units grouped by their level in the course plan): the section the
- * learner is in is open, a section before it is one card that opens it again,
- * and a later one is a card that says what it is — its number, its level by
- * the app's own name for it, how many chapters — shut. A course without
- * levels is one section, and shows no cards.
+ * The course shows one section at a time (units grouped by level): the current section is open, earlier ones collapse
+ * to a card that reopens them, and later ones are shut cards. A pinned heading names the unit at the top of the window
+ * with its guide; each unit's stops run down the road through its land, and tapping a stop opens its card.
  *
- * Over the open section a heading in the colour of the unit at the top of
- * the window, pinned under the bar as the page scrolls — "Section 1 ·
- * Chapter 2" over the unit's name, with its guide (the grammar notes) as a
- * book on the far side — and between two units a quiet divider with the next
- * one's name. Each unit's stops go down the road through its land: its four
- * topics, each in a ring of a piece for each lesson, a gold coin with a star
- * for each round once finished (one to three), the one to do now raised in
- * the unit's colour with a "Start" over it and Hevalo beside it, open ones
- * cream, and the rest field stone with a padlock; review beside the current
- * topic when words are due; and the story that closes the chapter, its prize
- * (a unit without one ends at its chest). Tapping a stop opens a small card
- * under it: its lessons, how far along it is, one thing to do, and what it
- * pays.
- *
- * Coming back after a lesson, the path shows what the lesson did, on the
- * shared timeline (`PATH_RETURN`): the ring's piece fills, a topic finished
- * pops as it turns gold and its star drops in, a round made whole earns its
- * star, the topic it opened loses its padlock, and the bubble moves on as the
- * page follows it and Hevalo cheers. Under Reduce Motion the path is simply
- * drawn as it now is.
- *
- * The course page opens scrolled to the current skill, and a button brings it
- * back once it has been scrolled away. Skills open in order, as they do on the
- * phone (the rules are @kurda/shared's `lessonPath`, which the phone uses too).
+ * Returning from a lesson plays what changed on the shared timeline (`PATH_RETURN`); under reduced motion the path is
+ * simply drawn as it is. The course page opens on the current skill, with a button back to it once scrolled away.
  */
 export function CoursePath({
   courseId,
@@ -526,10 +474,8 @@ export function CoursePath({
   showHeader?: boolean;
   home?: string | null;
   /**
-   * What whoever draws the path already holds (Learn has the courses, their
-   * maps and what review has waiting): the path takes it and asks for none of
-   * it again. A map that could not be loaded there (`null`) is asked for here,
-   * so the path has its own way to say so and to try again.
+   * What the caller already holds (Learn has the courses, maps and review count), so nothing is fetched again. A map
+   * that failed there (`null`) is fetched here, so the path can say so and retry.
    */
   given?: { map: Map | null; courses: CourseSummary[]; due: ApiState<PracticeDue> };
 }): React.JSX.Element {
@@ -555,12 +501,12 @@ export function CoursePath({
   const pathRef = useRef<HTMLDivElement>(null);
   const scrolled = useRef(false);
 
-  // the review count decides where review sits, so the path waits for it (or its failure) once
+  // The review count decides where review sits, so the path waits once for it or its failure.
   const dueSettled = due.data !== null || due.error !== null;
   const path = useMemo(() => (data && dueSettled ? lessonPath(data, { due: due.data?.due ?? 0 }) : null), [data, dueSettled, due.data]);
   const width = useWidth(pathRef, path !== null);
 
-  // what changed since the path was last drawn here: read once, as it is first drawn
+  // What changed since the path was last drawn here, read once on the first draw.
   const returned = useRef<{ ret: PathReturn | null } | null>(null);
   if (path && !returned.current) {
     const prev = readSnapshot(courseId);
@@ -571,19 +517,15 @@ export function CoursePath({
   const ret = returned.current?.ret ?? null;
   const step = useReturnStep(ret);
   const playing = ret !== null && step !== null;
-  // and what it is now, for next time
+  // And what it is now, for next time.
   useEffect(() => {
     if (path) writeSnapshot(courseId, pathSnapshot(path));
   }, [path, courseId]);
 
   /*
-   * The section open: the one picked from its card, else, coming back from a
-   * lesson, the one it was played in (a lesson played again in a section
-   * finished long ago is seen filling its ring there), and once the path has
-   * moved on, or with nothing to show, the one the stop to open on is in —
-   * during a return, the one the learner was in until the bubble moves on, so
-   * a lesson that finishes a section is seen finishing it. A pick lasts until
-   * the learner moves into another section.
+   * The open section: one picked from its card; else, returning from a lesson, the one it was played in until the bubble
+   * moves on, so finishing a section is seen; else the one the opening stop is in. A pick lasts until the learner moves
+   * into another section.
    */
   const [picked, setPicked] = useState<number | null>(null);
   const [pickedFor, setPickedFor] = useState<number | null>(path?.section ?? null);
@@ -602,9 +544,9 @@ export function CoursePath({
   const screen = useUnitsOnScreen(pathRef, openUnits);
   const atTop = useUnitAtTop(pathRef, openUnits);
 
-  // each unit rises the first time it can be seen, and only then; units not seen yet wait under the ground
+  // Each unit rises the first time it can be seen; unseen units wait under the ground.
   const [risen, setRisen] = useState<ReadonlySet<string>>(() => new Set(RISEN));
-  // those that rose on an earlier visit are simply there: only a rise seen now plays
+  // Units that rose on an earlier visit are simply there.
   const [risenBefore] = useState<ReadonlySet<string>>(() => new Set(RISEN));
   useEffect(() => {
     if (!screen.seen || reduceMotion) return;
@@ -624,9 +566,8 @@ export function CoursePath({
     return pathRef.current.querySelector<HTMLElement>(`[data-stop="${key}"]`);
   }, []);
 
-  // opening: the current skill in the middle of the screen — or, coming back, the one that was current,
-  // which the page then follows on to the new one. Learn opens at its top, today's row in view, unless
-  // the learner is coming back, and "Back to your lesson" is there when the stop is below the screen.
+  // Opening: the current skill in the middle of the screen, or on a return the previous one, which the page then follows
+  // to the new one. Learn opens at its top unless returning, with "Back to your lesson" when the stop is below.
   useLayoutEffect(() => {
     if (!path || scrolled.current) return;
     scrolled.current = true;
@@ -637,7 +578,7 @@ export function CoursePath({
     if (step === STEP.bubble && path?.focus) nodeOf(path.focus)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
   }, [step, path, nodeOf]);
 
-  // the way back to the current skill, shown only while it is off the screen (and in the section open)
+  // The way back to the current skill, shown only while it is off screen (in the open section).
   useEffect(() => {
     const el = nodeOf(path?.focus ?? null);
     if (!el || typeof IntersectionObserver === 'undefined') {
@@ -652,7 +593,7 @@ export function CoursePath({
     return () => io.disconnect();
   }, [path, nodeOf, open]);
 
-  // a card closes on Escape (back to its stop) and on a press anywhere else
+  // A card closes on Escape (back to its stop) and on a press anywhere else.
   useEffect(() => {
     if (!openKey) return;
     const onKey = (e: KeyboardEvent): void => {
@@ -674,19 +615,19 @@ export function CoursePath({
     };
   }, [openKey, nodeOf]);
 
-  // an opened card is one press from a lesson: its code is asked for now, so that press does not wait for it
+  // An open card is one press from a lesson, so the lesson's code is fetched now.
   useEffect(() => {
     if (openKey) preloadLesson();
   }, [openKey]);
 
-  // an opened card is brought fully into view, if it hangs below the screen
+  // An open card hanging below the screen is scrolled fully into view.
   useEffect(() => {
     if (!openKey) return;
     const card = document.getElementById(popId);
     card?.scrollIntoView?.({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
   }, [openKey, popId, reduceMotion]);
 
-  // a unit picked on the rail: its section opens, and once it is drawn the page goes to it
+  // A unit picked on the rail: its section opens, and once drawn the page goes to it.
   const [goTo, setGoTo] = useState<string | null>(null);
   useEffect(() => {
     if (!goTo || !pathRef.current) return;
@@ -697,7 +638,7 @@ export function CoursePath({
     target.querySelector<HTMLElement>('.lp-node, .lp-scard')?.focus({ preventScroll: true });
   }, [goTo, open, reduceMotion]);
 
-  /** Up and down the path with the arrow keys (across, in reading order), Home and End to its ends. */
+  /** Arrow keys move along the path (across, in reading order), Home and End to its ends. */
   const onPathKey = (e: React.KeyboardEvent<HTMLDivElement>): void => {
     const target = e.target as HTMLElement;
     if (!target.classList.contains('lp-node') || !pathRef.current) return;
@@ -736,7 +677,7 @@ export function CoursePath({
   const progress = courseProgress(data);
   const list = courses.data?.courses ?? [];
   const current = path.current;
-  // the learner stands on the skill to do now — on the one before it until the return has moved on — and hops across
+  // The learner stands on the skill to do now, or on the previous one until the return moves on, and hops across.
   const tokenAt = current ? (playing && step! < STEP.bubble && was ? was : current) : null;
   const hopping = playing && step! >= STEP.bubble && was !== null && current !== null && was !== current;
   const placedOf = (key: string | null): { unitId: string; x: number; y: number } | null => {
@@ -755,7 +696,7 @@ export function CoursePath({
         ? { dx: sign * (fromPlace.x - tokenPlace.x), dy: fromPlace.y - tokenPlace.y }
         : { dx: 0, dy: -2 * PATH_GEOMETRY.step }
       : null;
-  // the stretch of trail walked since the lesson fills in as the path moves on
+  // The trail walked since the lesson fills in as the path moves on.
   const fresh: ReadonlySet<string> = playing && step! < STEP.bubble && ret.changes.current && was ? new Set([ret.changes.current]) : NO_STOPS;
   const unitOfCurrent = placedOf(current)?.unitId ?? null;
   const rail: RailSection[] = path.sections.map((s) => ({
@@ -770,7 +711,7 @@ export function CoursePath({
     setGoTo(unitId);
   };
 
-  /** A stop as it is drawn now: during the return, a finished or opened one is drawn as it was until its moment. */
+  /** A stop as drawn now: during a return, a finished or opened one looks as it was until its moment. */
   const drawnAs = (stop: Stop): Stop => {
     if (!playing || stop.kind !== 'skill') return stop;
     const before = ret.prev[stop.key];
@@ -779,7 +720,7 @@ export function CoursePath({
     if (step! < STEP.open && ret.changes.opened.includes(stop.key)) return { ...stop, state: 'locked', finish: null };
     return stop;
   };
-  /** A topic's ring and stars as they are drawn at this moment of a return, and as they now are otherwise. */
+  /** A topic's ring and stars at this moment of a return, or as they are otherwise. */
   const ringNow = (stop: SkillStop<SkillNode>): { filled: number; whole: boolean; from?: number; stars: number; earned: boolean } => {
     const of = stop.lessonsTotal;
     const now = { filled: stop.rounds >= TOPIC_STARS ? of : stop.pieces, whole: stop.rounds >= TOPIC_STARS, stars: stop.rounds, earned: false };
@@ -789,19 +730,19 @@ export function CoursePath({
     const roundDone = change.to.rounds > change.from.rounds;
     if (step! < STEP.fill) return { filled: before, whole: false, stars: change.from.rounds, earned: false };
     if (!roundDone) return { ...now, from: before };
-    // the round made whole: full, gold as the stop turns, its star dropping in, then the next round as it is
+    // The round made whole: full and gold as the stop turns, its star dropping in, then the next round.
     if (step! < STEP.next) return { filled: of, whole: step! >= STEP.finish, from: before, stars: step! >= STEP.star ? change.to.rounds : change.from.rounds, earned: step! >= STEP.star };
     return { ...now, earned: true };
   };
   const cheer = playing && step! >= STEP.bubble && (ret.changes.finished.length > 0 || ret.changes.opened.length > 0);
-  // the unit named in the pinned heading: the one at the top of the window, in the section open
+  // The unit in the pinned heading: the one at the top of the window, in the open section.
   const pinUnit = openUnits.find((u) => u.unitId === atTop) ?? openUnits[0]!;
 
   return (
     <div className="lp">
       {showHeader && (
         <div className="page-header lp-head">
-          {/* the way back, as every page draws it: the chevron that points back in the page's own direction, then the words */}
+          {/* The way back, as on every page: a chevron pointing back in the page's direction, then the words. */}
           <Link to="/app/learn" className="back-link">
             <ArrowIcon size={16} />
             {t('coursemap.back')}
@@ -868,7 +809,7 @@ export function CoursePath({
                       aria-labelledby={headingId}
                     >
                       {index === 0 ? (
-                        // the first unit is named by the pinned heading over it: its own heading is read, not shown again
+                        // The first unit is named by the pinned heading, so its own heading is for screen readers only.
                         <h2 className="sr-only" id={headingId}>
                           {named ? `${t('coursemap.section', { n: section.number })}, ` : ''}
                           {t('coursemap.unit', { n: unit.number })}, {unit.title}
@@ -889,13 +830,13 @@ export function CoursePath({
                             const isCurrent = stop.kind === 'skill' && stop.state === 'current';
                             const finishing = playing && step! >= STEP.finish && ret.changes.finished.includes(stop.key);
                             const opening = playing && step! >= STEP.open && ret.changes.opened.includes(stop.key);
-                            // a prize won by the lesson: shut and wobbling as the skill pops, bursting open as the next one opens
+                            // A prize the lesson won: shut and wobbling as the skill pops, bursting open as the next opens.
                             const won = real.kind === 'trophy' ? real.earned : real.kind === 'story' ? real.open : false;
                             const wonNow = won && playing && unit.stops.some((p) => ret.changes.finished.includes(p.stop.key));
                             const wobbling = wonNow && step! >= STEP.finish && !(step! >= STEP.open);
                             const unlocking = wonNow && step! >= STEP.open;
                             const look = wonNow && step! < STEP.open ? (real.kind === 'story' ? 'storyLocked' : 'chest') : stopLook(stop);
-                            // the bubble waits for its moment on the way back, then arrives at the new stop
+                            // On a return the bubble waits for its moment, then arrives at the new stop.
                             const bubble = isCurrent && (!playing || step! >= STEP.bubble);
                             const ring = stop.kind === 'skill' && stop.lessonsTotal > 0 ? ringNow(stop) : null;
                             return (
@@ -973,7 +914,7 @@ export function CoursePath({
         <UnitRail sections={rail} onPick={toUnit} />
       </Sheet>
 
-      {/* not while a card is open: it would sit over the card's own button */}
+      {/* Not while a card is open, where it would cover the card's button. */}
       {away && path.focus && !openKey && (
         <button type="button" className="lp-jump" onClick={jump}>
           <span className={`lp-jump-arrow is-${away}`} aria-hidden="true">

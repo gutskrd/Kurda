@@ -1,7 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import {
   PATH_LANDMARK_LOOP,
-  PATH_STOP_ART,
   landmarkBox,
   pathGroundColour,
   pathLandSvg,
@@ -25,22 +24,15 @@ import type { MessageKey } from '../i18n/en';
 import type { SkillNode } from './types';
 
 /**
- * The world the website's lesson path walks through, drawn from @kurda/shared
- * (path-world.ts for where things stand, art/path-land.ts and
- * art/path-landmark.ts for the painted valley), as the phone draws it: each
- * unit's land under its stops with its road, the stretches walked so far in
- * warm dirt, the unit's landmark and its one small moving part, and the
- * learner's own picture standing on the stop to do now. The rail of units,
- * in their sections, beside the path is here too.
- *
- * A unit far from the screen (`near` false) is only its ground's colour, so a
- * course of twelve units draws two or three lands at a time; the stylesheet
- * moves only the unit in view (path.css), and nothing under Reduce Motion.
+ * The valley the lesson path walks through, drawn from @kurda/shared (path-world.ts, art/path-land.ts,
+ * art/path-landmark.ts) as on the phone: each unit's land and road, walked stretches in warm dirt, its landmark with one
+ * moving part, and the learner on the current stop; plus the rail of units. A unit far from the screen (`near` false)
+ * is only its ground colour, and only the unit in view moves (path.css), never under reduced motion.
  */
 
 type Unit = PathUnit<SkillNode>;
 
-/** Whether the page is drawn dark (theme/theme.ts puts the scheme on the root element), followed as it changes. */
+/** Whether the page is dark (theme/theme.ts sets the scheme on the root), followed as it changes. */
 export function useDarkPage(): boolean {
   const read = (): boolean => typeof document !== 'undefined' && document.documentElement.dataset.theme !== 'light';
   const [dark, setDark] = useState(read);
@@ -53,7 +45,7 @@ export function useDarkPage(): boolean {
   return dark;
 }
 
-/** An element's width, followed as it changes, from when it is there (`ready`). */
+/** An element's width, followed as it changes, from when it is `ready`. */
 export function useWidth(ref: React.RefObject<HTMLElement | null>, ready: boolean): number {
   const [width, setWidth] = useState(0);
   useEffect(() => {
@@ -69,9 +61,8 @@ export function useWidth(ref: React.RefObject<HTMLElement | null>, ready: boolea
 }
 
 /**
- * Which units are near the screen (one screen either way: drawn in full) and
- * which can be seen, by their `data-unit`, followed as the page scrolls. With
- * no IntersectionObserver (a test's page) every unit counts as near and seen.
+ * Which units are near the screen (within a screen either way: drawn in full) and which are visible, by `data-unit`.
+ * Without IntersectionObserver (tests) every unit counts as both.
  */
 export function useUnitsOnScreen(root: React.RefObject<HTMLElement | null>, units: readonly Unit[]): { near: ReadonlySet<string> | null; seen: ReadonlySet<string> | null } {
   const [near, setNear] = useState<ReadonlySet<string> | null>(null);
@@ -107,7 +98,7 @@ export function useUnitsOnScreen(root: React.RefObject<HTMLElement | null>, unit
   return { near, seen };
 }
 
-/** One unit's land, its trail and its landmark, behind its stops; decorative. */
+/** One unit's land, trail and landmark behind its stops; decorative. */
 export function UnitLand({
   unit,
   land,
@@ -123,7 +114,7 @@ export function UnitLand({
   rtl: boolean;
   dark: boolean;
   near: boolean;
-  /** the stops whose stretch of trail was walked only since the last lesson: their stones fill in as the path moves on */
+  /** Stops whose trail was walked since the last lesson; their stones fill in as the path moves on. */
   fresh: ReadonlySet<string>;
 }): React.JSX.Element {
   const stones = useMemo(() => trailStones(unit.stops), [unit.stops]);
@@ -161,7 +152,7 @@ export function UnitLand({
   );
 }
 
-/** A unit's landmark, and over it its loop, which the stylesheet moves while the unit is in view. */
+/** A unit's landmark with its loop over it, which the stylesheet moves while the unit is in view. */
 function Landmark({ land, box, dark }: { land: PathLand; box: PathBox; dark: boolean }): React.JSX.Element {
   const picture = useMemo(() => ({ __html: pathLandmarkSvg({ landmark: land.landmark, ground: land.ground, dark, size: box.w }) }), [land.landmark, land.ground, dark, box.w]);
   const loop = PATH_LANDMARK_LOOP[land.landmark];
@@ -183,7 +174,7 @@ function Landmark({ land, box, dark }: { land: PathLand; box: PathBox; dark: boo
   );
 }
 
-/** A stop's base and face, from the shared drawing; the face is what a press pushes down. */
+/** A stop's base and face from the shared drawing; a press pushes the face down. */
 export function StopArt({ look, tone, dark, near }: { look: PathStopLook; tone: UnitTone; dark: boolean; near: boolean }): React.JSX.Element | null {
   const art = useMemo(
     () => (near ? { base: { __html: pathStopSvg({ look, tone, part: 'base', dark }) }, face: { __html: pathStopSvg({ look, tone, part: 'face', dark }) } } : null),
@@ -198,15 +189,9 @@ export function StopArt({ look, tone, dark, near }: { look: PathStopLook; tone: 
   );
 }
 
-/** Where the shared drawing sits round a 72-point stop: its box, offset so its disc's face is a little above the button's middle. */
-export const STOP_ART_AT = { left: 36 - PATH_STOP_ART.cx, top: 30 - PATH_STOP_ART.cy, size: PATH_STOP_ART.box } as const;
-
 /**
- * The learner, standing on the stop to do now: their picture in a ring of the
- * unit's colour on a short stem. Coming back from a lesson that moved them
- * on, they hop there from the stop they finished (`hop`: how far across and
- * up that stop was, in points); the stylesheet plays the hop, and bobs them
- * with the stop.
+ * The learner on the current stop: their picture in a ring of the unit's colour on a short stem. Returning from a lesson
+ * that moved them on, they hop from the finished stop (`hop`, its offset in points); the stylesheet plays the hop.
  */
 export function LearnerToken({ x, y, hop }: { x: number; y: number; hop: { dx: number; dy: number } | null }): React.JSX.Element {
   const { user } = useAuth();
@@ -236,7 +221,7 @@ export interface RailUnit {
   here: boolean;
 }
 
-/** A section as the rail lists it: its number (null in a course of one section, which is not named), its level's plain name, and its units. */
+/** A section as the rail lists it: its number (null in a one-section course), its level's plain name, and its units. */
 export interface RailSection {
   number: number | null;
   level: MessageKey | null;
@@ -244,12 +229,8 @@ export interface RailSection {
 }
 
 /**
- * Every unit of the course as a milestone on a slim rail beside the path —
- * filled once the unit is done, ringed where the learner is — with its number
- * and its name, under the name of its section where the course has more than
- * one; a press opens its section and goes there. Sticky, so it is in reach
- * however far down the path the learner has scrolled; the stylesheet shows it
- * only where the page leaves room beside the path.
+ * Every unit as a milestone on a slim sticky rail beside the path, filled when done and ringed where the learner is,
+ * grouped by section where there are several; a press opens its section and goes there. Shown only where there is room.
  */
 export function UnitRail({ sections, onPick }: { sections: RailSection[]; onPick: (unitId: string) => void }): React.JSX.Element {
   const t = useT();
@@ -270,7 +251,7 @@ export function UnitRail({ sections, onPick }: { sections: RailSection[]; onPick
               const number = t('coursemap.unit', { n: n(u.number) });
               return (
                 <li key={u.unitId} className={`lp-rail-unit lp-tone-${u.tone}${u.here ? ' is-here' : ''}${finished ? ' is-done' : ''}`}>
-                  {/* its number and name said as one, as the unit's heading says them */}
+                  {/* Number and name as one, as the unit's heading says them. */}
                   <button type="button" onClick={() => onPick(u.unitId)} aria-current={u.here ? 'step' : undefined} aria-label={`${number}, ${u.title}`}>
                     <span className="lp-rail-dot" aria-hidden="true" />
                     <span className="lp-rail-words">
@@ -288,7 +269,7 @@ export function UnitRail({ sections, onPick }: { sections: RailSection[]; onPick
   );
 }
 
-/** The unit after the last one out, as the map names it (api/src/coursemap/service.ts). */
+/** The unit after the last one released, as the map names it (api/src/coursemap/service.ts). */
 export interface Upcoming {
   number: number;
   title: string;
@@ -296,11 +277,8 @@ export interface Upcoming {
 }
 
 /**
- * Where the path stops for now: a signpost pointing on up the road, the next
- * unit's number and name, and that it is on its way. On the road, whose
- * chapters go online one by one as Hamo records them, Hamo stands by the
- * sign and a small red light says he is recording it now; the stylesheet
- * lets it breathe, and holds it still under Reduce Motion.
+ * Where the path stops for now: a signpost with the next unit's number and name, on its way. On the road, whose chapters
+ * go online as Hamo records them, Hamo stands by the sign with a small red recording light, still under reduced motion.
  */
 export function UpcomingUnit({ upcoming, dark }: { upcoming: Upcoming; dark: boolean }): React.JSX.Element {
   const t = useT();
@@ -331,5 +309,5 @@ export function UpcomingUnit({ upcoming, dark }: { upcoming: Upcoming; dark: boo
   );
 }
 
-/** How tall Hamo stands by the signpost: a little smaller than beside a unit, as he is further up the road. */
+/** Hamo's height by the signpost, a little smaller than beside a unit, as he is further up the road. */
 const NEXT_HOST_SIZE = 112;
