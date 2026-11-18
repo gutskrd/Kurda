@@ -3,10 +3,7 @@ import { reportCategoryFrom, stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { ReportsService } from '../moderation/reports-service.js';
 
-/**
- * What the reporter says the problem is, as the old profile sheet offers it.
- * The new report sheet (`POST /reports`) has the full list in @kurda/shared.
- */
+/** What the reporter says is wrong, as the older profile sheet offers it; `POST /reports` has the full list in @kurda/shared. */
 export const REPORT_CATEGORIES = [
   'harassment',
   'spam',
@@ -25,23 +22,10 @@ export type UserReportResult =
   | { ok: false; reason: 'self' | 'not-found' | 'reason-too-short' };
 
 /**
- * Reporting a person, rather than one of their posts.
- *
- * Blocking already ends it privately — they cannot find you, message you or add
- * you — but a block tells nobody, so someone doing the same thing to twenty
- * people looked exactly like someone nobody had blocked. This is the half that
- * reaches a moderator, and it deliberately does not replace blocking: the
- * profile card offers both, because most people want to stop seeing someone
- * *and* have somebody look at them.
- *
- * The reported person is never told, by anything. Same rule as a block, for the
- * same reason: a report that announces itself is a report nobody files.
- *
- * Written through the one report service every surface uses
- * (moderation/reports-service.ts), so the profile is snapshotted and the report
- * joins its case at once; `user_reports` keeps its history and takes no new
- * rows. This older route keeps its own rule that a reason is required — the new
- * sheet asks for a category and makes the note optional.
+ * Reporting a person rather than a post. A block ends contact privately but tells nobody, so this is what reaches a
+ * moderator; the profile card offers both, since most people want both. The reported person is never told. Written
+ * through the shared report service, so the profile is snapshotted and the report joins its case at once;
+ * `user_reports` keeps its history and takes no new rows. This older route still requires a reason.
  */
 export class UserReportService {
   private readonly reports: ReportsService;
@@ -54,10 +38,8 @@ export class UserReportService {
   }
 
   /**
-   * File a report. While a report of yours about this person is open, another
-   * one is accepted and changes nothing — which also stops one account inflating
-   * a case by reporting over and over. Once it is decided, a new report is a new
-   * incident.
+   * Files a report. While your report about this person is open, another changes nothing, so one account cannot inflate
+   * a case; once decided, a new report is a new incident.
    */
   async report(
     reporterId: string,
@@ -68,8 +50,7 @@ export class UserReportService {
     if (reporterId === reportedUserId) return { ok: false, reason: 'self' };
 
     const clean = stripControlChars(reason).trim().slice(0, MAX_REASON_LEN);
-    // a report about a person carries no post for a moderator to look at, so
-    // the words are the whole case — an empty one is not actionable
+    // A report about a person has no post to look at, so the words are the whole case and must say something.
     if (clean.length < MIN_REASON_LEN) return { ok: false, reason: 'reason-too-short' };
 
     try {

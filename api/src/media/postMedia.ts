@@ -6,10 +6,8 @@ export const POST_PICTURE_KIND = 'image-post';
 /** Why a picture cannot go on a post. */
 export type PictureClaimFailure =
   /**
-   * Not a picture its author uploaded for a post, or not one that cleared the
-   * scan — an unknown key, somebody else's upload or profile photo, a voice
-   * note, an upload from before uploads had owners. One answer for all of
-   * them, so the answer never tells anyone whose a key is.
+   * Not a picture its author uploaded for a post, or one that did not clear the scan. One answer for every case, so it
+   * never reveals whose a key is.
    */
   | 'INVALID_MEDIA'
   /** already on a post, this one's or another's */
@@ -26,17 +24,10 @@ export type PictureClaim =
   | { ok: false; code: PictureClaimFailure; mediaKey: string };
 
 /**
- * Claim uploads for a post, inside the caller's transaction.
- *
- * A post may use a picture only if its author uploaded it through
- * `POST /images/upload`, the scan cleared it, and no post uses it yet. The
- * upload step leaves such a picture unconfirmed (media/imageMedia.ts) and this
- * is what confirms it — so "unconfirmed" is "not on a post", one picture is one
- * post's, and a picture nobody posts is left to the orphan sweep.
- *
- * The rows are locked, so two posts racing for the same upload cannot both
- * have it: the second sees it confirmed and is told it is in use. Keys come
- * back in the order asked for, with the size they were stored at.
+ * Claims uploads for a post inside the caller's transaction. A post may use a picture only if its author uploaded it
+ * through `POST /images/upload`, the scan cleared it, and no post uses it yet; the upload step leaves it unconfirmed
+ * and this confirms it, so one picture is one post's and unposted ones go to the orphan sweep. Rows are locked, so two
+ * posts racing for an upload cannot both get it. Keys come back in the order asked, with their stored sizes.
  */
 export async function claimPostPictures(
   executor: Pick<pg.PoolClient, 'query'>,
@@ -51,10 +42,8 @@ export async function claimPostPictures(
 }
 
 /**
- * The same answer as `claimPostPictures` would give, without claiming
- * anything: for a route to refuse a post for its pictures before the post
- * counts toward a velocity cap or its words reach the spam check. The claim
- * still decides; this only answers early.
+ * What `claimPostPictures` would answer, without claiming, so a route can refuse a post before it counts toward
+ * velocity or the spam check. The claim still decides.
  */
 export async function checkPostPictures(
   executor: Pick<pg.Pool, 'query'>,
@@ -108,19 +97,11 @@ async function inspect(
 }
 
 /**
- * Let go of pictures an edit took off a post, inside the caller's transaction.
- *
- * They go back to how an unposted upload is: unconfirmed, so the orphan sweep
- * deletes them after a day — unless their owner puts them on a post again
- * before then.
- *
- * Not a picture a moderator still has to look at: one whose scan flagged it
- * for review, or one a scan holds as evidence, stays confirmed, kept the way a
- * removed post's pictures are. (The caller keeps a reported post's pictures
- * by not letting go of them at all — see `LibraryService.update`.) One a
- * decided report's snapshot still holds is let go like any other, and the
- * sweep leaves it alone until the evidence's retention ends
- * (`media_uploads.preserve_evidence`, media/service.ts).
+ * Releases pictures an edit took off a post, inside the caller's transaction: unconfirmed again, so the orphan sweep
+ * deletes them after a day unless reposted. Pictures a moderator still needs (flagged for review, or held as scan
+ * evidence) stay confirmed; the caller keeps a reported post's pictures by not releasing them (`LibraryService.update`).
+ * One still in a decided report's snapshot is released, and the sweep spares it until the evidence retention ends
+ * (`media_uploads.preserve_evidence`).
  */
 export async function releasePostPictures(executor: Pick<pg.PoolClient, 'query'>, keys: readonly string[]): Promise<void> {
   if (keys.length === 0) return;

@@ -8,15 +8,10 @@ export interface CacheClient {
   del(key: string): Promise<unknown>;
 }
 
-/**
- * JSON with type markers for values JSON.stringify would mangle:
- * Date → ISO string, BigInt → decimal string. Round-trips through
- * serialize/deserialize preserve the original types.
- */
+/** JSON with type markers for Date and BigInt, so both survive a round trip through the cache. */
 const TYPE_KEY = '__kurda_t';
 
-// Date needs pre-encoding because JSON.stringify calls toJSON() before
-// a replacer could see the Date object.
+// Dates are encoded first because JSON.stringify calls toJSON() before a replacer sees the Date.
 function encodeDates(value: unknown): unknown {
   if (value instanceof Date) return { [TYPE_KEY]: 'date', v: value.toISOString() };
   if (Array.isArray(value)) return value.map(encodeDates);
@@ -48,13 +43,9 @@ export function cacheKey(domain: string, id: string): string {
   return `kurda:${domain}:${id}`;
 }
 
-/**
- * Cache facade over Redis. Every operation is best-effort: if Redis is
- * down or unset, reads behave as misses and writes are dropped — callers
- * never see a cache failure (KUR-006 graceful degradation).
- */
+/** Cache over Redis. Every operation is best-effort: with Redis down or unset, reads miss and writes are dropped. */
 export interface CacheOptions {
-  /** ±ratio TTL jitter to de-synchronize expiries (KUR-116). 0 disables. */
+  /** ±ratio TTL jitter so expiries do not line up; 0 disables it. */
   jitterRatio?: number;
   /** Injectable RNG for deterministic jitter in tests. */
   rng?: () => number;
@@ -107,10 +98,8 @@ export class Cache {
   }
 
   /**
-   * Read-through helper: cached value or compute-and-cache. Concurrent misses of
-   * the same key are collapsed into a single computation (in-process single-
-   * flight, KUR-116), so a hot key that expires can't unleash a thundering herd
-   * of identical origin calls from one node.
+   * Returns the cached value or computes and caches it. Concurrent misses of the same key in this process share
+   * one computation, so an expiring hot key does not send a burst of identical calls to the origin.
    */
   async withCache<T>(domain: string, id: string, ttlSeconds: number, fn: () => Promise<T>): Promise<T> {
     const hit = await this.get<T>(domain, id);

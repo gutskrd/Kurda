@@ -1,7 +1,6 @@
 /**
- * Copyright notices (contract-3 §C) against real Postgres: the public form,
- * the case it opens in the moderation queue, the receipt and the decision
- * emailed to the notifier, the uploader's counter-notice, and strikes.
+ * Copyright notices against real Postgres: the public form, the moderation case it opens, the emailed receipt and
+ * decision, the uploader's counter-notice, and strikes.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -70,7 +69,7 @@ describe.skipIf(!DATABASE_URL)('copyright notices (integration)', () => {
   const takeDown = (caseId: string) =>
     decide(caseId, { outcome: 'actioned', policy: 'copyright', removeContent: true, actions: [{ target: 'subject', kind: 'content_removal', statement: 'You posted a photo that belongs to someone else.' }] });
   const mailer: CopyrightMailer = { send: async (to, template, vars, locale) => void mails.push({ to, template, vars, locale }) };
-  /** The outcome sweep, run now instead of in five minutes (it reads only the database). */
+  /** The outcome sweep, run now instead of on its schedule. */
   const sweep = () => new CopyrightService(pool, { mailer }).sendOutcomes();
 
   beforeAll(async () => {
@@ -283,7 +282,7 @@ describe.skipIf(!DATABASE_URL)('copyright notices (integration)', () => {
     const told = mails.filter((m) => m.to === n.email).map((m) => m.template);
     expect(told).toContain('copyright-upheld');
     expect(told).not.toContain('copyright-removed');
-    // nothing was taken down, so the uploader has nothing to counter, and is not invited to
+    // Nothing was taken down, so the uploader has nothing to counter.
     expect(((await call('GET', '/me/copyright/notices', profileOwner.token)).json() as { notices: unknown[] }).notices).toEqual([]);
     const warned = await pool.query<{ body: string }>(
       `SELECT body FROM notifications WHERE user_id = $1 AND data->>'kind' = 'sanction' ORDER BY created_at DESC LIMIT 1`,
@@ -350,7 +349,7 @@ describe.skipIf(!DATABASE_URL)('copyright notices (integration)', () => {
     expect(bad.statusCode).toBe(422);
     expect((bad.json() as { code: string }).code).toBe('INVALID_COUNTER_NOTICE');
 
-    // ten business days are at least twelve calendar days (exactly twelve from a Sunday), counted from when it arrived
+    // Ten business days are at least twelve calendar days from arrival (exactly twelve from a Sunday).
     const sent = Date.now();
     const res = await call('POST', url, author.token, counter);
     expect(res.statusCode).toBe(201);
@@ -405,7 +404,7 @@ describe.skipIf(!DATABASE_URL)('copyright notices (integration)', () => {
     expect(strikes).toMatchObject({ count: 3, threshold: 3, windowDays: 365, terminationSuggested: true });
     expect(strikes.caseIds[0]).toBe(lastCase);
 
-    // a strike older than the window no longer counts
+    // A strike older than the window does not count.
     await pool.query(
       `UPDATE sanctions SET created_at = now() - interval '400 days', starts_at = now() - interval '400 days'
         WHERE id = (SELECT id FROM sanctions WHERE user_id = $1 AND policy = 'copyright' ORDER BY created_at LIMIT 1)`,

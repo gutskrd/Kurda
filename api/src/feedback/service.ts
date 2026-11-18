@@ -20,10 +20,7 @@ import { isKnownAdultRow } from '../users/age.js';
 import { feedbackState } from './eligibility.js';
 import { countFinishedGames } from './finished-games.js';
 
-/**
- * The rating box, "Send feedback", the store prompt's bookkeeping, and the
- * admin's feedback inbox (@kurda/shared `feedback`; migration 1751000156000).
- */
+/** Filters for the admin's feedback inbox. */
 
 export interface FeedbackFilter {
   status?: AppFeedbackStatus;
@@ -35,10 +32,8 @@ export interface FeedbackFilter {
   limit: number;
   offset: number;
   /**
-   * Only answers older than this one (the last of the page before), newest
-   * first. The inbox pages with it rather than the offset: marking answers
-   * read or archived takes them out of the filter, and an offset then skips
-   * as many answers as were marked. `total` still counts the whole filter.
+   * Only answers older than this one, newest first. The inbox pages by cursor because marking answers read or
+   * archived removes them from the filter, and an offset would then skip that many. `total` counts the whole filter.
    */
   beforeId?: string;
 }
@@ -84,9 +79,8 @@ function toItem(r: FeedbackRow): AdminFeedbackItem {
 }
 
 /**
- * Free text as it is kept: no control characters, NFC, trimmed; nothing left is
- * nothing. The routes check what this returns, since that is what the table's
- * limits apply to (NFC can turn one character into three).
+ * Free text as stored: no control characters, NFC, trimmed, and nothing left means null. Routes check the result,
+ * since the table's limits apply to it.
  */
 export function cleanFeedbackText(text: string | null | undefined): string | null {
   if (text == null) return null;
@@ -112,9 +106,8 @@ export class FeedbackService {
   }
 
   /**
-   * A pseudonym for the account an answer came from, so the counts can tell
-   * people apart after `user_id` is gone. Keyed with the server's secret: an
-   * unkeyed hash of a user id could be reversed by hashing every id there is.
+   * A pseudonym for the answering account, so counts can tell people apart after `user_id` is gone. Keyed with the
+   * server's secret, because an unkeyed hash of a user id could be reversed by hashing every id.
    */
   userHash(userId: string): string {
     return createHmac('sha256', this.secret).update(`app-feedback:${userId}`).digest('hex');
@@ -156,9 +149,8 @@ export class FeedbackService {
   }
 
   /**
-   * An answer, from the box or from Settings. Answering counts as having been
-   * shown the box, on every device. Returns null only for an account that is
-   * not there.
+   * Stores an answer from the box or Settings; answering counts as having been shown the box, on every device.
+   * Returns null only for an account that does not exist.
    */
   async submit(userId: string, input: AppFeedbackRequest): Promise<{ id: string } | null> {
     const categories = [...new Set(input.categories ?? [])];
@@ -194,9 +186,8 @@ export class FeedbackService {
   }
 
   /**
-   * The phone has just called the native store prompt. Neither store says
-   * whether anything was shown, so this records the asking. Once per app
-   * version, so a repeated call does not count twice.
+   * Records that the phone called the native store prompt; neither store says whether anything was shown. Once per
+   * app version, so a repeated call does not count twice.
    */
   async storeReviewPrompted(userId: string, appVersion: string): Promise<void> {
     await this.pool.query(
@@ -225,7 +216,7 @@ export class FeedbackService {
     if (filter.q) add((p) => `(f.comment ILIKE ${p} OR u.username ILIKE ${p})`, containsPattern(filter.q));
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const countParams = [...params];
-    // the cursor narrows the page, not the count; an id that is not there compares as null: nothing after it
+    // The cursor narrows the page, not the count; an unknown id compares as null, so nothing follows it.
     if (filter.beforeId) {
       add((p) => `(f.created_at, f.id) < (SELECT created_at, id FROM app_feedback WHERE id = ${p})`, filter.beforeId);
     }
@@ -261,7 +252,7 @@ export class FeedbackService {
     return toItem(row.rows[0]!);
   }
 
-  /** Counts, the average and the spread of stars — overall and over 30 days — for the inbox's chart. */
+  /** Counts, average and spread of stars, overall and over 30 days, for the inbox's chart. */
   async summary(): Promise<AdminFeedbackSummary> {
     const statsSql = (where: string) =>
       `SELECT count(*)::int AS count, round(avg(stars), 2)::float AS average,

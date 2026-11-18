@@ -1,11 +1,7 @@
 /**
- * Adaptive placement logic (KUR-039). Pure — no DB, no content — so the
- * difficulty walk and placed-level rule are exhaustively unit-testable.
- *
- * "Level" is a skill's 1-based position within the course. The test walks
- * levels: harder (+1) on a correct answer, easier (−1) on a wrong one, and
- * stops after a fixed budget. The learner is placed at the highest level
- * they answered correctly — skills up to there are "tested out".
+ * Pure adaptive placement logic. A level is a skill's 1-based position in the course. The test walks levels, up one
+ * on a right answer and down one on a wrong, for a fixed budget, and places the learner at the highest level answered
+ * right; skills up to there are tested out.
  */
 
 import { createHash } from 'node:crypto';
@@ -16,21 +12,15 @@ export const PLACEMENT_START_LEVEL = 1;
 export interface PlacementStep {
   level: number;
   correct: boolean;
-  /** the exercise that was asked (absent on steps recorded before it was kept) */
+  /** The exercise that was asked; absent on steps recorded before it was kept. */
   exerciseId?: string;
 }
 
 /**
- * Which of a level's candidate exercises to ask, for a seed.
- *
- * Placement used to ask the first exercise of every level, every time: the
- * same question to every learner, and the same question again when the walk
- * came back to a level — easy to learn by heart and pass without knowing the
- * skill. Now each question is drawn from all of the level's exercises, with a
- * seed of the session and the question number, so it is stable for one
- * attempt (resume asks the same thing) and differs between attempts.
- * Exercises this attempt has already asked are skipped while any other is
- * left. Returns an index into `candidates`, or -1 when there are none.
+ * Which of a level's candidate exercises to ask for a seed. Drawn from all the level's exercises with a seed of the
+ * session and question number, so it is stable within an attempt (a resume asks the same) and differs between
+ * attempts, making the test hard to learn by heart. Exercises already asked this attempt are skipped while others
+ * remain. Returns an index into `candidates`, or -1 when there are none.
  */
 export function pickCandidate(candidates: string[], seed: string, alreadyAsked: readonly string[] = []): number {
   if (candidates.length === 0) return -1;
@@ -47,9 +37,8 @@ export function nextLevel(current: number, correct: boolean, maxLevel: number): 
 }
 
 /**
- * The test ends when the question budget is spent, or early once the walk
- * has clearly settled: the learner missed the top level and can't climb
- * higher (two consecutive wrongs at or above the current ceiling).
+ * The test ends when the question budget is spent, or early once the walk has settled: two wrongs in a row at or
+ * above the ceiling, so the learner cannot climb higher.
  */
 export function isComplete(history: PlacementStep[], maxQuestions = PLACEMENT_MAX_QUESTIONS): boolean {
   if (history.length >= maxQuestions) return true;
@@ -60,10 +49,7 @@ export function isComplete(history: PlacementStep[], maxQuestions = PLACEMENT_MA
   return false;
 }
 
-/**
- * Placed level = the highest level answered correctly (0 if none). Skills
- * with position ≤ this are unlocked / tested out.
- */
+/** The placed level: the highest level answered right, or 0. Skills up to it are tested out. */
 export function placedLevel(history: PlacementStep[]): number {
   const correct = history.filter((s) => s.correct).map((s) => s.level);
   return correct.length ? Math.max(...correct) : 0;

@@ -1,11 +1,7 @@
 /**
- * The audio studio's lesson recordings, against real Postgres: what the admin
- * list says the lessons need, recording and removing, and the recordings
- * arriving with the exercises a learner is given.
- *
- * Runs on DATABASE_URL alone. With S3_ENDPOINT set it stores into that bucket;
- * without it the storage PUT is stubbed, since what is under test is the
- * route and the delivery, not the bucket.
+ * The audio studio's lesson recordings against real Postgres: what the admin list says lessons need, recording and
+ * removing, and recordings delivered with exercises. Runs on DATABASE_URL alone; without S3_ENDPOINT the storage PUT
+ * is stubbed, since the route and delivery are under test.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -301,7 +297,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     expect(item(items, T.unrecorded)!.usedIn[0]).toMatchObject({ lessonId: live, lessonStatus: 'published', lessonVersion: 1, live: true });
     // added in the draft only: needed already, not heard by anyone yet
     expect(item(items, T.newInV2)!.usedIn[0]).toMatchObject({ lessonId: nextVersion, lessonStatus: 'draft', live: false });
-    // a lesson that was never published
+    // A lesson that was never published.
     expect(item(items, T.draftOnly)!.usedIn[0]).toMatchObject({
       lessonId: draft,
       lessonPosition: 2,
@@ -445,7 +441,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     it('never says the answer before it is given: not in text, not by URL', async () => {
       const res = await authed('GET', `/lessons/${live}/session`);
       const exercises = res.json().exercises as Array<Record<string, unknown>>;
-      // recorded, but the translation's model is its answer and the multiple-choice model its right option
+      // Recorded, but the translation's model is its answer and the multiple-choice model its right option.
       for (const id of [ex.tr, ex.mc]) {
         expect(byId(exercises, id)).not.toHaveProperty('modelAudioUrl');
         expect(byId(exercises, id)).not.toHaveProperty('audio');
@@ -487,8 +483,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     it('gives a placement question only what it may hear before answering', async () => {
       const res = await authed('POST', `/courses/${courseId}/placement`, {});
       expect(res.statusCode, res.body).toBe(200);
-      // the question is drawn from the level's exercises, so check the property
-      // rather than the item: nothing in it says an answer before it is given
+      // The question is drawn from the level's exercises, so check the property: nothing reveals an answer early.
       const q = res.json().question;
       expect(q).not.toHaveProperty('say');
       if (q.exerciseId === ex.mc || q.exerciseId === ex.tr) expect(q).not.toHaveProperty('modelAudioUrl');
@@ -524,9 +519,8 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
   });
 
   /**
-   * A listening item's own clip is optional: without one it plays the
-   * studio's recording of its transcription, so publishing waits for that
-   * recording and removing it needs saying so.
+   * Without a clip of its own a listening item plays the studio's recording of its transcription, so publishing waits
+   * for that recording and removing it must be forced.
    */
   describe('a listening item with no clip of its own', () => {
     let lessonId = '';

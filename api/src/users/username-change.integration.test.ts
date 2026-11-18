@@ -1,8 +1,6 @@
 /**
- * Changing a username, through the routes, against real Postgres and Redis:
- * the password asked again, one change a month, the old name held for its
- * owner whichever way somebody else tries to take it, the record kept and the
- * owner told, and the limits on trying.
+ * Changing a username through the routes against real Postgres and Redis: the password asked again, one change a
+ * month, the old name held for its owner, the record kept and the owner told, and the limits on trying.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -164,7 +162,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('changing a username (integration)'
     expect(again.body.details.retryAfterSec).toBeGreaterThan(29 * 86_400);
     expect(await usernameOf(who)).toBe(name('waitb'));
 
-    // a username is lowercase, so the same name in capitals is the name they have: no change, nothing spent, nothing held
+    // Usernames are lowercase, so the same name in capitals is the current name: no change, nothing spent or held.
     const capitals = await change(who, name('waitb').toUpperCase());
     expect(capitals.status, JSON.stringify(capitals.body)).toBe(200);
     expect(capitals.body.changed).toBe(false);
@@ -225,7 +223,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('changing a username (integration)'
     const back = await change(owner, owner.username);
     expect(back.status, JSON.stringify(back.body)).toBe(200);
     expect(await usernameOf(owner)).toBe(owner.username);
-    // the name they have again is no longer "old"; the one they gave up is
+    // The name they have again is no longer an old one; the one they gave up is.
     const held = await pool.query<{ username: string }>(`SELECT username FROM username_history WHERE user_id = $1 AND held_until > now()`, [owner.id]);
     expect(held.rows.map((r) => r.username)).toEqual([name('backnew')]);
     expect((await change(other, name('backnew'))).status).toBe(409);

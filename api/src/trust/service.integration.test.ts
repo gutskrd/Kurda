@@ -1,4 +1,4 @@
-/** Trust levels + velocity caps + spam auto-moderation vs real Postgres+Redis. KUR-295. */
+/** Trust levels, velocity caps and spam auto-moderation against real Postgres and Redis. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { Redis } from 'ioredis';
@@ -112,7 +112,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('trust service (integration)', () =
     // system actions carry no acting admin
     expect(actions.rows.every((r) => r.admin_id === null)).toBe(true);
 
-    // and they are sanctions now: automatic, with a statement the person is sent once per step
+    // They are automatic sanctions, with a statement sent once per step.
     const sanctions = await pool.query<{ kind: string; origin: string; created_by: string | null }>(
       `SELECT kind, origin, created_by FROM sanctions WHERE user_id = $1 ORDER BY created_at, kind`,
       [u],

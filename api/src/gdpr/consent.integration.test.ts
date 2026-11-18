@@ -1,4 +1,4 @@
-/** Consent + minor protection (KUR-109). Unit + integration. */
+/** Consent and minor protection. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -9,10 +9,7 @@ import { activate } from '../test/activate.js';
 import { isBelowConsentAgeRow } from '../users/age.js';
 import { bornYearsAgo } from '../test/age.js';
 
-/*
- * The age math itself is @kurda/shared's (age.test.ts); this pins the server's
- * reading of it — derived from the birth month on every ask, never stored.
- */
+/* The age math is @kurda/shared's; this pins the server's reading of it, derived from the birth month and never stored. */
 describe('consent age (unit)', () => {
   it('is below 16 until the month after the sixteenth birthday month', () => {
     const now = new Date('2026-07-06T12:00:00Z');
@@ -47,8 +44,7 @@ describe.skipIf(!DATABASE_URL)('consent (integration)', () => {
       payload: { password: 'a-strong-password1', acceptTerms: true, ...bornYearsAgo(30), ...body },
       remoteAddress: ip,
     });
-    // the tests below re-consent and toggle analytics, which an unconfirmed
-    // account cannot do; the invalid-signup cases never get this far
+    // The tests below re-consent and toggle analytics, which an unconfirmed account cannot do.
     if (res.statusCode === 201) await activate(app, pool, res);
     return res;
   };
@@ -94,10 +90,7 @@ describe.skipIf(!DATABASE_URL)('consent (integration)', () => {
     expect(row.rows[0].consented_at).not.toBeNull();
   });
 
-  // deliberately changed: this sent a 12-year-old's birthDate and expected an
-  // account; under 13 is now refused (users/minors.integration.test.ts, 'makes
-  // no account for someone under 13'), and the flag is derived from the stored
-  // birth month rather than written once
+  // Under 13 is refused (users/minors.integration.test.ts); the flag is derived from the stored birth month.
   it('an under-16 birth month reads as restricted, with analytics off', async () => {
     const res = await register(
       {

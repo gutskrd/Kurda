@@ -4,14 +4,9 @@ import type { Notification, PushService } from '../push/service.js';
 import type { InboxService } from './inbox-service.js';
 
 /**
- * League and badge news, as the leagues and badges send it: a line in the
- * in-app list (`record`), or that and a push (`push`) — the push gated at
- * delivery by the learner's settings and quiet hours, like every other.
- *
- * The push goes through the queue when there is one, as the streak reminders
- * do, so a weekly settle telling a few hundred people is not a few hundred
- * sends in a row; without a queue (a single process in development) it is
- * delivered straight away.
+ * League and badge news: a notification (`record`), or that and a push (`push`) gated at delivery like every push.
+ * Pushes go through the queue when there is one, so a weekly settle is not hundreds of sends in a row; without a queue
+ * they are delivered at once.
  */
 export interface ProgressNotices {
   record(userId: string, notification: Notification): Promise<void>;

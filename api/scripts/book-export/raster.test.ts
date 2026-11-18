@@ -1,7 +1,6 @@
 /**
- * The book's pages as pictures (raster.ts), and the words the export reads
- * from the press (capture.ts) checked against what a PDF reader finds on the
- * page. Both need poppler's tools, which a machine without them skips.
+ * Page pictures (raster.ts) and the press's words (capture.ts) checked against what a PDF reader finds. Both need the
+ * `pdftocairo` and `pdftotext` commands and are skipped without them.
  */
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

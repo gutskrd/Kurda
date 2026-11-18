@@ -30,10 +30,7 @@ function underMinimumAge(details?: Record<string, unknown>): AppError {
   );
 }
 
-/**
- * The gate every sign-up passes: a month that could be real, and an age of at
- * least 13. Throws; returns nothing, so there is no verdict to keep.
- */
+/** The gate every sign-up passes: a plausible month and an age of at least 13. Throws rather than returning a verdict. */
 export function assertOldEnough(birth: BirthMonth, now: Date = new Date()): void {
   if (!isPlausibleBirthMonth(birth, now)) {
     throw new AppError('INVALID_BIRTH_MONTH', 400, 'that birth month is not possible');
@@ -42,16 +39,9 @@ export function assertOldEnough(birth: BirthMonth, now: Date = new Date()): void
 }
 
 /**
- * The one-time birth month question, for accounts that do not have one: every
- * account made before it was asked, and every Google or Apple sign-up, which
- * hands us an email address and nothing about age.
- *
- * Answered once. Letting it be changed would let anyone undo the protections
- * for minors by typing an older year, so only support can correct it.
- *
- * An answer under 13 closes the account there and then. It is not the
- * fourteen-day deletion a user can cancel by signing in again: an account we
- * now know belongs to a child is not one we may keep.
+ * The one-time birth month question for accounts without one (made before it was asked, or provider sign-ups, which
+ * give no age). Answered once, since changing it would let anyone undo the protections for minors; only support can
+ * correct it. An answer under 13 closes the account at once, not through the cancellable fourteen-day deletion.
  */
 export class BirthMonthService {
   constructor(
@@ -74,8 +64,7 @@ export class BirthMonthService {
       );
       const row = current.rows[0];
       if (!row) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
-      // checked before the age, so a second answer can never close an account
-      // that already has a birth month on record
+      // Checked before the age, so a second answer can never close an account that already has a birth month.
       if (row.birth_year !== null) {
         throw new AppError('BIRTH_DATE_ALREADY_SET', 409, 'your birth month is already on record');
       }
@@ -89,8 +78,7 @@ export class BirthMonthService {
           birth.month,
         ]);
         if (isMinor(birth, now)) await applyMinorDefaults(client, userId, now);
-        // analytics consent given before we knew needed a parent's below 16,
-        // which POST /me/consent now asks for; until then it is off
+        // Analytics consent below 16 needs a parent, which POST /me/consent asks for; until then it is off.
         if (isBelowConsentAge(birth, now)) {
           await client.query(`UPDATE users SET analytics_consent = false WHERE id = $1`, [userId]);
         }
@@ -111,20 +99,11 @@ export class BirthMonthService {
 }
 
 /**
- * What changes on the day we learn an existing account belongs to a minor.
- *
- * Only settings that were never chosen with an age in mind: until now nobody
- * was asked, so whatever an account holds is a default from a time we did not
- * know. From here on the minor's own choices stand (within the limits the
- * routes enforce). Leagues need nothing written — their default is read from
- * age every time — beyond leaving this week's league, joined as an adult.
- *
- * Friend requests other people sent them while we did not know go too: a minor
- * cannot be sent one, so none is theirs to accept. Requests they sent stay.
- *
- * Their groups stay. Every group is private, and nobody is in one unless they
- * made it or a friend who runs it added them: somebody they chose put them
- * there.
+ * What changes when an existing account turns out to be a minor's: only settings never chosen with an age in mind,
+ * since they are defaults from before anyone knew; the minor's own choices stand from here on. Leagues need nothing
+ * written (their default follows age) beyond leaving this week's league, joined as an adult. Friend requests others
+ * sent them are removed, since a minor cannot receive one; requests they sent stay. Their groups stay, since every
+ * group member was put there by someone they chose.
  */
 async function applyMinorDefaults(
   executor: Pick<pg.Pool, 'query'>,

@@ -6,13 +6,12 @@ import { BLOCKS_PAGE_MAX, FRIENDS_PAGE_MAX, type FriendService } from './service
 
 const targetParam = z.object({ userId: z.uuid() });
 
-// Tighter than the global default (100/min): sending friend requests is a spam /
-// harassment vector, and the friends-of-friends suggestion query is expensive.
+// Tighter than the global default: friend requests are a spam and harassment vector, and suggestions are expensive.
 const REQUEST_LIMIT = { max: 20, windowMs: 60_000, per: 'user-or-ip' as const };
 const SUGGESTIONS_LIMIT = { max: 30, windowMs: 60_000, per: 'user-or-ip' as const };
 const BLOCKS_LIMIT = { max: 40, windowMs: 60_000, per: 'user-or-ip' as const };
 
-/** Friend system (KUR-081): request/accept/decline, block/unblock, and the lists of each. */
+/** Friend routes: request, accept, decline, block, unblock, and the lists of each. */
 export function registerFriendRoutes(app: FastifyInstance, friends: FriendService): void {
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
 
@@ -91,11 +90,8 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
   );
 
   /**
-   * Who you have blocked.
-   *
-   * Yours alone — the service scopes it to `blocker_id`, so this can only ever
-   * answer "who did I block", never "who blocked me". Rate-limited a little
-   * tighter than the default because it joins and counts on every call.
+   * Who you have blocked. Scoped to `blocker_id`, so it can never answer who blocked you; limited a little tighter
+   * than the default because it joins and counts on every call.
    */
   app.get(
     '/friends/blocks',

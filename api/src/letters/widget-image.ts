@@ -4,18 +4,10 @@ import { DEFAULT_PAPER, LETTER_BIRD_FEET, LETTER_SILL, WIDGET_IMAGE, letterBirdS
 import type { WidgetPicture } from './widget.js';
 
 /**
- * The letter widget's picture (letters/widget.ts): the letter's paper with
- * what was drawn on it and its writer's pigeon in a lower corner, or, before
- * any letter has come, your own pigeon waiting on the windowsill. No text:
- * the widget sets the writer's name and the letter's opening over it in the
- * phone's own type, so Kurdish in either script shapes as it should.
- *
- * Drawn from the same art as every app (`letterPaperSvg`, `letterBirdSvg`,
- * `letterWindowSvg`), the pieces set into one SVG and rendered once with
- * sharp, at the widget's own size in pixels. A rendering is kept in memory by
- * what it shows and its size, so a widget asking again, or a family's phones
- * all showing the same size, costs a lookup; the ETag lets a widget that has
- * it already hear 304.
+ * The letter widget's picture: the letter's paper with its drawing and the writer's pigeon in a lower corner, or,
+ * before any letter, your own pigeon on the windowsill. No text: the widget sets the name and opening in the phone's
+ * own type, so Kurdish shapes correctly in either script. Drawn from the shared art into one SVG and rendered with
+ * sharp at the widget's pixel size; renderings are cached by content and size, and the ETag lets a widget hear 304.
  */
 
 export interface WidgetImageSize {
@@ -40,11 +32,7 @@ function placed(svg: string, x: number, y: number, width: number, height: number
   return svg.replace(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" width="[^"]*" height="[^"]*"/, `<svg x="${r(x)}" y="${r(y)}" width="${r(width)}" height="${r(height)}"`);
 }
 
-/**
- * How much of its square a standing pigeon reaches, either way round
- * (measured in a browser, the same reach the art's own tests keep to): the
- * corner it stands in leaves this much clear round it.
- */
+/** How far a standing pigeon reaches within its square, either way round, so its corner leaves this much clear. */
 const REACH = { x0: 0.24, x1: 0.88, y1: 0.86 } as const;
 
 /** The letter on its paper, the top of it filling the picture, its writer's pigeon in the corner away from where the writing starts. */
@@ -53,7 +41,7 @@ function letterSvg(picture: Extract<WidgetPicture, { kind: 'letter' }>, width: n
   const short = Math.min(width, height);
   const side = short * 0.5;
   const margin = short * 0.035;
-  // writing that runs left to right ends on the right: the pigeon stands bottom right, facing back into the page; right to left, the other way about
+  // Left-to-right writing ends on the right, so the pigeon stands bottom right facing into the page; mirrored for RTL.
   const facingLeft = !picture.rtl;
   const bird = letterBirdSvg({ bird: picture.bird, facingLeft, size: side, idPrefix: 'wb' });
   const left = facingLeft ? width - margin - (1 - REACH.x0) * side : margin - REACH.x0 * side;
@@ -61,7 +49,7 @@ function letterSvg(picture: Extract<WidgetPicture, { kind: 'letter' }>, width: n
   return wrap(width, height, placed(paper, 0, 0, width, height) + placed(bird, left, top, side, side));
 }
 
-/** How far down the window's square the picture reaches: just under the sill's front edge, so the pigeon has the room and not the wall below. */
+/** How far down the window's square the picture reaches: just under the sill's front edge, keeping the pigeon in view. */
 const UNDER_SILL = 0.9;
 
 /** Your window with your own pigeon waiting on the sill, filling the picture, the sill and the pigeon always in it. */
@@ -75,7 +63,7 @@ function emptySvg(bird: number, sky: WidgetSky, width: number, height: number): 
     share,
   );
   const window = letterWindowSvg({ sky, size: 120, idPrefix: 'ew' }).replace(/<\/svg>$/, `${pigeon}</svg>`);
-  // the window is square: a wide widget shows a band of it ending just under the sill, a tall one its middle
+  // The window is square: a wide widget shows a band ending under the sill, a tall one its middle.
   const side = Math.max(width, height / UNDER_SILL);
   const x = (width - side) / 2;
   const y = Math.min(0, height - side * UNDER_SILL);

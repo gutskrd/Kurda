@@ -1,4 +1,4 @@
-/** Config-driven events (KUR-089) against real Postgres. */
+/** Config-driven events against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { EventService } from './service.js';

@@ -3,29 +3,17 @@ import type pg from 'pg';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * When two accounts count as "on the same device or network" — the evidence
- * behind the moderators' linked accounts and the ranks' shared-network signal.
+ * When two accounts count as on the same device or network, for moderators' linked accounts and the ranks'
+ * shared-network signal. A shared device is a hashed device id both used to sign up or in. A shared network is weaker
+ * and needs both:
  *
- * A shared device is a hashed device id both accounts signed up or signed in
- * with. A shared network is much weaker evidence, and used to be no evidence at
- * all: any two accounts that ever had the same address in half a year were
- * linked, and for months that address was a Cloudflare edge every caller
- * shared. Now two accounts share a network only when both of these hold:
+ * 1. Co-presence: both seen on the same network (net/network-key.ts) within {@link CO_PRESENCE_HOURS} hours.
+ * 2. A quiet network: at most {@link MAX_QUIET_CROWD} other established accounts (older than
+ *    {@link ESTABLISHED_AFTER_DAYS} days then) seen on it within {@link CROWD_WINDOW_DAYS} days either side. Carrier
+ *    NATs, campuses, cafés, VPNs and relays drop out on their own; homes and small offices do not. Fresh accounts do
+ *    not count toward the crowd, so new accounts made at home cannot hide each other.
  *
- * 1. Co-presence: both were seen on the same network (net/network-key.ts)
- *    within {@link CO_PRESENCE_HOURS} hours of each other. Having used the same
- *    café a month apart says nothing.
- * 2. A quiet network: at most {@link MAX_QUIET_CROWD} other established
- *    accounts — older than {@link ESTABLISHED_AFTER_DAYS} days at the time —
- *    were seen on it within {@link CROWD_WINDOW_DAYS} days either side. A
- *    carrier's NAT, a campus, a café, a VPN or a relay exit is seen with many
- *    accounts and drops out on its own; a home or a small office does not.
- *    Fresh accounts do not count towards the crowd, so somebody who makes a
- *    handful of new accounts at home cannot hide them from each other.
- *
- * `days` is how many distinct days the pair was co-present on a quiet network,
- * which is what tells "once, at a friend's" from "every evening". A device
- * outranks a network.
+ * `days` is how many distinct days the pair was co-present on a quiet network. A device outranks a network.
  */
 export const CO_PRESENCE_HOURS = 48;
 export const CROWD_WINDOW_DAYS = 7;
@@ -33,11 +21,7 @@ export const ESTABLISHED_AFTER_DAYS = 14;
 export const MAX_QUIET_CROWD = 3;
 /** How far back evidence is looked for. Sightings are kept 90 days, so in practice that. */
 export const EVIDENCE_LOOKBACK_DAYS = 180;
-/**
- * The most sightings read when counting who else was on a network in a
- * window. More than this in a fortnight — over sixty accounts — is a busy
- * network whatever their age, and is treated as crowded without reading on.
- */
+/** The most sightings read when counting a network's crowd; more than this in a fortnight is crowded without reading on. */
 export const CROWD_SCAN_ROWS = 1000;
 /** Sightings read first, which settles a busy network without reading the rest. */
 export const CROWD_PROBE_ROWS = 50;
@@ -66,10 +50,7 @@ export interface EvidenceKinds {
   network: { days: number; lastSeenTogether: string } | null;
 }
 
-/**
- * Fold the evidence rows into both kinds of evidence per other account.
- * Network rows on a crowded network are dropped; `days` counts distinct days.
- */
+/** Folds evidence rows into both kinds per other account; network rows on a crowded network are dropped, and `days` counts distinct days. */
 export function foldEvidence(rows: readonly EvidenceRow[]): Map<string, EvidenceKinds> {
   const acc = new Map<string, Record<'device' | 'network', { days: Set<string>; at: number }>>();
   for (const r of rows) {
@@ -110,19 +91,11 @@ export function compareEvidence(a: LinkEvidence, b: LinkEvidence): number {
 const SPAN_DAYS = Math.ceil(CO_PRESENCE_HOURS / 24);
 
 /**
- * The evidence rows for one account against everyone (`other` null) or against
- * one other account. One statement, two halves:
- *
- * - device: sign-ups and sign-ins (risk decisions) with a device hash this
- *   account also used, one row per other account and day;
- * - network: this account's sightings, each day a co-presence could be dated
- *   on, and how many established accounts were around then. Only quiet days are
- *   joined against other accounts' sightings, so a carrier's NAT with thousands
- *   of users costs a capped count rather than a row per stranger. When one pair
- *   is asked about, only the days the two were actually near each other are
- *   counted at all, which keeps the ranks' per-game check cheap.
- *
- * Everything is in UTC days, the same days the sightings are written in.
+ * The evidence rows for one account against everyone (`other` null) or one other account, in one statement: device
+ * rows (sign-ups and sign-ins sharing a device hash, one per other account and day), and network rows (this
+ * account's sightings, each datable co-presence day, and the established-account count then). Only quiet days are
+ * joined against others' sightings, so a large NAT costs a capped count; for one pair only days the two were near
+ * each other are counted, keeping the ranks' per-game check cheap. All in UTC days, as sightings are written.
  */
 export async function evidenceRows(db: Executor, userId: string, other: string | null = null): Promise<EvidenceRow[]> {
   const res = await db.query<{ other: string; via: 'device' | 'network'; day: string; at: Date; crowd: number }>(
@@ -238,11 +211,9 @@ export async function pairEvidence(db: Executor, a: string, b: string): Promise<
 }
 
 /**
- * A network is busy — a carrier's NAT, a campus, a café — when more than this
- * many established accounts were seen on it in the last
- * {@link BUSY_NETWORK_DAYS} days. Sign-up risk then treats it as shared and
- * applies the softer per-network cap, so real people behind a carrier's NAT are
- * not hard-blocked because their neighbours signed up too.
+ * A network is busy (a carrier NAT, campus or café) when more than this many established accounts were seen on it in
+ * the last {@link BUSY_NETWORK_DAYS} days; sign-up risk then applies the softer per-network cap, so people behind a
+ * carrier NAT are not blocked by their neighbours' sign-ups.
  */
 export const BUSY_NETWORK_ACCOUNTS = 5;
 export const BUSY_NETWORK_DAYS = 30;

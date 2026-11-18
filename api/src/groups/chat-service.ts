@@ -12,23 +12,20 @@ import { notBlockedSql } from '../friends/blocked.js';
 export const MAX_GROUP_MESSAGE_LEN = 2000;
 export type MuteDuration = '1h' | '24h' | 'perm';
 
-/** Room fan-out over the KUR-049 bus (Redis pub/sub) + membership invites. */
+/** Room fan-out over the Redis pub/sub bus, and room invites. */
 export interface RoomHub {
   publish(room: string, event: Record<string, unknown>): Promise<void>;
   invite(room: string, userId: string, ttlSeconds?: number): Promise<void>;
 }
 
-/** Moderation hook (KUR-086): mask, track offenses, enforce escalation mutes. */
+/** Moderation hook: mask, track offences, enforce escalation mutes. */
 export interface ChatModeration {
   isChatMuted(userId: string): Promise<boolean>;
   filter(text: string): { masked: string; flagged: boolean };
   recordOffense(userId: string): Promise<unknown>;
 }
 
-/**
- * A message in a group's channel: text, or a gift or a game card (shared
- * `ChatMessageExtras`) with no body. A deleted message carries nothing.
- */
+/** A message in a group's channel: text, or a gift or game card with no body. A deleted message carries nothing. */
 export interface GroupMessage extends ChatMessageExtras {
   id: string;
   senderId: string;
@@ -42,11 +39,8 @@ export interface GroupMessage extends ChatMessageExtras {
 }
 
 /**
- * SQL: the moment before which a member sees nothing of the group's chat —
- * the later of the group's clear for everyone (`g`) and the member's own
- * (`me`, their membership) — or -infinity when neither has cleared it. Every
- * read of a group's messages for a member goes through it: the history and
- * the unread counts. Worked out in the database, at its own precision.
+ * SQL: the moment before which a member sees nothing of the chat, the later of the group's clear for everyone (`g`)
+ * and the member's own (`me`), or -infinity. Every member read of messages uses it, history and unread counts alike.
  */
 const CLEARED_BEFORE = `COALESCE(GREATEST(g.chat_cleared_at, me.chat_cleared_at), '-infinity'::timestamptz)`;
 
@@ -56,16 +50,11 @@ const room = groupRoom;
 const ROOM_TTL = 7 * 24 * 60 * 60; // a week
 
 /**
- * Group chat (KUR-085). Reuses the DM message shape over a per-group room fanned
- * out via Redis pub/sub. **Authorization is checked on every fetch** (not just
- * send), so a removed member loses history access immediately. Moderators can
- * delete messages and mute members (1h / 24h / permanent); unread counts come
- * from a per-member last-read marker.
- *
- * Two members with a block between them, whichever placed it, both stay in the
- * group — a block is between two people, not between a person and a group —
- * but neither sees the other's messages: not in the history, not in the
- * unread count, and not live (`hiddenFrom`).
+ * Group chat: the direct-message shape over a per-group room fanned out through Redis pub/sub. Membership is
+ * checked on every fetch, not just on send, so a removed member loses history at once. Moderators can delete
+ * messages and mute members for 1h, 24h or permanently; unread counts come from a per-member read marker. Two
+ * members with a block between them both stay in the group, but neither sees the other's messages in history,
+ * unread counts or live (`hiddenFrom`).
  */
 export class GroupChatService {
   constructor(
@@ -75,22 +64,15 @@ export class GroupChatService {
     private readonly moderation?: ChatModeration,
   ) {}
 
-  /**
-   * Membership: all a group's chat asks of its reader. Every member was put
-   * there by somebody they chose, whatever their age, so nothing else is.
-   */
+  /** Membership is all the chat asks of a reader: every member was put there by somebody they chose. */
   private async requireMember(groupId: string, userId: string): Promise<Role> {
     return (await this.member(groupId, userId)).role;
   }
 
   /**
-   * `requireMember` in one read: the membership, whether they are muted in
-   * the group right now (which only posting asks), and what their view of the
-   * chat has had cleared (which only the history answers with). Someone not
-   * in the group is told GROUP_BANNED, with until when, when that is why — so
-   * a thread left open as they were banned can say so — and NOT_A_MEMBER
-   * otherwise, which is also the answer for a group that does not exist: the
-   * chat tells a stranger no more than the group's own page does.
+   * `requireMember` in one read: the membership, whether they are muted in the group (asked only when posting), and
+   * what they have cleared (used only by history). A non-member is told GROUP_BANNED with its end when that is why, so
+   * a thread left open can say so, and NOT_A_MEMBER otherwise, also for a group that does not exist.
    */
   private async member(groupId: string, userId: string): Promise<{ role: Role; muted: boolean; username: string; cleared: GroupChatCleared }> {
     const r = await this.pool.query<{
@@ -123,12 +105,9 @@ export class GroupChatService {
   }
 
   /**
-   * Whether this person may post to the group's channel right now — not
-   * restricted from chat by moderation (403 MUTED with until when, the answer
-   * the message route's preHandler gives), a member who may use its chat, not
-   * muted in the group, not under the escalation mute — or the refusal that
-   * says why not. Text goes through it, and so does anything else posted to
-   * the channel (a gift, a game card), so the rules cannot drift apart.
+   * Whether this person may post to the channel now, or the refusal saying why: not restricted from chat by
+   * moderation (403 MUTED with its end, as the message route answers), a member, not muted in the group, and not under
+   * the escalation mute. Text, gifts and game cards all go through it, so the rules cannot drift apart.
    */
   async assertCanPost(groupId: string, userId: string): Promise<void> {
     await assertUnrestricted(this.pool, userId, 'chat');
@@ -138,7 +117,7 @@ export class GroupChatService {
     }
   }
 
-  /** Whether this person may read the group's channel right now: a member. Who a gift in the channel can go to. */
+  /** Whether this person may read the channel now, i.e. is a member; also who a gift in the channel can go to. */
   async canRead(groupId: string, userId: string): Promise<boolean> {
     try {
       await this.requireMember(groupId, userId);
@@ -164,12 +143,9 @@ export class GroupChatService {
   }
 
   /**
-   * The members who have blocked `authorId`, or whom `authorId` has blocked:
-   * whoever must not be sent what `authorId` posts to the room. The room
-   * itself is everyone in the group, so the event carries these ids and the
-   * gateway leaves their connections out (realtime/gateway.ts `hiddenFrom`).
-   * Asked per message rather than kept anywhere, so a block or an unblock
-   * counts from the next message on.
+   * The members who blocked `authorId` or whom `authorId` blocked, who must not be sent what `authorId` posts. The
+   * event carries these ids and the gateway skips their connections (realtime/gateway.ts `hiddenFrom`). Asked per
+   * message, so a block or unblock counts from the next message.
    */
   async hiddenFrom(groupId: string, authorId: string): Promise<string[]> {
     const rows = await this.pool.query<{ user_id: string }>(
@@ -230,10 +206,8 @@ export class GroupChatService {
   }
 
   /**
-   * A game card posted to the group (contract §B3): the host shared a lobby
-   * here. No text, so the text pipeline is skipped; a moderation chat mute,
-   * membership, the group's own mutes and an escalation mute apply exactly as
-   * to a message (`assertCanPost`), and it is published to the room like one.
+   * A game card posted to the group when the host shares a lobby. There is no text to check, but the same posting
+   * rules apply as to a message (`assertCanPost`), and it is published to the room like one.
    */
   async sendCard(
     userId: string,
@@ -272,9 +246,8 @@ export class GroupChatService {
   }
 
   /**
-   * History — membership re-checked here, so removal revokes access at once —
-   * and what this member's view has had cleared. Nothing from before the
-   * later of the two clears is in it (`CLEARED_BEFORE`).
+   * History, with membership re-checked so removal revokes access at once, and what this member has cleared. Nothing
+   * before the later of the two clears is included (`CLEARED_BEFORE`).
    */
   async history(
     userId: string,
@@ -286,9 +259,7 @@ export class GroupChatService {
     const { cleared } = await this.member(groupId, userId);
     // grant this member access to the live room for the WS join
     await this.hub.invite(room(groupId), userId, ROOM_TTL).catch(() => undefined);
-    // Everybody in a group was put there by somebody they chose, so a member
-    // reads what every other member wrote, whatever their ages. Nothing from
-    // somebody with a block between them and the reader (friends/blocked.ts).
+    // Every member reads what every other member wrote, whatever their ages, except across a block (friends/blocked.ts).
     const rows = await this.pool.query<
       KindColumns & {
         id: string; sender_id: string; username: string; profile_photo_key: string | null;
@@ -305,9 +276,7 @@ export class GroupChatService {
         ORDER BY m.created_at DESC LIMIT $2`,
       before ? [groupId, limit, userId, before] : [groupId, limit, userId],
     );
-    // The gifts on this page as this member sees them: their own to open, and
-    // the other recipients named by the roster's rule — everyone, to a member
-    // of the group (the reader is one: checked above).
+    // The gifts on this page as this member sees them; the reader is a member, so the roster rule names everyone.
     const cards = await giftCards(
       this.pool,
       rows.rows.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id && !r.deleted_at ? [r.gift_batch_id] : [])),
@@ -335,11 +304,9 @@ export class GroupChatService {
   }
 
   /**
-   * Clear the chat. For `me`, any member: the messages so far leave their own
-   * view, and the chat is read. For `everyone`, the owner or an admin only:
-   * the messages so far are deleted for every member, the chat keeps when and
-   * by whom, and the room is told (`group_chat_cleared`) so every open view
-   * clears at once.
+   * Clears the chat. For `me`, any member: the messages so far leave their own view and the chat is marked read. For
+   * `everyone`, owner or admin only: the messages so far are deleted for every member, the chat records when and by
+   * whom, and the room is told (`group_chat_cleared`) so every open view clears.
    */
   async clear(userId: string, groupId: string, scope: 'me' | 'everyone'): Promise<GroupChatCleared> {
     const { role, username, cleared } = await this.member(groupId, userId);
@@ -402,7 +369,7 @@ export class GroupChatService {
     await this.pool.query(`DELETE FROM group_mutes WHERE group_id = $1 AND user_id = $2`, [groupId, targetId]);
   }
 
-  /** Mark a group's messages read up to now. */
+  /** Marks a group's messages read up to now. */
   async markRead(userId: string, groupId: string): Promise<void> {
     await this.requireMember(groupId, userId);
     await this.pool.query(
@@ -413,14 +380,8 @@ export class GroupChatService {
   }
 
   /**
-   * Announce that someone is typing in the channel.
-   *
-   * Ephemeral: nothing is stored, it is published to the room and forgotten, so a
-   * missed ping costs nothing and there is no state to clean up. Membership is
-   * re-checked so a removed member cannot keep pinging a group they left.
-   *
-   * The username rides along because receivers need a name to show and the
-   * event is not worth a lookup per keystroke on the client.
+   * Announces that someone is typing. Nothing is stored; it is published to the room and forgotten. Membership is
+   * re-checked so a removed member cannot keep pinging. The username rides along so receivers need no lookup.
    */
   async typing(userId: string, groupId: string): Promise<void> {
     const { username } = await this.member(groupId, userId);
@@ -429,10 +390,8 @@ export class GroupChatService {
   }
 
   /**
-   * Per-group unread counts for the caller's groups. A message the history
-   * would not show them — from somebody with a block between them, or from
-   * before a clear (`CLEARED_BEFORE`) — is not counted, or the badge would
-   * announce messages that never appear.
+   * Unread counts for the caller's groups. Messages history would not show them (across a block, or before a clear)
+   * are not counted, or the badge would announce messages that never appear.
    */
   async unread(userId: string): Promise<Array<{ groupId: string; unread: number }>> {
     const rows = await this.pool.query<{ group_id: string; unread: number }>(

@@ -8,13 +8,9 @@ import type { SupportInbox } from './support-inbox.js';
 export const WEBHOOK_TOLERANCE_SECONDS = 5 * 60;
 
 /**
- * Whether a Resend webhook is really from Resend.
- *
- * Resend signs its webhooks the Svix way: an HMAC-SHA256, keyed with the
- * base64 secret after its `whsec_` prefix, over `<id>.<timestamp>.<raw body>`,
- * sent base64 in `svix-signature` as one or more space-separated `v1,<sig>`
- * (more than one while a secret is being rotated). The body must be the bytes
- * as they came — JSON parsed and printed again is not the same bytes.
+ * Whether a webhook really comes from Resend: an HMAC-SHA256 keyed with the base64 secret after `whsec_`, over
+ * `<id>.<timestamp>.<raw body>`, sent base64 in `svix-signature` as space-separated `v1,<sig>` entries (several
+ * while a secret is rotated). The body must be the bytes as received, not re-serialised JSON.
  */
 export function verifyResendSignature(
   secret: string,
@@ -64,14 +60,9 @@ const deliveryData = z.object({ to: z.array(z.string().max(500)).max(50).default
 const event = z.object({ type: z.string().max(100), created_at: z.string().optional(), data: z.unknown() });
 
 /**
- * Resend's webhook: mail received at the support address goes to the support
- * inbox, and a bounce or a complaint puts the address on the suppression list,
- * as the provider-neutral /webhooks/email does.
- *
- * Fails closed: 503 while no secret is set, 401 for a signature that does not
- * check out. Anything else that is signed is answered 200, events we do not
- * use included — Resend retries anything that is not, and a retry of an event
- * we have no use for is noise.
+ * Resend's webhook: mail received at the support address goes to the support inbox, and a bounce or complaint
+ * suppresses the address. Fails closed: 503 while no secret is set, 401 for a bad signature. Any other signed event
+ * gets 200, unused ones included, since anything else would be retried.
  */
 export function registerResendWebhookRoutes(
   app: FastifyInstance,
@@ -124,7 +115,7 @@ export function registerResendWebhookRoutes(
           })),
           receivedAt: d.created_at ?? parsed.created_at ?? new Date().toISOString(),
         });
-        // the body now, while it is fresh; if Resend cannot be reached it is read when an admin opens the mail
+        // Fetch the body now; if that fails it is read when an admin opens the mail.
         if (id) await deps.inbox.fetchBody(id).catch((err) => req.log.warn({ err }, 'support email body not fetched'));
       } else if (parsed.type === 'email.bounced' || parsed.type === 'email.complained') {
         const data = deliveryData.safeParse(parsed.data);

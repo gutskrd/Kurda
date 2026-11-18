@@ -1,4 +1,4 @@
-/** Transactional email suppression + webhook (KUR-098) against real Postgres. */
+/** Transactional email suppression and webhook, against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

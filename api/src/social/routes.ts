@@ -23,7 +23,7 @@ import {
 import type { ReportsService } from '../moderation/reports-service.js';
 import type { TreeService } from '../trees/service.js';
 
-/** User search + public profiles + privacy (KUR-082). */
+/** User search, public profiles and privacy. */
 export function registerSocialRoutes(
   app: FastifyInstance,
   social: SocialService,
@@ -64,27 +64,9 @@ export function registerSocialRoutes(
   );
 
   /**
-   * What a person has posted and played, for their profile.
-   *
-   * Gated twice, and both matter: the same privacy check the profile itself
-   * uses (a private profile has no public activity either), and the owner's own
-   * choice of which sections to show. Asking for a hidden section returns an
-   * empty list rather than an error — the client should not be able to tell a
-   * hidden section from an empty one.
-   */
-  /**
-   * Who this person is friends with.
-   *
-   * A profile that shows a level, a country and what someone is wearing but
-   * not who they know is a profile of an account rather than of a person — and
-   * on a community app, who someone knows is most of what makes them findable.
-   *
-   * The privacy rules are the profile's own: the profile call already resolves
-   * blocks and the everyone/members/friends setting, so it is reused rather
-   * than reimplemented where the two could drift apart. A profile you may not
-   * see the detail of has no friend list either. And the list never names a
-   * minor to somebody who is not their friend (FriendService.list), so it
-   * cannot be used to find one.
+   * Who this person is friends with. The profile call's privacy rules are reused (blocks and visibility), so a profile
+   * whose detail you may not see has no friend list either, and the list never names a minor to a non-friend
+   * (FriendService.list).
    */
   app.get(
     '/users/:id/friends',
@@ -124,40 +106,27 @@ export function registerSocialRoutes(
       if (!isProfileSection(kind)) throw new AppError('BAD_SECTION', 400, 'unknown profile section');
 
       /*
-       * A game result is a line in a history; a post is a post.
-       *
-       * Only games stay a row. The other three come back as whole cards — the
-       * same ones the wall shows — because a profile that reduced a picture to a
-       * 40px square and a poem to an icon was showing a list *about* posts
-       * rather than the posts themselves.
-       *
-       * That means two response shapes from one route, so both keys are always
-       * present and the unused one is empty. The refusals below then do not have
-       * to know which kind was asked for.
+       * What a person has posted and played, gated by the profile's privacy and the owner's chosen sections; a hidden
+       * section answers an empty list, indistinguishable from an empty one. Games come back as history rows, posts as whole
+       * feed cards, so both keys are always present and the unused one is empty.
        */
       const nothing = { entries: [] as ActivityEntry[], items: [] as FeedItem[] };
 
-      // the profile call enforces privacy and blocks; reuse it rather than
-      // reimplementing the rules where they could drift apart
+      // The profile call enforces privacy and blocks, reused so the rules cannot drift.
       const viewerId = req.user?.id ?? null;
       const profile = await social.profile(viewerId, id);
       if (profile.private) return nothing;
 
-      // hiding a section hides it from other people, not from the person who
-      // wrote it — their own profile still shows it, marked as hidden
+      // Hiding a section hides it from others, not from the owner, whose profile marks it hidden.
       const visible = await activity.sections(id);
       if (!visible[kind] && viewerId !== id) return nothing;
 
       if (kind === 'games') return { ...nothing, entries: await activity.games(id, limit, offset) };
 
-      // engagement resolves for whoever is LOOKING, not whose profile this is:
-      // the heart on a card in someone else's likes tab is about you, so a
-      // stranger's tab never arrives pre-liked
+      // Engagement resolves for whoever is looking, so a stranger's tab never arrives pre-liked.
       const shared = { limit, offset, publicUrl, viewerId };
 
-      // Three tabs are the same question with a different verb, so they are one
-      // call. 'saved' is the word the app uses; the engagement table still calls
-      // the row a bookmark, and renaming a stored value is not worth a migration.
+      // The three engagement tabs are one call; 'saved' is the stored 'bookmark', not worth a migration to rename.
       const ENGAGEMENT_TAB = { likes: 'like', saved: 'bookmark', reposts: 'repost' } as const;
       const engagementKind = ENGAGEMENT_TAB[kind as keyof typeof ENGAGEMENT_TAB];
       if (engagementKind) {
@@ -168,26 +137,10 @@ export function registerSocialRoutes(
   );
 
   /**
-   * Report a person to the moderators.
-   *
-   * Blocking already ends it privately, but a block tells nobody — so somebody
-   * doing the same thing to twenty people looked exactly like somebody nobody
-   * had blocked. This is the half that reaches a moderator, and the profile
-   * card offers both, because most people want to stop seeing someone *and*
-   * have somebody look at them.
-   *
-   * Deliberately says almost nothing back. It answers the same way whether the
-   * report is new, a duplicate of one you already filed, or about an account
-   * that does not exist — the alternative is an endpoint that reveals which
-   * user ids are real and whether an account has been reported before, and a
-   * reporter needs neither.
-   *
-   * The one exception is your own reason being too short, which is about what
-   * *you* typed and has to be fixable.
-   *
-   * Rate-limited hard, per hour rather than per minute: a report costs a
-   * moderator's attention, so filing them in bulk is itself a way to attack
-   * somebody.
+   * Reports a person to the moderators. It answers the same whether the report is new, a duplicate, or about an
+   * account that does not exist, so it reveals neither which ids are real nor past reports; only a too-short reason, the
+   * reporter's own input, is refused. Rate limited per hour, since filing reports in bulk is itself a way to attack
+   * someone.
    */
   app.post(
     '/users/:id/report',
@@ -223,11 +176,7 @@ export function registerSocialRoutes(
     '/me/profile/sections',
     {
       schema: {
-        /*
-         * Built from PROFILE_SECTIONS rather than listed again. The two had
-         * already drifted once: this schema still named the old sections, so a
-         * toggle for a new one was accepted with a 200 and silently dropped.
-         */
+        /* Built from PROFILE_SECTIONS, so a new section's toggle is never accepted and silently dropped. */
         body: z.object(
           Object.fromEntries(PROFILE_SECTIONS.map((s) => [s, z.boolean().optional()])) as Record<
             (typeof PROFILE_SECTIONS)[number],
@@ -244,14 +193,7 @@ export function registerSocialRoutes(
 
 
 
-  /**
-   * Like or save a post — one button, one endpoint, and the server decides.
-   *
-   * A toggle rather than add/remove: the client's idea of the current state can
-   * be stale (a second tab, a poll between renders), and letting the database
-   * answer from what is actually stored means a double click cannot leave the
-   * heart disagreeing with the count.
-   */
+  /** Likes or saves a post with one toggle; the database decides from what is stored, so a double click cannot desync the heart and count. */
   app.post(
     '/posts/:type/:id/:kind',
     {
@@ -273,11 +215,8 @@ export function registerSocialRoutes(
   );
 
   /**
-   * How one post has been received — likes, reposts, saves — and whether you
-   * are among them: what a post's own page shows under it, the same numbers
-   * the wall carries for each post. Readable signed out (the post's page is
-   * public); a signed-out reader is simply in none of them. Only counts and
-   * your own part in them, so nothing about who else did what.
+   * How one post has been received (likes, reposts, saves) and whether you are among them, as its page and the wall
+   * show. Readable signed out; only counts and your own part, never who else.
    */
   app.get(
     '/posts/:type/:id/engagement',
@@ -294,11 +233,8 @@ export function registerSocialRoutes(
   );
 
   /**
-   * A user's public profile (privacy- and block-gated).
-   *
-   * Readable without an account: the bylines on the public wall have to lead
-   * somewhere. A signed-out reader is simply nobody's friend, so a profile set
-   * to friends-only or nobody shows them what it shows any other stranger.
+   * A user's public profile, gated by privacy and blocks. Readable signed out, since wall bylines must lead somewhere;
+   * a signed-out reader is nobody's friend and sees what any stranger sees.
    */
   app.get(
     '/users/:id',
@@ -306,13 +242,11 @@ export function registerSocialRoutes(
     async (req) => {
       const id = (req.params as { id: string }).id;
       const profile = await social.profile(req.user?.id ?? null, id);
-      // Resolve cosmetics → URLs, derive level, expose only safe favorites, and
-      // strip every raw key/entitlement/premium field. The browser loads media
-      // directly from R2/static — the API never proxies images.
+      // Resolve cosmetics to URLs, derive the level, expose only safe favourites and strip every raw key and entitlement
+      // field. Clients load media directly; the API never proxies images.
       const dto = toPublicProfileDto(profile, app.storage);
-      // which sections this profile shows, so the client renders the right tabs
-      // instead of asking for each one to find out; and their tree, as it
-      // stands today, which a profile that shows nothing else keeps to itself too
+      // The sections this profile shows, so the client renders the right tabs, and today's tree, which a private profile
+      // keeps to itself.
       const [sections, tree] = profile.private ? [null, null] : await Promise.all([activity.sections(id), deps.trees?.glimpse(id) ?? null]);
       return { ...dto, sections, tree };
     },

@@ -1,4 +1,4 @@
-/** Notification preferences + delivery-time gating (KUR-095) against Postgres. */
+/** Notification preferences and delivery-time gating against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

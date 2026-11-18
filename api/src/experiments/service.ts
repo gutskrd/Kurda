@@ -25,10 +25,8 @@ interface ExperimentRow {
 }
 
 /**
- * A/B experiment assignment + config (KUR-107). `variant` resolves a user's
- * bucket deterministically and logs an idempotent exposure event (one per
- * user per experiment) into the analytics store — for accounts that agreed to
- * analytics only. A disabled experiment (kill switch) always resolves to
+ * A/B experiment assignment and config. `variant` resolves a user's bucket deterministically and logs one exposure
+ * event per user and experiment, for accounts that agreed to analytics. A disabled experiment always resolves to
  * `control`.
  */
 export class ExperimentService {
@@ -57,11 +55,8 @@ export class ExperimentService {
   }
 
   /**
-   * An exposure is an analytics event like any other, so it is stored only
-   * with `analytics_consent`, as /events/track stores nothing without it
-   * (analytics/routes.ts). Writing exposures for everyone was the same leak by
-   * a side door. The assignment itself does not depend on consent: the bucket
-   * is a hash of the id, worked out again on every call and stored nowhere.
+   * An exposure is an analytics event, so it is stored only with `analytics_consent`. The assignment needs no consent:
+   * it is a hash of the id, recomputed on every call and stored nowhere.
    */
   private async mayLogExposure(userId: string): Promise<boolean> {
     return this.analytics !== undefined && (await this.analytics.hasConsent(userId));

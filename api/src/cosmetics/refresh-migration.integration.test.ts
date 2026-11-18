@@ -1,11 +1,7 @@
 /**
- * Migration 1751000161000 against real Postgres: an item on a removed file is
- * given new art and withdrawn, and each owner is recorded with what they paid.
- *
- * The migration is run again here on purpose, against rows made for the test —
- * it is written to be re-runnable, and that is part of what is being checked.
- * The last case rolls both art migrations back and forward again through
- * node-pg-migrate itself, the way `migrate down` and `migrate up` would.
+ * Migration 1751000161000 against real Postgres: an item on a removed file gets new art and is withdrawn, and each
+ * owner is recorded with what they paid. The migration runs again here because it must be re-runnable; the last
+ * case rolls both art migrations down and up through node-pg-migrate.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -53,7 +49,7 @@ describe.skipIf(!DATABASE_URL)('the code-made cosmetics migration (integration)'
   let shop: ShopService;
   let migration: Migration;
   const s = Date.now().toString(36);
-  /** an item an admin made by hand on a file that is no longer shipped */
+  /** An item an admin made by hand on a file that no longer ships. */
   const SKU = `bg-handmade-${s}`;
   const ids: Record<string, string> = {};
   const tokens: Record<string, string> = {};
@@ -199,9 +195,7 @@ describe.skipIf(!DATABASE_URL)('the code-made cosmetics migration (integration)'
         )
         .then((r) => r.rows[0]);
 
-    // The friend has seen the notice. The buyer handed the item back while
-    // returns still existed: what such a return left behind is written here
-    // directly, since nothing in the app can return an item any more.
+    // The friend has seen the notice. Returns no longer exist in the app, so what one left behind is written directly.
     await pool.query(`UPDATE cosmetic_refreshes SET noticed_at = now() WHERE user_id = $1 AND sku = $2`, [ids.friend, SKU]);
     await pool.query(`DELETE FROM user_entitlements WHERE user_id = $1 AND sku = $2`, [ids.buyer, SKU]);
     await pool.query(`UPDATE cosmetic_refreshes SET returned_at = now(), noticed_at = now() WHERE user_id = $1 AND sku = $2`, [

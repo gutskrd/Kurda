@@ -1,15 +1,10 @@
 import { isIP } from 'node:net';
 
 /**
- * Network addresses as the server reasons about them.
- *
- * Addresses arrive as text from places that do not agree on a format: the
- * socket gives `::ffff:1.2.3.4` for an IPv4 client on a dual-stack listener,
- * proxies sometimes append a port (`1.2.3.4:5678`, `[2001:db8::1]:443`), a
- * link-local address can carry a zone (`fe80::1%eth0`), and a header a client
- * wrote can hold anything at all. Everything that compares or stores an address
- * goes through `parseIp` first, so the same machine is always the same text and
- * anything that is not an address is refused rather than guessed at.
+ * Network addresses as the server reasons about them. Addresses arrive in inconsistent formats (`::ffff:1.2.3.4` on a
+ * dual-stack listener, a port appended, a link-local zone, or anything in a client header), so everything that
+ * compares or stores one goes through `parseIp` first: one machine is always the same text, and non-addresses are
+ * refused.
  */
 export interface ParsedIp {
   family: 4 | 6;
@@ -23,12 +18,8 @@ export interface ParsedIp {
 const MAX_ADDRESS_TEXT = 64;
 
 /**
- * Read one address, or null when the text is not one.
- *
- * Accepted: an IPv4 or IPv6 address, either with a port (`1.2.3.4:80`,
- * `[::1]:443`), an IPv6 address in brackets, and a zone id, which is dropped.
- * An IPv4-mapped IPv6 address is read as the IPv4 address it carries, because
- * it is the same client.
+ * Reads one address, or null when the text is not one. Accepts IPv4 or IPv6, with a port (`1.2.3.4:80`, `[::1]:443`),
+ * IPv6 in brackets, and a zone id, which is dropped. An IPv4-mapped IPv6 address reads as its IPv4 address.
  */
 export function parseIp(raw: unknown): ParsedIp | null {
   if (typeof raw !== 'string') return null;
@@ -49,7 +40,7 @@ export function parseIp(raw: unknown): ParsedIp | null {
 
   const zone = s.indexOf('%');
   if (zone !== -1) {
-    // a zone only names the local interface a link-local address was reached on
+    // A zone only names the local interface a link-local address was reached on.
     if (!s.includes(':')) return null;
     s = s.slice(0, zone);
   }

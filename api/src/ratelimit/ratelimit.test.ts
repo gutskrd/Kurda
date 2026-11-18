@@ -5,8 +5,7 @@ import { MemoryRateLimitStore } from './store.js';
 
 let app: FastifyInstance;
 
-/** Bare app with a fake auth hook (x-user header) ahead of the limiter,
- *  mirroring the hook order in buildApp once KUR-016 lands. */
+/** A bare app with a fake auth hook (x-user header) ahead of the limiter, in buildApp's hook order. */
 function limitedApp(): FastifyInstance {
   app = Fastify({ logger: false });
   app.addHook('onRequest', async (req) => {

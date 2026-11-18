@@ -1,44 +1,17 @@
 /**
- * The words of each page of the Hevalo book as a reader takes them in: its
- * headings, its labels, who is speaking and what is said, each piece marked
- * Kurmanji or English. This is what a page reads as when it cannot be seen
- * (a screen reader, a search engine, a translation tool) and what the
- * book's text view on the web shows.
+ * The words of each page of the Hevalo book as a reader takes them in, for screen readers, search and the book's text
+ * view on the web: headings, labels, speakers and lines, each piece marked Kurmanji or English. The press's runs
+ * (capture.ts) arrive in reading order and are put together in steps:
  *
- * The press's runs (capture.ts) come in the order the page was drawn, which
- * is the order the book is read in: a Kurdish line, then its English; a
- * speaker, then the line. They are put together in steps:
- *
- *  1. The page's furniture goes: on a page that carries its number at its
- *     foot, what stands above the text (the running head) and the number
- *     itself are the same on every page and say nothing of their own. (A
- *     full page may run a line of its own down beside the number; it stays.)
- *  2. Runs on one baseline make a line; where a run starts clear of the end
- *     of the one before it (more than 0.15 of an em) a space stood between
- *     them, which a change of face otherwise loses ("I am" and "Hamo").
- *  3. One call of `set` is one paragraph; lines set one by one in the same
- *     type, lined up alike and one lead apart, are one too (the cover's
- *     "Rêya" and "Kurmancî").
- *  4. Small spaced capitals are the book's labels; they read as a sentence
- *     ("Part 1 of 4"), and a label set just left of a line in the book's
- *     Kurmanji type is the one who says it ("Hamo:").
- *  5. Each piece's language: what the chapters themselves say in Kurmanji or
- *     in English, word for word; else what the book's type for it says (its
- *     Kurdish faces and its English ones); else which language its words are
- *     found in; else the face; else the letters only Kurmanji has. A word is
- *     never split between two languages (the alphabet sets the letter it
- *     shows in another face: "as in bed" is English throughout), the
- *     alphabet's letters are Kurmanji, and a Kurmanji sentence the chapters
- *     say, met inside an English line, is marked Kurmanji there.
- *  6. What stands side by side on one baseline is one row, read left to
- *     right: an exercise's number and its sentence ("1. Hevalo is eating the
- *     apple!"), a line of the contents ("1. Silav · Hello · 9"), a Kurdish
- *     line and its English, a word and its gender ("sêv (f)"). A word card's
- *     English set under the word joins it ("sêv (f) · apple"). A heading
- *     keeps its own block, with the rest of its row after it; a speaker
- *     stays before the line they say. The book's number badges (a chapter's,
- *     a part's, a lesson's, a picture's to name) stand alone or before a
- *     heading and say nothing the words do not, so they are left out.
+ *  1. The running head and the page number go; a line a full page runs down beside the number stays.
+ *  2. Runs on one baseline make a line, with a space where a run starts more than 0.15 em past the one before it,
+ *     which a change of face otherwise loses.
+ *  3. One `set` call is one paragraph, and so are lines set one by one in the same type, lined up alike, a lead apart.
+ *  4. Small spaced capitals are labels, read in sentence case; a label just left of a Kurmanji line is its speaker.
+ *  5. Each piece's language comes from what the chapters say, else the book's type, else which language its words
+ *     are found in, else the face, else letters only Kurmanji has; a word is never split between languages.
+ *  6. What stands side by side on one baseline is one row, read left to right; number badges are left out, since they
+ *     say nothing the words do not.
  */
 import { MARGIN, PAGE, TEXT, type FontKey } from '../../src/books/sheet.js';
 import type { BookChapter, BookName } from '../../src/books/road-book.js';
@@ -78,12 +51,7 @@ const clean = (text: string): string => text.normalize('NFC').replace(/\s+/g, ' 
 
 const wordsOf = (text: string): string[] => clean(text).toLocaleLowerCase('ku').match(/\p{L}+/gu) ?? [];
 
-/**
- * Everything the chapters say in Kurmanji and in English: their titles, their
- * words, their lines and conversations, their stories, glossaries, questions
- * and practice, the people of the road, and the book's own prose (all of it
- * English, with the road's names in it).
- */
+/** Everything the chapters say in Kurmanji and in English, the people of the road, and the book's own English prose. */
 export function lexiconOf(chapters: readonly BookChapter[], people: readonly BookName[] = []): Lexicon {
   const ku: string[] = [];
   const en: string[] = [];
@@ -141,8 +109,8 @@ export function lexiconOf(chapters: readonly BookChapter[], people: readonly Boo
   for (const p of people) add(en, p.en);
   add(en, ...LETTER.map((spans) => spans.map((s) => s.text).join('')), ...Object.values(FRIENDS), ...AUTHOR.paragraphs);
 
-  // a word is one language's when the book says it in that language three times as often as in the other: the
-  // English glosses and notes quote Kurmanji words ("tu … dixwî: you eat"), and a word met there now and then is still Kurmanji
+    // A word belongs to a language the book says it in three times as often as the other, since the English glosses
+    // quote Kurmanji words ("tu … dixwî: you eat").
   const count = (texts: string[]): Map<string, number> => {
     const counts = new Map<string, number>();
     for (const w of texts.flatMap(wordsOf)) counts.set(w, (counts.get(w) ?? 0) + 1);
@@ -166,7 +134,7 @@ export function lexiconOf(chapters: readonly BookChapter[], people: readonly Boo
   return { ku: new Set(ku), en: new Set(en), kuWords, enWords, proper };
 }
 
-/** The faces the headings are set in (Fraunces); its italic sets subtitles and signatures, which are not headings. */
+/** The faces headings are set in; the italic sets subtitles and signatures, which are not headings. */
 const HEADING_FACES: ReadonlySet<FontKey> = new Set(['display', 'heavy']);
 
 /** Runs this close together (in points) stand on one baseline. */
@@ -226,11 +194,7 @@ function continues(prev: Paragraph, next: TextRun): boolean {
   );
 }
 
-/**
- * A call that carries on the word the one before it ended: set on the same
- * baseline, starting where it stopped, as the alphabet sets a word with its
- * letter in another colour ("a" and "v" are "av").
- */
+/** A run that carries on the word before it, on the same baseline where it stopped, as the alphabet colours a letter ("a" and "v" are "av"). */
 function runsOn(prev: Paragraph, next: TextRun): boolean {
   const last = prev.pieces.at(-1)!.run;
   return Math.abs(next.y - last.y) <= SAME_LINE && Math.abs(next.x - (last.x + last.width)) <= 0.15 * next.size;
@@ -254,9 +218,9 @@ export function languageOf(text: string, run: Pick<TextRun, 'font' | 'typeKey' |
   if (lexicon.ku.has(said) && !lexicon.en.has(said)) return 'ku';
   if (lexicon.en.has(said) && !lexicon.ku.has(said)) return 'en';
   if (run.typeKey === 'kurdish' || run.typeKey === 'word' || run.typeKey === 'tale') return 'ku';
-  // the book's prose and its scenes' captions are English, whatever Kurmanji they quote (marked by the sentence, below)
+    // The book's prose and captions are English, whatever Kurmanji they quote (marked by sentence below).
   if (run.typeKey === 'body' || run.typeKey === 'caption') return 'en';
-  // a grammar note sets the Kurdish to remember in bold and the Kurdish said in italics, and explains in its own face
+    // A grammar note sets Kurdish to remember in bold and Kurdish said in italics, and explains in its own face.
   if (run.setIn === 'note') return run.font === 'semi' || run.font === 'italic' ? 'ku' : 'en';
   if (run.typeKey === 'english' || run.typeKey === 'taleEnglish' || run.typeKey === 'gloss') return 'en';
   const words = wordsOf(said);
@@ -273,11 +237,8 @@ export function languageOf(text: string, run: Pick<TextRun, 'font' | 'typeKey' |
 const isLetter = (c: string | undefined): boolean => c !== undefined && /[\p{L}\p{M}]/u.test(c);
 
 /**
- * The spans of a paragraph: its pieces, each in its language, those of one
- * language run together, and no word split between two. Where a word runs
- * across pieces in different languages (the alphabet's "b", "e" and "d"),
- * it takes the language the word is known in, else that of most of its
- * letters, else its first piece's.
+ * A paragraph's spans, one per run of a language, never splitting a word: a word across pieces in different languages
+ * (the alphabet's "b", "e", "d") takes the language it is known in, else that of most of its letters, else its first piece's.
  */
 function spansOf(paragraph: Paragraph, lexicon: Lexicon, recase: boolean): TextSpan[] {
   const whole = clean(paragraph.pieces.map((p) => p.before + p.text).join(''));
@@ -324,11 +285,9 @@ const isLetterPair = (text: string): boolean => {
 };
 
 /**
- * The Kurmanji sentences of the chapters that can be told apart inside an
- * English line: those the English never says, of two words or more with one
- * only Kurmanji has ("Tu baş î?", "Bi xatirê te!"), or a single word only
- * Kurmanji has, with a letter only Kurmanji has ("çay"), that is not a name.
- * Indexed by their first word, longest first.
+ * The chapters' Kurmanji sentences that can be found inside an English line: ones the English never says, of two or
+ * more words with one only Kurmanji has, or a single Kurmanji-only word with a Kurmanji-only letter that is not a name.
+ * Indexed by first word, longest first.
  */
 const findable = new WeakMap<Lexicon, Map<string, string[]>>();
 export function kurmanjiSentences(lexicon: Lexicon): Map<string, string[]> {
@@ -344,7 +303,7 @@ export function kurmanjiSentences(lexicon: Lexicon): Map<string, string[]> {
       words.length >= 2 ? own.length > 0 : own.length === 1 && words[0]!.length >= 3 && /[çêîşû]/u.test(words[0]!) && !lexicon.proper.has(words[0]!);
     if (!fits) continue;
     const first = words[0]!;
-    // said inside a sentence, a sentence may lose its full stop or mark ("Hevalo sêvê dixwe: your apple")
+        // Quoted inside a sentence, a sentence may lose its final mark ("Hevalo sêvê dixwe: your apple").
     const bare = sentence.replace(/[.!?…]+$/u, '');
     index.set(first, [...(index.get(first) ?? []), ...new Set([sentence, bare])]);
   }
@@ -414,11 +373,7 @@ const SAME_ROW = 2;
 /** Only figures: a number, a page number, numbers in a row. */
 const isFigures = (text: string): boolean => /\d/.test(text) && /^[\d\s.,·–-]+$/u.test(text);
 
-/**
- * What a block is, when it is one of the book's small marks rather than
- * words: a number or a letter set in a badge before what it numbers, a
- * question's mark, a word's gender, or figures alone.
- */
+/** What a block is when it is one of the book's small marks: a badge's number or letter, a question mark, a gender, or bare figures. */
 function markOf(item: Item): 'number' | 'letter' | 'question' | 'gender' | 'figures' | null {
   const text = blockText(item.block).trim();
   if (item.first.font === 'bold' || item.first.font === 'heavy') {
@@ -431,10 +386,8 @@ function markOf(item: Item): 'number' | 'letter' | 'question' | 'gender' | 'figu
 }
 
 /**
- * The pieces of one row as one block, apart by " · ", a word's gender after
- * it as "(f)"; a question's mark goes. A sentence with a gap to fill is set
- * as its two halves, the first ending on a space or the second starting on
- * one, with a line drawn between them: the gap reads as "…".
+ * One row's pieces as one block, joined by " · ", with a gender as "(f)" and no question mark. A sentence with a gap
+ * is set as two halves with a line between them, so the gap reads as "…".
  */
 function rowBlock(items: readonly Item[]): TextBlock {
   const spans: TextSpan[] = [];
@@ -472,7 +425,7 @@ function rowsOf(items: readonly Item[]): Item[][] {
 /** One page's runs, as the blocks a reader takes in. */
 export function pageBlocks(all: readonly TextRun[], page: number, lexicon: Lexicon): TextBlock[] {
   let runs = all.filter((r) => r.page === page);
-  // the foot holds only the number (and the apple, a drawing), while a full page may run its last line down beside it
+    // The foot holds only the number and a drawing, while a full page may run its last line down beside it.
   if (runs.some((r) => isFolio(r, page))) runs = runs.filter((r) => r.y >= TEXT.top && !isFolio(r, page));
 
   // the calls, in the order they were made; lines set one by one join the paragraph they continue

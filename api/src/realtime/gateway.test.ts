@@ -1,8 +1,4 @@
-/**
- * The gateway over a store that stops answering, with real WebSocket clients
- * and no database: a message that needs the store fails, and the connection
- * and the process carry on.
- */
+/** The gateway over a store that stops answering, with real WebSocket clients and no database: the message fails, the connection and process carry on. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import fastifyWebsocket from '@fastify/websocket';

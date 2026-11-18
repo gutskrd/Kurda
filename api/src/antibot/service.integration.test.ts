@@ -1,4 +1,4 @@
-/** Behavioral bot detection vs real Postgres (CI job). KUR-110. */
+/** Bot detection against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { BotDetectionService } from './service.js';

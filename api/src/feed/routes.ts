@@ -6,11 +6,8 @@ import { AppError } from '../plugins/errors.js';
 import { FeedService, isFeedKind, isFeedSection } from './service.js';
 
 /**
- * The community wall.
- *
- * Public, like the three pages it replaces — a guest can read the community
- * without an account. Signing in only adds your own like and bookmark state to
- * each card, which is why the viewer is optional rather than required.
+ * The community wall. Public, so a guest can read it; signing in adds your own like and bookmark state to each
+ * card, which is why the viewer is optional.
  */
 export function registerFeedRoutes(app: FastifyInstance): void {
   const feed = new FeedService(app.db);
@@ -58,13 +55,7 @@ export function registerFeedRoutes(app: FastifyInstance): void {
     },
   );
 
-  /**
-   * Your reading list.
-   *
-   * Signed-in and always your own — there is no id in the path, because someone
-   * else's saved posts are theirs. What they have chosen to show is already on
-   * their profile.
-   */
+  /** Your reading list: signed in and always your own, so there is no id in the path. */
   app.get(
     '/me/saved',
     {

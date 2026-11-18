@@ -1,7 +1,4 @@
-/**
- * The public lists check their query strings: a malformed page or id is the
- * caller's mistake (400), not a database error (500).
- */
+/** Public lists reject malformed query strings with 400 rather than failing in the database with 500. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';

@@ -1,10 +1,7 @@
 /**
- * Networks against real Postgres: who a request is from behind Cloudflare,
- * which accounts count as "on the same network", the sign-up caps keyed on the
- * network, and the sightings that evidence comes from.
- *
- * Every address here comes from ranges picked per run (198.19.<run>.x and
- * 2001:db8:<run>::/48), so no other suite's rows are on the same networks.
+ * Networks against real Postgres: who a request is from behind Cloudflare, which accounts share a network, network
+ * sign-up caps, and the sightings behind the evidence. Addresses come from per-run ranges (198.19.<run>.x and
+ * 2001:db8:<run>::/48), so no other suite's rows share them.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -135,8 +132,7 @@ describe.skipIf(!DATABASE_URL)('networks and the accounts on them (integration)'
       );
       expect(decision.rows[0]).toEqual({ net_hash: networkHashOf(ca), ip_hash: null });
 
-      // a signed-in request from another network: one sighting for the day,
-      // written once however many requests there are
+      // A signed-in request from another network: one sighting for the day, written once however many requests.
       const elsewhere = v4();
       for (let i = 0; i < 3; i++) {
         const me = await app.inject({ method: 'GET', url: '/me', ...via(elsewhere, { authorization: `Bearer ${a.token}` }) });
@@ -215,7 +211,7 @@ describe.skipIf(!DATABASE_URL)('networks and the accounts on them (integration)'
         await seen(f, net, noon(9, i));
       }
       expect(await linkTo(a, b)).toMatchObject({ via: 'network' });
-      // and each new account is linked to the old one it was made beside
+      // Each new account is linked to the old one it was made beside.
       expect(await linkTo(a, fresh[0]!)).toMatchObject({ via: 'network' });
       expect((await linked(fresh[0]!)).map((l) => l.id)).toEqual(expect.arrayContaining([a, b, ...fresh.slice(1)]));
     });

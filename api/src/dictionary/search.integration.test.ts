@@ -1,4 +1,4 @@
-/** Dictionary search against real Postgres (CI job). KUR-044. */
+/** Dictionary search against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -30,10 +30,7 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     return id;
   }
 
-  /**
-   * A curated word, written the way migration 1751000094000 and the admin screen
-   * write one — both keys, the games' keeping its diacritics.
-   */
+  /** A curated word written as migrations and the admin screen write one: both keys, the games' with diacritics. */
   async function curated(headword: string, def: string): Promise<void> {
     const res = await pool.query<{ id: string }>(
       `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, in_games)
@@ -138,25 +135,15 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     expect(first).toMatchObject({ headword: 'sêv', matchType: 'exact', pos: 'noun', definitionEn: 'apple' });
   });
 
-  /**
-   * Wîkîferheng defines its words in Kurdish, so after an import almost nothing
-   * has an English definition. A hit that carried only `definitionEn` would give
-   * every one of those words a blank line under it, and a dictionary of hundreds
-   * of thousands of empty definitions reads as a broken search rather than a
-   * full one.
-   */
+  /** After an import almost nothing has an English definition, so a hit must carry the Kurdish one. */
   it('carries the Kurdish definition when a word has no English one', async () => {
     const res = await authed('/dictionary/search?q=hirmî');
     const first = res.json().results[0];
     expect(first).toMatchObject({ headword: 'hirmî', definitionEn: null, definitionKu: 'Fêkiyekî dardar e.' });
   });
   /**
-   * The bug this was hiding. Everything else in this suite seeds through the
-   * repository, which writes the folded key — so the search found its own
-   * fixtures while every word actually in the database, seeded by 1751000094000
-   * with the diacritics kept, was unreachable. Typing the word exactly returned
-   * nothing. There are two keys now (1751000115000) and the search reads the
-   * one meant for finding.
+   * Seeds the way real curated words are stored, with the games' key keeping diacritics; the search must read the
+   * folded key meant for finding.
    */
   it('finds a curated word, typed with its diacritics or without', async () => {
     for (const q of ['pirtûkî', 'pirtuki', 'pirtû', 'pirtu']) {

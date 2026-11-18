@@ -1,4 +1,4 @@
-/** Community image & meme sharing via HTTP (CI integration job). KUR-290. */
+/** Community image posts over HTTP. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -30,10 +30,8 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
   const call = (method: 'POST' | 'GET' | 'PATCH' | 'DELETE', url: string, token?: string, payload?: Record<string, unknown>) =>
     app.inject({ method, url, payload, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.60.0.9' });
 
-  // A post can only reference media that cleared the upload pipeline (#294) and
-  // that its author uploaded, unused — seed the row the upload step leaves for
-  // the keys these model tests use. (Changed on purpose: these were confirmed,
-  // ownerless rows, which a post now refuses.)
+  // A post may only reference media its author uploaded that cleared the pipeline and is unused, so seed the row the
+  // upload step leaves for these keys.
   const seedMedia = (key: string, scanStatus: 'cleared' | 'blocked' = 'cleared', uploaderId = authorId) =>
     seedPictureUpload(pool, key, uploaderId, { scanStatus });
 
@@ -118,9 +116,7 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
   });
 
   it('takes the pictures with the account, so no byline is ever orphaned', async () => {
-    // image_posts.author_id is ON DELETE CASCADE, unlike a library post — the
-    // picture goes when the person does, which is why the feed never has to
-    // render a stand-in name for one
+    // image_posts.author_id cascades on delete, unlike a library post, so the wall never needs a stand-in name for one.
     const ghost = await register('ghost', '10.60.0.4');
     await seedMedia('media/ghost.jpg', 'cleared', ghost.id);
     const post = (await call('POST', '/images', ghost.token, { imageMediaId: 'media/ghost.jpg' })).json();

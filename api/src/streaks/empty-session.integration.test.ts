@@ -1,10 +1,7 @@
 /**
- * A finished session with nothing in it is not learning, against real Postgres.
- *
- * Completing a lesson or a practice session is one request, and it can be sent
- * without answering anything. These go through the real routes and check that
- * such a session moves none of the things that are paid for learning: the
- * streak, days learned, the next freeze and the daily Zêr.
+ * A finished session with nothing in it is not learning, against real Postgres: completing is one request that can
+ * be sent without answering anything, so through the real routes it must move nothing paid for learning (streak, days
+ * learned, next freeze, daily Zêr).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

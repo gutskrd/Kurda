@@ -2,19 +2,12 @@ import type pg from 'pg';
 import { writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
 
-/** The emoji reactions a user can leave on an image/meme post (KUR-291). */
-/*
- * Order is the order they appear under a picture, warmest first: love, peace,
- * like, laugh, wow, sad, angry. It is not alphabetical and not the order they
- * were added — it is the order asked for, and the check constraint in
+/**
+ * The emoji reactions on an image post, in display order, warmest first. The check constraint in
  * `1751000107000_restore-angry-reaction` allows exactly this set.
  */
 export const REACTIONS = ['love', 'peace', 'like', 'laugh', 'wow', 'sad', 'angry'] as const;
 export type Reaction = (typeof REACTIONS)[number];
-
-export function isReaction(v: string): v is Reaction {
-  return (REACTIONS as readonly string[]).includes(v);
-}
 
 export interface ReactionSummary {
   /** Count per emoji (only non-zero entries). */
@@ -27,10 +20,8 @@ export interface ReactionSummary {
 export type SetResult = { ok: true; summary: ReactionSummary } | { ok: false; reason: 'post-not-found' };
 
 /**
- * Reactions on image/meme posts (KUR-291). A user has at most one reaction per
- * post; `set` upserts it (changing emoji is a no-op on the count, add is +1),
- * `clear` removes it (-1). The post's `reaction_count` is maintained in the same
- * transaction as the reaction row so the feed's count never drifts.
+ * Reactions on image posts: at most one per user and post. `set` upserts it (changing emoji leaves the count, adding
+ * is +1) and `clear` removes it (-1); `reaction_count` changes in the same transaction, so it never drifts.
  */
 export class ImageReactionService {
   constructor(private readonly pool: pg.Pool) {}
@@ -39,8 +30,7 @@ export class ImageReactionService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      // a picture the reacting user may not see answers as missing — a minor's,
-      // or one across a block
+      // A picture the user may not see (a minor's, or across a block) answers as missing.
       const post = await client.query(
         `SELECT 1 FROM image_posts
           WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}

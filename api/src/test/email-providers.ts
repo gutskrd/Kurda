@@ -1,8 +1,6 @@
 /**
- * The mail providers people sign up with, by domain, and one domain of their
- * own (a subdomain under a long top-level domain). Shared by the unit tests of
- * the address rules and the sign-up integration test, so both prove the same
- * list.
+ * Mail provider domains people sign up with, plus one custom domain (a subdomain under a long TLD), shared by the
+ * address-rule unit tests and the sign-up integration test so both prove the same list.
  */
 export const PROVIDER_DOMAINS = [
   // Apple, including the relay addresses Sign in with Apple hands out

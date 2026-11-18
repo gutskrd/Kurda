@@ -3,7 +3,6 @@ import {
   activeEvents,
   cacheTtlSeconds,
   isActive,
-  MAX_CONCURRENT_RENDER,
   nextBoundary,
   type EventDef,
 } from './window.js';
@@ -57,12 +56,11 @@ describe('activeEvents', () => {
     expect(activeEvents([later, earlier], now).map((e) => e.key)).toEqual(['a', 'z']);
   });
 
-  it('supports overlapping events (client caps concurrency)', () => {
+  it('supports overlapping events, highest priority first', () => {
     const now = T('2026-03-21T12:00:00.000Z');
     const events = [ev({ key: 'a', priority: 3 }), ev({ key: 'b', priority: 2 }), ev({ key: 'c', priority: 1 })];
     const live = activeEvents(events, now);
-    expect(live).toHaveLength(3);
-    expect(live.slice(0, MAX_CONCURRENT_RENDER).map((e) => e.key)).toEqual(['a', 'b']);
+    expect(live.map((e) => e.key)).toEqual(['a', 'b', 'c']);
   });
 });
 

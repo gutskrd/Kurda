@@ -1,17 +1,8 @@
 /**
- * Where everything is in the Hevalo book: its front and back matter, its
- * chapters and their parts, by page, and the edition the pages make.
- *
- * The book says where things are on its own contents page (page 3), as a
- * name and a page number on one line each, in a fixed order: the passport,
- * the alphabet, the people of the road, every chapter, the answers, the word
- * list and the author's note. Only the numbers are taken from it, by their
- * order; what they point at is checked against the pages themselves (each
- * chapter's opening page must begin with its name), so a contents page that
- * no longer matches its book stops the export instead of misleading a reader.
- *
- * A chapter runs from its opening page to the page before whatever begins
- * next; a part begins on the first page that carries its name as a heading.
+ * Where everything is in the Hevalo book, by page, and the edition its pages make. Only the page numbers are taken
+ * from the contents page (page 3), by their fixed order; each is checked against the pages themselves, so a contents
+ * page that no longer matches the book stops the export instead of misleading a reader. A chapter runs to the page
+ * before whatever begins next; a part begins on the first page with its name as a heading.
  */
 import { createHash } from 'node:crypto';
 import { MARGIN, PAGE, TEXT } from '../../src/books/sheet.js';
@@ -46,10 +37,7 @@ export interface Places {
 /** The page the contents page is: after the cover and Hamo's letter. */
 const CONTENTS_PAGE = 3;
 
-/**
- * The page numbers the contents page gives, top to bottom: the numbers set
- * flush with the right edge of the text, but for the page's own at its foot.
- */
+/** The contents page's numbers, top to bottom: those set flush right, except the page's own at its foot. */
 export function contentsNumbers(runs: readonly TextRun[]): number[] {
   const right = TEXT.x + TEXT.w;
   const folio = (r: TextRun): boolean => r.text === String(CONTENTS_PAGE) && r.y > PAGE.h - MARGIN.bottom;
@@ -119,12 +107,7 @@ export function placesOf(runs: readonly TextRun[], text: readonly PageText[], ch
   return { sections, chapters: placed };
 }
 
-/**
- * What a PDF the press wrote holds, without the moment it was written: the
- * writer stamps its dates (`(D:20261117034813Z)`) and an ID made from them,
- * and nothing else about it changes from one printing of the same book to
- * the next.
- */
+/** A hash of a PDF without the dates the writer stamps in it (`(D:20261117034813Z)`) and the ID made from them. */
 export function pdfFingerprint(pdf: Buffer): string {
   const timeless = pdf
     .toString('latin1')
@@ -134,10 +117,8 @@ export function pdfFingerprint(pdf: Buffer): string {
 }
 
 /**
- * The edition: the day it was made, and a short hash of what a reader gets,
- * the text, every page's image in order and the PDF without its dates. The
- * same book makes the same edition, whenever it is exported; a book whose
- * PDF alone changed (its bookmarks, say) makes a new one.
+ * The edition: the day and a short hash of what a reader gets (the text, every page image in order, the dateless PDF).
+ * The same book makes the same edition whenever it is exported; a change to the PDF alone makes a new one.
  */
 export function editionId(date: string, textJson: string, imageHashes: readonly string[], pdf: string): string {
   const hash = createHash('sha256').update(textJson);

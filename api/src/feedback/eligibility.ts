@@ -1,6 +1,5 @@
 /**
- * When the rating box is due and when the phone may ask for a store review —
- * the rules in one place, kept pure so each can be tested on its own
+ * When the rating box is due and when the phone may ask for a store review, kept pure so each rule can be tested
  * (@kurda/shared `feedback` explains why the two never depend on each other).
  */
 import {
@@ -17,10 +16,10 @@ const DAY = 24 * HOUR;
 
 export interface FeedbackFacts {
   now: Date;
-  /** when the box was shown, answered or dismissed (any of them, on any device) */
+  /** When the box was last shown, answered or dismissed, on any device. */
   feedbackPromptedAt: Date | null;
   storeReviewPromptedAt: Date | null;
-  /** the app version the store prompt was last called in */
+  /** The app version the store prompt was last called in. */
   storeReviewVersion: string | null;
   finishedGames: number;
   /** different days those games were finished on */
@@ -37,9 +36,8 @@ function within(at: Date | null, now: Date, ms: number): boolean {
 }
 
 /**
- * The box: once per account, ever, after a finished game — and not while the
- * store prompt was just called (PROMPT_SEPARATION_HOURS stands in for "not in
- * the same session", and holds across devices).
+ * The box: once per account ever, after a finished game, and not right after the store prompt
+ * (PROMPT_SEPARATION_HOURS stands in for "not in the same session" and holds across devices).
  */
 export function shouldPromptFeedback(f: FeedbackFacts): boolean {
   return (
@@ -50,10 +48,9 @@ export function shouldPromptFeedback(f: FeedbackFacts): boolean {
 }
 
 /**
- * The native store prompt: a phone app, a known adult, a few games on more
- * than one day, at most once per app version and STORE_REVIEW_SPACING_DAYS
- * apart (which keeps it to three a year), and not while the box was just
- * shown. Nothing here knows the stars, and nothing may.
+ * The native store prompt: a phone app, a known adult, a few games on more than one day, at most once per app
+ * version and STORE_REVIEW_SPACING_DAYS apart (three a year at most), and not right after the box. It never knows
+ * the stars given.
  */
 export function storeReviewEligible(f: FeedbackFacts): boolean {
   return (

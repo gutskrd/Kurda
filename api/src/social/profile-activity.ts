@@ -4,22 +4,13 @@ import { EngagementService, type EngagementKind } from './engagement-service.js'
 import { multiTitleSql, playedGamesSql } from '../mp/titles.js';
 
 /**
- * What a profile shows besides the person themselves: what they have posted and
- * how their recent games went.
- *
- * Every source already exists — library posts, image posts, and the per-game
- * tables — so this reads them rather than recording anything new. A profile is
- * a view over what someone has done, not a second copy of it.
+ * What a profile shows besides the person: their posts and recent games. It reads the existing library, image and
+ * game tables rather than recording anything new.
  */
 
-/** The sections a profile can show, in the order they appear. */
-/*
- * What a profile shows, in the order it shows it.
- *
- * 'posts' is everything they wrote or pictured — stories, poems, gotin, wêne,
- * mîm — for the same reason the community wall stopped being three pages: they
- * were one thing split three ways. 'saved' is what the app calls it everywhere
- * else, so the profile calls it that too.
+/**
+ * The sections a profile can show, in order. 'posts' is everything they wrote or pictured (stories, poems, gotin,
+ * wêne, mîm), and 'saved' is the app's word for bookmarks.
  */
 export const PROFILE_SECTIONS = ['posts', 'games', 'likes', 'reposts', 'saved'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
@@ -28,13 +19,7 @@ export function isProfileSection(value: string): value is ProfileSection {
   return (PROFILE_SECTIONS as readonly string[]).includes(value);
 }
 
-/**
- * Visible unless the owner says otherwise.
- *
- * Defaulting to on means a section added later appears for everyone without a
- * backfill; someone who wants it hidden turns it off, which is the choice they
- * were promised.
- */
+/** Sections are visible unless the owner hides them, so a section added later shows for everyone without a backfill. */
 export type SectionVisibility = Record<ProfileSection, boolean>;
 
 export function resolveSections(stored: unknown): SectionVisibility {
@@ -44,19 +29,14 @@ export function resolveSections(stored: unknown): SectionVisibility {
   return out;
 }
 
-/**
- * An entry whose picture is still a media key.
- *
- * The service does not know how media is served, so it hands the key up and the
- * route turns it into a URL. Optional because most sources have no picture.
- */
+/** An entry whose picture is still a media key; the route turns it into a URL. Most sources have no picture. */
 export type ActivityEntryWithMedia = ActivityEntry & { mediaId?: string | null };
 
 /** One thing that happened, in a shape every source can be flattened into. */
 export interface ActivityEntry {
   id: string;
   kind: ProfileSection;
-  /** what it was: a post title, or a game and how it went */
+  /** What it was: a post title, or a game and how it went. */
   title: string;
   /** a second line: an excerpt, a score, a result */
   detail: string | null;
@@ -92,15 +72,7 @@ export class ProfileActivityService {
     return resolveSections(res.rows[0]?.profile_sections);
   }
 
-  /**
-   * Everything this person posted, newest first, whatever kind it is.
-   *
-   * The profile used to split writing into Stories and Poems and keep pictures
-   * in a third tab, which is the same three-pages-for-one-thing the community
-   * wall stopped doing. One UNION rather than three requests the client would
-   * have to interleave — and paging works, which merging three lists client-side
-   * could never do honestly.
-   */
+  /** Everything this person posted, newest first, whatever its kind, in one paged UNION. */
   async allPosts(
     userId: string,
     limit: number,
@@ -131,8 +103,7 @@ export class ProfileActivityService {
     return rows.rows.map((r) => ({
       id: r.id,
       kind: 'posts' as const,
-      // a gotin and a picture both go without a title; falling back to the body
-      // beats a column of "Untitled"
+      // Gotin and pictures have no title, so the body's start beats a column of "Untitled".
       title: r.title?.trim() || excerpt(r.body ?? '') || 'Untitled',
       detail: r.title?.trim() ? excerpt(r.body ?? '') : null,
       href: r.source === 'image' ? `/app/dimen/${r.id}` : `/app/library/${r.id}`,
@@ -144,12 +115,8 @@ export class ProfileActivityService {
 
 
   /**
-   * What this person has liked or saved, newest first.
-   *
-   * Engagement is stored as pointers — (type, id) — so this fetches the posts
-   * they point at and puts them back in the order they were liked. Two queries
-   * for a mixed page rather than one per entry, and posts that have since been
-   * removed simply drop out instead of leaving holes.
+   * What this person liked or saved, newest first. Engagement rows are (type, id) pointers, so the posts are fetched in
+   * two queries and put back in liked order; removed posts drop out.
    */
   async engaged(userId: string, kind: EngagementKind, limit: number, offset: number): Promise<ActivityEntryWithMedia[]> {
     const refs = await this.engagement.listFor(userId, kind, limit, offset);
@@ -163,9 +130,7 @@ export class ProfileActivityService {
     const out: ActivityEntryWithMedia[] = [];
     for (const ref of refs) {
       const found = ref.targetType === 'library' ? posts.get(ref.targetId) : images.get(ref.targetId);
-      // the entry keeps its own kind — a liked picture is still a picture, and
-      // the tab needs that to render it as one rather than as a line of text.
-      // Which section this is was in the request.
+      // The entry keeps its own kind, so a liked picture renders as a picture.
       if (found) out.push({ ...found, at: ref.at });
     }
     return out;
@@ -218,15 +183,7 @@ export class ProfileActivityService {
     return map;
   }
 
-  /**
-   * Recent finished games across every mode, newest first.
-   *
-   * One UNION rather than four round trips, because the page wants them
-   * interleaved by time — fetching each separately would mean over-fetching all
-   * of them just to throw most away after sorting.
-   *
-   * Only finished games appear. A game still in progress is not a result.
-   */
+  /** Recent finished games across every mode, newest first, in one UNION; games in progress are not results. */
   async games(userId: string, limit: number, offset: number): Promise<ActivityEntry[]> {
     const rows = await this.pool.query<{
       id: string; game: string; outcome: string | null; detail: string | null; at: Date;

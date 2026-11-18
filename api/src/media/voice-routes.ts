@@ -10,11 +10,9 @@ import { registerAudioParser, storeAudioMedia } from './audioMedia.js';
 const VOICE_KIND = 'voice-note';
 
 /**
- * Through-server voice-note upload (KUR-282): POST raw audio bytes; the server
- * sniffs the real type, enforces the size / storage / op / rate limits, stores it
- * cost-safely, and returns a confirmed media id to attach to a library post
- * (narration) or comment (voice comment). Its own audio body parser + bodyLimit so
- * an oversized upload is rejected (413) before buffering.
+ * Through-server voice-note upload: raw audio bytes are sniffed, held to the size, storage, op and rate limits,
+ * stored, and answered with a confirmed media id for a library post or comment. Its own parser and `bodyLimit` reject
+ * oversized uploads (413) before buffering.
  */
 export function registerVoiceRoutes(app: FastifyInstance, config: AppConfig): void {
   const limits = audioLimits(config);

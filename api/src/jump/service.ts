@@ -35,21 +35,12 @@ function secondsToMidnight(now: Date, timeZone: string): number {
 }
 
 /**
- * Jumping ahead on the lesson path: a short test on the skills a unit skips,
- * which when passed opens the course up to that unit (skills skipped stay
- * open to come back to).
- *
- * The test is a practice session marked as a test (`path_jumps`), so the apps
- * play it in the player lessons and reviews use and it is graded exactly as
- * they are, second tries counting for nothing; `PracticeService.complete`
- * decides it. The placement walk was the other machine on offer, but it asks
- * one question at a time through endpoints of its own that no app plays, and
- * walks the whole course rather than the stretch being skipped.
- *
- * Which units may be jumped to is the course map's own rule (shared
- * `jumpPlan`), read from the map as this learner has it. Tests are counted per
- * unit per day in the learner's own time zone, `PATH_JUMP.triesPerDay` at most;
- * one left unfinished today is opened again rather than counted twice.
+ * Jumping ahead on the lesson path: a short test on the skills a unit skips which, when passed, opens the course up
+ * to that unit (skipped skills stay open). The test is a practice session marked in `path_jumps`, so the apps play it
+ * in the lesson player and it is graded like any session, second tries counting for nothing;
+ * `PracticeService.complete` decides it. Which units can be jumped to is the shared `jumpPlan` rule over the
+ * learner's course map. Tests are limited per unit per local day (`PATH_JUMP.triesPerDay`); one left unfinished today
+ * is reopened rather than counted twice.
  */
 export class PathJumpService {
   private readonly maps: CourseMapService;
@@ -102,7 +93,7 @@ export class PathJumpService {
       });
     }
 
-    // the skipped skills' learner-visible lessons, as the map lists them; never speaking, which is self-rated
+    // The skipped skills' visible lessons as the map lists them, never speaking, which is self-rated.
     const skillOf = new Map(plan.skipped.flatMap((skill, i) => skill.lessons.map((lesson) => [lesson.lessonId, i] as const)));
     const exercises = await this.pool.query<{ id: string; lesson_id: string }>(
       `SELECT id, lesson_id FROM exercises WHERE lesson_id = ANY($1::uuid[]) AND type <> 'speaking' ORDER BY lesson_id, position`,

@@ -1,4 +1,4 @@
-/** User tags & badges via HTTP (CI integration job). KUR-286. */
+/** User tags over HTTP. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -79,7 +79,7 @@ describe.skipIf(!DATABASE_URL)('tags (integration)', () => {
   });
 
   it('self-claims a sensitive tag only with consent; user controls display + can revoke', async () => {
-    // sensitive tag needs explicit consent (#109)
+    // A sensitive tag needs explicit consent.
     expect((await call('POST', '/me/tags/claim', userTok, { key: 'age', value: '18-24' })).statusCode).toBe(422);
     expect((await call('POST', '/me/tags/claim', userTok, { key: 'age', value: '18-24', consent: true })).statusCode).toBe(200);
 
@@ -91,7 +91,7 @@ describe.skipIf(!DATABASE_URL)('tags (integration)', () => {
     shown = (await call('GET', '/me/tags', userTok)).json().claimable.map((t: { key: string }) => t.key);
     expect(shown).not.toContain('age');
 
-    // the owner-manage endpoint still lists it (hidden) so it can be re-enabled (#287)
+    // The owner's management endpoint still lists it as hidden, so it can be shown again.
     const managed = (await call('GET', '/me/tags/claimed', userTok)).json().tags as Array<{ key: string; displayed: boolean }>;
     const ageRow = managed.find((t) => t.key === 'age');
     expect(ageRow?.displayed).toBe(false);
@@ -111,7 +111,7 @@ describe.skipIf(!DATABASE_URL)('tags (integration)', () => {
     expect(created.statusCode).toBe(201);
     expect(created.json().key).toBe(poet);
 
-    // now claimable by a user
+    // Now claimable by a user.
     expect((await call('POST', '/me/tags/claim', userTok, { key: poet })).statusCode).toBe(200);
 
     // deactivate hides it

@@ -8,11 +8,8 @@ import type { EmailTemplate, EmailLocale } from '../email/templates.js';
 export const SEND_EMAIL_JOB_NAME = 'send-email';
 
 /**
- * An email is tried eight times, the waits doubling from two seconds: a
- * little over four minutes in all. The queue's own four tries are over in
- * seven seconds, which is shorter than a rush of sign-ups lasts: when the
- * provider says it is being asked too fast, a code that gave up then would
- * never arrive, and its reader would be left at the code screen.
+ * An email is tried eight times with waits doubling from two seconds, a little over four minutes in all. The queue's
+ * default tries end within seconds, shorter than a rush of sign-ups during which the provider answers "too fast".
  */
 export const SEND_EMAIL_RETRY = { attempts: 8, backoffDelayMs: 2_000 } as const;
 
@@ -38,17 +35,15 @@ const payloadSchema = z.object({
     'security-alert',
   ]),
   vars: z.record(z.string(), z.string()).default({}),
-  /** Recipient language; omitted → English (KUR-098). */
+  /** Recipient language; English when omitted. */
   locale: z.enum(['en', 'ku']).optional(),
 });
 
 export type SendEmailPayload = z.infer<typeof payloadSchema>;
 
 /**
- * Stub email job — the fallback handler when no database is configured (so the
- * queue still has a valid consumer). Also the definition every enqueue site uses
- * (name + schema); the worker swaps in `makeSendEmailJob` for the real,
- * DB-backed handler when a database is available.
+ * The stub email job: the consumer when no database is configured, and the definition (name and schema) every
+ * enqueue uses. With a database the worker registers `makeSendEmailJob` instead.
  */
 export const sendEmailJob = defineJob({
   name: SEND_EMAIL_JOB_NAME,
@@ -63,10 +58,8 @@ export const sendEmailJob = defineJob({
 });
 
 /**
- * The real send job (KUR-098): renders the localized template and sends via the
- * provider, honoring the suppression list. A provider failure throws so BullMQ
- * retries with backoff (the auth flow that enqueued this already returned, so it
- * never blocks on the send).
+ * The real send job: renders the localized template and sends it through the provider, honouring the suppression
+ * list. A provider failure throws so the queue retries with backoff; the enqueuing auth flow has already returned.
  */
 export function makeSendEmailJob(email: EmailService): JobDefinition<SendEmailPayload> {
   return defineJob({
@@ -74,10 +67,8 @@ export function makeSendEmailJob(email: EmailService): JobDefinition<SendEmailPa
     schema: payloadSchema,
     retry: SEND_EMAIL_RETRY,
     handler: async (payload, ctx) => {
-      // A retry after a send whose answer never came (a timeout, a dropped
-      // connection, a 5xx after the mail was accepted) would otherwise be a
-      // second email, against the provider's daily allowance; with the job's
-      // key the provider sends it once and answers the retry as the first.
+      // With the job's key, a retry after a send whose answer was lost is answered as the first by the provider instead of
+      // sending a second email.
       const result = await email.send(
         payload.to,
         payload.template as EmailTemplate,

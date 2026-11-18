@@ -1,9 +1,7 @@
 /**
- * The proverbs' round without a database: a scene with its proverb taken out
- * however its Arabic is written, where a proverb is to be finished, and a
- * round of proverbs to finish, its options near the answer in their shape and
- * never one of the proverb's own variants. The proverbs here are stand-ins,
- * never shown to a learner.
+ * The proverb round without a database: a scene with its proverb removed however its Arabic is written, where a
+ * proverb is to be finished, and a round of finishes whose options resemble the answer but are never one of its
+ * variants. The proverbs are stand-ins.
  */
 import { describe, expect, it } from 'vitest';
 import { PROVERB_ROUND_ITEMS, PROVERB_ROUND_OPTIONS, type ProverbRoundItemView } from '@kurda/shared';

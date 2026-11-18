@@ -43,7 +43,7 @@ export interface CreateItemInput {
 
 export interface PurchaseResult {
   purchased: boolean;
-  /** true when this exact purchase (idempotency key) was already processed. */
+  /** True when this exact purchase (idempotency key) was already processed. */
   duplicate: boolean;
   sku: string;
   balance: number;
@@ -77,7 +77,7 @@ export interface ItemRow {
   asset_key: string | null;
   premium_only: boolean;
   display_order: number;
-  /** an admin deleted it while people owned it: kept for them, gone from the shop (migration 1751000180000) */
+  /** An admin deleted it while people owned it: kept for them, gone from the shop (migration 1751000180000). */
   retired_at: Date | null;
 }
 
@@ -88,9 +88,8 @@ export interface AdminShopItem extends ShopItem {
 }
 
 /**
- * Cache-friendly item: availability window as epoch millis so a JSON round-trip
- * through Redis keeps exact numeric comparisons (a limited-time item must expire
- * to the second regardless of the cache, KUR-069).
+ * A cache-friendly item with its availability window as epoch milliseconds, so a Redis round trip keeps exact
+ * comparisons and a limited-time item expires to the second.
  */
 interface CachedItem {
   sku: string;
@@ -111,7 +110,7 @@ interface CachedItem {
 const CATALOG_TTL_SECONDS = 300;
 const CATALOG_KEY = 'catalog';
 
-/** Can this item be bought right now (active + in-stock + inside its window)? */
+/** Whether the item can be bought now: active, in stock and inside its window. */
 export function isPurchasable(item: ItemRow, now: Date): boolean {
   if (!item.active || !item.in_stock) return false;
   if (item.available_from && item.available_from > now) return false;
@@ -120,41 +119,26 @@ export function isPurchasable(item: ItemRow, now: Date): boolean {
 }
 
 /**
- * Hold, until the transaction ends, the right to give `userId` a copy of
- * `sku`: everything that hands out a unique item — buying it, being given it —
- * takes this before asking whether they own it already.
- *
- * Without it the question and the grant are a race: two friends gifting the
- * same background at the same moment both find it not yet owned, both pay,
- * and the recipient ends up with two of a thing there is only meant to be one
- * of (and the same for buying it while a friend is gifting it). A row lock
- * cannot do this, because what is being guarded is a row that does not exist
- * yet. Transaction-scoped, so it can never be left held.
- *
- * A gift to several friends takes it for every item, unique or not, and for
- * all of them in one order, so that two such gifts cannot deadlock on the
- * friends' items (gifts/service.ts).
+ * Holds, until the transaction ends, the right to give `userId` a copy of `sku`; everything that hands out a unique
+ * item takes it before checking ownership. Otherwise two friends gifting the same background at once would both find
+ * it unowned and both pay for a single-copy item. A row lock cannot guard a row that does not exist yet; this is
+ * transaction-scoped, so never left held. A multi-friend gift takes it for every item in one order, so two cannot
+ * deadlock (gifts/service.ts).
  */
 export async function lockEntitlement(client: pg.PoolClient, userId: string, sku: string): Promise<void> {
   await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`entitlement:${userId}:${sku}`]);
 }
 
-/**
- * How many gifts the user behind `userExpr` (a uuid column or placeholder,
- * always a literal from this codebase) has not opened yet: the number on the
- * gift badge, read here and by the social rail beside its other numbers.
- */
+/** SQL: how many gifts the user `userExpr` (a literal uuid column or placeholder) has not opened, for the gift badge and the social rail. */
 export function unseenGiftsSql(userExpr: string): string {
   return `(SELECT count(*) FROM gifts WHERE to_user_id = ${userExpr} AND seen_at IS NULL)`;
 }
 
 /**
- * Shop catalog (KUR-069) + purchases (KUR-071). The active catalog is cached for
- * 5 minutes and invalidated on any admin edit; the availability window is
- * applied *after* the cache read (against epoch-ms bounds) so limited-time items
- * disappear exactly at window end even mid-cache. `GET /shop` is further filtered
- * per-user: out-of-window / out-of-stock items and already-owned unique items
- * are hidden. Purchases stay atomic (validate → debit → grant, all-or-nothing).
+ * Shop catalogue and purchases. The active catalogue is cached for 5 minutes and cleared on any admin edit; the
+ * availability window is applied after the cache read, so limited-time items vanish exactly on time. `GET /shop` is
+ * also filtered per user, hiding out-of-window, out-of-stock and already-owned unique items. Purchases are atomic:
+ * validate, debit, grant, or nothing.
  */
 export class ShopService {
   constructor(
@@ -191,12 +175,8 @@ export class ShopService {
   }
 
   /**
-   * Admin: upsert a catalog item, then bust the catalog cache.
-   *
-   * Uploaded art is held for the item, and the art it had before let go of if
-   * nothing else uses it (shop/art.ts). Listing an item again (`active`)
-   * un-retires it: retired means deleted-but-kept, and an item on the shelves
-   * is not that.
+   * Admin: upserts a catalogue item and clears the cache. Uploaded art is claimed for the item and its previous art
+   * released if unused (shop/art.ts); listing an item (`active`) un-retires it.
    */
   async createItem(input: CreateItemInput): Promise<ShopItem> {
     if (input.price < 0) throw new AppError('BAD_PRICE', 400, 'price must be ≥ 0');
@@ -230,12 +210,7 @@ export class ShopService {
     return this.toItem(row);
   }
 
-  /**
-   * Admin: add a new item, never touching one that exists — null when the SKU
-   * is taken. The upsert above overwrites whatever has the SKU it is given,
-   * which is right for an edit and wrong for "add": a new item that happened
-   * to reuse an SKU would quietly replace an item people own.
-   */
+  /** Admin: adds a new item, never touching an existing one; null when the SKU is taken, so a reused SKU cannot replace an owned item. */
   async addItem(input: CreateItemInput): Promise<ShopItem | null> {
     if (input.price < 0) throw new AppError('BAD_PRICE', 400, 'price must be ≥ 0');
     const category = input.category ?? 'misc';
@@ -285,14 +260,8 @@ export class ShopService {
   }
 
   /**
-   * Admin: every catalog row, including inactive and out-of-stock ones, so prices
-   * and availability can be managed. Reads straight through (no cache) — an admin
-   * must always see the current truth right after editing it.
-   *
-   * Retired items (deleted while people owned them) are left out unless asked
-   * for: they are not the shop any more, and a list to grant items from or to
-   * price should not offer them. Each row says how many people own it, which
-   * is what decides whether deleting it deletes it.
+   * Admin: every catalogue row, inactive and out of stock included, read uncached so edits show at once. Retired items
+   * are left out unless asked for. Each row has its owner count, which decides whether deleting it deletes it.
    */
   async allItems(opts: { retired?: 'exclude' | 'include' } = {}): Promise<AdminShopItem[]> {
     const [rows, owners] = await Promise.all([
@@ -334,10 +303,7 @@ export class ShopService {
       : load();
   }
 
-  /**
-   * Everything that can be bought right now, by anyone: active, in stock and
-   * inside its window, from the cached catalog.
-   */
+  /** Everything anyone can buy now (active, in stock, in its window), from the cached catalogue. */
   async liveItems(now: Date = new Date()): Promise<ShopItem[]> {
     const items = await this.activeItems();
     const t = now.getTime();
@@ -366,10 +332,7 @@ export class ShopService {
       }));
   }
 
-  /**
-   * The catalog this user can currently see/buy: in-window, in-stock, and with
-   * already-owned unique items hidden.
-   */
+  /** The catalogue this user can see and buy: in window, in stock, without unique items they own. */
   async catalog(userId: string, now: Date = new Date()): Promise<ShopItem[]> {
     const live = await this.liveItems(now);
     const ownedRes = await this.pool.query<{ sku: string }>(
@@ -381,9 +344,8 @@ export class ShopService {
   }
 
   /**
-   * Atomic purchase: validate → debit → grant, all-or-nothing. Throws
-   * ITEM_NOT_FOUND / ITEM_UNAVAILABLE / ALREADY_OWNED before any debit, and
-   * InsufficientFundsError if the wallet can't cover it (rolls back).
+   * Atomic purchase: validate, debit, grant, or nothing. Throws ITEM_NOT_FOUND, ITEM_UNAVAILABLE or ALREADY_OWNED before
+   * any debit, and InsufficientFundsError when the wallet cannot cover it.
    */
   async purchase(
     userId: string,
@@ -400,14 +362,12 @@ export class ShopService {
       const item = itemRes.rows[0];
       if (!item) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
       if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
-      // the price the client saw must still hold (catalog changed between view
-      // and buy → let the UI re-confirm rather than silently over/undercharge)
+      // The price the client saw must still hold, so the UI can reconfirm rather than charge a changed price.
       if (expectedPrice != null && item.price !== expectedPrice) {
         throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');
       }
 
-      // unique items: reject a second copy before any money moves — under the
-      // lock a gift of the same item to this buyer takes too
+      // Unique items: refuse a second copy before any money moves, under the lock a gift of the same item also takes.
       if (item.is_unique) {
         await lockEntitlement(client, userId, sku);
         const owned = await client.query(
@@ -427,11 +387,8 @@ export class ShopService {
           amount: item.price,
           reason: 'shop_purchase',
           refId: sku,
-          // Filed under the buyer. Ledger keys are unique across everyone, and
-          // the server pays under its own (`daily:<user>:<day>`, a quest's
-          // chest …): a key taken from the request as it came could claim one
-          // of those, or another member's, first — and that payment would then
-          // be skipped as already made.
+          // Filed under the buyer: ledger keys are unique across everyone and the server pays under its own keys, so a raw
+          // request key could claim one of those, or another member's, and make that payment be skipped.
           idempotencyKey: `purchase:${userId}:${idempotencyKey}`,
         });
         balance = debit.balance;

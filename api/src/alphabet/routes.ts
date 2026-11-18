@@ -1,26 +1,9 @@
 /**
- * Recordings for the alphabet page, and for the word sets beside it (colours,
- * numbers, days, months): one list of sounds, ALPHABET_CLIPS, and one table.
- *
- *   GET    /alphabet/audio               which sounds have a recording, and where (public)
- *   PUT    /admin/alphabet/audio?key=…   store a recording for one sound (raw audio body)
- *   DELETE /admin/alphabet/audio?key=…   remove it, so the synthesised clip plays again
- *
- * The PUT may say who says the sound, `&speaker=…`, and give its mouth's
- * timeline, `&lipsync=…`, as the lessons' does (speakers/voice.ts); the
- * public list sends both for the recordings with a speaker, under `voices`,
- * with a timeline made from the sound's `say` where none is stored.
- * PATCH /admin/audio/alphabet?key=… changes either later.
- *
- * The admin panel records or takes a file, trims the silence, levels the volume
- * and sends a short mono WAV; the server checks it is one, and no longer than a
- * letter or a word needs. The key travels in the query string because it holds
- * characters (ç, ḧ, the colons) that are awkward in a path segment.
- *
- * Gated to the content roles: this is editing what learners hear, the same
- * kind of work as editing a lesson. The PUT alone is also open to the voice
- * actor role, for a narrator recording the words and letters linked to their
- * account from the "Record by person" page (recording/access.ts).
+ * Recordings for the alphabet page and the word sets beside it (colours, numbers, days, months), one per sound in
+ * ALPHABET_CLIPS. `GET /alphabet/audio` is public; the admin PUT stores a short mono WAV for one sound, optionally
+ * with its speaker and lip-sync timeline, and DELETE brings back the synthesised clip. The key travels in the query
+ * string because it holds characters (ç, ḧ, colons) that are awkward in a path. Editing is for the content roles;
+ * the PUT is also open to voice actors recording their linked lines.
  */
 import type { FastifyInstance } from 'fastify';
 import {
@@ -81,12 +64,12 @@ function keyFrom(query: unknown): string {
 
 export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppConfig): void {
   const base = audioLimits(config);
-  // a WAV of a few seconds is far under the voice-note cap; the duration check below is the real bound
+  // The duration check below is the real bound; a short WAV is far under the voice-note cap.
   const limits = { ...base, allowedTypes: new Set(['audio/wav']) };
   const usage = new MediaUsageService(app.db, app.redis ?? null);
   const audit = new AuditService(app.db);
   const canRecord = requireRoles(...ALPHABET_AUDIO_ROLES);
-  // a take may also come from the "Record by person" page, whose voice actors record their own lines (recording/access.ts)
+  // Voice actors may upload takes for the lines linked to their account (recording/access.ts).
   const canTake = requireRoles(...RECORDING_ROLES);
 
   registerAudioParser(app, base.maxUploadBytes);
@@ -104,16 +87,12 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
     }
     return {
       clips: Object.fromEntries(rows.map((r) => [r.key, r.url])),
-      // only when a sound has a speaker, so the page's payload is what it was until one does
+      // Sent only once a sound has a speaker, so the payload is unchanged until then.
       ...(Object.keys(voices).length > 0 ? { voices } : {}),
     };
   });
 
-  /**
-   * The admin list: the same, with when each was recorded and its stored
-   * timeline, so the studio can preview the mouth as the apps will move it.
-   * A sound or two of seconds each: every timeline together is a few kB.
-   */
+  /** The admin list: the public one plus when each was recorded and its stored timeline, for previewing the mouth. */
   app.get('/admin/alphabet/audio', { preHandler: canRecord }, async () => {
     const { rows } = await app.db.query<Row>(
       `SELECT key, url, duration_ms, updated_at, speaker, lipsync FROM alphabet_audio ORDER BY key`,

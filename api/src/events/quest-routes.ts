@@ -20,7 +20,7 @@ const CLAIM_MESSAGE: Record<string, string> = {
   GRACE_EXPIRED: 'the claim window has closed',
 };
 
-/** Event quest progress + explicit reward claims (KUR-091). */
+/** Event quest progress and explicit reward claims. */
 export function registerQuestRoutes(app: FastifyInstance, quests: QuestService): void {
   /** Progress + claim state for every quest of an event. */
   app.get(
@@ -49,7 +49,7 @@ export function registerQuestRoutes(app: FastifyInstance, quests: QuestService):
       if (!result.ok) {
         return reply
           .code(CLAIM_STATUS[result.code] ?? 400)
-          // the flat { code, message } every route answers with, so the apps can say which refusal it was
+          // The flat { code, message } every route answers with, so the apps can tell which refusal it was.
           .send({ code: result.code, message: CLAIM_MESSAGE[result.code] ?? 'cannot claim' });
       }
       return result;

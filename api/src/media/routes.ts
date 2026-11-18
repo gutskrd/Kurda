@@ -11,34 +11,9 @@ import { registerAudioParser, storeAudioMedia } from './audioMedia.js';
 const PRACTICE_KIND = 'speaking';
 
 /**
- * Upload a speaking-practice recording (KUR-036).
- *
- * This used to hand out a signed URL and let the client PUT straight to the
- * bucket. The server saw a declared content type, a declared length and a
- * declared SHA-256, and then never saw the bytes at all — so the one thing it
- * could not check was the only thing that mattered. Anyone signed in could ask
- * for a ticket saying "image/webp", PUT whatever they liked, and have it stored
- * on the project's own CDN domain:
- *
- *   - no magic-byte sniff, because there were no bytes to sniff;
- *   - no image or audio scanning, so the moderation pipeline never ran;
- *   - no storage quota and no upload rate limit beyond the global 100/min,
- *     which at 10 MB a ticket is a gigabyte a minute per account;
- *   - a `kind` straight from the request, so any prefix in the bucket could be
- *     written to, including the one GDPR exports use.
- *
- * The signature pinned the content type, so a browser would not have run the
- * result as script — but "the bytes are arbitrary and the label is a promise"
- * is not a property worth keeping, and nothing downstream ever verified the
- * hash it was given.
- *
- * It goes through the server now, which is what `/media/voice` already did with
- * the same machinery: size cap → op ceiling → sniff the real type → storage
- * ceiling → store → confirm. Same helper, different prefix. The key it returns
- * is confirmed, so a consumer that checks `confirmed_at` gets a real answer
- * instead of the nothing it got before — `confirmUpload` was called from a test
- * and nowhere else, so every ticket ever issued stayed unconfirmed until the
- * orphan job swept it.
+ * Upload of a speaking-practice recording, through the server like `/media/voice`: size cap, op ceiling, real-type
+ * sniff, storage ceiling, store, confirm. The bytes are always seen and checked here; a client never writes to the
+ * bucket directly, and the prefix is fixed by the server.
  */
 export function registerMediaRoutes(app: FastifyInstance, config: AppConfig): void {
   const limits = audioLimits(config);
@@ -56,8 +31,8 @@ export function registerMediaRoutes(app: FastifyInstance, config: AppConfig): vo
         },
         skipValidation: true, // the body is raw bytes, not JSON
       },
-      // a feature limit ("you can't upload pictures or voice") covers this too; and an account, not a guest:
-      // a file has to belong to somebody who can be asked about it
+      // A media restriction covers this too, and it needs an account, not a guest, since a file must belong to someone
+      // who can be asked about it.
       preHandler: [requireAccount, requireUnrestricted('media')],
     },
     async (req, reply) => {

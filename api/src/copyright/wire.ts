@@ -14,10 +14,8 @@ export interface CopyrightWireOptions {
 }
 
 /**
- * Copyright notices, wired once: the routes, and the sweep that emails each
- * notifier the decision on their notice (as often as the moderation sweep).
- * Email goes through the job queue when there is one, like every other
- * transactional email, and straight to the provider when there is not.
+ * Wires copyright notices: the routes, and the sweep that emails each decision. Email goes through the job queue
+ * when there is one, else straight to the provider.
  */
 export function registerCopyright(app: FastifyInstance, config: AppConfig, options: CopyrightWireOptions = {}): CopyrightService {
   const mailer: CopyrightMailer = options.mailer ?? {

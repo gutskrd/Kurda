@@ -37,10 +37,9 @@ function toItem(row: InboxRow): InboxItem {
 }
 
 /**
- * Write lines into people's notifications, all in one statement, through
- * `executor` — the caller's transaction, when a change and the lines that
- * tell of it must commit together (its push follows, jobs/push-jobs.ts
- * `pushRecorded`). Held to the block rule `InboxService.record` describes.
+ * Writes notifications in one statement through `executor`, the caller's transaction when a change and its
+ * notifications must commit together (the push follows via `pushRecorded`). Held to the block rule of
+ * `InboxService.record`.
  */
 export async function recordNotifications(
   executor: Pick<pg.Pool, 'query'>,
@@ -64,23 +63,16 @@ export async function recordNotifications(
 }
 
 /**
- * In-app notification inbox (KUR-097). Records every produced notification and
- * exposes the catch-up list + a server-side read state that's shared across a
- * user's devices (read on phone → read on tablet). Reads are capped at the last
- * 50, newest first.
+ * In-app notification inbox: records every produced notification, with a server-side read state shared across a
+ * user's devices. Reads are capped at the latest 50, newest first.
  */
 export class InboxService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Persist a notification to the inbox (called from the delivery pipeline).
-   *
-   * A notification about something another person did names them in
-   * `data.fromUserId`, and is not recorded when there is a block between them
-   * and the recipient, whichever placed it (friends/blocked.ts): the blocker
-   * hears nothing more of them. Everything of that kind today comes from a
-   * friend, which a block ends, so this is what holds for one that races a
-   * block and for whatever kind is added next.
+   * Stores a notification. One about another person's action names them in `data.fromUserId` and is not recorded when
+   * a block stands between them and the recipient, in either direction (friends/blocked.ts); this covers one racing a
+   * block and any kind added later.
    */
   async record(userId: string, notification: Notification): Promise<void> {
     await recordNotifications(this.pool, [{ userId, notification }]);
@@ -96,11 +88,7 @@ export class InboxService {
     return res.rows.map(toItem);
   }
 
-  /**
-   * The newest `limit` notifications and how many are unread in all, in one
-   * query (the social rail polls both). Each row carries the count; with no
-   * rows there is nothing to be unread.
-   */
+  /** The newest `limit` notifications and the unread total in one query, which the social rail polls; each row carries the count. */
   async recent(userId: string, limit: number): Promise<{ items: InboxItem[]; unread: number }> {
     const res = await this.pool.query<InboxRow & { unread: number }>(
       `SELECT id, category, title, body, data, created_at, read_at,
@@ -129,10 +117,7 @@ export class InboxService {
     return (res.rowCount ?? 0) > 0;
   }
 
-  /**
-   * Take one notification out of the list for good, as its owner can from the
-   * list itself; returns false if it isn't theirs (or is already gone).
-   */
+  /** Removes one notification for good; false if it is not theirs or already gone. */
   async remove(userId: string, id: string): Promise<boolean> {
     const res = await this.pool.query(`DELETE FROM notifications WHERE id = $1 AND user_id = $2`, [id, userId]);
     return (res.rowCount ?? 0) > 0;

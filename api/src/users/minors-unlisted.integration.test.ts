@@ -1,13 +1,7 @@
 /**
- * No list a stranger can read names a minor, against real Postgres.
- *
- * Search and suggestions already left minors out. These go through every
- * other place a person's name or id is listed for somebody else to read —
- * another person's friends, a group's roster and chat, posts and comments, the
- * wall and profile tabs, the public boards, a league table, a tournament
- * bracket, a profile's tags — as an anonymous visitor and as a signed-in
- * adult stranger, and checks that the minor is on none of them while their
- * friends still see them where they did before.
+ * No list a stranger can read names a minor, against real Postgres: other people's friends, group rosters and chat,
+ * posts and comments, the wall and profile tabs, public boards, a league table, a tournament bracket and profile tags,
+ * as a visitor and as a signed-in adult stranger, while the minor's friends still see them.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -196,7 +190,7 @@ describe.skipIf(!DATABASE_URL)('minors are on no list a stranger can read (integ
         const key = `lb:weekly:${weekStart(new Date())}`;
         expect(await redis.zscore(key, minor.id)).toBeNull();
 
-        // a set built while the minor was taken for an adult
+        // A set built while the minor was taken for an adult.
         await redis.zadd(key, 90000000, minor.id);
         const board = await boards.board('weekly_xp', null, { limit: 100 });
         expect(mentions(board, minor.id)).toBe(false);

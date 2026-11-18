@@ -7,14 +7,9 @@ import { priorityForJob, shouldShed } from './backpressure.js';
 export const QUEUE_NAME = 'kurda-jobs';
 
 /**
- * How long a job that ran out of retries is kept, in seconds, and how many at most.
- *
- * BullMQ's failed set is our DLQ: inspectable via admin tooling (KUR-101) and
- * re-runnable, and the admin's email page counts the last week of failed sends
- * from it. It was kept for ever, which is a Redis that only grows — every
- * failed job is its payload and its stack trace, and a send's payload is
- * somebody's address — on a plan priced by memory. A month is four times what
- * the email page reads, and long enough to notice and re-run anything.
+ * How long a job that ran out of retries is kept, in seconds, and at most how many. The failed set is the
+ * dead-letter queue, inspectable and re-runnable, and the admin's email page counts a week of failed sends from it.
+ * Kept bounded because failed jobs hold payloads (addresses among them) and stack traces in memory-priced Redis.
  */
 export const FAILED_JOB_RETENTION = { age: 30 * 24 * 3600, count: 5_000 };
 
@@ -39,10 +34,7 @@ export interface EnqueueOptions {
   backoffDelayMs?: number;
 }
 
-/**
- * How a job is tried again: what this enqueue asks for, else what the job
- * itself asks for (`JobDefinition.retry`), else the queue's default.
- */
+/** How a job is retried: what this enqueue asks, else the job's own `retry`, else the queue default. */
 export function jobRetryOptions(def: Pick<JobDefinition<unknown>, 'retry'>, opts: Pick<EnqueueOptions, 'attempts' | 'backoffDelayMs'> = {}): { attempts?: number; backoff?: { type: 'exponential'; delay: number } } {
   const attempts = opts.attempts ?? def.retry?.attempts;
   const delay = opts.backoffDelayMs ?? def.retry?.backoffDelayMs;
@@ -64,11 +56,7 @@ export class JobQueue {
     );
   }
 
-  /**
-   * Validates the payload against the job's schema BEFORE it hits Redis —
-   * a malformed producer fails its own request instead of poisoning the
-   * queue.
-   */
+  /** Validates the payload against the job's schema before it reaches Redis, so a bad producer fails its own request. */
   async enqueue<T>(def: JobDefinition<T>, payload: T, opts: EnqueueOptions = {}): Promise<string> {
     const parsed = def.schema.safeParse(payload);
     if (!parsed.success) {
@@ -81,23 +69,19 @@ export class JobQueue {
     const job = await this.queue.add(def.name, parsed.data, {
       jobId: opts.idempotencyKey,
       delay: opts.delayMs,
-      // priority queues (KUR-119): auth emails > push > analytics
+      // Priority: auth emails, then push, then analytics.
       priority: priorityForJob(def.name),
       ...jobRetryOptions(def, opts),
     });
     return job.id as string;
   }
 
-  /** Current waiting-job depth — the backpressure signal (KUR-119). */
+  /** The waiting-job depth, the backpressure signal. */
   async waitingCount(): Promise<number> {
     return this.queue.getWaitingCount();
   }
 
-  /**
-   * Enqueue unless backpressure says to shed this job's class at the current
-   * depth (KUR-119). Critical jobs are never shed; bulk/analytics producers drop
-   * load first so a spike never delays auth email. Returns null when shed.
-   */
+  /** Enqueues unless backpressure sheds this job's class at the current depth; returns null when shed. */
   async enqueueUnlessShed<T>(def: JobDefinition<T>, payload: T, opts: EnqueueOptions = {}): Promise<string | null> {
     if (shouldShed(def.name, await this.waitingCount())) return null;
     return this.enqueue(def, payload, opts);
@@ -105,7 +89,7 @@ export class JobQueue {
 
   /** Upserts a repeatable schedule for a job (stable id per job name). */
   async scheduleEvery<T>(def: JobDefinition<T>, everyMs: number, payload: T): Promise<void> {
-    // bullmq 6: repeatable jobs use job schedulers (the `repeat` add-option was removed)
+    // Repeatable jobs use job schedulers in this BullMQ version.
     await this.queue.upsertJobScheduler(
       `repeat:${def.name}`,
       { every: everyMs },
@@ -113,11 +97,7 @@ export class JobQueue {
     );
   }
 
-  /**
-   * Upserts a calendar schedule for a job (a cron pattern, read in UTC) — for
-   * work that belongs to a moment, like the league week closing on Monday at
-   * 00:00, rather than to an interval since the process started.
-   */
+  /** Upserts a calendar schedule (a cron pattern in UTC), for work tied to a moment rather than an interval. */
   async scheduleCron<T>(def: JobDefinition<T>, pattern: string, payload: T): Promise<void> {
     await this.queue.upsertJobScheduler(
       `cron:${def.name}`,

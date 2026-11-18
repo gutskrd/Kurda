@@ -1,8 +1,7 @@
 /**
- * Through-server voice-note upload (KUR-282) against real Postgres + MinIO.
- * Exercises the cost-safe store (`storeAudioMedia`) + the route: valid audio →
- * confirmed object, non-audio/oversize rejection, idempotency, fail-closed
- * storage, rate limit. Skipped unless DATABASE_URL and S3_ENDPOINT are set.
+ * Through-server voice-note upload against real Postgres and a real bucket: `storeAudioMedia` and the route, covering
+ * valid audio, non-audio and oversize rejection, idempotency, fail-closed storage and the rate limit. Skipped unless
+ * DATABASE_URL and S3_ENDPOINT are set.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -19,8 +18,7 @@ import { activate } from '../test/activate.js';
 const ready = Boolean(process.env.DATABASE_URL && process.env.S3_ENDPOINT);
 const KIND = 'voice-note';
 
-// minimal valid-looking payloads: an ID3-tagged MP3 and an ftyp (m4a) container,
-// padded so they're comfortably non-trivial in size.
+// Minimal valid-looking payloads, an ID3-tagged MP3 and an ftyp (m4a) container, padded to a non-trivial size.
 const mp3 = (pad = 4096): Buffer => Buffer.concat([Buffer.from([0x49, 0x44, 0x33, 0x03, 0, 0, 0, 0]), Buffer.alloc(pad, 0x11)]);
 const m4a = (pad = 4096): Buffer => Buffer.concat([Buffer.from([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20]), Buffer.alloc(pad, 0x22)]);
 

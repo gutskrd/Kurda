@@ -12,7 +12,7 @@ const upsertBody = z.object({
   variants: z.array(variantSchema).min(1).max(20),
 });
 
-/** A/B experiment assignment (client SDK) + admin config (KUR-107). */
+/** A/B experiment assignment for clients, and admin config. */
 export function registerExperimentRoutes(app: FastifyInstance, experiments: ExperimentService): void {
   /** SDK bulk fetch: all active assignments for the caller (cache these). */
   app.get('/experiments', { preHandler: requireAuth }, async (req) => ({

@@ -15,30 +15,26 @@ export interface DeliveryReport {
   pruned: number;
   /** True when preferences/quiet hours blocked delivery at send time. */
   suppressed?: boolean;
-  /** For a push quiet hours held back that is to go when they end (`HELD_IN_QUIET`): when that is. */
+  /** For a push held by quiet hours to go when they end (`HELD_IN_QUIET`): when that is. */
   heldUntil?: Date;
 }
 
 /**
- * How long a push may wait for a phone that is off or out of signal before it
- * is no longer worth showing. A streak reminder is about today: arriving the
- * next morning it would be wrong, so it lapses after two hours (the later one
- * goes at 22:00, so it is never shown after midnight). Everything else keeps
- * the push service's own default.
+ * How long a push may wait for an offline phone before it is not worth showing. A streak reminder is about today, so
+ * it lapses after two hours (the later one goes at 22:00, so never after midnight); everything else keeps the
+ * service's default.
  */
 const FRESH_FOR: Partial<Record<NotificationCategory, number>> = {
   streak: 2 * 60 * 60,
 };
 
 /**
- * The categories whose push waits for quiet hours to end instead of being
- * dropped. A letter is a person writing to you: missing the push because it
- * came at night would leave its bird waiting unseen, while a reminder or the
- * news of a badge is worth nothing the next morning.
+ * Categories whose push waits for quiet hours to end instead of being dropped: a letter is a person writing to you,
+ * while a reminder or badge news is worthless the next morning.
  */
 export const HELD_IN_QUIET: ReadonlySet<NotificationCategory> = new Set(['letters']);
 
-/** Delivery-time preference gate (KUR-095). */
+/** The delivery-time preference gate. */
 export interface NotificationGate {
   allows(userId: string, category: NotificationCategory, at?: Date): Promise<boolean>;
   /** when a push held back only by quiet hours could go (notifications/prefs-service.ts) */
@@ -46,11 +42,9 @@ export interface NotificationGate {
 }
 
 /**
- * Push delivery (KUR-094). Fans a notification out to all of a user's devices,
- * batched per provider, and prunes any tokens the provider rejects so a stale
- * device is cleaned up on its first failed send. Delivery runs from the queue
- * worker via `makePushSendJob`; `deliver` is the idempotent-enough unit of work
- * (re-running re-sends, which push providers already de-duplicate per token).
+ * Push delivery: fans a notification out to all of a user's devices, batched per provider, and prunes tokens the
+ * provider rejects. Runs from the queue worker via `makePushSendJob`; re-running `deliver` resends, which providers
+ * deduplicate per token.
  */
 export class PushService {
   constructor(
@@ -61,8 +55,7 @@ export class PushService {
 
   /** Send to every device of `userId`; returns counts sent + pruned. */
   async deliver(userId: string, notification: Notification): Promise<DeliveryReport> {
-    // preferences + quiet hours are checked at delivery time (KUR-095), so a
-    // change is honored even for a send already queued when it was made.
+    // Preferences and quiet hours are checked at delivery, so a change applies to sends already queued.
     if (this.gate && !(await this.gate.allows(userId, notification.category))) {
       const heldUntil = HELD_IN_QUIET.has(notification.category) ? await this.gate.quietUntil?.(userId, notification.category) : null;
       return { sent: 0, pruned: 0, suppressed: true, ...(heldUntil ? { heldUntil } : {}) };
@@ -71,8 +64,7 @@ export class PushService {
     const devices = await this.tokens.forUser(userId);
     if (devices.length === 0) return { sent: 0, pruned: 0 };
 
-    // the category rides along so the app can open something sensible for a
-    // push whose data names no screen (a streak reminder opens the lessons)
+    // The category rides along so the app can open something sensible for data naming no screen (a streak reminder opens lessons).
     const data = { ...notification.data, category: notification.category };
     const ttlSeconds = FRESH_FOR[notification.category];
     const messages: PushMessage[] = devices.map((d) => ({

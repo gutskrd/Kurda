@@ -34,19 +34,10 @@ export function slotArtKind(slot: string): ArtKind | null {
 }
 
 /**
- * Pictures put in place of the art that ships (migration 1751000201000).
- *
- * A picture is uploaded first, exactly as shop art is (`POST
- * /admin/shop/art/:kind`: checked, re-encoded, stored content-addressed), and
- * then given to a slot here. Giving it holds the upload for as long as the slot
- * uses it (`claimArt`); replacing or resetting a slot lets the old picture go
- * (`releaseArt`), unless something else still uses it, and the orphan sweep
- * takes it a day later: the day in which "put the previous one back" works.
- * Every change, the resets too, goes in the slot's history.
- *
- * The apps load the whole list at once, which is small (a slot is replaced
- * only by hand) and cached here, so the many requests for it cost one query a
- * minute at most.
+ * Pictures put in place of the art that ships. A picture is uploaded like shop art and then given to a slot; the
+ * slot holds the upload while it uses it, and replacing or resetting the slot releases it unless something else
+ * uses it, so the orphan sweep takes it a day later. Every change goes in the slot's history. The apps load the
+ * whole list, which is small and cached here for a minute.
  */
 export class ArtOverrideService {
   private cached: { at: number; value: ArtOverridesResponse } | null = null;
@@ -65,7 +56,7 @@ export class ArtOverrideService {
     const overrides: Record<string, string> = {};
     let latest = 0;
     for (const row of res.rows) {
-      // a slot the apps no longer draw (a badge retired since) is left out, not sent
+      // A slot the apps no longer draw is left out.
       const url = isArtSlot(row.slot) ? this.publicUrl(row.asset_key) : null;
       if (url) overrides[row.slot] = url;
       latest = Math.max(latest, row.updated_at.getTime());
@@ -110,9 +101,8 @@ export class ArtOverrideService {
   }
 
   /**
-   * Put an uploaded picture in a slot, or (assetKey null) take the slot back
-   * to the art that ships. One transaction: the slot, its history, holding the
-   * new picture and letting go of the old.
+   * Puts an uploaded picture in a slot, or with a null key restores the shipped art. The slot, its history, and
+   * claiming and releasing the pictures happen in one transaction.
    */
   async set(adminId: string, slot: string, assetKey: string | null, note: string | null): Promise<ArtChange> {
     if (!isArtSlot(slot)) return { ok: false, status: 404, code: 'UNKNOWN_SLOT', message: 'there is no such picture to replace' };

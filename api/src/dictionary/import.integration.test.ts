@@ -1,4 +1,4 @@
-/** Lexicon import against real Postgres (CI job). KUR-048. */
+/** Lexicon import against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { DictionaryRepository, normalizedHeadword } from './repository.js';

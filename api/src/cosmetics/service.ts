@@ -13,18 +13,16 @@ interface AccessRow {
 }
 
 /**
- * Cosmetic equip + favorites (KUR profile cosmetics). Server-authoritative:
- * the client sends only a SKU/key/content-id; the server resolves it, verifies
- * category + entitlement/premium access, and updates the user. Reuses the
- * existing shop_items / user_entitlements / library_posts tables — no parallel
- * cosmetics store, no client-trusted ownership.
+ * Equipping cosmetics and favourites. The client sends only a SKU, key or post id; the server resolves it and
+ * checks category and entitlement or premium access, using the shop and library tables.
  */
 export class CosmeticsService {
   constructor(private readonly pool: pg.Pool) {}
 
-  /** Select a default avatar (or clear with null → universal fallback). Does NOT
-   *  touch the uploaded photo. Premium-gated avatars require active premium;
-   *  default-01 is always allowed. Server-authoritative — never trusts the client. */
+  /**
+   * Selects a default avatar, or clears it with null; the uploaded photo is untouched. Premium-gated avatars need
+   * active premium; default-01 is always allowed.
+   */
   async equipAvatar(userId: string, key: string | null, now: Date = new Date()): Promise<void> {
     if (key !== null) {
       if (!isValidAvatarKey(key)) {
@@ -57,9 +55,7 @@ export class CosmeticsService {
     return res.rows[0] ?? null;
   }
 
-  /** Equip a background/icon (or clear with null). Verifies category, then
-   *  ownership — or premium access to an item still on sale — before equipping.
-   *  Rejects everything else. */
+  /** Equips a background or icon, or clears it: checks the category, then ownership or premium access to an item on sale. */
   private async equipCosmetic(
     userId: string,
     column: 'equipped_background_sku' | 'equipped_icon_sku' | 'equipped_frame_sku',
@@ -89,22 +85,19 @@ export class CosmeticsService {
     return this.equipCosmetic(userId, 'equipped_icon_sku', 'icon', sku, now);
   }
   /**
-   * A frame around the avatar: a season frame (contract-4 §R5), which the
-   * season job grants and nobody sells, or one of the shop's, bought or given.
-   * Either way only a frame you own can be worn; none is `premium_only`.
+   * A frame around the avatar: a season frame, which the season job grants, or a shop frame bought or given. Only an
+   * owned frame can be worn; none is `premium_only`.
    */
   equipFrame(userId: string, sku: string | null, now: Date = new Date()): Promise<void> {
     return this.equipCosmetic(userId, 'equipped_frame_sku', 'frame', sku, now);
   }
 
-  /** Show/hide the equipped premium icon without changing the selection. The icon
-   *  still only renders when the viewer has access (owns it, or premium active). */
+  /** Shows or hides the equipped premium icon; it still renders only when the viewer has access. */
   async setIconVisibility(userId: string, enabled: boolean): Promise<void> {
     await this.pool.query(`UPDATE users SET premium_icon_enabled = $2 WHERE id = $1`, [userId, enabled]);
   }
 
-  /** Set (or clear) a favorite poem/story. Verifies the post exists, is of the
-   *  right type, and is publicly viewable before storing the reference. */
+  /** Sets or clears a favourite poem or story, after checking the post exists, has that type and is public. */
   async setFavorite(userId: string, kind: 'poem' | 'story', postId: string | null): Promise<void> {
     const column = kind === 'poem' ? 'favorite_poem_id' : 'favorite_story_id';
     if (postId === null) {

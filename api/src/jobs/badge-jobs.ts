@@ -4,10 +4,7 @@ import type { PushService } from '../push/service.js';
 import type { JobQueue } from './queue.js';
 import { defineJob, type JobDefinition } from './registry.js';
 
-/**
- * Badge work on the job queue (contract 4 §B2): the nightly rarity, and the
- * one push a day that bundles a learner's unlocks.
- */
+/** Badge work on the job queue: the nightly rarity, and the one daily push bundling a learner's unlocks. */
 
 export const BADGE_RARITY_JOB = 'badge-rarity';
 export const BADGE_PUSH_JOB = 'badge-push';
@@ -33,7 +30,7 @@ export function makeBadgeRarityJob(badges: BadgeService): JobDefinition<BadgeRar
 const pushSchema = z.object({ userId: z.uuid(), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
 export type BadgePushPayload = z.infer<typeof pushSchema>;
 
-/** The day's bundled push; gated by the learner's settings and quiet hours at delivery, like every push. */
+/** The day's bundled push, gated by the learner's settings and quiet hours at delivery like every push. */
 export function makeBadgePushJob(badges: BadgeService, push: PushService): JobDefinition<BadgePushPayload> {
   return defineJob({
     name: BADGE_PUSH_JOB,
@@ -48,9 +45,8 @@ export function makeBadgePushJob(badges: BadgeService, push: PushService): JobDe
 }
 
 /**
- * The badge notices for a process: the list, the live channel, and the day's
- * push — queued with a delay (and deduplicated per learner and day) when there
- * is a queue, sent at once when there is not.
+ * The badge notices for a process: the list, the live channel and the day's push, queued with a delay and
+ * deduplicated per learner and day when there is a queue, sent at once when there is not.
  */
 export function badgeNotices(deps: {
   inbox: { record: BadgeNotices['record'] };

@@ -1,10 +1,7 @@
 /**
- * Migration 1751000420000 against real Postgres: a new group is private from
- * the start, and in the groups that were open the accounts not known to be an
- * adult's leave and a minor's messages go out of sight, so that nobody is
- * handed to a room of strangers. Everything it does is written down, and down
- * puts every row back where it was. Run down and up through node-pg-migrate itself, as
- * `migrate down` and `migrate up` would.
+ * Migration 1751000420000 against real Postgres: new groups are private, and in formerly open groups accounts not
+ * known to be adults leave and minors' messages are hidden, so nobody is left in a room of strangers. Everything is
+ * recorded, and down restores every row; run down and up through node-pg-migrate.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dirname, join } from 'node:path';
@@ -57,7 +54,7 @@ describe.skipIf(!DATABASE_URL)('the private groups migration (integration)', () 
     return id;
   };
 
-  /** A group as it stood before the migration, with its members in the order given (the first one its owner). */
+  /** A group as it stood before the migration, members in order with the owner first. */
   const group = async (privacy: 'open' | 'invite', members: Array<[string, 'owner' | 'moderator' | 'member']>): Promise<string> => {
     const owner = members.find(([, role]) => role === 'owner')![0];
     const g = await pool.query<{ id: string }>(`INSERT INTO groups (name, privacy, owner_id) VALUES ($1, $2, $3) RETURNING id`, [`pg ${suffix}`, privacy, owner]);
@@ -104,7 +101,7 @@ describe.skipIf(!DATABASE_URL)('the private groups migration (integration)', () 
 
     await migrate('down');
 
-    // an open room of strangers: two adults, a minor and an account whose age was never recorded
+    // An open room of strangers: two adults, a minor and an account with no recorded age.
     const room = await group('open', [
       [adult, 'owner'],
       [friend, 'member'],
@@ -121,7 +118,7 @@ describe.skipIf(!DATABASE_URL)('the private groups migration (integration)', () 
     ]);
     // one with nobody else in it
     const empty = await group('open', [[loner, 'owner']]);
-    // and a group that was private already: a friend put the minor there
+    // A group that was already private, where a friend put the minor.
     const circle = await group('invite', [
       [adult, 'owner'],
       [minor, 'member'],
@@ -131,24 +128,24 @@ describe.skipIf(!DATABASE_URL)('the private groups migration (integration)', () 
 
     await migrate('up');
 
-    // the groups that were open go on saying so, which is all the column is for now; a new group is private from the start
+    // Formerly open groups still say so, which is all the column means now; new groups are private.
     for (const id of [room, handedOn, empty]) expect((await groupRow(id)).privacy).toBe('open');
     expect((await groupRow(circle)).privacy).toBe('invite');
     const fresh = await pool.query<{ id: string; privacy: string }>(`INSERT INTO groups (name, owner_id) VALUES ($1, $2) RETURNING id, privacy`, [`pg new ${suffix}`, adult]);
     groupIds.push(fresh.rows[0]!.id);
     expect(fresh.rows[0]!.privacy).toBe('invite');
 
-    // the room keeps its adults; the two who could not read it have left, and the minor's words are out of sight
+    // The room keeps its adults; the two who could not read it left, and the minor's words are hidden.
     expect(await roster(room)).toEqual({ [adult]: 'owner', [friend]: 'member' });
     expect(await inSight(kept)).toBe(true);
     expect(await inSight(minors)).toBe(false);
-    // the group whose owner left goes to its moderator, before a member who joined earlier
+    // The group whose owner left goes to its moderator before an earlier-joined member.
     expect(await roster(handedOn)).toEqual({ [friend]: 'member', [mod]: 'owner' });
     expect((await groupRow(handedOn)).owner_id).toBe(mod);
     // the one left with nobody is archived
     expect(await roster(empty)).toEqual({});
     expect(await groupRow(empty)).toMatchObject({ owner_id: null, archived: true });
-    // a group that was already private is as it was
+    // The already private group is unchanged.
     expect(await roster(circle)).toEqual({ [adult]: 'owner', [minor]: 'member', [unknown]: 'member' });
     expect(await inSight(amongFriends)).toBe(true);
 
@@ -161,7 +158,7 @@ describe.skipIf(!DATABASE_URL)('the private groups migration (integration)', () 
 
     await migrate('down');
 
-    // and back exactly: who was in, in which role, who owned what, what could be read
+    // And back exactly: who was in, in which role, who owned what, and what could be read.
     expect(await groupRow(room)).toEqual({ privacy: 'open', owner_id: adult, archived: false });
     expect(await roster(room)).toEqual({ [adult]: 'owner', [friend]: 'member', [minor]: 'member', [unknown]: 'member' });
     expect(await inSight(minors)).toBe(true);

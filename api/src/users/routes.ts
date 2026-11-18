@@ -25,16 +25,10 @@ import { TIME_ZONE_MESSAGE, storableTimeZone } from '../streaks/time-zones.js';
 import { RequestValidationError } from '../plugins/validation.js';
 
 export { USERNAME_CHANGE_COOLDOWN_DAYS };
-/** Profile photos are small; cap tighter than the global media limit (KUR-177). */
-export const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
-/** Timezone can be changed at most once per week (KUR-031 anti time-travel). */
+/** The time zone can change at most once a week, so a streak cannot be farmed by hopping zones. */
 export const TIMEZONE_CHANGE_COOLDOWN_DAYS = 7;
 
-/**
- * Bio is stored as plain text only: tags stripped, angle brackets and
- * control characters removed, whitespace normalized. Kurdish diacritics
- * pass through untouched.
- */
+/** Bio stored as plain text: tags stripped, angle brackets and control characters removed, whitespace normalised; Kurdish diacritics untouched. */
 export function sanitizeBio(raw: string): string {
   return normalizeKurdish(
     raw
@@ -44,7 +38,7 @@ export function sanitizeBio(raw: string): string {
   ).slice(0, 300);
 }
 
-// the shape only; whether the database knows the zone is asked in the route (streaks/time-zones.ts)
+// The shape only; the route asks whether the database knows the zone (streaks/time-zones.ts).
 const timezoneSchema = z
   .string()
   .max(50)
@@ -71,13 +65,12 @@ export const patchMeBodySchema = z
   .object({
     displayName: z.string().min(1).max(60).optional(),
     bio: z.string().max(1_000).optional(),
-    /* every language the interface is offered in — one list, so the picker
-       cannot offer something the server would refuse */
+    /* Every interface language, from one list, so the picker cannot offer something the server would refuse. */
     locale: z.enum(APP_LOCALE_CODES).optional(),
     timezone: timezoneSchema.optional(),
-    /** refused here: a username is changed at POST /me/username, which asks for the password (users/username-change.ts) */
+    /** Refused here: a username changes at POST /me/username, which asks for the password (users/username-change.ts). */
     username: z.string().max(60).optional(),
-    /** deny mic → speaking exercises skipped course-wide (KUR-036) */
+    /** Denying the microphone skips speaking exercises course-wide. */
     skipSpeaking: z.boolean().optional(),
     /** ISO-3166 alpha-2 country, or '' to clear */
     country: z.string().regex(/^[A-Za-z]{2}$/).or(z.literal('')).optional(),
@@ -86,11 +79,11 @@ export const patchMeBodySchema = z
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'no fields to update' });
 
-/** A username as it is typed: the rules themselves are users/username.ts, which says which one a name breaks. */
+/** A username as typed; users/username.ts says which rule a name breaks. */
 const usernameQuerySchema = z.object({ username: z.string().min(1).max(60) });
 const changeUsernameBodySchema = z.strictObject({
   username: z.string().min(1).max(60),
-  /** asked of every account that has a password; one that signs in through another service has none to give */
+  /** Asked of every account with a password; one that signs in through another service has none. */
   currentPassword: z.string().min(1).max(200).optional(),
 });
 
@@ -138,32 +131,17 @@ function toMe(row: MeRow) {
     roles: row.roles,
     emailVerified: row.email_verified_at !== null,
     consentVersion: row.consent_version,
-    /**
-     * A guest has consented to nothing yet, and is not asked to until the
-     * claim form, which records it: a re-consent prompt would be the wrong
-     * question for an account that has no account.
-     */
+    /** A guest has consented to nothing and is asked only on the claim form, which records it. */
     needsReconsent: !row.guest && row.consent_version !== CURRENT_POLICY_VERSION,
     analyticsConsent: row.analytics_consent,
-    /**
-     * no birth month on record yet: the clients ask once before anything else.
-     * Never for a guest, whom the claim form asks, and who is offered nothing
-     * that needs the answer.
-     */
+    /** No birth month on record yet, so the clients ask once first; never for a guest, whom the claim form asks. */
     birthDateRequired: row.birth_year == null && !row.guest,
     guest: row.guest,
-    /** 13–17 today, worked out now rather than stored (users/age.ts) */
+    /** 13–17 today, worked out now rather than stored (users/age.ts). */
     minor: isMinorRow(row),
-    /**
-     * Under the age of digital consent (16) today, so consent-based choices
-     * such as analytics need a parent. The name is kept from the flag it
-     * replaces, which was set once at sign-up and never changed again.
-     */
+    /** Under the age of digital consent (16) today, so consent choices such as analytics need a parent; the name is historical. */
     restrictedMode: isBelowConsentAgeRow(row),
-    /**
-     * never chosen → in for adults, out for minors and for an account whose age
-     * is not on record yet (read from age each time)
-     */
+    /** Never chosen means in for adults and out for minors and unknown ages, read from age each time. */
     leaguesEnabled: row.leagues_enabled ?? isKnownAdultRow(row),
     xp: row.xp,
     skipSpeaking: row.skip_speaking,
@@ -172,11 +150,7 @@ function toMe(row: MeRow) {
   };
 }
 
-/**
- * Un-confirm a replaced/cleared photo key so the media orphan job reclaims it —
- * but only when no other user still references it (content-hashed keys are shared
- * when two users happen to have identical photos).
- */
+/** Unconfirms a replaced or cleared photo key for the orphan job, unless another user references it (identical photos share a content-hashed key). */
 async function scheduleOrphan(app: FastifyInstance, oldKey: string | null, newKey: string | null): Promise<void> {
   if (!oldKey || oldKey === newKey) return;
   const stillUsed = await app.db.query(`SELECT 1 FROM users WHERE profile_photo_key = $1 LIMIT 1`, [oldKey]);
@@ -185,11 +159,8 @@ async function scheduleOrphan(app: FastifyInstance, oldKey: string | null, newKe
 }
 
 /**
- * What GET /me answers with, for one account: the row's own fields, the
- * streak settled on read, and the resolved cosmetics and progression the
- * public profile shows. Its own function because POST /auth/claim answers
- * with the same thing — the app replaces what it holds for the signed-in
- * person with it, and two renderings of "me" would drift apart.
+ * What GET /me returns for one account: the row's fields, the streak settled on read, and the resolved cosmetics and
+ * progression. Shared with POST /auth/claim, whose answer replaces what the app holds, so the two never drift.
  */
 export function createMeReader(app: FastifyInstance): (userId: string) => Promise<Record<string, unknown>> {
   const streaks = new StreakService(app.db);
@@ -201,10 +172,9 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
   return async (userId) => {
     const result = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]);
     const row = result.rows[0] as MeRow;
-    // settle the streak on read so a lapsed day shows as broken (KUR-031)
+    // Settle the streak on read so a lapsed day shows as broken.
     const streak = await streaks.get(row.id, row.timezone);
-    // reuse the single enriched profile query + resolver for cosmetics/level/
-    // favorites (self view: friendStatus 'self', details always visible)
+    // Reuse the enriched profile query and resolver for cosmetics, level and favourites (self view: details always visible).
     const publicDto = toPublicProfileDto(await social.profile(row.id, row.id), app.storage);
     return {
       ...toMe(row),
@@ -232,21 +202,15 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
 export function registerUserRoutes(app: FastifyInstance, config: AppConfig): void {
   const limits = mediaLimits(config);
   const usage = new MediaUsageService(app.db, app.redis ?? null);
-  // The raw-image body parser is registered app-wide (registerImageUploadParser),
-  // shared with the meme/image upload route (KUR-290).
+  // The raw-image body parser is registered app-wide (registerImageUploadParser) and shared with image post uploads.
   const me = createMeReader(app);
 
   app.get('/me', { preHandler: requireAuth }, async (req) => ({ user: await me(req.user!.id) }));
 
-  /**
-   * Presence heartbeat: the client pings this periodically while the app is
-   * open. Records last activity; "online" is derived from it at read time. Cheap
-   * single-row update, rate-limited by the global default.
-   */
+  /** Presence heartbeat, pinged while the app is open; "online" is derived from it at read time. One cheap row update, under the global rate limit. */
   app.post('/me/heartbeat', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
-    // last_seen_at is overwritten in place, so it can say who is online now but
-    // keeps no history; the one row per user per day is what DAU/WAU/MAU count.
-    // Both in one statement: every open app sends this once a minute.
+    // last_seen_at is overwritten in place and says only who is online now; the one row per user per day is what DAU, WAU
+    // and MAU count. One statement, since every open app sends this once a minute.
     await app.db.query(
       `WITH seen AS (UPDATE users SET last_seen_at = now() WHERE id = $1)
        INSERT INTO user_activity_days (day, user_id) VALUES (current_date, $1) ON CONFLICT DO NOTHING`,
@@ -255,12 +219,9 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     return { ok: true };
   });
 
-  // ---- Profile photo (KUR-177 + cost-safety): through-server upload ----
-
   /**
-   * Upload a profile photo: POST the raw image bytes (Content-Type image/*). The
-   * server validates + resizes + WebP-compresses it, enforces the size / storage /
-   * op limits, stores it, and replaces the old one. Per-user rate-limited.
+   * Uploads a profile photo as raw image bytes (Content-Type image/*): validated, resized and compressed to WebP, held to
+   * the size, storage and op limits, stored, and replacing the old one. Rate limited per user.
    */
   app.post(
     '/me/profile-picture',
@@ -269,8 +230,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      // a picture like any other: a feature limit on pictures covers this one
-      // too — and it is shown to other people, which a guest is not yet
+      // A picture like any other, so a media restriction covers it, and it is shown to others, which a guest is not yet.
       preHandler: [requireAccount, requireUnrestricted('media')],
     },
     async (req, reply) => {
@@ -312,15 +272,10 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   });
 
   /**
-   * The devices signed in to the account (KUR-022), each listed once.
-   *
-   * A session is a live refresh-token family. One device can hold several — it
-   * signed in again after the browser forgot the last one, or the admin
-   * console signed in beside the website — and they are one row: the device's
-   * name, when it first signed in and when it was last used. A session from an
-   * app that sends no device id is a row of its own. `id` is a session of the
-   * device (this one's, for the device in hand), and signing it out ends the
-   * device's every session.
+   * The devices signed in to the account, each listed once. A session is a live refresh-token family, and one device can
+   * hold several (it signed in again, or the admin console beside the website); they are one row with the device name,
+   * first sign-in and last use. A session from an app sending no device id is its own row. `id` is one of the device's
+   * sessions (this one's for the device in hand), and signing it out ends all of the device's sessions.
    */
   app.get('/me/sessions', { preHandler: requireAuth }, async (req) => {
     const result = await app.db.query<{
@@ -382,13 +337,12 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       if ((result.rowCount ?? 0) === 0) {
         throw new AppError('SESSION_NOT_FOUND', 404, 'no active session with that id');
       }
-      // when the caller signed out their own device, the client must drop
-      // its tokens now — the access token would otherwise live ≤15 min
+      // When the caller signed out their own device, the client must drop its tokens now rather than keep them up to 15 minutes.
       return { revoked: true, current: result.rows.some((r) => r.family_id === req.user!.familyId) };
     },
   );
 
-  /** Re-consent + analytics preference (KUR-109). */
+  /** Re-consent and the analytics preference. */
   app.post(
     '/me/consent',
     { schema: { body: consentBodySchema }, preHandler: requireAuth },
@@ -406,8 +360,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
             `SELECT birth_year, birth_month FROM users WHERE id = $1`,
             [req.user!.id],
           );
-          // below 16 the consent is a parent's to give (GDPR art. 8), and there
-          // is no way yet for a parent to give it — so it stays off
+          // Below 16 consent is a parent's to give (GDPR art. 8), and there is no way for a parent to give it yet, so it stays off.
           if (isBelowConsentAgeRow(age.rows[0]!)) {
             throw new AppError('PARENTAL_CONSENT_REQUIRED', 403, 'this needs a parent’s consent below age 16');
           }
@@ -428,8 +381,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     storage: app.storage,
     jobs: app.jobs,
     log: app.log,
-    // the story games' own service, read when called (registered after these
-    // routes): leaving through it wakes the other players' polls at once
+    // The story games' own service, read when called since it is registered later; leaving through it wakes other players' polls.
     storyGames: { leaveAll: (userId) => app.storyGames.leaveAll(userId) },
     // and the multiplayer learning games' (api/src/mp), the same way
     multiplayer: { leaveAll: (userId) => app.multiplayer.leaveAll(userId) },
@@ -439,10 +391,9 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   const birthMonths = new BirthMonthService(app.db, gdpr);
 
   /**
-   * The one-time birth month answer, for an account that has none (Google and
-   * Apple sign-ups, and every account made before it was asked). Once only —
-   * see BirthMonthService. Under 13 closes the account, so the client must
-   * drop its tokens on UNDER_MINIMUM_AGE.
+   * The one-time birth month answer for an account with none (provider sign-ups, and accounts from before it was asked),
+   * accepted once (BirthMonthService). Under 13 closes the account, so the client must drop its tokens on
+   * UNDER_MINIMUM_AGE.
    */
   app.post(
     '/me/birth-date',
@@ -460,22 +411,16 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   );
 
   /**
-   * GDPR: start the 14-day deletion grace period (KUR-024).
-   *
-   * A guest is closed at once instead: the grace period exists so the owner
-   * can sign in again and change their mind, and a guest has no way to sign
-   * in again — nor an address for the notice the grace period sends.
+   * GDPR: starts the 14-day deletion grace period. A guest is closed at once instead, having no way to sign in again and
+   * no address for the notice.
    */
   app.delete('/me', { preHandler: requireAuth }, async (req) => {
     if (req.user!.guest === true) {
       await gdpr.closeNow(req.user!.id, 'guest_left');
       return { deletionScheduled: false, deleted: true, graceDays: 0 };
     }
-    // A sign-up that never confirmed its address is closed at once too: the
-    // grace period is for coming back to something, and its notice would be
-    // mail to an address nobody showed to be theirs. A guest's claim that was
-    // never confirmed goes the same way here, learning and all: the person
-    // asked for the account to be deleted, not for the claim to lapse.
+    // An unconfirmed sign-up is closed at once too, since there is nothing to come back to and the address was never shown
+    // to be theirs; a guest's unconfirmed claim goes the same way, learning included, because deletion was asked for.
     if (!req.user!.emailVerified && (await gdpr.endUnconfirmedSignup(req.user!.id, { keepLearning: false })) === 'closed') {
       return { deletionScheduled: false, deleted: true, graceDays: 0 };
     }
@@ -504,17 +449,14 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   });
 
   /**
-   * Logout everywhere: kills refresh sessions AND live access tokens.
-   * `?except=current` signs out every OTHER session and keeps this one: their
-   * access tokens stop at once too, because a revoked family's tokens are
-   * refused (plugins/auth.ts).
+   * Signs out everywhere, ending refresh sessions and live access tokens. `?except=current` keeps this session; the
+   * others' access tokens stop at once too, since revoked families' tokens are refused (plugins/auth.ts).
    */
   app.delete('/me/sessions', { schema: { querystring: z.object({ except: z.literal('current').optional() }) }, preHandler: requireAuth }, async (req) => {
     const { except } = req.query as { except?: 'current' };
     const current = req.user!.familyId;
     if (except === 'current' && current) {
-      // every session but this one ends, this device's older ones too; what
-      // is counted is the other devices, as the list showed them
+      // Every session but this one ends, this device's older ones included; the count is of other devices, as listed.
       const others = await app.db.query<{ devices: number }>(
         `WITH here AS (
            SELECT device_hash FROM refresh_tokens
@@ -537,8 +479,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
       [req.user!.id],
     );
-    // token_version bump invalidates every outstanding access token
-    // immediately, including the one making this request
+    // Bumping token_version invalidates every outstanding access token at once, including this request's.
     await app.db.query(`UPDATE users SET token_version = token_version + 1 WHERE id = $1`, [
       req.user!.id,
     ]);
@@ -551,10 +492,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     async (req) => {
       const body = req.body as z.infer<typeof patchMeBodySchema>;
       const userId = req.user!.id;
-      // what others read about you is published text: not while you may not
-      // post — and not as a guest, whom nobody reads; nor may a guest join the
-      // leagues, a table of other people. Language, time zone, country and the
-      // speaking setting are the learner's own, and stay open to a guest.
+      // What others read about you is published text, so not while you may not post, and not as a guest, whom nobody reads;
+      // nor may a guest join the leagues. Language, time zone, country and the speaking setting stay open to a guest.
       const published = body.displayName !== undefined || body.bio !== undefined || body.username !== undefined;
       if (req.user!.guest === true && (published || body.leaguesEnabled !== undefined)) throw guestAccountError();
       if (published) await assertUnrestricted(app.db, userId, 'post');
@@ -582,8 +521,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         );
         const row = cur.rows[0]!;
         if (body.timezone !== row.timezone) {
-          // Cap tz changes to once a week so a streak can't be farmed by
-          // hopping timezones to fabricate extra days (KUR-031).
+          // At most one time zone change a week, so a streak cannot be farmed by hopping zones.
           const cooldownMs = TIMEZONE_CHANGE_COOLDOWN_DAYS * 24 * 3_600_000;
           if (
             row.timezone_changed_at &&
@@ -601,7 +539,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         }
       }
 
-      // a username is not a profile field: it is changed with the password, within limits, and written down (POST /me/username)
+      // A username is not a profile field: it changes with the password, within limits, and is recorded (POST /me/username).
       if (body.username !== undefined) {
         throw new AppError('USERNAME_CHANGE_ELSEWHERE', 400, 'a username is changed at POST /me/username');
       }
@@ -616,12 +554,9 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
           `UPDATE users SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
           values,
         );
-        // leaving takes effect now, not at the end of the week: the point is
-        // not to be in this week's table
+        // Leaving applies now, not at the week's end, since the point is to leave this week's table.
         if (body.leaguesEnabled === false) await leaveThisWeek(app.db, userId);
-        // and coming back puts them back in the group they left this week, if
-        // they had one; someone with no group yet joins with their next
-        // learning XP, as everyone does
+        // Coming back returns them to this week's group if they had one; otherwise they join with their next learning XP.
         if (body.leaguesEnabled === true) await returnThisWeek(app.db, userId);
         return { user: toMe(updated.rows[0] as MeRow) };
       }
@@ -629,15 +564,15 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   );
 
   /*
-   * The username: what a person is told before changing it, whether a name
-   * could be theirs, and the change (users/username-change.ts has the rules).
+   * The username: what a person is told before changing it, whether a name could be theirs, and the change
+   * (users/username-change.ts has the rules).
    *
-   *   GET  /me/username              where they stand: the wait, the names held for them, whether a password is asked
+   *   GET  /me/username              where they stand: the wait, names held for them, whether a password is asked
    *   GET  /me/username/available    ?username=…  (30 a minute)
    *   POST /me/username              { username, currentPassword? }  (5 in 15 minutes, as a password change)
    *
-   * None of it is open to a guest, who has a made-up name until they claim
-   * the account, nor to somebody who may not post: a username is published.
+   * Not open to a guest, whose name is made up until they claim the account, nor to someone who may not post, since a
+   * username is published.
    */
   const usernames = new UsernameChangeService(app.db, { jobs: app.jobs ?? null, security: app.securityLog, log: app.log });
   const requireNamed = async (req: { user?: { id: string; guest?: boolean } }): Promise<string> => {

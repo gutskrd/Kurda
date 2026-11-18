@@ -28,7 +28,7 @@ import type { JoinOutcome, LobbyFacts, LobbyPhase, PlayAdapter, Series } from '.
 
 type Executor = Pick<pg.Pool, 'query'>;
 
-/** What a story game is created with from an invite: `CreateGameInput` of the story-games service, duo or group. */
+/** What an invite creates a story game with: the story-games service's `CreateGameInput`, duo or group. */
 export interface StoryInviteSettings {
   mode: StoryGameMode;
   storyId?: string;
@@ -45,14 +45,12 @@ export interface StoryInviteSettings {
 }
 
 /**
- * What this adapter needs of the story games (contract §B3). API-games owns
- * the service; these are its public methods by their contract names
- * (`StoryGamesService` in api/src/story-games/service.ts satisfies this as
- * written). Kept narrow, so the play layer depends on these and nothing else.
+ * What this adapter needs of the story games, by their public method names (`StoryGamesService` satisfies it). Kept
+ * narrow, so the play layer depends on nothing else.
  */
 export interface StoryGamesPort {
   createFromInvite(hostId: string, input: StoryInviteSettings): Promise<{ gameId: string }>;
-  /** the normal join; refusals are AppErrors GAME_NOT_FOUND (404), GAME_STARTED and GAME_FULL (409) */
+  /** The normal join; refuses with GAME_NOT_FOUND (404), GAME_STARTED or GAME_FULL (409). */
   join(userId: string, target: { id: string }): Promise<unknown>;
   card(viewerId: string, gameId: string): Promise<LobbyCard>;
   summary(gameId: string): Promise<InviteSummary>;
@@ -60,7 +58,7 @@ export interface StoryGamesPort {
   startPairRematch(gameId: string): Promise<{ gameId: string }>;
   /** leaving; the host leaving a lobby calls it off */
   leave(gameId: string, userId: string): Promise<void>;
-  /** the host's Rated/Friendly toggle, in the lobby; refusals are AppErrors (GAME_NOT_FOUND, NOT_HOST, GAME_STARTED) */
+  /** The host's Rated/Friendly toggle in the lobby; refuses with GAME_NOT_FOUND, NOT_HOST or GAME_STARTED. */
   setRated(hostId: string, gameId: string, rated: boolean): Promise<void>;
   /** called after every change the service commits — the play layer's `play_changed` */
   onChange(listener: (gameId: string, version: number) => void): void;
@@ -96,11 +94,8 @@ interface GameRow {
 }
 
 /**
- * Stories, as the play layer drives it — through the story-games service for
- * everything that changes a game, and through two plain reads of its tables
- * for the facts the service has no method for (who hosts a game, who is in it,
- * which game came before it). Joining is allowed while people read, so a game
- * is joinable in its lobby and its reading phase.
+ * Stories for the play layer: changes go through the story-games service, and two plain reads cover what it has no
+ * method for (host, players, the previous game). A game is joinable in its lobby and its reading phase.
  */
 export class StoriesAdapter implements PlayAdapter {
   readonly game = 'stories' as const;
@@ -194,11 +189,7 @@ export class StoriesAdapter implements PlayAdapter {
     return (await this.stories.openNextRound(hostId, lobbyId)).gameId;
   }
 
-  /**
-   * Wins between two players over a run of duo rematches: each game's
-   * `next_game_id` points at the one after it, so the run is followed back
-   * from this game; a game's winner has the higher score (a tie is a draw).
-   */
+  /** Wins between two players over a run of duo rematches, followed back through `next_game_id`; the higher score wins, a tie draws. */
   async series(lobbyId: string, me: string, other: string): Promise<Series | null> {
     const chain = await this.pool.query<{ id: string }>(
       `WITH RECURSIVE chain(id, depth) AS (
