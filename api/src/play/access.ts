@@ -20,7 +20,7 @@ export interface JoinCheck {
 }
 
 /**
- * Who may join a game, one rule for Peyvok Battle, Rhyme Match and Stories (@kurda/shared `play` DEFAULT_ACCESS).
+ * Who may join a game, one rule for Peyvok Battle, Rhyme Match and Stories.
  * Never anyone the host removed, and never anyone with a block either way against anyone in the game, present or
  * gone. Then:
  *

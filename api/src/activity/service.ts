@@ -1,5 +1,4 @@
 import type pg from 'pg';
-import type { Redis } from 'ioredis';
 import type { FriendService } from '../friends/service.js';
 import { notBlockedSql } from '../friends/blocked.js';
 
@@ -18,8 +17,6 @@ export class ActivityService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly friends: FriendService,
-    // Unused; the standalone game services still pass their Redis client.
-    _redis?: Redis,
   ) {}
 
   /** Records a milestone. */

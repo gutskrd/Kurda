@@ -25,7 +25,7 @@ export function standaloneMultiplayer(pool: pg.Pool, opts: { redis?: Redis | nul
   const log: Log = opts.log ?? { warn: () => undefined };
   const redis = opts.redis ?? undefined;
   const gems = new GemService(pool, new WalletService(pool));
-  const activity = new ActivityService(pool, new FriendService(pool), redis);
+  const activity = new ActivityService(pool, new FriendService(pool));
   const ranks = new RankService(pool, { log });
   const { xp } = createProgression(pool, { ranks: ranks.events, gems, activity, log });
   return new MultiplayerService(pool, {

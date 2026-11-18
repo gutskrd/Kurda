@@ -157,7 +157,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 /**
  * Where a link opened from outside the app lands. Game route paths come from `inviteRoutePath`, so they always match
- * what `buildInviteUrl` puts in a message; a mismatch would only show on the recipient's phone. `?id=…` needs no
+ * the invite links the apps share; a mismatch would only show on the recipient's phone. `?id=…` needs no
  * `:param`, since React Navigation passes query parameters through as route params.
  *
  * hevalo.app is listed so web invite URLs match, but phones only hand those links over once the association files

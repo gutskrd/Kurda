@@ -36,7 +36,7 @@ export interface PublicProfileDto {
   league?: ProfileLeague | null;
   /** Game Ranks per game played (shared `ProfileRank`); "Resting" ones carry no tier for others */
   ranks?: ProfileRank[];
-  /** The frame around the avatar: a season frame (SEASON_FRAME_SKUS) or a shop frame; null for none. */
+  /** The frame around the avatar: a season frame or a shop frame; null for none. */
   frameSku?: string | null;
   /** A shop frame's picture to lay round the avatar; null for a season frame, which the apps draw. */
   frameUrl?: string | null;

@@ -282,7 +282,7 @@ function screened(post: LibraryPost): { surface: 'library'; contentType: 'post';
   return { surface: 'library', contentType: 'post', contentRef: post.id, text: postWords(post) };
 }
 
-/** A refused post: 422 with a composer code (`POST_ERROR_CODES`) and what it concerns, a field and its limit or a picture. */
+/** A refused post: 422 with a composer error code and what it concerns, a field and its limit or a picture. */
 function refuse(reply: FastifyReply, problem: PostRejection): FastifyReply {
   return reply.code(422).send({ ...problem, message: refusalMessage(problem) });
 }
