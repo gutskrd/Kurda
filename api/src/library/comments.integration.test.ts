@@ -49,20 +49,61 @@ describe.skipIf(!DATABASE_URL)('library comments (integration)', () => {
     expect((await call('POST', `/library/posts/${postId}/comments`, undefined, { body: 'hi' })).statusCode).toBe(401);
     expect((await call('POST', `/library/posts/${postId}/comments`, authorTok, {})).statusCode).toBe(422);
 
-    // A voice comment must reference a confirmed audio upload.
+    // A voice comment must reference a confirmed audio upload of the commenter's own.
     expect((await call('POST', `/library/posts/${postId}/comments`, otherTok, { audioMediaId: 'media/unconfirmed.mp3' })).statusCode).toBe(422);
+    const [author, other] = userIds;
+    const [a, b] = [`voice-note/cmt-a-${suffix}.mp3`, `voice-note/cmt-b-${suffix}.mp3`];
     await pool.query(
-      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
-       VALUES ('media/a.mp3','audio/mpeg',2048,now(),'cleared'), ('media/b.mp3','audio/mpeg',2048,now(),'cleared')
-       ON CONFLICT (key) DO UPDATE SET confirmed_at = now()`,
+      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status, uploader_id, kind)
+       VALUES ($1,'audio/mpeg',2048,now(),'cleared',$3,'voice-note'), ($2,'audio/mpeg',2048,now(),'cleared',$4,'voice-note')`,
+      [a, b, other, author],
     );
 
     expect((await call('POST', `/library/posts/${postId}/comments`, authorTok, { body: 'text only' })).statusCode).toBe(201);
-    expect((await call('POST', `/library/posts/${postId}/comments`, otherTok, { audioMediaId: 'media/a.mp3' })).statusCode).toBe(201);
-    const both = await call('POST', `/library/posts/${postId}/comments`, authorTok, { body: 'text + audio', audioMediaId: 'media/b.mp3' });
+    expect((await call('POST', `/library/posts/${postId}/comments`, otherTok, { audioMediaId: a })).statusCode).toBe(201);
+    const both = await call('POST', `/library/posts/${postId}/comments`, authorTok, { body: 'text + audio', audioMediaId: b });
     expect(both.statusCode).toBe(201);
     expect(both.json().body).toBe('text + audio');
-    expect(both.json().audioMediaId).toBe('media/b.mp3');
+    expect(both.json().audioMediaId).toBe(b);
+    await pool.query(`DELETE FROM media_uploads WHERE key = ANY($1)`, [[a, b]]);
+  });
+
+  it('takes only the commenter’s own recording, whatever key is sent', async () => {
+    const [author, other] = userIds;
+    const [theirs, course] = [`voice-note/cmt-theirs-${suffix}.mp3`, `lesson-audio/cmt-course-${suffix}.wav`];
+    await pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status, uploader_id, kind)
+       VALUES ($1,'audio/mpeg',2048,now(),'cleared',$3,'voice-note'), ($2,'audio/wav',2048,now(),'cleared',NULL,'lesson-audio')`,
+      [theirs, course, other],
+    );
+    const mine = `voice-note/cmt-mine-${suffix}.mp3`;
+    await pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status, uploader_id, kind)
+       VALUES ($1,'audio/mpeg',2048,now(),'cleared',$2,'voice-note')`,
+      [mine, author],
+    );
+    try {
+      const refused = [
+        theirs, // another member's recording: its key is in its public address
+        course, // the course's own audio
+        `../${mine}`,
+        `/${mine}`,
+        `${mine}/../../${theirs}`,
+        `https://cdn.test/${mine}`,
+        `other-bucket/${mine}`,
+      ];
+      for (const audioMediaId of refused) {
+        const res = await call('POST', `/library/posts/${postId}/comments`, authorTok, { audioMediaId });
+        expect(res.statusCode, audioMediaId).toBe(422);
+        expect(res.json().code).toBe('INVALID_AUDIO');
+      }
+      const post = await call('POST', '/library/posts', authorTok, { type: 'story', title: 'Deng', body: 'Bi deng.', audioMediaId: theirs });
+      expect(post.statusCode).toBe(422);
+      expect((await call('POST', `/library/posts/${postId}/comments`, authorTok, { audioMediaId: mine })).statusCode).toBe(201);
+    } finally {
+      await pool.query(`DELETE FROM library_comments WHERE audio_media_id = $1`, [mine]);
+      await pool.query(`DELETE FROM media_uploads WHERE key = ANY($1)`, [[theirs, course, mine]]);
+    }
   });
 
   it('nests replies to arbitrary depth with per-branch load-more', async () => {

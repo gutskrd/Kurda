@@ -135,6 +135,7 @@ export function registerGroupRoutes(
     {
       schema: { params: idParam },
       config: {
+        rawBody: true,
         rateLimit: { max: limits?.uploadRateMax ?? 10, windowMs: limits?.uploadRateWindowMs ?? 60 * 60_000, per: 'user-or-ip' as const },
         skipValidation: true,
       },

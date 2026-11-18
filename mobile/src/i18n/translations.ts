@@ -3275,6 +3275,8 @@ export type TranslationKey =
   | 'auth.reset.confirmNew'
   | 'auth.reset.mismatch'
   | 'error.code.wrongPassword'
+  | 'error.code.malformedAudio'
+  | 'error.code.audioTooLong'
   | 'error.code.noPassword'
   | 'error.code.passwordBreached'
   | 'error.code.captchaRequired'
@@ -7179,6 +7181,8 @@ const en: Catalog = {
   'auth.reset.confirmNew': 'Confirm new password',
   'auth.reset.mismatch': 'Those passwords don’t match.',
   'error.code.wrongPassword': 'Your current password isn’t right.',
+  'error.code.malformedAudio': 'That recording couldn’t be used. Record it again and try once more.',
+  'error.code.audioTooLong': 'That recording is too long. Record a shorter one.',
   'error.code.noPassword': 'Your account doesn’t have a password yet.',
   'error.code.passwordBreached': 'This password has shown up in a data leak, so it isn’t safe. Choose a different one.',
   'error.code.captchaRequired': 'There have been several failed sign-in attempts. For your safety, wait a few minutes and try again, or reset your password.',
@@ -11080,6 +11084,8 @@ const ku: Catalog = {
   'auth.reset.confirmNew': 'Şîfreya nû piştrast bike',
   'auth.reset.mismatch': 'Ev şîfre li hev nakin.',
   'error.code.wrongPassword': 'Şîfreya te ya niha ne rast e.',
+  'error.code.malformedAudio': 'Ev tomar nayê bikaranîn. Dîsa tomar bike û careke din biceribîne.',
+  'error.code.audioTooLong': 'Ev tomar pir dirêj e. Yeke kurttir tomar bike.',
   'error.code.noPassword': 'Hesabê te hîn bê şîfre ye.',
   'error.code.passwordBreached': 'Ev şîfre di daneyên dizîn de hatiye dîtin, loma ne ewle ye. Şîfreyeke din hilbijêre.',
   'error.code.captchaRequired': 'Gelek hewldanên têketinê yên çewt çêbûn. Ji bo ewlehiya te, çend xulekan bisekine û dîsa biceribîne, an şîfreya xwe ji nû ve saz bike.',
@@ -14981,6 +14987,8 @@ const de: Catalog = {
   'auth.reset.confirmNew': 'Neues Passwort bestätigen',
   'auth.reset.mismatch': 'Die Passwörter stimmen nicht überein.',
   'error.code.wrongPassword': 'Dein aktuelles Passwort stimmt nicht.',
+  'error.code.malformedAudio': 'Diese Aufnahme lässt sich nicht verwenden. Nimm sie neu auf und versuch es noch einmal.',
+  'error.code.audioTooLong': 'Diese Aufnahme ist zu lang. Nimm eine kürzere auf.',
   'error.code.noPassword': 'Dein Konto hat noch kein Passwort.',
   'error.code.passwordBreached': 'Dieses Passwort ist in einem Datenleck aufgetaucht und daher nicht sicher. Wähle ein anderes.',
   'error.code.captchaRequired': 'Es gab mehrere fehlgeschlagene Anmeldeversuche. Warte zur Sicherheit ein paar Minuten und versuche es dann erneut, oder setze dein Passwort zurück.',
@@ -18882,6 +18890,8 @@ const es: Catalog = {
   'auth.reset.confirmNew': 'Confirmar la contraseña nueva',
   'auth.reset.mismatch': 'Esas contraseñas no coinciden.',
   'error.code.wrongPassword': 'Tu contraseña actual no es correcta.',
+  'error.code.malformedAudio': 'No se puede usar esta grabación. Vuelve a grabarla e inténtalo de nuevo.',
+  'error.code.audioTooLong': 'Esta grabación es demasiado larga. Graba una más corta.',
   'error.code.noPassword': 'Tu cuenta todavía no tiene contraseña.',
   'error.code.passwordBreached': 'Esta contraseña ha aparecido en una filtración de datos, así que no es segura. Elige otra.',
   'error.code.captchaRequired': 'Ha habido varios intentos fallidos de inicio de sesión. Por seguridad, espera unos minutos y vuelve a intentarlo, o restablece tu contraseña.',
@@ -22783,6 +22793,8 @@ const tr: Catalog = {
   'auth.reset.confirmNew': 'Yeni parolayı doğrula',
   'auth.reset.mismatch': 'Bu parolalar eşleşmiyor.',
   'error.code.wrongPassword': 'Mevcut parolan doğru değil.',
+  'error.code.malformedAudio': 'Bu kayıt kullanılamıyor. Yeniden kaydedip tekrar dene.',
+  'error.code.audioTooLong': 'Bu kayıt çok uzun. Daha kısa bir kayıt yap.',
   'error.code.noPassword': 'Hesabının henüz bir parolası yok.',
   'error.code.passwordBreached': 'Bu parola bir veri sızıntısında ortaya çıktı, bu yüzden güvenli değil. Başka bir parola seç.',
   'error.code.captchaRequired': 'Birkaç başarısız giriş denemesi oldu. Güvenliğin için birkaç dakika bekleyip tekrar dene ya da parolanı sıfırla.',
@@ -26684,6 +26696,8 @@ const ar: Catalog = {
   'auth.reset.confirmNew': 'تأكيد كلمة المرور الجديدة',
   'auth.reset.mismatch': 'كلمتا المرور غير متطابقتين.',
   'error.code.wrongPassword': 'كلمة المرور الحالية غير صحيحة.',
+  'error.code.malformedAudio': 'لا يمكن استخدام هذا التسجيل. سجّله من جديد وحاول مرة أخرى.',
+  'error.code.audioTooLong': 'هذا التسجيل طويل جدًا. سجّل تسجيلًا أقصر.',
   'error.code.noPassword': 'ليست لحسابك كلمة مرور بعد.',
   'error.code.passwordBreached': 'ظهرت كلمة المرور هذه في تسريب بيانات، لذا فهي ليست آمنة. اختر كلمة مرور أخرى.',
   'error.code.captchaRequired': 'حدثت عدة محاولات فاشلة لتسجيل الدخول. حفاظًا على أمانك، انتظر بضع دقائق ثم حاول مرة أخرى، أو أعد تعيين كلمة المرور.',
@@ -30585,6 +30599,8 @@ const fr: Catalog = {
   'auth.reset.confirmNew': 'Confirmer le nouveau mot de passe',
   'auth.reset.mismatch': 'Ces mots de passe ne correspondent pas.',
   'error.code.wrongPassword': 'Ton mot de passe actuel n’est pas le bon.',
+  'error.code.malformedAudio': 'Cet enregistrement ne peut pas être utilisé. Enregistre-le à nouveau et réessaie.',
+  'error.code.audioTooLong': 'Cet enregistrement est trop long. Enregistres-en un plus court.',
   'error.code.noPassword': 'Ton compte n’a pas encore de mot de passe.',
   'error.code.passwordBreached': 'Ce mot de passe est apparu dans une fuite de données, il n’est donc pas sûr. Choisis-en un autre.',
   'error.code.captchaRequired': 'Il y a eu plusieurs tentatives de connexion échouées. Par sécurité, attends quelques minutes puis réessaie, ou réinitialise ton mot de passe.',
@@ -34486,6 +34502,8 @@ const nl: Catalog = {
   'auth.reset.confirmNew': 'Nieuw wachtwoord bevestigen',
   'auth.reset.mismatch': 'Die wachtwoorden komen niet overeen.',
   'error.code.wrongPassword': 'Je huidige wachtwoord klopt niet.',
+  'error.code.malformedAudio': 'Deze opname kan niet worden gebruikt. Neem hem opnieuw op en probeer het nog eens.',
+  'error.code.audioTooLong': 'Deze opname is te lang. Neem een kortere op.',
   'error.code.noPassword': 'Je account heeft nog geen wachtwoord.',
   'error.code.passwordBreached': 'Dit wachtwoord is opgedoken in een datalek en is daarom niet veilig. Kies een ander.',
   'error.code.captchaRequired': 'Er zijn meerdere mislukte inlogpogingen geweest. Wacht voor de veiligheid een paar minuten en probeer het opnieuw, of stel je wachtwoord opnieuw in.',
@@ -38388,6 +38406,8 @@ const ckb: Catalog = {
   'auth.reset.confirmNew': 'وشە نهێنییە نوێیەکە پشتڕاست بکەرەوە',
   'auth.reset.mismatch': 'ئەم وشە نهێنییانە یەک ناگرنەوە.',
   'error.code.wrongPassword': 'وشەی نهێنیی ئێستات ڕاست نییە.',
+  'error.code.malformedAudio': 'ئەم تۆمارە بەکارنایەت. دووبارە تۆماری بکە و جارێکی تر هەوڵ بدەرەوە.',
+  'error.code.audioTooLong': 'ئەم تۆمارە زۆر درێژە. یەکێکی کورتتر تۆمار بکە.',
   'error.code.noPassword': 'هەژمارەکەت هێشتا وشەی نهێنی نییە.',
   'error.code.passwordBreached': 'ئەم وشە نهێنییە لە زانیارییە دزراوەکاندا دۆزراوەتەوە، بۆیە پارێزراو نییە. یەکێکی تر هەڵبژێرە.',
   'error.code.captchaRequired': 'چەند هەوڵێکی هەڵەی چوونەژوورەوە هەبووە. بۆ پاراستنت، چەند خولەکێک چاوەڕێ بکە و دووبارە هەوڵ بدەرەوە، یان وشەی نهێنییەکەت ڕێکبخەرەوە.',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readWav } from './wav.js';
-import { sniffAudioType } from '../media/mimeSniff.js';
+import { sniffAudioType } from './mimeSniff.js';
 
 /** A PCM WAV of `seconds` of silence. */
 function wav(seconds: number, { rate = 22050, format = 1 } = {}): Buffer {

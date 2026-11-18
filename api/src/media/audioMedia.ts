@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
 import { mediaKey, type MediaStorage } from './storage.js';
-import { sniffAudioType } from './mimeSniff.js';
+import { checkAudio, type AudioReject } from './audioCheck.js';
 import { exceedsUploadSize, opLimitReached, wouldExceedStorage, type AudioLimits } from './mediaLimits.js';
 import type { MediaUsageService } from './mediaUsage.js';
 
@@ -40,6 +40,20 @@ const reject = (status: number, code: string, message: string, reason: string): 
   reason,
 });
 
+/** What the uploader is told when the container check refuses a file. */
+function refusal(reason: AudioReject, maxSeconds: number): StoreAudioResult {
+  switch (reason) {
+    case 'invalid-type':
+      return reject(415, 'INVALID_AUDIO', 'unsupported or non-audio file', reason);
+    case 'not-sound':
+      return reject(415, 'INVALID_AUDIO', 'only a sound recording can be uploaded; this file holds something else', reason);
+    case 'malformed':
+      return reject(422, 'MALFORMED_AUDIO', 'the recording could not be read; it may be damaged or cut short', reason);
+    case 'too-long':
+      return reject(422, 'AUDIO_TOO_LONG', `a recording can be up to ${maxSeconds} seconds long`, reason);
+  }
+}
+
 /** The content types a client may POST raw audio bytes under. */
 export const AUDIO_CONTENT_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/webm', 'audio/wav'] as const;
 
@@ -59,8 +73,9 @@ export function registerAudioParser(app: FastifyInstance, maxUploadBytes: number
 
 /**
  * Stores a voice note cost-safely and returns its confirmed key. Audio is not transcoded, so cost is capped by a tight
- * size limit and the shared ceilings: size, op ceiling, real-type sniff, storage ceiling (fail-closed), PUT, confirm.
- * Keys are content-addressed, so re-uploads are idempotent. Audio is not image-scanned; reports are its moderation path.
+ * size limit and the shared ceilings: size, op ceiling, container check (media/audioCheck.ts: real type, sound only,
+ * length, anything riding along emptied), storage ceiling (fail-closed), PUT of the checked bytes, confirm. Keys are
+ * hashes of the checked bytes, so re-uploads are idempotent. Audio is not image-scanned; reports are its moderation path.
  *
  * The file is kept under its uploader, so it counts against them (`AUDIO_DAILY_UPLOADS`), goes with their account and
  * can be traced when reported; one no post or comment uses is removed a day later (media/service.ts
@@ -79,10 +94,9 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
     return reject(503, 'MEDIA_OP_LIMIT_REACHED', 'media operation limit reached; try later', 'op-limit');
   }
 
-  const sniffed = sniffAudioType(raw);
-  if (!sniffed || !limits.allowedTypes.has(sniffed)) {
-    return reject(415, 'INVALID_AUDIO', 'unsupported or non-audio file', 'invalid-type');
-  }
+  const audio = checkAudio(raw, limits);
+  if (!audio.ok) return refusal(audio.reason, limits.maxSeconds);
+  const { type, bytes } = audio;
 
   // A member's own recordings are counted; staff upload course audio by the hundred and are not.
   if (uploaderId !== null && (AUDIO_KINDS as readonly string[]).includes(kind)) {
@@ -96,9 +110,14 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
     }
   }
 
-  const key = mediaKey(kind, createHash('sha256').update(raw).digest('hex'), sniffed);
+  // A member's recording is keyed to them as well as to its bytes, so the same file from two people is an upload each and
+  // only its uploader can attach it (moderation/restrictions.ts `voiceAttachable`). The course's audio is keyed by its
+  // bytes alone. `content_sha256` is what the copies share, so a takedown reaches every one.
+  const contentHash = createHash('sha256').update(bytes).digest('hex');
+  const ownHash = uploaderId === null ? contentHash : createHash('sha256').update(bytes).update(`\nowner:${uploaderId}`).digest('hex');
+  const key = mediaKey(kind, ownHash, type);
 
-  if (wouldExceedStorage(await usage.totalStoredBytes(), raw.length, limits.storageLimitBytes)) {
+  if (wouldExceedStorage(await usage.totalStoredBytes(), bytes.length, limits.storageLimitBytes)) {
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
   }
 
@@ -107,24 +126,30 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
        FROM media_uploads WHERE key = $1`,
     [key],
   );
-  // the same bytes moderation took down are not put back on the public bucket
-  if (existing.rows[0]?.taken_down) {
+  // Bytes moderation took down are not put back on the public bucket under any key; a recording stored before keys
+  // carried their owner has the plain hash of its bytes as its key.
+  const takenDown = await pool.query(
+    `SELECT 1 FROM media_uploads
+      WHERE (content_sha256 = $1 OR key = $2) AND (scan_status = 'blocked' OR quarantine_state IS NOT NULL) LIMIT 1`,
+    [contentHash, mediaKey(kind, contentHash, type)],
+  );
+  if (existing.rows[0]?.taken_down || takenDown.rowCount) {
     return reject(422, 'MEDIA_REJECTED', 'this file was removed by moderation', 'moderation');
   }
   // identical bytes already stored + confirmed → reuse, no new R2 write
   if (existing.rows[0]?.confirmed) {
-    return { ok: true, mediaId: key, url: storage.publicUrl(key), contentType: sniffed, reused: true };
+    return { ok: true, mediaId: key, url: storage.publicUrl(key), contentType: type, reused: true };
   }
 
   await pool.query(
-    `INSERT INTO media_uploads (key, content_type, content_length, kind, uploader_id)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length,
+    `INSERT INTO media_uploads (key, content_type, content_length, kind, uploader_id, content_sha256)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length, content_sha256 = EXCLUDED.content_sha256,
        uploader_id = COALESCE(media_uploads.uploader_id, EXCLUDED.uploader_id)`,
-    [key, sniffed, raw.length, kind, uploaderId],
+    [key, type, bytes.length, kind, uploaderId, contentHash],
   );
   try {
-    await storage.put(key, raw, sniffed);
+    await storage.put(key, bytes, type);
     await usage.recordOps('A');
   } catch (err) {
     log.error({ err, key }, 'voice note R2 put failed');
@@ -136,5 +161,5 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
     `UPDATE media_uploads SET confirmed_at = now(), scan_status = 'cleared' WHERE key = $1 AND confirmed_at IS NULL`,
     [key],
   );
-  return { ok: true, mediaId: key, url: storage.publicUrl(key), contentType: sniffed, reused: false };
+  return { ok: true, mediaId: key, url: storage.publicUrl(key), contentType: type, reused: false };
 }

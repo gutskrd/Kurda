@@ -87,6 +87,7 @@ export function registerShopAdminRoutes(app: FastifyInstance, shop: ShopService,
     {
       schema: { params: z.object({ kind: z.enum(ART_KINDS) }) },
       config: {
+        rawBody: true,
         rateLimit: { max: 60, windowMs: 60 * 60_000, per: 'user-or-ip' as const },
         skipValidation: true, // the body is raw bytes, not JSON
       },

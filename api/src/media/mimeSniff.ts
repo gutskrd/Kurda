@@ -41,13 +41,22 @@ function brandAt8(bytes: Uint8Array): string | null {
   return String.fromCharCode(bytes[8]!, bytes[9]!, bytes[10]!, bytes[11]!);
 }
 
+/**
+ * Whether the leading ftyp box's size, its first four bytes, is one a real file has: whole brands, inside the file.
+ * Without this, text such as `<!--ftypavif-->` passes the brand check, and the decoder then reads the file as SVG.
+ */
+function ftypFits(bytes: Uint8Array): boolean {
+  const size = ((bytes[0]! << 24) | (bytes[1]! << 16) | (bytes[2]! << 8) | bytes[3]!) >>> 0;
+  return size >= 16 && size % 4 === 0 && size <= bytes.length;
+}
+
 export function sniffImageType(bytes: Uint8Array): SniffedImageType | null {
   if (startsWith(bytes, JPEG)) return 'image/jpeg';
   if (startsWith(bytes, PNG)) return 'image/png';
   // WebP = RIFF container with a "WEBP" fourcc at byte 8
   if (startsWith(bytes, RIFF) && startsWith(bytes, WEBP, 8)) return 'image/webp';
   if (startsWith(bytes, TIFF_LE) || startsWith(bytes, TIFF_BE)) return 'image/tiff';
-  if (startsWith(bytes, FTYP, 4)) {
+  if (startsWith(bytes, FTYP, 4) && ftypFits(bytes)) {
     const brand = brandAt8(bytes);
     if (brand && HEIC_BRANDS.includes(brand)) return 'image/heic';
     if (brand && AVIF_BRANDS.includes(brand)) return 'image/avif';

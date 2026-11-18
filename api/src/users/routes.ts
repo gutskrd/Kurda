@@ -231,6 +231,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     '/me/profile-picture',
     {
       config: {
+        rawBody: true,
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
