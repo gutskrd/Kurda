@@ -68,18 +68,11 @@ export function useReminderOffer(enabled: boolean, store: DeviceStore = deviceSt
 }
 
 /**
- * The screen before the system notification prompt, last of the moments after a lesson's results: Hevalo at his
- * window, what he would send, and one button.
- *
- * The button says "Continue" and raises the system prompt, and nothing else can be pressed. Platform guidelines
- * for a pre-prompt screen ask for one button named for continuing (not "Allow") and no way to leave without
- * seeing the prompt, so there is no "Not now", ✕ or skip, and Android's back stays here.
- *
- * It describes what the server sends an adult with default settings (api
- * notifications/streak-reminder-service.ts, letters/service.ts, badges/service.ts): a streak reminder, a letter
- * notice, a badge notice. Whatever the phone answers, the lesson's way on is taken. Nothing spins while waiting,
- * and after `ANSWER_WAIT_MS` a second press continues without the answer. Counted as shown when seen
- * (permission.ts), which keeps it rare.
+ * The screen before the system notification prompt, last of the moments after a lesson: Hevalo, what he would
+ * send (only what the server sends an adult: a streak reminder, a letter, a badge), and one "Continue" button
+ * that raises the prompt. Platform guidelines for a pre-prompt screen allow no other way out, so there is no "Not
+ * now" or ✕ and Android's back stays. Whatever the answer, the lesson continues; after `ANSWER_WAIT_MS` a second
+ * press continues without it. Counted as shown when seen (permission.ts).
  */
 export function ReminderOffer({ onDone, store = deviceStore }: { onDone: () => void; store?: DeviceStore }): React.JSX.Element {
   const { t } = useI18n();

@@ -22,20 +22,11 @@ import { QuestRows } from './QuestRows';
 import { pressedDim } from '../theme/motion';
 
 /**
- * Today's three quests, in one of two places.
- *
- * After a lesson that moved any (`place: 'lesson'`, with the session's `steps`), it is a moment of its own
- * between the streak and the learner's next destination: each bar moves from where the lesson found it to where
- * it left it, and a just-finished quest lifts with a gold edge. With a chest to open the main button is "Open
- * chest" and "Later" leaves it waiting on Learn; otherwise "Continue".
- *
- * From Learn (`place: 'learn'`) it shows the quests as they stand, bars filling as the list opens, with a back
- * button and "Open chest" while one waits.
- *
- * Under today's three, "Earlier" lists last week's finished quests with unopened chests, so a chest is not lost
- * at midnight. The month's tally (MonthlyQuests) heads the list from Learn and closes it after a lesson. "Open
- * chest" opens each waiting chest in turn (ChestScreen), then returns to the lesson's way on or this list. The
- * list loads from `GET /me/quests`; after a lesson, if that fails, the quests the lesson moved are shown alone.
+ * Today's three quests, in two places. After a lesson (`place: 'lesson'`, with the session's `steps`) it is a
+ * moment of its own: bars move from where the lesson found them, with "Open chest" or "Later" when a chest waits.
+ * From Learn (`place: 'learn'`) it is the list as it stands, headed by the month's tally (MonthlyQuests). Below
+ * today's three, "Earlier" lists last week's unopened chests. "Open chest" opens each waiting chest in turn
+ * (ChestScreen). Loaded from `GET /me/quests`; after a lesson, a failed load shows the quests the lesson moved.
  */
 export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 'learn'; steps?: QuestStep[]; onDone: () => void }): React.JSX.Element {
   const { client } = useAuth();

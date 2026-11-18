@@ -3,18 +3,10 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
 /**
- * A list that keeps its place when its screen is returned to (the wall, the library, the pictures, saved posts).
- * Returning is the commonest action on these screens, so the list stays as it was and is refreshed silently by
- * re-reading the first page:
- *
- *   - a post already shown takes the read's version of itself, in place (a like from its own page, a new comment
- *     count)
- *   - nothing is removed, unless the read was the whole list (shorter than a page); then it is the list
- *   - a new post goes on top only while the list is at its top, where it pushes nothing in view; further down it
- *     waits until the list is back there (a pull, or a tab tap)
- *
- * A failed silent read shows nothing: what is shown is still true enough, and a pull retries properly. The
- * screen's first load, and loads for another filter or order, start from nothing and remain the screen's own.
+ * Keeps a list's place when its screen is returned to (the wall, the library, pictures, saved posts), refreshing
+ * it silently from a re-read first page: shown posts are updated in place, nothing is removed unless the read was
+ * the whole list, and new posts go on top only while the list is at its top (otherwise they wait). A failed
+ * silent read shows nothing. First loads, and loads for another filter or order, stay the screen's own.
  */
 
 /**

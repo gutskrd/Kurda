@@ -9,19 +9,11 @@ import { useReportAction } from '../reports/reportAction';
 import type { ChatMessage } from '../gifts/api';
 
 /**
- * What a chat message shows, by kind; the one place a DM and a group thread decide it, so they cannot disagree.
- *
- * - `text`: the words. A text carrying a game invite link (older invites, or pasted) is drawn as the game's live
- *   card,
- *   with any other text above it.
- * - `gift`: the present (gifts/GiftBubble).
- * - `game`: the game's live card (play/ChatGameCard), joinable or not. An invitation to a retired game, as a game
- *   message or an old link in a text, is a quiet line with nothing to press.
- *
- * Returns the content alone: the thread row (chat/MessageRow.tsx) draws a bubble around text and nothing around a
- * card. `onReport` (someone else's message): controls inside a message (a gift, a game) take the touch so the
- * row's long press never fires there, so each also reports on a long press and lists Report among its
- * screen-reader actions.
+ * What a chat message shows, by kind, shared by DMs and group threads: `text` (a text with a game invite link
+ * becomes the game's live card), `gift` (gifts/GiftBubble), `game` (play/ChatGameCard); an invitation to a
+ * retired game is a quiet line. Returns the content only; the row (chat/MessageRow.tsx) adds a bubble around
+ * text. With `onReport`, a control inside a message also reports on a long press and lists Report among its
+ * screen-reader actions, since it takes the row's long press.
  */
 export function MessageContent({
   message,

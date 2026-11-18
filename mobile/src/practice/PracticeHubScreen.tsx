@@ -30,20 +30,12 @@ import { exercisesOf, type PhoneExercise } from './exercises';
 import { ROW_HUES, heroOf, hubRows, practiceXpRange, type Hero, type HubRow, type Line } from './hub';
 
 /**
- * The practice hub: the one thing most worth doing now, and every other kind of practice a tap away.
- *
- * The top card, on the app's pale violet, has one button: reviewing due words with their count; else the unit
- * finished last; else the hardest words; and before any lesson, the way to the lessons. Hamo stands at its end,
- * and the button says what a session pays. Below are rows for the other kinds (mistakes, words, listening,
- * speaking, a chosen unit), each with a line and a badge in its own hue that pops under the finger. Build a
- * Kurdish Sentence and Hear It, Find It have their own screens and appear only while available in the learner's
- * Kurdish (exercises.ts). The card and rows rise in on arrival (`useListEntrance`) and stand still on later
- * visits. An empty kind stays listed, dimmed, saying what would fill it.
- *
- * The hub loads in one request (GET /practice/hub), again whenever the screen regains focus and on pull to
- * refresh. Exercise availability is awaited alongside, so the list arrives whole; without it the hub shows
- * without them. If the microphone is denied for good, the speaking row leads to Settings, and returning rechecks
- * it.
+ * The practice hub: a top card with the one thing most worth doing (due words, the last finished unit, the
+ * hardest words, or the lessons before any) and one button saying what a session pays, then a row for every other
+ * kind with its own badge hue. Empty kinds stay listed, dimmed, saying what would fill them; the two lesson
+ * exercises appear only while available (exercises.ts). Loaded in one request (GET /practice/hub) on focus and
+ * pull, with exercise availability awaited so the list arrives whole. A microphone denied for good turns the
+ * speaking row into a link to Settings.
  */
 export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();

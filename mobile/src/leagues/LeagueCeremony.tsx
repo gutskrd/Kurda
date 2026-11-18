@@ -30,21 +30,11 @@ const SCALE = { middle: [0.82, 1.1], side: 0.72 } as const;
 const LAND_MS = 260;
 
 /**
- * The week's ceremony, in two beats with a Continue each.
- *
- * First the ladder moves: the three leagues around the learner stand in a row that slides until their current
- * league is centred, the previous one shrinking to the side and the next waiting on the other (locked, or already
- * passed). It lands on the bouncy spring with a light haptic, and a promotion (or the trophy) gets the app's
- * burst. Under it, what happened: "You finished #15 last week and moved up to Çem." A demotion is framed as a
- * fresh start.
- *
- * Then on the same stage: "You’re in the Çem League", the name's meaning, and the one rule that matters now, how
- * to move up. Nothing counts down or asks for anything.
- *
- * Under Reduce Motion the emblems are static and the text fades in. Each beat's line is announced as it opens, in
- * reading order; the side emblems are decorative. A week worth sharing (shared `leagueWin`: promoted, or a
- * top-three place) has a quiet Share under the first Continue, naming the league and place and nobody else in the
- * group.
+ * The week's ceremony in two beats, each with Continue. First the ladder slides until the current league is
+ * centred, landing on a spring with a light haptic (and the burst for a promotion or the trophy), with one line
+ * on what happened; a demotion reads as a fresh start. Then the league's name, its meaning and how to move up.
+ * Nothing counts down. Under Reduce Motion the text fades in and nothing travels. A week worth sharing (shared
+ * `leagueWin`) gets a quiet Share under the first Continue, naming only the league and place.
  */
 export function LeagueCeremony({
   week,

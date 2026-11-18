@@ -10,21 +10,11 @@ import { ensureWidgetToken, forgetWidgetToken } from './tokens';
 import { forgetLetterDrafts } from '../letters/drafts';
 
 /**
- * Keeps the home-screen letter widget in step with the app. Renders nothing; mounted once under the account
- * (App.tsx), outside the screens, so any sign-out is noticed (Settings, an expired session, a deleted account).
- *
- * - Signed in with an account that can have pen pals: the widget gets a token (tokens.ts) in the app's language
- *   and
- *   is asked to show what is new.
- * - Signed out, or a guest: the token is revoked on the server and removed locally, and the widget says to open
- *   Hevalo.
- * - A letter arriving while the app is open (notification shown or tapped): the widget reloads so it is ready
- *   when
- *   the app closes. With the app closed the widget refreshes itself when its last feed said to.
- * - Back in the foreground: a token the widget found refused is replaced and the widget reloads, at most every
- *   ten
- *   minutes.
- * - On any sign-out, unfinished letter drafts on this device are discarded too (letters/drafts.ts).
+ * Keeps the home-screen letter widget in step with the account. Renders nothing; mounted once under the account
+ * (App.tsx) so every kind of sign-out is noticed. Signed in with pen pals, the widget gets a token (tokens.ts)
+ * and reloads; signed out or a guest, the token is revoked and the widget says to open Hevalo, and unfinished
+ * letter drafts are discarded (letters/drafts.ts). A letter notice while the app is open reloads the widget;
+ * returning to the foreground replaces a refused token and reloads at most every ten minutes.
  */
 
 /** How often coming back to the app may reload the widget. */

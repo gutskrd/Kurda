@@ -50,23 +50,11 @@ import { pressedDim } from '../theme/motion';
 import { PressableScale } from '../theme/MotionParts';
 
 /**
- * Learn's first half: the next lesson, the tools, the course and the rest of today.
- *
- * Top to bottom by priority: the next step (a card with one button), the practice tools two by two with today's
- * quests below (a waiting chest shows there), then the course as a lesson path on the first screen. The week's
- * league and the day's extras follow under "More for today". A review left part-way is offered under the card
- * (`ContinueReview`). Continuing is one tap, from the card or the path's "Continue" bubble. Today's status stays
- * in the bar above (LearnBar) while the path scrolls.
- *
- * The path shows one course at a time, with a switch when there are several, and one section at a time (the rest
- * folded into cards). It is told which units are near, visible and centred, so it draws and animates only those;
- * a unit heading's map button opens the rail of every unit in its section. On first show it scrolls to the
- * current skill, and a button returns there after scrolling away. A course whose map failed stays in the switch
- * with a retry.
- *
- * Learn's moments show here one at a time: a freeze that kept the streak (`useKeptStreak`, from the bar's
- * `streak`), and on a visit with no other moment, a slim banner on turning reminders on once the phone will not
- * ask again (ReminderNudge). Pull to refresh reloads the course, and `onRefresh` has the bar reload the streak.
+ * Learn's first half, top to bottom: the next step (one card, one button, with a part-finished review offered
+ * under it), the practice tools with today's quests, the course as a lesson path, then the league and the day's
+ * extras under "More for today". The path shows one course and one section at a time and draws only the units
+ * near the screen; it scrolls to the current skill on first show. Learn's one-at-a-time moments (a kept streak,
+ * the reminder banner) show here. Pull to refresh reloads the course and, via `onRefresh`, the bar's streak.
  */
 export function LessonsView({
   scrollRef,

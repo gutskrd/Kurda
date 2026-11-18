@@ -74,20 +74,11 @@ interface Moment {
 }
 
 /**
- * The learner's own tree.
- *
- * Before one is planted, the screen is the choice of a first seed: each free kind as its own seed, with the great
- * tree the chosen one will become above them. After, it is the tree in the season's scene, as large as the phone
- * allows; the distance to its next stage, shown as what is being grown toward; the water held (earned by lessons)
- * and the button to pour it; and a way to the nursery, where another kind can be bought and planted in its place.
- *
- * Pouring plays in the scene: the can comes in and tips, the water lands, the tree drinks. When that grows it,
- * the tree grows in place out of a burst of light, and only then does the celebration say so; a fully grown tree
- * that bears gets the celebration at once. A dry tree has a thought bubble of water, is described plainly as
- * thirsty, wilting or withered without blame, and the first water revives it.
- *
- * Under Reduce Motion nothing moves: the screen goes straight to the state after watering. When the server has no
- * trees, there is only a line saying so, and nowhere else in the app mentions them.
+ * The learner's own tree. Before planting, a choice of free first seeds under the tree each becomes. After, the
+ * tree in its season's scene, progress to the next stage, the water held with a pour button, and the nursery.
+ * Pouring plays in the scene, and growth is shown before the celebration; a dry tree is described plainly and the
+ * first water revives it. Under Reduce Motion it jumps to the result. When the server has no trees, only a line
+ * says so.
  */
 export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();

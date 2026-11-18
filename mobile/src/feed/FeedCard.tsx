@@ -36,20 +36,11 @@ const AUTHOR = 32;
 export const DOUBLE_TAP_MS = 220;
 
 /**
- * One post on the wall, written or a picture, in the same shape, since they sit side by side.
- *
- * Posts form one chain with a hairline between them and no boxes. Each has, top to bottom: one line of author,
- * kind and age with a "⋯" menu at the end; its text (a bold title and a few lines); its pictures within the page
- * margins with rounded corners; and a row of soft pills (like, comments, repost) with share and save as round
- * buttons at the far end. Text always comes before pictures, so every post starts the same way.
- *
- * The heart is the only reaction. A double tap on the text or pictures likes the post with a blooming heart and
- * the like haptic; a single tap opens it. Likes count optimistically and roll back if the server refuses. Like,
- * repost and save each wait only on themselves.
- *
- * The "⋯" offers Edit and Delete on your own post and Report on others'. `standalone` is the post on its own
- * page, with nothing to open. A guest sees the same card, and like, repost or save first offers an account
- * (auth/AccountGate). Memoised, since liking one post re-renders the whole wall.
+ * One post on the wall, written or a picture, in one shape: a header line (author, kind, age, "⋯"), the text, the
+ * pictures, and a row of pills (like, comments, repost, share, save). A double tap likes with a blooming heart; a
+ * single tap opens the post. Like, repost and save are optimistic, each waiting only on itself, and roll back on
+ * refusal; guests are offered an account first (auth/AccountGate). `standalone` is the post on its own page.
+ * Memoised, since liking one post re-renders the wall.
  */
 export const FeedCard = memo(function FeedCard({
   item,

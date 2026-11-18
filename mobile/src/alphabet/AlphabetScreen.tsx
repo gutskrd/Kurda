@@ -78,18 +78,11 @@ function soraniTile(l: SoraniLetter, arabicReader: boolean): TileData {
 }
 
 /**
- * Both Kurdish alphabets, Kurmancî in Latin letters and Soranî in Arabic script: every letter with its sound,
- * what it is like in the reader's language, a word to remember it by, and a self-check round. The same letters,
- * groups and practice as the web page (alphabet/ in @kurda/shared).
- *
- * It opens on the reader's dialect: Soranî for a Soranî interface, Kurmancî otherwise. Tapping a letter opens it
- * in a bottom sheet and plays it at once; a recording assigned to a character is said by Hevalo, Hamo or Xezo
- * beside its button.
- *
- * Nothing waits on the server: the letters, their clips and the clip manifest ship with the app, so every letter
- * plays its generated clip at once. Which sounds have recordings, and their speakers, is fetched in the
- * background (GET /alphabet/audio); recordings then replace the clips, and if the request fails it is retried
- * once later.
+ * Both Kurdish alphabets, Kurmancî Latin and Soranî Arabic: each letter with its sound, a comparison in the
+ * reader's language, a memory word and a self-check round, as on the web (alphabet/ in @kurda/shared). It opens
+ * on the reader's dialect, and a tapped letter opens in a sheet and plays. Letters and clips ship with the app;
+ * recordings and their speakers load in the background (GET /alphabet/audio), retried once, and replace the clips
+ * when they arrive.
  */
 export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScript; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();

@@ -140,26 +140,15 @@ const degrees = (value: Animated.AnimatedInterpolation<number> | Animated.Value 
   value.interpolate({ inputRange: [-TURN_RANGE, TURN_RANGE], outputRange: [`${-sign * TURN_RANGE}deg`, `${sign * TURN_RANGE}deg`] });
 
 /**
- * Hevalo, Hamo or Xezo saying the screen's recording, and idling between words.
+ * Hevalo, Hamo or Xezo saying the screen's recording, and idling between words. It follows the screen's own
+ * player, reading the position every frame and computing mouth and nod with `speakingFrame`, as the web does.
+ * Between words it breathes, blinks, glances and plays its habits (shared `HABITS`, `CHARACTER_HABITS`); its eyes
+ * follow a finger (`GazeArea`) unless `gaze` fixes them on a partner. Taps, `reaction` and `quiet` are described
+ * on the props.
  *
- * It follows the screen's own player (never a second one), reading the playback position every animation frame
- * and computing the mouth and nod with `speakingFrame`, as the web does.
- *
- * Between words it breathes, drifts its head slightly, blinks every few seconds and glances now and then; the
- * deer twitches an ear or sniffs (shared `HABITS`, plus `CHARACTER_HABITS` per character). Its eyes follow a
- * finger anywhere on screen (`GazeArea`) unless `gaze` fixes them on a conversation partner, with the head
- * leaning their way. Taps get a greeting then `onPress`, escalating on quick repeats (shared `tapActs`).
- * `reaction` plays a cheer, a curious tilt, or another act in the character's own way (shared `actFor`). A
- * `quiet` character listens: its mouth never moves.
- *
- * Every movement is a native-driver transform, so nothing redraws except the eyes, brows, cheeks and mouth when
- * their shape changes. It is drawn as stacked layers in one frame: the body, then the head and what is on it. The
- * deer's ears, pupils and nose are separate layers so they can move; the people's eyes and mouths are drawn
- * whole, with irises shifted inside the eyes; brows, cheeks, Xezal's loose hair and the near end of Hamo's
- * moustache are layers too.
- *
- * Under Reduce Motion only the mouth, blinks and reaction or tap faces change. Timers stop when the app is
- * backgrounded or the character unmounts.
+ * Movement is native-driver transforms over stacked SVG layers (body, then head parts), so only the eyes, brows,
+ * cheeks and mouth redraw when their shape changes. Under Reduce Motion only the mouth, blinks and faces change.
+ * Timers stop when the app is backgrounded or the character unmounts.
  */
 export function SpeakingCharacter({
   speaker,

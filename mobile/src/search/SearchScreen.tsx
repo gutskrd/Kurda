@@ -66,19 +66,10 @@ interface LessonRow {
 }
 
 /**
- * One search field for the whole app, over four scopes. Two ask the server and two are lists the app already has:
- *
- *   people   `/users/search`, rate-limited, so it waits for two characters and a typing pause; a leading "@" is
- *            dropped
- *   words    `/dictionary/search`, the same
- *   lessons  the skill nodes of the first course, fetched once and matched per keystroke
- *   games    every game with a card on the Games screen (games/gameCards.ts), matched locally
- *
- * The 250 ms debounce keeps normal typing to one call against a budget of thirty a minute. Until the server
- * answers, people and words are held in grey where they will appear.
- *
- * The field is the screen's pinned header. With nothing typed the screen offers recent searches (kept on this
- * device only) and people you may know.
+ * One search field for the whole app over four scopes: people (`/users/search`) and words (`/dictionary/search`)
+ * from the server, rate-limited, so they wait for two characters and a 250 ms typing pause; lessons (the first
+ * course's skills, fetched once) and games (games/gameCards.ts) matched locally. Pending server results are held
+ * in grey. With nothing typed it offers recent searches (this device only) and people you may know.
  */
 export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();

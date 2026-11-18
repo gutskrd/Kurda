@@ -49,20 +49,11 @@ const HEADER_FACE = 28;
 const ONLINE_DOT = 10;
 
 /**
- * A one-to-one conversation thread.
- *
- * Drawn as a conversation is read (chat/MessageRow.tsx, chat/thread.ts): consecutive messages from one side form
- * one turn, with the friend's face once at its foot and a tail on its last bubble; a day is named over its first
- * message, and the time is shown once per pause. While they type, a bubble of dots sits where their message will
- * land. Scrolled up, a round button leads back down with a count of new messages. An empty conversation opens on
- * who it is with and a suggested first hello.
- *
- * A message renders by kind (chat/MessageContent): text, a gift to unwrap or a game card. The gift button beside
- * the composer sends this friend a gift; theirs arrive wrapped, and `openGift` (from the gift banner or its
- * notification) unwraps one as soon as the thread opens. Holding one of their messages reports it. Sent messages
- * appear at once as pending (chat/sending.ts); one the server refuses is removed, the reason shown above the
- * composer and the text restored to the field. A thread that failed to load says so with a retry rather than
- * looking empty.
+ * A one-to-one conversation, drawn as it is read (chat/MessageRow.tsx, chat/thread.ts), with a typing bubble, a
+ * back-to-newest button counting new messages, and a suggested first hello when empty. Messages render by kind
+ * (chat/MessageContent); the composer's gift button sends a gift, and `openGift` unwraps one on open. Holding
+ * their message reports it. Sends show at once as pending (chat/sending.ts); a refused one is removed, its text
+ * restored and the reason shown. A failed load shows a retry rather than an empty thread.
  */
 export function ChatScreen({
   userId,
