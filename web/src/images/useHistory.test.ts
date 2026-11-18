@@ -28,10 +28,7 @@ describe('useHistory', () => {
     expect(result.current.canRedo).toBe(false);
   });
 
-  /**
-   * The reason this hook exists. A drag emits a state per pointer event; if each
-   * became a step, putting a sticker back would take two hundred presses.
-   */
+  // A drag emits a state per pointer event; each as a step would make undo useless.
   it('records a whole gesture as one step', () => {
     const { result } = renderHook(() => useHistory(0));
     act(() => result.current.set(1));
@@ -54,7 +51,7 @@ describe('useHistory', () => {
     });
     act(() => result.current.settle());
     expect(result.current.present).toBe('b');
-    // the only step is still a→b
+    // The only step is still a→b.
     act(() => result.current.undo());
     expect(result.current.present).toBe('a');
     expect(result.current.canUndo).toBe(false);
@@ -109,16 +106,12 @@ describe('useHistory', () => {
     act(() => {
       for (let i = 0; i < HISTORY_DEPTH + 25; i++) result.current.undo();
     });
-    // the earliest reachable state is bounded by the depth, not by where we began
+    // The earliest reachable state is bounded by the depth.
     expect(result.current.present).toBe(25);
     expect(result.current.canUndo).toBe(false);
   });
 
-  /**
-   * Typing into a caption is a gesture; reaching for a button is not. When the
-   * second interrupts the first, both have to survive — closing the gesture
-   * silently would lose whatever was typed from the history entirely.
-   */
+  // When a discrete change interrupts a gesture, both must survive in the history.
   it('closes an open gesture before recording a discrete change', () => {
     const { result } = renderHook(() => useHistory('a'));
     act(() => result.current.preview('typed'));

@@ -6,14 +6,7 @@ import { PictureEditor } from './PostPicture';
 import { renderApp } from '../test/utils';
 import { stubCanvas, stubImage } from './canvasStubs';
 
-/*
- * The photo editor, as the composer opens it for one picture (web/src/composer).
- * It used to be the whole picture composer — choose, edit, caption, post — and
- * these tests posted through it; posting is the composer's now and is tested
- * there (composer/Composer.test.tsx). What stays here is the editor: it takes
- * a picture and gives back the edited one, or the original when the browser
- * cannot draw it.
- */
+/* The photo editor as the composer opens it for one picture; posting itself is tested in composer/Composer.test.tsx. */
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -40,7 +33,7 @@ const show = (file: File = aPicture()) => {
   return renderApp(<PictureEditor file={file} handle="rojhat" onDone={done} onCancel={cancel} />);
 };
 
-/** Wait for the editor to appear (the picture is decoded first). */
+/** Waits for the editor, which appears once the picture is decoded. */
 async function pick(): Promise<void> {
   await screen.findByText('Edit your picture');
 }
@@ -57,15 +50,14 @@ describe('PictureEditor', () => {
     await waitFor(() => expect(done).toHaveBeenCalledTimes(1));
     const edited = done.mock.calls[0]![0] as File;
     expect(edited).toBeInstanceOf(File);
-    // the canvas export, not the bytes that came in
+    // The canvas export, not the bytes that came in.
     expect(edited).not.toBe(original);
   });
 
   it('takes a photo the operating system did not label', async () => {
     signIn();
     uploadFetch();
-    // plenty of real photos arrive with an empty `type`; judging by that string
-    // turned them away before anything had tried to read them
+    // Many real photos arrive with an empty `type`, so it must not be judged by that.
     show(new File([new Uint8Array([1, 2, 3])], 'IMG_4021.JPG', { type: '' }));
     expect(await screen.findByText('Edit your picture')).toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -75,16 +67,16 @@ describe('PictureEditor', () => {
     signIn();
     uploadFetch();
     stubImage({ fail: true });
-    // a phone photo: the browser has no HEIC decoder, but the server does
+    // A phone photo: the browser has no HEIC decoder, but the server does.
     const heic = new File([new Uint8Array([1, 2, 3])], 'IMG_4021.HEIC', { type: 'image/heic' });
     show(heic);
 
-    // no editor — there is nothing on screen to put a sticker on — but it says so plainly
+    // No editor, since nothing can be drawn, but it says so plainly.
     expect(await screen.findByText(/can’t show this kind of picture/i)).toBeInTheDocument();
     expect(screen.getByText('IMG_4021.HEIC')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Use this picture' }));
-    // the original bytes, not a canvas export of a picture that never rendered
+    // The original bytes, not an export of a picture that never rendered.
     expect(done).toHaveBeenCalledWith(heic);
   });
 
@@ -108,19 +100,13 @@ describe('PictureEditor', () => {
     );
 
     /*
-     * The app is wrapped in StrictMode, so in development every effect here runs
-     * mount → cleanup → mount, and the cleanup revokes the first run's object URL
-     * while its image is still reading from it. A picture must not be judged
-     * unreadable on the strength of that.
+     * StrictMode runs every effect mount, cleanup, mount in development, revoking the first run's object URL while its
+     * image is still reading; that must not make the picture unreadable.
      */
     expect(await screen.findByText('Edit your picture')).toBeInTheDocument();
     expect(screen.queryByText(/can’t show this kind of picture/i)).not.toBeInTheDocument();
   });
 
-  /*
-   * Framing is the first decision — which part of this did you mean — so it is
-   * the tab the editor opens on, before anything can be put on top.
-   */
   it('opens on framing, with something to frame with', async () => {
     signIn();
     uploadFetch();
@@ -151,22 +137,15 @@ describe('PictureEditor', () => {
     uploadFetch();
     show();
 
-    // before: four unlabelled grey words under the photo, and no panel until you
-    // had both added a layer and selected one — so it looked finished on arrival
     await pick();
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
     expect(screen.getByRole('button', { name: /Add words/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add a sticker/ })).toBeInTheDocument();
-    // and it says what to do while the picture is still bare
+    // It says what to do while the picture is bare.
     expect(screen.getByText(/Add words or a sticker, or draw on it/)).toBeInTheDocument();
   });
 
-  /*
-   * The point of undo is that it is there before you need it and off until you
-   * do — a live Undo button on an untouched picture is a lie about what it can
-   * take back.
-   */
   it('has nothing to take back until something is done', async () => {
     signIn();
     uploadFetch();
@@ -185,11 +164,6 @@ describe('PictureEditor', () => {
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
   });
 
-  /**
-   * Adding a sticker used to drop a fixed one onto the picture and leave you to
-   * hunt for the grid that turned it into the one you wanted — two steps, in
-   * the wrong order, with the wrong sticker on your photograph in between.
-   */
   it('opens a picker instead of guessing which sticker you meant', async () => {
     signIn();
     uploadFetch();
@@ -199,7 +173,7 @@ describe('PictureEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: /Add a sticker/ }));
 
     expect(screen.getByText('Pick a sticker')).toBeInTheDocument();
-    // and nothing has been put on the picture yet
+    // Nothing has been put on the picture yet.
     expect(screen.queryByText('Sticker', { exact: true })).not.toBeInTheDocument();
   });
 
@@ -214,15 +188,10 @@ describe('PictureEditor', () => {
 
     expect(await screen.findByText('Sticker', { exact: true })).toBeInTheDocument();
     expect(screen.queryByText('Pick a sticker')).not.toBeInTheDocument();
-    // and it is one step, so undo takes the whole sticker back
+    // One step, so undo takes the whole sticker back.
     expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
   });
 
-  /**
-   * Emoji used to be drawn as text in whichever font the writer's machine had,
-   * so the same post came out with Segoe's emoji from Windows and Apple's from
-   * a Mac. They are pictures now, served from this origin.
-   */
   it('draws emoji from pictures, not from whatever font the machine has', async () => {
     signIn();
     uploadFetch();
@@ -236,7 +205,7 @@ describe('PictureEditor', () => {
     expect(heart.querySelector('img')).toHaveAttribute('src', '/emoji/2764.webp');
   });
 
-  /** Choose a picture, switch to Add, and place a sticker (which selects it). */
+  /** Chooses a picture, switches to Add, and places a sticker, which selects it. */
   async function placeSticker(): Promise<void> {
     await pick();
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
@@ -245,11 +214,6 @@ describe('PictureEditor', () => {
     await screen.findByText('Sticker', { exact: true });
   }
 
-  /**
-   * Before this there was no way to tell what was selected except by noticing
-   * which panel had appeared underneath, and the only way to resize or turn
-   * something was to leave the picture and find a slider.
-   */
   it('shows the selected layer with handles to resize and turn it', async () => {
     signIn();
     uploadFetch();
@@ -258,7 +222,7 @@ describe('PictureEditor', () => {
 
     const box = document.querySelector('.layer-box');
     expect(box).not.toBeNull();
-    // four corners to pull, and one above the top edge to turn by
+    // Four corners to pull, and one above the top edge to turn by.
     expect(box!.querySelectorAll('.layer-handle')).toHaveLength(5);
     expect(box!.querySelector('.layer-handle-turn')).not.toBeNull();
   });
@@ -295,7 +259,7 @@ describe('PictureEditor', () => {
     const before = left();
     await userEvent.keyboard('{ArrowRight}');
     expect(left()).not.toBe(before);
-    // and it is a step you can take back, not a hundred
+    // One step to take back, not a hundred.
     expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
   });
 
@@ -305,12 +269,12 @@ describe('PictureEditor', () => {
     show();
     await placeSticker();
 
-    // one layer: nothing to move it above or below
+    // One layer: nothing to move it above or below.
     expect(screen.getByRole('button', { name: 'Bring forward' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Send back' })).toBeDisabled();
 
     await userEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
-    // the copy is on top, so it can go back but not further forward
+    // The copy is on top, so it can go back but not further forward.
     expect(screen.getByRole('button', { name: 'Bring forward' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Send back' })).toBeEnabled();
 

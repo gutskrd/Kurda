@@ -1,11 +1,4 @@
-/**
- * Colour, in the three ways people write it down.
- *
- * The picker shows Hex, RGB and HSL at once and lets you type into any of them,
- * so every conversion has to round-trip: type `#3ab26f`, and the HSL you get
- * back must be the HSL that produces `#3ab26f` again. All of it is pure, which
- * is the only reason that is checkable.
- */
+/** Colour conversions for the picker's hex, RGB and HSL fields; each round-trips, so typing in one never shifts the others. */
 
 export interface Rgb {
   r: number;
@@ -14,18 +7,18 @@ export interface Rgb {
 }
 
 export interface Hsl {
-  /** degrees, 0–360 */
+  /** Degrees, 0–360. */
   h: number;
-  /** percent, 0–100 */
+  /** Percent, 0–100. */
   s: number;
-  /** percent, 0–100 */
+  /** Percent, 0–100. */
   l: number;
 }
 
 const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 const round = (n: number): number => Math.round(n * 1000) / 1000;
 
-/** `#abc`, `#aabbcc` or `aabbcc` — anything else is not a colour. */
+/** `#abc`, `#aabbcc` or `aabbcc`; anything else is not a colour. */
 export function parseHex(input: string): Rgb | null {
   const raw = input.trim().replace(/^#/, '');
   const full = raw.length === 3 ? raw.split('').map((c) => c + c).join('') : raw;
@@ -115,18 +108,12 @@ export function formatHsl({ h, s, l }: Hsl): string {
   return `${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%`;
 }
 
-/**
- * Where a colour sits on the picker: which hue, and where in the square.
- *
- * The square is saturation across and value down, which is what a picker looks
- * like — HSL's lightness is not the same axis, so the two are kept apart and
- * converted at the edges rather than confused in the middle.
- */
+/** A colour's place on the picker: a hue, and saturation across and value down the square (unlike HSL's lightness). */
 export interface Hsv {
   h: number;
-  /** 0–1 across the square */
+  /** 0–1 across the square. */
   s: number;
-  /** 0–1 up the square */
+  /** 0–1 up the square. */
   v: number;
 }
 

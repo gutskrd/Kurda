@@ -1,29 +1,16 @@
 import { useRef } from 'react';
 import { SIZE_RANGE, captureIfPossible, layerBox, type PlacedLayer } from './layers';
 
-/** Corners you can pull. Named by where they sit, so the cursor can match. */
+/** Pullable corners, named by position so the cursor can match. */
 const CORNERS = ['nw', 'ne', 'se', 'sw'] as const;
 type Corner = (typeof CORNERS)[number];
 
 const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 
 /**
- * The selected layer, and the handles for changing it.
- *
- * Until this existed there was no way to tell what was selected except by
- * noticing which panel had appeared underneath, and the only way to resize or
- * turn something was to leave the picture and find a slider. That is the
- * difference between a control panel and an editor: in an editor you work on
- * the thing itself.
- *
- * Laid over the canvas as ordinary elements rather than painted into it, so the
- * outline stays crisp at any canvas resolution and the handles can be real
- * targets with real cursors. The box itself does not take pointer events —
- * dragging inside it falls through to the canvas, which already knows how to
- * move a layer — so only the handles intercept.
- *
- * Everything reports continuously and settles once, so pulling a corner across
- * the picture is a single step in the history rather than a hundred.
+ * The selected layer's outline and its resize and turn handles, laid over the canvas as elements so they stay crisp and
+ * have real cursors. The box itself passes pointer events through to the canvas, which moves the layer. Gestures
+ * preview continuously and settle once, so each is one history step.
  */
 export function LayerHandles({
   layer,
@@ -33,20 +20,20 @@ export function LayerHandles({
   onSettle,
 }: {
   layer: PlacedLayer;
-  /** the document's own pixel size, which the layer's box is measured against */
+  /** The document's pixel size, which the layer's box is measured against. */
   width: number;
   height: number;
   onPreview: (patch: Partial<PlacedLayer>) => void;
   onSettle: () => void;
 }): React.JSX.Element {
   const wrapRef = useRef<HTMLDivElement>(null);
-  /** what the layer looked like when the current gesture began */
+  /** The layer as it was when the current gesture began. */
   const gesture = useRef<{ size: number; rotation: number; dist: number; angle: number } | null>(null);
 
   const box = layerBox(layer, width, height);
   const pct = (n: number): string => `${n * 100}%`;
 
-  /** The layer's centre and the pointer, in the stage's own pixels. */
+  /** The distance and angle from the layer's centre to the pointer, in the stage's pixels. */
   function reading(e: React.PointerEvent): { dist: number; angle: number } | null {
     const stage = wrapRef.current?.parentElement;
     if (!stage) return null;
@@ -75,14 +62,7 @@ export function LayerHandles({
     onSettle();
   }
 
-  /**
-   * Resize by how much further the corner has been pulled from the centre.
-   *
-   * A ratio rather than a delta, so the same drag does the same thing to a big
-   * layer and a small one, and so grabbing any of the four corners behaves
-   * identically — which is what you expect when the box is turned and "up" is
-   * no longer up.
-   */
+  /** Resizes by the ratio of the corner's distance from the centre, so any corner works the same at any size and turn. */
   function resize(e: React.PointerEvent): void {
     const start = gesture.current;
     const now = start && reading(e);
@@ -130,7 +110,7 @@ export function LayerHandles({
         onPointerUp={end}
         onPointerCancel={end}
       />
-      {/* the stem, so the turn handle reads as attached rather than as a dot */}
+      {/* The stem, so the turn handle reads as attached. */}
       <span className="layer-turn-stem" />
     </div>
   );

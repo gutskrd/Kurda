@@ -30,7 +30,7 @@ describe('hex', () => {
     expect(parseHex('#3ab26f')).toEqual({ r: 58, g: 178, b: 111 });
     expect(parseHex('3ab26f')).toEqual({ r: 58, g: 178, b: 111 });
     expect(parseHex('  #3AB26F  ')).toEqual({ r: 58, g: 178, b: 111 });
-    // the short form is a real form, not a typo
+    // The short form is valid.
     expect(parseHex('#fff')).toEqual({ r: 255, g: 255, b: 255 });
   });
 
@@ -51,8 +51,7 @@ describe('hex', () => {
 
 describe('rgb ↔ hsl', () => {
   it('round-trips every sample', () => {
-    // the picker shows both at once and lets you type into either, so a colour
-    // must survive the trip or the two boxes will disagree in front of you
+    // Both fields show at once, so a colour must survive the round trip or they disagree.
     for (const rgb of SAMPLES) {
       const back = hslToRgb(rgbToHsl(rgb));
       expect(back, JSON.stringify(rgb)).toEqual(rgb);
@@ -77,8 +76,7 @@ describe('rgb ↔ hsl', () => {
 
 describe('rgb ↔ hsv', () => {
   it('round-trips every sample', () => {
-    // the gradient square is saturation/value, not saturation/lightness — the
-    // two are different axes and conflating them bends the colours
+    // The square is saturation/value, not saturation/lightness.
     for (const rgb of SAMPLES) {
       expect(hsvToRgb(rgbToHsv(rgb)), JSON.stringify(rgb)).toEqual(rgb);
     }
@@ -86,7 +84,7 @@ describe('rgb ↔ hsv', () => {
 
   it('puts full colour at the top-right of the square', () => {
     expect(rgbToHsv({ r: 255, g: 0, b: 0 })).toMatchObject({ s: 1, v: 1 });
-    // and black at the bottom, whatever the hue
+    // Black at the bottom, whatever the hue.
     expect(rgbToHsv({ r: 0, g: 0, b: 0 }).v).toBe(0);
   });
 });

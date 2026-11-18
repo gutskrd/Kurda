@@ -11,25 +11,10 @@ import { overlaySources } from './filters';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Edit one picture before it is posted: frame it, add words, stickers, a
- * filter, a drawing.
- *
- * This was the whole of "post a picture" — choose a file, edit it, pick photo
- * or meme, write a caption, post. Posting is the composer's now
- * (web/src/composer), where a picture is one of up to four on a post with
- * words, and this is what its "Edit" opens: it takes the picture, and gives
- * back the edited one as a file, or nothing if you cancel.
- *
- * The framing and everything added is burned into a canvas here and the canvas
- * is what comes back, so the preview and the stored file are the same pixels.
- * The Hevalo mark is the exception: the server adds that on upload, because a
- * mark the client applies is a mark the client can leave off — which is also
- * why nothing here can end up over the top of it.
- *
- * The export canvas is made when you are done rather than being the one on
- * screen. The editor's canvas is not mounted while you are framing, and an
- * export that failed because you happened to be on the wrong tab would be a
- * baffling thing to debug.
+ * Edits one picture for the composer (web/src/composer): framing, words, stickers, a filter, a drawing. It returns the
+ * edited picture as a file, or nothing on cancel. The edits are burned into a canvas so preview and file are the same
+ * pixels; the Hevalo mark is added by the server. The export canvas is made at the end, since the editor's canvas is not
+ * mounted while framing.
  */
 export function PictureEditor({
   file,
@@ -39,34 +24,33 @@ export function PictureEditor({
 }: {
   file: File;
   handle: string;
-  /** the edited picture; the original when the browser could not draw it */
+  /** The edited picture, or the original when the browser could not draw it. */
   onDone: (edited: File) => void;
   onCancel: () => void;
 }): React.JSX.Element {
   const t = useT();
   const imageRef = useRef<CanvasImageSource | null>(null);
 
-  /** the source picture's own pixels, before any framing */
+  /** The source picture's own pixels, before framing. */
   const [source, setSource] = useState<{ w: number; h: number } | null>(null);
   const history = useHistory<Composition>(UNTOUCHED);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** The browser could not decode it, so there is nothing to draw on. */
   const [rawOnly, setRawOnly] = useState(false);
-  /** what the bytes turned out to be, so a failure can be worded honestly */
+  /** What the bytes turned out to be, so a failure is worded honestly. */
   const [format, setFormat] = useState<string | null>(null);
-  /** bumped to decode the same file again, for a failure that may not repeat */
+  /** Bumped to decode the same file again, for a failure that may not repeat. */
   const [attempt, setAttempt] = useState(0);
 
-  // a new picture is a new document: undo must not walk back into the last
-  // one, and the graded copy of the last one is now worth nothing
+  // A new picture is a new document: undo must not reach the last one, and its graded copy is stale.
   const { reset } = history;
   useEffect(() => {
     forgetGraded();
     reset(UNTOUCHED);
   }, [file, reset]);
 
-  /** Decode the picture into something the canvas can draw from. */
+  /** Decodes the picture for the canvas. */
   useEffect(() => {
     let cancelled = false;
     let decoded: DecodedPicture | null = null;
@@ -74,17 +58,14 @@ export function PictureEditor({
 
     void decodePicture(file).then((result) => {
       decoded = result;
-      // React runs this effect twice in development, so a result belonging to a
-      // run that has already been torn down is dropped rather than rendered
+      // Development runs effects twice; a result from a torn-down run is dropped.
       if (cancelled) {
         result?.release();
         return;
       }
       if (!result) {
-        // Usually this browser has no decoder for these bytes — a HEIC from a
-        // phone. But read the bytes before saying so: a PNG that will not decode
-        // is not a format problem, and saying it is sends someone converting a
-        // file that is already fine.
+        // Usually no decoder for these bytes (a phone's HEIC), but check the bytes first: a PNG that will not decode is
+        // not a format problem.
         void sniffPictureFormat(file).then((f) => {
           if (!cancelled) setFormat(f);
         });
@@ -109,14 +90,13 @@ export function PictureEditor({
     }
     setBusy(true);
     setError(null);
-    // every picture the draw will need, decoded first: the export draws
-    // synchronously, so anything still loading would export as nothing
+    // Decode everything first: the export draws synchronously, so anything still loading would be missing.
     await ensureStickersFor([
       ...history.present.layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)),
       ...overlaySources(),
     ]);
     const canvas = document.createElement('canvas');
-    // full size this time, not the preview's ceiling — this is the file
+    // Full size this time: this is the file.
     compose(canvas, imageRef.current, source.w, source.h, history.present);
     const edited = await canvasToFile(canvas, 'dimen');
     setBusy(false);
@@ -142,8 +122,7 @@ export function PictureEditor({
               </Button>
             </>
           ) : (
-            /* no promise that it will convert: HEIC needs a codec the server
-               may not carry, and it says so plainly if it cannot */
+            /* No promise it will convert: HEIC needs a codec the server may lack, and it says so if it cannot. */
             <p className="muted">
               {t('picture.browserCannotShow', {
                 what: format ? t('picture.formatPictures', { format: format.toUpperCase() }) : t('picture.thisKind'),

@@ -54,27 +54,10 @@ const MODES: ReadonlyArray<{ key: Mode; labelKey: MessageKey; icon: React.ReactN
 ];
 
 /**
- * The editor: what part of the picture, and what goes on top of it.
- *
- * Framing comes first because it is the first decision — a picture is not
- * finished being chosen until you have said which part of it you meant — and it
- * stays available afterwards, so re-cropping does not mean throwing away the
- * words you already placed. Everything else is one list of layers in the order
- * they were added.
- *
- * Every position is a share of the picture rather than a pixel, because a
- * layout arranged in a 300px preview has to land identically in the stored file
- * at whatever size the server keeps.
- *
- * The whole document — the crop, the shape, the layers — lives in one history,
- * so undo takes back the last thing you did whatever kind of thing it was.
- * Changes arrive through it in two ways: `set` for something discrete, and
- * `preview` then `settle` for a gesture, so one long drag costs one undo.
- *
- * The signature is not a layer and cannot be one. It goes on last, on the
- * server, so nothing anyone adds can end up over the top of it. The editor
- * shades the corner it will occupy so nobody arranges something important there
- * and wonders where it went.
+ * The photo editor: framing first, kept available so re-cropping keeps the layers, then one list of layers in the
+ * order added. Positions are shares of the picture so a layout in a small preview lands the same in the stored file.
+ * The whole document lives in one history: `set` for a discrete change, `preview` then `settle` for a gesture, so a
+ * drag is one undo. The signature is not a layer; the server adds it last, and the editor shades its corner.
  */
 export function PhotoEditor({
   image,
@@ -84,7 +67,7 @@ export function PhotoEditor({
   history,
 }: {
   image: CanvasImageSource;
-  /** the source picture's own pixels */
+  /** The source picture's own pixels. */
   iw: number;
   ih: number;
   handle: string;
@@ -95,20 +78,13 @@ export function PhotoEditor({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>('frame');
   const [stickerTab, setStickerTab] = useState<'marks' | 'emoji'>('marks');
-  /**
-   * The sticker picker, and what choosing one will do.
-   *
-   * Adding a sticker used to drop a fixed one onto the picture and leave you to
-   * find the grid that changed it into the one you wanted — two steps, in the
-   * wrong order, with a wrong sticker on your photograph in between. Now the
-   * picker opens first and what you click is what you get.
-   */
+  /** The sticker picker and what choosing will do: add a new sticker, or replace one. */
   const [picker, setPicker] = useState<null | { mode: 'add' } | { mode: 'replace'; id: string }>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [color, setColor] = useState('#ffffff');
   const [strokeWidth, setStrokeWidth] = useState(0.012);
   const drawing = useRef<StrokeLayer | null>(null);
-  /** bumped when overlay artwork finishes decoding, so the draws can catch up */
+  /** Bumped when overlay artwork finishes decoding, so the draws catch up. */
   const [artReady, setArtReady] = useState(0);
   const dragging = useRef<{ id: string; dx: number; dy: number } | null>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
@@ -120,17 +96,10 @@ export function PhotoEditor({
   const selected: PlacedLayer | null =
     doc.layers.find((l): l is PlacedLayer => isPlaced(l) && l.id === selectedId) ?? null;
 
-  /* --- ways to change the document ------------------------------------- */
+  /* --- Ways to change the document --- */
   const setLayers = (layers: Layer[]): void => history.set({ ...doc, layers });
   const previewLayers = (layers: Layer[]): void => history.preview({ ...doc, layers });
-  /**
-   * Change one layer, and keep it inside the picture.
-   *
-   * Every route to moving, resizing or turning something goes through here, so
-   * this is the one place that has to hold the box inside the frame. Anything
-   * hanging over the edge is simply cut off on export, so what is placed here
-   * would not be what gets posted.
-   */
+  /** Changes one layer and keeps its box inside the picture; every move, resize and turn goes through here. */
   const patch = (id: string, p: Partial<PlacedLayer>, live = false): void => {
     const next = doc.layers.map((l) =>
       isPlaced(l) && l.id === id
@@ -145,11 +114,11 @@ export function PhotoEditor({
     if (layer.kind !== 'stroke') setSelectedId(layer.id);
     setMode('move');
   };
-  /** Put the chosen sticker where the picker was opened for. */
+  /** Puts the chosen sticker where the picker was opened for. */
   const chooseSticker = (src: string, glyph: string): void => {
     const target = picker;
     if (!target) return;
-    // decoded before it lands, so the first draw after it has something to draw
+    // Decoded before it lands, so the next draw has something to draw.
     void ensureSticker(src).then(() => {
       if (target.mode === 'replace') patch(target.id, { src, glyph });
       else add({ kind: 'sticker', id: newId(), glyph, src, size: 0.18, rotation: 0, x: 0.5, y: 0.4 });
@@ -163,12 +132,8 @@ export function PhotoEditor({
   };
 
   /**
-   * Select something else, and throw away words that were never typed.
-   *
-   * "Add words" now puts an empty text layer on the picture, which draws
-   * nothing — so if you change your mind and tap elsewhere, it would stay there
-   * forever: invisible, and still large enough to catch the next tap aimed at
-   * the photograph underneath it. Leaving is how you cancel.
+   * Selects something else, discarding words never typed: an empty text layer draws nothing, but would stay and catch
+   * taps meant for the photo.
    */
   const select = (id: string | null): void => {
     const stray = doc.layers.find(
@@ -178,13 +143,7 @@ export function PhotoEditor({
     setSelectedId(id);
   };
 
-  /**
-   * Move a layer up or down the stack.
-   *
-   * The list is the stacking order — later is on top — so this is a swap with
-   * the neighbour rather than a sort. Without it, two things placed on the same
-   * spot are stuck in the order they happened to be added.
-   */
+  /** Moves a layer one step up or down the stack; the list is the stacking order, later on top. */
   const reorder = (id: string, by: 1 | -1): void => {
     const from = doc.layers.findIndex((l) => l.id === id);
     const to = from + by;
@@ -196,7 +155,7 @@ export function PhotoEditor({
     setLayers(next);
   };
 
-  /** A copy, offset a little so it is visibly a second thing and not a no-op. */
+  /** A copy, offset a little so it is visibly a second thing. */
   const duplicate = (id: string): void => {
     const found = doc.layers.find((l) => l.id === id);
     if (!found || !isPlaced(found)) return;
@@ -209,7 +168,7 @@ export function PhotoEditor({
     setSelectedId(copy.id);
   };
 
-  /* a filter's artwork has to be decoded before a synchronous draw can use it */
+  /* A filter's artwork must be decoded before a synchronous draw can use it. */
   useEffect(() => {
     let live = true;
     void ensureStickersFor(overlaySources()).then(() => {
@@ -222,51 +181,27 @@ export function PhotoEditor({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    // drawn small: grading costs a pass over every pixel, and this runs on every
-    // slider tick. The export is drawn full size, once, when it is posted.
+    // Drawn small, since grading touches every pixel on every slider tick; the export is drawn full size once.
     if (canvas) compose(canvas, image, iw, ih, doc, PREVIEW_MAX_EDGE);
-    // `mode` is a dependency because it decides whether this canvas exists at
-    // all: framing shows the framer instead, so leaving frame mode mounts a
-    // fresh canvas that nothing else would ever draw into — the document has
-    // not changed, only what is on screen.
+    // `mode` matters: leaving frame mode mounts a fresh canvas that must be drawn into although the document is unchanged.
   }, [image, iw, ih, doc, mode, artReady]);
 
-  /**
-   * What the keyboard listener should act on, kept current without making it
-   * resubscribe. The listener is on the document and lives for the life of the
-   * editor; reading these through a ref is what stops it from closing over the
-   * selection as it was when the editor mounted.
-   */
+  /** The keyboard listener's view of current state, through a ref so it never closes over the selection at mount. */
   const latest = useRef({ selected, patch, remove, select });
   latest.current = { selected, patch, remove, select };
 
-  /**
-   * Words with nothing in them yet get the cursor.
-   *
-   * Pressing "Add words" is a request to write something, so the box should be
-   * ready for it — otherwise the next thing you do is hunt for the field you
-   * just asked for. Only when it is empty: reselecting words you have already
-   * written is usually a prelude to moving them, and stealing focus there would
-   * pull a phone's keyboard up over the picture for no reason.
-   */
+  /** Focuses the text field for words not yet written; reselecting written words usually means moving them, so no focus. */
   useEffect(() => {
-    // the emptiness test is what makes this run once: the first keystroke ends
-    // it, and re-focusing a field that already has focus does nothing anyway
+    // The emptiness check makes this run once: the first keystroke ends it.
     if (selected?.kind === 'text' && selected.value === '') textRef.current?.focus();
   }, [selectedId, selected]);
 
-  /**
-   * Undo and redo from the keyboard, the way every other editor does it.
-   *
-   * Bound on the document rather than the canvas so it works wherever the
-   * cursor happens to be — except inside a field someone is typing in, where
-   * the browser's own undo is the one they mean.
-   */
+  /** Undo and redo from the keyboard, on the document, except inside a field where the browser's own undo applies. */
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
-      // inside a field the browser's own keys are the ones that were meant
+      // Inside a field the browser's own keys are meant.
       if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
 
       const key = e.key.toLowerCase();
@@ -290,8 +225,7 @@ export function PhotoEditor({
         return;
       }
 
-      // a nudge is one part in two hundred of the picture; with shift, ten of
-      // them — fine placement without hunting for the last pixel by hand
+      // A nudge is 1/200 of the picture, ten times that with shift.
       const step = e.shiftKey ? 0.05 : 0.005;
       const moves: Record<string, [number, number]> = {
         ArrowLeft: [-step, 0],
@@ -308,7 +242,7 @@ export function PhotoEditor({
     return () => document.removeEventListener('keydown', onKey);
   }, [history]);
 
-  /** Where a pointer is, as a share of the picture. */
+  /** A pointer's position as a share of the picture. */
   const at = (e: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } => {
     const box = e.currentTarget.getBoundingClientRect();
     return {
@@ -326,7 +260,7 @@ export function PhotoEditor({
       previewLayers([...doc.layers, drawing.current]);
       return;
     }
-    // pick the topmost thing near the pointer; nothing near it clears the choice
+    // Pick the topmost thing near the pointer; nothing near clears the selection.
     const hit = [...doc.layers]
       .reverse()
       .find((l): l is PlacedLayer => isPlaced(l) && Math.hypot(l.x - p.x, l.y - p.y) < 0.12);
@@ -352,7 +286,7 @@ export function PhotoEditor({
     if (drag) patch(drag.id, { x: p.x + drag.dx, y: p.y + drag.dy }, true);
   }
 
-  /** A stroke, or a whole drag, becomes one step the moment it ends. */
+  /** A stroke or drag becomes one history step when it ends. */
   function onPointerUp(): void {
     const wasGesture = drawing.current !== null || dragging.current !== null;
     drawing.current = null;
@@ -360,12 +294,7 @@ export function PhotoEditor({
     if (wasGesture) history.settle();
   }
 
-  /**
-   * The document with a different shape, and everything on it pulled back
-   * inside. A tall crop is narrower than a wide one, so words that fitted
-   * before may not fit now — leaving them where they were would push them off
-   * the edge without anyone touching them.
-   */
+  /** The document in another shape, with every layer pulled back inside, since a taller crop is narrower. */
   const reshaped = (aspectKey: string): Composition => {
     const next = { ...doc, aspectKey };
     const fitted = outputSize(iw, ih, aspectOf(next, iw, ih), next.frame);
@@ -399,7 +328,7 @@ export function PhotoEditor({
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           />
-          {/* what is selected, and how to change it without leaving the picture */}
+          {/* The selection's controls, on the picture. */}
           {mode === 'move' && selected && !picker && (
             <LayerHandles
               layer={selected}
@@ -410,7 +339,7 @@ export function PhotoEditor({
             />
           )}
 
-          {/* the corner the mark will take, so nothing important is put under it */}
+          {/* The corner the mark will take, so nothing important goes under it. */}
           <span
             className="editor-sig-zone"
             style={{
@@ -457,7 +386,7 @@ export function PhotoEditor({
           ))}
         </div>
 
-        {/* taking something back lives away from everything that makes a change */}
+        {/* Undo and redo sit apart from the controls that make changes. */}
         <div className="editor-history">
           <button
             type="button"
@@ -507,8 +436,7 @@ export function PhotoEditor({
             crop={crop}
             artReady={artReady}
             activeKey={doc.filterKey}
-            // a new filter arrives at full strength; turning it down is the
-            // next thing you do, not something to have to undo first
+            // A new filter starts at full strength.
             onPick={(filterKey) => history.set({ ...doc, filterKey, strength: 1 })}
           />
 
@@ -557,16 +485,7 @@ export function PhotoEditor({
 
       {mode === 'move' && (
         <div className="editor-adds">
-          {/*
-            Words start empty and the box takes the focus.
-
-            This used to stamp "Gotina te" onto the photograph and then offer you
-            a box already full of it — so the first thing you did with your own
-            picture was select somebody else's placeholder and delete it. Now the
-            button opens the box, and what appears on the picture is what you
-            type. An empty one is thrown away when you look elsewhere, so
-            changing your mind leaves nothing behind.
-          */}
+          {/* Words start empty with the box focused; an empty one is discarded on selecting elsewhere. */}
           <button
             type="button"
             className="editor-add"
@@ -619,7 +538,7 @@ export function PhotoEditor({
             </button>
           </div>
 
-          {/* two kinds, because fifty-six emoji would bury seven marks in one grid */}
+          {/* Two kinds, so the emoji do not bury the marks in one grid. */}
           <div className="seg seg-sub" role="group" aria-label={t('photo.stickerKind')}>
             <button
               type="button"
@@ -699,12 +618,7 @@ export function PhotoEditor({
             </button>
           </div>
 
-          {/*
-            For words, the box comes first — it is the thing you pressed the
-            button for. Arranging and restyling only mean anything once there
-            is something to arrange, and burying the field under three rows of
-            controls is what made "Add words" feel like opening a settings page.
-          */}
+          {/* For words, the text box comes first; arranging and styling come after. */}
           {selected.kind === 'text' && (
             <textarea
               ref={textRef}
@@ -714,14 +628,13 @@ export function PhotoEditor({
               maxLength={280}
               placeholder={t('photo.typeYourWords')}
               aria-label={t('photo.textOnPicture')}
-              // a whole sentence is one step; settling per keystroke would
-              // make undo behave like backspace
+              // A whole edit is one step, so undo does not behave like backspace.
               onChange={(e) => patch(selected.id, { value: e.target.value }, true)}
               onBlur={history.settle}
             />
           )}
 
-          {/* the list is the stacking order, so this is a swap with the neighbour */}
+          {/* The list is the stacking order, so this swaps with the neighbour. */}
           <div className="layer-actions">
             <button
               type="button"
@@ -827,12 +740,8 @@ export function PhotoEditor({
 }
 
 /**
- * One adjustment.
- *
- * The number is shown only when it is doing something, so a panel of nine
- * sliders reads as "nothing is on" at a glance rather than as nine zeroes. The
- * value emits continuously and settles on release, so dragging one end to end
- * is a single step in the history rather than a hundred.
+ * One adjustment slider. The number shows only when non-zero, so the panel reads as "nothing on" at a glance. It
+ * previews while dragging and settles on release, so a drag is one history step.
  */
 function AdjustRow({
   name,

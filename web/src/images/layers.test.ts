@@ -41,7 +41,6 @@ const stroke = (over: Partial<Layer> = {}): Layer =>
 
 describe('clampLayer', () => {
   it('turns all the way round rather than stopping at a lean', () => {
-    // the old editor allowed -45°..45°, which is a tilt, not a rotation
     expect(ROTATION_RANGE).toEqual({ min: 0, max: 360 });
     for (const [given, expected] of [[0, 0], [359, 359], [360, 0], [370, 10], [-10, 350], [725, 5]]) {
       const turned = clampLayer(text({ rotation: given })) as { rotation: number };
@@ -57,7 +56,7 @@ describe('clampLayer', () => {
   });
 
   it('leaves a stroke where it was drawn', () => {
-    // a stroke has no centre to move and no angle to turn
+    // A stroke has no centre to move and no angle to turn.
     const s = stroke({ width: 99 }) as { width: number; points: unknown[] };
     const held = clampLayer(s as Layer) as { width: number; points: unknown[] };
     expect(held.width).toBeLessThan(1);
@@ -105,7 +104,7 @@ describe('drawLayers', () => {
 
     expect(calls[0]).toBe('clearRect');
     expect(calls[1]).toBe('drawImage');
-    // the order they were added is the order they stack
+    // The order added is the order they stack.
     const drawn = calls.filter((c) => c.startsWith('fillText')).map((c) => c.replace('fillText:', ''));
     expect(drawn).toEqual(['first', '🔥', 'last']);
   });
@@ -113,16 +112,14 @@ describe('drawLayers', () => {
   it('draws nothing over the signature, because the signature is not a layer', () => {
     const { calls } = stubCanvas();
     drawLayers(document.createElement('canvas'), image, 900, 700, [text({ value: 'hi' })]);
-    // the mark is added afterwards by the server, which is what makes it
-    // impossible to cover — nothing here can be told to draw it
+    // The server adds the mark afterwards, so nothing here can be told to draw it.
     expect(calls.some((c) => c.includes('@'))).toBe(false);
   });
 
   it('draws a single tap as a dot rather than nothing', () => {
     const { calls } = stubCanvas();
     drawLayers(document.createElement('canvas'), image, 900, 700, [stroke({ points: [{ x: 0.4, y: 0.4 }] })]);
-    // one point is a tap, and a tap should leave a mark; a path with no second
-    // point strokes nothing at all
+    // A tap should leave a mark; a path with no second point strokes nothing.
     expect(calls).toContain('lineTo');
     expect(calls).toContain('stroke');
   });
@@ -132,7 +129,7 @@ describe('drawLayers', () => {
     drawLayers(document.createElement('canvas'), image, 900, 700, [
       stroke({ points: [{ x: 0.1, y: 0.1 }, { x: 0.2, y: 0.2 }, { x: 0.3, y: 0.25 }] }),
     ]);
-    // one moveTo and a lineTo per point after it
+    // One moveTo, then a lineTo per point after it.
     expect(calls.filter((c) => c === 'lineTo')).toHaveLength(2);
   });
 
@@ -146,21 +143,21 @@ describe('drawLayers', () => {
     stubCanvas();
     const canvas = document.createElement('canvas');
     drawLayers(canvas, image, 2000, 500, [text({ value: 'hi', size: 0.1 })]);
-    // 500 * 0.1, not 2000 * 0.1
+    // 500 × 0.1, not 2000 × 0.1.
     expect(canvas.getContext('2d')!.font).toContain('50px');
   });
 
   it('skips words that are only whitespace', () => {
     const { calls } = stubCanvas();
     drawLayers(document.createElement('canvas'), image, 900, 700, [text({ value: '   ', plate: true })]);
-    // a plate and a shadow behind nothing would be a mark on the picture
+    // A plate and a shadow behind nothing would be a mark on the picture.
     expect(calls.some((c) => c.startsWith('fillText'))).toBe(false);
     expect(calls).not.toContain('fill');
   });
 
   describe('picture stickers', () => {
     it('draws a loaded one as an image, not as text', async () => {
-      // jsdom never loads a real file, so the Image has to be the stub that does
+      // jsdom never loads a real file, so the Image must be the stub.
       stubImage({ width: 512, height: 512 });
       await ensureSticker('/stickers/kurdistan_badge.webp');
       const { calls } = stubCanvas();
@@ -169,7 +166,7 @@ describe('drawLayers', () => {
         sticker({ src: '/stickers/kurdistan_badge.webp' }),
       ]);
 
-      // one drawImage for the photo itself, one for the sticker
+      // One drawImage for the photo, one for the sticker.
       expect(calls.filter((c) => c === 'drawImage')).toHaveLength(2);
       expect(calls.some((c) => c.startsWith('fillText'))).toBe(false);
     });
@@ -181,7 +178,7 @@ describe('drawLayers', () => {
         sticker({ src: '/stickers/never-loaded.webp' }),
       ]);
 
-      // only the photo — a half-loaded sticker must not become a broken box
+      // Only the photo; a half-loaded sticker must not become a broken box.
       expect(calls.filter((c) => c === 'drawImage')).toHaveLength(1);
       expect(calls.some((c) => c.startsWith('fillText'))).toBe(false);
     });
@@ -195,7 +192,7 @@ describe('drawLayers', () => {
 });
 
 describe('keepInside', () => {
-  /** typed narrowly, unlike the module-level helpers, so layerBox will take it */
+  /** Typed narrowly, unlike the module-level helpers, so layerBox will take it. */
   const words = (value: string): TextLayerV2 => ({
     kind: 'text',
     id: 't1',
@@ -220,14 +217,10 @@ describe('keepInside', () => {
     ...over,
   });
 
-  /**
-   * `clampLayer` only holds the centre between 0 and 1, which lets half a
-   * sticker hang over the edge — and on export that half is simply gone, so
-   * what you placed is not what gets posted.
-   */
+  // `clampLayer` only holds the centre, which would let half a sticker be cut off on export.
   it('pulls a sticker back so none of it hangs over the edge', () => {
     const held = keepInside(sticker({ x: 1, y: 1 }), 1000, 1000);
-    // 0.2 of the short edge is 200px, so the centre cannot come within 100px
+    // 0.2 of the short edge is 200px, so the centre stays 100px from the edge.
     expect(held.x).toBeCloseTo(0.9, 6);
     expect(held.y).toBeCloseTo(0.9, 6);
   });
@@ -240,16 +233,16 @@ describe('keepInside', () => {
 
   it('leaves something already inside exactly as it was', () => {
     const inside = sticker({ x: 0.5, y: 0.5 });
-    // the same object back, so a redraw is not triggered for nothing
+    // The same object back, so nothing redraws for nothing.
     expect(keepInside(inside, 1000, 1000)).toBe(inside);
   });
 
-  /** A turned square needs more room than an upright one: its corners stick out. */
+  /** A turned square needs more room: its corners stick out. */
   it('gives a turned sticker the room its corners need', () => {
     const upright = keepInside(sticker({ x: 1 }), 1000, 1000);
     const turned = keepInside(sticker({ x: 1, rotation: 45 }), 1000, 1000);
     expect(turned.x).toBeLessThan(upright.x);
-    // 200px square turned 45 degrees spans 200 * sqrt(2), so half of it is ~141
+    // A 200px square turned 45° spans 200√2, so half of it is about 141.
     expect(turned.x).toBeCloseTo(1 - 141.42 / 1000, 3);
   });
 
@@ -262,11 +255,11 @@ describe('keepInside', () => {
 
   it('centres something too big to fit rather than jamming it against an edge', () => {
     const huge = keepInside(sticker({ size: 0.3, x: 0.05 }), 300, 300);
-    // 0.3 of 300 is 90px on a 300px picture — it fits, so it is only pulled in
+    // 0.3 of 300 is 90px, which fits, so it is only pulled in.
     expect(huge.x).toBeGreaterThan(0.05);
 
     const wider = keepInside({ ...sticker({ x: 0.05 }), size: 0.3 }, 100, 3000);
-    // on a 100px-wide picture a 0.3 sticker is 30px... still fits
+    // On a 100px-wide picture a 0.3 sticker is 30px, which still fits.
     expect(wider.x).toBeGreaterThanOrEqual(0.15);
   });
 
@@ -280,23 +273,17 @@ describe('keepInside', () => {
     expect(keepInside(s, 0, 0)).toBe(s);
   });
 
-  /**
-   * "Add words" now puts an empty text layer down and focuses the box, so there
-   * is a moment before the first keystroke where the layer exists and paints
-   * nothing. Measured honestly that box is zero wide, and the selection outline
-   * would be a sliver — so an empty one is given room to show where the words
-   * are going to land.
-   */
+  // An empty text layer paints nothing, so it gets a placeholder box until the first keystroke.
   it('gives words you have not typed yet somewhere to be', () => {
-    stubCanvas(); // or jsdom logs a "no getContext" error on every measurement
+    stubCanvas(); // Or jsdom logs a "no getContext" error on every measurement.
     const empty = layerBox(words(''), 1000, 800);
     expect(empty.w).toBeGreaterThan(200);
     expect(empty.h).toBeGreaterThan(0);
 
-    // whitespace alone is still nothing typed
+    // Whitespace alone is still nothing typed.
     expect(layerBox(words('   '), 1000, 800).w).toBe(empty.w);
 
-    // and one real character takes over from the placeholder size
+    // One real character takes over from the placeholder size.
     const typed = layerBox(words('W'), 1000, 800);
     expect(typed.w).toBeLessThan(empty.w);
     expect(typed.w).toBeGreaterThan(0);

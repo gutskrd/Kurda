@@ -18,21 +18,9 @@ const WHEEL_STEP = 0.0016;
 const KEY_NUDGE = 0.04;
 
 /**
- * Decide what part of a picture is the picture.
- *
- * Drag it, pinch it, roll the wheel over it, or use the slider — they all end
- * up in the same place, a `Frame`, which is a zoom and a centre held in shares
- * of the source image rather than pixels on screen. Nothing here knows the size
- * of the box except to convert a gesture into that, so one framing lands
- * identically in a 300px preview and a 1440px export.
- *
- * The picture can never be dragged out from under the frame: zoom starts at
- * "the largest crop of this shape that fits", so no arrangement shows a gap and
- * there is no empty background to design.
- *
- * `onChange` fires continuously through a gesture and `onSettled` once at the
- * end of one, which is what lets an undo history record a whole drag as a
- * single step instead of four hundred of them.
+ * Frames a picture by drag, pinch, wheel, keys or slider, all producing a `Frame` in source-image shares so the framing
+ * lands identically in preview and export. The picture can never leave a gap under the frame. `onChange` fires through
+ * a gesture and `onSettled` once at its end, so a drag is one undo step.
  */
 export function ImageFramer({
   image,
@@ -52,7 +40,7 @@ export function ImageFramer({
   frame: Frame;
   onChange: (frame: Frame) => void;
   onSettled?: () => void;
-  /** show the crop through a circle, for a picture that renders as an avatar */
+  /** Shows the crop through a circle, for a picture used as an avatar. */
   round?: boolean;
   busy?: boolean;
 }): React.JSX.Element {
@@ -60,11 +48,11 @@ export function ImageFramer({
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
-  /** live pointers, so two of them can be told from one */
+  /** Live pointers, so two can be told from one. */
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ dist: number; zoom: number } | null>(null);
 
-  /* the drawn size follows the box; a canvas sized once is a blurry canvas */
+  /* The canvas size follows the box, or it blurs. */
   useEffect(() => {
     const el = boxRef.current;
     if (!el) return;
@@ -79,8 +67,7 @@ export function ImageFramer({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || box.w === 0 || box.h === 0) return;
-    // drawn at device resolution so the preview is not soft on a phone, but no
-    // finer than that: this canvas is thrown away, only the export is kept
+    // Device resolution so the preview is sharp on a phone, capped at 2 since only the export is kept.
     const dpr = Math.min(typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, 2);
     drawLayers(
       canvas,
@@ -94,12 +81,7 @@ export function ImageFramer({
 
   const settle = useCallback((): void => onSettled?.(), [onSettled]);
 
-  /*
-   * Where the slider ends, which is a property of this picture rather than a
-   * constant: a 12-megapixel photo gets the whole range, one that has already
-   * been round the internet stops early. Going past it could only hand back an
-   * upscale of itself.
-   */
+  /* The slider's end depends on this picture's pixels (`maxZoomFor`). */
   const maxZoom = maxZoomFor(iw, ih, aspect);
   const atCeiling = frame.zoom >= maxZoom - 1e-6;
 
@@ -116,7 +98,7 @@ export function ImageFramer({
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const rect = e.currentTarget.getBoundingClientRect();
 
-    // two fingers: the gap between them is the zoom, their middle is the anchor
+    // Two fingers: their gap is the zoom, their middle the anchor.
     const grip = pinch.current;
     if (grip && pointers.current.size === 2) {
       const now = spread(pointers.current);
@@ -160,11 +142,11 @@ export function ImageFramer({
         rect.height === 0 ? 0.5 : (e.clientY - rect.top) / rect.height,
       ),
     );
-    // a wheel has no end, so each notch is its own step in the history
+    // A wheel has no end, so each notch is its own history step.
     settle();
   }
 
-  /** Arrows nudge, plus and minus zoom: framing without a mouse or a screen to touch. */
+  /** Arrows nudge and plus and minus zoom, for framing without a pointer. */
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
     if (busy) return;
     const nudge = (dx: number, dy: number): void => {
@@ -202,7 +184,7 @@ export function ImageFramer({
         aria-label={t('photo.framerHint')}
       >
         <canvas ref={canvasRef} className="framer-canvas" />
-        {/* thirds, the way a camera shows them, and only while it is being moved */}
+        {/* Thirds, as a camera shows them, only while moving. */}
         <span className="framer-grid" aria-hidden />
       </div>
 
