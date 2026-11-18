@@ -12,9 +12,8 @@ const answerBody = z.object({
 });
 
 /**
- * Optional: practise exactly these exercises ("practise these now", after a
- * lesson), or a kind of practice (`mode`; a unit's review names the unit). No
- * body, or neither, is the ordinary review.
+ * Optional: practise exactly these exercises ("practise these now" after a lesson), or a kind of practice (`mode`; a
+ * unit review names the unit). No body, or neither, is the ordinary review.
  */
 const startBody = z
   .object({
@@ -49,7 +48,7 @@ export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService, mil
     async (req) => practice.view((req.params as { id: string }).id, req.user!.id),
   );
 
-  /** How many items are due, and any review left unfinished, for a "Review" entry to show before one starts. */
+  /** How many items are due, and any unfinished review, for a "Review" entry to show before one starts. */
   app.get('/practice/due', { preHandler: requireAuth }, async (req) => practice.due(req.user!.id));
 
   /** A second try at an item already answered here: graded, never recorded. */
@@ -74,7 +73,7 @@ export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService, mil
     },
   );
 
-  /** Finish the review and get the summary: reduced XP, the streak, and the misses with their answers. */
+  /** Finishes the review and returns the summary: reduced XP, the streak, and the misses with their answers. */
   app.post(
     '/practice/sessions/:id/complete',
     { schema: { params: z.object({ id: z.uuid() }) }, config: { skipValidation: true }, preHandler: requireAuth },
