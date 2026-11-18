@@ -27,6 +27,7 @@ import { Button } from '../components/Button';
 import { CheckIcon, CloseIcon, FlagIcon, HelpIcon } from '../components/icons';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 
 /**
@@ -65,8 +66,6 @@ const GLOSS_KEY: Record<WhoAmISays, MessageKey> = {
   unsure: 'games.whoAmI.unsure',
 };
 
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
-
 /** The game's own page: its start, and where a game on one phone or with friends is left for. */
 export const WHO_AM_I_PATH = '/app/games/who-am-i';
 
@@ -83,7 +82,6 @@ export const WHO_AM_I_END_KEY: Record<NonNullable<WhoAmITableBoard['endedBy']>, 
 export function answerWord(dialect: GameDialect, answer: WhoAmIAnswer | 'unsure', t: Translate): string {
   return t(WORD_KEY[dialect][answer]);
 }
-
 
 /** An answer in the reader's language, for under the Kurdish; none when the reader's language is that Kurdish. */
 function gloss(dialect: GameDialect, answer: WhoAmISays, t: Translate): string | null {

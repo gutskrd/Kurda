@@ -16,9 +16,8 @@ import type {
   SeasonName,
 } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { GAME_NAME_KEY } from '../play/playApi';
-
-export type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** A name and what it means; the meaning is null where it would only repeat the name (Kurdish readers). */
 export interface Named {

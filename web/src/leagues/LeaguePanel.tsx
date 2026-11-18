@@ -19,7 +19,8 @@ import { BookIcon, DownIcon, PersonGlyph, ShieldIcon, SparkleIcon, TimerIcon, Up
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
-import { leagueName, leagueNamed, withMeaning, type Translate } from '../ranks/names';
+import type { Translate } from '../i18n/I18nProvider';
+import { leagueName, leagueNamed, withMeaning } from '../ranks/names';
 import { colourFor, initialsOf } from '../lib/initials';
 import { RankList, RankRow } from '../ui/RankRow';
 import { GoalRing } from './GoalRing';

@@ -32,6 +32,7 @@ import { Modal } from '../components/Modal';
 import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { useAsksBeforeLeaving } from '../layouts/BackButton';
 import { dialectName } from '../learn/map';
 import { haptic } from '../lib/haptics';
@@ -162,8 +163,6 @@ interface Game {
   state: WhoAmITableState;
   step: Step;
 }
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** The table as one seat reads it: the rules' own view, the only thing a screen here is drawn from. */
 function viewOf(game: Game, seat: number): WhoAmITableBoard {

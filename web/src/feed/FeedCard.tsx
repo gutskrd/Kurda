@@ -9,7 +9,7 @@ import { SharePost } from './SharePost';
 import { PostMenu } from './PostMenu';
 import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import type { FeedItem } from '../lib/types';
 import { useGrowsFrom, useGrowsInto } from '../lib/viewTransition';
 import { lastSeen } from '../social/time';
@@ -19,7 +19,6 @@ import { PostPictures } from '../composer/PostPictures';
 import type { FeedImage } from '@kurda/shared';
 
 type Kind = 'like' | 'bookmark' | 'repost';
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * One post on the wall, separated from the next by a hairline. Every kind has the same order: the author, kind and

@@ -1,10 +1,7 @@
 import { HELPLINE_URL, isSanctionKind, letterNoticeOf, type SanctionKind } from '@kurda/shared';
-import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { SANCTION_LABEL } from './labels';
 import { formatUntil, MY_REPORTS_PATH, STANDING_PATH } from './restriction';
-
-/** Just enough of the i18n contract to write a sentence; no React in here. */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** A notification as the rail holds it: the server's English and the data it was made from. */
 export interface InboxNote {

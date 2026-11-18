@@ -3,7 +3,8 @@ import { SHIELD_GAMES, type RankCard as RankCardData } from '@kurda/shared';
 import { ChevronIcon, ShieldIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { PlacementEmblem, RankEmblem } from './art';
-import { gameName, rankLabel, rankTierNamed, withMeaning, type Translate } from './names';
+import type { Translate } from '../i18n/I18nProvider';
+import { gameName, rankLabel, rankTierNamed, withMeaning } from './names';
 
 /**
  * One game's rank on the Games page: the emblem, tier and division with meaning, points, progress to the next

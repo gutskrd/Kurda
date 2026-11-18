@@ -1,8 +1,7 @@
 /** Labels for the riddle and proverb codes (difficulty, category, tradition, theme, state), shared by every screen. */
 import type { LoreTradition, ProverbTheme, RiddleCategory, RiddleDifficulty, RiddleState } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 export const DIFFICULTY_KEY: Record<RiddleDifficulty, MessageKey> = {
   easy: 'lore.difficulty.easy',

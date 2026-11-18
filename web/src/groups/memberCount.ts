@@ -1,6 +1,4 @@
-import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /** How many people are in a group, in words, with its own wording for one, since every new group starts with one. */
 export function membersLine(t: Translate, count: number): string {

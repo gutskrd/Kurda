@@ -1,7 +1,8 @@
 import { badgeColour, badgeLeft, badgeTierKey, badgeDef, badgeViewFraction, hasBadgeArt, type BadgeView } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { BadgeMedal } from '../ranks/art';
-import { badgeNamed, badgeTierNamed, unitWord, withMeaning, type Translate } from '../ranks/names';
+import type { Translate } from '../i18n/I18nProvider';
+import { badgeNamed, badgeTierNamed, unitWord, withMeaning } from '../ranks/names';
 
 /** The parts of a badge every screen draws the same way: the medallion with its accessible name, tier and progress. */
 

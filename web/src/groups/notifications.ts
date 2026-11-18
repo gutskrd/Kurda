@@ -1,9 +1,7 @@
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { formatUntil } from '../reports/restriction';
 import type { InboxNote, NoteView } from '../reports/notifications';
-
-/** Just enough of the i18n contract to write a sentence; no React in here. */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
 /** A push's data is all strings, so 'true' counts as true. */

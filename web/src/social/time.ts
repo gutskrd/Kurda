@@ -1,10 +1,9 @@
-import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * Compact durations for the narrow rail, such as "1h 4m". The abbreviations differ by language, so they come from the
  * catalogue through a `t` passed in, since this module has no React.
  */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** How long someone has been in a game: "just now", "7m", "1h 4m". */
 export function elapsed(sinceIso: string, t: Translate, now = Date.now()): string {

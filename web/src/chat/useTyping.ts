@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * Both halves of the typing indicator. Sending is throttled, not debounced, so the first keystroke pings at once.

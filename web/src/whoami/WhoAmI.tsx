@@ -25,6 +25,7 @@ import { HelpIcon } from '../components/icons';
 import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, ApiResult } from '../lib/types';
 import { haptic } from '../lib/haptics';
@@ -64,7 +65,6 @@ const TONE = learnGame('who-am-i').tone;
 
 type Board = WhoAmITableBoard;
 type View = MultiView<Board | null>;
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** How long each of a turn's three waits is given, for the bar that empties with it. */
 const PHASE_SECONDS: Record<Board['phase'], number> = { ask: WHO_AM_I_ASK_SECONDS, answer: WHO_AM_I_ANSWER_SECONDS, decide: WHO_AM_I_DECIDE_SECONDS };

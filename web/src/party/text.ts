@@ -2,8 +2,7 @@ import type { TextSlip } from '@kurda/shared';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * Why a party game's clue or guess was not taken: the chat pipeline's refusals, then the game's own. Mutes and

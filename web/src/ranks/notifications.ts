@@ -1,6 +1,7 @@
 import { toLeagueTier } from '@kurda/shared';
 import type { InboxNote, NoteView } from '../play/notifications';
-import { badgeNamed, leagueName, type Translate } from './names';
+import type { Translate } from '../i18n/I18nProvider';
+import { badgeNamed, leagueName } from './names';
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
 

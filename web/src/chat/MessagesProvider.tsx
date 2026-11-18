@@ -16,10 +16,8 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import type { Conversation, DmMessage, GroupMessage, MyGroup } from '../lib/types';
 import { messagePreview, truncate, type Previewable } from './messagePreview';
 import { useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * App-wide unread counts and arrival banners. Direct messages arrive on the reader's `user:<id>` room; this also

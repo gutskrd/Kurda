@@ -3,10 +3,13 @@ import { APP_LOCALES, DEFAULT_LOCALE, localeDir, type AppLocale } from '@kurda/s
 import { en, type Catalogue, type MessageKey } from './en';
 import { LOCALE_STORAGE_KEY, loadCatalogue, readyCatalogue, resolveLocale } from './catalogues';
 
+/** A message lookup, as `useT` returns; modules without React take one as a parameter. */
+export type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+
 interface I18n {
   locale: AppLocale;
   /** Look up a message, falling back to English, then to the key itself. */
-  t: (key: MessageKey, vars?: Record<string, string | number>) => string;
+  t: Translate;
   /** Remember a choice locally. Persisting it to an account is the caller's job. */
   setLocale: (next: AppLocale) => void;
 }

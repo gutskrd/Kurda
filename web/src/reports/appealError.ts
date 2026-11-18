@@ -1,8 +1,7 @@
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /** The refusals only an appeal can meet, by the API's code. */
 const APPEAL_COPY: Readonly<Record<string, MessageKey>> = {

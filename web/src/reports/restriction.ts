@@ -1,9 +1,6 @@
 import type { MutedErrorDetails, SuspendedErrorDetails } from '@kurda/shared';
 import type { ApiError } from '../lib/types';
-import type { MessageKey } from '../i18n/en';
-
-/** Just enough of the i18n contract to write a sentence; no React in here. */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * A refusal caused by a limit on the account rather than the content sent, so it can say what is limited and until

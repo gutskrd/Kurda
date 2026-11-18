@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { letterNoticeOf } from '@kurda/shared';
 import { socialNotification } from '../reports/notifications';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 export interface LiveActivity {
   game: string;

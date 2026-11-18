@@ -1,10 +1,9 @@
 import type { PostProblem } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 import { restrictionOf, type Restriction } from '../reports/restriction';
 import type { ApiError } from '../lib/types';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** The composer's error codes in the reader's language, since the API's messages are English and for developers. */
 const CODE_KEY: Record<string, MessageKey> = {

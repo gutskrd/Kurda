@@ -6,9 +6,7 @@ import type { ApiClient } from '../lib/api';
 import { describeError } from '../lib/api';
 import { limitErrorText } from '../lib/limits';
 import type { ApiError, ApiResult } from '../lib/types';
-import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 export function saveWord(client: ApiClient, entryId: string): Promise<ApiResult<unknown>> {
   return client.put(`/dictionary/entries/${encodeURIComponent(entryId)}/save`);

@@ -1,9 +1,6 @@
 import { isPlayGame, type ChatGameRef, type ChatMessageKind, type GiftCard } from '@kurda/shared';
 import { INVITE_NAME_KEY, hasRetiredInvite, inviteLinkPattern, parseInvite, withoutRetiredInvites } from '../lib/gameInvites';
-import type { MessageKey } from '../i18n/en';
-
-/** Just enough of the i18n contract to name a game — this file has no React. */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * A message in one line, for the conversation list and arrival banners alike. Game invite links become the game's

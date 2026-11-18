@@ -5,10 +5,8 @@
  * sharers are children.
  */
 import { shareMessage, winLine, winLinkUrl, wordGameShareText, type LeagueWin, type WinLink } from '@kurda/shared';
-import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import type { WordleGame } from '../lib/types';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** The word game's name over its grid; a name, so the same in every language. */
 const WORD_GAME_NAME = 'Hevalo Peyvok';

@@ -14,9 +14,8 @@ import { TypingBubble } from './TypingBubble';
 import { DmWelcome } from './DmWelcome';
 import { ReadReceipt } from './ReadReceipt';
 import { useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { ThreadSkeleton } from '../components/skeletons';

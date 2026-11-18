@@ -1,6 +1,7 @@
 import type { TreeHealth, TreeSpecies, TreeStage } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
-import type { Named, Translate } from '../ranks/names';
+import type { Translate } from '../i18n/I18nProvider';
+import type { Named } from '../ranks/names';
 
 /**
  * The words for a tree: each kind's Kurdish name, meaning and description, its stages and its health. Written out key

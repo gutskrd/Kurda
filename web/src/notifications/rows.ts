@@ -1,7 +1,5 @@
 import type { RailNotification } from '../social/useSocialRail';
-import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * What a notification is about, as one of a few kinds, each with its own glyph. Invitations wear the ticket colours
