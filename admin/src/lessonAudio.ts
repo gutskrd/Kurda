@@ -437,10 +437,6 @@ export function recordingPlan(items: readonly Item[]): CoursePlan[] {
   });
 }
 
-/** A character's script: their lines in the order the page lists them (course order), recorded or not. */
-export function voiceScript(items: readonly Item[], voice: SpeakerId): Item[] {
-  return displayOrder(items.filter((item) => voiceOf(item) === voice));
-}
 
 /** Where a character's script is: #/audio/lessons?voice=hamo&course=kurmanji-road. */
 export function scriptHref(voice: SpeakerId, course: string | null): string {

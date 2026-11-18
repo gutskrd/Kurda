@@ -58,7 +58,6 @@ export function Table<T>({
   onRetry,
   empty,
   actions,
-  defaultSort,
   paging,
   rowClassName,
   what,
@@ -77,7 +76,6 @@ export function Table<T>({
   empty?: ReactNode;
   /** The row's buttons, last on a wide screen and at the foot of its card on a phone. */
   actions?: (row: T) => ReactNode;
-  defaultSort?: SortState;
   paging?: Paging;
   rowClassName?: (row: T) => string | undefined;
   /** For the error's "your role doesn't include …" */
@@ -95,7 +93,7 @@ export function Table<T>({
    */
   layout?: TableLayout;
 }): React.JSX.Element {
-  const [sort, setSort] = useState<SortState | null>(defaultSort ?? null);
+  const [sort, setSort] = useState<SortState | null>(null);
   const span = columns.length + (actions ? 1 : 0);
   const wrap = useRef<HTMLDivElement>(null);
 

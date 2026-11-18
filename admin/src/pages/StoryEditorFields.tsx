@@ -22,7 +22,6 @@ export interface FieldProblems {
 
 export type ProblemsAt = (path: string, exact?: boolean) => FieldProblems;
 
-export const NO_PROBLEMS: FieldProblems = { error: [], publish: [], warning: [] };
 
 export const TAG: Record<ProblemTone, string> = { error: 'Must fix', publish: 'Before publishing', warning: 'Check' };
 

@@ -142,8 +142,8 @@ export function BadgeArt({ badgeKey, tier, tiers, size = 56, label }: { badgeKey
 // ---- a weekly run -------------------------------------------------------------------
 
 /** Where a settle or merge stands, with when, and what it did or why it failed. */
-export function RunLine({ title, run, now }: { title: string; run: LeagueRunStatus | null; now?: Date }): React.JSX.Element {
-  const state = runState(run, now);
+export function RunLine({ title, run }: { title: string; run: LeagueRunStatus | null }): React.JSX.Element {
+  const state = runState(run);
   return (
     <div className="run-line">
       <div className="run-head">
@@ -368,12 +368,12 @@ export function PairGamesDrawer({
 }
 
 /** "Çiya II · 1,040 points" with the emblem, for a list row. */
-export function RankCell({ tier, division, points, placement }: { tier: RankTier | null; division: Division | null; points: number; placement?: { played: number; of: number } | null }): React.JSX.Element {
+export function RankCell({ tier, division, points }: { tier: RankTier | null; division: Division | null; points: number }): React.JSX.Element {
   return (
     <span className="rank-cell">
-      <RankEmblem tier={tier} division={division} placing={placement?.played} size={28} />
+      <RankEmblem tier={tier} division={division} size={28} />
       <span>
-        <span className="rank-cell-name">{rankLine(tier, division, placement)}</span>
+        <span className="rank-cell-name">{rankLine(tier, division)}</span>
         <span className="subtle"> · {points.toLocaleString()} pts</span>
       </span>
     </span>

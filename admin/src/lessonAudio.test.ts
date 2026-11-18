@@ -21,7 +21,7 @@ import {
   scriptOf,
   voiceCounts,
   voiceOf,
-  voiceScript,
+
   matchesVoice,
   withRecording,
   withoutRecording,
@@ -376,10 +376,7 @@ describe('the recording plan', () => {
     expect(recordingPlan([items[6]!])).toEqual([]);
   });
 
-  it('lists a character’s script in course order, recorded or not', () => {
-    const road1 = items.flatMap((i) => inCourse(i, 'kurmanji-road') ?? []);
-    expect(voiceScript(road1, 'hamo').map((i) => i.text)).toEqual(['Silav', 'Bi xêr hatî', 'Spas']);
-    expect(voiceScript(road1, 'xezo').map((i) => i.text)).toEqual(['Ez Xezal im']);
+  it('links to a character’s script', () => {
     expect(scriptHref('hamo', 'kurmanji-road')).toBe('#/audio/lessons?voice=hamo&course=kurmanji-road');
     expect(scriptHref('xezo', null)).toBe('#/audio/lessons?voice=xezo');
   });

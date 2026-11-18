@@ -70,7 +70,6 @@ function TextList({
   lang,
   dir,
   readOnly,
-  multiline = false,
 }: {
   label: string;
   hint?: string;
@@ -83,18 +82,13 @@ function TextList({
   lang: string;
   dir: 'ltr' | 'rtl';
   readOnly: boolean;
-  multiline?: boolean;
 }): React.JSX.Element {
   return (
     <Field label={label} hint={hint}>
       <div className="gc-list">
         {items.map((value, i) => (
           <span key={i} className="row">
-            {multiline ? (
-              <textarea rows={2} aria-label={itemLabel(i)} value={value} lang={lang} dir={dir} readOnly={readOnly} onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))} />
-            ) : (
-              <input aria-label={itemLabel(i)} value={value} lang={lang} dir={dir} readOnly={readOnly} onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))} />
-            )}
+            <input aria-label={itemLabel(i)} value={value} lang={lang} dir={dir} readOnly={readOnly} onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))} />
             {!readOnly && items.length > min && (
               <Button variant="ghost" icon="trash" aria-label={`Remove ${itemLabel(i).toLowerCase()}`} onClick={() => onChange(items.filter((_, j) => j !== i))}>
                 Remove

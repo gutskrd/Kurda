@@ -27,7 +27,6 @@ import {
   type AppLocale,
   type StoryCategory,
   type StoryProblem,
-  type StoryTradition,
   type StoryTranslationReviewStatus,
 } from '@kurda/shared';
 import { artSrc } from '../shop/art';
@@ -858,9 +857,4 @@ function LocaleFooter({ locale, story, locales }: { locale: string; story: Admin
       )}
     </div>
   );
-}
-
-/** The tradition a story claims, as a type the names know; anything else reads as original. */
-export function traditionOf(value: string): StoryTradition {
-  return (STORY_TRADITIONS as readonly string[]).includes(value) ? (value as StoryTradition) : 'original';
 }

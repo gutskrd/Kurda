@@ -12,14 +12,12 @@ interface FieldProps {
   hint?: ReactNode;
   error?: ReactNode;
   required?: boolean;
-  /** The label beside the control rather than above it. */
-  inline?: boolean;
   className?: string;
   children: ReactElement<Record<string, unknown>>;
 }
 
 /** Wraps one control: `<Field label="SKU" hint="…"><input … /></Field>`. */
-export function Field({ label, hint, error, required, inline = false, className, children }: FieldProps): React.JSX.Element {
+export function Field({ label, hint, error, required, className, children }: FieldProps): React.JSX.Element {
   const auto = useId();
   const id = (isValidElement(children) && typeof children.props.id === 'string' ? children.props.id : null) ?? auto;
   const hintId = hint ? `${id}-hint` : undefined;
@@ -32,7 +30,7 @@ export function Field({ label, hint, error, required, inline = false, className,
     required: required ?? children.props.required,
   });
   return (
-    <div className={`field${inline ? ' is-inline' : ''}${error ? ' has-error' : ''}${className ? ` ${className}` : ''}`}>
+    <div className={`field${error ? ' has-error' : ''}${className ? ` ${className}` : ''}`}>
       <label htmlFor={id}>
         {label}
         {required && (

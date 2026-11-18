@@ -606,14 +606,8 @@ export function isDirty(form: StoryForm, loaded: StoryForm): boolean {
   return JSON.stringify(draftFromForm(form)) !== JSON.stringify(draftFromForm(loaded));
 }
 
-/**
- * The content a reviewer read, in the order the API compares it: a change to
- * any of it takes an approved story's approval away when it is saved, while a
- * change to how the story is filed or attributed does not. Kept in step with
- * the API's own comparison, so the editor can say ahead of a save that the
- * story will need approving again.
- */
-function contentOf(draft: StoryDraft, withTranslations = true): string {
+/** The Kurdish a reviewer read, in the order the API compares it (`canonicalContent`, translations left out). */
+function kurdishOf(draft: StoryDraft): string {
   return JSON.stringify([
     draft.dialect,
     draft.level,
@@ -624,22 +618,15 @@ function contentOf(draft: StoryDraft, withTranslations = true): string {
     draft.questions.map((q) => [q.kind, q.prompt, q.promptEn, q.options, q.correctIndex, q.explanation, q.explanationEn, q.evidenceParagraph, q.evidenceSentence]),
     (draft.reflections ?? []).map((r) => r.text),
     (draft.notes ?? []).map((n) => [n.kind, n.title, n.body]),
-    withTranslations ? translatedLocales(draft).map((locale) => [locale, localeOf(draft, locale)]) : null,
   ]);
 }
 
-/** Whether the unsaved edits touch what a reviewer read (text, glossary, questions, reflections, notes, translations), not only the filing. */
-export function contentChanged(form: StoryForm, loaded: StoryForm): boolean {
-  return contentOf(draftFromForm(form)) !== contentOf(draftFromForm(loaded));
-}
-
 /**
- * Whether the unsaved edits touch what a reviewer read in Kurdish. A change to
- * translations alone is saved language by language, which keeps the approval,
- * so only this says a story will need approving again.
+ * Whether the unsaved edits touch the Kurdish a reviewer read, so that saving takes an approved story's approval away.
+ * Filing, attribution and translations do not count: translations are saved language by language, keeping the approval.
  */
 export function kurdishChanged(form: StoryForm, loaded: StoryForm): boolean {
-  return contentOf(draftFromForm(form), false) !== contentOf(draftFromForm(loaded), false);
+  return kurdishOf(draftFromForm(form)) !== kurdishOf(draftFromForm(loaded));
 }
 
 // ---------------------------------------------------------------------------

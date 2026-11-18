@@ -373,11 +373,11 @@ export function ClipRecorder({
 }
 
 /** The keys, for a page that turns them on. */
-export function ShortcutHint({ moves = 'previous / next' }: { moves?: string }): React.JSX.Element {
+export function ShortcutHint(): React.JSX.Element {
   return (
     <p className="aa-keys">
       <kbd>R</kbd> record / stop · <kbd>Space</kbd> listen · <kbd>Enter</kbd> save · <kbd>↑</kbd>
-      <kbd>↓</kbd> {moves}
+      <kbd>↓</kbd> previous / next
     </p>
   );
 }

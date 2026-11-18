@@ -18,7 +18,7 @@ import {
   cefrLabel,
   changedBesidesTranslations,
   changedLocales,
-  contentChanged,
+
   describePath,
   draftFromForm,
   editorReducer,
@@ -188,12 +188,11 @@ describe('the form and the request', () => {
 
   it('tells edits a reviewer would have to read again from edits to the filing', () => {
     const loaded = formFromStory(storyFixture({ reviewStatus: 'approved' }));
-    expect(contentChanged(edit(loaded, { type: 'lib/category', value: 'fable' }, { type: 'lib/text', field: 'author', value: 'Someone' }), loaded)).toBe(false);
-    expect(contentChanged(edit(loaded, { type: 'text', field: 'summary', value: 'Changed.' }), loaded)).toBe(true);
-    expect(contentChanged(edit(loaded, { type: 'translation', locale: 'en', value: 'A.\n\nB.\n\nC.' }), loaded)).toBe(true);
-    expect(contentChanged(edit(loaded, { type: 'q/correct', index: 0, option: 1 }), loaded)).toBe(true);
+    expect(kurdishChanged(edit(loaded, { type: 'lib/category', value: 'fable' }, { type: 'lib/text', field: 'author', value: 'Someone' }), loaded)).toBe(false);
+    expect(kurdishChanged(edit(loaded, { type: 'text', field: 'summary', value: 'Changed.' }), loaded)).toBe(true);
+    expect(kurdishChanged(edit(loaded, { type: 'q/correct', index: 0, option: 1 }), loaded)).toBe(true);
     // Whitespace the API trims is no change.
-    expect(contentChanged(edit(loaded, { type: 'text', field: 'title', value: 'Rêya Dibistanê ' }), loaded)).toBe(false);
+    expect(kurdishChanged(edit(loaded, { type: 'text', field: 'title', value: 'Rêya Dibistanê ' }), loaded)).toBe(false);
   });
 });
 
@@ -682,8 +681,7 @@ describe('one language at a time', () => {
     const german = edit(loaded, { type: 'tr/meta', locale: 'de', field: 'title', value: 'Der Schulweg' }, { type: 'translation', locale: 'en', value: 'One.\n\nTwo.\n\nThree.' });
     expect(changedLocales(german, loaded)).toEqual(['en', 'de']);
     expect(changedBesidesTranslations(german, loaded)).toBe(false);
-    // Translations are content for the whole-story save, but not the Kurdish a reviewer approved.
-    expect(contentChanged(german, loaded)).toBe(true);
+    // Translations are not the Kurdish a reviewer approved.
     expect(kurdishChanged(german, loaded)).toBe(false);
     const both = edit(german, { type: 'text', field: 'summary', value: 'Nû.' });
     expect(changedBesidesTranslations(both, loaded)).toBe(true);
