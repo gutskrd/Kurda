@@ -454,15 +454,10 @@ function sectionOf(path: Path<SkillNode>, key: string | null): number | null {
 }
 
 /**
- * A course's lesson path, on the course page (pages/CourseMap.tsx, with its header) and as Learn's home
- * (pages/Learn.tsx, without). Rules come from @kurda/shared's `lessonPath`, as on the phone.
- *
- * The course shows one section at a time (units grouped by level): the current section is open, earlier ones collapse
- * to a card that reopens them, and later ones are shut cards. A pinned heading names the unit at the top of the window
- * with its guide; each unit's stops run down the road through its land, and tapping a stop opens its card.
- *
- * Returning from a lesson plays what changed on the shared timeline (`PATH_RETURN`); under reduced motion the path is
- * simply drawn as it is. The course page opens on the current skill, with a button back to it once scrolled away.
+ * A course's lesson path, on the course page (pages/CourseMap.tsx) and as Learn's home (pages/Learn.tsx), by
+ * @kurda/shared's `lessonPath` as on the phone. One section shows at a time, with earlier and later ones as cards, under
+ * a pinned heading naming the top unit. A return from a lesson plays what changed (`PATH_RETURN`), or simply redraws
+ * under reduced motion.
  */
 export function CoursePath({
   courseId,

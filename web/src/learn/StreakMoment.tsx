@@ -33,18 +33,11 @@ import { FIRE_GREW, FIRE_NEXT, FIRE_STAGE_NAME } from './fireWords';
 import type { Streak } from './types';
 
 /**
- * The streak kept today, after the results, only when today's first lesson kept it and once the learner taps on.
- *
- * On the day the fire grew (shared `flameMoment`), the flame comes first (`StreakFlame`): it opens dim on yesterday,
- * then lights (shared `FLAME_IGNITE`) with a pop, a gold ring, a warm flood, sparks and the day number rolling on, heard
- * and felt as it lights; it leaps into its new stage with a line saying what it grew into, and moves on after the
- * celebration or on a click, Enter, Space or Escape.
- *
- * The week (`StreakWeek`) is one card: the streak medal over its top edge, the streak in words, a word from Hevalo for
- * the kind of day, and this week's seven days, with the fire and freezes under it. It plays in on shared
- * `streakReveal` (the grey medal hops and turns gold as the number rolls on), and a click finishes it at once.
- *
- * Under reduced motion both simply cross-fade. Nothing counts down, warns or asks: a streak is a number that went up.
+ * The streak kept today, shown after the results when today's first lesson kept it. On the day the fire grew (shared
+ * `flameMoment`) the flame comes first (`StreakFlame`, on shared `FLAME_IGNITE`), lighting and growing into its new
+ * stage. The week (`StreakWeek`, on shared `streakReveal`) is one card: the medal, the streak in words, Hevalo's word for
+ * the day and this week's days. A click finishes either; under reduced motion both cross-fade. Nothing counts down or
+ * warns.
  */
 
 /**

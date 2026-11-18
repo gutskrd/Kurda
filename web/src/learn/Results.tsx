@@ -78,16 +78,11 @@ function ownedElsewhere(target: EventTarget | null): boolean {
 }
 
 /**
- * The end of a lesson or review. The results open as the app's celebration (ranks/Celebration.tsx), Hevalo cheering as
- * the buzz lands, a title and a warm line by how it went, then three counting cards: XP earned, right first time, and
- * time taken; today's goal, league place and a new level follow. A screen reader hears the cards in one sentence. Every
- * mistake is listed with its right answer. Items put off ("Can't listen now") are left out of the score, and the count
- * says how many.
- *
- * Then, a tap at a time: the streak kept today (StreakMoment.tsx) and today's quests when the session moved any. The way
- * on sits in the action bar where Check was: the next lesson until today's goal is met, then "Done" beside it, and
- * practising mistakes when there are any; Enter or Space moves on. A quiet Share (share/ShareWin.tsx) sits beside it on
- * a lesson's results and on the streak's big days; reviews have none.
+ * The end of a lesson or review: the celebration (ranks/Celebration.tsx), three counting cards (XP, right first time,
+ * time) read to screen readers as one sentence, today's goal, league and level, and every mistake with its answer; put
+ * off items are left out of the score and counted. Then, a tap at a time, the streak (StreakMoment.tsx) and today's
+ * quests. The way on sits in the action bar where Check was, with a quiet Share (share/ShareWin.tsx) beside it on a
+ * lesson's results and the streak's big days.
  */
 export function Results({
   title,
