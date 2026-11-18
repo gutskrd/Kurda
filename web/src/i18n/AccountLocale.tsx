@@ -4,19 +4,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { useI18n } from './I18nProvider';
 
 /**
- * An account's language wins over the device's.
- *
- * The provider settles on a language before anyone has signed in — from what
- * this device chose last, or from the browser. Once there is an account, its
- * choice is the one the person actually made, and it should follow them onto a
- * borrowed laptop or a new phone without being asked again.
- *
- * Applied once per sign-in rather than continuously: after that, changing the
- * language in Settings sets both at once, and re-asserting the stored value on
- * every render would fight it.
- *
- * Renders nothing. It exists so the provider stays free of anything to do with
- * sessions, which would otherwise make it un-testable without an auth stack.
+ * Applies the account's language over the device's, once per sign-in, so it follows the person to a new device;
+ * Settings then changes both. Kept apart from the provider so the provider can be tested without auth.
  */
 export function AccountLocale(): null {
   const { user } = useAuth();

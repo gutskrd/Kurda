@@ -2,16 +2,7 @@ import { useId } from 'react';
 import { APP_LOCALES, type AppLocale } from '@kurda/shared';
 import { useT } from './I18nProvider';
 
-/**
- * Choosing a language.
- *
- * A plain `<select>`, not a grid of flags. A flag is a country and a language
- * is not — Kurdish has no flag every Kurd would agree on, Arabic and Spanish
- * and French each have dozens, and the whole idea would put this app in the
- * business of deciding which flag stands for whom. Each option is written in
- * its own language, because somebody looking for theirs is looking for the word
- * they call it.
- */
+/** The language choice: a plain select rather than flags, since a flag is a country, with each option in its own language. */
 export function LanguagePicker({
   value,
   onChange,
